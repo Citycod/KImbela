@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Your Email – Kimbela</title>
+
+    <!-- Favicons -->
+    <link href="{{ url_for('static', filename='assets/img/kimbela-logo.png') }}" rel="icon">
+    <link href="{{ url_for('static', filename='assets/img/kimbela-logo.png') }}" rel="apple-touch-icon">
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Vendor CSS -->
+    <link href="{{ url_for('static', filename='assets/vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='assets/vendor/bootstrap-icons/bootstrap-icons.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='assets/vendor/aos/aos.css') }}" rel="stylesheet">
+
+    <style>
+        :root{
+            --primary:#8e44ad;--secondary:#9b59b6;--accent:#f39c12;
+            --light:#f8f9fa;--dark:#2c3e50;--text:#34495e;
+            --radius:12px;--shadow:0 10px 30px rgba(0,0,0,.1);
+            --transition:all .3s cubic-bezier(.25,.8,.25,1);
+        }
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{
+            font-family:'Poppins',sans-serif;
+            background:linear-gradient(135deg,#f5f7fa 0%,#c3cfe2 100%);
+            color:var(--text);min-height:100vh;
+            display:flex;align-items:center;justify-content:center;padding:1rem;
+        }
+        .verify-container{
+            width:100%;max-width:1200px;min-height:680px;
+            border-radius:var(--radius);overflow:hidden;
+            box-shadow:var(--shadow);background:#fff;
+            display:flex;flex-direction:row;
+        }
+        .verify-left{
+            flex:1;background:linear-gradient(135deg,var(--primary),var(--secondary));
+            display:flex;align-items:center;justify-content:center;position:relative;
+            padding:2rem;overflow:hidden;
+        }
+        .verify-left .content{
+            position:relative;z-index:2;text-align:center;color:#fff;max-width:500px;
+        }
+        .verify-left h2{font-size:2.5rem;margin-bottom:1.5rem;font-weight:700;font-family:'Montserrat',sans-serif}
+        .verify-left p{font-size:1.1rem;margin-bottom:2rem;opacity:.9}
+        .badge{
+            display:inline-flex;align-items:center;background:rgba(255,255,255,.15);
+            padding:.75rem 1.5rem;border-radius:50px;margin-bottom:2rem;
+            backdrop-filter:blur(5px);
+        }
+        .badge i{font-size:1.5rem;margin-right:.75rem;color:var(--accent)}
+        .floating{
+            position:absolute;top:0;left:0;width:100%;height:100%;overflow:hidden;z-index:1;
+        }
+        .shape{
+            position:absolute;border-radius:50%;background:rgba(255,255,255,.1);
+            animation:float 15s infinite linear;
+        }
+        .shape:nth-child(1){width:150px;height:150px;top:10%;left:15%;animation-delay:0s}
+        .shape:nth-child(2){width:200px;height:200px;bottom:15%;right:10%;animation-delay:2s}
+        .shape:nth-child(3){width:100px;height:100px;top:50%;left:30%;animation-delay:4s}
+        @keyframes float{
+            0%{transform:translateY(0) rotate(0)}
+            50%{transform:translateY(-50px) rotate(180deg)}
+            100%{transform:translateY(0) rotate(360deg)}
+        }
+        .verify-right{
+            flex:1;display:flex;align-items:center;justify-content:center;
+            padding:2rem;background:#fff;
+        }
+        .verify-form{max-width:420px;width:100%;padding:2rem}
+        .logo{margin-bottom:2rem;text-align:center}
+        .logo img{height:80px;transition:var(--transition)}
+        .logo img:hover{transform:scale(1.05)}
+        .title{font-size:2rem;font-weight:700;color:var(--primary);margin-bottom:.5rem;text-align:center;font-family:'Montserrat',sans-serif}
+        .subtitle{color:#6c757d;text-align:center;margin-bottom:2rem}
+        .form-group{margin-bottom:1.5rem;position:relative}
+        .form-control{
+            width:100%;padding:.75rem 1rem;font-size:1rem;
+            border:2px solid #e9ecef;border-radius:var(--radius);
+            background:#f8f9fa;transition:var(--transition);
+            padding-right: 3rem;
+        }
+        .form-control:focus{
+            border-color:var(--primary);box-shadow:0 0 0 3px rgba(142,68,173,.2);
+            outline:none;background:#fff;
+        }
+        .input-group-append {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 5;
+            cursor: pointer;
+        }
+        .input-group-append i {
+            font-size: 1.1rem;
+            color: #6c757d;
+        }
+        .btn-verify{
+            width:100%;padding:1rem;background:linear-gradient(to right,var(--primary),var(--secondary));
+            color:#fff;border:none;border-radius:var(--radius);
+            font-weight:600;font-size:1rem;cursor:pointer;transition:var(--transition);
+            position:relative;overflow:hidden;
+        }
+        .btn-verify:hover{transform:translateY(-3px);box-shadow:0 10px 20px rgba(142,68,173,.2)}
+        .btn-verify::after{
+            content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;
+            background:linear-gradient(to bottom right,rgba(255,255,255,.3),rgba(255,255,255,.1),rgba(255,255,255,.3));
+            transform:rotate(30deg);transition:var(--transition);
+        }
+        .btn-verify:hover::after{left:100%}
+        .resend{margin-top:1.5rem;text-align:center}
+        .resend a{color:var(--primary);font-weight:500;text-decoration:none}
+        .resend a:hover{text-decoration:underline}
+        .alert{padding:.75rem 1.25rem;margin-bottom:1rem;border:1px solid transparent;border-radius:var(--radius)}
+        .alert-success{color:#155724;background:#d4edda;border-color:#c3e6cb}
+        .alert-danger{color:#721c24;background:#f8d7da;border-color:#f5c6cb}
+        .alert-warning{color:#856404;background:#fff3cd;border-color:#ffeaa7}
+        @media (max-width:992px){
+            .verify-container{flex-direction:column;min-height:auto}
+            .verify-left{min-height:300px;padding:2rem}
+            .verify-right{padding:3rem 2rem}
+        }
+        @media (max-width:576px){
+            .verify-left{min-height:200px;padding:1.5rem}
+            .verify-right{padding:2rem 1rem}
+            .verify-form{padding:1.5rem}
+            .logo img{height:70px}
+        }
+    </style>
+</head>
+<body>
+<div class="verify-container">
+    <!-- LEFT – Animation -->
+    <div class="verify-left">
+        <div class="floating">
+            <div class="shape"></div><div class="shape"></div><div class="shape"></div>
+        </div>
+        <div class="content" data-aos="fade-up">
+            <div class="badge"><i class="bi bi-shield-check"></i>Secure Verification</div>
+            <h2>Almost There!</h2>
+            <p>We sent a 6-digit token to <strong>{{ email }}</strong>. Paste it below to activate your account.</p>
+        </div>
+    </div>
+
+    <!-- RIGHT – Form -->
+    <div class="verify-right">
+        <div class="verify-form" data-aos="fade-up" data-aos-delay="100">
+            <div class="logo">
+                <img src="{{ url_for('static', filename='assets/img/kimbela-logo.png') }}" alt="Kimbela">
+            </div>
+
+            <h1 class="title">Verify Email</h1>
+            <p class="subtitle">Enter the token we emailed you.</p>
+
+            <!-- Flash messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for cat, msg in messages %}
+                        <div class="alert alert-{{ cat }} alert-dismissible fade show" role="alert">
+                            {{ msg }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('auth.verify_page') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <input type="hidden" name="email" value="{{ email }}">
+
+                <div class="form-group">
+                    <input type="text" class="form-control" name="token" id="token" placeholder="••••••" maxlength="6"
+                           required autofocus autocomplete="off">
+                    <div class="input-group-append" onclick="toggleTokenVisibility()">
+                        <i class="bi bi-eye" id="toggleIcon"></i>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-verify">Verify &amp; Continue</button>
+            </form>
+
+            <div class="resend">
+                Didn’t receive it? <a href="{{ url_for('auth.resend_verification', email=email) }}">Resend token</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Vendor JS -->
+<script src="{{ url_for('static', filename='assets/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/vendor/aos/aos.js') }}"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        AOS.init({duration:800,easing:'ease-in-out',once:true});
+
+        const tokenInput = document.getElementById('token');
+        const toggleIcon = document.getElementById('toggleIcon');
+
+        // Auto-focus
+        tokenInput.focus();
+
+        // Only digits + auto-submit
+        tokenInput.addEventListener('input', e => {
+            e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0,6);
+            if (e.target.value.length === 6) e.target.form.submit();
+        });
+
+        // Toggle visibility
+        window.toggleTokenVisibility = function() {
+            if (tokenInput.type === 'password') {
+                tokenInput.type = 'text';
+                toggleIcon.classList.replace('bi-eye', 'bi-eye-slash');
+            } else {
+                tokenInput.type = 'password';
+                toggleIcon.classList.replace('bi-eye-slash', 'bi-eye');
+            }
+        };
+    });
+</script>
+</body>
+</html>

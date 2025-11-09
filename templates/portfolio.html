@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Portfolio - More Peace Technology LLC</title>
+    <meta
+      name="description"
+      content="Explore the portfolio of More Peace Technology LLC, showcasing our expert interior and exterior home improvement projects."
+    />
+    <meta
+      name="keywords"
+      content="home improvement portfolio, flooring projects, painting projects, remodeling, landscaping, gallery"
+    />
+
+    <!-- Favicons -->
+    <link href="assets/img/nn.png" rel="icon" />
+    <link href="assets/img/nn.png" rel="apple-touch-icon" />
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Raleway:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Vendor CSS Files -->
+    <link
+      href="assets/vendor/bootstrap/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="assets/vendor/bootstrap-icons/bootstrap-icons.css"
+      rel="stylesheet"
+    />
+    <link href="assets/vendor/aos/aos.css" rel="stylesheet" />
+    <link href="assets/vendor/swiper/swiper-bundle.min.css" rel="stylesheet" />
+    <link
+      href="assets/vendor/glightbox/css/glightbox.min.css"
+      rel="stylesheet"
+    />
+
+    <!-- Main CSS File -->
+    <link href="assets/css/main.css" rel="stylesheet" />
+
+    <!-- Custom CSS for Portfolio Page -->
+    <style>
+      .portfolio-filter {
+        margin-bottom: 30px;
+        text-align: center;
+      }
+
+      .filter-btn {
+        background: none;
+        border: none;
+        padding: 8px 20px;
+        margin: 0 5px 10px;
+        border-radius: 30px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s;
+        color: #2c3e50;
+      }
+
+      .filter-btn:hover,
+      .filter-btn.active {
+        background: #0d6efd;
+        color: white;
+      }
+
+      .portfolio-item {
+        margin-bottom: 30px;
+        transition: transform 0.3s ease;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      .portfolio-item:hover {
+        transform: translateY(-5px);
+      }
+
+      .portfolio-img {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .portfolio-img img {
+        width: 100%;
+        height: 250px;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+      }
+
+      .portfolio-item:hover .portfolio-img img {
+        transform: scale(1.05);
+      }
+
+      .portfolio-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        opacity: 0;
+        transition: opacity 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .portfolio-item:hover .portfolio-overlay {
+        opacity: 1;
+      }
+
+      .portfolio-info {
+        text-align: center;
+        color: white;
+        padding: 20px;
+      }
+
+      .portfolio-info h4 {
+        font-size: 1.25rem;
+        margin-bottom: 0.5rem;
+        color: #fff;
+      }
+
+      .portfolio-info p {
+        font-size: 0.9rem;
+        color: #ddd;
+        margin-bottom: 1rem;
+      }
+
+      .portfolio-info .btn {
+        background: #0d6efd;
+        border: none;
+        padding: 5px 15px;
+        font-size: 0.9rem;
+      }
+
+      .placeholder-image {
+        background: #f0f0f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 250px;
+        color: #888;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+
+  <body class="portfolio-page">
+    <header id="header" class="header d-flex align-items-center sticky-top">
+      <div
+        class="header-container container-fluid container-xl position-relative d-flex align-items-center justify-content-end"
+      >
+        <a
+          href="index.html"
+          class="logo d-flex align-items-center me-auto"
+          style="background: none"
+        >
+          <!-- Uncomment the line below if you also wish to use an image logo -->
+          <img
+            src="assets/img/nn.png"
+            alt=""
+            style="width: 10rem; height: 10rem"
+          />
+        </a>
+
+        <nav id="navmenu" class="navmenu">
+          <ul>
+            <li><a href="index.html" class="active">Home</a></li>
+            <li><a href="about.html">About Us</a></li>
+            <li><a href="portfolio.html">Portfolio</a></li>
+            <li><a href="contact.html">Contact Us</a></li>
+          </ul>
+          <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+        </nav>
+      </div>
+    </header>
+
+    <main class="main">
+      <!-- Hero Section -->
+      <!-- Hero Section -->
+      <section id="hero" class="hero section">
+        <div class="hero-wrapper">
+          <div class="container">
+            <div class="row align-items-center">
+              <div
+                class="col-lg-6 hero-content"
+                data-aos="fade-right"
+                data-aos-delay="100"
+              >
+                <h1>Our Portfolio</h1>
+                <p>
+                  Discover the exceptional interior and exterior projects
+                  completed by More Peace Technology LLC. From stunning
+                  renovations to beautiful landscapes, see our quality
+                  craftsmanship in action.
+                </p>
+                <div class="action-buttons">
+                  <a href="contact.html" class="btn btn-primary"
+                    >Get Free Estimate</a
+                  >
+                  <a href="#portfolio" class="btn btn-secondary"
+                    >View Projects</a
+                  >
+                </div>
+              </div>
+              <div
+                class="col-lg-6 hero-media"
+                data-aos="zoom-in"
+                data-aos-delay="200"
+              >
+                <img
+                  src="assets/img/2.jpg"
+                  alt="Portfolio Showcase"
+                  class="img-fluid"
+                  style="
+                    width: 100%;
+                    height: 400px;
+                    object-fit: cover;
+                    border-radius: 15px;
+                  "
+                />
+                <div class="image-overlay">
+                  <div class="badge-accredited">
+                    <i class="bi bi-patch-check-fill"></i>
+                    <span>Licensed & Insured</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <!-- /Hero Section -->
+      <!-- /Hero Section -->
+
+      <!-- Portfolio Section -->
+      <section id="portfolio" class="portfolio section">
+        <div class="container section-title" data-aos="fade-up">
+          <h2>Recent Projects</h2>
+          <p>
+            Explore our completed projects showcasing our expertise in interior,
+            exterior, and installation services
+          </p>
+        </div>
+
+        <div class="container" data-aos="fade-up" data-aos-delay="100">
+          <!-- Portfolio Filter -->
+          <div class="portfolio-filter" data-aos="fade-up" data-aos-delay="200">
+            <button class="filter-btn active" data-filter="all">
+              All Projects
+            </button>
+            <button class="filter-btn" data-filter="interior">
+              Interior Services
+            </button>
+            <button class="filter-btn" data-filter="exterior">
+              Exterior Services
+            </button>
+            <button class="filter-btn" data-filter="installation">
+              Installation Services
+            </button>
+          </div>
+
+          <!-- Portfolio Grid -->
+          <div class="row g-4" id="portfolio-grid">
+            <!-- Portfolio items will be dynamically generated -->
+          </div>
+        </div>
+      </section>
+      <!-- /Portfolio Section -->
+    </main>
+
+    <footer id="footer" class="footer position-relative light-background">
+      <div class="container footer-top">
+        <div class="row gy-4">
+          <div class="col-lg-4 col-md-6 footer-about">
+            <a href="index.html" class="logo d-flex align-items-center">
+              <span class="sitename">More Peace Technology</span>
+            </a>
+            <div class="footer-contact pt-3">
+              <p>Professional interior and exterior services</p>
+              <p class="mt-3">
+                <strong>Phone:</strong> <span>+1 (443) 355-3697</span>
+              </p>
+              <p><strong>Email:</strong> <span>info@morepeacetech.com</span></p>
+              <p>
+                <strong>Hours:</strong>
+                <span>Mon-Fri: 8AM - 6PM, Sat: 9AM - 4PM</span>
+              </p>
+            </div>
+            <div class="social-links d-flex mt-4">
+              <a href=""><i class="bi bi-facebook"></i></a>
+              <a href=""><i class="bi bi-instagram"></i></a>
+              <a href=""><i class="bi bi-linkedin"></i></a>
+              <a href=""><i class="bi bi-youtube"></i></a>
+            </div>
+          </div>
+          <div class="col-lg-2 col-md-3 footer-links">
+            <h4>Quick Links</h4>
+            <ul>
+              <li><a href="index.html">Home</a></li>
+              <li><a href="about.html">About Us</a></li>
+              <li><a href="portfolio.html">Portfolio</a></li>
+              <li><a href="contact.html">Contact Us</a></li>
+            </ul>
+          </div>
+          <div class="col-lg-3 col-md-3 footer-links">
+            <h4>Our Services</h4>
+            <ul>
+              <li><a href="portfolio.html#interior">Interior Services</a></li>
+              <li><a href="portfolio.html#exterior">Exterior Services</a></li>
+              <li>
+                <a href="portfolio.html#installation">Installation Services</a>
+              </li>
+              <li><a href="portfolio.html">View All Services</a></li>
+            </ul>
+          </div>
+          <div class="col-lg-3 col-md-6 footer-newsletter">
+            <h4>Stay Updated</h4>
+            <p>Subscribe to our newsletter for updates and special offers</p>
+            <form action="" method="post">
+              <input
+                type="email"
+                name="email"
+                placeholder="Enter your email"
+                class="form-control"
+              />
+              <input
+                type="submit"
+                value="Subscribe"
+                class="btn btn-primary mt-2"
+              />
+            </form>
+          </div>
+        </div>
+      </div>
+      <div class="container copyright text-center mt-4">
+        <p>
+          © <span>Copyright</span>
+          <strong class="px-1 sitename">More Peace Technology</strong>
+          <span>All Rights Reserved</span>
+        </p>
+        <div class="credits">
+          Designed by <a href="https://technest-gules.vercel.app/">Tech Nest</a>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Scroll Top -->
+    <a
+      href="#"
+      id="scroll-top"
+      class="scroll-top d-flex align-items-center justify-content-center"
+      ><i class="bi bi-arrow-up-short"></i
+    ></a>
+
+    <!-- Preloader -->
+    <div id="preloader"></div>
+
+    <!-- Vendor JS Files -->
+    <script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/vendor/php-email-form/validate.js"></script>
+    <script src="assets/vendor/aos/aos.js"></script>
+    <script src="assets/vendor/swiper/swiper-bundle.min.js"></script>
+    <script src="assets/vendor/purecounter/purecounter_vanilla.js"></script>
+    <script src="assets/vendor/imagesloaded/imagesloaded.pkgd.min.js"></script>
+    <script src="assets/vendor/isotope-layout/isotope.pkgd.min.js"></script>
+    <script src="assets/vendor/glightbox/js/glightbox.min.js"></script>
+
+    <!-- Main JS File -->
+    <script src="assets/js/main.js"></script>
+
+    <!-- Portfolio JavaScript -->
+    <script>
+      // Portfolio data with categories and descriptions
+      const portfolioItems = [
+        {
+          id: 1,
+          name: "2.jpg",
+          title: "Modern Kitchen Remodel",
+          category: "interior",
+          description:
+            "Complete kitchen transformation with custom cabinets, quartz countertops, and premium appliances.",
+        },
+        {
+          id: 2,
+          name: "1.jpg",
+          title: "Wooden Floor Installation",
+          category: "interior",
+          description:
+            "Hardwood flooring installation in a contemporary living space with a natural finish.",
+        },
+        {
+          id: 3,
+          name: "bath.webp",
+          title: "Bathroom Renovation",
+          category: "interior",
+          description:
+            "Luxury bathroom remodel with walk-in shower, freestanding tub, and custom vanity.",
+        },
+        {
+          id: 4,
+          name: "20.jpeg",
+          title: "Exterior Stone Wall",
+          category: "exterior",
+          description:
+            "Natural stone retention wall installation for both functionality and aesthetic appeal.",
+        },
+        {
+          id: 5,
+          name: "5.jpg",
+          title: "Patio Stonework",
+          category: "exterior",
+          description:
+            "Beautiful stone patio with seating wall and integrated lighting for evening enjoyment.",
+        },
+        {
+          id: 6,
+          name: "epoxy.jpg",
+          title: "Epoxy Garage Floor",
+          category: "interior",
+          description:
+            "Durable and attractive epoxy flooring solution for a residential garage space.",
+        },
+        {
+          id: 7,
+          name: "22.jpg",
+          title: "Garden Landscape",
+          category: "exterior",
+          description:
+            "Complete garden design with flower beds, pathway, and decorative elements.",
+        },
+        {
+          id: 8,
+          name: "crown.webp",
+          title: "Crown Molding Installation",
+          category: "installation",
+          description:
+            "Elegant crown molding detail in a traditional dining room setting.",
+        },
+        {
+          id: 9,
+          name: "paint3.png",
+          title: "Interior Painting",
+          category: "interior",
+          description:
+            "Professional interior painting with accent walls and trim work.",
+        },
+        {
+          id: 10,
+          name: "kit.jpg",
+          title: "Outdoor Kitchen",
+          category: "exterior",
+          description:
+            "Fully equipped outdoor kitchen with grill, counter space, and storage.",
+        },
+        {
+          id: 11,
+          name: "window.avif",
+          title: "Window Treatment",
+          category: "installation",
+          description:
+            "Custom window blinds and drapery installation for light control and privacy.",
+        },
+        {
+          id: 12,
+          name: "drive.webp",
+          title: "Driveway Pressure Washing",
+          category: "exterior",
+          description:
+            "High-pressure cleaning service for driveways and exterior surfaces.",
+        },
+        {
+          id: 13,
+          name: "tile.webp",
+          title: "Tile Backsplash",
+          category: "interior",
+          description:
+            "Decorative tile backsplash installation in a modern kitchen.",
+        },
+        {
+          id: 14,
+          name: "deck.jpg",
+          title: "Deck Construction",
+          category: "exterior",
+          description:
+            "Custom-built wooden deck with railings and built-in seating.",
+        },
+        {
+          id: 15,
+          name: "chand.jpeg",
+          title: "Chandelier Installation",
+          category: "installation",
+          description: "Elegant chandelier installation in a formal entryway.",
+        },
+        {
+          id: 16,
+          name: "3d.jpeg",
+          title: "3D Design Plan",
+          category: "interior",
+          description:
+            "Custom 3D design rendering for a client's remodeling project.",
+        },
+        {
+          id: 17,
+          name: "drain.jpg",
+          title: "French Drain System",
+          category: "exterior",
+          description:
+            "Professional drainage solution to manage water runoff in a residential property.",
+        },
+        {
+          id: 18,
+          name: "shelv.webp",
+          title: "Custom Shelving",
+          category: "installation",
+          description:
+            "Built-in shelving unit for storage and display in a living area.",
+        },
+        {
+          id: 19,
+          name: "paint1.jpg",
+          title: "Exterior Painting",
+          category: "exterior",
+          description:
+            "Complete exterior house painting with quality weather-resistant products.",
+        },
+        {
+          id: 20,
+          name: "room.webp",
+          title: "Bathroom Fixture Installation",
+          category: "installation",
+          description:
+            "Premium faucet and fixture installation in a master bathroom.",
+        },
+        {
+          id: 21,
+          name: "21.jpg",
+          title: "Walkway Pavers",
+          category: "exterior",
+          description:
+            "Interlocking paver walkway with decorative pattern and border.",
+        },
+        {
+          id: 22,
+          name: "cloth.jpg",
+          title: "Closet Organization",
+          category: "installation",
+          description:
+            "Custom closet organization system with shelves, rods, and drawers.",
+        },
+        {
+          id: 23,
+          name: "out.webp",
+          title: "Outdoor Lighting",
+          category: "exterior",
+          description:
+            "Landscape lighting installation to enhance property aesthetics and security.",
+        },
+        {
+          id: 24,
+          name: "chair.jpg",
+          title: "Furniture Assembly",
+          category: "installation",
+          description:
+            "Professional assembly and arrangement of home furniture pieces.",
+        },
+      ];
+
+      // Function to generate portfolio items
+      function generatePortfolioItems(items) {
+        const portfolioGrid = document.getElementById("portfolio-grid");
+        portfolioGrid.innerHTML = "";
+
+        items.forEach((item) => {
+          const col = document.createElement("div");
+          col.className = `col-lg-4 col-md-6 portfolio-item ${item.category}`;
+          col.setAttribute("data-aos", "fade-up");
+          col.setAttribute("data-aos-delay", "100");
+
+          col.innerHTML = `
+            <div class="portfolio-img">
+                <img src="assets/img/${item.name}" alt="${
+            item.title
+          }" class="img-fluid">
+                <div class="portfolio-overlay">
+                    <div class="portfolio-info">
+                        <h4>${item.title}</h4>
+                        <p>${item.description}</p>
+                        <a href="assets/img/${
+                          item.name
+                        }" class="glightbox btn btn-sm btn-primary" data-gallery="gallery${
+            item.id
+          }" data-glightbox="title: ${item.title}; description: .desc${
+            item.id
+          }">View Details</a>
+                    </div>
+                </div>
+            </div>
+            <div class="glightbox-desc desc${item.id}" style="display:none">
+                <h4>${item.title}</h4>
+                <p>${item.description}</p>
+                <p>Category: ${
+                  item.category.charAt(0).toUpperCase() + item.category.slice(1)
+                } Services</p>
+            </div>
+        `;
+
+          portfolioGrid.appendChild(col);
+        });
+
+        // Initialize Glightbox
+        const lightbox = GLightbox({
+          selector: ".glightbox",
+        });
+      }
+
+      // Filter portfolio items
+      document.querySelectorAll(".filter-btn").forEach((button) => {
+        button.addEventListener("click", function () {
+          document
+            .querySelectorAll(".filter-btn")
+            .forEach((btn) => btn.classList.remove("active"));
+          this.classList.add("active");
+
+          const filter = this.getAttribute("data-filter");
+
+          if (filter === "all") {
+            generatePortfolioItems(portfolioItems);
+          } else {
+            const filteredItems = portfolioItems.filter(
+              (item) => item.category === filter
+            );
+            generatePortfolioItems(filteredItems);
+          }
+        });
+      });
+
+      // Initialize portfolio on page load
+      document.addEventListener("DOMContentLoaded", function () {
+        generatePortfolioItems(portfolioItems);
+
+        // Initialize AOS
+        if (typeof AOS !== "undefined") {
+          AOS.init({
+            duration: 1000,
+            easing: "ease-in-out",
+            once: true,
+            mirror: false,
+          });
+        }
+      });
+    </script>
+  </body>
+</html>
