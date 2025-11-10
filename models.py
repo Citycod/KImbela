@@ -5,6 +5,11 @@ import random, string, uuid
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import url_for
+# app/models.py  (or wherever the signal lives)
+
+from sqlalchemy import event
+
+
 
 # db = SQLAlchemy()
 
@@ -17,6 +22,24 @@ friendship = db.Table(
     db.Column('friend_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
     db.Column('accepted_at', db.DateTime, default=datetime.utcnow)
 )
+
+# Many-to-many block list
+# Many-to-many block list
+blocked_users = db.Table(
+    'blocked_users',
+    db.Column('blocker_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
+    db.Column('blocked_id', db.Integer, db.ForeignKey('users.id'), primary_key=True)
+)
+
+# Relationships - FIXED VERSION
+# blocks = db.relationship(
+#         'User', 
+#         secondary=blocked_users,
+#         primaryjoin=(blocked_users.c.blocker_id == id),
+#         secondaryjoin=(blocked_users.c.blocked_id == id),
+#         backref=db.backref('blockers', lazy='dynamic'),  # Changed from 'blocked_by'
+#         lazy='dynamic'
+#     )
 
 
 @login_manager.user_loader
@@ -50,11 +73,116 @@ class User(db.Model, UserMixin):
     cover_pic = db.Column(db.String(500), default='https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg')
     bio = db.Column(db.Text, nullable=True)
     marital_status = db.Column(db.String(50), nullable=True)
+    is_online = db.Column(db.Boolean, default=False)          # <-- NEW
+    last_seen = db.Column(db.DateTime, default=datetime.utcnow) 
     
-    def generate_otp(self):
-        self.email_token = ''.join(random.choices(string.digits, k=6))
-        self.email_token_expires = datetime.utcnow() + timedelta(minutes=10)
-        db.session.commit()
+     # Enhanced blocking system using a proper association table
+    _blocked_users = db.Table(
+        'user_blocks',
+        db.Column('blocker_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
+        db.Column('blocked_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
+        db.Column('created_at', db.DateTime, default=datetime.utcnow),
+        db.UniqueConstraint('blocker_id', 'blocked_id', name='uq_user_block')
+    )
+    
+    # Relationship for blocked users
+    blocked_users = db.relationship(
+        'User',
+        secondary=_blocked_users,
+        primaryjoin=(_blocked_users.c.blocker_id == id),
+        secondaryjoin=(_blocked_users.c.blocked_id == id),
+        backref=db.backref('blocked_by', lazy='dynamic'),
+        lazy='dynamic'
+    )
+
+    # In your User model, enhance the blocked users methods:
+
+    def get_blocked_users(self):
+        """Get list of users blocked by current user"""
+        return self.blocked_users.all()
+
+    def get_blocked_users_with_details(self):
+        """Get blocked users with complete details"""
+        blocked_users = self.get_blocked_users()
+        result = []
+        for user in blocked_users:
+            result.append({
+                'id': user.id,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'profile_pic': user.profile_pic or url_for('static', filename='assets/img/default-avatar.png'),
+                'email': user.email,
+                'created_at': user.created_at
+            })
+        return result
+
+    def get_blockers(self):
+        """Get list of users who blocked current user"""
+        return User.query.join(self._blocked_users, User.id == self._blocked_users.c.blocker_id)\
+                        .filter(self._blocked_users.c.blocked_id == self.id).all()
+
+    def is_blocked_by(self, user):
+        """Check if this user is blocked by another user"""
+        return db.session.query(self._blocked_users).filter(
+            self._blocked_users.c.blocker_id == user.id,
+            self._blocked_users.c.blocked_id == self.id
+        ).first() is not None
+
+    def is_blocking(self, user):
+        """Check if this user is blocking another user"""
+        return db.session.query(self._blocked_users).filter(
+            self._blocked_users.c.blocker_id == self.id,
+            self._blocked_users.c.blocked_id == user.id
+        ).first() is not None
+
+    def block(self, user):
+        """Block a user"""
+        if not self.is_blocking(user):
+            stmt = self._blocked_users.insert().values(
+                blocker_id=self.id, 
+                blocked_id=user.id,
+                created_at=datetime.utcnow()
+            )
+            db.session.execute(stmt)
+            
+            # Remove friendship if exists
+            if user in self.friends:
+                self.remove_friend(user)
+            
+            # Remove any pending friend requests
+            FriendRequest.query.filter(
+                ((FriendRequest.sender_id == self.id) & (FriendRequest.receiver_id == user.id)) |
+                ((FriendRequest.sender_id == user.id) & (FriendRequest.receiver_id == self.id))
+            ).delete()
+            
+            db.session.commit()
+
+    def unblock(self, user):
+        """Unblock a user"""
+        if self.is_blocking(user):
+            stmt = self._blocked_users.delete().where(
+                (self._blocked_users.c.blocker_id == self.id) & 
+                (self._blocked_users.c.blocked_id == user.id)
+            )
+            db.session.execute(stmt)
+            db.session.commit()
+
+    def is_visible_to(self, viewer):
+        """True if viewer can see this user (not blocked either way)"""
+        return not (self.is_blocking(viewer) or self.is_blocked_by(viewer))
+
+    def get_blocked_users_count(self):
+        """Get count of blocked users"""
+        return self.blocked_users.count()
+
+    def get_blockers_count(self):
+        """Get count of users who blocked this user"""
+        return User.query.join(self._blocked_users, User.id == self._blocked_users.c.blocker_id)\
+                        .filter(self._blocked_users.c.blocked_id == self.id).count()
+
+    def can_interact_with(self, other_user):
+        """Check if users can interact (neither has blocked the other)"""
+        return not (self.is_blocking(other_user) or other_user.is_blocking(self))
 
     # Relationships
     friends = db.relationship(
@@ -77,28 +205,32 @@ class User(db.Model, UserMixin):
     def full_name(self):
         return f"{self.first_name} {self.last_name}"
 
+    
     @property
     def friend_ids(self):
-        """Return set of friend user IDs"""
-        return {friend.id for friend in self.friends}
-
+        """Return list of friend user IDs"""
+        return [friend.id for friend in self.friends]
+    
+    
     @property
     def pending_requests(self):
-        """Return set of user IDs who have pending friend requests to this user"""
-        return {
-            req.sender_id for req in self.received_requests.filter(
+        """IDs of users who sent a PENDING request to me"""
+        return [
+            req.sender_id
+            for req in self.received_requests.filter(
                 FriendRequest.status == FriendRequestStatus.PENDING
             ).all()
-        }
+        ]
 
     @property
     def sent_pending_ids(self):
-        """Return set of user IDs this user has sent pending requests to"""
-        return {
-            req.receiver_id for req in self.sent_requests.filter(
+        """IDs of users I sent a PENDING request to"""
+        return [
+            req.receiver_id
+            for req in self.sent_requests.filter(
                 FriendRequest.status == FriendRequestStatus.PENDING
             ).all()
-        }
+        ] 
 
     # --- Friendship Methods ---
     def send_friend_request(self, user):
@@ -124,29 +256,37 @@ class User(db.Model, UserMixin):
         return True
 
     def accept_friend_request(self, user):
-        req = FriendRequest.query.filter_by(sender_id=user.id, receiver_id=self.id, status=FriendRequestStatus.PENDING).first()
+        req = FriendRequest.query.filter_by(
+            sender_id=user.id,
+            receiver_id=self.id,
+            status=FriendRequestStatus.PENDING
+        ).first()
         if not req:
             return False
-        req.status = FriendRequestStatus.ACCEPTED
+
+        req.status = FriendRequestStatus.ACCEPTED          # <-- enum
         self.friends.append(user)
         user.friends.append(self)
-        
-        # Create notification for the person who sent the request
+
+        # Notify the *sender* that the request was accepted
         user.create_notification(
             actor=self,
             notification_type=NotificationType.FRIEND_ACCEPTED,
             entity_id=self.id,
             entity_type='user'
         )
-        
         db.session.commit()
         return True
 
     def decline_friend_request(self, user):
-        req = FriendRequest.query.filter_by(sender_id=user.id, receiver_id=self.id, status=FriendRequestStatus.PENDING).first()
+        req = FriendRequest.query.filter_by(
+            sender_id=user.id,
+            receiver_id=self.id,
+            status=FriendRequestStatus.PENDING
+        ).first()
         if not req:
             return False
-        req.status = FriendRequestStatus.DECLINED
+        req.status = FriendRequestStatus.DECLINED          # <-- enum
         db.session.commit()
         return True
 
@@ -225,6 +365,69 @@ class User(db.Model, UserMixin):
         except Exception as e:
             print(f"Error in recent_notifications: {e}")
             return []
+        
+    # models.py  (inside User class)
+
+    def is_blocked_by(self, user):
+        """Check if this user is blocked by another user"""
+        # Method 1: Try the relationship first
+        if hasattr(self, 'blockers'):
+            return self.blockers.filter(blocked_users.c.blocker_id == user.id).first() is not None
+        
+        # Method 2: Direct query fallback
+        from sqlalchemy import and_
+        return db.session.query(blocked_users).filter(
+            and_(
+                blocked_users.c.blocker_id == user.id,
+                blocked_users.c.blocked_id == self.id
+            )
+        ).first() is not None
+
+    def is_blocking(self, user):
+        """Check if this user is blocking another user"""
+        if hasattr(self, 'blocks'):
+            return self.blocks.filter(blocked_users.c.blocked_id == user.id).first() is not None
+        
+        # Fallback
+        from sqlalchemy import and_
+        return db.session.query(blocked_users).filter(
+            and_(
+                blocked_users.c.blocker_id == self.id,
+                blocked_users.c.blocked_id == user.id
+            )
+        ).first() is not None
+
+    def block(self, user):
+        if not self.is_blocking(user):
+            # Using the relationship
+            if hasattr(self, 'blocks'):
+                self.blocks.append(user)
+            else:
+                # Fallback: direct insert
+                stmt = blocked_users.insert().values(blocker_id=self.id, blocked_id=user.id)
+                db.session.execute(stmt)
+            
+            # Remove friendship if exists
+            if user in self.friends:
+                self.remove_friend(user)
+            db.session.commit()
+
+    def unblock(self, user):
+        if self.is_blocking(user):
+            if hasattr(self, 'blocks'):
+                self.blocks.remove(user)
+            else:
+                # Fallback: direct delete
+                stmt = blocked_users.delete().where(
+                    (blocked_users.c.blocker_id == self.id) & 
+                    (blocked_users.c.blocked_id == user.id)
+                )
+                db.session.execute(stmt)
+            db.session.commit()
+
+    def is_visible_to(self, viewer):
+        """True if viewer can see this user (not blocked either way)"""
+        return not (self.is_blocking(viewer) or self.is_blocked_by(viewer))
 
 
 
@@ -237,17 +440,23 @@ class FriendRequestStatus:
 
 # Friend Request model
 class FriendRequest(db.Model):
+    __tablename__ = 'friend_requests'
+
     id = db.Column(db.Integer, primary_key=True)
     sender_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     receiver_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    status = db.Column(db.String(20), default=FriendRequestStatus.PENDING)
+    status = db.Column(db.String(20), default='pending')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     sender = db.relationship('User', foreign_keys=[sender_id], backref='sent_requests')
     receiver = db.relationship('User', foreign_keys=[receiver_id], backref='received_requests')
 
-    __table_args__ = (db.UniqueConstraint('sender_id', 'receiver_id', name='unique_request'),)
-
+    __table_args__ = (
+        db.UniqueConstraint('sender_id', 'receiver_id', name='uq_friend_request'),
+    )
+    
+    
+    
 # Post model
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -270,7 +479,21 @@ class Post(db.Model):
         return self.likes.all()
 
 
+@event.listens_for(FriendRequest, 'after_insert')
+def maybe_create_notification(mapper, connection, target):
+    if getattr(target, '_skip_notification', False):
+        return
 
+    # Use correct column names
+    notification = Notification(
+        user_id=target.receiver_id,        # receiver gets the notification
+        actor_id=target.sender_id,         # sender is the actor
+        type='friend_request',
+        message=f"{target.sender.full_name} sent you a friend request",
+        entity_id=target.id
+    )
+    db.session.add(notification)
+    db.session.commit()
 
 
     
@@ -297,6 +520,21 @@ class Like(db.Model):
     __table_args__ = (db.UniqueConstraint('user_id', 'post_id', name='unique_like'),)
 
 
+# # models.py
+# class BlockedUser(db.Model):
+#     __tablename__ = 'blocked_users'
+#     __table_args__ = (
+#         db.UniqueConstraint('blocker_id', 'blocked_id', name='uq_block'),
+#         {'extend_existing': True}
+#     )
+
+#     id         = db.Column(db.Integer, primary_key=True)
+#     blocker_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+#     blocked_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+#     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+#     blocker = db.relationship('User', foreign_keys=[blocker_id])
+#     blocked = db.relationship('User', foreign_keys=[blocked_id])
 
 # Notification Types
 class NotificationType:

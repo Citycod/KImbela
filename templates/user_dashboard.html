@@ -467,6 +467,11 @@
   padding: 0 8px;
 }
 
+/* Online indicator */
+.bg-success {
+  background-color: #42b72a !important;
+}
+
 .detail-card {
   background: var(--fb-gray);
   border-radius: 12px;
@@ -888,1555 +893,1201 @@
     </style>
 </head>
 <body>
+  <!-- NAVBAR -->
+  <nav class="fb-navbar d-flex align-items-center px-3">
+      <button class="mobile-menu-btn me-2" onclick="toggleMobileMenu()">
+          <i class="bi bi-list"></i>
+      </button>
 
-    <!-- NAVBAR -->
-    <nav class="fb-navbar d-flex align-items-center px-3">
-        <!-- Mobile Menu Button -->
-          <button class="mobile-menu-btn me-2" onclick="toggleMobileMenu()">
-            <i class="bi bi-list"></i>
-        </button>
-        
-        <!-- Logo - Much Bigger -->
-        <a href="{{ url_for('auth.user_dashboard') }}" class="navbar-brand me-4">
-            <img src="{{ url_for('static', filename='assets/img/kim.png') }}" alt="Kimbela" class="logo-img" style="width: 12rem; height: 10rem;">
-        </a>
+      <a href="{{ url_for('auth.user_dashboard') }}" class="navbar-brand me-4">
+          <img src="{{ url_for('static', filename='assets/img/kim.png') }}" alt="Kimbela" style="width: 12rem; height: 10rem;">
+      </a>
 
-        <!-- Search Bar -->
       <div class="search-bar position-relative d-none d-md-block flex-fill mx-3">
-        <input type="text" id="globalSearch" placeholder="Search users, posts, and more..." class="border-0">
-        <i class="bi bi-search position-absolute top-50 start-3 translate-middle-y text-muted"></i>
-        <!-- Search Results Dropdown -->
-        <div class="search-results dropdown-menu w-100 mt-1 shadow" id="searchResults" style="display: none; max-height: 400px; overflow-y: auto;">
-            <div class="search-results-body p-2" id="searchResultsBody">
-                <!-- Results will be loaded here -->
-            </div>
-        </div>
+          <input type="text" id="globalSearch" placeholder="Search users, posts, and more..." class="border-0">
+          <i class="bi bi-search position-absolute top-50 start-3 translate-middle-y text-muted"></i>
+          <div class="search-results dropdown-menu w-100 mt-1 shadow" id="searchResults" style="display: none; max-height: 400px; overflow-y: auto;">
+              <div class="search-results-body p-2" id="searchResultsBody"></div>
+          </div>
       </div>
 
-        <div class="flex-fill"></div>
+      <div class="flex-fill"></div>
 
-        <div class="nav-icons d-flex align-items-center">
-          <div class="icon" title="Messenger">
-            <i class="bi bi-messenger fs-5"></i>
-        </div>
-        
-        <!-- Enhanced Notification Icon -->
-        <div class="dropdown">
-            <div class="icon position-relative" data-bs-toggle="dropdown" id="notificationDropdown">
-                <i class="bi bi-bell fs-5"></i>
-                <span class="notification-badge" id="notificationBadge" style="display: none;">0</span>
-            </div>
-            
-            <ul class="dropdown-menu dropdown-menu-end shadow notification-dropdown" style="width: 400px; max-height: 500px; overflow-y: auto;">
-                <li class="dropdown-header d-flex justify-content-between align-items-center">
-                    <span>Notifications</span>
-                    <button class="btn btn-sm btn-link p-0" onclick="markAllAsRead()">Mark all as read</button>
-                </li>
-                <li><hr class="dropdown-divider m-0"></li>
-                <div id="notificationsList">
-                    <li class="text-center p-3 text-muted">
-                        <div class="spinner-border spinner-border-sm" role="status"></div>
-                        Loading notifications...
-                    </li>
-                </div>
-                <li><hr class="dropdown-divider m-0"></li>
-                <li class="text-center">
-                    <a href="#" class="dropdown-item text-primary" onclick="viewAllNotifications()">
-                        View All Notifications
-                    </a>
-                </li>
-            </ul>
-        </div>
+      <div class="nav-icons d-flex align-items-center">
+          <div class="icon" title="Messenger"><i class="bi bi-messenger fs-5"></i></div>
 
-            <div class="dropdown ms-2">
-                <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-                     alt="{{ current_user.first_name }}" class="profile-pic" data-bs-toggle="dropdown">
-                <ul class="dropdown-menu dropdown-menu-end shadow">
-                    <li><a class="dropdown-item" href="{{ url_for('auth.profile', user_id=current_user.id) }}"><i class="bi bi-person-circle"></i> Profile</a></li>
-                    <li><a class="dropdown-item" href="#"><i class="bi bi-gear"></i> Settings</a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}">Logout</a></li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+          <div class="dropdown">
+              <div class="icon position-relative" data-bs-toggle="dropdown" id="notificationDropdown">
+                  <i class="bi bi-bell fs-5"></i>
+                  <span class="notification-badge" id="notificationBadge" style="display: none;">0</span>
+              </div>
+              <ul class="dropdown-menu dropdown-menu-end shadow notification-dropdown" style="width: 400px; max-height: 500px; overflow-y: auto;">
+                  <li class="dropdown-header d-flex justify-content-between align-items-center">
+                      <span>Notifications</span>
+                      <button class="btn btn-sm btn-link p-0" onclick="markAllAsRead()">Mark all as read</button>
+                  </li>
+                  <li><hr class="dropdown-divider m-0"></li>
+                  <div id="notificationsList">
+                      <li class="text-center p-3 text-muted">
+                          <div class="spinner-border spinner-border-sm" role="status"></div>
+                          Loading...
+                      </li>
+                  </div>
+                  <li><hr class="dropdown-divider m-0"></li>
+                  <li class="text-center">
+                      <a href="#" class="dropdown-item text-primary" onclick="viewAllNotifications()">View All</a>
+                  </li>
+              </ul>
+          </div>
 
-    <!-- MOBILE SIDEBAR -->
-    <div class="mobile-sidebar" id="mobileSidebar">
-        <div class="sidebar-item active"><i class="bi bi-house-door"></i> Home</div>
-        <a href="{{ url_for('auth.profile', user_id=current_user.id) }}" class="sidebar-item text-decoration-none">
-            <i class="bi bi-person"></i> Profile
-        </a>
-        <div class="sidebar-item"><i class="bi bi-people"></i> Groups</div>
-        <div class="sidebar-item"><i class="bi bi-gear"></i> Market Place</div>
-        <div class="sidebar-item text-danger"><i class="bi bi-box-arrow-right"></i> Logout</div>
-    </div>
+          <div class="dropdown ms-2">
+              <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+                   alt="{{ current_user.first_name }}" class="profile-pic" data-bs-toggle="dropdown">
+              <ul class="dropdown-menu dropdown-menu-end shadow">
+                  <li><a class="dropdown-item" href="{{ url_for('auth.profile', user_id=current_user.id) }}"><i class="bi bi-person-circle"></i> Profile</a></li>
+                  <li><a class="dropdown-item" href="#"><i class="bi bi-gear"></i> Settings</a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}">Logout</a></li>
+              </ul>
+          </div>
+      </div>
+  </nav>
 
-    <!-- DASHBOARD CONTAINER -->
-    <div class="dashboard-container">
+  <!-- MOBILE SIDEBAR -->
+  <div class="mobile-sidebar" id="mobileSidebar">
+      <div class="sidebar-item active"><i class="bi bi-house-door"></i> Home</div>
+      <a href="{{ url_for('auth.profile', user_id=current_user.id) }}" class="sidebar-item text-decoration-none">
+          <i class="bi bi-person"></i> Profile
+      </a>
+      <div class="sidebar-item"><i class="bi bi-people-fill"></i> Groups</div>
+      <div class="sidebar-item"><i class="bi bi-cart3"></i> Market Place</div>
+      <div class="sidebar-item text-danger"><i class="bi bi-box-arrow-right"></i> Logout</div>
+  </div>
 
-        <!-- LEFT SIDEBAR -->
-        <div class="left-sidebar d-none d-lg-block">
-            <div class="sidebar-item active"><i class="bi bi-house-door"></i> Home</div>
-            <a href="{{ url_for('auth.profile', user_id=current_user.id) }}" class="sidebar-item text-decoration-none">
-                <i class="bi bi-person"></i> Profile
-            </a>
-            <div class="sidebar-item"><i class="bi bi-people-fill"></i>Groups</div>
-            <div class="sidebar-item"><i class="bi bi-cart3"></i> Market Place</div>
-            <div class="sidebar-item text-danger"><i class="bi bi-box-arrow-right"></i> Logout</div>
-        </div>
+  <!-- DASHBOARD CONTAINER -->
+  <div class="dashboard-container">
+      <!-- LEFT SIDEBAR -->
+      <div class="left-sidebar d-none d-lg-block">
+          <div class="sidebar-item active"><i class="bi bi-house-door"></i> Home</div>
+          <a href="{{ url_for('auth.profile', user_id=current_user.id) }}" class="sidebar-item text-decoration-none">
+              <i class="bi bi-person"></i> Profile
+          </a>
+          <div class="sidebar-item"><i class="bi bi-people-fill"></i> Groups</div>
+          <div class="sidebar-item"><i class="bi bi-cart3"></i> Market Place</div>
+          <div class="sidebar-item text-danger"><i class="bi bi-box-arrow-right"></i> Logout</div>
+      </div>
 
-        <!-- MAIN CONTENT -->
-        <div class="main-content">
+      <!-- MAIN CONTENT -->
+      <div class="main-content">
+          <!-- POST COMPOSER -->
+          <div class="post-composer">
+              <div class="composer-header">
+                  <a href="{{ url_for('auth.profile', user_id=current_user.id) }}">
+                      <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" alt="" class="rounded-circle">
+                  </a>
+                  <div class="composer-input" data-bs-toggle="modal" data-bs-target="#postModal">
+                      What's on your mind, {{ current_user.first_name }}?
+                  </div>
+              </div>
+              <div class="composer-footer">
+                  <div class="composer-btn" data-bs-toggle="modal" data-bs-target="#postModal"><i class="bi bi-camera-video-fill"></i> Live Video</div>
+                  <div class="composer-btn" onclick="document.getElementById('photoInput').click()">
+                      <i class="bi bi-image-fill"></i> Photo/Video
+                      <input type="file" id="photoInput" accept="image/*,video/*" hidden onchange="previewMedia(this)">
+                  </div>
+                  <div class="composer-btn"><i class="bi bi-emoji-smile-fill"></i> Feeling/Activity</div>
+              </div>
+          </div>
 
-            <!-- POST COMPOSER -->
-            <div class="post-composer">
-                <div class="composer-header">
-                    <a href="{{ url_for('auth.profile', user_id=current_user.id) }}">
-                        <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" alt="" class="rounded-circle">
-                    </a>
-                    <div class="composer-input" data-bs-toggle="modal" data-bs-target="#postModal">
-                        What's on your mind, {{ current_user.first_name }}?
-                    </div>
-                </div>
-                <div class="composer-footer">
-                    <div class="composer-btn" data-bs-toggle="modal" data-bs-target="#postModal"><i class="bi bi-camera-video-fill"></i> Live Video</div>
-                    <div class="composer-btn" onclick="document.getElementById('photoInput').click()">
-                        <i class="bi bi-image-fill"></i> Photo/Video
-                        <input type="file" id="photoInput" accept="image/*,video/*" hidden onchange="previewMedia(this)">
-                    </div>
-                    <div class="composer-btn"><i class="bi bi-emoji-smile-fill"></i> Feeling/Activity</div>
-                </div>
-            </div>
-
-            <!-- POSTS FEED -->
-            <div id="posts-feed">
-                {% set first_post = posts[0] if posts else none %}
-                {% if first_post %}
-                <div class="post-card" data-post-id="{{ first_post.id }}">
-                    <div class="post-header">
-                        <div class="d-flex align-items-center">
-                            <img src="{{ first_post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" class="post-avatar">
-                            <div>
-                                <div class="post-author">{{ first_post.author.first_name }} {{ first_post.author.last_name }}</div>
-                                <div class="post-time">{{ first_post.created_at.strftime('%b %d at %I:%M %p') }}</div>
-                            </div>
-                        </div>
-                        <div class="dropdown">
-                            <button class="btn btn-sm" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button>
-                            <ul class="dropdown-menu">
-                                {% if first_post.author.id == current_user.id %}
-                                <li><a class="dropdown-item text-primary edit-post" href="#" data-bs-toggle="modal" data-bs-target="#editPostModal" data-post-id="{{ first_post.id }}">Edit</a></li>
-                                <li><a class="dropdown-item text-danger delete-post" href="#" data-post-id="{{ first_post.id }}">Delete <span class="loader" style="display:none;"></span></a></li>
-                                {% endif %}
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="post-content">
-                      <p class="post-text {% if first_post.content|length > 100 %}truncated{% endif %}" 
-                         id="post-text-{{ first_post.id }}">
+          <!-- POSTS FEED -->
+          <div id="posts-feed">
+              {% set first_post = posts[0] if posts else none %}
+              {% if first_post %}
+              <!-- FIRST POST -->
+              <div class="post-card" data-post-id="{{ first_post.id }}">
+                  <div class="post-header">
+                      <div class="d-flex align-items-center">
+                          <img src="{{ first_post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" class="post-avatar">
+                          <div>
+                              <div class="post-author">{{ first_post.author.first_name }} {{ first_post.author.last_name }}</div>
+                              <div class="post-time">{{ first_post.created_at.strftime('%b %d at %I:%M %p') }}</div>
+                          </div>
+                      </div>
+                      <div class="dropdown">
+                          <button class="btn btn-sm" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button>
+                          <ul class="dropdown-menu">
+                              {% if first_post.author.id == current_user.id %}
+                              <li><a class="dropdown-item text-primary edit-post" href="#" data-bs-toggle="modal" data-bs-target="#editPostModal" data-post-id="{{ first_post.id }}">Edit</a></li>
+                              <li><a class="dropdown-item text-danger delete-post" href="#" data-post-id="{{ first_post.id }}">Delete <span class="loader" style="display:none;"></span></a></li>
+                              {% endif %}
+                          </ul>
+                      </div>
+                  </div>
+                  <div class="post-content">
+                      <p class="post-text {% if first_post.content|length > 100 %}truncated{% endif %}" id="post-text-{{ first_post.id }}">
                           {{ first_post.content }}
                       </p>
                       {% if first_post.content|length > 100 %}
-                      <button class="see-more-btn" onclick="togglePostText({{ first_post.id }})">
-                          See More
-                      </button>
+                      <button class="see-more-btn" onclick="togglePostText({{ first_post.id }})">See More</button>
                       {% endif %}
                       {% if first_post.image %}<div class="post-media"><img src="{{ first_post.image }}" alt="Post"></div>{% endif %}
                       {% if first_post.video %}<div class="post-media"><video controls><source src="{{ first_post.video }}"></video></div>{% endif %}
                   </div>
+                  <div class="post-actions">
+                      <div class="action-btn like-btn {% if current_user.has_liked_post(first_post.id) %}liked{% endif %}" data-post-id="{{ first_post.id }}">
+                          <i class="bi bi-hand-thumbs-up{% if current_user.has_liked_post(first_post.id) %}-fill{% endif %}"></i>
+                          <span class="like-count">{{ first_post.likes_list|length }}</span>
+                      </div>
+                      <div class="action-btn view-comments" data-bs-toggle="modal" data-bs-target="#commentModal" data-post-id="{{ first_post.id }}">
+                          <i class="bi bi-chat"></i> Comment
+                      </div>
+                      <div class="action-btn share-btn" data-url="{{ url_for('auth.user_dashboard', _anchor='post-' ~ first_post.id) }}">
+                          <i class="bi bi-share"></i> Share
+                      </div>
+                  </div>
+                  <div class="comments-section">
+                      <div class="comment-input">
+                          <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" alt="">
+                          <input type="text" placeholder="Write a comment..." class="add-comment" data-post-id="{{ first_post.id }}">
+                      </div>
+                      {% for comment in first_post.comments_list[:3] %}
+                      <div class="comment" id="comment-{{ comment.id }}">
+                          <img src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" alt="">
+                          <div class="comment-body">
+                              <div class="comment-author">{{ comment.author.first_name }}</div>
+                              <div class="comment-text">{{ comment.content }}</div>
+                              <div class="comment-actions">
+                                  <span class="reply-comment" data-comment-id="{{ comment.id }}">Reply</span>
+                                  <span class="copy-comment-link" data-comment-id="{{ comment.id }}">Link</span>
+                              </div>
+                          </div>
+                      </div>
+                      {% endfor %}
+                  </div>
+              </div>
 
-                  
-                    <div class="post-actions">
-                        <div class="action-btn like-btn" data-post-id="{{ first_post.id }}">
-                            <i class="bi bi-hand-thumbs-up"></i> <span class="like-count">{{ first_post.likes_list|length }}</span>
-                        </div>
-                        <div class="action-btn view-comments" data-bs-toggle="modal" data-bs-target="#commentModal" data-post-id="{{ first_post.id }}">
-                            <i class="bi bi-chat"></i> Comment
-                        </div>
-                        <div class="action-btn share-btn" data-url="{{ url_for('auth.user_dashboard', _anchor='post-' ~ first_post.id) }}">
-                            <i class="bi bi-share"></i> Share
-                        </div>
-                    </div>
-                    <div class="comments-section">
-                        <div class="comment-input">
-                            <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" alt="">
-                            <input type="text" placeholder="Write a comment..." class="add-comment" data-post-id="{{ first_post.id }}">
-                        </div>
-                        {% for comment in first_post.comments_list[:3] %}
-                        <div class="comment" id="comment-{{ comment.id }}">
-                            <img src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" alt="">
-                            <div class="comment-body">
-                                <div class="comment-author">{{ comment.author.first_name }}</div>
-                                <div class="comment-text">{{ comment.content }}</div>
-                                <div class="comment-actions">
-                                    <span class="reply-comment" data-comment-id="{{ comment.id }}">Reply</span>
-                                    <span class="copy-comment-link" data-comment-id="{{ comment.id }}">Link</span>
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-
-                <!-- PEOPLE YOU MAY KNOW - AFTER FIRST POST -->
-                <div class="suggestions-section">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h6 class="suggestions-title m-0">People You May Know</h6>
-                    </div>
-                    <div class="suggestions-slider">
-                        <button class="slider-arrow prev" onclick="scrollSuggestions(-1)"><i class="bi bi-chevron-left"></i></button>
-                        <div class="suggestions-track" id="suggestionsTrack">
-                          {% for user in all_users %}
-                          {% if user.id != current_user.id and user not in current_user.friends %}
+              <!-- PEOPLE YOU MAY KNOW -->
+              <div class="suggestions-section">
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                      <h6 class="suggestions-title m-0">People You May Know</h6>
+                  </div>
+                  <div class="suggestions-slider">
+                      <button class="slider-arrow prev" onclick="scrollSuggestions(-1)"><i class="bi bi-chevron-left"></i></button>
+                      <div class="suggestions-track" id="suggestionsTrack">
+                          {% for user in random_three %}
                           <div class="suggestion-card" onclick="openProfileModal({{ user.id }})">
                               <img src="{{ user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" alt="{{ user.first_name }}" class="suggestion-avatar">
                               <div class="suggestion-name">{{ user.first_name }} {{ user.last_name }}</div>
                               <div class="suggestion-mutual">New to Kimbela</div>
-                      
                               {% if user.id in current_user.sent_pending_ids %}
-                              <button class="btn btn-cancel-request btn-sm w-100 mt-1"
-                                      onclick="event.stopPropagation(); cancelFriendRequest({{ user.id }})">
+                              <button class="btn btn-cancel-request btn-sm w-100 mt-1" onclick="event.stopPropagation(); cancelFriendRequest({{ user.id }})">
                                   Cancel Request
                               </button>
                               {% else %}
-                              <button class="btn btn-add-friend btn-sm w-100 mt-1"
-                                      onclick="event.stopPropagation(); addFriend({{ user.id }})">
+                              <button class="btn btn-add-friend btn-sm w-100 mt-1" onclick="event.stopPropagation(); addFriend({{ user.id }})">
                                   Add Friend
                               </button>
                               {% endif %}
                           </div>
-                          {% endif %}
-                      {% endfor %}
-                        </div>
-                        <button class="slider-arrow next" onclick="scrollSuggestions(1)"><i class="bi bi-chevron-right"></i></button>
-                    </div>
-                </div>
-                {% endif %}
-
-                <!-- REST OF POSTS -->
-                <!-- REST OF POSTS -->
-{% for post in posts[1:] %}
-<div class="post-card" data-post-id="{{ post.id }}">
-    <div class="post-header">
-        <div class="d-flex align-items-center">
-            <img src="{{ post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" class="post-avatar">
-            <div>
-                <div class="post-author">{{ post.author.first_name }} {{ post.author.last_name }}</div>
-                <div class="post-time">{{ post.created_at.strftime('%b %d at %I:%M %p') }}</div>
-            </div>
-        </div>
-        <div class="dropdown">
-            <button class="btn btn-sm" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button>
-            <ul class="dropdown-menu">
-                {% if post.author.id == current_user.id %}
-                <li><a class="dropdown-item text-primary edit-post" href="#" data-bs-toggle="modal" data-bs-target="#editPostModal" data-post-id="{{ post.id }}">Edit</a></li>
-                <li><a class="dropdown-item text-danger delete-post" href="#" data-post-id="{{ post.id }}">Delete <span class="loader" style="display:none;"></span></a></li>
-                {% endif %}
-            </ul>
-        </div>
-    </div>
-    <div class="post-content">
-        <p class="post-text {% if post.content|length > 100 %}truncated{% endif %}" 
-           id="post-text-{{ post.id }}">
-            {{ post.content }}
-        </p>
-        {% if post.content|length > 100 %}
-        <button class="see-more-btn" onclick="togglePostText({{ post.id }})">
-            See More
-        </button>
-        {% endif %}
-        {% if post.image %}<div class="post-media"><img src="{{ post.image }}" alt="Post"></div>{% endif %}
-        {% if post.video %}<div class="post-media"><video controls><source src="{{ post.video }}"></video></div>{% endif %}
-    </div>
-    <div class="post-actions">
-        <div class="action-btn like-btn {% if current_user.has_liked_post(post.id) %}liked{% endif %}" 
-            data-post-id="{{ post.id }}">
-            <i class="bi bi-hand-thumbs-up{% if current_user.has_liked_post(post.id) %}-fill{% endif %}"></i> 
-            <span class="like-count">{{ post.likes_list|length }}</span>
-        </div>
-        <div class="action-btn view-comments" data-bs-toggle="modal" data-bs-target="#commentModal" data-post-id="{{ post.id }}">
-            <i class="bi bi-chat"></i> Comment
-        </div>
-        <div class="action-btn share-btn" data-url="{{ url_for('auth.user_dashboard', _anchor='post-' ~ post.id) }}">
-            <i class="bi bi-share"></i> Share
-        </div>
-    </div>
-    <div class="comments-section">
-        <div class="comment-input">
-            <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" alt="">
-            <input type="text" placeholder="Write a comment..." class="add-comment" data-post-id="{{ post.id }}">
-        </div>
-        {% for comment in post.comments_list[:3] %}
-        <div class="comment" id="comment-{{ comment.id }}">
-            <img src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" alt="">
-            <div class="comment-body">
-                <div class="comment-author">{{ comment.author.first_name }}</div>
-                <div class="comment-text">{{ comment.content }}</div>
-                <div class="comment-actions">
-                    <span class="reply-comment" data-comment-id="{{ comment.id }}">Reply</span>
-                    <span class="copy-comment-link" data-comment-id="{{ comment.id }}">Link</span>
-                </div>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-</div>
-{% endfor %}
-            </div>
-        </div>
-
-        <!-- RIGHT SIDEBAR -->
-        <!-- RIGHT SIDEBAR -->
-<div class="right-sidebar d-none d-lg-block">
-  <div class="sidebar-header">Recent Activity</div>
-  <p class="text-muted small">No recent activity</p>
-
-  <hr class="my-3">
-
-  <div class="sidebar-header">People You May Know</div>
-  <div class="suggestions-slider">
-      <div class="suggestions-track">
-          {% for user in random_three %}
-          <div class="suggestion-card" onclick="openProfileModal({{ user.id }})">
-              <img src="{{ user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" alt="" class="suggestion-avatar">
-              <div class="suggestion-name">{{ user.first_name }} {{ user.last_name }}</div>
-              <button class="btn btn-add-friend btn-sm w-100 mt-1"
-                      onclick="event.stopPropagation(); addFriend({{ user.id }})">
-                  Add Friend
-              </button>
-          </div>
-          {% endfor %}
-      </div>
-  </div>
-</div>
-    </div>
-
-    <!-- POST MODAL -->
-    <div class="modal fade" id="postModal">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Create Post</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <form method="POST" enctype="multipart/form-data" action="{{ url_for('auth.user_dashboard') }}" id="createPostForm">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                    <div class="modal-body">
-                        <textarea name="post_content" class="form-control" rows="4" placeholder="What's on your mind?" required></textarea>
-                        <div id="mediaPreview" class="mt-3"></div>
-                        <div class="mt-3">
-                            <input type="file" name="media" accept="image/*,video/*" onchange="previewMedia(this)">
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-primary">Post <span class="loader" style="display:none;"></span></button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- EDIT POST MODAL -->
-    <div class="modal fade" id="editPostModal">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Edit Post</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <form id="editPostForm">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                    <div class="modal-body">
-                        <textarea name="content" class="form-control" rows="4" id="editPostContent"></textarea>
-                        <div id="editMediaPreview" class="mt-3"></div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-primary">Save <span class="loader" style="display:none;"></span></button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- COMMENT MODAL -->
-    <div class="modal fade" id="commentModal">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Comments</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body" id="commentModalBody">
-                    <!-- Filled by JS -->
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- PROFILE MODAL -->
-    <!-- PROFILE MODAL -->
-<div class="modal fade" id="profileModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered modal-lg">
-      <div class="modal-content">
-          <div class="modal-header">
-              <h5 class="modal-title">Profile Information</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-          </div>
-          <div class="modal-body p-0" id="profileModalBody">
-              <!-- Content will be loaded here by JavaScript -->
-          </div>
-      </div>
-  </div>
-</div>
-
-    <!-- Bootstrap JS -->
-    <script src="{{ url_for('static', filename='assets/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
-
-    <script>
-        // Mobile menu
-        function toggleMobileMenu() {
-            document.getElementById('mobileSidebar').classList.toggle('open');
-        }
-
-        // Scroll suggestions
-        // Scroll suggestions with proper card width calculation
-function scrollSuggestions(dir) {
-  const track = document.getElementById('suggestionsTrack');
-  const card = track.querySelector('.suggestion-card');
-  if (!card) return;
-  
-  const cardWidth = card.offsetWidth + 16; // card width + gap
-  const visibleWidth = track.offsetWidth;
-  const scrollAmount = Math.floor(visibleWidth / cardWidth) * cardWidth;
-  
-  track.scrollBy({
-      left: dir * scrollAmount,
-      behavior: 'smooth'
-  });
-  
-  updateArrowVisibility(track);
-}
-
-// Update arrow visibility based on scroll position
-function updateArrowVisibility(track) {
-  const prevArrow = document.querySelector('.slider-arrow.prev');
-  const nextArrow = document.querySelector('.slider-arrow.next');
-  
-  if (!prevArrow || !nextArrow) return;
-  
-  // Show/hide previous arrow
-  prevArrow.classList.toggle('disabled', track.scrollLeft <= 10);
-  
-  // Show/hide next arrow
-  const maxScroll = track.scrollWidth - track.clientWidth;
-  nextArrow.classList.toggle('disabled', track.scrollLeft >= maxScroll - 10);
-}
-
-// Initialize slider on page load
-document.addEventListener('DOMContentLoaded', function() {
-  const track = document.getElementById('suggestionsTrack');
-  if (track) {
-      updateArrowVisibility(track);
-      
-      // Update arrows on scroll
-      track.addEventListener('scroll', function() {
-          updateArrowVisibility(track);
-      });
-  }
-});
-
-        // Media preview
-        function previewMedia(input) {
-            const preview = document.getElementById('mediaPreview');
-            preview.innerHTML = '';
-            const file = input.files[0];
-            if (file) {
-                const url = URL.createObjectURL(file);
-                const el = file.type.startsWith('image/') ? document.createElement('img') : document.createElement('video');
-                el.src = url; el.controls = true; el.style.borderRadius = '12px'; el.style.maxHeight = '300px'; el.style.width = '100%';
-                preview.appendChild(el);
-            }
-        }
-
-        // Add Friend
-        function addFriend(userId) {
-            const btn = event.target;
-            btn.disabled = true;
-            fetch(`/add_friend/${userId}`, {
-                method: 'POST',
-                headers: { 'X-CSRFToken': '{{ csrf_token }}' }
-            }).then(r => r.json()).then(() => {
-                btn.textContent = 'Cancel Request';
-                btn.className = 'btn btn-cancel-request btn-sm w-100 mt-1';
-                btn.onclick = (e) => { e.stopPropagation(); cancelFriendRequest(userId); };
-            }).finally(() => btn.disabled = false);
-        }
-
-        // Cancel Request
-        function cancelFriendRequest(userId) {
-            const btn = event.target;
-            btn.disabled = true;
-            fetch(`/cancel_friend_request/${userId}`, {
-                method: 'POST',
-                headers: { 'X-CSRFToken': '{{ csrf_token }}' }
-            }).then(r => r.json()).then(() => {
-                btn.textContent = 'Add Friend';
-                btn.className = 'btn btn-add-friend btn-sm w-100 mt-1';
-                btn.onclick = (e) => { e.stopPropagation(); addFriend(userId); };
-            }).finally(() => btn.disabled = false);
-        }
-
-        // Open Profile Modal
-        // Open Profile Modal with comprehensive user info
-function openProfileModal(userId) {
-  fetch(`/get_user_profile/${userId}`)
-      .then(r => {
-          if (!r.ok) throw new Error('Network response was not ok');
-          return r.json();
-      })
-      .then(data => {
-          const body = document.getElementById('profileModalBody');
-          
-          // Format date of birth
-          const dob = data.dob ? new Date(data.dob).toLocaleDateString('en-US', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric'
-          }) : 'Not specified';
-          
-          // Calculate age
-          const age = data.dob ? calculateAge(new Date(data.dob)) : '';
-          
-          body.innerHTML = `
-              <div class="profile-modal-content">
-                  <!-- Profile Header -->
-                  <div class="profile-header position-relative">
-                      <div class="cover-photo-container">
-                          <img src="${data.cover_pic || 'https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg'}" 
-                               alt="Cover photo" class="cover-photo">
-                          <div class="profile-overlay"></div>
+                          {% endfor %}
                       </div>
-                      
-                      <div class="profile-info-container text-center">
-                          <div class="profile-avatar-container">
-                              <img src="${data.profile_pic}" 
-                                   alt="${data.first_name}" 
-                                   class="profile-avatar">
-                          </div>
-                          
-                          <div class="profile-text-content mt-3">
-                              <h3 class="profile-name mb-1">${data.first_name} ${data.last_name}</h3>
-                              
-                              <div class="profile-details">
-                                  ${data.marital_status ? `<span class="detail-item">
-                                      <i class="bi bi-heart-fill"></i> ${data.marital_status}
-                                  </span>` : ''}
-                                  
-                                  ${data.city && data.country ? `<span class="detail-item">
-                                      <i class="bi bi-geo-alt-fill"></i> ${data.city}, ${data.country}
-                                  </span>` : ''}
-                                  
-                                  ${age ? `<span class="detail-item">
-                                      <i class="bi bi-balloon-fill"></i> ${age} years old
-                                  </span>` : ''}
-                              </div>
-                              
-                              ${data.bio ? `
-                              <div class="profile-bio mt-2">
-                                  <p class="bio-text">${data.bio}</p>
-                              </div>
-                              ` : ''}
-                          </div>
-                      </div>
-                  </div>
-                  
-                  <!-- Profile Details -->
-                  <div class="profile-details-section mt-4">
-                      <div class="row g-3">
-                          <!-- Personal Information -->
-                          <div class="col-md-6">
-                              <div class="detail-card">
-                                  <h6 class="detail-card-title">
-                                      <i class="bi bi-person-badge-fill me-2"></i>Personal Information
-                                  </h6>
-                                  <div class="detail-list">
-                                      ${data.email ? `
-                                      <div class="detail-row">
-                                          <span class="detail-label">Email:</span>
-                                          <span class="detail-value">${data.email}</span>
-                                      </div>
-                                      ` : ''}
-                                      
-                                      ${data.phone_number ? `
-                                      <div class="detail-row">
-                                          <span class="detail-label">Phone:</span>
-                                          <span class="detail-value">${data.phone_number}</span>
-                                      </div>
-                                      ` : ''}
-                                      
-                                      ${data.gender ? `
-                                      <div class="detail-row">
-                                          <span class="detail-label">Gender:</span>
-                                          <span class="detail-value">${data.gender}</span>
-                                      </div>
-                                      ` : ''}
-                                      
-                                      ${data.dob ? `
-                                      <div class="detail-row">
-                                          <span class="detail-label">Date of Birth:</span>
-                                          <span class="detail-value">${dob}</span>
-                                      </div>
-                                      ` : ''}
-                                  </div>
-                              </div>
-                          </div>
-                          
-                          <!-- Location & Interests -->
-                          <div class="col-md-6">
-                              <div class="detail-card">
-                                  <h6 class="detail-card-title">
-                                      <i class="bi bi-geo-fill me-2"></i>Location & Interests
-                                  </h6>
-                                  <div class="detail-list">
-                                      ${data.city ? `
-                                      <div class="detail-row">
-                                          <span class="detail-label">City:</span>
-                                          <span class="detail-value">${data.city}</span>
-                                      </div>
-                                      ` : ''}
-                                      
-                                      ${data.country ? `
-                                      <div class="detail-row">
-                                          <span class="detail-label">Country:</span>
-                                          <span class="detail-value">${data.country}</span>
-                                      </div>
-                                      ` : ''}
-                                      
-                                      ${data.interests ? `
-                                      <div class="detail-row">
-                                          <span class="detail-label">Interests:</span>
-                                          <span class="detail-value">${data.interests}</span>
-                                      </div>
-                                      ` : ''}
-                                  </div>
-                              </div>
-                          </div>
-                      </div>
-                  </div>
-                  
-                  <!-- Action Buttons -->
-                  <div class="profile-actions mt-4 text-center">
-                      <a href="${data.profile_url}" class="btn btn-primary btn-lg me-2">
-                          <i class="bi bi-person-circle me-2"></i>View Full Profile
-                      </a>
-                      <button class="btn btn-outline-primary btn-lg" onclick="addFriend(${userId})">
-                          <i class="bi bi-person-plus me-2"></i>Add Friend
-                      </button>
+                      <button class="slider-arrow next" onclick="scrollSuggestions(1)"><i class="bi bi-chevron-right"></i></button>
                   </div>
               </div>
-          `;
-          
-          // Initialize modal
-          const profileModal = new bootstrap.Modal(document.getElementById('profileModal'));
-          profileModal.show();
-          
-      })
-      .catch(error => {
-          console.error('Error loading profile:', error);
-          alert('Error loading profile information.');
-      });
+              {% endif %}
+
+              <!-- REST OF POSTS -->
+              {% for post in posts[1:] %}
+              <div class="post-card" data-post-id="{{ post.id }}">
+                  <div class="post-header">
+                      <div class="d-flex align-items-center">
+                          <img src="{{ post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" class="post-avatar">
+                          <div>
+                              <div class="post-author">{{ post.author.first_name }} {{ post.author.last_name }}</div>
+                              <div class="post-time">{{ post.created_at.strftime('%b %d at %I:%M %p') }}</div>
+                          </div>
+                      </div>
+                      <div class="dropdown">
+                          <button class="btn btn-sm" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button>
+                          <ul class="dropdown-menu">
+                              {% if post.author.id == current_user.id %}
+                              <li><a class="dropdown-item text-primary edit-post" href="#" data-bs-toggle="modal" data-bs-target="#editPostModal" data-post-id="{{ post.id }}">Edit</a></li>
+                              <li><a class="dropdown-item text-danger delete-post" href="#" data-post-id="{{ post.id }}">Delete <span class="loader" style="display:none;"></span></a></li>
+                              {% endif %}
+                          </ul>
+                      </div>
+                  </div>
+                  <div class="post-content">
+                      <p class="post-text {% if post.content|length > 100 %}truncated{% endif %}" id="post-text-{{ post.id }}">
+                          {{ post.content }}
+                      </p>
+                      {% if post.content|length > 100 %}
+                      <button class="see-more-btn" onclick="togglePostText({{ post.id }})">See More</button>
+                      {% endif %}
+                      {% if post.image %}<div class="post-media"><img src="{{ post.image }}" alt="Post"></div>{% endif %}
+                      {% if post.video %}<div class="post-media"><video controls><source src="{{ post.video }}"></video></div>{% endif %}
+                  </div>
+                  <div class="post-actions">
+                      <div class="action-btn like-btn {% if current_user.has_liked_post(post.id) %}liked{% endif %}" data-post-id="{{ post.id }}">
+                          <i class="bi bi-hand-thumbs-up{% if current_user.has_liked_post(post.id) %}-fill{% endif %}"></i>
+                          <span class="like-count">{{ post.likes_list|length }}</span>
+                      </div>
+                      <div class="action-btn view-comments" data-bs-toggle="modal" data-bs-target="#commentModal" data-post-id="{{ post.id }}">
+                          <i class="bi bi-chat"></i> Comment
+                      </div>
+                      <div class="action-btn share-btn" data-url="{{ url_for('auth.user_dashboard', _anchor='post-' ~ post.id) }}">
+                          <i class="bi bi-share"></i> Share
+                      </div>
+                  </div>
+                  <div class="comments-section">
+                      <div class="comment-input">
+                          <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" alt="">
+                          <input type="text" placeholder="Write a comment..." class="add-comment" data-post-id="{{ post.id }}">
+                      </div>
+                      {% for comment in post.comments_list[:3] %}
+                      <div class="comment" id="comment-{{ comment.id }}">
+                          <img src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" alt="">
+                          <div class="comment-body">
+                              <div class="comment-author">{{ comment.author.first_name }}</div>
+                              <div class="comment-text">{{ comment.content }}</div>
+                              <div class="comment-actions">
+                                  <span class="reply-comment" data-comment-id="{{ comment.id }}">Reply</span>
+                                  <span class="copy-comment-link" data-comment-id="{{ comment.id }}">Link</span>
+                              </div>
+                          </div>
+                      </div>
+                      {% endfor %}
+                  </div>
+              </div>
+              {% endfor %}
+          </div>
+      </div>
+
+      <!-- RIGHT SIDEBAR -->
+      <div class="right-sidebar d-none d-lg-block">
+          <div class="sidebar-header d-flex justify-content-between align-items-center">
+              <span>Friends</span>
+              <a href="#" class="text-primary small">See All</a>
+          </div>
+          <div class="list-group list-group-flush">
+              {% for friend in friends %}
+              <a href="#" class="list-group-item list-group-item-action p-2 border-0 d-flex align-items-center"
+                 onclick="event.preventDefault(); openProfileModal({{ friend.id }})">
+                  <div class="position-relative me-3">
+                      <img src="{{ friend.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+                           class="rounded-circle" width="40" height="40" alt="{{ friend.full_name }}">
+                      {% if friend.is_online %}
+                      <span class="position-absolute bottom-0 end-0 bg-success border border-2 border-white rounded-circle"
+                            style="width:12px;height:12px;"></span>
+                      {% endif %}
+                  </div>
+                  <div class="flex-fill">
+                      <div class="fw-600">{{ friend.full_name }}</div>
+                      <small class="text-muted">
+                          {% if friend.is_online %}Active now{% else %}Last seen {{ friend.last_seen|timeago }}{% endif %}
+                      </small>
+                  </div>
+              </a>
+              {% endfor %}
+              {% if friends|length == 0 %}
+              <div class="text-center text-muted p-3">
+                  <i class="bi bi-people fs-1"></i>
+                  <p class="mt-2">No friends yet</p>
+              </div>
+              {% endif %}
+          </div>
+      </div>
+  </div>
+
+  <!-- MODALS -->
+  <!-- Post Modal -->
+  <div class="modal fade" id="postModal">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+          <div class="modal-content">
+              <div class="modal-header">
+                  <h5 class="modal-title">Create Post</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <form method="POST" enctype="multipart/form-data" action="{{ url_for('auth.user_dashboard') }}" id="createPostForm">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                  <div class="modal-body">
+                      <textarea name="post_content" class="form-control" rows="4" placeholder="What's on your mind?" required></textarea>
+                      <div id="mediaPreview" class="mt-3"></div>
+                      <div class="mt-3">
+                          <input type="file" name="media" accept="image/*,video/*" onchange="previewMedia(this)">
+                      </div>
+                  </div>
+                  <div class="modal-footer">
+                      <button type="submit" class="btn btn-primary">Post <span class="loader" style="display:none;"></span></button>
+                  </div>
+              </form>
+          </div>
+      </div>
+  </div>
+
+  <!-- Edit Post Modal -->
+  <div class="modal fade" id="editPostModal">
+      <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+              <div class="modal-header">
+                  <h5 class="modal-title">Edit Post</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <form id="editPostForm">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                  <div class="modal-body">
+                      <textarea name="content" class="form-control" rows="4" id="editPostContent"></textarea>
+                      <div id="editMediaPreview" class="mt-3"></div>
+                  </div>
+                  <div class="modal-footer">
+                      <button type="submit" class="btn btn-primary">Save <span class="loader" style="display:none;"></span></button>
+                  </div>
+              </form>
+          </div>
+      </div>
+  </div>
+
+  <!-- Comment Modal -->
+  <div class="modal fade" id="commentModal">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+          <div class="modal-content">
+              <div class="modal-header">
+                  <h5 class="modal-title">Comments</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body" id="commentModalBody"></div>
+          </div>
+      </div>
+  </div>
+
+  <!-- Profile Modal -->
+  <div class="modal fade" id="profileModal" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+          <div class="modal-content">
+              <div class="modal-header">
+                  <h5 class="modal-title">Profile Information</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body p-0" id="profileModalBody"></div>
+              <div class="modal-footer profile-actions" id="profileActions">
+                  <!-- Filled by JS -->
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="{{ url_for('static', filename='assets/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+
+  <script>
+    // ========================================
+    // GLOBAL UTILITIES
+    // ========================================
+    const csrfToken = '{{ csrf_token }}';
+
+    function showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `alert alert-${type} position-fixed`;
+        toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 250px;';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    function formatNotificationTime(timestamp) {
+        const now = new Date();
+        const notificationTime = new Date(timestamp);
+        const diffInSeconds = Math.floor((now - notificationTime) / 1000);
+
+        if (diffInSeconds < 60) return 'Just now';
+        if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+        if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+        if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+        return notificationTime.toLocaleDateString();
+    }
+
+    function calculateAge(birthDate) {
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+        return age;
+    }
+
+    function highlightMatch(text, query) {
+        if (!query.trim()) return text;
+        const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+        return text.replace(regex, '<span class="highlight">$1</span>');
+    }
+
+    // ========================================
+    // MOBILE MENU
+    // ========================================
+    function toggleMobileMenu() {
+        document.getElementById('mobileSidebar').classList.toggle('open');
+    }
+
+    // ========================================
+    // SUGGESTIONS SLIDER
+    // ========================================
+    function scrollSuggestions(dir) {
+        const track = document.getElementById('suggestionsTrack');
+        const card = track.querySelector('.suggestion-card');
+        if (!card) return;
+
+        const cardWidth = card.offsetWidth + 16;
+        const visibleWidth = track.offsetWidth;
+        const scrollAmount = Math.floor(visibleWidth / cardWidth) * cardWidth;
+
+        track.scrollBy({
+            left: dir * scrollAmount,
+            behavior: 'smooth'
+        });
+
+        updateArrowVisibility(track);
+    }
+
+    function updateArrowVisibility(track) {
+        const prevArrow = document.querySelector('.slider-arrow.prev');
+        const nextArrow = document.querySelector('.slider-arrow.next');
+        if (!prevArrow || !nextArrow) return;
+
+        prevArrow.classList.toggle('disabled', track.scrollLeft <= 10);
+        const maxScroll = track.scrollWidth - track.clientWidth;
+        nextArrow.classList.toggle('disabled', track.scrollLeft >= maxScroll - 10);
+    }
+
+    // ========================================
+    // MEDIA PREVIEW
+    // ========================================
+    function previewMedia(input) {
+        const preview = document.getElementById('mediaPreview');
+        preview.innerHTML = '';
+        const file = input.files[0];
+        if (file) {
+            const url = URL.createObjectURL(file);
+            const el = file.type.startsWith('image/') ? document.createElement('img') : document.createElement('video');
+            el.src = url;
+            el.controls = true;
+            el.style.borderRadius = '12px';
+            el.style.maxHeight = '300px';
+            el.style.width = '100%';
+            preview.appendChild(el);
+        }
+    }
+
+    // ========================================
+    // FRIEND SYSTEM
+    // ========================================
+    function addFriend(userId) {
+        const btn = event.target;
+        btn.disabled = true;
+        fetch(`/add_friend/${userId}`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken }
+        })
+        .then(r => r.json())
+        .then(() => {
+            btn.textContent = 'Cancel Request';
+            btn.className = 'btn btn-cancel-request btn-sm w-100 mt-1';
+            btn.onclick = (e) => { e.stopPropagation(); cancelFriendRequest(userId); };
+        })
+        .catch(err => showToast('Error sending request', 'danger'))
+        .finally(() => btn.disabled = false);
+    }
+
+    function cancelFriendRequest(userId) {
+        const btn = event.target;
+        btn.disabled = true;
+        fetch(`/cancel_friend_request/${userId}`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken }
+        })
+        .then(r => r.json())
+        .then(() => {
+            btn.textContent = 'Add Friend';
+            btn.className = 'btn btn-add-friend btn-sm w-100 mt-1';
+            btn.onclick = (e) => { e.stopPropagation(); addFriend(userId); };
+        })
+        .catch(err => showToast('Error canceling request', 'danger'))
+        .finally(() => btn.disabled = false);
+    }
+
+    // ========================================
+    // PROFILE MODAL
+    // ========================================
+    function openProfileModal(userId) {
+        fetch(`/get_user_profile/${userId}`)
+            .then(r => {
+                if (!r.ok) throw new Error('Failed to load profile');
+                return r.json();
+            })
+            .then(data => {
+                const dob = data.dob ? new Date(data.dob).toLocaleDateString('en-US', {
+                    year: 'numeric', month: 'long', day: 'numeric'
+                }) : 'Not specified';
+                const age = data.dob ? calculateAge(new Date(data.dob)) : '';
+
+                document.getElementById('profileModalBody').innerHTML = `
+                    <div class="profile-modal-content">
+                        <div class="profile-header position-relative">
+                            <div class="cover-photo-container">
+                                <img src="${data.cover_pic || 'https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg'}" 
+                                     alt="Cover" class="cover-photo">
+                                <div class="profile-overlay"></div>
+                            </div>
+                            <div class="profile-info-container text-center">
+                                <div class="profile-avatar-container">
+                                    <img src="${data.profile_pic}" alt="${data.first_name}" class="profile-avatar">
+                                </div>
+                                <div class="profile-text-content mt-3">
+                                    <h3 class="profile-name mb-1">${data.first_name} ${data.last_name}</h3>
+                                    <div class="profile-details">
+                                        ${data.marital_status ? `<span class="detail-item"><i class="bi bi-heart-fill"></i> ${data.marital_status}</span>` : ''}
+                                        ${data.city && data.country ? `<span class="detail-item"><i class="bi bi-geo-alt-fill"></i> ${data.city}, ${data.country}</span>` : ''}
+                                        ${age ? `<span class="detail-item"><i class="bi bi-balloon-fill"></i> ${age} years old</span>` : ''}
+                                    </div>
+                                    ${data.bio ? `<div class="profile-bio mt-2"><p class="bio-text">${data.bio}</p></div>` : ''}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="profile-details-section mt-4">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="detail-card">
+                                        <h6 class="detail-card-title"><i class="bi bi-person-badge-fill me-2"></i>Personal Information</h6>
+                                        <div class="detail-list">
+                                            ${data.email ? `<div class="detail-row"><span class="detail-label">Email:</span><span class="detail-value">${data.email}</span></div>` : ''}
+                                            ${data.phone_number ? `<div class="detail-row"><span class="detail-label">Phone:</span><span class="detail-value">${data.phone_number}</span></div>` : ''}
+                                            ${data.gender ? `<div class="detail-row"><span class="detail-label">Gender:</span><span class="detail-value">${data.gender}</span></div>` : ''}
+                                            ${data.dob ? `<div class="detail-row"><span class="detail-label">Date of Birth:</span><span class="detail-value">${dob}</span></div>` : ''}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="detail-card">
+                                        <h6 class="detail-card-title"><i class="bi bi-geo-fill me-2"></i>Location & Interests</h6>
+                                        <div class="detail-list">
+                                            ${data.city ? `<div class="detail-row"><span class="detail-label">City:</span><span class="detail-value">${data.city}</span></div>` : ''}
+                                            ${data.country ? `<div class="detail-row"><span class="detail-label">Country:</span><span class="detail-value">${data.country}</span></div>` : ''}
+                                            ${data.interests ? `<div class="detail-row"><span class="detail-label">Interests:</span><span class="detail-value">${data.interests}</span></div>` : ''}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                const isFriend = {{ current_user.friend_ids|tojson }}.includes(userId);
+                const isBlocked = {{ current_user.blocks|map(attribute='id')|list|tojson }}.includes(userId);
+
+                const actions = isFriend ? `
+                     <button class="btn btn-primary me-2" onclick="startChat(${userId})">
+        <i class="bi bi-chat-dots me-1"></i> Message
+    </button>
+    ${isBlocked ? `
+        <button class="btn btn-success" onclick="unblockUserFromModal(${userId})">
+            <i class="bi bi-check-circle me-1"></i> Unblock
+        </button>
+    ` : `
+        <button class="btn btn-outline-danger" onclick="blockUser(${userId})">
+            <i class="bi bi-slash-circle me-1"></i> Block
+        </button>
+    `}
+` : `
+    <button class="btn btn-primary me-2" onclick="addFriend(${userId})">
+        <i class="bi bi-person-plus me-1"></i> Add Friend
+    </button>
+    <a href="${data.profile_url}" class="btn btn-outline-secondary">
+        <i class="bi bi-person-circle me-1"></i> View Profile
+    </a>
+                `;
+
+                document.querySelector('.profile-actions').innerHTML = actions;
+                new bootstrap.Modal(document.getElementById('profileModal')).show();
+            })
+            .catch(err => {
+                console.error(err);
+                showToast('Failed to load profile', 'danger');
+            });
+    }
+
+    // ========================================
+    // POST INTERACTIONS
+    // ========================================
+    document.querySelectorAll('.like-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const postId = this.dataset.postId;
+            const likeBtn = this;
+
+            fetch(`/like_post/${postId}`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' }
+            })
+            .then(r => r.ok ? r.json() : Promise.reject('Network error'))
+            .then(data => {
+                if (data.error) throw new Error(data.error);
+                likeBtn.querySelector('.like-count').textContent = data.likes;
+                if (data.liked) {
+                    likeBtn.classList.add('liked');
+                    likeBtn.querySelector('i').className = 'bi bi-hand-thumbs-up-fill';
+                } else {
+                    likeBtn.classList.remove('liked');
+                    likeBtn.querySelector('i').className = 'bi bi-hand-thumbs-up';
+                }
+            })
+            .catch(err => showToast('Like failed', 'danger'));
+        });
+    });
+
+    document.querySelectorAll('.delete-post').forEach(link => {
+        link.addEventListener('click', function (e) {
+            e.preventDefault();
+            if (confirm('Delete this post?')) {
+                const postId = this.dataset.postId;
+                fetch(`/delete_post/${postId}`, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': csrfToken }
+                }).then(() => {
+                    document.querySelector(`[data-post-id="${postId}"]`).remove();
+                });
+            }
+        });
+    });
+
+    document.querySelectorAll('.edit-post').forEach(link => {
+        link.addEventListener('click', function () {
+            const postId = this.dataset.postId;
+            const post = document.querySelector(`[data-post-id="${postId}"]`);
+            document.getElementById('editPostContent').value = post.querySelector('.post-text').textContent;
+
+            const form = document.getElementById('editPostForm');
+            form.onsubmit = function (e) {
+                e.preventDefault();
+                const fd = new FormData(this);
+                fd.append('post_id', postId);
+                fetch('/edit_post', {
+                    method: 'POST',
+                    body: fd,
+                    headers: { 'X-CSRFToken': csrfToken }
+                }).then(() => location.reload());
+            };
+        });
+    });
+
+    document.querySelectorAll('.add-comment').forEach(input => {
+        input.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter' && this.value.trim()) {
+                const postId = this.dataset.postId;
+                const content = this.value.trim();
+                const inp = this;
+                inp.disabled = true;
+
+                fetch(`/add_comment/${postId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                    body: JSON.stringify({ content })
+                })
+                .then(r => r.json())
+                .then(data => {
+                    inp.value = '';
+                    const container = inp.closest('.comments-section');
+                    container.insertAdjacentHTML('beforeend', `
+                        <div class="comment" id="comment-${data.id}">
+                            <img src="${data.avatar}" alt="">
+                            <div class="comment-body">
+                                <div class="comment-author">${data.name}</div>
+                                <div class="comment-text">${data.content}</div>
+                                <div class="comment-actions">
+                                    <span class="reply-comment" data-comment-id="${data.id}">Reply</span>
+                                    <span class="copy-comment-link" data-comment-id="${data.id}">Link</span>
+                                </div>
+                            </div>
+                        </div>`);
+                })
+                .finally(() => inp.disabled = false);
+            }
+        });
+    });
+
+    document.querySelectorAll('.view-comments').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const postId = this.dataset.postId;
+            fetch(`/get_comments/${postId}`)
+                .then(r => r.json())
+                .then(comments => {
+                    const body = document.getElementById('commentModalBody');
+                    body.innerHTML = '';
+                    comments.forEach(c => {
+                        const replyInput = `<div class="reply-input mt-2 d-none">
+                            <input type="text" class="form-control form-control-sm" placeholder="Reply..." data-parent-id="${c.id}">
+                        </div>`;
+                        const replies = c.replies.map(r => `
+                            <div class="reply">
+                                <img src="${r.avatar}" width="24">
+                                <div class="comment-body">
+                                    <div class="comment-author">${r.name}</div>
+                                    <div class="comment-text">${r.content}</div>
+                                </div>
+                            </div>`).join('');
+                        body.innerHTML += `
+                            <div class="comment mb-3" id="modal-comment-${c.id}">
+                                <img src="${c.avatar}" width="36">
+                                <div class="comment-body">
+                                    <div class="comment-author">${c.name}</div>
+                                    <div class="comment-text">${c.content}</div>
+                                    <div class="comment-actions">
+                                        <span class="reply-comment" data-comment-id="${c.id}">Reply</span>
+                                    </div>
+                                    ${replyInput}
+                                    ${replies}
+                                </div>
+                            </div>`;
+                    });
+                    body.querySelectorAll('.reply-comment').forEach(span => {
+                        span.addEventListener('click', () => {
+                            span.closest('.comment-body').querySelector('.reply-input').classList.toggle('d-none');
+                        });
+                    });
+                });
+        });
+    });
+
+    document.querySelectorAll('.copy-comment-link').forEach(span => {
+        span.addEventListener('click', function () {
+            const id = this.dataset.commentId;
+            const url = `${location.origin}${location.pathname}#comment-${id}`;
+            navigator.clipboard.writeText(url);
+            showToast('Comment link copied!', 'success');
+        });
+    });
+
+    document.querySelectorAll('.share-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            navigator.clipboard.writeText(this.dataset.url);
+            showToast('Post link copied!', 'success');
+        });
+    });
+
+    // ========================================
+    // NOTIFICATION SYSTEM
+    // ========================================
+    let notificationCheckInterval;
+
+    function initializeNotifications() {
+        loadNotifications();
+        updateNotificationBadge();
+        notificationCheckInterval = setInterval(updateNotificationBadge, 30000);
+
+        const dropdown = document.getElementById('notificationDropdown');
+        if (dropdown) {
+            dropdown.addEventListener('show.bs.dropdown', loadNotifications);
+        }
+    }
+
+    function updateNotificationBadge() {
+        fetch('/notifications/count')
+            .then(r => r.ok ? r.json() : Promise.reject())
+            .then(data => {
+                const badge = document.getElementById('notificationBadge');
+                if (data.count > 0) {
+                    badge.textContent = data.count > 99 ? '99+' : data.count;
+                    badge.style.display = 'flex';
+                } else {
+                    badge.style.display = 'none';
+                }
+            })
+            .catch(() => {
+                document.getElementById('notificationBadge').style.display = 'none';
+            });
+    }
+
+    function loadNotifications() {
+        const list = document.getElementById('notificationsList');
+        if (!list) return;
+
+        fetch('/notifications')
+            .then(r => r.ok ? r.json() : Promise.reject())
+            .then(notifications => {
+                if (notifications.length === 0) {
+                    list.innerHTML = `<li class="empty-notifications"><i class="bi bi-bell"></i><p>No notifications yet</p></li>`;
+                    return;
+                }
+
+                list.innerHTML = notifications.map(n => `
+                    <li class="dropdown-item ${n.is_read ? 'read' : 'unread'}"
+                        onclick="handleNotificationClick(${n.id}, '${n.type}', ${n.entity_id || 0})">
+                        <div class="notification-item">
+                            <img src="${n.actor.avatar}" alt="${n.actor.name}" class="notification-avatar"
+                                 onerror="this.src='{{ url_for('static', filename='assets/img/default-avatar.png') }}'">
+                            <div class="notification-content">
+                                <div class="notification-text">${n.message}</div>
+                                <div class="notification-time">${formatNotificationTime(n.created_at)}</div>
+                                ${n.type === 'friend_request' ? `
+                                <div class="notification-actions">
+                                    ${!n.is_read ? `
+                                        <button class="notification-action-btn btn-accept"
+                                                onclick="event.stopPropagation(); acceptFriendRequest(${n.actor.id}, ${n.id})">
+                                            Accept
+                                        </button>
+                                        <button class="notification-action-btn btn-decline"
+                                                onclick="event.stopPropagation(); declineFriendRequest(${n.actor.id}, ${n.id})">
+                                            Decline
+                                        </button>
+                                    ` : `<small class="text-muted">Request pending</small>`}
+                                </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </li>
+                `).join('');
+            })
+            .catch(() => {
+                list.innerHTML = `<li class="text-center p-3 text-danger"><i class="bi bi-exclamation-triangle"></i><p>Error loading notifications</p></li>`;
+            });
+    }
+
+    function handleNotificationClick(id, type, entityId) {
+        markNotificationAsRead(id);
+        switch (type) {
+            case 'friend_request':
+            case 'friend_accepted':
+            case 'profile_update':
+                openProfileModal(entityId);
+                break;
+            case 'post_like':
+            case 'new_comment':
+                scrollToPost(entityId);
+                break;
+        }
+        bootstrap.Dropdown.getInstance(document.getElementById('notificationDropdown'))?.hide();
+    }
+
+    function markNotificationAsRead(id) {
+        fetch(`/notifications/${id}/read`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' }
+        })
+        .then(() => {
+            updateNotificationBadge();
+            loadNotifications();
+        });
+    }
+
+    function markAllAsRead() {
+        fetch('/notifications/read', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' }
+        })
+        .then(() => {
+            updateNotificationBadge();
+            loadNotifications();
+        });
+    }
+
+    function acceptFriendRequest(userId, notifId) {
+        fetch(`/accept_friend_request/${userId}`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ notification_id: notifId })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                markNotificationAsRead(notifId);
+                showToast('Friend request accepted!', 'success');
+            } else {
+                showToast('Failed to accept', 'danger');
+            }
+        });
+    }
+
+    function declineFriendRequest(userId, notifId) {
+        fetch(`/decline_friend_request/${userId}`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ notification_id: notifId })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                markNotificationAsRead(notifId);
+                showToast('Request declined', 'info');
+            } else {
+                showToast('Failed to decline', 'danger');
+            }
+        });
+    }
+
+    function scrollToPost(postId) {
+        const el = document.querySelector(`[data-post-id="${postId}"]`);
+        if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.style.animation = 'highlight 2s ease-in-out';
+            setTimeout(() => el.style.animation = '', 2000);
+        }
+    }
+
+    // ========================================
+    // SEARCH SYSTEM
+    // ========================================
+    let searchTimeout;
+    const searchInput = document.getElementById('globalSearch');
+    const searchResults = document.getElementById('searchResults');
+    const searchResultsBody = document.getElementById('searchResultsBody');
+
+    function performSearch(query) {
+        if (!query.trim()) { hideSearchResults(); return; }
+        showSearchLoading();
+
+        fetch(`/search?q=${encodeURIComponent(query)}`)
+            .then(r => r.ok ? r.json() : Promise.reject())
+            .then(data => displaySearchResults(data, query))
+            .catch(() => showSearchError());
+    }
+
+    function displaySearchResults(results, query) {
+        searchResultsBody.innerHTML = '';
+        if (!results.users.length && !results.posts.length) {
+            showNoResults();
+            return;
+        }
+
+        let html = '';
+        results.users.forEach(u => {
+            const name = highlightMatch(`${u.first_name} ${u.last_name}`, query);
+            html += `<div class="search-result-item" onclick="openProfileModal(${u.id})">
+                <div class="search-result-user">
+                    <img src="${u.profile_pic || '{{ url_for('static', filename='assets/img/default-avatar.png') }}'}" class="search-result-avatar">
+                    <div class="search-result-info">
+                        <div class="search-result-name">${name}</div>
+                        <div class="search-result-type">User</div>
+                    </div>
+                </div>
+            </div>`;
+        });
+
+        results.posts.forEach(p => {
+            const content = highlightMatch(p.content.substring(0, 100), query);
+            html += `<div class="search-result-item" onclick="viewPost(${p.id})">
+                <div class="search-result-post">
+                    <div class="search-result-content">${content}${p.content.length > 100 ? '...' : ''}</div>
+                    <div class="search-result-author">By ${p.author_first_name} ${p.author_last_name}</div>
+                    <div class="search-result-type">Post</div>
+                </div>
+            </div>`;
+        });
+
+        searchResultsBody.innerHTML = html;
+        showSearchResults();
+    }
+
+    function showSearchLoading() { searchResultsBody.innerHTML = `<div class="search-loading"><div class="spinner-border spinner-border-sm"></div><div class="mt-2">Searching...</div></div>`; showSearchResults(); }
+    function showNoResults() { searchResultsBody.innerHTML = `<div class="no-results"><i class="bi bi-search"></i><p>No results</p><small>Try different keywords</small></div>`; showSearchResults(); }
+    function showSearchError() { searchResultsBody.innerHTML = `<div class="no-results"><i class="bi bi-exclamation-triangle"></i><p>Search failed</p></div>`; showSearchResults(); }
+    function showSearchResults() { searchResults.style.display = 'block'; }
+    function hideSearchResults() { searchResults.style.display = 'none'; }
+
+    function viewPost(postId) {
+        hideSearchResults();
+        searchInput.value = '';
+        const el = document.querySelector(`[data-post-id="${postId}"]`);
+        if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.style.animation = 'highlight 2s';
+            setTimeout(() => el.style.animation = '', 2000);
+        } else {
+            fetch(`/get_post/${postId}`)
+                .then(r => r.json())
+                .then(post => {
+                    if (post.error) throw new Error();
+                    displayPostModal(post);
+                })
+                .catch(() => showToast('Post not found', 'danger'));
+        }
+    }
+
+    function displayPostModal(post) {
+        const body = document.getElementById('commentModalBody');
+        body.innerHTML = `
+            <div class="post-card">
+                <div class="post-header">
+                    <div class="d-flex align-items-center">
+                        <img src="${post.author_profile_pic}" class="post-avatar">
+                        <div>
+                            <div class="post-author">${post.author_first_name} ${post.author_last_name}</div>
+                            <div class="post-time">${new Date(post.created_at).toLocaleString()}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="post-content">
+                    <p class="post-text">${post.content}</p>
+                    ${post.image ? `<div class="post-media"><img src="${post.image}" alt="Post"></div>` : ''}
+                    ${post.video ? `<div class="post-media"><video controls><source src="${post.video}"></video></div>` : ''}
+                </div>
+            </div>
+        `;
+        new bootstrap.Modal(document.getElementById('commentModal')).show();
+    }
+
+    // Search event listeners
+    searchInput?.addEventListener('input', function () {
+        clearTimeout(searchTimeout);
+        const q = this.value.trim();
+        if (q.length >= 2) {
+            searchTimeout = setTimeout(() => performSearch(q), 300);
+        } else {
+            hideSearchResults();
+        }
+    });
+
+    searchInput?.addEventListener('focus', function () {
+        if (this.value.trim().length >= 2) performSearch(this.value.trim());
+    });
+
+    document.addEventListener('click', e => {
+        if (!searchResults?.contains(e.target) && e.target !== searchInput) hideSearchResults();
+    });
+
+    // ========================================
+    // POST TEXT TRUNCATION
+    // ========================================
+    function togglePostText(postId) {
+        const text = document.getElementById(`post-text-${postId}`);
+        const btn = text.nextElementSibling;
+        if (!text || !btn?.classList.contains('see-more-btn')) return;
+
+        if (text.classList.contains('truncated')) {
+            text.classList.remove('truncated');
+            btn.textContent = 'See Less';
+            const card = text.closest('.post-card');
+            if (card.getBoundingClientRect().bottom > window.innerHeight - 100) {
+                card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        } else {
+            text.classList.add('truncated');
+            btn.textContent = 'See More';
+        }
+    }
+
+    function initializePostTextTruncation() {
+        document.querySelectorAll('.post-text').forEach(textEl => {
+            const content = textEl.textContent;
+            if (content.length > 100 && !textEl.nextElementSibling?.classList.contains('see-more-btn')) {
+                textEl.classList.add('truncated');
+                const btn = document.createElement('button');
+                btn.className = 'see-more-btn';
+                btn.textContent = 'See More';
+                btn.onclick = () => togglePostText(textEl.id.replace('post-text-', ''));
+                textEl.parentNode.insertBefore(btn, textEl.nextSibling);
+            }
+        });
+    }
+
+    // ========================================
+    // BLOCK USER
+    // ========================================
+    // ========================================
+// BLOCK USER
+// ========================================
+function blockUser(userId) {
+  if (!confirm("Block this user? They won't see your posts or be able to contact you.")) return;
+  
+  fetch(`/block_user/${userId}`, {
+      method: 'POST',
+      headers: { 
+          'X-CSRFToken': csrfToken,
+          'Content-Type': 'application/json'
+      }
+  })
+  .then(response => response.json())
+  .then(data => {
+      if (data.success) {
+          showToast(data.message || 'User blocked successfully!', 'success');
+          bootstrap.Modal.getInstance(document.getElementById('profileModal')).hide();
+          // Optionally refresh the page or update UI
+          setTimeout(() => {
+              location.reload();
+          }, 1500);
+      } else {
+          showToast(data.error || 'Error blocking user', 'danger');
+      }
+  })
+  .catch(error => {
+      console.error('Error:', error);
+      showToast('Error blocking user. Please try again.', 'danger');
+  });
 }
 
-// Calculate age from date of birth
-function calculateAge(birthDate) {
-  const today = new Date();
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const monthDiff = today.getMonth() - birthDate.getMonth();
-  
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-  }
-  
-  return age;
-}
+    function startChat(userId) {
+        alert(`Chat with user ${userId} (implement chat later)`);
+    }
 
-        // Like, Delete, Edit, Comment, Share (unchanged)
-        // Like functionality with better error handling
-document.querySelectorAll('.like-btn').forEach(btn => {
-  btn.addEventListener('click', function () {
-      const postId = this.dataset.postId;
-      const likeBtn = this;
-      
-      fetch(`/like_post/${postId}`, {
+    // ========================================
+    // INIT ON LOAD
+    // ========================================
+    document.addEventListener('DOMContentLoaded', () => {
+        // Initialize core systems
+        initializeNotifications();
+        initializePostTextTruncation();
+
+        // Slider arrows
+        const track = document.getElementById('suggestionsTrack');
+        if (track) {
+            updateArrowVisibility(track);
+            track.addEventListener('scroll', () => updateArrowVisibility(track));
+        }
+
+        // Add test button (remove in production)
+        const testBtn = document.createElement('button');
+        testBtn.textContent = 'Test Notifications';
+        testBtn.className = 'btn btn-sm btn-outline-secondary position-fixed';
+        testBtn.style.cssText = 'bottom: 20px; right: 20px; z-index: 9999;';
+        testBtn.onclick = () => {
+            fetch('/notifications').then(r => r.json()).then(console.log);
+            fetch('/notifications/count').then(r => r.json()).then(console.log);
+        };
+        document.body.appendChild(testBtn);
+    });
+
+    // ========================================
+    // ANIMATIONS
+    // ========================================
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes highlight { 0%,100% { background-color: transparent; } 50% { background-color: #fff3cd; } }
+        @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+        .notification-badge.pulse { animation: pulse 0.5s ease-in-out; }
+    `;
+    document.head.appendChild(style);
+
+
+    function unblockUserFromModal(userId) {
+      if (!confirm("Unblock this user? They will be able to see your posts again.")) return;
+  
+      fetch(`/unblock_user/${userId}`, {
           method: 'POST',
           headers: { 
-              'X-CSRFToken': '{{ csrf_token }}',
+              'X-CSRFToken': csrfToken,
               'Content-Type': 'application/json'
           }
       })
-      .then(response => {
-          if (!response.ok) {
-              throw new Error('Network response was not ok');
-          }
-          return response.json();
-      })
+      .then(r => r.json())
       .then(data => {
-          if (data.error) {
-              console.error('Error:', data.error);
-              alert('Error: ' + data.error);
-              return;
-          }
-          
-          // Update like count
-          likeBtn.querySelector('.like-count').textContent = data.likes;
-          
-          // Update like status and icon
-          if (data.liked) {
-              likeBtn.classList.add('liked');
-              likeBtn.querySelector('i').className = 'bi bi-hand-thumbs-up-fill';
+          if (data.success) {
+              showToast('User unblocked!', 'success');
+              bootstrap.Modal.getInstance(document.getElementById('profileModal')).hide();
+              // Optionally reload or update UI
           } else {
-              likeBtn.classList.remove('liked');
-              likeBtn.querySelector('i').className = 'bi bi-hand-thumbs-up';
+              showToast(data.error || 'Failed to unblock', 'danger');
           }
       })
-      .catch(error => {
-          console.error('Error liking post:', error);
-          alert('Error liking post. Please try again.');
-      });
-  });
-});
-
-        document.querySelectorAll('.delete-post').forEach(link => {
-            link.addEventListener('click', function (e) {
-                e.preventDefault();
-                if (confirm('Delete this post?')) {
-                    const postId = this.dataset.postId;
-                    fetch(`/delete_post/${postId}`, {
-                        method: 'POST',
-                        headers: { 'X-CSRFToken': '{{ csrf_token }}' }
-                    }).then(() => document.querySelector(`[data-post-id="${postId}"]`).remove());
-                }
-            });
-        });
-
-        document.querySelectorAll('.edit-post').forEach(link => {
-            link.addEventListener('click', function () {
-                const postId = this.dataset.postId;
-                const post = document.querySelector(`[data-post-id="${postId}"]`);
-                document.getElementById('editPostContent').value = post.querySelector('.post-text').textContent;
-
-                const form = document.getElementById('editPostForm');
-                form.onsubmit = function (e) {
-                    e.preventDefault();
-                    const fd = new FormData(this);
-                    fd.append('post_id', postId);
-                    fetch('/edit_post', {
-                        method: 'POST',
-                        body: fd,
-                        headers: { 'X-CSRFToken': '{{ csrf_token }}' }
-                    }).then(() => location.reload());
-                };
-            });
-        });
-
-        document.querySelectorAll('.add-comment').forEach(input => {
-            input.addEventListener('keypress', function (e) {
-                if (e.key === 'Enter' && this.value.trim()) {
-                    const postId = this.dataset.postId;
-                    const content = this.value.trim();
-                    const inp = this;
-                    inp.disabled = true;
-                    fetch(`/add_comment/${postId}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
-                        body: JSON.stringify({ content })
-                    }).then(r => r.json()).then(data => {
-                        inp.value = '';
-                        const container = inp.closest('.comments-section');
-                        container.insertAdjacentHTML('beforeend', `
-                            <div class="comment" id="comment-${data.id}">
-                                <img src="${data.avatar}" alt="">
-                                <div class="comment-body">
-                                    <div class="comment-author">${data.name}</div>
-                                    <div class="comment-text">${data.content}</div>
-                                    <div class="comment-actions">
-                                        <span class="reply-comment" data-comment-id="${data.id}">Reply</span>
-                                        <span class="copy-comment-link" data-comment-id="${data.id}">Link</span>
-                                    </div>
-                                </div>
-                            </div>`);
-                    }).finally(() => inp.disabled = false);
-                }
-            });
-        });
-
-        document.querySelectorAll('.view-comments').forEach(btn => {
-            btn.addEventListener('click', function () {
-                const postId = this.dataset.postId;
-                fetch(`/get_comments/${postId}`)
-                    .then(r => r.json())
-                    .then(comments => {
-                        const body = document.getElementById('commentModalBody');
-                        body.innerHTML = '';
-                        comments.forEach(c => {
-                            const replyInput = `<div class="reply-input mt-2 d-none">
-                                <input type="text" class="form-control form-control-sm" placeholder="Reply..." data-parent-id="${c.id}">
-                            </div>`;
-                            const replies = c.replies.map(r => `
-                                <div class="reply">
-                                    <img src="${r.avatar}" width="24">
-                                    <div class="comment-body">
-                                        <div class="comment-author">${r.name}</div>
-                                        <div class="comment-text">${r.content}</div>
-                                    </div>
-                                </div>`).join('');
-                            body.innerHTML += `
-                                <div class="comment mb-3" id="modal-comment-${c.id}">
-                                    <img src="${c.avatar}" width="36">
-                                    <div class="comment-body">
-                                        <div class="comment-author">${c.name}</div>
-                                        <div class="comment-text">${c.content}</div>
-                                        <div class="comment-actions">
-                                            <span class="reply-comment" data-comment-id="${c.id}">Reply</span>
-                                        </div>
-                                        ${replyInput}
-                                        ${replies}
-                                    </div>
-                                </div>`;
-                        });
-                        body.querySelectorAll('.reply-comment').forEach(span => {
-                            span.addEventListener('click', () => {
-                                span.closest('.comment-body').querySelector('.reply-input').classList.toggle('d-none');
-                            });
-                        });
-                    });
-            });
-        });
-
-        document.querySelectorAll('.copy-comment-link').forEach(span => {
-            span.addEventListener('click', function () {
-                const id = this.dataset.commentId;
-                const url = `${location.origin}${location.pathname}#comment-${id}`;
-                navigator.clipboard.writeText(url);
-                alert('Comment link copied!');
-            });
-        });
-
-        document.querySelectorAll('.share-btn').forEach(btn => {
-            btn.addEventListener('click', function () {
-                navigator.clipboard.writeText(this.dataset.url);
-                alert('Post link copied!');
-            });
-        });
-
-  // Notification System with Debugging
-let notificationCheckInterval;
-
-function initializeNotifications() {
-    console.log("Initializing notifications...");
-    loadNotifications();
-    updateNotificationBadge();
-    
-    // Check for new notifications every 30 seconds
-    notificationCheckInterval = setInterval(updateNotificationBadge, 30000);
-    
-    // Set up dropdown event listeners
-    const dropdown = document.getElementById('notificationDropdown');
-    if (dropdown) {
-        dropdown.addEventListener('show.bs.dropdown', function() {
-            console.log("Notification dropdown opened");
-            loadNotifications();
-        });
-    }
-}
-
-function updateNotificationBadge() {
-    console.log("Updating notification badge...");
-    fetch('/notifications/count')
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log("Notification count response:", data);
-            const badge = document.getElementById('notificationBadge');
-            if (data.count > 0) {
-                badge.textContent = data.count > 99 ? '99+' : data.count;
-                badge.style.display = 'flex';
-                console.log(`Badge updated with count: ${data.count}`);
-            } else {
-                badge.style.display = 'none';
-                console.log("No notifications, badge hidden");
-            }
-        })
-        .catch(error => {
-            console.error('Error updating notification badge:', error);
-            const badge = document.getElementById('notificationBadge');
-            badge.style.display = 'none';
-        });
-}
-
-
-
-function handleNotificationClick(notificationId, type, entityId) {
-    console.log(`Notification clicked: ID=${notificationId}, Type=${type}, EntityID=${entityId}`);
-    
-    // Mark as read
-    markNotificationAsRead(notificationId);
-    
-    // Handle different notification types
-    switch(type) {
-        case 'friend_request':
-            console.log("Opening profile modal for friend request");
-            openProfileModal(entityId);
-            break;
-        case 'post_like':
-        case 'new_comment':
-            console.log("Scrolling to post");
-            scrollToPost(entityId);
-            break;
-        case 'profile_update':
-            console.log("Opening profile modal for profile update");
-            openProfileModal(entityId);
-            break;
-        case 'friend_accepted':
-            console.log("Opening profile modal for friend acceptance");
-            openProfileModal(entityId);
-            break;
-        default:
-            console.log("Unknown notification type:", type);
-            break;
-    }
-    
-    // Close dropdown
-    const dropdown = bootstrap.Dropdown.getInstance(document.getElementById('notificationDropdown'));
-    if (dropdown) dropdown.hide();
-}
-
-function markNotificationAsRead(notificationId) {
-    console.log(`Marking notification ${notificationId} as read`);
-    fetch(`/notifications/${notificationId}/read`, {
-        method: 'POST',
-        headers: { 
-            'X-CSRFToken': '{{ csrf_token }}',
-            'Content-Type': 'application/json'
-        }
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log(`Notification ${notificationId} marked as read`);
-        updateNotificationBadge();
-    })
-    .catch(error => {
-        console.error('Error marking notification as read:', error);
-    });
-}
-
-function markAllAsRead() {
-    console.log("Marking all notifications as read");
-    fetch('/notifications/read', {
-        method: 'POST',
-        headers: { 
-            'X-CSRFToken': '{{ csrf_token }}',
-            'Content-Type': 'application/json'
-        }
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log("All notifications marked as read");
-        updateNotificationBadge();
-        loadNotifications();
-    })
-    .catch(error => {
-        console.error('Error marking all notifications as read:', error);
-    });
-}
-
-function acceptFriendRequest(userId, notificationId) {
-    console.log(`Accepting friend request from user ${userId}`);
-    fetch(`/accept_friend_request/${userId}`, {
-        method: 'POST',
-        headers: { 
-            'X-CSRFToken': '{{ csrf_token }}',
-            'Content-Type': 'application/json'
-        }
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            console.log("Friend request accepted successfully");
-            markNotificationAsRead(notificationId);
-            loadNotifications();
-            updateNotificationBadge();
-            showToast('Friend request accepted!', 'success');
-        } else {
-            console.error("Failed to accept friend request:", data.error);
-            showToast('Failed to accept friend request', 'danger');
-        }
-    })
-    .catch(error => {
-        console.error('Error accepting friend request:', error);
-        showToast('Error accepting friend request', 'danger');
-    });
-}
-
-function declineFriendRequest(userId, notificationId) {
-    console.log(`Declining friend request from user ${userId}`);
-    fetch(`/decline_friend_request/${userId}`, {
-        method: 'POST',
-        headers: { 
-            'X-CSRFToken': '{{ csrf_token }}',
-            'Content-Type': 'application/json'
-        }
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            console.log("Friend request declined successfully");
-            markNotificationAsRead(notificationId);
-            loadNotifications();
-            updateNotificationBadge();
-            showToast('Friend request declined', 'info');
-        } else {
-            console.error("Failed to decline friend request:", data.error);
-            showToast('Failed to decline friend request', 'danger');
-        }
-    })
-    .catch(error => {
-        console.error('Error declining friend request:', error);
-        showToast('Error declining friend request', 'danger');
-    });
-}
-
-function formatNotificationTime(timestamp) {
-    const now = new Date();
-    const notificationTime = new Date(timestamp);
-    const diffInSeconds = Math.floor((now - notificationTime) / 1000);
-    
-    if (diffInSeconds < 60) return 'Just now';
-    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
-    return notificationTime.toLocaleDateString();
-}
-
-function scrollToPost(postId) {
-    const postElement = document.querySelector(`[data-post-id="${postId}"]`);
-    if (postElement) {
-        postElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        postElement.style.animation = 'highlight 2s ease-in-out';
-        setTimeout(() => postElement.style.animation = '', 2000);
-    }
-}
-
-function showToast(message, type = 'info') {
-    const toast = document.createElement('div');
-    toast.className = `alert alert-${type} position-fixed`;
-    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 250px;';
-    toast.textContent = message;
-    document.body.appendChild(toast);
-    
-    setTimeout(() => {
-        toast.remove();
-    }, 3000);
-}
-
-// Debug function to test notifications manually
-function testNotifications() {
-    console.log("=== MANUAL NOTIFICATION TEST ===");
-    
-    // Test notification count
-    fetch('/notifications/count')
-        .then(response => {
-            console.log("Count response status:", response.status);
-            return response.json();
-        })
-        .then(data => {
-            console.log("Notification count:", data);
-        })
-        .catch(error => console.error('Count test error:', error));
-    
-    // Test getting notifications
-    fetch('/notifications')
-        .then(response => {
-            console.log("Notifications response status:", response.status);
-            return response.json();
-        })
-        .then(data => {
-            console.log("Notifications data:", data);
-            if (data.length === 0) {
-                console.log("No notifications returned from API");
-            } else {
-                console.log(`API returned ${data.length} notifications`);
-            }
-        })
-        .catch(error => console.error('Notifications test error:', error));
-}
-
-// Add highlight animation
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes highlight {
-        0% { background-color: transparent; }
-        50% { background-color: #fff3cd; }
-        100% { background-color: transparent; }
-    }
-    
-    @keyframes pulse {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.1); }
-        100% { transform: scale(1); }
-    }
-    
-    .notification-badge.pulse {
-        animation: pulse 0.5s ease-in-out;
-    }
-`;
-document.head.appendChild(style);
-
-// Initialize notifications when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    console.log("DOM loaded, initializing notifications...");
-    initializeNotifications();
-    
-    // Add test button for manual testing (remove in production)
-    const testButton = document.createElement('button');
-    testButton.textContent = 'Test Notifications';
-    testButton.className = 'btn btn-sm btn-outline-secondary position-fixed';
-    testButton.style.cssText = 'bottom: 20px; right: 20px; z-index: 9999;';
-    testButton.onclick = testNotifications;
-    document.body.appendChild(testButton);
-    
-    console.log("Notification system initialized");
-});
-
-function loadNotifications() {
-  const notificationsList = document.getElementById('notificationsList');
-  if (!notificationsList) {
-      console.error("Notifications list element not found!");
-      return;
+      .catch(() => showToast('Error unblocking user', 'danger'));
   }
-
-  console.log("Loading notifications...");
-  
-  fetch('/notifications')
-      .then(response => {
-          if (!response.ok) {
-              throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          return response.json();
-      })
-      .then(notifications => {
-          console.log("Notifications API response:", notifications);
-          
-          if (notifications.length === 0) {
-              notificationsList.innerHTML = `
-                  <li class="empty-notifications">
-                      <i class="bi bi-bell"></i>
-                      <p>No notifications yet</p>
-                  </li>
-              `;
-              console.log("No notifications to display");
-              return;
-          }
-
-          // Show ALL notifications, not just unread ones
-          notificationsList.innerHTML = notifications.map(notification => {
-              console.log("Processing notification:", notification);
-              return `
-              <li class="dropdown-item ${notification.is_read ? 'read' : 'unread'}" 
-                  onclick="handleNotificationClick(${notification.id}, '${notification.type}', ${notification.entity_id || 0})">
-                  <div class="notification-item">
-                      <img src="${notification.actor.avatar}" 
-                           alt="${notification.actor.name}" 
-                           class="notification-avatar"
-                           onerror="this.src='{{ url_for('static', filename='assets/img/default-avatar.png') }}'">
-                      <div class="notification-content">
-                          <div class="notification-text">${notification.message}</div>
-                          <div class="notification-time">${formatNotificationTime(notification.created_at)}</div>
-                          ${notification.type === 'friend_request' ? `
-                          <div class="notification-actions">
-                              ${!notification.is_read ? `
-                                  <button class="notification-action-btn btn-accept" 
-                                          onclick="event.stopPropagation(); acceptFriendRequest(${notification.actor.id}, ${notification.id})">
-                                      Accept
-                                  </button>
-                                  <button class="notification-action-btn btn-decline" 
-                                          onclick="event.stopPropagation(); declineFriendRequest(${notification.actor.id}, ${notification.id})">
-                                      Decline
-                                  </button>
-                              ` : `
-                                  <small class="text-muted">Request pending</small>
-                              `}
-                          </div>
-                      ` : ''}
-                      </div>
-                  </div>
-              </li>
-              `;
-          }).join('');
-          
-          console.log(`Displayed ${notifications.length} notifications`);
-      })
-      .catch(error => {
-          console.error('Error loading notifications:', error);
-          notificationsList.innerHTML = `
-              <li class="text-center p-3 text-danger">
-                  <i class="bi bi-exclamation-triangle"></i>
-                  <p>Error loading notifications</p>
-                  <small>Check console for details</small>
-              </li>
-          `;
-      });
-}
-
-// Search functionality
-let searchTimeout;
-const searchInput = document.getElementById('globalSearch');
-const searchResults = document.getElementById('searchResults');
-const searchResultsBody = document.getElementById('searchResultsBody');
-
-// Search function
-function performSearch(query) {
-    if (!query.trim()) {
-        hideSearchResults();
-        return;
-    }
-
-    showSearchLoading();
-    
-    fetch(`/search?q=${encodeURIComponent(query)}`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Search failed');
-            }
-            return response.json();
-        })
-        .then(data => {
-            displaySearchResults(data, query);
-        })
-        .catch(error => {
-            console.error('Search error:', error);
-            showSearchError();
-        });
-}
-
-// Display search results
-function displaySearchResults(results, query) {
-    searchResultsBody.innerHTML = '';
-    
-    if (results.users.length === 0 && results.posts.length === 0) {
-        showNoResults();
-        return;
-    }
-
-    let resultsHTML = '';
-    
-    // Display users
-    if (results.users.length > 0) {
-        results.users.forEach(user => {
-            const highlightedName = highlightMatch(`${user.first_name} ${user.last_name}`, query);
-            resultsHTML += `
-                <div class="search-result-item" onclick="openProfileModal(${user.id})">
-                    <div class="search-result-user">
-                        <img src="${user.profile_pic || '{{ url_for('static', filename='assets/img/default-avatar.png') }}'}" 
-                             alt="${user.first_name}" 
-                             class="search-result-avatar"
-                             onerror="this.src='{{ url_for('static', filename='assets/img/default-avatar.png') }}'">
-                        <div class="search-result-info">
-                            <div class="search-result-name">${highlightedName}</div>
-                            <div class="search-result-type">User</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-    }
-    
-    // Display posts
-    if (results.posts.length > 0) {
-        results.posts.forEach(post => {
-            const highlightedContent = highlightMatch(post.content.substring(0, 100), query);
-            resultsHTML += `
-                <div class="search-result-item" onclick="viewPost(${post.id})">
-                    <div class="search-result-post">
-                        <div class="search-result-content">${highlightedContent}${post.content.length > 100 ? '...' : ''}</div>
-                        <div class="search-result-author">By ${post.author_first_name} ${post.author_last_name}</div>
-                        <div class="search-result-type">Post</div>
-                    </div>
-                </div>
-            `;
-        });
-    }
-    
-    searchResultsBody.innerHTML = resultsHTML;
-    showSearchResults();
-}
-
-// Highlight matching text
-function highlightMatch(text, query) {
-    if (!query.trim()) return text;
-    
-    const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-    return text.replace(regex, '<span class="highlight">$1</span>');
-}
-
-// Show/hide search results
-function showSearchResults() {
-    searchResults.style.display = 'block';
-}
-
-function hideSearchResults() {
-    searchResults.style.display = 'none';
-}
-
-function showSearchLoading() {
-    searchResultsBody.innerHTML = `
-        <div class="search-loading">
-            <div class="spinner-border spinner-border-sm" role="status"></div>
-            <div class="mt-2">Searching...</div>
-        </div>
-    `;
-    showSearchResults();
-}
-
-function showNoResults() {
-    searchResultsBody.innerHTML = `
-        <div class="no-results">
-            <i class="bi bi-search"></i>
-            <p>No results found</p>
-            <small>Try different keywords</small>
-        </div>
-    `;
-    showSearchResults();
-}
-
-function showSearchError() {
-    searchResultsBody.innerHTML = `
-        <div class="no-results">
-            <i class="bi bi-exclamation-triangle"></i>
-            <p>Search failed</p>
-            <small>Please try again</small>
-        </div>
-    `;
-    showSearchResults();
-}
-
-// View post function
-function viewPost(postId) {
-    hideSearchResults();
-    searchInput.value = '';
-    
-    // Scroll to post if it exists on current page
-    const postElement = document.querySelector(`[data-post-id="${postId}"]`);
-    if (postElement) {
-        postElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        postElement.style.animation = 'highlight 2s ease-in-out';
-        setTimeout(() => postElement.style.animation = '', 2000);
-    } else {
-        // If post is not on current page, redirect to post page or show in modal
-        showToast('Post not found on this page', 'info');
-    }
-}
-
-// Event listeners
-searchInput.addEventListener('input', function() {
-    clearTimeout(searchTimeout);
-    const query = this.value.trim();
-    
-    if (query.length >= 2) {
-        searchTimeout = setTimeout(() => performSearch(query), 300);
-    } else {
-        hideSearchResults();
-    }
-});
-
-searchInput.addEventListener('focus', function() {
-    if (this.value.trim().length >= 2) {
-        performSearch(this.value.trim());
-    }
-});
-
-// Close search results when clicking outside
-document.addEventListener('click', function(event) {
-    if (!searchResults.contains(event.target) && event.target !== searchInput) {
-        hideSearchResults();
-    }
-});
-
-// Keyboard navigation for search results
-searchInput.addEventListener('keydown', function(event) {
-    if (event.key === 'Escape') {
-        hideSearchResults();
-    }
-    
-    if (event.key === 'ArrowDown' && searchResults.style.display === 'block') {
-        event.preventDefault();
-        const firstResult = searchResultsBody.querySelector('.search-result-item');
-        if (firstResult) firstResult.focus();
-    }
-});
-
-// Enhanced viewPost function
-function viewPost(postId) {
-  hideSearchResults();
-  searchInput.value = '';
-  
-  // Try to find post on current page first
-  const postElement = document.querySelector(`[data-post-id="${postId}"]`);
-  if (postElement) {
-      postElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      postElement.style.animation = 'highlight 2s ease-in-out';
-      setTimeout(() => postElement.style.animation = '', 2000);
-  } else {
-      // If post is not on current page, fetch and display it
-      fetch(`/get_post/${postId}`)
-          .then(response => response.json())
-          .then(post => {
-              if (post.error) {
-                  showToast('Post not found', 'danger');
-                  return;
-              }
-              displayPostModal(post);
-          })
-          .catch(error => {
-              console.error('Error fetching post:', error);
-              showToast('Error loading post', 'danger');
-          });
-  }
-}
-
-// Function to display post in modal
-function displayPostModal(post) {
-  const modalBody = document.getElementById('commentModalBody');
-  modalBody.innerHTML = `
-      <div class="post-card">
-          <div class="post-header">
-              <div class="d-flex align-items-center">
-                  <img src="${post.author_profile_pic}" class="post-avatar">
-                  <div>
-                      <div class="post-author">${post.author_first_name} ${post.author_last_name}</div>
-                      <div class="post-time">${new Date(post.created_at).toLocaleString()}</div>
-                  </div>
-              </div>
-          </div>
-          <div class="post-content">
-              <p class="post-text">${post.content}</p>
-              ${post.image ? `<div class="post-media"><img src="${post.image}" alt="Post"></div>` : ''}
-              ${post.video ? `<div class="post-media"><video controls><source src="${post.video}"></video></div>` : ''}
-          </div>
-      </div>
-  `;
-  
-  const commentModal = new bootstrap.Modal(document.getElementById('commentModal'));
-  commentModal.show();
-}
-
-// Toggle post text expansion with smooth animation
-function togglePostText(postId) {
-  const postText = document.getElementById(`post-text-${postId}`);
-  if (!postText) {
-      console.error(`Post text element not found for post ID: ${postId}`);
-      return;
-  }
-  
-  const seeMoreBtn = postText.nextElementSibling;
-  
-  if (!seeMoreBtn || !seeMoreBtn.classList.contains('see-more-btn')) {
-      console.error(`See more button not found for post ID: ${postId}`);
-      return;
-  }
-  
-  if (postText.classList.contains('truncated')) {
-      // Expand the text
-      postText.classList.remove('truncated');
-      seeMoreBtn.textContent = 'See Less';
-      
-      // Smooth scroll to keep the post in view if it's near the bottom
-      const postCard = postText.closest('.post-card');
-      const rect = postCard.getBoundingClientRect();
-      if (rect.bottom > window.innerHeight - 100) {
-          postCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      }
-  } else {
-      // Collapse the text
-      postText.classList.add('truncated');
-      seeMoreBtn.textContent = 'See More';
-  }
-}
-
-// Also handle posts loaded via search results or dynamically
-function initializePostTextTruncation() {
-  document.querySelectorAll('.post-text').forEach(postText => {
-      const content = postText.textContent;
-      // Check if content is longer than 100 characters AND doesn't already have a see more button
-      if (content.length > 100 && !postText.nextElementSibling?.classList.contains('see-more-btn')) {
-          // Add see more button if it doesn't exist
-          postText.classList.add('truncated');
-          const seeMoreBtn = document.createElement('button');
-          seeMoreBtn.className = 'see-more-btn';
-          seeMoreBtn.textContent = 'See More';
-          seeMoreBtn.onclick = function() {
-              const postId = this.previousElementSibling.id.replace('post-text-', '');
-              togglePostText(postId);
-          };
-          postText.parentNode.insertBefore(seeMoreBtn, postText.nextSibling);
-      }
-  });
-}
-
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', function() {
-  initializePostTextTruncation();
-});
-
-// Also handle posts loaded via search results
-function initializePostTextTruncation() {
-  document.querySelectorAll('.post-text').forEach(postText => {
-      const content = postText.textContent;
-      if (content.length > 100 && !postText.nextElementSibling?.classList.contains('see-more-btn')) {
-          // Add see more button if it doesn't exist
-          postText.classList.add('truncated');
-          const seeMoreBtn = document.createElement('button');
-          seeMoreBtn.className = 'see-more-btn';
-          seeMoreBtn.textContent = 'See More';
-          seeMoreBtn.onclick = function() {
-              const postId = this.previousElementSibling.id.replace('post-text-', '');
-              togglePostText(postId);
-          };
-          postText.parentNode.insertBefore(seeMoreBtn, postText.nextSibling);
-      }
-  });
-}
-
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', function() {
-  initializePostTextTruncation();
-});
-
-    </script>
+</script>
 </body>
 </html>

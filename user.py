@@ -343,7 +343,7 @@ def login():
             return render_template("login.html")
 
         if not user.is_active:
-            flash("Please verify your email before logging in. <a href='/resend-verification?email=" + email + "' class='alert-link'>Resend code</a>", "warning")
+            flash("Please you need to verify your email address before we let you in.",  "warning")
             return render_template("login.html")
 
         # === Login successful ===
@@ -391,6 +391,21 @@ from random import sample
 #         random_three=random_three,    # for right sidebar
 #         csrf_token=generate_csrf()
 #     )
+
+from datetime import datetime
+
+def timeago(dt):
+    now = datetime.utcnow()
+    diff = now - dt
+    if diff.days > 0:
+        return f"{diff.days}d ago"
+    hours = diff.seconds // 3600
+    if hours > 0:
+        return f"{hours}h ago"
+    mins = diff.seconds // 60
+    return f"{mins}m ago" if mins > 0 else "just now"
+
+    app.jinja_env.filters['timeago'] = timeago
 
 
 
@@ -448,7 +463,22 @@ def user_dashboard():
 
     # GET request handling (your existing code)
     posts = Post.query.order_by(Post.created_at.desc()).all()
+    # 1. Get ALL other users (no block filtering in SQL)
     all_users = User.query.filter(User.id != current_user.id).all()
+
+    # 2. Filter in Python using your existing methods
+    all_users = [
+        u for u in all_users
+        if not u.is_blocked_by(current_user)     # u did NOT block me
+        and not current_user.is_blocked_by(u)    # I did NOT block u
+    ]
+    # FRIENDS (visible only)
+    friends = [f for f in current_user.friends if f.is_visible_to(current_user)]
+
+    # NON-FRIENDS for suggestions
+    friend_ids = {f.id for f in friends}
+    
+    non_friends = [u for u in all_users if u.id not in friend_ids]
     friend_ids = {friend.id for friend in current_user.friends}
     non_friends = [u for u in all_users if u.id not in friend_ids]
     random_three = sample(non_friends, min(3, len(non_friends))) if non_friends else []
@@ -458,6 +488,7 @@ def user_dashboard():
         posts=posts,
         current_user=current_user,
         all_users=all_users,
+        friends=friends, 
         random_three=random_three,
         csrf_token=generate_csrf()
     )
@@ -573,140 +604,140 @@ def add_comment(post_id):
 import cloudinary.uploader
 import cloudinary.utils
 
-@auth.route("/<int:user_id>", methods=["GET", "POST"])
-@login_required
-def profile(user_id):
-    user = User.query.get_or_404(user_id)
+# @auth.route("/<int:user_id>", methods=["GET", "POST"])
+# @login_required
+# def profile(user_id):
+#     user = User.query.get_or_404(user_id)
 
-    # Only allow users to edit their own profile
-    if user.id != current_user.id:
-        flash("You can only edit your own profile.", "warning")
-        return redirect(url_for('auth.profile', user_id=current_user.id))
+#     # Only allow users to edit their own profile
+#     if user.id != current_user.id:
+#         flash("You can only edit your own profile.", "warning")
+#         return redirect(url_for('auth.profile', user_id=current_user.id))
 
-    if request.method == "POST":
-        try:
-            # === 1. PROFILE PICTURE ===
-            if 'profile_pic' in request.files:
-                file = request.files['profile_pic']
-                if file and file.filename != '' and allowed_file(file.filename):
-                    print(f"Uploading profile picture: {file.filename}")  # Debug
-                    result = cloudinary.uploader.upload(
-                        file,
-                        folder="kimbela/profiles",
-                        transformation=[
-                            {'width': 400, 'height': 400, 'crop': 'fill', 'gravity': 'face'},
-                            {'quality': 'auto', 'fetch_format': 'auto'}
-                        ]
-                    )
-                    current_user.profile_pic = result['secure_url']
-                    db.session.commit()
-                    flash("Profile picture updated!", "success")
-                elif file and file.filename != '':
-                    flash("Invalid file type for profile picture.", "danger")
+#     if request.method == "POST":
+#         try:
+#             # === 1. PROFILE PICTURE ===
+#             if 'profile_pic' in request.files:
+#                 file = request.files['profile_pic']
+#                 if file and file.filename != '' and allowed_file(file.filename):
+#                     print(f"Uploading profile picture: {file.filename}")  # Debug
+#                     result = cloudinary.uploader.upload(
+#                         file,
+#                         folder="kimbela/profiles",
+#                         transformation=[
+#                             {'width': 400, 'height': 400, 'crop': 'fill', 'gravity': 'face'},
+#                             {'quality': 'auto', 'fetch_format': 'auto'}
+#                         ]
+#                     )
+#                     current_user.profile_pic = result['secure_url']
+#                     db.session.commit()
+#                     flash("Profile picture updated!", "success")
+#                 elif file and file.filename != '':
+#                     flash("Invalid file type for profile picture.", "danger")
 
-            # === 2. COVER PHOTO ===
-            if 'cover_pic' in request.files:
-                file = request.files['cover_pic']
-                if file and file.filename != '' and allowed_file(file.filename):
-                    print(f"Uploading cover photo: {file.filename}")  # Debug
-                    result = cloudinary.uploader.upload(
-                        file,
-                        folder="kimbela/covers",
-                        transformation=[
-                            {'width': 1200, 'height': 400, 'crop': 'fill'},
-                            {'quality': 'auto', 'fetch_format': 'auto'}
-                        ]
-                    )
-                    current_user.cover_pic = result['secure_url']
-                    db.session.commit()
-                    flash("Cover photo updated!", "success")
-                elif file and file.filename != '':
-                    flash("Invalid file type for cover photo.", "danger")
+#             # === 2. COVER PHOTO ===
+#             if 'cover_pic' in request.files:
+#                 file = request.files['cover_pic']
+#                 if file and file.filename != '' and allowed_file(file.filename):
+#                     print(f"Uploading cover photo: {file.filename}")  # Debug
+#                     result = cloudinary.uploader.upload(
+#                         file,
+#                         folder="kimbela/covers",
+#                         transformation=[
+#                             {'width': 1200, 'height': 400, 'crop': 'fill'},
+#                             {'quality': 'auto', 'fetch_format': 'auto'}
+#                         ]
+#                     )
+#                     current_user.cover_pic = result['secure_url']
+#                     db.session.commit()
+#                     flash("Cover photo updated!", "success")
+#                 elif file and file.filename != '':
+#                     flash("Invalid file type for cover photo.", "danger")
 
-            # === 3. BIO UPDATE ===
-            bio = request.form.get("bio")
-            if bio is not None:
-                current_user.bio = bio.strip()
-                db.session.commit()
-                flash("Bio updated!", "success")
+#             # === 3. BIO UPDATE ===
+#             bio = request.form.get("bio")
+#             if bio is not None:
+#                 current_user.bio = bio.strip()
+#                 db.session.commit()
+#                 flash("Bio updated!", "success")
 
-            # === 4. CREATE NEW POST (TEXT + MEDIA) ===
-            post_content = request.form.get("post_content")
-            media_file = request.files.get('media')
+#             # === 4. CREATE NEW POST (TEXT + MEDIA) ===
+#             post_content = request.form.get("post_content")
+#             media_file = request.files.get('media')
             
-            if post_content or (media_file and media_file.filename != ''):
-                image_url = None
-                video_url = None
+#             if post_content or (media_file and media_file.filename != ''):
+#                 image_url = None
+#                 video_url = None
 
-                if media_file and media_file.filename != '' and allowed_file(media_file.filename):
-                    try:
-                        # Determine resource type based on content type
-                        resource_type = "auto"
-                        if media_file.content_type.startswith('video'):
-                            resource_type = "video"
+#                 if media_file and media_file.filename != '' and allowed_file(media_file.filename):
+#                     try:
+#                         # Determine resource type based on content type
+#                         resource_type = "auto"
+#                         if media_file.content_type.startswith('video'):
+#                             resource_type = "video"
                         
-                        result = cloudinary.uploader.upload(
-                            media_file,
-                            folder="kimbela/posts",
-                            resource_type=resource_type,
-                            transformation=[
-                                {'width': 800, 'crop': 'limit'},
-                                {'quality': 'auto', 'fetch_format': 'auto'}
-                            ]
-                        )
+#                         result = cloudinary.uploader.upload(
+#                             media_file,
+#                             folder="kimbela/posts",
+#                             resource_type=resource_type,
+#                             transformation=[
+#                                 {'width': 800, 'crop': 'limit'},
+#                                 {'quality': 'auto', 'fetch_format': 'auto'}
+#                             ]
+#                         )
                         
-                        if media_file.content_type.startswith('video'):
-                            video_url = result['secure_url']
-                        else:
-                            image_url = result['secure_url']
+#                         if media_file.content_type.startswith('video'):
+#                             video_url = result['secure_url']
+#                         else:
+#                             image_url = result['secure_url']
                             
-                    except Exception as e:
-                        print(f"Media upload error: {e}")  # Debug
-                        flash("Failed to upload media.", "danger")
+#                     except Exception as e:
+#                         print(f"Media upload error: {e}")  # Debug
+#                         flash("Failed to upload media.", "danger")
                         
-                # Notify friends about profile update
-                if any([request.files.get('profile_pic'), request.files.get('cover_pic'), request.form.get('bio')]):
-                    for friend in current_user.friends:
-                        friend.create_notification(
-                            actor=current_user,
-                            notification_type=NotificationType.PROFILE_UPDATE,
-                            entity_id=current_user.id,
-                            entity_type='user',
-                            custom_message=f"{current_user.full_name} updated their profile"
-                        )
+#                 # Notify friends about profile update
+#                 if any([request.files.get('profile_pic'), request.files.get('cover_pic'), request.form.get('bio')]):
+#                     for friend in current_user.friends:
+#                         friend.create_notification(
+#                             actor=current_user,
+#                             notification_type=NotificationType.PROFILE_UPDATE,
+#                             entity_id=current_user.id,
+#                             entity_type='user',
+#                             custom_message=f"{current_user.full_name} updated their profile"
+#                         )
 
-                # Create post
-                new_post = Post(
-                    content=post_content or "",
-                    image=image_url,
-                    video=video_url,
-                    author_id=current_user.id,
-                    created_at=datetime.utcnow()
-                )
-                db.session.add(new_post)
-                db.session.commit()
-                flash("Post created!", "success")
+#                 # Create post
+#                 new_post = Post(
+#                     content=post_content or "",
+#                     image=image_url,
+#                     video=video_url,
+#                     author_id=current_user.id,
+#                     created_at=datetime.utcnow()
+#                 )
+#                 db.session.add(new_post)
+#                 db.session.commit()
+#                 flash("Post created!", "success")
 
-            return redirect(url_for('auth.profile', user_id=current_user.id))
+#             return redirect(url_for('auth.profile', user_id=current_user.id))
 
-        except Exception as e:
-            print(f"Error in profile update: {e}")  # Debug
-            flash("An error occurred while updating your profile.", "danger")
-            return redirect(url_for('auth.profile', user_id=current_user.id))
+#         except Exception as e:
+#             print(f"Error in profile update: {e}")  # Debug
+#             flash("An error occurred while updating your profile.", "danger")
+#             return redirect(url_for('auth.profile', user_id=current_user.id))
 
-    # === GET REQUEST: Load profile data ===
-    posts = Post.query.filter_by(author_id=current_user.id)\
-                      .order_by(Post.created_at.desc()).all()
+#     # === GET REQUEST: Load profile data ===
+#     posts = Post.query.filter_by(author_id=current_user.id)\
+#                       .order_by(Post.created_at.desc()).all()
 
-    # Mock friends (replace with real Friend model later)
-    friends = User.query.filter(User.id != current_user.id).limit(9).all()
+#     # Mock friends (replace with real Friend model later)
+#     friends = User.query.filter(User.id != current_user.id).limit(9).all()
 
-    return render_template(
-        "profile.html",
-        user=current_user,
-        posts=posts,
-        friends=friends
-    )
+#     return render_template(
+#         "profile.html",
+#         user=current_user,
+#         posts=posts,
+#         friends=friends
+#     )
     
     
 @auth.route("/get_comments/<int:post_id>")
@@ -759,23 +790,50 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in allowed_extensions
            
            
+def create_notification(user_id, actor_id, type_, message, entity_id=None):
+    """Helper to create a notification safely"""
+    notification = Notification(
+        user_id=user_id,
+        actor_id=actor_id,
+        type=type_,
+        message=message,
+        entity_id=entity_id
+    )
+    db.session.add(notification)
+    db.session.commit()  
+           
            
 
 # In your add_friend route
-@auth.route("/add_friend/<int:user_id>", methods=["POST"])
+@auth.route('/add_friend/<int:user_id>', methods=['POST'])
 @login_required
 def add_friend(user_id):
-    user = User.query.get_or_404(user_id)
-    if current_user.send_friend_request(user):
-        # Create notification for the user being requested
-        user.create_notification(
-            actor=current_user,
-            notification_type=NotificationType.FRIEND_REQUEST,
-            entity_id=current_user.id,
-            entity_type='user'
-        )
-        return jsonify(success=True)
-    return jsonify(success=False, error="Could not send friend request")
+    if user_id == current_user.id:
+        return jsonify(error="Can't add yourself"), 400
+
+    # Prevent duplicate DB rows
+    existing = FriendRequest.query.filter_by(
+        sender_id=current_user.id,
+        receiver_id=user_id
+    ).first()
+    if existing:
+        return jsonify(error="Request already sent"), 400
+
+    req = FriendRequest(sender_id=current_user.id, receiver_id=user_id)
+    # **FLAG** so the signal knows we already handled it
+    req._skip_notification = True
+    db.session.add(req)
+
+    # ---- CREATE NOTIFICATION MANUALLY (only once) ----
+    create_notification(
+        actor_id=current_user.id,
+        user_id=user_id,
+        type_='friend_request',
+        message=f"{current_user.full_name} sent you a friend request",
+        entity_id=req.id
+    )
+    db.session.commit()
+    return jsonify(success=True)
 
 
 
@@ -806,7 +864,8 @@ def get_user_profile(user_id):
         'phone_number': user.phone_number,
         'marital_status': user.marital_status,
         'interests': user.interests,
-        'profile_url': url_for('auth.profile', user_id=user.id)
+        'profile_url': url_for('auth.profile', user_id=user.id),
+        'friends_count': user.friends.count(),
     })   
     
     
@@ -844,18 +903,42 @@ def get_unread_count():
 @auth.route("/accept_friend_request/<int:user_id>", methods=["POST"])
 @login_required
 def accept_friend_request_route(user_id):
+    data = request.get_json() or {}
+    notification_id = data.get('notification_id')
+
     user = User.query.get_or_404(user_id)
+
     if current_user.accept_friend_request(user):
+        # mark the notification as read
+        if notification_id:
+            noti = Notification.query.get(notification_id)
+            if noti and noti.user_id == current_user.id:
+                noti.is_read = True
+                db.session.commit()
         return jsonify(success=True)
-    return jsonify(success=False, error="Could not accept friend request")
+
+    return jsonify(success=False, error="Could not accept request")
+
+
+
 
 @auth.route("/decline_friend_request/<int:user_id>", methods=["POST"])
 @login_required
 def decline_friend_request_route(user_id):
+    data = request.get_json() or {}
+    notification_id = data.get('notification_id')
+
     user = User.query.get_or_404(user_id)
+
     if current_user.decline_friend_request(user):
+        if notification_id:
+            noti = Notification.query.get(notification_id)
+            if noti and noti.user_id == current_user.id:
+                noti.is_read = True
+                db.session.commit()
         return jsonify(success=True)
-    return jsonify(success=False, error="Could not decline friend request")
+
+    return jsonify(success=False, error="Could not decline request")
            
            
 
@@ -918,6 +1001,400 @@ def get_post(post_id):
         'author_profile_pic': post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png'),
         'created_at': post.created_at.isoformat()
     })
+
+
+
+
+
+# auth.py  (add these routes)
+
+# @auth.route("/block_user/<int:user_id>", methods=["POST"])
+# @login_required
+# def block_user(user_id):
+#     user = User.query.get_or_404(user_id)
+#     if user.id == current_user.id:
+#         return jsonify(success=False, error="Cannot block yourself")
+#     current_user.block(user)
+#     return jsonify(success=True)
+
+# @auth.route("/unblock_user/<int:user_id>", methods=["POST"])
+# @login_required
+# def unblock_user(user_id):
+#     user = User.query.get_or_404(user_id)
+#     current_user.unblock(user)
+#     return jsonify(success=True)
+
+# Update last_seen on every request
+@auth.before_request
+def update_last_seen():
+    if current_user.is_authenticated:
+        current_user.last_seen = datetime.utcnow()
+        # Consider user online if seen < 5 min ago
+        current_user.is_online = (datetime.utcnow() - current_user.last_seen) < timedelta(minutes=5)
+        db.session.commit()
+
+
+
+
+# Add these routes to your auth.py
+
+# @auth.route("/block_user/<int:user_id>", methods=["POST"])
+# @login_required
+# def block_user(user_id):
+#     """Block a user"""
+#     user = User.query.get_or_404(user_id)
+    
+#     if user.id == current_user.id:
+#         return jsonify(success=False, error="Cannot block yourself")
+    
+#     if current_user.is_blocking(user):
+#         return jsonify(success=False, error="User already blocked")
+    
+#     try:
+#         current_user.block(user)
+        
+#         # Remove friendship if exists
+#         if user in current_user.friends:
+#             current_user.remove_friend(user)
+            
+#         # Remove any pending friend requests
+#         FriendRequest.query.filter(
+#             ((FriendRequest.sender_id == current_user.id) & (FriendRequest.receiver_id == user_id)) |
+#             ((FriendRequest.sender_id == user_id) & (FriendRequest.receiver_id == current_user.id))
+#         ).delete()
+        
+#         db.session.commit()
+        
+#         return jsonify(success=True, message=f"{user.first_name} has been blocked")
+        
+#     except Exception as e:
+#         db.session.rollback()
+#         return jsonify(success=False, error=str(e))
+
+
+
+
+# Add these routes to your auth.py
+
+@auth.route("/block_user/<int:user_id>", methods=["POST"])
+@login_required
+def block_user(user_id):
+    """Block a user"""
+    user = User.query.get_or_404(user_id)
+    
+    if user.id == current_user.id:
+        return jsonify(success=False, error="Cannot block yourself")
+    
+    if current_user.is_blocking(user):
+        return jsonify(success=False, error="User already blocked")
+    
+    try:
+        current_user.block(user)
+        
+        # Remove friendship if exists
+        if user in current_user.friends:
+            current_user.remove_friend(user)
+            
+        # Remove any pending friend requests
+        FriendRequest.query.filter(
+            ((FriendRequest.sender_id == current_user.id) & (FriendRequest.receiver_id == user_id)) |
+            ((FriendRequest.sender_id == user_id) & (FriendRequest.receiver_id == current_user.id))
+        ).delete()
+        
+        db.session.commit()
+        
+        return jsonify(success=True, message=f"{user.first_name} has been blocked")
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify(success=False, error=str(e))
+
+@auth.route("/unblock_user/<int:user_id>", methods=["POST"])
+@login_required
+def unblock_user(user_id):
+    """Unblock a user"""
+    user = User.query.get_or_404(user_id)
+    
+    if not current_user.is_blocking(user):
+        return jsonify(success=False, error="User is not blocked")
+    
+    try:
+        current_user.unblock(user)
+        db.session.commit()
+        
+        return jsonify(success=True, message=f"{user.first_name} has been unblocked")
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify(success=False, error=str(e))
+
+@auth.route("/get_blocked_users", methods=["GET"])
+@login_required
+def get_blocked_users():
+    """Get list of blocked users"""
+    blocked_users = current_user.get_blocked_users()
+    
+    blocked_data = []
+    for user in blocked_users:
+        blocked_data.append({
+            'id': user.id,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'profile_pic': user.profile_pic or url_for('static', filename='assets/img/default-avatar.png'),
+            'email': user.email
+        })
+    
+    return jsonify(blocked_users=blocked_data)
+
+
+
+# @auth.route("/unblock_user/<int:user_id>", methods=["POST"])
+# @login_required
+# def unblock_user(user_id):
+#     """Unblock a user"""
+#     user = User.query.get_or_404(user_id)
+    
+#     if not current_user.is_blocking(user):
+#         return jsonify(success=False, error="User is not blocked")
+    
+#     try:
+#         current_user.unblock(user)
+#         db.session.commit()
+        
+#         return jsonify(success=True, message=f"{user.first_name} has been unblocked")
+        
+#     except Exception as e:
+#         db.session.rollback()
+#         return jsonify(success=False, error=str(e))
+
+# @auth.route("/get_blocked_users", methods=["GET"])
+# @login_required
+# def get_blocked_users():
+#     """Get list of blocked users"""
+#     blocked_users = current_user.get_blocked_users()
+    
+#     blocked_data = []
+#     for user in blocked_users:
+#         blocked_data.append({
+#             'id': user.id,
+#             'first_name': user.first_name,
+#             'last_name': user.last_name,
+#             'profile_pic': user.profile_pic or url_for('static', filename='assets/img/default-avatar.png'),
+#             'email': user.email
+#         })
+    
+#     return jsonify(blocked_users=blocked_data)
+
+
+
+
+
+
+# Update the existing profile route to handle new fields
+# @auth.route("/<int:user_id>", methods=["GET", "POST"])
+# @login_required
+# def profile(user_id):
+#     user = User.query.get_or_404(user_id)
+
+#     # Only allow users to edit their own profile
+#     if user.id != current_user.id:
+#         flash("You can only edit your own profile.", "warning")
+#         return redirect(url_for('auth.profile', user_id=current_user.id))
+
+#     if request.method == "POST":
+#         try:
+#             # Handle profile fields from registration form
+#             current_user.first_name = request.form.get('first_name', current_user.first_name)
+#             current_user.last_name = request.form.get('last_name', current_user.last_name)
+#             current_user.email = request.form.get('email', current_user.email)
+#             current_user.phone_number = request.form.get('phone_number', current_user.phone_number)
+#             current_user.city = request.form.get('city', current_user.city)
+#             current_user.country = request.form.get('country', current_user.country)
+#             current_user.gender = request.form.get('gender', current_user.gender)
+#             current_user.marital_status = request.form.get('marital_status', current_user.marital_status)
+#             current_user.interests = request.form.get('interests', current_user.interests)
+#             current_user.bio = request.form.get('bio', current_user.bio)
+
+#             # Handle date of birth
+#             dob_str = request.form.get('dob')
+#             if dob_str:
+#                 try:
+#                     current_user.dob = datetime.strptime(dob_str, "%Y-%m-%d").date()
+#                 except ValueError:
+#                     flash("Invalid date format for date of birth.", "warning")
+
+#             # Handle profile picture
+#             if 'profile_pic' in request.files:
+#                 file = request.files['profile_pic']
+#                 if file and file.filename != '' and allowed_file(file.filename):
+#                     try:
+#                         result = cloudinary.uploader.upload(
+#                             file,
+#                             folder="kimbela/profiles",
+#                             transformation=[
+#                                 {'width': 400, 'height': 400, 'crop': 'fill', 'gravity': 'face'},
+#                                 {'quality': 'auto', 'fetch_format': 'auto'}
+#                             ]
+#                         )
+#                         current_user.profile_pic = result['secure_url']
+#                         flash("Profile picture updated successfully!", "success")
+#                     except Exception as e:
+#                         print(f"Profile picture upload error: {e}")
+#                         flash("Failed to upload profile picture.", "danger")
+
+#             # Handle cover photo
+#             if 'cover_pic' in request.files:
+#                 file = request.files['cover_pic']
+#                 if file and file.filename != '' and allowed_file(file.filename):
+#                     try:
+#                         result = cloudinary.uploader.upload(
+#                             file,
+#                             folder="kimbela/covers",
+#                             transformation=[
+#                                 {'width': 1200, 'height': 400, 'crop': 'fill'},
+#                                 {'quality': 'auto', 'fetch_format': 'auto'}
+#                             ]
+#                         )
+#                         current_user.cover_pic = result['secure_url']
+#                         flash("Cover photo updated successfully!", "success")
+#                     except Exception as e:
+#                         print(f"Cover photo upload error: {e}")
+#                         flash("Failed to upload cover photo.", "danger")
+
+#             db.session.commit()
+#             flash("Profile updated successfully!", "success")
+
+#         except Exception as e:
+#             db.session.rollback()
+#             flash("An error occurred while updating your profile.", "danger")
+#             print(f"Profile update error: {e}")
+
+#         return redirect(url_for('auth.profile', user_id=current_user.id))
+
+#     # GET request - load profile data
+#     posts = Post.query.filter_by(author_id=current_user.id)\
+#                       .order_by(Post.created_at.desc()).all()
+
+#     # Get friends (excluding blocked users)
+#     friends = [f for f in current_user.friends if not current_user.is_blocking(f)]
+
+#     # Get blocked users
+#     blocked_users = current_user.get_blocked_users()
+
+#     return render_template(
+#         "profile.html",
+#         user=current_user,
+#         posts=posts,
+#         friends=friends,
+#         blocked_users=blocked_users
+#     )
+
+
+
+
+
+
+@auth.route("/<int:user_id>", methods=["GET", "POST"])
+@login_required
+def profile(user_id):
+    user = User.query.get_or_404(user_id)
+
+    # Only allow users to edit their own profile
+    if user.id != current_user.id:
+        flash("You can only edit your own profile.", "warning")
+        return redirect(url_for('auth.profile', user_id=current_user.id))
+
+    if request.method == "POST":
+        try:
+            # Handle profile fields from registration form
+            current_user.first_name = request.form.get('first_name', current_user.first_name)
+            current_user.last_name = request.form.get('last_name', current_user.last_name)
+            current_user.email = request.form.get('email', current_user.email)
+            current_user.phone_number = request.form.get('phone_number', current_user.phone_number)
+            current_user.city = request.form.get('city', current_user.city)
+            current_user.country = request.form.get('country', current_user.country)
+            current_user.gender = request.form.get('gender', current_user.gender)
+            current_user.marital_status = request.form.get('marital_status', current_user.marital_status)
+            current_user.interests = request.form.get('interests', current_user.interests)
+            current_user.bio = request.form.get('bio', current_user.bio)
+
+            # Handle date of birth
+            dob_str = request.form.get('dob')
+            if dob_str:
+                try:
+                    current_user.dob = datetime.strptime(dob_str, "%Y-%m-%d").date()
+                except ValueError:
+                    flash("Invalid date format for date of birth.", "warning")
+
+            # Handle profile picture
+            if 'profile_pic' in request.files:
+                file = request.files['profile_pic']
+                if file and file.filename != '' and allowed_file(file.filename):
+                    try:
+                        result = cloudinary.uploader.upload(
+                            file,
+                            folder="kimbela/profiles",
+                            transformation=[
+                                {'width': 400, 'height': 400, 'crop': 'fill', 'gravity': 'face'},
+                                {'quality': 'auto', 'fetch_format': 'auto'}
+                            ]
+                        )
+                        current_user.profile_pic = result['secure_url']
+                        flash("Profile picture updated successfully!", "success")
+                    except Exception as e:
+                        print(f"Profile picture upload error: {e}")
+                        flash("Failed to upload profile picture.", "danger")
+
+            # Handle cover photo
+            if 'cover_pic' in request.files:
+                file = request.files['cover_pic']
+                if file and file.filename != '' and allowed_file(file.filename):
+                    try:
+                        result = cloudinary.uploader.upload(
+                            file,
+                            folder="kimbela/covers",
+                            transformation=[
+                                {'width': 1200, 'height': 400, 'crop': 'fill'},
+                                {'quality': 'auto', 'fetch_format': 'auto'}
+                            ]
+                        )
+                        current_user.cover_pic = result['secure_url']
+                        flash("Cover photo updated successfully!", "success")
+                    except Exception as e:
+                        print(f"Cover photo upload error: {e}")
+                        flash("Failed to upload cover photo.", "danger")
+
+            db.session.commit()
+            flash("Profile updated successfully!", "success")
+
+        except Exception as e:
+            db.session.rollback()
+            flash("An error occurred while updating your profile.", "danger")
+            print(f"Profile update error: {e}")
+
+        return redirect(url_for('auth.profile', user_id=current_user.id))
+
+    # GET request - load profile data
+    posts = Post.query.filter_by(author_id=current_user.id)\
+                      .order_by(Post.created_at.desc()).all()
+
+    # Get friends (excluding blocked users)
+    friends = [f for f in current_user.friends if not current_user.is_blocking(f)]
+
+    # Get blocked users
+    blocked_users = current_user.get_blocked_users()
+
+    return render_template(
+        "profile.html",
+        user=current_user,
+        posts=posts,
+        friends=friends,
+        blocked_users=blocked_users  # Add this line
+    )
+
+
+
+
 
            
 @auth.route("/logout")
