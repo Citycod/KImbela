@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Dashboard – Kimbela</title>
 
@@ -18,227 +18,478 @@
             --border: #dddfe2;
             --text: #1c1e21;
             --text-light: #606770;
+            --sidebar-width: 280px;
+            --main-width: 680px;
         }
 
         * { box-sizing: border-box; }
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: var(--fb-gray);
-            color: var(--text);
-            margin: 0;
-            padding: 0;
-        }
+        body { font-family: 'Poppins', sans-serif; background: var(--fb-gray); color: var(--text); margin: 0; padding: 0; }
 
         /* NAVBAR */
         .fb-navbar {
-            height: 60px;
-            background: white;
-            border-bottom: 1px solid var(--border);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            box-shadow: 0 1px 2px rgba(0,0,0,.05);
+            height: 60px; background: white; border-bottom: 1px solid var(--border);
+            position: sticky; top: 0; z-index: 1000; box-shadow: 0 1px 2px rgba(0,0,0,.05);
         }
-
         .search-bar input {
-            width: 100%;
-            padding: 8px 40px;
-            border: none;
-            border-radius: 50px;
-            background: var(--fb-gray);
-            font-size: 15px;
+            width: 100%; padding: 8px 40px; border: none; border-radius: 50px;
+            background: var(--fb-gray); font-size: 15px;
         }
-
         .nav-icons .icon {
-            width: 40px; height: 40px;
-            border-radius: 50%;
-            background: var(--fb-gray);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 4px;
-            cursor: pointer;
+            width: 40px; height: 40px; border-radius: 50%; background: var(--fb-gray);
+            display: flex; align-items: center; justify-content: center; margin: 0 4px; cursor: pointer;
+        }
+        .profile-pic { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; cursor: pointer; }
+
+        /* LAYOUT */
+        .dashboard-container {
+            display: flex; min-height: calc(100vh - 60px); margin-top: 60px;
         }
 
-        .profile-pic {
-            width: 40px; height: 40px;
-            border-radius: 50%;
-            object-fit: cover;
-            cursor: pointer;
+        /* LEFT SIDEBAR */
+        .left-sidebar {
+            width: var(--sidebar-width); padding: 20px 10px; position: sticky; top: 60px;
+            height: calc(100vh - 60px); overflow-y: auto; background: var(--fb-gray); border-right: 1px solid var(--border);
         }
+        .sidebar-item {
+            display: flex; align-items: center; padding: 8px 12px; border-radius: 8px; margin-bottom: 4px;
+            color: var(--text); font-weight: 500; cursor: pointer; transition: background 0.2s;
+        }
+        .sidebar-item:hover { background: #e4e6eb; }
+        .sidebar-item i { font-size: 1.4rem; margin-right: 12px; width: 32px; }
+        .sidebar-item.active { background: #e7f3ff; color: var(--fb-blue); font-weight: 600; }
 
-        /* MAIN CONTENT – centred, max 680px */
+        /* MAIN CONTENT */
         .main-content {
-            max-width: 680px;
-            margin: 20px auto;
-            padding: 0 10px;
+            flex: 1; max-width: var(--main-width); margin: 0 auto; padding: 20px 10px;
         }
+
+        /* RIGHT SIDEBAR */
+        .right-sidebar {
+            width: var(--sidebar-width); padding: 20px 10px; position: sticky; top: 60px;
+            height: calc(100vh - 60px); overflow-y: auto; background: var(--fb-gray); border-left: 1px solid var(--border);
+        }
+        .sidebar-header { font-size: 1.1rem; font-weight: 600; color: var(--text-light); margin-bottom: 12px; }
 
         /* POST COMPOSER */
         .post-composer {
-            background: white;
-            border-radius: 12px;
-            padding: 12px;
-            box-shadow: 0 1px 2px rgba(0,0,0,.05);
-            margin-bottom: 20px;
+            background: white; border-radius: 12px; padding: 12px;
+            box-shadow: 0 1px 2px rgba(0,0,0,.05); margin-bottom: 20px;
         }
-
         .composer-header { display: flex; align-items: center; margin-bottom: 10px; }
         .composer-header img { width: 40px; height: 40px; border-radius: 50%; margin-right: 10px; }
-
         .composer-input {
-            flex: 1;
-            padding: 12px 16px;
-            background: var(--fb-gray);
-            border-radius: 50px;
-            font-size: 15px;
-            cursor: pointer;
+            flex: 1; padding: 12px 16px; background: var(--fb-gray); border-radius: 50px;
+            font-size: 15px; cursor: pointer;
         }
-
         .composer-footer {
-            display: flex;
-            justify-content: space-around;
-            padding-top: 8px;
-            border-top: 1px solid var(--border);
-            margin-top: 10px;
+            display: flex; justify-content: space-around; padding-top: 8px;
+            border-top: 1px solid var(--border); margin-top: 10px;
         }
-
         .composer-btn {
-            display: flex;
-            align-items: center;
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-weight: 600;
-            color: var(--text-light);
-            cursor: pointer;
+            display: flex; align-items: center; padding: 8px 12px; border-radius: 8px;
+            font-weight: 600; color: var(--text-light); cursor: pointer;
         }
-
         .composer-btn i { font-size: 1.4rem; margin-right: 8px; }
         .bi-camera-video-fill { color: #f02849; }
         .bi-image-fill { color: #45bd62; }
         .bi-emoji-smile-fill { color: #f7b928; }
 
+        /* PEOPLE YOU MAY KNOW (AFTER FIRST POST) */
+        .suggestions-section {
+            background: white; border-radius: 12px; padding: 16px;
+            box-shadow: 0 1px 2px rgba(0,0,0,.05); margin: 20px 0;
+        }
+        .suggestions-title {
+            font-size: 1.1rem; font-weight: 600; margin-bottom: 12px; color: var(--text);
+        }
+        .suggestions-slider { position: relative; overflow: hidden; }
+        .suggestions-track { display: flex; transition: transform 0.3s ease; gap: 12px; }
+        .suggestion-card {
+            min-width: 160px; text-align: center; cursor: pointer; transition: transform 0.2s;
+        }
+        .suggestion-card:hover { transform: translateY(-2px); }
+        .suggestion-avatar {
+            width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 8px; object-fit: cover;
+        }
+        .suggestion-name { font-weight: 600; font-size: 0.95rem; margin-bottom: 4px; }
+        .suggestion-mutual { font-size: 0.8rem; color: var(--text-light); margin-bottom: 8px; }
+        .btn-add-friend, .btn-cancel-request {
+            width: 100%; padding: 6px; font-size: 0.85rem; border-radius: 6px;
+        }
+
+        /* PROFILE MODAL ENHANCEMENTS */
+.profile-modal-content {
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.profile-header {
+  margin: -1rem -1rem 0 -1rem;
+}
+
+.cover-photo-container {
+  position: relative;
+  height: 200px;
+  overflow: hidden;
+  border-radius: 12px 12px 0 0;
+}
+
+.cover-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(transparent 60%, rgba(0,0,0,0.3));
+}
+
+.profile-info-container {
+  position: relative;
+  margin-top: -60px;
+  padding: 0 20px 20px;
+}
+
+.profile-avatar-container {
+  position: relative;
+  display: inline-block;
+}
+
+.profile-avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 4px solid white;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+  object-fit: cover;
+}
+
+.profile-name {
+  font-weight: 700;
+  color: var(--text);
+  font-size: 1.5rem;
+}
+
+.profile-details {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.detail-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.9rem;
+  color: var(--text-light);
+  background: var(--fb-gray);
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.detail-item i {
+  font-size: 0.8rem;
+}
+
+.profile-bio {
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.bio-text {
+  color: var(--text);
+  font-size: 0.95rem;
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* Detail Cards */
+.profile-details-section {
+  padding: 0 8px;
+}
+
+.detail-card {
+  background: var(--fb-gray);
+  border-radius: 12px;
+  padding: 16px;
+  height: 100%;
+}
+
+.detail-card-title {
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 12px;
+  font-size: 0.95rem;
+}
+
+.detail-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: between;
+  align-items: flex-start;
+}
+
+.detail-label {
+  font-weight: 500;
+  color: var(--text-light);
+  min-width: 100px;
+  font-size: 0.85rem;
+}
+
+.detail-value {
+  color: var(--text);
+  font-weight: 500;
+  flex: 1;
+  font-size: 0.85rem;
+}
+
+/* Action Buttons */
+.profile-actions {
+  padding-bottom: 16px;
+}
+
+.profile-actions .btn {
+  border-radius: 8px;
+  font-weight: 600;
+  padding: 10px 20px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .profile-details {
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+  }
+  
+  .detail-row {
+      flex-direction: column;
+      gap: 2px;
+  }
+  
+  .detail-label {
+      min-width: auto;
+  }
+  
+  .profile-actions .btn {
+      width: 100%;
+      margin-bottom: 8px;
+  }
+  
+  .profile-actions .btn:last-child {
+      margin-bottom: 0;
+  }
+}
+
+
+        .btn-add-friend { background: var(--fb-blue); color: white; }
+        .btn-cancel-request { background: #e4e6eb; color: var(--text); }
+
+        .slider-arrow {
+            position: absolute; top: 50%; transform: translateY(-50%);
+            background: rgba(255,255,255,.9); border: none; border-radius: 50%;
+            width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; z-index: 2; box-shadow: 0 1px 3px rgba(0,0,0,.2);
+        }
+        .slider-arrow:hover { background: white; }
+        .slider-arrow.prev { left: 8px; }
+        .slider-arrow.next { right: 8px; }
+        .slider-arrow.disabled { opacity: 0.4; cursor: not-allowed; }
+
+        /* PEOPLE YOU MAY KNOW SLIDER FIXES */
+.suggestions-section {
+  background: white; 
+  border-radius: 12px; 
+  padding: 16px;
+  box-shadow: 0 1px 2px rgba(0,0,0,.05); 
+  margin: 20px 0;
+  position: relative;
+}
+
+.suggestions-slider {
+  position: relative;
+  overflow: hidden;
+  padding: 0 40px; /* Space for arrows */
+}
+
+.suggestions-track {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+  padding: 8px 0;
+}
+
+.suggestions-track::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
+
+.suggestion-card {
+  min-width: 180px;
+  flex: 0 0 auto;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 12px;
+  background: white;
+}
+
+.suggestion-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.slider-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: all 0.2s;
+  font-size: 1.2rem;
+  color: var(--text-light);
+}
+
+.slider-arrow:hover {
+  background: var(--fb-blue);
+  color: white;
+  border-color: var(--fb-blue);
+  box-shadow: 0 4px 12px rgba(24, 119, 242, 0.3);
+}
+
+.slider-arrow.prev {
+  left: 8px;
+}
+
+.slider-arrow.next {
+  right: 8px;
+}
+
+.slider-arrow.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: var(--fb-gray);
+}
+
+.slider-arrow.disabled:hover {
+  background: var(--fb-gray);
+  color: var(--text-light);
+  border-color: var(--border);
+}
+
         /* POST CARD */
         .post-card {
-            background: white;
-            border-radius: 12px;
-            margin-bottom: 16px;
+            background: white; border-radius: 12px; margin-bottom: 16px;
             box-shadow: 0 1px 2px rgba(0,0,0,.05);
         }
-
         .post-header {
-            padding: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+            padding: 12px; display: flex; align-items: center; justify-content: space-between;
         }
-
         .post-avatar { width: 40px; height: 40px; border-radius: 50%; margin-right: 10px; }
         .post-author { font-weight: 600; }
         .post-time { font-size: .8rem; color: var(--text-light); }
-
         .post-content { padding: 0 12px 12px; }
         .post-media img, .post-media video {
             width: 100%; border-radius: 12px; margin-top: 8px; max-height: 500px; object-fit: contain;
         }
-
         .post-actions {
-            padding: 8px 12px;
-            border-top: 1px solid var(--border);
-            display: flex;
-            justify-content: space-around;
-            color: var(--text-light);
-            font-weight: 600;
+            padding: 8px 12px; border-top: 1px solid var(--border);
+            display: flex; justify-content: space-around; color: var(--text-light); font-weight: 600;
         }
-
         .action-btn {
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 5px;
+            cursor: pointer; display: flex; align-items: center; gap: 5px;
         }
-
         .action-btn:hover { color: var(--fb-blue); }
         .action-btn.liked { color: var(--fb-blue); }
 
-        /* COMMENTS SECTION – scrollable, max 3 visible */
+        /* COMMENTS */
         .comments-section {
-            padding: 8px 12px;
-            border-top: 1px solid var(--border);
-            background: #f8f9fa;
-            max-height: 200px;
-            overflow-y: auto;
+            padding: 8px 12px; border-top: 1px solid var(--border); background: #f8f9fa;
+            max-height: 200px; overflow-y: auto;
         }
-
-        .comment-input {
-            display: flex;
-            gap: 8px;
-            margin-top: 8px;
-        }
-
+        .comment-input { display: flex; gap: 8px; margin-top: 8px; }
         .comment-input img { width: 32px; height: 32px; border-radius: 50%; }
         .comment-input input {
-            flex: 1;
-            border: none;
-            background: white;
-            padding: 8px 12px;
-            border-radius: 20px;
-            font-size: .9rem;
+            flex: 1; border: none; background: white; padding: 8px 12px;
+            border-radius: 20px; font-size: .9rem;
         }
-
-        .comment {
-            display: flex;
-            gap: 8px;
-            margin-top: 8px;
-            font-size: .9rem;
-        }
-
+        .comment { display: flex; gap: 8px; margin-top: 8px; font-size: .9rem; }
         .comment img { width: 28px; height: 28px; border-radius: 50%; }
         .comment-body {
-            background: white;
-            padding: 6px 10px;
-            border-radius: 18px;
-            flex: 1;
+            background: white; padding: 6px 10px; border-radius: 18px; flex: 1;
         }
-
         .comment-author { font-weight: 600; }
         .comment-text { margin: 2px 0 0; }
         .comment-actions { font-size: .75rem; color: var(--text-light); margin-top: 4px; }
         .comment-actions span { cursor: pointer; margin-right: 8px; }
         .comment-actions span:hover { text-decoration: underline; }
 
-        .reply { margin-left: 36px; margin-top: 6px; }
-
         /* LOADER */
         .loader {
-            width: 20px; height: 20px;
-            border: 2px solid #f3f3f3;
-            border-top: 2px solid var(--fb-blue);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            display: inline-block;
-            margin-left: 8px;
+            width: 16px; height: 16px; border: 2px solid #f3f3f3;
+            border-top: 2px solid var(--fb-blue); border-radius: 50%;
+            animation: spin 0.8s linear infinite; display: inline-block; margin-left: 6px;
         }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         /* MODAL */
         .modal-content { border-radius: 16px; }
         .modal-body { max-height: 70vh; overflow-y: auto; }
+
+        /* MOBILE */
+        @media (max-width: 992px) {
+            .left-sidebar, .right-sidebar { display: none; }
+            .main-content { max-width: 100%; padding: 16px; }
+            .mobile-menu-btn { display: block !important; }
+        }
+        .mobile-menu-btn {
+            display: none; background: none; border: none; font-size: 1.5rem; color: var(--text);
+        }
+        .mobile-sidebar {
+            position: fixed; top: 60px; left: 0; width: 280px; height: calc(100vh - 60px);
+            background: white; z-index: 999; box-shadow: 2px 0 5px rgba(0,0,0,.1); padding: 16px;
+            transform: translateX(-100%); transition: transform 0.3s ease;
+        }
+        .mobile-sidebar.open { transform: translateX(0); }
     </style>
 </head>
 <body>
 
     <!-- NAVBAR -->
     <nav class="fb-navbar d-flex align-items-center px-3">
+        <button class="mobile-menu-btn me-2" onclick="toggleMobileMenu()">
+            <i class="bi bi-list"></i>
+        </button>
         <a href="{{ url_for('auth.user_dashboard') }}" class="me-3">
             <img src="{{ url_for('static', filename='assets/img/nn.png') }}" alt="Kimbela" height="40">
         </a>
 
-        <div class="search-bar position-relative d-none d-md-block">
+        <div class="search-bar position-relative d-none d-md-block flex-fill mx-3">
             <input type="text" placeholder="Search Kimbela..." class="border-0">
             <i class="bi bi-search position-absolute top-50 start-3 translate-middle-y text-muted"></i>
         </div>
@@ -262,114 +513,236 @@
         </div>
     </nav>
 
-    <!-- MAIN CONTENT -->
-    <div class="main-content">
+    <!-- MOBILE SIDEBAR -->
+    <div class="mobile-sidebar" id="mobileSidebar">
+        <div class="sidebar-item active"><i class="bi bi-house-door"></i> Home</div>
+        <a href="{{ url_for('auth.profile', user_id=current_user.id) }}" class="sidebar-item text-decoration-none">
+            <i class="bi bi-person"></i> Profile
+        </a>
+        <div class="sidebar-item"><i class="bi bi-people"></i> Groups</div>
+        <div class="sidebar-item"><i class="bi bi-gear"></i> Market Place</div>
+        <div class="sidebar-item text-danger"><i class="bi bi-box-arrow-right"></i> Logout</div>
+    </div>
 
-        <!-- POST COMPOSER -->
-        <div class="post-composer">
-            <div class="composer-header">
-                <a href="{{ url_for('auth.profile', user_id=current_user.id) }}">
-                    <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-                         alt="{{ current_user.first_name }}" class="rounded-circle">
-                </a>
-                <div class="composer-input" data-bs-toggle="modal" data-bs-target="#postModal">
-                    What's on your mind, {{ current_user.first_name }}?
-                </div>
-            </div>
+    <!-- DASHBOARD CONTAINER -->
+    <div class="dashboard-container">
 
-            <div class="composer-footer">
-                <div class="composer-btn" data-bs-toggle="modal" data-bs-target="#postModal"><i class="bi bi-camera-video-fill"></i> Live Video</div>
-                <div class="composer-btn" onclick="document.getElementById('photoInput').click()">
-                    <i class="bi bi-image-fill"></i> Photo/Video
-                    <input type="file" id="photoInput" accept="image/*,video/*" hidden onchange="previewMedia(this)">
-                </div>
-                <div class="composer-btn"><i class="bi bi-emoji-smile-fill"></i> Feeling/Activity</div>
-            </div>
+        <!-- LEFT SIDEBAR -->
+        <div class="left-sidebar d-none d-lg-block">
+            <div class="sidebar-item active"><i class="bi bi-house-door"></i> Home</div>
+            <a href="{{ url_for('auth.profile', user_id=current_user.id) }}" class="sidebar-item text-decoration-none">
+                <i class="bi bi-person"></i> Profile
+            </a>
+            <div class="sidebar-item"><i class="bi bi-people-fill"></i>Groups</div>
+            <div class="sidebar-item"><i class="bi bi-cart3"></i> Market Place</div>
+            <div class="sidebar-item text-danger"><i class="bi bi-box-arrow-right"></i> Logout</div>
         </div>
 
-        <!-- POSTS FEED -->
-        <div id="posts-feed">
-            {% for post in posts %}
-            <div class="post-card" data-post-id="{{ post.id }}">
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
 
-                <!-- HEADER -->
-                <div class="post-header">
-                    <div class="d-flex align-items-center">
-                        <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" class="post-avatar">
-                        <div>
-                            <div class="post-author">{{ current_user.first_name }} {{ current_user.last_name }}</div>
-                            <div class="post-time">{{ post.created_at.strftime('%b %d at %I:%M %p') }}</div>
-                        </div>
-                    </div>
-                    <div class="dropdown">
-                        <button class="btn btn-sm" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item text-primary edit-post" href="#" data-bs-toggle="modal" data-bs-target="#editPostModal" data-post-id="{{ post.id }}">Edit</a></li>
-                            <li><a class="dropdown-item text-danger delete-post" href="#" data-post-id="{{ post.id }}">Delete <span class="loader" style="display:none;"></span></a></li>
-                        </ul>
+            <!-- POST COMPOSER -->
+            <div class="post-composer">
+                <div class="composer-header">
+                    <a href="{{ url_for('auth.profile', user_id=current_user.id) }}">
+                        <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" alt="" class="rounded-circle">
+                    </a>
+                    <div class="composer-input" data-bs-toggle="modal" data-bs-target="#postModal">
+                        What's on your mind, {{ current_user.first_name }}?
                     </div>
                 </div>
-
-                <!-- CONTENT -->
-                <div class="post-content">
-                    <p class="post-text">{{ post.content }}</p>
-                    {% if post.image %}
-                    <div class="post-media"><img src="{{ post.image }}" alt="Post"></div>
-                    {% endif %}
-                    {% if post.video %}
-                    <div class="post-media"><video controls><source src="{{ post.video }}"></video></div>
-                    {% endif %}
+                <div class="composer-footer">
+                    <div class="composer-btn" data-bs-toggle="modal" data-bs-target="#postModal"><i class="bi bi-camera-video-fill"></i> Live Video</div>
+                    <div class="composer-btn" onclick="document.getElementById('photoInput').click()">
+                        <i class="bi bi-image-fill"></i> Photo/Video
+                        <input type="file" id="photoInput" accept="image/*,video/*" hidden onchange="previewMedia(this)">
+                    </div>
+                    <div class="composer-btn"><i class="bi bi-emoji-smile-fill"></i> Feeling/Activity</div>
                 </div>
+            </div>
 
-                <!-- ACTIONS -->
-                <div class="post-actions">
-                    <div class="action-btn like-btn" data-post-id="{{ post.id }}">
-                        <i class="bi bi-hand-thumbs-up"></i> <span class="like-count">{{ post.likes_list|length }}</span>
-                    </div>
-                    <div class="action-btn view-comments" data-bs-toggle="modal" data-bs-target="#commentModal" data-post-id="{{ post.id }}">
-                        <i class="bi bi-chat"></i> Comment
-                    </div>
-                    <div class="action-btn share-btn" data-url="{{ url_for('auth.profile', user_id=current_user.id, _anchor='post-' ~ post.id) }}">
-                        <i class="bi bi-share"></i> Share
-                    </div>
-                </div>
-
-                <!-- COMMENTS SECTION -->
-                <div class="comments-section">
-                    <div class="comment-input">
-                        <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" alt="">
-                        <input type="text" placeholder="Write a comment..." class="add-comment" data-post-id="{{ post.id }}">
-                    </div>
-
-                    <!-- Show up to 3 comments -->
-                    {% set visible_comments = post.comments_list[:3] %}
-                    {% for comment in visible_comments %}
-                    <div class="comment" id="comment-{{ comment.id }}">
-                        <img src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" alt="">
-                        <div class="comment-body">
-                            <div class="comment-author">{{ comment.author.first_name }}</div>
-                            <div class="comment-text">{{ comment.content }}</div>
-                            <div class="comment-actions">
-                                <span class="reply-comment" data-comment-id="{{ comment.id }}">Reply</span>
-                                <span class="copy-comment-link" data-comment-id="{{ comment.id }}">Link</span>
+            <!-- POSTS FEED -->
+            <div id="posts-feed">
+                {% set first_post = posts[0] if posts else none %}
+                {% if first_post %}
+                <div class="post-card" data-post-id="{{ first_post.id }}">
+                    <div class="post-header">
+                        <div class="d-flex align-items-center">
+                            <img src="{{ first_post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" class="post-avatar">
+                            <div>
+                                <div class="post-author">{{ first_post.author.first_name }} {{ first_post.author.last_name }}</div>
+                                <div class="post-time">{{ first_post.created_at.strftime('%b %d at %I:%M %p') }}</div>
                             </div>
                         </div>
+                        <div class="dropdown">
+                            <button class="btn btn-sm" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button>
+                            <ul class="dropdown-menu">
+                                {% if first_post.author.id == current_user.id %}
+                                <li><a class="dropdown-item text-primary edit-post" href="#" data-bs-toggle="modal" data-bs-target="#editPostModal" data-post-id="{{ first_post.id }}">Edit</a></li>
+                                <li><a class="dropdown-item text-danger delete-post" href="#" data-post-id="{{ first_post.id }}">Delete <span class="loader" style="display:none;"></span></a></li>
+                                {% endif %}
+                            </ul>
+                        </div>
                     </div>
-                    {% endfor %}
-
-                    <!-- "View all" link if more than 3 -->
-                    {% if post.comments_list|length > 3 %}
-                    <div class="text-center mt-2">
-                        <a href="#" class="text-muted small view-all-comments" data-post-id="{{ post.id }}">
-                          View all {{ post.comments_list|length }} comments
-                        </a>
+                    <div class="post-content">
+                        <p class="post-text">{{ first_post.content }}</p>
+                        {% if first_post.image %}<div class="post-media"><img src="{{ first_post.image }}" alt="Post"></div>{% endif %}
+                        {% if first_post.video %}<div class="post-media"><video controls><source src="{{ first_post.video }}"></video></div>{% endif %}
                     </div>
-                    {% endif %}
+                    <div class="post-actions">
+                        <div class="action-btn like-btn" data-post-id="{{ first_post.id }}">
+                            <i class="bi bi-hand-thumbs-up"></i> <span class="like-count">{{ first_post.likes_list|length }}</span>
+                        </div>
+                        <div class="action-btn view-comments" data-bs-toggle="modal" data-bs-target="#commentModal" data-post-id="{{ first_post.id }}">
+                            <i class="bi bi-chat"></i> Comment
+                        </div>
+                        <div class="action-btn share-btn" data-url="{{ url_for('auth.user_dashboard', _anchor='post-' ~ first_post.id) }}">
+                            <i class="bi bi-share"></i> Share
+                        </div>
+                    </div>
+                    <div class="comments-section">
+                        <div class="comment-input">
+                            <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" alt="">
+                            <input type="text" placeholder="Write a comment..." class="add-comment" data-post-id="{{ first_post.id }}">
+                        </div>
+                        {% for comment in first_post.comments_list[:3] %}
+                        <div class="comment" id="comment-{{ comment.id }}">
+                            <img src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" alt="">
+                            <div class="comment-body">
+                                <div class="comment-author">{{ comment.author.first_name }}</div>
+                                <div class="comment-text">{{ comment.content }}</div>
+                                <div class="comment-actions">
+                                    <span class="reply-comment" data-comment-id="{{ comment.id }}">Reply</span>
+                                    <span class="copy-comment-link" data-comment-id="{{ comment.id }}">Link</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
                 </div>
+
+                <!-- PEOPLE YOU MAY KNOW - AFTER FIRST POST -->
+                <div class="suggestions-section">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="suggestions-title m-0">People You May Know</h6>
+                    </div>
+                    <div class="suggestions-slider">
+                        <button class="slider-arrow prev" onclick="scrollSuggestions(-1)"><i class="bi bi-chevron-left"></i></button>
+                        <div class="suggestions-track" id="suggestionsTrack">
+                          {% for user in all_users %}
+                          {% if user.id != current_user.id and user not in current_user.friends %}
+                          <div class="suggestion-card" onclick="openProfileModal({{ user.id }})">
+                              <img src="{{ user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" alt="{{ user.first_name }}" class="suggestion-avatar">
+                              <div class="suggestion-name">{{ user.first_name }} {{ user.last_name }}</div>
+                              <div class="suggestion-mutual">New to Kimbela</div>
+                      
+                              {% if user.id in current_user.sent_pending_ids %}
+                              <button class="btn btn-cancel-request btn-sm w-100 mt-1"
+                                      onclick="event.stopPropagation(); cancelFriendRequest({{ user.id }})">
+                                  Cancel Request
+                              </button>
+                              {% else %}
+                              <button class="btn btn-add-friend btn-sm w-100 mt-1"
+                                      onclick="event.stopPropagation(); addFriend({{ user.id }})">
+                                  Add Friend
+                              </button>
+                              {% endif %}
+                          </div>
+                          {% endif %}
+                      {% endfor %}
+                        </div>
+                        <button class="slider-arrow next" onclick="scrollSuggestions(1)"><i class="bi bi-chevron-right"></i></button>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- REST OF POSTS -->
+                {% for post in posts[1:] %}
+                <div class="post-card" data-post-id="{{ post.id }}">
+                    <div class="post-header">
+                        <div class="d-flex align-items-center">
+                            <img src="{{ post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" class="post-avatar">
+                            <div>
+                                <div class="post-author">{{ post.author.first_name }} {{ post.author.last_name }}</div>
+                                <div class="post-time">{{ post.created_at.strftime('%b %d at %I:%M %p') }}</div>
+                            </div>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-sm" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button>
+                            <ul class="dropdown-menu">
+                                {% if post.author.id == current_user.id %}
+                                <li><a class="dropdown-item text-primary edit-post" href="#" data-bs-toggle="modal" data-bs-target="#editPostModal" data-post-id="{{ post.id }}">Edit</a></li>
+                                <li><a class="dropdown-item text-danger delete-post" href="#" data-post-id="{{ post.id }}">Delete <span class="loader" style="display:none;"></span></a></li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="post-content">
+                        <p class="post-text">{{ post.content }}</p>
+                        {% if post.image %}<div class="post-media"><img src="{{ post.image }}" alt="Post"></div>{% endif %}
+                        {% if post.video %}<div class="post-media"><video controls><source src="{{ post.video }}"></video></div>{% endif %}
+                    </div>
+                    <div class="post-actions">
+                      <div class="action-btn like-btn {% if current_user.has_liked_post(post.id) %}liked{% endif %}" 
+                      data-post-id="{{ post.id }}">
+                     <i class="bi bi-hand-thumbs-up{% if current_user.has_liked_post(post.id) %}-fill{% endif %}"></i> 
+                     <span class="like-count">{{ post.likes_list|length }}</span>
+                 </div>
+                        <div class="action-btn view-comments" data-bs-toggle="modal" data-bs-target="#commentModal" data-post-id="{{ post.id }}">
+                            <i class="bi bi-chat"></i> Comment
+                        </div>
+                        <div class="action-btn share-btn" data-url="{{ url_for('auth.user_dashboard', _anchor='post-' ~ post.id) }}">
+                            <i class="bi bi-share"></i> Share
+                        </div>
+                    </div>
+                    <div class="comments-section">
+                        <div class="comment-input">
+                            <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" alt="">
+                            <input type="text" placeholder="Write a comment..." class="add-comment" data-post-id="{{ post.id }}">
+                        </div>
+                        {% for comment in post.comments_list[:3] %}
+                        <div class="comment" id="comment-{{ comment.id }}">
+                            <img src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" alt="">
+                            <div class="comment-body">
+                                <div class="comment-author">{{ comment.author.first_name }}</div>
+                                <div class="comment-text">{{ comment.content }}</div>
+                                <div class="comment-actions">
+                                    <span class="reply-comment" data-comment-id="{{ comment.id }}">Reply</span>
+                                    <span class="copy-comment-link" data-comment-id="{{ comment.id }}">Link</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
             </div>
-            {% endfor %}
         </div>
 
+        <!-- RIGHT SIDEBAR -->
+        <!-- RIGHT SIDEBAR -->
+<div class="right-sidebar d-none d-lg-block">
+  <div class="sidebar-header">Recent Activity</div>
+  <p class="text-muted small">No recent activity</p>
+
+  <hr class="my-3">
+
+  <div class="sidebar-header">People You May Know</div>
+  <div class="suggestions-slider">
+      <div class="suggestions-track">
+          {% for user in random_three %}
+          <div class="suggestion-card" onclick="openProfileModal({{ user.id }})">
+              <img src="{{ user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" alt="" class="suggestion-avatar">
+              <div class="suggestion-name">{{ user.first_name }} {{ user.last_name }}</div>
+              <button class="btn btn-add-friend btn-sm w-100 mt-1"
+                      onclick="event.stopPropagation(); addFriend({{ user.id }})">
+                  Add Friend
+              </button>
+          </div>
+          {% endfor %}
+      </div>
+  </div>
+</div>
     </div>
 
     <!-- POST MODAL -->
@@ -380,7 +753,7 @@
                     <h5 class="modal-title">Create Post</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <form method="POST" enctype="multipart/form-data" action="{{ url_for('auth.profile', user_id=current_user.id) }}" id="createPostForm">
+                <form method="POST" enctype="multipart/form-data" action="{{ url_for('auth.user_dashboard') }}" id="createPostForm">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                     <div class="modal-body">
                         <textarea name="post_content" class="form-control" rows="4" placeholder="What's on your mind?" required></textarea>
@@ -434,23 +807,79 @@
         </div>
     </div>
 
+    <!-- PROFILE MODAL -->
+    <!-- PROFILE MODAL -->
+<div class="modal fade" id="profileModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+          <div class="modal-header">
+              <h5 class="modal-title">Profile Information</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body p-0" id="profileModalBody">
+              <!-- Content will be loaded here by JavaScript -->
+          </div>
+      </div>
+  </div>
+</div>
+
     <!-- Bootstrap JS -->
     <script src="{{ url_for('static', filename='assets/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
 
     <script>
-        // Loader helpers
-        function showLoader(el) {
-            const loader = el.querySelector('.loader');
-            if (loader) loader.style.display = 'inline-block';
-            el.disabled = true;
-        }
-        function hideLoader(el) {
-            const loader = el.querySelector('.loader');
-            if (loader) loader.style.display = 'none';
-            el.disabled = false;
+        // Mobile menu
+        function toggleMobileMenu() {
+            document.getElementById('mobileSidebar').classList.toggle('open');
         }
 
-        // Media preview (create post)
+        // Scroll suggestions
+        // Scroll suggestions with proper card width calculation
+function scrollSuggestions(dir) {
+  const track = document.getElementById('suggestionsTrack');
+  const card = track.querySelector('.suggestion-card');
+  if (!card) return;
+  
+  const cardWidth = card.offsetWidth + 16; // card width + gap
+  const visibleWidth = track.offsetWidth;
+  const scrollAmount = Math.floor(visibleWidth / cardWidth) * cardWidth;
+  
+  track.scrollBy({
+      left: dir * scrollAmount,
+      behavior: 'smooth'
+  });
+  
+  updateArrowVisibility(track);
+}
+
+// Update arrow visibility based on scroll position
+function updateArrowVisibility(track) {
+  const prevArrow = document.querySelector('.slider-arrow.prev');
+  const nextArrow = document.querySelector('.slider-arrow.next');
+  
+  if (!prevArrow || !nextArrow) return;
+  
+  // Show/hide previous arrow
+  prevArrow.classList.toggle('disabled', track.scrollLeft <= 10);
+  
+  // Show/hide next arrow
+  const maxScroll = track.scrollWidth - track.clientWidth;
+  nextArrow.classList.toggle('disabled', track.scrollLeft >= maxScroll - 10);
+}
+
+// Initialize slider on page load
+document.addEventListener('DOMContentLoaded', function() {
+  const track = document.getElementById('suggestionsTrack');
+  if (track) {
+      updateArrowVisibility(track);
+      
+      // Update arrows on scroll
+      track.addEventListener('scroll', function() {
+          updateArrowVisibility(track);
+      });
+  }
+});
+
+        // Media preview
         function previewMedia(input) {
             const preview = document.getElementById('mediaPreview');
             preview.innerHTML = '';
@@ -458,45 +887,272 @@
             if (file) {
                 const url = URL.createObjectURL(file);
                 const el = file.type.startsWith('image/') ? document.createElement('img') : document.createElement('video');
-                el.src = url; el.controls = true; el.style.borderRadius = '12px'; el.style.maxHeight = '300px';
+                el.src = url; el.controls = true; el.style.borderRadius = '12px'; el.style.maxHeight = '300px'; el.style.width = '100%';
                 preview.appendChild(el);
             }
         }
 
-        /* ---------- LIKE ---------- */
-        document.querySelectorAll('.like-btn').forEach(btn => {
-            btn.addEventListener('click', function () {
-                const postId = this.dataset.postId;
-                fetch(`/like_post/${postId}`, {
-                    method: 'POST',
-                    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
-                })
-                .then(r => r.json())
-                .then(data => {
-                    this.querySelector('.like-count').textContent = data.likes;
-                    this.classList.toggle('liked', data.liked);
-                });
-            });
-        });
+        // Add Friend
+        function addFriend(userId) {
+            const btn = event.target;
+            btn.disabled = true;
+            fetch(`/add_friend/${userId}`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+            }).then(r => r.json()).then(() => {
+                btn.textContent = 'Cancel Request';
+                btn.className = 'btn btn-cancel-request btn-sm w-100 mt-1';
+                btn.onclick = (e) => { e.stopPropagation(); cancelFriendRequest(userId); };
+            }).finally(() => btn.disabled = false);
+        }
 
-        /* ---------- DELETE ---------- */
+        // Cancel Request
+        function cancelFriendRequest(userId) {
+            const btn = event.target;
+            btn.disabled = true;
+            fetch(`/cancel_friend_request/${userId}`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+            }).then(r => r.json()).then(() => {
+                btn.textContent = 'Add Friend';
+                btn.className = 'btn btn-add-friend btn-sm w-100 mt-1';
+                btn.onclick = (e) => { e.stopPropagation(); addFriend(userId); };
+            }).finally(() => btn.disabled = false);
+        }
+
+        // Open Profile Modal
+        // Open Profile Modal with comprehensive user info
+function openProfileModal(userId) {
+  fetch(`/get_user_profile/${userId}`)
+      .then(r => {
+          if (!r.ok) throw new Error('Network response was not ok');
+          return r.json();
+      })
+      .then(data => {
+          const body = document.getElementById('profileModalBody');
+          
+          // Format date of birth
+          const dob = data.dob ? new Date(data.dob).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+          }) : 'Not specified';
+          
+          // Calculate age
+          const age = data.dob ? calculateAge(new Date(data.dob)) : '';
+          
+          body.innerHTML = `
+              <div class="profile-modal-content">
+                  <!-- Profile Header -->
+                  <div class="profile-header position-relative">
+                      <div class="cover-photo-container">
+                          <img src="${data.cover_pic || 'https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg'}" 
+                               alt="Cover photo" class="cover-photo">
+                          <div class="profile-overlay"></div>
+                      </div>
+                      
+                      <div class="profile-info-container text-center">
+                          <div class="profile-avatar-container">
+                              <img src="${data.profile_pic}" 
+                                   alt="${data.first_name}" 
+                                   class="profile-avatar">
+                          </div>
+                          
+                          <div class="profile-text-content mt-3">
+                              <h3 class="profile-name mb-1">${data.first_name} ${data.last_name}</h3>
+                              
+                              <div class="profile-details">
+                                  ${data.marital_status ? `<span class="detail-item">
+                                      <i class="bi bi-heart-fill"></i> ${data.marital_status}
+                                  </span>` : ''}
+                                  
+                                  ${data.city && data.country ? `<span class="detail-item">
+                                      <i class="bi bi-geo-alt-fill"></i> ${data.city}, ${data.country}
+                                  </span>` : ''}
+                                  
+                                  ${age ? `<span class="detail-item">
+                                      <i class="bi bi-balloon-fill"></i> ${age} years old
+                                  </span>` : ''}
+                              </div>
+                              
+                              ${data.bio ? `
+                              <div class="profile-bio mt-2">
+                                  <p class="bio-text">${data.bio}</p>
+                              </div>
+                              ` : ''}
+                          </div>
+                      </div>
+                  </div>
+                  
+                  <!-- Profile Details -->
+                  <div class="profile-details-section mt-4">
+                      <div class="row g-3">
+                          <!-- Personal Information -->
+                          <div class="col-md-6">
+                              <div class="detail-card">
+                                  <h6 class="detail-card-title">
+                                      <i class="bi bi-person-badge-fill me-2"></i>Personal Information
+                                  </h6>
+                                  <div class="detail-list">
+                                      ${data.email ? `
+                                      <div class="detail-row">
+                                          <span class="detail-label">Email:</span>
+                                          <span class="detail-value">${data.email}</span>
+                                      </div>
+                                      ` : ''}
+                                      
+                                      ${data.phone_number ? `
+                                      <div class="detail-row">
+                                          <span class="detail-label">Phone:</span>
+                                          <span class="detail-value">${data.phone_number}</span>
+                                      </div>
+                                      ` : ''}
+                                      
+                                      ${data.gender ? `
+                                      <div class="detail-row">
+                                          <span class="detail-label">Gender:</span>
+                                          <span class="detail-value">${data.gender}</span>
+                                      </div>
+                                      ` : ''}
+                                      
+                                      ${data.dob ? `
+                                      <div class="detail-row">
+                                          <span class="detail-label">Date of Birth:</span>
+                                          <span class="detail-value">${dob}</span>
+                                      </div>
+                                      ` : ''}
+                                  </div>
+                              </div>
+                          </div>
+                          
+                          <!-- Location & Interests -->
+                          <div class="col-md-6">
+                              <div class="detail-card">
+                                  <h6 class="detail-card-title">
+                                      <i class="bi bi-geo-fill me-2"></i>Location & Interests
+                                  </h6>
+                                  <div class="detail-list">
+                                      ${data.city ? `
+                                      <div class="detail-row">
+                                          <span class="detail-label">City:</span>
+                                          <span class="detail-value">${data.city}</span>
+                                      </div>
+                                      ` : ''}
+                                      
+                                      ${data.country ? `
+                                      <div class="detail-row">
+                                          <span class="detail-label">Country:</span>
+                                          <span class="detail-value">${data.country}</span>
+                                      </div>
+                                      ` : ''}
+                                      
+                                      ${data.interests ? `
+                                      <div class="detail-row">
+                                          <span class="detail-label">Interests:</span>
+                                          <span class="detail-value">${data.interests}</span>
+                                      </div>
+                                      ` : ''}
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+                  
+                  <!-- Action Buttons -->
+                  <div class="profile-actions mt-4 text-center">
+                      <a href="${data.profile_url}" class="btn btn-primary btn-lg me-2">
+                          <i class="bi bi-person-circle me-2"></i>View Full Profile
+                      </a>
+                      <button class="btn btn-outline-primary btn-lg" onclick="addFriend(${userId})">
+                          <i class="bi bi-person-plus me-2"></i>Add Friend
+                      </button>
+                  </div>
+              </div>
+          `;
+          
+          // Initialize modal
+          const profileModal = new bootstrap.Modal(document.getElementById('profileModal'));
+          profileModal.show();
+          
+      })
+      .catch(error => {
+          console.error('Error loading profile:', error);
+          alert('Error loading profile information.');
+      });
+}
+
+// Calculate age from date of birth
+function calculateAge(birthDate) {
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+  }
+  
+  return age;
+}
+
+        // Like, Delete, Edit, Comment, Share (unchanged)
+        // Like functionality with better error handling
+document.querySelectorAll('.like-btn').forEach(btn => {
+  btn.addEventListener('click', function () {
+      const postId = this.dataset.postId;
+      const likeBtn = this;
+      
+      fetch(`/like_post/${postId}`, {
+          method: 'POST',
+          headers: { 
+              'X-CSRFToken': '{{ csrf_token }}',
+              'Content-Type': 'application/json'
+          }
+      })
+      .then(response => {
+          if (!response.ok) {
+              throw new Error('Network response was not ok');
+          }
+          return response.json();
+      })
+      .then(data => {
+          if (data.error) {
+              console.error('Error:', data.error);
+              alert('Error: ' + data.error);
+              return;
+          }
+          
+          // Update like count
+          likeBtn.querySelector('.like-count').textContent = data.likes;
+          
+          // Update like status and icon
+          if (data.liked) {
+              likeBtn.classList.add('liked');
+              likeBtn.querySelector('i').className = 'bi bi-hand-thumbs-up-fill';
+          } else {
+              likeBtn.classList.remove('liked');
+              likeBtn.querySelector('i').className = 'bi bi-hand-thumbs-up';
+          }
+      })
+      .catch(error => {
+          console.error('Error liking post:', error);
+          alert('Error liking post. Please try again.');
+      });
+  });
+});
+
         document.querySelectorAll('.delete-post').forEach(link => {
             link.addEventListener('click', function (e) {
                 e.preventDefault();
                 if (confirm('Delete this post?')) {
-                    showLoader(this);
                     const postId = this.dataset.postId;
                     fetch(`/delete_post/${postId}`, {
                         method: 'POST',
                         headers: { 'X-CSRFToken': '{{ csrf_token }}' }
-                    })
-                    .then(() => document.querySelector(`[data-post-id="${postId}"]`).remove())
-                    .finally(() => hideLoader(this));
+                    }).then(() => document.querySelector(`[data-post-id="${postId}"]`).remove());
                 }
             });
         });
 
-        /* ---------- EDIT ---------- */
         document.querySelectorAll('.edit-post').forEach(link => {
             link.addEventListener('click', function () {
                 const postId = this.dataset.postId;
@@ -504,24 +1160,19 @@
                 document.getElementById('editPostContent').value = post.querySelector('.post-text').textContent;
 
                 const form = document.getElementById('editPostForm');
-                const btn = form.querySelector('button[type="submit"]');
                 form.onsubmit = function (e) {
                     e.preventDefault();
-                    showLoader(btn);
                     const fd = new FormData(this);
                     fd.append('post_id', postId);
                     fetch('/edit_post', {
                         method: 'POST',
                         body: fd,
                         headers: { 'X-CSRFToken': '{{ csrf_token }}' }
-                    })
-                    .then(() => location.reload())
-                    .finally(() => hideLoader(btn));
+                    }).then(() => location.reload());
                 };
             });
         });
 
-        /* ---------- ADD COMMENT ---------- */
         document.querySelectorAll('.add-comment').forEach(input => {
             input.addEventListener('keypress', function (e) {
                 if (e.key === 'Enter' && this.value.trim()) {
@@ -531,17 +1182,12 @@
                     inp.disabled = true;
                     fetch(`/add_comment/${postId}`, {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': '{{ csrf_token }}'
-                        },
+                        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
                         body: JSON.stringify({ content })
-                    })
-                    .then(r => r.json())
-                    .then(data => {
+                    }).then(r => r.json()).then(data => {
                         inp.value = '';
                         const container = inp.closest('.comments-section');
-                        const html = `
+                        container.insertAdjacentHTML('beforeend', `
                             <div class="comment" id="comment-${data.id}">
                                 <img src="${data.avatar}" alt="">
                                 <div class="comment-body">
@@ -552,23 +1198,12 @@
                                         <span class="copy-comment-link" data-comment-id="${data.id}">Link</span>
                                     </div>
                                 </div>
-                            </div>`;
-                        container.insertAdjacentHTML('beforeend', html);
-                    })
-                    .finally(() => inp.disabled = false);
+                            </div>`);
+                    }).finally(() => inp.disabled = false);
                 }
             });
         });
 
-        /* ---------- VIEW ALL COMMENTS (opens modal) ---------- */
-        document.querySelectorAll('.view-all-comments').forEach(link => {
-            link.addEventListener('click', e => {
-                e.preventDefault();
-                document.querySelector(`.view-comments[data-post-id="${link.dataset.postId}"]`).click();
-            });
-        });
-
-        /* ---------- COMMENT MODAL ---------- */
         document.querySelectorAll('.view-comments').forEach(btn => {
             btn.addEventListener('click', function () {
                 const postId = this.dataset.postId;
@@ -603,7 +1238,6 @@
                                     </div>
                                 </div>`;
                         });
-                        // Toggle reply input in modal
                         body.querySelectorAll('.reply-comment').forEach(span => {
                             span.addEventListener('click', () => {
                                 span.closest('.comment-body').querySelector('.reply-input').classList.toggle('d-none');
@@ -613,7 +1247,6 @@
             });
         });
 
-        /* ---------- COPY COMMENT LINK ---------- */
         document.querySelectorAll('.copy-comment-link').forEach(span => {
             span.addEventListener('click', function () {
                 const id = this.dataset.commentId;
@@ -623,7 +1256,6 @@
             });
         });
 
-        /* ---------- SHARE POST ---------- */
         document.querySelectorAll('.share-btn').forEach(btn => {
             btn.addEventListener('click', function () {
                 navigator.clipboard.writeText(this.dataset.url);

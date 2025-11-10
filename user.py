@@ -31,7 +31,7 @@ from flask import (
     send_file,
 )
 import logging, secrets, re
-from models import User, Post, Comment
+from models import User, Post, Comment, Like, FriendRequest, friendship
 
 
 from flask_login import login_user, logout_user, login_required, current_user
@@ -363,32 +363,153 @@ def login():
 
 
 from flask import jsonify, request
+from random import sample
 
-@auth.route('/user_dashboard')
+
+# @auth.route('/user_dashboard')
+# @login_required
+# def user_dashboard():
+#     posts = Post.query.order_by(Post.created_at.desc()).all()
+
+#     # All other users
+#     all_users = User.query.filter(User.id != current_user.id).all()
+
+#     # Get list of friend IDs (not full User objects)
+#     friend_ids = {friend.id for friend in current_user.friends}
+
+#     # Non-friends = all_users except current_user and friends
+#     non_friends = [u for u in all_users if u.id not in friend_ids]
+
+#     # Pick 3 random non-friends
+#     random_three = sample(non_friends, min(3, len(non_friends))) if non_friends else []
+
+#     return render_template(
+#         'user_dashboard.html',
+#         posts=posts,
+#         current_user=current_user,
+#         all_users=all_users,          # for main "People You May Know"
+#         random_three=random_three,    # for right sidebar
+#         csrf_token=generate_csrf()
+#     )
+
+
+
+
+@auth.route('/user_dashboard', methods=['GET', 'POST'])
+@login_required
 def user_dashboard():
-    # Your existing code to get posts
-    posts = Post.query.filter_by(author_id=current_user.id).order_by(Post.created_at.desc()).all()
-    
-    # Convert comments and likes to lists for each post
-    for post in posts:
-        post.comments_list = list(post.comments)  # Convert to list
-        post.likes_list = list(post.likes)        # Convert to list
-    
-    return render_template('user_dashboard.html', posts=posts)
+    if request.method == 'POST':
+        # Handle post creation here
+        post_content = request.form.get("post_content")
+        media_file = request.files.get('media')
+        
+        if post_content or (media_file and media_file.filename != ''):
+            image_url = None
+            video_url = None
+
+            if media_file and media_file.filename != '' and allowed_file(media_file.filename):
+                try:
+                    resource_type = "auto"
+                    if media_file.content_type.startswith('video'):
+                        resource_type = "video"
+                    
+                    result = cloudinary.uploader.upload(
+                        media_file,
+                        folder="kimbela/posts",
+                        resource_type=resource_type,
+                        transformation=[
+                            {'width': 800, 'crop': 'limit'},
+                            {'quality': 'auto', 'fetch_format': 'auto'}
+                        ]
+                    )
+                    
+                    if media_file.content_type.startswith('video'):
+                        video_url = result['secure_url']
+                    else:
+                        image_url = result['secure_url']
+                        
+                except Exception as e:
+                    print(f"Media upload error: {e}")
+                    flash("Failed to upload media.", "danger")
+
+            # Create post
+            new_post = Post(
+                content=post_content or "",
+                image=image_url,
+                video=video_url,
+                author_id=current_user.id,
+                created_at=datetime.utcnow()
+            )
+            db.session.add(new_post)
+            db.session.commit()
+            flash("Post created!", "success")
+        
+        return redirect(url_for('auth.user_dashboard'))
+
+    # GET request handling (your existing code)
+    posts = Post.query.order_by(Post.created_at.desc()).all()
+    all_users = User.query.filter(User.id != current_user.id).all()
+    friend_ids = {friend.id for friend in current_user.friends}
+    non_friends = [u for u in all_users if u.id not in friend_ids]
+    random_three = sample(non_friends, min(3, len(non_friends))) if non_friends else []
+
+    return render_template(
+        'user_dashboard.html',
+        posts=posts,
+        current_user=current_user,
+        all_users=all_users,
+        random_three=random_three,
+        csrf_token=generate_csrf()
+    )
+
+
+
+
+
 
 # Like Post
+# @auth.route("/like_post/<int:post_id>", methods=["POST"])
+# @login_required
+# def like_post(post_id):
+#     post = Post.query.get_or_404(post_id)
+#     if current_user in post.likes:
+#         post.likes.remove(current_user)
+#         liked = False
+#     else:
+#         post.likes.append(current_user)
+#         liked = True
+#     db.session.commit()
+#     return jsonify(likes=len(post.likes), liked=liked)
+
+
+
 @auth.route("/like_post/<int:post_id>", methods=["POST"])
 @login_required
 def like_post(post_id):
     post = Post.query.get_or_404(post_id)
-    if current_user in post.likes:
-        post.likes.remove(current_user)
+    
+    # Check if user already liked this post using the Like model
+    existing_like = Like.query.filter_by(user_id=current_user.id, post_id=post_id).first()
+    
+    if existing_like:
+        # Unlike: remove the like
+        db.session.delete(existing_like)
         liked = False
     else:
-        post.likes.append(current_user)
+        # Like: create new like
+        new_like = Like(user_id=current_user.id, post_id=post_id)
+        db.session.add(new_like)
         liked = True
+    
     db.session.commit()
-    return jsonify(likes=len(post.likes), liked=liked)
+    
+    # Get updated like count
+    like_count = Like.query.filter_by(post_id=post_id).count()
+    
+    return jsonify(likes=like_count, liked=liked)
+
+
+
 
 # Delete Post
 @auth.route("/delete_post/<int:post_id>", methods=["POST"])
@@ -580,6 +701,44 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in allowed_extensions
            
+           
+           
+
+@auth.route("/add_friend/<int:user_id>", methods=["POST"])
+@login_required
+def add_friend(user_id):
+    user = User.query.get_or_404(user_id)
+    if current_user.send_friend_request(user):
+        return jsonify(success=True)
+    return jsonify(success=False, error="Could not send friend request")
+
+@auth.route("/cancel_friend_request/<int:user_id>", methods=["POST"])
+@login_required
+def cancel_friend_request(user_id):
+    user = User.query.get_or_404(user_id)
+    # You'll need to implement this method in your User model
+    return jsonify(success=True)
+
+@auth.route("/get_user_profile/<int:user_id>")
+@login_required
+def get_user_profile(user_id):
+    user = User.query.get_or_404(user_id)
+    return jsonify({
+        'first_name': user.first_name,
+        'last_name': user.last_name,
+        'email': user.email,
+        'profile_pic': user.profile_pic or url_for('static', filename='assets/img/default-avatar.png'),
+        'cover_pic': user.cover_pic,
+        'bio': user.bio,
+        'city': user.city,
+        'country': user.country,
+        'gender': user.gender,
+        'dob': user.dob.isoformat() if user.dob else None,
+        'phone_number': user.phone_number,
+        'marital_status': user.marital_status,
+        'interests': user.interests,
+        'profile_url': url_for('auth.profile', user_id=user.id)
+    })   
            
            
 @auth.route("/logout")
