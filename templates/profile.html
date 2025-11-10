@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>{{ user.first_name }} {{ user.last_name }} – Kimbela</title>
+
+    <!-- Bootstrap & Icons -->
+    <link href="{{ url_for('static', filename='assets/vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='assets/vendor/bootstrap-icons/bootstrap-icons.css') }}" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --fb-blue: #1877f2;
+            --fb-dark: #1c1e21;
+            --fb-gray: #f0f2f5;
+            --border: #dddfe2;
+            --text: #1c1e21;
+            --text-light: #606770;
+        }
+        * { box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background: var(--fb-gray); margin: 0; }
+
+        /* Cover & Profile */
+        .cover-container { position: relative; height: 380px; overflow: hidden; }
+        .cover-photo {
+            width: 100%; height: 100%; object-fit: cover;
+            filter: brightness(0.8);
+        }
+        .profile-section {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.6));
+            color: white; padding: 20px;
+            display: flex; align-items: flex-end; gap: 15px;
+        }
+        .profile-pic-large {
+            width: 168px; height: 168px; border-radius: 50%;
+            border: 5px solid white; object-fit: cover;
+        }
+        .profile-name { font-size: 2rem; font-weight: 700; margin: 0; }
+        .profile-bio { font-size: 1rem; opacity: 0.9; margin: 4px 0 8px; }
+
+        /* Tabs */
+        .profile-tabs { border-bottom: 1px solid var(--border); background: white; }
+        .nav-link { color: var(--text-light); font-weight: 600; }
+        .nav-link.active { color: var(--fb-blue); border-bottom: 3px solid var(--fb-blue); }
+
+        /* Posts */
+        .post-card { background: white; border-radius: 12px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+        .post-header { padding: 12px; display: flex; align-items: center; }
+        .post-avatar { width: 40px; height: 40px; border-radius: 50%; margin-right: 10px; }
+        .post-author { font-weight: 600; }
+        .post-time { font-size: 0.8rem; color: var(--text-light); }
+        .post-content { padding: 0 12px 12px; }
+        .post-media img, .post-media video { width: 100%; border-radius: 12px; margin-top: 8px; max-height: 500px; object-fit: contain; background: #000; }
+        .post-actions { padding: 8px 12px; border-top: 1px solid var(--border); display: flex; justify-content: space-around; color: var(--text-light); }
+        .action-btn { cursor: pointer; }
+        .action-btn:hover { color: var(--fb-blue); }
+
+        /* Friends Grid */
+        .friend-card { text-align: center; margin-bottom: 16px; }
+        .friend-card img { width: 100%; border-radius: 12px; height: 100px; object-fit: cover; }
+        .friend-name { font-weight: 600; margin-top: 8px; font-size: 0.9rem; }
+
+        /* Breadcrumb */
+        .breadcrumb { background: white; padding: 12px; border-radius: 8px; margin-bottom: 16px; }
+
+        /* Modal */
+        .modal-content { border-radius: 16px; }
+    </style>
+</head>
+<body>
+
+    <!-- COVER & PROFILE -->
+    <div class="cover-container">
+        <img src="{{ user.cover_pic or url_for('static', filename='assets/img/default-cover.jpg') }}" alt="Cover" class="cover-photo">
+        <div class="profile-section">
+            <img src="{{ user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" alt="{{ user.first_name }}" class="profile-pic-large">
+            <div>
+                <h1 class="profile-name">{{ user.first_name }} {{ user.last_name }}</h1>
+                <p class="profile-bio">{{ user.bio or 'No bio yet.' }}</p>
+                <button class="btn btn-light btn-sm me-2" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                    <i class="bi bi-pencil"></i> Edit Profile
+                </button>
+            </div>
+            <!-- BACK TO DASHBOARD -->
+            <div class="ms-auto">
+                <a href="{{ url_for('auth.user_dashboard') }}" class="btn btn-outline-light btn-sm">
+                    <i class="bi bi-house-door"></i> Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- BREADCRUMB -->
+    <div class="container mt-3">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('auth.user_dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Profile</li>
+            </ol>
+        </nav>
+    </div>
+
+    <!-- TABS -->
+    <div class="profile-tabs sticky-top">
+        <div class="container">
+            <ul class="nav nav-tabs border-0">
+                <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#posts">Posts</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#friends">Friends</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#about">About</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container mt-3">
+        <div class="tab-content">
+
+            <!-- POSTS -->
+            <div class="tab-pane fade show active" id="posts">
+                {% for post in posts %}
+                <div class="post-card">
+                    <div class="post-header">
+                        <img src="{{ user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" class="post-avatar">
+                        <div>
+                            <div class="post-author">{{ user.first_name }} {{ user.last_name }}</div>
+                            <div class="post-time">{{ post.created_at.strftime('%b %d at %I:%M %p') }}</div>
+                        </div>
+                    </div>
+                    <div class="post-content">
+                        <p>{{ post.content }}</p>
+                        {% if post.image %}
+                        <div class="post-media"><img src="{{ post.image }}" alt="Post"></div>
+                        {% endif %}
+                        {% if post.video %}
+                        <div class="post-media"><video controls><source src="{{ post.video }}"></video></div>
+                        {% endif %}
+                    </div>
+                    <div class="post-actions">
+                        <span class="action-btn"><i class="bi bi-hand-thumbs-up"></i> Like</span>
+                        <span class="action-btn"><i class="bi bi-chat"></i> Comment</span>
+                        <span class="action-btn"><i class="bi bi-share"></i> Share</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- FRIENDS -->
+            <div class="tab-pane fade" id="friends">
+                <h5>{{ friends|length }} Friends</h5>
+                <div class="row">
+                    {% for friend in friends %}
+                    <div class="col-4 col-md-3 col-lg-2">
+                        <div class="friend-card">
+                            <img src="{{ friend.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" alt="{{ friend.first_name }}">
+                            <div class="friend-name">{{ friend.first_name }} {{ friend.last_name }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- ABOUT -->
+            <div class="tab-pane fade" id="about">
+                <div class="card p-3">
+                    <h6><i class="bi bi-info-circle"></i> About</h6>
+                    <p><strong>Lives in:</strong> {{ user.city }}, {{ user.country }}</p>
+                    <p><strong>From:</strong> {{ user.city }}</p>
+                    <p><strong>Member since:</strong> {{ user.created_at.strftime('%B %Y') }}</p>
+                    <p><strong>Interests:</strong> {{ user.interests or 'Not set' }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- EDIT PROFILE MODAL -->
+    <div class="modal fade" id="editProfileModal">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Profile & Create Post</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+                    <div class="modal-body">
+                        <!-- Profile Picture -->
+                        <div class="text-center mb-4">
+                            <img id="profilePreview" 
+                                 src="{{ user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+                                 class="rounded-circle" width="120" alt="Profile">
+                            <div class="mt-3">
+                                <label class="btn btn-outline-primary btn-sm">
+                                    Change Photo 
+                                    <input type="file" name="profile_pic" accept="image/*" hidden onchange="previewImage(this, 'profilePreview')">
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Cover Photo -->
+                        <div class="mb-4">
+                            <label class="form-label">Cover Photo</label>
+                            <div class="border rounded p-2 text-center">
+                                <img id="coverPreview" 
+                                     src="{{ user.cover_pic or url_for('static', filename='assets/img/default-cover.jpg') }}"
+                                     class="img-fluid rounded" style="max-height: 200px;" alt="Cover">
+                                <div class="mt-2">
+                                    <label class="btn btn-outline-secondary btn-sm">
+                                        Change Cover 
+                                        <input type="file" name="cover_pic" accept="image/*" hidden onchange="previewImage(this, 'coverPreview')">
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bio -->
+                        <div class="mb-3">
+                            <label class="form-label">Bio</label>
+                            <textarea name="bio" class="form-control" rows="3" placeholder="Describe yourself...">{{ user.bio or '' }}</textarea>
+                        </div>
+
+                        <!-- New Post -->
+                        <hr>
+                        <h6>Create New Post</h6>
+                        <div class="mb-3">
+                            <textarea name="post_content" class="form-control" rows="3" placeholder="What's on your mind?"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Add Photo/Video</label>
+                            <input type="file" name="media" class="form-control" accept="image/*,video/*">
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">Save & Post</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="{{ url_for('static', filename='assets/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+
+    <script>
+        function previewImage(input, previewId) {
+            const preview = document.getElementById(previewId);
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = e => preview.src = e.target.result;
+                reader.readAsDataURL(file);
+            }
+        }
+    </script>
+</body>
+</html>

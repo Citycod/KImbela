@@ -722,6 +722,18 @@
                                 </select>
                                 {% if errors.gender %}<div class="invalid-feedback">{{ errors.gender }}</div>{% endif %}
                             </div>
+
+                            <div class="form-group">
+                                <label for="marital_status" class="form-label">Marital Status</label>
+                                <select class="form-control {% if errors.gender %}is-invalid{% endif %}"
+                                        id="marital_status" name="marital_status" required>
+                                    <option value="">Marital Status</option>
+                                    <option value="Single" {% if request.form.gender == 'Single' %}selected{% endif %}>Single</option>
+                                    <option value="Divorced" {% if request.form.gender == 'Divorced' %}selected{% endif %}>Divorced</option>
+                                    <option value="Widowed" {% if request.form.gender == 'Widowed' %}selected{% endif %}>Widowed</option>
+                                </select>
+                                {% if errors.marital_status %}<div class="invalid-feedback">{{ errors.marital_status }}</div>{% endif %}
+                            </div>
                         </div>
 
                         <div class="form-row">

@@ -31,7 +31,7 @@ from flask import (
     send_file,
 )
 import logging, secrets, re
-from models import User
+from models import User, Post, Comment
 
 
 from flask_login import login_user, logout_user, login_required, current_user
@@ -45,16 +45,27 @@ import random
 from extensions import db, login_manager, mail
 import string
 from flask_mail import Message
+from dotenv import load_dotenv
 
-
-
-auth = Blueprint("auth", __name__)
 
 
 load_dotenv()
 
 env_path = os.path.join(os.path.dirname(__file__), ".env")
 load_dotenv(dotenv_path=env_path)
+
+# config.py or top of app.py
+import cloudinary
+cloudinary.config(
+    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.getenv("CLOUDINARY_API_KEY"),
+    api_secret=os.getenv("CLOUDINARY_API_SECRET"),
+    secure=True
+)
+
+
+auth = Blueprint("auth", __name__)
+
 
 
 logger = logging.getLogger(__name__)
@@ -98,6 +109,7 @@ def register():
         phone_number = request.form.get("phone_number", "").strip()
         dob_str = request.form.get("dob")
         gender = request.form.get("gender")
+        marital_status = request.form.get("marital_status")
         city = request.form.get("city", "").strip()
         country = request.form.get("country", "").strip()
         password = request.form.get("password")
@@ -139,6 +151,9 @@ def register():
 
         if not gender:
             errors['gender'] = "Gender is required."
+            
+        if not marital_status:
+            errors['marital_status'] = "Marital status is required."
 
         if not city:
             errors['city'] = "City is required."
@@ -181,6 +196,7 @@ def register():
                 dob=dob,
                 gender=gender,
                 city=city,
+                marital_status=marital_status,
                 country=country,
                 interests=interests,
                 is_active=False  
@@ -346,10 +362,231 @@ def login():
 
 
 
-@auth.route("/user_dashboard", methods=["GET", "POST"])
-def user_dashboard():
-    return render_template("user_dashboard.html", user=current_user)
+from flask import jsonify, request
 
+@auth.route('/user_dashboard')
+def user_dashboard():
+    # Your existing code to get posts
+    posts = Post.query.filter_by(author_id=current_user.id).order_by(Post.created_at.desc()).all()
+    
+    # Convert comments and likes to lists for each post
+    for post in posts:
+        post.comments_list = list(post.comments)  # Convert to list
+        post.likes_list = list(post.likes)        # Convert to list
+    
+    return render_template('user_dashboard.html', posts=posts)
+
+# Like Post
+@auth.route("/like_post/<int:post_id>", methods=["POST"])
+@login_required
+def like_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    if current_user in post.likes:
+        post.likes.remove(current_user)
+        liked = False
+    else:
+        post.likes.append(current_user)
+        liked = True
+    db.session.commit()
+    return jsonify(likes=len(post.likes), liked=liked)
+
+# Delete Post
+@auth.route("/delete_post/<int:post_id>", methods=["POST"])
+@login_required
+def delete_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    if post.author_id != current_user.id:
+        return jsonify(error="Unauthorized"), 403
+    db.session.delete(post)
+    db.session.commit()
+    return jsonify(success=True)
+
+# Edit Post
+@auth.route("/edit_post", methods=["POST"])
+@login_required
+def edit_post():
+    post_id = request.form.get("post_id")
+    post = Post.query.get_or_404(post_id)
+    if post.author_id != current_user.id:
+        return jsonify(error="Unauthorized"), 403
+    post.content = request.form.get("content", "").strip()
+    db.session.commit()
+    return jsonify(success=True)
+
+# Add Comment
+@auth.route("/add_comment/<int:post_id>", methods=["POST"])
+@login_required
+def add_comment(post_id):
+    post = Post.query.get_or_404(post_id)
+    content = request.json.get("content", "").strip()
+    if not content:
+        return jsonify(error="Empty"), 400
+    comment = Comment(content=content, author_id=current_user.id, post_id=post_id)
+    db.session.add(comment)
+    db.session.commit()
+    return jsonify(
+        name=f"{current_user.first_name} {current_user.last_name}",
+        avatar=current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png'),
+        content=content
+    )
+
+
+import cloudinary.uploader
+import cloudinary.utils
+
+@auth.route("/<int:user_id>", methods=["GET", "POST"])
+@login_required
+def profile(user_id):
+    user = User.query.get_or_404(user_id)
+
+    # Only allow users to edit their own profile
+    if user.id != current_user.id:
+        flash("You can only edit your own profile.", "warning")
+        return redirect(url_for('auth.profile', user_id=current_user.id))
+
+    if request.method == "POST":
+        try:
+            # === 1. PROFILE PICTURE ===
+            if 'profile_pic' in request.files:
+                file = request.files['profile_pic']
+                if file and file.filename != '' and allowed_file(file.filename):
+                    print(f"Uploading profile picture: {file.filename}")  # Debug
+                    result = cloudinary.uploader.upload(
+                        file,
+                        folder="kimbela/profiles",
+                        transformation=[
+                            {'width': 400, 'height': 400, 'crop': 'fill', 'gravity': 'face'},
+                            {'quality': 'auto', 'fetch_format': 'auto'}
+                        ]
+                    )
+                    current_user.profile_pic = result['secure_url']
+                    db.session.commit()
+                    flash("Profile picture updated!", "success")
+                elif file and file.filename != '':
+                    flash("Invalid file type for profile picture.", "danger")
+
+            # === 2. COVER PHOTO ===
+            if 'cover_pic' in request.files:
+                file = request.files['cover_pic']
+                if file and file.filename != '' and allowed_file(file.filename):
+                    print(f"Uploading cover photo: {file.filename}")  # Debug
+                    result = cloudinary.uploader.upload(
+                        file,
+                        folder="kimbela/covers",
+                        transformation=[
+                            {'width': 1200, 'height': 400, 'crop': 'fill'},
+                            {'quality': 'auto', 'fetch_format': 'auto'}
+                        ]
+                    )
+                    current_user.cover_pic = result['secure_url']
+                    db.session.commit()
+                    flash("Cover photo updated!", "success")
+                elif file and file.filename != '':
+                    flash("Invalid file type for cover photo.", "danger")
+
+            # === 3. BIO UPDATE ===
+            bio = request.form.get("bio")
+            if bio is not None:
+                current_user.bio = bio.strip()
+                db.session.commit()
+                flash("Bio updated!", "success")
+
+            # === 4. CREATE NEW POST (TEXT + MEDIA) ===
+            post_content = request.form.get("post_content")
+            media_file = request.files.get('media')
+            
+            if post_content or (media_file and media_file.filename != ''):
+                image_url = None
+                video_url = None
+
+                if media_file and media_file.filename != '' and allowed_file(media_file.filename):
+                    try:
+                        # Determine resource type based on content type
+                        resource_type = "auto"
+                        if media_file.content_type.startswith('video'):
+                            resource_type = "video"
+                        
+                        result = cloudinary.uploader.upload(
+                            media_file,
+                            folder="kimbela/posts",
+                            resource_type=resource_type,
+                            transformation=[
+                                {'width': 800, 'crop': 'limit'},
+                                {'quality': 'auto', 'fetch_format': 'auto'}
+                            ]
+                        )
+                        
+                        if media_file.content_type.startswith('video'):
+                            video_url = result['secure_url']
+                        else:
+                            image_url = result['secure_url']
+                            
+                    except Exception as e:
+                        print(f"Media upload error: {e}")  # Debug
+                        flash("Failed to upload media.", "danger")
+
+                # Create post
+                new_post = Post(
+                    content=post_content or "",
+                    image=image_url,
+                    video=video_url,
+                    author_id=current_user.id,
+                    created_at=datetime.utcnow()
+                )
+                db.session.add(new_post)
+                db.session.commit()
+                flash("Post created!", "success")
+
+            return redirect(url_for('auth.profile', user_id=current_user.id))
+
+        except Exception as e:
+            print(f"Error in profile update: {e}")  # Debug
+            flash("An error occurred while updating your profile.", "danger")
+            return redirect(url_for('auth.profile', user_id=current_user.id))
+
+    # === GET REQUEST: Load profile data ===
+    posts = Post.query.filter_by(author_id=current_user.id)\
+                      .order_by(Post.created_at.desc()).all()
+
+    # Mock friends (replace with real Friend model later)
+    friends = User.query.filter(User.id != current_user.id).limit(9).all()
+
+    return render_template(
+        "profile.html",
+        user=current_user,
+        posts=posts,
+        friends=friends
+    )
+    
+    
+@auth.route("/get_comments/<int:post_id>")
+def get_comments(post_id):
+    post = Post.query.get_or_404(post_id)
+    comments = []
+    for c in post.comments:
+        comments.append({
+            'id': c.id,
+            'name': f"{c.author.first_name} {c.author.last_name}",
+            'avatar': c.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png'),
+            'content': c.content,
+            'replies': []  # Add later
+        })
+    return jsonify(comments)
+
+
+def allowed_file(filename):
+    """Check if file extension is allowed"""
+    allowed_extensions = {'png', 'jpg', 'jpeg', 'gif', 'mp4', 'mov', 'avi'}
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in allowed_extensions
+           
+           
+           
+@auth.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for("auth.login"))
 
 
 

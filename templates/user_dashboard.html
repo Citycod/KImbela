@@ -1,54 +1,635 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>Events - College Bootstrap Template</title>
-    <meta name="description" content="" />
-    <meta name="keywords" content="" />
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Dashboard – Kimbela</title>
 
-    <!-- Favicons -->
-    <link href="assets/img/nn.png" rel="icon" />
-    <link href="assets/img/apple-touch-icon.png" rel="apple-touch-icon" />
+    <!-- Bootstrap & Icons -->
+    <link href="{{ url_for('static', filename='assets/vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='assets/vendor/bootstrap-icons/bootstrap-icons.css') }}" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com" rel="preconnect" />
-    <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Raleway:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
-      rel="stylesheet"
-    />
+    <style>
+        :root {
+            --fb-blue: #1877f2;
+            --fb-dark: #1c1e21;
+            --fb-gray: #f0f2f5;
+            --border: #dddfe2;
+            --text: #1c1e21;
+            --text-light: #606770;
+        }
 
-    <!-- Vendor CSS Files -->
-    <link
-      href="assets/vendor/bootstrap/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
-    <link
-      href="assets/vendor/bootstrap-icons/bootstrap-icons.css"
-      rel="stylesheet"
-    />
-    <link href="assets/vendor/aos/aos.css" rel="stylesheet" />
-    <link href="assets/vendor/swiper/swiper-bundle.min.css" rel="stylesheet" />
-    <link
-      href="assets/vendor/glightbox/css/glightbox.min.css"
-      rel="stylesheet"
-    />
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--fb-gray);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+        }
 
-    <!-- Main CSS File -->
-    <link href="assets/css/main.css" rel="stylesheet" />
+        /* NAVBAR */
+        .fb-navbar {
+            height: 60px;
+            background: white;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 1px 2px rgba(0,0,0,.05);
+        }
 
-    <!-- =======================================================
-  * Template Name: College
-  * Template URL: https://bootstrapmade.com/college-bootstrap-education-template/
-  * Updated: Jun 19 2025 with Bootstrap v5.3.6
-  * Author: BootstrapMade.com
-  * License: https://bootstrapmade.com/license/
-  ======================================================== -->
-  </head>
+        .search-bar input {
+            width: 100%;
+            padding: 8px 40px;
+            border: none;
+            border-radius: 50px;
+            background: var(--fb-gray);
+            font-size: 15px;
+        }
 
-  <body class="events-page">
-    <p>Logged in user {{ current_user.first_name }}</p>
-  </body>
-  
+        .nav-icons .icon {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            background: var(--fb-gray);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 4px;
+            cursor: pointer;
+        }
+
+        .profile-pic {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            cursor: pointer;
+        }
+
+        /* MAIN CONTENT – centred, max 680px */
+        .main-content {
+            max-width: 680px;
+            margin: 20px auto;
+            padding: 0 10px;
+        }
+
+        /* POST COMPOSER */
+        .post-composer {
+            background: white;
+            border-radius: 12px;
+            padding: 12px;
+            box-shadow: 0 1px 2px rgba(0,0,0,.05);
+            margin-bottom: 20px;
+        }
+
+        .composer-header { display: flex; align-items: center; margin-bottom: 10px; }
+        .composer-header img { width: 40px; height: 40px; border-radius: 50%; margin-right: 10px; }
+
+        .composer-input {
+            flex: 1;
+            padding: 12px 16px;
+            background: var(--fb-gray);
+            border-radius: 50px;
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        .composer-footer {
+            display: flex;
+            justify-content: space-around;
+            padding-top: 8px;
+            border-top: 1px solid var(--border);
+            margin-top: 10px;
+        }
+
+        .composer-btn {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            color: var(--text-light);
+            cursor: pointer;
+        }
+
+        .composer-btn i { font-size: 1.4rem; margin-right: 8px; }
+        .bi-camera-video-fill { color: #f02849; }
+        .bi-image-fill { color: #45bd62; }
+        .bi-emoji-smile-fill { color: #f7b928; }
+
+        /* POST CARD */
+        .post-card {
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 2px rgba(0,0,0,.05);
+        }
+
+        .post-header {
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .post-avatar { width: 40px; height: 40px; border-radius: 50%; margin-right: 10px; }
+        .post-author { font-weight: 600; }
+        .post-time { font-size: .8rem; color: var(--text-light); }
+
+        .post-content { padding: 0 12px 12px; }
+        .post-media img, .post-media video {
+            width: 100%; border-radius: 12px; margin-top: 8px; max-height: 500px; object-fit: contain;
+        }
+
+        .post-actions {
+            padding: 8px 12px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            color: var(--text-light);
+            font-weight: 600;
+        }
+
+        .action-btn {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .action-btn:hover { color: var(--fb-blue); }
+        .action-btn.liked { color: var(--fb-blue); }
+
+        /* COMMENTS SECTION – scrollable, max 3 visible */
+        .comments-section {
+            padding: 8px 12px;
+            border-top: 1px solid var(--border);
+            background: #f8f9fa;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .comment-input {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .comment-input img { width: 32px; height: 32px; border-radius: 50%; }
+        .comment-input input {
+            flex: 1;
+            border: none;
+            background: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: .9rem;
+        }
+
+        .comment {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+            font-size: .9rem;
+        }
+
+        .comment img { width: 28px; height: 28px; border-radius: 50%; }
+        .comment-body {
+            background: white;
+            padding: 6px 10px;
+            border-radius: 18px;
+            flex: 1;
+        }
+
+        .comment-author { font-weight: 600; }
+        .comment-text { margin: 2px 0 0; }
+        .comment-actions { font-size: .75rem; color: var(--text-light); margin-top: 4px; }
+        .comment-actions span { cursor: pointer; margin-right: 8px; }
+        .comment-actions span:hover { text-decoration: underline; }
+
+        .reply { margin-left: 36px; margin-top: 6px; }
+
+        /* LOADER */
+        .loader {
+            width: 20px; height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid var(--fb-blue);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            display: inline-block;
+            margin-left: 8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* MODAL */
+        .modal-content { border-radius: 16px; }
+        .modal-body { max-height: 70vh; overflow-y: auto; }
+    </style>
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="fb-navbar d-flex align-items-center px-3">
+        <a href="{{ url_for('auth.user_dashboard') }}" class="me-3">
+            <img src="{{ url_for('static', filename='assets/img/nn.png') }}" alt="Kimbela" height="40">
+        </a>
+
+        <div class="search-bar position-relative d-none d-md-block">
+            <input type="text" placeholder="Search Kimbela..." class="border-0">
+            <i class="bi bi-search position-absolute top-50 start-3 translate-middle-y text-muted"></i>
+        </div>
+
+        <div class="flex-fill"></div>
+
+        <div class="nav-icons d-flex align-items-center">
+            <div class="icon"><i class="bi bi-messenger fs-5"></i></div>
+            <div class="icon"><i class="bi bi-bell fs-5"></i></div>
+
+            <div class="dropdown ms-2">
+                <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+                     alt="{{ current_user.first_name }}" class="profile-pic" data-bs-toggle="dropdown">
+                <ul class="dropdown-menu dropdown-menu-end shadow">
+                    <li><a class="dropdown-item" href="{{ url_for('auth.profile', user_id=current_user.id) }}"><i class="bi bi-person-circle"></i> Profile</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="bi bi-gear"></i> Settings</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}">Logout</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+
+        <!-- POST COMPOSER -->
+        <div class="post-composer">
+            <div class="composer-header">
+                <a href="{{ url_for('auth.profile', user_id=current_user.id) }}">
+                    <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+                         alt="{{ current_user.first_name }}" class="rounded-circle">
+                </a>
+                <div class="composer-input" data-bs-toggle="modal" data-bs-target="#postModal">
+                    What's on your mind, {{ current_user.first_name }}?
+                </div>
+            </div>
+
+            <div class="composer-footer">
+                <div class="composer-btn" data-bs-toggle="modal" data-bs-target="#postModal"><i class="bi bi-camera-video-fill"></i> Live Video</div>
+                <div class="composer-btn" onclick="document.getElementById('photoInput').click()">
+                    <i class="bi bi-image-fill"></i> Photo/Video
+                    <input type="file" id="photoInput" accept="image/*,video/*" hidden onchange="previewMedia(this)">
+                </div>
+                <div class="composer-btn"><i class="bi bi-emoji-smile-fill"></i> Feeling/Activity</div>
+            </div>
+        </div>
+
+        <!-- POSTS FEED -->
+        <div id="posts-feed">
+            {% for post in posts %}
+            <div class="post-card" data-post-id="{{ post.id }}">
+
+                <!-- HEADER -->
+                <div class="post-header">
+                    <div class="d-flex align-items-center">
+                        <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" class="post-avatar">
+                        <div>
+                            <div class="post-author">{{ current_user.first_name }} {{ current_user.last_name }}</div>
+                            <div class="post-time">{{ post.created_at.strftime('%b %d at %I:%M %p') }}</div>
+                        </div>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn btn-sm" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item text-primary edit-post" href="#" data-bs-toggle="modal" data-bs-target="#editPostModal" data-post-id="{{ post.id }}">Edit</a></li>
+                            <li><a class="dropdown-item text-danger delete-post" href="#" data-post-id="{{ post.id }}">Delete <span class="loader" style="display:none;"></span></a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- CONTENT -->
+                <div class="post-content">
+                    <p class="post-text">{{ post.content }}</p>
+                    {% if post.image %}
+                    <div class="post-media"><img src="{{ post.image }}" alt="Post"></div>
+                    {% endif %}
+                    {% if post.video %}
+                    <div class="post-media"><video controls><source src="{{ post.video }}"></video></div>
+                    {% endif %}
+                </div>
+
+                <!-- ACTIONS -->
+                <div class="post-actions">
+                    <div class="action-btn like-btn" data-post-id="{{ post.id }}">
+                        <i class="bi bi-hand-thumbs-up"></i> <span class="like-count">{{ post.likes_list|length }}</span>
+                    </div>
+                    <div class="action-btn view-comments" data-bs-toggle="modal" data-bs-target="#commentModal" data-post-id="{{ post.id }}">
+                        <i class="bi bi-chat"></i> Comment
+                    </div>
+                    <div class="action-btn share-btn" data-url="{{ url_for('auth.profile', user_id=current_user.id, _anchor='post-' ~ post.id) }}">
+                        <i class="bi bi-share"></i> Share
+                    </div>
+                </div>
+
+                <!-- COMMENTS SECTION -->
+                <div class="comments-section">
+                    <div class="comment-input">
+                        <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" alt="">
+                        <input type="text" placeholder="Write a comment..." class="add-comment" data-post-id="{{ post.id }}">
+                    </div>
+
+                    <!-- Show up to 3 comments -->
+                    {% set visible_comments = post.comments_list[:3] %}
+                    {% for comment in visible_comments %}
+                    <div class="comment" id="comment-{{ comment.id }}">
+                        <img src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" alt="">
+                        <div class="comment-body">
+                            <div class="comment-author">{{ comment.author.first_name }}</div>
+                            <div class="comment-text">{{ comment.content }}</div>
+                            <div class="comment-actions">
+                                <span class="reply-comment" data-comment-id="{{ comment.id }}">Reply</span>
+                                <span class="copy-comment-link" data-comment-id="{{ comment.id }}">Link</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+
+                    <!-- "View all" link if more than 3 -->
+                    {% if post.comments_list|length > 3 %}
+                    <div class="text-center mt-2">
+                        <a href="#" class="text-muted small view-all-comments" data-post-id="{{ post.id }}">
+                          View all {{ post.comments_list|length }} comments
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+    </div>
+
+    <!-- POST MODAL -->
+    <div class="modal fade" id="postModal">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create Post</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" enctype="multipart/form-data" action="{{ url_for('auth.profile', user_id=current_user.id) }}" id="createPostForm">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <div class="modal-body">
+                        <textarea name="post_content" class="form-control" rows="4" placeholder="What's on your mind?" required></textarea>
+                        <div id="mediaPreview" class="mt-3"></div>
+                        <div class="mt-3">
+                            <input type="file" name="media" accept="image/*,video/*" onchange="previewMedia(this)">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">Post <span class="loader" style="display:none;"></span></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- EDIT POST MODAL -->
+    <div class="modal fade" id="editPostModal">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Post</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="editPostForm">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <div class="modal-body">
+                        <textarea name="content" class="form-control" rows="4" id="editPostContent"></textarea>
+                        <div id="editMediaPreview" class="mt-3"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">Save <span class="loader" style="display:none;"></span></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- COMMENT MODAL -->
+    <div class="modal fade" id="commentModal">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Comments</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="commentModalBody">
+                    <!-- Filled by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="{{ url_for('static', filename='assets/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+
+    <script>
+        // Loader helpers
+        function showLoader(el) {
+            const loader = el.querySelector('.loader');
+            if (loader) loader.style.display = 'inline-block';
+            el.disabled = true;
+        }
+        function hideLoader(el) {
+            const loader = el.querySelector('.loader');
+            if (loader) loader.style.display = 'none';
+            el.disabled = false;
+        }
+
+        // Media preview (create post)
+        function previewMedia(input) {
+            const preview = document.getElementById('mediaPreview');
+            preview.innerHTML = '';
+            const file = input.files[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                const el = file.type.startsWith('image/') ? document.createElement('img') : document.createElement('video');
+                el.src = url; el.controls = true; el.style.borderRadius = '12px'; el.style.maxHeight = '300px';
+                preview.appendChild(el);
+            }
+        }
+
+        /* ---------- LIKE ---------- */
+        document.querySelectorAll('.like-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const postId = this.dataset.postId;
+                fetch(`/like_post/${postId}`, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+                })
+                .then(r => r.json())
+                .then(data => {
+                    this.querySelector('.like-count').textContent = data.likes;
+                    this.classList.toggle('liked', data.liked);
+                });
+            });
+        });
+
+        /* ---------- DELETE ---------- */
+        document.querySelectorAll('.delete-post').forEach(link => {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                if (confirm('Delete this post?')) {
+                    showLoader(this);
+                    const postId = this.dataset.postId;
+                    fetch(`/delete_post/${postId}`, {
+                        method: 'POST',
+                        headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+                    })
+                    .then(() => document.querySelector(`[data-post-id="${postId}"]`).remove())
+                    .finally(() => hideLoader(this));
+                }
+            });
+        });
+
+        /* ---------- EDIT ---------- */
+        document.querySelectorAll('.edit-post').forEach(link => {
+            link.addEventListener('click', function () {
+                const postId = this.dataset.postId;
+                const post = document.querySelector(`[data-post-id="${postId}"]`);
+                document.getElementById('editPostContent').value = post.querySelector('.post-text').textContent;
+
+                const form = document.getElementById('editPostForm');
+                const btn = form.querySelector('button[type="submit"]');
+                form.onsubmit = function (e) {
+                    e.preventDefault();
+                    showLoader(btn);
+                    const fd = new FormData(this);
+                    fd.append('post_id', postId);
+                    fetch('/edit_post', {
+                        method: 'POST',
+                        body: fd,
+                        headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+                    })
+                    .then(() => location.reload())
+                    .finally(() => hideLoader(btn));
+                };
+            });
+        });
+
+        /* ---------- ADD COMMENT ---------- */
+        document.querySelectorAll('.add-comment').forEach(input => {
+            input.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter' && this.value.trim()) {
+                    const postId = this.dataset.postId;
+                    const content = this.value.trim();
+                    const inp = this;
+                    inp.disabled = true;
+                    fetch(`/add_comment/${postId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({ content })
+                    })
+                    .then(r => r.json())
+                    .then(data => {
+                        inp.value = '';
+                        const container = inp.closest('.comments-section');
+                        const html = `
+                            <div class="comment" id="comment-${data.id}">
+                                <img src="${data.avatar}" alt="">
+                                <div class="comment-body">
+                                    <div class="comment-author">${data.name}</div>
+                                    <div class="comment-text">${data.content}</div>
+                                    <div class="comment-actions">
+                                        <span class="reply-comment" data-comment-id="${data.id}">Reply</span>
+                                        <span class="copy-comment-link" data-comment-id="${data.id}">Link</span>
+                                    </div>
+                                </div>
+                            </div>`;
+                        container.insertAdjacentHTML('beforeend', html);
+                    })
+                    .finally(() => inp.disabled = false);
+                }
+            });
+        });
+
+        /* ---------- VIEW ALL COMMENTS (opens modal) ---------- */
+        document.querySelectorAll('.view-all-comments').forEach(link => {
+            link.addEventListener('click', e => {
+                e.preventDefault();
+                document.querySelector(`.view-comments[data-post-id="${link.dataset.postId}"]`).click();
+            });
+        });
+
+        /* ---------- COMMENT MODAL ---------- */
+        document.querySelectorAll('.view-comments').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const postId = this.dataset.postId;
+                fetch(`/get_comments/${postId}`)
+                    .then(r => r.json())
+                    .then(comments => {
+                        const body = document.getElementById('commentModalBody');
+                        body.innerHTML = '';
+                        comments.forEach(c => {
+                            const replyInput = `<div class="reply-input mt-2 d-none">
+                                <input type="text" class="form-control form-control-sm" placeholder="Reply..." data-parent-id="${c.id}">
+                            </div>`;
+                            const replies = c.replies.map(r => `
+                                <div class="reply">
+                                    <img src="${r.avatar}" width="24">
+                                    <div class="comment-body">
+                                        <div class="comment-author">${r.name}</div>
+                                        <div class="comment-text">${r.content}</div>
+                                    </div>
+                                </div>`).join('');
+                            body.innerHTML += `
+                                <div class="comment mb-3" id="modal-comment-${c.id}">
+                                    <img src="${c.avatar}" width="36">
+                                    <div class="comment-body">
+                                        <div class="comment-author">${c.name}</div>
+                                        <div class="comment-text">${c.content}</div>
+                                        <div class="comment-actions">
+                                            <span class="reply-comment" data-comment-id="${c.id}">Reply</span>
+                                        </div>
+                                        ${replyInput}
+                                        ${replies}
+                                    </div>
+                                </div>`;
+                        });
+                        // Toggle reply input in modal
+                        body.querySelectorAll('.reply-comment').forEach(span => {
+                            span.addEventListener('click', () => {
+                                span.closest('.comment-body').querySelector('.reply-input').classList.toggle('d-none');
+                            });
+                        });
+                    });
+            });
+        });
+
+        /* ---------- COPY COMMENT LINK ---------- */
+        document.querySelectorAll('.copy-comment-link').forEach(span => {
+            span.addEventListener('click', function () {
+                const id = this.dataset.commentId;
+                const url = `${location.origin}${location.pathname}#comment-${id}`;
+                navigator.clipboard.writeText(url);
+                alert('Comment link copied!');
+            });
+        });
+
+        /* ---------- SHARE POST ---------- */
+        document.querySelectorAll('.share-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                navigator.clipboard.writeText(this.dataset.url);
+                alert('Post link copied!');
+            });
+        });
+    </script>
+</body>
 </html>
