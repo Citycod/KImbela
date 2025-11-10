@@ -31,7 +31,7 @@ from flask import (
     send_file,
 )
 import logging, secrets, re
-from models import User, Post, Comment, Like, FriendRequest, friendship
+from models import User, Post, Comment, Like, FriendRequest, friendship, Notification, NotificationType
 
 
 from flask_login import login_user, logout_user, login_required, current_user
@@ -488,26 +488,28 @@ def user_dashboard():
 def like_post(post_id):
     post = Post.query.get_or_404(post_id)
     
-    # Check if user already liked this post using the Like model
     existing_like = Like.query.filter_by(user_id=current_user.id, post_id=post_id).first()
     
     if existing_like:
-        # Unlike: remove the like
         db.session.delete(existing_like)
         liked = False
     else:
-        # Like: create new like
         new_like = Like(user_id=current_user.id, post_id=post_id)
         db.session.add(new_like)
         liked = True
+        
+        # Create notification for post owner (if not liking own post)
+        if post.author_id != current_user.id:
+            post.author.create_notification(
+                actor=current_user,
+                notification_type=NotificationType.POST_LIKE,
+                entity_id=post_id,
+                entity_type='post'
+            )
     
     db.session.commit()
-    
-    # Get updated like count
     like_count = Like.query.filter_by(post_id=post_id).count()
-    
     return jsonify(likes=like_count, liked=liked)
-
 
 
 
@@ -534,18 +536,34 @@ def edit_post():
     db.session.commit()
     return jsonify(success=True)
 
+
+
 # Add Comment
+# In your add_comment route
 @auth.route("/add_comment/<int:post_id>", methods=["POST"])
 @login_required
 def add_comment(post_id):
     post = Post.query.get_or_404(post_id)
     content = request.json.get("content", "").strip()
+    
     if not content:
         return jsonify(error="Empty"), 400
+        
     comment = Comment(content=content, author_id=current_user.id, post_id=post_id)
     db.session.add(comment)
     db.session.commit()
+    
+    # Create notification for post owner (if not commenting on own post)
+    if post.author_id != current_user.id:
+        post.author.create_notification(
+            actor=current_user,
+            notification_type=NotificationType.NEW_COMMENT,
+            entity_id=post_id,
+            entity_type='post'
+        )
+    
     return jsonify(
+        id=comment.id,
         name=f"{current_user.first_name} {current_user.last_name}",
         avatar=current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png'),
         content=content
@@ -645,6 +663,17 @@ def profile(user_id):
                     except Exception as e:
                         print(f"Media upload error: {e}")  # Debug
                         flash("Failed to upload media.", "danger")
+                        
+                # Notify friends about profile update
+                if any([request.files.get('profile_pic'), request.files.get('cover_pic'), request.form.get('bio')]):
+                    for friend in current_user.friends:
+                        friend.create_notification(
+                            actor=current_user,
+                            notification_type=NotificationType.PROFILE_UPDATE,
+                            entity_id=current_user.id,
+                            entity_type='user',
+                            custom_message=f"{current_user.full_name} updated their profile"
+                        )
 
                 # Create post
                 new_post = Post(
@@ -683,16 +712,44 @@ def profile(user_id):
 @auth.route("/get_comments/<int:post_id>")
 def get_comments(post_id):
     post = Post.query.get_or_404(post_id)
-    comments = []
-    for c in post.comments:
-        comments.append({
+    # Order comments by created_at DESCENDING (newest first)
+    comments = Comment.query.filter_by(post_id=post_id)\
+                           .order_by(Comment.created_at.desc())\
+                           .all()
+    result = []
+    for c in comments:
+        result.append({
             'id': c.id,
             'name': f"{c.author.first_name} {c.author.last_name}",
             'avatar': c.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png'),
             'content': c.content,
-            'replies': []  # Add later
+            'created_at': c.created_at.isoformat(),
+            'replies': []  # handle replies later
         })
-    return jsonify(comments)
+    return jsonify(result)
+
+
+@auth.route("/debug/notification_status")
+@login_required
+def debug_notification_status():
+    """Check read status of notifications"""
+    notifications = Notification.query.filter_by(user_id=current_user.id).order_by(Notification.created_at.desc()).all()
+    result = []
+    for n in notifications:
+        result.append({
+            'id': n.id,
+            'type': n.type,
+            'message': n.message,
+            'is_read': n.is_read,
+            'created_at': n.created_at.isoformat()
+        })
+    return jsonify({
+        'total': len(notifications),
+        'unread': len([n for n in notifications if not n.is_read]),
+        'read': len([n for n in notifications if n.is_read]),
+        'notifications': result
+    })
+
 
 
 def allowed_file(filename):
@@ -704,13 +761,25 @@ def allowed_file(filename):
            
            
 
+# In your add_friend route
 @auth.route("/add_friend/<int:user_id>", methods=["POST"])
 @login_required
 def add_friend(user_id):
     user = User.query.get_or_404(user_id)
     if current_user.send_friend_request(user):
+        # Create notification for the user being requested
+        user.create_notification(
+            actor=current_user,
+            notification_type=NotificationType.FRIEND_REQUEST,
+            entity_id=current_user.id,
+            entity_type='user'
+        )
         return jsonify(success=True)
     return jsonify(success=False, error="Could not send friend request")
+
+
+
+
 
 @auth.route("/cancel_friend_request/<int:user_id>", methods=["POST"])
 @login_required
@@ -739,7 +808,117 @@ def get_user_profile(user_id):
         'interests': user.interests,
         'profile_url': url_for('auth.profile', user_id=user.id)
     })   
+    
+    
+
+
+@auth.route("/notifications")
+@login_required
+def get_notifications():
+    notifications = current_user.recent_notifications
+    return jsonify([notification.to_dict() for notification in notifications])
+
+@auth.route("/notifications/read", methods=["POST"])
+@login_required
+def mark_notifications_read():
+    Notification.query.filter_by(user_id=current_user.id, is_read=False).update({'is_read': True})
+    db.session.commit()
+    return jsonify(success=True)
+
+@auth.route("/notifications/<int:notification_id>/read", methods=["POST"])
+@login_required
+def mark_notification_read(notification_id):
+    notification = Notification.query.filter_by(id=notification_id, user_id=current_user.id).first_or_404()
+    notification.is_read = True
+    db.session.commit()
+    return jsonify(success=True)
+
+@auth.route("/notifications/count")
+@login_required
+def get_unread_count():
+    count = current_user.unread_notifications_count
+    return jsonify(count=count)
+
+
+
+@auth.route("/accept_friend_request/<int:user_id>", methods=["POST"])
+@login_required
+def accept_friend_request_route(user_id):
+    user = User.query.get_or_404(user_id)
+    if current_user.accept_friend_request(user):
+        return jsonify(success=True)
+    return jsonify(success=False, error="Could not accept friend request")
+
+@auth.route("/decline_friend_request/<int:user_id>", methods=["POST"])
+@login_required
+def decline_friend_request_route(user_id):
+    user = User.query.get_or_404(user_id)
+    if current_user.decline_friend_request(user):
+        return jsonify(success=True)
+    return jsonify(success=False, error="Could not decline friend request")
            
+           
+
+# Add this to your Flask routes
+@auth.route('/search')
+def search():
+    query = request.args.get('q', '').strip()
+    if not query or len(query) < 2:
+        return jsonify({'users': [], 'posts': []})
+    
+    # Search users (exclude current user)
+    users = User.query.filter(
+        db.and_(
+            User.id != current_user.id,  # Exclude current user
+            db.or_(
+                User.first_name.ilike(f'%{query}%'),
+                User.last_name.ilike(f'%{query}%'),
+                User.email.ilike(f'%{query}%')
+            )
+        )
+    ).limit(10).all()
+    
+    # Search posts (you can also exclude current user's posts if desired)
+    posts = Post.query.filter(
+        Post.content.ilike(f'%{query}%')
+    ).join(User).limit(10).all()
+    
+    users_data = [{
+        'id': user.id,
+        'first_name': user.first_name,
+        'last_name': user.last_name,
+        'profile_pic': user.profile_pic,
+        'email': user.email
+    } for user in users]
+    
+    posts_data = [{
+        'id': post.id,
+        'content': post.content,
+        'author_first_name': post.author.first_name,
+        'author_last_name': post.author.last_name,
+        'author_id': post.author.id,  # Add author ID for client-side filtering
+        'created_at': post.created_at.isoformat()
+    } for post in posts]
+    
+    return jsonify({
+        'users': users_data,
+        'posts': posts_data
+    })        
+        
+@auth.route('/get_post/<int:post_id>')
+def get_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    return jsonify({
+        'id': post.id,
+        'content': post.content,
+        'image': post.image,
+        'video': post.video,
+        'author_first_name': post.author.first_name,
+        'author_last_name': post.author.last_name,
+        'author_profile_pic': post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png'),
+        'created_at': post.created_at.isoformat()
+    })
+
            
 @auth.route("/logout")
 @login_required

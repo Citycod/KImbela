@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import random, string, uuid
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
-
+from flask import url_for
 
 # db = SQLAlchemy()
 
@@ -111,6 +111,15 @@ class User(db.Model, UserMixin):
 
         request = FriendRequest(sender=self, receiver=user)
         db.session.add(request)
+        
+        # Create notification for the receiver
+        user.create_notification(
+            actor=self,
+            notification_type=NotificationType.FRIEND_REQUEST,
+            entity_id=self.id,
+            entity_type='user'
+        )
+        
         db.session.commit()
         return True
 
@@ -121,6 +130,15 @@ class User(db.Model, UserMixin):
         req.status = FriendRequestStatus.ACCEPTED
         self.friends.append(user)
         user.friends.append(self)
+        
+        # Create notification for the person who sent the request
+        user.create_notification(
+            actor=self,
+            notification_type=NotificationType.FRIEND_ACCEPTED,
+            entity_id=self.id,
+            entity_type='user'
+        )
+        
         db.session.commit()
         return True
 
@@ -157,6 +175,56 @@ class User(db.Model, UserMixin):
     def has_liked_post(self, post_id):
         """Check if user has liked a specific post"""
         return Like.query.filter_by(user_id=self.id, post_id=post_id).first() is not None
+    
+    
+    def create_notification(self, actor, notification_type, entity_id=None, entity_type=None, custom_message=None):
+        """Create a notification for this user"""
+        messages = {
+            NotificationType.FRIEND_REQUEST: f"{actor.full_name} sent you a friend request",
+            NotificationType.FRIEND_ACCEPTED: f"{actor.full_name} accepted your friend request",
+            NotificationType.POST_LIKE: f"{actor.full_name} liked your post",
+            NotificationType.COMMENT_LIKE: f"{actor.full_name} liked your comment",
+            NotificationType.NEW_COMMENT: f"{actor.full_name} commented on your post",
+            NotificationType.PROFILE_UPDATE: f"{actor.full_name} updated their profile",
+            NotificationType.NEW_POST: f"{actor.full_name} created a new post",
+            NotificationType.MENTION: f"{actor.full_name} mentioned you in a post"
+        }
+        
+        message = custom_message or messages.get(notification_type, "You have a new notification")
+        
+        notification = Notification(
+            user_id=self.id,
+            actor_id=actor.id,
+            type=notification_type,
+            entity_id=entity_id,
+            entity_type=entity_type,
+            message=message
+        )
+        
+        db.session.add(notification)
+        db.session.commit()
+        return notification
+
+    @property
+    def unread_notifications_count(self):
+        """Count only unread notifications"""
+        try:
+            return Notification.query.filter_by(user_id=self.id, is_read=False).count()
+        except Exception as e:
+            print(f"Error in unread_notifications_count: {e}")
+            return 0
+
+    @property
+    def recent_notifications(self):
+        """Get recent notifications (both read and unread)"""
+        try:
+            return Notification.query.filter_by(user_id=self.id)\
+                                    .order_by(Notification.created_at.desc())\
+                                    .limit(20)\
+                                    .all()
+        except Exception as e:
+            print(f"Error in recent_notifications: {e}")
+            return []
 
 
 
@@ -228,3 +296,46 @@ class Like(db.Model):
 
     __table_args__ = (db.UniqueConstraint('user_id', 'post_id', name='unique_like'),)
 
+
+
+# Notification Types
+class NotificationType:
+    FRIEND_REQUEST = 'friend_request'
+    FRIEND_ACCEPTED = 'friend_accepted'
+    POST_LIKE = 'post_like'
+    COMMENT_LIKE = 'comment_like'
+    NEW_COMMENT = 'new_comment'
+    PROFILE_UPDATE = 'profile_update'
+    NEW_POST = 'new_post'
+    MENTION = 'mention'
+
+# Notification Model
+class Notification(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    actor_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    type = db.Column(db.String(50), nullable=False)
+    entity_id = db.Column(db.Integer)  # post_id, comment_id, etc.
+    entity_type = db.Column(db.String(50))  # 'post', 'comment', 'user'
+    message = db.Column(db.Text, nullable=False)
+    is_read = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', foreign_keys=[user_id], backref='notifications')
+    actor = db.relationship('User', foreign_keys=[actor_id])
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'type': self.type,
+            'message': self.message,
+            'is_read': self.is_read,
+            'created_at': self.created_at.isoformat(),
+            'actor': {
+                'id': self.actor.id,
+                'name': self.actor.full_name,
+                'avatar': self.actor.profile_pic or url_for('static', filename='assets/img/default-avatar.png')
+            },
+            'entity_id': self.entity_id,
+            'entity_type': self.entity_type
+        }

@@ -26,20 +26,272 @@
         body { font-family: 'Poppins', sans-serif; background: var(--fb-gray); color: var(--text); margin: 0; padding: 0; }
 
         /* NAVBAR */
-        .fb-navbar {
-            height: 60px; background: white; border-bottom: 1px solid var(--border);
-            position: sticky; top: 0; z-index: 1000; box-shadow: 0 1px 2px rgba(0,0,0,.05);
-        }
-        .search-bar input {
-            width: 100%; padding: 8px 40px; border: none; border-radius: 50px;
-            background: var(--fb-gray); font-size: 15px;
-        }
-        .nav-icons .icon {
-            width: 40px; height: 40px; border-radius: 50%; background: var(--fb-gray);
-            display: flex; align-items: center; justify-content: center; margin: 0 4px; cursor: pointer;
-        }
-        .profile-pic { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; cursor: pointer; }
+        /* NAVBAR */
+.fb-navbar {
+  height: 70px; /* Increased height for bigger logo */
+  background: white; 
+  border-bottom: 1px solid var(--border);
+  position: sticky; 
+  top: 0; 
+  z-index: 1000; 
+  box-shadow: 0 1px 2px rgba(0,0,0,.05);
+  padding: 0 16px;
+}
 
+/* Logo Styling - Much Bigger */
+.fb-navbar .navbar-brand {
+  margin-right: 0;
+  padding: 0;
+}
+
+.fb-navbar .navbar-brand img {
+  height: auto /* Much bigger logo */
+  width: auto;
+  transition: transform 0.2s ease;
+}
+
+.fb-navbar .navbar-brand img:hover {
+  transform: scale(1.05);
+}
+
+/* Centered Search Bar */
+.search-bar {
+  position: absolute;
+  left: 35%;
+  transform: translateX(-50%);
+  width: 400px; /* Increased width */
+  max-width: 40%;
+}
+
+.search-bar input {
+  width: 100%;
+  padding: 10px 45px; /* Increased padding */
+  border: none;
+  border-radius: 50px;
+  background: var(--fb-gray);
+  font-size: 15px;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.search-bar input:focus {
+  outline: none;
+  background: white;
+  box-shadow: 0 0 0 2px var(--fb-blue);
+}
+
+.search-bar .bi-search {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-light);
+  font-size: 1.1rem;
+}
+
+/* Nav Icons - Adjusted for new layout */
+.nav-icons {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-icons .icon {
+  width: 42px; /* Slightly larger */
+  height: 42px;
+  border-radius: 50%;
+  background: var(--fb-gray);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nav-icons .icon:hover {
+  background: #e4e6eb;
+  transform: scale(1.05);
+}
+
+.nav-icons .icon i {
+  font-size: 1.3rem;
+  color: var(--text);
+}
+
+/* Profile Picture in Navbar */
+.profile-pic {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.profile-pic:hover {
+  border-color: var(--fb-blue);
+  transform: scale(1.05);
+}
+
+/* Mobile Responsive Adjustments */
+@media (max-width: 1200px) {
+  .search-bar {
+      width: 350px;
+      max-width: 35%;
+  }
+}
+
+@media (max-width: 992px) {
+  .fb-navbar {
+      height: 65px;
+      padding: 0 12px;
+  }
+  
+  .fb-navbar .navbar-brand img {
+      height: 45px !important;
+  }
+  
+  .search-bar {
+      width: 300px;
+      max-width: 50%;
+  }
+  
+  .search-bar input {
+      padding: 8px 40px;
+  }
+}
+
+@media (max-width: 768px) {
+  .search-bar {
+      display: none !important; /* Hide search bar on mobile */
+  }
+  
+  .fb-navbar .navbar-brand {
+      margin-right: auto;
+  }
+  
+  .fb-navbar .navbar-brand img {
+      height: 40px !important;
+  }
+}
+
+/* Notification Styles */
+.notification-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #f02849;
+  color: white;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: 0.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  border: 2px solid white;
+}
+
+.notification-dropdown .dropdown-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  transition: background-color 0.2s;
+}
+
+.notification-dropdown .dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.notification-dropdown .dropdown-item.unread {
+  background-color: #f0f8ff;
+  border-left: 3px solid var(--fb-blue);
+}
+
+.notification-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+}
+
+.notification-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.notification-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.notification-text {
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+  line-height: 1.3;
+}
+
+.notification-time {
+  font-size: 0.75rem;
+  color: var(--text-light);
+}
+
+.notification-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.notification-action-btn {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-accept {
+  background: var(--fb-blue);
+  color: white;
+}
+
+.btn-decline {
+  background: var(--fb-gray);
+  color: var(--text);
+}
+
+.empty-notifications {
+  text-align: center;
+  padding: 20px;
+  color: var(--text-light);
+}
+
+.empty-notifications i {
+  font-size: 2rem;
+  margin-bottom: 8px;
+  opacity: 0.5;
+}
+
+/* Mobile menu button adjustment */
+.mobile-menu-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--text);
+  padding: 8px;
+  border-radius: 50%;
+  transition: background 0.2s ease;
+}
+
+.mobile-menu-btn:hover {
+  background: var(--fb-gray);
+}
         /* LAYOUT */
         .dashboard-container {
             display: flex; min-height: calc(100vh - 60px); margin-top: 60px;
@@ -402,6 +654,132 @@
   border-color: var(--border);
 }
 
+/* Search Results Styling */
+.search-results {
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+
+.search-result-item {
+  padding: 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  border-bottom: 1px solid var(--border);
+}
+
+
+/* Post Text Truncation */
+.post-text {
+  margin: 0;
+  line-height: 1.4;
+  word-wrap: break-word;
+  white-space: pre-line; /* This preserves line breaks from user input */
+}
+
+.post-text.truncated {
+  max-height: 4.2em; /* Approximately 3 lines of text */
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  position: relative;
+}
+
+.see-more-btn {
+  background: none;
+  border: none;
+  color: var(--fb-blue);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 0;
+  margin-top: 4px;
+  font-size: 0.9rem;
+  display: block;
+}
+
+.see-more-btn:hover {
+  text-decoration: underline;
+  background: none;
+}
+
+.search-result-item:last-child {
+  border-bottom: none;
+}
+
+.search-result-item:hover {
+  background-color: var(--fb-gray);
+}
+
+.search-result-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.search-result-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.search-result-info {
+  flex: 1;
+}
+
+.search-result-name {
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.search-result-type {
+  font-size: 0.8rem;
+  color: var(--text-light);
+}
+
+.search-result-post {
+  display: flex;
+  flex-direction: column;
+}
+
+.search-result-content {
+  font-size: 0.9rem;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.search-result-author {
+  font-size: 0.8rem;
+  color: var(--text-light);
+}
+
+.no-results {
+  padding: 20px;
+  text-align: center;
+  color: var(--text-light);
+}
+
+.no-results i {
+  font-size: 2rem;
+  margin-bottom: 8px;
+  opacity: 0.5;
+}
+
+.search-loading {
+  padding: 20px;
+  text-align: center;
+  color: var(--text-light);
+}
+
+/* Highlight matching text */
+.highlight {
+  background-color: #fff3cd;
+  padding: 1px 2px;
+  border-radius: 2px;
+}
+
         /* POST CARD */
         .post-card {
             background: white; border-radius: 12px; margin-bottom: 16px;
@@ -426,6 +804,37 @@
         }
         .action-btn:hover { color: var(--fb-blue); }
         .action-btn.liked { color: var(--fb-blue); }
+
+        /* Post Text Truncation */
+.post-text {
+  margin: 0;
+  line-height: 1.4;
+  word-wrap: break-word;
+}
+
+.post-text.truncated {
+  max-height: 4.2em; /* Approximately 3 lines of text */
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.see-more-btn {
+  background: none;
+  border: none;
+  color: var(--fb-blue);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 0;
+  margin-top: 4px;
+  font-size: 0.9rem;
+}
+
+.see-more-btn:hover {
+  text-decoration: underline;
+  background: none;
+}
 
         /* COMMENTS */
         .comments-section {
@@ -482,23 +891,62 @@
 
     <!-- NAVBAR -->
     <nav class="fb-navbar d-flex align-items-center px-3">
-        <button class="mobile-menu-btn me-2" onclick="toggleMobileMenu()">
+        <!-- Mobile Menu Button -->
+          <button class="mobile-menu-btn me-2" onclick="toggleMobileMenu()">
             <i class="bi bi-list"></i>
         </button>
-        <a href="{{ url_for('auth.user_dashboard') }}" class="me-3">
-            <img src="{{ url_for('static', filename='assets/img/nn.png') }}" alt="Kimbela" height="40">
+        
+        <!-- Logo - Much Bigger -->
+        <a href="{{ url_for('auth.user_dashboard') }}" class="navbar-brand me-4">
+            <img src="{{ url_for('static', filename='assets/img/kim.png') }}" alt="Kimbela" class="logo-img" style="width: 12rem; height: 10rem;">
         </a>
 
-        <div class="search-bar position-relative d-none d-md-block flex-fill mx-3">
-            <input type="text" placeholder="Search Kimbela..." class="border-0">
-            <i class="bi bi-search position-absolute top-50 start-3 translate-middle-y text-muted"></i>
+        <!-- Search Bar -->
+      <div class="search-bar position-relative d-none d-md-block flex-fill mx-3">
+        <input type="text" id="globalSearch" placeholder="Search users, posts, and more..." class="border-0">
+        <i class="bi bi-search position-absolute top-50 start-3 translate-middle-y text-muted"></i>
+        <!-- Search Results Dropdown -->
+        <div class="search-results dropdown-menu w-100 mt-1 shadow" id="searchResults" style="display: none; max-height: 400px; overflow-y: auto;">
+            <div class="search-results-body p-2" id="searchResultsBody">
+                <!-- Results will be loaded here -->
+            </div>
         </div>
+      </div>
 
         <div class="flex-fill"></div>
 
         <div class="nav-icons d-flex align-items-center">
-            <div class="icon"><i class="bi bi-messenger fs-5"></i></div>
-            <div class="icon"><i class="bi bi-bell fs-5"></i></div>
+          <div class="icon" title="Messenger">
+            <i class="bi bi-messenger fs-5"></i>
+        </div>
+        
+        <!-- Enhanced Notification Icon -->
+        <div class="dropdown">
+            <div class="icon position-relative" data-bs-toggle="dropdown" id="notificationDropdown">
+                <i class="bi bi-bell fs-5"></i>
+                <span class="notification-badge" id="notificationBadge" style="display: none;">0</span>
+            </div>
+            
+            <ul class="dropdown-menu dropdown-menu-end shadow notification-dropdown" style="width: 400px; max-height: 500px; overflow-y: auto;">
+                <li class="dropdown-header d-flex justify-content-between align-items-center">
+                    <span>Notifications</span>
+                    <button class="btn btn-sm btn-link p-0" onclick="markAllAsRead()">Mark all as read</button>
+                </li>
+                <li><hr class="dropdown-divider m-0"></li>
+                <div id="notificationsList">
+                    <li class="text-center p-3 text-muted">
+                        <div class="spinner-border spinner-border-sm" role="status"></div>
+                        Loading notifications...
+                    </li>
+                </div>
+                <li><hr class="dropdown-divider m-0"></li>
+                <li class="text-center">
+                    <a href="#" class="dropdown-item text-primary" onclick="viewAllNotifications()">
+                        View All Notifications
+                    </a>
+                </li>
+            </ul>
+        </div>
 
             <div class="dropdown ms-2">
                 <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
@@ -585,10 +1033,20 @@
                         </div>
                     </div>
                     <div class="post-content">
-                        <p class="post-text">{{ first_post.content }}</p>
-                        {% if first_post.image %}<div class="post-media"><img src="{{ first_post.image }}" alt="Post"></div>{% endif %}
-                        {% if first_post.video %}<div class="post-media"><video controls><source src="{{ first_post.video }}"></video></div>{% endif %}
-                    </div>
+                      <p class="post-text {% if first_post.content|length > 100 %}truncated{% endif %}" 
+                         id="post-text-{{ first_post.id }}">
+                          {{ first_post.content }}
+                      </p>
+                      {% if first_post.content|length > 100 %}
+                      <button class="see-more-btn" onclick="togglePostText({{ first_post.id }})">
+                          See More
+                      </button>
+                      {% endif %}
+                      {% if first_post.image %}<div class="post-media"><img src="{{ first_post.image }}" alt="Post"></div>{% endif %}
+                      {% if first_post.video %}<div class="post-media"><video controls><source src="{{ first_post.video }}"></video></div>{% endif %}
+                  </div>
+
+                  
                     <div class="post-actions">
                         <div class="action-btn like-btn" data-post-id="{{ first_post.id }}">
                             <i class="bi bi-hand-thumbs-up"></i> <span class="like-count">{{ first_post.likes_list|length }}</span>
@@ -657,65 +1115,74 @@
                 {% endif %}
 
                 <!-- REST OF POSTS -->
-                {% for post in posts[1:] %}
-                <div class="post-card" data-post-id="{{ post.id }}">
-                    <div class="post-header">
-                        <div class="d-flex align-items-center">
-                            <img src="{{ post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" class="post-avatar">
-                            <div>
-                                <div class="post-author">{{ post.author.first_name }} {{ post.author.last_name }}</div>
-                                <div class="post-time">{{ post.created_at.strftime('%b %d at %I:%M %p') }}</div>
-                            </div>
-                        </div>
-                        <div class="dropdown">
-                            <button class="btn btn-sm" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button>
-                            <ul class="dropdown-menu">
-                                {% if post.author.id == current_user.id %}
-                                <li><a class="dropdown-item text-primary edit-post" href="#" data-bs-toggle="modal" data-bs-target="#editPostModal" data-post-id="{{ post.id }}">Edit</a></li>
-                                <li><a class="dropdown-item text-danger delete-post" href="#" data-post-id="{{ post.id }}">Delete <span class="loader" style="display:none;"></span></a></li>
-                                {% endif %}
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="post-content">
-                        <p class="post-text">{{ post.content }}</p>
-                        {% if post.image %}<div class="post-media"><img src="{{ post.image }}" alt="Post"></div>{% endif %}
-                        {% if post.video %}<div class="post-media"><video controls><source src="{{ post.video }}"></video></div>{% endif %}
-                    </div>
-                    <div class="post-actions">
-                      <div class="action-btn like-btn {% if current_user.has_liked_post(post.id) %}liked{% endif %}" 
-                      data-post-id="{{ post.id }}">
-                     <i class="bi bi-hand-thumbs-up{% if current_user.has_liked_post(post.id) %}-fill{% endif %}"></i> 
-                     <span class="like-count">{{ post.likes_list|length }}</span>
-                 </div>
-                        <div class="action-btn view-comments" data-bs-toggle="modal" data-bs-target="#commentModal" data-post-id="{{ post.id }}">
-                            <i class="bi bi-chat"></i> Comment
-                        </div>
-                        <div class="action-btn share-btn" data-url="{{ url_for('auth.user_dashboard', _anchor='post-' ~ post.id) }}">
-                            <i class="bi bi-share"></i> Share
-                        </div>
-                    </div>
-                    <div class="comments-section">
-                        <div class="comment-input">
-                            <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" alt="">
-                            <input type="text" placeholder="Write a comment..." class="add-comment" data-post-id="{{ post.id }}">
-                        </div>
-                        {% for comment in post.comments_list[:3] %}
-                        <div class="comment" id="comment-{{ comment.id }}">
-                            <img src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" alt="">
-                            <div class="comment-body">
-                                <div class="comment-author">{{ comment.author.first_name }}</div>
-                                <div class="comment-text">{{ comment.content }}</div>
-                                <div class="comment-actions">
-                                    <span class="reply-comment" data-comment-id="{{ comment.id }}">Reply</span>
-                                    <span class="copy-comment-link" data-comment-id="{{ comment.id }}">Link</span>
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
+                <!-- REST OF POSTS -->
+{% for post in posts[1:] %}
+<div class="post-card" data-post-id="{{ post.id }}">
+    <div class="post-header">
+        <div class="d-flex align-items-center">
+            <img src="{{ post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" class="post-avatar">
+            <div>
+                <div class="post-author">{{ post.author.first_name }} {{ post.author.last_name }}</div>
+                <div class="post-time">{{ post.created_at.strftime('%b %d at %I:%M %p') }}</div>
+            </div>
+        </div>
+        <div class="dropdown">
+            <button class="btn btn-sm" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button>
+            <ul class="dropdown-menu">
+                {% if post.author.id == current_user.id %}
+                <li><a class="dropdown-item text-primary edit-post" href="#" data-bs-toggle="modal" data-bs-target="#editPostModal" data-post-id="{{ post.id }}">Edit</a></li>
+                <li><a class="dropdown-item text-danger delete-post" href="#" data-post-id="{{ post.id }}">Delete <span class="loader" style="display:none;"></span></a></li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+    <div class="post-content">
+        <p class="post-text {% if post.content|length > 100 %}truncated{% endif %}" 
+           id="post-text-{{ post.id }}">
+            {{ post.content }}
+        </p>
+        {% if post.content|length > 100 %}
+        <button class="see-more-btn" onclick="togglePostText({{ post.id }})">
+            See More
+        </button>
+        {% endif %}
+        {% if post.image %}<div class="post-media"><img src="{{ post.image }}" alt="Post"></div>{% endif %}
+        {% if post.video %}<div class="post-media"><video controls><source src="{{ post.video }}"></video></div>{% endif %}
+    </div>
+    <div class="post-actions">
+        <div class="action-btn like-btn {% if current_user.has_liked_post(post.id) %}liked{% endif %}" 
+            data-post-id="{{ post.id }}">
+            <i class="bi bi-hand-thumbs-up{% if current_user.has_liked_post(post.id) %}-fill{% endif %}"></i> 
+            <span class="like-count">{{ post.likes_list|length }}</span>
+        </div>
+        <div class="action-btn view-comments" data-bs-toggle="modal" data-bs-target="#commentModal" data-post-id="{{ post.id }}">
+            <i class="bi bi-chat"></i> Comment
+        </div>
+        <div class="action-btn share-btn" data-url="{{ url_for('auth.user_dashboard', _anchor='post-' ~ post.id) }}">
+            <i class="bi bi-share"></i> Share
+        </div>
+    </div>
+    <div class="comments-section">
+        <div class="comment-input">
+            <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" alt="">
+            <input type="text" placeholder="Write a comment..." class="add-comment" data-post-id="{{ post.id }}">
+        </div>
+        {% for comment in post.comments_list[:3] %}
+        <div class="comment" id="comment-{{ comment.id }}">
+            <img src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" alt="">
+            <div class="comment-body">
+                <div class="comment-author">{{ comment.author.first_name }}</div>
+                <div class="comment-text">{{ comment.content }}</div>
+                <div class="comment-actions">
+                    <span class="reply-comment" data-comment-id="{{ comment.id }}">Reply</span>
+                    <span class="copy-comment-link" data-comment-id="{{ comment.id }}">Link</span>
                 </div>
-                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endfor %}
             </div>
         </div>
 
@@ -1262,6 +1729,714 @@ document.querySelectorAll('.like-btn').forEach(btn => {
                 alert('Post link copied!');
             });
         });
+
+  // Notification System with Debugging
+let notificationCheckInterval;
+
+function initializeNotifications() {
+    console.log("Initializing notifications...");
+    loadNotifications();
+    updateNotificationBadge();
+    
+    // Check for new notifications every 30 seconds
+    notificationCheckInterval = setInterval(updateNotificationBadge, 30000);
+    
+    // Set up dropdown event listeners
+    const dropdown = document.getElementById('notificationDropdown');
+    if (dropdown) {
+        dropdown.addEventListener('show.bs.dropdown', function() {
+            console.log("Notification dropdown opened");
+            loadNotifications();
+        });
+    }
+}
+
+function updateNotificationBadge() {
+    console.log("Updating notification badge...");
+    fetch('/notifications/count')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log("Notification count response:", data);
+            const badge = document.getElementById('notificationBadge');
+            if (data.count > 0) {
+                badge.textContent = data.count > 99 ? '99+' : data.count;
+                badge.style.display = 'flex';
+                console.log(`Badge updated with count: ${data.count}`);
+            } else {
+                badge.style.display = 'none';
+                console.log("No notifications, badge hidden");
+            }
+        })
+        .catch(error => {
+            console.error('Error updating notification badge:', error);
+            const badge = document.getElementById('notificationBadge');
+            badge.style.display = 'none';
+        });
+}
+
+
+
+function handleNotificationClick(notificationId, type, entityId) {
+    console.log(`Notification clicked: ID=${notificationId}, Type=${type}, EntityID=${entityId}`);
+    
+    // Mark as read
+    markNotificationAsRead(notificationId);
+    
+    // Handle different notification types
+    switch(type) {
+        case 'friend_request':
+            console.log("Opening profile modal for friend request");
+            openProfileModal(entityId);
+            break;
+        case 'post_like':
+        case 'new_comment':
+            console.log("Scrolling to post");
+            scrollToPost(entityId);
+            break;
+        case 'profile_update':
+            console.log("Opening profile modal for profile update");
+            openProfileModal(entityId);
+            break;
+        case 'friend_accepted':
+            console.log("Opening profile modal for friend acceptance");
+            openProfileModal(entityId);
+            break;
+        default:
+            console.log("Unknown notification type:", type);
+            break;
+    }
+    
+    // Close dropdown
+    const dropdown = bootstrap.Dropdown.getInstance(document.getElementById('notificationDropdown'));
+    if (dropdown) dropdown.hide();
+}
+
+function markNotificationAsRead(notificationId) {
+    console.log(`Marking notification ${notificationId} as read`);
+    fetch(`/notifications/${notificationId}/read`, {
+        method: 'POST',
+        headers: { 
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log(`Notification ${notificationId} marked as read`);
+        updateNotificationBadge();
+    })
+    .catch(error => {
+        console.error('Error marking notification as read:', error);
+    });
+}
+
+function markAllAsRead() {
+    console.log("Marking all notifications as read");
+    fetch('/notifications/read', {
+        method: 'POST',
+        headers: { 
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log("All notifications marked as read");
+        updateNotificationBadge();
+        loadNotifications();
+    })
+    .catch(error => {
+        console.error('Error marking all notifications as read:', error);
+    });
+}
+
+function acceptFriendRequest(userId, notificationId) {
+    console.log(`Accepting friend request from user ${userId}`);
+    fetch(`/accept_friend_request/${userId}`, {
+        method: 'POST',
+        headers: { 
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            console.log("Friend request accepted successfully");
+            markNotificationAsRead(notificationId);
+            loadNotifications();
+            updateNotificationBadge();
+            showToast('Friend request accepted!', 'success');
+        } else {
+            console.error("Failed to accept friend request:", data.error);
+            showToast('Failed to accept friend request', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error accepting friend request:', error);
+        showToast('Error accepting friend request', 'danger');
+    });
+}
+
+function declineFriendRequest(userId, notificationId) {
+    console.log(`Declining friend request from user ${userId}`);
+    fetch(`/decline_friend_request/${userId}`, {
+        method: 'POST',
+        headers: { 
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            console.log("Friend request declined successfully");
+            markNotificationAsRead(notificationId);
+            loadNotifications();
+            updateNotificationBadge();
+            showToast('Friend request declined', 'info');
+        } else {
+            console.error("Failed to decline friend request:", data.error);
+            showToast('Failed to decline friend request', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error declining friend request:', error);
+        showToast('Error declining friend request', 'danger');
+    });
+}
+
+function formatNotificationTime(timestamp) {
+    const now = new Date();
+    const notificationTime = new Date(timestamp);
+    const diffInSeconds = Math.floor((now - notificationTime) / 1000);
+    
+    if (diffInSeconds < 60) return 'Just now';
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+    return notificationTime.toLocaleDateString();
+}
+
+function scrollToPost(postId) {
+    const postElement = document.querySelector(`[data-post-id="${postId}"]`);
+    if (postElement) {
+        postElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        postElement.style.animation = 'highlight 2s ease-in-out';
+        setTimeout(() => postElement.style.animation = '', 2000);
+    }
+}
+
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type} position-fixed`;
+    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 250px;';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+
+// Debug function to test notifications manually
+function testNotifications() {
+    console.log("=== MANUAL NOTIFICATION TEST ===");
+    
+    // Test notification count
+    fetch('/notifications/count')
+        .then(response => {
+            console.log("Count response status:", response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log("Notification count:", data);
+        })
+        .catch(error => console.error('Count test error:', error));
+    
+    // Test getting notifications
+    fetch('/notifications')
+        .then(response => {
+            console.log("Notifications response status:", response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log("Notifications data:", data);
+            if (data.length === 0) {
+                console.log("No notifications returned from API");
+            } else {
+                console.log(`API returned ${data.length} notifications`);
+            }
+        })
+        .catch(error => console.error('Notifications test error:', error));
+}
+
+// Add highlight animation
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes highlight {
+        0% { background-color: transparent; }
+        50% { background-color: #fff3cd; }
+        100% { background-color: transparent; }
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+    
+    .notification-badge.pulse {
+        animation: pulse 0.5s ease-in-out;
+    }
+`;
+document.head.appendChild(style);
+
+// Initialize notifications when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("DOM loaded, initializing notifications...");
+    initializeNotifications();
+    
+    // Add test button for manual testing (remove in production)
+    const testButton = document.createElement('button');
+    testButton.textContent = 'Test Notifications';
+    testButton.className = 'btn btn-sm btn-outline-secondary position-fixed';
+    testButton.style.cssText = 'bottom: 20px; right: 20px; z-index: 9999;';
+    testButton.onclick = testNotifications;
+    document.body.appendChild(testButton);
+    
+    console.log("Notification system initialized");
+});
+
+function loadNotifications() {
+  const notificationsList = document.getElementById('notificationsList');
+  if (!notificationsList) {
+      console.error("Notifications list element not found!");
+      return;
+  }
+
+  console.log("Loading notifications...");
+  
+  fetch('/notifications')
+      .then(response => {
+          if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json();
+      })
+      .then(notifications => {
+          console.log("Notifications API response:", notifications);
+          
+          if (notifications.length === 0) {
+              notificationsList.innerHTML = `
+                  <li class="empty-notifications">
+                      <i class="bi bi-bell"></i>
+                      <p>No notifications yet</p>
+                  </li>
+              `;
+              console.log("No notifications to display");
+              return;
+          }
+
+          // Show ALL notifications, not just unread ones
+          notificationsList.innerHTML = notifications.map(notification => {
+              console.log("Processing notification:", notification);
+              return `
+              <li class="dropdown-item ${notification.is_read ? 'read' : 'unread'}" 
+                  onclick="handleNotificationClick(${notification.id}, '${notification.type}', ${notification.entity_id || 0})">
+                  <div class="notification-item">
+                      <img src="${notification.actor.avatar}" 
+                           alt="${notification.actor.name}" 
+                           class="notification-avatar"
+                           onerror="this.src='{{ url_for('static', filename='assets/img/default-avatar.png') }}'">
+                      <div class="notification-content">
+                          <div class="notification-text">${notification.message}</div>
+                          <div class="notification-time">${formatNotificationTime(notification.created_at)}</div>
+                          ${notification.type === 'friend_request' ? `
+                          <div class="notification-actions">
+                              ${!notification.is_read ? `
+                                  <button class="notification-action-btn btn-accept" 
+                                          onclick="event.stopPropagation(); acceptFriendRequest(${notification.actor.id}, ${notification.id})">
+                                      Accept
+                                  </button>
+                                  <button class="notification-action-btn btn-decline" 
+                                          onclick="event.stopPropagation(); declineFriendRequest(${notification.actor.id}, ${notification.id})">
+                                      Decline
+                                  </button>
+                              ` : `
+                                  <small class="text-muted">Request pending</small>
+                              `}
+                          </div>
+                      ` : ''}
+                      </div>
+                  </div>
+              </li>
+              `;
+          }).join('');
+          
+          console.log(`Displayed ${notifications.length} notifications`);
+      })
+      .catch(error => {
+          console.error('Error loading notifications:', error);
+          notificationsList.innerHTML = `
+              <li class="text-center p-3 text-danger">
+                  <i class="bi bi-exclamation-triangle"></i>
+                  <p>Error loading notifications</p>
+                  <small>Check console for details</small>
+              </li>
+          `;
+      });
+}
+
+// Search functionality
+let searchTimeout;
+const searchInput = document.getElementById('globalSearch');
+const searchResults = document.getElementById('searchResults');
+const searchResultsBody = document.getElementById('searchResultsBody');
+
+// Search function
+function performSearch(query) {
+    if (!query.trim()) {
+        hideSearchResults();
+        return;
+    }
+
+    showSearchLoading();
+    
+    fetch(`/search?q=${encodeURIComponent(query)}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Search failed');
+            }
+            return response.json();
+        })
+        .then(data => {
+            displaySearchResults(data, query);
+        })
+        .catch(error => {
+            console.error('Search error:', error);
+            showSearchError();
+        });
+}
+
+// Display search results
+function displaySearchResults(results, query) {
+    searchResultsBody.innerHTML = '';
+    
+    if (results.users.length === 0 && results.posts.length === 0) {
+        showNoResults();
+        return;
+    }
+
+    let resultsHTML = '';
+    
+    // Display users
+    if (results.users.length > 0) {
+        results.users.forEach(user => {
+            const highlightedName = highlightMatch(`${user.first_name} ${user.last_name}`, query);
+            resultsHTML += `
+                <div class="search-result-item" onclick="openProfileModal(${user.id})">
+                    <div class="search-result-user">
+                        <img src="${user.profile_pic || '{{ url_for('static', filename='assets/img/default-avatar.png') }}'}" 
+                             alt="${user.first_name}" 
+                             class="search-result-avatar"
+                             onerror="this.src='{{ url_for('static', filename='assets/img/default-avatar.png') }}'">
+                        <div class="search-result-info">
+                            <div class="search-result-name">${highlightedName}</div>
+                            <div class="search-result-type">User</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+    
+    // Display posts
+    if (results.posts.length > 0) {
+        results.posts.forEach(post => {
+            const highlightedContent = highlightMatch(post.content.substring(0, 100), query);
+            resultsHTML += `
+                <div class="search-result-item" onclick="viewPost(${post.id})">
+                    <div class="search-result-post">
+                        <div class="search-result-content">${highlightedContent}${post.content.length > 100 ? '...' : ''}</div>
+                        <div class="search-result-author">By ${post.author_first_name} ${post.author_last_name}</div>
+                        <div class="search-result-type">Post</div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+    
+    searchResultsBody.innerHTML = resultsHTML;
+    showSearchResults();
+}
+
+// Highlight matching text
+function highlightMatch(text, query) {
+    if (!query.trim()) return text;
+    
+    const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    return text.replace(regex, '<span class="highlight">$1</span>');
+}
+
+// Show/hide search results
+function showSearchResults() {
+    searchResults.style.display = 'block';
+}
+
+function hideSearchResults() {
+    searchResults.style.display = 'none';
+}
+
+function showSearchLoading() {
+    searchResultsBody.innerHTML = `
+        <div class="search-loading">
+            <div class="spinner-border spinner-border-sm" role="status"></div>
+            <div class="mt-2">Searching...</div>
+        </div>
+    `;
+    showSearchResults();
+}
+
+function showNoResults() {
+    searchResultsBody.innerHTML = `
+        <div class="no-results">
+            <i class="bi bi-search"></i>
+            <p>No results found</p>
+            <small>Try different keywords</small>
+        </div>
+    `;
+    showSearchResults();
+}
+
+function showSearchError() {
+    searchResultsBody.innerHTML = `
+        <div class="no-results">
+            <i class="bi bi-exclamation-triangle"></i>
+            <p>Search failed</p>
+            <small>Please try again</small>
+        </div>
+    `;
+    showSearchResults();
+}
+
+// View post function
+function viewPost(postId) {
+    hideSearchResults();
+    searchInput.value = '';
+    
+    // Scroll to post if it exists on current page
+    const postElement = document.querySelector(`[data-post-id="${postId}"]`);
+    if (postElement) {
+        postElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        postElement.style.animation = 'highlight 2s ease-in-out';
+        setTimeout(() => postElement.style.animation = '', 2000);
+    } else {
+        // If post is not on current page, redirect to post page or show in modal
+        showToast('Post not found on this page', 'info');
+    }
+}
+
+// Event listeners
+searchInput.addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    const query = this.value.trim();
+    
+    if (query.length >= 2) {
+        searchTimeout = setTimeout(() => performSearch(query), 300);
+    } else {
+        hideSearchResults();
+    }
+});
+
+searchInput.addEventListener('focus', function() {
+    if (this.value.trim().length >= 2) {
+        performSearch(this.value.trim());
+    }
+});
+
+// Close search results when clicking outside
+document.addEventListener('click', function(event) {
+    if (!searchResults.contains(event.target) && event.target !== searchInput) {
+        hideSearchResults();
+    }
+});
+
+// Keyboard navigation for search results
+searchInput.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        hideSearchResults();
+    }
+    
+    if (event.key === 'ArrowDown' && searchResults.style.display === 'block') {
+        event.preventDefault();
+        const firstResult = searchResultsBody.querySelector('.search-result-item');
+        if (firstResult) firstResult.focus();
+    }
+});
+
+// Enhanced viewPost function
+function viewPost(postId) {
+  hideSearchResults();
+  searchInput.value = '';
+  
+  // Try to find post on current page first
+  const postElement = document.querySelector(`[data-post-id="${postId}"]`);
+  if (postElement) {
+      postElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      postElement.style.animation = 'highlight 2s ease-in-out';
+      setTimeout(() => postElement.style.animation = '', 2000);
+  } else {
+      // If post is not on current page, fetch and display it
+      fetch(`/get_post/${postId}`)
+          .then(response => response.json())
+          .then(post => {
+              if (post.error) {
+                  showToast('Post not found', 'danger');
+                  return;
+              }
+              displayPostModal(post);
+          })
+          .catch(error => {
+              console.error('Error fetching post:', error);
+              showToast('Error loading post', 'danger');
+          });
+  }
+}
+
+// Function to display post in modal
+function displayPostModal(post) {
+  const modalBody = document.getElementById('commentModalBody');
+  modalBody.innerHTML = `
+      <div class="post-card">
+          <div class="post-header">
+              <div class="d-flex align-items-center">
+                  <img src="${post.author_profile_pic}" class="post-avatar">
+                  <div>
+                      <div class="post-author">${post.author_first_name} ${post.author_last_name}</div>
+                      <div class="post-time">${new Date(post.created_at).toLocaleString()}</div>
+                  </div>
+              </div>
+          </div>
+          <div class="post-content">
+              <p class="post-text">${post.content}</p>
+              ${post.image ? `<div class="post-media"><img src="${post.image}" alt="Post"></div>` : ''}
+              ${post.video ? `<div class="post-media"><video controls><source src="${post.video}"></video></div>` : ''}
+          </div>
+      </div>
+  `;
+  
+  const commentModal = new bootstrap.Modal(document.getElementById('commentModal'));
+  commentModal.show();
+}
+
+// Toggle post text expansion with smooth animation
+function togglePostText(postId) {
+  const postText = document.getElementById(`post-text-${postId}`);
+  if (!postText) {
+      console.error(`Post text element not found for post ID: ${postId}`);
+      return;
+  }
+  
+  const seeMoreBtn = postText.nextElementSibling;
+  
+  if (!seeMoreBtn || !seeMoreBtn.classList.contains('see-more-btn')) {
+      console.error(`See more button not found for post ID: ${postId}`);
+      return;
+  }
+  
+  if (postText.classList.contains('truncated')) {
+      // Expand the text
+      postText.classList.remove('truncated');
+      seeMoreBtn.textContent = 'See Less';
+      
+      // Smooth scroll to keep the post in view if it's near the bottom
+      const postCard = postText.closest('.post-card');
+      const rect = postCard.getBoundingClientRect();
+      if (rect.bottom > window.innerHeight - 100) {
+          postCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+  } else {
+      // Collapse the text
+      postText.classList.add('truncated');
+      seeMoreBtn.textContent = 'See More';
+  }
+}
+
+// Also handle posts loaded via search results or dynamically
+function initializePostTextTruncation() {
+  document.querySelectorAll('.post-text').forEach(postText => {
+      const content = postText.textContent;
+      // Check if content is longer than 100 characters AND doesn't already have a see more button
+      if (content.length > 100 && !postText.nextElementSibling?.classList.contains('see-more-btn')) {
+          // Add see more button if it doesn't exist
+          postText.classList.add('truncated');
+          const seeMoreBtn = document.createElement('button');
+          seeMoreBtn.className = 'see-more-btn';
+          seeMoreBtn.textContent = 'See More';
+          seeMoreBtn.onclick = function() {
+              const postId = this.previousElementSibling.id.replace('post-text-', '');
+              togglePostText(postId);
+          };
+          postText.parentNode.insertBefore(seeMoreBtn, postText.nextSibling);
+      }
+  });
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+  initializePostTextTruncation();
+});
+
+// Also handle posts loaded via search results
+function initializePostTextTruncation() {
+  document.querySelectorAll('.post-text').forEach(postText => {
+      const content = postText.textContent;
+      if (content.length > 100 && !postText.nextElementSibling?.classList.contains('see-more-btn')) {
+          // Add see more button if it doesn't exist
+          postText.classList.add('truncated');
+          const seeMoreBtn = document.createElement('button');
+          seeMoreBtn.className = 'see-more-btn';
+          seeMoreBtn.textContent = 'See More';
+          seeMoreBtn.onclick = function() {
+              const postId = this.previousElementSibling.id.replace('post-text-', '');
+              togglePostText(postId);
+          };
+          postText.parentNode.insertBefore(seeMoreBtn, postText.nextSibling);
+      }
+  });
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+  initializePostTextTruncation();
+});
+
     </script>
 </body>
 </html>
