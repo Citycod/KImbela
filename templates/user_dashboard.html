@@ -924,7 +924,6 @@
               <ul class="dropdown-menu dropdown-menu-end shadow notification-dropdown" style="width: 400px; max-height: 500px; overflow-y: auto;">
                   <li class="dropdown-header d-flex justify-content-between align-items-center">
                       <span>Notifications</span>
-                      <button class="btn btn-sm btn-link p-0" onclick="markAllAsRead()">Mark all as read</button>
                   </li>
                   <li><hr class="dropdown-divider m-0"></li>
                   <div id="notificationsList">
@@ -934,9 +933,7 @@
                       </li>
                   </div>
                   <li><hr class="dropdown-divider m-0"></li>
-                  <li class="text-center">
-                      <a href="#" class="dropdown-item text-primary" onclick="viewAllNotifications()">View All</a>
-                  </li>
+                  
               </ul>
           </div>
 
@@ -1720,7 +1717,8 @@
 
                 list.innerHTML = notifications.map(n => `
                     <li class="dropdown-item ${n.is_read ? 'read' : 'unread'}"
-                        onclick="handleNotificationClick(${n.id}, '${n.type}', ${n.entity_id || 0})">
+                        ${n.type !== 'friend_request' ? `onclick="handleNotificationClick(${n.id}, '${n.type}', ${n.entity_id || 0})"` : ''}>
+
                         <div class="notification-item">
                             <img src="${n.actor.avatar}" alt="${n.actor.name}" class="notification-avatar"
                                  onerror="this.src='{{ url_for('static', filename='assets/img/default-avatar.png') }}'">

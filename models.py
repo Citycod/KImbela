@@ -1,7 +1,7 @@
 from extensions import db, login_manager
 from flask_login import UserMixin
 from datetime import datetime, timedelta
-import random, string, uuid
+import random, string, uuid, secrets
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import url_for
@@ -61,20 +61,29 @@ class User(db.Model, UserMixin):
     city = db.Column(db.String(50), nullable=False)
     country = db.Column(db.String(50), nullable=False)
     dob = db.Column(db.Date, nullable=False)
-    gender = db.Column(db.String(20), nullable=False)  # Add this field
+    gender = db.Column(db.String(20), nullable=False)
     phone_number = db.Column(db.String(20), nullable=False)
-    interests = db.Column(db.Text, nullable=True)  # Add this field for hobbies/interests
+    interests = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    email_token = db.Column(db.String(255))  # 6-digit token
+    email_token = db.Column(db.String(255))
     email_token_expires = db.Column(db.DateTime)
-    # In your User model (add these lines)
+    educational_level = db.Column(db.String(50), nullable=True)
+    occupation = db.Column(db.String(100), nullable=True)
+    ethnicity = db.Column(db.String(50), nullable=True)
+    religion = db.Column(db.String(50), nullable=True)
+    is_premium = db.Column(db.Boolean, default=False)
     profile_pic = db.Column(db.String(500), default='https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg')
     cover_pic = db.Column(db.String(500), default='https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg')
     bio = db.Column(db.Text, nullable=True)
     marital_status = db.Column(db.String(50), nullable=True)
-    is_online = db.Column(db.Boolean, default=False)          # <-- NEW
-    last_seen = db.Column(db.DateTime, default=datetime.utcnow) 
+    email_token = db.Column(db.String(10))
+    email_token_expires = db.Column(db.DateTime)
+    otp = db.Column(db.String(255), nullable=True)
+    otp_expires = db.Column(db.DateTime, nullable=True)
+    is_online = db.Column(db.Boolean, default=False)
+    last_seen = db.Column(db.DateTime, default=datetime.utcnow)
+    about_me = db.Column(db.Text, nullable=True)  # NEW FIELD
     
      # Enhanced blocking system using a proper association table
     _blocked_users = db.Table(
@@ -94,6 +103,12 @@ class User(db.Model, UserMixin):
         backref=db.backref('blocked_by', lazy='dynamic'),
         lazy='dynamic'
     )
+    
+    def generate_otp(self):
+        """Generate a 6-digit numeric OTP"""
+        self.otp = f"{random.randint(0, 999999):06d}"  # always 6 digits
+        self.otp_expires = datetime.utcnow() + timedelta(minutes=10)
+        db.session.commit()
 
     # In your User model, enhance the blocked users methods:
 

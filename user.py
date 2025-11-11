@@ -9,6 +9,8 @@ from flask import (
     session,
     current_app,
 )
+
+from sqlalchemy import event
 from flask_wtf.csrf import generate_csrf
 from werkzeug.security import check_password_hash
 
@@ -19,6 +21,10 @@ from dotenv import load_dotenv
 import os, requests, json
 from extensions import db, bcrypt
 from werkzeug.utils import secure_filename
+
+import cloudinary.uploader
+import cloudinary.utils
+
 
 from flask import (
     Blueprint,
@@ -46,6 +52,10 @@ from extensions import db, login_manager, mail
 import string
 from flask_mail import Message
 from dotenv import load_dotenv
+
+from flask import jsonify, request
+from random import sample
+from datetime import datetime
 
 
 
@@ -99,8 +109,62 @@ def index():
     return render_template("index.html")
 
 
+
+
+
+
 @auth.route("/register", methods=["GET", "POST"])
 def register():
+    # Define options for dropdowns
+    EDUCATIONAL_LEVELS = [
+        'Primary or Elementary School',
+        'Middle School or Junior High School', 
+        'High School',
+        'Vocational College',
+        'Associate Degree',
+        'Bachelor\'s Degree',
+        'Master\'s Degree',
+        'PhD or Doctorate',
+        'Professional Degree',
+        'No Formal Education'
+        'Other'
+    ]
+    
+    INTERESTS_LIST = [
+        'Reading', 'Traveling', 'Cooking', 'Photography', 'Music',
+        'Sports', 'Gardening', 'Painting', 'Dancing', 'Hiking',
+        'Movies', 'Technology', 'Art', 'Writing', 'Fishing',
+        'Yoga', 'Meditation', 'Chess', 'Gaming', 'Knitting',
+        'Bird Watching', 'Wine Tasting', 'Volunteering', 'Learning Languages',
+        'Camping', 'Cycling', 'Swimming', 'Running', 'Weightlifting',
+        'Pottery', 'Sculpting', 'Drawing', 'Singing', 'Playing Instruments',
+        'Theater', 'Dancing', 'Poetry', 'Blogging', 'Podcasting',
+        'DIY Projects', 'Woodworking', 'Car Restoration', 'Home Decorating',
+        'Watching Sports', 'Fantasy Sports', 'Collecting', 'Antique Hunting',
+        'Stargazing', 'Meteorology', 'Genealogy', 'History Research',
+        'Baking', 'Coffee Brewing', 'Tea Tasting', 'Mixology', 'Foodie Culture',
+        'Motorcycles', 'Sailing', 'Scuba Diving', 'Rock Climbing', 'Mountain Biking',
+        'Fashion', 'Makeup Artistry', 'Hair Styling', 'Fitness Training', 'Nutrition',
+        'Philosophy', 'Psychology', 'Sociology', 'Political Science', 'Economics',
+        'Astronomy', 'Physics', 'Biology', 'Chemistry', 'Mathematics',
+        'Computer Programming', 'Web Development', 'Data Science', 'Artificial Intelligence',
+        'Cryptocurrency', 'Stock Trading', 'Real Estate', 'Entrepreneurship', 'Startups'
+    ]
+    
+    RELIGIONS = [
+        'Christianity', 'Islam', 'Hinduism', 'Buddhism', 'Judaism',
+        'Sikhism', 'Baháʼí Faith', 'Jainism', 'Shinto', 'Taoism',
+        'Zoroastrianism', 'Atheism', 'Agnosticism', 'Spiritual but not religious', 'Traditional / Indegenous Beliefs', 'No Religion / Atheist / Agnostic', 'Roman Catholic', 'Anglican', 'Pentecostal', 'Methodist', 'Baptist', 'Seventh Day Adventist', "Jehova's Witnesses", 'Latter Day Saints', 'Mormon', 'Lutheran', 'Presbyterian', 'Episcopal', 'Bible Church', 'Orthodox Christian', 'White Garment Churches',
+        'Other'
+    ]
+    
+    ETHNICITIES = [
+        'African', 'African American', 'Asian', 'Caucasian', 'Hispanic/Latino',
+        'Native American', 'Pacific Islander', 'Middle Eastern', 'Mixed Race',
+        'Caribbean', 'European', 'South Asian', 'East Asian', 'Southeast Asian',
+        'Indigenous Australian', 'Maori', 'Other'
+    ]
+
     if request.method == "POST":
         # Extract form data
         first_name = request.form.get("first_name", "").strip()
@@ -115,7 +179,12 @@ def register():
         password = request.form.get("password")
         confirm_password = request.form.get("confirm_password")
         terms = request.form.get("terms")
-        interests = request.form.get("interests", "").strip()
+        interests = request.form.getlist("interests")
+        educational_level = request.form.get("educational_level")
+        occupation = request.form.get("occupation", "").strip()
+        ethnicity = request.form.get("ethnicity")
+        religion = request.form.get("religion")
+        about_me = request.form.get("about_me", "").strip()  # NEW FIELD
 
         errors = {}
 
@@ -183,11 +252,18 @@ def register():
                 "register.html", 
                 max_dob=max_dob,
                 errors=errors,
-                request=request
+                request=request,
+                educational_levels=EDUCATIONAL_LEVELS,
+                interests_list=INTERESTS_LIST,
+                religions=RELIGIONS,
+                ethnicities=ETHNICITIES
             )
 
         # === Create User ===
         try:
+            # Convert interests list to comma-separated string
+            interests_str = ", ".join(interests) if interests else None
+            
             user = User(
                 first_name=first_name,
                 last_name=last_name,
@@ -198,13 +274,18 @@ def register():
                 city=city,
                 marital_status=marital_status,
                 country=country,
-                interests=interests,
+                interests=interests_str,
+                educational_level=educational_level,
+                occupation=occupation,
+                ethnicity=ethnicity,
+                religion=religion,
+                about_me=about_me,  # NEW FIELD
                 is_active=False  
             )
             user.set_password(password)
 
             # Generate 6-digit OTP
-            otp = user.generate_otp()  # ← This method sets email_token & expires
+            otp = user.generate_otp()
 
             db.session.add(user)
             db.session.commit()
@@ -219,7 +300,7 @@ def register():
                 msg.html = render_template(
                     "emails/verify_email.html",
                     user=user,
-                    otp=otp  # ← Pass the 6-digit code
+                    otp=otp
                 )
                 mail.send(msg)
                 flash("Check your email for the 6-digit verification code.", "success")
@@ -227,7 +308,6 @@ def register():
                 print(f"Email send failed: {e}")
                 flash("Registration successful, but failed to send verification email. Please contact support.", "warning")
 
-            # Redirect to OTP entry page
             return redirect(url_for("auth.verify_page", email=email))
 
         except Exception as e:
@@ -239,7 +319,11 @@ def register():
                 "register.html", 
                 max_dob=max_dob,
                 errors={},
-                request=request
+                request=request,
+                educational_levels=EDUCATIONAL_LEVELS,
+                interests_list=INTERESTS_LIST,
+                religions=RELIGIONS,
+                ethnicities=ETHNICITIES
             )
 
     # === GET request ===
@@ -248,7 +332,11 @@ def register():
         "register.html", 
         max_dob=max_dob, 
         csrf_token=generate_csrf(), 
-        errors={}
+        errors={},
+        educational_levels=EDUCATIONAL_LEVELS,
+        interests_list=INTERESTS_LIST,
+        religions=RELIGIONS,
+        ethnicities=ETHNICITIES
     )
 
 
@@ -267,18 +355,18 @@ def verify_page():
 
     if request.method == "POST":
         token = request.form.get("token", "").strip()
-        if user.email_token != token:
+        if user.otp != token:
             flash("Invalid token.", "danger")
             return render_template("verify.html", email=email)
 
         # Token is correct → activate
-        if user.email_token_expires < datetime.utcnow():
+        if user.otp_expires < datetime.utcnow():
             flash("Token expired. Please register again.", "danger")
             return redirect(url_for("auth.register"))
 
         user.is_active = True
-        user.email_token = None
-        user.email_token_expires = None
+        user.otp = None
+        user.otp_expires = None
         db.session.commit()
 
         flash("Email verified! You can now log in.", "success")
@@ -286,6 +374,9 @@ def verify_page():
 
     # GET – show the form
     return render_template("verify.html", email=email)
+
+
+
 
 
 
@@ -1389,8 +1480,9 @@ def profile(user_id):
         user=current_user,
         posts=posts,
         friends=friends,
-        blocked_users=blocked_users  # Add this line
-    )
+        blocked_users=blocked_users,
+        datetime=datetime
+        )
 
 
 
@@ -1434,4 +1526,3 @@ def terms():
 @auth.route("/privacy", methods=["GET", "POST"])
 def privacy():
     return render_template("privacy.html")
-
