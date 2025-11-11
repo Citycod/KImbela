@@ -572,7 +572,7 @@ def user_dashboard():
     non_friends = [u for u in all_users if u.id not in friend_ids]
     friend_ids = {friend.id for friend in current_user.friends}
     non_friends = [u for u in all_users if u.id not in friend_ids]
-    random_three = sample(non_friends, min(3, len(non_friends))) if non_friends else []
+    random_three = sample(non_friends, min(1000, len(non_friends))) if non_friends else []
 
     return render_template(
         'user_dashboard.html',
