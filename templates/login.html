@@ -154,7 +154,11 @@
         <div class="login-form-container">
             <div class="login-form-wrapper" data-aos="fade-up" data-aos-delay="100">
                 <div class="logo-container">
-                    <img src="{{ url_for('static', filename='assets/img/kimbela-logo.png') }}" alt="Kimbela Logo">
+                    <a href="{{ url_for('auth.index') }}">
+                        <img src="{{ url_for('static', filename='assets/img/kim.png') }}" 
+                             alt="Kimbela" 
+                             style="width: 15rem; height: 15rem; left: 0;">
+                    </a>
                 </div>
                 
                 <h1 class="login-title">Sign In</h1>
@@ -201,11 +205,7 @@
 
                 <div class="divider"><span class="divider-text">OR</span></div>
 
-                <div class="social-login">
-                    <a href="#" class="social-btn btn-google" title="Google"><i class="bi bi-google"></i></a>
-                    <a href="#" class="social-btn btn-facebook" title="Facebook"><i class="bi bi-facebook"></i></a>
-                    <a href="#" class="social-btn btn-linkedin" title="LinkedIn"><i class="bi bi-linkedin"></i></a>
-                </div>
+                
 
                 <div class="register-link">
                     Don't have an account? <a href="{{ url_for('auth.register') }}">Join Kimbela</a>

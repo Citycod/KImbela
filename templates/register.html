@@ -843,8 +843,13 @@
         <div class="register-form-container">
             <div class="register-form-wrapper" data-aos="fade-up" data-aos-delay="100">
                 <div class="logo-container">
-                    <img src="{{ url_for('static', filename='assets/img/kim.png') }}" alt="Kimbela Logo" style="width: 10rem; height: 10rem;" >
+                    <a href="{{ url_for('auth.index') }}">
+                        <img src="{{ url_for('static', filename='assets/img/kim.png') }}" 
+                             alt="Kimbela" 
+                             style="width: 15rem; height: 15rem; left: 0;">
+                    </a>
                 </div>
+                
 
                 <h1 class="register-title">Create Your Account</h1>
                 <p class="register-subtitle">Join Kimbela today and start building meaningful connections</p>
