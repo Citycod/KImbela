@@ -290,19 +290,21 @@
 
       <!-- Logo -->
       <a
-        href="{{ url_for('auth.user_dashboard') }}"
-        class="flex items-center mr-4 " style="margin-left: 15rem;"
-      >
-        <img
-          src="{{ url_for('static', filename='assets/img/kim.png') }}"
-          alt="Kimbela"
-          class="h-10" style="width: 10rem; height: 10rem; left: 0;"
-        />
-      </a>
+  href="{{ url_for('auth.user_dashboard') }}"
+  class="flex items-center mr-4"
+>
+  <img
+    src="{{ url_for('static', filename='assets/img/kim.png') }}"
+    alt="Kimbela"
+    class="h-10"
+    style="width: 10rem; height: 10rem;"
+  />
+</a>
+
 
       <!-- Search Bar -->
-      <div class="hidden md:flex relative flex-1 max-w-xl mx-4" style="margin-left: 5rem;">
-        <div class="relative w-full" >
+      <div class="flex-1 flex justify-center" style="margin-right: 1rem;">
+        <div class="relative w-full max-w-xl">
           <i
             class="bi bi-search absolute left-3 top-1/2 transform -translate-y-1/2 text-fb-text-light"
           ></i>
@@ -325,7 +327,6 @@
       </div>
 
       <!-- Spacer -->
-      <div class="flex-1"></div>
 
       <!-- Navigation Icons -->
       <div class="flex items-center space-x-2">
@@ -475,11 +476,7 @@
           >
             <i class="bi bi-cart3 mr-3 text-lg"></i> Market Place
           </div>
-          <div
-            class="sidebar-item flex items-center p-3 rounded-lg text-red-500 hover:bg-red-50 transition-colors mt-8"
-          >
-            <i class="bi bi-box-arrow-right mr-3 text-lg"></i> Logout
-          </div>
+          
         </div>
       </div>
     </div>
@@ -511,11 +508,7 @@
         >
           <i class="bi bi-cart3 mr-3 text-lg"></i> Market Place
         </div>
-        <div
-          class="sidebar-item flex items-center p-3 rounded-lg text-red-500 hover:bg-red-50 transition-colors mt-8"
-        >
-          <i class="bi bi-box-arrow-right mr-3 text-lg"></i> Logout
-        </div>
+        
 
         <!-- Sponsored Section -->
         <div class="mt-8 pt-6 border-t border-fb-border">
