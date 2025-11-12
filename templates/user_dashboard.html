@@ -273,7 +273,44 @@
         padding-right: 8px;
       }
             }
+
+
     </style>
+
+    <style>
+      .message-bubble {
+          max-width: 70%;
+          word-wrap: break-word;
+      }
+      
+      .message-own {
+          background: linear-gradient(135deg, #0084ff 0%, #0099ff 100%);
+          color: white;
+          border-radius: 18px 18px 4px 18px;
+          margin-left: auto;
+      }
+      
+      .message-other {
+          background: #f0f2f5;
+          color: #1c1e21;
+          border-radius: 18px 18px 18px 4px;
+      }
+      
+      .message-status {
+          font-size: 0.7rem;
+          margin-top: 2px;
+      }
+      
+      .typing-indicator {
+          display: inline-flex;
+          align-items: center;
+      }
+      
+      #messengerPopup {
+          box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+          border: 1px solid #e4e6eb;
+      }
+      </style>
   </head>
   <body class="font-poppins bg-fb-gray text-fb-text">
     <!-- NAVBAR -->
@@ -331,11 +368,11 @@
       <!-- Navigation Icons -->
       <div class="flex items-center space-x-2">
         <!-- Messenger -->
-        <div
-          class="p-2 rounded-full hover:bg-fb-gray transition-colors cursor-pointer relative"
-          title="Messenger"
-        >
+        <div>
+        <button onclick="openMessenger()" class="p-2 rounded-full hover:bg-fb-gray transition-colors relative" title="Messenger" id="openMessaging">
           <i class="bi bi-messenger text-xl"></i>
+          <span id="unreadMessagesBadge" class="notification-badge absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden">0</span>
+        </button>
         </div>
 
         <!-- Notifications -->
@@ -414,6 +451,78 @@
         </div>
       </div>
     </nav>
+
+    <!-- Messenger Popup -->
+<!-- Messenger Popup -->
+<div id="messengerPopup" class="fixed bottom-0 right-4 w-96 h-96 bg-white rounded-t-xl shadow-2xl z-50 hidden flex flex-col" style="height: 30rem;">
+  <div class="flex justify-between items-center p-3 border-b bg-fb-blue text-white rounded-t-xl">
+    <h3 class="font-semibold">Messenger</h3>
+    <button onclick="closeMessenger()" class="text-white hover:bg-blue-600 p-1 rounded">
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </div>
+
+  <!-- Friends List Container -->
+  <div id="friendList" class="flex-1 overflow-y-auto custom-scrollbar">
+    <div id="friendsContainer" class="p-2">
+      <!-- Friends will be loaded here -->
+    </div>
+  </div>
+
+  <!-- Chat Area -->
+  <!-- Chat Area -->
+<div id="chatArea" class="hidden flex flex-col h-full">
+
+  <!-- Chat Header -->
+  <div id="chatHeader" class="p-3 border-b bg-gray-50 flex items-center justify-between flex-none">
+    <div class="flex items-center">
+      <button onclick="backToFriends()" class="p-1 mr-2 rounded-full hover:bg-gray-200">
+        <i class="bi bi-arrow-left"></i>
+      </button>
+      <img id="chatAvatar" src="" class="w-8 h-8 rounded-full mr-2">
+      <div>
+        <p id="chatName" class="font-medium text-sm"></p>
+        <p id="chatStatus" class="text-xs text-green-600">Online</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Messages + Typing Indicator (scrollable) -->
+  <div class="flex-1 flex flex-col overflow-hidden max-h-[30vh]">
+    <div id="chatMessagesWrapper" class="flex-1 overflow-y-auto p-3 space-y-2 bg-gray-50">
+      <div id="chatMessages" class="flex flex-col space-y-2"></div>
+    </div>
+
+    <!-- Typing Indicator -->
+    <div id="typingIndicator" class="hidden px-4 py-2 bg-gray-50 flex-none">
+      <div class="flex items-center space-x-2 text-gray-500">
+        <div class="flex space-x-1">
+          <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+          <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+          <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+        </div>
+        <span id="typingUserName" class="text-xs"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Message Input (always at bottom) -->
+  <div class="border-t border-gray-200 bg-white flex-none">
+    <div class="flex items-center space-x-2 p-3">
+      <input 
+        type="text"
+        id="chatInput"
+        placeholder="Type a message..."
+        class="flex-1 px-4 py-2 bg-gray-100 rounded-full text-sm border-0 focus:ring-2 focus:ring-fb-blue focus:outline-none"
+      >
+      <button id="sendChatBtn" class="bg-fb-blue text-white px-4 py-2 rounded-full text-sm hover:bg-blue-600 transition-colors">
+        Send
+      </button>
+    </div>
+  </div>
+</div>
+
+</div>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
@@ -1297,6 +1406,9 @@
               // ========================================
               const csrfToken = '{{ csrf_token }}';
 
+              // Add this at the top of your JavaScript, after csrfToken
+              const currentUserId = {{ current_user.id }};
+
               function showToast(message, type = 'info') {
                   const toast = document.createElement('div');
                   toast.className = `fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-strong text-white ${
@@ -1558,26 +1670,26 @@
                           const isBlocked = {{ current_user.blocks|map(attribute='id')|list|tojson }}.includes(userId);
 
                           const actions = isFriend ? `
-                               <button class="btn btn-primary px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors" onclick="startChat(${userId})">
-                                  <i class="bi bi-chat-dots me-1"></i> Message
-                              </button>
-                              ${isBlocked ? `
-                                  <button class="btn btn-success px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors" onclick="unblockUserFromModal(${userId})">
-                                      <i class="bi bi-check-circle me-1"></i> Unblock
-                                  </button>
-                              ` : `
-                                  <button class="btn btn-outline-danger px-4 py-2 border border-red-500 text-red-500 rounded-lg font-medium hover:bg-red-50 transition-colors" onclick="blockUser(${userId})">
-                                      <i class="bi bi-slash-circle me-1"></i> Block
-                                  </button>
-                              `}
-                          ` : `
-                              <button class="btn btn-primary px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors" onclick="addFriend(${userId})">
-                                  <i class="bi bi-person-plus me-1"></i> Add Friend
-                              </button>
-                              <a href="${data.profile_url}" class="btn btn-outline-secondary px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors">
-                                  <i class="bi bi-person-circle me-1"></i> View Profile
-                              </a>
-                          `;
+    <button class="btn btn-primary px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors" onclick="startChat(${userId})">
+        <i class="bi bi-chat-dots me-1"></i> Message
+    </button>
+    ${isBlocked ? `
+        <button class="btn btn-success px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors" onclick="unblockUserFromModal(${userId})">
+            <i class="bi bi-check-circle me-1"></i> Unblock
+        </button>
+    ` : `
+        <button class="btn btn-outline-danger px-4 py-2 border border-red-500 text-red-500 rounded-lg font-medium hover:bg-red-50 transition-colors" onclick="blockUser(${userId})">
+            <i class="bi bi-slash-circle me-1"></i> Block
+        </button>
+    `}
+` : `
+    <button class="btn btn-primary px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors" onclick="addFriend(${userId})">
+        <i class="bi bi-person-plus me-1"></i> Add Friend
+    </button>
+    <a href="${data.profile_url}" class="btn btn-outline-secondary px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors">
+        <i class="bi bi-person-circle me-1"></i> View Profile
+    </a>
+`;
 
                           document.getElementById('profileActions').innerHTML = actions;
                           openModal('profileModal');
@@ -2174,8 +2286,35 @@
               }
 
               function startChat(userId) {
-                  alert(`Chat with user ${userId} (implement chat later)`);
-              }
+                // Open the messenger popup
+                openMessenger();
+                
+                // Load friends and then open chat with the specific user
+                loadFriends().then(() => {
+                    // Find the friend in the loaded friends list and open chat
+                    setTimeout(() => {
+                        openChatWithUser(userId);
+                    }, 500); // Small delay to ensure friends are loaded
+                });
+            }
+            
+            function openChatWithUser(userId) {
+                // First, make sure we have the friends list
+                fetch('/messaging/friends')
+                    .then(response => response.json())
+                    .then(friends => {
+                        const friend = friends.find(f => f.id === userId);
+                        if (friend) {
+                            openChatWith(friend.id, friend.name, friend.avatar, friend.online);
+                        } else {
+                            showToast('Friend not found or not available for messaging', 'danger');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading friend:', error);
+                        showToast('Failed to start chat', 'danger');
+                    });
+            }
 
               // ========================================
               // INIT ON LOAD
@@ -2262,6 +2401,378 @@
                 navigator.clipboard.writeText(url);
                 showToast('Comment link copied!', 'success');
             }
+
+
+
     </script>
+
+    <!-- Socket.IO + JS -->
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script>
+  // Messenger functionality
+let activeFriendId = null;
+let typingTimer;
+let isTyping = false;
+
+// Socket.IO connection
+const socket = io();
+
+// Socket event listeners
+socket.on('connect', () => {
+    console.log('Connected to messaging server');
+    socket.emit('join_messenger');
+});
+
+socket.on('messenger_joined', (data) => {
+    console.log('Joined messenger room');
+});
+
+socket.on('new_message', (msg) => {
+    if ((msg.sender_id === activeFriendId && msg.receiver_id === currentUserId) || 
+        (msg.receiver_id === activeFriendId && msg.sender_id === currentUserId)) {
+        appendMessage(msg, true);
+        
+        // If message is from active friend, mark as read
+        if (msg.sender_id === activeFriendId) {
+            markMessagesAsRead(activeFriendId);
+        }
+    }
+    updateUnreadBadge();
+});
+
+socket.on('message_delivered', (data) => {
+    updateMessageStatus(data.message_id, 'delivered', data.message_data);
+});
+
+socket.on('messages_read', (data) => {
+    if (data.receiver_id === currentUserId) {
+        data.message_ids?.forEach(msgId => {
+            updateMessageStatus(msgId, 'read');
+        });
+    }
+});
+
+socket.on('user_typing', (data) => {
+    if (data.user_id === activeFriendId) {
+        showTypingIndicator(data.user_name);
+    }
+});
+
+socket.on('user_stopped_typing', (data) => {
+    if (data.user_id === activeFriendId) {
+        hideTypingIndicator();
+    }
+});
+
+socket.on('error', (data) => {
+    showToast(data.message, 'danger');
+});
+
+// Messenger functions
+function openMessenger() {
+    document.getElementById('messengerPopup').classList.remove('hidden');
+    loadFriends();
+    socket.emit('join_messenger');
+}
+
+function closeMessenger() {
+    document.getElementById('messengerPopup').classList.add('hidden');
+    activeFriendId = null;
+    document.getElementById('chatArea').classList.add('hidden');
+    document.getElementById('friendList').classList.remove('hidden');
+    hideTypingIndicator();
+}
+
+function backToFriends() {
+    activeFriendId = null;
+    document.getElementById('chatArea').classList.add('hidden');
+    document.getElementById('friendList').classList.remove('hidden');
+    hideTypingIndicator();
+    stopTyping();
+}
+
+async function loadFriends() {
+    try {
+        const response = await fetch('/messaging/friends');
+        const friends = await response.json();
+        
+        const container = document.getElementById('friendsContainer');
+        container.innerHTML = '';
+        
+        if (friends.length === 0) {
+            container.innerHTML = `
+                <div class="text-center p-6 text-gray-500">
+                    <i class="bi bi-people text-3xl mb-2"></i>
+                    <p class="text-sm">No friends yet</p>
+                    <p class="text-xs mt-1">Add friends to start messaging</p>
+                </div>
+            `;
+            return;
+        }
+        
+        friends.forEach(friend => {
+            const friendElement = document.createElement('div');
+            friendElement.className = 'flex items-center p-3 hover:bg-gray-50 cursor-pointer rounded-lg transition-colors';
+            friendElement.onclick = () => openChatWith(friend.id, friend.name, friend.avatar, friend.online);
+            
+            friendElement.innerHTML = `
+                <div class="relative">
+                    <img src="${friend.avatar}" alt="${friend.name}" class="w-12 h-12 rounded-full object-cover">
+                    ${friend.online ? `
+                        <span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></span>
+                    ` : ''}
+                </div>
+                <div class="ml-3 flex-1">
+                    <p class="font-medium text-sm">${friend.name}</p>
+                    <p class="text-xs ${friend.online ? 'text-green-600' : 'text-gray-500'}">
+                        ${friend.online ? 'Online' : 'Offline'}
+                    </p>
+                </div>
+            `;
+            
+            container.appendChild(friendElement);
+        });
+    } catch (error) {
+        console.error('Error loading friends:', error);
+        showToast('Failed to load friends', 'danger');
+    }
+}
+
+function openChatWith(friendId, friendName, friendAvatar, friendOnline) {
+    activeFriendId = friendId;
+    
+    // Update UI
+    document.getElementById('friendList').classList.add('hidden');
+    document.getElementById('chatArea').classList.remove('hidden');
+    document.getElementById('chatName').textContent = friendName;
+    document.getElementById('chatAvatar').src = friendAvatar;
+    document.getElementById('chatStatus').textContent = friendOnline ? 'Online' : 'Offline';
+    document.getElementById('chatStatus').className = `text-xs ${friendOnline ? 'text-green-600' : 'text-gray-500'}`;
+    
+    // Join chat room and load messages
+    socket.emit('join_chat', { friend_id: friendId });
+    loadMessages(friendId);
+    
+    // Mark messages as read
+    markMessagesAsRead(friendId);
+}
+
+async function loadMessages(friendId) {
+    try {
+        const response = await fetch(`/messaging/messages/${friendId}`);
+        const messages = await response.json();
+        
+        const chatContainer = document.getElementById('chatMessages');
+        chatContainer.innerHTML = '';
+        
+        if (messages.length === 0) {
+            chatContainer.innerHTML = `
+                <div class="text-center p-6 text-gray-500">
+                    <i class="bi bi-chat-dots text-2xl mb-2"></i>
+                    <p class="text-sm">No messages yet</p>
+                    <p class="text-xs mt-1">Send a message to start the conversation</p>
+                </div>
+            `;
+            return;
+        }
+        
+        messages.forEach(msg => {
+            appendMessage(msg, false);
+        });
+        
+        // Scroll to bottom
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    } catch (error) {
+        console.error('Error loading messages:', error);
+        showToast('Failed to load messages', 'danger');
+    }
+}
+
+function appendMessage(msg, shouldScroll = true) {
+    const chatContainer = document.getElementById('chatMessages');
+    const isOwnMessage = msg.sender_id === currentUserId;
+    
+    const messageElement = document.createElement('div');
+    messageElement.className = `flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-2`;
+    messageElement.id = `message-${msg.id}`;
+    
+    const statusIcon = getStatusIcon(msg.status, isOwnMessage);
+    
+    messageElement.innerHTML = `
+        <div class="max-w-xs px-4 py-2 rounded-2xl ${isOwnMessage ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'}">
+            <div class="text-sm">${msg.content}</div>
+            <div class="text-xs mt-1 flex items-center justify-end space-x-1 opacity-80">
+                <span>${formatMessageTime(msg.timestamp)}</span>
+                ${isOwnMessage ? statusIcon : ''}
+            </div>
+        </div>
+    `;
+    
+    chatContainer.appendChild(messageElement);
+    
+    if (shouldScroll) {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+}
+
+
+
+// Update the getStatusIcon function to work with the simplified status
+function getStatusIcon(status, isOwnMessage) {
+  if (!isOwnMessage) return '';
+  
+  switch(status) {
+      case 'sent':
+          return '<i class="bi bi-check"></i>';
+      case 'delivered':
+          return '<i class="bi bi-check-all"></i>';
+      case 'read':
+          return '<i class="bi bi-check-all text-blue-300"></i>';
+      default:
+          return '<i class="bi bi-check"></i>';
+  }
+}
+
+// Update the message delivery handler
+socket.on('message_delivered', (data) => {
+  updateMessageStatus(data.message_id, 'delivered');
+});
+
+socket.on('messages_read', (data) => {
+  if (data.receiver_id === currentUserId) {
+      data.message_ids?.forEach(msgId => {
+          updateMessageStatus(msgId, 'read');
+      });
+  }
+});
+function updateMessageStatus(messageId, status, messageData = null) {
+    const messageElement = document.getElementById(`message-${messageId}`);
+    if (messageElement) {
+        const statusElement = messageElement.querySelector('.bi');
+        if (statusElement) {
+            statusElement.className = getStatusIcon(status, true);
+        }
+    }
+}
+
+function sendMessage() {
+    const input = document.getElementById('chatInput');
+    const content = input.value.trim();
+    
+    if (!content || !activeFriendId) {
+        return;
+    }
+    
+    // Emit typing stop immediately
+    stopTyping();
+    
+    // Send message via socket
+    socket.emit('send_message', {
+        friend_id: activeFriendId,
+        content: content
+    });
+    
+    // Clear input
+    input.value = '';
+}
+
+// Typing indicators
+function handleTyping() {
+    if (!isTyping && activeFriendId) {
+        isTyping = true;
+        socket.emit('typing', { friend_id: activeFriendId });
+    }
+    
+    clearTimeout(typingTimer);
+    typingTimer = setTimeout(() => {
+        stopTyping();
+    }, 1000);
+}
+
+function stopTyping() {
+    if (isTyping && activeFriendId) {
+        isTyping = false;
+        socket.emit('stop_typing', { friend_id: activeFriendId });
+    }
+}
+
+function showTypingIndicator(userName) {
+    const indicator = document.getElementById('typingIndicator');
+    const userNameElement = document.getElementById('typingUserName');
+    
+    userNameElement.textContent = `${userName} is typing`;
+    indicator.classList.remove('hidden');
+}
+
+function hideTypingIndicator() {
+    const indicator = document.getElementById('typingIndicator');
+    indicator.classList.add('hidden');
+}
+
+// Utility functions
+function formatMessageTime(timestamp) {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+async function markMessagesAsRead(friendId) {
+    try {
+        await fetch(`/messaging/mark_read/${friendId}`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'Content-Type': 'application/json'
+            }
+        });
+        updateUnreadBadge();
+    } catch (error) {
+        console.error('Error marking messages as read:', error);
+    }
+}
+
+async function updateUnreadBadge() {
+    // You can implement this to show total unread messages count
+    // This would require an additional endpoint to count unread messages
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Messenger button
+    document.getElementById('openMessaging').addEventListener('click', openMessenger);
+    
+    // Send message button
+    document.getElementById('sendChatBtn').addEventListener('click', sendMessage);
+    
+    // Message input events
+    const chatInput = document.getElementById('chatInput');
+    if (chatInput) {
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+        
+        chatInput.addEventListener('input', handleTyping);
+    }
+    
+    // Close messenger button
+    document.getElementById('closeMessenger').addEventListener('click', closeMessenger);
+    
+    // Initialize messenger when page loads
+    socket.emit('join_messenger');
+});
+</script>
+
+<style>
+  .read-receipt { background: #1877f2 !important; }
+  .tick i { font-size: 0.8rem; }
+</style>
   </body>
 </html>

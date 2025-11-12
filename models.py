@@ -592,3 +592,34 @@ class Notification(db.Model):
             'entity_id': self.entity_id,
             'entity_type': self.entity_type
         }
+        
+from flask_socketio import emit       
+        
+
+class Message(db.Model):
+    __tablename__ = 'messages'
+    id = db.Column(db.Integer, primary_key=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    receiver_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    status = db.Column(db.String(20), default='sent')  # sent, delivered, read
+
+    sender = db.relationship('User', foreign_keys=[sender_id], backref='sent_messages')
+    receiver = db.relationship('User', foreign_keys=[receiver_id], backref='received_messages')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'sender_id': self.sender_id,
+            'receiver_id': self.receiver_id,
+            'content': self.content,
+            'timestamp': self.timestamp.isoformat(),
+            'status': self.status,
+            'sender_name': self.sender.full_name,
+            'sender_avatar': self.sender.profile_pic or url_for('static', filename='assets/img/default-avatar.png')
+        }
+
+    @staticmethod
+    def are_friends(u1, u2):
+        return u2 in u1.friends

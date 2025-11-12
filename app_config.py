@@ -8,6 +8,9 @@ from user import auth
 # from admin import admin as admin_blueprint
 from models import User, Post, Comment, Like, FriendRequest, friendship
 from datetime import datetime, timedelta, timezone
+from extensions import db, socketio
+from messaging import messaging
+
 
 load_dotenv()
 
@@ -44,6 +47,7 @@ def create_app():
     bcrypt.init_app(app)
     login_manager.init_app(app)
     migrate = Migrate(app, db)
+    socketio.init_app(app)
 
     login_manager.login_view = "auth.login"
     login_manager.login_message_category = "info"
@@ -53,6 +57,7 @@ def create_app():
 
     # Register blueprints
     app.register_blueprint(auth)
+    app.register_blueprint(messaging, url_prefix='/messaging')
     # app.register_blueprint(admin_blueprint)
 
     # Inject CSRF token into all templates
