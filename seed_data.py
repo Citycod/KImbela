@@ -41,24 +41,61 @@ except ImportError as e:
     sys.exit(1)
 
 # === 4. Faker Setup ===
-fake = Faker([ 'en_US', 'en_GB'])
+fake = Faker(["en_US", "en_GB"])
 
-CITIES = ['Lagos', 'Abuja', 'Port Harcourt', 'Kano', 'Ibadan', 'London', 'Toronto', 'Berlin', 'New York', 'Sydney']
-COUNTRIES = ['Nigeria', 'United States', 'United Kingdom', 'Canada', 'Germany']
-RELIGIONS = ['Christianity', 'Islam', 'Atheism', 'Traditional', 'Other']
-ETHNICITIES = ['Yoruba', 'Igbo', 'Hausa', 'Efik', 'Tiv', 'English', 'German', 'Canadian', 'American']
+CITIES = [
+    "Lagos",
+    "Abuja",
+    "Port Harcourt",
+    "Kano",
+    "Ibadan",
+    "London",
+    "Toronto",
+    "Berlin",
+    "New York",
+    "Sydney",
+]
+COUNTRIES = ["Nigeria", "United States", "United Kingdom", "Canada", "Germany"]
+RELIGIONS = ["Christianity", "Islam", "Atheism", "Traditional", "Other"]
+ETHNICITIES = [
+    "Yoruba",
+    "Igbo",
+    "Hausa",
+    "Efik",
+    "Tiv",
+    "English",
+    "German",
+    "Canadian",
+    "American",
+]
 OCCUPATIONS = [
-    'Software Engineer', 'Graphic Designer', 'Teacher', 'Doctor', 'Nurse', 'Photographer', 
-    'Lawyer', 'Architect', 'Civil Engineer', 'Marketing Specialist', 'Entrepreneur', 'Chef'
+    "Software Engineer",
+    "Graphic Designer",
+    "Teacher",
+    "Doctor",
+    "Nurse",
+    "Photographer",
+    "Lawyer",
+    "Architect",
+    "Civil Engineer",
+    "Marketing Specialist",
+    "Entrepreneur",
+    "Chef",
 ]
-EDUCATION_LEVELS = ['High School', 'Diploma', 'B.Sc', 'M.Sc', 'PhD']
+EDUCATION_LEVELS = ["High School", "Diploma", "B.Sc", "M.Sc", "PhD"]
 INTERESTS = [
-    "Traveling, photography, jollof", "Reading, yoga, hiking", "Afrobeats, live concerts",
-    "Fitness, running, meditation", "Art, painting, museums", "Tech, coding, AI",
-    "Volunteering, community", "Gardening, sustainability", "Food, wine, events"
+    "Traveling, photography, jollof",
+    "Reading, yoga, hiking",
+    "Afrobeats, live concerts",
+    "Fitness, running, meditation",
+    "Art, painting, museums",
+    "Tech, coding, AI",
+    "Volunteering, community",
+    "Gardening, sustainability",
+    "Food, wine, events",
 ]
-MARITAL_STATUSES = ['Single', 'Married', 'Divorced', 'Widowed']
-GENDERS = ['Male', 'Female']
+MARITAL_STATUSES = ["Single", "Married", "Divorced", "Widowed"]
+GENDERS = ["Male", "Female"]
 IMAGE_URLS = [f"https://picsum.photos/seed/{i}/800/600" for i in range(1, 101)]
 
 POST_TEMPLATES = [
@@ -71,13 +108,21 @@ POST_TEMPLATES = [
     "Coffee and contemplation — my kind of morning.",
     "Anyone else obsessed with {hobby}?",
     "Throwback to last year's trip to {country}. Miss it!",
-    "Weekend plans: {activity}. Who's with me?"
+    "Weekend plans: {activity}. Who's with me?",
 ]
 
-FOODS = ['jollof rice', 'suya', 'egusi soup', 'pounded yam', 'lasagna', 'sushi', 'pizza']
-BOOKS = ['Atomic Habits', 'Sapiens', 'The Alchemist', 'Things Fall Apart', '1984']
-HOBBIES = ['photography', 'dancing', 'coding', 'cooking', 'reading', 'football']
-ACTIVITIES = ['movie night', 'beach day', 'owambe', 'picnic', 'road trip']
+FOODS = [
+    "jollof rice",
+    "suya",
+    "egusi soup",
+    "pounded yam",
+    "lasagna",
+    "sushi",
+    "pizza",
+]
+BOOKS = ["Atomic Habits", "Sapiens", "The Alchemist", "Things Fall Apart", "1984"]
+HOBBIES = ["photography", "dancing", "coding", "cooking", "reading", "football"]
+ACTIVITIES = ["movie night", "beach day", "owambe", "picnic", "road trip"]
 
 
 # === Helper Functions ===
@@ -89,9 +134,9 @@ def random_dob():
 
 
 def random_phone():
-    prefixes = ['+234', '+1', '+44', '+61', '+49']
+    prefixes = ["+234", "+1", "+44", "+61", "+49"]
     prefix = random.choice(prefixes)
-    if prefix == '+234':
+    if prefix == "+234":
         return f"{prefix}{random.randint(700, 999)}{random.randint(1000000, 9999999)}"
     else:
         return f"{prefix}{random.randint(200, 999)}-{random.randint(200, 999)}-{random.randint(1000, 9999)}"
@@ -128,7 +173,9 @@ def create_users(n=50):
             religion=random.choice(RELIGIONS),
             occupation=random.choice(OCCUPATIONS),
             educational_level=random.choice(EDUCATION_LEVELS),
-            is_premium=random.choice([True, False, False, False])  # ~25% chance premium
+            is_premium=random.choice(
+                [True, False, False, False]
+            ),  # ~25% chance premium
         )
         db.session.add(user)
         users.append(user)
@@ -155,7 +202,7 @@ def create_posts(users, n=50):
             food=random.choice(FOODS),
             book=random.choice(BOOKS),
             hobby=random.choice(HOBBIES),
-            activity=random.choice(ACTIVITIES)
+            activity=random.choice(ACTIVITIES),
         )
         image = random.choice(IMAGE_URLS) if random.random() > 0.4 else None
 
@@ -185,12 +232,14 @@ def create_posts(users, n=50):
     print("💬 Adding comments...")
     commented_posts = random.sample(posts, k=min(30, len(posts)))
     for post in commented_posts:
-        commenters = random.sample([u for u in users if u.id != post.author_id], k=random.randint(1, 5))
+        commenters = random.sample(
+            [u for u in users if u.id != post.author_id], k=random.randint(1, 5)
+        )
         for commenter in commenters:
             comment = Comment(
                 content=fake.sentence(nb_words=8),
                 author_id=commenter.id,
-                post_id=post.id
+                post_id=post.id,
             )
             db.session.add(comment)
     db.session.commit()
@@ -200,7 +249,7 @@ def create_posts(users, n=50):
 
 
 # === MAIN ===
-if __name__ == '__main__':
+if __name__ == "__main__":
     print("=" * 50)
     print("🚀 KIMBELA SEEDER STARTED")
     print(f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
@@ -222,5 +271,6 @@ if __name__ == '__main__':
     except Exception as e:
         print(f"\n❌ SEEDING FAILED: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

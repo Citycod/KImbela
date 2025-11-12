@@ -37,7 +37,16 @@ from flask import (
     send_file,
 )
 import logging, secrets, re
-from models import User, Post, Comment, Like, FriendRequest, friendship, Notification, NotificationType
+from models import (
+    User,
+    Post,
+    Comment,
+    Like,
+    FriendRequest,
+    friendship,
+    Notification,
+    NotificationType,
+)
 
 
 from flask_login import login_user, logout_user, login_required, current_user
@@ -58,7 +67,6 @@ from random import sample
 from datetime import datetime
 
 
-
 load_dotenv()
 
 env_path = os.path.join(os.path.dirname(__file__), ".env")
@@ -66,16 +74,16 @@ load_dotenv(dotenv_path=env_path)
 
 # config.py or top of app.py
 import cloudinary
+
 cloudinary.config(
     cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
     api_key=os.getenv("CLOUDINARY_API_KEY"),
     api_secret=os.getenv("CLOUDINARY_API_SECRET"),
-    secure=True
+    secure=True,
 )
 
 
 auth = Blueprint("auth", __name__)
-
 
 
 logger = logging.getLogger(__name__)
@@ -95,6 +103,7 @@ def is_strong_password(password):
         return False
     return True
 
+
 def calculate_age(birth_date):
     today = datetime.utcnow().date()
     age = today.year - birth_date.year
@@ -109,60 +118,163 @@ def index():
     return render_template("index.html")
 
 
-
-
-
-
 @auth.route("/register", methods=["GET", "POST"])
 def register():
     # Define options for dropdowns
     EDUCATIONAL_LEVELS = [
-        'Primary or Elementary School',
-        'Middle School or Junior High School', 
-        'High School',
-        'Vocational College',
-        'Associate Degree',
-        'Bachelor\'s Degree',
-        'Master\'s Degree',
-        'PhD or Doctorate',
-        'Professional Degree',
-        'No Formal Education'
-        'Other'
+        "Primary or Elementary School",
+        "Middle School or Junior High School",
+        "High School",
+        "Vocational College",
+        "Associate Degree",
+        "Bachelor's Degree",
+        "Master's Degree",
+        "PhD or Doctorate",
+        "Professional Degree",
+        "No Formal Education" "Other",
     ]
-    
+
     INTERESTS_LIST = [
-        'Reading', 'Traveling', 'Cooking', 'Photography', 'Music',
-        'Sports', 'Gardening', 'Painting', 'Dancing', 'Hiking',
-        'Movies', 'Technology', 'Art', 'Writing', 'Fishing',
-        'Yoga', 'Meditation', 'Chess', 'Gaming', 'Knitting',
-        'Bird Watching', 'Wine Tasting', 'Volunteering', 'Learning Languages',
-        'Camping', 'Cycling', 'Swimming', 'Running', 'Weightlifting',
-        'Pottery', 'Sculpting', 'Drawing', 'Singing', 'Playing Instruments',
-        'Theater', 'Dancing', 'Poetry', 'Blogging', 'Podcasting',
-        'DIY Projects', 'Woodworking', 'Car Restoration', 'Home Decorating',
-        'Watching Sports', 'Fantasy Sports', 'Collecting', 'Antique Hunting',
-        'Stargazing', 'Meteorology', 'Genealogy', 'History Research',
-        'Baking', 'Coffee Brewing', 'Tea Tasting', 'Mixology', 'Foodie Culture',
-        'Motorcycles', 'Sailing', 'Scuba Diving', 'Rock Climbing', 'Mountain Biking',
-        'Fashion', 'Makeup Artistry', 'Hair Styling', 'Fitness Training', 'Nutrition',
-        'Philosophy', 'Psychology', 'Sociology', 'Political Science', 'Economics',
-        'Astronomy', 'Physics', 'Biology', 'Chemistry', 'Mathematics',
-        'Computer Programming', 'Web Development', 'Data Science', 'Artificial Intelligence',
-        'Cryptocurrency', 'Stock Trading', 'Real Estate', 'Entrepreneurship', 'Startups'
+        "Reading",
+        "Traveling",
+        "Cooking",
+        "Photography",
+        "Music",
+        "Sports",
+        "Gardening",
+        "Painting",
+        "Dancing",
+        "Hiking",
+        "Movies",
+        "Technology",
+        "Art",
+        "Writing",
+        "Fishing",
+        "Yoga",
+        "Meditation",
+        "Chess",
+        "Gaming",
+        "Knitting",
+        "Bird Watching",
+        "Wine Tasting",
+        "Volunteering",
+        "Learning Languages",
+        "Camping",
+        "Cycling",
+        "Swimming",
+        "Running",
+        "Weightlifting",
+        "Pottery",
+        "Sculpting",
+        "Drawing",
+        "Singing",
+        "Playing Instruments",
+        "Theater",
+        "Dancing",
+        "Poetry",
+        "Blogging",
+        "Podcasting",
+        "DIY Projects",
+        "Woodworking",
+        "Car Restoration",
+        "Home Decorating",
+        "Watching Sports",
+        "Fantasy Sports",
+        "Collecting",
+        "Antique Hunting",
+        "Stargazing",
+        "Meteorology",
+        "Genealogy",
+        "History Research",
+        "Baking",
+        "Coffee Brewing",
+        "Tea Tasting",
+        "Mixology",
+        "Foodie Culture",
+        "Motorcycles",
+        "Sailing",
+        "Scuba Diving",
+        "Rock Climbing",
+        "Mountain Biking",
+        "Fashion",
+        "Makeup Artistry",
+        "Hair Styling",
+        "Fitness Training",
+        "Nutrition",
+        "Philosophy",
+        "Psychology",
+        "Sociology",
+        "Political Science",
+        "Economics",
+        "Astronomy",
+        "Physics",
+        "Biology",
+        "Chemistry",
+        "Mathematics",
+        "Computer Programming",
+        "Web Development",
+        "Data Science",
+        "Artificial Intelligence",
+        "Cryptocurrency",
+        "Stock Trading",
+        "Real Estate",
+        "Entrepreneurship",
+        "Startups",
     ]
-    
+
     RELIGIONS = [
-        'Christianity', 'Islam', 'Hinduism', 'Buddhism', 'Judaism',
-        'Sikhism', 'Baháʼí Faith', 'Jainism', 'Shinto', 'Taoism',
-        'Zoroastrianism', 'Atheism', 'Agnosticism', 'Spiritual but not religious', 'Traditional / Indegenous Beliefs', 'No Religion / Atheist / Agnostic', 'Roman Catholic', 'Anglican', 'Pentecostal', 'Methodist', 'Baptist', 'Seventh Day Adventist', "Jehova's Witnesses", 'Latter Day Saints', 'Mormon', 'Lutheran', 'Presbyterian', 'Episcopal', 'Bible Church', 'Orthodox Christian', 'White Garment Churches',
-        'Other'
+        "Christianity",
+        "Islam",
+        "Hinduism",
+        "Buddhism",
+        "Judaism",
+        "Sikhism",
+        "Baháʼí Faith",
+        "Jainism",
+        "Shinto",
+        "Taoism",
+        "Zoroastrianism",
+        "Atheism",
+        "Agnosticism",
+        "Spiritual but not religious",
+        "Traditional / Indegenous Beliefs",
+        "No Religion / Atheist / Agnostic",
+        "Roman Catholic",
+        "Anglican",
+        "Pentecostal",
+        "Methodist",
+        "Baptist",
+        "Seventh Day Adventist",
+        "Jehova's Witnesses",
+        "Latter Day Saints",
+        "Mormon",
+        "Lutheran",
+        "Presbyterian",
+        "Episcopal",
+        "Bible Church",
+        "Orthodox Christian",
+        "White Garment Churches",
+        "Other",
     ]
-    
+
     ETHNICITIES = [
-        'African', 'African American', 'Asian', 'Caucasian', 'Hispanic/Latino',
-        'Native American', 'Pacific Islander', 'Middle Eastern', 'Mixed Race',
-        'Caribbean', 'European', 'South Asian', 'East Asian', 'Southeast Asian',
-        'Indigenous Australian', 'Maori', 'Other'
+        "African",
+        "African American",
+        "Asian",
+        "Caucasian",
+        "Hispanic/Latino",
+        "Native American",
+        "Pacific Islander",
+        "Middle Eastern",
+        "Mixed Race",
+        "Caribbean",
+        "European",
+        "South Asian",
+        "East Asian",
+        "Southeast Asian",
+        "Indigenous Australian",
+        "Maori",
+        "Other",
     ]
 
     if request.method == "POST":
@@ -190,80 +302,86 @@ def register():
 
         # === Individual Field Validation ===
         if not first_name:
-            errors['first_name'] = "First name is required."
-        
+            errors["first_name"] = "First name is required."
+
         if not last_name:
-            errors['last_name'] = "Last name is required."
-            
+            errors["last_name"] = "Last name is required."
+
         if not email:
-            errors['email'] = "Email is required."
+            errors["email"] = "Email is required."
         elif not re.match(r"^[^@]+@[^@]+\.[^@]+$", email):
-            errors['email'] = "Please enter a valid email address."
+            errors["email"] = "Please enter a valid email address."
         elif User.query.filter_by(email=email).first():
-            errors['email'] = "This email is already registered."
+            errors["email"] = "This email is already registered."
 
         if not phone_number:
-            errors['phone_number'] = "Phone number is required."
+            errors["phone_number"] = "Phone number is required."
         elif not re.match(r"^\+?[\d\s\-\(\)]{10,}$", phone_number):
-            errors['phone_number'] = "Please enter a valid phone number."
+            errors["phone_number"] = "Please enter a valid phone number."
 
         if not dob_str:
-            errors['dob'] = "Date of birth is required."
+            errors["dob"] = "Date of birth is required."
         else:
             try:
                 dob = datetime.strptime(dob_str, "%Y-%m-%d").date()
                 age = calculate_age(dob)
                 if age < 31:
-                    errors['dob'] = "You must be at least 31 years old to join Kimbela."
+                    errors["dob"] = "You must be at least 31 years old to join Kimbela."
             except ValueError:
-                errors['dob'] = "Invalid date of birth."
+                errors["dob"] = "Invalid date of birth."
 
         if not gender:
-            errors['gender'] = "Gender is required."
-            
+            errors["gender"] = "Gender is required."
+
         if not marital_status:
-            errors['marital_status'] = "Marital status is required."
+            errors["marital_status"] = "Marital status is required."
 
         if not city:
-            errors['city'] = "City is required."
+            errors["city"] = "City is required."
 
         if not country:
-            errors['country'] = "Country is required."
+            errors["country"] = "Country is required."
 
         if not password:
-            errors['password'] = "Password is required."
+            errors["password"] = "Password is required."
         elif not is_strong_password(password):
-            errors['password'] = "Password must be at least 8 characters with uppercase, lowercase, number, and symbol."
+            errors["password"] = (
+                "Password must be at least 8 characters with uppercase, lowercase, number, and symbol."
+            )
 
         if not confirm_password:
-            errors['confirm_password'] = "Please confirm your password."
+            errors["confirm_password"] = "Please confirm your password."
         elif password != confirm_password:
-            errors['confirm_password'] = "Passwords do not match."
+            errors["confirm_password"] = "Passwords do not match."
 
         if not terms:
-            errors['terms'] = "You must agree to the Terms of Service and Privacy Policy."
+            errors["terms"] = (
+                "You must agree to the Terms of Service and Privacy Policy."
+            )
 
         # If there are errors, return to form
         if errors:
             for field, error in errors.items():
                 flash(error, "danger")
-            max_dob = (datetime.utcnow().date() - timedelta(days=31*365)).strftime("%Y-%m-%d")
+            max_dob = (datetime.utcnow().date() - timedelta(days=31 * 365)).strftime(
+                "%Y-%m-%d"
+            )
             return render_template(
-                "register.html", 
+                "register.html",
                 max_dob=max_dob,
                 errors=errors,
                 request=request,
                 educational_levels=EDUCATIONAL_LEVELS,
                 interests_list=INTERESTS_LIST,
                 religions=RELIGIONS,
-                ethnicities=ETHNICITIES
+                ethnicities=ETHNICITIES,
             )
 
         # === Create User ===
         try:
             # Convert interests list to comma-separated string
             interests_str = ", ".join(interests) if interests else None
-            
+
             user = User(
                 first_name=first_name,
                 last_name=last_name,
@@ -280,7 +398,7 @@ def register():
                 ethnicity=ethnicity,
                 religion=religion,
                 about_me=about_me,  # NEW FIELD
-                is_active=False  
+                is_active=False,
             )
             user.set_password(password)
 
@@ -294,19 +412,20 @@ def register():
             try:
                 msg = Message(
                     subject="Your Kimbela Verification Code",
-                    sender=current_app.config['MAIL_DEFAULT_SENDER'],
-                    recipients=[email]
+                    sender=current_app.config["MAIL_DEFAULT_SENDER"],
+                    recipients=[email],
                 )
                 msg.html = render_template(
-                    "emails/verify_email.html",
-                    user=user,
-                    otp=otp
+                    "emails/verify_email.html", user=user, otp=otp
                 )
                 mail.send(msg)
                 flash("Check your email for the 6-digit verification code.", "success")
             except Exception as e:
                 print(f"Email send failed: {e}")
-                flash("Registration successful, but failed to send verification email. Please contact support.", "warning")
+                flash(
+                    "Registration successful, but failed to send verification email. Please contact support.",
+                    "warning",
+                )
 
             return redirect(url_for("auth.verify_page", email=email))
 
@@ -314,31 +433,32 @@ def register():
             db.session.rollback()
             flash("An error occurred during registration. Please try again.", "danger")
             print(f"Registration error: {e}")
-            max_dob = (datetime.utcnow().date() - timedelta(days=31*365)).strftime("%Y-%m-%d")
+            max_dob = (datetime.utcnow().date() - timedelta(days=31 * 365)).strftime(
+                "%Y-%m-%d"
+            )
             return render_template(
-                "register.html", 
+                "register.html",
                 max_dob=max_dob,
                 errors={},
                 request=request,
                 educational_levels=EDUCATIONAL_LEVELS,
                 interests_list=INTERESTS_LIST,
                 religions=RELIGIONS,
-                ethnicities=ETHNICITIES
+                ethnicities=ETHNICITIES,
             )
 
     # === GET request ===
-    max_dob = (datetime.utcnow().date() - timedelta(days=31*365)).strftime("%Y-%m-%d")
+    max_dob = (datetime.utcnow().date() - timedelta(days=31 * 365)).strftime("%Y-%m-%d")
     return render_template(
-        "register.html", 
-        max_dob=max_dob, 
-        csrf_token=generate_csrf(), 
+        "register.html",
+        max_dob=max_dob,
+        csrf_token=generate_csrf(),
         errors={},
         educational_levels=EDUCATIONAL_LEVELS,
         interests_list=INTERESTS_LIST,
         religions=RELIGIONS,
-        ethnicities=ETHNICITIES
+        ethnicities=ETHNICITIES,
     )
-
 
 
 @auth.route("/verify", methods=["GET", "POST"])
@@ -376,10 +496,6 @@ def verify_page():
     return render_template("verify.html", email=email)
 
 
-
-
-
-
 @auth.route("/resend-verification")
 def resend_verification():
     email = request.args.get("email")
@@ -392,14 +508,18 @@ def resend_verification():
     db.session.commit()
 
     short_token = user.generate_short_token()
-    msg = Message("Your Kimbela verification token", sender=current_app.config['MAIL_DEFAULT_SENDER'], recipients=[email])
-    msg.html = render_template("emails/verify_email.html", user=user, verify_url=verify_url)
+    msg = Message(
+        "Your Kimbela verification token",
+        sender=current_app.config["MAIL_DEFAULT_SENDER"],
+        recipients=[email],
+    )
+    msg.html = render_template(
+        "emails/verify_email.html", user=user, verify_url=verify_url
+    )
     mail.send(msg)
 
     flash("A new token has been sent to your email.", "success")
     return redirect(url_for("auth.verify_page", email=email))
-
-
 
 
 @auth.route("/login", methods=["GET", "POST"])
@@ -434,7 +554,10 @@ def login():
             return render_template("login.html")
 
         if not user.is_active:
-            flash("Please you need to verify your email address before we let you in.",  "warning")
+            flash(
+                "Please you need to verify your email address before we let you in.",
+                "warning",
+            )
             return render_template("login.html")
 
         # === Login successful ===
@@ -450,7 +573,6 @@ def login():
 
     # === GET request ===
     return render_template("login.html")
-
 
 
 from flask import jsonify, request
@@ -485,6 +607,7 @@ from random import sample
 
 from datetime import datetime
 
+
 def timeago(dt):
     now = datetime.utcnow()
     diff = now - dt
@@ -496,44 +619,46 @@ def timeago(dt):
     mins = diff.seconds // 60
     return f"{mins}m ago" if mins > 0 else "just now"
 
-    app.jinja_env.filters['timeago'] = timeago
+    app.jinja_env.filters["timeago"] = timeago
 
 
-
-
-@auth.route('/user_dashboard', methods=['GET', 'POST'])
+@auth.route("/user_dashboard", methods=["GET", "POST"])
 @login_required
 def user_dashboard():
-    if request.method == 'POST':
+    if request.method == "POST":
         # Handle post creation here
         post_content = request.form.get("post_content")
-        media_file = request.files.get('media')
-        
-        if post_content or (media_file and media_file.filename != ''):
+        media_file = request.files.get("media")
+
+        if post_content or (media_file and media_file.filename != ""):
             image_url = None
             video_url = None
 
-            if media_file and media_file.filename != '' and allowed_file(media_file.filename):
+            if (
+                media_file
+                and media_file.filename != ""
+                and allowed_file(media_file.filename)
+            ):
                 try:
                     resource_type = "auto"
-                    if media_file.content_type.startswith('video'):
+                    if media_file.content_type.startswith("video"):
                         resource_type = "video"
-                    
+
                     result = cloudinary.uploader.upload(
                         media_file,
                         folder="kimbela/posts",
                         resource_type=resource_type,
                         transformation=[
-                            {'width': 800, 'crop': 'limit'},
-                            {'quality': 'auto', 'fetch_format': 'auto'}
-                        ]
+                            {"width": 800, "crop": "limit"},
+                            {"quality": "auto", "fetch_format": "auto"},
+                        ],
                     )
-                    
-                    if media_file.content_type.startswith('video'):
-                        video_url = result['secure_url']
+
+                    if media_file.content_type.startswith("video"):
+                        video_url = result["secure_url"]
                     else:
-                        image_url = result['secure_url']
-                        
+                        image_url = result["secure_url"]
+
                 except Exception as e:
                     print(f"Media upload error: {e}")
                     flash("Failed to upload media.", "danger")
@@ -544,13 +669,13 @@ def user_dashboard():
                 image=image_url,
                 video=video_url,
                 author_id=current_user.id,
-                created_at=datetime.utcnow()
+                created_at=datetime.utcnow(),
             )
             db.session.add(new_post)
             db.session.commit()
             flash("Post created!", "success")
-        
-        return redirect(url_for('auth.user_dashboard'))
+
+        return redirect(url_for("auth.user_dashboard"))
 
     # GET request handling (your existing code)
     posts = Post.query.order_by(Post.created_at.desc()).all()
@@ -559,34 +684,33 @@ def user_dashboard():
 
     # 2. Filter in Python using your existing methods
     all_users = [
-        u for u in all_users
-        if not u.is_blocked_by(current_user)     # u did NOT block me
-        and not current_user.is_blocked_by(u)    # I did NOT block u
+        u
+        for u in all_users
+        if not u.is_blocked_by(current_user)  # u did NOT block me
+        and not current_user.is_blocked_by(u)  # I did NOT block u
     ]
     # FRIENDS (visible only)
     friends = [f for f in current_user.friends if f.is_visible_to(current_user)]
 
     # NON-FRIENDS for suggestions
     friend_ids = {f.id for f in friends}
-    
+
     non_friends = [u for u in all_users if u.id not in friend_ids]
     friend_ids = {friend.id for friend in current_user.friends}
     non_friends = [u for u in all_users if u.id not in friend_ids]
-    random_three = sample(non_friends, min(1000, len(non_friends))) if non_friends else []
+    random_three = (
+        sample(non_friends, min(1000, len(non_friends))) if non_friends else []
+    )
 
     return render_template(
-        'user_dashboard.html',
+        "user_dashboard.html",
         posts=posts,
         current_user=current_user,
         all_users=all_users,
-        friends=friends, 
+        friends=friends,
         random_three=random_three,
-        csrf_token=generate_csrf()
+        csrf_token=generate_csrf(),
     )
-
-
-
-
 
 
 # Like Post
@@ -604,14 +728,15 @@ def user_dashboard():
 #     return jsonify(likes=len(post.likes), liked=liked)
 
 
-
 @auth.route("/like_post/<int:post_id>", methods=["POST"])
 @login_required
 def like_post(post_id):
     post = Post.query.get_or_404(post_id)
-    
-    existing_like = Like.query.filter_by(user_id=current_user.id, post_id=post_id).first()
-    
+
+    existing_like = Like.query.filter_by(
+        user_id=current_user.id, post_id=post_id
+    ).first()
+
     if existing_like:
         db.session.delete(existing_like)
         liked = False
@@ -619,20 +744,19 @@ def like_post(post_id):
         new_like = Like(user_id=current_user.id, post_id=post_id)
         db.session.add(new_like)
         liked = True
-        
+
         # Create notification for post owner (if not liking own post)
         if post.author_id != current_user.id:
             post.author.create_notification(
                 actor=current_user,
                 notification_type=NotificationType.POST_LIKE,
                 entity_id=post_id,
-                entity_type='post'
+                entity_type="post",
             )
-    
+
     db.session.commit()
     like_count = Like.query.filter_by(post_id=post_id).count()
     return jsonify(likes=like_count, liked=liked)
-
 
 
 # Delete Post
@@ -645,6 +769,7 @@ def delete_post(post_id):
     db.session.delete(post)
     db.session.commit()
     return jsonify(success=True)
+
 
 # Edit Post
 @auth.route("/edit_post", methods=["POST"])
@@ -659,7 +784,6 @@ def edit_post():
     return jsonify(success=True)
 
 
-
 # Add Comment
 # In your add_comment route
 @auth.route("/add_comment/<int:post_id>", methods=["POST"])
@@ -667,28 +791,29 @@ def edit_post():
 def add_comment(post_id):
     post = Post.query.get_or_404(post_id)
     content = request.json.get("content", "").strip()
-    
+
     if not content:
         return jsonify(error="Empty"), 400
-        
+
     comment = Comment(content=content, author_id=current_user.id, post_id=post_id)
     db.session.add(comment)
     db.session.commit()
-    
+
     # Create notification for post owner (if not commenting on own post)
     if post.author_id != current_user.id:
         post.author.create_notification(
             actor=current_user,
             notification_type=NotificationType.NEW_COMMENT,
             entity_id=post_id,
-            entity_type='post'
+            entity_type="post",
         )
-    
+
     return jsonify(
         id=comment.id,
         name=f"{current_user.first_name} {current_user.last_name}",
-        avatar=current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png'),
-        content=content
+        avatar=current_user.profile_pic
+        or url_for("static", filename="assets/img/default-avatar.png"),
+        content=content,
     )
 
 
@@ -755,7 +880,7 @@ import cloudinary.utils
 #             # === 4. CREATE NEW POST (TEXT + MEDIA) ===
 #             post_content = request.form.get("post_content")
 #             media_file = request.files.get('media')
-            
+
 #             if post_content or (media_file and media_file.filename != ''):
 #                 image_url = None
 #                 video_url = None
@@ -766,7 +891,7 @@ import cloudinary.utils
 #                         resource_type = "auto"
 #                         if media_file.content_type.startswith('video'):
 #                             resource_type = "video"
-                        
+
 #                         result = cloudinary.uploader.upload(
 #                             media_file,
 #                             folder="kimbela/posts",
@@ -776,16 +901,16 @@ import cloudinary.utils
 #                                 {'quality': 'auto', 'fetch_format': 'auto'}
 #                             ]
 #                         )
-                        
+
 #                         if media_file.content_type.startswith('video'):
 #                             video_url = result['secure_url']
 #                         else:
 #                             image_url = result['secure_url']
-                            
+
 #                     except Exception as e:
 #                         print(f"Media upload error: {e}")  # Debug
 #                         flash("Failed to upload media.", "danger")
-                        
+
 #                 # Notify friends about profile update
 #                 if any([request.files.get('profile_pic'), request.files.get('cover_pic'), request.form.get('bio')]):
 #                     for friend in current_user.friends:
@@ -829,25 +954,30 @@ import cloudinary.utils
 #         posts=posts,
 #         friends=friends
 #     )
-    
-    
+
+
 @auth.route("/get_comments/<int:post_id>")
 def get_comments(post_id):
     post = Post.query.get_or_404(post_id)
     # Order comments by created_at DESCENDING (newest first)
-    comments = Comment.query.filter_by(post_id=post_id)\
-                           .order_by(Comment.created_at.desc())\
-                           .all()
+    comments = (
+        Comment.query.filter_by(post_id=post_id)
+        .order_by(Comment.created_at.desc())
+        .all()
+    )
     result = []
     for c in comments:
-        result.append({
-            'id': c.id,
-            'name': f"{c.author.first_name} {c.author.last_name}",
-            'avatar': c.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png'),
-            'content': c.content,
-            'created_at': c.created_at.isoformat(),
-            'replies': []  # handle replies later
-        })
+        result.append(
+            {
+                "id": c.id,
+                "name": f"{c.author.first_name} {c.author.last_name}",
+                "avatar": c.author.profile_pic
+                or url_for("static", filename="assets/img/default-avatar.png"),
+                "content": c.content,
+                "created_at": c.created_at.isoformat(),
+                "replies": [],  # handle replies later
+            }
+        )
     return jsonify(result)
 
 
@@ -855,32 +985,38 @@ def get_comments(post_id):
 @login_required
 def debug_notification_status():
     """Check read status of notifications"""
-    notifications = Notification.query.filter_by(user_id=current_user.id).order_by(Notification.created_at.desc()).all()
+    notifications = (
+        Notification.query.filter_by(user_id=current_user.id)
+        .order_by(Notification.created_at.desc())
+        .all()
+    )
     result = []
     for n in notifications:
-        result.append({
-            'id': n.id,
-            'type': n.type,
-            'message': n.message,
-            'is_read': n.is_read,
-            'created_at': n.created_at.isoformat()
-        })
-    return jsonify({
-        'total': len(notifications),
-        'unread': len([n for n in notifications if not n.is_read]),
-        'read': len([n for n in notifications if n.is_read]),
-        'notifications': result
-    })
-
+        result.append(
+            {
+                "id": n.id,
+                "type": n.type,
+                "message": n.message,
+                "is_read": n.is_read,
+                "created_at": n.created_at.isoformat(),
+            }
+        )
+    return jsonify(
+        {
+            "total": len(notifications),
+            "unread": len([n for n in notifications if not n.is_read]),
+            "read": len([n for n in notifications if n.is_read]),
+            "notifications": result,
+        }
+    )
 
 
 def allowed_file(filename):
     """Check if file extension is allowed"""
-    allowed_extensions = {'png', 'jpg', 'jpeg', 'gif', 'mp4', 'mov', 'avi'}
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in allowed_extensions
-           
-           
+    allowed_extensions = {"png", "jpg", "jpeg", "gif", "mp4", "mov", "avi"}
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in allowed_extensions
+
+
 def create_notification(user_id, actor_id, type_, message, entity_id=None):
     """Helper to create a notification safely"""
     notification = Notification(
@@ -888,15 +1024,14 @@ def create_notification(user_id, actor_id, type_, message, entity_id=None):
         actor_id=actor_id,
         type=type_,
         message=message,
-        entity_id=entity_id
+        entity_id=entity_id,
     )
     db.session.add(notification)
-    db.session.commit()  
-           
-           
+    db.session.commit()
+
 
 # In your add_friend route
-@auth.route('/add_friend/<int:user_id>', methods=['POST'])
+@auth.route("/add_friend/<int:user_id>", methods=["POST"])
 @login_required
 def add_friend(user_id):
     if user_id == current_user.id:
@@ -904,8 +1039,7 @@ def add_friend(user_id):
 
     # Prevent duplicate DB rows
     existing = FriendRequest.query.filter_by(
-        sender_id=current_user.id,
-        receiver_id=user_id
+        sender_id=current_user.id, receiver_id=user_id
     ).first()
     if existing:
         return jsonify(error="Request already sent"), 400
@@ -919,15 +1053,12 @@ def add_friend(user_id):
     create_notification(
         actor_id=current_user.id,
         user_id=user_id,
-        type_='friend_request',
+        type_="friend_request",
         message=f"{current_user.full_name} sent you a friend request",
-        entity_id=req.id
+        entity_id=req.id,
     )
     db.session.commit()
     return jsonify(success=True)
-
-
-
 
 
 @auth.route("/cancel_friend_request/<int:user_id>", methods=["POST"])
@@ -937,29 +1068,31 @@ def cancel_friend_request(user_id):
     # You'll need to implement this method in your User model
     return jsonify(success=True)
 
+
 @auth.route("/get_user_profile/<int:user_id>")
 @login_required
 def get_user_profile(user_id):
     user = User.query.get_or_404(user_id)
-    return jsonify({
-        'first_name': user.first_name,
-        'last_name': user.last_name,
-        'email': user.email,
-        'profile_pic': user.profile_pic or url_for('static', filename='assets/img/default-avatar.png'),
-        'cover_pic': user.cover_pic,
-        'bio': user.bio,
-        'city': user.city,
-        'country': user.country,
-        'gender': user.gender,
-        'dob': user.dob.isoformat() if user.dob else None,
-        'phone_number': user.phone_number,
-        'marital_status': user.marital_status,
-        'interests': user.interests,
-        'profile_url': url_for('auth.profile', user_id=user.id),
-        'friends_count': user.friends.count(),
-    })   
-    
-    
+    return jsonify(
+        {
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "email": user.email,
+            "profile_pic": user.profile_pic
+            or url_for("static", filename="assets/img/default-avatar.png"),
+            "cover_pic": user.cover_pic,
+            "bio": user.bio,
+            "city": user.city,
+            "country": user.country,
+            "gender": user.gender,
+            "dob": user.dob.isoformat() if user.dob else None,
+            "phone_number": user.phone_number,
+            "marital_status": user.marital_status,
+            "interests": user.interests,
+            "profile_url": url_for("auth.profile", user_id=user.id),
+            "friends_count": user.friends.count(),
+        }
+    )
 
 
 @auth.route("/notifications")
@@ -968,20 +1101,27 @@ def get_notifications():
     notifications = current_user.recent_notifications
     return jsonify([notification.to_dict() for notification in notifications])
 
+
 @auth.route("/notifications/read", methods=["POST"])
 @login_required
 def mark_notifications_read():
-    Notification.query.filter_by(user_id=current_user.id, is_read=False).update({'is_read': True})
+    Notification.query.filter_by(user_id=current_user.id, is_read=False).update(
+        {"is_read": True}
+    )
     db.session.commit()
     return jsonify(success=True)
+
 
 @auth.route("/notifications/<int:notification_id>/read", methods=["POST"])
 @login_required
 def mark_notification_read(notification_id):
-    notification = Notification.query.filter_by(id=notification_id, user_id=current_user.id).first_or_404()
+    notification = Notification.query.filter_by(
+        id=notification_id, user_id=current_user.id
+    ).first_or_404()
     notification.is_read = True
     db.session.commit()
     return jsonify(success=True)
+
 
 @auth.route("/notifications/count")
 @login_required
@@ -990,12 +1130,11 @@ def get_unread_count():
     return jsonify(count=count)
 
 
-
 @auth.route("/accept_friend_request/<int:user_id>", methods=["POST"])
 @login_required
 def accept_friend_request_route(user_id):
     data = request.get_json() or {}
-    notification_id = data.get('notification_id')
+    notification_id = data.get("notification_id")
 
     user = User.query.get_or_404(user_id)
 
@@ -1011,13 +1150,11 @@ def accept_friend_request_route(user_id):
     return jsonify(success=False, error="Could not accept request")
 
 
-
-
 @auth.route("/decline_friend_request/<int:user_id>", methods=["POST"])
 @login_required
 def decline_friend_request_route(user_id):
     data = request.get_json() or {}
-    notification_id = data.get('notification_id')
+    notification_id = data.get("notification_id")
 
     user = User.query.get_or_404(user_id)
 
@@ -1030,69 +1167,78 @@ def decline_friend_request_route(user_id):
         return jsonify(success=True)
 
     return jsonify(success=False, error="Could not decline request")
-           
-           
+
 
 # Add this to your Flask routes
-@auth.route('/search')
+@auth.route("/search")
 def search():
-    query = request.args.get('q', '').strip()
+    query = request.args.get("q", "").strip()
     if not query or len(query) < 2:
-        return jsonify({'users': [], 'posts': []})
-    
+        return jsonify({"users": [], "posts": []})
+
     # Search users (exclude current user)
-    users = User.query.filter(
-        db.and_(
-            User.id != current_user.id,  # Exclude current user
-            db.or_(
-                User.first_name.ilike(f'%{query}%'),
-                User.last_name.ilike(f'%{query}%'),
-                User.email.ilike(f'%{query}%')
+    users = (
+        User.query.filter(
+            db.and_(
+                User.id != current_user.id,  # Exclude current user
+                db.or_(
+                    User.first_name.ilike(f"%{query}%"),
+                    User.last_name.ilike(f"%{query}%"),
+                    User.email.ilike(f"%{query}%"),
+                ),
             )
         )
-    ).limit(10).all()
-    
+        .limit(10)
+        .all()
+    )
+
     # Search posts (you can also exclude current user's posts if desired)
-    posts = Post.query.filter(
-        Post.content.ilike(f'%{query}%')
-    ).join(User).limit(10).all()
-    
-    users_data = [{
-        'id': user.id,
-        'first_name': user.first_name,
-        'last_name': user.last_name,
-        'profile_pic': user.profile_pic,
-        'email': user.email
-    } for user in users]
-    
-    posts_data = [{
-        'id': post.id,
-        'content': post.content,
-        'author_first_name': post.author.first_name,
-        'author_last_name': post.author.last_name,
-        'author_id': post.author.id,  # Add author ID for client-side filtering
-        'created_at': post.created_at.isoformat()
-    } for post in posts]
-    
-    return jsonify({
-        'users': users_data,
-        'posts': posts_data
-    })        
-        
-@auth.route('/get_post/<int:post_id>')
+    posts = (
+        Post.query.filter(Post.content.ilike(f"%{query}%")).join(User).limit(10).all()
+    )
+
+    users_data = [
+        {
+            "id": user.id,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "profile_pic": user.profile_pic,
+            "email": user.email,
+        }
+        for user in users
+    ]
+
+    posts_data = [
+        {
+            "id": post.id,
+            "content": post.content,
+            "author_first_name": post.author.first_name,
+            "author_last_name": post.author.last_name,
+            "author_id": post.author.id,  # Add author ID for client-side filtering
+            "created_at": post.created_at.isoformat(),
+        }
+        for post in posts
+    ]
+
+    return jsonify({"users": users_data, "posts": posts_data})
+
+
+@auth.route("/get_post/<int:post_id>")
 def get_post(post_id):
     post = Post.query.get_or_404(post_id)
-    return jsonify({
-        'id': post.id,
-        'content': post.content,
-        'image': post.image,
-        'video': post.video,
-        'author_first_name': post.author.first_name,
-        'author_last_name': post.author.last_name,
-        'author_profile_pic': post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png'),
-        'created_at': post.created_at.isoformat()
-    })
-
+    return jsonify(
+        {
+            "id": post.id,
+            "content": post.content,
+            "image": post.image,
+            "video": post.video,
+            "author_first_name": post.author.first_name,
+            "author_last_name": post.author.last_name,
+            "author_profile_pic": post.author.profile_pic
+            or url_for("static", filename="assets/img/default-avatar.png"),
+            "created_at": post.created_at.isoformat(),
+        }
+    )
 
 
 # Update last_seen on every request
@@ -1101,11 +1247,10 @@ def update_last_seen():
     if current_user.is_authenticated:
         current_user.last_seen = datetime.utcnow()
         # Consider user online if seen < 5 min ago
-        current_user.is_online = (datetime.utcnow() - current_user.last_seen) < timedelta(minutes=5)
+        current_user.is_online = (
+            datetime.utcnow() - current_user.last_seen
+        ) < timedelta(minutes=5)
         db.session.commit()
-
-
-
 
 
 @auth.route("/<int:user_id>", methods=["GET", "POST"])
@@ -1116,24 +1261,34 @@ def profile(user_id):
     # Only allow users to edit their own profile
     if user.id != current_user.id:
         flash("You can only edit your own profile.", "warning")
-        return redirect(url_for('auth.profile', user_id=current_user.id))
+        return redirect(url_for("auth.profile", user_id=current_user.id))
 
     if request.method == "POST":
         try:
             # Handle profile fields from registration form
-            current_user.first_name = request.form.get('first_name', current_user.first_name)
-            current_user.last_name = request.form.get('last_name', current_user.last_name)
-            current_user.email = request.form.get('email', current_user.email)
-            current_user.phone_number = request.form.get('phone_number', current_user.phone_number)
-            current_user.city = request.form.get('city', current_user.city)
-            current_user.country = request.form.get('country', current_user.country)
-            current_user.gender = request.form.get('gender', current_user.gender)
-            current_user.marital_status = request.form.get('marital_status', current_user.marital_status)
-            current_user.interests = request.form.get('interests', current_user.interests)
-            current_user.bio = request.form.get('bio', current_user.bio)
+            current_user.first_name = request.form.get(
+                "first_name", current_user.first_name
+            )
+            current_user.last_name = request.form.get(
+                "last_name", current_user.last_name
+            )
+            current_user.email = request.form.get("email", current_user.email)
+            current_user.phone_number = request.form.get(
+                "phone_number", current_user.phone_number
+            )
+            current_user.city = request.form.get("city", current_user.city)
+            current_user.country = request.form.get("country", current_user.country)
+            current_user.gender = request.form.get("gender", current_user.gender)
+            current_user.marital_status = request.form.get(
+                "marital_status", current_user.marital_status
+            )
+            current_user.interests = request.form.get(
+                "interests", current_user.interests
+            )
+            current_user.bio = request.form.get("bio", current_user.bio)
 
             # Handle date of birth
-            dob_str = request.form.get('dob')
+            dob_str = request.form.get("dob")
             if dob_str:
                 try:
                     current_user.dob = datetime.strptime(dob_str, "%Y-%m-%d").date()
@@ -1141,38 +1296,43 @@ def profile(user_id):
                     flash("Invalid date format for date of birth.", "warning")
 
             # Handle profile picture
-            if 'profile_pic' in request.files:
-                file = request.files['profile_pic']
-                if file and file.filename != '' and allowed_file(file.filename):
+            if "profile_pic" in request.files:
+                file = request.files["profile_pic"]
+                if file and file.filename != "" and allowed_file(file.filename):
                     try:
                         result = cloudinary.uploader.upload(
                             file,
                             folder="kimbela/profiles",
                             transformation=[
-                                {'width': 400, 'height': 400, 'crop': 'fill', 'gravity': 'face'},
-                                {'quality': 'auto', 'fetch_format': 'auto'}
-                            ]
+                                {
+                                    "width": 400,
+                                    "height": 400,
+                                    "crop": "fill",
+                                    "gravity": "face",
+                                },
+                                {"quality": "auto", "fetch_format": "auto"},
+                            ],
                         )
-                        current_user.profile_pic = result['secure_url']
+                        current_user.profile_pic = result["secure_url"]
                         flash("Profile picture updated successfully!", "success")
                     except Exception as e:
                         print(f"Profile picture upload error: {e}")
                         flash("Failed to upload profile picture.", "danger")
 
             # Handle cover photo
-            if 'cover_pic' in request.files:
-                file = request.files['cover_pic']
-                if file and file.filename != '' and allowed_file(file.filename):
+            if "cover_pic" in request.files:
+                file = request.files["cover_pic"]
+                if file and file.filename != "" and allowed_file(file.filename):
                     try:
                         result = cloudinary.uploader.upload(
                             file,
                             folder="kimbela/covers",
                             transformation=[
-                                {'width': 1200, 'height': 400, 'crop': 'fill'},
-                                {'quality': 'auto', 'fetch_format': 'auto'}
-                            ]
+                                {"width": 1200, "height": 400, "crop": "fill"},
+                                {"quality": "auto", "fetch_format": "auto"},
+                            ],
                         )
-                        current_user.cover_pic = result['secure_url']
+                        current_user.cover_pic = result["secure_url"]
                         flash("Cover photo updated successfully!", "success")
                     except Exception as e:
                         print(f"Cover photo upload error: {e}")
@@ -1186,11 +1346,14 @@ def profile(user_id):
             flash("An error occurred while updating your profile.", "danger")
             print(f"Profile update error: {e}")
 
-        return redirect(url_for('auth.profile', user_id=current_user.id))
+        return redirect(url_for("auth.profile", user_id=current_user.id))
 
     # GET request - load profile data
-    posts = Post.query.filter_by(author_id=current_user.id)\
-                      .order_by(Post.created_at.desc()).all()
+    posts = (
+        Post.query.filter_by(author_id=current_user.id)
+        .order_by(Post.created_at.desc())
+        .all()
+    )
 
     # Get friends (excluding blocked users)
     friends = [f for f in current_user.friends if not current_user.is_blocking(f)]
@@ -1204,14 +1367,10 @@ def profile(user_id):
         posts=posts,
         friends=friends,
         blocked_users=blocked_users,
-        datetime=datetime
-        )
+        datetime=datetime,
+    )
 
 
-
-
-
-           
 @auth.route("/logout")
 @login_required
 def logout():
@@ -1219,23 +1378,20 @@ def logout():
     return redirect(url_for("auth.login"))
 
 
-
-
 @auth.route("/forgot_password", methods=["GET", "POST"])
 def forgot_password():
     return render_template("forgot_password.html")
-
-
-
 
 
 @auth.route("/about", methods=["GET", "POST"])
 def about():
     return render_template("about.html")
 
+
 @auth.route("/features", methods=["GET", "POST"])
 def features():
     return render_template("features.html")
+
 
 @auth.route("/contact", methods=["GET", "POST"])
 def contact():
@@ -1245,6 +1401,7 @@ def contact():
 @auth.route("/terms", methods=["GET", "POST"])
 def terms():
     return render_template("terms.html")
+
 
 @auth.route("/privacy", methods=["GET", "POST"])
 def privacy():

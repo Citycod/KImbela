@@ -13,6 +13,7 @@ from flask import (
 from flask_wtf.csrf import generate_csrf
 import uuid
 from io import BytesIO
+
 # from sendgrid import SendGridAPIClient
 # from sendgrid.helpers.mail import Mail, Content
 from datetime import datetime, timedelta
@@ -62,6 +63,7 @@ from flask import (
 from flask_login import login_required, current_user
 import logging
 from sqlalchemy.sql import text
+
 # from func import calculate_client_growth, get_audit_compliance
 # import pdfkit, tempfile
 from flask import send_file, render_template_string

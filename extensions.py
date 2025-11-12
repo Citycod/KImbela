@@ -10,4 +10,4 @@ bcrypt = Bcrypt()
 login_manager = LoginManager()
 
 # use gevent for stability with Python 3.13
-socketio = SocketIO(cors_allowed_origins="*", async_mode='gevent')
+socketio = SocketIO(cors_allowed_origins="*", async_mode="gevent")

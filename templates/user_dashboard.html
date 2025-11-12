@@ -311,8 +311,94 @@
           border: 1px solid #e4e6eb;
       }
       </style>
+
+      <style>
+        /* Simple Loader Styles */
+        .simple-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 1s ease-out;
+        }
+
+        .loader-logo {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            color: #1877f2;
+        }
+
+        .loader-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #e5e7eb;
+            border-top: 4px solid #1877f2;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        .loader-text {
+            color: #606770;
+            font-size: 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loader-hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+
+        /* Fade-in animation for main content */
+.main-content {
+  opacity: 0;
+  animation: fadeInContent 0.6s ease-out forwards;
+  animation-delay: 0.1s; /* Small delay after loader disappears */
+}
+
+@keyframes fadeInContent {
+  from {
+      opacity: 0;
+      transform: translateY(10px);
+  }
+  to {
+      opacity: 1;
+      transform: translateY(0);
+  }
+}
+
+/* Faster loader transition */
+.simple-loader {
+  transition: opacity 0.3s ease-out;
+}
+    </style>
   </head>
   <body class="font-poppins bg-fb-gray text-fb-text">
+
+
+    <div class="simple-loader" id="loader">
+        <div class="loader-logo"><img
+          src="{{ url_for('static', filename='assets/img/kim.png') }}"
+          alt="Kimbela"
+          class="h-10"
+          style="width: 30rem; height: 30rem;"
+        /></div>
+        <div class="loader-spinner"></div>
+        <div class="loader-text">Loading your dashboard...</div>
+    </div>
     <!-- NAVBAR -->
     <nav
       class="fixed top-0 left-0 right-0 z-50 bg-white shadow-soft border-b border-fb-border h-16 flex items-center px-4"
@@ -2766,8 +2852,55 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('closeMessenger').addEventListener('click', closeMessenger);
     
     // Initialize messenger when page loads
-    socket.emit('join_messenger');
 });
+</script>
+
+
+<script>
+// ULTRA-FAST LOADER WITH FADE-IN CONTENT
+document.addEventListener('DOMContentLoaded', function() {
+  const loader = document.getElementById('loader');
+  const mainContent = document.getElementById('mainContent');
+  
+  // Initially hide main content
+  if (mainContent) {
+      mainContent.style.opacity = '0';
+      mainContent.style.visibility = 'hidden';
+  }
+  
+  // Hide loader quickly and fade in content
+  setTimeout(() => {
+      if (loader) {
+          // Fade out loader
+          loader.style.opacity = '0';
+          
+          // After loader fades out, show and fade in main content
+          setTimeout(() => {
+              loader.style.display = 'none';
+              
+              if (mainContent) {
+                  mainContent.style.visibility = 'visible';
+                  mainContent.style.opacity = '1';
+                  mainContent.style.transition = 'opacity 0.6s ease-out, transform 0.6s ease-out';
+              }
+          }, 300); // Match this with loader transition time
+      }
+  }, 100); // Initial delay before starting fade
+});
+
+// Emergency cleanup
+setTimeout(() => {
+  const loader = document.getElementById('loader');
+  const mainContent = document.getElementById('mainContent');
+  
+  if (loader) {
+      loader.style.display = 'none';
+  }
+  if (mainContent) {
+      mainContent.style.visibility = 'visible';
+      mainContent.style.opacity = '1';
+  }
+}, 1000);
 </script>
 
 <style>

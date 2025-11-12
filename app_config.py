@@ -5,6 +5,7 @@ import os
 from flask_migrate import Migrate
 from extensions import db, bcrypt, login_manager, mail
 from user import auth
+
 # from admin import admin as admin_blueprint
 from models import User, Post, Comment, Like, FriendRequest, friendship
 from datetime import datetime, timedelta, timezone
@@ -38,8 +39,6 @@ def create_app():
     app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")
     app.config["MAIL_DEFAULT_SENDER"] = os.getenv("MAIL_DEFAULT_SENDER")
 
-
-
     # Initialize extensions
     mail.init_app(app)
     csrf.init_app(app)
@@ -51,13 +50,10 @@ def create_app():
 
     login_manager.login_view = "auth.login"
     login_manager.login_message_category = "info"
-    
-    
-
 
     # Register blueprints
     app.register_blueprint(auth)
-    app.register_blueprint(messaging, url_prefix='/messaging')
+    app.register_blueprint(messaging, url_prefix="/messaging")
     # app.register_blueprint(admin_blueprint)
 
     # Inject CSRF token into all templates
