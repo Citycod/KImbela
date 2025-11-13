@@ -1,0 +1,144 @@
+<!-- templates/admin_dashboard_content.html -->
+<div class="mb-8">
+    <h2 class="text-3xl font-bold text-gray-800 mb-2">Welcome back, {{ current_user.first_name }}!</h2>
+    <p class="text-gray-600">Here's what's happening with your platform today.</p>
+</div>
+
+<!-- Statistics Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="stat-card glass-card card p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-blue-500 text-sm font-medium">Total Users</p>
+                <h3 class="text-2xl font-bold text-black">{{ total_users }}</h3>
+                <p class="text-blue-500 text-xs mt-1">{{ active_users }} active</p>
+            </div>
+            <div class="w-12 h-12 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
+                <i class="bi bi-people text-xl text-white"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="stat-card glass-card card p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-green-500 text-sm font-medium">Groups</p>
+                <h3 class="text-2xl font-bold text-black">{{ total_groups }}</h3>
+                <p class="text-green-500 text-xs mt-1">{{ active_groups }} active</p>
+            </div>
+            <div class="w-12 h-12 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
+                <i class="bi bi-collection text-xl text-white"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="stat-card glass-card card p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-yellow-500 text-sm font-medium">Pending Reports</p>
+                <h3 class="text-2xl font-bold text-black">{{ pending_reports }}</h3>
+                <p class="text-yellow-500 text-xs mt-1">Need attention</p>
+            </div>
+            <div class="w-12 h-12 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
+                <i class="bi bi-flag text-xl text-white"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="stat-card glass-card card p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-red-500 text-sm font-medium">Active Ads</p>
+                <h3 class="text-2xl font-bold text-black">{{ active_ads }}</h3>
+                <p class="text-red-500 text-xs mt-1">Running campaigns</p>
+            </div>
+            <div class="w-12 h-12 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
+                <i class="bi bi-megaphone text-xl text-white"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <!-- Recent Users -->
+    <div class="activity-glass card p-6">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-xl font-semibold text-gray-800">Recent Users</h3>
+            <a href="#" onclick="showSection('users')" class="text-primary hover:text-primary-dark text-sm font-medium">View all</a>
+        </div>
+        <div class="space-y-4">
+            {% for user in recent_users %}
+            <div class="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition-colors">
+                <div class="flex items-center space-x-3">
+                    <img src="{{ user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
+                         alt="{{ user.first_name }}" class="w-10 h-10 rounded-full object-cover">
+                    <div>
+                        <p class="font-medium text-gray-800">{{ user.first_name }} {{ user.last_name }}</p>
+                        <p class="text-sm text-gray-500">{{ user.email }}</p>
+                    </div>
+                </div>
+                <span class="text-xs px-2 py-1 rounded-full {{ 'bg-green-100 text-green-800' if user.is_active else 'bg-yellow-100 text-yellow-800' }}">
+                    {{ 'Active' if user.is_active else 'Pending' }}
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Recent Reports -->
+    <div class="activity-glass card p-6">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-xl font-semibold text-gray-800">Recent Reports</h3>
+            <a href="#" onclick="showSection('reports')" class="text-primary hover:text-primary-dark text-sm font-medium">View all</a>
+        </div>
+        <div class="space-y-4">
+            {% for report in recent_reports %}
+            <div class="p-3 border-l-4 border-red-500 bg-red-50 rounded-lg">
+                <div class="flex justify-between items-start mb-2">
+                    <p class="font-medium text-gray-800">{{ report.content_type|title }} Report</p>
+                    <span class="text-xs px-2 py-1 bg-red-100 text-red-800 rounded-full">Pending</span>
+                </div>
+                <p class="text-sm text-gray-600 mb-2">{{ report.reason }}</p>
+                <p class="text-xs text-gray-500">Reported {{ report.created_at.strftime('%b %d, %Y') }}</p>
+            </div>
+            {% else %}
+            <div class="text-center py-8 text-gray-500">
+                <i class="bi bi-flag text-2xl mb-2"></i>
+                <p>No pending reports</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="card p-6 mt-8">
+    <h3 class="text-xl font-semibold text-gray-800 mb-6">Quick Actions</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <button onclick="showSection('users')" class="p-4 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors text-left group">
+            <i class="bi bi-people text-2xl text-blue-600 mb-2"></i>
+            <h4 class="font-semibold text-gray-800">Manage Users</h4>
+            <p class="text-sm text-gray-600 mt-1">View and manage all users</p>
+        </button>
+        
+        <button onclick="showSection('groups')" class="p-4 bg-green-50 hover:bg-green-100 rounded-xl transition-colors text-left group">
+            <i class="bi bi-collection text-2xl text-green-600 mb-2"></i>
+            <h4 class="font-semibold text-gray-800">Manage Groups</h4>
+            <p class="text-sm text-gray-600 mt-1">Create and moderate groups</p>
+        </button>
+        
+        <button onclick="showSection('reports')" class="p-4 bg-red-50 hover:bg-red-100 rounded-xl transition-colors text-left group">
+            <i class="bi bi-flag text-2xl text-red-600 mb-2"></i>
+            <h4 class="font-semibold text-gray-800">Handle Reports</h4>
+            <p class="text-sm text-gray-600 mt-1">Review reported content</p>
+        </button>
+        
+        <button onclick="showSection('ads')" class="p-4 bg-purple-50 hover:bg-purple-100 rounded-xl transition-colors text-left group">
+            <i class="bi bi-megaphone text-2xl text-purple-600 mb-2"></i>
+            <h4 class="font-semibold text-gray-800">Ad Campaigns</h4>
+            <p class="text-sm text-gray-600 mt-1">Manage sponsored ads</p>
+        </button>
+    </div>
+</div>
+

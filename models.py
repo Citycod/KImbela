@@ -91,6 +91,21 @@ class User(db.Model, UserMixin):
     is_online = db.Column(db.Boolean, default=False)
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
     about_me = db.Column(db.Text, nullable=True)  # NEW FIELD
+    admin_role = db.Column(db.String(50), default='moderator')  # super_admin, admin, moderator
+    admin_permissions = db.Column(db.Text)  # JSON string of permissions
+    
+    # Add these methods for admin functionality
+    def has_admin_permission(self, permission):
+        """Check if admin has specific permission"""
+        if self.is_super_admin:
+            return True
+        if not self.admin_permissions:
+            return False
+        try:
+            permissions = json.loads(self.admin_permissions)
+            return permission in permissions
+        except:
+            return False
 
     # Enhanced blocking system using a proper association table
     _blocked_users = db.Table(
@@ -699,3 +714,73 @@ class Message(db.Model):
     @staticmethod
     def are_friends(u1, u2):
         return u2 in u1.friends
+
+
+
+
+# Add Group model for admin group management
+class Group(db.Model):
+    __tablename__ = 'groups'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text)
+    category = db.Column(db.String(50))
+    image = db.Column(db.String(500))
+    is_private = db.Column(db.Boolean, default=False)
+    is_active = db.Column(db.Boolean, default=True)
+    created_by = db.Column(db.Integer, db.ForeignKey('users.id'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    member_count = db.Column(db.Integer, default=0)
+    
+    # Relationship
+    creator = db.relationship('User', foreign_keys=[created_by])
+    members = db.relationship('User', secondary='group_members', backref='user_groups')
+
+# Group members association table
+group_members = db.Table('group_members',
+    db.Column('group_id', db.Integer, db.ForeignKey('groups.id'), primary_key=True),
+    db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
+    db.Column('joined_at', db.DateTime, default=datetime.utcnow),
+    db.Column('is_moderator', db.Boolean, default=False)
+)
+
+# Sponsored Ad model
+class SponsoredAd(db.Model):
+    __tablename__ = 'sponsored_ads'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+    image = db.Column(db.String(500))
+    target_audience = db.Column(db.String(50), default='all')  # all, male, female, premium
+    start_date = db.Column(db.DateTime, nullable=False)
+    end_date = db.Column(db.DateTime, nullable=False)
+    budget = db.Column(db.Float, default=0.0)
+    status = db.Column(db.String(20), default='active')  # active, paused, completed
+    created_by = db.Column(db.Integer, db.ForeignKey('users.id'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    clicks = db.Column(db.Integer, default=0)
+    impressions = db.Column(db.Integer, default=0)
+    
+    creator = db.relationship('User', foreign_keys=[created_by])
+
+# Reported Content model
+class ReportedContent(db.Model):
+    __tablename__ = 'reported_content'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    reporter_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    reported_user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    content_type = db.Column(db.String(50))  # post, comment, profile, message
+    content_id = db.Column(db.Integer)  # ID of the reported content
+    reason = db.Column(db.Text, nullable=False)
+    status = db.Column(db.String(20), default='pending')  # pending, reviewed, resolved, dismissed
+    admin_notes = db.Column(db.Text)
+    resolved_by = db.Column(db.Integer, db.ForeignKey('users.id'))
+    resolved_at = db.Column(db.DateTime)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    reporter = db.relationship('User', foreign_keys=[reporter_id])
+    reported_user = db.relationship('User', foreign_keys=[reported_user_id])
+    resolver = db.relationship('User', foreign_keys=[resolved_by])
