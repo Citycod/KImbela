@@ -719,6 +719,13 @@ class Message(db.Model):
 
 
 # Add Group model for admin group management
+# Association table for many-to-many relationship between Users and Groups
+group_members = db.Table(
+    'group_members',
+    db.Column('user_id', db.Integer, db.ForeignKey('users.id', ondelete='CASCADE')),
+    db.Column('group_id', db.Integer, db.ForeignKey('groups.id', ondelete='CASCADE'))
+)
+
 class Group(db.Model):
     __tablename__ = 'groups'
     
@@ -729,21 +736,16 @@ class Group(db.Model):
     image = db.Column(db.String(500))
     is_private = db.Column(db.Boolean, default=False)
     is_active = db.Column(db.Boolean, default=True)
-    created_by = db.Column(db.Integer, db.ForeignKey('users.id'))
+    
+    created_by = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
+    
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     member_count = db.Column(db.Integer, default=0)
     
-    # Relationship
-    creator = db.relationship('User', foreign_keys=[created_by])
-    members = db.relationship('User', secondary='group_members', backref='user_groups')
+    # Relationships
+    creator = db.relationship('User', foreign_keys=[created_by], backref='created_groups')
+    members = db.relationship('User', secondary=group_members, backref='user_groups')
 
-# Group members association table
-group_members = db.Table('group_members',
-    db.Column('group_id', db.Integer, db.ForeignKey('groups.id'), primary_key=True),
-    db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
-    db.Column('joined_at', db.DateTime, default=datetime.utcnow),
-    db.Column('is_moderator', db.Boolean, default=False)
-)
 
 # Sponsored Ad model
 class SponsoredAd(db.Model):

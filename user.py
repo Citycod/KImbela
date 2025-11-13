@@ -815,23 +815,44 @@ def admin_update_group(group_id):
     
     return jsonify({'success': True})
 
+
+
 @auth.route('/admin/groups/<int:group_id>/delete', methods=['POST'])
 @login_required
 def admin_delete_group(group_id):
-    if not current_user.is_admin and not current_user.is_super_admin:
+    if not (current_user.is_admin or current_user.is_super_admin):
         return jsonify({'success': False, 'error': 'Access denied'}), 403
-    
-    group = Group.query.get_or_404(group_id)
-    
-    # Remove group members
-    db.session.execute(group_members.delete().where(group_members.c.group_id == group_id))
-    
-    db.session.delete(group)
-    db.session.commit()
-    
-    return jsonify({'success': True})
 
+    group = Group.query.get(group_id)
+    if not group:
+        return jsonify({'success': False, 'error': 'Group not found'}), 404
 
+    try:
+        # 1. Remove all members (clears group_members table)
+        group.members.clear()  # This is clean and safe
+
+        # 2. Delete Cloudinary image if exists
+        if group.image and 'res.cloudinary.com' in group.image:
+            try:
+                public_id = group.image.split('/')[-1].split('.')[0]
+                cloudinary.uploader.destroy(f"kimbela/groups/{public_id}")
+            except:
+                pass  # Ignore image delete errors
+
+        # 3. Delete the group — created_by becomes NULL automatically
+        db.session.delete(group)
+        db.session.commit()
+
+        return jsonify({'success': True})
+
+    except Exception as e:
+        db.session.rollback()
+        print("Group delete error:", str(e))
+        return jsonify({'success': False, 'error': 'Delete failed'}), 500
+    
+    
+    
+    
 
 @auth.route('/admin/reports')
 @login_required
