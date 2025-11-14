@@ -543,9 +543,10 @@
     <!-- Messenger Popup -->
 <!-- Messenger Popup -->
 <div id="messengerPopup" class="fixed bottom-0 right-4 w-96 h-96 bg-white rounded-t-xl shadow-2xl z-50 hidden flex flex-col" style="height: 30rem;">
-  <div class="flex justify-between items-center p-3 border-b bg-fb-blue text-white rounded-t-xl" style="background-color: black;">
+  <div class="flex justify-between items-center p-3 border-b bg-fb-blue text-white rounded-t-xl" style="background: linear-gradient(135deg, #5A4500, #B88900);"
+  > 
     <h3 class="font-semibold">Messenger</h3>
-    <button onclick="closeMessenger()" class="text-white hover:bg-blue-600 p-1 rounded" style="background-color: black;">
+    <button onclick="closeMessenger()" class="text-white hover:bg-blue-600 p-1 rounded" style="background-color: ;">
       <i class="bi bi-x-lg"></i>
     </button>
   </div>
@@ -1013,7 +1014,8 @@
                   <button
                     class="btn-add-friend w-full py-2  text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
                     onclick="event.stopPropagation(); addFriend({{ user.id }})"
-                    style="background-color: black;" >
+                    style="background: linear-gradient(135deg, #5A4500, #B88900);"
+ >
                     Add Friend
                   </button>
                   {% endif %}

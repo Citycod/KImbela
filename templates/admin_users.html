@@ -96,7 +96,8 @@
                           {% endif %}
                           
                           <button onclick="viewUserProfile({{ user.id }})" 
-                                  class="p-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors">
+                                  class="p-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+                                  title="View Profile">
                               <i class="bi bi-eye"></i>
                           </button>
                       </div>
@@ -147,6 +148,28 @@
 
   </div>
 
+    <!-- User Profile Modal -->
+<!-- Profile Modal (Admin Version) -->
+<div class="modal fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden" id="adminProfileModal">
+  <div class="modal-dialog bg-white rounded-2xl shadow-strong w-full max-w-4xl mx-4 max-h-[90vh] overflow-hidden">
+      <div class="modal-header p-4 border-b border-gray-200 flex justify-between items-center">
+          <h3 class="text-xl font-semibold">User Profile</h3>
+          <button type="button" class="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                  onclick="closeModal('adminProfileModal')">
+              <i class="bi bi-x-lg"></i>
+          </button>
+      </div>
+      <div class="modal-body p-0 overflow-y-auto max-h-[70vh] custom-scrollbar" id="adminProfileModalBody">
+          <!-- Content loaded via JS -->
+      </div>
+      <div class="modal-footer p-4 border-t border-gray-200 text-center">
+          <button onclick="closeModal('adminProfileModal')" 
+                  class="px-6 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors">
+              Close
+          </button>
+      </div>
+  </div>
+</div>
   
 
 <script>
@@ -305,10 +328,102 @@ window.removeAdmin = async function(userId) {
     }
 };
 
-// =====================
-// View user profile in new tab
-// =====================
-window.viewUserProfile = function(userId) {
-    window.open(`/profile/${userId}`, '_blank');
+
+
+
+
+window.viewUserProfile = async function(userId) {
+  try {
+      const response = await fetch(`/get_user_profile/${userId}`);
+      if (!response.ok) throw new Error('Failed to fetch profile');
+
+      const data = await response.json();
+
+      const dob = data.dob ? new Date(data.dob).toLocaleDateString('en-US', {
+          year: 'numeric', month: 'long', day: 'numeric'
+      }) : 'Not specified';
+
+      const age = data.dob ? calculateAge(new Date(data.dob)) : null;
+
+      document.getElementById('adminProfileModalBody').innerHTML = `
+          <div class="profile-modal-content">
+              <!-- Cover Photo -->
+              <div class="relative h-48 bg-gradient-to-r from-blue-500 to-purple-600">
+                  ${data.cover_pic ? `<img src="${data.cover_pic}" class="w-full h-full object-cover">` : ''}
+                  <div class="absolute inset-0 bg-black bg-opacity-30"></div>
+              </div>
+
+              <!-- Profile Info -->
+              <div class="text-center -mt-20 pb-6 px-6 relative">
+                  <img src="${data.profile_pic}" 
+                       class="w-32 h-32 rounded-full border-8 border-white object-cover shadow-xl mx-auto">
+                  <h3 class="text-2xl font-bold mt-4">${data.first_name} ${data.last_name}</h3>
+                  
+                  <div class="flex flex-wrap justify-center gap-3 mt-3">
+                      ${data.marital_status ? `<span class="bg-gray-100 px-4 py-2 rounded-full text-sm"><i class="bi bi-heart-fill text-red-500 mr-1"></i> ${data.marital_status}</span>` : ''}
+                      ${data.city && data.country ? `<span class="bg-gray-100 px-4 py-2 rounded-full text-sm"><i class="bi bi-geo-alt-fill text-blue-500 mr-1"></i> ${data.city}, ${data.country}</span>` : ''}
+                      ${age ? `<span class="bg-gray-100 px-4 py-2 rounded-full text-sm"><i class="bi bi-balloon-fill text-purple-500 mr-1"></i> ${age} years old</span>` : ''}
+                      <span class="bg-gray-100 px-4 py-2 rounded-full text-sm">
+                          <i class="bi bi-people-fill text-green-600 mr-1"></i> ${data.friends_count} Friends
+                      </span>
+                  </div>
+
+                  ${data.bio ? `<p class="mt-4 text-gray-700 max-w-2xl mx-auto">${data.bio}</p>` : ''}
+              </div>
+
+              <!-- Details Grid -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 px-6 pb-8">
+                  <div class="bg-gray-50 rounded-2xl p-6">
+                      <h6 class="font-semibold text-lg mb-4 flex items-center">
+                          <i class="bi bi-person-badge-fill mr-2 text-blue-600"></i> Personal Info
+                      </h6>
+                      <div class="space-y-3 text-sm">
+                          <div class="flex"><span class="w-24 text-gray-600">Email:</span> <span>${data.email}</span></div>
+                          ${data.phone_number ? `<div class="flex"><span class="w-24 text-gray-600">Phone:</span> <span>${data.phone_number}</span></div>` : ''}
+                          ${data.gender ? `<div class="flex"><span class="w-24 text-gray-600">Gender:</span> <span>${data.gender}</span></div>` : ''}
+                          ${data.dob ? `<div class="flex"><span class="w-24 text-gray-600">Birthday:</span> <span>${dob}</span></div>` : ''}
+                      </div>
+                  </div>
+
+                  <div class="bg-gray-50 rounded-2xl p-6">
+                      <h6 class="font-semibold text-lg mb-4 flex items-center">
+                          <i class="bi bi-geo-fill mr-2 text-green-600"></i> Location & Interests
+                      </h6>
+                      <div class="space-y-3 text-sm">
+                          ${data.city ? `<div class="flex"><span class="w-24 text-gray-600">City:</span> <span>${data.city}</span></div>` : ''}
+                          ${data.country ? `<div class="flex"><span class="w-24 text-gray-600">Country:</span> <span>${data.country}</span></div>` : ''}
+                          ${data.interests ? `<div class="flex"><span class="w-24 text-gray-600">Interests:</span> <span>${data.interests}</span></div>` : ''}
+                      </div>
+                  </div>
+              </div>
+          </div>
+      `;
+
+      openModal('adminProfileModal');
+  } catch (err) {
+      console.error(err);
+      showToast('Failed to load user profile', 'error');
+  }
 };
+
+function calculateAge(birthDate) {
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+  return age;
+}
+
+function openModal(id) {
+  document.getElementById(id).classList.remove('hidden');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.add('hidden');
+}
+
 </script>
+
+<style>
+ 
+</style>

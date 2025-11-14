@@ -147,6 +147,46 @@
   }
 
 
+   /* Custom scrollbar for modal */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Modal animations */
+.modal {
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-dialog {
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from { 
+      opacity: 0;
+      transform: translateY(-20px);
+  }
+  to { 
+      opacity: 1;
+      transform: translateY(0);
+  }
+}
   
     
   </style>
@@ -449,9 +489,97 @@
       }
     };
     
-    window.viewUserProfile = function (userId) {
-      window.open(`/profile/${userId}`, "_blank");
+    window.viewUserProfile = async function(userId) {
+      try {
+          const response = await fetch(`/get_user_profile/${userId}`);
+          if (!response.ok) throw new Error('Failed to fetch profile');
+    
+          const data = await response.json();
+    
+          const dob = data.dob ? new Date(data.dob).toLocaleDateString('en-US', {
+              year: 'numeric', month: 'long', day: 'numeric'
+          }) : 'Not specified';
+    
+          const age = data.dob ? calculateAge(new Date(data.dob)) : null;
+    
+          document.getElementById('adminProfileModalBody').innerHTML = `
+              <div class="profile-modal-content">
+                  <!-- Cover Photo -->
+                  <div class="relative h-48 bg-gradient-to-r from-blue-500 to-purple-600">
+                      ${data.cover_pic ? `<img src="${data.cover_pic}" class="w-full h-full object-cover">` : ''}
+                      <div class="absolute inset-0 bg-black bg-opacity-30"></div>
+                  </div>
+    
+                  <!-- Profile Info -->
+                  <div class="text-center -mt-20 pb-6 px-6 relative">
+                      <img src="${data.profile_pic || '/static/assets/img/default-avatar.png'}" 
+                        class="w-32 h-32 rounded-full border-8 border-white object-cover shadow-xl mx-auto">
+                      <h3 class="text-2xl font-bold mt-4">${data.first_name} ${data.last_name}</h3>
+                      
+                      <div class="flex flex-wrap justify-center gap-3 mt-3">
+                          ${data.marital_status ? `<span class="bg-gray-100 px-4 py-2 rounded-full text-sm"><i class="bi bi-heart-fill text-red-500 mr-1"></i> ${data.marital_status}</span>` : ''}
+                          ${data.city && data.country ? `<span class="bg-gray-100 px-4 py-2 rounded-full text-sm"><i class="bi bi-geo-alt-fill text-blue-500 mr-1"></i> ${data.city}, ${data.country}</span>` : ''}
+                          ${age ? `<span class="bg-gray-100 px-4 py-2 rounded-full text-sm"><i class="bi bi-balloon-fill text-purple-500 mr-1"></i> ${age} years old</span>` : ''}
+                          <span class="bg-gray-100 px-4 py-2 rounded-full text-sm">
+                              <i class="bi bi-people-fill text-green-600 mr-1"></i> ${data.friends_count || 0} Friends
+                          </span>
+                      </div>
+    
+                      ${data.bio ? `<p class="mt-4 text-gray-700 max-w-2xl mx-auto">${data.bio}</p>` : ''}
+                  </div>
+    
+                  <!-- Details Grid -->
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 px-6 pb-8">
+                      <div class="bg-gray-50 rounded-2xl p-6">
+                          <h6 class="font-semibold text-lg mb-4 flex items-center">
+                              Personal Info
+                          </h6>
+                          <div class="space-y-3 text-sm">
+                              <div class="flex"><span class="w-24 text-gray-600">Email:</span> <span>${data.email}</span></div>
+                              ${data.phone_number ? `<div class="flex"><span class="w-24 text-gray-600">Phone:</span> <span>${data.phone_number}</span></div>` : ''}
+                              ${data.gender ? `<div class="flex"><span class="w-24 text-gray-600">Gender:</span> <span>${data.gender}</span></div>` : ''}
+                              ${data.dob ? `<div class="flex"><span class="w-24 text-gray-600">Birthday:</span> <span>${dob}</span></div>` : ''}
+                          </div>
+                      </div>
+    
+                      <div class="bg-gray-50 rounded-2xl p-6">
+                          <h6 class="font-semibold text-lg mb-4 flex items-center">
+                              Location & Interests
+                          </h6>
+                          <div class="space-y-3 text-sm">
+                              ${data.city ? `<div class="flex"><span class="w-24 text-gray-600">City:</span> <span>${data.city}</span></div>` : ''}
+                              ${data.country ? `<div class="flex"><span class="w-24 text-gray-600">Country:</span> <span>${data.country}</span></div>` : ''}
+                              ${data.interests ? `<div class="flex"><span class="w-24 text-gray-600">Interests:</span> <span>${data.interests}</span></div>` : ''}
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          `;
+    
+          openModal('adminProfileModal');
+      } catch (err) {
+          console.error(err);
+          showToast('Failed to load user profile', 'danger');
+      }
     };
+
+
+
+    function calculateAge(birthDate) {
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+      return age;
+    }
+    
+    function openModal(id) {
+      document.getElementById(id).classList.remove('hidden');
+    }
+    
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+    }
     
     // ======== TOASTS ========
     function showToast(msg, type = "info") {
