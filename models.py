@@ -14,6 +14,8 @@ from sqlalchemy import event
 # db = SQLAlchemy()
 
 
+
+
 # Association table for many-to-many friendship
 friendship = db.Table(
     "friendship",
@@ -44,6 +46,13 @@ blocked_users = db.Table(
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(user_id)
+
+group_members = db.Table(
+    'group_members',
+    db.Column('user_id', db.Integer, db.ForeignKey('users.id', ondelete='CASCADE')),
+    db.Column('group_id', db.Integer, db.ForeignKey('groups.id', ondelete='CASCADE'))
+)
+
 
 
 # Main User model
@@ -720,11 +729,7 @@ class Message(db.Model):
 
 # Add Group model for admin group management
 # Association table for many-to-many relationship between Users and Groups
-group_members = db.Table(
-    'group_members',
-    db.Column('user_id', db.Integer, db.ForeignKey('users.id', ondelete='CASCADE')),
-    db.Column('group_id', db.Integer, db.ForeignKey('groups.id', ondelete='CASCADE'))
-)
+
 
 class Group(db.Model):
     __tablename__ = 'groups'
@@ -744,7 +749,21 @@ class Group(db.Model):
     
     # Relationships
     creator = db.relationship('User', foreign_keys=[created_by], backref='created_groups')
-    members = db.relationship('User', secondary=group_members, backref='user_groups')
+    members = db.relationship('User', secondary=group_members, backref='user_groups', lazy='dynamic')
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'description': self.description,
+            'category': self.category,
+            'image': self.image,
+            'is_private': self.is_private,
+            'is_active': self.is_active,
+            'created_by': self.created_by,
+            'created_at': self.created_at.isoformat(),
+            'member_count': self.member_count,
+        }
 
 
 # Sponsored Ad model

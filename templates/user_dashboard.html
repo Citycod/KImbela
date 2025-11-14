@@ -11,7 +11,6 @@
       tailwind.config = {
         theme: {
           extend: {
-
             colors: {
               "fb-blue": "#1877f2",
               "fb-dark": "#1c1e21",
@@ -20,7 +19,7 @@
               "fb-text": "#1c1e21",
               "fb-text-light": "#606770",
             },
-            
+
             fontFamily: {
               poppins: ["Poppins", "sans-serif"],
             },
@@ -275,131 +274,132 @@
         padding-right: 8px;
       }
             }
-
-
     </style>
 
     <style>
       .message-bubble {
-          max-width: 70%;
-          word-wrap: break-word;
+        max-width: 70%;
+        word-wrap: break-word;
       }
-      
+
       .message-own {
-          background: linear-gradient(135deg, #0084ff 0%, #0099ff 100%);
-          color: white;
-          border-radius: 18px 18px 4px 18px;
-          margin-left: auto;
+        background: linear-gradient(135deg, #0084ff 0%, #0099ff 100%);
+        color: white;
+        border-radius: 18px 18px 4px 18px;
+        margin-left: auto;
       }
-      
+
       .message-other {
-          background: #f0f2f5;
-          color: #1c1e21;
-          border-radius: 18px 18px 18px 4px;
+        background: #f0f2f5;
+        color: #1c1e21;
+        border-radius: 18px 18px 18px 4px;
       }
-      
+
       .message-status {
-          font-size: 0.7rem;
-          margin-top: 2px;
+        font-size: 0.7rem;
+        margin-top: 2px;
       }
-      
+
       .typing-indicator {
-          display: inline-flex;
-          align-items: center;
+        display: inline-flex;
+        align-items: center;
       }
-      
+
       #messengerPopup {
-          box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
-          border: 1px solid #e4e6eb;
+        box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e4e6eb;
       }
-      </style>
+    </style>
 
-      <style>
-        /* Simple Loader Styles */
-        .simple-loader {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #f0f2f5;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            transition: opacity 1s ease-out;
+    <style>
+      /* Simple Loader Styles */
+      .simple-loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #f0f2f5;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        transition: opacity 1s ease-out;
+      }
+
+      .loader-logo {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 2rem;
+        color: #1877f2;
+      }
+
+      .loader-spinner {
+        width: 50px;
+        height: 50px;
+        border: 4px solid #e5e7eb;
+        border-top: 4px solid #1877f2;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin-bottom: 1rem;
+      }
+
+      .loader-text {
+        color: #606770;
+        font-size: 1rem;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
         }
-
-        .loader-logo {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 2rem;
-            color: #1877f2;
+        100% {
+          transform: rotate(360deg);
         }
+      }
 
-        .loader-spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid #e5e7eb;
-            border-top: 4px solid #1877f2;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin-bottom: 1rem;
+      .loader-hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      /* Fade-in animation for main content */
+      .main-content {
+        opacity: 0;
+        animation: fadeInContent 0.6s ease-out forwards;
+        animation-delay: 0.1s; /* Small delay after loader disappears */
+      }
+
+      @keyframes fadeInContent {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
         }
-
-        .loader-text {
-            color: #606770;
-            font-size: 1rem;
+        to {
+          opacity: 1;
+          transform: translateY(0);
         }
+      }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .loader-hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-
-        /* Fade-in animation for main content */
-.main-content {
-  opacity: 0;
-  animation: fadeInContent 0.6s ease-out forwards;
-  animation-delay: 0.1s; /* Small delay after loader disappears */
-}
-
-@keyframes fadeInContent {
-  from {
-      opacity: 0;
-      transform: translateY(10px);
-  }
-  to {
-      opacity: 1;
-      transform: translateY(0);
-  }
-}
-
-/* Faster loader transition */
-.simple-loader {
-  transition: opacity 0.3s ease-out;
-}
+      /* Faster loader transition */
+      .simple-loader {
+        transition: opacity 0.3s ease-out;
+      }
     </style>
   </head>
   <body class="font-poppins bg-fb-gray text-fb-text">
-
-
     <div class="simple-loader" id="loader">
-        <div class="loader-logo"><img
+      <div class="loader-logo">
+        <img
           src="{{ url_for('static', filename='assets/img/kim.png') }}"
           alt="Kimbela"
           class="h-10"
-          style="width: 30rem; height: 30rem;"
-        /></div>
-        <div class="loader-spinner"></div>
-        <div class="loader-text">Loading your dashboard...</div>
+          style="width: 30rem; height: 30rem"
+        />
+      </div>
+      <div class="loader-spinner"></div>
+      <div class="loader-text">Loading your dashboard...</div>
     </div>
     <!-- NAVBAR -->
     <nav
@@ -415,20 +415,19 @@
 
       <!-- Logo -->
       <a
-  href="{{ url_for('auth.user_dashboard') }}"
-  class="flex items-center mr-4"
->
-  <img
-    src="{{ url_for('static', filename='assets/img/kim.png') }}"
-    alt="Kimbela"
-    class="h-10"
-    style="width: 10rem; height: 10rem;"
-  />
-</a>
-
+        href="{{ url_for('auth.user_dashboard') }}"
+        class="flex items-center mr-4"
+      >
+        <img
+          src="{{ url_for('static', filename='assets/img/kim.png') }}"
+          alt="Kimbela"
+          class="h-10"
+          style="width: 10rem; height: 10rem"
+        />
+      </a>
 
       <!-- Search Bar -->
-      <div class="flex-1 flex justify-center" style="margin-right: 1rem;">
+      <div class="flex-1 flex justify-center" style="margin-right: 1rem">
         <div class="relative w-full max-w-xl">
           <i
             class="bi bi-search absolute left-3 top-1/2 transform -translate-y-1/2 text-fb-text-light"
@@ -457,10 +456,19 @@
       <div class="flex items-center space-x-2">
         <!-- Messenger -->
         <div>
-        <button onclick="openMessenger()" class="p-2 rounded-full hover:bg-fb-gray transition-colors relative" title="Messenger" id="openMessaging">
-          <i class="bi bi-messenger text-xl"></i>
-          <span id="unreadMessagesBadge" class="notification-badge absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden">0</span>
-        </button>
+          <button
+            onclick="openMessenger()"
+            class="p-2 rounded-full hover:bg-fb-gray transition-colors relative"
+            title="Messenger"
+            id="openMessaging"
+          >
+            <i class="bi bi-messenger text-xl"></i>
+            <span
+              id="unreadMessagesBadge"
+              class="notification-badge absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden"
+              >0</span
+            >
+          </button>
         </div>
 
         <!-- Notifications -->
@@ -527,7 +535,7 @@
             >
               <i class="bi bi-person-circle mr-2"></i> Profile
             </a>
-            
+
             <div class="border-t border-fb-border"></div>
             <a
               class="dropdown-item block px-4 py-2 text-red-500 hover:bg-red-50 transition-colors"
@@ -541,88 +549,125 @@
     </nav>
 
     <!-- Messenger Popup -->
-<!-- Messenger Popup -->
-<div id="messengerPopup" class="fixed bottom-0 right-4 w-96 h-96 bg-white rounded-t-xl shadow-2xl z-50 hidden flex flex-col" style="height: 30rem;">
-  <div class="flex justify-between items-center p-3 border-b bg-fb-blue text-white rounded-t-xl" style="background: linear-gradient(135deg, #5A4500, #B88900);"
-  > 
-    <h3 class="font-semibold">Messenger</h3>
-    <button onclick="closeMessenger()" class="text-white hover:bg-blue-600 p-1 rounded" style="background-color: ;">
-      <i class="bi bi-x-lg"></i>
-    </button>
-  </div>
-
-  <!-- Friends List Container -->
-  <div id="friendList" class="flex-1 overflow-y-auto custom-scrollbar">
-    <div id="friendsContainer" class="p-2">
-      <!-- Friends will be loaded here -->
-    </div>
-  </div>
-
-  <!-- Chat Area -->
-  <!-- Chat Area -->
-<div id="chatArea" class="hidden flex flex-col h-full">
-
-  <!-- Chat Header -->
-  <div id="chatHeader" class="p-3 border-b bg-gray-50 flex items-center justify-between flex-none">
-    <div class="flex items-center">
-      <button onclick="backToFriends()" class="p-1 mr-2 rounded-full hover:bg-gray-200">
-        <i class="bi bi-arrow-left"></i>
-      </button>
-      <img id="chatAvatar" src="" class="w-8 h-8 rounded-full mr-2">
-      <div>
-        <p id="chatName" class="font-medium text-sm"></p>
-        <p id="chatStatus" class="text-xs text-green-600">Online</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- Messages + Typing Indicator (scrollable) -->
-  <div class="flex-1 flex flex-col overflow-hidden max-h-[30vh]">
-    <div id="chatMessagesWrapper" class="flex-1 overflow-y-auto p-3 space-y-2 bg-gray-50">
-      <div id="chatMessages" class="flex flex-col space-y-2"></div>
-    </div>
-
-    <!-- Typing Indicator -->
-    <div id="typingIndicator" class="hidden px-4 py-2 bg-gray-50 flex-none">
-      <div class="flex items-center space-x-2 text-gray-500">
-        <div class="flex space-x-1">
-          <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-          <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
-          <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
-        </div>
-        <span id="typingUserName" class="text-xs"></span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Message Input (always at bottom) -->
-  <div class="border-t border-gray-200 bg-white flex-none">
-    <div class="flex items-center space-x-2 p-3">
-      <input 
-        type="text"
-        id="chatInput"
-        placeholder="Type a message..."
-        class="flex-1 px-4 py-2 bg-gray-100 rounded-full text-sm border-0 focus:ring-2 focus:ring-fb-blue focus:outline-none"
+    <!-- Messenger Popup -->
+    <div
+      id="messengerPopup"
+      class="fixed bottom-0 right-4 w-96 h-96 bg-white rounded-t-xl shadow-2xl z-50 hidden flex flex-col"
+      style="height: 30rem"
+    >
+      <div
+        class="flex justify-between items-center p-3 border-b bg-fb-blue text-white rounded-t-xl"
+        style="background: linear-gradient(135deg, #5a4500, #b88900)"
       >
-      <button id="sendChatBtn" class="bg-fb-blue text-white px-4 py-2 rounded-full text-sm hover:bg-blue-600 transition-colors" style="background-color: black;">
-        Send
-      </button>
+        <h3 class="font-semibold">Messenger</h3>
+        <button
+          onclick="closeMessenger()"
+          class="text-white hover:bg-blue-600 p-1 rounded"
+          style="background-color: "
+        >
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+
+      <!-- Friends List Container -->
+      <div id="friendList" class="flex-1 overflow-y-auto custom-scrollbar">
+        <div id="friendsContainer" class="p-2">
+          <!-- Friends will be loaded here -->
+        </div>
+      </div>
+
+      <!-- Chat Area -->
+      <!-- Chat Area -->
+      <div id="chatArea" class="hidden flex flex-col h-full">
+        <!-- Chat Header -->
+        <div
+          id="chatHeader"
+          class="p-3 border-b bg-gray-50 flex items-center justify-between flex-none"
+        >
+          <div class="flex items-center">
+            <button
+              onclick="backToFriends()"
+              class="p-1 mr-2 rounded-full hover:bg-gray-200"
+            >
+              <i class="bi bi-arrow-left"></i>
+            </button>
+            <img id="chatAvatar" src="" class="w-8 h-8 rounded-full mr-2" />
+            <div>
+              <p id="chatName" class="font-medium text-sm"></p>
+              <p id="chatStatus" class="text-xs text-green-600">Online</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Messages + Typing Indicator (scrollable) -->
+        <div class="flex-1 flex flex-col overflow-hidden max-h-[30vh]">
+          <div
+            id="chatMessagesWrapper"
+            class="flex-1 overflow-y-auto p-3 space-y-2 bg-gray-50"
+          >
+            <div id="chatMessages" class="flex flex-col space-y-2"></div>
+          </div>
+
+          <!-- Typing Indicator -->
+          <div
+            id="typingIndicator"
+            class="hidden px-4 py-2 bg-gray-50 flex-none"
+          >
+            <div class="flex items-center space-x-2 text-gray-500">
+              <div class="flex space-x-1">
+                <div
+                  class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                ></div>
+                <div
+                  class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                  style="animation-delay: 0.1s"
+                ></div>
+                <div
+                  class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                  style="animation-delay: 0.2s"
+                ></div>
+              </div>
+              <span id="typingUserName" class="text-xs"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Message Input (always at bottom) -->
+        <div class="border-t border-gray-200 bg-white flex-none">
+          <div class="flex items-center space-x-2 p-3">
+            <input
+              type="text"
+              id="chatInput"
+              placeholder="Type a message..."
+              class="flex-1 px-4 py-2 bg-gray-100 rounded-full text-sm border-0 focus:ring-2 focus:ring-fb-blue focus:outline-none"
+            />
+            <button
+              id="sendChatBtn"
+              class="bg-fb-blue text-white px-4 py-2 rounded-full text-sm hover:bg-blue-600 transition-colors"
+              style="background-color: black"
+            >
+              Send
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
 
-</div>
-
-    {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        {% for category, message in messages %}
-                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                            </div>
-                        {% endfor %}
-                    {% endif %}
-                {% endwith %}
+    {% with messages = get_flashed_messages(with_categories=true) %} {% if
+    messages %} {% for category, message in messages %}
+    <div
+      class="alert alert-{{ category }} alert-dismissible fade show"
+      role="alert"
+    >
+      {{ message }}
+      <button
+        type="button"
+        class="btn-close"
+        data-bs-dismiss="alert"
+        aria-label="Close"
+      ></button>
+    </div>
+    {% endfor %} {% endif %} {% endwith %}
 
     <!-- MOBILE SIDEBAR -->
     <div
@@ -664,17 +709,78 @@
           >
             <i class="bi bi-person mr-3 text-lg"></i> Profile
           </a>
-          <div
-            class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-fb-gray transition-colors mb-2"
-          >
-            <i class="bi bi-people-fill mr-3 text-lg"></i> Groups
+
+
+
+          <!-- In MOBILE SIDEBAR section, replace the Groups item with: -->
+          <!-- Mobile Groups Dropdown -->
+<!-- Desktop Groups Dropdown -->
+<!-- Mobile Groups Dropdown -->
+<div class="dropdown relative">
+  <div class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-300 mb-2 cursor-pointer group" data-bs-toggle="groups-dropdown-mobile">
+    <i class="bi bi-people-fill mr-3 text-lg text-blue-600 group-hover:text-purple-600 transition-colors duration-300"></i>
+    <span class="font-medium group-hover:text-blue-700 transition-colors duration-300">Groups</span>
+    <i class="bi bi-chevron-down ml-auto text-sm text-gray-400 group-hover:text-blue-500 transform group-hover:rotate-180 transition-all duration-300"></i>
+  </div>
+  
+  <div class="dropdown-menu absolute left-0 mt-1 w-85 bg-white rounded-2xl shadow-2xl overflow-hidden z-10 hidden border border-gray-100" id="groupsDropdownMenuMobile" style="background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);">
+    <!-- Same beautiful content as desktop -->
+    <div class="p-4 border-b border-gray-100 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+      <div class="flex items-center justify-between">
+        <div>
+          <h4 class="font-bold text-lg">Discover Groups</h4>
+          <p class="text-blue-100 text-sm mt-1">Connect with amazing communities</p>
+        </div>
+        <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+          <i class="bi bi-people-fill text-lg"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="p-3 bg-white/50">
+      <div class="relative">
+        <i class="bi bi-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+        <input 
+          type="text" 
+          placeholder="Search groups..." 
+          class="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 text-sm"
+          oninput="searchGroups(this.value)"
+        >
+      </div>
+    </div>
+
+    <div class="max-h-64 overflow-y-auto custom-scrollbar bg-gradient-to-b from-white to-blue-50/30" id="groupsListMobile">
+      <div class="flex flex-col items-center justify-center p-8 text-gray-500">
+        <div class="relative mb-4">
+          <div class="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+          <div class="absolute inset-0 flex items-center justify-center">
+            <i class="bi bi-people text-blue-600"></i>
           </div>
+        </div>
+        <p class="text-sm font-medium">Loading amazing groups...</p>
+        <p class="text-xs mt-1 text-gray-400">Finding the best communities for you</p>
+      </div>
+    </div>
+
+    <div class="p-4 border-t border-gray-100 bg-white/80 backdrop-blur-sm">
+      <button 
+        class="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl font-semibold transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg flex items-center justify-center group"
+        onclick="createNewGroup()"
+      >
+        <i class="bi bi-plus-circle text-lg mr-2 group-hover:scale-110 transition-transform duration-300"></i>
+        Create New Group
+      </button>
+    </div>
+  </div>
+</div>
+
+
+
           <div
             class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-fb-gray transition-colors mb-2"
           >
             <i class="bi bi-cart3 mr-3 text-lg"></i> Market Place
           </div>
-          
         </div>
       </div>
     </div>
@@ -683,7 +789,7 @@
     <div class="pt-16 flex">
       <!-- LEFT SIDEBAR -->
       <div
-        class="hidden lg:block w-80 h-screen sticky top-16 overflow-y-auto custom-scrollbar bg-white border-r border-fb-border p-4"
+        class="hidden lg:block w-96 h-screen sticky top-16 overflow-y-auto custom-scrollbar bg-white border-r border-fb-border p-4"
       >
         <div
           class="sidebar-item flex items-center p-3 rounded-lg bg-blue-50 text-blue-600 font-medium mb-2"
@@ -696,17 +802,81 @@
         >
           <i class="bi bi-person mr-3 text-lg"></i> Profile
         </a>
-        <div
-          class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-fb-gray transition-colors mb-2"
-        >
-          <i class="bi bi-people-fill mr-3 text-lg"></i> Groups
+
+
+        <!-- In your LEFT SIDEBAR section, replace the current Groups item with: -->
+        <!-- Desktop Groups Dropdown -->
+<div class="dropdown relative">
+  <div class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-300 mb-2 cursor-pointer group border border-transparent hover:border-blue-200 shadow-sm hover:shadow-md" data-bs-toggle="groups-dropdown">
+    <div class="relative">
+      <i class="bi bi-people-fill mr-3 text-lg text-blue-600 group-hover:text-purple-600 transition-colors duration-300"></i>
+      <div class="absolute -top-1 -right-1 w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+    </div>
+    <span class="font-medium group-hover:text-blue-700 transition-colors duration-300">Groups</span>
+    <i class="bi bi-chevron-down ml-auto text-sm text-gray-400 group-hover:text-blue-500 transform group-hover:rotate-180 transition-all duration-300"></i>
+  </div>
+  
+  <div class="dropdown-menu absolute left-0 mt-2 w-94 bg-white rounded-2xl shadow-2xl overflow-hidden z-10 hidden border border-gray-100 transform origin-top transition-all duration-300 scale-95 group-hover:scale-100" id="groupsDropdownMenu" style="background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);">
+    <!-- Header with gradient -->
+    <div class="p-4 border-b border-gray-100 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+      <div class="flex items-center justify-between">
+        <div>
+          <h4 class="font-bold text-lg">Discover Groups</h4>
+          <p class="text-blue-100 text-sm mt-1">Connect with amazing communities</p>
         </div>
+        <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+          <i class="bi bi-people-fill text-lg"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="p-3 bg-white/50">
+      <div class="relative">
+        <i class="bi bi-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+        <input 
+          type="text" 
+          placeholder="Search groups..." 
+          class="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 text-sm"
+          oninput="searchGroups(this.value)"
+        >
+      </div>
+    </div>
+
+    <!-- Groups List -->
+    <div class="max-h-80 overflow-y-auto custom-scrollbar bg-gradient-to-b from-white to-blue-50/30" id="groupsList">
+      <!-- Loading State -->
+      <div class="flex flex-col items-center justify-center p-8 text-gray-500">
+        <div class="relative mb-4">
+          <div class="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+          <div class="absolute inset-0 flex items-center justify-center">
+            <i class="bi bi-people text-blue-600"></i>
+          </div>
+        </div>
+        <p class="text-sm font-medium">Loading amazing groups...</p>
+        <p class="text-xs mt-1 text-gray-400">Finding the best communities for you</p>
+      </div>
+    </div>
+
+    <!-- Footer with Create Button -->
+    <div class="p-4 border-t border-gray-100 bg-white/80 backdrop-blur-sm">
+      <button 
+        class="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl font-semibold transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg flex items-center justify-center group"
+        onclick="createNewGroup()"
+      >
+        <i class="bi bi-plus-circle text-lg mr-2 group-hover:scale-110 transition-transform duration-300"></i>
+        Create New Group
+      </button>
+    </div>
+  </div>
+</div>
+
+
         <div
           class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-fb-gray transition-colors mb-2"
         >
           <i class="bi bi-cart3 mr-3 text-lg"></i> Market Place
         </div>
-        
 
         <!-- Sponsored Section -->
         <div class="mt-8 pt-6 border-t border-fb-border">
@@ -1012,10 +1182,12 @@
                   </button>
                   {% else %}
                   <button
-                    class="btn-add-friend w-full py-2  text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                    class="btn-add-friend w-full py-2 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
                     onclick="event.stopPropagation(); addFriend({{ user.id }})"
-                    style="background: linear-gradient(135deg, #5A4500, #B88900);"
- >
+                    style="
+                      background: linear-gradient(135deg, #5a4500, #b88900);
+                    "
+                  >
                     Add Friend
                   </button>
                   {% endif %}
@@ -1190,7 +1362,7 @@
 
       <!-- RIGHT SIDEBAR -->
       <div
-        class="hidden lg:block w-80 h-screen sticky top-16 overflow-y-auto custom-scrollbar bg-white border-l border-fb-border p-4"
+        class="hidden lg:block w-96 h-screen sticky top-16 overflow-y-auto custom-scrollbar bg-white border-l border-fb-border p-4"
       >
         <div class="flex justify-between items-center mb-4">
           <h3 class="font-semibold">Friends</h3>
@@ -1491,1105 +1663,1461 @@
 
     <!-- JavaScript -->
     <script>
-              // ========================================
-              // GLOBAL UTILITIES
-              // ========================================
-              const csrfToken = '{{ csrf_token }}';
 
-              // Add this at the top of your JavaScript, after csrfToken
-              const currentUserId = {{ current_user.id }};
 
-              function showToast(message, type = 'info') {
-                  const toast = document.createElement('div');
-                  toast.className = `fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-strong text-white ${
-                      type === 'success' ? 'bg-green-500' :
-                      type === 'danger' ? 'bg-red-500' :
-                      type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500'
-                  }`;
-                  toast.textContent = message;
-                  document.body.appendChild(toast);
-                  setTimeout(() => toast.remove(), 3000);
-              }
+      // ========================================
+// GROUPS SYSTEM
+// ========================================
 
-              function formatNotificationTime(timestamp) {
-                  const now = new Date();
-                  const notificationTime = new Date(timestamp);
-                  const diffInSeconds = Math.floor((now - notificationTime) / 1000);
+// Enhanced Groups System with Beautiful UI
+function loadGroups() {
+  console.log('🔍 Loading ALL groups...');
+  
+  // Show loading state
+  showGroupsLoading('groupsList');
+  showGroupsLoading('groupsListMobile');
 
-                  if (diffInSeconds < 60) return 'Just now';
-                  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-                  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-                  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
-                  return notificationTime.toLocaleDateString();
-              }
+  // Load groups for desktop dropdown
+  fetch('/get_user_groups')
+      .then(r => {
+          console.log('🔍 Response status:', r.status);
+          return r.json();
+      })
+      .then(groups => {
+          console.log('🔍 Groups received:', groups);
+          console.log('🔍 Number of groups:', groups.length);
+          
+          updateGroupsList(groups, 'groupsList');
+          updateGroupsList(groups, 'groupsListMobile');
+      })
+      .catch(err => {
+          console.error('❌ Error loading groups:', err);
+          showGroupsError('groupsList');
+          showGroupsError('groupsListMobile');
+      });
+}
 
-              function calculateAge(birthDate) {
-                  const today = new Date();
-                  let age = today.getFullYear() - birthDate.getFullYear();
-                  const monthDiff = today.getMonth() - birthDate.getMonth();
-                  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-                      age--;
-                  }
-                  return age;
-              }
+function showGroupsLoading(elementId) {
+  const groupsList = document.getElementById(elementId);
+  groupsList.innerHTML = `
+    <div class="flex flex-col items-center justify-center p-8 text-gray-500">
+      <div class="relative mb-4">
+        <div class="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+        <div class="absolute inset-0 flex items-center justify-center">
+          <i class="bi bi-people text-blue-600"></i>
+        </div>
+      </div>
+      <p class="text-sm font-medium">Loading amazing groups...</p>
+      <p class="text-xs mt-1 text-gray-400">Finding the best communities for you</p>
+    </div>
+  `;
+}
 
-              function highlightMatch(text, query) {
-                  if (!query.trim()) return text;
-                  const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-                  return text.replace(regex, '<span class="bg-yellow-200 px-1 rounded">$1</span>');
-              }
-
-              // ========================================
-              // MODAL FUNCTIONS
-              // ========================================
-              function openModal(modalId) {
-                  document.getElementById(modalId).classList.remove('hidden');
-              }
-
-              function closeModal(modalId) {
-                  document.getElementById(modalId).classList.add('hidden');
-              }
-
-              // ========================================
-              // MOBILE MENU
-              // ========================================
-              function toggleMobileMenu() {
-                  const overlay = document.getElementById('mobileSidebarOverlay');
-                  const sidebar = document.getElementById('mobileSidebar');
-
-                  if (overlay.style.display === 'block') {
-                      overlay.style.display = 'none';
-                      sidebar.classList.remove('translate-x-0');
-                      sidebar.classList.add('-translate-x-full');
-                  } else {
-                      overlay.style.display = 'block';
-                      sidebar.classList.remove('-translate-x-full');
-                      sidebar.classList.add('translate-x-0');
-                  }
-              }
-
-              // ========================================
-              // DROPDOWN FUNCTIONS
-              // ========================================
-              document.addEventListener('click', function(e) {
-                  // Close all dropdowns when clicking outside
-                  if (!e.target.closest('.dropdown')) {
-                      document.querySelectorAll('.dropdown-menu').forEach(menu => {
-                          menu.classList.add('hidden');
-                      });
-                  }
-
-                  // Toggle dropdowns
-                  if (e.target.closest('[data-bs-toggle="dropdown"]')) {
-                      const dropdown = e.target.closest('.dropdown');
-                      const menu = dropdown.querySelector('.dropdown-menu');
-                      menu.classList.toggle('hidden');
-
-                      // Close other dropdowns
-                      document.querySelectorAll('.dropdown-menu').forEach(otherMenu => {
-                          if (otherMenu !== menu) {
-                              otherMenu.classList.add('hidden');
-                          }
-                      });
-                  }
-              });
-
-              // ========================================
-              // SUGGESTIONS SLIDER
-              // ========================================
-              function scrollSuggestions(dir) {
-          const track = document.getElementById('suggestionsTrack');
-          const card = track.querySelector('.suggestion-card');
-          if (!card) return;
-
-          const cardWidth = card.offsetWidth + 16; // 16px margin
-          const visibleWidth = track.offsetWidth;
-          const scrollAmount = Math.floor(visibleWidth / cardWidth) * cardWidth;
-
-          track.scrollBy({
-              left: dir * scrollAmount,
-              behavior: 'smooth'
-          });
-
-          updateArrowVisibility(track);
-      }
-
-      function updateArrowVisibility(track) {
-          const prevArrow = document.querySelector('.slider-arrow.prev');
-          const nextArrow = document.querySelector('.slider-arrow.next');
-          if (!prevArrow || !nextArrow) return;
-
-          const maxScroll = track.scrollWidth - track.clientWidth;
-          prevArrow.classList.toggle('opacity-50', track.scrollLeft <= 10);
-          prevArrow.classList.toggle('cursor-not-allowed', track.scrollLeft <= 10);
-          nextArrow.classList.toggle('opacity-50', track.scrollLeft >= maxScroll - 10);
-          nextArrow.classList.toggle('cursor-not-allowed', track.scrollLeft >= maxScroll - 10);
-      }
-
-              // ========================================
-              // MEDIA PREVIEW
-              // ========================================
-              function previewMedia(input) {
-                  const preview = document.getElementById('mediaPreview');
-                  preview.innerHTML = '';
-                  const file = input.files[0];
-                  if (file) {
-                      const url = URL.createObjectURL(file);
-                      const el = file.type.startsWith('image/') ? document.createElement('img') : document.createElement('video');
-                      el.src = url;
-                      if (file.type.startsWith('video/')) {
-                          el.controls = true;
-                      }
-                      el.classList.add('w-full', 'rounded-2xl', 'max-h-96', 'object-cover');
-                      preview.appendChild(el);
-                  }
-              }
-
-              // ========================================
-              // FRIEND SYSTEM
-              // ========================================
-              function addFriend(userId) {
-                  const btn = event.target;
-                  btn.disabled = true;
-                  btn.classList.add('opacity-70');
-
-                  fetch(`/add_friend/${userId}`, {
-                      method: 'POST',
-                      headers: { 'X-CSRFToken': csrfToken }
-                  })
-                  .then(r => r.json())
-                  .then(() => {
-                      btn.textContent = 'Cancel Request';
-                      btn.className = 'btn-cancel-request w-full py-2 bg-gray-200 text-fb-text rounded-lg font-medium hover:bg-gray-300 transition-colors';
-                      btn.onclick = (e) => { e.stopPropagation(); cancelFriendRequest(userId); };
-                  })
-                  .catch(err => showToast('Error sending request', 'danger'))
-                  .finally(() => {
-                      btn.disabled = false;
-                      btn.classList.remove('opacity-70');
-                  });
-              }
-
-              function cancelFriendRequest(userId) {
-                  const btn = event.target;
-                  btn.disabled = true;
-                  btn.classList.add('opacity-70');
-
-                  fetch(`/cancel_friend_request/${userId}`, {
-                      method: 'POST',
-                      headers: { 'X-CSRFToken': csrfToken }
-                  })
-                  .then(r => r.json())
-                  .then(() => {
-                      btn.textContent = 'Add Friend';
-                      btn.className = 'btn-add-friend w-full py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors';
-                      btn.onclick = (e) => { e.stopPropagation(); addFriend(userId); };
-                  })
-                  .catch(err => showToast('Error canceling request', 'danger'))
-                  .finally(() => {
-                      btn.disabled = false;
-                      btn.classList.remove('opacity-70');
-                  });
-              }
-
-              // ========================================
-              // PROFILE MODAL
-              // ========================================
-              function openProfileModal(userId) {
-                  fetch(`/get_user_profile/${userId}`)
-                      .then(r => {
-                          if (!r.ok) throw new Error('Failed to load profile');
-                          return r.json();
-                      })
-                      .then(data => {
-                          const dob = data.dob ? new Date(data.dob).toLocaleDateString('en-US', {
-                              year: 'numeric', month: 'long', day: 'numeric'
-                          }) : 'Not specified';
-                          const age = data.dob ? calculateAge(new Date(data.dob)) : '';
-
-                          document.getElementById('profileModalBody').innerHTML = `
-                              <div class="profile-modal-content">
-                                  <div class="profile-header relative">
-                                      <div class="cover-photo-container h-48 overflow-hidden rounded-t-2xl">
-                                          <img src="${data.cover_pic || 'https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg'}"
-                                               alt="Cover" class="cover-photo w-full h-full object-cover">
-                                          <div class="profile-overlay absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
-                                      </div>
-                                      <div class="profile-info-container text-center relative -mt-16 pb-6 px-6">
-                                          <div class="profile-avatar-container inline-block">
-                                              <img src="${data.profile_pic}" alt="${data.first_name}"
-                                                   class="profile-avatar w-32 h-32 rounded-full border-4 border-white object-cover shadow-strong">
-                                          </div>
-                                          <div class="profile-text-content mt-4">
-                                              <h3 class="profile-name text-2xl font-bold">${data.first_name} ${data.last_name}</h3>
-                                              <div class="profile-details flex flex-wrap justify-center gap-2 mt-2">
-                                                  ${data.marital_status ? `<span class="detail-item inline-flex items-center gap-1 bg-gray-100 px-3 py-1 rounded-full text-sm"><i class="bi bi-heart-fill text-red-500"></i> ${data.marital_status}</span>` : ''}
-                                                  ${data.city && data.country ? `<span class="detail-item inline-flex items-center gap-1 bg-gray-100 px-3 py-1 rounded-full text-sm"><i class="bi bi-geo-alt-fill text-blue-500"></i> ${data.city}, ${data.country}</span>` : ''}
-                                                  ${age ? `<span class="detail-item inline-flex items-center gap-1 bg-gray-100 px-3 py-1 rounded-full text-sm"><i class="bi bi-balloon-fill text-purple-500"></i> ${age} years old</span>` : ''}
-                                              </div>
-                                              ${data.bio ? `<div class="profile-bio mt-3 max-w-2xl mx-auto"><p class="bio-text text-gray-700">${data.bio}</p></div>` : ''}
-                                          </div>
-                                      </div>
-                                  </div>
-
-                                  <div class="profile-details-section mt-6 px-6 pb-6">
-                                      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                          <div class="detail-card bg-gray-50 rounded-2xl p-6">
-                                              <h6 class="detail-card-title font-semibold text-lg mb-4 flex items-center"><i class="bi bi-person-badge-fill mr-2 text-blue-500"></i>Personal Information</h6>
-                                              <div class="detail-list space-y-3">
-                                                  ${data.email ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">Email:</span><span class="detail-value">${data.email}</span></div>` : ''}
-                                                  ${data.phone_number ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">Phone:</span><span class="detail-value">${data.phone_number}</span></div>` : ''}
-                                                  ${data.gender ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">Gender:</span><span class="detail-value">${data.gender}</span></div>` : ''}
-                                                  ${data.dob ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">Date of Birth:</span><span class="detail-value">${dob}</span></div>` : ''}
-                                              </div>
-                                          </div>
-                                          <div class="detail-card bg-gray-50 rounded-2xl p-6">
-                                              <h6 class="detail-card-title font-semibold text-lg mb-4 flex items-center"><i class="bi bi-geo-fill mr-2 text-green-500"></i>Location & Interests</h6>
-                                              <div class="detail-list space-y-3">
-                                                  ${data.city ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">City:</span><span class="detail-value">${data.city}</span></div>` : ''}
-                                                  ${data.country ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">Country:</span><span class="detail-value">${data.country}</span></div>` : ''}
-                                                  ${data.interests ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">Interests:</span><span class="detail-value">${data.interests}</span></div>` : ''}
-                                              </div>
-                                          </div>
-                                      </div>
-                                  </div>
-                              </div>
-                          `;
-
-                          const isFriend = {{ current_user.friend_ids|tojson }}.includes(userId);
-                          const isBlocked = {{ current_user.blocks|map(attribute='id')|list|tojson }}.includes(userId);
-
-                          const actions = isFriend ? `
-    <button class="btn btn-primary px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors" onclick="startChat(${userId})">
-        <i class="bi bi-chat-dots me-1"></i> Message
-    </button>
-    ${isBlocked ? `
-        <button class="btn btn-success px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors" onclick="unblockUserFromModal(${userId})">
-            <i class="bi bi-check-circle me-1"></i> Unblock
+function updateGroupsList(groups, elementId) {
+  const groupsList = document.getElementById(elementId);
+  
+  if (!groups || groups.length === 0) {
+    console.log('🔍 No groups found, showing empty state');
+    groupsList.innerHTML = `
+      <div class="text-center p-8">
+        <div class="w-16 h-16 bg-gradient-to-r from-blue-100 to-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <i class="bi bi-people text-2xl text-blue-600"></i>
+        </div>
+        <h3 class="font-semibold text-gray-700 mb-2">No Groups Yet</h3>
+        <p class="text-sm text-gray-500 mb-4">Be the pioneer! Create the first amazing group.</p>
+        <button 
+          class="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg text-sm font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105"
+          onclick="createNewGroup()"
+        >
+          <i class="bi bi-plus-circle mr-1"></i>Create Group
         </button>
-    ` : `
-        <button class="btn btn-outline-danger px-4 py-2 border border-red-500 text-red-500 rounded-lg font-medium hover:bg-red-50 transition-colors" onclick="blockUser(${userId})">
-            <i class="bi bi-slash-circle me-1"></i> Block
-        </button>
-    `}
-` : `
-    <button class="btn btn-primary px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors" onclick="addFriend(${userId})">
-        <i class="bi bi-person-plus me-1"></i> Add Friend
-    </button>
-    <a href="${data.profile_url}" class="btn btn-outline-secondary px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors">
-        <i class="bi bi-person-circle me-1"></i> View Profile
-    </a>
-`;
+      </div>
+    `;
+    return;
+  }
 
-                          document.getElementById('profileActions').innerHTML = actions;
-                          openModal('profileModal');
-                      })
-                      .catch(err => {
-                          console.error(err);
-                          showToast('Failed to load profile', 'danger');
-                      });
-              }
+  console.log('🔍 Rendering beautiful groups in dropdown');
+  groupsList.innerHTML = groups.map(group => `
+    <div class="group-item p-4 border-b border-gray-100 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-300 cursor-pointer group" onclick="openGroup(${group.id})">
+      <div class="flex items-start space-x-3">
+        <!-- Group Avatar with Gradient Border -->
+        <div class="relative flex-shrink-0">
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 p-0.5">
+            <img 
+              src="${group.cover_pic}" 
+              class="w-full h-full rounded-xl object-cover"
+              onerror="this.src='https://images.unsplash.com/photo-1611262588024-d12430b98920?w=100&h=100&fit=crop&crop=center'"
+              alt="${group.name}"
+            >
+          </div>
+          ${group.is_member ? `
+            <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
+              <i class="bi bi-check text-white text-xs"></i>
+            </div>
+          ` : ''}
+        </div>
+        
+        <!-- Group Info -->
+        <div class="flex-1 min-w-0">
+          <div class="flex items-start justify-between">
+            <div class="flex-1">
+              <h4 class="font-semibold text-gray-800 group-hover:text-blue-700 transition-colors duration-300 text-sm leading-tight">${group.name}</h4>
+              <div class="flex items-center mt-1 space-x-2">
+                <div class="flex items-center text-xs text-gray-500">
+                  <i class="bi bi-people mr-1"></i>
+                  <span>${group.member_count} members</span>
+                </div>
+                ${group.unread_count > 0 ? `
+                  <span class="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full animate-pulse">
+                    ${group.unread_count} new
+                  </span>
+                ` : ''}
+              </div>
+            </div>
+            
+            <!-- Action Button -->
+            <div class="flex-shrink-0 ml-2">
+              ${group.is_member ? `
+                <button 
+                  class="text-xs bg-green-100 text-green-700 px-3 py-1.5 rounded-lg hover:bg-green-200 transition-all duration-300 transform hover:scale-105 flex items-center group/btn"
+                  onclick="event.stopPropagation(); leaveGroup(${group.id})"
+                >
+                  <i class="bi bi-check-circle mr-1 group-hover/btn:scale-110 transition-transform duration-300"></i>
+                  Joined
+                </button>
+              ` : `
+                <button 
+                  class="text-xs bg-gradient-to-r from-blue-500 to-purple-600 text-white px-3 py-1.5 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 flex items-center group/btn shadow-sm"
+                  onclick="event.stopPropagation(); joinGroup(${group.id})"
+                >
+                  <i class="bi bi-plus-circle mr-1 group-hover/btn:scale-110 transition-transform duration-300"></i>
+                  Join
+                </button>
+              `}
+            </div>
+          </div>
+          
+          <!-- Progress bar for member count (visual appeal) -->
+          <div class="mt-2">
+            <div class="w-full bg-gray-200 rounded-full h-1">
+              <div 
+                class="bg-gradient-to-r from-blue-500 to-purple-600 h-1 rounded-full transition-all duration-1000" 
+                style="width: ${Math.min((group.member_count / 100) * 100, 100)}%"
+              ></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
 
-              // ========================================
-              // POST INTERACTIONS
-              // ========================================
-              document.addEventListener('DOMContentLoaded', function() {
-                  // Like buttons
-                  document.querySelectorAll('.like-btn').forEach(btn => {
-                      btn.addEventListener('click', function () {
-                          const postId = this.dataset.postId;
-                          const likeBtn = this;
+function showGroupsError(elementId) {
+  const groupsList = document.getElementById(elementId);
+  groupsList.innerHTML = `
+    <div class="text-center p-8">
+      <div class="w-16 h-16 bg-gradient-to-r from-red-100 to-pink-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+        <i class="bi bi-exclamation-triangle text-2xl text-red-600"></i>
+      </div>
+      <h3 class="font-semibold text-gray-700 mb-2">Oops! Something went wrong</h3>
+      <p class="text-sm text-gray-500 mb-4">We couldn't load the groups right now.</p>
+      <button 
+        class="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg text-sm font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105"
+        onclick="loadGroups()"
+      >
+        <i class="bi bi-arrow-clockwise mr-1"></i>Try Again
+      </button>
+    </div>
+  `;
+}
 
-                          fetch(`/like_post/${postId}`, {
-                              method: 'POST',
-                              headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' }
-                          })
-                          .then(r => r.ok ? r.json() : Promise.reject('Network error'))
-                          .then(data => {
-                              if (data.error) throw new Error(data.error);
-                              likeBtn.querySelector('.like-count').textContent = data.likes;
-                              if (data.liked) {
-                                  likeBtn.classList.add('text-blue-600');
-                                  likeBtn.querySelector('i').className = 'bi bi-hand-thumbs-up-fill';
-                              } else {
-                                  likeBtn.classList.remove('text-blue-600');
-                                  likeBtn.querySelector('i').className = 'bi bi-hand-thumbs-up';
-                              }
-                          })
-                          .catch(err => showToast('Like failed', 'danger'));
-                      });
-                  });
+// Enhanced group actions with beautiful animations
+function joinGroup(groupId) {
+  console.log(`🔍 Joining group ${groupId}`);
+  
+  const button = event.target.closest('button');
+  const originalContent = button.innerHTML;
+  
+  // Show loading state
+  button.innerHTML = `
+    <div class="flex items-center">
+      <div class="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin mr-1"></div>
+      Joining...
+    </div>
+  `;
+  button.disabled = true;
+  
+  fetch(`/groups/${groupId}/join`, {
+      method: 'POST',
+      headers: {
+          'X-CSRFToken': csrfToken,
+          'Content-Type': 'application/json'
+      }
+  })
+  .then(r => r.json())
+  .then(data => {
+      if (data.success) {
+          showToast('🎉 Successfully joined the group!', 'success');
+          // Reload the groups to update the UI
+          setTimeout(() => loadGroups(), 500);
+      } else {
+          showToast(data.error || 'Failed to join group', 'danger');
+          button.innerHTML = originalContent;
+          button.disabled = false;
+      }
+  })
+  .catch(err => {
+      console.error('Error joining group:', err);
+      showToast('Error joining group', 'danger');
+      button.innerHTML = originalContent;
+      button.disabled = false;
+  });
+}
 
-                  // Delete posts
-                  document.querySelectorAll('.delete-post').forEach(link => {
-                      link.addEventListener('click', function (e) {
-                          e.preventDefault();
-                          if (confirm('Delete this post?')) {
-                              const postId = this.dataset.postId;
-                              fetch(`/delete_post/${postId}`, {
-                                  method: 'POST',
-                                  headers: { 'X-CSRFToken': csrfToken }
-                              }).then(() => {
-                                  document.querySelector(`[data-post-id="${postId}"]`).remove();
-                                  showToast('Post deleted successfully', 'success');
-                              });
-                          }
-                      });
-                  });
+function leaveGroup(groupId) {
+  console.log(`🔍 Leaving group ${groupId}`);
+  
+  if (!confirm('Are you sure you want to leave this amazing group?')) {
+      return;
+  }
+  
+  const button = event.target.closest('button');
+  const originalContent = button.innerHTML;
+  
+  // Show loading state
+  button.innerHTML = `
+    <div class="flex items-center">
+      <div class="w-3 h-3 border-2 border-green-700 border-t-transparent rounded-full animate-spin mr-1"></div>
+      Leaving...
+    </div>
+  `;
+  button.disabled = true;
+  
+  fetch(`/groups/${groupId}/leave`, {
+      method: 'POST',
+      headers: {
+          'X-CSRFToken': csrfToken,
+          'Content-Type': 'application/json'
+      }
+  })
+  .then(r => r.json())
+  .then(data => {
+      if (data.success) {
+          showToast('👋 Left the group successfully', 'info');
+          // Reload the groups to update the UI
+          setTimeout(() => loadGroups(), 500);
+      } else {
+          showToast(data.error || 'Failed to leave group', 'danger');
+          button.innerHTML = originalContent;
+          button.disabled = false;
+      }
+  })
+  .catch(err => {
+      console.error('Error leaving group:', err);
+      showToast('Error leaving group', 'danger');
+      button.innerHTML = originalContent;
+      button.disabled = false;
+  });
+}
 
-                  // Edit posts
-                  document.querySelectorAll('.edit-post').forEach(link => {
-                      link.addEventListener('click', function () {
-                          const postId = this.dataset.postId;
-                          const post = document.querySelector(`[data-post-id="${postId}"]`);
-                          document.getElementById('editPostContent').value = post.querySelector('.post-text').textContent;
+// Search functionality for groups
+function searchGroups(query) {
+  const groups = document.querySelectorAll('.group-item');
+  const searchTerm = query.toLowerCase().trim();
+  
+  groups.forEach(group => {
+    const groupName = group.querySelector('h4').textContent.toLowerCase();
+    if (groupName.includes(searchTerm)) {
+      group.style.display = 'block';
+      group.classList.add('bg-yellow-50');
+      setTimeout(() => group.classList.remove('bg-yellow-50'), 1000);
+    } else {
+      group.style.display = 'none';
+    }
+  });
+}
 
-                          const form = document.getElementById('editPostForm');
-                          form.onsubmit = function (e) {
-                              e.preventDefault();
-                              const fd = new FormData(this);
-                              fd.append('post_id', postId);
-                              fetch('/edit_post', {
-                                  method: 'POST',
-                                  body: fd,
-                                  headers: { 'X-CSRFToken': csrfToken }
-                              }).then(() => {
-                                  closeModal('editPostModal');
-                                  location.reload();
-                              });
-                          };
+function openGroup(groupId) {
+  // Close dropdowns with animation
+  const dropdowns = ['groupsDropdownMenu', 'groupsDropdownMenuMobile'];
+  dropdowns.forEach(id => {
+    const dropdown = document.getElementById(id);
+    if (dropdown) {
+      dropdown.style.transform = 'scale(0.95)';
+      dropdown.style.opacity = '0';
+      setTimeout(() => {
+        dropdown.classList.add('hidden');
+        dropdown.style.transform = '';
+        dropdown.style.opacity = '';
+      }, 200);
+    }
+  });
+  
+  // Show loading toast
+  showToast('🚀 Opening group...', 'info');
+  
+  // Redirect to group page
+  setTimeout(() => {
+    window.location.href = `/groups/${groupId}`;
+  }, 500);
+}
 
-                          openModal('editPostModal');
-                      });
-                  });
+function createNewGroup() {
+  // Close dropdowns with animation
+  const dropdowns = ['groupsDropdownMenu', 'groupsDropdownMenuMobile'];
+  dropdowns.forEach(id => {
+    const dropdown = document.getElementById(id);
+    if (dropdown) {
+      dropdown.style.transform = 'scale(0.95)';
+      dropdown.style.opacity = '0';
+      setTimeout(() => {
+        dropdown.classList.add('hidden');
+        dropdown.style.transform = '';
+        dropdown.style.opacity = '';
+      }, 200);
+    }
+  });
+  
+  // Show creation modal or redirect
+  showToast('✨ Let\'s create something amazing!', 'success');
+  setTimeout(() => {
+    window.location.href = '/groups/create';
+  }, 1000);
+}
 
-                  // Add comments
-                  document.querySelectorAll('.add-comment').forEach(input => {
-                      input.addEventListener('keypress', function (e) {
-                          if (e.key === 'Enter' && this.value.trim()) {
-                              const postId = this.dataset.postId;
-                              const content = this.value.trim();
-                              const inp = this;
-                              inp.disabled = true;
+// Add groups dropdown to the existing dropdown toggle system
+document.addEventListener('click', function(e) {
+  // Handle groups dropdown toggle
+  if (e.target.closest('[data-bs-toggle="groups-dropdown"]')) {
+      const dropdown = e.target.closest('.dropdown');
+      const menu = dropdown.querySelector('.dropdown-menu');
+      menu.classList.toggle('hidden');
+      
+      // Load groups when dropdown opens
+      if (!menu.classList.contains('hidden')) {
+          loadGroups();
+      }
+  }
+  
+  if (e.target.closest('[data-bs-toggle="groups-dropdown-mobile"]')) {
+      const dropdown = e.target.closest('.dropdown');
+      const menu = dropdown.querySelector('.dropdown-menu');
+      menu.classList.toggle('hidden');
+      
+      // Load groups when dropdown opens
+      if (!menu.classList.contains('hidden')) {
+          loadGroups();
+      }
+  }
+  
+  // Close groups dropdown when clicking outside
+  if (!e.target.closest('.dropdown') && !e.target.closest('[data-bs-toggle="groups-dropdown"]') && !e.target.closest('[data-bs-toggle="groups-dropdown-mobile"]')) {
+      document.querySelectorAll('#groupsDropdownMenu, #groupsDropdownMenuMobile').forEach(menu => {
+          menu.classList.add('hidden');
+      });
+  }
+});
+                    // ========================================
+                    // GLOBAL UTILITIES
+                    // ========================================
+                    const csrfToken = '{{ csrf_token }}';
 
-                              fetch(`/add_comment/${postId}`, {
-                                  method: 'POST',
-                                  headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-                                  body: JSON.stringify({ content })
-                              })
-                              .then(r => r.json())
-                              .then(data => {
-                                  inp.value = '';
-                                  const container = inp.closest('.comments-section');
-                                  container.insertAdjacentHTML('beforeend', `
-                                      <div class="comment flex space-x-2 mb-3" id="comment-${data.id}">
-                                          <img src="${data.avatar}" alt="" class="w-8 h-8 rounded-full object-cover flex-shrink-0">
-                                          <div class="flex-1">
-                                              <div class="bg-white rounded-2xl px-3 py-2">
-                                                  <div class="font-semibold text-sm">${data.name}</div>
-                                                  <div class="text-sm">${data.content}</div>
-                                              </div>
+                    // Add this at the top of your JavaScript, after csrfToken
+                    const currentUserId = {{ current_user.id }};
 
-                                          </div>
-                                      </div>`);
-                              })
-                              .finally(() => inp.disabled = false);
-                          }
-                      });
-                  });
-
-                  // View comments modal
-                  // View comments modal
-      document.querySelectorAll('.view-comments').forEach(btn => {
-        btn.addEventListener('click', function () {
-            const postId = this.dataset.postId;
-            fetch(`/get_comments/${postId}`)
-                .then(r => r.json())
-                .then(comments => {
-                    const body = document.getElementById('commentModalBody');
-                    body.innerHTML = '';
-
-                    if (comments.length === 0) {
-                        body.innerHTML = `<div class="text-center py-8 text-gray-500">No comments yet</div>`;
-                        openModal('commentModal');
-                        return;
+                    function showToast(message, type = 'info') {
+                        const toast = document.createElement('div');
+                        toast.className = `fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-strong text-white ${
+                            type === 'success' ? 'bg-green-500' :
+                            type === 'danger' ? 'bg-red-500' :
+                            type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500'
+                        }`;
+                        toast.textContent = message;
+                        document.body.appendChild(toast);
+                        setTimeout(() => toast.remove(), 3000);
                     }
 
-                    comments.forEach(c => {
-                        const isLong = c.content.length > 150;
-                        const replyInput = `<div class="reply-input mt-2 hidden">
-                            <input type="text" class="w-full border border-gray-300 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                   placeholder="Write a reply..." data-parent-id="${c.id}">
-                        </div>`;
+                    function formatNotificationTime(timestamp) {
+                        const now = new Date();
+                        const notificationTime = new Date(timestamp);
+                        const diffInSeconds = Math.floor((now - notificationTime) / 1000);
 
-                        const replies = c.replies.map(r => `
-                            <div class="reply flex space-x-2 mt-2 ml-8">
-                                <img src="${r.avatar}" class="w-6 h-6 rounded-full object-cover flex-shrink-0">
-                                <div class="flex-1">
-                                    <div class="bg-gray-100 rounded-2xl px-3 py-2 text-sm">
-                                        <div class="font-semibold text-xs">${r.name}</div>
-                                        <div>${r.content}</div>
-                                    </div>
-                                </div>
-                            </div>`).join('');
+                        if (diffInSeconds < 60) return 'Just now';
+                        if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+                        if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+                        if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+                        return notificationTime.toLocaleDateString();
+                    }
 
-                        body.innerHTML += `
-                            <div class="comment mb-5 border-b pb-4" id="modal-comment-${c.id}">
-                                <div class="flex space-x-3">
-                                    <img src="${c.avatar}" class="w-10 h-10 rounded-full object-cover flex-shrink-0">
-                                    <div class="flex-1">
-                                        <div class="bg-gray-50 rounded-2xl px-4 py-3">
-                                            <div class="font-semibold">${c.name}</div>
-                                            <div class="text-sm comment-text ${isLong ? 'truncated' : ''}"
-                                                 id="modal-comment-text-${c.id}">
-                                                ${c.content}
-                                            </div>
-                                            ${isLong ? `
-                                            <button class="text-blue-600 text-xs font-medium mt-2 see-more-comment"
-                                                    onclick="event.stopPropagation(); toggleModalComment(${c.id})">
-                                                See More
-                                            </button>` : ''}
-                                        </div>
+                    function calculateAge(birthDate) {
+                        const today = new Date();
+                        let age = today.getFullYear() - birthDate.getFullYear();
+                        const monthDiff = today.getMonth() - birthDate.getMonth();
+                        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                            age--;
+                        }
+                        return age;
+                    }
 
-                                        ${replyInput}
-                                        ${replies}
-                                    </div>
-                                </div>
-                            </div>`;
+                    function highlightMatch(text, query) {
+                        if (!query.trim()) return text;
+                        const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+                        return text.replace(regex, '<span class="bg-yellow-200 px-1 rounded">$1</span>');
+                    }
+
+                    // ========================================
+                    // MODAL FUNCTIONS
+                    // ========================================
+                    function openModal(modalId) {
+                        document.getElementById(modalId).classList.remove('hidden');
+                    }
+
+                    function closeModal(modalId) {
+                        document.getElementById(modalId).classList.add('hidden');
+                    }
+
+                    // ========================================
+                    // MOBILE MENU
+                    // ========================================
+                    function toggleMobileMenu() {
+                        const overlay = document.getElementById('mobileSidebarOverlay');
+                        const sidebar = document.getElementById('mobileSidebar');
+
+                        if (overlay.style.display === 'block') {
+                            overlay.style.display = 'none';
+                            sidebar.classList.remove('translate-x-0');
+                            sidebar.classList.add('-translate-x-full');
+                        } else {
+                            overlay.style.display = 'block';
+                            sidebar.classList.remove('-translate-x-full');
+                            sidebar.classList.add('translate-x-0');
+                        }
+                    }
+
+                    // ========================================
+                    // DROPDOWN FUNCTIONS
+                    // ========================================
+                    document.addEventListener('click', function(e) {
+                        // Close all dropdowns when clicking outside
+                        if (!e.target.closest('.dropdown')) {
+                            document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                                menu.classList.add('hidden');
+                            });
+                        }
+
+                        // Toggle dropdowns
+                        if (e.target.closest('[data-bs-toggle="dropdown"]')) {
+                            const dropdown = e.target.closest('.dropdown');
+                            const menu = dropdown.querySelector('.dropdown-menu');
+                            menu.classList.toggle('hidden');
+
+                            // Close other dropdowns
+                            document.querySelectorAll('.dropdown-menu').forEach(otherMenu => {
+                                if (otherMenu !== menu) {
+                                    otherMenu.classList.add('hidden');
+                                }
+                            });
+                        }
                     });
 
-                    openModal('commentModal');
-                })
-                .catch(() => {
-                    document.getElementById('commentModalBody').innerHTML =
-                        `<div class="text-center py-8 text-red-500">Failed to load comments</div>`;
-                    openModal('commentModal');
+                    // ========================================
+                    // SUGGESTIONS SLIDER
+                    // ========================================
+                    function scrollSuggestions(dir) {
+                const track = document.getElementById('suggestionsTrack');
+                const card = track.querySelector('.suggestion-card');
+                if (!card) return;
+
+                const cardWidth = card.offsetWidth + 16; // 16px margin
+                const visibleWidth = track.offsetWidth;
+                const scrollAmount = Math.floor(visibleWidth / cardWidth) * cardWidth;
+
+                track.scrollBy({
+                    left: dir * scrollAmount,
+                    behavior: 'smooth'
                 });
-        });
-      });
 
-                  // Copy comment links
-                  document.querySelectorAll('.copy-comment-link').forEach(span => {
-                      span.addEventListener('click', function () {
-                          const id = this.dataset.commentId;
-                          const url = `${location.origin}${location.pathname}#comment-${id}`;
-                          navigator.clipboard.writeText(url);
-                          showToast('Comment link copied!', 'success');
-                      });
-                  });
+                updateArrowVisibility(track);
+            }
 
-                  // Share buttons
-                  document.querySelectorAll('.share-btn').forEach(btn => {
-                      btn.addEventListener('click', function () {
-                          navigator.clipboard.writeText(this.dataset.url);
-                          showToast('Post link copied!', 'success');
-                      });
-                  });
-              });
+            function updateArrowVisibility(track) {
+                const prevArrow = document.querySelector('.slider-arrow.prev');
+                const nextArrow = document.querySelector('.slider-arrow.next');
+                if (!prevArrow || !nextArrow) return;
 
-              // ========================================
-              // NOTIFICATION SYSTEM
-              // ========================================
-              let notificationCheckInterval;
+                const maxScroll = track.scrollWidth - track.clientWidth;
+                prevArrow.classList.toggle('opacity-50', track.scrollLeft <= 10);
+                prevArrow.classList.toggle('cursor-not-allowed', track.scrollLeft <= 10);
+                nextArrow.classList.toggle('opacity-50', track.scrollLeft >= maxScroll - 10);
+                nextArrow.classList.toggle('cursor-not-allowed', track.scrollLeft >= maxScroll - 10);
+            }
 
-              function initializeNotifications() {
-                  loadNotifications();
-                  updateNotificationBadge();
-                  notificationCheckInterval = setInterval(updateNotificationBadge, 30000);
+                    // ========================================
+                    // MEDIA PREVIEW
+                    // ========================================
+                    function previewMedia(input) {
+                        const preview = document.getElementById('mediaPreview');
+                        preview.innerHTML = '';
+                        const file = input.files[0];
+                        if (file) {
+                            const url = URL.createObjectURL(file);
+                            const el = file.type.startsWith('image/') ? document.createElement('img') : document.createElement('video');
+                            el.src = url;
+                            if (file.type.startsWith('video/')) {
+                                el.controls = true;
+                            }
+                            el.classList.add('w-full', 'rounded-2xl', 'max-h-96', 'object-cover');
+                            preview.appendChild(el);
+                        }
+                    }
 
-                  const dropdown = document.getElementById('notificationDropdown');
-                  if (dropdown) {
-                      dropdown.addEventListener('click', loadNotifications);
-                  }
-              }
+                    // ========================================
+                    // FRIEND SYSTEM
+                    // ========================================
+                    function addFriend(userId) {
+                        const btn = event.target;
+                        btn.disabled = true;
+                        btn.classList.add('opacity-70');
 
-              function updateNotificationBadge() {
-                  fetch('/notifications/count')
-                      .then(r => r.ok ? r.json() : Promise.reject())
-                      .then(data => {
-                          const badge = document.getElementById('notificationBadge');
-                          if (data.count > 0) {
-                              badge.textContent = data.count > 99 ? '99+' : data.count;
-                              badge.classList.remove('hidden');
-                          } else {
-                              badge.classList.add('hidden');
-                          }
-                      })
-                      .catch(() => {
-                          document.getElementById('notificationBadge').classList.add('hidden');
-                      });
-              }
+                        fetch(`/add_friend/${userId}`, {
+                            method: 'POST',
+                            headers: { 'X-CSRFToken': csrfToken }
+                        })
+                        .then(r => r.json())
+                        .then(() => {
+                            btn.textContent = 'Cancel Request';
+                            btn.className = 'btn-cancel-request w-full py-2 bg-gray-200 text-fb-text rounded-lg font-medium hover:bg-gray-300 transition-colors';
+                            btn.onclick = (e) => { e.stopPropagation(); cancelFriendRequest(userId); };
+                        })
+                        .catch(err => showToast('Error sending request', 'danger'))
+                        .finally(() => {
+                            btn.disabled = false;
+                            btn.classList.remove('opacity-70');
+                        });
+                    }
 
-              function loadNotifications() {
-                  const list = document.getElementById('notificationsList');
-                  if (!list) return;
+                    function cancelFriendRequest(userId) {
+                        const btn = event.target;
+                        btn.disabled = true;
+                        btn.classList.add('opacity-70');
 
-                  fetch('/notifications')
-                      .then(r => r.ok ? r.json() : Promise.reject())
-                      .then(notifications => {
-                          if (notifications.length === 0) {
-                              list.innerHTML = `<div class="empty-notifications text-center p-6 text-gray-500"><i class="bi bi-bell text-4xl mb-2"></i><p>No notifications yet</p></div>`;
+                        fetch(`/cancel_friend_request/${userId}`, {
+                            method: 'POST',
+                            headers: { 'X-CSRFToken': csrfToken }
+                        })
+                        .then(r => r.json())
+                        .then(() => {
+                            btn.textContent = 'Add Friend';
+                            btn.className = 'btn-add-friend w-full py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors';
+                            btn.onclick = (e) => { e.stopPropagation(); addFriend(userId); };
+                        })
+                        .catch(err => showToast('Error canceling request', 'danger'))
+                        .finally(() => {
+                            btn.disabled = false;
+                            btn.classList.remove('opacity-70');
+                        });
+                    }
+
+                    // ========================================
+                    // PROFILE MODAL
+                    // ========================================
+                    function openProfileModal(userId) {
+                        fetch(`/get_user_profile/${userId}`)
+                            .then(r => {
+                                if (!r.ok) throw new Error('Failed to load profile');
+                                return r.json();
+                            })
+                            .then(data => {
+                                const dob = data.dob ? new Date(data.dob).toLocaleDateString('en-US', {
+                                    year: 'numeric', month: 'long', day: 'numeric'
+                                }) : 'Not specified';
+                                const age = data.dob ? calculateAge(new Date(data.dob)) : '';
+
+                                document.getElementById('profileModalBody').innerHTML = `
+                                    <div class="profile-modal-content">
+                                        <div class="profile-header relative">
+                                            <div class="cover-photo-container h-48 overflow-hidden rounded-t-2xl">
+                                                <img src="${data.cover_pic || 'https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg'}"
+                                                     alt="Cover" class="cover-photo w-full h-full object-cover">
+                                                <div class="profile-overlay absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                                            </div>
+                                            <div class="profile-info-container text-center relative -mt-16 pb-6 px-6">
+                                                <div class="profile-avatar-container inline-block">
+                                                    <img src="${data.profile_pic}" alt="${data.first_name}"
+                                                         class="profile-avatar w-32 h-32 rounded-full border-4 border-white object-cover shadow-strong">
+                                                </div>
+                                                <div class="profile-text-content mt-4">
+                                                    <h3 class="profile-name text-2xl font-bold">${data.first_name} ${data.last_name}</h3>
+                                                    <div class="profile-details flex flex-wrap justify-center gap-2 mt-2">
+                                                        ${data.marital_status ? `<span class="detail-item inline-flex items-center gap-1 bg-gray-100 px-3 py-1 rounded-full text-sm"><i class="bi bi-heart-fill text-red-500"></i> ${data.marital_status}</span>` : ''}
+                                                        ${data.city && data.country ? `<span class="detail-item inline-flex items-center gap-1 bg-gray-100 px-3 py-1 rounded-full text-sm"><i class="bi bi-geo-alt-fill text-blue-500"></i> ${data.city}, ${data.country}</span>` : ''}
+                                                        ${age ? `<span class="detail-item inline-flex items-center gap-1 bg-gray-100 px-3 py-1 rounded-full text-sm"><i class="bi bi-balloon-fill text-purple-500"></i> ${age} years old</span>` : ''}
+                                                    </div>
+                                                    ${data.bio ? `<div class="profile-bio mt-3 max-w-2xl mx-auto"><p class="bio-text text-gray-700">${data.bio}</p></div>` : ''}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="profile-details-section mt-6 px-6 pb-6">
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div class="detail-card bg-gray-50 rounded-2xl p-6">
+                                                    <h6 class="detail-card-title font-semibold text-lg mb-4 flex items-center"><i class="bi bi-person-badge-fill mr-2 text-blue-500"></i>Personal Information</h6>
+                                                    <div class="detail-list space-y-3">
+                                                        ${data.email ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">Email:</span><span class="detail-value">${data.email}</span></div>` : ''}
+                                                        ${data.phone_number ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">Phone:</span><span class="detail-value">${data.phone_number}</span></div>` : ''}
+                                                        ${data.gender ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">Gender:</span><span class="detail-value">${data.gender}</span></div>` : ''}
+                                                        ${data.dob ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">Date of Birth:</span><span class="detail-value">${dob}</span></div>` : ''}
+                                                    </div>
+                                                </div>
+                                                <div class="detail-card bg-gray-50 rounded-2xl p-6">
+                                                    <h6 class="detail-card-title font-semibold text-lg mb-4 flex items-center"><i class="bi bi-geo-fill mr-2 text-green-500"></i>Location & Interests</h6>
+                                                    <div class="detail-list space-y-3">
+                                                        ${data.city ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">City:</span><span class="detail-value">${data.city}</span></div>` : ''}
+                                                        ${data.country ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">Country:</span><span class="detail-value">${data.country}</span></div>` : ''}
+                                                        ${data.interests ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">Interests:</span><span class="detail-value">${data.interests}</span></div>` : ''}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+
+                                const isFriend = {{ current_user.friend_ids|tojson }}.includes(userId);
+                                const isBlocked = {{ current_user.blocks|map(attribute='id')|list|tojson }}.includes(userId);
+
+                                const actions = isFriend ? `
+          <button class="btn btn-primary px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors" onclick="startChat(${userId})">
+              <i class="bi bi-chat-dots me-1"></i> Message
+          </button>
+          ${isBlocked ? `
+              <button class="btn btn-success px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors" onclick="unblockUserFromModal(${userId})">
+                  <i class="bi bi-check-circle me-1"></i> Unblock
+              </button>
+          ` : `
+              <button class="btn btn-outline-danger px-4 py-2 border border-red-500 text-red-500 rounded-lg font-medium hover:bg-red-50 transition-colors" onclick="blockUser(${userId})">
+                  <i class="bi bi-slash-circle me-1"></i> Block
+              </button>
+          `}
+      ` : `
+          <button class="btn btn-primary px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors" onclick="addFriend(${userId})">
+              <i class="bi bi-person-plus me-1"></i> Add Friend
+          </button>
+          <a href="${data.profile_url}" class="btn btn-outline-secondary px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors">
+              <i class="bi bi-person-circle me-1"></i> View Profile
+          </a>
+      `;
+
+                                document.getElementById('profileActions').innerHTML = actions;
+                                openModal('profileModal');
+                            })
+                            .catch(err => {
+                                console.error(err);
+                                showToast('Failed to load profile', 'danger');
+                            });
+                    }
+
+                    // ========================================
+                    // POST INTERACTIONS
+                    // ========================================
+                    document.addEventListener('DOMContentLoaded', function() {
+                        // Like buttons
+                        document.querySelectorAll('.like-btn').forEach(btn => {
+                            btn.addEventListener('click', function () {
+                                const postId = this.dataset.postId;
+                                const likeBtn = this;
+
+                                fetch(`/like_post/${postId}`, {
+                                    method: 'POST',
+                                    headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' }
+                                })
+                                .then(r => r.ok ? r.json() : Promise.reject('Network error'))
+                                .then(data => {
+                                    if (data.error) throw new Error(data.error);
+                                    likeBtn.querySelector('.like-count').textContent = data.likes;
+                                    if (data.liked) {
+                                        likeBtn.classList.add('text-blue-600');
+                                        likeBtn.querySelector('i').className = 'bi bi-hand-thumbs-up-fill';
+                                    } else {
+                                        likeBtn.classList.remove('text-blue-600');
+                                        likeBtn.querySelector('i').className = 'bi bi-hand-thumbs-up';
+                                    }
+                                })
+                                .catch(err => showToast('Like failed', 'danger'));
+                            });
+                        });
+
+                        // Delete posts
+                        document.querySelectorAll('.delete-post').forEach(link => {
+                            link.addEventListener('click', function (e) {
+                                e.preventDefault();
+                                if (confirm('Delete this post?')) {
+                                    const postId = this.dataset.postId;
+                                    fetch(`/delete_post/${postId}`, {
+                                        method: 'POST',
+                                        headers: { 'X-CSRFToken': csrfToken }
+                                    }).then(() => {
+                                        document.querySelector(`[data-post-id="${postId}"]`).remove();
+                                        showToast('Post deleted successfully', 'success');
+                                    });
+                                }
+                            });
+                        });
+
+                        // Edit posts
+                        document.querySelectorAll('.edit-post').forEach(link => {
+                            link.addEventListener('click', function () {
+                                const postId = this.dataset.postId;
+                                const post = document.querySelector(`[data-post-id="${postId}"]`);
+                                document.getElementById('editPostContent').value = post.querySelector('.post-text').textContent;
+
+                                const form = document.getElementById('editPostForm');
+                                form.onsubmit = function (e) {
+                                    e.preventDefault();
+                                    const fd = new FormData(this);
+                                    fd.append('post_id', postId);
+                                    fetch('/edit_post', {
+                                        method: 'POST',
+                                        body: fd,
+                                        headers: { 'X-CSRFToken': csrfToken }
+                                    }).then(() => {
+                                        closeModal('editPostModal');
+                                        location.reload();
+                                    });
+                                };
+
+                                openModal('editPostModal');
+                            });
+                        });
+
+                        // Add comments
+                        document.querySelectorAll('.add-comment').forEach(input => {
+                            input.addEventListener('keypress', function (e) {
+                                if (e.key === 'Enter' && this.value.trim()) {
+                                    const postId = this.dataset.postId;
+                                    const content = this.value.trim();
+                                    const inp = this;
+                                    inp.disabled = true;
+
+                                    fetch(`/add_comment/${postId}`, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                                        body: JSON.stringify({ content })
+                                    })
+                                    .then(r => r.json())
+                                    .then(data => {
+                                        inp.value = '';
+                                        const container = inp.closest('.comments-section');
+                                        container.insertAdjacentHTML('beforeend', `
+                                            <div class="comment flex space-x-2 mb-3" id="comment-${data.id}">
+                                                <img src="${data.avatar}" alt="" class="w-8 h-8 rounded-full object-cover flex-shrink-0">
+                                                <div class="flex-1">
+                                                    <div class="bg-white rounded-2xl px-3 py-2">
+                                                        <div class="font-semibold text-sm">${data.name}</div>
+                                                        <div class="text-sm">${data.content}</div>
+                                                    </div>
+
+                                                </div>
+                                            </div>`);
+                                    })
+                                    .finally(() => inp.disabled = false);
+                                }
+                            });
+                        });
+
+                        // View comments modal
+                        // View comments modal
+            document.querySelectorAll('.view-comments').forEach(btn => {
+              btn.addEventListener('click', function () {
+                  const postId = this.dataset.postId;
+                  fetch(`/get_comments/${postId}`)
+                      .then(r => r.json())
+                      .then(comments => {
+                          const body = document.getElementById('commentModalBody');
+                          body.innerHTML = '';
+
+                          if (comments.length === 0) {
+                              body.innerHTML = `<div class="text-center py-8 text-gray-500">No comments yet</div>`;
+                              openModal('commentModal');
                               return;
                           }
 
-                          list.innerHTML = notifications.map(n => `
-                              <div class="notification-item p-3 border-b border-gray-100 ${n.is_read ? '' : 'bg-blue-50 border-l-4 border-l-blue-500'}"
-                                  ${n.type !== 'friend_request' ? `onclick="handleNotificationClick(${n.id}, '${n.type}', ${n.entity_id || 0})"` : ''}>
+                          comments.forEach(c => {
+                              const isLong = c.content.length > 150;
+                              const replyInput = `<div class="reply-input mt-2 hidden">
+                                  <input type="text" class="w-full border border-gray-300 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                         placeholder="Write a reply..." data-parent-id="${c.id}">
+                              </div>`;
 
-                                  <div class="flex items-start space-x-3">
-                                      <img src="${n.actor.avatar}" alt="${n.actor.name}" class="w-10 h-10 rounded-full object-cover"
-                                           onerror="this.src='{{ url_for('static', filename='assets/img/default-avatar.png') }}'">
+                              const replies = c.replies.map(r => `
+                                  <div class="reply flex space-x-2 mt-2 ml-8">
+                                      <img src="${r.avatar}" class="w-6 h-6 rounded-full object-cover flex-shrink-0">
                                       <div class="flex-1">
-                                          <div class="notification-text text-sm">${n.message}</div>
-                                          <div class="notification-time text-xs text-gray-500 mt-1">${formatNotificationTime(n.created_at)}</div>
-                                          ${n.type === 'friend_request' ? `
-                                          <div class="notification-actions flex space-x-2 mt-2">
-                                              ${!n.is_read ? `
-                                                  <button class="notification-action-btn px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors"
-                                                          onclick="event.stopPropagation(); acceptFriendRequest(${n.actor.id}, ${n.id})">
-                                                      Accept
-                                                  </button>
-                                                  <button class="notification-action-btn px-3 py-1 bg-gray-200 text-gray-700 text-xs rounded-lg hover:bg-gray-300 transition-colors"
-                                                          onclick="event.stopPropagation(); declineFriendRequest(${n.actor.id}, ${n.id})">
-                                                      Decline
-                                                  </button>
-                                              ` : `<small class="text-gray-500 text-xs">Request pending</small>`}
+                                          <div class="bg-gray-100 rounded-2xl px-3 py-2 text-sm">
+                                              <div class="font-semibold text-xs">${r.name}</div>
+                                              <div>${r.content}</div>
                                           </div>
-                                          ` : ''}
                                       </div>
-                                  </div>
-                              </div>
-                          `).join('');
+                                  </div>`).join('');
+
+                              body.innerHTML += `
+                                  <div class="comment mb-5 border-b pb-4" id="modal-comment-${c.id}">
+                                      <div class="flex space-x-3">
+                                          <img src="${c.avatar}" class="w-10 h-10 rounded-full object-cover flex-shrink-0">
+                                          <div class="flex-1">
+                                              <div class="bg-gray-50 rounded-2xl px-4 py-3">
+                                                  <div class="font-semibold">${c.name}</div>
+                                                  <div class="text-sm comment-text ${isLong ? 'truncated' : ''}"
+                                                       id="modal-comment-text-${c.id}">
+                                                      ${c.content}
+                                                  </div>
+                                                  ${isLong ? `
+                                                  <button class="text-blue-600 text-xs font-medium mt-2 see-more-comment"
+                                                          onclick="event.stopPropagation(); toggleModalComment(${c.id})">
+                                                      See More
+                                                  </button>` : ''}
+                                              </div>
+
+                                              ${replyInput}
+                                              ${replies}
+                                          </div>
+                                      </div>
+                                  </div>`;
+                          });
+
+                          openModal('commentModal');
                       })
                       .catch(() => {
-                          list.innerHTML = `<div class="text-center p-4 text-red-500"><i class="bi bi-exclamation-triangle"></i><p>Error loading notifications</p></div>`;
+                          document.getElementById('commentModalBody').innerHTML =
+                              `<div class="text-center py-8 text-red-500">Failed to load comments</div>`;
+                          openModal('commentModal');
                       });
-              }
-
-              function handleNotificationClick(id, type, entityId) {
-                  markNotificationAsRead(id);
-                  switch (type) {
-                      case 'friend_request':
-                      case 'friend_accepted':
-                      case 'profile_update':
-                          openProfileModal(entityId);
-                          break;
-                      case 'post_like':
-                      case 'new_comment':
-                          scrollToPost(entityId);
-                          break;
-                  }
-                  document.getElementById('notificationDropdownMenu').classList.add('hidden');
-              }
-
-              function markNotificationAsRead(id) {
-                  fetch(`/notifications/${id}/read`, {
-                      method: 'POST',
-                      headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' }
-                  })
-                  .then(() => {
-                      updateNotificationBadge();
-                      loadNotifications();
-                  });
-              }
-
-              function markAllAsRead() {
-                  fetch('/notifications/read', {
-                      method: 'POST',
-                      headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' }
-                  })
-                  .then(() => {
-                      updateNotificationBadge();
-                      loadNotifications();
-                  });
-              }
-
-              function acceptFriendRequest(userId, notifId) {
-                  fetch(`/accept_friend_request/${userId}`, {
-                      method: 'POST',
-                      headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ notification_id: notifId })
-                  })
-                  .then(r => r.json())
-                  .then(data => {
-                      if (data.success) {
-                          markNotificationAsRead(notifId);
-                          showToast('Friend request accepted!', 'success');
-                      } else {
-                          showToast('Failed to accept', 'danger');
-                      }
-                  });
-              }
-
-              function declineFriendRequest(userId, notifId) {
-                  fetch(`/decline_friend_request/${userId}`, {
-                      method: 'POST',
-                      headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ notification_id: notifId })
-                  })
-                  .then(r => r.json())
-                  .then(data => {
-                      if (data.success) {
-                          markNotificationAsRead(notifId);
-                          showToast('Request declined', 'info');
-                      } else {
-                          showToast('Failed to decline', 'danger');
-                      }
-                  });
-              }
-
-              function scrollToPost(postId) {
-                  const el = document.querySelector(`[data-post-id="${postId}"]`);
-                  if (el) {
-                      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                      el.classList.add('highlight-animation');
-                      setTimeout(() => el.classList.remove('highlight-animation'), 2000);
-                  }
-              }
-
-              // ========================================
-              // SEARCH SYSTEM
-              // ========================================
-              let searchTimeout;
-              const searchInput = document.getElementById('globalSearch');
-              const searchResults = document.getElementById('searchResults');
-              const searchResultsBody = document.getElementById('searchResultsBody');
-
-              function performSearch(query) {
-                  if (!query.trim()) { hideSearchResults(); return; }
-                  showSearchLoading();
-
-                  fetch(`/search?q=${encodeURIComponent(query)}`)
-                      .then(r => r.ok ? r.json() : Promise.reject())
-                      .then(data => displaySearchResults(data, query))
-                      .catch(() => showSearchError());
-              }
-
-              function displaySearchResults(results, query) {
-                  searchResultsBody.innerHTML = '';
-                  if (!results.users.length && !results.posts.length) {
-                      showNoResults();
-                      return;
-                  }
-
-                  let html = '';
-                  results.users.forEach(u => {
-                      const name = highlightMatch(`${u.first_name} ${u.last_name}`, query);
-                      html += `<div class="search-result-item p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors" onclick="openProfileModal(${u.id})">
-                          <div class="search-result-user flex items-center space-x-3">
-                              <img src="${u.profile_pic || '{{ url_for('static', filename='assets/img/default-avatar.png') }}'}" class="search-result-avatar w-10 h-10 rounded-full object-cover">
-                              <div class="search-result-info">
-                                  <div class="search-result-name font-medium">${name}</div>
-                                  <div class="search-result-type text-xs text-gray-500">User</div>
-                              </div>
-                          </div>
-                      </div>`;
-                  });
-
-                  results.posts.forEach(p => {
-                      const content = highlightMatch(p.content.substring(0, 100), query);
-                      html += `<div class="search-result-item p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors" onclick="viewPost(${p.id})">
-                          <div class="search-result-post">
-                              <div class="search-result-content text-sm">${content}${p.content.length > 100 ? '...' : ''}</div>
-                              <div class="search-result-author text-xs text-gray-500 mt-1">By ${p.author_first_name} ${p.author_last_name}</div>
-                              <div class="search-result-type text-xs text-gray-500">Post</div>
-                          </div>
-                      </div>`;
-                  });
-
-                  searchResultsBody.innerHTML = html;
-                  showSearchResults();
-              }
-
-              function showSearchLoading() {
-                  searchResultsBody.innerHTML = `<div class="search-loading text-center p-4 text-gray-500"><div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div><div class="mt-2">Searching...</div></div>`;
-                  showSearchResults();
-              }
-
-              function showNoResults() {
-                  searchResultsBody.innerHTML = `<div class="no-results text-center p-6 text-gray-500"><i class="bi bi-search text-3xl mb-2"></i><p>No results</p><small class="text-xs">Try different keywords</small></div>`;
-                  showSearchResults();
-              }
-
-              function showSearchError() {
-                  searchResultsBody.innerHTML = `<div class="no-results text-center p-6 text-red-500"><i class="bi bi-exclamation-triangle text-3xl mb-2"></i><p>Search failed</p></div>`;
-                  showSearchResults();
-              }
-
-              function showSearchResults() {
-                  searchResults.classList.remove('hidden');
-              }
-
-              function hideSearchResults() {
-                  searchResults.classList.add('hidden');
-              }
-
-              function viewPost(postId) {
-                  hideSearchResults();
-                  searchInput.value = '';
-                  const el = document.querySelector(`[data-post-id="${postId}"]`);
-                  if (el) {
-                      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                      el.classList.add('highlight-animation');
-                      setTimeout(() => el.classList.remove('highlight-animation'), 2000);
-                  } else {
-                      fetch(`/get_post/${postId}`)
-                          .then(r => r.json())
-                          .then(post => {
-                              if (post.error) throw new Error();
-                              displayPostModal(post);
-                          })
-                          .catch(() => showToast('Post not found', 'danger'));
-                  }
-              }
-
-              function displayPostModal(post) {
-                  const body = document.getElementById('commentModalBody');
-                  body.innerHTML = `
-                      <div class="post-card bg-white rounded-2xl shadow-soft overflow-hidden">
-                          <div class="p-4 flex justify-between items-start">
-                              <div class="flex items-start space-x-3">
-                                  <img src="${post.author_profile_pic}" class="w-10 h-10 rounded-full object-cover">
-                                  <div>
-                                      <div class="font-semibold">${post.author_first_name} ${post.author_last_name}</div>
-                                      <div class="text-sm text-gray-500">${new Date(post.created_at).toLocaleString()}</div>
-                                  </div>
-                              </div>
-                          </div>
-                          <div class="px-4 pb-3">
-                              <p class="post-text">${post.content}</p>
-                              ${post.image ? `<div class="post-media mt-3"><img src="${post.image}" alt="Post" class="w-full rounded-2xl max-h-96 object-cover"></div>` : ''}
-                              ${post.video ? `<div class="post-media mt-3"><video controls class="w-full rounded-2xl max-h-96"><source src="${post.video}"></video></div>` : ''}
-                          </div>
-                      </div>
-                  `;
-                  openModal('commentModal');
-              }
-
-              // Search event listeners
-              if (searchInput) {
-                  searchInput.addEventListener('input', function () {
-                      clearTimeout(searchTimeout);
-                      const q = this.value.trim();
-                      if (q.length >= 2) {
-                          searchTimeout = setTimeout(() => performSearch(q), 300);
-                      } else {
-                          hideSearchResults();
-                      }
-                  });
-
-                  searchInput.addEventListener('focus', function () {
-                      if (this.value.trim().length >= 2) performSearch(this.value.trim());
-                  });
-              }
-
-              document.addEventListener('click', e => {
-                  if (!searchResults?.contains(e.target) && e.target !== searchInput) hideSearchResults();
               });
+            });
 
-              // ========================================
-              // POST TEXT TRUNCATION
-              // ========================================
-              function togglePostText(postId) {
-                  const text = document.getElementById(`post-text-${postId}`);
-                  const btn = text.nextElementSibling;
-                  if (!text || !btn?.classList.contains('see-more-btn')) return;
+                        // Copy comment links
+                        document.querySelectorAll('.copy-comment-link').forEach(span => {
+                            span.addEventListener('click', function () {
+                                const id = this.dataset.commentId;
+                                const url = `${location.origin}${location.pathname}#comment-${id}`;
+                                navigator.clipboard.writeText(url);
+                                showToast('Comment link copied!', 'success');
+                            });
+                        });
 
-                  if (text.classList.contains('truncated')) {
-                      text.classList.remove('truncated');
-                      btn.textContent = 'See Less';
-                      const card = text.closest('.post-card');
-                      if (card.getBoundingClientRect().bottom > window.innerHeight - 100) {
-                          card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                      }
-                  } else {
-                      text.classList.add('truncated');
-                      btn.textContent = 'See More';
-                  }
-              }
-
-              function initializePostTextTruncation() {
-                  document.querySelectorAll('.post-text').forEach(textEl => {
-                      const content = textEl.textContent;
-                      if (content.length > 100 && !textEl.nextElementSibling?.classList.contains('see-more-btn')) {
-                          textEl.classList.add('truncated');
-                          const btn = document.createElement('button');
-                          btn.className = 'see-more-btn text-blue-600 font-medium text-sm mt-1';
-                          btn.textContent = 'See More';
-                          btn.onclick = () => togglePostText(textEl.id.replace('post-text-', ''));
-                          textEl.parentNode.insertBefore(btn, textEl.nextSibling);
-                      }
-                  });
-              }
-
-              // ========================================
-              // BLOCK USER
-              // ========================================
-              function blockUser(userId) {
-                  if (!confirm("Block this user? They won't see your posts or be able to contact you.")) return;
-
-                  fetch(`/block_user/${userId}`, {
-                      method: 'POST',
-                      headers: {
-                          'X-CSRFToken': csrfToken,
-                          'Content-Type': 'application/json'
-                      }
-                  })
-                  .then(response => response.json())
-                  .then(data => {
-                      if (data.success) {
-                          showToast(data.message || 'User blocked successfully!', 'success');
-                          closeModal('profileModal');
-                          setTimeout(() => {
-                              location.reload();
-                          }, 1500);
-                      } else {
-                          showToast(data.error || 'Error blocking user', 'danger');
-                      }
-                  })
-                  .catch(error => {
-                      console.error('Error:', error);
-                      showToast('Error blocking user. Please try again.', 'danger');
-                  });
-              }
-
-              function unblockUserFromModal(userId) {
-                  if (!confirm("Unblock this user? They will be able to see your posts again.")) return;
-
-                  fetch(`/unblock_user/${userId}`, {
-                      method: 'POST',
-                      headers: {
-                          'X-CSRFToken': csrfToken,
-                          'Content-Type': 'application/json'
-                      }
-                  })
-                  .then(r => r.json())
-                  .then(data => {
-                      if (data.success) {
-                          showToast('User unblocked!', 'success');
-                          closeModal('profileModal');
-                      } else {
-                          showToast(data.error || 'Failed to unblock', 'danger');
-                      }
-                  })
-                  .catch(() => showToast('Error unblocking user', 'danger'));
-              }
-
-              function startChat(userId) {
-                // Open the messenger popup
-                openMessenger();
-                
-                // Load friends and then open chat with the specific user
-                loadFriends().then(() => {
-                    // Find the friend in the loaded friends list and open chat
-                    setTimeout(() => {
-                        openChatWithUser(userId);
-                    }, 500); // Small delay to ensure friends are loaded
-                });
-            }
-            
-            function openChatWithUser(userId) {
-                // First, make sure we have the friends list
-                fetch('/messaging/friends')
-                    .then(response => response.json())
-                    .then(friends => {
-                        const friend = friends.find(f => f.id === userId);
-                        if (friend) {
-                            openChatWith(friend.id, friend.name, friend.avatar, friend.online);
-                        } else {
-                            showToast('Friend not found or not available for messaging', 'danger');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error loading friend:', error);
-                        showToast('Failed to start chat', 'danger');
+                        // Share buttons
+                        document.querySelectorAll('.share-btn').forEach(btn => {
+                            btn.addEventListener('click', function () {
+                                navigator.clipboard.writeText(this.dataset.url);
+                                showToast('Post link copied!', 'success');
+                            });
+                        });
                     });
-            }
 
-              // ========================================
-              // INIT ON LOAD
-              // ========================================
-              document.addEventListener('DOMContentLoaded', () => {
-                  // Initialize core systems
-                  initializeNotifications();
-                  initializePostTextTruncation();
+                    // ========================================
+                    // NOTIFICATION SYSTEM
+                    // ========================================
+                    let notificationCheckInterval;
 
-                  // Slider arrows
+                    function initializeNotifications() {
+                        loadNotifications();
+                        updateNotificationBadge();
+                        notificationCheckInterval = setInterval(updateNotificationBadge, 30000);
 
-                  // Slider arrows – attach click handlers
-      const track = document.getElementById('suggestionsTrack');
-      if (track) {
-          // ---- LEFT ARROW ----
-          document.querySelectorAll('.slider-arrow.prev').forEach(btn => {
-              btn.addEventListener('click', () => scrollSuggestions(-1));
-          });
+                        const dropdown = document.getElementById('notificationDropdown');
+                        if (dropdown) {
+                            dropdown.addEventListener('click', loadNotifications);
+                        }
+                    }
 
-          // ---- RIGHT ARROW ----
-          document.querySelectorAll('.slider-arrow.next').forEach(btn => {
-              btn.addEventListener('click', () => scrollSuggestions(1));
-          });
+                    function updateNotificationBadge() {
+                        fetch('/notifications/count')
+                            .then(r => r.ok ? r.json() : Promise.reject())
+                            .then(data => {
+                                const badge = document.getElementById('notificationBadge');
+                                if (data.count > 0) {
+                                    badge.textContent = data.count > 99 ? '99+' : data.count;
+                                    badge.classList.remove('hidden');
+                                } else {
+                                    badge.classList.add('hidden');
+                                }
+                            })
+                            .catch(() => {
+                                document.getElementById('notificationBadge').classList.add('hidden');
+                            });
+                    }
 
-          // initialise arrow state (disabled/opacity) on load & on scroll
-          updateArrowVisibility(track);
-          track.addEventListener('scroll', () => updateArrowVisibility(track));
-      }
+                    function loadNotifications() {
+                        const list = document.getElementById('notificationsList');
+                        if (!list) return;
 
+                        fetch('/notifications')
+                            .then(r => r.ok ? r.json() : Promise.reject())
+                            .then(notifications => {
+                                if (notifications.length === 0) {
+                                    list.innerHTML = `<div class="empty-notifications text-center p-6 text-gray-500"><i class="bi bi-bell text-4xl mb-2"></i><p>No notifications yet</p></div>`;
+                                    return;
+                                }
 
+                                list.innerHTML = notifications.map(n => `
+                                    <div class="notification-item p-3 border-b border-gray-100 ${n.is_read ? '' : 'bg-blue-50 border-l-4 border-l-blue-500'}"
+                                        ${n.type !== 'friend_request' ? `onclick="handleNotificationClick(${n.id}, '${n.type}', ${n.entity_id || 0})"` : ''}>
 
+                                        <div class="flex items-start space-x-3">
+                                            <img src="${n.actor.avatar}" alt="${n.actor.name}" class="w-10 h-10 rounded-full object-cover"
+                                                 onerror="this.src='{{ url_for('static', filename='assets/img/default-avatar.png') }}'">
+                                            <div class="flex-1">
+                                                <div class="notification-text text-sm">${n.message}</div>
+                                                <div class="notification-time text-xs text-gray-500 mt-1">${formatNotificationTime(n.created_at)}</div>
+                                                ${n.type === 'friend_request' ? `
+                                                <div class="notification-actions flex space-x-2 mt-2">
+                                                    ${!n.is_read ? `
+                                                        <button class="notification-action-btn px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors"
+                                                                onclick="event.stopPropagation(); acceptFriendRequest(${n.actor.id}, ${n.id})">
+                                                            Accept
+                                                        </button>
+                                                        <button class="notification-action-btn px-3 py-1 bg-gray-200 text-gray-700 text-xs rounded-lg hover:bg-gray-300 transition-colors"
+                                                                onclick="event.stopPropagation(); declineFriendRequest(${n.actor.id}, ${n.id})">
+                                                            Decline
+                                                        </button>
+                                                    ` : `<small class="text-gray-500 text-xs">Request pending</small>`}
+                                                </div>
+                                                ` : ''}
+                                            </div>
+                                        </div>
+                                    </div>
+                                `).join('');
+                            })
+                            .catch(() => {
+                                list.innerHTML = `<div class="text-center p-4 text-red-500"><i class="bi bi-exclamation-triangle"></i><p>Error loading notifications</p></div>`;
+                            });
+                    }
 
+                    function handleNotificationClick(id, type, entityId) {
+                        markNotificationAsRead(id);
+                        switch (type) {
+                            case 'friend_request':
+                            case 'friend_accepted':
+                            case 'profile_update':
+                                openProfileModal(entityId);
+                                break;
+                            case 'post_like':
+                            case 'new_comment':
+                                scrollToPost(entityId);
+                                break;
+                        }
+                        document.getElementById('notificationDropdownMenu').classList.add('hidden');
+                    }
 
-                  // Modal triggers
-                  document.querySelectorAll('[data-bs-toggle="modal"]').forEach(trigger => {
-                      trigger.addEventListener('click', function() {
-                          const target = this.getAttribute('data-bs-target');
-                          openModal(target.replace('#', ''));
+                    function markNotificationAsRead(id) {
+                        fetch(`/notifications/${id}/read`, {
+                            method: 'POST',
+                            headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' }
+                        })
+                        .then(() => {
+                            updateNotificationBadge();
+                            loadNotifications();
+                        });
+                    }
+
+                    function markAllAsRead() {
+                        fetch('/notifications/read', {
+                            method: 'POST',
+                            headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' }
+                        })
+                        .then(() => {
+                            updateNotificationBadge();
+                            loadNotifications();
+                        });
+                    }
+
+                    function acceptFriendRequest(userId, notifId) {
+                        fetch(`/accept_friend_request/${userId}`, {
+                            method: 'POST',
+                            headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ notification_id: notifId })
+                        })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.success) {
+                                markNotificationAsRead(notifId);
+                                showToast('Friend request accepted!', 'success');
+                            } else {
+                                showToast('Failed to accept', 'danger');
+                            }
+                        });
+                    }
+
+                    function declineFriendRequest(userId, notifId) {
+                        fetch(`/decline_friend_request/${userId}`, {
+                            method: 'POST',
+                            headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ notification_id: notifId })
+                        })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.success) {
+                                markNotificationAsRead(notifId);
+                                showToast('Request declined', 'info');
+                            } else {
+                                showToast('Failed to decline', 'danger');
+                            }
+                        });
+                    }
+
+                    function scrollToPost(postId) {
+                        const el = document.querySelector(`[data-post-id="${postId}"]`);
+                        if (el) {
+                            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            el.classList.add('highlight-animation');
+                            setTimeout(() => el.classList.remove('highlight-animation'), 2000);
+                        }
+                    }
+
+                    // ========================================
+                    // SEARCH SYSTEM
+                    // ========================================
+                    let searchTimeout;
+                    const searchInput = document.getElementById('globalSearch');
+                    const searchResults = document.getElementById('searchResults');
+                    const searchResultsBody = document.getElementById('searchResultsBody');
+
+                    function performSearch(query) {
+                        if (!query.trim()) { hideSearchResults(); return; }
+                        showSearchLoading();
+
+                        fetch(`/search?q=${encodeURIComponent(query)}`)
+                            .then(r => r.ok ? r.json() : Promise.reject())
+                            .then(data => displaySearchResults(data, query))
+                            .catch(() => showSearchError());
+                    }
+
+                    function displaySearchResults(results, query) {
+                        searchResultsBody.innerHTML = '';
+                        if (!results.users.length && !results.posts.length) {
+                            showNoResults();
+                            return;
+                        }
+
+                        let html = '';
+                        results.users.forEach(u => {
+                            const name = highlightMatch(`${u.first_name} ${u.last_name}`, query);
+                            html += `<div class="search-result-item p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors" onclick="openProfileModal(${u.id})">
+                                <div class="search-result-user flex items-center space-x-3">
+                                    <img src="${u.profile_pic || '{{ url_for('static', filename='assets/img/default-avatar.png') }}'}" class="search-result-avatar w-10 h-10 rounded-full object-cover">
+                                    <div class="search-result-info">
+                                        <div class="search-result-name font-medium">${name}</div>
+                                        <div class="search-result-type text-xs text-gray-500">User</div>
+                                    </div>
+                                </div>
+                            </div>`;
+                        });
+
+                        results.posts.forEach(p => {
+                            const content = highlightMatch(p.content.substring(0, 100), query);
+                            html += `<div class="search-result-item p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors" onclick="viewPost(${p.id})">
+                                <div class="search-result-post">
+                                    <div class="search-result-content text-sm">${content}${p.content.length > 100 ? '...' : ''}</div>
+                                    <div class="search-result-author text-xs text-gray-500 mt-1">By ${p.author_first_name} ${p.author_last_name}</div>
+                                    <div class="search-result-type text-xs text-gray-500">Post</div>
+                                </div>
+                            </div>`;
+                        });
+
+                        searchResultsBody.innerHTML = html;
+                        showSearchResults();
+                    }
+
+                    function showSearchLoading() {
+                        searchResultsBody.innerHTML = `<div class="search-loading text-center p-4 text-gray-500"><div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div><div class="mt-2">Searching...</div></div>`;
+                        showSearchResults();
+                    }
+
+                    function showNoResults() {
+                        searchResultsBody.innerHTML = `<div class="no-results text-center p-6 text-gray-500"><i class="bi bi-search text-3xl mb-2"></i><p>No results</p><small class="text-xs">Try different keywords</small></div>`;
+                        showSearchResults();
+                    }
+
+                    function showSearchError() {
+                        searchResultsBody.innerHTML = `<div class="no-results text-center p-6 text-red-500"><i class="bi bi-exclamation-triangle text-3xl mb-2"></i><p>Search failed</p></div>`;
+                        showSearchResults();
+                    }
+
+                    function showSearchResults() {
+                        searchResults.classList.remove('hidden');
+                    }
+
+                    function hideSearchResults() {
+                        searchResults.classList.add('hidden');
+                    }
+
+                    function viewPost(postId) {
+                        hideSearchResults();
+                        searchInput.value = '';
+                        const el = document.querySelector(`[data-post-id="${postId}"]`);
+                        if (el) {
+                            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            el.classList.add('highlight-animation');
+                            setTimeout(() => el.classList.remove('highlight-animation'), 2000);
+                        } else {
+                            fetch(`/get_post/${postId}`)
+                                .then(r => r.json())
+                                .then(post => {
+                                    if (post.error) throw new Error();
+                                    displayPostModal(post);
+                                })
+                                .catch(() => showToast('Post not found', 'danger'));
+                        }
+                    }
+
+                    function displayPostModal(post) {
+                        const body = document.getElementById('commentModalBody');
+                        body.innerHTML = `
+                            <div class="post-card bg-white rounded-2xl shadow-soft overflow-hidden">
+                                <div class="p-4 flex justify-between items-start">
+                                    <div class="flex items-start space-x-3">
+                                        <img src="${post.author_profile_pic}" class="w-10 h-10 rounded-full object-cover">
+                                        <div>
+                                            <div class="font-semibold">${post.author_first_name} ${post.author_last_name}</div>
+                                            <div class="text-sm text-gray-500">${new Date(post.created_at).toLocaleString()}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="px-4 pb-3">
+                                    <p class="post-text">${post.content}</p>
+                                    ${post.image ? `<div class="post-media mt-3"><img src="${post.image}" alt="Post" class="w-full rounded-2xl max-h-96 object-cover"></div>` : ''}
+                                    ${post.video ? `<div class="post-media mt-3"><video controls class="w-full rounded-2xl max-h-96"><source src="${post.video}"></video></div>` : ''}
+                                </div>
+                            </div>
+                        `;
+                        openModal('commentModal');
+                    }
+
+                    // Search event listeners
+                    if (searchInput) {
+                        searchInput.addEventListener('input', function () {
+                            clearTimeout(searchTimeout);
+                            const q = this.value.trim();
+                            if (q.length >= 2) {
+                                searchTimeout = setTimeout(() => performSearch(q), 300);
+                            } else {
+                                hideSearchResults();
+                            }
+                        });
+
+                        searchInput.addEventListener('focus', function () {
+                            if (this.value.trim().length >= 2) performSearch(this.value.trim());
+                        });
+                    }
+
+                    document.addEventListener('click', e => {
+                        if (!searchResults?.contains(e.target) && e.target !== searchInput) hideSearchResults();
+                    });
+
+                    // ========================================
+                    // POST TEXT TRUNCATION
+                    // ========================================
+                    function togglePostText(postId) {
+                        const text = document.getElementById(`post-text-${postId}`);
+                        const btn = text.nextElementSibling;
+                        if (!text || !btn?.classList.contains('see-more-btn')) return;
+
+                        if (text.classList.contains('truncated')) {
+                            text.classList.remove('truncated');
+                            btn.textContent = 'See Less';
+                            const card = text.closest('.post-card');
+                            if (card.getBoundingClientRect().bottom > window.innerHeight - 100) {
+                                card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                            }
+                        } else {
+                            text.classList.add('truncated');
+                            btn.textContent = 'See More';
+                        }
+                    }
+
+                    function initializePostTextTruncation() {
+                        document.querySelectorAll('.post-text').forEach(textEl => {
+                            const content = textEl.textContent;
+                            if (content.length > 100 && !textEl.nextElementSibling?.classList.contains('see-more-btn')) {
+                                textEl.classList.add('truncated');
+                                const btn = document.createElement('button');
+                                btn.className = 'see-more-btn text-blue-600 font-medium text-sm mt-1';
+                                btn.textContent = 'See More';
+                                btn.onclick = () => togglePostText(textEl.id.replace('post-text-', ''));
+                                textEl.parentNode.insertBefore(btn, textEl.nextSibling);
+                            }
+                        });
+                    }
+
+                    // ========================================
+                    // BLOCK USER
+                    // ========================================
+                    function blockUser(userId) {
+                        if (!confirm("Block this user? They won't see your posts or be able to contact you.")) return;
+
+                        fetch(`/block_user/${userId}`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': csrfToken,
+                                'Content-Type': 'application/json'
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                showToast(data.message || 'User blocked successfully!', 'success');
+                                closeModal('profileModal');
+                                setTimeout(() => {
+                                    location.reload();
+                                }, 1500);
+                            } else {
+                                showToast(data.error || 'Error blocking user', 'danger');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            showToast('Error blocking user. Please try again.', 'danger');
+                        });
+                    }
+
+                    function unblockUserFromModal(userId) {
+                        if (!confirm("Unblock this user? They will be able to see your posts again.")) return;
+
+                        fetch(`/unblock_user/${userId}`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': csrfToken,
+                                'Content-Type': 'application/json'
+                            }
+                        })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.success) {
+                                showToast('User unblocked!', 'success');
+                                closeModal('profileModal');
+                            } else {
+                                showToast(data.error || 'Failed to unblock', 'danger');
+                            }
+                        })
+                        .catch(() => showToast('Error unblocking user', 'danger'));
+                    }
+
+                    function startChat(userId) {
+                      // Open the messenger popup
+                      openMessenger();
+
+                      // Load friends and then open chat with the specific user
+                      loadFriends().then(() => {
+                          // Find the friend in the loaded friends list and open chat
+                          setTimeout(() => {
+                              openChatWithUser(userId);
+                          }, 500); // Small delay to ensure friends are loaded
                       });
-                  });
+                  }
 
-                  // Close modals when clicking outside
-                  document.querySelectorAll('.modal').forEach(modal => {
-                      modal.addEventListener('click', function(e) {
-                          if (e.target === this) {
-                              closeModal(this.id);
-                          }
-                      });
-                  });
-              });
+                  function openChatWithUser(userId) {
+                      // First, make sure we have the friends list
+                      fetch('/messaging/friends')
+                          .then(response => response.json())
+                          .then(friends => {
+                              const friend = friends.find(f => f.id === userId);
+                              if (friend) {
+                                  openChatWith(friend.id, friend.name, friend.avatar, friend.online);
+                              } else {
+                                  showToast('Friend not found or not available for messaging', 'danger');
+                              }
+                          })
+                          .catch(error => {
+                              console.error('Error loading friend:', error);
+                              showToast('Failed to start chat', 'danger');
+                          });
+                  }
 
+                    // ========================================
+                    // INIT ON LOAD
+                    // ========================================
+                    document.addEventListener('DOMContentLoaded', () => {
+                        // Initialize core systems
+                        initializeNotifications();
+                        initializePostTextTruncation();
+                        loadGroups();
 
+                        // Slider arrows
 
-              function toggleCommentText(commentId) {
-                const el = document.getElementById(`comment-text-${commentId}`);
-                const btn = el.nextElementSibling;
-                if (el.classList.contains('truncated')) {
-                    el.classList.remove('truncated');
-                    btn.textContent = 'See Less';
-                } else {
-                    el.classList.add('truncated');
-                    btn.textContent = 'See More';
-                }
+                        // Slider arrows – attach click handlers
+            const track = document.getElementById('suggestionsTrack');
+            if (track) {
+                // ---- LEFT ARROW ----
+                document.querySelectorAll('.slider-arrow.prev').forEach(btn => {
+                    btn.addEventListener('click', () => scrollSuggestions(-1));
+                });
+
+                // ---- RIGHT ARROW ----
+                document.querySelectorAll('.slider-arrow.next').forEach(btn => {
+                    btn.addEventListener('click', () => scrollSuggestions(1));
+                });
+
+                // initialise arrow state (disabled/opacity) on load & on scroll
+                updateArrowVisibility(track);
+                track.addEventListener('scroll', () => updateArrowVisibility(track));
             }
 
-            function toggleModalComment(commentId) {
-                const el = document.getElementById(`modal-comment-text-${commentId}`);
-                const btn = el.nextElementSibling;
-                if (el.classList.contains('truncated')) {
-                    el.classList.remove('truncated');
-                    btn.textContent = 'See Less';
-                } else {
-                    el.classList.add('truncated');
-                    btn.textContent = 'See More';
-                }
-            }
-
-            function toggleReplyInput(span) {
-                span.closest('.comment').querySelector('.reply-input').classList.toggle('hidden');
-            }
-
-            function copyCommentLink(commentId) {
-                const url = `${location.origin}${location.pathname}#comment-${commentId}`;
-                navigator.clipboard.writeText(url);
-                showToast('Comment link copied!', 'success');
-            }
 
 
 
+
+                        // Modal triggers
+                        document.querySelectorAll('[data-bs-toggle="modal"]').forEach(trigger => {
+                            trigger.addEventListener('click', function() {
+                                const target = this.getAttribute('data-bs-target');
+                                openModal(target.replace('#', ''));
+                            });
+                        });
+
+                        // Close modals when clicking outside
+                        document.querySelectorAll('.modal').forEach(modal => {
+                            modal.addEventListener('click', function(e) {
+                                if (e.target === this) {
+                                    closeModal(this.id);
+                                }
+                            });
+                        });
+                    });
+
+
+
+                    function toggleCommentText(commentId) {
+                      const el = document.getElementById(`comment-text-${commentId}`);
+                      const btn = el.nextElementSibling;
+                      if (el.classList.contains('truncated')) {
+                          el.classList.remove('truncated');
+                          btn.textContent = 'See Less';
+                      } else {
+                          el.classList.add('truncated');
+                          btn.textContent = 'See More';
+                      }
+                  }
+
+                  function toggleModalComment(commentId) {
+                      const el = document.getElementById(`modal-comment-text-${commentId}`);
+                      const btn = el.nextElementSibling;
+                      if (el.classList.contains('truncated')) {
+                          el.classList.remove('truncated');
+                          btn.textContent = 'See Less';
+                      } else {
+                          el.classList.add('truncated');
+                          btn.textContent = 'See More';
+                      }
+                  }
+
+                  function toggleReplyInput(span) {
+                      span.closest('.comment').querySelector('.reply-input').classList.toggle('hidden');
+                  }
+
+                  function copyCommentLink(commentId) {
+                      const url = `${location.origin}${location.pathname}#comment-${commentId}`;
+                      navigator.clipboard.writeText(url);
+                      showToast('Comment link copied!', 'success');
+                  }
     </script>
 
     <!-- Socket.IO + JS -->
-<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-<script>
-  // Messenger functionality
-let activeFriendId = null;
-let typingTimer;
-let isTyping = false;
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script>
+      // Messenger functionality
+      let activeFriendId = null;
+      let typingTimer;
+      let isTyping = false;
 
-// Socket.IO connection
-const socket = io();
+      // Socket.IO connection
+      const socket = io();
 
-// Socket event listeners
-socket.on('connect', () => {
-    console.log('Connected to messaging server');
-    socket.emit('join_messenger');
-});
+      // Socket event listeners
+      socket.on("connect", () => {
+        console.log("Connected to messaging server");
+        socket.emit("join_messenger");
+      });
 
-socket.on('messenger_joined', (data) => {
-    console.log('Joined messenger room');
-});
+      socket.on("messenger_joined", (data) => {
+        console.log("Joined messenger room");
+      });
 
-socket.on('new_message', (msg) => {
-    if ((msg.sender_id === activeFriendId && msg.receiver_id === currentUserId) || 
-        (msg.receiver_id === activeFriendId && msg.sender_id === currentUserId)) {
-        appendMessage(msg, true);
-        
-        // If message is from active friend, mark as read
-        if (msg.sender_id === activeFriendId) {
+      socket.on("new_message", (msg) => {
+        if (
+          (msg.sender_id === activeFriendId &&
+            msg.receiver_id === currentUserId) ||
+          (msg.receiver_id === activeFriendId &&
+            msg.sender_id === currentUserId)
+        ) {
+          appendMessage(msg, true);
+
+          // If message is from active friend, mark as read
+          if (msg.sender_id === activeFriendId) {
             markMessagesAsRead(activeFriendId);
+          }
         }
-    }
-    updateUnreadBadge();
-});
+        updateUnreadBadge();
+      });
 
-socket.on('message_delivered', (data) => {
-    updateMessageStatus(data.message_id, 'delivered', data.message_data);
-});
+      socket.on("message_delivered", (data) => {
+        updateMessageStatus(data.message_id, "delivered", data.message_data);
+      });
 
-socket.on('messages_read', (data) => {
-    if (data.receiver_id === currentUserId) {
-        data.message_ids?.forEach(msgId => {
-            updateMessageStatus(msgId, 'read');
-        });
-    }
-});
+      socket.on("messages_read", (data) => {
+        if (data.receiver_id === currentUserId) {
+          data.message_ids?.forEach((msgId) => {
+            updateMessageStatus(msgId, "read");
+          });
+        }
+      });
 
-socket.on('user_typing', (data) => {
-    if (data.user_id === activeFriendId) {
-        showTypingIndicator(data.user_name);
-    }
-});
+      socket.on("user_typing", (data) => {
+        if (data.user_id === activeFriendId) {
+          showTypingIndicator(data.user_name);
+        }
+      });
 
-socket.on('user_stopped_typing', (data) => {
-    if (data.user_id === activeFriendId) {
+      socket.on("user_stopped_typing", (data) => {
+        if (data.user_id === activeFriendId) {
+          hideTypingIndicator();
+        }
+      });
+
+      socket.on("error", (data) => {
+        showToast(data.message, "danger");
+      });
+
+      // Messenger functions
+      function openMessenger() {
+        document.getElementById("messengerPopup").classList.remove("hidden");
+        loadFriends();
+        socket.emit("join_messenger");
+      }
+
+      function closeMessenger() {
+        document.getElementById("messengerPopup").classList.add("hidden");
+        activeFriendId = null;
+        document.getElementById("chatArea").classList.add("hidden");
+        document.getElementById("friendList").classList.remove("hidden");
         hideTypingIndicator();
-    }
-});
+      }
 
-socket.on('error', (data) => {
-    showToast(data.message, 'danger');
-});
+      function backToFriends() {
+        activeFriendId = null;
+        document.getElementById("chatArea").classList.add("hidden");
+        document.getElementById("friendList").classList.remove("hidden");
+        hideTypingIndicator();
+        stopTyping();
+      }
 
-// Messenger functions
-function openMessenger() {
-    document.getElementById('messengerPopup').classList.remove('hidden');
-    loadFriends();
-    socket.emit('join_messenger');
-}
+      async function loadFriends() {
+        try {
+          const response = await fetch("/messaging/friends");
+          const friends = await response.json();
 
-function closeMessenger() {
-    document.getElementById('messengerPopup').classList.add('hidden');
-    activeFriendId = null;
-    document.getElementById('chatArea').classList.add('hidden');
-    document.getElementById('friendList').classList.remove('hidden');
-    hideTypingIndicator();
-}
+          const container = document.getElementById("friendsContainer");
+          container.innerHTML = "";
 
-function backToFriends() {
-    activeFriendId = null;
-    document.getElementById('chatArea').classList.add('hidden');
-    document.getElementById('friendList').classList.remove('hidden');
-    hideTypingIndicator();
-    stopTyping();
-}
-
-async function loadFriends() {
-    try {
-        const response = await fetch('/messaging/friends');
-        const friends = await response.json();
-        
-        const container = document.getElementById('friendsContainer');
-        container.innerHTML = '';
-        
-        if (friends.length === 0) {
+          if (friends.length === 0) {
             container.innerHTML = `
                 <div class="text-center p-6 text-gray-500">
                     <i class="bi bi-people text-3xl mb-2"></i>
@@ -2598,64 +3126,83 @@ async function loadFriends() {
                 </div>
             `;
             return;
-        }
-        
-        friends.forEach(friend => {
-            const friendElement = document.createElement('div');
-            friendElement.className = 'flex items-center p-3 hover:bg-gray-50 cursor-pointer rounded-lg transition-colors';
-            friendElement.onclick = () => openChatWith(friend.id, friend.name, friend.avatar, friend.online);
-            
+          }
+
+          friends.forEach((friend) => {
+            const friendElement = document.createElement("div");
+            friendElement.className =
+              "flex items-center p-3 hover:bg-gray-50 cursor-pointer rounded-lg transition-colors";
+            friendElement.onclick = () =>
+              openChatWith(
+                friend.id,
+                friend.name,
+                friend.avatar,
+                friend.online
+              );
+
             friendElement.innerHTML = `
                 <div class="relative">
-                    <img src="${friend.avatar}" alt="${friend.name}" class="w-12 h-12 rounded-full object-cover">
-                    ${friend.online ? `
+                    <img src="${friend.avatar}" alt="${
+              friend.name
+            }" class="w-12 h-12 rounded-full object-cover">
+                    ${
+                      friend.online
+                        ? `
                         <span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></span>
-                    ` : ''}
+                    `
+                        : ""
+                    }
                 </div>
                 <div class="ml-3 flex-1">
                     <p class="font-medium text-sm">${friend.name}</p>
-                    <p class="text-xs ${friend.online ? 'text-green-600' : 'text-gray-500'}">
-                        ${friend.online ? 'Online' : 'Offline'}
+                    <p class="text-xs ${
+                      friend.online ? "text-green-600" : "text-gray-500"
+                    }">
+                        ${friend.online ? "Online" : "Offline"}
                     </p>
                 </div>
             `;
-            
+
             container.appendChild(friendElement);
-        });
-    } catch (error) {
-        console.error('Error loading friends:', error);
-        showToast('Failed to load friends', 'danger');
-    }
-}
+          });
+        } catch (error) {
+          console.error("Error loading friends:", error);
+          showToast("Failed to load friends", "danger");
+        }
+      }
 
-function openChatWith(friendId, friendName, friendAvatar, friendOnline) {
-    activeFriendId = friendId;
-    
-    // Update UI
-    document.getElementById('friendList').classList.add('hidden');
-    document.getElementById('chatArea').classList.remove('hidden');
-    document.getElementById('chatName').textContent = friendName;
-    document.getElementById('chatAvatar').src = friendAvatar;
-    document.getElementById('chatStatus').textContent = friendOnline ? 'Online' : 'Offline';
-    document.getElementById('chatStatus').className = `text-xs ${friendOnline ? 'text-green-600' : 'text-gray-500'}`;
-    
-    // Join chat room and load messages
-    socket.emit('join_chat', { friend_id: friendId });
-    loadMessages(friendId);
-    
-    // Mark messages as read
-    markMessagesAsRead(friendId);
-}
+      function openChatWith(friendId, friendName, friendAvatar, friendOnline) {
+        activeFriendId = friendId;
 
-async function loadMessages(friendId) {
-    try {
-        const response = await fetch(`/messaging/messages/${friendId}`);
-        const messages = await response.json();
-        
-        const chatContainer = document.getElementById('chatMessages');
-        chatContainer.innerHTML = '';
-        
-        if (messages.length === 0) {
+        // Update UI
+        document.getElementById("friendList").classList.add("hidden");
+        document.getElementById("chatArea").classList.remove("hidden");
+        document.getElementById("chatName").textContent = friendName;
+        document.getElementById("chatAvatar").src = friendAvatar;
+        document.getElementById("chatStatus").textContent = friendOnline
+          ? "Online"
+          : "Offline";
+        document.getElementById("chatStatus").className = `text-xs ${
+          friendOnline ? "text-green-600" : "text-gray-500"
+        }`;
+
+        // Join chat room and load messages
+        socket.emit("join_chat", { friend_id: friendId });
+        loadMessages(friendId);
+
+        // Mark messages as read
+        markMessagesAsRead(friendId);
+      }
+
+      async function loadMessages(friendId) {
+        try {
+          const response = await fetch(`/messaging/messages/${friendId}`);
+          const messages = await response.json();
+
+          const chatContainer = document.getElementById("chatMessages");
+          chatContainer.innerHTML = "";
+
+          if (messages.length === 0) {
             chatContainer.innerHTML = `
                 <div class="text-center p-6 text-gray-500">
                     <i class="bi bi-chat-dots text-2xl mb-2"></i>
@@ -2664,252 +3211,267 @@ async function loadMessages(friendId) {
                 </div>
             `;
             return;
-        }
-        
-        messages.forEach(msg => {
-            appendMessage(msg, false);
-        });
-        
-        // Scroll to bottom
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-    } catch (error) {
-        console.error('Error loading messages:', error);
-        showToast('Failed to load messages', 'danger');
-    }
-}
+          }
 
-function appendMessage(msg, shouldScroll = true) {
-    const chatContainer = document.getElementById('chatMessages');
-    const isOwnMessage = msg.sender_id === currentUserId;
-    
-    const messageElement = document.createElement('div');
-    messageElement.className = `flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-2`;
-    messageElement.id = `message-${msg.id}`;
-    
-    const statusIcon = getStatusIcon(msg.status, isOwnMessage);
-    
-    messageElement.innerHTML = `
-        <div class="max-w-xs px-4 py-2 rounded-2xl ${isOwnMessage ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'}">
+          messages.forEach((msg) => {
+            appendMessage(msg, false);
+          });
+
+          // Scroll to bottom
+          chatContainer.scrollTop = chatContainer.scrollHeight;
+        } catch (error) {
+          console.error("Error loading messages:", error);
+          showToast("Failed to load messages", "danger");
+        }
+      }
+
+      function appendMessage(msg, shouldScroll = true) {
+        const chatContainer = document.getElementById("chatMessages");
+        const isOwnMessage = msg.sender_id === currentUserId;
+
+        const messageElement = document.createElement("div");
+        messageElement.className = `flex ${
+          isOwnMessage ? "justify-end" : "justify-start"
+        } mb-2`;
+        messageElement.id = `message-${msg.id}`;
+
+        const statusIcon = getStatusIcon(msg.status, isOwnMessage);
+
+        messageElement.innerHTML = `
+        <div class="max-w-xs px-4 py-2 rounded-2xl ${
+          isOwnMessage ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-800"
+        }">
             <div class="text-sm">${msg.content}</div>
             <div class="text-xs mt-1 flex items-center justify-end space-x-1 opacity-80">
                 <span>${formatMessageTime(msg.timestamp)}</span>
-                ${isOwnMessage ? statusIcon : ''}
+                ${isOwnMessage ? statusIcon : ""}
             </div>
         </div>
     `;
-    
-    chatContainer.appendChild(messageElement);
-    
-    if (shouldScroll) {
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-    }
-}
 
+        chatContainer.appendChild(messageElement);
 
-
-// Update the getStatusIcon function to work with the simplified status
-function getStatusIcon(status, isOwnMessage) {
-  if (!isOwnMessage) return '';
-  
-  switch(status) {
-      case 'sent':
-          return '<i class="bi bi-check"></i>';
-      case 'delivered':
-          return '<i class="bi bi-check-all"></i>';
-      case 'read':
-          return '<i class="bi bi-check-all text-blue-300"></i>';
-      default:
-          return '<i class="bi bi-check"></i>';
-  }
-}
-
-// Update the message delivery handler
-socket.on('message_delivered', (data) => {
-  updateMessageStatus(data.message_id, 'delivered');
-});
-
-socket.on('messages_read', (data) => {
-  if (data.receiver_id === currentUserId) {
-      data.message_ids?.forEach(msgId => {
-          updateMessageStatus(msgId, 'read');
-      });
-  }
-});
-function updateMessageStatus(messageId, status, messageData = null) {
-    const messageElement = document.getElementById(`message-${messageId}`);
-    if (messageElement) {
-        const statusElement = messageElement.querySelector('.bi');
-        if (statusElement) {
-            statusElement.className = getStatusIcon(status, true);
+        if (shouldScroll) {
+          chatContainer.scrollTop = chatContainer.scrollHeight;
         }
-    }
-}
-
-function sendMessage() {
-    const input = document.getElementById('chatInput');
-    const content = input.value.trim();
-    
-    if (!content || !activeFriendId) {
-        return;
-    }
-    
-    // Emit typing stop immediately
-    stopTyping();
-    
-    // Send message via socket
-    socket.emit('send_message', {
-        friend_id: activeFriendId,
-        content: content
-    });
-    
-    // Clear input
-    input.value = '';
-}
-
-// Typing indicators
-function handleTyping() {
-    if (!isTyping && activeFriendId) {
-        isTyping = true;
-        socket.emit('typing', { friend_id: activeFriendId });
-    }
-    
-    clearTimeout(typingTimer);
-    typingTimer = setTimeout(() => {
-        stopTyping();
-    }, 1000);
-}
-
-function stopTyping() {
-    if (isTyping && activeFriendId) {
-        isTyping = false;
-        socket.emit('stop_typing', { friend_id: activeFriendId });
-    }
-}
-
-function showTypingIndicator(userName) {
-    const indicator = document.getElementById('typingIndicator');
-    const userNameElement = document.getElementById('typingUserName');
-    
-    userNameElement.textContent = `${userName} is typing`;
-    indicator.classList.remove('hidden');
-}
-
-function hideTypingIndicator() {
-    const indicator = document.getElementById('typingIndicator');
-    indicator.classList.add('hidden');
-}
-
-// Utility functions
-function formatMessageTime(timestamp) {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffMs = now - date;
-    const diffMins = Math.floor(diffMs / 60000);
-    
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-}
-
-async function markMessagesAsRead(friendId) {
-    try {
-        await fetch(`/messaging/mark_read/${friendId}`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': csrfToken,
-                'Content-Type': 'application/json'
-            }
-        });
-        updateUnreadBadge();
-    } catch (error) {
-        console.error('Error marking messages as read:', error);
-    }
-}
-
-async function updateUnreadBadge() {
-    // You can implement this to show total unread messages count
-    // This would require an additional endpoint to count unread messages
-}
-
-// Event listeners
-document.addEventListener('DOMContentLoaded', function() {
-    // Messenger button
-    document.getElementById('openMessaging').addEventListener('click', openMessenger);
-    
-    // Send message button
-    document.getElementById('sendChatBtn').addEventListener('click', sendMessage);
-    
-    // Message input events
-    const chatInput = document.getElementById('chatInput');
-    if (chatInput) {
-        chatInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                sendMessage();
-            }
-        });
-        
-        chatInput.addEventListener('input', handleTyping);
-    }
-    
-    // Close messenger button
-    document.getElementById('closeMessenger').addEventListener('click', closeMessenger);
-    
-    // Initialize messenger when page loads
-});
-</script>
-
-
-<script>
-// ULTRA-FAST LOADER WITH FADE-IN CONTENT
-document.addEventListener('DOMContentLoaded', function() {
-  const loader = document.getElementById('loader');
-  const mainContent = document.getElementById('mainContent');
-  
-  // Initially hide main content
-  if (mainContent) {
-      mainContent.style.opacity = '0';
-      mainContent.style.visibility = 'hidden';
-  }
-  
-  // Hide loader quickly and fade in content
-  setTimeout(() => {
-      if (loader) {
-          // Fade out loader
-          loader.style.opacity = '0';
-          
-          // After loader fades out, show and fade in main content
-          setTimeout(() => {
-              loader.style.display = 'none';
-              
-              if (mainContent) {
-                  mainContent.style.visibility = 'visible';
-                  mainContent.style.opacity = '1';
-                  mainContent.style.transition = 'opacity 0.6s ease-out, transform 0.6s ease-out';
-              }
-          }, 300); // Match this with loader transition time
       }
-  }, 100); // Initial delay before starting fade
-});
 
-// Emergency cleanup
-setTimeout(() => {
-  const loader = document.getElementById('loader');
-  const mainContent = document.getElementById('mainContent');
-  
-  if (loader) {
-      loader.style.display = 'none';
-  }
-  if (mainContent) {
-      mainContent.style.visibility = 'visible';
-      mainContent.style.opacity = '1';
-  }
-}, 1000);
-</script>
+      // Update the getStatusIcon function to work with the simplified status
+      function getStatusIcon(status, isOwnMessage) {
+        if (!isOwnMessage) return "";
 
-<style>
-  .read-receipt { background: #1877f2 !important; }
-  .tick i { font-size: 0.8rem; }
-</style>
+        switch (status) {
+          case "sent":
+            return '<i class="bi bi-check"></i>';
+          case "delivered":
+            return '<i class="bi bi-check-all"></i>';
+          case "read":
+            return '<i class="bi bi-check-all text-blue-300"></i>';
+          default:
+            return '<i class="bi bi-check"></i>';
+        }
+      }
+
+      // Update the message delivery handler
+      socket.on("message_delivered", (data) => {
+        updateMessageStatus(data.message_id, "delivered");
+      });
+
+      socket.on("messages_read", (data) => {
+        if (data.receiver_id === currentUserId) {
+          data.message_ids?.forEach((msgId) => {
+            updateMessageStatus(msgId, "read");
+          });
+        }
+      });
+      function updateMessageStatus(messageId, status, messageData = null) {
+        const messageElement = document.getElementById(`message-${messageId}`);
+        if (messageElement) {
+          const statusElement = messageElement.querySelector(".bi");
+          if (statusElement) {
+            statusElement.className = getStatusIcon(status, true);
+          }
+        }
+      }
+
+      function sendMessage() {
+        const input = document.getElementById("chatInput");
+        const content = input.value.trim();
+
+        if (!content || !activeFriendId) {
+          return;
+        }
+
+        // Emit typing stop immediately
+        stopTyping();
+
+        // Send message via socket
+        socket.emit("send_message", {
+          friend_id: activeFriendId,
+          content: content,
+        });
+
+        // Clear input
+        input.value = "";
+      }
+
+      // Typing indicators
+      function handleTyping() {
+        if (!isTyping && activeFriendId) {
+          isTyping = true;
+          socket.emit("typing", { friend_id: activeFriendId });
+        }
+
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(() => {
+          stopTyping();
+        }, 1000);
+      }
+
+      function stopTyping() {
+        if (isTyping && activeFriendId) {
+          isTyping = false;
+          socket.emit("stop_typing", { friend_id: activeFriendId });
+        }
+      }
+
+      function showTypingIndicator(userName) {
+        const indicator = document.getElementById("typingIndicator");
+        const userNameElement = document.getElementById("typingUserName");
+
+        userNameElement.textContent = `${userName} is typing`;
+        indicator.classList.remove("hidden");
+      }
+
+      function hideTypingIndicator() {
+        const indicator = document.getElementById("typingIndicator");
+        indicator.classList.add("hidden");
+      }
+
+      // Utility functions
+      function formatMessageTime(timestamp) {
+        const date = new Date(timestamp);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+
+        if (diffMins < 1) return "Just now";
+        if (diffMins < 60) return `${diffMins}m ago`;
+
+        return date.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+      }
+
+      async function markMessagesAsRead(friendId) {
+        try {
+          await fetch(`/messaging/mark_read/${friendId}`, {
+            method: "POST",
+            headers: {
+              "X-CSRFToken": csrfToken,
+              "Content-Type": "application/json",
+            },
+          });
+          updateUnreadBadge();
+        } catch (error) {
+          console.error("Error marking messages as read:", error);
+        }
+      }
+
+      async function updateUnreadBadge() {
+        // You can implement this to show total unread messages count
+        // This would require an additional endpoint to count unread messages
+      }
+
+      // Event listeners
+      document.addEventListener("DOMContentLoaded", function () {
+        // Messenger button
+        document
+          .getElementById("openMessaging")
+          .addEventListener("click", openMessenger);
+
+        // Send message button
+        document
+          .getElementById("sendChatBtn")
+          .addEventListener("click", sendMessage);
+
+        // Message input events
+        const chatInput = document.getElementById("chatInput");
+        if (chatInput) {
+          chatInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") {
+              sendMessage();
+            }
+          });
+
+          chatInput.addEventListener("input", handleTyping);
+        }
+
+        // Close messenger button
+        document
+          .getElementById("closeMessenger")
+          .addEventListener("click", closeMessenger);
+
+        // Initialize messenger when page loads
+      });
+    </script>
+
+    <script>
+      // ULTRA-FAST LOADER WITH FADE-IN CONTENT
+      document.addEventListener("DOMContentLoaded", function () {
+        const loader = document.getElementById("loader");
+        const mainContent = document.getElementById("mainContent");
+
+        // Initially hide main content
+        if (mainContent) {
+          mainContent.style.opacity = "0";
+          mainContent.style.visibility = "hidden";
+        }
+
+        // Hide loader quickly and fade in content
+        setTimeout(() => {
+          if (loader) {
+            // Fade out loader
+            loader.style.opacity = "0";
+
+            // After loader fades out, show and fade in main content
+            setTimeout(() => {
+              loader.style.display = "none";
+
+              if (mainContent) {
+                mainContent.style.visibility = "visible";
+                mainContent.style.opacity = "1";
+                mainContent.style.transition =
+                  "opacity 0.6s ease-out, transform 0.6s ease-out";
+              }
+            }, 300); // Match this with loader transition time
+          }
+        }, 100); // Initial delay before starting fade
+      });
+
+      // Emergency cleanup
+      setTimeout(() => {
+        const loader = document.getElementById("loader");
+        const mainContent = document.getElementById("mainContent");
+
+        if (loader) {
+          loader.style.display = "none";
+        }
+        if (mainContent) {
+          mainContent.style.visibility = "visible";
+          mainContent.style.opacity = "1";
+        }
+      }, 1000);
+    </script>
+
+    <style>
+      .read-receipt {
+        background: #1877f2 !important;
+      }
+      .tick i {
+        font-size: 0.8rem;
+      }
+    </style>
   </body>
 </html>

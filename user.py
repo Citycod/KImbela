@@ -49,6 +49,9 @@ from models import (
     Group,
     SponsoredAd,
     ReportedContent,
+    group_members,
+    ReportedContent,
+    # ReportedPost,
 )
 
 
@@ -1926,3 +1929,225 @@ def terms():
 @auth.route("/privacy", methods=["GET", "POST"])
 def privacy():
     return render_template("privacy.html")
+
+
+
+@auth.route('/get_user_groups')
+@login_required
+def get_user_groups():
+    """Get all groups for the dropdown with membership status"""
+    try:
+        print(f"🔍 DEBUG: Fetching ALL groups for user: {current_user.id} ({current_user.email})")
+        
+        # Get all active groups
+        all_groups = Group.query.filter_by(is_active=True).order_by(Group.name.asc()).all()
+        print(f"🔍 DEBUG: Found {len(all_groups)} total active groups")
+        
+        # Get the user's current group memberships for comparison
+        user_group_ids = {group.id for group in current_user.user_groups}
+        print(f"🔍 DEBUG: User is already a member of {len(user_group_ids)} groups: {user_group_ids}")
+        
+        groups_data = []
+        for group in all_groups:
+            member_count = group.member_count or group.members.count()
+            is_member = group.id in user_group_ids
+            
+            print(f"🔍 DEBUG: Group '{group.name}' (ID: {group.id}) with {member_count} members. User is member: {is_member}")
+            
+            groups_data.append({
+                'id': group.id,
+                'name': group.name,
+                'cover_pic': group.image or 'https://via.placeholder.com/100x100/3B82F6/FFFFFF?text=Group',
+                'member_count': member_count,
+                'is_member': is_member,
+                'unread_count': 0
+            })
+        
+        print(f"🔍 DEBUG: Returning {len(groups_data)} groups as JSON")
+        return jsonify(groups_data)
+        
+    except Exception as e:
+        print(f"❌ ERROR in get_user_groups: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify([])
+
+
+# Add these routes to your auth blueprint
+
+@auth.route('/groups/user_groups')
+@login_required
+def user_groups():
+    """Get user's groups for sidebar - alternative approach"""
+    try:
+        # Alternative approach using direct query
+        groups = Group.query.join(group_members).filter(
+            group_members.c.user_id == current_user.id
+        ).limit(10).all()
+        
+        return jsonify([{
+            'id': group.id,
+            'name': group.name,
+            'image': group.image or 'https://images.unsplash.com/photo-1611262588024-d12430b98920?w=100&h=100&fit=crop',
+            'member_count': group.member_count,
+            'is_member': True
+        } for group in groups])
+    except Exception as e:
+        print(f"Error in user_groups: {e}")
+        return jsonify([])
+    
+    
+    
+@auth.route('/groups/all')
+@login_required
+def all_groups():
+    """Get all groups for discovery"""
+    search = request.args.get('search', '')
+    category = request.args.get('category', 'all')
+    
+    query = Group.query.filter_by(is_active=True)
+    
+    if search:
+        query = query.filter(Group.name.ilike(f'%{search}%'))
+    
+    if category != 'all':
+        query = query.filter_by(category=category)
+    
+    groups = query.order_by(Group.member_count.desc()).limit(20).all()
+    
+    return jsonify([{
+        'id': group.id,
+        'name': group.name,
+        'description': group.description,
+        'image': group.image,
+        'category': group.category,
+        'is_private': group.is_private,
+        'member_count': group.member_count,
+        'created_at': group.created_at.isoformat(),
+        'is_member': current_user in group.members
+    } for group in groups])
+
+@auth.route('/groups/<int:group_id>')
+@login_required
+def group_page(group_id):
+    """Get group page HTML"""
+    group = Group.query.get_or_404(group_id)
+    is_member = current_user in group.members
+    
+    # Get group posts
+    posts = Post.query.filter_by(group_id=group_id).order_by(Post.created_at.desc()).all()
+    
+    return render_template('group_page.html', 
+                         group=group, 
+                         is_member=is_member,
+                         posts=posts,
+                         current_user=current_user)
+
+@auth.route('/groups/create', methods=['POST'])
+@login_required
+def create_group():
+    """Create a new group"""
+    try:
+        name = request.form.get('name', '').strip()
+        description = request.form.get('description', '').strip()
+        category = request.form.get('category', 'social')
+        is_private = request.form.get('is_private') == 'true'
+        
+        if not name:
+            return jsonify({'success': False, 'error': 'Group name is required'})
+        
+        group = Group(
+            name=name,
+            description=description,
+            category=category,
+            is_private=is_private,
+            created_by=current_user.id
+        )
+        
+        # Handle group image
+        if 'image' in request.files:
+            file = request.files['image']
+            if file and file.filename and allowed_file(file.filename):
+                try:
+                    result = cloudinary.uploader.upload(
+                        file,
+                        folder="kimbela/groups",
+                        transformation=[
+                            {"width": 800, "height": 600, "crop": "limit"},
+                            {"quality": "auto", "fetch_format": "auto"}
+                        ]
+                    )
+                    group.image = result['secure_url']
+                except Exception as e:
+                    print("Group image upload failed:", e)
+        
+        db.session.add(group)
+        
+        # Add creator as first member
+        group.members.append(current_user)
+        group.member_count = 1
+        
+        db.session.commit()
+        
+        return jsonify({'success': True, 'group_id': group.id})
+        
+    except Exception as e:
+        db.session.rollback()
+        print("Create group error:", e)
+        return jsonify({'success': False, 'error': 'Failed to create group'})
+
+@auth.route('/groups/<int:group_id>/join', methods=['POST'])
+@login_required
+def join_group(group_id):
+    """Join a group"""
+    group = Group.query.get_or_404(group_id)
+    
+    if current_user in group.members:
+        return jsonify({'success': False, 'error': 'Already a member'})
+    
+    group.members.append(current_user)
+    group.member_count = len(group.members)
+    db.session.commit()
+    
+    return jsonify({'success': True})
+
+@auth.route('/groups/<int:group_id>/leave', methods=['POST'])
+@login_required
+def leave_group(group_id):
+    """Leave a group"""
+    group = Group.query.get_or_404(group_id)
+    
+    if current_user not in group.members:
+        return jsonify({'success': False, 'error': 'Not a member'})
+    
+    group.members.remove(current_user)
+    group.member_count = len(group.members)
+    db.session.commit()
+    
+    return jsonify({'success': True})
+
+@auth.route('/comments/<int:comment_id>/report', methods=['POST'])
+@login_required
+def report_comment(comment_id):
+    """Report a comment"""
+    comment = Comment.query.get_or_404(comment_id)
+    reason = request.form.get('report_reason')
+    other_reason = request.form.get('other_reason', '')
+    
+    if not reason:
+        return jsonify({'success': False, 'error': 'Please select a reason'})
+    
+    # Create reported content entry
+    report = ReportedContent(
+        reporter_id=current_user.id,
+        reported_user_id=comment.author_id,
+        content_type='comment',
+        content_id=comment_id,
+        reason=f"{reason}: {other_reason}".strip() if other_reason else reason,
+        status='pending'
+    )
+    
+    db.session.add(report)
+    db.session.commit()
+    
+    return jsonify({'success': True})
