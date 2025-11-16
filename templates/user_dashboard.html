@@ -1176,7 +1176,7 @@
                   data-post-id="{{ first_post.id }}"
                 />
               </div>
-              {% for comment in first_post.comments_list[:3] %}
+              {% for comment in first_post.comments[:3] %}
               <div
                 class="comment flex space-x-2 mb-3"
                 id="comment-{{ comment.id }}"
@@ -1408,7 +1408,7 @@
                   data-post-id="{{ post.id }}"
                 />
               </div>
-              {% for comment in post.comments_list[:3] %}
+              {% for comment in post.comments[:3] %}
               <div
                 class="comment flex space-x-2 mb-3"
                 id="comment-{{ comment.id }}"

@@ -371,7 +371,7 @@
                         
                         <!-- Comments Preview -->
                         <div class="space-y-4">
-                            {% for comment in post.comments_list[:2] %}
+                            {% for comment in post.comments[:2] %}
                             <div class="flex items-start space-x-3">
                                 <img src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
                                      alt="{{ comment.author.first_name }}" 

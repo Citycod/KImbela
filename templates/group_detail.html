@@ -7,6 +7,35 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+<!-- ==== RESPONSIVE FONT-SIZE CONFIG ==== -->
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontSize: {
+          // base (mobile) → smaller on tiny screens
+          'xs':   '0.65rem',   // ~10px
+          'sm':   '0.75rem',   // ~12px
+          'base': '0.875rem',  // ~14px  ← default for most text
+          'lg':   '1rem',      // ~16px
+          'xl':   '1.125rem',  // ~18px
+          '2xl':  '1.25rem',   // ~20px
+          '3xl':  '1.5rem',    // ~24px
+          '4xl':  '1.875rem',  // ~30px
+        }
+      }
+    },
+    screens: {
+      sm: '480px',
+      md: '768px',
+      lg: '976px',
+      xl: '1240px',
+    }
+  }
+</script>
     
     <style>
         .glass-effect {
@@ -48,77 +77,356 @@
         }
         
         .post-media {
-            max-height: 500px;
+            max-height: auto;
             overflow: hidden;
         }
 
-        /* Add these styles to your existing CSS */
-.modal-media-preview {
-    max-height: 300px;
-    overflow-y: auto;
-    border-radius: 12px;
-    margin-top: 1rem;
-}
+        .modal-media-preview {
+            max-height: 300px;
+            overflow-y: auto;
+            border-radius: 12px;
+            margin-top: 1rem;
+        }
 
-.modal-media-preview img,
-.modal-media-preview video {
-    max-width: 100%;
-    max-height: 280px;
-    object-fit: contain;
-    border-radius: 8px;
-}
+        .modal-media-preview img,
+        .modal-media-preview video {
+            max-width: 100%;
+            max-height: 280px;
+            object-fit: contain;
+            border-radius: 8px;
+        }
 
-/* Custom scrollbar for modal media preview */
-.modal-media-preview::-webkit-scrollbar {
-    width: 6px;
-}
+        .modal-media-preview::-webkit-scrollbar {
+            width: 6px;
+        }
 
-.modal-media-preview::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
-}
+        .modal-media-preview::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
 
-.modal-media-preview::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 10px;
-}
+        .modal-media-preview::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 10px;
+        }
 
-.modal-media-preview::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
-}
+        .modal-media-preview::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
 
-/* Make the modal content area scrollable */
-.modal-content-scrollable {
-    max-height: 60vh;
-    overflow-y: auto;
-}
+        .modal-content-scrollable {
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        /* Like animation */
+        .like-animation {
+            animation: likePop 0.3s ease-in-out;
+        }
+
+        @keyframes likePop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        /* Comment fade in */
+        .comment-fade-in {
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Share modal styles */
+        .share-option:hover {
+            background-color: #f8fafc;
+            transform: translateX(5px);
+            transition: all 0.2s ease;
+        }
+
+        /* Facebook-style Reactions */
+        .reactions-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .reactions-tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(-10px);
+            background: white;
+            border-radius: 50px;
+            padding: 4px 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            border: 1px solid #e5e7eb;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .reactions-tooltip.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(-15px);
+        }
+
+        .reaction-option {
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            transform: scale(1);
+            filter: grayscale(100%);
+        }
+
+        .reaction-option:hover {
+            transform: scale(1.4) translateY(-5px);
+            filter: grayscale(0%);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .reaction-option.like:hover { color: #1877f2; }
+        .reaction-option.love:hover { color: #f02849; }
+        .reaction-option.care:hover { color: #f7b928; }
+        .reaction-option.haha:hover { color: #f7b928; }
+        .reaction-option.wow:hover { color: #f7b928; }
+        .reaction-option.sad:hover { color: #f7b928; }
+        .reaction-option.angry:hover { color: #e9710f; }
+
+        /* Active reaction styles */
+        .like-btn.active-like { color: #1877f2; }
+        .like-btn.active-love { color: #f02849; }
+        .like-btn.active-care { color: #f7b928; }
+        .like-btn.active-haha { color: #f7b928; }
+        .like-btn.active-wow { color: #f7b928; }
+        .like-btn.active-sad { color: #f7b928; }
+        .like-btn.active-angry { color: #e9710f; }
+
+        /* Reaction tooltip delay */
+        .reactions-container:hover .reactions-tooltip {
+            transition-delay: 0.1s;
+        }
+    </style>
+    <style>
+    .glass-effect {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .card-hover {
+        transition: all 0.3s ease;
+    }
+    
+    .card-hover:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+    
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+    
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 10px;
+    }
+    
+    .comments-section {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    
+    /* REMOVED the max-height constraint for post media */
+    .post-media {
+        /* Removed: max-height: 500px; */
+        overflow: hidden;
+    }
+
+    /* Full size media for images and videos */
+    .post-media img,
+    .post-media video {
+        width: 100%;
+        height: auto;
+        max-height: none; /* Remove any max-height constraints */
+        object-fit: contain; /* This ensures the entire image/video is visible */
+        border-radius: 8px;
+    }
+
+    /* Modal media preview styles */
+    .modal-media-preview {
+        max-height: 300px;
+        overflow-y: auto;
+        border-radius: 12px;
+        margin-top: 1rem;
+    }
+
+    .modal-media-preview img,
+    .modal-media-preview video {
+        max-width: 100%;
+        max-height: 280px;
+        object-fit: contain;
+        border-radius: 8px;
+    }
+
+    .modal-media-preview::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .modal-media-preview::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+
+    .modal-media-preview::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 10px;
+    }
+
+    .modal-media-preview::-webkit-scrollbar-thumb:hover {
+        background: #a8a8a8;
+    }
+
+    .modal-content-scrollable {
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+
+    /* Like animation */
+    .like-animation {
+        animation: likePop 0.3s ease-in-out;
+    }
+
+    @keyframes likePop {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.2); }
+        100% { transform: scale(1); }
+    }
+
+    /* Comment fade in */
+    .comment-fade-in {
+        animation: fadeInUp 0.3s ease-out;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Share modal styles */
+    .share-option:hover {
+        background-color: #f8fafc;
+        transform: translateX(5px);
+        transition: all 0.2s ease;
+    }
+
+    /* Optional: Add smooth expansion for very large images */
+    .expandable-media {
+        cursor: zoom-in;
+        transition: transform 0.3s ease;
+    }
+
+    .expandable-media.expanded {
+        cursor: zoom-out;
+        transform: scale(1.02);
+    }
+</style>
+
+<style>
+    /* ──────────────────────────────────────────────────────────────
+       POST MEDIA – SMALLER BUT FULLY VISIBLE
+       ────────────────────────────────────────────────────────────── */
+    .post-media {
+        overflow: hidden;                     /* keep the rounded corners clean */
+        margin: 0.75rem 0;                    /* a little breathing room */
+        border-radius: 12px;                  /* slightly larger radius for a nicer look */
+        background: #f9f9f9;                  /* subtle background so the image doesn't touch the card edge */
+        padding: 0.5rem;                      /* tiny inner padding */
+        box-sizing: border-box;
+    }
+    
+    /* Limit the maximum width of the media while preserving aspect ratio */
+    .post-media img,
+    .post-media video {
+        width: 100%;                          /* fill the container width */
+        max-width: 520px;                     /* <-- the "smaller" size you asked for */
+        height: auto;                         /* keep original proportions */
+        object-fit: contain;                  /* show the whole picture/video */
+        display: block;
+        margin: 0 auto;                       /* center if the container is wider */
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
     </style>
 </head>
 <body class="font-poppins bg-gray-50">
     <!-- Navigation -->
-    <nav class="bg-white shadow-lg sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
-                <div class="flex items-center space-x-4">
-                    <a href="{{ url_for('auth.user_dashboard') }}" class="flex items-center">
-                        <img src="{{ url_for('static', filename='assets/img/kim.png') }}" alt="Kimbela" class="h-8">
-                    </a>
-                    <a href="{{ url_for('auth.groups_page') }}" class="text-gray-600 hover:text-blue-600 transition-colors flex items-center">
-                        <i class="bi bi-arrow-left mr-2"></i> Back to Groups
-                    </a>
-                </div>
-                
-                <div class="flex items-center space-x-4">
-                    <a href="{{ url_for('auth.user_dashboard') }}" class="text-gray-600 hover:text-blue-600 transition-colors">
-                        <i class="bi bi-house-door text-xl"></i>
-                    </a>
-                    <a href="{{ url_for('auth.profile', user_id=current_user.id) }}" class="text-gray-600 hover:text-blue-600 transition-colors">
-                        <i class="bi bi-person text-xl"></i>
-                    </a>
-                </div>
-            </div>
+<!-- Navigation -->
+<!-- Group Navigation -->
+<nav class="bg-white shadow-lg sticky top-0 z-50">
+    <div class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-20">
+  
+        <!-- Left: Logo -->
+        <div class="flex items-center justify-start w-full md:w-auto">
+          <a href="{{ url_for('auth.user_dashboard') }}" class="flex items-center">
+            <img src="{{ url_for('static', filename='assets/img/kim.png') }}" 
+                 alt="Kimbela" 
+                 class="w-32 h-32 md:w-40 md:h-40">
+          </a>
         </div>
-    </nav>
+  
+       
+  
+        <!-- Right: Navigation icons -->
+        <div class="flex items-center space-x-4">
+          <!-- Home -->
+          
+  
+          <!-- Profile -->
+          <a href="{{ url_for('auth.profile', user_id=current_user.id) }}" 
+             class="text-gray-600 hover:text-blue-600 flex items-center p-2 rounded-lg hover:bg-gray-50"
+             title="Profile">
+            <i class="bi bi-person text-xl"></i>
+            <span class="ml-2 hidden lg:inline">Profile</span>
+          </a>
+  
+          <!-- Optional: Group settings -->
+          
+        </div>
+        
+      </div>
+    </div>
+  </nav>
+  
 
     <!-- Group Header -->
     <div class="bg-white shadow-lg">
@@ -160,7 +468,7 @@
                                         <i class="bi bi-lock-fill mr-1"></i>Private Group
                                     </span>
                                     {% else %}
-                                    <span class="bg-green-500/80 px-3 py-1 rounded-full backdrop-blur-sm">
+                                    <span class="bg-green-500/80 px-3py-1 rounded-full backdrop-blur-sm">
                                         <i class="bi bi-globe mr-1"></i>Public Group
                                     </span>
                                     {% endif %}
@@ -220,21 +528,21 @@
                 <div class="bg-white rounded-2xl shadow-lg p-6">
                     <h3 class="font-semibold text-gray-900 mb-4">Group Stats</h3>
                     <div class="space-y-3">
-                        <div class="flex justify-between items-center">
+                        <div class="flex justify-between items-center " style="font-size: 0.9rem;">
                             <span class="text-gray-600">Members</span>
                             <span class="font-semibold">{{ group.member_count }}</span>
                         </div>
-                        <div class="flex justify-between items-center">
+                        <div class="flex justify-between items-center" style="font-size: 0.9rem;">
                             <span class="text-gray-600">Category</span>
                             <span class="font-semibold capitalize">{{ group.category }}</span>
                         </div>
-                        <div class="flex justify-between items-center">
+                        <div class="flex justify-between items-center" style="font-size: 0.9rem;">
                             <span class="text-gray-600">Privacy</span>
                             <span class="font-semibold">
                                 {% if group.is_private %}Private{% else %}Public{% endif %}
                             </span>
                         </div>
-                        <div class="flex justify-between items-center">
+                        <div class="flex justify-between items-center" style="font-size: 0.9rem;">
                             <span class="text-gray-600">Created</span>
                             <span class="font-semibold">{{ group.created_at.strftime('%b %d, %Y') }}</span>
                         </div>
@@ -242,11 +550,11 @@
                 </div>
 
                 <!-- Group Members Preview -->
-                <div class="bg-white rounded-2xl shadow-lg p-6">
+                <div class="bg-white rounded-2xl shadow-lg p-6" style="font-size: 0.9rem;">
                     <h3 class="font-semibold text-gray-900 mb-4">Recent Members</h3>
                     <div class="space-y-3">
                         {% for member in group.members.limit(5).all() %}
-                        <div class="flex items-center space-x-3">
+                        <div class="flex items-center space-x-3" style="font-size: 0.9rem;">
                             <img src="{{ member.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
                                  alt="{{ member.full_name }}" 
                                  class="w-8 h-8 rounded-full object-cover">
@@ -273,8 +581,8 @@
                              class="w-12 h-12 rounded-full object-cover">
                         <div class="flex-1">
                             <button onclick="openPostModal()" 
-                                    class="w-full text-left bg-gray-50 rounded-full px-6 py-3 hover:bg-gray-100 transition-colors duration-300 text-gray-600">
-                                What's happening in {{ group.name }}, {{ current_user.first_name }}?
+                                    class="w-full text-left bg-gray-50 rounded-full px-6 py-3 hover:bg-gray-100 transition-colors duration-300 text-gray-600" style="font-size: 1rem;">
+                                Say something {{ current_user.first_name }}...
                             </button>
                         </div>
                     </div>
@@ -351,27 +659,54 @@
                         {% endif %}
 
                         <!-- Post Stats -->
+                       <!-- Post Stats -->
                         <div class="px-6 py-3 border-t border-gray-100 text-sm text-gray-500">
                             <div class="flex justify-between">
-                                <span>{{ post.likes_list|length }} likes</span>
-                                <span>{{ post.comments_list|length }} comments</span>
+                                <span id="like-count-{{ post.id }}">{{ post.get_reaction_count() }} reactions</span>
+                                <span id="comment-count-{{ post.id }}">{{ post.comments_list|length }} comments</span>
                             </div>
                         </div>
 
                         <!-- Post Actions -->
                         <div class="px-6 py-3 border-t border-gray-100">
                             <div class="flex justify-around">
-                                <button onclick="likePost({{ post.id }})" 
-                                        class="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 {% if current_user.has_liked_post(post.id) %}text-blue-600{% else %}text-gray-600{% endif %}">
-                                    <i class="bi bi-hand-thumbs-up{% if current_user.has_liked_post(post.id) %}-fill{% endif %}"></i>
-                                    <span>Like</span>
-                                </button>
+                                <!-- Like Button with Reactions -->
+                                <div class="reactions-container">
+                                    {% set user_reaction = current_user.get_user_reaction(post.id) %}
+                                    <button onclick="likePost({{ post.id }})" 
+                                            class="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 like-btn {% if user_reaction %}active-{{ user_reaction }} text-{% if user_reaction == 'like' %}blue{% elif user_reaction == 'love' %}red{% elif user_reaction in ['care', 'haha', 'wow', 'sad'] %}yellow{% elif user_reaction == 'angry' %}red{% endif %}-600{% else %}text-gray-600{% endif %}"
+                                            id="like-btn-{{ post.id }}"
+                                            onmouseenter="showReactions({{ post.id }})"
+                                            onmouseleave="hideReactions({{ post.id }})">
+                                        <i class="bi {% if user_reaction %}{% if user_reaction == 'like' %}bi-hand-thumbs-up-fill{% elif user_reaction == 'love' %}bi-heart-fill{% elif user_reaction == 'care' %}bi-emoji-heart-eyes{% elif user_reaction == 'haha' %}bi-emoji-laughing{% elif user_reaction == 'wow' %}bi-emoji-surprise{% elif user_reaction == 'sad' %}bi-emoji-frown{% elif user_reaction == 'angry' %}bi-emoji-angry{% endif %}{% else %}bi-hand-thumbs-up{% endif %}" id="like-icon-{{ post.id }}"></i>
+                                        <span id="like-text-{{ post.id }}">
+                                            {% if user_reaction %}
+                                                {% if user_reaction == 'like' %}Liked{% elif user_reaction == 'love' %}Loved{% elif user_reaction == 'care' %}Cared{% elif user_reaction == 'haha' %}Haha{% elif user_reaction == 'wow' %}Wow{% elif user_reaction == 'sad' %}Sad{% elif user_reaction == 'angry' %}Angry{% endif %}
+                                            {% else %}
+                                                Like
+                                            {% endif %}
+                                        </span>
+                                    </button>
+                                    
+                                    <!-- Reactions Tooltip -->
+                                    <div class="reactions-tooltip" id="reactions-{{ post.id }}">
+                                        <div class="reaction-option like" onclick="reactToPost({{ post.id }}, 'like')" title="Like">👍</div>
+                                        <div class="reaction-option love" onclick="reactToPost({{ post.id }}, 'love')" title="Love">❤️</div>
+                                        <div class="reaction-option care" onclick="reactToPost({{ post.id }}, 'care')" title="Care">🥰</div>
+                                        <div class="reaction-option haha" onclick="reactToPost({{ post.id }}, 'haha')" title="Haha">😂</div>
+                                        <div class="reaction-option wow" onclick="reactToPost({{ post.id }}, 'wow')" title="Wow">😮</div>
+                                        <div class="reaction-option sad" onclick="reactToPost({{ post.id }}, 'sad')" title="Sad">😢</div>
+                                        <div class="reaction-option angry" onclick="reactToPost({{ post.id }}, 'angry')" title="Angry">😠</div>
+                                    </div>
+                                </div>
+
                                 <button onclick="focusCommentInput({{ post.id }})" 
                                         class="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 text-gray-600">
                                     <i class="bi bi-chat"></i>
                                     <span>Comment</span>
                                 </button>
-                                <button class="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 text-gray-600">
+                                <button onclick="openShareModal({{ post.id }})" 
+                                        class="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 text-gray-600">
                                     <i class="bi bi-share"></i>
                                     <span>Share</span>
                                 </button>
@@ -395,44 +730,42 @@
                             </div>
 
                             <!-- Comments List -->
-                            <div id="comments-{{ post.id }}">
-                                {% for comment in post.comments_list[:3] %}
-                                <div class="flex space-x-3 mb-4 comment-item" id="comment-{{ comment.id }}">
-                                    <img src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
-                                         alt="{{ comment.author.full_name }}" 
-                                         class="w-8 h-8 rounded-full object-cover flex-shrink-0">
-                                    <div class="flex-1">
-                                        <div class="bg-white rounded-2xl px-4 py-3">
-                                            <div class="flex justify-between items-start mb-1">
-                                                <h5 class="font-semibold text-sm">{{ comment.author.full_name }}</h5>
-                                                <div class="dropdown relative">
-                                                    <button class="p-1 rounded-full hover:bg-gray-100 transition-colors duration-300">
-                                                        <i class="bi bi-three-dots text-gray-400 text-xs"></i>
-                                                    </button>
-                                                    <div class="dropdown-menu absolute right-0 mt-1 w-32 bg-white rounded-xl shadow-2xl border border-gray-200 hidden z-10">
-                                                        {% if comment.author.id == current_user.id %}
-                                                        <button onclick="deleteComment({{ comment.id }})" class="w-full text-left px-3 py-2 hover:bg-gray-50 rounded-t-xl text-red-600 text-sm">
-                                                            <i class="bi bi-trash mr-1"></i>Delete
-                                                        </button>
-                                                        {% endif %}
-                                                        <button onclick="reportContent('comment', {{ comment.id }})" class="w-full text-left px-3 py-2 hover:bg-gray-50 rounded-b-xl text-orange-600 text-sm">
-                                                            <i class="bi bi-flag mr-1"></i>Report
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <p class="text-gray-800 text-sm">{{ comment.content }}</p>
-                                            <div class="flex items-center space-x-3 mt-2">
-                                                <button onclick="likeComment({{ comment.id }})" class="text-xs text-gray-500 hover:text-blue-600 transition-colors duration-300">
-                                                    Like
-                                                </button>
-                                                <span class="text-xs text-gray-400">{{ comment.created_at.strftime('%I:%M %p') }}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                {% endfor %}
-                            </div>
+                            <!-- Comments List -->
+<div id="comments-{{ post.id }}">
+    {% for comment in post.comments[:3] %}
+    <div class="flex space-x-3 mb-4 comment-item comment-fade-in" id="comment-{{ comment.id }}">
+        <img src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
+             alt="{{ comment.author.full_name }}" 
+             class="w-8 h-8 rounded-full object-cover flex-shrink-0">
+        <div class="flex-1">
+            <div class="bg-white rounded-2xl px-4 py-3">
+                <div class="flex justify-between items-start mb-1">
+                    <h5 class="font-semibold text-sm">{{ comment.author.full_name }}</h5>
+                    <div class="dropdown relative">
+                        <button class="p-1 rounded-full hover:bg-gray-100 transition-colors duration-300">
+                            <i class="bi bi-three-dots text-gray-400 text-xs"></i>
+                        </button>
+                        <div class="dropdown-menu absolute right-0 mt-1 w-32 bg-white rounded-xl shadow-2xl border border-gray-200 hidden z-10">
+                            {% if comment.author.id == current_user.id %}
+                            <button onclick="deleteComment({{ comment.id }})" class="w-full text-left px-3 py-2 hover:bg-gray-50 rounded-t-xl text-red-600 text-sm">
+                                <i class="bi bi-trash mr-1"></i>Delete
+                            </button>
+                            {% endif %}
+                            <button onclick="reportContent('comment', {{ comment.id }})" class="w-full text-left px-3 py-2 hover:bg-gray-50 rounded-b-xl text-orange-600 text-sm">
+                                <i class="bi bi-flag mr-1"></i>Report
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-gray-800 text-sm">{{ comment.content }}</p>
+                <div class="flex items-center space-x-3 mt-2">
+                    <span class="text-xs text-gray-400">{{ comment.created_at.strftime('%I:%M %p') }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
 
                             {% if post.comments_list|length > 3 %}
                             <button onclick="loadAllComments({{ post.id }})" class="text-blue-600 hover:text-blue-700 text-sm font-semibold">
@@ -475,63 +808,101 @@
     </div>
 
     <!-- Create Post Modal -->
-    <!-- Create Post Modal -->
-<div id="postModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden flex flex-col">
-        <div class="p-6 border-b border-gray-200 flex justify-between items-center flex-none">
-            <h3 class="text-xl font-semibold">Create Post in {{ group.name }}</h3>
-            <button onclick="closePostModal()" class="p-2 rounded-full hover:bg-gray-100 transition-colors duration-300">
-                <i class="bi bi-x-lg text-gray-500"></i>
-            </button>
-        </div>
-        
-        <form id="createPostForm" enctype="multipart/form-data" class="flex flex-col h-full">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-            
-            <!-- Scrollable Content Area -->
-            <div class="flex-1 overflow-y-auto modal-content-scrollable p-6">
-                <div class="flex items-center space-x-3 mb-6">
-                    <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
-                         alt="{{ current_user.full_name }}" 
-                         class="w-10 h-10 rounded-full object-cover">
-                    <div>
-                        <h4 class="font-semibold">{{ current_user.full_name }}</h4>
-                        <p class="text-sm text-gray-500">Posting in {{ group.name }}</p>
-                    </div>
-                </div>
-                
-                <textarea name="post_content" 
-                          id="postContent"
-                          placeholder="What's happening in {{ group.name }}?"
-                          class="w-full border-0 focus:ring-0 focus:outline-none text-lg resize-none min-h-[120px]"
-                          rows="4"></textarea>
-                
-                <!-- Scrollable Media Preview -->
-                <div id="mediaPreview" class="modal-media-preview"></div>
-            </div>
-            
-            <!-- Fixed Bottom Section - This stays at the bottom -->
-            <div class="p-6 border-t border-gray-200 bg-white flex-none">
-                <div class="flex items-center justify-between mb-4">
-                    <span class="font-medium text-gray-700">Add to your post</span>
-                    <div class="flex space-x-2">
-                        <button type="button" onclick="document.getElementById('mediaInput').click()" 
-                                class="p-2 rounded-full hover:bg-gray-100 transition-colors duration-300 text-green-600">
-                            <i class="bi bi-image text-xl"></i>
-                        </button>
-                        <input type="file" name="media" id="mediaInput" accept="image/*,video/*" hidden onchange="previewPostMedia(this)">
-                    </div>
-                </div>
-                
-                <button type="submit" 
-                        class="w-full bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition-colors duration-300 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-                        id="submitPostBtn">
-                    Post to {{ group.name }}
+    <div id="postModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+            <div class="p-6 border-b border-gray-200 flex justify-between items-center flex-none" style="font-size: 1rem;">
+                <button onclick="closePostModal()" class="p-2 rounded-full hover:bg-gray-100 transition-colors duration-300">
+                    <i class="bi bi-x-lg text-gray-500"></i>
                 </button>
             </div>
-        </form>
+            
+            <form id="createPostForm" enctype="multipart/form-data" class="flex flex-col h-full">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                
+                <!-- Scrollable Content Area -->
+                <div class="flex-1 overflow-y-auto modal-content-scrollable p-6">
+                    <div class="flex items-center space-x-3 mb-6">
+                        <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
+                             alt="{{ current_user.full_name }}" 
+                             class="w-10 h-10 rounded-full object-cover">
+                        <div>
+                            <h4 class="font-semibold">{{ current_user.full_name }}</h4>
+                            <p class="text-sm text-gray-500">Posting in {{ group.name }}</p>
+                        </div>
+                    </div>
+                    
+                    <textarea name="post_content" 
+                              id="postContent"
+                              placeholder="What's happening in {{ group.name }}?"
+                              class="w-full border-0 focus:ring-0 focus:outline-none text-lg resize-none min-h-[120px]"
+                              rows="4"></textarea>
+                    
+                    <!-- Scrollable Media Preview -->
+                    <div id="mediaPreview" class="modal-media-preview"></div>
+                </div>
+                
+                <!-- Fixed Bottom Section - This stays at the bottom -->
+                <div class="p-6 border-t border-gray-200 bg-white flex-none">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="font-medium text-gray-700">Add to your post</span>
+                        <div class="flex space-x-2">
+                            <button type="button" onclick="document.getElementById('mediaInput').click()" 
+                                    class="p-2 rounded-full hover:bg-gray-100 transition-colors duration-300 text-green-600">
+                                <i class="bi bi-image text-xl"></i>
+                            </button>
+                            <input type="file" name="media" id="mediaInput" accept="image/*,video/*" hidden onchange="previewPostMedia(this)">
+                        </div>
+                    </div>
+                    
+                    <button type="submit" 
+                            class="w-full bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition-colors duration-300 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                            id="submitPostBtn">
+                        Post to {{ group.name }}
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
-</div>
+
+    <!-- Share Modal -->
+    <div id="shareModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4">
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-xl font-semibold">Share Post</h3>
+            </div>
+            
+            <div class="p-6">
+                <div class="space-y-3 mb-6">
+                    <button onclick="shareToFeed()" class="w-full flex items-center space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-300 share-option">
+                        <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                            <i class="bi bi-newspaper text-blue-600"></i>
+                        </div>
+                        <div class="text-left">
+                            <p class="font-semibold">Share to your feed</p>
+                            <p class="text-sm text-gray-500">Share this post on your timeline</p>
+                        </div>
+                    </button>
+                    
+                    <button onclick="copyPostLink()" class="w-full flex items-center space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-300 share-option">
+                        <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                            <i class="bi bi-link-45deg text-green-600"></i>
+                        </div>
+                        <div class="text-left">
+                            <p class="font-semibold">Copy link</p>
+                            <p class="text-sm text-gray-500">Copy link to this post</p>
+                        </div>
+                    </button>
+                </div>
+                
+                <div class="flex space-x-3">
+                    <button type="button" onclick="closeShareModal()" 
+                            class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl hover:bg-gray-200 transition-colors duration-300 font-semibold">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Report Content Modal -->
     <div id="reportModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
@@ -597,656 +968,633 @@
 
     <!-- JavaScript -->
     <script>
+        // ==================== KIMBELA - FULL JAVASCRIPT (CLEAN & FINAL) ====================
+        
+        // Global variables
         const csrfToken = '{{ csrf_token }}';
         const groupId = {{ group.id }};
-        let currentUser = {{ current_user.id }};
-
-        // Modal functions
+        const currentUserId = {{ current_user.id }};
+        let currentSharePostId = null;
+        let currentReactionPostId = null;
+        let reactionTimeout = null;
+        
+        // ==================== TOAST NOTIFICATIONS ====================
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg text-white font-medium text-sm transition-all duration-300 transform translate-x-full`;
+            
+            const types = {
+                success: 'bg-green-500',
+                danger: 'bg-red-500',
+                warning: 'bg-yellow-500',
+                info: 'bg-blue-500'
+            };
+            toast.classList.add(types[type] || types.info);
+            toast.textContent = message;
+            
+            document.body.appendChild(toast);
+            
+            // Animate in
+            setTimeout(() => toast.classList.remove('translate-x-full'), 100);
+            
+            // Auto remove
+            setTimeout(() => {
+                toast.classList.add('translate-x-full');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+        
+        // ==================== REACTION SYSTEM (Facebook-style) ====================
+        function showReactions(postId) {
+            const tooltip = document.getElementById(`reactions-${postId}`);
+            if (!tooltip) return;
+        
+            clearTimeout(reactionTimeout);
+            tooltip.classList.add('show');
+            currentReactionPostId = postId;
+        }
+        
+        function hideReactions(postId) {
+            const tooltip = document.getElementById(`reactions-${postId}`);
+            if (!tooltip) return;
+        
+            reactionTimeout = setTimeout(() => {
+                tooltip.classList.remove('show');
+                currentReactionPostId = null;
+            }, 300);
+        }
+        
+        async function reactToPost(postId, reactionType) {
+            const likeBtn = document.getElementById(`like-btn-${postId}`);
+            const likeIcon = document.getElementById(`like-icon-${postId}`);
+            const likeText = document.getElementById(`like-text-${postId}`);
+            const likeCount = document.getElementById(`like-count-${postId}`);
+            const tooltip = document.getElementById(`reactions-${postId}`);
+        
+            if (!likeBtn || !likeIcon || !likeText) return;
+        
+            // Hide tooltip
+            tooltip?.classList.remove('show');
+        
+            // Optimistic update
+            const wasActive = likeBtn.classList.contains(`active-${reactionType}`);
+            updateReactionUI(postId, reactionType, !wasActive, likeBtn, likeIcon, likeText);
+        
+            try {
+                const response = await fetch(`/react_post/${postId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({ reaction_type: reactionType })
+                });
+        
+                const data = await response.json();
+        
+                if (data.success) {
+                    updateReactionUI(postId, data.user_reaction || null, true, likeBtn, likeIcon, likeText);
+                    likeCount.textContent = `${data.total_reactions} ${data.total_reactions === 1 ? 'reaction' : 'reactions'}`;
+                    showToast(getReactionMessage(data.user_reaction, data.reacted), 'success');
+                } else {
+                    updateReactionUI(postId, null, false, likeBtn, likeIcon, likeText);
+                    showToast(data.error || 'Failed to react', 'danger');
+                }
+            } catch (error) {
+                console.error('Reaction error:', error);
+                updateReactionUI(postId, null, false, likeBtn, likeIcon, likeText);
+                showToast('Network error', 'danger');
+            }
+        }
+        
+        function updateReactionUI(postId, reactionType, isActive, likeBtn, likeIcon, likeText) {
+            // Reset
+            likeBtn.className = likeBtn.className.replace(/active-\w+|text-\w+-?\d*/g, '').trim();
+            likeBtn.classList.add('flex', 'items-center', 'space-x-2', 'px-4', 'py-2', 'rounded-lg', 'hover:bg-gray-100', 'transition-colors', 'duration-300');
+            likeIcon.className = 'bi bi-hand-thumbs-up';
+            likeText.textContent = 'Like';
+        
+            if (isActive && reactionType) {
+                const config = {
+                    like:  { icon: 'bi-hand-thumbs-up-fill',  text: 'Liked',   color: 'text-blue-600' },
+                    love:  { icon: 'bi-heart-fill',           text: 'Loved',   color: 'text-red-600' },
+                    care:  { icon: 'bi-emoji-heart-eyes',     text: 'Cared',   color: 'text-yellow-600' },
+                    haha:  { icon: 'bi-emoji-laughing',       text: 'Haha',    color: 'text-yellow-500' },
+                    wow:   { icon: 'bi-emoji-surprise',       text: 'Wow',     color: 'text-orange-500' },
+                    sad:   { icon: 'bi-emoji-frown',          text: 'Sad',     color: 'text-indigo-600' },
+                    angry: { icon: 'bi-emoji-angry',          text: 'Angry',   color: 'text-red-700' }
+                };
+        
+                const r = config[reactionType];
+                if (r) {
+                    likeBtn.classList.add(`active-${reactionType}`, r.color);
+                    likeIcon.className = `${r.icon} like-animation`;
+                    likeText.textContent = r.text;
+                }
+            }
+        }
+        
+        function getReactionMessage(reactionType, reacted) {
+            const messages = {
+                like:  reacted ? 'You liked this post!' : 'Like removed',
+                love:  reacted ? 'You loved this post! heart' : 'Love removed',
+                care:  reacted ? 'You cared! smiling face with hearts' : 'Care removed',
+                haha:  reacted ? 'Haha! face with tears of joy' : 'Haha removed',
+                wow:   reacted ? 'Wow! open mouth' : 'Wow removed',
+                sad:   reacted ? 'Sad crying face' : 'Sad removed',
+                angry: reacted ? 'Angry pouting face' : 'Angry removed'
+            };
+            return messages[reactionType] || (reacted ? 'Reacted!' : 'Reaction removed');
+        }
+        
+        function likePost(postId) {
+            reactToPost(postId, 'like');
+        }
+        
+        // Keep tooltip open on hover
+        document.addEventListener('mouseover', e => {
+            if (e.target.closest('.reactions-tooltip')) clearTimeout(reactionTimeout);
+        });
+        document.addEventListener('mouseout', e => {
+            if (e.target.closest('.reactions-tooltip') && currentReactionPostId) {
+                hideReactions(currentReactionPostId);
+            }
+        });
+        
+        // ==================== MODALS ====================
         function openPostModal() {
             document.getElementById('postModal').classList.remove('hidden');
-            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+            document.body.style.overflow = 'hidden';
         }
-
+        
         function closePostModal() {
             document.getElementById('postModal').classList.add('hidden');
-            document.body.style.overflow = ''; // Restore background scrolling
-            
-            // Reset form
+            document.body.style.overflow = '';
             document.getElementById('mediaPreview').innerHTML = '';
             document.getElementById('postContent').value = '';
             document.getElementById('mediaInput').value = '';
-            
-            // Reset button state
-            const submitBtn = document.getElementById('submitPostBtn');
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = 'Post to {{ group.name }}';
+            const btn = document.getElementById('submitPostBtn');
+            btn.disabled = false;
+            btn.innerHTML = `Post to {{ group.name }}`;
         }
-
+        
+        function openShareModal(postId) {
+            currentSharePostId = postId;
+            document.getElementById('shareModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeShareModal() {
+            document.getElementById('shareModal').classList.add('hidden');
+            document.body.style.overflow = '';
+            currentSharePostId = null;
+        }
+        
         function openReportModal() {
             document.getElementById('reportModal').classList.remove('hidden');
         }
-
+        
         function closeReportModal() {
             document.getElementById('reportModal').classList.add('hidden');
             document.getElementById('reportForm').reset();
             document.getElementById('otherReasonContainer').classList.add('hidden');
         }
-
-        // Post creation
+        
+        // ==================== POST CREATION ====================
         document.getElementById('createPostForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const submitBtn = document.getElementById('submitPostBtn');
             const originalText = submitBtn.innerHTML;
             
-            // Show loading state
             submitBtn.disabled = true;
-            submitBtn.innerHTML = `
-                <div class="flex items-center justify-center">
-                    <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                    Posting...
-                </div>
-            `;
+            submitBtn.innerHTML = `<div class="flex items-center justify-center"><div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>Posting...</div>`;
             
             const formData = new FormData(this);
             formData.append('group_id', groupId);
             
             try {
-                const response = await fetch('/groups/' + groupId + '/post', {
+                const response = await fetch(`/groups/${groupId}/post`, {
                     method: 'POST',
                     body: formData,
-                    headers: {
-                        'X-CSRFToken': csrfToken
-                    }
+                    headers: { 'X-CSRFToken': csrfToken }
                 });
                 
                 const data = await response.json();
                 
                 if (data.success) {
-                    showToast('Post created successfully!', 'success');
+                    showToast('Post created!', 'success');
                     closePostModal();
-                    
-                    // Reload the page to show the new post
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1000);
-                    
+                    setTimeout(() => location.reload(), 1000);
                 } else {
-                    showToast(data.error || 'Failed to create post', 'danger');
+                    showToast(data.error || 'Failed to post', 'danger');
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = originalText;
                 }
             } catch (error) {
-                console.error('Error creating post:', error);
-                showToast('Error creating post', 'danger');
+                console.error('Post error:', error);
+                showToast('Network error', 'danger');
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalText;
             }
         });
-
-        // Add drag and drop functionality for better UX
-function setupDragAndDrop() {
-    const modal = document.getElementById('postModal');
-    const mediaInput = document.getElementById('mediaInput');
-    
-    modal.addEventListener('dragover', function(e) {
-        e.preventDefault();
-        modal.classList.add('border-2', 'border-blue-500', 'border-dashed');
-    });
-    
-    modal.addEventListener('dragleave', function(e) {
-        e.preventDefault();
-        modal.classList.remove('border-2', 'border-blue-500', 'border-dashed');
-    });
-    
-    modal.addEventListener('drop', function(e) {
-        e.preventDefault();
-        modal.classList.remove('border-2', 'border-blue-500', 'border-dashed');
         
-        const files = e.dataTransfer.files;
-        if (files.length > 0) {
-            mediaInput.files = files;
-            previewPostMedia(mediaInput);
-        }
-    });
-}
-
-        // Media preview
-        function previewPostMedia(input) {
-            const preview = document.getElementById('mediaPreview');
-            const file = input.files[0];
-            
-            if (file) {
-                const url = URL.createObjectURL(file);
-                
-                // Clear previous preview
-                preview.innerHTML = '';
-                
-                if (file.type.startsWith('image/')) {
-                    const img = document.createElement('img');
-                    img.src = url;
-                    img.className = 'w-full h-auto object-contain rounded-lg';
-                    img.onload = function() {
-                        // Auto-scroll to show the new image
-                        preview.scrollTop = preview.scrollHeight;
-                    };
-                    preview.appendChild(img);
-                    
-                } else if (file.type.startsWith('video/')) {
-                    const video = document.createElement('video');
-                    video.src = url;
-                    video.controls = true;
-                    video.className = 'w-full h-auto object-contain rounded-lg';
-                    video.onloadeddata = function() {
-                        // Auto-scroll to show the new video
-                        preview.scrollTop = preview.scrollHeight;
-                    };
-                    preview.appendChild(video);
-                }
-                
-            } else {
-                // Clear preview if no file
-                preview.innerHTML = '';
-            }
-        }
-
-        // Post interactions
-        async function likePost(postId) {
-            try {
-                const response = await fetch('/like_post/' + postId, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': csrfToken,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                const data = await response.json();
-                
-                if (data.liked !== undefined) {
-                    const likeBtn = document.querySelector(`[data-post-id="${postId}"] .bi-hand-thumbs-up`);
-                    const likeCount = document.querySelector(`[data-post-id="${postId}"] .like-count`);
-                    
-                    if (likeBtn) {
-                        likeBtn.className = data.liked ? 'bi bi-hand-thumbs-up-fill text-blue-600' : 'bi bi-hand-thumbs-up';
-                    }
-                    
-                    // You might want to update like count here
-                }
-            } catch (error) {
-                console.error('Error liking post:', error);
-            }
-        }
-
-        // Initialize when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    // Set up drag and drop
-    setupDragAndDrop();
-    
-    // Close modal when clicking outside
-    document.getElementById('postModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closePostModal();
-        }
-    });
-    
-    // Close modal with Escape key
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && !document.getElementById('postModal').classList.contains('hidden')) {
-            closePostModal();
-        }
-    });
-    
-    // Show other reason textarea when "Other" is selected
-    document.addEventListener('change', function(e) {
-        if (e.target.name === 'reportReason') {
-            const otherContainer = document.getElementById('otherReasonContainer');
-            if (e.target.value === 'Other') {
-                otherContainer.classList.remove('hidden');
-            } else {
-                otherContainer.classList.add('hidden');
-            }
-        }
-    });
-});
-
-        // Comment functionality
+        // ==================== COMMENT SYSTEM ====================
         function handleCommentKeypress(event, postId) {
-            if (event.key === 'Enter' && event.target.value.trim()) {
+            if (event.key === 'Enter' && !event.shiftKey && event.target.value.trim()) {
+                event.preventDefault();
                 addComment(postId, event.target.value.trim());
-                event.target.value = '';
             }
         }
-
+        
         async function addComment(postId, content) {
+            const input = document.getElementById(`commentInput-${postId}`);
+            const container = document.getElementById(`comments-${postId}`);
+            const count = document.getElementById(`comment-count-${postId}`);
+            
+            input.disabled = true;
+            const placeholder = input.placeholder;
+            input.placeholder = 'Posting...';
+            
             try {
-                const response = await fetch('/add_comment/' + postId, {
+                const response = await fetch(`/add_comment/${postId}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRFToken': csrfToken
                     },
-                    body: JSON.stringify({ content: content })
+                    body: JSON.stringify({ content })
                 });
                 
                 const data = await response.json();
                 
-                if (data.id) {
-                    const commentsContainer = document.getElementById('comments-' + postId);
-                    const newComment = document.createElement('div');
-                    newComment.className = 'flex space-x-3 mb-4 comment-item';
-                    newComment.id = 'comment-' + data.id;
-                    newComment.innerHTML = `
-                        <img src="${data.avatar}" class="w-8 h-8 rounded-full object-cover flex-shrink-0">
+                if (data.success || data.id) {
+                    const comment = data.comment || data;
+                    const div = document.createElement('div');
+                    div.className = 'flex space-x-3 mb-4 comment-item comment-fade-in';
+                    div.id = `comment-${comment.id}`;
+                    div.innerHTML = `
+                        <img src="${comment.author_avatar || '{{ default_avatar }}'}" class="w-8 h-8 rounded-full object-cover">
                         <div class="flex-1">
                             <div class="bg-white rounded-2xl px-4 py-3">
                                 <div class="flex justify-between items-start mb-1">
-                                    <h5 class="font-semibold text-sm">${data.name}</h5>
+                                    <h5 class="font-semibold text-sm">${comment.author_name || '{{ current_user.full_name }}'}</h5>
                                     <div class="dropdown relative">
-                                        <button class="p-1 rounded-full hover:bg-gray-100 transition-colors duration-300">
-                                            <i class="bi bi-three-dots text-gray-400 text-xs"></i>
-                                        </button>
+                                        <button class="p-1 rounded-full hover:bg-gray-100"><i class="bi bi-three-dots text-gray-400 text-xs"></i></button>
                                         <div class="dropdown-menu absolute right-0 mt-1 w-32 bg-white rounded-xl shadow-2xl border border-gray-200 hidden z-10">
-                                            <button onclick="deleteComment(${data.id})" class="w-full text-left px-3 py-2 hover:bg-gray-50 rounded-xl text-red-600 text-sm">
-                                                <i class="bi bi-trash mr-1"></i>Delete
-                                            </button>
+                                            <button onclick="deleteComment(${comment.id})" class="w-full text-left px-3 py-2 hover:bg-gray-50 text-red-600 text-sm"><i class="bi bi-trash mr-1"></i>Delete</button>
                                         </div>
                                     </div>
                                 </div>
-                                <p class="text-gray-800 text-sm">${data.content}</p>
+                                <p class="text-gray-800 text-sm">${comment.content}</p>
                                 <div class="flex items-center space-x-3 mt-2">
-                                    <button onclick="likeComment(${data.id})" class="text-xs text-gray-500 hover:text-blue-600 transition-colors duration-300">
-                                        Like
-                                    </button>
                                     <span class="text-xs text-gray-400">Just now</span>
                                 </div>
                             </div>
                         </div>
                     `;
-                    commentsContainer.appendChild(newComment);
+                    container.appendChild(div);
+                    input.value = '';
+                    
+                    const current = parseInt(count.textContent) || 0;
+                    count.textContent = `${current + 1} comments`;
+                    
+                    showToast('Comment added!', 'success');
+                    setTimeout(() => div.scrollIntoView({ behavior: 'smooth' }), 100);
+                } else {
+                    showToast(data.error || 'Failed', 'danger');
                 }
             } catch (error) {
-                console.error('Error adding comment:', error);
-                showToast('Error adding comment', 'danger');
+                console.error('Comment error:', error);
+                showToast('Network error', 'danger');
+            } finally {
+                input.disabled = false;
+                input.placeholder = placeholder;
+                input.focus();
             }
         }
-
-        // Report functionality
-        function reportContent(contentType, contentId) {
-            document.getElementById('reportContentType').value = contentType;
-            document.getElementById('reportContentId').value = contentId;
-            openReportModal();
-        }
-
-        document.getElementById('reportForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const formData = {
-                content_type: document.getElementById('reportContentType').value,
-                content_id: document.getElementById('reportContentId').value,
-                reason: document.querySelector('input[name="reportReason"]:checked').value,
-                additional_info: document.getElementById('otherReason').value || ''
-            };
+        
+        async function deleteComment(commentId) {
+            if (!confirm('Delete this comment?')) return;
             
             try {
-                const response = await fetch('/report_content', {
+                const response = await fetch(`/delete_comment/${commentId}`, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' }
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    const el = document.getElementById(`comment-${commentId}`);
+                    el.style.opacity = '0';
+                    el.style.transform = 'translateX(-50%)';
+                    setTimeout(() => el.remove(), 300);
+                    showToast('Comment deleted', 'info');
+                } else {
+                    showToast(data.error || 'Failed', 'danger');
+                }
+            } catch (error) {
+                console.error(error);
+                showToast('Network error', 'danger');
+            }
+        }
+        
+        function focusCommentInput(postId) {
+            document.getElementById(`commentInput-${postId}`)?.focus();
+        }
+        
+        // ==================== SHARE & COPY LINK ====================
+        function shareToFeed() {
+            showToast('Shared to your feed!', 'success');
+            closeShareModal();
+        }
+        
+        function copyPostLink() {
+            const url = `${window.location.origin}/post/${currentSharePostId}`;
+            navigator.clipboard.writeText(url).then(() => {
+                showToast('Link copied!', 'success');
+            }).catch(() => {
+                const textarea = document.createElement('textarea');
+                textarea.value = url;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showToast('Link copied!', 'success');
+            });
+            closeShareModal();
+        }
+        
+        // ==================== GROUP ACTIONS ====================
+        async function joinGroup(groupId) {
+            try {
+                const res = await fetch(`/groups/${groupId}/join`, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('Joined group!', 'success');
+                    location.reload();
+                } else {
+                    showToast(data.error || 'Failed', 'danger');
+                }
+            } catch (error) {
+                showToast('Network error', 'danger');
+            }
+        }
+        
+        async function leaveGroup(groupId) {
+            if (!confirm('Leave this group?')) return;
+            try {
+                const res = await fetch(`/groups/${groupId}/leave`, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('Left group', 'info');
+                    location.reload();
+                } else {
+                    showToast(data.error || 'Failed', 'danger');
+                }
+            } catch (error) {
+                showToast('Network error', 'danger');
+            }
+        }
+        
+        // ==================== REPORT CONTENT ====================
+        function reportContent(type, id) {
+            document.getElementById('reportContentType').value = type;
+            document.getElementById('reportContentId').value = id;
+            openReportModal();
+        }
+        
+        document.getElementById('reportForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const reason = document.querySelector('input[name="reportReason"]:checked')?.value;
+            const info = document.getElementById('otherReason').value;
+            
+            try {
+                const res = await fetch('/report_content', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRFToken': csrfToken
                     },
-                    body: JSON.stringify(formData)
+                    body: JSON.stringify({
+                        content_type: document.getElementById('reportContentType').value,
+                        content_id: document.getElementById('reportContentId').value,
+                        reason,
+                        additional_info: info
+                    })
                 });
-                
-                const data = await response.json();
-                
+                const data = await res.json();
                 if (data.success) {
-                    showToast('Content reported successfully', 'success');
+                    showToast('Reported', 'success');
                     closeReportModal();
                 } else {
-                    showToast(data.error || 'Failed to report content', 'danger');
+                    showToast(data.error || 'Failed', 'danger');
                 }
             } catch (error) {
-                console.error('Error reporting content:', error);
-                showToast('Error reporting content', 'danger');
-            }
-        });
-
-        // Group actions
-        async function joinGroup(groupId) {
-            try {
-                const response = await fetch('/groups/' + groupId + '/join', {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': csrfToken,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    showToast('Successfully joined the group!', 'success');
-                    location.reload();
-                } else {
-                    showToast(data.error || 'Failed to join group', 'danger');
-                }
-            } catch (error) {
-                console.error('Error joining group:', error);
-                showToast('Error joining group', 'danger');
-            }
-        }
-
-        async function leaveGroup(groupId) {
-            if (!confirm('Are you sure you want to leave this group?')) return;
-            
-            try {
-                const response = await fetch('/groups/' + groupId + '/leave', {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': csrfToken,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    showToast('Left the group successfully', 'info');
-                    location.reload();
-                } else {
-                    showToast(data.error || 'Failed to leave group', 'danger');
-                }
-            } catch (error) {
-                console.error('Error leaving group:', error);
-                showToast('Error leaving group', 'danger');
-            }
-        }
-
-        // Utility functions
-        function showToast(message, type = 'info') {
-            const toast = document.createElement('div');
-            toast.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg text-white ${
-                type === 'success' ? 'bg-green-500' :
-                type === 'danger' ? 'bg-red-500' :
-                type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500'
-            }`;
-            toast.textContent = message;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
-        }
-
-        function focusCommentInput(postId) {
-            const input = document.getElementById('commentInput-' + postId);
-            if (input) {
-                input.focus();
-            }
-        }
-
-        // Event listeners for dropdowns
-        document.addEventListener('click', function(e) {
-            // Close dropdowns when clicking outside
-            if (!e.target.closest('.dropdown')) {
-                document.querySelectorAll('.dropdown-menu').forEach(menu => {
-                    menu.classList.add('hidden');
-                });
-            }
-            
-            // Toggle dropdowns
-            if (e.target.closest('.dropdown button')) {
-                const dropdown = e.target.closest('.dropdown');
-                const menu = dropdown.querySelector('.dropdown-menu');
-                menu.classList.toggle('hidden');
-            }
-            
-            // Show other reason textarea
-            if (e.target.value === 'Other' && e.target.name === 'reportReason') {
-                document.getElementById('otherReasonContainer').classList.remove('hidden');
-            } else if (e.target.name === 'reportReason') {
-                document.getElementById('otherReasonContainer').classList.add('hidden');
-            }
-        });
-
-
-        // Post management functions
-async function editPost(postId) {
-    try {
-        // Get the current post content
-        const postCard = document.querySelector(`[data-post-id="${postId}"]`);
-        const postContent = postCard.querySelector('.text-gray-800').textContent;
-        
-        // Create a modal for editing
-        const editModal = document.createElement('div');
-        editModal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50';
-        editModal.innerHTML = `
-            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4">
-                <div class="p-6 border-b border-gray-200 flex justify-between items-center">
-                    <h3 class="text-xl font-semibold">Edit Post</h3>
-                    <button onclick="this.closest('.fixed').remove()" class="p-2 rounded-full hover:bg-gray-100 transition-colors duration-300">
-                        <i class="bi bi-x-lg text-gray-500"></i>
-                    </button>
-                </div>
-                <form id="editPostForm" class="p-6">
-                    <input type="hidden" name="csrf_token" value="${csrfToken}">
-                    <div class="mb-6">
-                        <textarea name="post_content" 
-                                class="w-full border border-gray-300 rounded-xl p-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                                rows="6">${postContent}</textarea>
-                    </div>
-                    <div class="flex space-x-3">
-                        <button type="button" onclick="this.closest('.fixed').remove()" 
-                                class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl hover:bg-gray-200 transition-colors duration-300 font-semibold">
-                            Cancel
-                        </button>
-                        <button type="submit" 
-                                class="flex-1 bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition-colors duration-300 font-semibold">
-                            Update Post
-                        </button>
-                    </div>
-                </form>
-            </div>
-        `;
-        
-        document.body.appendChild(editModal);
-        
-        // Handle form submission
-        document.getElementById('editPostForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(this);
-            formData.append('post_content', this.querySelector('textarea').value);
-            
-            try {
-                const response = await fetch('/edit_post/' + postId, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-CSRFToken': csrfToken
-                    }
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    showToast('Post updated successfully!', 'success');
-                    editModal.remove();
-                    
-                    // Update the post content in the UI
-                    const postContentElement = postCard.querySelector('.text-gray-800');
-                    postContentElement.textContent = this.querySelector('textarea').value;
-                    
-                } else {
-                    showToast(data.error || 'Failed to update post', 'danger');
-                }
-            } catch (error) {
-                console.error('Error updating post:', error);
-                showToast('Error updating post', 'danger');
+                showToast('Network error', 'danger');
             }
         });
         
-    } catch (error) {
-        console.error('Error editing post:', error);
-        showToast('Error editing post', 'danger');
-    }
-}
-
-async function deletePost(postId) {
-    if (!confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
-        return;
-    }
-    
-    try {
-        const response = await fetch('/delete_post/' + postId, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': csrfToken,
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            showToast('Post deleted successfully!', 'success');
-            
-            // Remove the post from the UI
+        // ==================== POST EDIT & DELETE ====================
+        async function editPost(postId) {
             const postCard = document.querySelector(`[data-post-id="${postId}"]`);
-            if (postCard) {
-                postCard.style.opacity = '0';
-                postCard.style.transform = 'translateX(-100%)';
-                setTimeout(() => postCard.remove(), 300);
-            }
-        } else {
-            showToast(data.error || 'Failed to delete post', 'danger');
+            const content = postCard.querySelector('.text-gray-800').textContent;
+        
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50';
+            modal.innerHTML = `
+                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4">
+                    <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                        <h3 class="text-xl font-semibold">Edit Post</h3>
+                        <button onclick="this.closest('.fixed').remove()" class="p-2 rounded-full hover:bg-gray-100"><i class="bi bi-x-lg"></i></button>
+                    </div>
+                    <form id="editForm" class="p-6">
+                        <input type="hidden" name="csrf_token" value="${csrfToken}">
+                        <textarea name="post_content" class="w-full border border-gray-300 rounded-xl p-4 resize-none" rows="6">${content}</textarea>
+                        <div class="flex space-x-3 mt-4">
+                            <button type="button" onclick="this.closest('.fixed').remove()" class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl hover:bg-gray-200 font-semibold">Cancel</button>
+                            <button type="submit" class="flex-1 bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 font-semibold">Update</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        
+            modal.querySelector('#editForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                try {
+                    const res = await fetch(`/edit_post/${postId}`, {
+                        method: 'POST',
+                        body: formData,
+                        headers: { 'X-CSRFToken': csrfToken }
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        postCard.querySelector('.text-gray-800').textContent = formData.get('post_content');
+                        modal.remove();
+                        showToast('Post updated!', 'success');
+                    } else {
+                        showToast(data.error || 'Failed', 'danger');
+                    }
+                } catch (error) {
+                    showToast('Network error', 'danger');
+                }
+            });
         }
-    } catch (error) {
-        console.error('Error deleting post:', error);
-        showToast('Error deleting post', 'danger');
-    }
-}
-
-// Comment deletion function
-async function deleteComment(commentId) {
-    if (!confirm('Are you sure you want to delete this comment?')) {
-        return;
-    }
-    
-    try {
-        const response = await fetch('/delete_comment/' + commentId, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': csrfToken,
-                'Content-Type': 'application/json'
-            }
-        });
         
-        const data = await response.json();
-        
-        if (data.success) {
-            showToast('Comment deleted successfully!', 'success');
-            
-            // Remove the comment from the UI
-            const commentElement = document.getElementById('comment-' + commentId);
-            if (commentElement) {
-                commentElement.style.opacity = '0';
-                commentElement.style.transform = 'translateX(-100%)';
-                setTimeout(() => commentElement.remove(), 300);
+        async function deletePost(postId) {
+            if (!confirm('Delete this post?')) return;
+            try {
+                const res = await fetch(`/delete_post/${postId}`, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    const card = document.querySelector(`[data-post-id="${postId}"]`);
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateX(-100%)';
+                    setTimeout(() => card.remove(), 300);
+                    showToast('Post deleted', 'info');
+                } else {
+                    showToast(data.error || 'Failed', 'danger');
+                }
+            } catch (error) {
+                showToast('Network error', 'danger');
             }
-        } else {
-            showToast(data.error || 'Failed to delete comment', 'danger');
         }
-    } catch (error) {
-        console.error('Error deleting comment:', error);
-        showToast('Error deleting comment', 'danger');
-    }
-}
-
-// Comment liking function
-async function likeComment(commentId) {
-    try {
-        const response = await fetch('/like_comment/' + commentId, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': csrfToken,
-                'Content-Type': 'application/json'
-            }
-        });
         
-        const data = await response.json();
-        
-        if (data.liked !== undefined) {
-            showToast(data.liked ? 'Comment liked!' : 'Comment unliked!', 'success');
-            // You can update the UI here if needed
-        }
-    } catch (error) {
-        console.error('Error liking comment:', error);
-        showToast('Error liking comment', 'danger');
-    }
-}
-
-// Load all comments function
-async function loadAllComments(postId) {
-    try {
-        const response = await fetch('/get_comments/' + postId);
-        const data = await response.json();
-        
-        if (data.comments) {
-            const commentsContainer = document.getElementById('comments-' + postId);
-            const viewAllButton = commentsContainer.nextElementSibling;
-            
-            // Clear existing comments and button
-            commentsContainer.innerHTML = '';
-            
-            // Add all comments
-            data.comments.forEach(comment => {
-                const commentElement = document.createElement('div');
-                commentElement.className = 'flex space-x-3 mb-4 comment-item';
-                commentElement.id = 'comment-' + comment.id;
-                commentElement.innerHTML = `
-                    <img src="${comment.avatar}" class="w-8 h-8 rounded-full object-cover flex-shrink-0">
-                    <div class="flex-1">
-                        <div class="bg-white rounded-2xl px-4 py-3">
-                            <div class="flex justify-between items-start mb-1">
-                                <h5 class="font-semibold text-sm">${comment.author_name}</h5>
-                                <div class="dropdown relative">
-                                    <button class="p-1 rounded-full hover:bg-gray-100 transition-colors duration-300">
-                                        <i class="bi bi-three-dots text-gray-400 text-xs"></i>
-                                    </button>
-                                    <div class="dropdown-menu absolute right-0 mt-1 w-32 bg-white rounded-xl shadow-2xl border border-gray-200 hidden z-10">
-                                        ${comment.author_id === currentUser ? 
-                                            `<button onclick="deleteComment(${comment.id})" class="w-full text-left px-3 py-2 hover:bg-gray-50 rounded-t-xl text-red-600 text-sm">
-                                                <i class="bi bi-trash mr-1"></i>Delete
-                                            </button>` : ''
-                                        }
-                                        <button onclick="reportContent('comment', ${comment.id})" class="w-full text-left px-3 py-2 hover:bg-gray-50 ${comment.author_id === currentUser ? 'rounded-b-xl' : 'rounded-xl'} text-orange-600 text-sm">
-                                            <i class="bi bi-flag mr-1"></i>Report
-                                        </button>
+        // ==================== LOAD ALL COMMENTS ====================
+        async function loadAllComments(postId) {
+            try {
+                const res = await fetch(`/get_comments/${postId}`);
+                const data = await res.json();
+                if (data.comments) {
+                    const container = document.getElementById(`comments-${postId}`);
+                    const btn = container.nextElementSibling;
+                    container.innerHTML = '';
+                    data.comments.forEach(c => {
+                        const div = document.createElement('div');
+                        div.className = 'flex space-x-3 mb-4 comment-item';
+                        div.id = `comment-${c.id}`;
+                        div.innerHTML = `
+                            <img src="${c.avatar}" class="w-8 h-8 rounded-full object-cover">
+                            <div class="flex-1">
+                                <div class="bg-white rounded-2xl px-4 py-3">
+                                    <div class="flex justify-between items-start mb-1">
+                                        <h5 class="font-semibold text-sm">${c.author_name}</h5>
+                                        <div class="dropdown relative">
+                                            <button class="p-1 rounded-full hover:bg-gray-100"><i class="bi bi-three-dots text-gray-400 text-xs"></i></button>
+                                            <div class="dropdown-menu absolute right-0 mt-1 w-32 bg-white rounded-xl shadow-2xl border border-gray-200 hidden z-10">
+                                                ${c.author_id === currentUserId ? `<button onclick="deleteComment(${c.id})" class="w-full text-left px-3 py-2 hover:bg-gray-50 text-red-600 text-sm"><i class="bi bi-trash mr-1"></i>Delete</button>` : ''}
+                                                <button onclick="reportContent('comment', ${c.id})" class="w-full text-left px-3 py-2 hover:bg-gray-50 text-orange-600 text-sm"><i class="bi bi-flag mr-1"></i>Report</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p class="text-gray-800 text-sm">${c.content}</p>
+                                    <div class="flex items-center space-x-3 mt-2">
+                                        <span class="text-xs text-gray-400">${c.created_at}</span>
                                     </div>
                                 </div>
                             </div>
-                            <p class="text-gray-800 text-sm">${comment.content}</p>
-                            <div class="flex items-center space-x-3 mt-2">
-                                <button onclick="likeComment(${comment.id})" class="text-xs text-gray-500 hover:text-blue-600 transition-colors duration-300">
-                                    Like
-                                </button>
-                                <span class="text-xs text-gray-400">${comment.created_at}</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                commentsContainer.appendChild(commentElement);
-            });
-            
-            // Remove the "View all comments" button
-            if (viewAllButton && viewAllButton.tagName === 'BUTTON') {
-                viewAllButton.remove();
+                        `;
+                        container.appendChild(div);
+                    });
+                    if (btn && btn.tagName === 'BUTTON') btn.remove();
+                }
+            } catch (error) {
+                showToast('Failed to load comments', 'danger');
             }
         }
-    } catch (error) {
-        console.error('Error loading comments:', error);
-        showToast('Error loading comments', 'danger');
-    }
-}
-    </script>
+        
+        // ==================== MEDIA PREVIEW ====================
+        function previewPostMedia(input) {
+            const preview = document.getElementById('mediaPreview');
+            preview.innerHTML = '';
+            
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const url = URL.createObjectURL(file);
+                const isVideo = file.type.startsWith('video');
+                
+                const el = document.createElement(isVideo ? 'video' : 'img');
+                el.src = url;
+                el.className = 'max-w-full max-h-64 rounded-lg object-contain';
+                if (isVideo) el.controls = true;
+                
+                preview.appendChild(el);
+            }
+        }
+        
+        // ==================== EVENT LISTENERS ====================
+        document.addEventListener('DOMContentLoaded', () => {
+            // Close modals on outside click
+            document.addEventListener('click', e => {
+                if (e.target.id === 'postModal') closePostModal();
+                if (e.target.id === 'shareModal') closeShareModal();
+                if (e.target.id === 'reportModal') closeReportModal();
+                
+                // Dropdowns
+                if (!e.target.closest('.dropdown')) {
+                    document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.add('hidden'));
+                }
+                if (e.target.closest('.dropdown button')) {
+                    const menu = e.target.closest('.dropdown').querySelector('.dropdown-menu');
+                    menu.classList.toggle('hidden');
+                }
+            });
+        
+            // ESC key
+            document.addEventListener('keydown', e => {
+                if (e.key === 'Escape') {
+                    closePostModal();
+                    closeShareModal();
+                    closeReportModal();
+                }
+            });
+        
+            // Report "Other" reason
+            document.addEventListener('change', e => {
+                if (e.target.name === 'reportReason' && e.target.value === 'Other') {
+                    document.getElementById('otherReasonContainer').classList.remove('hidden');
+                } else if (e.target.name === 'reportReason') {
+                    document.getElementById('otherReasonContainer').classList.add('hidden');
+                }
+            });
+        });
+        
+        // Expose functions to HTML
+        window.openPostModal = openPostModal;
+        window.closePostModal = closePostModal;
+        window.openShareModal = openShareModal;
+        window.closeShareModal = closeShareModal;
+        window.openReportModal = openReportModal;
+        window.closeReportModal = closeReportModal;
+        window.focusCommentInput = focusCommentInput;
+        window.handleCommentKeypress = handleCommentKeypress;
+        window.addComment = addComment;
+        window.deleteComment = deleteComment;
+        window.loadAllComments = loadAllComments;
+        window.shareToFeed = shareToFeed;
+        window.copyPostLink = copyPostLink;
+        window.joinGroup = joinGroup;
+        window.leaveGroup = leaveGroup;
+        window.reportContent = reportContent;
+        window.editPost = editPost;
+        window.deletePost = deletePost;
+        window.likePost = likePost;
+        window.reactToPost = reactToPost;
+        window.showReactions = showReactions;
+        window.hideReactions = hideReactions;
+        window.previewPostMedia = previewPostMedia;
+        
+        </script>
 </body>
 </html>

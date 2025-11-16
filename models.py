@@ -2,17 +2,11 @@ from extensions import db, login_manager
 from flask_login import UserMixin
 from datetime import datetime, timedelta
 import random, string, uuid, secrets
+import json  # Add this import
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import url_for
-
-# app/models.py  (or wherever the signal lives)
-
 from sqlalchemy import event
-
-
-# db = SQLAlchemy()
-
 
 # Association table for many-to-many friendship
 friendship = db.Table(
@@ -23,35 +17,21 @@ friendship = db.Table(
 )
 
 # Many-to-many block list
-# Many-to-many block list
 blocked_users = db.Table(
     "blocked_users",
     db.Column("blocker_id", db.Integer, db.ForeignKey("users.id"), primary_key=True),
     db.Column("blocked_id", db.Integer, db.ForeignKey("users.id"), primary_key=True),
 )
 
-# Relationships - FIXED VERSION
-# blocks = db.relationship(
-#         'User',
-#         secondary=blocked_users,
-#         primaryjoin=(blocked_users.c.blocker_id == id),
-#         secondaryjoin=(blocked_users.c.blocked_id == id),
-#         backref=db.backref('blockers', lazy='dynamic'),  # Changed from 'blocked_by'
-#         lazy='dynamic'
-#     )
-
-
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(user_id)
-
 
 group_members = db.Table(
     "group_members",
     db.Column("user_id", db.Integer, db.ForeignKey("users.id", ondelete="CASCADE")),
     db.Column("group_id", db.Integer, db.ForeignKey("groups.id", ondelete="CASCADE")),
 )
-
 
 # Main User model
 class User(db.Model, UserMixin):
@@ -74,8 +54,8 @@ class User(db.Model, UserMixin):
     updated_at = db.Column(
         db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
     )
-    email_token = db.Column(db.String(255))
-    email_token_expires = db.Column(db.DateTime)
+    # REMOVED DUPLICATE: email_token = db.Column(db.String(255))
+    # REMOVED DUPLICATE: email_token_expires = db.Column(db.DateTime)
     educational_level = db.Column(db.String(50), nullable=True)
     occupation = db.Column(db.String(100), nullable=True)
     ethnicity = db.Column(db.String(50), nullable=True)
@@ -97,11 +77,24 @@ class User(db.Model, UserMixin):
     otp_expires = db.Column(db.DateTime, nullable=True)
     is_online = db.Column(db.Boolean, default=False)
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
-    about_me = db.Column(db.Text, nullable=True)  # NEW FIELD
-    admin_role = db.Column(
-        db.String(50), default="moderator"
-    )  # super_admin, admin, moderator
-    admin_permissions = db.Column(db.Text)  # JSON string of permissions
+    about_me = db.Column(db.Text, nullable=True)
+    admin_role = db.Column(db.String(50), default="moderator")
+    admin_permissions = db.Column(db.Text)
+    
+    def get_user_reaction(self, post_id):
+        """Get user's reaction for a specific post"""
+        reaction = Reaction.query.filter_by(
+            user_id=self.id, 
+            post_id=post_id
+        ).first()
+        return reaction.reaction_type if reaction else None
+    
+    def has_reacted_to_post(self, post_id):
+        """Check if user has reacted to a post"""
+        return Reaction.query.filter_by(
+            user_id=self.id, 
+            post_id=post_id
+        ).first() is not None
 
     # Add these methods for admin functionality
     def has_admin_permission(self, permission):
@@ -119,12 +112,8 @@ class User(db.Model, UserMixin):
     # Enhanced blocking system using a proper association table
     _blocked_users = db.Table(
         "user_blocks",
-        db.Column(
-            "blocker_id", db.Integer, db.ForeignKey("users.id"), primary_key=True
-        ),
-        db.Column(
-            "blocked_id", db.Integer, db.ForeignKey("users.id"), primary_key=True
-        ),
+        db.Column("blocker_id", db.Integer, db.ForeignKey("users.id"), primary_key=True),
+        db.Column("blocked_id", db.Integer, db.ForeignKey("users.id"), primary_key=True),
         db.Column("created_at", db.DateTime, default=datetime.utcnow),
         db.UniqueConstraint("blocker_id", "blocked_id", name="uq_user_block"),
     )
@@ -141,11 +130,9 @@ class User(db.Model, UserMixin):
 
     def generate_otp(self):
         """Generate a 6-digit numeric OTP"""
-        self.otp = f"{random.randint(0, 999999):06d}"  # always 6 digits
+        self.otp = f"{random.randint(0, 999999):06d}"
         self.otp_expires = datetime.utcnow() + timedelta(minutes=10)
         db.session.commit()
-
-    # In your User model, enhance the blocked users methods:
 
     def get_blocked_users(self):
         """Get list of users blocked by current user"""
@@ -156,52 +143,35 @@ class User(db.Model, UserMixin):
         blocked_users = self.get_blocked_users()
         result = []
         for user in blocked_users:
-            result.append(
-                {
-                    "id": user.id,
-                    "first_name": user.first_name,
-                    "last_name": user.last_name,
-                    "profile_pic": user.profile_pic
-                    or url_for("static", filename="assets/img/default-avatar.png"),
-                    "email": user.email,
-                    "created_at": user.created_at,
-                }
-            )
+            result.append({
+                "id": user.id,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "profile_pic": user.profile_pic or url_for("static", filename="assets/img/default-avatar.png"),
+                "email": user.email,
+                "created_at": user.created_at,
+            })
         return result
 
     def get_blockers(self):
         """Get list of users who blocked current user"""
-        return (
-            User.query.join(
-                self._blocked_users, User.id == self._blocked_users.c.blocker_id
-            )
-            .filter(self._blocked_users.c.blocked_id == self.id)
-            .all()
-        )
+        return User.query.join(
+            self._blocked_users, User.id == self._blocked_users.c.blocker_id
+        ).filter(self._blocked_users.c.blocked_id == self.id).all()
 
     def is_blocked_by(self, user):
         """Check if this user is blocked by another user"""
-        return (
-            db.session.query(self._blocked_users)
-            .filter(
-                self._blocked_users.c.blocker_id == user.id,
-                self._blocked_users.c.blocked_id == self.id,
-            )
-            .first()
-            is not None
-        )
+        return db.session.query(self._blocked_users).filter(
+            self._blocked_users.c.blocker_id == user.id,
+            self._blocked_users.c.blocked_id == self.id,
+        ).first() is not None
 
     def is_blocking(self, user):
         """Check if this user is blocking another user"""
-        return (
-            db.session.query(self._blocked_users)
-            .filter(
-                self._blocked_users.c.blocker_id == self.id,
-                self._blocked_users.c.blocked_id == user.id,
-            )
-            .first()
-            is not None
-        )
+        return db.session.query(self._blocked_users).filter(
+            self._blocked_users.c.blocker_id == self.id,
+            self._blocked_users.c.blocked_id == user.id,
+        ).first() is not None
 
     def block(self, user):
         """Block a user"""
@@ -217,14 +187,8 @@ class User(db.Model, UserMixin):
 
             # Remove any pending friend requests
             FriendRequest.query.filter(
-                (
-                    (FriendRequest.sender_id == self.id)
-                    & (FriendRequest.receiver_id == user.id)
-                )
-                | (
-                    (FriendRequest.sender_id == user.id)
-                    & (FriendRequest.receiver_id == self.id)
-                )
+                ((FriendRequest.sender_id == self.id) & (FriendRequest.receiver_id == user.id)) |
+                ((FriendRequest.sender_id == user.id) & (FriendRequest.receiver_id == self.id))
             ).delete()
 
             db.session.commit()
@@ -233,8 +197,8 @@ class User(db.Model, UserMixin):
         """Unblock a user"""
         if self.is_blocking(user):
             stmt = self._blocked_users.delete().where(
-                (self._blocked_users.c.blocker_id == self.id)
-                & (self._blocked_users.c.blocked_id == user.id)
+                (self._blocked_users.c.blocker_id == self.id) &
+                (self._blocked_users.c.blocked_id == user.id)
             )
             db.session.execute(stmt)
             db.session.commit()
@@ -249,13 +213,9 @@ class User(db.Model, UserMixin):
 
     def get_blockers_count(self):
         """Get count of users who blocked this user"""
-        return (
-            User.query.join(
-                self._blocked_users, User.id == self._blocked_users.c.blocker_id
-            )
-            .filter(self._blocked_users.c.blocked_id == self.id)
-            .count()
-        )
+        return User.query.join(
+            self._blocked_users, User.id == self._blocked_users.c.blocker_id
+        ).filter(self._blocked_users.c.blocked_id == self.id).count()
 
     def can_interact_with(self, other_user):
         """Check if users can interact (neither has blocked the other)"""
@@ -291,8 +251,7 @@ class User(db.Model, UserMixin):
     def pending_requests(self):
         """IDs of users who sent a PENDING request to me"""
         return [
-            req.sender_id
-            for req in self.received_requests.filter(
+            req.sender_id for req in self.received_requests.filter(
                 FriendRequest.status == FriendRequestStatus.PENDING
             ).all()
         ]
@@ -301,8 +260,7 @@ class User(db.Model, UserMixin):
     def sent_pending_ids(self):
         """IDs of users I sent a PENDING request to"""
         return [
-            req.receiver_id
-            for req in self.sent_requests.filter(
+            req.receiver_id for req in self.sent_requests.filter(
                 FriendRequest.status == FriendRequestStatus.PENDING
             ).all()
         ]
@@ -313,9 +271,7 @@ class User(db.Model, UserMixin):
             return False
         if user in self.friends:
             return False
-        if FriendRequest.query.filter_by(
-            sender_id=self.id, receiver_id=user.id
-        ).first():
+        if FriendRequest.query.filter_by(sender_id=self.id, receiver_id=user.id).first():
             return False
 
         request = FriendRequest(sender=self, receiver=user)
@@ -339,7 +295,7 @@ class User(db.Model, UserMixin):
         if not req:
             return False
 
-        req.status = FriendRequestStatus.ACCEPTED  # <-- enum
+        req.status = FriendRequestStatus.ACCEPTED
         self.friends.append(user)
         user.friends.append(self)
 
@@ -359,7 +315,7 @@ class User(db.Model, UserMixin):
         ).first()
         if not req:
             return False
-        req.status = FriendRequestStatus.DECLINED  # <-- enum
+        req.status = FriendRequestStatus.DECLINED
         db.session.commit()
         return True
 
@@ -387,18 +343,9 @@ class User(db.Model, UserMixin):
 
     def has_liked_post(self, post_id):
         """Check if user has liked a specific post"""
-        return (
-            Like.query.filter_by(user_id=self.id, post_id=post_id).first() is not None
-        )
+        return Like.query.filter_by(user_id=self.id, post_id=post_id).first() is not None
 
-    def create_notification(
-        self,
-        actor,
-        notification_type,
-        entity_id=None,
-        entity_type=None,
-        custom_message=None,
-    ):
+    def create_notification(self, actor, notification_type, entity_id=None, entity_type=None, custom_message=None):
         """Create a notification for this user"""
         messages = {
             NotificationType.FRIEND_REQUEST: f"{actor.full_name} sent you a friend request",
@@ -411,9 +358,7 @@ class User(db.Model, UserMixin):
             NotificationType.MENTION: f"{actor.full_name} mentioned you in a post",
         }
 
-        message = custom_message or messages.get(
-            notification_type, "You have a new notification"
-        )
+        message = custom_message or messages.get(notification_type, "You have a new notification")
 
         notification = Notification(
             user_id=self.id,
@@ -441,106 +386,18 @@ class User(db.Model, UserMixin):
     def recent_notifications(self):
         """Get recent notifications (both read and unread)"""
         try:
-            return (
-                Notification.query.filter_by(user_id=self.id)
-                .order_by(Notification.created_at.desc())
-                .limit(20)
-                .all()
-            )
+            return Notification.query.filter_by(user_id=self.id).order_by(
+                Notification.created_at.desc()
+            ).limit(20).all()
         except Exception as e:
             print(f"Error in recent_notifications: {e}")
             return []
-
-    # models.py  (inside User class)
-
-    def is_blocked_by(self, user):
-        """Check if this user is blocked by another user"""
-        # Method 1: Try the relationship first
-        if hasattr(self, "blockers"):
-            return (
-                self.blockers.filter(blocked_users.c.blocker_id == user.id).first()
-                is not None
-            )
-
-        # Method 2: Direct query fallback
-        from sqlalchemy import and_
-
-        return (
-            db.session.query(blocked_users)
-            .filter(
-                and_(
-                    blocked_users.c.blocker_id == user.id,
-                    blocked_users.c.blocked_id == self.id,
-                )
-            )
-            .first()
-            is not None
-        )
-
-    def is_blocking(self, user):
-        """Check if this user is blocking another user"""
-        if hasattr(self, "blocks"):
-            return (
-                self.blocks.filter(blocked_users.c.blocked_id == user.id).first()
-                is not None
-            )
-
-        # Fallback
-        from sqlalchemy import and_
-
-        return (
-            db.session.query(blocked_users)
-            .filter(
-                and_(
-                    blocked_users.c.blocker_id == self.id,
-                    blocked_users.c.blocked_id == user.id,
-                )
-            )
-            .first()
-            is not None
-        )
-
-    def block(self, user):
-        if not self.is_blocking(user):
-            # Using the relationship
-            if hasattr(self, "blocks"):
-                self.blocks.append(user)
-            else:
-                # Fallback: direct insert
-                stmt = blocked_users.insert().values(
-                    blocker_id=self.id, blocked_id=user.id
-                )
-                db.session.execute(stmt)
-
-            # Remove friendship if exists
-            if user in self.friends:
-                self.remove_friend(user)
-            db.session.commit()
-
-    def unblock(self, user):
-        if self.is_blocking(user):
-            if hasattr(self, "blocks"):
-                self.blocks.remove(user)
-            else:
-                # Fallback: direct delete
-                stmt = blocked_users.delete().where(
-                    (blocked_users.c.blocker_id == self.id)
-                    & (blocked_users.c.blocked_id == user.id)
-                )
-                db.session.execute(stmt)
-            db.session.commit()
-
-    def is_visible_to(self, viewer):
-        """True if viewer can see this user (not blocked either way)"""
-        return not (self.is_blocking(viewer) or self.is_blocked_by(viewer))
-
 
 # Friend request statuses
 class FriendRequestStatus:
     PENDING = "pending"
     ACCEPTED = "accepted"
     DECLINED = "declined"
-
 
 # Friend Request model
 class FriendRequest(db.Model):
@@ -553,51 +410,95 @@ class FriendRequest(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     sender = db.relationship("User", foreign_keys=[sender_id], backref="sent_requests")
-    receiver = db.relationship(
-        "User", foreign_keys=[receiver_id], backref="received_requests"
-    )
+    receiver = db.relationship("User", foreign_keys=[receiver_id], backref="received_requests")
 
-    __table_args__ = (
-        db.UniqueConstraint("sender_id", "receiver_id", name="uq_friend_request"),
-    )
-
+    __table_args__ = (db.UniqueConstraint("sender_id", "receiver_id", name="uq_friend_request"),)
 
 # Post model
 class Post(db.Model):
+    __tablename__ = "posts"
+    
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.Text, nullable=False)
     image = db.Column(db.String(255))
     video = db.Column(db.String(255))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     author_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    group_id = db.Column(db.Integer, db.ForeignKey("groups.id"), nullable=True) 
+    group_id = db.Column(db.Integer, db.ForeignKey("groups.id"), nullable=True)
 
     author = db.relationship("User", backref="posts")
-    comments = db.relationship(
-        "Comment", backref="post", lazy="dynamic", cascade="all, delete-orphan"
-    )
-    likes = db.relationship(
-        "Like", backref="post", lazy="dynamic", cascade="all, delete-orphan"
-    )
+    comments = db.relationship("Comment", backref="post", lazy="selectin", cascade="all, delete-orphan")
+    likes = db.relationship("Like", backref="post", lazy="dynamic", cascade="all, delete-orphan")
 
     @property
     def comments_list(self):
+        """Return ordered list of comments for template compatibility"""
         return self.comments.order_by(Comment.created_at.asc()).all()
+    
+    def get_reaction_count(self):
+        """Get total reaction count"""
+        return Reaction.query.filter_by(post_id=self.id).count()
 
     @property
     def likes_list(self):
         return self.likes.all()
 
+    # Enhanced reaction methods - MOVED FROM REACTION CLASS
+    def toggle_reaction(self, user_id, reaction_type):
+        """Toggle reaction for a post"""
+        existing_reaction = Reaction.query.filter_by(
+            user_id=user_id, 
+            post_id=self.id
+        ).first()
+        
+        if existing_reaction:
+            if existing_reaction.reaction_type == reaction_type:
+                # Remove reaction if same type clicked again
+                db.session.delete(existing_reaction)
+                db.session.commit()
+                return False, 'removed'
+            else:
+                # Update reaction type
+                existing_reaction.reaction_type = reaction_type
+                db.session.commit()
+                return True, 'updated'
+        else:
+            # Add new reaction
+            new_reaction = Reaction(
+                user_id=user_id,
+                post_id=self.id,
+                reaction_type=reaction_type
+            )
+            db.session.add(new_reaction)
+            db.session.commit()
+            return True, 'added'
+
+    def get_reaction_count(self):
+        """Get total reaction count"""
+        return Reaction.query.filter_by(post_id=self.id).count()
+
+    def get_user_reaction(self, user_id):
+        """Get user's reaction for this post"""
+        reaction = Reaction.query.filter_by(user_id=user_id, post_id=self.id).first()
+        return reaction.reaction_type if reaction else None
+
+    def get_reaction_breakdown(self):
+        """Get count of each reaction type"""
+        from sqlalchemy import func
+        breakdown = db.session.query(
+            Reaction.reaction_type,
+            func.count(Reaction.id)
+        ).filter(Reaction.post_id == self.id).group_by(Reaction.reaction_type).all()
+        return dict(breakdown)
 
 @event.listens_for(FriendRequest, "after_insert")
 def maybe_create_notification(mapper, connection, target):
     if getattr(target, "_skip_notification", False):
         return
 
-    # Use correct column names
     notification = Notification(
-        user_id=target.receiver_id,  # receiver gets the notification
-        actor_id=target.sender_id,  # sender is the actor
+        user_id=target.receiver_id,
+        actor_id=target.sender_id,
         type="friend_request",
         message=f"{target.sender.full_name} sent you a friend request",
         entity_id=target.id,
@@ -605,46 +506,26 @@ def maybe_create_notification(mapper, connection, target):
     db.session.add(notification)
     db.session.commit()
 
-
 # Comment model
 class Comment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     author_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    post_id = db.Column(db.Integer, db.ForeignKey("post.id"), nullable=False)
+    post_id = db.Column(db.Integer, db.ForeignKey("posts.id"), nullable=False)
     parent_id = db.Column(db.Integer, db.ForeignKey("comment.id"), nullable=True)
 
     author = db.relationship("User", backref="comments")
     parent = db.relationship("Comment", remote_side=[id], backref="replies")
 
-
 # Like model
 class Like(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    post_id = db.Column(db.Integer, db.ForeignKey("post.id"), nullable=False)
+    post_id = db.Column(db.Integer, db.ForeignKey("posts.id"), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     __table_args__ = (db.UniqueConstraint("user_id", "post_id", name="unique_like"),)
-
-
-# # models.py
-# class BlockedUser(db.Model):
-#     __tablename__ = 'blocked_users'
-#     __table_args__ = (
-#         db.UniqueConstraint('blocker_id', 'blocked_id', name='uq_block'),
-#         {'extend_existing': True}
-#     )
-
-#     id         = db.Column(db.Integer, primary_key=True)
-#     blocker_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-#     blocked_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-#     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-#     blocker = db.relationship('User', foreign_keys=[blocker_id])
-#     blocked = db.relationship('User', foreign_keys=[blocked_id])
-
 
 # Notification Types
 class NotificationType:
@@ -657,15 +538,14 @@ class NotificationType:
     NEW_POST = "new_post"
     MENTION = "mention"
 
-
 # Notification Model
 class Notification(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     actor_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     type = db.Column(db.String(50), nullable=False)
-    entity_id = db.Column(db.Integer)  # post_id, comment_id, etc.
-    entity_type = db.Column(db.String(50))  # 'post', 'comment', 'user'
+    entity_id = db.Column(db.Integer)
+    entity_type = db.Column(db.String(50))
     message = db.Column(db.Text, nullable=False)
     is_read = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -683,16 +563,11 @@ class Notification(db.Model):
             "actor": {
                 "id": self.actor.id,
                 "name": self.actor.full_name,
-                "avatar": self.actor.profile_pic
-                or url_for("static", filename="assets/img/default-avatar.png"),
+                "avatar": self.actor.profile_pic or url_for("static", filename="assets/img/default-avatar.png"),
             },
             "entity_id": self.entity_id,
             "entity_type": self.entity_type,
         }
-
-
-from flask_socketio import emit
-
 
 class Message(db.Model):
     __tablename__ = "messages"
@@ -701,12 +576,10 @@ class Message(db.Model):
     receiver_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     content = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow, index=True)
-    status = db.Column(db.String(20), default="sent")  # sent, delivered, read
+    status = db.Column(db.String(20), default="sent")
 
     sender = db.relationship("User", foreign_keys=[sender_id], backref="sent_messages")
-    receiver = db.relationship(
-        "User", foreign_keys=[receiver_id], backref="received_messages"
-    )
+    receiver = db.relationship("User", foreign_keys=[receiver_id], backref="received_messages")
 
     def to_dict(self):
         return {
@@ -717,18 +590,12 @@ class Message(db.Model):
             "timestamp": self.timestamp.isoformat(),
             "status": self.status,
             "sender_name": self.sender.full_name,
-            "sender_avatar": self.sender.profile_pic
-            or url_for("static", filename="assets/img/default-avatar.png"),
+            "sender_avatar": self.sender.profile_pic or url_for("static", filename="assets/img/default-avatar.png"),
         }
 
     @staticmethod
     def are_friends(u1, u2):
         return u2 in u1.friends
-
-
-# Add Group model for admin group management
-# Association table for many-to-many relationship between Users and Groups
-
 
 class Group(db.Model):
     __tablename__ = "groups"
@@ -740,21 +607,12 @@ class Group(db.Model):
     image = db.Column(db.String(500))
     is_private = db.Column(db.Boolean, default=False)
     is_active = db.Column(db.Boolean, default=True)
-
-    created_by = db.Column(
-        db.Integer, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True
-    )
-
+    created_by = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     member_count = db.Column(db.Integer, default=0)
 
-    # Relationships
-    creator = db.relationship(
-        "User", foreign_keys=[created_by], backref="created_groups"
-    )
-    members = db.relationship(
-        "User", secondary=group_members, backref="user_groups", lazy="dynamic"
-    )
+    creator = db.relationship("User", foreign_keys=[created_by], backref="created_groups")
+    members = db.relationship("User", secondary=group_members, backref="user_groups", lazy="dynamic")
     
     def update_member_count(self):
         """Update the member count from the actual relationship"""
@@ -775,22 +633,17 @@ class Group(db.Model):
             "member_count": self.member_count,
         }
 
-
-# Sponsored Ad model
 class SponsoredAd(db.Model):
     __tablename__ = "sponsored_ads"
-
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
     image = db.Column(db.String(500))
-    target_audience = db.Column(
-        db.String(50), default="all"
-    )  # all, male, female, premium
+    target_audience = db.Column(db.String(50), default="all")
     start_date = db.Column(db.DateTime, nullable=False)
     end_date = db.Column(db.DateTime, nullable=False)
     budget = db.Column(db.Float, default=0.0)
-    status = db.Column(db.String(20), default="active")  # active, paused, completed
+    status = db.Column(db.String(20), default="active")
     created_by = db.Column(db.Integer, db.ForeignKey("users.id"))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     clicks = db.Column(db.Integer, default=0)
@@ -798,20 +651,15 @@ class SponsoredAd(db.Model):
 
     creator = db.relationship("User", foreign_keys=[created_by])
 
-
-# Reported Content model
 class ReportedContent(db.Model):
     __tablename__ = "reported_content"
-
     id = db.Column(db.Integer, primary_key=True)
     reporter_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     reported_user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
-    content_type = db.Column(db.String(50))  # post, comment, profile, message
-    content_id = db.Column(db.Integer)  # ID of the reported content
+    content_type = db.Column(db.String(50))
+    content_id = db.Column(db.Integer)
     reason = db.Column(db.Text, nullable=False)
-    status = db.Column(
-        db.String(20), default="pending"
-    )  # pending, reviewed, resolved, dismissed
+    status = db.Column(db.String(20), default="pending")
     admin_notes = db.Column(db.Text)
     resolved_by = db.Column(db.Integer, db.ForeignKey("users.id"))
     resolved_at = db.Column(db.DateTime)
@@ -820,3 +668,18 @@ class ReportedContent(db.Model):
     reporter = db.relationship("User", foreign_keys=[reporter_id])
     reported_user = db.relationship("User", foreign_keys=[reported_user_id])
     resolver = db.relationship("User", foreign_keys=[resolved_by])
+
+class Reaction(db.Model):
+    __tablename__ = 'reactions'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    post_id = db.Column(db.Integer, db.ForeignKey('posts.id', ondelete='CASCADE'), nullable=False)
+    reaction_type = db.Column(db.String(20), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Fixed relationships with proper cascade
+    user = db.relationship('User', backref=db.backref('reactions', cascade='all, delete-orphan'))
+    post = db.relationship('Post', backref=db.backref('post_reactions', cascade='all, delete-orphan'))
+    
+    __table_args__ = (db.UniqueConstraint('user_id', 'post_id', name='unique_user_post_reaction'),)

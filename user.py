@@ -89,6 +89,8 @@ cloudinary.config(
 )
 
 
+
+
 auth = Blueprint("auth", __name__)
 
 
@@ -2056,6 +2058,8 @@ def all_groups():
     )
 
 
+
+
 @auth.route("/groups/<int:group_id>")
 @login_required
 def group_page(group_id):
@@ -2064,16 +2068,26 @@ def group_page(group_id):
     
     # Check membership properly
     is_member = group.members.filter_by(id=current_user.id).first() is not None
+    
+    default_avatar = url_for('static', filename='assets/img/default-avatar.png')
 
     # Get group posts
-    posts = Post.query.filter_by(group_id=group_id).order_by(Post.created_at.desc()).all()
+    posts = Post.query.filter_by(group_id=group_id)\
+        .options(
+            db.joinedload(Post.author),
+            db.joinedload(Post.comments).joinedload(Comment.author)
+        )\
+        .order_by(Post.created_at.desc())\
+        .all()
+    
 
     return render_template(
         "group_detail.html",
         group=group,
         is_member=is_member,
         posts=posts,
-        current_user=current_user
+        current_user=current_user,
+        default_avatar=default_avatar
     )
 # @auth.route("/groups/create", methods=["POST"])
 # @login_required
@@ -2205,6 +2219,8 @@ def group_detail(group_id):
     group = Group.query.get_or_404(group_id)
     is_member = current_user in group.members
     
+    default_avatar = url_for('static', filename='assets/img/default-avatar.png')
+    
     # Get posts for this group
     posts = Post.query.filter_by(group_id=group_id).order_by(Post.created_at.desc()).all()
     
@@ -2213,7 +2229,8 @@ def group_detail(group_id):
         group=group,
         is_member=is_member,
         posts=posts,
-        current_user=current_user
+        current_user=current_user,
+        default_avatar=default_avatar,
     )
 
 @auth.route("/groups/create", methods=['GET', 'POST'])
@@ -2612,3 +2629,124 @@ def get_group_comments(post_id):
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
+    
+
+
+@auth.route('/like_post/<int:post_id>', methods=['POST'])
+@login_required
+def like_group_post(post_id):
+    try:
+        post = Post.query.get_or_404(post_id)
+        liked = post.toggle_like(current_user.id)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'liked': liked,
+            'like_count': len(post.likes_list)
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@auth.route('/add_comment/<int:post_id>', methods=['POST'])
+@login_required
+def add_group_comment(post_id):
+    try:
+        data = request.get_json()
+        content = data.get('content', '').strip()
+        
+        if not content:
+            return jsonify({'success': False, 'error': 'Comment cannot be empty'})
+        
+        comment = Comment(
+            content=content,
+            author_id=current_user.id,
+            post_id=post_id
+        )
+        
+        db.session.add(comment)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'comment': {
+                'id': comment.id,
+                'content': comment.content,
+                'author_name': current_user.full_name,
+                'author_avatar': current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png'),
+                'created_at': 'Just now'
+            }
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    
+    
+    
+    
+from models import Reaction
+    
+    
+@auth.route('/react_post/<int:post_id>', methods=['POST'])
+@login_required
+def react_to_post(post_id):
+    """Handle post reactions"""
+    try:
+        data = request.get_json()
+        reaction_type = data.get('reaction_type', 'like')
+        
+        # Validate reaction type
+        valid_reactions = ['like', 'love', 'care', 'haha', 'wow', 'sad', 'angry']
+        if reaction_type not in valid_reactions:
+            return jsonify({'success': False, 'error': 'Invalid reaction type'}), 400
+        
+        post = Post.query.get_or_404(post_id)
+        
+        # Check for existing reaction
+        existing_reaction = Reaction.query.filter_by(
+            user_id=current_user.id, 
+            post_id=post_id
+        ).first()
+        
+        if existing_reaction:
+            if existing_reaction.reaction_type == reaction_type:
+                # Remove reaction if same type clicked again
+                db.session.delete(existing_reaction)
+                reacted = False
+            else:
+                # Update reaction type
+                existing_reaction.reaction_type = reaction_type
+                reacted = True
+        else:
+            # Add new reaction
+            new_reaction = Reaction(
+                user_id=current_user.id,
+                post_id=post_id,
+                reaction_type=reaction_type
+            )
+            db.session.add(new_reaction)
+            reacted = True
+        
+        db.session.commit()
+        
+        # Get updated reaction count
+        reaction_count = Reaction.query.filter_by(post_id=post_id).count()
+        user_reaction = Reaction.query.filter_by(
+            user_id=current_user.id, 
+            post_id=post_id
+        ).first()
+        
+        return jsonify({
+            'success': True,
+            'reacted': reacted,
+            'reaction_type': reaction_type,
+            'total_reactions': reaction_count,
+            'user_reaction': user_reaction.reaction_type if user_reaction else None
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"Reaction error: {e}")
+        return jsonify({'success': False, 'error': 'Failed to react to post'}), 500
