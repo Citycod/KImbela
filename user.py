@@ -532,7 +532,7 @@ def resend_verification():
 def login():
     # If already logged in → go to dashboard
     if current_user.is_authenticated:
-        return redirect(url_for("main.user_dashboard"))
+        return redirect(url_for("auth.user_dashboard"))
 
     if request.method == "POST":
         email = request.form.get("email", "").strip().lower()
@@ -546,8 +546,6 @@ def login():
         if not password:
             flash("Please enter your password.", "danger")
             return render_template("login.html")
-        
-        
 
         # === Find user ===
         user = User.query.filter_by(email=email).first()
@@ -576,7 +574,7 @@ def login():
         next_page = request.args.get("next")
         if next_page and next_page.startswith("/"):
             return redirect(next_page)
-        
+
         if user.is_admin:
             return redirect(url_for("auth.admin_dashboard"))
 
@@ -586,52 +584,57 @@ def login():
     return render_template("login.html")
 
 
-
 # Add these routes to your auth blueprint
 
-@auth.route('/admin_dashboard')
+
+@auth.route("/admin_dashboard")
 @login_required
 def admin_dashboard():
     if not current_user.is_admin and not current_user.is_super_admin:
-        flash('Access denied. Admin privileges required.', 'danger')
-        return redirect(url_for('auth.user_dashboard'))
-    
+        flash("Access denied. Admin privileges required.", "danger")
+        return redirect(url_for("auth.user_dashboard"))
+
     # Get statistics for dashboard
     total_users = User.query.count()
     active_users = User.query.filter_by(is_active=True).count()
     pending_users = User.query.filter_by(is_active=False).count()
     total_groups = Group.query.count()
     active_groups = Group.query.filter_by(is_active=True).count()
-    pending_reports = ReportedContent.query.filter_by(status='pending').count()
-    active_ads = SponsoredAd.query.filter_by(status='active').count()
-    
+    pending_reports = ReportedContent.query.filter_by(status="pending").count()
+    active_ads = SponsoredAd.query.filter_by(status="active").count()
+
     # Recent activity
     recent_users = User.query.order_by(User.created_at.desc()).limit(5).all()
-    recent_reports = ReportedContent.query.order_by(ReportedContent.created_at.desc()).limit(5).all()
-    
-    return render_template('admin_dashboard.html',
-                         total_users=total_users,
-                         active_users=active_users,
-                         pending_users=pending_users,
-                         total_groups=total_groups,
-                         active_groups=active_groups,
-                         pending_reports=pending_reports,
-                         active_ads=active_ads,
-                         recent_users=recent_users,
-                         recent_reports=recent_reports)
+    recent_reports = (
+        ReportedContent.query.order_by(ReportedContent.created_at.desc()).limit(5).all()
+    )
+
+    return render_template(
+        "admin_dashboard.html",
+        total_users=total_users,
+        active_users=active_users,
+        pending_users=pending_users,
+        total_groups=total_groups,
+        active_groups=active_groups,
+        pending_reports=pending_reports,
+        active_ads=active_ads,
+        recent_users=recent_users,
+        recent_reports=recent_reports,
+    )
+
 
 # @auth.route('/admin/users')
 # @login_required
 # def admin_users():
 #     if not current_user.is_admin and not current_user.is_super_admin:
 #         return jsonify({'error': 'Access denied'}), 403
-    
+
 #     page = request.args.get('page', 1, type=int)
 #     search = request.args.get('search', '')
 #     status_filter = request.args.get('status', 'all')
-    
+
 #     query = User.query
-    
+
 #     if search:
 #         query = query.filter(
 #             db.or_(
@@ -640,108 +643,112 @@ def admin_dashboard():
 #                 User.email.ilike(f'%{search}%')
 #             )
 #         )
-    
+
 #     if status_filter == 'active':
 #         query = query.filter_by(is_active=True)
 #     elif status_filter == 'pending':
 #         query = query.filter_by(is_active=False)
 #     elif status_filter == 'admin':
 #         query = query.filter(db.or_(User.is_admin == True, User.is_super_admin == True))
-    
+
 #     users = query.order_by(User.created_at.desc()).paginate(
 #         page=page, per_page=20, error_out=False
 #     )
-    
+
 #     return render_template('admin_users.html', users=users, search=search, status_filter=status_filter)
 
-@auth.route('/admin/users/<int:user_id>/toggle_status', methods=['POST'])
+
+@auth.route("/admin/users/<int:user_id>/toggle_status", methods=["POST"])
 @login_required
 def admin_toggle_user_status(user_id):
     if not current_user.is_admin and not current_user.is_super_admin:
-        return jsonify({'success': False, 'error': 'Access denied'}), 403
-    
+        return jsonify({"success": False, "error": "Access denied"}), 403
+
     user = User.query.get_or_404(user_id)
     user.is_active = not user.is_active
     db.session.commit()
-    
-    return jsonify({'success': True, 'is_active': user.is_active})
 
-@auth.route('/admin/users/<int:user_id>/make_admin', methods=['POST'])
+    return jsonify({"success": True, "is_active": user.is_active})
+
+
+@auth.route("/admin/users/<int:user_id>/make_admin", methods=["POST"])
 @login_required
 def admin_make_admin(user_id):
     if not current_user.is_super_admin:
-        return jsonify({'success': False, 'error': 'Super admin required'}), 403
-    
+        return jsonify({"success": False, "error": "Super admin required"}), 403
+
     user = User.query.get_or_404(user_id)
     user.is_admin = True
     db.session.commit()
-    
-    return jsonify({'success': True})
 
-@auth.route('/admin/users/<int:user_id>/remove_admin', methods=['POST'])
+    return jsonify({"success": True})
+
+
+@auth.route("/admin/users/<int:user_id>/remove_admin", methods=["POST"])
 @login_required
 def admin_remove_admin(user_id):
     if not current_user.is_super_admin:
-        return jsonify({'success': False, 'error': 'Super admin required'}), 403
-    
+        return jsonify({"success": False, "error": "Super admin required"}), 403
+
     user = User.query.get_or_404(user_id)
     user.is_admin = False
     db.session.commit()
-    
-    return jsonify({'success': True})
 
-@auth.route('/admin/groups')
+    return jsonify({"success": True})
+
+
+@auth.route("/admin/groups")
 @login_required
 def admin_groups():
     if not current_user.is_admin and not current_user.is_super_admin:
-        return jsonify({'error': 'Access denied'}), 403
-    
-    page = request.args.get('page', 1, type=int)
-    search = request.args.get('search', '')
-    
+        return jsonify({"error": "Access denied"}), 403
+
+    page = request.args.get("page", 1, type=int)
+    search = request.args.get("search", "")
+
     query = Group.query
-    
+
     if search:
         query = query.filter(
             db.or_(
-                Group.name.ilike(f'%{search}%'),
-                Group.description.ilike(f'%{search}%')
+                Group.name.ilike(f"%{search}%"), Group.description.ilike(f"%{search}%")
             )
         )
-    
+
     groups = query.order_by(Group.created_at.desc()).paginate(
         page=page, per_page=12, error_out=False
     )
-    
-    return render_template('admin_groups.html', groups=groups, search=search)
 
-@auth.route('/admin/groups/create', methods=['POST'])
+    return render_template("admin_groups.html", groups=groups, search=search)
+
+
+@auth.route("/admin/groups/create", methods=["POST"])
 @login_required
 def admin_create_group():
     if not (current_user.is_admin or current_user.is_super_admin):
-        return jsonify({'success': False, 'error': 'Access denied'}), 403
+        return jsonify({"success": False, "error": "Access denied"}), 403
 
     # Force parsing of form data even when files are present
-    name = request.form.get('name', '').strip()
-    description = request.form.get('description', '').strip()
-    category = request.form.get('category', 'social')
-    is_private_str = request.form.get('is_private', 'false')
-    is_private = is_private_str == 'true' or is_private_str == 'True'
+    name = request.form.get("name", "").strip()
+    description = request.form.get("description", "").strip()
+    category = request.form.get("category", "social")
+    is_private_str = request.form.get("is_private", "false")
+    is_private = is_private_str == "true" or is_private_str == "True"
 
     if not name:
-        return jsonify({'success': False, 'error': 'Group name is required'}), 400
+        return jsonify({"success": False, "error": "Group name is required"}), 400
 
     group = Group(
         name=name,
         description=description or None,
         category=category,
         is_private=is_private,
-        created_by=current_user.id
+        created_by=current_user.id,
     )
 
     # Handle image
-    if 'image' in request.files:
-        file = request.files['image']
+    if "image" in request.files:
+        file = request.files["image"]
         if file and file.filename and allowed_file(file.filename):
             try:
                 result = cloudinary.uploader.upload(
@@ -749,58 +756,58 @@ def admin_create_group():
                     folder="kimbela/groups",
                     transformation=[
                         {"width": 800, "height": 600, "crop": "limit"},
-                        {"quality": "auto", "fetch_format": "auto"}
-                    ]
+                        {"quality": "auto", "fetch_format": "auto"},
+                    ],
                 )
-                group.image = result['secure_url']
+                group.image = result["secure_url"]
             except Exception as e:
                 print("Image upload failed:", e)
 
     db.session.add(group)
     db.session.commit()
 
-    return jsonify({'success': True, 'group_id': group.id})
+    return jsonify({"success": True, "group_id": group.id})
 
 
-@auth.route('/admin/groups/<int:group_id>/edit')
+@auth.route("/admin/groups/<int:group_id>/edit")
 @login_required
 def admin_get_group_for_edit(group_id):
     if not current_user.is_admin and not current_user.is_super_admin:
-        return jsonify({'success': False, 'error': 'Access denied'}), 403
-    
+        return jsonify({"success": False, "error": "Access denied"}), 403
+
     group = Group.query.get_or_404(group_id)
-    
-    return jsonify({
-        'success': True,
-        'group': {
-            'id': group.id,
-            'name': group.name,
-            'description': group.description,
-            'category': group.category,
-            'is_private': group.is_private
+
+    return jsonify(
+        {
+            "success": True,
+            "group": {
+                "id": group.id,
+                "name": group.name,
+                "description": group.description,
+                "category": group.category,
+                "is_private": group.is_private,
+            },
         }
-    })
+    )
 
 
-
-
-@auth.route('/admin/groups/<int:group_id>/update', methods=['POST'])
+@auth.route("/admin/groups/<int:group_id>/update", methods=["POST"])
 @login_required
 def admin_update_group(group_id):
     if not current_user.is_admin and not current_user.is_super_admin:
-        return jsonify({'success': False, 'error': 'Access denied'}), 403
-    
+        return jsonify({"success": False, "error": "Access denied"}), 403
+
     group = Group.query.get_or_404(group_id)
-    
-    group.name = request.form.get('name', group.name)
-    group.description = request.form.get('description', group.description)
-    group.category = request.form.get('category', group.category)
-    group.is_private = request.form.get('is_private') == 'true'
-    
+
+    group.name = request.form.get("name", group.name)
+    group.description = request.form.get("description", group.description)
+    group.category = request.form.get("category", group.category)
+    group.is_private = request.form.get("is_private") == "true"
+
     # Handle group image update
-    if 'image' in request.files:
-        file = request.files['image']
-        if file and file.filename != '' and allowed_file(file.filename):
+    if "image" in request.files:
+        file = request.files["image"]
+        if file and file.filename != "" and allowed_file(file.filename):
             try:
                 result = cloudinary.uploader.upload(
                     file,
@@ -813,31 +820,30 @@ def admin_update_group(group_id):
                 group.image = result["secure_url"]
             except Exception as e:
                 print(f"Group image upload error: {e}")
-    
+
     db.session.commit()
-    
-    return jsonify({'success': True})
+
+    return jsonify({"success": True})
 
 
-
-@auth.route('/admin/groups/<int:group_id>/delete', methods=['POST'])
+@auth.route("/admin/groups/<int:group_id>/delete", methods=["POST"])
 @login_required
 def admin_delete_group(group_id):
     if not (current_user.is_admin or current_user.is_super_admin):
-        return jsonify({'success': False, 'error': 'Access denied'}), 403
+        return jsonify({"success": False, "error": "Access denied"}), 403
 
     group = Group.query.get(group_id)
     if not group:
-        return jsonify({'success': False, 'error': 'Group not found'}), 404
+        return jsonify({"success": False, "error": "Group not found"}), 404
 
     try:
         # 1. Remove all members (clears group_members table)
         group.members.clear()  # This is clean and safe
 
         # 2. Delete Cloudinary image if exists
-        if group.image and 'res.cloudinary.com' in group.image:
+        if group.image and "res.cloudinary.com" in group.image:
             try:
-                public_id = group.image.split('/')[-1].split('.')[0]
+                public_id = group.image.split("/")[-1].split(".")[0]
                 cloudinary.uploader.destroy(f"kimbela/groups/{public_id}")
             except:
                 pass  # Ignore image delete errors
@@ -846,139 +852,138 @@ def admin_delete_group(group_id):
         db.session.delete(group)
         db.session.commit()
 
-        return jsonify({'success': True})
+        return jsonify({"success": True})
 
     except Exception as e:
         db.session.rollback()
         print("Group delete error:", str(e))
-        return jsonify({'success': False, 'error': 'Delete failed'}), 500
-    
-    
-    
-    
+        return jsonify({"success": False, "error": "Delete failed"}), 500
 
-@auth.route('/admin/reports')
+
+@auth.route("/admin/reports")
 @login_required
 def admin_reports():
     if not current_user.is_admin and not current_user.is_super_admin:
-        return jsonify({'error': 'Access denied'}), 403
-    
-    page = request.args.get('page', 1, type=int)
-    status_filter = request.args.get('status', 'pending')
-    type_filter = request.args.get('type', 'all')
-    
+        return jsonify({"error": "Access denied"}), 403
+
+    page = request.args.get("page", 1, type=int)
+    status_filter = request.args.get("status", "pending")
+    type_filter = request.args.get("type", "all")
+
     query = ReportedContent.query
-    
-    if status_filter != 'all':
+
+    if status_filter != "all":
         query = query.filter_by(status=status_filter)
-    
-    if type_filter != 'all':
+
+    if type_filter != "all":
         query = query.filter_by(content_type=type_filter)
-    
+
     reports = query.order_by(ReportedContent.created_at.desc()).paginate(
         page=page, per_page=10, error_out=False
     )
-    
-    return render_template('admin_reports.html', reports=reports, status_filter=status_filter, type_filter=type_filter)
+
+    return render_template(
+        "admin_reports.html",
+        reports=reports,
+        status_filter=status_filter,
+        type_filter=type_filter,
+    )
 
 
-
-@auth.route('/admin/reports/<int:report_id>/resolve', methods=['POST'])
+@auth.route("/admin/reports/<int:report_id>/resolve", methods=["POST"])
 @login_required
 def admin_resolve_report(report_id):
     if not current_user.is_admin and not current_user.is_super_admin:
-        return jsonify({'success': False, 'error': 'Access denied'}), 403
-    
+        return jsonify({"success": False, "error": "Access denied"}), 403
+
     report = ReportedContent.query.get_or_404(report_id)
-    action = request.json.get('action')  # delete_content, warn_user, suspend_user, dismiss
-    
-    if action == 'delete_content':
+    action = request.json.get(
+        "action"
+    )  # delete_content, warn_user, suspend_user, dismiss
+
+    if action == "delete_content":
         # Delete the reported content based on type
-        if report.content_type == 'post':
+        if report.content_type == "post":
             post = Post.query.get(report.content_id)
             if post:
                 db.session.delete(post)
-        elif report.content_type == 'comment':
+        elif report.content_type == "comment":
             comment = Comment.query.get(report.content_id)
             if comment:
                 db.session.delete(comment)
-    elif action == 'suspend_user' and report.reported_user:
+    elif action == "suspend_user" and report.reported_user:
         report.reported_user.is_active = False
-    
-    report.status = 'resolved'
+
+    report.status = "resolved"
     report.resolved_by = current_user.id
     report.resolved_at = datetime.utcnow()
-    report.admin_notes = request.json.get('notes', '')
-    
-    db.session.commit()
-    
-    return jsonify({'success': True})
+    report.admin_notes = request.json.get("notes", "")
 
-@auth.route('/admin/reports/<int:report_id>/dismiss', methods=['POST'])
+    db.session.commit()
+
+    return jsonify({"success": True})
+
+
+@auth.route("/admin/reports/<int:report_id>/dismiss", methods=["POST"])
 @login_required
 def admin_dismiss_report(report_id):
     if not current_user.is_admin and not current_user.is_super_admin:
-        return jsonify({'success': False, 'error': 'Access denied'}), 403
-    
+        return jsonify({"success": False, "error": "Access denied"}), 403
+
     report = ReportedContent.query.get_or_404(report_id)
-    report.status = 'dismissed'
+    report.status = "dismissed"
     report.resolved_by = current_user.id
     report.resolved_at = datetime.utcnow()
-    report.admin_notes = request.json.get('notes', '')
-    
+    report.admin_notes = request.json.get("notes", "")
+
     db.session.commit()
-    
-    return jsonify({'success': True})
+
+    return jsonify({"success": True})
 
 
-
-
-@auth.route('/admin/ads')
+@auth.route("/admin/ads")
 @login_required
 def admin_ads():
     if not current_user.is_admin and not current_user.is_super_admin:
-        return jsonify({'error': 'Access denied'}), 403
-    
-    page = request.args.get('page', 1, type=int)
-    status_filter = request.args.get('status', 'active')
-    
+        return jsonify({"error": "Access denied"}), 403
+
+    page = request.args.get("page", 1, type=int)
+    status_filter = request.args.get("status", "active")
+
     query = SponsoredAd.query
-    
-    if status_filter != 'all':
+
+    if status_filter != "all":
         query = query.filter_by(status=status_filter)
-    
+
     ads = query.order_by(SponsoredAd.created_at.desc()).paginate(
         page=page, per_page=12, error_out=False
     )
-    
-    return render_template('admin_ads.html', ads=ads, status_filter=status_filter)
+
+    return render_template("admin_ads.html", ads=ads, status_filter=status_filter)
 
 
-
-
-
-@auth.route('/admin/ads/create', methods=['POST'])
+@auth.route("/admin/ads/create", methods=["POST"])
 @login_required
 def admin_create_ad():
     if not current_user.is_admin and not current_user.is_super_admin:
-        return jsonify({'success': False, 'error': 'Access denied'}), 403
-    
-    title = request.form.get('title')
-    description = request.form.get('description')
-    target_audience = request.form.get('target_audience', 'all')
-    start_date = request.form.get('start_date')
-    end_date = request.form.get('end_date')
-    budget = request.form.get('budget', 0.0, type=float)
-    
+        return jsonify({"success": False, "error": "Access denied"}), 403
+
+    title = request.form.get("title")
+    description = request.form.get("description")
+    target_audience = request.form.get("target_audience", "all")
+    start_date = request.form.get("start_date")
+    end_date = request.form.get("end_date")
+    budget = request.form.get("budget", 0.0, type=float)
+
     if not all([title, start_date, end_date]):
-        return jsonify({'success': False, 'error': 'Missing required fields'})
-    
+        return jsonify({"success": False, "error": "Missing required fields"})
+
     try:
-        start_date = datetime.strptime(start_date, '%Y-%m-%d')
-        end_date = datetime.strptime(end_date, '%Y-%m-%d')
+        start_date = datetime.strptime(start_date, "%Y-%m-%d")
+        end_date = datetime.strptime(end_date, "%Y-%m-%d")
     except ValueError:
-        return jsonify({'success': False, 'error': 'Invalid date format'})
-    
+        return jsonify({"success": False, "error": "Invalid date format"})
+
     ad = SponsoredAd(
         title=title,
         description=description,
@@ -986,13 +991,13 @@ def admin_create_ad():
         start_date=start_date,
         end_date=end_date,
         budget=budget,
-        created_by=current_user.id
+        created_by=current_user.id,
     )
-    
+
     # Handle ad image
-    if 'image' in request.files:
-        file = request.files['image']
-        if file and file.filename != '' and allowed_file(file.filename):
+    if "image" in request.files:
+        file = request.files["image"]
+        if file and file.filename != "" and allowed_file(file.filename):
             try:
                 result = cloudinary.uploader.upload(
                     file,
@@ -1005,43 +1010,38 @@ def admin_create_ad():
                 ad.image = result["secure_url"]
             except Exception as e:
                 print(f"Ad image upload error: {e}")
-    
+
     db.session.add(ad)
     db.session.commit()
-    
-    return jsonify({'success': True, 'ad_id': ad.id})
+
+    return jsonify({"success": True, "ad_id": ad.id})
 
 
-
-
-
-
-
-@auth.route('/admin/ads/<int:ad_id>/update', methods=['POST'])
+@auth.route("/admin/ads/<int:ad_id>/update", methods=["POST"])
 @login_required
 def admin_update_ad(ad_id):
     if not current_user.is_admin and not current_user.is_super_admin:
-        return jsonify({'success': False, 'error': 'Access denied'}), 403
-    
+        return jsonify({"success": False, "error": "Access denied"}), 403
+
     ad = SponsoredAd.query.get_or_404(ad_id)
-    
-    ad.title = request.form.get('title', ad.title)
-    ad.description = request.form.get('description', ad.description)
-    ad.target_audience = request.form.get('target_audience', ad.target_audience)
-    ad.budget = request.form.get('budget', ad.budget, type=float)
-    
+
+    ad.title = request.form.get("title", ad.title)
+    ad.description = request.form.get("description", ad.description)
+    ad.target_audience = request.form.get("target_audience", ad.target_audience)
+    ad.budget = request.form.get("budget", ad.budget, type=float)
+
     # Handle dates
-    start_date = request.form.get('start_date')
-    end_date = request.form.get('end_date')
+    start_date = request.form.get("start_date")
+    end_date = request.form.get("end_date")
     if start_date:
-        ad.start_date = datetime.strptime(start_date, '%Y-%m-%d')
+        ad.start_date = datetime.strptime(start_date, "%Y-%m-%d")
     if end_date:
-        ad.end_date = datetime.strptime(end_date, '%Y-%m-%d')
-    
+        ad.end_date = datetime.strptime(end_date, "%Y-%m-%d")
+
     # Handle ad image update
-    if 'image' in request.files:
-        file = request.files['image']
-        if file and file.filename != '' and allowed_file(file.filename):
+    if "image" in request.files:
+        file = request.files["image"]
+        if file and file.filename != "" and allowed_file(file.filename):
             try:
                 result = cloudinary.uploader.upload(
                     file,
@@ -1054,186 +1054,201 @@ def admin_update_ad(ad_id):
                 ad.image = result["secure_url"]
             except Exception as e:
                 print(f"Ad image upload error: {e}")
-    
-    db.session.commit()
-    
-    return jsonify({'success': True})
 
-@auth.route('/admin/ads/<int:ad_id>/toggle_status', methods=['POST'])
+    db.session.commit()
+
+    return jsonify({"success": True})
+
+
+@auth.route("/admin/ads/<int:ad_id>/toggle_status", methods=["POST"])
 @login_required
 def admin_toggle_ad_status(ad_id):
     if not current_user.is_admin and not current_user.is_super_admin:
-        return jsonify({'success': False, 'error': 'Access denied'}), 403
-    
-    ad = SponsoredAd.query.get_or_404(ad_id)
-    
-    if ad.status == 'active':
-        ad.status = 'paused'
-    else:
-        ad.status = 'active'
-    
-    db.session.commit()
-    
-    return jsonify({'success': True, 'status': ad.status})
+        return jsonify({"success": False, "error": "Access denied"}), 403
 
-@auth.route('/admin/ads/<int:ad_id>/delete', methods=['POST'])
+    ad = SponsoredAd.query.get_or_404(ad_id)
+
+    if ad.status == "active":
+        ad.status = "paused"
+    else:
+        ad.status = "active"
+
+    db.session.commit()
+
+    return jsonify({"success": True, "status": ad.status})
+
+
+@auth.route("/admin/ads/<int:ad_id>/delete", methods=["POST"])
 @login_required
 def admin_delete_ad(ad_id):
     if not current_user.is_admin and not current_user.is_super_admin:
-        return jsonify({'success': False, 'error': 'Access denied'}), 403
-    
+        return jsonify({"success": False, "error": "Access denied"}), 403
+
     ad = SponsoredAd.query.get_or_404(ad_id)
     db.session.delete(ad)
     db.session.commit()
-    
-    return jsonify({'success': True})
 
-@auth.route('/admin/stats')
+    return jsonify({"success": True})
+
+
+@auth.route("/admin/stats")
 @login_required
 def admin_stats():
     if not current_user.is_admin and not current_user.is_super_admin:
-        return jsonify({'error': 'Access denied'}), 403
-    
+        return jsonify({"error": "Access denied"}), 403
+
     # User growth (last 30 days)
     thirty_days_ago = datetime.utcnow() - timedelta(days=30)
     user_growth = User.query.filter(User.created_at >= thirty_days_ago).count()
-    
+
     # Active users (last 7 days)
     seven_days_ago = datetime.utcnow() - timedelta(days=7)
     active_users = User.query.filter(User.last_seen >= seven_days_ago).count()
-    
+
     # Group statistics
     total_groups = Group.query.count()
     active_groups = Group.query.filter_by(is_active=True).count()
-    
+
     # Report statistics
     total_reports = ReportedContent.query.count()
-    resolved_reports = ReportedContent.query.filter_by(status='resolved').count()
-    
+    resolved_reports = ReportedContent.query.filter_by(status="resolved").count()
+
     # Ad statistics
     total_ads = SponsoredAd.query.count()
-    active_ads = SponsoredAd.query.filter_by(status='active').count()
+    active_ads = SponsoredAd.query.filter_by(status="active").count()
     total_ad_budget = db.session.query(db.func.sum(SponsoredAd.budget)).scalar() or 0
-    
-    return jsonify({
-        'user_growth': user_growth,
-        'active_users': active_users,
-        'total_groups': total_groups,
-        'active_groups': active_groups,
-        'total_reports': total_reports,
-        'resolved_reports': resolved_reports,
-        'total_ads': total_ads,
-        'active_ads': active_ads,
-        'total_ad_budget': float(total_ad_budget)
-    })
+
+    return jsonify(
+        {
+            "user_growth": user_growth,
+            "active_users": active_users,
+            "total_groups": total_groups,
+            "active_groups": active_groups,
+            "total_reports": total_reports,
+            "resolved_reports": resolved_reports,
+            "total_ads": total_ads,
+            "active_ads": active_ads,
+            "total_ad_budget": float(total_ad_budget),
+        }
+    )
+
 
 # Add this to handle user comments (for reported comments)
-@auth.route('/admin/comments/<int:comment_id>/delete', methods=['POST'])
+@auth.route("/admin/comments/<int:comment_id>/delete", methods=["POST"])
 @login_required
 def admin_delete_comment(comment_id):
     if not current_user.is_admin and not current_user.is_super_admin:
-        return jsonify({'success': False, 'error': 'Access denied'}), 403
-    
+        return jsonify({"success": False, "error": "Access denied"}), 403
+
     comment = Comment.query.get_or_404(comment_id)
     db.session.delete(comment)
     db.session.commit()
-    
-    return jsonify({'success': True})
 
+    return jsonify({"success": True})
 
 
 from flask import jsonify, request
 from random import sample
 
 
-
-
-
-
-
 # Add these routes to your auth blueprint
 
-@auth.route('/admin/dashboard_content')
+
+@auth.route("/admin/dashboard_content")
 @login_required
 def admin_dashboard_content():
     if not current_user.is_admin and not current_user.is_super_admin:
-        return jsonify({'error': 'Access denied'}), 403
-    
+        return jsonify({"error": "Access denied"}), 403
+
     # Get statistics for dashboard
     total_users = User.query.count()
     active_users = User.query.filter_by(is_active=True).count()
     pending_users = User.query.filter_by(is_active=False).count()
-    total_groups = Group.query.count() if 'Group' in globals() else 0
-    active_groups = Group.query.filter_by(is_active=True).count() if 'Group' in globals() else 0
-    pending_reports = ReportedContent.query.filter_by(status='pending').count() if 'ReportedContent' in globals() else 0
-    active_ads = SponsoredAd.query.filter_by(status='active').count() if 'SponsoredAd' in globals() else 0
-    
+    total_groups = Group.query.count() if "Group" in globals() else 0
+    active_groups = (
+        Group.query.filter_by(is_active=True).count() if "Group" in globals() else 0
+    )
+    pending_reports = (
+        ReportedContent.query.filter_by(status="pending").count()
+        if "ReportedContent" in globals()
+        else 0
+    )
+    active_ads = (
+        SponsoredAd.query.filter_by(status="active").count()
+        if "SponsoredAd" in globals()
+        else 0
+    )
+
     # Recent activity
     recent_users = User.query.order_by(User.created_at.desc()).limit(5).all()
-    recent_reports = ReportedContent.query.order_by(ReportedContent.created_at.desc()).limit(5).all() if 'ReportedContent' in globals() else []
-    
-    return render_template('admin_dashboard_content.html',
-                         total_users=total_users,
-                         active_users=active_users,
-                         pending_users=pending_users,
-                         total_groups=total_groups,
-                         active_groups=active_groups,
-                         pending_reports=pending_reports,
-                         active_ads=active_ads,
-                         recent_users=recent_users,
-                         recent_reports=recent_reports)
-    
-    
-    
-    
+    recent_reports = (
+        ReportedContent.query.order_by(ReportedContent.created_at.desc()).limit(5).all()
+        if "ReportedContent" in globals()
+        else []
+    )
 
-@auth.route('/admin/users')
+    return render_template(
+        "admin_dashboard_content.html",
+        total_users=total_users,
+        active_users=active_users,
+        pending_users=pending_users,
+        total_groups=total_groups,
+        active_groups=active_groups,
+        pending_reports=pending_reports,
+        active_ads=active_ads,
+        recent_users=recent_users,
+        recent_reports=recent_reports,
+    )
+
+
+@auth.route("/admin/users")
 @login_required
 def admin_users():
     if not current_user.is_admin and not current_user.is_super_admin:
-        return jsonify({'error': 'Access denied'}), 403
-    
-    page = request.args.get('page', 1, type=int)
-    search = request.args.get('search', '')
-    status_filter = request.args.get('status', 'all')
-    partial = request.args.get('partial', 0, type=int)
-    
+        return jsonify({"error": "Access denied"}), 403
+
+    page = request.args.get("page", 1, type=int)
+    search = request.args.get("search", "")
+    status_filter = request.args.get("status", "all")
+    partial = request.args.get("partial", 0, type=int)
+
     query = User.query
-    
+
     if search:
         query = query.filter(
             db.or_(
-                User.first_name.ilike(f'%{search}%'),
-                User.last_name.ilike(f'%{search}%'),
-                User.email.ilike(f'%{search}%')
+                User.first_name.ilike(f"%{search}%"),
+                User.last_name.ilike(f"%{search}%"),
+                User.email.ilike(f"%{search}%"),
             )
         )
-    
-    if status_filter == 'active':
+
+    if status_filter == "active":
         query = query.filter_by(is_active=True)
-    elif status_filter == 'pending':
+    elif status_filter == "pending":
         query = query.filter_by(is_active=False)
-    elif status_filter == 'admins':
+    elif status_filter == "admins":
         query = query.filter(db.or_(User.is_admin == True, User.is_super_admin == True))
-    elif status_filter == 'suspended':
+    elif status_filter == "suspended":
         query = query.filter_by(is_active=False)
-    
+
     # Set pagination to 10 per page
     users = query.order_by(User.created_at.desc()).paginate(
         page=page, per_page=10, error_out=False
     )
-    
+
     if partial:
-        return render_template('admin_users.html', 
-                             users=users, 
-                             search=search, 
-                             status_filter=status_filter,
-                             current_user=current_user)
-    
-    return render_template('admin_dashboard.html', 
-                         users=users, 
-                         search=search, 
-                         status_filter=status_filter)
+        return render_template(
+            "admin_users.html",
+            users=users,
+            search=search,
+            status_filter=status_filter,
+            current_user=current_user,
+        )
+
+    return render_template(
+        "admin_dashboard.html", users=users, search=search, status_filter=status_filter
+    )
 
 
 # @auth.route('/user_dashboard')
@@ -1476,7 +1491,6 @@ def add_comment(post_id):
 
 import cloudinary.uploader
 import cloudinary.utils
-
 
 
 @auth.route("/get_comments/<int:post_id>")
@@ -1932,40 +1946,40 @@ def privacy():
 
 
 
-@auth.route('/get_user_groups')
+
+
+@auth.route("/get_user_groups")
 @login_required
 def get_user_groups():
     """Get all groups for the dropdown with membership status"""
     try:
         print(f"🔍 DEBUG: Fetching ALL groups for user: {current_user.id} ({current_user.email})")
-        
+
         # Get all active groups
         all_groups = Group.query.filter_by(is_active=True).order_by(Group.name.asc()).all()
         print(f"🔍 DEBUG: Found {len(all_groups)} total active groups")
-        
-        # Get the user's current group memberships for comparison
-        user_group_ids = {group.id for group in current_user.user_groups}
-        print(f"🔍 DEBUG: User is already a member of {len(user_group_ids)} groups: {user_group_ids}")
-        
+
         groups_data = []
         for group in all_groups:
-            member_count = group.member_count or group.members.count()
-            is_member = group.id in user_group_ids
-            
-            print(f"🔍 DEBUG: Group '{group.name}' (ID: {group.id}) with {member_count} members. User is member: {is_member}")
-            
-            groups_data.append({
-                'id': group.id,
-                'name': group.name,
-                'cover_pic': group.image or 'https://via.placeholder.com/100x100/3B82F6/FFFFFF?text=Group',
-                'member_count': member_count,
-                'is_member': is_member,
-                'unread_count': 0
-            })
-        
+            # Check membership using the relationship
+            is_member = group.members.filter_by(id=current_user.id).first() is not None
+
+            print(f"🔍 DEBUG: Group '{group.name}' (ID: {group.id}) with {group.member_count} members. User is member: {is_member}")
+
+            groups_data.append(
+                {
+                    "id": group.id,
+                    "name": group.name,
+                    "cover_pic": group.image or "https://via.placeholder.com/100x100/3B82F6/FFFFFF?text=Group",
+                    "member_count": group.member_count,
+                    "is_member": is_member,
+                    "unread_count": 0,
+                }
+            )
+
         print(f"🔍 DEBUG: Returning {len(groups_data)} groups as JSON")
         return jsonify(groups_data)
-        
+
     except Exception as e:
         print(f"❌ ERROR in get_user_groups: {str(e)}")
         import traceback
@@ -1975,179 +1989,626 @@ def get_user_groups():
 
 # Add these routes to your auth blueprint
 
-@auth.route('/groups/user_groups')
+
+@auth.route("/groups/user_groups")
 @login_required
 def user_groups():
     """Get user's groups for sidebar - alternative approach"""
     try:
-        # Alternative approach using direct query
-        groups = Group.query.join(group_members).filter(
-            group_members.c.user_id == current_user.id
-        ).limit(10).all()
-        
-        return jsonify([{
-            'id': group.id,
-            'name': group.name,
-            'image': group.image or 'https://images.unsplash.com/photo-1611262588024-d12430b98920?w=100&h=100&fit=crop',
-            'member_count': group.member_count,
-            'is_member': True
-        } for group in groups])
+        # Get user's groups using the relationship
+        groups = current_user.user_groups.filter_by(is_active=True).limit(10).all()
+
+        return jsonify(
+            [
+                {
+                    "id": group.id,
+                    "name": group.name,
+                    "image": group.image or "https://images.unsplash.com/photo-1611262588024-d12430b98920?w=100&h=100&fit=crop",
+                    "member_count": group.member_count,
+                    "is_member": True,
+                }
+                for group in groups
+            ]
+        )
     except Exception as e:
         print(f"Error in user_groups: {e}")
         return jsonify([])
-    
-    
-    
-@auth.route('/groups/all')
+
+
+
+@auth.route("/groups/all")
 @login_required
 def all_groups():
     """Get all groups for discovery"""
-    search = request.args.get('search', '')
-    category = request.args.get('category', 'all')
-    
-    query = Group.query.filter_by(is_active=True)
-    
-    if search:
-        query = query.filter(Group.name.ilike(f'%{search}%'))
-    
-    if category != 'all':
-        query = query.filter_by(category=category)
-    
-    groups = query.order_by(Group.member_count.desc()).limit(20).all()
-    
-    return jsonify([{
-        'id': group.id,
-        'name': group.name,
-        'description': group.description,
-        'image': group.image,
-        'category': group.category,
-        'is_private': group.is_private,
-        'member_count': group.member_count,
-        'created_at': group.created_at.isoformat(),
-        'is_member': current_user in group.members
-    } for group in groups])
+    search = request.args.get("search", "")
+    category = request.args.get("category", "all")
 
-@auth.route('/groups/<int:group_id>')
+    query = Group.query.filter_by(is_active=True)
+
+    if search:
+        query = query.filter(
+            db.or_(
+                Group.name.ilike(f"%{search}%"),
+                Group.description.ilike(f"%{search}%")
+            )
+        )
+
+    if category != "all":
+        query = query.filter_by(category=category)
+
+    groups = query.order_by(Group.member_count.desc()).limit(20).all()
+
+    return jsonify(
+        [
+            {
+                "id": group.id,
+                "name": group.name,
+                "description": group.description,
+                "image": group.image,
+                "category": group.category,
+                "is_private": group.is_private,
+                "member_count": group.member_count,
+                "created_at": group.created_at.isoformat(),
+                "is_member": group.members.filter_by(id=current_user.id).first() is not None,  # Proper membership check
+            }
+            for group in groups
+        ]
+    )
+
+
+@auth.route("/groups/<int:group_id>")
 @login_required
 def group_page(group_id):
     """Get group page HTML"""
     group = Group.query.get_or_404(group_id)
-    is_member = current_user in group.members
     
+    # Check membership properly
+    is_member = group.members.filter_by(id=current_user.id).first() is not None
+
     # Get group posts
     posts = Post.query.filter_by(group_id=group_id).order_by(Post.created_at.desc()).all()
-    
-    return render_template('group_page.html', 
-                         group=group, 
-                         is_member=is_member,
-                         posts=posts,
-                         current_user=current_user)
 
-@auth.route('/groups/create', methods=['POST'])
+    return render_template(
+        "group_detail.html",
+        group=group,
+        is_member=is_member,
+        posts=posts,
+        current_user=current_user
+    )
+# @auth.route("/groups/create", methods=["POST"])
+# @login_required
+# def create_group():
+#     """Create a new group"""
+#     try:
+#         name = request.form.get("name", "").strip()
+#         description = request.form.get("description", "").strip()
+#         category = request.form.get("category", "social")
+#         is_private = request.form.get("is_private") == "true"
+
+#         if not name:
+#             return jsonify({"success": False, "error": "Group name is required"})
+
+#         group = Group(
+#             name=name,
+#             description=description,
+#             category=category,
+#             is_private=is_private,
+#             created_by=current_user.id,
+#         )
+
+#         # Handle group image
+#         if "image" in request.files:
+#             file = request.files["image"]
+#             if file and file.filename and allowed_file(file.filename):
+#                 try:
+#                     result = cloudinary.uploader.upload(
+#                         file,
+#                         folder="kimbela/groups",
+#                         transformation=[
+#                             {"width": 800, "height": 600, "crop": "limit"},
+#                             {"quality": "auto", "fetch_format": "auto"},
+#                         ],
+#                     )
+#                     group.image = result["secure_url"]
+#                 except Exception as e:
+#                     print("Group image upload failed:", e)
+
+#         db.session.add(group)
+
+#         # Add creator as first member
+#         group.members.append(current_user)
+#         group.member_count = 1
+
+#         db.session.commit()
+
+#         return jsonify({"success": True, "group_id": group.id})
+
+#     except Exception as e:
+#         db.session.rollback()
+#         print("Create group error:", e)
+#         return jsonify({"success": False, "error": "Failed to create group"})
+
+
+# @auth.route("/groups/<int:group_id>/join", methods=["POST"])
+# @login_required
+# def join_group(group_id):
+#     """Join a group"""
+#     group = Group.query.get_or_404(group_id)
+
+#     if current_user in group.members:
+#         return jsonify({"success": False, "error": "Already a member"})
+
+#     group.members.append(current_user)
+#     group.member_count = len(group.members)
+#     db.session.commit()
+
+#     return jsonify({"success": True})
+
+
+# @auth.route("/groups/<int:group_id>/leave", methods=["POST"])
+# @login_required
+# def leave_group(group_id):
+#     """Leave a group"""
+#     group = Group.query.get_or_404(group_id)
+
+#     if current_user not in group.members:
+#         return jsonify({"success": False, "error": "Not a member"})
+
+#     group.members.remove(current_user)
+#     group.member_count = len(group.members)
+#     db.session.commit()
+
+#     return jsonify({"success": True})
+
+
+@auth.route("/comments/<int:comment_id>/report", methods=["POST"])
+@login_required
+def report_comment(comment_id):
+    """Report a comment"""
+    comment = Comment.query.get_or_404(comment_id)
+    reason = request.form.get("report_reason")
+    other_reason = request.form.get("other_reason", "")
+
+    if not reason:
+        return jsonify({"success": False, "error": "Please select a reason"})
+
+    # Create reported content entry
+    report = ReportedContent(
+        reporter_id=current_user.id,
+        reported_user_id=comment.author_id,
+        content_type="comment",
+        content_id=comment_id,
+        reason=f"{reason}: {other_reason}".strip() if other_reason else reason,
+        status="pending",
+    )
+
+    db.session.add(report)
+    db.session.commit()
+
+    return jsonify({"success": True})
+
+
+
+
+# Add these routes to your auth blueprint
+
+@auth.route('/groups')
+@login_required
+def groups_page():
+    """Main groups discovery page"""
+    return render_template('groups.html')
+
+@auth.route('/groups/<int:group_id>')
+@login_required
+def group_detail(group_id):
+    """Individual group page with posts and interactions"""
+    group = Group.query.get_or_404(group_id)
+    is_member = current_user in group.members
+    
+    # Get posts for this group
+    posts = Post.query.filter_by(group_id=group_id).order_by(Post.created_at.desc()).all()
+    
+    return render_template(
+        'group_detail.html',
+        group=group,
+        is_member=is_member,
+        posts=posts,
+        current_user=current_user
+    )
+
+@auth.route("/groups/create", methods=['GET', 'POST'])
 @login_required
 def create_group():
     """Create a new group"""
-    try:
-        name = request.form.get('name', '').strip()
-        description = request.form.get('description', '').strip()
-        category = request.form.get('category', 'social')
-        is_private = request.form.get('is_private') == 'true'
-        
-        if not name:
-            return jsonify({'success': False, 'error': 'Group name is required'})
-        
-        group = Group(
-            name=name,
-            description=description,
-            category=category,
-            is_private=is_private,
-            created_by=current_user.id
-        )
-        
-        # Handle group image
-        if 'image' in request.files:
-            file = request.files['image']
-            if file and file.filename and allowed_file(file.filename):
-                try:
-                    result = cloudinary.uploader.upload(
-                        file,
-                        folder="kimbela/groups",
-                        transformation=[
-                            {"width": 800, "height": 600, "crop": "limit"},
-                            {"quality": "auto", "fetch_format": "auto"}
-                        ]
-                    )
-                    group.image = result['secure_url']
-                except Exception as e:
-                    print("Group image upload failed:", e)
-        
-        db.session.add(group)
-        
-        # Add creator as first member
-        group.members.append(current_user)
-        group.member_count = 1
-        
-        db.session.commit()
-        
-        return jsonify({'success': True, 'group_id': group.id})
-        
-    except Exception as e:
-        db.session.rollback()
-        print("Create group error:", e)
-        return jsonify({'success': False, 'error': 'Failed to create group'})
+    if request.method == 'POST':
+        try:
+            name = request.form.get('name', '').strip()
+            description = request.form.get('description', '').strip()
+            category = request.form.get('category', 'social')
+            is_private = request.form.get('is_private') == 'true'
 
-@auth.route('/groups/<int:group_id>/join', methods=['POST'])
+            if not name:
+                return jsonify({'success': False, 'error': 'Group name is required'})
+
+            group = Group(
+                name=name,
+                description=description,
+                category=category,
+                is_private=is_private,
+                created_by=current_user.id,
+                member_count=1
+            )
+
+            # Handle group image
+            if 'image' in request.files:
+                file = request.files['image']
+                if file and file.filename and allowed_file(file.filename):
+                    try:
+                        result = cloudinary.uploader.upload(
+                            file,
+                            folder='kimbela/groups',
+                            transformation=[
+                                {'width': 800, 'height': 600, 'crop': 'limit'},
+                                {'quality': 'auto', 'fetch_format': 'auto'},
+                            ],
+                        )
+                        group.image = result['secure_url']
+                    except Exception as e:
+                        print('Group image upload failed:', e)
+
+            db.session.add(group)
+            
+            # Add creator as first member
+            group.members.append(current_user)
+            db.session.commit()
+
+            return jsonify({'success': True, 'group_id': group.id})
+
+        except Exception as e:
+            db.session.rollback()
+            print('Create group error:', e)
+            return jsonify({'success': False, 'error': 'Failed to create group'})
+
+    return render_template('create_group.html')
+
+
+
+
+
+@auth.route("/groups/<int:group_id>/join", methods=['POST'])
 @login_required
 def join_group(group_id):
     """Join a group"""
     group = Group.query.get_or_404(group_id)
     
-    if current_user in group.members:
+    if current_user in group.members.all():  # Use .all() to check membership
         return jsonify({'success': False, 'error': 'Already a member'})
-    
+
     group.members.append(current_user)
-    group.member_count = len(group.members)
+    group.member_count = group.members.count()  # Use .count() instead of len()
     db.session.commit()
-    
+
     return jsonify({'success': True})
 
-@auth.route('/groups/<int:group_id>/leave', methods=['POST'])
+
+
+
+
+# Fix the leave_group rout
+@auth.route("/groups/<int:group_id>/leave", methods=['POST'])
 @login_required
 def leave_group(group_id):
     """Leave a group"""
     group = Group.query.get_or_404(group_id)
     
-    if current_user not in group.members:
+    if current_user not in group.members.all():  # Use .all() to check membership
         return jsonify({'success': False, 'error': 'Not a member'})
-    
+
     group.members.remove(current_user)
-    group.member_count = len(group.members)
+    group.member_count = group.members.count()  # Use .count() instead of len()
     db.session.commit()
-    
+
     return jsonify({'success': True})
 
-@auth.route('/comments/<int:comment_id>/report', methods=['POST'])
+
+
+
+
+
+@auth.route('/groups/<int:group_id>/post', methods=['POST'])
 @login_required
-def report_comment(comment_id):
-    """Report a comment"""
-    comment = Comment.query.get_or_404(comment_id)
-    reason = request.form.get('report_reason')
-    other_reason = request.form.get('other_reason', '')
+def create_group_post(group_id):
+    """Create a post in a group"""
+    group = Group.query.get_or_404(group_id)
     
-    if not reason:
-        return jsonify({'success': False, 'error': 'Please select a reason'})
+    if current_user not in group.members:
+        return jsonify({'success': False, 'error': 'Must be a member to post'})
+
+    post_content = request.form.get('post_content', '').strip()
+    media_file = request.files.get('media')
+
+    if not post_content and not (media_file and media_file.filename):
+        return jsonify({'success': False, 'error': 'Post content or media is required'})
+
+    try:
+        image_url = None
+        video_url = None
+
+        if media_file and media_file.filename and allowed_file(media_file.filename):
+            resource_type = 'auto'
+            if media_file.content_type.startswith('video'):
+                resource_type = 'video'
+
+            result = cloudinary.uploader.upload(
+                media_file,
+                folder='kimbela/groups/posts',
+                resource_type=resource_type,
+                transformation=[
+                    {'width': 800, 'crop': 'limit'},
+                    {'quality': 'auto', 'fetch_format': 'auto'},
+                ],
+            )
+
+            if media_file.content_type.startswith('video'):
+                video_url = result['secure_url']
+            else:
+                image_url = result['secure_url']
+
+        post = Post(
+            content=post_content,
+            image=image_url,
+            video=video_url,
+            author_id=current_user.id,
+            group_id=group_id,  # Now this will work!
+            created_at=datetime.utcnow()
+        )
+        
+        db.session.add(post)
+        db.session.commit()
+
+        return jsonify({
+            'success': True, 
+            'post_id': post.id,
+            'message': 'Post created successfully!'
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        print('Group post creation error:', e)
+        return jsonify({'success': False, 'error': 'Failed to create post'})
+
+@auth.route('/groups/<int:group_id>/posts')
+@login_required
+def get_group_posts(group_id):
+    """Get posts for a group with pagination"""
+    page = request.args.get('page', 1, type=int)
+    per_page = 10
     
-    # Create reported content entry
+    posts = Post.query.filter_by(group_id=group_id)\
+        .order_by(Post.created_at.desc())\
+        .paginate(page=page, per_page=per_page, error_out=False)
+    
+    posts_data = []
+    for post in posts.items:
+        posts_data.append({
+            'id': post.id,
+            'content': post.content,
+            'image': post.image,
+            'video': post.video,
+            'created_at': post.created_at.isoformat(),
+            'author': {
+                'id': post.author.id,
+                'name': post.author.full_name,
+                'avatar': post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png')
+            },
+            'likes_count': post.likes.count(),
+            'comments_count': post.comments.count(),
+            'user_has_liked': current_user.has_liked_post(post.id) if current_user.is_authenticated else False
+        })
+    
+    return jsonify({
+        'posts': posts_data,
+        'has_next': posts.has_next,
+        'next_page': posts.next_num if posts.has_next else None
+    })
+
+@auth.route('/report_content', methods=['POST'])
+@login_required
+def report_content():
+    """Report a post or comment"""
+    data = request.get_json()
+    
+    content_type = data.get('content_type')  # 'post' or 'comment'
+    content_id = data.get('content_id')
+    reason = data.get('reason')
+    additional_info = data.get('additional_info', '')
+    
+    if not all([content_type, content_id, reason]):
+        return jsonify({'success': False, 'error': 'Missing required fields'})
+    
+    # Determine the reported user based on content type
+    reported_user_id = None
+    if content_type == 'post':
+        post = Post.query.get(content_id)
+        if post:
+            reported_user_id = post.author_id
+    elif content_type == 'comment':
+        comment = Comment.query.get(content_id)
+        if comment:
+            reported_user_id = comment.author_id
+    
     report = ReportedContent(
         reporter_id=current_user.id,
-        reported_user_id=comment.author_id,
-        content_type='comment',
-        content_id=comment_id,
-        reason=f"{reason}: {other_reason}".strip() if other_reason else reason,
+        reported_user_id=reported_user_id,
+        content_type=content_type,
+        content_id=content_id,
+        reason=f"{reason}: {additional_info}".strip() if additional_info else reason,
         status='pending'
     )
     
     db.session.add(report)
     db.session.commit()
     
-    return jsonify({'success': True})
+    return jsonify({'success': True, 'message': 'Content reported successfully'})
+
+
+
+
+
+@auth.route('/groups/all')
+@login_required
+def get_all_groups():
+    """API endpoint to get all groups with filtering"""
+    page = request.args.get('page', 1, type=int)
+    search = request.args.get('search', '')
+    category = request.args.get('category', '')
+    privacy = request.args.get('privacy', '')
+    
+    query = Group.query.filter_by(is_active=True)
+    
+    if search:
+        query = query.filter(
+            db.or_(
+                Group.name.ilike(f'%{search}%'),
+                Group.description.ilike(f'%{search}%')
+            )
+        )
+    
+    if category and category != 'all':
+        query = query.filter_by(category=category)
+    
+    if privacy == 'public':
+        query = query.filter_by(is_private=False)
+    elif privacy == 'private':
+        query = query.filter_by(is_private=True)
+    
+    groups = query.order_by(Group.member_count.desc()).paginate(
+        page=page, per_page=20, error_out=False
+    )
+    
+    groups_data = []
+    for group in groups.items:
+        groups_data.append({
+            'id': group.id,
+            'name': group.name,
+            'description': group.description,
+            'image': group.image,
+            'category': group.category,
+            'is_private': group.is_private,
+            'member_count': group.member_count,
+            'created_at': group.created_at.isoformat(),
+            'is_member': current_user in group.members
+        })
+    
+    return jsonify(groups_data)
+
+@auth.route('/groups/<int:group_id>/members')
+@login_required
+def get_group_members(group_id):
+    """Get group members"""
+    group = Group.query.get_or_404(group_id)
+    page = request.args.get('page', 1, type=int)
+    
+    members = group.members.paginate(page=page, per_page=50, error_out=False)
+    
+    members_data = []
+    for member in members.items:
+        members_data.append({
+            'id': member.id,
+            'name': member.full_name,
+            'avatar': member.profile_pic or url_for('static', filename='assets/img/default-avatar.png'),
+            'is_online': member.is_online,
+            'last_seen': member.last_seen.isoformat() if member.last_seen else None
+        })
+    
+    return jsonify({
+        'members': members_data,
+        'has_next': members.has_next,
+        'next_page': members.next_num if members.has_next else None
+    })
+    
+    
+    
+
+
+# Add these routes to your Flask application
+
+@auth.route('/edit_post/<int:post_id>', methods=['POST'])
+@login_required
+def edit_group_post(post_id):
+    try:
+        post = Post.query.get_or_404(post_id)
+        
+        # Check if the current user is the author
+        if post.author_id != current_user.id:
+            return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+        
+        new_content = request.form.get('post_content')
+        if new_content:
+            post.content = new_content
+            db.session.commit()
+            return jsonify({'success': True})
+        else:
+            return jsonify({'success': False, 'error': 'Content cannot be empty'})
+            
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@auth.route('/delete_post/<int:post_id>', methods=['POST'])
+@login_required
+def delete_group_post(post_id):
+    try:
+        post = Post.query.get_or_404(post_id)
+        
+        # Check if the current user is the author
+        if post.author_id != current_user.id:
+            return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+        
+        db.session.delete(post)
+        db.session.commit()
+        return jsonify({'success': True})
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@auth.route('/delete_comment/<int:comment_id>', methods=['POST'])
+@login_required
+def delete_group_comment(comment_id):
+    try:
+        comment = Comment.query.get_or_404(comment_id)
+        
+        # Check if the current user is the author
+        if comment.author_id != current_user.id:
+            return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+        
+        db.session.delete(comment)
+        db.session.commit()
+        return jsonify({'success': True})
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@auth.route('/get_comments/<int:post_id>')
+@login_required
+def get_group_comments(post_id):
+    try:
+        post = Post.query.get_or_404(post_id)
+        comments = []
+        
+        for comment in post.comments_list:
+            comments.append({
+                'id': comment.id,
+                'content': comment.content,
+                'author_name': comment.author.full_name,
+                'author_id': comment.author_id,
+                'avatar': comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png'),
+                'created_at': comment.created_at.strftime('%I:%M %p')
+            })
+        
+        return jsonify({'comments': comments})
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500

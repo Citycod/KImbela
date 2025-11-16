@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ group.name }} - Kimbela</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .gradient-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 10px;
+        }
+        
+        .comments-section {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .post-media {
+            max-height: 500px;
+            overflow: hidden;
+        }
+
+        /* Add these styles to your existing CSS */
+.modal-media-preview {
+    max-height: 300px;
+    overflow-y: auto;
+    border-radius: 12px;
+    margin-top: 1rem;
+}
+
+.modal-media-preview img,
+.modal-media-preview video {
+    max-width: 100%;
+    max-height: 280px;
+    object-fit: contain;
+    border-radius: 8px;
+}
+
+/* Custom scrollbar for modal media preview */
+.modal-media-preview::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-media-preview::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.modal-media-preview::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 10px;
+}
+
+.modal-media-preview::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Make the modal content area scrollable */
+.modal-content-scrollable {
+    max-height: 60vh;
+    overflow-y: auto;
+}
+    </style>
+</head>
+<body class="font-poppins bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <a href="{{ url_for('auth.user_dashboard') }}" class="flex items-center">
+                        <img src="{{ url_for('static', filename='assets/img/kim.png') }}" alt="Kimbela" class="h-8">
+                    </a>
+                    <a href="{{ url_for('auth.groups_page') }}" class="text-gray-600 hover:text-blue-600 transition-colors flex items-center">
+                        <i class="bi bi-arrow-left mr-2"></i> Back to Groups
+                    </a>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <a href="{{ url_for('auth.user_dashboard') }}" class="text-gray-600 hover:text-blue-600 transition-colors">
+                        <i class="bi bi-house-door text-xl"></i>
+                    </a>
+                    <a href="{{ url_for('auth.profile', user_id=current_user.id) }}" class="text-gray-600 hover:text-blue-600 transition-colors">
+                        <i class="bi bi-person text-xl"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Group Header -->
+    <div class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="relative">
+                <!-- Cover Photo -->
+                <div class="h-64 bg-gradient-to-r from-blue-500 to-purple-600 rounded-b-2xl overflow-hidden">
+                    {% if group.image %}
+                    <img src="{{ group.image }}" alt="{{ group.name }}" class="w-full h-full object-cover">
+                    {% endif %}
+                    <div class="absolute inset-0 bg-black/20"></div>
+                </div>
+                
+                <!-- Group Info -->
+                <div class="relative -mt-20 px-6 pb-6">
+                    <div class="flex flex-col md:flex-row items-start md:items-end justify-between">
+                        <div class="flex items-end space-x-6">
+                            <!-- Group Avatar -->
+                            <div class="w-32 h-32 bg-white rounded-2xl shadow-2xl p-2">
+                                <img src="{{ group.image or 'https://images.unsplash.com/photo-1611262588024-d12430b98920?w=400&h=400&fit=crop' }}" 
+                                     alt="{{ group.name }}" 
+                                     class="w-full h-full object-cover rounded-xl">
+                            </div>
+                            
+                            <!-- Group Details -->
+                            <div class="text-white mb-4">
+                                <h1 class="text-3xl font-bold mb-2">{{ group.name }}</h1>
+                                <div class="flex flex-wrap items-center gap-4 text-sm">
+                                    <span class="bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm">
+                                        <i class="bi bi-people mr-1"></i>
+                                        {{ group.member_count }} members
+                                    </span>
+                                    <span class="bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm">
+                                        <i class="bi bi-grid-3x3-gap mr-1"></i>
+                                        {{ group.category|title }}
+                                    </span>
+                                    {% if group.is_private %}
+                                    <span class="bg-yellow-500/80 px-3 py-1 rounded-full backdrop-blur-sm">
+                                        <i class="bi bi-lock-fill mr-1"></i>Private Group
+                                    </span>
+                                    {% else %}
+                                    <span class="bg-green-500/80 px-3 py-1 rounded-full backdrop-blur-sm">
+                                        <i class="bi bi-globe mr-1"></i>Public Group
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <br>
+                        <div class="flex space-x-3 mt-5 md:mt-0" style="margin-bottom: -1rem;">
+                            {% if is_member %}
+                            <!-- Create Post Button (Smaller + New Color) -->
+                            <button onclick="openPostModal()" 
+                                    class="px-4 py-2 rounded-lg bg-indigo-500 text-white hover:bg-indigo-600 transition font-medium flex items-center text-sm shadow-sm">
+                                <i class="bi bi-plus-circle mr-1 text-base"></i>
+                                Create Post
+                            </button>
+                        
+                            <!-- Leave Group (Smaller + Balanced Style) -->
+                            <button onclick="leaveGroup({{ group.id }})" 
+                                    class="px-4 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 transition font-medium flex items-center text-sm shadow-sm">
+                                <i class="bi bi-box-arrow-right mr-1 text-base"></i>
+                                Leave
+                            </button>
+                        
+                            {% else %}
+                        
+                            <!-- Join Button (Smaller) -->
+                            <button onclick="joinGroup({{ group.id }})" 
+                                    class="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition font-medium flex items-center text-sm shadow-sm">
+                                <i class="bi bi-person-plus mr-1 text-base"></i>
+                                Join
+                            </button>
+                        
+                            {% endif %}
+                        </div>
+                        
+                    </div>
+                    
+                    <!-- Group Description -->
+                    {% if group.description %}
+                    <div class="mt-6 max-w-3xl">
+                        <p class="text-gray-700 text-lg leading-relaxed">{{ group.description }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <!-- Sidebar -->
+            <div class="lg:col-span-1 space-y-6">
+                <!-- Group Stats -->
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <h3 class="font-semibold text-gray-900 mb-4">Group Stats</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Members</span>
+                            <span class="font-semibold">{{ group.member_count }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Category</span>
+                            <span class="font-semibold capitalize">{{ group.category }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Privacy</span>
+                            <span class="font-semibold">
+                                {% if group.is_private %}Private{% else %}Public{% endif %}
+                            </span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Created</span>
+                            <span class="font-semibold">{{ group.created_at.strftime('%b %d, %Y') }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Group Members Preview -->
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <h3 class="font-semibold text-gray-900 mb-4">Recent Members</h3>
+                    <div class="space-y-3">
+                        {% for member in group.members.limit(5).all() %}
+                        <div class="flex items-center space-x-3">
+                            <img src="{{ member.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
+                                 alt="{{ member.full_name }}" 
+                                 class="w-8 h-8 rounded-full object-cover">
+                            <span class="text-sm font-medium">{{ member.full_name }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% if group.member_count > 5 %}
+                    <button class="w-full mt-4 text-blue-600 hover:text-blue-700 text-sm font-semibold">
+                        View All Members
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Posts Feed -->
+            <div class="lg:col-span-3">
+                {% if is_member %}
+                <!-- Create Post Card -->
+                <div class="bg-white rounded-2xl shadow-lg p-6 mb-6 card-hover">
+                    <div class="flex items-center space-x-4">
+                        <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
+                             alt="{{ current_user.full_name }}" 
+                             class="w-12 h-12 rounded-full object-cover">
+                        <div class="flex-1">
+                            <button onclick="openPostModal()" 
+                                    class="w-full text-left bg-gray-50 rounded-full px-6 py-3 hover:bg-gray-100 transition-colors duration-300 text-gray-600">
+                                What's happening in {{ group.name }}, {{ current_user.first_name }}?
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex justify-between mt-4 pt-4 border-t border-gray-100">
+                        <button onclick="openPostModal()" class="flex items-center text-gray-500 hover:text-blue-600 transition-colors duration-300">
+                            <i class="bi bi-image text-green-500 mr-2"></i>Photo
+                        </button>
+                        <button onclick="openPostModal()" class="flex items-center text-gray-500 hover:text-blue-600 transition-colors duration-300">
+                            <i class="bi bi-camera-video text-red-500 mr-2"></i>Video
+                        </button>
+                        <button onclick="openPostModal()" class="flex items-center text-gray-500 hover:text-blue-600 transition-colors duration-300">
+                            <i class="bi bi-emoji-smile text-yellow-500 mr-2"></i>Feeling
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Posts Container -->
+                <div id="postsContainer">
+                    {% for post in posts %}
+                    <div class="bg-white rounded-2xl shadow-lg mb-6 card-hover post-card" data-post-id="{{ post.id }}">
+                        <!-- Post Header -->
+                        <div class="p-6 pb-4">
+                            <div class="flex justify-between items-start">
+                                <div class="flex items-center space-x-3">
+                                    <img src="{{ post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
+                                         alt="{{ post.author.full_name }}" 
+                                         class="w-10 h-10 rounded-full object-cover">
+                                    <div>
+                                        <h4 class="font-semibold text-gray-900">{{ post.author.full_name }}</h4>
+                                        <p class="text-sm text-gray-500">{{ post.created_at.strftime('%b %d at %I:%M %p') }}</p>
+                                    </div>
+                                </div>
+                                <div class="dropdown relative">
+                                    <button class="p-2 rounded-full hover:bg-gray-100 transition-colors duration-300">
+                                        <i class="bi bi-three-dots text-gray-500"></i>
+                                    </button>
+                                    <div class="dropdown-menu absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-2xl border border-gray-200 hidden z-10">
+                                        {% if post.author.id == current_user.id %}
+                                        <button onclick="editPost({{ post.id }})" class="w-full text-left px-4 py-2 hover:bg-gray-50 rounded-t-xl text-blue-600">
+                                            <i class="bi bi-pencil mr-2"></i>Edit Post
+                                        </button>
+                                        <button onclick="deletePost({{ post.id }})" class="w-full text-left px-4 py-2 hover:bg-gray-50 text-red-600">
+                                            <i class="bi bi-trash mr-2"></i>Delete Post
+                                        </button>
+                                        {% endif %}
+                                        <button onclick="reportContent('post', {{ post.id }})" class="w-full text-left px-4 py-2 hover:bg-gray-50 rounded-b-xl text-orange-600">
+                                            <i class="bi bi-flag mr-2"></i>Report Post
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Post Content -->
+                            <div class="mt-4">
+                                <p class="text-gray-800 whitespace-pre-wrap">{{ post.content }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Post Media -->
+                        {% if post.image %}
+                        <div class="post-media">
+                            <img src="{{ post.image }}" alt="Post image" class="w-full object-cover">
+                        </div>
+                        {% endif %}
+                        
+                        {% if post.video %}
+                        <div class="post-media">
+                            <video controls class="w-full">
+                                <source src="{{ post.video }}" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
+                        </div>
+                        {% endif %}
+
+                        <!-- Post Stats -->
+                        <div class="px-6 py-3 border-t border-gray-100 text-sm text-gray-500">
+                            <div class="flex justify-between">
+                                <span>{{ post.likes_list|length }} likes</span>
+                                <span>{{ post.comments_list|length }} comments</span>
+                            </div>
+                        </div>
+
+                        <!-- Post Actions -->
+                        <div class="px-6 py-3 border-t border-gray-100">
+                            <div class="flex justify-around">
+                                <button onclick="likePost({{ post.id }})" 
+                                        class="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 {% if current_user.has_liked_post(post.id) %}text-blue-600{% else %}text-gray-600{% endif %}">
+                                    <i class="bi bi-hand-thumbs-up{% if current_user.has_liked_post(post.id) %}-fill{% endif %}"></i>
+                                    <span>Like</span>
+                                </button>
+                                <button onclick="focusCommentInput({{ post.id }})" 
+                                        class="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 text-gray-600">
+                                    <i class="bi bi-chat"></i>
+                                    <span>Comment</span>
+                                </button>
+                                <button class="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 text-gray-600">
+                                    <i class="bi bi-share"></i>
+                                    <span>Share</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Comments Section -->
+                        <div class="comments-section px-6 py-4 border-t border-gray-100 bg-gray-50">
+                            <!-- Comment Input -->
+                            <div class="flex items-center space-x-3 mb-4">
+                                <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
+                                     alt="{{ current_user.full_name }}" 
+                                     class="w-8 h-8 rounded-full object-cover">
+                                <div class="flex-1 relative">
+                                    <input type="text" 
+                                           id="commentInput-{{ post.id }}" 
+                                           placeholder="Write a comment..." 
+                                           class="w-full bg-white rounded-full px-4 py-2 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
+                                           onkeypress="handleCommentKeypress(event, {{ post.id }})">
+                                </div>
+                            </div>
+
+                            <!-- Comments List -->
+                            <div id="comments-{{ post.id }}">
+                                {% for comment in post.comments_list[:3] %}
+                                <div class="flex space-x-3 mb-4 comment-item" id="comment-{{ comment.id }}">
+                                    <img src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
+                                         alt="{{ comment.author.full_name }}" 
+                                         class="w-8 h-8 rounded-full object-cover flex-shrink-0">
+                                    <div class="flex-1">
+                                        <div class="bg-white rounded-2xl px-4 py-3">
+                                            <div class="flex justify-between items-start mb-1">
+                                                <h5 class="font-semibold text-sm">{{ comment.author.full_name }}</h5>
+                                                <div class="dropdown relative">
+                                                    <button class="p-1 rounded-full hover:bg-gray-100 transition-colors duration-300">
+                                                        <i class="bi bi-three-dots text-gray-400 text-xs"></i>
+                                                    </button>
+                                                    <div class="dropdown-menu absolute right-0 mt-1 w-32 bg-white rounded-xl shadow-2xl border border-gray-200 hidden z-10">
+                                                        {% if comment.author.id == current_user.id %}
+                                                        <button onclick="deleteComment({{ comment.id }})" class="w-full text-left px-3 py-2 hover:bg-gray-50 rounded-t-xl text-red-600 text-sm">
+                                                            <i class="bi bi-trash mr-1"></i>Delete
+                                                        </button>
+                                                        {% endif %}
+                                                        <button onclick="reportContent('comment', {{ comment.id }})" class="w-full text-left px-3 py-2 hover:bg-gray-50 rounded-b-xl text-orange-600 text-sm">
+                                                            <i class="bi bi-flag mr-1"></i>Report
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <p class="text-gray-800 text-sm">{{ comment.content }}</p>
+                                            <div class="flex items-center space-x-3 mt-2">
+                                                <button onclick="likeComment({{ comment.id }})" class="text-xs text-gray-500 hover:text-blue-600 transition-colors duration-300">
+                                                    Like
+                                                </button>
+                                                <span class="text-xs text-gray-400">{{ comment.created_at.strftime('%I:%M %p') }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+
+                            {% if post.comments_list|length > 3 %}
+                            <button onclick="loadAllComments({{ post.id }})" class="text-blue-600 hover:text-blue-700 text-sm font-semibold">
+                                View all {{ post.comments_list|length }} comments
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% else %}
+                    <!-- Empty State -->
+                    <div class="bg-white rounded-2xl shadow-lg p-12 text-center">
+                        <div class="w-24 h-24 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <i class="bi bi-chat-square-text text-3xl text-blue-600"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">No posts yet</h3>
+                        <p class="text-gray-600 mb-6">Be the first to share something in this group!</p>
+                        {% if is_member %}
+                        <button onclick="openPostModal()" 
+                                class="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-colors duration-300 font-semibold inline-flex items-center">
+                            <i class="bi bi-plus-circle mr-2"></i>Create First Post
+                        </button>
+                        {% else %}
+                        <p class="text-gray-500">Join the group to start posting</p>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Load More Button -->
+                {% if posts|length >= 10 %}
+                <div class="text-center mt-8">
+                    <button id="loadMorePosts" 
+                            class="bg-white text-blue-600 px-8 py-3 rounded-xl hover:bg-blue-50 transition-all duration-300 transform hover:scale-105 shadow-lg border border-blue-200 font-semibold">
+                        Load More Posts
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Post Modal -->
+    <!-- Create Post Modal -->
+<div id="postModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="p-6 border-b border-gray-200 flex justify-between items-center flex-none">
+            <h3 class="text-xl font-semibold">Create Post in {{ group.name }}</h3>
+            <button onclick="closePostModal()" class="p-2 rounded-full hover:bg-gray-100 transition-colors duration-300">
+                <i class="bi bi-x-lg text-gray-500"></i>
+            </button>
+        </div>
+        
+        <form id="createPostForm" enctype="multipart/form-data" class="flex flex-col h-full">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            
+            <!-- Scrollable Content Area -->
+            <div class="flex-1 overflow-y-auto modal-content-scrollable p-6">
+                <div class="flex items-center space-x-3 mb-6">
+                    <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
+                         alt="{{ current_user.full_name }}" 
+                         class="w-10 h-10 rounded-full object-cover">
+                    <div>
+                        <h4 class="font-semibold">{{ current_user.full_name }}</h4>
+                        <p class="text-sm text-gray-500">Posting in {{ group.name }}</p>
+                    </div>
+                </div>
+                
+                <textarea name="post_content" 
+                          id="postContent"
+                          placeholder="What's happening in {{ group.name }}?"
+                          class="w-full border-0 focus:ring-0 focus:outline-none text-lg resize-none min-h-[120px]"
+                          rows="4"></textarea>
+                
+                <!-- Scrollable Media Preview -->
+                <div id="mediaPreview" class="modal-media-preview"></div>
+            </div>
+            
+            <!-- Fixed Bottom Section - This stays at the bottom -->
+            <div class="p-6 border-t border-gray-200 bg-white flex-none">
+                <div class="flex items-center justify-between mb-4">
+                    <span class="font-medium text-gray-700">Add to your post</span>
+                    <div class="flex space-x-2">
+                        <button type="button" onclick="document.getElementById('mediaInput').click()" 
+                                class="p-2 rounded-full hover:bg-gray-100 transition-colors duration-300 text-green-600">
+                            <i class="bi bi-image text-xl"></i>
+                        </button>
+                        <input type="file" name="media" id="mediaInput" accept="image/*,video/*" hidden onchange="previewPostMedia(this)">
+                    </div>
+                </div>
+                
+                <button type="submit" 
+                        class="w-full bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition-colors duration-300 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                        id="submitPostBtn">
+                    Post to {{ group.name }}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+    <!-- Report Content Modal -->
+    <div id="reportModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4">
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-xl font-semibold">Report Content</h3>
+            </div>
+            
+            <form id="reportForm" class="p-6">
+                <input type="hidden" id="reportContentType">
+                <input type="hidden" id="reportContentId">
+                
+                <div class="space-y-4 mb-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Reason for reporting</label>
+                        <div class="space-y-2">
+                            <label class="flex items-center">
+                                <input type="radio" name="reportReason" value="Spam" class="mr-3">
+                                <span>Spam</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="reportReason" value="Harassment" class="mr-3">
+                                <span>Harassment or bullying</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="reportReason" value="Hate speech" class="mr-3">
+                                <span>Hate speech</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="reportReason" value="Inappropriate content" class="mr-3">
+                                <span>Inappropriate content</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="reportReason" value="False information" class="mr-3">
+                                <span>False information</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="reportReason" value="Other" class="mr-3">
+                                <span>Other</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div id="otherReasonContainer" class="hidden">
+                        <textarea id="otherReason" placeholder="Please provide additional details..." 
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                    </div>
+                </div>
+                
+                <div class="flex space-x-3">
+                    <button type="button" onclick="closeReportModal()" 
+                            class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl hover:bg-gray-200 transition-colors duration-300 font-semibold">
+                        Cancel
+                    </button>
+                    <button type="submit" 
+                            class="flex-1 bg-orange-600 text-white py-3 rounded-xl hover:bg-orange-700 transition-colors duration-300 font-semibold">
+                        Submit Report
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        const csrfToken = '{{ csrf_token }}';
+        const groupId = {{ group.id }};
+        let currentUser = {{ current_user.id }};
+
+        // Modal functions
+        function openPostModal() {
+            document.getElementById('postModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        }
+
+        function closePostModal() {
+            document.getElementById('postModal').classList.add('hidden');
+            document.body.style.overflow = ''; // Restore background scrolling
+            
+            // Reset form
+            document.getElementById('mediaPreview').innerHTML = '';
+            document.getElementById('postContent').value = '';
+            document.getElementById('mediaInput').value = '';
+            
+            // Reset button state
+            const submitBtn = document.getElementById('submitPostBtn');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = 'Post to {{ group.name }}';
+        }
+
+        function openReportModal() {
+            document.getElementById('reportModal').classList.remove('hidden');
+        }
+
+        function closeReportModal() {
+            document.getElementById('reportModal').classList.add('hidden');
+            document.getElementById('reportForm').reset();
+            document.getElementById('otherReasonContainer').classList.add('hidden');
+        }
+
+        // Post creation
+        document.getElementById('createPostForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitPostBtn');
+            const originalText = submitBtn.innerHTML;
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `
+                <div class="flex items-center justify-center">
+                    <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                    Posting...
+                </div>
+            `;
+            
+            const formData = new FormData(this);
+            formData.append('group_id', groupId);
+            
+            try {
+                const response = await fetch('/groups/' + groupId + '/post', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': csrfToken
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('Post created successfully!', 'success');
+                    closePostModal();
+                    
+                    // Reload the page to show the new post
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                    
+                } else {
+                    showToast(data.error || 'Failed to create post', 'danger');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                }
+            } catch (error) {
+                console.error('Error creating post:', error);
+                showToast('Error creating post', 'danger');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        });
+
+        // Add drag and drop functionality for better UX
+function setupDragAndDrop() {
+    const modal = document.getElementById('postModal');
+    const mediaInput = document.getElementById('mediaInput');
+    
+    modal.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        modal.classList.add('border-2', 'border-blue-500', 'border-dashed');
+    });
+    
+    modal.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        modal.classList.remove('border-2', 'border-blue-500', 'border-dashed');
+    });
+    
+    modal.addEventListener('drop', function(e) {
+        e.preventDefault();
+        modal.classList.remove('border-2', 'border-blue-500', 'border-dashed');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            mediaInput.files = files;
+            previewPostMedia(mediaInput);
+        }
+    });
+}
+
+        // Media preview
+        function previewPostMedia(input) {
+            const preview = document.getElementById('mediaPreview');
+            const file = input.files[0];
+            
+            if (file) {
+                const url = URL.createObjectURL(file);
+                
+                // Clear previous preview
+                preview.innerHTML = '';
+                
+                if (file.type.startsWith('image/')) {
+                    const img = document.createElement('img');
+                    img.src = url;
+                    img.className = 'w-full h-auto object-contain rounded-lg';
+                    img.onload = function() {
+                        // Auto-scroll to show the new image
+                        preview.scrollTop = preview.scrollHeight;
+                    };
+                    preview.appendChild(img);
+                    
+                } else if (file.type.startsWith('video/')) {
+                    const video = document.createElement('video');
+                    video.src = url;
+                    video.controls = true;
+                    video.className = 'w-full h-auto object-contain rounded-lg';
+                    video.onloadeddata = function() {
+                        // Auto-scroll to show the new video
+                        preview.scrollTop = preview.scrollHeight;
+                    };
+                    preview.appendChild(video);
+                }
+                
+            } else {
+                // Clear preview if no file
+                preview.innerHTML = '';
+            }
+        }
+
+        // Post interactions
+        async function likePost(postId) {
+            try {
+                const response = await fetch('/like_post/' + postId, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.liked !== undefined) {
+                    const likeBtn = document.querySelector(`[data-post-id="${postId}"] .bi-hand-thumbs-up`);
+                    const likeCount = document.querySelector(`[data-post-id="${postId}"] .like-count`);
+                    
+                    if (likeBtn) {
+                        likeBtn.className = data.liked ? 'bi bi-hand-thumbs-up-fill text-blue-600' : 'bi bi-hand-thumbs-up';
+                    }
+                    
+                    // You might want to update like count here
+                }
+            } catch (error) {
+                console.error('Error liking post:', error);
+            }
+        }
+
+        // Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Set up drag and drop
+    setupDragAndDrop();
+    
+    // Close modal when clicking outside
+    document.getElementById('postModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closePostModal();
+        }
+    });
+    
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && !document.getElementById('postModal').classList.contains('hidden')) {
+            closePostModal();
+        }
+    });
+    
+    // Show other reason textarea when "Other" is selected
+    document.addEventListener('change', function(e) {
+        if (e.target.name === 'reportReason') {
+            const otherContainer = document.getElementById('otherReasonContainer');
+            if (e.target.value === 'Other') {
+                otherContainer.classList.remove('hidden');
+            } else {
+                otherContainer.classList.add('hidden');
+            }
+        }
+    });
+});
+
+        // Comment functionality
+        function handleCommentKeypress(event, postId) {
+            if (event.key === 'Enter' && event.target.value.trim()) {
+                addComment(postId, event.target.value.trim());
+                event.target.value = '';
+            }
+        }
+
+        async function addComment(postId, content) {
+            try {
+                const response = await fetch('/add_comment/' + postId, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({ content: content })
+                });
+                
+                const data = await response.json();
+                
+                if (data.id) {
+                    const commentsContainer = document.getElementById('comments-' + postId);
+                    const newComment = document.createElement('div');
+                    newComment.className = 'flex space-x-3 mb-4 comment-item';
+                    newComment.id = 'comment-' + data.id;
+                    newComment.innerHTML = `
+                        <img src="${data.avatar}" class="w-8 h-8 rounded-full object-cover flex-shrink-0">
+                        <div class="flex-1">
+                            <div class="bg-white rounded-2xl px-4 py-3">
+                                <div class="flex justify-between items-start mb-1">
+                                    <h5 class="font-semibold text-sm">${data.name}</h5>
+                                    <div class="dropdown relative">
+                                        <button class="p-1 rounded-full hover:bg-gray-100 transition-colors duration-300">
+                                            <i class="bi bi-three-dots text-gray-400 text-xs"></i>
+                                        </button>
+                                        <div class="dropdown-menu absolute right-0 mt-1 w-32 bg-white rounded-xl shadow-2xl border border-gray-200 hidden z-10">
+                                            <button onclick="deleteComment(${data.id})" class="w-full text-left px-3 py-2 hover:bg-gray-50 rounded-xl text-red-600 text-sm">
+                                                <i class="bi bi-trash mr-1"></i>Delete
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p class="text-gray-800 text-sm">${data.content}</p>
+                                <div class="flex items-center space-x-3 mt-2">
+                                    <button onclick="likeComment(${data.id})" class="text-xs text-gray-500 hover:text-blue-600 transition-colors duration-300">
+                                        Like
+                                    </button>
+                                    <span class="text-xs text-gray-400">Just now</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    commentsContainer.appendChild(newComment);
+                }
+            } catch (error) {
+                console.error('Error adding comment:', error);
+                showToast('Error adding comment', 'danger');
+            }
+        }
+
+        // Report functionality
+        function reportContent(contentType, contentId) {
+            document.getElementById('reportContentType').value = contentType;
+            document.getElementById('reportContentId').value = contentId;
+            openReportModal();
+        }
+
+        document.getElementById('reportForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                content_type: document.getElementById('reportContentType').value,
+                content_id: document.getElementById('reportContentId').value,
+                reason: document.querySelector('input[name="reportReason"]:checked').value,
+                additional_info: document.getElementById('otherReason').value || ''
+            };
+            
+            try {
+                const response = await fetch('/report_content', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('Content reported successfully', 'success');
+                    closeReportModal();
+                } else {
+                    showToast(data.error || 'Failed to report content', 'danger');
+                }
+            } catch (error) {
+                console.error('Error reporting content:', error);
+                showToast('Error reporting content', 'danger');
+            }
+        });
+
+        // Group actions
+        async function joinGroup(groupId) {
+            try {
+                const response = await fetch('/groups/' + groupId + '/join', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('Successfully joined the group!', 'success');
+                    location.reload();
+                } else {
+                    showToast(data.error || 'Failed to join group', 'danger');
+                }
+            } catch (error) {
+                console.error('Error joining group:', error);
+                showToast('Error joining group', 'danger');
+            }
+        }
+
+        async function leaveGroup(groupId) {
+            if (!confirm('Are you sure you want to leave this group?')) return;
+            
+            try {
+                const response = await fetch('/groups/' + groupId + '/leave', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('Left the group successfully', 'info');
+                    location.reload();
+                } else {
+                    showToast(data.error || 'Failed to leave group', 'danger');
+                }
+            } catch (error) {
+                console.error('Error leaving group:', error);
+                showToast('Error leaving group', 'danger');
+            }
+        }
+
+        // Utility functions
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg text-white ${
+                type === 'success' ? 'bg-green-500' :
+                type === 'danger' ? 'bg-red-500' :
+                type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500'
+            }`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function focusCommentInput(postId) {
+            const input = document.getElementById('commentInput-' + postId);
+            if (input) {
+                input.focus();
+            }
+        }
+
+        // Event listeners for dropdowns
+        document.addEventListener('click', function(e) {
+            // Close dropdowns when clicking outside
+            if (!e.target.closest('.dropdown')) {
+                document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                    menu.classList.add('hidden');
+                });
+            }
+            
+            // Toggle dropdowns
+            if (e.target.closest('.dropdown button')) {
+                const dropdown = e.target.closest('.dropdown');
+                const menu = dropdown.querySelector('.dropdown-menu');
+                menu.classList.toggle('hidden');
+            }
+            
+            // Show other reason textarea
+            if (e.target.value === 'Other' && e.target.name === 'reportReason') {
+                document.getElementById('otherReasonContainer').classList.remove('hidden');
+            } else if (e.target.name === 'reportReason') {
+                document.getElementById('otherReasonContainer').classList.add('hidden');
+            }
+        });
+
+
+        // Post management functions
+async function editPost(postId) {
+    try {
+        // Get the current post content
+        const postCard = document.querySelector(`[data-post-id="${postId}"]`);
+        const postContent = postCard.querySelector('.text-gray-800').textContent;
+        
+        // Create a modal for editing
+        const editModal = document.createElement('div');
+        editModal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50';
+        editModal.innerHTML = `
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4">
+                <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                    <h3 class="text-xl font-semibold">Edit Post</h3>
+                    <button onclick="this.closest('.fixed').remove()" class="p-2 rounded-full hover:bg-gray-100 transition-colors duration-300">
+                        <i class="bi bi-x-lg text-gray-500"></i>
+                    </button>
+                </div>
+                <form id="editPostForm" class="p-6">
+                    <input type="hidden" name="csrf_token" value="${csrfToken}">
+                    <div class="mb-6">
+                        <textarea name="post_content" 
+                                class="w-full border border-gray-300 rounded-xl p-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                                rows="6">${postContent}</textarea>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button type="button" onclick="this.closest('.fixed').remove()" 
+                                class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl hover:bg-gray-200 transition-colors duration-300 font-semibold">
+                            Cancel
+                        </button>
+                        <button type="submit" 
+                                class="flex-1 bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition-colors duration-300 font-semibold">
+                            Update Post
+                        </button>
+                    </div>
+                </form>
+            </div>
+        `;
+        
+        document.body.appendChild(editModal);
+        
+        // Handle form submission
+        document.getElementById('editPostForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            formData.append('post_content', this.querySelector('textarea').value);
+            
+            try {
+                const response = await fetch('/edit_post/' + postId, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': csrfToken
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('Post updated successfully!', 'success');
+                    editModal.remove();
+                    
+                    // Update the post content in the UI
+                    const postContentElement = postCard.querySelector('.text-gray-800');
+                    postContentElement.textContent = this.querySelector('textarea').value;
+                    
+                } else {
+                    showToast(data.error || 'Failed to update post', 'danger');
+                }
+            } catch (error) {
+                console.error('Error updating post:', error);
+                showToast('Error updating post', 'danger');
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error editing post:', error);
+        showToast('Error editing post', 'danger');
+    }
+}
+
+async function deletePost(postId) {
+    if (!confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('/delete_post/' + postId, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showToast('Post deleted successfully!', 'success');
+            
+            // Remove the post from the UI
+            const postCard = document.querySelector(`[data-post-id="${postId}"]`);
+            if (postCard) {
+                postCard.style.opacity = '0';
+                postCard.style.transform = 'translateX(-100%)';
+                setTimeout(() => postCard.remove(), 300);
+            }
+        } else {
+            showToast(data.error || 'Failed to delete post', 'danger');
+        }
+    } catch (error) {
+        console.error('Error deleting post:', error);
+        showToast('Error deleting post', 'danger');
+    }
+}
+
+// Comment deletion function
+async function deleteComment(commentId) {
+    if (!confirm('Are you sure you want to delete this comment?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('/delete_comment/' + commentId, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showToast('Comment deleted successfully!', 'success');
+            
+            // Remove the comment from the UI
+            const commentElement = document.getElementById('comment-' + commentId);
+            if (commentElement) {
+                commentElement.style.opacity = '0';
+                commentElement.style.transform = 'translateX(-100%)';
+                setTimeout(() => commentElement.remove(), 300);
+            }
+        } else {
+            showToast(data.error || 'Failed to delete comment', 'danger');
+        }
+    } catch (error) {
+        console.error('Error deleting comment:', error);
+        showToast('Error deleting comment', 'danger');
+    }
+}
+
+// Comment liking function
+async function likeComment(commentId) {
+    try {
+        const response = await fetch('/like_comment/' + commentId, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.liked !== undefined) {
+            showToast(data.liked ? 'Comment liked!' : 'Comment unliked!', 'success');
+            // You can update the UI here if needed
+        }
+    } catch (error) {
+        console.error('Error liking comment:', error);
+        showToast('Error liking comment', 'danger');
+    }
+}
+
+// Load all comments function
+async function loadAllComments(postId) {
+    try {
+        const response = await fetch('/get_comments/' + postId);
+        const data = await response.json();
+        
+        if (data.comments) {
+            const commentsContainer = document.getElementById('comments-' + postId);
+            const viewAllButton = commentsContainer.nextElementSibling;
+            
+            // Clear existing comments and button
+            commentsContainer.innerHTML = '';
+            
+            // Add all comments
+            data.comments.forEach(comment => {
+                const commentElement = document.createElement('div');
+                commentElement.className = 'flex space-x-3 mb-4 comment-item';
+                commentElement.id = 'comment-' + comment.id;
+                commentElement.innerHTML = `
+                    <img src="${comment.avatar}" class="w-8 h-8 rounded-full object-cover flex-shrink-0">
+                    <div class="flex-1">
+                        <div class="bg-white rounded-2xl px-4 py-3">
+                            <div class="flex justify-between items-start mb-1">
+                                <h5 class="font-semibold text-sm">${comment.author_name}</h5>
+                                <div class="dropdown relative">
+                                    <button class="p-1 rounded-full hover:bg-gray-100 transition-colors duration-300">
+                                        <i class="bi bi-three-dots text-gray-400 text-xs"></i>
+                                    </button>
+                                    <div class="dropdown-menu absolute right-0 mt-1 w-32 bg-white rounded-xl shadow-2xl border border-gray-200 hidden z-10">
+                                        ${comment.author_id === currentUser ? 
+                                            `<button onclick="deleteComment(${comment.id})" class="w-full text-left px-3 py-2 hover:bg-gray-50 rounded-t-xl text-red-600 text-sm">
+                                                <i class="bi bi-trash mr-1"></i>Delete
+                                            </button>` : ''
+                                        }
+                                        <button onclick="reportContent('comment', ${comment.id})" class="w-full text-left px-3 py-2 hover:bg-gray-50 ${comment.author_id === currentUser ? 'rounded-b-xl' : 'rounded-xl'} text-orange-600 text-sm">
+                                            <i class="bi bi-flag mr-1"></i>Report
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-gray-800 text-sm">${comment.content}</p>
+                            <div class="flex items-center space-x-3 mt-2">
+                                <button onclick="likeComment(${comment.id})" class="text-xs text-gray-500 hover:text-blue-600 transition-colors duration-300">
+                                    Like
+                                </button>
+                                <span class="text-xs text-gray-400">${comment.created_at}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                commentsContainer.appendChild(commentElement);
+            });
+            
+            // Remove the "View all comments" button
+            if (viewAllButton && viewAllButton.tagName === 'BUTTON') {
+                viewAllButton.remove();
+            }
+        }
+    } catch (error) {
+        console.error('Error loading comments:', error);
+        showToast('Error loading comments', 'danger');
+    }
+}
+    </script>
+</body>
+</html>

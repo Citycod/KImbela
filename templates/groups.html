@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discover Groups - Kimbela</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .gradient-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        
+    </style>
+</head>
+<body class="font-poppins bg-gradient-to-br from-blue-50 to-purple-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <a href="{{ url_for('auth.user_dashboard') }}" class="flex items-center">
+                        <img src="{{ url_for('static', filename='assets/img/kim.png') }}" alt="Kimbela" class="h-8">
+                    </a>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <a href="{{ url_for('auth.user_dashboard') }}" class="text-gray-600 hover:text-blue-600 transition-colors">
+                        <i class="bi bi-house-door text-xl"></i>
+                    </a>
+                    <a href="{{ url_for('auth.profile', user_id=current_user.id) }}" class="text-gray-600 hover:text-blue-600 transition-colors">
+                        <i class="bi bi-person text-xl"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-gray-900 mb-4">
+                Discover Amazing <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Groups</span>
+            </h1>
+            <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+                Connect with like-minded people, share your passions, and build meaningful communities together.
+            </p>
+        </div>
+
+        <!-- Create Group Button -->
+        <div class="text-center mb-8">
+            <a href="{{ url_for('auth.create_group') }}" 
+               class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 shadow-lg">
+                <i class="bi bi-plus-circle text-xl mr-2"></i>
+                Create New Group
+            </a>
+        </div>
+
+        <!-- Groups Grid -->
+        <div id="groupsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
+            <!-- Groups will be loaded here dynamically -->
+            <div class="col-span-full text-center py-12">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p class="text-gray-600">Loading amazing groups...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        const csrfToken = '{{ csrf_token }}';
+
+        // Load groups function
+        function loadGroups() {
+            fetch('/groups/all')
+                .then(response => response.json())
+                .then(groups => {
+                    const container = document.getElementById('groupsContainer');
+                    
+                    if (groups.length === 0) {
+                        container.innerHTML = `
+                            <div class="col-span-full text-center py-12">
+                                <div class="w-24 h-24 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <i class="bi bi-people text-3xl text-blue-600"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold text-gray-900 mb-2">No Groups Found</h3>
+                                <p class="text-gray-600 mb-4">Be the first to create an amazing group!</p>
+                                <a href="/groups/create" 
+                                   class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300">
+                                    <i class="bi bi-plus-circle mr-2"></i>
+                                    Create Group
+                                </a>
+                            </div>
+                        `;
+                    } else {
+                        container.innerHTML = groups.map(group => `
+                            <div class="bg-white rounded-2xl shadow-lg overflow-hidden card-hover group">
+                                <div class="relative">
+                                    <img src="${group.image || 'https://images.unsplash.com/photo-1611262588024-d12430b98920?w=400&h=200&fit=crop'}" 
+                                         alt="${group.name}" 
+                                         class="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300">
+                                    <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                                    ${group.is_private ? `
+                                        <div class="absolute top-3 right-3 bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-semibold">
+                                            <i class="bi bi-lock-fill mr-1"></i>Private
+                                        </div>
+                                    ` : `
+                                        <div class="absolute top-3 right-3 bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold">
+                                            <i class="bi bi-globe mr-1"></i>Public
+                                        </div>
+                                    `}
+                                </div>
+                                
+                                <div class="p-6">
+                                    <h3 class="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors duration-300">
+                                        ${group.name}
+                                    </h3>
+                                    
+                                    <p class="text-gray-600 text-sm mb-4 line-clamp-2">
+                                        ${group.description || 'No description provided.'}
+                                    </p>
+                                    
+                                    <div class="flex items-center justify-between text-sm text-gray-500 mb-4">
+                                        <div class="flex items-center">
+                                            <i class="bi bi-people mr-1"></i>
+                                            <span>${group.member_count} members</span>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <i class="bi bi-grid-3x3-gap mr-1"></i>
+                                            <span class="capitalize">${group.category}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="flex space-x-3">
+                                        <button onclick="viewGroup(${group.id})" 
+                                                class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-300 font-semibold text-sm">
+                                            View Group
+                                        </button>
+                                        
+                                        ${group.is_member ? `
+                                            <button onclick="leaveGroup(${group.id})" 
+                                                    class="flex-1 bg-red-100 text-red-700 py-2 px-4 rounded-lg hover:bg-red-200 transition-colors duration-300 font-semibold text-sm">
+                                                Leave
+                                            </button>
+                                        ` : `
+                                            <button onclick="joinGroup(${group.id})" 
+                                                    class="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors duration-300 font-semibold text-sm">
+                                                Join
+                                            </button>
+                                        `}
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading groups:', error);
+                    document.getElementById('groupsContainer').innerHTML = `
+                        <div class="col-span-full text-center py-12 text-red-600">
+                            <i class="bi bi-exclamation-triangle text-4xl mb-4"></i>
+                            <p>Failed to load groups. Please try again.</p>
+                        </div>
+                    `;
+                });
+        }
+
+        // Group actions
+        function viewGroup(groupId) {
+            window.location.href = `/groups/${groupId}`;
+        }
+
+        async function joinGroup(groupId) {
+            try {
+                const response = await fetch(`/groups/${groupId}/join`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('🎉 Successfully joined the group!', 'success');
+                    loadGroups(); // Reload groups
+                } else {
+                    showToast(data.error || 'Failed to join group', 'danger');
+                }
+            } catch (error) {
+                console.error('Error joining group:', error);
+                showToast('Error joining group', 'danger');
+            }
+        }
+
+        async function leaveGroup(groupId) {
+            if (!confirm('Are you sure you want to leave this group?')) return;
+            
+            try {
+                const response = await fetch(`/groups/${groupId}/leave`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('👋 Left the group successfully', 'info');
+                    loadGroups(); // Reload groups
+                } else {
+                    showToast(data.error || 'Failed to leave group', 'danger');
+                }
+            } catch (error) {
+                console.error('Error leaving group:', error);
+                showToast('Error leaving group', 'danger');
+            }
+        }
+
+        // Utility function
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg text-white ${
+                type === 'success' ? 'bg-green-500' :
+                type === 'danger' ? 'bg-red-500' :
+                type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500'
+            }`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // Load groups when page loads
+        document.addEventListener('DOMContentLoaded', loadGroups);
+    </script>
+</body>
+</html>
