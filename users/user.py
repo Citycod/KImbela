@@ -10,6 +10,12 @@ from flask import (
     current_app,
 )
 
+from datetime import datetime
+import humanize
+
+from datetime import datetime
+import humanize
+
 from sqlalchemy import event
 from flask_wtf.csrf import generate_csrf
 from werkzeug.security import check_password_hash
@@ -88,14 +94,37 @@ cloudinary.config(
     secure=True,
 )
 
-
-
-
-auth = Blueprint("auth", __name__)
+user = Blueprint("user", __name__)
 
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
+
+
+
+
+
+
+
+
+
+
+
+# Add this function to create a timeago filter
+def timeago_filter(dt):
+    if dt is None:
+        return "Never"
+    
+    # Make sure dt is a datetime object
+    if isinstance(dt, str):
+        try:
+            dt = datetime.fromisoformat(dt.replace('Z', '+00:00'))
+        except:
+            return "Unknown"
+    
+    now = datetime.utcnow()
+    return humanize.naturaltime(now - dt)
+
 
 
 def is_strong_password(password):
@@ -120,1166 +149,10 @@ def calculate_age(birth_date):
     return age
 
 
-@auth.route("/")
-@auth.route("/index", methods=["GET", "POST"])
+@user.route("/")
+@user.route("/index", methods=["GET", "POST"])
 def index():
     return render_template("index.html")
-
-
-@auth.route("/register", methods=["GET", "POST"])
-def register():
-    # Define options for dropdowns
-    EDUCATIONAL_LEVELS = [
-        "Primary or Elementary School",
-        "Middle School or Junior High School",
-        "High School",
-        "Vocational College",
-        "Associate Degree",
-        "Bachelor's Degree",
-        "Master's Degree",
-        "PhD or Doctorate",
-        "Professional Degree",
-        "No Formal Education" "Other",
-    ]
-
-    INTERESTS_LIST = [
-        "Reading",
-        "Traveling",
-        "Cooking",
-        "Photography",
-        "Music",
-        "Sports",
-        "Gardening",
-        "Painting",
-        "Dancing",
-        "Hiking",
-        "Movies",
-        "Technology",
-        "Art",
-        "Writing",
-        "Fishing",
-        "Yoga",
-        "Meditation",
-        "Chess",
-        "Gaming",
-        "Knitting",
-        "Bird Watching",
-        "Wine Tasting",
-        "Volunteering",
-        "Learning Languages",
-        "Camping",
-        "Cycling",
-        "Swimming",
-        "Running",
-        "Weightlifting",
-        "Pottery",
-        "Sculpting",
-        "Drawing",
-        "Singing",
-        "Playing Instruments",
-        "Theater",
-        "Dancing",
-        "Poetry",
-        "Blogging",
-        "Podcasting",
-        "DIY Projects",
-        "Woodworking",
-        "Car Restoration",
-        "Home Decorating",
-        "Watching Sports",
-        "Fantasy Sports",
-        "Collecting",
-        "Antique Hunting",
-        "Stargazing",
-        "Meteorology",
-        "Genealogy",
-        "History Research",
-        "Baking",
-        "Coffee Brewing",
-        "Tea Tasting",
-        "Mixology",
-        "Foodie Culture",
-        "Motorcycles",
-        "Sailing",
-        "Scuba Diving",
-        "Rock Climbing",
-        "Mountain Biking",
-        "Fashion",
-        "Makeup Artistry",
-        "Hair Styling",
-        "Fitness Training",
-        "Nutrition",
-        "Philosophy",
-        "Psychology",
-        "Sociology",
-        "Political Science",
-        "Economics",
-        "Astronomy",
-        "Physics",
-        "Biology",
-        "Chemistry",
-        "Mathematics",
-        "Computer Programming",
-        "Web Development",
-        "Data Science",
-        "Artificial Intelligence",
-        "Cryptocurrency",
-        "Stock Trading",
-        "Real Estate",
-        "Entrepreneurship",
-        "Startups",
-    ]
-
-    RELIGIONS = [
-        "Christianity",
-        "Islam",
-        "Hinduism",
-        "Buddhism",
-        "Judaism",
-        "Sikhism",
-        "Baháʼí Faith",
-        "Jainism",
-        "Shinto",
-        "Taoism",
-        "Zoroastrianism",
-        "Atheism",
-        "Agnosticism",
-        "Spiritual but not religious",
-        "Traditional / Indegenous Beliefs",
-        "No Religion / Atheist / Agnostic",
-        "Roman Catholic",
-        "Anglican",
-        "Pentecostal",
-        "Methodist",
-        "Baptist",
-        "Seventh Day Adventist",
-        "Jehova's Witnesses",
-        "Latter Day Saints",
-        "Mormon",
-        "Lutheran",
-        "Presbyterian",
-        "Episcopal",
-        "Bible Church",
-        "Orthodox Christian",
-        "White Garment Churches",
-        "Other",
-    ]
-
-    ETHNICITIES = [
-        "African",
-        "African American",
-        "Asian",
-        "Caucasian",
-        "Hispanic/Latino",
-        "Native American",
-        "Pacific Islander",
-        "Middle Eastern",
-        "Mixed Race",
-        "Caribbean",
-        "European",
-        "South Asian",
-        "East Asian",
-        "Southeast Asian",
-        "Indigenous Australian",
-        "Maori",
-        "Other",
-    ]
-
-    if request.method == "POST":
-        # Extract form data
-        first_name = request.form.get("first_name", "").strip()
-        last_name = request.form.get("last_name", "").strip()
-        email = request.form.get("email", "").strip().lower()
-        phone_number = request.form.get("phone_number", "").strip()
-        dob_str = request.form.get("dob")
-        gender = request.form.get("gender")
-        marital_status = request.form.get("marital_status")
-        city = request.form.get("city", "").strip()
-        country = request.form.get("country", "").strip()
-        password = request.form.get("password")
-        confirm_password = request.form.get("confirm_password")
-        terms = request.form.get("terms")
-        interests = request.form.getlist("interests")
-        educational_level = request.form.get("educational_level")
-        occupation = request.form.get("occupation", "").strip()
-        ethnicity = request.form.get("ethnicity")
-        religion = request.form.get("religion")
-        about_me = request.form.get("about_me", "").strip()  # NEW FIELD
-
-        errors = {}
-
-        # === Individual Field Validation ===
-        if not first_name:
-            errors["first_name"] = "First name is required."
-
-        if not last_name:
-            errors["last_name"] = "Last name is required."
-
-        if not email:
-            errors["email"] = "Email is required."
-        elif not re.match(r"^[^@]+@[^@]+\.[^@]+$", email):
-            errors["email"] = "Please enter a valid email address."
-        elif User.query.filter_by(email=email).first():
-            errors["email"] = "This email is already registered."
-
-        if not phone_number:
-            errors["phone_number"] = "Phone number is required."
-        elif not re.match(r"^\+?[\d\s\-\(\)]{10,}$", phone_number):
-            errors["phone_number"] = "Please enter a valid phone number."
-
-        if not dob_str:
-            errors["dob"] = "Date of birth is required."
-        else:
-            try:
-                dob = datetime.strptime(dob_str, "%Y-%m-%d").date()
-                age = calculate_age(dob)
-                if age < 31:
-                    errors["dob"] = "You must be at least 31 years old to join Kimbela."
-            except ValueError:
-                errors["dob"] = "Invalid date of birth."
-
-        if not gender:
-            errors["gender"] = "Gender is required."
-
-        if not marital_status:
-            errors["marital_status"] = "Marital status is required."
-
-        if not city:
-            errors["city"] = "City is required."
-
-        if not country:
-            errors["country"] = "Country is required."
-
-        if not password:
-            errors["password"] = "Password is required."
-        elif not is_strong_password(password):
-            errors["password"] = (
-                "Password must be at least 8 characters with uppercase, lowercase, number, and symbol."
-            )
-
-        if not confirm_password:
-            errors["confirm_password"] = "Please confirm your password."
-        elif password != confirm_password:
-            errors["confirm_password"] = "Passwords do not match."
-
-        if not terms:
-            errors["terms"] = (
-                "You must agree to the Terms of Service and Privacy Policy."
-            )
-
-        # If there are errors, return to form
-        if errors:
-            for field, error in errors.items():
-                flash(error, "danger")
-            max_dob = (datetime.utcnow().date() - timedelta(days=31 * 365)).strftime(
-                "%Y-%m-%d"
-            )
-            return render_template(
-                "register.html",
-                max_dob=max_dob,
-                errors=errors,
-                request=request,
-                educational_levels=EDUCATIONAL_LEVELS,
-                interests_list=INTERESTS_LIST,
-                religions=RELIGIONS,
-                ethnicities=ETHNICITIES,
-            )
-
-        # === Create User ===
-        try:
-            # Convert interests list to comma-separated string
-            interests_str = ", ".join(interests) if interests else None
-
-            user = User(
-                first_name=first_name,
-                last_name=last_name,
-                email=email,
-                phone_number=phone_number,
-                dob=dob,
-                gender=gender,
-                city=city,
-                marital_status=marital_status,
-                country=country,
-                interests=interests_str,
-                educational_level=educational_level,
-                occupation=occupation,
-                ethnicity=ethnicity,
-                religion=religion,
-                about_me=about_me,  # NEW FIELD
-                is_active=False,
-            )
-            user.set_password(password)
-
-            # Generate 6-digit OTP
-            otp = user.generate_otp()
-
-            db.session.add(user)
-            db.session.commit()
-
-            # === Send Verification Email with OTP ===
-            try:
-                msg = Message(
-                    subject="Your Kimbela Verification Code",
-                    sender=current_app.config["MAIL_DEFAULT_SENDER"],
-                    recipients=[email],
-                )
-                msg.html = render_template(
-                    "emails/verify_email.html", user=user, otp=otp
-                )
-                mail.send(msg)
-                flash("Check your email for the 6-digit verification code.", "success")
-            except Exception as e:
-                print(f"Email send failed: {e}")
-                flash(
-                    "Registration successful, but failed to send verification email. Please contact support.",
-                    "warning",
-                )
-
-            return redirect(url_for("auth.verify_page", email=email))
-
-        except Exception as e:
-            db.session.rollback()
-            flash("An error occurred during registration. Please try again.", "danger")
-            print(f"Registration error: {e}")
-            max_dob = (datetime.utcnow().date() - timedelta(days=31 * 365)).strftime(
-                "%Y-%m-%d"
-            )
-            return render_template(
-                "register.html",
-                max_dob=max_dob,
-                errors={},
-                request=request,
-                educational_levels=EDUCATIONAL_LEVELS,
-                interests_list=INTERESTS_LIST,
-                religions=RELIGIONS,
-                ethnicities=ETHNICITIES,
-            )
-
-    # === GET request ===
-    max_dob = (datetime.utcnow().date() - timedelta(days=31 * 365)).strftime("%Y-%m-%d")
-    return render_template(
-        "register.html",
-        max_dob=max_dob,
-        csrf_token=generate_csrf(),
-        errors={},
-        educational_levels=EDUCATIONAL_LEVELS,
-        interests_list=INTERESTS_LIST,
-        religions=RELIGIONS,
-        ethnicities=ETHNICITIES,
-    )
-
-
-@auth.route("/verify", methods=["GET", "POST"])
-def verify_page():
-    email = request.args.get("email") or request.form.get("email")
-    if not email:
-        flash("No email supplied.", "danger")
-        return redirect(url_for("auth.login"))
-
-    user = User.query.filter_by(email=email, is_active=False).first()
-    if not user:
-        flash("Account already verified or not found.", "info")
-        return redirect(url_for("auth.login"))
-
-    if request.method == "POST":
-        token = request.form.get("token", "").strip()
-        if user.otp != token:
-            flash("Invalid token.", "danger")
-            return render_template("verify.html", email=email)
-
-        # Token is correct → activate
-        if user.otp_expires < datetime.utcnow():
-            flash("Token expired. Please register again.", "danger")
-            return redirect(url_for("auth.register"))
-
-        user.is_active = True
-        user.otp = None
-        user.otp_expires = None
-        db.session.commit()
-
-        flash("Email verified! You can now log in.", "success")
-        return redirect(url_for("auth.login"))
-
-    # GET – show the form
-    return render_template("verify.html", email=email)
-
-
-@auth.route("/resend-verification")
-def resend_verification():
-    email = request.args.get("email")
-    user = User.query.filter_by(email=email, is_active=False).first()
-    if not user:
-        flash("No pending verification for this email.", "info")
-        return redirect(url_for("auth.login"))
-
-    token = user.generate_email_token()
-    db.session.commit()
-
-    short_token = user.generate_short_token()
-    msg = Message(
-        "Your Kimbela verification token",
-        sender=current_app.config["MAIL_DEFAULT_SENDER"],
-        recipients=[email],
-    )
-    msg.html = render_template(
-        "emails/verify_email.html", user=user, verify_url=verify_url
-    )
-    mail.send(msg)
-
-    flash("A new token has been sent to your email.", "success")
-    return redirect(url_for("auth.verify_page", email=email))
-
-
-@auth.route("/login", methods=["GET", "POST"])
-def login():
-    # If already logged in → go to dashboard
-    if current_user.is_authenticated:
-        return redirect(url_for("auth.user_dashboard"))
-
-    if request.method == "POST":
-        email = request.form.get("email", "").strip().lower()
-        password = request.form.get("password")
-        remember = bool(request.form.get("remember"))
-
-        # === Basic validation ===
-        if not email:
-            flash("Please enter your email.", "danger")
-            return render_template("login.html")
-        if not password:
-            flash("Please enter your password.", "danger")
-            return render_template("login.html")
-
-        # === Find user ===
-        user = User.query.filter_by(email=email).first()
-
-        # === Check credentials & account status ===
-        if not user:
-            flash("Invalid email or password.", "danger")
-            return render_template("login.html")
-
-        if not user.check_password(password):
-            flash("Invalid email or password.", "danger")
-            return render_template("login.html")
-
-        if not user.is_active:
-            flash(
-                "Please you need to verify your email address before we let you in.",
-                "warning",
-            )
-            return render_template("login.html")
-
-        # === Login successful ===
-        login_user(user, remember=remember)
-        flash(f"Welcome back, {user.first_name}! You're now logged in.", "success")
-
-        # Optional: redirect to next page (e.g. ?next=/profile)
-        next_page = request.args.get("next")
-        if next_page and next_page.startswith("/"):
-            return redirect(next_page)
-
-        if user.is_admin:
-            return redirect(url_for("auth.admin_dashboard"))
-
-        return redirect(url_for("auth.user_dashboard"))
-
-    # === GET request ===
-    return render_template("login.html")
-
-
-# Add these routes to your auth blueprint
-
-
-@auth.route("/admin_dashboard")
-@login_required
-def admin_dashboard():
-    if not current_user.is_admin and not current_user.is_super_admin:
-        flash("Access denied. Admin privileges required.", "danger")
-        return redirect(url_for("auth.user_dashboard"))
-
-    # Get statistics for dashboard
-    total_users = User.query.count()
-    active_users = User.query.filter_by(is_active=True).count()
-    pending_users = User.query.filter_by(is_active=False).count()
-    total_groups = Group.query.count()
-    active_groups = Group.query.filter_by(is_active=True).count()
-    pending_reports = ReportedContent.query.filter_by(status="pending").count()
-    active_ads = SponsoredAd.query.filter_by(status="active").count()
-
-    # Recent activity
-    recent_users = User.query.order_by(User.created_at.desc()).limit(5).all()
-    recent_reports = (
-        ReportedContent.query.order_by(ReportedContent.created_at.desc()).limit(5).all()
-    )
-
-    return render_template(
-        "admin_dashboard.html",
-        total_users=total_users,
-        active_users=active_users,
-        pending_users=pending_users,
-        total_groups=total_groups,
-        active_groups=active_groups,
-        pending_reports=pending_reports,
-        active_ads=active_ads,
-        recent_users=recent_users,
-        recent_reports=recent_reports,
-    )
-
-
-# @auth.route('/admin/users')
-# @login_required
-# def admin_users():
-#     if not current_user.is_admin and not current_user.is_super_admin:
-#         return jsonify({'error': 'Access denied'}), 403
-
-#     page = request.args.get('page', 1, type=int)
-#     search = request.args.get('search', '')
-#     status_filter = request.args.get('status', 'all')
-
-#     query = User.query
-
-#     if search:
-#         query = query.filter(
-#             db.or_(
-#                 User.first_name.ilike(f'%{search}%'),
-#                 User.last_name.ilike(f'%{search}%'),
-#                 User.email.ilike(f'%{search}%')
-#             )
-#         )
-
-#     if status_filter == 'active':
-#         query = query.filter_by(is_active=True)
-#     elif status_filter == 'pending':
-#         query = query.filter_by(is_active=False)
-#     elif status_filter == 'admin':
-#         query = query.filter(db.or_(User.is_admin == True, User.is_super_admin == True))
-
-#     users = query.order_by(User.created_at.desc()).paginate(
-#         page=page, per_page=20, error_out=False
-#     )
-
-#     return render_template('admin_users.html', users=users, search=search, status_filter=status_filter)
-
-
-@auth.route("/admin/users/<int:user_id>/toggle_status", methods=["POST"])
-@login_required
-def admin_toggle_user_status(user_id):
-    if not current_user.is_admin and not current_user.is_super_admin:
-        return jsonify({"success": False, "error": "Access denied"}), 403
-
-    user = User.query.get_or_404(user_id)
-    user.is_active = not user.is_active
-    db.session.commit()
-
-    return jsonify({"success": True, "is_active": user.is_active})
-
-
-@auth.route("/admin/users/<int:user_id>/make_admin", methods=["POST"])
-@login_required
-def admin_make_admin(user_id):
-    if not current_user.is_super_admin:
-        return jsonify({"success": False, "error": "Super admin required"}), 403
-
-    user = User.query.get_or_404(user_id)
-    user.is_admin = True
-    db.session.commit()
-
-    return jsonify({"success": True})
-
-
-@auth.route("/admin/users/<int:user_id>/remove_admin", methods=["POST"])
-@login_required
-def admin_remove_admin(user_id):
-    if not current_user.is_super_admin:
-        return jsonify({"success": False, "error": "Super admin required"}), 403
-
-    user = User.query.get_or_404(user_id)
-    user.is_admin = False
-    db.session.commit()
-
-    return jsonify({"success": True})
-
-
-@auth.route("/admin/groups")
-@login_required
-def admin_groups():
-    if not current_user.is_admin and not current_user.is_super_admin:
-        return jsonify({"error": "Access denied"}), 403
-
-    page = request.args.get("page", 1, type=int)
-    search = request.args.get("search", "")
-
-    query = Group.query
-
-    if search:
-        query = query.filter(
-            db.or_(
-                Group.name.ilike(f"%{search}%"), Group.description.ilike(f"%{search}%")
-            )
-        )
-
-    groups = query.order_by(Group.created_at.desc()).paginate(
-        page=page, per_page=12, error_out=False
-    )
-
-    return render_template("admin_groups.html", groups=groups, search=search)
-
-
-@auth.route("/admin/groups/create", methods=["POST"])
-@login_required
-def admin_create_group():
-    if not (current_user.is_admin or current_user.is_super_admin):
-        return jsonify({"success": False, "error": "Access denied"}), 403
-
-    # Force parsing of form data even when files are present
-    name = request.form.get("name", "").strip()
-    description = request.form.get("description", "").strip()
-    category = request.form.get("category", "social")
-    is_private_str = request.form.get("is_private", "false")
-    is_private = is_private_str == "true" or is_private_str == "True"
-
-    if not name:
-        return jsonify({"success": False, "error": "Group name is required"}), 400
-
-    group = Group(
-        name=name,
-        description=description or None,
-        category=category,
-        is_private=is_private,
-        created_by=current_user.id,
-    )
-
-    # Handle image
-    if "image" in request.files:
-        file = request.files["image"]
-        if file and file.filename and allowed_file(file.filename):
-            try:
-                result = cloudinary.uploader.upload(
-                    file,
-                    folder="kimbela/groups",
-                    transformation=[
-                        {"width": 800, "height": 600, "crop": "limit"},
-                        {"quality": "auto", "fetch_format": "auto"},
-                    ],
-                )
-                group.image = result["secure_url"]
-            except Exception as e:
-                print("Image upload failed:", e)
-
-    db.session.add(group)
-    db.session.commit()
-
-    return jsonify({"success": True, "group_id": group.id})
-
-
-@auth.route("/admin/groups/<int:group_id>/edit")
-@login_required
-def admin_get_group_for_edit(group_id):
-    if not current_user.is_admin and not current_user.is_super_admin:
-        return jsonify({"success": False, "error": "Access denied"}), 403
-
-    group = Group.query.get_or_404(group_id)
-
-    return jsonify(
-        {
-            "success": True,
-            "group": {
-                "id": group.id,
-                "name": group.name,
-                "description": group.description,
-                "category": group.category,
-                "is_private": group.is_private,
-            },
-        }
-    )
-
-
-@auth.route("/admin/groups/<int:group_id>/update", methods=["POST"])
-@login_required
-def admin_update_group(group_id):
-    if not current_user.is_admin and not current_user.is_super_admin:
-        return jsonify({"success": False, "error": "Access denied"}), 403
-
-    group = Group.query.get_or_404(group_id)
-
-    group.name = request.form.get("name", group.name)
-    group.description = request.form.get("description", group.description)
-    group.category = request.form.get("category", group.category)
-    group.is_private = request.form.get("is_private") == "true"
-
-    # Handle group image update
-    if "image" in request.files:
-        file = request.files["image"]
-        if file and file.filename != "" and allowed_file(file.filename):
-            try:
-                result = cloudinary.uploader.upload(
-                    file,
-                    folder="kimbela/groups",
-                    transformation=[
-                        {"width": 400, "height": 300, "crop": "fill"},
-                        {"quality": "auto", "fetch_format": "auto"},
-                    ],
-                )
-                group.image = result["secure_url"]
-            except Exception as e:
-                print(f"Group image upload error: {e}")
-
-    db.session.commit()
-
-    return jsonify({"success": True})
-
-
-@auth.route("/admin/groups/<int:group_id>/delete", methods=["POST"])
-@login_required
-def admin_delete_group(group_id):
-    if not (current_user.is_admin or current_user.is_super_admin):
-        return jsonify({"success": False, "error": "Access denied"}), 403
-
-    group = Group.query.get(group_id)
-    if not group:
-        return jsonify({"success": False, "error": "Group not found"}), 404
-
-    try:
-        # 1. Remove all members (clears group_members table)
-        group.members.clear()  # This is clean and safe
-
-        # 2. Delete Cloudinary image if exists
-        if group.image and "res.cloudinary.com" in group.image:
-            try:
-                public_id = group.image.split("/")[-1].split(".")[0]
-                cloudinary.uploader.destroy(f"kimbela/groups/{public_id}")
-            except:
-                pass  # Ignore image delete errors
-
-        # 3. Delete the group — created_by becomes NULL automatically
-        db.session.delete(group)
-        db.session.commit()
-
-        return jsonify({"success": True})
-
-    except Exception as e:
-        db.session.rollback()
-        print("Group delete error:", str(e))
-        return jsonify({"success": False, "error": "Delete failed"}), 500
-
-
-@auth.route("/admin/reports")
-@login_required
-def admin_reports():
-    if not current_user.is_admin and not current_user.is_super_admin:
-        return jsonify({"error": "Access denied"}), 403
-
-    page = request.args.get("page", 1, type=int)
-    status_filter = request.args.get("status", "pending")
-    type_filter = request.args.get("type", "all")
-
-    query = ReportedContent.query
-
-    if status_filter != "all":
-        query = query.filter_by(status=status_filter)
-
-    if type_filter != "all":
-        query = query.filter_by(content_type=type_filter)
-
-    reports = query.order_by(ReportedContent.created_at.desc()).paginate(
-        page=page, per_page=10, error_out=False
-    )
-
-    return render_template(
-        "admin_reports.html",
-        reports=reports,
-        status_filter=status_filter,
-        type_filter=type_filter,
-    )
-
-
-@auth.route("/admin/reports/<int:report_id>/resolve", methods=["POST"])
-@login_required
-def admin_resolve_report(report_id):
-    if not current_user.is_admin and not current_user.is_super_admin:
-        return jsonify({"success": False, "error": "Access denied"}), 403
-
-    report = ReportedContent.query.get_or_404(report_id)
-    action = request.json.get(
-        "action"
-    )  # delete_content, warn_user, suspend_user, dismiss
-
-    if action == "delete_content":
-        # Delete the reported content based on type
-        if report.content_type == "post":
-            post = Post.query.get(report.content_id)
-            if post:
-                db.session.delete(post)
-        elif report.content_type == "comment":
-            comment = Comment.query.get(report.content_id)
-            if comment:
-                db.session.delete(comment)
-    elif action == "suspend_user" and report.reported_user:
-        report.reported_user.is_active = False
-
-    report.status = "resolved"
-    report.resolved_by = current_user.id
-    report.resolved_at = datetime.utcnow()
-    report.admin_notes = request.json.get("notes", "")
-
-    db.session.commit()
-
-    return jsonify({"success": True})
-
-
-@auth.route("/admin/reports/<int:report_id>/dismiss", methods=["POST"])
-@login_required
-def admin_dismiss_report(report_id):
-    if not current_user.is_admin and not current_user.is_super_admin:
-        return jsonify({"success": False, "error": "Access denied"}), 403
-
-    report = ReportedContent.query.get_or_404(report_id)
-    report.status = "dismissed"
-    report.resolved_by = current_user.id
-    report.resolved_at = datetime.utcnow()
-    report.admin_notes = request.json.get("notes", "")
-
-    db.session.commit()
-
-    return jsonify({"success": True})
-
-
-@auth.route("/admin/ads")
-@login_required
-def admin_ads():
-    if not current_user.is_admin and not current_user.is_super_admin:
-        return jsonify({"error": "Access denied"}), 403
-
-    page = request.args.get("page", 1, type=int)
-    status_filter = request.args.get("status", "active")
-
-    query = SponsoredAd.query
-
-    if status_filter != "all":
-        query = query.filter_by(status=status_filter)
-
-    ads = query.order_by(SponsoredAd.created_at.desc()).paginate(
-        page=page, per_page=12, error_out=False
-    )
-
-    return render_template("admin_ads.html", ads=ads, status_filter=status_filter)
-
-
-@auth.route("/admin/ads/create", methods=["POST"])
-@login_required
-def admin_create_ad():
-    if not current_user.is_admin and not current_user.is_super_admin:
-        return jsonify({"success": False, "error": "Access denied"}), 403
-
-    title = request.form.get("title")
-    description = request.form.get("description")
-    target_audience = request.form.get("target_audience", "all")
-    start_date = request.form.get("start_date")
-    end_date = request.form.get("end_date")
-    budget = request.form.get("budget", 0.0, type=float)
-
-    if not all([title, start_date, end_date]):
-        return jsonify({"success": False, "error": "Missing required fields"})
-
-    try:
-        start_date = datetime.strptime(start_date, "%Y-%m-%d")
-        end_date = datetime.strptime(end_date, "%Y-%m-%d")
-    except ValueError:
-        return jsonify({"success": False, "error": "Invalid date format"})
-
-    ad = SponsoredAd(
-        title=title,
-        description=description,
-        target_audience=target_audience,
-        start_date=start_date,
-        end_date=end_date,
-        budget=budget,
-        created_by=current_user.id,
-    )
-
-    # Handle ad image
-    if "image" in request.files:
-        file = request.files["image"]
-        if file and file.filename != "" and allowed_file(file.filename):
-            try:
-                result = cloudinary.uploader.upload(
-                    file,
-                    folder="kimbela/ads",
-                    transformation=[
-                        {"width": 400, "height": 300, "crop": "fill"},
-                        {"quality": "auto", "fetch_format": "auto"},
-                    ],
-                )
-                ad.image = result["secure_url"]
-            except Exception as e:
-                print(f"Ad image upload error: {e}")
-
-    db.session.add(ad)
-    db.session.commit()
-
-    return jsonify({"success": True, "ad_id": ad.id})
-
-
-@auth.route("/admin/ads/<int:ad_id>/update", methods=["POST"])
-@login_required
-def admin_update_ad(ad_id):
-    if not current_user.is_admin and not current_user.is_super_admin:
-        return jsonify({"success": False, "error": "Access denied"}), 403
-
-    ad = SponsoredAd.query.get_or_404(ad_id)
-
-    ad.title = request.form.get("title", ad.title)
-    ad.description = request.form.get("description", ad.description)
-    ad.target_audience = request.form.get("target_audience", ad.target_audience)
-    ad.budget = request.form.get("budget", ad.budget, type=float)
-
-    # Handle dates
-    start_date = request.form.get("start_date")
-    end_date = request.form.get("end_date")
-    if start_date:
-        ad.start_date = datetime.strptime(start_date, "%Y-%m-%d")
-    if end_date:
-        ad.end_date = datetime.strptime(end_date, "%Y-%m-%d")
-
-    # Handle ad image update
-    if "image" in request.files:
-        file = request.files["image"]
-        if file and file.filename != "" and allowed_file(file.filename):
-            try:
-                result = cloudinary.uploader.upload(
-                    file,
-                    folder="kimbela/ads",
-                    transformation=[
-                        {"width": 400, "height": 300, "crop": "fill"},
-                        {"quality": "auto", "fetch_format": "auto"},
-                    ],
-                )
-                ad.image = result["secure_url"]
-            except Exception as e:
-                print(f"Ad image upload error: {e}")
-
-    db.session.commit()
-
-    return jsonify({"success": True})
-
-
-@auth.route("/admin/ads/<int:ad_id>/toggle_status", methods=["POST"])
-@login_required
-def admin_toggle_ad_status(ad_id):
-    if not current_user.is_admin and not current_user.is_super_admin:
-        return jsonify({"success": False, "error": "Access denied"}), 403
-
-    ad = SponsoredAd.query.get_or_404(ad_id)
-
-    if ad.status == "active":
-        ad.status = "paused"
-    else:
-        ad.status = "active"
-
-    db.session.commit()
-
-    return jsonify({"success": True, "status": ad.status})
-
-
-@auth.route("/admin/ads/<int:ad_id>/delete", methods=["POST"])
-@login_required
-def admin_delete_ad(ad_id):
-    if not current_user.is_admin and not current_user.is_super_admin:
-        return jsonify({"success": False, "error": "Access denied"}), 403
-
-    ad = SponsoredAd.query.get_or_404(ad_id)
-    db.session.delete(ad)
-    db.session.commit()
-
-    return jsonify({"success": True})
-
-
-@auth.route("/admin/stats")
-@login_required
-def admin_stats():
-    if not current_user.is_admin and not current_user.is_super_admin:
-        return jsonify({"error": "Access denied"}), 403
-
-    # User growth (last 30 days)
-    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
-    user_growth = User.query.filter(User.created_at >= thirty_days_ago).count()
-
-    # Active users (last 7 days)
-    seven_days_ago = datetime.utcnow() - timedelta(days=7)
-    active_users = User.query.filter(User.last_seen >= seven_days_ago).count()
-
-    # Group statistics
-    total_groups = Group.query.count()
-    active_groups = Group.query.filter_by(is_active=True).count()
-
-    # Report statistics
-    total_reports = ReportedContent.query.count()
-    resolved_reports = ReportedContent.query.filter_by(status="resolved").count()
-
-    # Ad statistics
-    total_ads = SponsoredAd.query.count()
-    active_ads = SponsoredAd.query.filter_by(status="active").count()
-    total_ad_budget = db.session.query(db.func.sum(SponsoredAd.budget)).scalar() or 0
-
-    return jsonify(
-        {
-            "user_growth": user_growth,
-            "active_users": active_users,
-            "total_groups": total_groups,
-            "active_groups": active_groups,
-            "total_reports": total_reports,
-            "resolved_reports": resolved_reports,
-            "total_ads": total_ads,
-            "active_ads": active_ads,
-            "total_ad_budget": float(total_ad_budget),
-        }
-    )
-
-
-# Add this to handle user comments (for reported comments)
-@auth.route("/admin/comments/<int:comment_id>/delete", methods=["POST"])
-@login_required
-def admin_delete_comment(comment_id):
-    if not current_user.is_admin and not current_user.is_super_admin:
-        return jsonify({"success": False, "error": "Access denied"}), 403
-
-    comment = Comment.query.get_or_404(comment_id)
-    db.session.delete(comment)
-    db.session.commit()
-
-    return jsonify({"success": True})
-
-
-from flask import jsonify, request
-from random import sample
-
-
-# Add these routes to your auth blueprint
-
-
-@auth.route("/admin/dashboard_content")
-@login_required
-def admin_dashboard_content():
-    if not current_user.is_admin and not current_user.is_super_admin:
-        return jsonify({"error": "Access denied"}), 403
-
-    # Get statistics for dashboard
-    total_users = User.query.count()
-    active_users = User.query.filter_by(is_active=True).count()
-    pending_users = User.query.filter_by(is_active=False).count()
-    total_groups = Group.query.count() if "Group" in globals() else 0
-    active_groups = (
-        Group.query.filter_by(is_active=True).count() if "Group" in globals() else 0
-    )
-    pending_reports = (
-        ReportedContent.query.filter_by(status="pending").count()
-        if "ReportedContent" in globals()
-        else 0
-    )
-    active_ads = (
-        SponsoredAd.query.filter_by(status="active").count()
-        if "SponsoredAd" in globals()
-        else 0
-    )
-
-    # Recent activity
-    recent_users = User.query.order_by(User.created_at.desc()).limit(5).all()
-    recent_reports = (
-        ReportedContent.query.order_by(ReportedContent.created_at.desc()).limit(5).all()
-        if "ReportedContent" in globals()
-        else []
-    )
-
-    return render_template(
-        "admin_dashboard_content.html",
-        total_users=total_users,
-        active_users=active_users,
-        pending_users=pending_users,
-        total_groups=total_groups,
-        active_groups=active_groups,
-        pending_reports=pending_reports,
-        active_ads=active_ads,
-        recent_users=recent_users,
-        recent_reports=recent_reports,
-    )
-
-
-@auth.route("/admin/users")
-@login_required
-def admin_users():
-    if not current_user.is_admin and not current_user.is_super_admin:
-        return jsonify({"error": "Access denied"}), 403
-
-    page = request.args.get("page", 1, type=int)
-    search = request.args.get("search", "")
-    status_filter = request.args.get("status", "all")
-    partial = request.args.get("partial", 0, type=int)
-
-    query = User.query
-
-    if search:
-        query = query.filter(
-            db.or_(
-                User.first_name.ilike(f"%{search}%"),
-                User.last_name.ilike(f"%{search}%"),
-                User.email.ilike(f"%{search}%"),
-            )
-        )
-
-    if status_filter == "active":
-        query = query.filter_by(is_active=True)
-    elif status_filter == "pending":
-        query = query.filter_by(is_active=False)
-    elif status_filter == "admins":
-        query = query.filter(db.or_(User.is_admin == True, User.is_super_admin == True))
-    elif status_filter == "suspended":
-        query = query.filter_by(is_active=False)
-
-    # Set pagination to 10 per page
-    users = query.order_by(User.created_at.desc()).paginate(
-        page=page, per_page=10, error_out=False
-    )
-
-    if partial:
-        return render_template(
-            "admin_users.html",
-            users=users,
-            search=search,
-            status_filter=status_filter,
-            current_user=current_user,
-        )
-
-    return render_template(
-        "admin_dashboard.html", users=users, search=search, status_filter=status_filter
-    )
-
-
-# @auth.route('/user_dashboard')
-# @login_required
-# def user_dashboard():
-#     posts = Post.query.order_by(Post.created_at.desc()).all()
-
-#     # All other users
-#     all_users = User.query.filter(User.id != current_user.id).all()
-
-#     # Get list of friend IDs (not full User objects)
-#     friend_ids = {friend.id for friend in current_user.friends}
-
-#     # Non-friends = all_users except current_user and friends
-#     non_friends = [u for u in all_users if u.id not in friend_ids]
-
-#     # Pick 3 random non-friends
-#     random_three = sample(non_friends, min(3, len(non_friends))) if non_friends else []
-
-#     return render_template(
-#         'user_dashboard.html',
-#         posts=posts,
-#         current_user=current_user,
-#         all_users=all_users,          # for main "People You May Know"
-#         random_three=random_three,    # for right sidebar
-#         csrf_token=generate_csrf()
-#     )
-
-from datetime import datetime
 
 
 def timeago(dt):
@@ -1296,7 +169,7 @@ def timeago(dt):
     app.jinja_env.filters["timeago"] = timeago
 
 
-@auth.route("/user_dashboard", methods=["GET", "POST"])
+@user.route("/user_dashboard", methods=["GET", "POST"])
 @login_required
 def user_dashboard():
     if request.method == "POST":
@@ -1349,7 +222,7 @@ def user_dashboard():
             db.session.commit()
             flash("Post created!", "success")
 
-        return redirect(url_for("auth.user_dashboard"))
+        return redirect(url_for("user.user_dashboard"))
 
     # GET request handling (your existing code)
     posts = Post.query.order_by(Post.created_at.desc()).all()
@@ -1387,22 +260,8 @@ def user_dashboard():
     )
 
 
-# Like Post
-# @auth.route("/like_post/<int:post_id>", methods=["POST"])
-# @login_required
-# def like_post(post_id):
-#     post = Post.query.get_or_404(post_id)
-#     if current_user in post.likes:
-#         post.likes.remove(current_user)
-#         liked = False
-#     else:
-#         post.likes.append(current_user)
-#         liked = True
-#     db.session.commit()
-#     return jsonify(likes=len(post.likes), liked=liked)
 
-
-@auth.route("/like_post/<int:post_id>", methods=["POST"])
+@user.route("/like_post/<int:post_id>", methods=["POST"])
 @login_required
 def like_post(post_id):
     post = Post.query.get_or_404(post_id)
@@ -1433,8 +292,10 @@ def like_post(post_id):
     return jsonify(likes=like_count, liked=liked)
 
 
+
+
 # Delete Post
-@auth.route("/delete_post/<int:post_id>", methods=["POST"])
+@user.route("/delete_post/<int:post_id>", methods=["POST"])
 @login_required
 def delete_post(post_id):
     post = Post.query.get_or_404(post_id)
@@ -1446,7 +307,7 @@ def delete_post(post_id):
 
 
 # Edit Post
-@auth.route("/edit_post", methods=["POST"])
+@user.route("/edit_post", methods=["POST"])
 @login_required
 def edit_post():
     post_id = request.form.get("post_id")
@@ -1460,7 +321,7 @@ def edit_post():
 
 # Add Comment
 # In your add_comment route
-@auth.route("/add_comment/<int:post_id>", methods=["POST"])
+@user.route("/add_comment/<int:post_id>", methods=["POST"])
 @login_required
 def add_comment(post_id):
     post = Post.query.get_or_404(post_id)
@@ -1491,11 +352,9 @@ def add_comment(post_id):
     )
 
 
-import cloudinary.uploader
-import cloudinary.utils
 
 
-@auth.route("/get_comments/<int:post_id>")
+@user.route("/get_comments/<int:post_id>")
 def get_comments(post_id):
     post = Post.query.get_or_404(post_id)
     # Order comments by created_at DESCENDING (newest first)
@@ -1520,7 +379,7 @@ def get_comments(post_id):
     return jsonify(result)
 
 
-@auth.route("/debug/notification_status")
+@user.route("/debug/notification_status")
 @login_required
 def debug_notification_status():
     """Check read status of notifications"""
@@ -1570,7 +429,7 @@ def create_notification(user_id, actor_id, type_, message, entity_id=None):
 
 
 # In your add_friend route
-@auth.route("/add_friend/<int:user_id>", methods=["POST"])
+@user.route("/add_friend/<int:user_id>", methods=["POST"])
 @login_required
 def add_friend(user_id):
     if user_id == current_user.id:
@@ -1600,7 +459,7 @@ def add_friend(user_id):
     return jsonify(success=True)
 
 
-@auth.route("/cancel_friend_request/<int:user_id>", methods=["POST"])
+@user.route("/cancel_friend_request/<int:user_id>", methods=["POST"])
 @login_required
 def cancel_friend_request(user_id):
     user = User.query.get_or_404(user_id)
@@ -1608,7 +467,7 @@ def cancel_friend_request(user_id):
     return jsonify(success=True)
 
 
-@auth.route("/get_user_profile/<int:user_id>")
+@user.route("/get_user_profile/<int:user_id>")
 @login_required
 def get_user_profile(user_id):
     user = User.query.get_or_404(user_id)
@@ -1628,20 +487,20 @@ def get_user_profile(user_id):
             "phone_number": user.phone_number,
             "marital_status": user.marital_status,
             "interests": user.interests,
-            "profile_url": url_for("auth.profile", user_id=user.id),
+            "profile_url": url_for("user.profile", user_id=user.id),
             "friends_count": user.friends.count(),
         }
     )
 
 
-@auth.route("/notifications")
+@user.route("/notifications")
 @login_required
 def get_notifications():
     notifications = current_user.recent_notifications
     return jsonify([notification.to_dict() for notification in notifications])
 
 
-@auth.route("/notifications/read", methods=["POST"])
+@user.route("/notifications/read", methods=["POST"])
 @login_required
 def mark_notifications_read():
     Notification.query.filter_by(user_id=current_user.id, is_read=False).update(
@@ -1651,7 +510,7 @@ def mark_notifications_read():
     return jsonify(success=True)
 
 
-@auth.route("/notifications/<int:notification_id>/read", methods=["POST"])
+@user.route("/notifications/<int:notification_id>/read", methods=["POST"])
 @login_required
 def mark_notification_read(notification_id):
     notification = Notification.query.filter_by(
@@ -1662,14 +521,14 @@ def mark_notification_read(notification_id):
     return jsonify(success=True)
 
 
-@auth.route("/notifications/count")
+@user.route("/notifications/count")
 @login_required
 def get_unread_count():
     count = current_user.unread_notifications_count
     return jsonify(count=count)
 
 
-@auth.route("/accept_friend_request/<int:user_id>", methods=["POST"])
+@user.route("/accept_friend_request/<int:user_id>", methods=["POST"])
 @login_required
 def accept_friend_request_route(user_id):
     data = request.get_json() or {}
@@ -1689,7 +548,7 @@ def accept_friend_request_route(user_id):
     return jsonify(success=False, error="Could not accept request")
 
 
-@auth.route("/decline_friend_request/<int:user_id>", methods=["POST"])
+@user.route("/decline_friend_request/<int:user_id>", methods=["POST"])
 @login_required
 def decline_friend_request_route(user_id):
     data = request.get_json() or {}
@@ -1709,7 +568,7 @@ def decline_friend_request_route(user_id):
 
 
 # Add this to your Flask routes
-@auth.route("/search")
+@user.route("/search")
 def search():
     query = request.args.get("q", "").strip()
     if not query or len(query) < 2:
@@ -1762,7 +621,7 @@ def search():
     return jsonify({"users": users_data, "posts": posts_data})
 
 
-@auth.route("/get_post/<int:post_id>")
+@user.route("/get_post/<int:post_id>")
 def get_post(post_id):
     post = Post.query.get_or_404(post_id)
     return jsonify(
@@ -1781,7 +640,7 @@ def get_post(post_id):
 
 
 # Update last_seen on every request
-@auth.before_request
+@user.before_request
 def update_last_seen():
     if current_user.is_authenticated:
         current_user.last_seen = datetime.utcnow()
@@ -1792,7 +651,7 @@ def update_last_seen():
         db.session.commit()
 
 
-@auth.route("/<int:user_id>", methods=["GET", "POST"])
+@user.route("/<int:user_id>", methods=["GET", "POST"])
 @login_required
 def profile(user_id):
     user = User.query.get_or_404(user_id)
@@ -1800,7 +659,7 @@ def profile(user_id):
     # Only allow users to edit their own profile
     if user.id != current_user.id:
         flash("You can only edit your own profile.", "warning")
-        return redirect(url_for("auth.profile", user_id=current_user.id))
+        return redirect(url_for("user.profile", user_id=current_user.id))
 
     if request.method == "POST":
         try:
@@ -1885,7 +744,7 @@ def profile(user_id):
             flash("An error occurred while updating your profile.", "danger")
             print(f"Profile update error: {e}")
 
-        return redirect(url_for("auth.profile", user_id=current_user.id))
+        return redirect(url_for("user.profile", user_id=current_user.id))
 
     # GET request - load profile data
     posts = (
@@ -1910,39 +769,39 @@ def profile(user_id):
     )
 
 
-@auth.route("/logout")
+@user.route("/logout")
 @login_required
 def logout():
     logout_user()
     return redirect(url_for("auth.login"))
 
 
-@auth.route("/forgot_password", methods=["GET", "POST"])
+@user.route("/forgot_password", methods=["GET", "POST"])
 def forgot_password():
     return render_template("forgot_password.html")
 
 
-@auth.route("/about", methods=["GET", "POST"])
+@user.route("/about", methods=["GET", "POST"])
 def about():
     return render_template("about.html")
 
 
-@auth.route("/features", methods=["GET", "POST"])
+@user.route("/features", methods=["GET", "POST"])
 def features():
     return render_template("features.html")
 
 
-@auth.route("/contact", methods=["GET", "POST"])
+@user.route("/contact", methods=["GET", "POST"])
 def contact():
     return render_template("contact.html")
 
 
-@auth.route("/terms", methods=["GET", "POST"])
+@user.route("/terms", methods=["GET", "POST"])
 def terms():
     return render_template("terms.html")
 
 
-@auth.route("/privacy", methods=["GET", "POST"])
+@user.route("/privacy", methods=["GET", "POST"])
 def privacy():
     return render_template("privacy.html")
 
@@ -1950,7 +809,7 @@ def privacy():
 
 
 
-@auth.route("/get_user_groups")
+@user.route("/get_user_groups")
 @login_required
 def get_user_groups():
     """Get all groups for the dropdown with membership status"""
@@ -1992,7 +851,7 @@ def get_user_groups():
 # Add these routes to your auth blueprint
 
 
-@auth.route("/groups/user_groups")
+@user.route("/groups/user_groups")
 @login_required
 def user_groups():
     """Get user's groups for sidebar - alternative approach"""
@@ -2018,7 +877,7 @@ def user_groups():
 
 
 
-@auth.route("/groups/all")
+@user.route("/groups/all")
 @login_required
 def all_groups():
     """Get all groups for discovery"""
@@ -2060,7 +919,7 @@ def all_groups():
 
 
 
-@auth.route("/groups/<int:group_id>")
+@user.route("/groups/<int:group_id>")
 @login_required
 def group_page(group_id):
     """Get group page HTML"""
@@ -2089,7 +948,7 @@ def group_page(group_id):
         current_user=current_user,
         default_avatar=default_avatar
     )
-# @auth.route("/groups/create", methods=["POST"])
+# @user.route("/groups/create", methods=["POST"])
 # @login_required
 # def create_group():
 #     """Create a new group"""
@@ -2143,7 +1002,7 @@ def group_page(group_id):
 #         return jsonify({"success": False, "error": "Failed to create group"})
 
 
-# @auth.route("/groups/<int:group_id>/join", methods=["POST"])
+# @user.route("/groups/<int:group_id>/join", methods=["POST"])
 # @login_required
 # def join_group(group_id):
 #     """Join a group"""
@@ -2159,7 +1018,7 @@ def group_page(group_id):
 #     return jsonify({"success": True})
 
 
-# @auth.route("/groups/<int:group_id>/leave", methods=["POST"])
+# @user.route("/groups/<int:group_id>/leave", methods=["POST"])
 # @login_required
 # def leave_group(group_id):
 #     """Leave a group"""
@@ -2175,7 +1034,7 @@ def group_page(group_id):
 #     return jsonify({"success": True})
 
 
-@auth.route("/comments/<int:comment_id>/report", methods=["POST"])
+@user.route("/comments/<int:comment_id>/report", methods=["POST"])
 @login_required
 def report_comment(comment_id):
     """Report a comment"""
@@ -2206,13 +1065,13 @@ def report_comment(comment_id):
 
 # Add these routes to your auth blueprint
 
-@auth.route('/groups')
+@user.route('/groups')
 @login_required
 def groups_page():
     """Main groups discovery page"""
     return render_template('groups.html')
 
-@auth.route('/groups/<int:group_id>')
+@user.route('/groups/<int:group_id>')
 @login_required
 def group_detail(group_id):
     """Individual group page with posts and interactions"""
@@ -2233,7 +1092,7 @@ def group_detail(group_id):
         default_avatar=default_avatar,
     )
 
-@auth.route("/groups/create", methods=['GET', 'POST'])
+@user.route("/groups/create", methods=['GET', 'POST'])
 @login_required
 def create_group():
     """Create a new group"""
@@ -2292,7 +1151,7 @@ def create_group():
 
 
 
-@auth.route("/groups/<int:group_id>/join", methods=['POST'])
+@user.route("/groups/<int:group_id>/join", methods=['POST'])
 @login_required
 def join_group(group_id):
     """Join a group"""
@@ -2312,7 +1171,7 @@ def join_group(group_id):
 
 
 # Fix the leave_group rout
-@auth.route("/groups/<int:group_id>/leave", methods=['POST'])
+@user.route("/groups/<int:group_id>/leave", methods=['POST'])
 @login_required
 def leave_group(group_id):
     """Leave a group"""
@@ -2332,7 +1191,7 @@ def leave_group(group_id):
 
 
 
-@auth.route('/groups/<int:group_id>/post', methods=['POST'])
+@user.route('/groups/<int:group_id>/post', methods=['POST'])
 @login_required
 def create_group_post(group_id):
     """Create a post in a group"""
@@ -2393,8 +1252,15 @@ def create_group_post(group_id):
         db.session.rollback()
         print('Group post creation error:', e)
         return jsonify({'success': False, 'error': 'Failed to create post'})
+    
+    
+    
+    
+    
+    
+    
 
-@auth.route('/groups/<int:group_id>/posts')
+@user.route('/groups/<int:group_id>/posts')
 @login_required
 def get_group_posts(group_id):
     """Get posts for a group with pagination"""
@@ -2426,10 +1292,15 @@ def get_group_posts(group_id):
     return jsonify({
         'posts': posts_data,
         'has_next': posts.has_next,
-        'next_page': posts.next_num if posts.has_next else None
+        'next_page': posts.next_num if posts.has_next else None     
     })
+    
+    
+    
+    
+    
 
-@auth.route('/report_content', methods=['POST'])
+@user.route('/report_content', methods=['POST'])
 @login_required
 def report_content():
     """Report a post or comment"""
@@ -2472,7 +1343,7 @@ def report_content():
 
 
 
-@auth.route('/groups/all')
+@user.route('/groups/all')
 @login_required
 def get_all_groups():
     """API endpoint to get all groups with filtering"""
@@ -2519,7 +1390,10 @@ def get_all_groups():
     
     return jsonify(groups_data)
 
-@auth.route('/groups/<int:group_id>/members')
+
+
+
+@user.route('/groups/<int:group_id>/members')
 @login_required
 def get_group_members(group_id):
     """Get group members"""
@@ -2549,8 +1423,7 @@ def get_group_members(group_id):
 
 
 # Add these routes to your Flask application
-
-@auth.route('/edit_post/<int:post_id>', methods=['POST'])
+@user.route('/edit_post/<int:post_id>', methods=['POST'])
 @login_required
 def edit_group_post(post_id):
     try:
@@ -2571,8 +1444,12 @@ def edit_group_post(post_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'error': str(e)}), 500
+    
+    
+    
+    
 
-@auth.route('/delete_post/<int:post_id>', methods=['POST'])
+@user.route('/delete_post/<int:post_id>', methods=['POST'])
 @login_required
 def delete_group_post(post_id):
     try:
@@ -2589,8 +1466,14 @@ def delete_group_post(post_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'error': str(e)}), 500
+    
+    
+    
+    
+    
+    
 
-@auth.route('/delete_comment/<int:comment_id>', methods=['POST'])
+@user.route('/delete_comment/<int:comment_id>', methods=['POST'])
 @login_required
 def delete_group_comment(comment_id):
     try:
@@ -2608,7 +1491,7 @@ def delete_group_comment(comment_id):
         db.session.rollback()
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@auth.route('/get_comments/<int:post_id>')
+@user.route('/get_comments/<int:post_id>')
 @login_required
 def get_group_comments(post_id):
     try:
@@ -2633,7 +1516,7 @@ def get_group_comments(post_id):
     
 
 
-@auth.route('/like_post/<int:post_id>', methods=['POST'])
+@user.route('/like_post/<int:post_id>', methods=['POST'])
 @login_required
 def like_group_post(post_id):
     try:
@@ -2650,7 +1533,7 @@ def like_group_post(post_id):
         db.session.rollback()
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@auth.route('/add_comment/<int:post_id>', methods=['POST'])
+@user.route('/add_comment/<int:post_id>', methods=['POST'])
 @login_required
 def add_group_comment(post_id):
     try:
@@ -2689,7 +1572,7 @@ def add_group_comment(post_id):
 from models import Reaction
     
     
-@auth.route('/react_post/<int:post_id>', methods=['POST'])
+@user.route('/react_post/<int:post_id>', methods=['POST'])
 @login_required
 def react_to_post(post_id):
     """Handle post reactions"""

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-KIMBELA SEEDER
+KIMBELA SEEDER - UPDATED WITH BETTER IMAGES
 Generates 50 fake users, posts, likes, and comments.
 Run with: python seed_data.py
 """
@@ -44,43 +44,19 @@ except ImportError as e:
 fake = Faker(["en_US", "en_GB"])
 
 CITIES = [
-    "Lagos",
-    "Abuja",
-    "Port Harcourt",
-    "Kano",
-    "Ibadan",
-    "London",
-    "Toronto",
-    "Berlin",
-    "New York",
-    "Sydney",
+    "Lagos", "Abuja", "Port Harcourt", "Kano", "Ibadan", 
+    "London", "Toronto", "Berlin", "New York", "Sydney"
 ]
 COUNTRIES = ["Nigeria", "United States", "United Kingdom", "Canada", "Germany"]
 RELIGIONS = ["Christianity", "Islam", "Atheism", "Traditional", "Other"]
 ETHNICITIES = [
-    "Yoruba",
-    "Igbo",
-    "Hausa",
-    "Efik",
-    "Tiv",
-    "English",
-    "German",
-    "Canadian",
-    "American",
+    "Yoruba", "Igbo", "Hausa", "Efik", "Tiv", 
+    "English", "German", "Canadian", "American"
 ]
 OCCUPATIONS = [
-    "Software Engineer",
-    "Graphic Designer",
-    "Teacher",
-    "Doctor",
-    "Nurse",
-    "Photographer",
-    "Lawyer",
-    "Architect",
-    "Civil Engineer",
-    "Marketing Specialist",
-    "Entrepreneur",
-    "Chef",
+    "Software Engineer", "Graphic Designer", "Teacher", "Doctor", "Nurse",
+    "Photographer", "Lawyer", "Architect", "Civil Engineer", "Marketing Specialist",
+    "Entrepreneur", "Chef"
 ]
 EDUCATION_LEVELS = ["High School", "Diploma", "B.Sc", "M.Sc", "PhD"]
 INTERESTS = [
@@ -96,33 +72,71 @@ INTERESTS = [
 ]
 MARITAL_STATUSES = ["Single", "Married", "Divorced", "Widowed"]
 GENDERS = ["Male", "Female"]
-IMAGE_URLS = [f"https://picsum.photos/seed/{i}/800/600" for i in range(1, 101)]
+
+# BETTER IMAGE URLS - Using reliable sources
+PROFILE_PICS = [
+    # Male profile pictures
+    "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face",
+    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face",
+    "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&h=400&fit=crop&crop=face",
+    "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop&crop=face",
+    "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&h=400&fit=crop&crop=face",
+    # Female profile pictures
+    "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=400&fit=crop&crop=face",
+    "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&crop=face",
+    "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&crop=face",
+    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=400&fit=crop&crop=face",
+    "https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=400&h=400&fit=crop&crop=face",
+]
+
+COVER_PICS = [
+    "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=400&fit=crop",
+    "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800&h=400&fit=crop",
+    "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=400&fit=crop",
+    "https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=800&h=400&fit=crop",
+    "https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&h=400&fit=crop",
+    "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800&h=400&fit=crop",
+    "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800&h=400&fit=crop",
+]
+
+POST_IMAGES = [
+    "https://images.unsplash.com/photo-1579546929662-711aa81148cf?w=600&h=400&fit=crop",
+    "https://images.unsplash.com/photo-1551963831-b3b1ca40c98e?w=600&h=400&fit=crop",
+    "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&h=400&fit=crop",
+    "https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=600&h=400&fit=crop",
+    "https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=600&h=400&fit=crop",
+    "https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=600&h=400&fit=crop",
+    "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=600&h=400&fit=crop",
+    "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&h=400&fit=crop",
+    "https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=600&h=400&fit=crop",
+    "https://images.unsplash.com/photo-1482049016688-2d3e1b311543?w=600&h=400&fit=crop",
+]
 
 POST_TEMPLATES = [
-    "Just enjoyed a beautiful sunset in {city}. Life is good!",
-    "Trying out a new recipe tonight: {food}. Wish me luck!",
-    "Finally finished reading '{book}'. Highly recommend!",
-    "Great hike today with friends. {city} never disappoints.",
-    "Feeling grateful for the little things today.",
-    "New profile pic! What do you think?",
-    "Coffee and contemplation — my kind of morning.",
-    "Anyone else obsessed with {hobby}?",
-    "Throwback to last year's trip to {country}. Miss it!",
-    "Weekend plans: {activity}. Who's with me?",
+    "Just enjoyed a beautiful sunset in {city}. Life is good! 🌅",
+    "Trying out a new recipe tonight: {food}. Wish me luck! 👨‍🍳",
+    "Finally finished reading '{book}'. Highly recommend! 📚",
+    "Great hike today with friends. {city} never disappoints. 🏞️",
+    "Feeling grateful for the little things today. 🙏",
+    "New profile pic! What do you think? 😊",
+    "Coffee and contemplation — my kind of morning. ☕",
+    "Anyone else obsessed with {hobby}? Let's connect!",
+    "Throwback to last year's trip to {country}. Miss it! ✈️",
+    "Weekend plans: {activity}. Who's with me? 🎉",
+    "Just completed an amazing project at work! Feeling accomplished. 💼",
+    "Beautiful weather today in {city}. Perfect for outdoor activities! ☀️",
+    "Learning something new every day. Growth mindset! 🌱",
+    "Family time is the best time. Cherishing these moments. ❤️",
+    "Exploring new places and making memories. Adventure awaits! 🗺️",
 ]
 
 FOODS = [
-    "jollof rice",
-    "suya",
-    "egusi soup",
-    "pounded yam",
-    "lasagna",
-    "sushi",
-    "pizza",
+    "jollof rice", "suya", "egusi soup", "pounded yam", 
+    "lasagna", "sushi", "pizza", "shawarma", "barbecue"
 ]
-BOOKS = ["Atomic Habits", "Sapiens", "The Alchemist", "Things Fall Apart", "1984"]
-HOBBIES = ["photography", "dancing", "coding", "cooking", "reading", "football"]
-ACTIVITIES = ["movie night", "beach day", "owambe", "picnic", "road trip"]
+BOOKS = ["Atomic Habits", "Sapiens", "The Alchemist", "Things Fall Apart", "1984", "The Power of Now"]
+HOBBIES = ["photography", "dancing", "coding", "cooking", "reading", "football", "yoga", "painting"]
+ACTIVITIES = ["movie night", "beach day", "owambe", "picnic", "road trip", "game night", "brunch"]
 
 
 # === Helper Functions ===
@@ -142,6 +156,14 @@ def random_phone():
         return f"{prefix}{random.randint(200, 999)}-{random.randint(200, 999)}-{random.randint(1000, 9999)}"
 
 
+def get_profile_pic(gender):
+    """Get appropriate profile picture based on gender"""
+    if gender == "Male":
+        return random.choice(PROFILE_PICS[:5])  # First 5 are male
+    else:
+        return random.choice(PROFILE_PICS[5:])  # Last 5 are female
+
+
 # === CREATE USERS ===
 def create_users(n=50):
     print(f"\n👤 Creating {n} users...")
@@ -151,7 +173,8 @@ def create_users(n=50):
         first = fake.first_name()
         last = fake.last_name()
         email = f"{first.lower()}.{last.lower()}{random.randint(10,99)}@example.com"
-
+        gender = random.choice(GENDERS)
+        
         user = User(
             first_name=first,
             last_name=last,
@@ -161,21 +184,19 @@ def create_users(n=50):
             city=random.choice(CITIES),
             country=random.choice(COUNTRIES),
             dob=random_dob(),
-            gender=random.choice(GENDERS),
+            gender=gender,
             marital_status=random.choice(MARITAL_STATUSES),
             interests=random.choice(INTERESTS),
             bio=fake.paragraph(nb_sentences=2),
             about_me=fake.text(max_nb_chars=150),
-            profile_pic=random.choice(IMAGE_URLS),
-            cover_pic=random.choice(IMAGE_URLS),
+            profile_pic=get_profile_pic(gender),  # Gender-appropriate profile pics
+            cover_pic=random.choice(COVER_PICS),
             phone_number=random_phone(),
             ethnicity=random.choice(ETHNICITIES),
             religion=random.choice(RELIGIONS),
             occupation=random.choice(OCCUPATIONS),
             educational_level=random.choice(EDUCATION_LEVELS),
-            is_premium=random.choice(
-                [True, False, False, False]
-            ),  # ~25% chance premium
+            is_premium=random.choice([True, False, False, False]),  # ~25% chance premium
         )
         db.session.add(user)
         users.append(user)
@@ -204,9 +225,16 @@ def create_posts(users, n=50):
             hobby=random.choice(HOBBIES),
             activity=random.choice(ACTIVITIES),
         )
-        image = random.choice(IMAGE_URLS) if random.random() > 0.4 else None
+        
+        # 60% chance of having an image, 40% text-only
+        image = random.choice(POST_IMAGES) if random.random() > 0.4 else None
 
-        post = Post(content=content, image=image, author_id=author.id)
+        post = Post(
+            content=content, 
+            image=image, 
+            author_id=author.id,
+            created_at=fake.date_time_between(start_date='-30d', end_date='now')
+        )
         db.session.add(post)
         posts.append(post)
 
@@ -224,26 +252,52 @@ def create_posts(users, n=50):
         for liker in likers:
             if liker.id != post.author_id:
                 db.session.execute(
-                    db.insert(Like).values(user_id=liker.id, post_id=post.id)
+                    db.insert(Like).values(
+                        user_id=liker.id, 
+                        post_id=post.id,
+                        created_at=fake.date_time_between_dates(
+                            datetime_start=post.created_at, 
+                            datetime_end='now'
+                        )
+                    )
                 )
     db.session.commit()
 
     # Comments
     print("💬 Adding comments...")
-    commented_posts = random.sample(posts, k=min(30, len(posts)))
-    for post in commented_posts:
-        commenters = random.sample(
-            [u for u in users if u.id != post.author_id], k=random.randint(1, 5)
-        )
-        for commenter in commenters:
-            comment = Comment(
-                content=fake.sentence(nb_words=8),
-                author_id=commenter.id,
-                post_id=post.id,
+    COMMENT_TEMPLATES = [
+        "Great post! 😊",
+        "I totally agree with this!",
+        "This is amazing! 👏",
+        "Thanks for sharing!",
+        "Beautiful! ❤️",
+        "So true! 🙌",
+        "Love this perspective!",
+        "Well said! 💯",
+        "This made my day! 😄",
+        "Inspiring content! 🌟"
+    ]
+    
+    for post in posts:
+        # 80% chance of having comments
+        if random.random() > 0.2:
+            commenters = random.sample(
+                [u for u in users if u.id != post.author_id], 
+                k=random.randint(1, 8)
             )
-            db.session.add(comment)
+            for commenter in commenters:
+                comment = Comment(
+                    content=random.choice(COMMENT_TEMPLATES),
+                    author_id=commenter.id,
+                    post_id=post.id,
+                    created_at=fake.date_time_between_dates(
+                        datetime_start=post.created_at, 
+                        datetime_end='now'
+                    )
+                )
+                db.session.add(comment)
+    
     db.session.commit()
-
     print("✅ Likes and comments added.")
     return posts
 
@@ -256,21 +310,45 @@ if __name__ == "__main__":
     print("=" * 50)
 
     try:
+        # Clear existing data (optional - uncomment if you want fresh data)
+        # print("\n🗑️ Clearing existing data...")
+        # db.session.query(Comment).delete()
+        # db.session.query(Like).delete()
+        # db.session.query(Post).delete()
+        # db.session.query(User).delete()
+        # db.session.commit()
+        
         users = create_users(50)
         posts = create_posts(users, 50)
 
         print("\n🎉 SEEDING COMPLETE!")
         print(f"Total Users: {len(users)}")
         print(f"Total Posts: {len(posts)}")
-        print("Likes & Comments generated successfully.")
-        print("\nExample Login:")
-        print(f"   Email: {users[0].email}")
-        print("   Password: SecurePass123!")
+        
+        # Count likes and comments
+        total_likes = db.session.query(Like).count()
+        total_comments = db.session.query(Comment).count()
+        print(f"Total Likes: {total_likes}")
+        print(f"Total Comments: {total_comments}")
+        
+        print("\n📧 Example Login Credentials:")
+        for i in range(3):
+            print(f"   {i+1}. Email: {users[i].email} | Password: SecurePass123!")
+        
+        print("\n🔍 Sample Data Preview:")
+        sample_user = users[0]
+        print(f"   User: {sample_user.first_name} {sample_user.last_name}")
+        print(f"   Profile Pic: {sample_user.profile_pic}")
+        print(f"   Cover Pic: {sample_user.cover_pic}")
+        
+        sample_post = next((p for p in posts if p.image), None)
+        if sample_post:
+            print(f"   Sample Post with Image: {sample_post.image}")
+        
         print("=" * 50)
 
     except Exception as e:
         print(f"\n❌ SEEDING FAILED: {e}")
         import traceback
-
         traceback.print_exc()
         sys.exit(1)

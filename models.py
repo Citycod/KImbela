@@ -61,6 +61,8 @@ class User(db.Model, UserMixin):
     ethnicity = db.Column(db.String(50), nullable=True)
     religion = db.Column(db.String(50), nullable=True)
     is_premium = db.Column(db.Boolean, default=False)
+    campaigns = db.relationship("AdCampaign", back_populates="user")
+    transactions = db.relationship("PaymentTransaction", backref="transaction_user", lazy=True)
     profile_pic = db.Column(
         db.String(500),
         default="https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg",
@@ -683,3 +685,94 @@ class Reaction(db.Model):
     post = db.relationship('Post', backref=db.backref('post_reactions', cascade='all, delete-orphan'))
     
     __table_args__ = (db.UniqueConstraint('user_id', 'post_id', name='unique_user_post_reaction'),)
+    
+    
+    
+    
+    
+    
+    
+# Add these new models to your existing models.py
+class AdCampaign(db.Model):
+    __tablename__ = "ad_campaigns"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    package_id = db.Column(db.Integer, db.ForeignKey("ad_packages.id"), nullable=False)
+    
+    # Ad content
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+    image = db.Column(db.Text)
+    target_url = db.Column(db.String(500))
+    call_to_action = db.Column(db.String(50), default="Learn More")
+    
+    # Targeting
+    target_audience = db.Column(db.String(50), default="all")
+    target_countries = db.Column(db.Text)
+    target_interests = db.Column(db.Text)
+    
+    # Campaign details
+    status = db.Column(db.String(20), default="pending")
+    start_date = db.Column(db.DateTime)
+    end_date = db.Column(db.DateTime)
+    budget = db.Column(db.Float, nullable=False)
+    
+    # Tracking
+    impressions = db.Column(db.Integer, default=0)
+    clicks = db.Column(db.Integer, default=0)
+    click_through_rate = db.Column(db.Float, default=0.0)
+    
+    # Payment
+    payment_status = db.Column(db.String(20), default="pending")
+    payment_gateway = db.Column(db.String(20))
+    payment_id = db.Column(db.String(255))
+    currency = db.Column(db.String(3), default="USD")
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    user = db.relationship("User", back_populates="campaigns")
+    package = db.relationship("AdPackage", foreign_keys=[package_id])
+
+class PaymentTransaction(db.Model):
+    __tablename__ = "payment_transactions"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    campaign_id = db.Column(db.Integer, db.ForeignKey("ad_campaigns.id"), nullable=True)
+    
+    # Payment details
+    amount = db.Column(db.Float, nullable=False)
+    currency = db.Column(db.String(3), default="USD")
+    gateway = db.Column(db.String(20), nullable=False)
+    gateway_payment_id = db.Column(db.String(255))
+    gateway_status = db.Column(db.String(50))
+    
+    # Status
+    status = db.Column(db.String(20), default="pending")
+    description = db.Column(db.Text)
+    
+    # Metadata
+    gateway_metadata = db.Column(db.Text)
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    user = db.relationship("User", foreign_keys=[user_id])
+    campaign = db.relationship("AdCampaign", foreign_keys=[campaign_id])
+
+class AdPackage(db.Model):
+    __tablename__ = "ad_packages"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text)
+    price = db.Column(db.Float, nullable=False)
+    duration_days = db.Column(db.Integer, nullable=False)
+    impressions = db.Column(db.Integer)
+    features = db.Column(db.Text)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    campaigns = db.relationship("AdCampaign", backref="ad_package", lazy=True)

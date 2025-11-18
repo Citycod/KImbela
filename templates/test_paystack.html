@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Paystack Integration</title>
+</head>
+<body>
+    <h1>Test Paystack Payment</h1>
+    
+    <div id="result"></div>
+    
+    <button onclick="testPaystack()">Test Paystack Payment</button>
+    
+    <script>
+    async function testPaystack() {
+        const resultDiv = document.getElementById('result');
+        resultDiv.innerHTML = 'Testing Paystack...';
+        
+        try {
+            const response = await fetch('/payment/test-paystack', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                resultDiv.innerHTML = `
+                    <p>✅ Success! Redirecting to Paystack...</p>
+                    <p>Reference: ${data.reference}</p>
+                `;
+                // Redirect to Paystack
+                window.location.href = data.authorization_url;
+            } else {
+                resultDiv.innerHTML = `
+                    <p>❌ Error: ${data.error}</p>
+                `;
+            }
+        } catch (error) {
+            resultDiv.innerHTML = `
+                <p>❌ Request failed: ${error}</p>
+            `;
+        }
+    }
+    </script>
+</body>
+</html>

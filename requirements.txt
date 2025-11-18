@@ -32,6 +32,7 @@ gevent==25.9.1
 greenlet==3.2.3
 gunicorn==23.0.0
 h11==0.16.0
+humanize==4.14.0
 idna==3.10
 importlib_metadata==8.7.0
 importlib_resources==6.5.2
@@ -67,6 +68,7 @@ sendgrid==6.12.5
 simple-websocket==1.1.0
 six==1.17.0
 SQLAlchemy==2.0.41
+stripe==13.2.0
 tinycss2==1.4.0
 tinyhtml5==2.0.0
 tomli==2.2.1

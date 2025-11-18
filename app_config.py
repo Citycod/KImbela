@@ -4,13 +4,17 @@ from dotenv import load_dotenv
 import os
 from flask_migrate import Migrate
 from extensions import db, bcrypt, login_manager, mail
-from user import auth
+from users.user import user as user_blueprint
+from authentication.authenticate import auth
+from admin.admin import admin as admin_blueprint
+from payments.payments import payments as payments_blueprint
+
 
 # from admin import admin as admin_blueprint
 from models import User, Post, Comment, Like, FriendRequest, friendship
 from datetime import datetime, timedelta, timezone
 from extensions import db, socketio
-from messaging import messaging
+from messages.messaging import messaging as message_blueprint
 
 
 load_dotenv()
@@ -20,6 +24,16 @@ csrf = CSRFProtect()
 
 def create_app():
     app = Flask(__name__)
+    # Stripe configuration
+    app.config['STRIPE_SECRET_KEY'] = os.getenv('STRIPE_SECRET_KEY')
+    app.config['STRIPE_PUBLISHABLE_KEY'] = os.getenv('STRIPE_PUBLISHABLE_KEY')
+    app.config['STRIPE_WEBHOOK_SECRET'] = os.getenv('STRIPE_WEBHOOK_SECRET')
+    
+    # Verify webhook secret is loaded
+    if not app.config['STRIPE_WEBHOOK_SECRET']:
+        app.logger.error("STRIPE_WEBHOOK_SECRET is not set!")
+        raise Exception("STRIPE_WEBHOOK_SECRET is not set!")
+    
     app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("SQLALCHEMY_DATABASE_URI")
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY")
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -53,7 +67,10 @@ def create_app():
 
     # Register blueprints
     app.register_blueprint(auth)
-    app.register_blueprint(messaging, url_prefix="/messaging")
+    app.register_blueprint(user_blueprint)
+    app.register_blueprint(message_blueprint)
+    app.register_blueprint(admin_blueprint)
+    app.register_blueprint(payments_blueprint)
     # app.register_blueprint(admin_blueprint)
 
     # Inject CSRF token into all templates
@@ -82,6 +99,24 @@ def create_app():
                 return f"{value} {period_name}{'s' if value != 1 else ''} ago"
 
         return "just now"
+    
+    
+    # Register template filters
+    @app.template_filter('timeago')
+    def timeago(dt):
+        if dt is None:
+            return "Never"
+        
+        # Make sure dt is a datetime object
+        if isinstance(dt, str):
+            try:
+                dt = datetime.fromisoformat(dt.replace('Z', '+00:00'))
+            except:
+                return "Unknown"
+        
+        now = datetime.utcnow()
+        return humanize.naturaltime(now - dt)
+    
 
     # Jinja filter: Convert UTC to WAT time
     def to_wat(dt):

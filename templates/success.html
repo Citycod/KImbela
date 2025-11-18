@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Successful - Kimbela</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+
+    <script>
+        // Check if Tailwind loads properly
+        function checkTailwind() {
+            setTimeout(() => {
+                const bodyStyles = window.getComputedStyle(document.body);
+                const hasTailwind = bodyStyles.margin === '0px' && bodyStyles.fontFamily;
+                
+                if (!hasTailwind) {
+                    console.log('🔄 Tailwind not detected, loading fallback...');
+                    loadFallbackTailwind();
+                } else {
+                    console.log('✅ Tailwind CSS loaded successfully');
+                }
+            }, 500);
+        }
+
+        function loadFallbackTailwind() {
+            // Load from alternative CDN
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = 'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css';
+            link.onload = () => console.log('✅ Fallback Tailwind loaded');
+            link.onerror = () => {
+                console.log('❌ All CDNs failed, using inline styles');
+                loadEmergencyStyles();
+            };
+            document.head.appendChild(link);
+        }
+
+        function loadEmergencyStyles() {
+            const emergencyCSS = `
+                /* EMERGENCY STYLES - Basic Tailwind equivalents */
+                * { box-sizing: border-box; margin: 0; padding: 0; }
+                body { 
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                    background-color: #f3f4f6; 
+                    line-height: 1.5;
+                }
+                .bg-white { background-color: white; }
+                .bg-gray-50 { background-color: #f9fafb; }
+                .bg-gray-100 { background-color: #f3f4f6; }
+                .bg-blue-600 { background-color: #2563eb; }
+                .bg-red-500 { background-color: #ef4444; }
+                .bg-green-500 { background-color: #10b981; }
+                .text-white { color: white; }
+                .text-gray-700 { color: #374151; }
+                .text-gray-500 { color: #6b7280; }
+                .text-blue-600 { color: #2563eb; }
+                .font-semibold { font-weight: 600; }
+                .font-bold { font-weight: 700; }
+                .rounded-lg { border-radius: 0.5rem; }
+                .rounded-xl { border-radius: 0.75rem; }
+                .rounded-2xl { border-radius: 1rem; }
+                .rounded-full { border-radius: 9999px; }
+                .shadow { box-shadow: 0 1px 3px 0 rgba(0,0,0,0.1); }
+                .shadow-md { box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+                .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+                .p-2 { padding: 0.5rem; }
+                .p-3 { padding: 0.75rem; }
+                .p-4 { padding: 1rem; }
+                .p-6 { padding: 1.5rem; }
+                .m-2 { margin: 0.5rem; }
+                .m-4 { margin: 1rem; }
+                .mb-2 { margin-bottom: 0.5rem; }
+                .mb-4 { margin-bottom: 1rem; }
+                .mb-6 { margin-bottom: 1.5rem; }
+                .mt-4 { margin-top: 1rem; }
+                .flex { display: flex; }
+                .hidden { display: none; }
+                .items-center { align-items: center; }
+                .justify-center { justify-content: center; }
+                .justify-between { justify-content: space-between; }
+                .w-full { width: 100%; }
+                .h-screen { height: 100vh; }
+                .h-10 { height: 2.5rem; }
+                .h-16 { height: 4rem; }
+                .w-10 { width: 2.5rem; }
+                .w-16 { width: 4rem; }
+                .fixed { position: fixed; }
+                .relative { position: relative; }
+                .absolute { position: absolute; }
+                .inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
+                .top-0 { top: 0; }
+                .left-0 { left: 0; }
+                .right-0 { right: 0; }
+                .z-50 { z-index: 50; }
+                .border { border-width: 1px; }
+                .border-b { border-bottom-width: 1px; }
+                .border-gray-200 { border-color: #e5e7eb; }
+                .border-gray-300 { border-color: #d1d5db; }
+                .cursor-pointer { cursor: pointer; }
+                .transition-colors { transition: color 0.15s ease; }
+                .hover\\:bg-gray-100:hover { background-color: #f3f4f6; }
+                .hover\\:bg-blue-700:hover { background-color: #1d4ed8; }
+                .space-x-2 > * + * { margin-left: 0.5rem; }
+                .space-x-3 > * + * { margin-left: 0.75rem; }
+                .space-y-2 > * + * { margin-top: 0.5rem; }
+                .space-y-3 > * + * { margin-top: 0.75rem; }
+                .grid { display: grid; }
+                .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+                .max-w-2xl { max-width: 42rem; }
+                .max-w-md { max-width: 28rem; }
+                .mx-auto { margin-left: auto; margin-right: auto; }
+                .object-cover { object-fit: cover; }
+                .text-center { text-align: center; }
+                .text-sm { font-size: 0.875rem; }
+                .text-lg { font-size: 1.125rem; }
+                .text-xl { font-size: 1.25rem; }
+                .text-2xl { font-size: 1.5rem; }
+                .text-3xl { font-size: 1.875rem; }
+                .leading-tight { line-height: 1.25; }
+                .overflow-hidden { overflow: hidden; }
+                .overflow-y-auto { overflow-y: auto; }
+                
+                /* Custom scrollbar */
+                .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+                .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 10px; }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+            `;
+            
+            const style = document.createElement('style');
+            style.textContent = emergencyCSS;
+            document.head.appendChild(style);
+        }
+
+        // Initialize check when DOM loads
+        document.addEventListener('DOMContentLoaded', checkTailwind);
+    </script>
+
+    <!-- Primary Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .success-animation {
+            animation: successScale 0.5s ease-in-out;
+        }
+        @keyframes successScale {
+            0% { transform: scale(0.8); opacity: 0; }
+            70% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-green-50 to-blue-50 min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 text-center success-animation">
+        <!-- Success Icon -->
+        <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <i class="bi bi-check-circle-fill text-green-500 text-4xl"></i>
+        </div>
+        
+        <!-- Success Message -->
+        <h1 class="text-3xl font-black text-gray-800 mb-4">Payment Successful!</h1>
+        
+        <p class="text-gray-600 mb-6">
+            Your payment has been processed successfully. Your ad campaign is now active and running.
+        </p>
+        
+        <!-- Transaction Details -->
+        {% if transaction %}
+        <div class="bg-gray-50 rounded-xl p-4 mb-6 text-left border border-gray-200">
+            <h3 class="font-semibold text-gray-800 mb-3 text-center">Transaction Details</h3>
+            <div class="space-y-2">
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Transaction ID:</span>
+                    <span class="font-semibold">#{{ transaction.id }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Amount:</span>
+                    <span class="font-semibold">{{ transaction.currency }} {{ "%.2f"|format(transaction.amount) }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Status:</span>
+                    <span class="font-semibold text-green-600 capitalize">{{ transaction.status }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Payment Method:</span>
+                    <span class="font-semibold capitalize">{{ transaction.gateway }}</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Campaign Details -->
+        {% if campaign %}
+        <div class="bg-blue-50 rounded-xl p-4 mb-6 text-left border border-blue-200">
+            <h3 class="font-semibold text-gray-800 mb-3 text-center">Campaign Details</h3>
+            <div class="space-y-2">
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Campaign:</span>
+                    <span class="font-semibold">{{ campaign.title }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Package:</span>
+                    <span class="font-semibold">{{ campaign.package.name if campaign.package else 'N/A' }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Duration:</span>
+                    <span class="font-semibold">{{ campaign.package.duration_days if campaign.package else 'N/A' }} days</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Action Buttons -->
+        <div class="space-y-3">
+            <a href="{{ url_for('user.user_dashboard') }}" 
+               class="w-full bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 transition-all duration-300 flex items-center justify-center space-x-2">
+                <i class="bi bi-grid-1x2"></i>
+                <span>Go to Dashboard</span>
+            </a>
+            <a href="{{ url_for('payments.ad_packages') }}" 
+               class="w-full border-2 border-gray-300 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-50 transition-all duration-300 flex items-center justify-center space-x-2">
+                <i class="bi bi-plus-circle"></i>
+                <span>Create Another Campaign</span>
+            </a>
+        </div>
+        
+        <!-- Additional Info -->
+        <div class="mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
+            <div class="flex items-center justify-center space-x-2 text-green-700">
+                <i class="bi bi-info-circle"></i>
+                <span class="text-sm font-medium">Your campaign is now active and will start receiving impressions shortly.</span>
+            </div>
+        </div>
+        
+        <p class="text-sm text-gray-500 mt-6">
+            A confirmation email has been sent to your registered email address.
+        </p>
+    </div>
+
+    <script>
+        // Add some interactive effects
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add celebration effect
+            const buttons = document.querySelectorAll('a');
+            buttons.forEach(button => {
+                button.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-2px)';
+                });
+                button.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                });
+            });
+            
+            // Auto-redirect to dashboard after 10 seconds
+            setTimeout(() => {
+                window.location.href = "{{ url_for('user.user_dashboard') }}";
+            }, 10000);
+        });
+    </script>
+</body>
+</html>
