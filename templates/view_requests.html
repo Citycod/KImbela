@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matchmaking Requests - Kimbela</title>
+    <meta name="csrf-token" content="{{ csrf_token }}">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" />
+
+    <!-- Google Fonts - Poppins and Roboto -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet" />
+
+    <script>
+      // Tailwind configuration
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: '#8B4513',
+              secondary: '#D4A76A',
+              accent: '#C19A6B',
+              'rose-gold': '#B76E79',
+              'ivory': '#FFFFF0',
+              'dusty-rose': '#DCAE96',
+              'sage': '#87A96B',
+              'blush': '#F5D0C9',
+              'champagne': '#F7E7CE',
+              'dark-bg': '#2C1810',
+              'light-bg': '#FDF6F0',
+              'border-color': '#E8D5C4',
+              'text-primary': '#5D4037',
+              'text-secondary': '#8D6E63',
+            },
+            fontFamily: {
+              roboto: ["Roboto", "sans-serif"],
+              poppins: ["Poppins", "sans-serif"],
+            },
+            animation: {
+              'fade-in': 'fadeIn 0.5s ease-in-out',
+              'slide-up': 'slideUp 0.3s ease-out',
+              'pulse-soft': 'pulseSoft 2s infinite',
+              'float': 'float 6s ease-in-out infinite',
+            },
+            keyframes: {
+              fadeIn: {
+                '0%': { opacity: '0' },
+                '100%': { opacity: '1' },
+              },
+              slideUp: {
+                '0%': { transform: 'translateY(10px)', opacity: '0' },
+                '100%': { transform: 'translateY(0)', opacity: '1' },
+              },
+              pulseSoft: {
+                '0%, 100%': { opacity: '1' },
+                '50%': { opacity: '0.8' },
+              },
+              float: {
+                '0%, 100%': { transform: 'translateY(0)' },
+                '50%': { transform: 'translateY(-10px)' },
+              }
+            }
+          },
+        },
+      };
+    </script>
+
+    <style>
+      /* Enhanced Styles with Wedding/Floral Theme */
+      body {
+        font-family: 'Roboto', sans-serif;
+      }
+      
+      h1, h2, h3, h4, h5, h6 {
+        font-family: 'Poppins', sans-serif;
+      }
+      
+      .glass-effect {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+      
+      .gradient-bg {
+        background: linear-gradient(135deg, #8B4513 0%, #D4A76A 100%);
+      }
+      
+      .gradient-rose {
+        background: linear-gradient(135deg, #B76E79 0%, #DCAE96 100%);
+      }
+      
+      .gradient-sage {
+        background: linear-gradient(135deg, #87A96B 0%, #C1E1C1 100%);
+      }
+      
+      .gradient-champagne {
+        background: linear-gradient(135deg, #F7E7CE 0%, #FFFDD0 100%);
+      }
+      
+      .shadow-soft {
+        box-shadow: 0 4px 6px -1px rgba(139, 69, 19, 0.1), 0 2px 4px -1px rgba(139, 69, 19, 0.06);
+      }
+      
+      .shadow-medium {
+        box-shadow: 0 10px 15px -3px rgba(139, 69, 19, 0.1), 0 4px 6px -2px rgba(139, 69, 19, 0.05);
+      }
+      
+      .shadow-strong {
+        box-shadow: 0 20px 25px -5px rgba(139, 69, 19, 0.1), 0 10px 10px -5px rgba(139, 69, 19, 0.04);
+      }
+      
+      .floral-card {
+        background: #FFFFF0;
+        border: 1px solid #E8D5C4;
+        border-radius: 16px;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+      }
+      
+      .floral-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #B76E79, #D4A76A, #87A96B);
+      }
+      
+      .floral-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 25px 50px -12px rgba(139, 69, 19, 0.25);
+      }
+      
+      .floral-pattern {
+        background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23D4A76A' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
+      }
+      
+      .matchmaking-header {
+        background: linear-gradient(135deg, #F7E7CE 0%, #FFFDD0 100%);
+        padding: 1.5rem;
+        text-align: center;
+        border-bottom: 1px solid #E8D5C4;
+      }
+      
+      .matchmaking-body {
+        padding: 1.5rem;
+      }
+      
+      .matchmaking-footer {
+        padding: 1rem 1.5rem;
+        background: #FDF6F0;
+        border-top: 1px solid #E8D5C4;
+      }
+      
+      .floral-divider {
+        height: 1px;
+        background: linear-gradient(90deg, transparent, #D4A76A, transparent);
+        margin: 1rem 0;
+      }
+      
+      .interest-tag {
+        display: inline-block;
+        background: #f3f4f6;
+        border: 1px solid #e5e7eb;
+        border-radius: 20px;
+        padding: 6px 12px;
+        margin: 4px;
+        font-size: 0.75rem;
+        transition: all 0.2s ease;
+      }
+      
+      .interest-tag.rose {
+        background: #FDF2F8;
+        border-color: #FBCFE8;
+        color: #BE185D;
+      }
+      
+      .interest-tag.sage {
+        background: #F0FDF4;
+        border-color: #BBF7D0;
+        color: #15803D;
+      }
+      
+      .interest-tag.champagne {
+        background: #FFFBEB;
+        border-color: #FDE68A;
+        color: #B45309;
+      }
+      
+      .like-btn {
+        transition: all 0.3s ease;
+      }
+      
+      .like-btn:hover {
+        transform: scale(1.1);
+      }
+      
+      .like-btn.liked {
+        color: #B76E79;
+      }
+      
+      .loader-spinner {
+        width: 48px;
+        height: 48px;
+        border: 4px solid #E8D5C4;
+        border-top: 4px solid #B76E79;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      
+      .filter-card {
+        background: #FFFFF0;
+        border: 1px solid #E8D5C4;
+        border-radius: 12px;
+        padding: 1.5rem;
+      }
+      
+      .empty-state {
+        background: linear-gradient(135deg, #FDF6F0 0%, #FFFDD0 100%);
+        border: 2px dashed #E8D5C4;
+        border-radius: 16px;
+        padding: 3rem;
+        text-align: center;
+      }
+      
+      /* Mobile responsive adjustments */
+      @media (max-width: 768px) {
+        .mobile-btn {
+          padding: 0.5rem 1rem !important;
+          font-size: 0.875rem !important;
+        }
+        
+        .mobile-btn-icon {
+          margin-right: 0.25rem !important;
+        }
+        
+        .filter-card {
+          padding: 1rem;
+        }
+        
+        .matchmaking-header, .matchmaking-body, .matchmaking-footer {
+          padding: 1rem;
+        }
+      }
+    </style>
+</head>
+<body class="font-roboto bg-gradient-to-br from-ivory to-champagne min-h-screen">
+    <!-- Enhanced Header -->
+    <header class="glass-effect sticky top-0 z-40 border-b border-rose-200/50">
+      <div class="container mx-auto px-4 py-4">
+        <div class="flex justify-between items-center">
+          <div class="flex items-center space-x-3">
+            <h1 class="text-2xl font-poppins font-bold text-primary">Kimbela Matchmaking</h1>
+          </div>
+          <div class="flex items-center space-x-2 md:space-x-4">
+            <a href="{{ url_for('user.create_request') }}" class="mobile-btn bg-rose-gold text-white px-3 py-2 md:px-4 md:py-2.5 rounded-lg hover:bg-rose-700 transition-all duration-300 flex items-center space-x-1 md:space-x-2">
+              <i class="bi bi-heart mobile-btn-icon"></i>
+              <span class="hidden md:inline">Create Request</span>
+            </a>
+            <a href="{{ url_for('user.user_dashboard') }}" class="mobile-btn bg-primary text-white px-3 py-2 md:px-4 md:py-2.5 rounded-lg hover:bg-secondary transition-all duration-300 flex items-center space-x-1 md:space-x-2">
+              <i class="bi bi-grid-1x2 mobile-btn-icon"></i>
+              <span class="hidden md:inline">Dashboard</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="relative py-12 md:py-16 gradient-bg text-white overflow-hidden">
+      <div class="absolute inset-0 bg-black/10"></div>
+      <div class="absolute top-0 left-0 w-72 h-72 bg-rose-500/10 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+      <div class="absolute bottom-0 right-0 w-96 h-96 bg-sage-500/10 rounded-full translate-x-1/3 translate-y-1/3"></div>
+      
+      <div class="container mx-auto px-4 text-center relative z-10">
+        <h1 class="text-3xl md:text-5xl font-poppins font-black mb-4 animate-fade-in">
+          Find Your Perfect Match
+        </h1>
+        <p class="text-lg md:text-xl text-ivory max-w-2xl mx-auto mb-6 md:mb-8 leading-relaxed">
+          Browse through genuine matchmaking requests and connect with people looking for meaningful relationships.
+        </p>
+      </div>
+    </section>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 py-6 md:py-8">
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 md:gap-8">
+        <!-- Filters Sidebar -->
+        <div class="lg:col-span-1 space-y-6">
+          <!-- Search Filter -->
+          <div class="filter-card">
+            <h3 class="font-poppins font-semibold text-lg text-primary mb-4">Search & Filter</h3>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-text-secondary mb-2">Search</label>
+                <input type="text" id="searchInput" placeholder="Search requests..." 
+                       class="w-full px-4 py-2 border border-border-color rounded-lg focus:ring-2 focus:ring-rose-gold focus:border-transparent">
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-text-secondary mb-2">Age Range</label>
+                <div class="flex space-x-2">
+                  <input type="number" id="minAgeFilter" placeholder="Min" 
+                         class="w-1/2 px-3 py-2 border border-border-color rounded-lg focus:ring-2 focus:ring-rose-gold focus:border-transparent">
+                  <input type="number" id="maxAgeFilter" placeholder="Max" 
+                         class="w-1/2 px-3 py-2 border border-border-color rounded-lg focus:ring-2 focus:ring-rose-gold focus:border-transparent">
+                </div>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-text-secondary mb-2">Gender</label>
+                <select id="genderFilter" class="w-full px-3 py-2 border border-border-color rounded-lg focus:ring-2 focus:ring-rose-gold focus:border-transparent">
+                  <option value="">Any Gender</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="non-binary">Non-binary</option>
+                </select>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-text-secondary mb-2">Location</label>
+                <select id="locationFilter" class="w-full px-3 py-2 border border-border-color rounded-lg focus:ring-2 focus:ring-rose-gold focus:border-transparent">
+                  <option value="">Any Location</option>
+                  <!-- Options will be populated by JavaScript -->
+                </select>
+              </div>
+              
+              <button id="applyFilters" class="mobile-btn w-full bg-rose-gold text-white py-2 rounded-lg hover:bg-rose-700 transition-colors duration-300">
+                Apply Filters
+              </button>
+              <button id="clearFilters" class="mobile-btn w-full bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300 transition-colors duration-300">
+                Clear Filters
+              </button>
+            </div>
+          </div>
+
+          <!-- Quick Stats -->
+          <div class="filter-card">
+            <h3 class="font-poppins font-semibold text-lg text-primary mb-4">Quick Stats</h3>
+            <div class="space-y-3 text-sm">
+              <div class="flex justify-between items-center py-2 border-b border-border-color">
+                <span class="text-text-secondary">Active Requests</span>
+                <span class="font-semibold text-primary" id="activeCount">-</span>
+              </div>
+              <div class="flex justify-between items-center py-2 border-b border-border-color">
+                <span class="text-text-secondary">Total Matches</span>
+                <span class="font-semibold text-primary" id="totalMatches">-</span>
+              </div>
+              <div class="flex justify-between items-center py-2">
+                <span class="text-text-secondary">New This Week</span>
+                <span class="font-semibold text-primary" id="newThisWeek">-</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Requests Grid -->
+        <div class="lg:col-span-3">
+          <!-- Sort and View Options -->
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
+            <div>
+              <h2 class="text-2xl font-poppins font-bold text-primary">Matchmaking Requests</h2>
+              <p class="text-text-secondary" id="resultsCount">Loading requests...</p>
+            </div>
+            <div class="flex space-x-2 md:space-x-4">
+              <select id="sortSelect" class="mobile-btn px-3 py-2 border border-border-color rounded-lg focus:ring-2 focus:ring-rose-gold focus:border-transparent">
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+                <option value="popular">Most Popular</option>
+                <option value="ending">Ending Soon</option>
+              </select>
+              <div class="flex bg-gray-100 rounded-lg p-1">
+                <button id="gridView" class="p-2 rounded-md bg-white shadow-sm">
+                  <i class="bi bi-grid-3x3-gap text-rose-gold"></i>
+                </button>
+                <button id="listView" class="p-2 rounded-md">
+                  <i class="bi bi-list text-text-secondary"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Requests Container -->
+          <div id="requestsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            <!-- Debug Info -->
+<div id="debugInfo" class="hidden text-sm text-gray-600 mb-4 p-4 bg-yellow-50 rounded">
+    <p id="debugStatus">Loading...</p>
+</div>
+
+<!-- Requests Container -->
+<div id="requestsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- Requests will be loaded here -->
+</div>
+            <!-- Requests will be loaded here -->
+          </div>
+
+          <!-- Loading State -->
+          <div id="loadingState" class="text-center py-12">
+            <div class="loader-spinner mx-auto mb-4"></div>
+            <p class="text-text-secondary">Loading matchmaking requests...</p>
+          </div>
+
+          <!-- Empty State -->
+          <div id="emptyState" class="empty-state hidden">
+            <div class="w-24 h-24 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <i class="bi bi-heart text-rose-gold text-3xl"></i>
+            </div>
+            <h3 class="text-2xl font-poppins font-bold text-primary mb-2">No requests found</h3>
+            <p class="text-text-secondary mb-6">Try adjusting your filters or check back later for new requests.</p>
+            <button id="clearAllFilters" class="mobile-btn bg-rose-gold text-white px-6 py-3 rounded-lg hover:bg-rose-700 transition-colors duration-300">
+              Clear All Filters
+            </button>
+          </div>
+
+          <!-- Load More Button -->
+          <div id="loadMoreContainer" class="text-center mt-8 hidden">
+            <button id="loadMoreBtn" class="mobile-btn bg-white text-rose-gold border border-rose-gold px-8 py-3 rounded-lg hover:bg-rose-50 transition-colors duration-300 font-semibold">
+              Load More Requests
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Request Detail Modal -->
+    <div id="requestModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 hidden">
+      <div class="modal-dialog bg-white rounded-2xl shadow-strong w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto animate-fade-in">
+        <div class="modal-header p-6 md:p-8 border-b border-border-color flex justify-between items-center bg-gradient-to-r from-primary to-secondary text-white rounded-t-2xl">
+          <div>
+            <h3 class="text-xl md:text-2xl font-poppins font-black">Matchmaking Request</h3>
+            <p class="text-white/80 text-sm mt-1">View complete details</p>
+          </div>
+          <button type="button" class="p-2 md:p-3 rounded-xl hover:bg-white/10 transition-all duration-300 close-modal">
+            <i class="bi bi-x-lg text-lg md:text-xl"></i>
+          </button>
+        </div>
+
+        <div class="modal-body p-6 md:p-8" id="requestModalContent">
+          <!-- Content will be loaded by JavaScript -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Enhanced Footer -->
+    <footer class="bg-dark-bg text-white py-12 mt-12">
+      <div class="container mx-auto px-4">
+        <div class="text-center">
+          <p class="text-text-secondary text-sm">&copy; 2025 Kimbela Matchmaking. All rights reserved. Connecting hearts worldwide.</p>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // Global variables
+      const csrfToken = '{{ csrf_token }}';
+      let currentView = 'grid';
+      let currentPage = 1;
+      let hasMore = true;
+      let isLoading = false;
+      let currentFilters = {};
+
+      document.addEventListener('DOMContentLoaded', function() {
+        initializeEventListeners();
+        loadRequests();
+        updateStats();
+      });
+
+      function initializeEventListeners() {
+        // View toggle
+        document.getElementById('gridView').addEventListener('click', () => setView('grid'));
+        document.getElementById('listView').addEventListener('click', () => setView('list'));
+
+        // Sort change
+        document.getElementById('sortSelect').addEventListener('change', function() {
+          currentFilters.sort = this.value;
+          reloadRequests();
+        });
+
+        // Search
+        document.getElementById('searchInput').addEventListener('input', function() {
+          clearTimeout(this.searchTimeout);
+          this.searchTimeout = setTimeout(() => {
+            currentFilters.search = this.value;
+            reloadRequests();
+          }, 500);
+        });
+
+        // Filter buttons
+        document.getElementById('applyFilters').addEventListener('click', applyFilters);
+        document.getElementById('clearFilters').addEventListener('click', clearFilters);
+        document.getElementById('clearAllFilters').addEventListener('click', clearAllFilters);
+
+        // Load more
+        document.getElementById('loadMoreBtn').addEventListener('click', loadMoreRequests);
+
+        // Modal close
+        document.querySelectorAll('.close-modal').forEach(btn => {
+          btn.addEventListener('click', closeModal);
+        });
+      }
+
+      function setView(view) {
+        currentView = view;
+        const gridBtn = document.getElementById('gridView');
+        const listBtn = document.getElementById('listView');
+        
+        if (view === 'grid') {
+          gridBtn.classList.add('bg-white', 'shadow-sm');
+          gridBtn.querySelector('i').classList.add('text-rose-gold');
+          listBtn.classList.remove('bg-white', 'shadow-sm');
+          listBtn.querySelector('i').classList.remove('text-rose-gold');
+          listBtn.querySelector('i').classList.add('text-text-secondary');
+          document.getElementById('requestsContainer').classList.add('grid', 'grid-cols-1', 'md:grid-cols-2');
+          document.getElementById('requestsContainer').classList.remove('space-y-6');
+        } else {
+          listBtn.classList.add('bg-white', 'shadow-sm');
+          listBtn.querySelector('i').classList.add('text-rose-gold');
+          gridBtn.classList.remove('bg-white', 'shadow-sm');
+          gridBtn.querySelector('i').classList.remove('text-rose-gold');
+          gridBtn.querySelector('i').classList.add('text-text-secondary');
+          document.getElementById('requestsContainer').classList.remove('grid', 'grid-cols-1', 'md:grid-cols-2');
+          document.getElementById('requestsContainer').classList.add('space-y-6');
+        }
+        
+        renderRequests();
+      }
+
+      function applyFilters() {
+        currentFilters.minAge = document.getElementById('minAgeFilter').value;
+        currentFilters.maxAge = document.getElementById('maxAgeFilter').value;
+        currentFilters.gender = document.getElementById('genderFilter').value;
+        currentFilters.location = document.getElementById('locationFilter').value;
+        
+        reloadRequests();
+      }
+
+      function clearFilters() {
+        document.getElementById('minAgeFilter').value = '';
+        document.getElementById('maxAgeFilter').value = '';
+        document.getElementById('genderFilter').value = '';
+        document.getElementById('locationFilter').value = '';
+        document.getElementById('searchInput').value = '';
+        
+        currentFilters = {};
+        reloadRequests();
+      }
+
+      function clearAllFilters() {
+        clearFilters();
+        document.getElementById('emptyState').classList.add('hidden');
+      }
+
+      function reloadRequests() {
+        currentPage = 1;
+        hasMore = true;
+        loadRequests();
+      }
+
+      function showDebugInfo(message) {
+    const debugDiv = document.getElementById('debugInfo');
+    const debugStatus = document.getElementById('debugStatus');
+    debugDiv.classList.remove('hidden');
+    debugStatus.textContent = message;
+}
+
+      async function loadRequests() {
+        if (isLoading) return;
+        
+        isLoading = true;
+        document.getElementById('loadingState').classList.remove('hidden');
+        document.getElementById('emptyState').classList.add('hidden');
+        
+        try {
+          // Build query parameters
+          const params = new URLSearchParams({
+            page: currentPage,
+            per_page: 12
+          });
+          
+          if (currentFilters.search) params.append('search', currentFilters.search);
+          if (currentFilters.minAge) params.append('min_age', currentFilters.minAge);
+          if (currentFilters.maxAge) params.append('max_age', currentFilters.maxAge);
+          if (currentFilters.gender) params.append('gender', currentFilters.gender);
+          if (currentFilters.location) params.append('location', currentFilters.location);
+          if (currentFilters.sort) params.append('sort_by', currentFilters.sort);
+          
+          const response = await fetch(`/api/requests?${params}`, {
+            headers: {
+              'Content-Type': 'application/json',
+            }
+          });
+          
+          const data = await response.json();
+          
+          if (data.success) {
+            renderRequests(data.requests);
+            hasMore = data.has_next;
+            
+            if (data.requests.length === 0 && currentPage === 1) {
+              document.getElementById('emptyState').classList.remove('hidden');
+            }
+            
+            updateResultsCount(data.requests.length, data.total);
+            populateLocationFilter(data.requests);
+          } else {
+            console.error('Error loading requests:', data.error);
+            showError('Failed to load requests');
+          }
+        } catch (error) {
+          console.error('Error loading requests:', error);
+          showError('Failed to load requests');
+        } finally {
+          document.getElementById('loadingState').classList.add('hidden');
+          isLoading = false;
+        }
+      }
+
+      async function loadMoreRequests() {
+        if (isLoading || !hasMore) return;
+        
+        currentPage++;
+        await loadRequests();
+      }
+
+      function renderRequests(requests = []) {
+        const container = document.getElementById('requestsContainer');
+        
+        if (currentPage === 1) {
+          container.innerHTML = '';
+        }
+        
+        if (requests.length === 0 && currentPage === 1) {
+          document.getElementById('emptyState').classList.remove('hidden');
+          return;
+        }
+        
+        requests.forEach(request => {
+          const requestElement = createRequestElement(request);
+          container.appendChild(requestElement);
+        });
+        
+        // Show/hide load more button
+        document.getElementById('loadMoreContainer').classList.toggle('hidden', !hasMore);
+      }
+
+      function createRequestElement(request) {
+    const div = document.createElement('div');
+    div.className = `floral-card cursor-pointer ${request.is_own_request ? 'border-2 border-rose-gold' : ''}`;
+    div.addEventListener('click', () => openRequestModal(request));
+    
+    const tagColors = ['rose', 'sage', 'champagne'];
+    const interests = request.interests || [];
+    
+    div.innerHTML = `
+        ${request.is_own_request ? `
+            <div class="bg-rose-gold text-white text-xs font-semibold px-3 py-1 rounded-t-lg">
+                <i class="bi bi-person-check mr-1"></i>Your Request
+            </div>
+        ` : ''}
+        
+        <div class="matchmaking-header">
+            <div class="flex items-center space-x-3">
+                <img src="${request.user.profile_pic || '/static/assets/img/default-avatar.png'}" 
+                     alt="${request.user.full_name}" 
+                     class="w-16 h-16 rounded-full object-cover border-2 ${request.is_own_request ? 'border-rose-gold' : 'border-white'} shadow-sm">
+                <div class="text-left">
+                    <h4 class="font-poppins font-bold text-lg text-primary">${request.user.full_name}, ${request.user.age}</h4>
+                    <p class="text-text-secondary text-sm flex items-center">
+                        <i class="bi bi-geo-alt mr-1"></i>${request.user.location}
+                    </p>
+                    <div class="flex items-center space-x-2 mt-1">
+                        <span class="bg-rose-100 text-rose-800 text-xs px-2 py-1 rounded-full">${request.package}</span>
+                        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">${request.expires_in}d left</span>
+                        ${request.is_own_request ? `<span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Your Request</span>` : ''}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="matchmaking-body">
+            <p class="text-text-primary line-clamp-2 mb-4">${request.about_you}</p>
+            
+            <div class="flex flex-wrap gap-1 mb-4">
+                ${interests.slice(0, 3).map((interest, index) => `
+                    <span class="interest-tag ${tagColors[index % tagColors.length]}">${interest}</span>
+                `).join('')}
+                ${interests.length > 3 ? `<span class="interest-tag">+${interests.length - 3} more</span>` : ''}
+            </div>
+            
+            ${request.image ? `
+                <div class="mb-4 rounded-lg overflow-hidden">
+                    <img src="${request.image}" alt="Profile photo" class="w-full h-32 object-cover">
+                </div>
+            ` : ''}
+        </div>
+        
+        <div class="matchmaking-footer">
+            <div class="flex justify-between items-center text-sm">
+                <div class="flex space-x-4 text-text-secondary">
+                    <span class="flex items-center space-x-1">
+                        <i class="bi bi-eye"></i>
+                        <span>${request.views}</span>
+                    </span>
+                    <span class="flex items-center space-x-1">
+                        <i class="bi bi-heart"></i>
+                        <span>${request.likes}</span>
+                    </span>
+                    <span class="flex items-center space-x-1">
+                        <i class="bi bi-chat"></i>
+                        <span>${request.matches}</span>
+                    </span>
+                </div>
+                ${!request.is_own_request ? `
+                    <button class="like-btn ${request.is_liked ? 'liked' : ''} text-text-secondary hover:text-rose-gold" onclick="event.stopPropagation(); likeRequest(${request.id}, this)">
+                        <i class="bi bi-heart${request.is_liked ? '-fill' : ''}"></i>
+                    </button>
+                ` : `
+                    <button class="text-text-secondary cursor-default" title="Your own request">
+                        <i class="bi bi-person-check"></i>
+                    </button>
+                `}
+            </div>
+        </div>
+    `;
+    
+    return div;
+}
+
+      async function openRequestModal(request) {
+    try {
+        const response = await fetch(`/api/requests/${request.id}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            const requestDetail = data.request;
+            const modalContent = document.getElementById('requestModalContent');
+            const tagColors = ['rose', 'sage', 'champagne'];
+            
+            modalContent.innerHTML = `
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+                    <div class="lg:col-span-2 space-y-6">
+                        ${requestDetail.is_own_request ? `
+                            <div class="bg-rose-50 border border-rose-200 rounded-lg p-4 mb-4">
+                                <div class="flex items-center space-x-2 text-rose-800">
+                                    <i class="bi bi-info-circle"></i>
+                                    <span class="font-semibold">This is your matchmaking request</span>
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        <div class="flex items-center space-x-4">
+                            <img src="${requestDetail.user.profile_pic || '/static/assets/img/default-avatar.png'}" 
+                                 alt="${requestDetail.user.full_name}" 
+                                 class="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover border-2 ${requestDetail.is_own_request ? 'border-rose-gold' : 'border-rose-gold'}">
+                            <div>
+                                <h4 class="font-poppins font-bold text-xl md:text-2xl text-primary">${requestDetail.user.full_name}, ${requestDetail.user.age}</h4>
+                                <p class="text-text-secondary flex items-center">
+                                    <i class="bi bi-geo-alt mr-2"></i>${requestDetail.user.location}
+                                </p>
+                                <div class="flex items-center space-x-2 mt-2">
+                                    <span class="bg-rose-100 text-rose-800 text-sm px-3 py-1 rounded-full">${requestDetail.package} Package</span>
+                                    <span class="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full">${requestDetail.expires_in} days remaining</span>
+                                    ${requestDetail.is_own_request ? `<span class="bg-green-100 text-green-800 text-sm px-3 py-1 rounded-full">Your Request</span>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="floral-divider"></div>
+                        
+                        <!-- Rest of your modal content remains the same -->
+                        <div>
+                            <h5 class="font-poppins font-semibold text-lg text-primary mb-3">About Me</h5>
+                            <p class="text-text-primary leading-relaxed">${requestDetail.about_you}</p>
+                        </div>
+                        
+                        <div>
+                            <h5 class="font-poppins font-semibold text-lg text-primary mb-3">My Ideal Partner</h5>
+                            <p class="text-text-primary leading-relaxed">${requestDetail.ideal_partner}</p>
+                        </div>
+                        
+                        ${requestDetail.image ? `
+                            <div class="rounded-xl overflow-hidden">
+                                <img src="${requestDetail.image}" alt="Profile photo" class="w-full h-48 md:h-64 object-cover">
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <div class="space-y-6">
+                        <!-- Your existing sidebar content -->
+                        
+                        ${!requestDetail.is_own_request ? `
+                            <div class="flex space-x-3">
+                                <button onclick="sendLike(${requestDetail.id})" class="mobile-btn flex-1 bg-rose-gold text-white py-3 rounded-lg hover:bg-rose-700 transition-colors duration-300 font-semibold flex items-center justify-center space-x-2">
+                                    <i class="bi bi-heart"></i>
+                                    <span>Send Like</span>
+                                </button>
+                                <button onclick="sendMessage(${requestDetail.id})" class="mobile-btn flex-1 bg-primary text-white py-3 rounded-lg hover:bg-secondary transition-colors duration-300 font-semibold flex items-center justify-center space-x-2">
+                                    <i class="bi bi-chat"></i>
+                                    <span>Message</span>
+                                </button>
+                            </div>
+                        ` : `
+                            <div class="bg-gray-100 rounded-lg p-4 text-center">
+                                <p class="text-gray-600 text-sm">This is your own request</p>
+                            </div>
+                        `}
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('requestModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        } else {
+            showError('Failed to load request details');
+        }
+    } catch (error) {
+        console.error('Error loading request details:', error);
+        showError('Failed to load request details');
+    }
+}
+
+      function closeModal() {
+        document.getElementById('requestModal').classList.add('hidden');
+        document.body.style.overflow = '';
+      }
+
+      async function likeRequest(requestId, button) {
+        try {
+          const response = await fetch(`/api/requests/${requestId}/like`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': csrfToken
+            }
+          });
+          
+          const data = await response.json();
+          
+          if (data.success) {
+            const icon = button.querySelector('i');
+            const likesCount = button.closest('.matchmaking-footer').querySelector('.bi-heart').nextElementSibling;
+            
+            if (data.liked) {
+              icon.classList.remove('bi-heart');
+              icon.classList.add('bi-heart-fill', 'liked');
+              button.classList.add('liked');
+              likesCount.textContent = data.like_count;
+            } else {
+              icon.classList.remove('bi-heart-fill', 'liked');
+              icon.classList.add('bi-heart');
+              button.classList.remove('liked');
+              likesCount.textContent = data.like_count;
+            }
+          } else {
+            showError(data.error || 'Failed to like request');
+          }
+        } catch (error) {
+          console.error('Error liking request:', error);
+          showError('Failed to like request');
+        }
+      }
+
+      async function sendLike(requestId) {
+        try {
+          const response = await fetch(`/api/requests/${requestId}/like`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': csrfToken
+            }
+          });
+          
+          const data = await response.json();
+          
+          if (data.success) {
+            showSuccess('Like sent successfully!');
+            closeModal();
+            reloadRequests(); // Refresh to update counts
+          } else {
+            showError(data.error || 'Failed to send like');
+          }
+        } catch (error) {
+          console.error('Error sending like:', error);
+          showError('Failed to send like');
+        }
+      }
+
+      async function sendMessage(requestId) {
+        const message = prompt('Enter your message:');
+        if (!message) return;
+        
+        try {
+          const response = await fetch(`/api/requests/${requestId}/message`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ message })
+          });
+          
+          const data = await response.json();
+          
+          if (data.success) {
+            showSuccess('Message sent successfully!');
+            closeModal();
+            reloadRequests(); // Refresh to update counts
+          } else {
+            showError(data.error || 'Failed to send message');
+          }
+        } catch (error) {
+          console.error('Error sending message:', error);
+          showError('Failed to send message');
+        }
+      }
+
+      async function updateStats() {
+        try {
+          const response = await fetch('/stats');
+          const data = await response.json();
+          
+          if (data.success) {
+            document.getElementById('activeCount').textContent = data.stats.total_requests;
+            document.getElementById('totalMatches').textContent = data.stats.total_matches;
+            document.getElementById('newThisWeek').textContent = data.stats.new_this_week;
+          }
+        } catch (error) {
+          console.error('Error fetching stats:', error);
+        }
+      }
+
+      function updateResultsCount(currentCount, totalCount) {
+        const resultsElement = document.getElementById('resultsCount');
+        
+        if (currentCount === 0) {
+          resultsElement.textContent = 'No requests found';
+        } else if (currentCount === totalCount) {
+          resultsElement.textContent = `Showing all ${currentCount} requests`;
+        } else {
+          resultsElement.textContent = `Showing ${currentCount} of ${totalCount} requests`;
+        }
+      }
+
+      function populateLocationFilter(requests) {
+        const locations = [...new Set(requests.map(req => req.user.location).filter(Boolean))];
+        const select = document.getElementById('locationFilter');
+        
+        // Clear existing options except the first one
+        while (select.children.length > 1) {
+          select.removeChild(select.lastChild);
+        }
+        
+        locations.forEach(location => {
+          const option = document.createElement('option');
+          option.value = location;
+          option.textContent = location;
+          select.appendChild(option);
+        });
+      }
+
+      function showError(message) {
+        // Simple error display - you could use a more sophisticated notification system
+        alert('Error: ' + message);
+      }
+
+      function showSuccess(message) {
+        // Simple success display - you could use a more sophisticated notification system
+        alert('Success: ' + message);
+      }
+
+      // Close modal on outside click
+      document.addEventListener('click', function(e) {
+        if (e.target.id === 'requestModal') {
+          closeModal();
+        }
+      });
+
+      // Close modal on ESC key
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          closeModal();
+        }
+      });
+    </script>
+</body>
+</html>

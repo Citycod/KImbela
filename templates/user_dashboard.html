@@ -940,19 +940,7 @@
                 </div>
               </div>
 
-              <div
-                class="p-4 border-t border-gray-100 bg-white/80 backdrop-blur-sm"
-              >
-                <button
-                  class="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl font-semibold transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg flex items-center justify-center group"
-                  onclick="createNewGroup()"
-                >
-                  <i
-                    class="bi bi-plus-circle text-lg mr-2 group-hover:scale-110 transition-transform duration-300"
-                  ></i>
-                  Create New Group
-                </button>
-              </div>
+              
             </div>
           </div>
 
@@ -961,6 +949,59 @@
           >
             <i class="bi bi-cart3 mr-3 text-lg"></i> Market Place
           </div>
+
+          <a
+          href="{{ url_for('payments.ad_packages') }}"
+          class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-orange-50 hover:to-yellow-50 transition-all duration-300 mb-2 group border border-transparent hover:border-orange-200 shadow-sm hover:shadow-md"
+        >
+          <i
+            class="bi bi-megaphone-fill mr-3 text-lg group-hover:scale-110 group-hover:rotate-12 transition-all duration-300"
+            style="color: #f59e0b; animation: pulse-glow 2s infinite"
+          ></i>
+          <span
+            class="font-medium group-hover:text-orange-700 transition-colors duration-300"
+            >Create Sponsored Ad</span
+          >
+        </a>
+
+        <!-- Match Making Request Form -->
+        <a
+          href="{{ url_for('user.requests') }}"
+          class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-pink-50 hover:to-rose-50 transition-all duration-300 mb-2 group border border-transparent hover:border-pink-200 shadow-sm hover:shadow-md"
+        >
+          <i
+            class="bi bi-heart-fill mr-3 text-lg group-hover:scale-110 group-hover:animate-bounce transition-all duration-300"
+            style="
+              color: #ec4899;
+              animation: heartbeat 1.5s ease-in-out infinite;
+            "
+          ></i>
+          <span
+            class="font-medium group-hover:text-pink-700 transition-colors duration-300"
+            >Create Match Request</span
+          >
+        </a>
+
+        <!-- View Match Requests -->
+        <a
+          href="{{ url_for('user.view_requests') }}"
+          class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 transition-all duration-300 mb-2 group border border-transparent hover:border-green-200 shadow-sm hover:shadow-md"
+        >
+          <i
+            class="bi bi-binoculars-fill mr-3 text-lg group-hover:scale-110 group-hover:rotate-45 transition-all duration-300"
+            style="
+              color: #10b981;
+              animation: search-sweep 3s ease-in-out infinite;
+            "
+          ></i>
+          <span
+            class="font-medium group-hover:text-green-700 transition-colors duration-300"
+            >Browse Match Requests</span
+          >
+        </a>
+
+        <!-- My Match Requests -->
+        
         </div>
       </div>
     </div>
@@ -1075,19 +1116,7 @@
             </div>
 
             <!-- Footer with Create Button -->
-            <div
-              class="p-4 border-t border-gray-100 bg-white/80 backdrop-blur-sm"
-            >
-              <button
-                class="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl font-semibold transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg flex items-center justify-center group"
-                onclick="createNewGroup()"
-              >
-                <i
-                  class="bi bi-plus-circle text-lg mr-2 group-hover:scale-110 transition-transform duration-300"
-                ></i>
-                Create New Group
-              </button>
-            </div>
+            
           </div>
         </div>
 
@@ -1099,11 +1128,31 @@
 
 
         <!-- ADD THIS SPONSORED ADS LINK -->
-        <a href="{{ url_for('payments.ad_packages') }}" 
-          class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-fb-gray transition-colors mb-2">
-            <i class="bi bi-megaphone-fill mr-3 text-lg" style="color: #f59e0b;"></i> 
-            Create Sponsored Ad
+        <a
+            href="{{ url_for('payments.ad_packages') }}"
+            class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-orange-50 hover:to-yellow-50 transition-all duration-300 mb-2 group"
+          >
+            <i
+              class="bi bi-megaphone-fill mr-3 text-lg"
+              style="color: #f59e0b"
+            ></i>
+            <span class="font-medium">Create Sponsored Ad</span>
         </a>
+
+
+        <!-- Match Making Request Form -->
+        <a href="{{ url_for('user.requests') }}" class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-pink-50 hover:to-rose-50 transition-all duration-300 mb-2 group">
+            <i class="bi bi-heart-fill mr-3 text-lg" style="color: #ec4899"></i>
+            <span class="font-medium">Create Match Request</span>
+        </a>
+
+        <!-- View Match Requests -->
+        <a href="{{ url_for('user.view_requests') }}" class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 transition-all duration-300 mb-2 group">
+            <i class="bi bi-binoculars-fill mr-3 text-lg" style="color: #10b981"></i>
+            <span class="font-medium">Browse Match Requests</span>
+        </a>
+
+        
 
         <!-- Sponsored Section -->
         <div class="mt-8 pt-6 border-t border-fb-border">
@@ -1889,2316 +1938,2333 @@
 
     <!-- JavaScript -->
     <script src="https://cdn.socket.io/4.6.1/socket.io.min.js" crossorigin="anonymous"></script>
+
+
     <script>
+    // ========================================
+    // GLOBAL UTILITIES & INITIALIZATION
+    // ========================================
+    const csrfToken = '{{ csrf_token }}';
+    const currentUserId = {{ current_user.id|tojson }};
 
-// ========================================
-// GLOBAL UTILITIES & INITIALIZATION
-// ========================================
-const csrfToken = '{{ csrf_token }}';
-const currentUserId = {{ current_user.id }};
-
-// Global state management
-const appState = {
-    activeFriendId: null,
-    typingTimer: null,
-    isTyping: false,
-    activeAds: [],
-    adShownThisHour: false,
-    userAdPreferences: JSON.parse(localStorage.getItem('adPreferences') || '{}'),
-    notificationCheckInterval: null,
-    searchTimeout: null
-};
-
-// Socket.IO connection
-const socket = io();
-
-// ========================================
-// UTILITY FUNCTIONS
-// ========================================
-
-
-// ========================================
-// TIMEAGO UTILITIES
-// ========================================
-
-function formatTimeAgo(dateString) {
-    if (!dateString) return 'Never';
-    
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now - date;
-    const diffSecs = Math.floor(diffMs / 1000);
-    const diffMins = Math.floor(diffSecs / 60);
-    const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
-    const diffWeeks = Math.floor(diffDays / 7);
-    const diffMonths = Math.floor(diffDays / 30);
-    const diffYears = Math.floor(diffDays / 365);
-
-    if (diffSecs < 60) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
-    if (diffWeeks < 4) return `${diffWeeks}w ago`;
-    if (diffMonths < 12) return `${diffMonths}mo ago`;
-    return `${diffYears}y ago`;
-}
-
-function initializeTimeAgo() {
-    // Update all last-seen elements
-    document.querySelectorAll('.last-seen').forEach(element => {
-        const lastSeen = element.getAttribute('data-last-seen');
-        if (lastSeen) {
-            element.textContent = formatTimeAgo(lastSeen);
-        }
-    });
-}
-
-function startTimeAgoUpdates() {
-    initializeTimeAgo();
-    setInterval(initializeTimeAgo, 60000); // Update every minute
-}
-
-function showToast(message, type = 'info') {
-    const toast = document.createElement('div');
-    toast.className = `fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-strong text-white ${
-        type === 'success' ? 'bg-green-500' :
-        type === 'danger' ? 'bg-red-500' :
-        type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500'
-    }`;
-    toast.textContent = message;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
-}
-
-function formatNotificationTime(timestamp) {
-    const now = new Date();
-    const notificationTime = new Date(timestamp);
-    const diffInSeconds = Math.floor((now - notificationTime) / 1000);
-
-    if (diffInSeconds < 60) return 'Just now';
-    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
-    return notificationTime.toLocaleDateString();
-}
-
-function calculateAge(birthDate) {
-    if (!birthDate) return '';
-    const today = new Date();
-    const birth = new Date(birthDate);
-    let age = today.getFullYear() - birth.getFullYear();
-    const monthDiff = today.getMonth() - birth.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-        age--;
-    }
-    return age;
-}
-
-function highlightMatch(text, query) {
-    if (!query || !query.trim()) return text;
-    const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const regex = new RegExp(`(${escapedQuery})`, 'gi');
-    return text.replace(regex, '<span class="bg-yellow-200 px-1 rounded">$1</span>');
-}
-
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
+    // Global state management
+    const appState = {
+        activeFriendId: null,
+        typingTimer: null,
+        isTyping: false,
+        activeAds: [],
+        adShownThisHour: false,
+        userAdPreferences: JSON.parse(localStorage.getItem('adPreferences') || '{}'),
+        notificationCheckInterval: null,
+        searchTimeout: null
     };
-}
 
-// ========================================
-// MODAL MANAGEMENT
-// ========================================
+    // Socket.IO connection
+    const socket = io();
 
-function openModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
+
+    // ========================================
+    // UTILITY FUNCTIONS
+    // ========================================
+
+
+    // ========================================
+    // TIMEAGO UTILITIES
+    // ========================================
+
+    function formatTimeAgo(dateString) {
+        if (!dateString) return 'Never';
+
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffSecs = Math.floor(diffMs / 1000);
+        const diffMins = Math.floor(diffSecs / 60);
+        const diffHours = Math.floor(diffMins / 60);
+        const diffDays = Math.floor(diffHours / 24);
+        const diffWeeks = Math.floor(diffDays / 7);
+        const diffMonths = Math.floor(diffDays / 30);
+        const diffYears = Math.floor(diffDays / 365);
+
+        if (diffSecs < 60) return 'Just now';
+        if (diffMins < 60) return `${diffMins}m ago`;
+        if (diffHours < 24) return `${diffHours}h ago`;
+        if (diffDays < 7) return `${diffDays}d ago`;
+        if (diffWeeks < 4) return `${diffWeeks}w ago`;
+        if (diffMonths < 12) return `${diffMonths}mo ago`;
+        return `${diffYears}y ago`;
     }
-}
 
-function closeModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.classList.add('hidden');
-        document.body.style.overflow = '';
+    function initializeTimeAgo() {
+        // Update all last-seen elements
+        document.querySelectorAll('.last-seen').forEach(element => {
+            const lastSeen = element.getAttribute('data-last-seen');
+            if (lastSeen) {
+                element.textContent = formatTimeAgo(lastSeen);
+            }
+        });
     }
-}
 
-// ========================================
-// MOBILE MENU
-// ========================================
-
-function toggleMobileMenu() {
-    const overlay = document.getElementById('mobileSidebarOverlay');
-    const sidebar = document.getElementById('mobileSidebar');
-
-    if (!overlay || !sidebar) return;
-
-    if (overlay.style.display === 'block') {
-        overlay.style.display = 'none';
-        sidebar.classList.remove('translate-x-0');
-        sidebar.classList.add('-translate-x-full');
-    } else {
-        overlay.style.display = 'block';
-        sidebar.classList.remove('-translate-x-full');
-        sidebar.classList.add('translate-x-0');
+    function startTimeAgoUpdates() {
+        initializeTimeAgo();
+        setInterval(initializeTimeAgo, 60000); // Update every minute
     }
-}
 
-// ========================================
-// DROPDOWN MANAGEMENT
-// ========================================
+    function showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-strong text-white ${
+              type === 'success' ? 'bg-green-500' :
+              type === 'danger' ? 'bg-red-500' :
+              type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500'
+          }`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
 
-function initializeDropdowns() {
-    document.addEventListener('click', function(e) {
-        // Close all dropdowns when clicking outside
-        if (!e.target.closest('.dropdown')) {
-            document.querySelectorAll('.dropdown-menu').forEach(menu => {
-                menu.classList.add('hidden');
-            });
+    function formatNotificationTime(timestamp) {
+        const now = new Date();
+        const notificationTime = new Date(timestamp);
+        const diffInSeconds = Math.floor((now - notificationTime) / 1000);
+
+        if (diffInSeconds < 60) return 'Just now';
+        if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+        if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+        if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+        return notificationTime.toLocaleDateString();
+    }
+
+    function calculateAge(birthDate) {
+        if (!birthDate) return '';
+        const today = new Date();
+        const birth = new Date(birthDate);
+        let age = today.getFullYear() - birth.getFullYear();
+        const monthDiff = today.getMonth() - birth.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+            age--;
         }
+        return age;
+    }
 
-        // Toggle dropdowns
-        if (e.target.closest('[data-bs-toggle="dropdown"]')) {
-            const dropdown = e.target.closest('.dropdown');
-            const menu = dropdown.querySelector('.dropdown-menu');
-            if (menu) {
-                menu.classList.toggle('hidden');
+    function highlightMatch(text, query) {
+        if (!query || !query.trim()) return text;
+        const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(`(${escapedQuery})`, 'gi');
+        return text.replace(regex, '<span class="bg-yellow-200 px-1 rounded">$1</span>');
+    }
 
-                // Load groups if it's a groups dropdown
-                if (menu.id === 'groupsDropdownMenu' || menu.id === 'groupsDropdownMenuMobile') {
-                    if (!menu.classList.contains('hidden')) {
-                        loadGroups();
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    // ========================================
+    // MODAL MANAGEMENT
+    // ========================================
+
+    function openModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    function closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+    }
+
+    // ========================================
+    // MOBILE MENU
+    // ========================================
+
+    function toggleMobileMenu() {
+        const overlay = document.getElementById('mobileSidebarOverlay');
+        const sidebar = document.getElementById('mobileSidebar');
+
+        if (!overlay || !sidebar) return;
+
+        if (overlay.style.display === 'block') {
+            overlay.style.display = 'none';
+            sidebar.classList.remove('translate-x-0');
+            sidebar.classList.add('-translate-x-full');
+        } else {
+            overlay.style.display = 'block';
+            sidebar.classList.remove('-translate-x-full');
+            sidebar.classList.add('translate-x-0');
+        }
+    }
+
+    // ========================================
+    // DROPDOWN MANAGEMENT
+    // ========================================
+
+    function initializeDropdowns() {
+        document.addEventListener('click', function(e) {
+            // Close all dropdowns when clicking outside
+            if (!e.target.closest('.dropdown')) {
+                document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                    menu.classList.add('hidden');
+                });
+            }
+
+            // Toggle dropdowns - FIXED VERSION
+            const dropdownToggle = e.target.closest('[data-bs-toggle="dropdown"], [data-bs-toggle="groups-dropdown"], [data-bs-toggle="groups-dropdown-mobile"]');
+            if (dropdownToggle) {
+                const dropdown = dropdownToggle.closest('.dropdown');
+                const menu = dropdown.querySelector('.dropdown-menu');
+
+                if (menu) {
+                    // Close all other dropdowns first
+                    document.querySelectorAll('.dropdown-menu').forEach(otherMenu => {
+                        if (otherMenu !== menu) {
+                            otherMenu.classList.add('hidden');
+                        }
+                    });
+
+                    // Toggle current dropdown
+                    menu.classList.toggle('hidden');
+
+                    // Load groups if it's a groups dropdown
+                    if (menu.id === 'groupsDropdownMenu' || menu.id === 'groupsDropdownMenuMobile') {
+                        if (!menu.classList.contains('hidden')) {
+                            loadGroups();
+                        }
                     }
                 }
             }
-
-            // Close other dropdowns
-            document.querySelectorAll('.dropdown-menu').forEach(otherMenu => {
-                if (otherMenu !== menu) {
-                    otherMenu.classList.add('hidden');
-                }
-            });
-        }
-    });
-}
-
-// ========================================
-// SUGGESTIONS SLIDER
-// ========================================
-
-function scrollSuggestions(dir) {
-    const track = document.getElementById('suggestionsTrack');
-    if (!track) return;
-
-    const card = track.querySelector('.suggestion-card');
-    if (!card) return;
-
-    const cardWidth = card.offsetWidth + 16; // 16px margin
-    const visibleWidth = track.offsetWidth;
-    const scrollAmount = Math.floor(visibleWidth / cardWidth) * cardWidth;
-
-    track.scrollBy({
-        left: dir * scrollAmount,
-        behavior: 'smooth'
-    });
-
-    updateArrowVisibility(track);
-}
-
-function updateArrowVisibility(track) {
-    const prevArrow = document.querySelector('.slider-arrow.prev');
-    const nextArrow = document.querySelector('.slider-arrow.next');
-    if (!prevArrow || !nextArrow) return;
-
-    const maxScroll = track.scrollWidth - track.clientWidth;
-    prevArrow.classList.toggle('opacity-50', track.scrollLeft <= 10);
-    prevArrow.classList.toggle('cursor-not-allowed', track.scrollLeft <= 10);
-    nextArrow.classList.toggle('opacity-50', track.scrollLeft >= maxScroll - 10);
-    nextArrow.classList.toggle('cursor-not-allowed', track.scrollLeft >= maxScroll - 10);
-}
-
-// ========================================
-// MEDIA PREVIEW
-// ========================================
-
-function previewMedia(input) {
-    const preview = document.getElementById('mediaPreview');
-    if (!preview) return;
-
-    preview.innerHTML = '';
-    const file = input.files[0];
-    if (file) {
-        const url = URL.createObjectURL(file);
-        const el = file.type.startsWith('image/') ? document.createElement('img') : document.createElement('video');
-        el.src = url;
-        if (file.type.startsWith('video/')) {
-            el.controls = true;
-        }
-        el.classList.add('w-full', 'rounded-2xl', 'max-h-96', 'object-cover');
-        preview.appendChild(el);
-    }
-}
-
-// ========================================
-// FRIEND SYSTEM
-// ========================================
-
-async function addFriend(userId) {
-    const btn = event.target;
-    if (!btn) return;
-
-    try {
-        btn.disabled = true;
-        btn.classList.add('opacity-70');
-
-        const response = await fetch(`/add_friend/${userId}`, {
-            method: 'POST',
-            headers: { 'X-CSRFToken': csrfToken }
-        });
-
-        if (!response.ok) throw new Error('Network error');
-
-        const data = await response.json();
-        
-        if (data.success) {
-            btn.textContent = 'Cancel Request';
-            btn.className = 'btn-cancel-request w-full py-2 bg-gray-200 text-fb-text rounded-lg font-medium hover:bg-gray-300 transition-colors';
-            btn.onclick = (e) => { e.stopPropagation(); cancelFriendRequest(userId); };
-            showToast('Friend request sent!', 'success');
-        } else {
-            throw new Error(data.error || 'Failed to send request');
-        }
-    } catch (error) {
-        console.error('Error adding friend:', error);
-        showToast('Error sending friend request', 'danger');
-    } finally {
-        btn.disabled = false;
-        btn.classList.remove('opacity-70');
-    }
-}
-
-async function cancelFriendRequest(userId) {
-    const btn = event.target;
-    if (!btn) return;
-
-    try {
-        btn.disabled = true;
-        btn.classList.add('opacity-70');
-
-        const response = await fetch(`/cancel_friend_request/${userId}`, {
-            method: 'POST',
-            headers: { 'X-CSRFToken': csrfToken }
-        });
-
-        if (!response.ok) throw new Error('Network error');
-
-        const data = await response.json();
-        
-        if (data.success) {
-            btn.textContent = 'Add Friend';
-            btn.className = 'btn-add-friend w-full py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors';
-            btn.onclick = (e) => { e.stopPropagation(); addFriend(userId); };
-            showToast('Friend request cancelled', 'info');
-        } else {
-            throw new Error(data.error || 'Failed to cancel request');
-        }
-    } catch (error) {
-        console.error('Error canceling friend request:', error);
-        showToast('Error canceling friend request', 'danger');
-    } finally {
-        btn.disabled = false;
-        btn.classList.remove('opacity-70');
-    }
-}
-
-// ========================================
-// PROFILE MODAL
-// ========================================
-
-async function openProfileModal(userId) {
-    try {
-        const response = await fetch(`/get_user_profile/${userId}`);
-        if (!response.ok) throw new Error('Failed to load profile');
-
-        const data = await response.json();
-        displayProfileModal(data, userId);
-    } catch (error) {
-        console.error('Error loading profile:', error);
-        showToast('Failed to load profile', 'danger');
-    }
-}
-
-function displayProfileModal(data, userId) {
-    const modalBody = document.getElementById('profileModalBody');
-    const profileActions = document.getElementById('profileActions');
-    
-    if (!modalBody || !profileActions) return;
-
-    const dob = data.dob ? new Date(data.dob).toLocaleDateString('en-US', {
-        year: 'numeric', month: 'long', day: 'numeric'
-    }) : 'Not specified';
-    
-    const age = data.dob ? calculateAge(new Date(data.dob)) : '';
-
-    modalBody.innerHTML = `
-        <div class="profile-modal-content">
-            <div class="profile-header relative">
-                <div class="cover-photo-container h-48 overflow-hidden rounded-t-2xl">
-                    <img src="${data.cover_pic || 'https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg'}"
-                         alt="Cover" class="cover-photo w-full h-full object-cover">
-                    <div class="profile-overlay absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
-                </div>
-                <div class="profile-info-container text-center relative -mt-16 pb-6 px-6">
-                    <div class="profile-avatar-container inline-block">
-                        <img src="${data.profile_pic}" alt="${data.first_name}"
-                             class="profile-avatar w-32 h-32 rounded-full border-4 border-white object-cover shadow-strong">
-                    </div>
-                    <div class="profile-text-content mt-4">
-                        <h3 class="profile-name text-2xl font-bold">${data.first_name} ${data.last_name}</h3>
-                        <div class="profile-details flex flex-wrap justify-center gap-2 mt-2">
-                            ${data.marital_status ? `<span class="detail-item inline-flex items-center gap-1 bg-gray-100 px-3 py-1 rounded-full text-sm"><i class="bi bi-heart-fill text-red-500"></i> ${data.marital_status}</span>` : ''}
-                            ${data.city && data.country ? `<span class="detail-item inline-flex items-center gap-1 bg-gray-100 px-3 py-1 rounded-full text-sm"><i class="bi bi-geo-alt-fill text-blue-500"></i> ${data.city}, ${data.country}</span>` : ''}
-                            ${age ? `<span class="detail-item inline-flex items-center gap-1 bg-gray-100 px-3 py-1 rounded-full text-sm"><i class="bi bi-balloon-fill text-purple-500"></i> ${age} years old</span>` : ''}
-                        </div>
-                        ${data.bio ? `<div class="profile-bio mt-3 max-w-2xl mx-auto"><p class="bio-text text-gray-700">${data.bio}</p></div>` : ''}
-                    </div>
-                </div>
-            </div>
-
-            <div class="profile-details-section mt-6 px-6 pb-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="detail-card bg-gray-50 rounded-2xl p-6">
-                        <h6 class="detail-card-title font-semibold text-lg mb-4 flex items-center"><i class="bi bi-person-badge-fill mr-2 text-blue-500"></i>Personal Information</h6>
-                        <div class="detail-list space-y-3">
-                            ${data.email ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">Email:</span><span class="detail-value">${data.email}</span></div>` : ''}
-                            ${data.phone_number ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">Phone:</span><span class="detail-value">${data.phone_number}</span></div>` : ''}
-                            ${data.gender ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">Gender:</span><span class="detail-value">${data.gender}</span></div>` : ''}
-                            ${data.dob ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">Date of Birth:</span><span class="detail-value">${dob}</span></div>` : ''}
-                        </div>
-                    </div>
-                    <div class="detail-card bg-gray-50 rounded-2xl p-6">
-                        <h6 class="detail-card-title font-semibold text-lg mb-4 flex items-center"><i class="bi bi-geo-fill mr-2 text-green-500"></i>Location & Interests</h6>
-                        <div class="detail-list space-y-3">
-                            ${data.city ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">City:</span><span class="detail-value">${data.city}</span></div>` : ''}
-                            ${data.country ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">Country:</span><span class="detail-value">${data.country}</span></div>` : ''}
-                            ${data.interests ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">Interests:</span><span class="detail-value">${data.interests}</span></div>` : ''}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-
-    // Get friend status and update actions
-    const isFriend = {{ current_user.friend_ids|tojson }}.includes(userId);
-    const isBlocked = {{ current_user.blocks|map(attribute='id')|list|tojson }}.includes(userId);
-
-    let actionsHTML = '';
-    if (isFriend) {
-        actionsHTML = `
-            <button class="btn btn-primary px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors" onclick="startChat(${userId})">
-                <i class="bi bi-chat-dots me-1"></i> Message
-            </button>
-            ${isBlocked ? `
-                <button class="btn btn-success px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors" onclick="unblockUserFromModal(${userId})">
-                    <i class="bi bi-check-circle me-1"></i> Unblock
-                </button>
-            ` : `
-                <button class="btn btn-outline-danger px-4 py-2 border border-red-500 text-red-500 rounded-lg font-medium hover:bg-red-50 transition-colors" onclick="blockUser(${userId})">
-                    <i class="bi bi-slash-circle me-1"></i> Block
-                </button>
-            `}
-        `;
-    } else {
-        actionsHTML = `
-            <button class="btn btn-primary px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors" onclick="addFriend(${userId})">
-                <i class="bi bi-person-plus me-1"></i> Add Friend
-            </button>
-            <a href="${data.profile_url}" class="btn btn-outline-secondary px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors">
-                <i class="bi bi-person-circle me-1"></i> View Profile
-            </a>
-        `;
-    }
-
-    profileActions.innerHTML = actionsHTML;
-    openModal('profileModal');
-}
-
-// ========================================
-// POST INTERACTIONS
-// ========================================
-
-function initializePostInteractions() {
-    // Like buttons
-    document.querySelectorAll('.like-btn').forEach(btn => {
-        btn.addEventListener('click', function () {
-            const postId = this.dataset.postId;
-            handleLikePost(postId, this);
-        });
-    });
-
-    // Delete posts
-    document.querySelectorAll('.delete-post').forEach(link => {
-        link.addEventListener('click', function (e) {
-            e.preventDefault();
-            const postId = this.dataset.postId;
-            handleDeletePost(postId);
-        });
-    });
-
-    // Edit posts
-    document.querySelectorAll('.edit-post').forEach(link => {
-        link.addEventListener('click', function () {
-            const postId = this.dataset.postId;
-            handleEditPost(postId);
-        });
-    });
-
-    // Add comments
-    document.querySelectorAll('.add-comment').forEach(input => {
-        input.addEventListener('keypress', function (e) {
-            if (e.key === 'Enter' && this.value.trim()) {
-                const postId = this.dataset.postId;
-                const content = this.value.trim();
-                handleAddComment(postId, content, this);
-            }
-        });
-    });
-
-    // View comments modal
-    document.querySelectorAll('.view-comments').forEach(btn => {
-        btn.addEventListener('click', function () {
-            const postId = this.dataset.postId;
-            handleViewComments(postId);
-        });
-    });
-
-    // Share buttons
-    document.querySelectorAll('.share-btn').forEach(btn => {
-        btn.addEventListener('click', function () {
-            navigator.clipboard.writeText(this.dataset.url);
-            showToast('Post link copied!', 'success');
-        });
-    });
-}
-
-async function handleLikePost(postId, likeBtn) {
-    try {
-        const response = await fetch(`/like_post/${postId}`, {
-            method: 'POST',
-            headers: { 
-                'X-CSRFToken': csrfToken, 
-                'Content-Type': 'application/json' 
-            }
-        });
-
-        if (!response.ok) throw new Error('Network error');
-
-        const data = await response.json();
-        if (data.error) throw new Error(data.error);
-
-        likeBtn.querySelector('.like-count').textContent = data.likes;
-        if (data.liked) {
-            likeBtn.classList.add('text-blue-600');
-            likeBtn.querySelector('i').className = 'bi bi-hand-thumbs-up-fill';
-        } else {
-            likeBtn.classList.remove('text-blue-600');
-            likeBtn.querySelector('i').className = 'bi bi-hand-thumbs-up';
-        }
-    } catch (error) {
-        console.error('Error liking post:', error);
-        showToast('Failed to like post', 'danger');
-    }
-}
-
-async function handleDeletePost(postId) {
-    if (!confirm('Are you sure you want to delete this post?')) return;
-
-    try {
-        const response = await fetch(`/delete_post/${postId}`, {
-            method: 'POST',
-            headers: { 'X-CSRFToken': csrfToken }
-        });
-
-        if (!response.ok) throw new Error('Network error');
-
-        const postElement = document.querySelector(`[data-post-id="${postId}"]`);
-        if (postElement) {
-            postElement.remove();
-            showToast('Post deleted successfully', 'success');
-        }
-    } catch (error) {
-        console.error('Error deleting post:', error);
-        showToast('Failed to delete post', 'danger');
-    }
-}
-
-function handleEditPost(postId) {
-    const post = document.querySelector(`[data-post-id="${postId}"]`);
-    if (!post) return;
-
-    const postText = post.querySelector('.post-text');
-    if (!postText) return;
-
-    document.getElementById('editPostContent').value = postText.textContent;
-
-    const form = document.getElementById('editPostForm');
-    form.onsubmit = async function (e) {
-        e.preventDefault();
-        const formData = new FormData(this);
-        formData.append('post_id', postId);
-        
-        try {
-            const response = await fetch('/edit_post', {
-                method: 'POST',
-                body: formData,
-                headers: { 'X-CSRFToken': csrfToken }
-            });
-
-            if (!response.ok) throw new Error('Network error');
-
-            closeModal('editPostModal');
-            showToast('Post updated successfully', 'success');
-            setTimeout(() => location.reload(), 1000);
-        } catch (error) {
-            console.error('Error editing post:', error);
-            showToast('Failed to edit post', 'danger');
-        }
-    };
-
-    openModal('editPostModal');
-}
-
-async function handleAddComment(postId, content, inputElement) {
-    try {
-        inputElement.disabled = true;
-
-        const response = await fetch(`/add_comment/${postId}`, {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json', 
-                'X-CSRFToken': csrfToken 
-            },
-            body: JSON.stringify({ content })
-        });
-
-        if (!response.ok) throw new Error('Network error');
-
-        const data = await response.json();
-        inputElement.value = '';
-        
-        const container = inputElement.closest('.comments-section');
-        if (container) {
-            container.insertAdjacentHTML('beforeend', `
-                <div class="comment flex space-x-2 mb-3" id="comment-${data.id}">
-                    <img src="${data.avatar}" alt="" class="w-8 h-8 rounded-full object-cover flex-shrink-0">
-                    <div class="flex-1">
-                        <div class="bg-white rounded-2xl px-3 py-2">
-                            <div class="font-semibold text-sm">${data.name}</div>
-                            <div class="text-sm">${data.content}</div>
-                        </div>
-                    </div>
-                </div>
-            `);
-        }
-        
-        showToast('Comment added!', 'success');
-    } catch (error) {
-        console.error('Error adding comment:', error);
-        showToast('Failed to add comment', 'danger');
-    } finally {
-        inputElement.disabled = false;
-    }
-}
-
-async function handleViewComments(postId) {
-    try {
-        const response = await fetch(`/get_comments/${postId}`);
-        if (!response.ok) throw new Error('Network error');
-
-        const comments = await response.json();
-        displayCommentsModal(comments);
-    } catch (error) {
-        console.error('Error loading comments:', error);
-        document.getElementById('commentModalBody').innerHTML = 
-            '<div class="text-center py-8 text-red-500">Failed to load comments</div>';
-        openModal('commentModal');
-    }
-}
-
-function displayCommentsModal(comments) {
-    const body = document.getElementById('commentModalBody');
-    if (!body) return;
-
-    body.innerHTML = '';
-
-    if (comments.length === 0) {
-        body.innerHTML = '<div class="text-center py-8 text-gray-500">No comments yet</div>';
-        openModal('commentModal');
-        return;
-    }
-
-    comments.forEach(comment => {
-        const isLong = comment.content.length > 150;
-        body.innerHTML += `
-            <div class="comment mb-5 border-b pb-4" id="modal-comment-${comment.id}">
-                <div class="flex space-x-3">
-                    <img src="${comment.avatar}" class="w-10 h-10 rounded-full object-cover flex-shrink-0">
-                    <div class="flex-1">
-                        <div class="bg-gray-50 rounded-2xl px-4 py-3">
-                            <div class="font-semibold">${comment.name}</div>
-                            <div class="text-sm comment-text ${isLong ? 'truncated' : ''}"
-                                 id="modal-comment-text-${comment.id}">
-                                ${comment.content}
-                            </div>
-                            ${isLong ? `
-                            <button class="text-blue-600 text-xs font-medium mt-2 see-more-comment"
-                                    onclick="event.stopPropagation(); toggleModalComment(${comment.id})">
-                                See More
-                            </button>` : ''}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-    });
-
-    openModal('commentModal');
-}
-
-// ========================================
-// TEXT TRUNCATION
-// ========================================
-
-function togglePostText(postId) {
-    const text = document.getElementById(`post-text-${postId}`);
-    const btn = text?.nextElementSibling;
-    if (!text || !btn?.classList.contains('see-more-btn')) return;
-
-    if (text.classList.contains('truncated')) {
-        text.classList.remove('truncated');
-        btn.textContent = 'See Less';
-        const card = text.closest('.post-card');
-        if (card.getBoundingClientRect().bottom > window.innerHeight - 100) {
-            card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-    } else {
-        text.classList.add('truncated');
-        btn.textContent = 'See More';
-    }
-}
-
-function toggleCommentText(commentId) {
-    const el = document.getElementById(`comment-text-${commentId}`);
-    const btn = el?.nextElementSibling;
-    if (!el || !btn) return;
-
-    if (el.classList.contains('truncated')) {
-        el.classList.remove('truncated');
-        btn.textContent = 'See Less';
-    } else {
-        el.classList.add('truncated');
-        btn.textContent = 'See More';
-    }
-}
-
-function toggleModalComment(commentId) {
-    const el = document.getElementById(`modal-comment-text-${commentId}`);
-    const btn = el?.nextElementSibling;
-    if (!el || !btn) return;
-
-    if (el.classList.contains('truncated')) {
-        el.classList.remove('truncated');
-        btn.textContent = 'See Less';
-    } else {
-        el.classList.add('truncated');
-        btn.textContent = 'See More';
-    }
-}
-
-// ========================================
-// BLOCK USER SYSTEM
-// ========================================
-
-async function blockUser(userId) {
-    if (!confirm("Block this user? They won't see your posts or be able to contact you.")) return;
-
-    try {
-        const response = await fetch(`/block_user/${userId}`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': csrfToken,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (!response.ok) throw new Error('Network error');
-
-        const data = await response.json();
-        if (data.success) {
-            showToast(data.message || 'User blocked successfully!', 'success');
-            closeModal('profileModal');
-            setTimeout(() => location.reload(), 1500);
-        } else {
-            showToast(data.error || 'Error blocking user', 'danger');
-        }
-    } catch (error) {
-        console.error('Error blocking user:', error);
-        showToast('Error blocking user. Please try again.', 'danger');
-    }
-}
-
-async function unblockUserFromModal(userId) {
-    if (!confirm("Unblock this user? They will be able to see your posts again.")) return;
-
-    try {
-        const response = await fetch(`/unblock_user/${userId}`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': csrfToken,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (!response.ok) throw new Error('Network error');
-
-        const data = await response.json();
-        if (data.success) {
-            showToast('User unblocked!', 'success');
-            closeModal('profileModal');
-        } else {
-            showToast(data.error || 'Failed to unblock', 'danger');
-        }
-    } catch (error) {
-        console.error('Error unblocking user:', error);
-        showToast('Error unblocking user', 'danger');
-    }
-}
-
-// ========================================
-// NOTIFICATION SYSTEM
-// ========================================
-
-function initializeNotifications() {
-    loadNotifications();
-    updateNotificationBadge();
-    appState.notificationCheckInterval = setInterval(updateNotificationBadge, 30000);
-
-    const dropdown = document.getElementById('notificationDropdown');
-    if (dropdown) {
-        dropdown.addEventListener('click', loadNotifications);
-    }
-}
-
-async function updateNotificationBadge() {
-    try {
-        const response = await fetch('/notifications/count');
-        if (!response.ok) throw new Error('Network error');
-
-        const data = await response.json();
-        const badge = document.getElementById('notificationBadge');
-        if (!badge) return;
-
-        if (data.count > 0) {
-            badge.textContent = data.count > 99 ? '99+' : data.count;
-            badge.classList.remove('hidden');
-        } else {
-            badge.classList.add('hidden');
-        }
-    } catch (error) {
-        console.error('Error updating notification badge:', error);
-        const badge = document.getElementById('notificationBadge');
-        if (badge) badge.classList.add('hidden');
-    }
-}
-
-async function loadNotifications() {
-    const list = document.getElementById('notificationsList');
-    if (!list) return;
-
-    try {
-        const response = await fetch('/notifications');
-        if (!response.ok) throw new Error('Network error');
-
-        const notifications = await response.json();
-        displayNotifications(notifications, list);
-    } catch (error) {
-        console.error('Error loading notifications:', error);
-        list.innerHTML = '<div class="text-center p-4 text-red-500"><i class="bi bi-exclamation-triangle"></i><p>Error loading notifications</p></div>';
-    }
-}
-
-function displayNotifications(notifications, list) {
-    if (notifications.length === 0) {
-        list.innerHTML = '<div class="empty-notifications text-center p-6 text-gray-500"><i class="bi bi-bell text-4xl mb-2"></i><p>No notifications yet</p></div>';
-        return;
-    }
-
-    list.innerHTML = notifications.map(notification => `
-        <div class="notification-item p-3 border-b border-gray-100 ${notification.is_read ? '' : 'bg-blue-50 border-l-4 border-l-blue-500'}"
-            ${notification.type !== 'friend_request' ? `onclick="handleNotificationClick(${notification.id}, '${notification.type}', ${notification.entity_id || 0})"` : ''}>
-
-            <div class="flex items-start space-x-3">
-                <img src="${notification.actor.avatar}" alt="${notification.actor.name}" class="w-10 h-10 rounded-full object-cover"
-                     onerror="this.src='{{ url_for('static', filename='assets/img/default-avatar.png') }}'">
-                <div class="flex-1">
-                    <div class="notification-text text-sm">${notification.message}</div>
-                    <div class="notification-time text-xs text-gray-500 mt-1">${formatNotificationTime(notification.created_at)}</div>
-                    ${notification.type === 'friend_request' ? `
-                    <div class="notification-actions flex space-x-2 mt-2">
-                        ${!notification.is_read ? `
-                            <button class="notification-action-btn px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors"
-                                    onclick="event.stopPropagation(); acceptFriendRequest(${notification.actor.id}, ${notification.id})">
-                                    Accept
-                            </button>
-                            <button class="notification-action-btn px-3 py-1 bg-gray-200 text-gray-700 text-xs rounded-lg hover:bg-gray-300 transition-colors"
-                                    onclick="event.stopPropagation(); declineFriendRequest(${notification.actor.id}, ${notification.id})">
-                                    Decline
-                            </button>
-                        ` : `<small class="text-gray-500 text-xs">Request pending</small>`}
-                    </div>
-                    ` : ''}
-                </div>
-            </div>
-        </div>
-    `).join('');
-}
-
-async function handleNotificationClick(id, type, entityId) {
-    await markNotificationAsRead(id);
-    
-    switch (type) {
-        case 'friend_request':
-        case 'friend_accepted':
-        case 'profile_update':
-            openProfileModal(entityId);
-            break;
-        case 'post_like':
-        case 'new_comment':
-            scrollToPost(entityId);
-            break;
-    }
-    
-    const dropdownMenu = document.getElementById('notificationDropdownMenu');
-    if (dropdownMenu) dropdownMenu.classList.add('hidden');
-}
-
-async function markNotificationAsRead(id) {
-    try {
-        await fetch(`/notifications/${id}/read`, {
-            method: 'POST',
-            headers: { 
-                'X-CSRFToken': csrfToken, 
-                'Content-Type': 'application/json' 
-            }
-        });
-        updateNotificationBadge();
-        loadNotifications();
-    } catch (error) {
-        console.error('Error marking notification as read:', error);
-    }
-}
-
-async function markAllAsRead() {
-    try {
-        await fetch('/notifications/read', {
-            method: 'POST',
-            headers: { 
-                'X-CSRFToken': csrfToken, 
-                'Content-Type': 'application/json' 
-            }
-        });
-        updateNotificationBadge();
-        loadNotifications();
-        showToast('All notifications marked as read', 'success');
-    } catch (error) {
-        console.error('Error marking all notifications as read:', error);
-        showToast('Failed to mark notifications as read', 'danger');
-    }
-}
-
-async function acceptFriendRequest(userId, notifId) {
-    try {
-        const response = await fetch(`/accept_friend_request/${userId}`, {
-            method: 'POST',
-            headers: { 
-                'X-CSRFToken': csrfToken, 
-                'Content-Type': 'application/json' 
-            },
-            body: JSON.stringify({ notification_id: notifId })
-        });
-
-        if (!response.ok) throw new Error('Network error');
-
-        const data = await response.json();
-        if (data.success) {
-            await markNotificationAsRead(notifId);
-            showToast('Friend request accepted!', 'success');
-        } else {
-            showToast(data.error || 'Failed to accept request', 'danger');
-        }
-    } catch (error) {
-        console.error('Error accepting friend request:', error);
-        showToast('Failed to accept friend request', 'danger');
-    }
-}
-
-async function declineFriendRequest(userId, notifId) {
-    try {
-        const response = await fetch(`/decline_friend_request/${userId}`, {
-            method: 'POST',
-            headers: { 
-                'X-CSRFToken': csrfToken, 
-                'Content-Type': 'application/json' 
-            },
-            body: JSON.stringify({ notification_id: notifId })
-        });
-
-        if (!response.ok) throw new Error('Network error');
-
-        const data = await response.json();
-        if (data.success) {
-            await markNotificationAsRead(notifId);
-            showToast('Request declined', 'info');
-        } else {
-            showToast(data.error || 'Failed to decline request', 'danger');
-        }
-    } catch (error) {
-        console.error('Error declining friend request:', error);
-        showToast('Failed to decline friend request', 'danger');
-    }
-}
-
-function scrollToPost(postId) {
-    const el = document.querySelector(`[data-post-id="${postId}"]`);
-    if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        el.classList.add('highlight-animation');
-        setTimeout(() => el.classList.remove('highlight-animation'), 2000);
-    } else {
-        showToast('Post not found', 'warning');
-    }
-}
-
-// ========================================
-// SEARCH SYSTEM
-// ========================================
-
-function initializeSearch() {
-    const searchInput = document.getElementById('globalSearch');
-    const searchResults = document.getElementById('searchResults');
-    const searchResultsBody = document.getElementById('searchResultsBody');
-
-    if (!searchInput || !searchResults || !searchResultsBody) return;
-
-    const debouncedSearch = debounce(performSearch, 300);
-
-    searchInput.addEventListener('input', function () {
-        const query = this.value.trim();
-        if (query.length >= 2) {
-            debouncedSearch(query);
-        } else {
-            hideSearchResults();
-        }
-    });
-
-    searchInput.addEventListener('focus', function () {
-        const query = this.value.trim();
-        if (query.length >= 2) {
-            performSearch(query);
-        }
-    });
-
-    document.addEventListener('click', e => {
-        if (!searchResults.contains(e.target) && e.target !== searchInput) {
-            hideSearchResults();
-        }
-    });
-}
-
-async function performSearch(query) {
-    if (!query.trim()) {
-        hideSearchResults();
-        return;
-    }
-
-    showSearchLoading();
-
-    try {
-        const response = await fetch(`/search?q=${encodeURIComponent(query)}`);
-        if (!response.ok) throw new Error('Network error');
-
-        const data = await response.json();
-        displaySearchResults(data, query);
-    } catch (error) {
-        console.error('Error performing search:', error);
-        showSearchError();
-    }
-}
-
-function displaySearchResults(results, query) {
-    const searchResultsBody = document.getElementById('searchResultsBody');
-    if (!searchResultsBody) return;
-
-    searchResultsBody.innerHTML = '';
-
-    if (!results.users?.length && !results.posts?.length) {
-        showNoResults();
-        return;
-    }
-
-    let html = '';
-
-    if (results.users?.length > 0) {
-        results.users.forEach(user => {
-            const name = highlightMatch(`${user.first_name} ${user.last_name}`, query);
-            html += `
-                <div class="search-result-item p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors" onclick="openProfileModal(${user.id})">
-                    <div class="search-result-user flex items-center space-x-3">
-                        <img src="${user.profile_pic || '{{ url_for('static', filename='assets/img/default-avatar.png') }}'}" class="search-result-avatar w-10 h-10 rounded-full object-cover">
-                        <div class="search-result-info">
-                            <div class="search-result-name font-medium">${name}</div>
-                            <div class="search-result-type text-xs text-gray-500">User</div>
-                        </div>
-                    </div>
-                </div>
-            `;
         });
     }
 
-    if (results.posts?.length > 0) {
-        results.posts.forEach(post => {
-            const content = highlightMatch(post.content.substring(0, 100), query);
-            html += `
-                <div class="search-result-item p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors" onclick="viewPost(${post.id})">
-                    <div class="search-result-post">
-                        <div class="search-result-content text-sm">${content}${post.content.length > 100 ? '...' : ''}</div>
-                        <div class="search-result-author text-xs text-gray-500 mt-1">By ${post.author_first_name} ${post.author_last_name}</div>
-                        <div class="search-result-type text-xs text-gray-500">Post</div>
-                    </div>
-                </div>
-            `;
-        });
-    }
-
-    searchResultsBody.innerHTML = html;
-    showSearchResults();
-}
-
-function showSearchLoading() {
-    const searchResultsBody = document.getElementById('searchResultsBody');
-    if (!searchResultsBody) return;
-
-    searchResultsBody.innerHTML = `
-        <div class="search-loading text-center p-4 text-gray-500">
-            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
-            <div class="mt-2">Searching...</div>
-        </div>
-    `;
-    showSearchResults();
-}
-
-function showNoResults() {
-    const searchResultsBody = document.getElementById('searchResultsBody');
-    if (!searchResultsBody) return;
-
-    searchResultsBody.innerHTML = `
-        <div class="no-results text-center p-6 text-gray-500">
-            <i class="bi bi-search text-3xl mb-2"></i>
-            <p>No results</p>
-            <small class="text-xs">Try different keywords</small>
-        </div>
-    `;
-    showSearchResults();
-}
-
-function showSearchError() {
-    const searchResultsBody = document.getElementById('searchResultsBody');
-    if (!searchResultsBody) return;
-
-    searchResultsBody.innerHTML = `
-        <div class="no-results text-center p-6 text-red-500">
-            <i class="bi bi-exclamation-triangle text-3xl mb-2"></i>
-            <p>Search failed</p>
-        </div>
-    `;
-    showSearchResults();
-}
-
-function showSearchResults() {
-    const searchResults = document.getElementById('searchResults');
-    if (searchResults) searchResults.classList.remove('hidden');
-}
-
-function hideSearchResults() {
-    const searchResults = document.getElementById('searchResults');
-    if (searchResults) searchResults.classList.add('hidden');
-}
-
-async function viewPost(postId) {
-    hideSearchResults();
-    
-    const searchInput = document.getElementById('globalSearch');
-    if (searchInput) searchInput.value = '';
-
-    const el = document.querySelector(`[data-post-id="${postId}"]`);
-    if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        el.classList.add('highlight-animation');
-        setTimeout(() => el.classList.remove('highlight-animation'), 2000);
-    } else {
-        try {
-            const response = await fetch(`/get_post/${postId}`);
-            if (!response.ok) throw new Error('Network error');
-
-            const post = await response.json();
-            if (post.error) throw new Error(post.error);
-
-            displayPostModal(post);
-        } catch (error) {
-            console.error('Error viewing post:', error);
-            showToast('Post not found', 'danger');
-        }
-    }
-}
-
-function displayPostModal(post) {
-    const body = document.getElementById('commentModalBody');
-    if (!body) return;
-
-    body.innerHTML = `
-        <div class="post-card bg-white rounded-2xl shadow-soft overflow-hidden">
-            <div class="p-4 flex justify-between items-start">
-                <div class="flex items-start space-x-3">
-                    <img src="${post.author_profile_pic}" class="w-10 h-10 rounded-full object-cover">
-                    <div>
-                        <div class="font-semibold">${post.author_first_name} ${post.author_last_name}</div>
-                        <div class="text-sm text-gray-500">${new Date(post.created_at).toLocaleString()}</div>
-                    </div>
-                </div>
-            </div>
-            <div class="px-4 pb-3">
-                <p class="post-text">${post.content}</p>
-                ${post.image ? `<div class="post-media mt-3"><img src="${post.image}" alt="Post" class="w-full rounded-2xl max-h-96 object-cover"></div>` : ''}
-                ${post.video ? `<div class="post-media mt-3"><video controls class="w-full rounded-2xl max-h-96"><source src="${post.video}"></video></div>` : ''}
-            </div>
-        </div>
-    `;
-    openModal('commentModal');
-}
-
-// ========================================
-// MESSENGER SYSTEM
-// ========================================
-
-// Socket event listeners
-socket.on("connect", () => {
-    console.log("Connected to messaging server");
-    socket.emit("join_messenger");
-});
-
-socket.on("messenger_joined", (data) => {
-    console.log("Joined messenger room");
-});
-
-socket.on("new_message", (msg) => {
-    if (
-        (msg.sender_id === appState.activeFriendId && msg.receiver_id === currentUserId) ||
-        (msg.receiver_id === appState.activeFriendId && msg.sender_id === currentUserId)
-    ) {
-        appendMessage(msg, true);
-        if (msg.sender_id === appState.activeFriendId) {
-            markMessagesAsRead(appState.activeFriendId);
-        }
-    } else {
-        showMessageNotification(msg);
-    }
-    updateUnreadBadge();
-});
-
-socket.on("message_delivered", (data) => {
-    updateMessageStatus(data.message_id, "delivered");
-});
-
-socket.on("messages_read", (data) => {
-    if (data.receiver_id === currentUserId) {
-        data.message_ids?.forEach(msgId => {
-            updateMessageStatus(msgId, "read");
-        });
-    }
-});
-
-socket.on("user_typing", (data) => {
-    if (data.user_id === appState.activeFriendId) {
-        showTypingIndicator(data.user_name);
-    }
-});
-
-socket.on("user_stopped_typing", (data) => {
-    if (data.user_id === appState.activeFriendId) {
-        hideTypingIndicator();
-    }
-});
-
-socket.on("error", (data) => {
-    showToast(data.message, "danger");
-});
-
-// Messenger functions
-function openMessenger() {
-    const popup = document.getElementById("messengerPopup");
-    if (popup) {
-        popup.classList.remove("hidden");
-        loadFriends();
-        socket.emit("join_messenger");
-    }
-}
-
-function closeMessenger() {
-    const popup = document.getElementById("messengerPopup");
-    if (popup) {
-        popup.classList.add("hidden");
-        appState.activeFriendId = null;
-        
-        const chatArea = document.getElementById("chatArea");
-        const friendList = document.getElementById("friendList");
-        
-        if (chatArea) chatArea.classList.add("hidden");
-        if (friendList) friendList.classList.remove("hidden");
-        
-        hideTypingIndicator();
-        stopTyping();
-    }
-}
-
-function backToFriends() {
-    appState.activeFriendId = null;
-    
-    const chatArea = document.getElementById("chatArea");
-    const friendList = document.getElementById("friendList");
-    
-    if (chatArea) chatArea.classList.add("hidden");
-    if (friendList) friendList.classList.remove("hidden");
-    
-    hideTypingIndicator();
-    stopTyping();
-}
-
-async function loadFriends() {
-    try {
-        const response = await fetch("/friends");
-        if (!response.ok) throw new Error('Network error');
-
-        const friends = await response.json();
-        displayFriends(friends);
-    } catch (error) {
-        console.error("Error loading friends:", error);
-        showToast("Failed to load friends", "danger");
-    }
-}
-
-function displayFriends(friends) {
-    const container = document.getElementById("friendsContainer");
-    if (!container) return;
-
-    container.innerHTML = "";
-
-    if (friends.length === 0) {
-        container.innerHTML = `
-            <div class="text-center p-6 text-gray-500">
-                <i class="bi bi-people text-3xl mb-2"></i>
-                <p class="text-sm">No friends yet</p>
-                <p class="text-xs mt-1">Add friends to start messaging</p>
-            </div>
-        `;
-        return;
-    }
-
-    friends.forEach(friend => {
-        const friendElement = document.createElement("div");
-        friendElement.className = "flex items-center p-3 hover:bg-gray-50 cursor-pointer rounded-lg transition-colors";
-        friendElement.onclick = () => openChatWith(friend.id, friend.name, friend.avatar, friend.online);
-
-        friendElement.innerHTML = `
-            <div class="relative">
-                <img src="${friend.avatar}" alt="${friend.name}" class="w-12 h-12 rounded-full object-cover">
-                ${friend.online ? `
-                    <span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></span>
-                ` : ""}
-            </div>
-            <div class="ml-3 flex-1">
-                <p class="font-medium text-sm">${friend.name}</p>
-                <p class="text-xs ${friend.online ? "text-green-600" : "text-gray-500"}">
-                    ${friend.online ? "Online" : "Offline"}
-                </p>
-            </div>
-        `;
-
-        container.appendChild(friendElement);
-    });
-}
-
-function openChatWith(friendId, friendName, friendAvatar, friendOnline) {
-    appState.activeFriendId = friendId;
-
-    const friendList = document.getElementById("friendList");
-    const chatArea = document.getElementById("chatArea");
-    const chatName = document.getElementById("chatName");
-    const chatAvatar = document.getElementById("chatAvatar");
-    const chatStatus = document.getElementById("chatStatus");
-
-    if (!friendList || !chatArea || !chatName || !chatAvatar || !chatStatus) return;
-
-    friendList.classList.add("hidden");
-    chatArea.classList.remove("hidden");
-    chatName.textContent = friendName;
-    chatAvatar.src = friendAvatar;
-    chatStatus.textContent = friendOnline ? "Online" : "Offline";
-    chatStatus.className = `text-xs ${friendOnline ? "text-green-600" : "text-gray-500"}`;
-
-    socket.emit("join_chat", { friend_id: friendId });
-    loadMessages(friendId);
-    markMessagesAsRead(friendId);
-}
-
-async function loadMessages(friendId) {
-    try {
-        const response = await fetch(`/messages/${friendId}`);
-        if (!response.ok) throw new Error('Network error');
-
-        const messages = await response.json();
-        displayMessages(messages);
-    } catch (error) {
-        console.error("Error loading messages:", error);
-        showToast("Failed to load messages", "danger");
-    }
-}
-
-function displayMessages(messages) {
-    const chatContainer = document.getElementById("chatMessages");
-    if (!chatContainer) return;
-
-    chatContainer.innerHTML = "";
-
-    if (messages.length === 0) {
-        chatContainer.innerHTML = `
-            <div class="text-center p-6 text-gray-500">
-                <i class="bi bi-chat-dots text-2xl mb-2"></i>
-                <p class="text-sm">No messages yet</p>
-                <p class="text-xs mt-1">Send a message to start the conversation</p>
-            </div>
-        `;
-        return;
-    }
-
-    messages.forEach(msg => {
-        appendMessage(msg, false);
-    });
-
-    autoScrollToBottom();
-}
-
-function appendMessage(msg, shouldScroll = true) {
-    const chatContainer = document.getElementById("chatMessages");
-    if (!chatContainer) return;
-
-    const isOwnMessage = msg.sender_id === currentUserId;
-    const statusIcon = getStatusIcon(msg.status, isOwnMessage);
-
-    const messageElement = document.createElement("div");
-    messageElement.className = `flex ${isOwnMessage ? "justify-end" : "justify-start"} mb-2`;
-    messageElement.id = `message-${msg.id}`;
-
-    messageElement.innerHTML = `
-        <div class="max-w-xs px-4 py-2 rounded-2xl ${
-            isOwnMessage ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-800"
-        }">
-            <div class="text-sm">${msg.content}</div>
-            <div class="text-xs mt-1 flex items-center justify-end space-x-1 opacity-80">
-                <span>${formatMessageTime(msg.timestamp)}</span>
-                ${isOwnMessage ? statusIcon : ""}
-            </div>
-        </div>
-    `;
-
-    chatContainer.appendChild(messageElement);
-
-    if (shouldScroll) {
-        autoScrollToBottom();
-    }
-}
-
-function autoScrollToBottom() {
-    const messagesWrapper = document.getElementById("chatMessagesWrapper");
-    if (messagesWrapper) {
-        setTimeout(() => {
-            messagesWrapper.scrollTop = messagesWrapper.scrollHeight;
-        }, 50);
-    }
-}
-
-function getStatusIcon(status, isOwnMessage) {
-    if (!isOwnMessage) return "";
-
-    switch (status) {
-        case "sent":
-            return '<i class="bi bi-check"></i>';
-        case "delivered":
-            return '<i class="bi bi-check-all"></i>';
-        case "read":
-            return '<i class="bi bi-check-all text-blue-300"></i>';
-        default:
-            return '<i class="bi bi-check"></i>';
-    }
-}
-
-function updateMessageStatus(messageId, status) {
-    const messageElement = document.getElementById(`message-${messageId}`);
-    if (messageElement) {
-        const statusElement = messageElement.querySelector(".bi");
-        if (statusElement) {
-            statusElement.className = getStatusIcon(status, true);
-        }
-    }
-}
-
-function sendMessage() {
-    const input = document.getElementById("chatInput");
-    if (!input || !appState.activeFriendId) return;
-
-    const content = input.value.trim();
-    if (!content) return;
-
-    stopTyping();
-
-    socket.emit("send_message", {
-        friend_id: appState.activeFriendId,
-        content: content,
-    });
-
-    input.value = "";
-}
-
-function handleTyping() {
-    if (!appState.isTyping && appState.activeFriendId) {
-        appState.isTyping = true;
-        socket.emit("typing", { friend_id: appState.activeFriendId });
-    }
-
-    clearTimeout(appState.typingTimer);
-    appState.typingTimer = setTimeout(() => {
-        stopTyping();
-    }, 1000);
-}
-
-function stopTyping() {
-    if (appState.isTyping && appState.activeFriendId) {
-        appState.isTyping = false;
-        socket.emit("stop_typing", { friend_id: appState.activeFriendId });
-    }
-}
-
-function showTypingIndicator(userName) {
-    const indicator = document.getElementById("typingIndicator");
-    const userNameElement = document.getElementById("typingUserName");
-
-    if (indicator && userNameElement) {
-        userNameElement.textContent = `${userName} is typing`;
-        indicator.classList.remove("hidden");
-    }
-}
-
-function hideTypingIndicator() {
-    const indicator = document.getElementById("typingIndicator");
-    if (indicator) indicator.classList.add("hidden");
-}
-
-function formatMessageTime(timestamp) {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffMs = now - date;
-    const diffMins = Math.floor(diffMs / 60000);
-
-    if (diffMins < 1) return "Just now";
-    if (diffMins < 60) return `${diffMins}m ago`;
-
-    return date.toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-    });
-}
-
-async function markMessagesAsRead(friendId) {
-    try {
-        await fetch(`/mark_read/${friendId}`, {
-            method: "POST",
-            headers: {
-                "X-CSRFToken": csrfToken,
-                "Content-Type": "application/json",
-            },
-        });
-        updateUnreadBadge();
-    } catch (error) {
-        console.error("Error marking messages as read:", error);
-    }
-}
-
-// Message Notification System
-function initializeMessageNotifications() {
-    updateUnreadBadge();
-    setInterval(updateUnreadBadge, 30000);
-}
-
-async function updateUnreadBadge() {
-    try {
-        const response = await fetch('/unread_count');
-        if (!response.ok) throw new Error('Network error');
-
-        const data = await response.json();
-        const badge = document.getElementById("unreadMessagesBadge");
-        if (!badge) return;
-
-        if (data.unread_count > 0) {
-            badge.textContent = data.unread_count > 99 ? '99+' : data.unread_count;
-            badge.classList.remove("hidden");
-        } else {
-            badge.classList.add("hidden");
-        }
-    } catch (error) {
-        console.error("Error updating unread badge:", error);
-    }
-}
-
-function showMessageNotification(msg) {
-    if (!("Notification" in window)) {
-        console.log("This browser does not support desktop notification");
-        return;
-    }
-
-    if (Notification.permission === "granted") {
-        createMessageNotification(msg);
-    } else if (Notification.permission !== "denied") {
-        Notification.requestPermission().then(permission => {
-            if (permission === "granted") {
-                createMessageNotification(msg);
-            }
-        });
-    }
-
-    updateUnreadBadge();
-    showToast(`New message from ${msg.sender_name}`, 'info');
-}
-
-function createMessageNotification(msg) {
-    const notification = new Notification("New Message", {
-        body: `${msg.sender_name}: ${msg.content.substring(0, 50)}${msg.content.length > 50 ? '...' : ''}`,
-        icon: msg.sender_avatar,
-        tag: "message"
-    });
-
-    notification.onclick = function() {
-        window.focus();
-        openMessenger();
-        if (msg.sender_id !== appState.activeFriendId) {
-            openChatWithUser(msg.sender_id);
-        }
-        this.close();
-    };
-
-    setTimeout(() => notification.close(), 5000);
-}
-
-function startChat(userId) {
-    openMessenger();
-    loadFriends().then(() => {
-        setTimeout(() => {
-            openChatWithUser(userId);
-        }, 500);
-    });
-}
-
-function openChatWithUser(userId) {
-    fetch('/friends')
-        .then(response => response.json())
-        .then(friends => {
-            const friend = friends.find(f => f.id === userId);
-            if (friend) {
-                openChatWith(friend.id, friend.name, friend.avatar, friend.online);
-            } else {
-                showToast('Friend not found or not available for messaging', 'danger');
-            }
-        })
-        .catch(error => {
-            console.error('Error loading friend:', error);
-            showToast('Failed to start chat', 'danger');
-        });
-}
-
-// ========================================
-// GROUPS SYSTEM
-// ========================================
-
-async function loadGroups() {
-    console.log('🔍 Loading ALL groups...');
-
-    showGroupsLoading('groupsList');
-    showGroupsLoading('groupsListMobile');
-
-    try {
-        const response = await fetch('/get_user_groups');
-        if (!response.ok) throw new Error('Network error');
-
-        const groups = await response.json();
-        console.log('🔍 Groups received:', groups);
-
-        updateGroupsList(groups, 'groupsList');
-        updateGroupsList(groups, 'groupsListMobile');
-    } catch (err) {
-        console.error('❌ Error loading groups:', err);
-        showGroupsError('groupsList');
-        showGroupsError('groupsListMobile');
-    }
-}
-
-function showGroupsLoading(elementId) {
-    const groupsList = document.getElementById(elementId);
-    if (!groupsList) return;
-
-    groupsList.innerHTML = `
-        <div class="flex flex-col items-center justify-center p-8 text-gray-500">
-            <div class="relative mb-4">
-                <div class="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-                <div class="absolute inset-0 flex items-center justify-center">
-                    <i class="bi bi-people text-blue-600"></i>
-                </div>
-            </div>
-            <p class="text-sm font-medium">Loading amazing groups...</p>
-            <p class="text-xs mt-1 text-gray-400">Finding the best communities for you</p>
-        </div>
-    `;
-}
-
-function updateGroupsList(groups, elementId) {
-    const groupsList = document.getElementById(elementId);
-    if (!groupsList) return;
-
-    if (!groups || groups.length === 0) {
-        console.log('🔍 No groups found, showing empty state');
-        groupsList.innerHTML = `
-            <div class="text-center p-8">
-                <div class="w-16 h-16 bg-gradient-to-r from-blue-100 to-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <i class="bi bi-people text-2xl text-blue-600"></i>
-                </div>
-                <h3 class="font-semibold text-gray-700 mb-2">No Groups Yet</h3>
-                <p class="text-sm text-gray-500 mb-4">Be the pioneer! Create the first amazing group.</p>
-                <button
-                    class="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg text-sm font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105"
-                    onclick="createNewGroup()"
-                >
-                    <i class="bi bi-plus-circle mr-1"></i>Create Group
-                </button>
-            </div>
-        `;
-        return;
-    }
-
-    console.log('🔍 Rendering beautiful groups in dropdown');
-    groupsList.innerHTML = groups.map(group => `
-        <div class="group-item p-4 border-b border-gray-100 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-300 cursor-pointer group" onclick="openGroup(${group.id})">
-            <div class="flex items-start space-x-3">
-                <div class="relative flex-shrink-0">
-                    <div class="w-12 h-12 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 p-0.5">
-                        <img
-                            src="${group.cover_pic}"
-                            class="w-full h-full rounded-xl object-cover"
-                            onerror="this.src='https://images.unsplash.com/photo-1611262588024-d12430b98920?w=100&h=100&fit=crop&crop=center'"
-                            alt="${group.name}"
-                        >
-                    </div>
-                    ${group.is_member ? `
-                        <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
-                            <i class="bi bi-check text-white text-xs"></i>
-                        </div>
-                    ` : ''}
-                </div>
-
-                <div class="flex-1 min-w-0">
-                    <div class="flex items-start justify-between">
-                        <div class="flex-1">
-                            <h4 class="font-semibold text-gray-800 group-hover:text-blue-700 transition-colors duration-300 text-sm leading-tight">${group.name}</h4>
-                            <div class="flex items-center mt-1 space-x-2">
-                                <div class="flex items-center text-xs text-gray-500">
-                                    <i class="bi bi-people mr-1"></i>
-                                    <span>${group.member_count} members</span>
-                                </div>
-                                ${group.unread_count > 0 ? `
-                                    <span class="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full animate-pulse">
-                                        ${group.unread_count} new
-                                    </span>
-                                ` : ''}
-                            </div>
-                        </div>
-
-                        <div class="flex-shrink-0 ml-2">
-                            ${group.is_member ? `
-                                <button
-                                    class="text-xs bg-green-100 text-green-700 px-3 py-1.5 rounded-lg hover:bg-green-200 transition-all duration-300 transform hover:scale-105 flex items-center group/btn"
-                                    onclick="event.stopPropagation(); leaveGroup(${group.id})"
-                                >
-                                    <i class="bi bi-check-circle mr-1 group-hover/btn:scale-110 transition-transform duration-300"></i>
-                                    Joined
-                                </button>
-                            ` : `
-                                <button
-                                    class="text-xs bg-gradient-to-r from-blue-500 to-purple-600 text-white px-3 py-1.5 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 flex items-center group/btn shadow-sm"
-                                    onclick="event.stopPropagation(); joinGroup(${group.id})"
-                                >
-                                    <i class="bi bi-plus-circle mr-1 group-hover/btn:scale-110 transition-transform duration-300"></i>
-                                    Join
-                                </button>
-                            `}
-                        </div>
-                    </div>
-
-                    <div class="mt-2">
-                        <div class="w-full bg-gray-200 rounded-full h-1">
-                            <div
-                                class="bg-gradient-to-r from-blue-500 to-purple-600 h-1 rounded-full transition-all duration-1000"
-                                style="width: ${Math.min((group.member_count / 100) * 100, 100)}%"
-                            ></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `).join('');
-}
-
-function showGroupsError(elementId) {
-    const groupsList = document.getElementById(elementId);
-    if (!groupsList) return;
-
-    groupsList.innerHTML = `
-        <div class="text-center p-8">
-            <div class="w-16 h-16 bg-gradient-to-r from-red-100 to-pink-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <i class="bi bi-exclamation-triangle text-2xl text-red-600"></i>
-            </div>
-            <h3 class="font-semibold text-gray-700 mb-2">Oops! Something went wrong</h3>
-            <p class="text-sm text-gray-500 mb-4">We couldn't load the groups right now.</p>
-            <button
-                class="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg text-sm font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105"
-                onclick="loadGroups()"
-            >
-                <i class="bi bi-arrow-clockwise mr-1"></i>Try Again
-            </button>
-        </div>
-    `;
-}
-
-async function joinGroup(groupId) {
-    console.log(`🔍 Joining group ${groupId}`);
-
-    const button = event.target.closest('button');
-    if (!button) return;
-
-    const originalContent = button.innerHTML;
-
-    button.innerHTML = `
-        <div class="flex items-center">
-            <div class="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin mr-1"></div>
-            Joining...
-        </div>
-    `;
-    button.disabled = true;
-
-    try {
-        const response = await fetch(`/groups/${groupId}/join`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': csrfToken,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (!response.ok) throw new Error('Network error');
-
-        const data = await response.json();
-        if (data.success) {
-            showToast('🎉 Successfully joined the group!', 'success');
-            setTimeout(() => loadGroups(), 500);
-        } else {
-            throw new Error(data.error || 'Failed to join group');
-        }
-    } catch (err) {
-        console.error('Error joining group:', err);
-        showToast(err.message || 'Error joining group', 'danger');
-        button.innerHTML = originalContent;
-        button.disabled = false;
-    }
-}
-
-async function leaveGroup(groupId) {
-    console.log(`🔍 Leaving group ${groupId}`);
-
-    if (!confirm('Are you sure you want to leave this amazing group?')) {
-        return;
-    }
-
-    const button = event.target.closest('button');
-    if (!button) return;
-
-    const originalContent = button.innerHTML;
-
-    button.innerHTML = `
-        <div class="flex items-center">
-            <div class="w-3 h-3 border-2 border-green-700 border-t-transparent rounded-full animate-spin mr-1"></div>
-            Leaving...
-        </div>
-    `;
-    button.disabled = true;
-
-    try {
-        const response = await fetch(`/groups/${groupId}/leave`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': csrfToken,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (!response.ok) throw new Error('Network error');
-
-        const data = await response.json();
-        if (data.success) {
-            showToast('👋 Left the group successfully', 'info');
-            setTimeout(() => loadGroups(), 500);
-        } else {
-            throw new Error(data.error || 'Failed to leave group');
-        }
-    } catch (err) {
-        console.error('Error leaving group:', err);
-        showToast(err.message || 'Error leaving group', 'danger');
-        button.innerHTML = originalContent;
-        button.disabled = false;
-    }
-}
-
-function searchGroups(query) {
-    const groups = document.querySelectorAll('.group-item');
-    const searchTerm = query.toLowerCase().trim();
-
-    groups.forEach(group => {
-        const groupName = group.querySelector('h4')?.textContent.toLowerCase();
-        if (groupName && groupName.includes(searchTerm)) {
-            group.style.display = 'block';
-            group.classList.add('bg-yellow-50');
-            setTimeout(() => group.classList.remove('bg-yellow-50'), 1000);
-        } else {
-            group.style.display = 'none';
-        }
-    });
-}
-
-function openGroup(groupId) {
-    const dropdowns = ['groupsDropdownMenu', 'groupsDropdownMenuMobile'];
-    dropdowns.forEach(id => {
-        const dropdown = document.getElementById(id);
-        if (dropdown) {
-            dropdown.style.transform = 'scale(0.95)';
-            dropdown.style.opacity = '0';
-            setTimeout(() => {
-                dropdown.classList.add('hidden');
-                dropdown.style.transform = '';
-                dropdown.style.opacity = '';
-            }, 200);
-        }
-    });
-
-    showToast('🚀 Opening group...', 'info');
-    setTimeout(() => {
-        window.location.href = `/groups/${groupId}`;
-    }, 500);
-}
-
-function createNewGroup() {
-    const dropdowns = ['groupsDropdownMenu', 'groupsDropdownMenuMobile'];
-    dropdowns.forEach(id => {
-        const dropdown = document.getElementById(id);
-        if (dropdown) {
-            dropdown.style.transform = 'scale(0.95)';
-            dropdown.style.opacity = '0';
-            setTimeout(() => {
-                dropdown.classList.add('hidden');
-                dropdown.style.transform = '';
-                dropdown.style.opacity = '';
-            }, 200);
-        }
-    });
-
-    showToast('✨ Let\'s create something amazing!', 'success');
-    setTimeout(() => {
-        window.location.href = '/groups/create';
-    }, 1000);
-}
-
-// ========================================
-// AD SYSTEM
-// ========================================
-
-function initializeAdSystem() {
-    loadActiveAds();
-    setupAdTriggers();
-    showFloatingAdWidget();
-}
-
-async function loadActiveAds() {
-    try {
-        const response = await fetch('/ads/active');
-        if (!response.ok) throw new Error('Network error');
-
-        const ads = await response.json();
-        appState.activeAds = ads.filter(ad => ad.status === 'active' && ad.budget > 0);
-        
-        if (appState.activeAds.length > 0) {
-            console.log(`🎯 Loaded ${appState.activeAds.length} active ads`);
-            preloadAdImages();
-            showNativeAdInFeed();
-        }
-    } catch (err) {
-        console.log('No active ads or error loading:', err);
-    }
-}
-
-function setupAdTriggers() {
-    setTimeout(() => {
-        if (!appState.adShownThisHour && appState.activeAds.length > 0) {
-            showSmartModalAd();
-        }
-    }, 60000);
-
-    window.addEventListener('scroll', () => {
-        const scrolled = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
-        if (scrolled > 60 && !appState.adShownThisHour && appState.activeAds.length > 0) {
-            showSmartModalAd();
-        }
-    });
-}
-
-function showSmartModalAd() {
-    if (appState.userAdPreferences.disableAds || appState.adShownThisHour) return;
-    
-    const ad = getRandomAd();
-    if (!ad) return;
-
-    const modal = document.getElementById('adModal');
-    const content = modal?.querySelector('.ad-modal-content');
-    if (!modal || !content) return;
-
-    const title = document.getElementById('adModalTitle');
-    const description = document.getElementById('adModalDescription');
-    const image = document.getElementById('adModalImage');
-    const link = document.getElementById('adModalLink');
-    const cta = document.getElementById('adModalCTA');
-
-    if (title) title.textContent = ad.title;
-    if (description) description.textContent = ad.description;
-    if (image) image.src = ad.image;
-    if (link) link.href = ad.target_url;
-    if (cta) cta.textContent = ad.call_to_action || 'Learn More';
-    
-    trackAdImpression(ad.id);
-    
-    modal.classList.remove('hidden');
-    setTimeout(() => {
-        content.classList.remove('scale-95', 'opacity-0');
-        content.classList.add('scale-100', 'opacity-100');
-    }, 50);
-    
-    appState.adShownThisHour = true;
-    
-    setTimeout(() => {
-        appState.adShownThisHour = false;
-    }, 60 * 60 * 1000);
-}
-
-function closeAdModal() {
-    const modal = document.getElementById('adModal');
-    const content = modal?.querySelector('.ad-modal-content');
-    if (!modal || !content) return;
-    
-    content.classList.remove('scale-100', 'opacity-100');
-    content.classList.add('scale-95', 'opacity-0');
-    
-    setTimeout(() => {
-        modal.classList.add('hidden');
-    }, 300);
-}
-
-function showFloatingAdWidget() {
-    setTimeout(() => {
-        const widget = document.getElementById('floatingAd');
-        if (widget) {
-            widget.classList.remove('translate-y-10', 'opacity-0');
-            widget.classList.add('translate-y-0', 'opacity-100');
-        }
-    }, 100000);
-}
-
-function toggleFloatingAd() {
-    const content = document.getElementById('floatingAdContent');
-    if (!content) return;
-
-    const ad = getRandomAd();
-    
-    if (content.classList.contains('hidden')) {
-        if (ad) {
-            const title = document.getElementById('floatingAdTitle');
-            const desc = document.getElementById('floatingAdDesc');
-            const link = document.getElementById('floatingAdLink');
-
-            if (title) title.textContent = ad.title;
-            if (desc) desc.textContent = ad.description.substring(0, 60) + '...';
-            if (link) link.href = ad.target_url;
-            
-            trackAdImpression(ad.id);
-        }
-        
-        content.classList.remove('hidden');
-        setTimeout(() => {
-            content.classList.remove('scale-95', 'opacity-0');
-            content.classList.add('scale-100', 'opacity-100');
-        }, 50);
-    } else {
-        content.classList.remove('scale-100', 'opacity-100');
-        content.classList.add('scale-95', 'opacity-0');
-        setTimeout(() => {
-            content.classList.add('hidden');
-        }, 300);
-    }
-}
-
-function showNativeAdInFeed() {
-    const ad = getRandomAd();
-    if (!ad) return;
-    
-    const nativeAd = document.getElementById('nativeAd');
-    if (!nativeAd) return;
-
-    const title = document.getElementById('nativeAdTitle');
-    const description = document.getElementById('nativeAdDescription');
-    const image = document.getElementById('nativeAdImage');
-    const link = document.getElementById('nativeAdLink');
-    const cta = document.getElementById('nativeAdCTA');
-
-    if (title) title.textContent = ad.title;
-    if (description) description.textContent = ad.description;
-    if (image) image.src = ad.image;
-    if (link) link.href = ad.target_url;
-    if (cta) cta.textContent = ad.call_to_action || 'Discover More';
-    
-    const posts = document.querySelectorAll('.post-card');
-    if (posts.length >= 3) {
-        const randomPostIndex = Math.floor(Math.random() * 2) + 1;
-        posts[randomPostIndex].after(nativeAd);
-        nativeAd.classList.remove('hidden');
-        
-        trackAdImpression(ad.id);
-    }
-}
-
-function getRandomAd() {
-    if (appState.activeAds.length === 0) return null;
-    return appState.activeAds[Math.floor(Math.random() * appState.activeAds.length)];
-}
-
-function trackAdImpression(adId) {
-    fetch(`/track/impression/${adId}`, {
-        method: 'POST',
-        headers: { 'X-CSRFToken': csrfToken }
-    }).catch(console.error);
-}
-
-function trackAdClick(adId) {
-    fetch(`/ads/track/click/${adId}`, {
-        method: 'POST',
-        headers: { 'X-CSRFToken': csrfToken }
-    }).catch(console.error);
-}
-
-function adNotInterested() {
-    appState.userAdPreferences.disableAds = true;
-    localStorage.setItem('adPreferences', JSON.stringify(appState.userAdPreferences));
-    closeAdModal();
-    showToast('Thanks for your feedback! We\'ll show fewer ads.', 'info');
-}
-
-function preloadAdImages() {
-    appState.activeAds.forEach(ad => {
-        if (ad.image) {
-            const img = new Image();
-            img.src = ad.image;
-        }
-    });
-}
-
-// Enhanced ad click tracking
-document.addEventListener('click', function(e) {
-    const adLink = e.target.closest('a[id*="ad"]');
-    if (adLink && adLink.href && !adLink.href.startsWith('#')) {
-        const adId = adLink.getAttribute('data-ad-id');
-        if (adId) {
-            trackAdClick(adId);
-        }
-    }
-});
-
-// ========================================
-// INITIALIZATION
-// ========================================
-
-document.addEventListener('DOMContentLoaded', () => {
-    // Initialize core systems
-    initializeDropdowns();
-    initializePostInteractions();
-    initializeNotifications();
-    initializeSearch();
-    initializeMessageNotifications();
-    initializeAdSystem();
-    loadGroups();
-    startTimeAgoUpdates();
-
-    // Slider initialization
-    const track = document.getElementById('suggestionsTrack');
-    if (track) {
-        document.querySelectorAll('.slider-arrow.prev').forEach(btn => {
-            btn.addEventListener('click', () => scrollSuggestions(-1));
-        });
-
-        document.querySelectorAll('.slider-arrow.next').forEach(btn => {
-            btn.addEventListener('click', () => scrollSuggestions(1));
+    // ========================================
+    // SUGGESTIONS SLIDER
+    // ========================================
+
+    function scrollSuggestions(dir) {
+        const track = document.getElementById('suggestionsTrack');
+        if (!track) return;
+
+        const card = track.querySelector('.suggestion-card');
+        if (!card) return;
+
+        const cardWidth = card.offsetWidth + 16; // 16px margin
+        const visibleWidth = track.offsetWidth;
+        const scrollAmount = Math.floor(visibleWidth / cardWidth) * cardWidth;
+
+        track.scrollBy({
+            left: dir * scrollAmount,
+            behavior: 'smooth'
         });
 
         updateArrowVisibility(track);
-        track.addEventListener('scroll', () => updateArrowVisibility(track));
     }
 
-    // Modal triggers
-    document.querySelectorAll('[data-bs-toggle="modal"]').forEach(trigger => {
-        trigger.addEventListener('click', function() {
-            const target = this.getAttribute('data-bs-target');
-            if (target) {
-                openModal(target.replace('#', ''));
+    function updateArrowVisibility(track) {
+        const prevArrow = document.querySelector('.slider-arrow.prev');
+        const nextArrow = document.querySelector('.slider-arrow.next');
+        if (!prevArrow || !nextArrow) return;
+
+        const maxScroll = track.scrollWidth - track.clientWidth;
+        prevArrow.classList.toggle('opacity-50', track.scrollLeft <= 10);
+        prevArrow.classList.toggle('cursor-not-allowed', track.scrollLeft <= 10);
+        nextArrow.classList.toggle('opacity-50', track.scrollLeft >= maxScroll - 10);
+        nextArrow.classList.toggle('cursor-not-allowed', track.scrollLeft >= maxScroll - 10);
+    }
+
+    // ========================================
+    // MEDIA PREVIEW
+    // ========================================
+
+    function previewMedia(input) {
+        const preview = document.getElementById('mediaPreview');
+        if (!preview) return;
+
+        preview.innerHTML = '';
+        const file = input.files[0];
+        if (file) {
+            const url = URL.createObjectURL(file);
+            const el = file.type.startsWith('image/') ? document.createElement('img') : document.createElement('video');
+            el.src = url;
+            if (file.type.startsWith('video/')) {
+                el.controls = true;
             }
-        });
-    });
-
-    // Close modals when clicking outside
-    document.querySelectorAll('.modal').forEach(modal => {
-        modal.addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeModal(this.id);
-            }
-        });
-    });
-
-    // Messenger event listeners
-    const openMessagingBtn = document.getElementById('openMessaging');
-    const sendChatBtn = document.getElementById('sendChatBtn');
-    const chatInput = document.getElementById('chatInput');
-    const closeMessengerBtn = document.getElementById('closeMessenger');
-
-    if (openMessagingBtn) {
-        openMessagingBtn.addEventListener('click', openMessenger);
-    }
-    if (sendChatBtn) {
-        sendChatBtn.addEventListener('click', sendMessage);
-    }
-    if (chatInput) {
-        chatInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                sendMessage();
-            }
-        });
-        chatInput.addEventListener('input', handleTyping);
-    }
-    if (closeMessengerBtn) {
-        closeMessengerBtn.addEventListener('click', closeMessenger);
+            el.classList.add('w-full', 'rounded-2xl', 'max-h-96', 'object-cover');
+            preview.appendChild(el);
+        }
     }
 
-    // Fast loader
-    initializeFastLoader();
-});
+    // ========================================
+    // FRIEND SYSTEM
+    // ========================================
 
-function initializeFastLoader() {
-    const loader = document.getElementById('loader');
-    const mainContent = document.getElementById('mainContent');
+    async function addFriend(userId) {
+        const btn = event.target;
+        if (!btn) return;
 
-    if (mainContent) {
-        mainContent.style.opacity = '0';
-        mainContent.style.visibility = 'hidden';
-    }
+        try {
+            btn.disabled = true;
+            btn.classList.add('opacity-70');
 
-    setTimeout(() => {
-        if (loader) {
-            loader.style.opacity = '0';
-            setTimeout(() => {
-                loader.style.display = 'none';
-                if (mainContent) {
-                    mainContent.style.visibility = 'visible';
-                    mainContent.style.opacity = '1';
-                    mainContent.style.transition = 'opacity 0.6s ease-out, transform 0.6s ease-out';
+            const response = await fetch(`/add_friend/${userId}`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken
                 }
-            }, 300);
+            });
+
+            if (!response.ok) throw new Error('Network error');
+
+            const data = await response.json();
+
+            if (data.success) {
+                btn.textContent = 'Cancel Request';
+                btn.className = 'btn-cancel-request w-full py-2 bg-gray-200 text-fb-text rounded-lg font-medium hover:bg-gray-300 transition-colors';
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    cancelFriendRequest(userId);
+                };
+                showToast('Friend request sent!', 'success');
+            } else {
+                throw new Error(data.error || 'Failed to send request');
+            }
+        } catch (error) {
+            console.error('Error adding friend:', error);
+            showToast('Error sending friend request', 'danger');
+        } finally {
+            btn.disabled = false;
+            btn.classList.remove('opacity-70');
         }
-    }, 100);
+    }
 
-    // Emergency cleanup
-    setTimeout(() => {
-        const loader = document.getElementById('loader');
-        const mainContent = document.getElementById('mainContent');
+    async function cancelFriendRequest(userId) {
+        const btn = event.target;
+        if (!btn) return;
 
-        if (loader) {
-            loader.style.display = 'none';
+        try {
+            btn.disabled = true;
+            btn.classList.add('opacity-70');
+
+            const response = await fetch(`/cancel_friend_request/${userId}`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken
+                }
+            });
+
+            if (!response.ok) throw new Error('Network error');
+
+            const data = await response.json();
+
+            if (data.success) {
+                btn.textContent = 'Add Friend';
+                btn.className = 'btn-add-friend w-full py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors';
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    addFriend(userId);
+                };
+                showToast('Friend request cancelled', 'info');
+            } else {
+                throw new Error(data.error || 'Failed to cancel request');
+            }
+        } catch (error) {
+            console.error('Error canceling friend request:', error);
+            showToast('Error canceling friend request', 'danger');
+        } finally {
+            btn.disabled = false;
+            btn.classList.remove('opacity-70');
         }
-        if (mainContent) {
-            mainContent.style.visibility = 'visible';
-            mainContent.style.opacity = '1';
+    }
+
+    // ========================================
+    // PROFILE MODAL
+    // ========================================
+
+    async function openProfileModal(userId) {
+        try {
+            const response = await fetch(`/get_user_profile/${userId}`);
+            if (!response.ok) throw new Error('Failed to load profile');
+
+            const data = await response.json();
+            displayProfileModal(data, userId);
+        } catch (error) {
+            console.error('Error loading profile:', error);
+            showToast('Failed to load profile', 'danger');
         }
-    }, 1000);
-}
+    }
 
-// Debug function
-function debugAdSystem() {
-    console.log('=== AD SYSTEM DEBUG ===');
-    console.log('Active ads array:', appState.activeAds);
-    console.log('Ad shown this hour:', appState.adShownThisHour);
-    console.log('User preferences:', appState.userAdPreferences);
-    console.log('Floating ad element:', document.getElementById('floatingAd'));
-    console.log('Modal ad element:', document.getElementById('adModal'));
-    console.log('Native ad element:', document.getElementById('nativeAd'));
-    
-    fetch('/ads/active')
-        .then(r => r.json())
-        .then(ads => {
-            console.log('Direct API response:', ads);
-            console.log('Number of ads:', ads.length);
-        })
-        .catch(err => console.log('API Error:', err));
-}
+    function displayProfileModal(data, userId) {
+        const modalBody = document.getElementById('profileModalBody');
+        const profileActions = document.getElementById('profileActions');
 
-window.debugAds = debugAdSystem;
-    </script>
+        if (!modalBody || !profileActions) return;
+
+        const dob = data.dob ? new Date(data.dob).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        }) : 'Not specified';
+
+        const age = data.dob ? calculateAge(new Date(data.dob)) : '';
+
+        modalBody.innerHTML = `
+              <div class="profile-modal-content">
+                  <div class="profile-header relative">
+                      <div class="cover-photo-container h-48 overflow-hidden rounded-t-2xl">
+                          <img src="${data.cover_pic || 'https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg'}"
+                               alt="Cover" class="cover-photo w-full h-full object-cover">
+                          <div class="profile-overlay absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                      </div>
+                      <div class="profile-info-container text-center relative -mt-16 pb-6 px-6">
+                          <div class="profile-avatar-container inline-block">
+                              <img src="${data.profile_pic}" alt="${data.first_name}"
+                                   class="profile-avatar w-32 h-32 rounded-full border-4 border-white object-cover shadow-strong">
+                          </div>
+                          <div class="profile-text-content mt-4">
+                              <h3 class="profile-name text-2xl font-bold">${data.first_name} ${data.last_name}</h3>
+                              <div class="profile-details flex flex-wrap justify-center gap-2 mt-2">
+                                  ${data.marital_status ? `<span class="detail-item inline-flex items-center gap-1 bg-gray-100 px-3 py-1 rounded-full text-sm"><i class="bi bi-heart-fill text-red-500"></i> ${data.marital_status}</span>` : ''}
+                                  ${data.city && data.country ? `<span class="detail-item inline-flex items-center gap-1 bg-gray-100 px-3 py-1 rounded-full text-sm"><i class="bi bi-geo-alt-fill text-blue-500"></i> ${data.city}, ${data.country}</span>` : ''}
+                                  ${age ? `<span class="detail-item inline-flex items-center gap-1 bg-gray-100 px-3 py-1 rounded-full text-sm"><i class="bi bi-balloon-fill text-purple-500"></i> ${age} years old</span>` : ''}
+                              </div>
+                              ${data.bio ? `<div class="profile-bio mt-3 max-w-2xl mx-auto"><p class="bio-text text-gray-700">${data.bio}</p></div>` : ''}
+                          </div>
+                      </div>
+                  </div>
+
+                  <div class="profile-details-section mt-6 px-6 pb-6">
+                      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div class="detail-card bg-gray-50 rounded-2xl p-6">
+                              <h6 class="detail-card-title font-semibold text-lg mb-4 flex items-center"><i class="bi bi-person-badge-fill mr-2 text-blue-500"></i>Personal Information</h6>
+                              <div class="detail-list space-y-3">
+                                  ${data.email ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">Email:</span><span class="detail-value">${data.email}</span></div>` : ''}
+                                  ${data.phone_number ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">Phone:</span><span class="detail-value">${data.phone_number}</span></div>` : ''}
+                                  ${data.gender ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">Gender:</span><span class="detail-value">${data.gender}</span></div>` : ''}
+                                  ${data.dob ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">Date of Birth:</span><span class="detail-value">${dob}</span></div>` : ''}
+                              </div>
+                          </div>
+                          <div class="detail-card bg-gray-50 rounded-2xl p-6">
+                              <h6 class="detail-card-title font-semibold text-lg mb-4 flex items-center"><i class="bi bi-geo-fill mr-2 text-green-500"></i>Location & Interests</h6>
+                              <div class="detail-list space-y-3">
+                                  ${data.city ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">City:</span><span class="detail-value">${data.city}</span></div>` : ''}
+                                  ${data.country ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">Country:</span><span class="detail-value">${data.country}</span></div>` : ''}
+                                  ${data.interests ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">Interests:</span><span class="detail-value">${data.interests}</span></div>` : ''}
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          `;
+
+          // Get friend status and update actions
+          const isFriend = {{ current_user.friend_ids|tojson }}.includes(userId);
+          const isBlocked = {{ current_user.blocks|map(attribute='id')|list|tojson }}.includes(userId);
+
+          let actionsHTML = '';
+          if (isFriend) {
+              actionsHTML = `
+                  <button class="btn btn-primary px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors" onclick="startChat(${userId})">
+                      <i class="bi bi-chat-dots me-1"></i> Message
+                  </button>
+                  ${isBlocked ? `
+                      <button class="btn btn-success px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors" onclick="unblockUserFromModal(${userId})">
+                          <i class="bi bi-check-circle me-1"></i> Unblock
+                      </button>
+                  ` : `
+                      <button class="btn btn-outline-danger px-4 py-2 border border-red-500 text-red-500 rounded-lg font-medium hover:bg-red-50 transition-colors" onclick="blockUser(${userId})">
+                          <i class="bi bi-slash-circle me-1"></i> Block
+                      </button>
+                  `}
+              `;
+          } else {
+              actionsHTML = `
+                  <button class="btn btn-primary px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors" onclick="addFriend(${userId})">
+                      <i class="bi bi-person-plus me-1"></i> Add Friend
+                  </button>
+                  <a href="${data.profile_url}" class="btn btn-outline-secondary px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors">
+                      <i class="bi bi-person-circle me-1"></i> View Profile
+                  </a>
+              `;
+          }
+
+          profileActions.innerHTML = actionsHTML;
+          openModal('profileModal');
+      }
+
+      // ========================================
+      // POST INTERACTIONS
+      // ========================================
+
+      function initializePostInteractions() {
+          // Like buttons
+          document.querySelectorAll('.like-btn').forEach(btn => {
+              btn.addEventListener('click', function () {
+                  const postId = this.dataset.postId;
+                  handleLikePost(postId, this);
+              });
+          });
+
+          // Delete posts
+          document.querySelectorAll('.delete-post').forEach(link => {
+              link.addEventListener('click', function (e) {
+                  e.preventDefault();
+                  const postId = this.dataset.postId;
+                  handleDeletePost(postId);
+              });
+          });
+
+          // Edit posts
+          document.querySelectorAll('.edit-post').forEach(link => {
+              link.addEventListener('click', function () {
+                  const postId = this.dataset.postId;
+                  handleEditPost(postId);
+              });
+          });
+
+          // Add comments
+          document.querySelectorAll('.add-comment').forEach(input => {
+              input.addEventListener('keypress', function (e) {
+                  if (e.key === 'Enter' && this.value.trim()) {
+                      const postId = this.dataset.postId;
+                      const content = this.value.trim();
+                      handleAddComment(postId, content, this);
+                  }
+              });
+          });
+
+          // View comments modal
+          document.querySelectorAll('.view-comments').forEach(btn => {
+              btn.addEventListener('click', function () {
+                  const postId = this.dataset.postId;
+                  handleViewComments(postId);
+              });
+          });
+
+          // Share buttons
+          document.querySelectorAll('.share-btn').forEach(btn => {
+              btn.addEventListener('click', function () {
+                  navigator.clipboard.writeText(this.dataset.url);
+                  showToast('Post link copied!', 'success');
+              });
+          });
+      }
+
+      async function handleLikePost(postId, likeBtn) {
+          try {
+              const response = await fetch(`/like_post/${postId}`, {
+                  method: 'POST',
+                  headers: {
+                      'X-CSRFToken': csrfToken,
+                      'Content-Type': 'application/json'
+                  }
+              });
+
+              if (!response.ok) throw new Error('Network error');
+
+              const data = await response.json();
+              if (data.error) throw new Error(data.error);
+
+              likeBtn.querySelector('.like-count').textContent = data.likes;
+              if (data.liked) {
+                  likeBtn.classList.add('text-blue-600');
+                  likeBtn.querySelector('i').className = 'bi bi-hand-thumbs-up-fill';
+              } else {
+                  likeBtn.classList.remove('text-blue-600');
+                  likeBtn.querySelector('i').className = 'bi bi-hand-thumbs-up';
+              }
+          } catch (error) {
+              console.error('Error liking post:', error);
+              showToast('Failed to like post', 'danger');
+          }
+      }
+
+      async function handleDeletePost(postId) {
+          if (!confirm('Are you sure you want to delete this post?')) return;
+
+          try {
+              const response = await fetch(`/delete_post/${postId}`, {
+                  method: 'POST',
+                  headers: { 'X-CSRFToken': csrfToken }
+              });
+
+              if (!response.ok) throw new Error('Network error');
+
+              const postElement = document.querySelector(`[data-post-id="${postId}"]`);
+              if (postElement) {
+                  postElement.remove();
+                  showToast('Post deleted successfully', 'success');
+              }
+          } catch (error) {
+              console.error('Error deleting post:', error);
+              showToast('Failed to delete post', 'danger');
+          }
+      }
+
+      function handleEditPost(postId) {
+          const post = document.querySelector(`[data-post-id="${postId}"]`);
+          if (!post) return;
+
+          const postText = post.querySelector('.post-text');
+          if (!postText) return;
+
+          document.getElementById('editPostContent').value = postText.textContent;
+
+          const form = document.getElementById('editPostForm');
+          form.onsubmit = async function (e) {
+              e.preventDefault();
+              const formData = new FormData(this);
+              formData.append('post_id', postId);
+
+              try {
+                  const response = await fetch('/edit_post', {
+                      method: 'POST',
+                      body: formData,
+                      headers: { 'X-CSRFToken': csrfToken }
+                  });
+
+                  if (!response.ok) throw new Error('Network error');
+
+                  closeModal('editPostModal');
+                  showToast('Post updated successfully', 'success');
+                  setTimeout(() => location.reload(), 1000);
+              } catch (error) {
+                  console.error('Error editing post:', error);
+                  showToast('Failed to edit post', 'danger');
+              }
+          };
+
+          openModal('editPostModal');
+      }
+
+      async function handleAddComment(postId, content, inputElement) {
+          try {
+              inputElement.disabled = true;
+
+              const response = await fetch(`/add_comment/${postId}`, {
+                  method: 'POST',
+                  headers: {
+                      'Content-Type': 'application/json',
+                      'X-CSRFToken': csrfToken
+                  },
+                  body: JSON.stringify({ content })
+              });
+
+              if (!response.ok) throw new Error('Network error');
+
+              const data = await response.json();
+              inputElement.value = '';
+
+              const container = inputElement.closest('.comments-section');
+              if (container) {
+                  container.insertAdjacentHTML('beforeend', `
+                      <div class="comment flex space-x-2 mb-3" id="comment-${data.id}">
+                          <img src="${data.avatar}" alt="" class="w-8 h-8 rounded-full object-cover flex-shrink-0">
+                          <div class="flex-1">
+                              <div class="bg-white rounded-2xl px-3 py-2">
+                                  <div class="font-semibold text-sm">${data.name}</div>
+                                  <div class="text-sm">${data.content}</div>
+                              </div>
+                          </div>
+                      </div>
+                  `);
+              }
+
+              showToast('Comment added!', 'success');
+          } catch (error) {
+              console.error('Error adding comment:', error);
+              showToast('Failed to add comment', 'danger');
+          } finally {
+              inputElement.disabled = false;
+          }
+      }
+
+      async function handleViewComments(postId) {
+          try {
+              const response = await fetch(`/get_comments/${postId}`);
+              if (!response.ok) throw new Error('Network error');
+
+              const comments = await response.json();
+              displayCommentsModal(comments);
+          } catch (error) {
+              console.error('Error loading comments:', error);
+              document.getElementById('commentModalBody').innerHTML =
+                  '<div class="text-center py-8 text-red-500">Failed to load comments</div>';
+              openModal('commentModal');
+          }
+      }
+
+      function displayCommentsModal(comments) {
+          const body = document.getElementById('commentModalBody');
+          if (!body) return;
+
+          body.innerHTML = '';
+
+          if (comments.length === 0) {
+              body.innerHTML = '<div class="text-center py-8 text-gray-500">No comments yet</div>';
+              openModal('commentModal');
+              return;
+          }
+
+          comments.forEach(comment => {
+              const isLong = comment.content.length > 150;
+              body.innerHTML += `
+                  <div class="comment mb-5 border-b pb-4" id="modal-comment-${comment.id}">
+                      <div class="flex space-x-3">
+                          <img src="${comment.avatar}" class="w-10 h-10 rounded-full object-cover flex-shrink-0">
+                          <div class="flex-1">
+                              <div class="bg-gray-50 rounded-2xl px-4 py-3">
+                                  <div class="font-semibold">${comment.name}</div>
+                                  <div class="text-sm comment-text ${isLong ? 'truncated' : ''}"
+                                       id="modal-comment-text-${comment.id}">
+                                      ${comment.content}
+                                  </div>
+                                  ${isLong ? `
+                                  <button class="text-blue-600 text-xs font-medium mt-2 see-more-comment"
+                                          onclick="event.stopPropagation(); toggleModalComment(${comment.id})">
+                                      See More
+                                  </button>` : ''}
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              `;
+          });
+
+          openModal('commentModal');
+      }
+
+      // ========================================
+      // TEXT TRUNCATION
+      // ========================================
+
+      function togglePostText(postId) {
+          const text = document.getElementById(`post-text-${postId}`);
+          const btn = text?.nextElementSibling;
+          if (!text || !btn?.classList.contains('see-more-btn')) return;
+
+          if (text.classList.contains('truncated')) {
+              text.classList.remove('truncated');
+              btn.textContent = 'See Less';
+              const card = text.closest('.post-card');
+              if (card.getBoundingClientRect().bottom > window.innerHeight - 100) {
+                  card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+              }
+          } else {
+              text.classList.add('truncated');
+              btn.textContent = 'See More';
+          }
+      }
+
+      function toggleCommentText(commentId) {
+          const el = document.getElementById(`comment-text-${commentId}`);
+          const btn = el?.nextElementSibling;
+          if (!el || !btn) return;
+
+          if (el.classList.contains('truncated')) {
+              el.classList.remove('truncated');
+              btn.textContent = 'See Less';
+          } else {
+              el.classList.add('truncated');
+              btn.textContent = 'See More';
+          }
+      }
+
+      function toggleModalComment(commentId) {
+          const el = document.getElementById(`modal-comment-text-${commentId}`);
+          const btn = el?.nextElementSibling;
+          if (!el || !btn) return;
+
+          if (el.classList.contains('truncated')) {
+              el.classList.remove('truncated');
+              btn.textContent = 'See Less';
+          } else {
+              el.classList.add('truncated');
+              btn.textContent = 'See More';
+          }
+      }
+
+      // ========================================
+      // BLOCK USER SYSTEM
+      // ========================================
+
+      async function blockUser(userId) {
+          if (!confirm("Block this user? They won't see your posts or be able to contact you.")) return;
+
+          try {
+              const response = await fetch(`/block_user/${userId}`, {
+                  method: 'POST',
+                  headers: {
+                      'X-CSRFToken': csrfToken,
+                      'Content-Type': 'application/json'
+                  }
+              });
+
+              if (!response.ok) throw new Error('Network error');
+
+              const data = await response.json();
+              if (data.success) {
+                  showToast(data.message || 'User blocked successfully!', 'success');
+                  closeModal('profileModal');
+                  setTimeout(() => location.reload(), 1500);
+              } else {
+                  showToast(data.error || 'Error blocking user', 'danger');
+              }
+          } catch (error) {
+              console.error('Error blocking user:', error);
+              showToast('Error blocking user. Please try again.', 'danger');
+          }
+      }
+
+      async function unblockUserFromModal(userId) {
+          if (!confirm("Unblock this user? They will be able to see your posts again.")) return;
+
+          try {
+              const response = await fetch(`/unblock_user/${userId}`, {
+                  method: 'POST',
+                  headers: {
+                      'X-CSRFToken': csrfToken,
+                      'Content-Type': 'application/json'
+                  }
+              });
+
+              if (!response.ok) throw new Error('Network error');
+
+              const data = await response.json();
+              if (data.success) {
+                  showToast('User unblocked!', 'success');
+                  closeModal('profileModal');
+              } else {
+                  showToast(data.error || 'Failed to unblock', 'danger');
+              }
+          } catch (error) {
+              console.error('Error unblocking user:', error);
+              showToast('Error unblocking user', 'danger');
+          }
+      }
+
+      // ========================================
+      // NOTIFICATION SYSTEM
+      // ========================================
+
+      function initializeNotifications() {
+          loadNotifications();
+          updateNotificationBadge();
+          appState.notificationCheckInterval = setInterval(updateNotificationBadge, 30000);
+
+          const dropdown = document.getElementById('notificationDropdown');
+          if (dropdown) {
+              dropdown.addEventListener('click', loadNotifications);
+          }
+      }
+
+      async function updateNotificationBadge() {
+          try {
+              const response = await fetch('/notifications/count');
+              if (!response.ok) throw new Error('Network error');
+
+              const data = await response.json();
+              const badge = document.getElementById('notificationBadge');
+              if (!badge) return;
+
+              if (data.count > 0) {
+                  badge.textContent = data.count > 99 ? '99+' : data.count;
+                  badge.classList.remove('hidden');
+              } else {
+                  badge.classList.add('hidden');
+              }
+          } catch (error) {
+              console.error('Error updating notification badge:', error);
+              const badge = document.getElementById('notificationBadge');
+              if (badge) badge.classList.add('hidden');
+          }
+      }
+
+      async function loadNotifications() {
+          const list = document.getElementById('notificationsList');
+          if (!list) return;
+
+          try {
+              const response = await fetch('/notifications');
+              if (!response.ok) throw new Error('Network error');
+
+              const notifications = await response.json();
+              displayNotifications(notifications, list);
+          } catch (error) {
+              console.error('Error loading notifications:', error);
+              list.innerHTML = '<div class="text-center p-4 text-red-500"><i class="bi bi-exclamation-triangle"></i><p>Error loading notifications</p></div>';
+          }
+      }
+
+      function displayNotifications(notifications, list) {
+          if (notifications.length === 0) {
+              list.innerHTML = '<div class="empty-notifications text-center p-6 text-gray-500"><i class="bi bi-bell text-4xl mb-2"></i><p>No notifications yet</p></div>';
+              return;
+          }
+
+          list.innerHTML = notifications.map(notification => `
+              <div class="notification-item p-3 border-b border-gray-100 ${notification.is_read ? '' : 'bg-blue-50 border-l-4 border-l-blue-500'}"
+                  ${notification.type !== 'friend_request' ? `onclick="handleNotificationClick(${notification.id}, '${notification.type}', ${notification.entity_id || 0})"` : ''}>
+
+                  <div class="flex items-start space-x-3">
+                      <img src="${notification.actor.avatar}" alt="${notification.actor.name}" class="w-10 h-10 rounded-full object-cover"
+                           onerror="this.src='{{ url_for('static', filename='assets/img/default-avatar.png') }}'">
+                      <div class="flex-1">
+                          <div class="notification-text text-sm">${notification.message}</div>
+                          <div class="notification-time text-xs text-gray-500 mt-1">${formatNotificationTime(notification.created_at)}</div>
+                          ${notification.type === 'friend_request' ? `
+                          <div class="notification-actions flex space-x-2 mt-2">
+                              ${!notification.is_read ? `
+                                  <button class="notification-action-btn px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors"
+                                          onclick="event.stopPropagation(); acceptFriendRequest(${notification.actor.id}, ${notification.id})">
+                                          Accept
+                                  </button>
+                                  <button class="notification-action-btn px-3 py-1 bg-gray-200 text-gray-700 text-xs rounded-lg hover:bg-gray-300 transition-colors"
+                                          onclick="event.stopPropagation(); declineFriendRequest(${notification.actor.id}, ${notification.id})">
+                                          Decline
+                                  </button>
+                              ` : `<small class="text-gray-500 text-xs">Request pending</small>`}
+                          </div>
+                          ` : ''}
+                      </div>
+                  </div>
+              </div>
+          `).join('');
+      }
+
+      async function handleNotificationClick(id, type, entityId) {
+          await markNotificationAsRead(id);
+
+          switch (type) {
+              case 'friend_request':
+              case 'friend_accepted':
+              case 'profile_update':
+                  openProfileModal(entityId);
+                  break;
+              case 'post_like':
+              case 'new_comment':
+                  scrollToPost(entityId);
+                  break;
+          }
+
+          const dropdownMenu = document.getElementById('notificationDropdownMenu');
+          if (dropdownMenu) dropdownMenu.classList.add('hidden');
+      }
+
+      async function markNotificationAsRead(id) {
+          try {
+              await fetch(`/notifications/${id}/read`, {
+                  method: 'POST',
+                  headers: {
+                      'X-CSRFToken': csrfToken,
+                      'Content-Type': 'application/json'
+                  }
+              });
+              updateNotificationBadge();
+              loadNotifications();
+          } catch (error) {
+              console.error('Error marking notification as read:', error);
+          }
+      }
+
+      async function markAllAsRead() {
+          try {
+              await fetch('/notifications/read', {
+                  method: 'POST',
+                  headers: {
+                      'X-CSRFToken': csrfToken,
+                      'Content-Type': 'application/json'
+                  }
+              });
+              updateNotificationBadge();
+              loadNotifications();
+              showToast('All notifications marked as read', 'success');
+          } catch (error) {
+              console.error('Error marking all notifications as read:', error);
+              showToast('Failed to mark notifications as read', 'danger');
+          }
+      }
+
+      async function acceptFriendRequest(userId, notifId) {
+          try {
+              const response = await fetch(`/accept_friend_request/${userId}`, {
+                  method: 'POST',
+                  headers: {
+                      'X-CSRFToken': csrfToken,
+                      'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({ notification_id: notifId })
+              });
+
+              if (!response.ok) throw new Error('Network error');
+
+              const data = await response.json();
+              if (data.success) {
+                  await markNotificationAsRead(notifId);
+                  showToast('Friend request accepted!', 'success');
+              } else {
+                  showToast(data.error || 'Failed to accept request', 'danger');
+              }
+          } catch (error) {
+              console.error('Error accepting friend request:', error);
+              showToast('Failed to accept friend request', 'danger');
+          }
+      }
+
+      async function declineFriendRequest(userId, notifId) {
+          try {
+              const response = await fetch(`/decline_friend_request/${userId}`, {
+                  method: 'POST',
+                  headers: {
+                      'X-CSRFToken': csrfToken,
+                      'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({ notification_id: notifId })
+              });
+
+              if (!response.ok) throw new Error('Network error');
+
+              const data = await response.json();
+              if (data.success) {
+                  await markNotificationAsRead(notifId);
+                  showToast('Request declined', 'info');
+              } else {
+                  showToast(data.error || 'Failed to decline request', 'danger');
+              }
+          } catch (error) {
+              console.error('Error declining friend request:', error);
+              showToast('Failed to decline friend request', 'danger');
+          }
+      }
+
+      function scrollToPost(postId) {
+          const el = document.querySelector(`[data-post-id="${postId}"]`);
+          if (el) {
+              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              el.classList.add('highlight-animation');
+              setTimeout(() => el.classList.remove('highlight-animation'), 2000);
+          } else {
+              showToast('Post not found', 'warning');
+          }
+      }
+
+      // ========================================
+      // SEARCH SYSTEM
+      // ========================================
+
+      function initializeSearch() {
+          const searchInput = document.getElementById('globalSearch');
+          const searchResults = document.getElementById('searchResults');
+          const searchResultsBody = document.getElementById('searchResultsBody');
+
+          if (!searchInput || !searchResults || !searchResultsBody) return;
+
+          const debouncedSearch = debounce(performSearch, 300);
+
+          searchInput.addEventListener('input', function () {
+              const query = this.value.trim();
+              if (query.length >= 2) {
+                  debouncedSearch(query);
+              } else {
+                  hideSearchResults();
+              }
+          });
+
+          searchInput.addEventListener('focus', function () {
+              const query = this.value.trim();
+              if (query.length >= 2) {
+                  performSearch(query);
+              }
+          });
+
+          document.addEventListener('click', e => {
+              if (!searchResults.contains(e.target) && e.target !== searchInput) {
+                  hideSearchResults();
+              }
+          });
+      }
+
+      async function performSearch(query) {
+          if (!query.trim()) {
+              hideSearchResults();
+              return;
+          }
+
+          showSearchLoading();
+
+          try {
+              const response = await fetch(`/search?q=${encodeURIComponent(query)}`);
+              if (!response.ok) throw new Error('Network error');
+
+              const data = await response.json();
+              displaySearchResults(data, query);
+          } catch (error) {
+              console.error('Error performing search:', error);
+              showSearchError();
+          }
+      }
+
+      function displaySearchResults(results, query) {
+          const searchResultsBody = document.getElementById('searchResultsBody');
+          if (!searchResultsBody) return;
+
+          searchResultsBody.innerHTML = '';
+
+          if (!results.users?.length && !results.posts?.length) {
+              showNoResults();
+              return;
+          }
+
+          let html = '';
+
+          if (results.users?.length > 0) {
+              results.users.forEach(user => {
+                  const name = highlightMatch(`${user.first_name} ${user.last_name}`, query);
+                  html += `
+                      <div class="search-result-item p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors" onclick="openProfileModal(${user.id})">
+                          <div class="search-result-user flex items-center space-x-3">
+                              <img src="${user.profile_pic || '{{ url_for('static', filename='assets/img/default-avatar.png') }}'}" class="search-result-avatar w-10 h-10 rounded-full object-cover">
+                              <div class="search-result-info">
+                                  <div class="search-result-name font-medium">${name}</div>
+                                  <div class="search-result-type text-xs text-gray-500">User</div>
+                              </div>
+                          </div>
+                      </div>
+                  `;
+              });
+          }
+
+          if (results.posts?.length > 0) {
+              results.posts.forEach(post => {
+                  const content = highlightMatch(post.content.substring(0, 100), query);
+                  html += `
+                      <div class="search-result-item p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors" onclick="viewPost(${post.id})">
+                          <div class="search-result-post">
+                              <div class="search-result-content text-sm">${content}${post.content.length > 100 ? '...' : ''}</div>
+                              <div class="search-result-author text-xs text-gray-500 mt-1">By ${post.author_first_name} ${post.author_last_name}</div>
+                              <div class="search-result-type text-xs text-gray-500">Post</div>
+                          </div>
+                      </div>
+                  `;
+              });
+          }
+
+          searchResultsBody.innerHTML = html;
+          showSearchResults();
+      }
+
+      function showSearchLoading() {
+          const searchResultsBody = document.getElementById('searchResultsBody');
+          if (!searchResultsBody) return;
+
+          searchResultsBody.innerHTML = `
+              <div class="search-loading text-center p-4 text-gray-500">
+                  <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
+                  <div class="mt-2">Searching...</div>
+              </div>
+          `;
+          showSearchResults();
+      }
+
+      function showNoResults() {
+          const searchResultsBody = document.getElementById('searchResultsBody');
+          if (!searchResultsBody) return;
+
+          searchResultsBody.innerHTML = `
+              <div class="no-results text-center p-6 text-gray-500">
+                  <i class="bi bi-search text-3xl mb-2"></i>
+                  <p>No results</p>
+                  <small class="text-xs">Try different keywords</small>
+              </div>
+          `;
+          showSearchResults();
+      }
+
+      function showSearchError() {
+          const searchResultsBody = document.getElementById('searchResultsBody');
+          if (!searchResultsBody) return;
+
+          searchResultsBody.innerHTML = `
+              <div class="no-results text-center p-6 text-red-500">
+                  <i class="bi bi-exclamation-triangle text-3xl mb-2"></i>
+                  <p>Search failed</p>
+              </div>
+          `;
+          showSearchResults();
+      }
+
+      function showSearchResults() {
+          const searchResults = document.getElementById('searchResults');
+          if (searchResults) searchResults.classList.remove('hidden');
+      }
+
+      function hideSearchResults() {
+          const searchResults = document.getElementById('searchResults');
+          if (searchResults) searchResults.classList.add('hidden');
+      }
+
+      async function viewPost(postId) {
+          hideSearchResults();
+
+          const searchInput = document.getElementById('globalSearch');
+          if (searchInput) searchInput.value = '';
+
+          const el = document.querySelector(`[data-post-id="${postId}"]`);
+          if (el) {
+              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              el.classList.add('highlight-animation');
+              setTimeout(() => el.classList.remove('highlight-animation'), 2000);
+          } else {
+              try {
+                  const response = await fetch(`/get_post/${postId}`);
+                  if (!response.ok) throw new Error('Network error');
+
+                  const post = await response.json();
+                  if (post.error) throw new Error(post.error);
+
+                  displayPostModal(post);
+              } catch (error) {
+                  console.error('Error viewing post:', error);
+                  showToast('Post not found', 'danger');
+              }
+          }
+      }
+
+      function displayPostModal(post) {
+          const body = document.getElementById('commentModalBody');
+          if (!body) return;
+
+          body.innerHTML = `
+              <div class="post-card bg-white rounded-2xl shadow-soft overflow-hidden">
+                  <div class="p-4 flex justify-between items-start">
+                      <div class="flex items-start space-x-3">
+                          <img src="${post.author_profile_pic}" class="w-10 h-10 rounded-full object-cover">
+                          <div>
+                              <div class="font-semibold">${post.author_first_name} ${post.author_last_name}</div>
+                              <div class="text-sm text-gray-500">${new Date(post.created_at).toLocaleString()}</div>
+                          </div>
+                      </div>
+                  </div>
+                  <div class="px-4 pb-3">
+                      <p class="post-text">${post.content}</p>
+                      ${post.image ? `<div class="post-media mt-3"><img src="${post.image}" alt="Post" class="w-full rounded-2xl max-h-96 object-cover"></div>` : ''}
+                      ${post.video ? `<div class="post-media mt-3"><video controls class="w-full rounded-2xl max-h-96"><source src="${post.video}"></video></div>` : ''}
+                  </div>
+              </div>
+          `;
+          openModal('commentModal');
+      }
+
+      // ========================================
+      // MESSENGER SYSTEM
+      // ========================================
+
+      // Socket event listeners
+      socket.on("connect", () => {
+          console.log("Connected to messaging server");
+          socket.emit("join_messenger");
+      });
+
+      socket.on("messenger_joined", (data) => {
+          console.log("Joined messenger room");
+      });
+
+      socket.on("new_message", (msg) => {
+          if (
+              (msg.sender_id === appState.activeFriendId && msg.receiver_id === currentUserId) ||
+              (msg.receiver_id === appState.activeFriendId && msg.sender_id === currentUserId)
+          ) {
+              appendMessage(msg, true);
+              if (msg.sender_id === appState.activeFriendId) {
+                  markMessagesAsRead(appState.activeFriendId);
+              }
+          } else {
+              showMessageNotification(msg);
+          }
+          updateUnreadBadge();
+      });
+
+      socket.on("message_delivered", (data) => {
+          updateMessageStatus(data.message_id, "delivered");
+      });
+
+      socket.on("messages_read", (data) => {
+          if (data.receiver_id === currentUserId) {
+              data.message_ids?.forEach(msgId => {
+                  updateMessageStatus(msgId, "read");
+              });
+          }
+      });
+
+      socket.on("user_typing", (data) => {
+          if (data.user_id === appState.activeFriendId) {
+              showTypingIndicator(data.user_name);
+          }
+      });
+
+      socket.on("user_stopped_typing", (data) => {
+          if (data.user_id === appState.activeFriendId) {
+              hideTypingIndicator();
+          }
+      });
+
+      socket.on("error", (data) => {
+          showToast(data.message, "danger");
+      });
+
+      // Messenger functions
+      function openMessenger() {
+          const popup = document.getElementById("messengerPopup");
+          if (popup) {
+              popup.classList.remove("hidden");
+              loadFriends();
+              socket.emit("join_messenger");
+          }
+      }
+
+      function closeMessenger() {
+          const popup = document.getElementById("messengerPopup");
+          if (popup) {
+              popup.classList.add("hidden");
+              appState.activeFriendId = null;
+
+              const chatArea = document.getElementById("chatArea");
+              const friendList = document.getElementById("friendList");
+
+              if (chatArea) chatArea.classList.add("hidden");
+              if (friendList) friendList.classList.remove("hidden");
+
+              hideTypingIndicator();
+              stopTyping();
+          }
+      }
+
+      function backToFriends() {
+          appState.activeFriendId = null;
+
+          const chatArea = document.getElementById("chatArea");
+          const friendList = document.getElementById("friendList");
+
+          if (chatArea) chatArea.classList.add("hidden");
+          if (friendList) friendList.classList.remove("hidden");
+
+          hideTypingIndicator();
+          stopTyping();
+      }
+
+      async function loadFriends() {
+          try {
+              const response = await fetch("/friends");
+              if (!response.ok) throw new Error('Network error');
+
+              const friends = await response.json();
+              displayFriends(friends);
+          } catch (error) {
+              console.error("Error loading friends:", error);
+              showToast("Failed to load friends", "danger");
+          }
+      }
+
+      function displayFriends(friends) {
+          const container = document.getElementById("friendsContainer");
+          if (!container) return;
+
+          container.innerHTML = "";
+
+          if (friends.length === 0) {
+              container.innerHTML = `
+                  <div class="text-center p-6 text-gray-500">
+                      <i class="bi bi-people text-3xl mb-2"></i>
+                      <p class="text-sm">No friends yet</p>
+                      <p class="text-xs mt-1">Add friends to start messaging</p>
+                  </div>
+              `;
+              return;
+          }
+
+          friends.forEach(friend => {
+              const friendElement = document.createElement("div");
+              friendElement.className = "flex items-center p-3 hover:bg-gray-50 cursor-pointer rounded-lg transition-colors";
+              friendElement.onclick = () => openChatWith(friend.id, friend.name, friend.avatar, friend.online);
+
+              friendElement.innerHTML = `
+                  <div class="relative">
+                      <img src="${friend.avatar}" alt="${friend.name}" class="w-12 h-12 rounded-full object-cover">
+                      ${friend.online ? `
+                          <span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></span>
+                      ` : ""}
+                  </div>
+                  <div class="ml-3 flex-1">
+                      <p class="font-medium text-sm">${friend.name}</p>
+                      <p class="text-xs ${friend.online ? "text-green-600" : "text-gray-500"}">
+                          ${friend.online ? "Online" : "Offline"}
+                      </p>
+                  </div>
+              `;
+
+              container.appendChild(friendElement);
+          });
+      }
+
+      function openChatWith(friendId, friendName, friendAvatar, friendOnline) {
+          appState.activeFriendId = friendId;
+
+          const friendList = document.getElementById("friendList");
+          const chatArea = document.getElementById("chatArea");
+          const chatName = document.getElementById("chatName");
+          const chatAvatar = document.getElementById("chatAvatar");
+          const chatStatus = document.getElementById("chatStatus");
+
+          if (!friendList || !chatArea || !chatName || !chatAvatar || !chatStatus) return;
+
+          friendList.classList.add("hidden");
+          chatArea.classList.remove("hidden");
+          chatName.textContent = friendName;
+          chatAvatar.src = friendAvatar;
+          chatStatus.textContent = friendOnline ? "Online" : "Offline";
+          chatStatus.className = `text-xs ${friendOnline ? "text-green-600" : "text-gray-500"}`;
+
+          socket.emit("join_chat", { friend_id: friendId });
+          loadMessages(friendId);
+          markMessagesAsRead(friendId);
+      }
+
+      async function loadMessages(friendId) {
+          try {
+              const response = await fetch(`/messages/${friendId}`);
+              if (!response.ok) throw new Error('Network error');
+
+              const messages = await response.json();
+              displayMessages(messages);
+          } catch (error) {
+              console.error("Error loading messages:", error);
+              showToast("Failed to load messages", "danger");
+          }
+      }
+
+      function displayMessages(messages) {
+          const chatContainer = document.getElementById("chatMessages");
+          if (!chatContainer) return;
+
+          chatContainer.innerHTML = "";
+
+          if (messages.length === 0) {
+              chatContainer.innerHTML = `
+                  <div class="text-center p-6 text-gray-500">
+                      <i class="bi bi-chat-dots text-2xl mb-2"></i>
+                      <p class="text-sm">No messages yet</p>
+                      <p class="text-xs mt-1">Send a message to start the conversation</p>
+                  </div>
+              `;
+              return;
+          }
+
+          messages.forEach(msg => {
+              appendMessage(msg, false);
+          });
+
+          autoScrollToBottom();
+      }
+
+      function appendMessage(msg, shouldScroll = true) {
+          const chatContainer = document.getElementById("chatMessages");
+          if (!chatContainer) return;
+
+          const isOwnMessage = msg.sender_id === currentUserId;
+          const statusIcon = getStatusIcon(msg.status, isOwnMessage);
+
+          const messageElement = document.createElement("div");
+          messageElement.className = `flex ${isOwnMessage ? "justify-end" : "justify-start"} mb-2`;
+          messageElement.id = `message-${msg.id}`;
+
+          messageElement.innerHTML = `
+              <div class="max-w-xs px-4 py-2 rounded-2xl ${
+                  isOwnMessage ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-800"
+              }">
+                  <div class="text-sm">${msg.content}</div>
+                  <div class="text-xs mt-1 flex items-center justify-end space-x-1 opacity-80">
+                      <span>${formatMessageTime(msg.timestamp)}</span>
+                      ${isOwnMessage ? statusIcon : ""}
+                  </div>
+              </div>
+          `;
+
+          chatContainer.appendChild(messageElement);
+
+          if (shouldScroll) {
+              autoScrollToBottom();
+          }
+      }
+
+      function autoScrollToBottom() {
+          const messagesWrapper = document.getElementById("chatMessagesWrapper");
+          if (messagesWrapper) {
+              setTimeout(() => {
+                  messagesWrapper.scrollTop = messagesWrapper.scrollHeight;
+              }, 50);
+          }
+      }
+
+      function getStatusIcon(status, isOwnMessage) {
+          if (!isOwnMessage) return "";
+
+          switch (status) {
+              case "sent":
+                  return '<i class="bi bi-check"></i>';
+              case "delivered":
+                  return '<i class="bi bi-check-all"></i>';
+              case "read":
+                  return '<i class="bi bi-check-all text-blue-300"></i>';
+              default:
+                  return '<i class="bi bi-check"></i>';
+          }
+      }
+
+      function updateMessageStatus(messageId, status) {
+          const messageElement = document.getElementById(`message-${messageId}`);
+          if (messageElement) {
+              const statusElement = messageElement.querySelector(".bi");
+              if (statusElement) {
+                  statusElement.className = getStatusIcon(status, true);
+              }
+          }
+      }
+
+      function sendMessage() {
+          const input = document.getElementById("chatInput");
+          if (!input || !appState.activeFriendId) return;
+
+          const content = input.value.trim();
+          if (!content) return;
+
+          stopTyping();
+
+          socket.emit("send_message", {
+              friend_id: appState.activeFriendId,
+              content: content,
+          });
+
+          input.value = "";
+      }
+
+      function handleTyping() {
+          if (!appState.isTyping && appState.activeFriendId) {
+              appState.isTyping = true;
+              socket.emit("typing", { friend_id: appState.activeFriendId });
+          }
+
+          clearTimeout(appState.typingTimer);
+          appState.typingTimer = setTimeout(() => {
+              stopTyping();
+          }, 1000);
+      }
+
+      function stopTyping() {
+          if (appState.isTyping && appState.activeFriendId) {
+              appState.isTyping = false;
+              socket.emit("stop_typing", { friend_id: appState.activeFriendId });
+          }
+      }
+
+      function showTypingIndicator(userName) {
+          const indicator = document.getElementById("typingIndicator");
+          const userNameElement = document.getElementById("typingUserName");
+
+          if (indicator && userNameElement) {
+              userNameElement.textContent = `${userName} is typing`;
+              indicator.classList.remove("hidden");
+          }
+      }
+
+      function hideTypingIndicator() {
+          const indicator = document.getElementById("typingIndicator");
+          if (indicator) indicator.classList.add("hidden");
+      }
+
+      function formatMessageTime(timestamp) {
+          const date = new Date(timestamp);
+          const now = new Date();
+          const diffMs = now - date;
+          const diffMins = Math.floor(diffMs / 60000);
+
+          if (diffMins < 1) return "Just now";
+          if (diffMins < 60) return `${diffMins}m ago`;
+
+          return date.toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+          });
+      }
+
+      async function markMessagesAsRead(friendId) {
+          try {
+              await fetch(`/mark_read/${friendId}`, {
+                  method: "POST",
+                  headers: {
+                      "X-CSRFToken": csrfToken,
+                      "Content-Type": "application/json",
+                  },
+              });
+              updateUnreadBadge();
+          } catch (error) {
+              console.error("Error marking messages as read:", error);
+          }
+      }
+
+      // Message Notification System
+      function initializeMessageNotifications() {
+          updateUnreadBadge();
+          setInterval(updateUnreadBadge, 30000);
+      }
+
+      async function updateUnreadBadge() {
+          try {
+              const response = await fetch('/unread_count');
+              if (!response.ok) throw new Error('Network error');
+
+              const data = await response.json();
+              const badge = document.getElementById("unreadMessagesBadge");
+              if (!badge) return;
+
+              if (data.unread_count > 0) {
+                  badge.textContent = data.unread_count > 99 ? '99+' : data.unread_count;
+                  badge.classList.remove("hidden");
+              } else {
+                  badge.classList.add("hidden");
+              }
+          } catch (error) {
+              console.error("Error updating unread badge:", error);
+          }
+      }
+
+      function showMessageNotification(msg) {
+          if (!("Notification" in window)) {
+              console.log("This browser does not support desktop notification");
+              return;
+          }
+
+          if (Notification.permission === "granted") {
+              createMessageNotification(msg);
+          } else if (Notification.permission !== "denied") {
+              Notification.requestPermission().then(permission => {
+                  if (permission === "granted") {
+                      createMessageNotification(msg);
+                  }
+              });
+          }
+
+          updateUnreadBadge();
+          showToast(`New message from ${msg.sender_name}`, 'info');
+      }
+
+      function createMessageNotification(msg) {
+          const notification = new Notification("New Message", {
+              body: `${msg.sender_name}: ${msg.content.substring(0, 50)}${msg.content.length > 50 ? '...' : ''}`,
+              icon: msg.sender_avatar,
+              tag: "message"
+          });
+
+          notification.onclick = function() {
+              window.focus();
+              openMessenger();
+              if (msg.sender_id !== appState.activeFriendId) {
+                  openChatWithUser(msg.sender_id);
+              }
+              this.close();
+          };
+
+          setTimeout(() => notification.close(), 5000);
+      }
+
+      function startChat(userId) {
+          openMessenger();
+          loadFriends().then(() => {
+              setTimeout(() => {
+                  openChatWithUser(userId);
+              }, 500);
+          });
+      }
+
+      function openChatWithUser(userId) {
+          fetch('/friends')
+              .then(response => response.json())
+              .then(friends => {
+                  const friend = friends.find(f => f.id === userId);
+                  if (friend) {
+                      openChatWith(friend.id, friend.name, friend.avatar, friend.online);
+                  } else {
+                      showToast('Friend not found or not available for messaging', 'danger');
+                  }
+              })
+              .catch(error => {
+                  console.error('Error loading friend:', error);
+                  showToast('Failed to start chat', 'danger');
+              });
+      }
+
+      // ========================================
+      // GROUPS SYSTEM
+      // ========================================
+
+      async function loadGroups() {
+          console.log('🔍 Loading ALL groups...');
+
+          showGroupsLoading('groupsList');
+          showGroupsLoading('groupsListMobile');
+
+          try {
+              const response = await fetch('/get_user_groups');
+              if (!response.ok) throw new Error('Network error');
+
+              const groups = await response.json();
+              console.log('🔍 Groups received:', groups);
+
+              updateGroupsList(groups, 'groupsList');
+              updateGroupsList(groups, 'groupsListMobile');
+          } catch (err) {
+              console.error('❌ Error loading groups:', err);
+              showGroupsError('groupsList');
+              showGroupsError('groupsListMobile');
+          }
+      }
+
+      function showGroupsLoading(elementId) {
+          const groupsList = document.getElementById(elementId);
+          if (!groupsList) return;
+
+          groupsList.innerHTML = `
+              <div class="flex flex-col items-center justify-center p-8 text-gray-500">
+                  <div class="relative mb-4">
+                      <div class="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+                      <div class="absolute inset-0 flex items-center justify-center">
+                          <i class="bi bi-people text-blue-600"></i>
+                      </div>
+                  </div>
+                  <p class="text-sm font-medium">Loading amazing groups...</p>
+                  <p class="text-xs mt-1 text-gray-400">Finding the best communities for you</p>
+              </div>
+          `;
+      }
+
+      function updateGroupsList(groups, elementId) {
+          const groupsList = document.getElementById(elementId);
+          if (!groupsList) return;
+
+          if (!groups || groups.length === 0) {
+              console.log('🔍 No groups found, showing empty state');
+              groupsList.innerHTML = `
+                  <div class="text-center p-8">
+                      <div class="w-16 h-16 bg-gradient-to-r from-blue-100 to-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                          <i class="bi bi-people text-2xl text-blue-600"></i>
+                      </div>
+                      <h3 class="font-semibold text-gray-700 mb-2">No Groups Yet</h3>
+                      <p class="text-sm text-gray-500 mb-4">Be the pioneer! Create the first amazing group.</p>
+                      <button
+                          class="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg text-sm font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105"
+                          onclick="createNewGroup()"
+                      >
+                          <i class="bi bi-plus-circle mr-1"></i>Create Group
+                      </button>
+                  </div>
+              `;
+              return;
+          }
+
+          console.log('🔍 Rendering beautiful groups in dropdown');
+          groupsList.innerHTML = groups.map(group => `
+              <div class="group-item p-4 border-b border-gray-100 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-300 cursor-pointer group" onclick="openGroup(${group.id})">
+                  <div class="flex items-start space-x-3">
+                      <div class="relative flex-shrink-0">
+                          <div class="w-12 h-12 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 p-0.5">
+                              <img
+                                  src="${group.cover_pic}"
+                                  class="w-full h-full rounded-xl object-cover"
+                                  onerror="this.src='https://images.unsplash.com/photo-1611262588024-d12430b98920?w=100&h=100&fit=crop&crop=center'"
+                                  alt="${group.name}"
+                              >
+                          </div>
+                          ${group.is_member ? `
+                              <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
+                                  <i class="bi bi-check text-white text-xs"></i>
+                              </div>
+                          ` : ''}
+                      </div>
+
+                      <div class="flex-1 min-w-0">
+                          <div class="flex items-start justify-between">
+                              <div class="flex-1">
+                                  <h4 class="font-semibold text-gray-800 group-hover:text-blue-700 transition-colors duration-300 text-sm leading-tight">${group.name}</h4>
+                                  <div class="flex items-center mt-1 space-x-2">
+                                      <div class="flex items-center text-xs text-gray-500">
+                                          <i class="bi bi-people mr-1"></i>
+                                          <span>${group.member_count} members</span>
+                                      </div>
+                                      ${group.unread_count > 0 ? `
+                                          <span class="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full animate-pulse">
+                                              ${group.unread_count} new
+                                          </span>
+                                      ` : ''}
+                                  </div>
+                              </div>
+
+                              <div class="flex-shrink-0 ml-2">
+                                  ${group.is_member ? `
+                                      <button
+                                          class="text-xs bg-green-100 text-green-700 px-3 py-1.5 rounded-lg hover:bg-green-200 transition-all duration-300 transform hover:scale-105 flex items-center group/btn"
+                                          onclick="event.stopPropagation(); leaveGroup(${group.id})"
+                                      >
+                                          <i class="bi bi-check-circle mr-1 group-hover/btn:scale-110 transition-transform duration-300"></i>
+                                          Joined
+                                      </button>
+                                  ` : `
+                                      <button
+                                          class="text-xs bg-gradient-to-r from-blue-500 to-purple-600 text-white px-3 py-1.5 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 flex items-center group/btn shadow-sm"
+                                          onclick="event.stopPropagation(); joinGroup(${group.id})"
+                                      >
+                                          <i class="bi bi-plus-circle mr-1 group-hover/btn:scale-110 transition-transform duration-300"></i>
+                                          Join
+                                      </button>
+                                  `}
+                              </div>
+                          </div>
+
+                          <div class="mt-2">
+                              <div class="w-full bg-gray-200 rounded-full h-1">
+                                  <div
+                                      class="bg-gradient-to-r from-blue-500 to-purple-600 h-1 rounded-full transition-all duration-1000"
+                                      style="width: ${Math.min((group.member_count / 100) * 100, 100)}%"
+                                  ></div>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          `).join('');
+      }
+
+      function showGroupsError(elementId) {
+          const groupsList = document.getElementById(elementId);
+          if (!groupsList) return;
+
+          groupsList.innerHTML = `
+              <div class="text-center p-8">
+                  <div class="w-16 h-16 bg-gradient-to-r from-red-100 to-pink-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <i class="bi bi-exclamation-triangle text-2xl text-red-600"></i>
+                  </div>
+                  <h3 class="font-semibold text-gray-700 mb-2">Oops! Something went wrong</h3>
+                  <p class="text-sm text-gray-500 mb-4">We couldn't load the groups right now.</p>
+                  <button
+                      class="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg text-sm font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105"
+                      onclick="loadGroups()"
+                  >
+                      <i class="bi bi-arrow-clockwise mr-1"></i>Try Again
+                  </button>
+              </div>
+          `;
+      }
+
+      async function joinGroup(groupId) {
+          console.log(`🔍 Joining group ${groupId}`);
+
+          const button = event.target.closest('button');
+          if (!button) return;
+
+          const originalContent = button.innerHTML;
+
+          button.innerHTML = `
+              <div class="flex items-center">
+                  <div class="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin mr-1"></div>
+                  Joining...
+              </div>
+          `;
+          button.disabled = true;
+
+          try {
+              const response = await fetch(`/groups/${groupId}/join`, {
+                  method: 'POST',
+                  headers: {
+                      'X-CSRFToken': csrfToken,
+                      'Content-Type': 'application/json'
+                  }
+              });
+
+              if (!response.ok) throw new Error('Network error');
+
+              const data = await response.json();
+              if (data.success) {
+                  showToast('🎉 Successfully joined the group!', 'success');
+                  setTimeout(() => loadGroups(), 500);
+              } else {
+                  throw new Error(data.error || 'Failed to join group');
+              }
+          } catch (err) {
+              console.error('Error joining group:', err);
+              showToast(err.message || 'Error joining group', 'danger');
+              button.innerHTML = originalContent;
+              button.disabled = false;
+          }
+      }
+
+      async function leaveGroup(groupId) {
+          console.log(`🔍 Leaving group ${groupId}`);
+
+          if (!confirm('Are you sure you want to leave this amazing group?')) {
+              return;
+          }
+
+          const button = event.target.closest('button');
+          if (!button) return;
+
+          const originalContent = button.innerHTML;
+
+          button.innerHTML = `
+              <div class="flex items-center">
+                  <div class="w-3 h-3 border-2 border-green-700 border-t-transparent rounded-full animate-spin mr-1"></div>
+                  Leaving...
+              </div>
+          `;
+          button.disabled = true;
+
+          try {
+              const response = await fetch(`/groups/${groupId}/leave`, {
+                  method: 'POST',
+                  headers: {
+                      'X-CSRFToken': csrfToken,
+                      'Content-Type': 'application/json'
+                  }
+              });
+
+              if (!response.ok) throw new Error('Network error');
+
+              const data = await response.json();
+              if (data.success) {
+                  showToast('👋 Left the group successfully', 'info');
+                  setTimeout(() => loadGroups(), 500);
+              } else {
+                  throw new Error(data.error || 'Failed to leave group');
+              }
+          } catch (err) {
+              console.error('Error leaving group:', err);
+              showToast(err.message || 'Error leaving group', 'danger');
+              button.innerHTML = originalContent;
+              button.disabled = false;
+          }
+      }
+
+      function searchGroups(query) {
+          const groups = document.querySelectorAll('.group-item');
+          const searchTerm = query.toLowerCase().trim();
+
+          groups.forEach(group => {
+              const groupName = group.querySelector('h4')?.textContent.toLowerCase();
+              if (groupName && groupName.includes(searchTerm)) {
+                  group.style.display = 'block';
+                  group.classList.add('bg-yellow-50');
+                  setTimeout(() => group.classList.remove('bg-yellow-50'), 1000);
+              } else {
+                  group.style.display = 'none';
+              }
+          });
+      }
+
+      function openGroup(groupId) {
+          const dropdowns = ['groupsDropdownMenu', 'groupsDropdownMenuMobile'];
+          dropdowns.forEach(id => {
+              const dropdown = document.getElementById(id);
+              if (dropdown) {
+                  dropdown.style.transform = 'scale(0.95)';
+                  dropdown.style.opacity = '0';
+                  setTimeout(() => {
+                      dropdown.classList.add('hidden');
+                      dropdown.style.transform = '';
+                      dropdown.style.opacity = '';
+                  }, 200);
+              }
+          });
+
+          showToast('🚀 Opening group...', 'info');
+          setTimeout(() => {
+              window.location.href = `/groups/${groupId}`;
+          }, 500);
+      }
+
+      function createNewGroup() {
+          const dropdowns = ['groupsDropdownMenu', 'groupsDropdownMenuMobile'];
+          dropdowns.forEach(id => {
+              const dropdown = document.getElementById(id);
+              if (dropdown) {
+                  dropdown.style.transform = 'scale(0.95)';
+                  dropdown.style.opacity = '0';
+                  setTimeout(() => {
+                      dropdown.classList.add('hidden');
+                      dropdown.style.transform = '';
+                      dropdown.style.opacity = '';
+                  }, 200);
+              }
+          });
+
+          showToast('✨ Let\'s create something amazing!', 'success');
+          setTimeout(() => {
+              window.location.href = '/groups/create';
+          }, 1000);
+      }
+
+      // ========================================
+      // AD SYSTEM
+      // ========================================
+
+      function initializeAdSystem() {
+          loadActiveAds();
+          setupAdTriggers();
+          showFloatingAdWidget();
+      }
+
+      async function loadActiveAds() {
+          try {
+              const response = await fetch('/ads/active');
+              if (!response.ok) throw new Error('Network error');
+
+              const ads = await response.json();
+              appState.activeAds = ads.filter(ad => ad.status === 'active' && ad.budget > 0);
+
+              if (appState.activeAds.length > 0) {
+                  console.log(`🎯 Loaded ${appState.activeAds.length} active ads`);
+                  preloadAdImages();
+                  showNativeAdInFeed();
+              }
+          } catch (err) {
+              console.log('No active ads or error loading:', err);
+          }
+      }
+
+      function setupAdTriggers() {
+          setTimeout(() => {
+              if (!appState.adShownThisHour && appState.activeAds.length > 0) {
+                  showSmartModalAd();
+              }
+          }, 60000);
+
+          window.addEventListener('scroll', () => {
+              const scrolled = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
+              if (scrolled > 60 && !appState.adShownThisHour && appState.activeAds.length > 0) {
+                  showSmartModalAd();
+              }
+          });
+      }
+
+      function showSmartModalAd() {
+          if (appState.userAdPreferences.disableAds || appState.adShownThisHour) return;
+
+          const ad = getRandomAd();
+          if (!ad) return;
+
+          const modal = document.getElementById('adModal');
+          const content = modal?.querySelector('.ad-modal-content');
+          if (!modal || !content) return;
+
+          const title = document.getElementById('adModalTitle');
+          const description = document.getElementById('adModalDescription');
+          const image = document.getElementById('adModalImage');
+          const link = document.getElementById('adModalLink');
+          const cta = document.getElementById('adModalCTA');
+
+          if (title) title.textContent = ad.title;
+          if (description) description.textContent = ad.description;
+          if (image) image.src = ad.image;
+          if (link) link.href = ad.target_url;
+          if (cta) cta.textContent = ad.call_to_action || 'Learn More';
+
+          trackAdImpression(ad.id);
+
+          modal.classList.remove('hidden');
+          setTimeout(() => {
+              content.classList.remove('scale-95', 'opacity-0');
+              content.classList.add('scale-100', 'opacity-100');
+          }, 50);
+
+          appState.adShownThisHour = true;
+
+          setTimeout(() => {
+              appState.adShownThisHour = false;
+          }, 60 * 60 * 1000);
+      }
+
+      function closeAdModal() {
+          const modal = document.getElementById('adModal');
+          const content = modal?.querySelector('.ad-modal-content');
+          if (!modal || !content) return;
+
+          content.classList.remove('scale-100', 'opacity-100');
+          content.classList.add('scale-95', 'opacity-0');
+
+          setTimeout(() => {
+              modal.classList.add('hidden');
+          }, 300);
+      }
+
+      function showFloatingAdWidget() {
+          setTimeout(() => {
+              const widget = document.getElementById('floatingAd');
+              if (widget) {
+                  widget.classList.remove('translate-y-10', 'opacity-0');
+                  widget.classList.add('translate-y-0', 'opacity-100');
+              }
+          }, 100000);
+      }
+
+      function toggleFloatingAd() {
+          const content = document.getElementById('floatingAdContent');
+          if (!content) return;
+
+          const ad = getRandomAd();
+
+          if (content.classList.contains('hidden')) {
+              if (ad) {
+                  const title = document.getElementById('floatingAdTitle');
+                  const desc = document.getElementById('floatingAdDesc');
+                  const link = document.getElementById('floatingAdLink');
+
+                  if (title) title.textContent = ad.title;
+                  if (desc) desc.textContent = ad.description.substring(0, 60) + '...';
+                  if (link) link.href = ad.target_url;
+
+                  trackAdImpression(ad.id);
+              }
+
+              content.classList.remove('hidden');
+              setTimeout(() => {
+                  content.classList.remove('scale-95', 'opacity-0');
+                  content.classList.add('scale-100', 'opacity-100');
+              }, 50);
+          } else {
+              content.classList.remove('scale-100', 'opacity-100');
+              content.classList.add('scale-95', 'opacity-0');
+              setTimeout(() => {
+                  content.classList.add('hidden');
+              }, 300);
+          }
+      }
+
+      function showNativeAdInFeed() {
+          const ad = getRandomAd();
+          if (!ad) return;
+
+          const nativeAd = document.getElementById('nativeAd');
+          if (!nativeAd) return;
+
+          const title = document.getElementById('nativeAdTitle');
+          const description = document.getElementById('nativeAdDescription');
+          const image = document.getElementById('nativeAdImage');
+          const link = document.getElementById('nativeAdLink');
+          const cta = document.getElementById('nativeAdCTA');
+
+          if (title) title.textContent = ad.title;
+          if (description) description.textContent = ad.description;
+          if (image) image.src = ad.image;
+          if (link) link.href = ad.target_url;
+          if (cta) cta.textContent = ad.call_to_action || 'Discover More';
+
+          const posts = document.querySelectorAll('.post-card');
+          if (posts.length >= 3) {
+              const randomPostIndex = Math.floor(Math.random() * 2) + 1;
+              posts[randomPostIndex].after(nativeAd);
+              nativeAd.classList.remove('hidden');
+
+              trackAdImpression(ad.id);
+          }
+      }
+
+      function getRandomAd() {
+          if (appState.activeAds.length === 0) return null;
+          return appState.activeAds[Math.floor(Math.random() * appState.activeAds.length)];
+      }
+
+      function trackAdImpression(adId) {
+          fetch(`/track/impression/${adId}`, {
+              method: 'POST',
+              headers: { 'X-CSRFToken': csrfToken }
+          }).catch(console.error);
+      }
+
+      function trackAdClick(adId) {
+          fetch(`/ads/track/click/${adId}`, {
+              method: 'POST',
+              headers: { 'X-CSRFToken': csrfToken }
+          }).catch(console.error);
+      }
+
+      function adNotInterested() {
+          appState.userAdPreferences.disableAds = true;
+          localStorage.setItem('adPreferences', JSON.stringify(appState.userAdPreferences));
+          closeAdModal();
+          showToast('Thanks for your feedback! We\'ll show fewer ads.', 'info');
+      }
+
+      function preloadAdImages() {
+          appState.activeAds.forEach(ad => {
+              if (ad.image) {
+                  const img = new Image();
+                  img.src = ad.image;
+              }
+          });
+      }
+
+      // Enhanced ad click tracking
+      document.addEventListener('click', function(e) {
+          const adLink = e.target.closest('a[id*="ad"]');
+          if (adLink && adLink.href && !adLink.href.startsWith('#')) {
+              const adId = adLink.getAttribute('data-ad-id');
+              if (adId) {
+                  trackAdClick(adId);
+              }
+          }
+      });
+
+      // ========================================
+      // INITIALIZATION
+      // ========================================
+
+      document.addEventListener('DOMContentLoaded', () => {
+          // Initialize core systems
+          initializeDropdowns();
+          initializePostInteractions();
+          initializeNotifications();
+          initializeSearch();
+          initializeMessageNotifications();
+          initializeAdSystem();
+          loadGroups();
+          startTimeAgoUpdates();
+
+          // Slider initialization
+          const track = document.getElementById('suggestionsTrack');
+          if (track) {
+              document.querySelectorAll('.slider-arrow.prev').forEach(btn => {
+                  btn.addEventListener('click', () => scrollSuggestions(-1));
+              });
+
+              document.querySelectorAll('.slider-arrow.next').forEach(btn => {
+                  btn.addEventListener('click', () => scrollSuggestions(1));
+              });
+
+              updateArrowVisibility(track);
+              track.addEventListener('scroll', () => updateArrowVisibility(track));
+          }
+
+          // Modal triggers
+          document.querySelectorAll('[data-bs-toggle="modal"]').forEach(trigger => {
+              trigger.addEventListener('click', function() {
+                  const target = this.getAttribute('data-bs-target');
+                  if (target) {
+                      openModal(target.replace('#', ''));
+                  }
+              });
+          });
+
+          // Close modals when clicking outside
+          document.querySelectorAll('.modal').forEach(modal => {
+              modal.addEventListener('click', function(e) {
+                  if (e.target === this) {
+                      closeModal(this.id);
+                  }
+              });
+          });
+
+          // Messenger event listeners
+          const openMessagingBtn = document.getElementById('openMessaging');
+          const sendChatBtn = document.getElementById('sendChatBtn');
+          const chatInput = document.getElementById('chatInput');
+          const closeMessengerBtn = document.getElementById('closeMessenger');
+
+          if (openMessagingBtn) {
+              openMessagingBtn.addEventListener('click', openMessenger);
+          }
+          if (sendChatBtn) {
+              sendChatBtn.addEventListener('click', sendMessage);
+          }
+          if (chatInput) {
+              chatInput.addEventListener('keypress', (e) => {
+                  if (e.key === 'Enter') {
+                      sendMessage();
+                  }
+              });
+              chatInput.addEventListener('input', handleTyping);
+          }
+          if (closeMessengerBtn) {
+              closeMessengerBtn.addEventListener('click', closeMessenger);
+          }
+
+          // Fast loader
+          initializeFastLoader();
+      });
+
+      function initializeFastLoader() {
+          const loader = document.getElementById('loader');
+          const mainContent = document.getElementById('mainContent');
+
+          if (mainContent) {
+              mainContent.style.opacity = '0';
+              mainContent.style.visibility = 'hidden';
+          }
+
+          setTimeout(() => {
+              if (loader) {
+                  loader.style.opacity = '0';
+                  setTimeout(() => {
+                      loader.style.display = 'none';
+                      if (mainContent) {
+                          mainContent.style.visibility = 'visible';
+                          mainContent.style.opacity = '1';
+                          mainContent.style.transition = 'opacity 0.6s ease-out, transform 0.6s ease-out';
+                      }
+                  }, 300);
+              }
+          }, 100);
+
+          // Emergency cleanup
+          setTimeout(() => {
+              const loader = document.getElementById('loader');
+              const mainContent = document.getElementById('mainContent');
+
+              if (loader) {
+                  loader.style.display = 'none';
+              }
+              if (mainContent) {
+                  mainContent.style.visibility = 'visible';
+                  mainContent.style.opacity = '1';
+              }
+          }, 1000);
+      }
+
+      // Debug function
+      function debugAdSystem() {
+          console.log('=== AD SYSTEM DEBUG ===');
+          console.log('Active ads array:', appState.activeAds);
+          console.log('Ad shown this hour:', appState.adShownThisHour);
+          console.log('User preferences:', appState.userAdPreferences);
+          console.log('Floating ad element:', document.getElementById('floatingAd'));
+          console.log('Modal ad element:', document.getElementById('adModal'));
+          console.log('Native ad element:', document.getElementById('nativeAd'));
+
+          fetch('/ads/active')
+              .then(r => r.json())
+              .then(ads => {
+                  console.log('Direct API response:', ads);
+                  console.log('Number of ads:', ads.length);
+              })
+              .catch(err => console.log('API Error:', err));
+      }
+
+      window.debugAds = debugAdSystem;
+</script>
 
     <style>
       .read-receipt {

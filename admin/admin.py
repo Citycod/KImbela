@@ -13,6 +13,7 @@ from flask import (
 from flask_wtf.csrf import generate_csrf
 import uuid
 from io import BytesIO
+from models import User, Group, ReportedContent, Post, Comment, SponsoredAd, AdCampaign, AdPackage
 
 # from sendgrid import SendGridAPIClient
 # from sendgrid.helpers.mail import Mail, Content
@@ -89,6 +90,13 @@ cloudinary.config(
 
 admin = Blueprint("admin", __name__)
 
+
+
+
+def allowed_file(filename):
+    """Check if file extension is allowed"""
+    allowed_extensions = {"png", "jpg", "jpeg", "gif", "mp4", "mov", "avi"}
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in allowed_extensions
 
 
 

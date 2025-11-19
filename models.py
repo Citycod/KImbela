@@ -776,3 +776,121 @@ class AdPackage(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     campaigns = db.relationship("AdCampaign", backref="ad_package", lazy=True)
+    
+    
+
+
+
+
+
+
+# Add these to your existing models
+
+class MatchmakingPackage(db.Model):
+    __tablename__ = "matchmaking_packages"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text)
+    price = db.Column(db.Float, nullable=False)
+    duration_days = db.Column(db.Integer, nullable=False)
+    features = db.Column(db.Text)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    requests = db.relationship("MatchmakingRequest", backref="package", lazy=True)
+
+class MatchmakingRequest(db.Model):
+    __tablename__ = "matchmaking_requests"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    package_id = db.Column(db.Integer, db.ForeignKey("matchmaking_packages.id"), nullable=False)
+    
+    # Partner Preferences
+    min_age = db.Column(db.Integer)
+    max_age = db.Column(db.Integer)
+    partner_gender = db.Column(db.String(20))
+    partner_ethnicity = db.Column(db.String(50))
+    partner_religion = db.Column(db.String(50))
+    partner_interests = db.Column(db.Text)  # JSON string of interests
+    target_countries = db.Column(db.Text)   # JSON string of countries
+    
+    # About the user
+    about_you = db.Column(db.Text, nullable=False)
+    ideal_partner = db.Column(db.Text, nullable=False)
+    your_interests = db.Column(db.Text)     # JSON string of interests
+    lifestyles = db.Column(db.Text)         # JSON string of lifestyles
+    image = db.Column(db.Text)
+    
+    # Request details
+    status = db.Column(db.String(20), default="active")
+    start_date = db.Column(db.DateTime, default=datetime.utcnow)
+    end_date = db.Column(db.DateTime)
+    
+    # Payment
+    payment_status = db.Column(db.String(20), default="completed")
+    payment_gateway = db.Column(db.String(20))
+    payment_id = db.Column(db.String(255))
+    
+    # Tracking
+    views = db.Column(db.Integer, default=0)
+    likes = db.Column(db.Integer, default=0)
+    matches = db.Column(db.Integer, default=0)
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    user = db.relationship("User", foreign_keys=[user_id])
+    
+    def get_partner_interests(self):
+        """Parse partner interests from JSON string"""
+        if self.partner_interests:
+            return json.loads(self.partner_interests)
+        return []
+    
+    def get_target_countries(self):
+        """Parse target countries from JSON string"""
+        if self.target_countries:
+            return json.loads(self.target_countries)
+        return []
+    
+    def get_your_interests(self):
+        """Parse user interests from JSON string"""
+        if self.your_interests:
+            return json.loads(self.your_interests)
+        return []
+    
+    def get_lifestyles(self):
+        """Parse lifestyles from JSON string"""
+        if self.lifestyles:
+            return json.loads(self.lifestyles)
+        return []
+    
+    def is_active(self):
+        """Check if the request is still active"""
+        return self.status == "active" and self.end_date > datetime.utcnow()
+
+class MatchmakingLike(db.Model):
+    __tablename__ = "matchmaking_likes"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    request_id = db.Column(db.Integer, db.ForeignKey("matchmaking_requests.id"), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    user = db.relationship("User", foreign_keys=[user_id])
+    request = db.relationship("MatchmakingRequest", foreign_keys=[request_id])
+    
+    __table_args__ = (db.UniqueConstraint("user_id", "request_id", name="unique_matchmaking_like"),)
+
+class MatchmakingView(db.Model):
+    __tablename__ = "matchmaking_views"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    request_id = db.Column(db.Integer, db.ForeignKey("matchmaking_requests.id"), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    user = db.relationship("User", foreign_keys=[user_id])
+    request = db.relationship("MatchmakingRequest", foreign_keys=[request_id])
