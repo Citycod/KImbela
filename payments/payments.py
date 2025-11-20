@@ -1,4 +1,3 @@
-# payments.py
 from flask import (
     Blueprint, request, jsonify, render_template, redirect, url_for, current_app
 )
@@ -8,10 +7,15 @@ from models import User, AdCampaign, AdPackage, PaymentTransaction
 from .payment_service import PaymentService
 import cloudinary.uploader
 import os
+from email_service import EmailService 
 import json
 from datetime import datetime, timedelta
 
 payments = Blueprint("payments", __name__)
+
+
+
+
 
 @payments.route('/ad-packages')
 @login_required
@@ -19,6 +23,10 @@ def ad_packages():
     """Display available ad packages"""
     packages = AdPackage.query.filter_by(is_active=True).all()
     return render_template('packages.html', packages=packages)
+
+
+
+
 
 @payments.route('/create-campaign', methods=['POST'])
 @login_required
@@ -84,6 +92,8 @@ def create_campaign():
         db.session.add(campaign)
         db.session.commit()
         
+        current_app.logger.info(f"✅ Campaign created successfully for user {current_user.id}: {campaign.id}")
+        
         return jsonify({
             'success': True,
             'campaign_id': campaign.id,
@@ -92,8 +102,13 @@ def create_campaign():
         
     except Exception as e:
         db.session.rollback()
-        current_app.logger.error(f"Campaign creation failed: {str(e)}")
+        current_app.logger.error(f"❌ Campaign creation failed: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
+    
+    
+    
+    
+    
 
 @payments.route('/initiate-payment', methods=['POST'])
 @login_required
@@ -134,11 +149,18 @@ def initiate_payment():
                 currency=currency or 'USD'
             )
 
+        current_app.logger.info(f"✅ Payment initiated for campaign {campaign_id} by user {current_user.id}")
+
         return jsonify(result)
 
     except Exception as e:
-        current_app.logger.error(f"Payment initiation failed: {str(e)}", exc_info=True)
+        current_app.logger.error(f"❌ Payment initiation failed: {str(e)}", exc_info=True)
         return jsonify({'success': False, 'error': 'Payment initiation failed'}), 500
+    
+    
+    
+    
+    
 
 @payments.route('/upload-image', methods=['POST'])
 @login_required
@@ -162,6 +184,8 @@ def upload_image():
             quality="auto"
         )
         
+        current_app.logger.info(f"✅ Image uploaded successfully for user {current_user.id}")
+        
         return jsonify({
             'success': True,
             'image_url': upload_result['secure_url'],
@@ -169,8 +193,11 @@ def upload_image():
         })
         
     except Exception as e:
-        current_app.logger.error(f"Image upload failed: {str(e)}")
+        current_app.logger.error(f"❌ Image upload failed: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
+    
+    
+    
     
     
     
@@ -186,10 +213,10 @@ def paystack_callback():
         payment_reference = reference or trxref
         
         if not payment_reference:
-            current_app.logger.error("Paystack callback: No reference provided")
+            current_app.logger.error("❌ Paystack callback: No reference provided")
             return redirect(url_for('payments.payment_failed'))
         
-        current_app.logger.info(f"Paystack callback received for reference: {payment_reference}")
+        current_app.logger.info(f"🔄 Paystack callback received for reference: {payment_reference}")
         
         payment_service = PaymentService()
         
@@ -208,22 +235,55 @@ def paystack_callback():
                 
                 # Handle successful payment
                 if payment_service.handle_successful_payment(transaction.id, payment_data):
-                    current_app.logger.info(f"Payment successful for transaction: {transaction.id}")
-
+                    current_app.logger.info(f"✅ Payment successful for transaction: {transaction.id}")
+                    
+                    # Send success email via Gmail
+                    user = User.query.get(transaction.user_id)
+                    campaign = AdCampaign.query.get(transaction.campaign_id)
+                    package = AdPackage.query.get(campaign.package_id) if campaign else None
+                    
+                    if user and campaign and package:
+                        EmailService.send_ad_purchase_success(user, transaction, campaign, package)
+                        current_app.logger.info(f"📧 Success email queued for {user.email}")
+                    else:
+                        current_app.logger.warning(f"⚠️ Could not find user, campaign, or package for transaction {transaction.id}")
                     
                     # Redirect to success page with transaction ID
                     return redirect(url_for('payments.payment_success', transaction_id=transaction.id))
                 else:
-                    current_app.logger.error(f"Failed to handle successful payment for transaction: {transaction.id}")
+                    current_app.logger.error(f"❌ Failed to handle successful payment for transaction: {transaction.id}")
             else:
-                current_app.logger.error(f"No transaction found for reference: {payment_reference}")
+                current_app.logger.error(f"❌ No transaction found for reference: {payment_reference}")
         
-        current_app.logger.error(f"Payment verification failed for reference: {payment_reference}")
+        # If payment failed, send failure email
+        transaction = PaymentTransaction.query.filter_by(gateway_payment_id=payment_reference).first()
+        if transaction:
+            user = User.query.get(transaction.user_id)
+            campaign = AdCampaign.query.get(transaction.campaign_id)
+            package = AdPackage.query.get(campaign.package_id) if campaign else None
+            
+            if user and package:
+                EmailService.send_ad_purchase_failed(
+                    user=user,
+                    package=package,
+                    transaction=transaction,
+                    campaign=campaign,
+                    error_message="Payment verification failed or was declined"
+                )
+                current_app.logger.info(f"📧 Failure email queued for {user.email}")
+        
+        current_app.logger.error(f"❌ Payment verification failed for reference: {payment_reference}")
         return redirect(url_for('payments.payment_failed'))
         
     except Exception as e:
-        current_app.logger.error(f"Paystack callback error: {str(e)}", exc_info=True)
+        current_app.logger.error(f"❌ Paystack callback error: {str(e)}", exc_info=True)
         return redirect(url_for('payments.payment_failed'))
+    
+    
+    
+    
+    
+    
 
 @payments.route('/payment-success/<int:transaction_id>')
 @login_required
@@ -234,6 +294,7 @@ def payment_success(transaction_id):
         
         # Verify the transaction belongs to the current user
         if not transaction or transaction.user_id != current_user.id:
+            current_app.logger.warning(f"⚠️ Unauthorized access to transaction {transaction_id} by user {current_user.id}")
             return redirect(url_for('payments.payment_failed'))
         
         # Double-check that payment was actually successful
@@ -244,19 +305,29 @@ def payment_success(transaction_id):
                 verification_result = payment_service.verify_paystack_payment(transaction.gateway_payment_id)
                 if verification_result['success'] and verification_result['data']['status'] == 'success':
                     payment_service.handle_successful_payment(transaction.id, verification_result['data'])
+                    
+                    # Send success email if not already sent
+                    campaign = AdCampaign.query.get(transaction.campaign_id)
+                    package = AdPackage.query.get(campaign.package_id) if campaign else None
+                    
+                    if campaign and package:
+                        EmailService.send_ad_purchase_success(current_user, transaction, campaign, package)
+                        current_app.logger.info(f"📧 Success email sent to {current_user.email}")
                 else:
+                    current_app.logger.error(f"❌ Payment verification failed for transaction {transaction_id}")
                     return redirect(url_for('payments.payment_failed'))
         
         campaign = AdCampaign.query.get(transaction.campaign_id) if transaction.campaign_id else None
+        
+        current_app.logger.info(f"✅ User {current_user.id} viewed success page for transaction {transaction_id}")
         
         return render_template('success.html', 
                              transaction=transaction, 
                              campaign=campaign)
     
     except Exception as e:
-        current_app.logger.error(f"Payment success page error: {str(e)}")
-        return redirect(url_for('payment_failed'))
-    
+        current_app.logger.error(f"❌ Payment success page error: {str(e)}")
+        return redirect(url_for('payments.payment_failed'))
     
     
     
@@ -266,7 +337,12 @@ def payment_success(transaction_id):
 @login_required
 def payment_failed():
     """Handle failed payment"""
+    current_app.logger.info(f"⚠️ User {current_user.id} viewed payment failed page")
     return render_template('failed.html')
+
+
+
+
 
 @payments.route('/verify-payment', methods=['POST'])
 @login_required
@@ -291,17 +367,49 @@ def verify_payment():
             
             if transaction:
                 payment_service.handle_successful_payment(transaction.id, result['data'])
+                
+                # Send success email
+                campaign = AdCampaign.query.get(transaction.campaign_id)
+                package = AdPackage.query.get(campaign.package_id) if campaign else None
+                
+                if campaign and package:
+                    EmailService.send_ad_purchase_success(current_user, transaction, campaign, package)
+                
                 return jsonify({
                     'success': True,
                     'transaction_id': transaction.id,
                     'status': 'completed'
                 })
         
+        # Send failure email if payment failed
+        transaction = PaymentTransaction.query.filter_by(gateway_payment_id=reference).first()
+        if transaction:
+            campaign = AdCampaign.query.get(transaction.campaign_id)
+            package = AdPackage.query.get(campaign.package_id) if campaign else None
+            
+            if package:
+                EmailService.send_ad_purchase_failed(
+                    user=current_user,
+                    package=package,
+                    transaction=transaction,
+                    campaign=campaign,
+                    error_message="Payment verification failed"
+                )
+        
         return jsonify({'success': False, 'error': 'Payment verification failed'})
         
     except Exception as e:
-        current_app.logger.error(f"Payment verification error: {str(e)}")
+        current_app.logger.error(f"❌ Payment verification error: {str(e)}")
         return jsonify({'success': False, 'error': str(e)})
+    
+    
+    
+    
+    
+    
+
+    
+    
 
 @payments.route('/update-payment-status', methods=['POST'])
 @login_required

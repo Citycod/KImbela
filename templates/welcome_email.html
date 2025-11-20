@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Kimbela</title>
+    <style>
+        /* Base styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f7f9fc;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        }
+        
+        /* Header section with gradient */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .header:after {
+            content: '';
+            position: absolute;
+            bottom: -20px;
+            left: 0;
+            width: 100%;
+            height: 40px;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 120' preserveAspectRatio='none'%3E%3Cpath d='M1200 120L0 16.48 0 0 1200 0 1200 120z' fill='%23ffffff'%3E%3C/path%3E%3C/svg%3E");
+            background-size: cover;
+        }
+        
+        .logo {
+            width: 160px;
+            height: 160px;
+            margin: 0 auto 20px;
+            background-color: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .logo img {
+            width: 140px;
+            height: 140px;
+            object-fit: contain;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        
+        .header p {
+            margin: 10px 0 0;
+            font-size: 18px;
+            opacity: 0.9;
+        }
+        
+        /* Content section */
+        .content {
+            padding: 50px 40px 40px;
+            background-color: #ffffff;
+        }
+        
+        .welcome-text {
+            font-size: 20px;
+            margin-bottom: 25px;
+            color: #2d3748;
+            font-weight: 500;
+        }
+        
+        .intro-text {
+            font-size: 16px;
+            margin-bottom: 30px;
+            color: #4a5568;
+            line-height: 1.7;
+        }
+        
+        /* OTP section */
+        .otp-section {
+            background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
+            border-radius: 12px;
+            padding: 25px;
+            margin: 30px 0;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .otp-label {
+            font-size: 16px;
+            color: #4a5568;
+            margin-bottom: 15px;
+        }
+        
+        .otp-code {
+            font-size: 42px;
+            font-weight: 700;
+            letter-spacing: 8px;
+            color: #667eea;
+            margin: 15px 0;
+            padding: 10px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+            display: inline-block;
+            min-width: 280px;
+        }
+        
+        .otp-note {
+            font-size: 14px;
+            color: #718096;
+            margin-top: 15px;
+        }
+        
+        /* Features section */
+        .features {
+            margin: 35px 0;
+        }
+        
+        .features h3 {
+            color: #2d3748;
+            font-size: 22px;
+            margin-bottom: 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .features h3:after {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 10px auto;
+            border-radius: 2px;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 12px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .feature-item:hover {
+            background-color: #f7f9fc;
+            transform: translateY(-2px);
+        }
+        
+        .feature-icon {
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        
+        .feature-icon svg {
+            width: 12px;
+            height: 12px;
+            fill: white;
+        }
+        
+        .feature-text {
+            font-size: 14px;
+            color: #4a5568;
+        }
+        
+        /* CTA section */
+        .cta-section {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 16px 40px;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 16px;
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.5);
+        }
+        
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 30px 40px;
+            background-color: #f8f9fa;
+            border-top: 1px solid #e2e8f0;
+            color: #718096;
+            font-size: 14px;
+        }
+        
+        .social-links {
+            margin: 20px 0;
+        }
+        
+        .social-link {
+            display: inline-block;
+            margin: 0 10px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: #e2e8f0;
+            color: #667eea;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .social-link:hover {
+            background-color: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .footer-links {
+            margin: 15px 0;
+        }
+        
+        .footer-links a {
+            color: #667eea;
+            text-decoration: none;
+            margin: 0 10px;
+            font-size: 13px;
+        }
+        
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+        
+        .copyright {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #a0aec0;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            .container {
+                margin: 10px;
+                border-radius: 12px;
+            }
+            
+            .header {
+                padding: 30px 20px;
+            }
+            
+            .content {
+                padding: 40px 25px 30px;
+            }
+            
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .otp-code {
+                font-size: 36px;
+                letter-spacing: 6px;
+                min-width: 240px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            
+            <h1>Welcome to Kimbela!</h1>
+            <p>Where meaningful connections begin</p>
+        </div>
+        
+        <div class="content">
+            <p class="welcome-text">Dear {{ user.first_name }} {{ user.last_name }},</p>
+            
+            <p class="intro-text">Welcome to Kimbela! We're thrilled to have you as part of our community of mature singles looking for meaningful connections. Your journey to finding genuine relationships starts here.</p>
+            
+            <!-- OTP Verification Section -->
+            <div class="otp-section">
+                <div class="otp-label">To verify your email address and activate your account, please use the following 6-digit code:</div>
+                <div class="otp-code">{{ otp }}</div>
+                <div class="otp-note">This code will expire in 30 minutes for security reasons.</div>
+            </div>
+            
+            <div class="features">
+                <h3>Your Kimbela Experience Awaits</h3>
+                <div class="feature-grid">
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                            </svg>
+                        </div>
+                        <div class="feature-text">Complete your profile to get better matches</div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                            </svg>
+                        </div>
+                        <div class="feature-text">Browse compatible partners in your area</div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                            </svg>
+                        </div>
+                        <div class="feature-text">Send and receive messages with verified users</div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/>
+                            </svg>
+                        </div>
+                        <div class="feature-text">Join community events and activities</div>
+                    </div>
+                </div>
+            </div>
+
+            <p style="text-align: center; color: #4a5568; margin: 25px 0;">To get started, complete your profile and upload a profile picture to increase your matches!</p>
+            
+            <div class="cta-section">
+                <a href="{{ url_for('user.profile', _external=True, user_id=user.id) }}" class="cta-button">Complete Your Profile</a>
+            </div>
+
+            <p style="text-align: center; color: #4a5568; margin-top: 30px;"><strong>Need help?</strong> Our support team is here to assist you with any questions at support@kimbela.com</p>
+        </div>
+        
+        <div class="footer">
+            
+            
+            <div class="footer-links">
+                <a href="#">About Us</a>
+                <a href="#">Privacy Policy</a>
+                <a href="#">Terms of Service</a>
+                <a href="#">Contact Support</a>
+            </div>
+            
+            <div class="copyright">
+                <p>© 2024 Kimbela. All rights reserved.</p>
+                <p>If you have any questions, contact us at support@kimbela.com</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

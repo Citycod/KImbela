@@ -73,6 +73,11 @@ from dotenv import load_dotenv
 from flask import jsonify, request
 from random import sample
 from datetime import datetime
+from flask_limiter.util import get_remote_address
+from flask_limiter import Limiter
+
+
+limiter = Limiter(key_func=get_remote_address)
 
 
 load_dotenv()
@@ -98,6 +103,11 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
+MAIL_USERNAME=os.getenv("MAIL_USERNAME")
+MAIL_PASSWORD=os.getenv("MAIL_PASSWORD")
+MAIL_PORT=os.getenv("MAIL_PORT")
+MAIL_SERVER=os.getenv("MAIL_SERVER")
+MAIL_DEFAULT_SENDER=os.getenv("MAIL_DEFAULT_SENDER")
 
 
 
@@ -148,7 +158,97 @@ def calculate_age(birth_date):
 
 
 
+# @auth.route("/test-email",  methods=["GET", "POST"])
+# def test_email():
+#     """Test email functionality with real SMTP sending"""
+#     if request.method == "POST":
+#         test_email = request.form.get("test_email", "").strip() or "test@example.com"
+        
+#         try:
+#             print("\n" + "=" * 70)
+#             print("🧪 REAL EMAIL TEST STARTING")
+#             print("=" * 70)
+#             print(f"📧 Target: {test_email}")
+#             print(f"🔌 SMTP Server: localhost:1025")
+#             print("=" * 70)
+            
+#             # Create mock user
+#             class MockUser:
+#                 def __init__(self, email):
+#                     self.first_name = "Test"
+#                     self.last_name = "User" 
+#                     self.email = email
+            
+#             mock_user = MockUser(test_email)
+
+#             # Test 1: Send verification email
+#             print("📨 Sending Verification Email...")
+#             msg_verify = Message(
+#                 subject="Kimbela Verification Code - TEST",
+#                 sender=current_app.config["MAIL_DEFAULT_SENDER"],
+#                 recipients=[test_email],
+#             )
+            
+#             # Use the template
+#             try:
+#                 msg_verify.html = render_template("verify.html", user=mock_user, otp="123456")
+#                 print("   ✅ Template rendered successfully")
+#             except Exception as e:
+#                 print(f"   ❌ Template failed: {e}")
+#                 # Fallback
+#                 msg_verify.body = f"Your verification code is: 123456"
+            
+#             mail.send(msg_verify)
+#             print("   ✅ Verification email SENT to SMTP server!")
+#             print()
+            
+#             # Test 2: Send welcome email
+#             print("📨 Sending Welcome Email...")
+#             msg_welcome = Message(
+#                 subject="Welcome to Kimbela! - TEST",
+#                 sender=current_app.config["MAIL_DEFAULT_SENDER"],
+#                 recipients=[test_email],
+#             )
+            
+#             # Use the template
+#             try:
+#                 msg_welcome.html = render_template("verify.html", user=mock_user)
+#                 print("   ✅ Template rendered successfully")
+#             except Exception as e:
+#                 print(f"   ❌ Template failed: {e}")
+#                 # Fallback
+#                 msg_welcome.body = f"Welcome to Kimbela, {mock_user.first_name}!"
+            
+#             mail.send(msg_welcome)
+#             print("   ✅ Welcome email SENT to SMTP server!")
+#             print()
+            
+#             print("=" * 70)
+#             print("🎉 REAL EMAIL TEST COMPLETED!")
+#             print("📩 Check your SMTP debug server terminal for email output")
+#             print("=" * 70)
+            
+#             flash("✅ Real emails sent successfully! Check the debug server terminal.", "success")
+            
+#         except Exception as e:
+#             error_msg = f"❌ Email sending failed: {str(e)}"
+#             print(f"ERROR: {e}")
+#             flash(error_msg, "danger")
+            
+#             # Check if debug server is running
+#             flash("💡 Make sure 'python3 modern_smtp_debug.py' is running in another terminal", "info")
+        
+#         return render_template("test_email.html")
+    
+#     return render_template("test_email.html")
+
+
+
+
+
+
 @auth.route("/register", methods=["GET", "POST"])
+@limiter.limit("5 per minute")
 def register():
     # Define options for dropdowns
     EDUCATIONAL_LEVELS = [
@@ -161,7 +261,8 @@ def register():
         "Master's Degree",
         "PhD or Doctorate",
         "Professional Degree",
-        "No Formal Education" "Other",
+        "No Formal Education",
+        "Other"
     ]
 
     INTERESTS_LIST = [
@@ -446,7 +547,7 @@ def register():
                     recipients=[email],
                 )
                 msg.html = render_template(
-                    "emails/verify_email.html", user=user, otp=otp
+                    "welcome_email.html", user=user, otp=user.otp
                 )
                 mail.send(msg)
                 flash("Check your email for the 6-digit verification code.", "success")
@@ -507,7 +608,7 @@ def verify_page():
         token = request.form.get("token", "").strip()
         if user.otp != token:
             flash("Invalid token.", "danger")
-            return render_template("verify.html", email=email)
+            return render_template("verify.html", email=email, user=user)
 
         # Token is correct → activate
         if user.otp_expires < datetime.utcnow():
@@ -519,11 +620,27 @@ def verify_page():
         user.otp_expires = None
         db.session.commit()
 
-        flash("Email verified! You can now log in.", "success")
+        # === Send Welcome Email ===
+        try:
+            msg = Message(
+                subject="Welcome to Kimbela! Start Your Journey",
+                sender=current_app.config["MAIL_DEFAULT_SENDER"],
+                recipients=[email],
+            )
+            msg.html = render_template(
+                "welcome_email.html", user=user
+            )
+            mail.send(msg)
+            print(f"Welcome email sent to {email}")
+        except Exception as e:
+            print(f"Welcome email send failed: {e}")
+            # Don't flash error to user since verification was successful
+
+        flash("Email verified! Welcome to Kimbela! Check your email for a welcome message.", "success")
         return redirect(url_for("auth.login"))
 
     # GET – show the form
-    return render_template("verify.html", email=email)
+    return render_template("verify.html", email=email, user=user)
 
 
 @auth.route("/resend-verification")
@@ -544,7 +661,7 @@ def resend_verification():
         recipients=[email],
     )
     msg.html = render_template(
-        "emails/verify_email.html", user=user, verify_url=verify_url
+        "verify.html", user=user, verify_url=verify_url
     )
     mail.send(msg)
 

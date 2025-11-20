@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ad Purchase Confirmation</title>
+    <style>
+        /* Base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 30px;
+            text-align: center;
+            color: white;
+            position: relative;
+        }
+        
+        .header:after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 100%;
+            height: 20px;
+            background: white;
+            border-radius: 20px 20px 0 0;
+        }
+        
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 36px;
+        }
+        
+        .header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+        
+        /* Content */
+        .content {
+            padding: 40px;
+        }
+        
+        .greeting {
+            font-size: 20px;
+            color: #2d3748;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+        
+        .confirmation-text {
+            font-size: 16px;
+            color: #4a5568;
+            margin-bottom: 30px;
+            line-height: 1.7;
+        }
+        
+        /* Ad Details Card */
+        .details-card {
+            background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px 0;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .details-card h3 {
+            color: #2d3748;
+            font-size: 22px;
+            margin-bottom: 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .details-card h3:after {
+            content: '';
+            display: block;
+            width: 50px;
+            height: 3px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 10px auto;
+            border-radius: 2px;
+        }
+        
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        
+        .detail-label {
+            font-weight: 600;
+            color: #4a5568;
+        }
+        
+        .detail-value {
+            color: #2d3748;
+            font-weight: 500;
+        }
+        
+        .highlight {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
+        }
+        
+        /* Campaign Preview */
+        .campaign-preview {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 25px 0;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        
+        .campaign-preview h4 {
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        .ad-image {
+            width: 100%;
+            height: 200px;
+            background: #f7f9fc;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+        
+        .ad-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .ad-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+        
+        .ad-description {
+            color: #4a5568;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        
+        .ad-url {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        /* Next Steps */
+        .next-steps {
+            background: #f0fff4;
+            border: 1px solid #9ae6b4;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+        
+        .next-steps h4 {
+            color: #2f855a;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        .steps-list {
+            list-style: none;
+        }
+        
+        .steps-list li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+            color: #2d3748;
+        }
+        
+        .steps-list li:before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #48bb78;
+            font-weight: bold;
+        }
+        
+        /* CTA */
+        .cta-section {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 16px 40px;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 16px;
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.5);
+        }
+        
+        /* Footer */
+        .footer {
+            background: #f8f9fa;
+            padding: 30px 40px;
+            text-align: center;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        .support-info {
+            color: #718096;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        
+        .social-links {
+            margin: 20px 0;
+        }
+        
+        .social-link {
+            display: inline-block;
+            margin: 0 8px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            color: #667eea;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .social-link:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .copyright {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #a0aec0;
+        }
+        
+        /* Responsive */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            
+            .content {
+                padding: 25px;
+            }
+            
+            .header {
+                padding: 30px 20px;
+            }
+            
+            .header h1 {
+                font-size: 28px;
+            }
+            
+            .detail-row {
+                flex-direction: column;
+            }
+            
+            .detail-value {
+                margin-top: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+                            <img src="{{ url_for('static', filename='assets/img/kim.png') }}" alt="" style="width: 13rem; height: 13rem" />
+
+            <h1>Ad Purchase Confirmed!</h1>
+            <p>Your advertising campaign is now active</p>
+        </div>
+        
+        <div class="content">
+            <p class="greeting">Dear {{ user.first_name }},</p>
+            
+            <p class="confirmation-text">
+                Thank you for purchasing an ad package on Kimbela! Your payment has been successfully processed 
+                and your advertising campaign is now active. Here are the details of your purchase:
+            </p>
+            
+            <!-- Ad Package Details -->
+            <div class="details-card">
+                <h3>Purchase Details</h3>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Package Name:</span>
+                    <span class="detail-value highlight">{{ package.name }}</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Amount Paid:</span>
+                    <span class="detail-value highlight">${{ "%.2f"|format(transaction.amount) }}</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Transaction ID:</span>
+                    <span class="detail-value">{{ transaction.gateway_payment_id }}</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Purchase Date:</span>
+                    <span class="detail-value">{{ transaction.created_at.strftime('%B %d, %Y at %H:%M') }}</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Campaign Duration:</span>
+                    <span class="detail-value">{{ package.duration_days }} days</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Impressions Included:</span>
+                    <span class="detail-value">{{ package.impressions|default('Unlimited') }}</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Target Audience:</span>
+                    <span class="detail-value">{{ campaign.target_audience|title }}</span>
+                </div>
+            </div>
+            
+            <!-- Campaign Preview -->
+            <div class="campaign-preview">
+                <h4>Your Ad Campaign</h4>
+                
+                {% if campaign.image %}
+                <div class="ad-image">
+                    <img src="{{ campaign.image }}" alt="{{ campaign.title }}">
+                </div>
+                {% endif %}
+                
+                <div class="ad-title">{{ campaign.title }}</div>
+                
+                {% if campaign.description %}
+                <div class="ad-description">{{ campaign.description }}</div>
+                {% endif %}
+                
+                <div>
+                    <strong>Destination URL:</strong> 
+                    <a href="{{ campaign.target_url }}" class="ad-url" target="_blank">{{ campaign.target_url }}</a>
+                </div>
+                
+                <div style="margin-top: 10px;">
+                    <strong>Call to Action:</strong> {{ campaign.call_to_action }}
+                </div>
+            </div>
+            
+            <!-- Next Steps -->
+            <div class="next-steps">
+                <h4>What Happens Next?</h4>
+                <ul class="steps-list">
+                    <li>Your ad is now live and visible to our community</li>
+                    <li>We'll start showing your ad to relevant users immediately</li>
+                    <li>Your ad will run for {{ package.duration_days }} days</li>
+                </ul>
+            </div>
+            
+            <div class="cta-section">
+                <a href="{{ url_for('user.user_dashboard', _external=True) }}" class="cta-button">
+                    View Your Dashboard
+                </a>
+            </div>
+            
+            <p style="text-align: center; color: #4a5568; margin-top: 20px;">
+                Need to make changes to your campaign? Visit your dashboard to manage your ads.
+            </p>
+        </div>
+        
+        <div class="footer">
+            <div class="support-info">
+                <strong>Need help?</strong> Contact our support team at support@kimbela.com
+            </div>
+            
+            
+            
+            <div class="copyright">
+                <p>© 2024 Kimbela. All rights reserved.</p>
+                <p>This email was sent to {{ user.email }} regarding your recent ad purchase.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
