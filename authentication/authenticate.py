@@ -158,89 +158,89 @@ def calculate_age(birth_date):
 
 
 
-# @auth.route("/test-email",  methods=["GET", "POST"])
-# def test_email():
-#     """Test email functionality with real SMTP sending"""
-#     if request.method == "POST":
-#         test_email = request.form.get("test_email", "").strip() or "test@example.com"
+@auth.route("/test-email",  methods=["GET", "POST"])
+def test_email():
+    """Test email functionality with real SMTP sending"""
+    if request.method == "POST":
+        test_email = request.form.get("test_email", "").strip() or "test@example.com"
         
-#         try:
-#             print("\n" + "=" * 70)
-#             print("🧪 REAL EMAIL TEST STARTING")
-#             print("=" * 70)
-#             print(f"📧 Target: {test_email}")
-#             print(f"🔌 SMTP Server: localhost:1025")
-#             print("=" * 70)
+        try:
+            print("\n" + "=" * 70)
+            print("🧪 REAL EMAIL TEST STARTING")
+            print("=" * 70)
+            print(f"📧 Target: {test_email}")
+            print(f"🔌 SMTP Server: localhost:1025")
+            print("=" * 70)
             
-#             # Create mock user
-#             class MockUser:
-#                 def __init__(self, email):
-#                     self.first_name = "Test"
-#                     self.last_name = "User" 
-#                     self.email = email
+            # Create mock user
+            class MockUser:
+                def __init__(self, email):
+                    self.first_name = "Test"
+                    self.last_name = "User" 
+                    self.email = email
             
-#             mock_user = MockUser(test_email)
+            mock_user = MockUser(test_email)
 
-#             # Test 1: Send verification email
-#             print("📨 Sending Verification Email...")
-#             msg_verify = Message(
-#                 subject="Kimbela Verification Code - TEST",
-#                 sender=current_app.config["MAIL_DEFAULT_SENDER"],
-#                 recipients=[test_email],
-#             )
+            # Test 1: Send verification email
+            print("📨 Sending Verification Email...")
+            msg_verify = Message(
+                subject="Kimbela Verification Code - TEST",
+                sender=current_app.config["MAIL_DEFAULT_SENDER"],
+                recipients=[test_email],
+            )
             
-#             # Use the template
-#             try:
-#                 msg_verify.html = render_template("verify.html", user=mock_user, otp="123456")
-#                 print("   ✅ Template rendered successfully")
-#             except Exception as e:
-#                 print(f"   ❌ Template failed: {e}")
-#                 # Fallback
-#                 msg_verify.body = f"Your verification code is: 123456"
+            # Use the template
+            try:
+                msg_verify.html = render_template("verify.html", user=mock_user, otp="123456")
+                print("   ✅ Template rendered successfully")
+            except Exception as e:
+                print(f"   ❌ Template failed: {e}")
+                # Fallback
+                msg_verify.body = f"Your verification code is: 123456"
             
-#             mail.send(msg_verify)
-#             print("   ✅ Verification email SENT to SMTP server!")
-#             print()
+            mail.send(msg_verify)
+            print("   ✅ Verification email SENT to SMTP server!")
+            print()
             
-#             # Test 2: Send welcome email
-#             print("📨 Sending Welcome Email...")
-#             msg_welcome = Message(
-#                 subject="Welcome to Kimbela! - TEST",
-#                 sender=current_app.config["MAIL_DEFAULT_SENDER"],
-#                 recipients=[test_email],
-#             )
+            # Test 2: Send welcome email
+            print("📨 Sending Welcome Email...")
+            msg_welcome = Message(
+                subject="Welcome to Kimbela! - TEST",
+                sender=current_app.config["MAIL_DEFAULT_SENDER"],
+                recipients=[test_email],
+            )
             
-#             # Use the template
-#             try:
-#                 msg_welcome.html = render_template("verify.html", user=mock_user)
-#                 print("   ✅ Template rendered successfully")
-#             except Exception as e:
-#                 print(f"   ❌ Template failed: {e}")
-#                 # Fallback
-#                 msg_welcome.body = f"Welcome to Kimbela, {mock_user.first_name}!"
+            # Use the template
+            try:
+                msg_welcome.html = render_template("verify.html", user=mock_user)
+                print("   ✅ Template rendered successfully")
+            except Exception as e:
+                print(f"   ❌ Template failed: {e}")
+                # Fallback
+                msg_welcome.body = f"Welcome to Kimbela, {mock_user.first_name}!"
             
-#             mail.send(msg_welcome)
-#             print("   ✅ Welcome email SENT to SMTP server!")
-#             print()
+            mail.send(msg_welcome)
+            print("   ✅ Welcome email SENT to SMTP server!")
+            print()
             
-#             print("=" * 70)
-#             print("🎉 REAL EMAIL TEST COMPLETED!")
-#             print("📩 Check your SMTP debug server terminal for email output")
-#             print("=" * 70)
+            print("=" * 70)
+            print("🎉 REAL EMAIL TEST COMPLETED!")
+            print("📩 Check your SMTP debug server terminal for email output")
+            print("=" * 70)
             
-#             flash("✅ Real emails sent successfully! Check the debug server terminal.", "success")
+            flash("✅ Real emails sent successfully! Check the debug server terminal.", "success")
             
-#         except Exception as e:
-#             error_msg = f"❌ Email sending failed: {str(e)}"
-#             print(f"ERROR: {e}")
-#             flash(error_msg, "danger")
+        except Exception as e:
+            error_msg = f"❌ Email sending failed: {str(e)}"
+            print(f"ERROR: {e}")
+            flash(error_msg, "danger")
             
-#             # Check if debug server is running
-#             flash("💡 Make sure 'python3 modern_smtp_debug.py' is running in another terminal", "info")
+            # Check if debug server is running
+            flash("💡 Make sure 'python3 modern_smtp_debug.py' is running in another terminal", "info")
         
-#         return render_template("test_email.html")
+        return render_template("test_email.html")
     
-#     return render_template("test_email.html")
+    return render_template("test_email.html")
 
 
 

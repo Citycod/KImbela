@@ -712,6 +712,7 @@ class Reaction(db.Model):
     
     
 # Add these new models to your existing models.py
+# Add these new models to your existing models.py
 class AdCampaign(db.Model):
     __tablename__ = "ad_campaigns"
     
@@ -730,7 +731,7 @@ class AdCampaign(db.Model):
     start_date = db.Column(db.DateTime)
     end_date = db.Column(db.DateTime)
     budget = db.Column(db.Float, nullable=False)  # Total budget
-    daily_budget = db.Column(db.Float, nullable=False)  # Daily budget - ADD THIS
+    daily_budget = db.Column(db.Float, nullable=False)  # Daily budget
     duration_days = db.Column(db.Integer, nullable=False)
     
     # Tracking
@@ -742,9 +743,10 @@ class AdCampaign(db.Model):
     payment_status = db.Column(db.String(20), default="pending")
     payment_gateway = db.Column(db.String(20))
     payment_id = db.Column(db.String(255))
-    currency = db.Column(db.String(3), default="USD")
+    currency = db.Column(db.String(3), default="USD")  # ✅ ADDED currency field
     
-    # Targeting fields
+    # ✅ ADDED ALL TARGETING FIELDS
+    # Demographic targeting
     target_gender = db.Column(db.Text)  # JSON string of genders
     target_age_min = db.Column(db.Integer, default=18)
     target_age_max = db.Column(db.Integer, default=65)
@@ -753,6 +755,11 @@ class AdCampaign(db.Model):
     target_education = db.Column(db.Text)  # JSON string of education levels
     target_occupation = db.Column(db.Text)  # JSON string of occupations
     target_relationship = db.Column(db.Text)  # JSON string of relationship statuses
+    target_language = db.Column(db.String(50))  # Single language
+    
+    # Additional targeting fields
+    target_devices = db.Column(db.Text)  # JSON string of devices
+    target_platforms = db.Column(db.Text)  # JSON string of platforms
     
     # Expiration tracking
     expiry_notification_sent = db.Column(db.Boolean, default=False)
@@ -762,6 +769,28 @@ class AdCampaign(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     user = db.relationship("User", back_populates="campaigns")
+    transactions = db.relationship(
+        "PaymentTransaction",
+        back_populates="campaign",
+        lazy=True,
+        cascade="all, delete"
+    )
+
+    def get_targeting_data(self):
+        """Return targeting data as a dictionary"""
+        return {
+            'gender': json.loads(self.target_gender) if self.target_gender else [],
+            'age_min': self.target_age_min,
+            'age_max': self.target_age_max,
+            'countries': json.loads(self.target_countries) if self.target_countries else [],
+            'interests': json.loads(self.target_interests) if self.target_interests else [],
+            'education': json.loads(self.target_education) if self.target_education else [],
+            'occupation': json.loads(self.target_occupation) if self.target_occupation else [],
+            'relationship': json.loads(self.target_relationship) if self.target_relationship else [],
+            'language': self.target_language,
+            'devices': json.loads(self.target_devices) if self.target_devices else [],
+            'platforms': json.loads(self.target_platforms) if self.target_platforms else []
+        }
     
     
 
@@ -789,8 +818,8 @@ class PaymentTransaction(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    user = db.relationship("User", foreign_keys=[user_id])
-    campaign = db.relationship("AdCampaign", foreign_keys=[campaign_id])
+    user = db.relationship("User",  back_populates="transactions", foreign_keys=[user_id])
+    campaign = db.relationship("AdCampaign", back_populates="transactions", foreign_keys=[campaign_id])
 
 class AdPackage(db.Model):
     __tablename__ = "ad_packages"

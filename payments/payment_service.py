@@ -5,7 +5,7 @@ from extensions import db
 from models import PaymentTransaction, AdCampaign, User
 import logging
 import os, time
-from datetime import datetime
+from datetime import datetime, timedelta  # ✅ ADDED timedelta import
 from flask_mail import Message
 from extensions import mail
 
@@ -19,21 +19,24 @@ class PaymentService:
         self.flutterwave_base_url = "https://api.flutterwave.com/v3" 
     
     def create_flutterwave_transaction(self, user, campaign, amount, currency='USD'):
-        """Create a Flutterwave payment transaction - DEBUG VERSION"""
+        """Create a Flutterwave payment transaction - UPDATED CALLBACK URL"""
         try:
             print(f"🟡 [FLUTTERWAVE] Starting transaction creation")
-            print(f"🟡 [FLUTTERWAVE] User: {user.email}, Campaign: {campaign.title}, Amount: {amount}, Currency: {currency}")
             
             # Generate unique transaction reference
             tx_ref = f"KIMBELA_AD_{campaign.id}_{int(time.time())}"
             print(f"🟡 [FLUTTERWAVE] Generated tx_ref: {tx_ref}")
             
+            # ✅ IMPORTANT: Use Flutterwave callback URL, not Paystack
+            redirect_url = url_for('payments.flutterwave_callback', _external=True)
+            print(f"🟡 [FLUTTERWAVE] Callback URL: {redirect_url}")
+            
             # Prepare payment data
             payment_data = {
                 "tx_ref": tx_ref,
-                "amount": float(amount),  # Flutterwave expects string amount
+                "amount": str(float(amount)),  # Flutterwave expects string amount
                 "currency": currency,
-                "redirect_url": url_for('payments.paystack_callback', _external=True),
+                "redirect_url": redirect_url,  # ✅ Use Flutterwave callback
                 "customer": {
                     "email": user.email,
                     "name": user.first_name or user.email.split('@')[0]
@@ -49,11 +52,9 @@ class PaymentService:
                 }
             }
             
+            # Rest of your existing code remains the same...
             print(f"🟡 [FLUTTERWAVE] Payment data prepared: {payment_data}")
-            print(f"🟡 [FLUTTERWAVE] Flutterwave API URL: {self.flutterwave_base_url}/payments")
-            print(f"🟡 [FLUTTERWAVE] Using Secret Key: {self.flutterwave_secret_key[:10]}...")
             
-            # Make API request to Flutterwave
             headers = {
                 'Authorization': f'Bearer {self.flutterwave_secret_key}',
                 'Content-Type': 'application/json'
@@ -173,7 +174,7 @@ class PaymentService:
             }
 
     def handle_successful_payment(self, transaction_id, payment_data=None):
-        """Handle successful payment - UPDATED"""
+        """Handle successful payment - FIXED"""
         try:
             transaction = PaymentTransaction.query.get(transaction_id)
             if not transaction:
@@ -197,23 +198,25 @@ class PaymentService:
                 campaign.payment_id = transaction.gateway_payment_id
                 campaign.start_date = datetime.utcnow()
                 
+                # ✅ FIXED: timedelta is now imported
                 # Calculate end date based on duration_days
-                duration_days = campaign.duration_days
+                duration_days = getattr(campaign, 'duration_days', 30)  # Default to 30 days if not set
                 campaign.end_date = datetime.utcnow() + timedelta(days=duration_days)
                 campaign.updated_at = datetime.utcnow()
                 
-                current_app.logger.info(f"Updated campaign {campaign.id} to active for {duration_days} days")
+                current_app.logger.info(f"✅ Updated campaign {campaign.id} to active for {duration_days} days")
                 
-                # Send success email
+                # Send success email using our internal method
                 self.send_payment_success_email(transaction.user_id, campaign, transaction)
             else:
-                current_app.logger.error(f"Campaign not found for transaction: {transaction_id}")
+                current_app.logger.error(f"❌ Campaign not found for transaction: {transaction_id}")
             
             db.session.commit()
+            current_app.logger.info(f"✅ Payment handling completed successfully for transaction: {transaction_id}")
             return True
             
         except Exception as e:
-            current_app.logger.error(f"Payment handling failed: {str(e)}", exc_info=True)
+            current_app.logger.error(f"❌ Payment handling failed: {str(e)}", exc_info=True)
             db.session.rollback()
             return False
 
@@ -237,7 +240,7 @@ class PaymentService:
                 campaign.status = 'pending'
                 campaign.updated_at = datetime.utcnow()
                 
-                # Send failure email
+                # Send failure email using our internal method
                 self.send_payment_failed_email(transaction.user_id, campaign, transaction)
             
             db.session.commit()
@@ -257,7 +260,7 @@ class PaymentService:
             
             # Calculate expiry date
             expiry_date = campaign.end_date.strftime('%B %d, %Y')
-            duration_days = campaign.duration_days
+            duration_days = getattr(campaign, 'duration_days', 30)
             
             subject = "🎉 Your Kimbela Ad Campaign is Live!"
             
@@ -288,22 +291,18 @@ class PaymentService:
                             <h3>📊 Campaign Details</h3>
                             <p><strong>Campaign Title:</strong> {campaign.title}</p>
                             <p><strong>Description:</strong> {campaign.description or 'N/A'}</p>
-                            <p><strong>Daily Budget:</strong> ${transaction.amount:.2f} {transaction.currency}</p>
+                            <p><strong>Total Amount:</strong> {transaction.amount:.2f} {transaction.currency}</p>
                             <p><strong>Duration:</strong> {duration_days} days</p>
                             <p><strong>Start Date:</strong> {campaign.start_date.strftime('%B %d, %Y')}</p>
                             <p><strong>Expiry Date:</strong> {expiry_date}</p>
-                            <p><strong>Total Amount Paid:</strong> ${transaction.amount * duration_days:.2f} {transaction.currency}</p>
                         </div>
                         
                         <div class="details">
                             <h3>📈 What's Next?</h3>
-                            <p>• Your ad is now visible to our community</p>
-                            <p>• Track performance in your dashboard</p>
-                            <p>• Monitor impressions and clicks in real-time</p>
+                            <p>• Your ad is now visible to our community</p>                           
                             <p>• Campaign will automatically end on {expiry_date}</p>
                         </div>
                         
-                        <p>You can view your campaign performance and analytics from your <a href="{current_app.config.get('BASE_URL', 'http://localhost:5000')}/user/dashboard">dashboard</a>.</p>
                         
                         <p>Need help? Contact our support team anytime.</p>
                         
@@ -325,11 +324,11 @@ class PaymentService:
             )
             
             mail.send(msg)
-            current_app.logger.info(f"Success email sent to {user.email}")
+            current_app.logger.info(f"✅ Success email sent to {user.email}")
             return True
             
         except Exception as e:
-            current_app.logger.error(f"Failed to send success email: {str(e)}")
+            current_app.logger.error(f"❌ Failed to send success email: {str(e)}")
             return False
 
     def send_payment_failed_email(self, user_id, campaign, transaction):
@@ -388,9 +387,9 @@ class PaymentService:
             )
             
             mail.send(msg)
-            current_app.logger.info(f"Failure email sent to {user.email}")
+            current_app.logger.info(f"✅ Failure email sent to {user.email}")
             return True
             
         except Exception as e:
-            current_app.logger.error(f"Failed to send failure email: {str(e)}")
+            current_app.logger.error(f"❌ Failed to send failure email: {str(e)}")
             return False

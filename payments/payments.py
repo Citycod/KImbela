@@ -203,31 +203,37 @@ def upload_image():
     
     
 
-@payments.route('/paystack/callback')
-def paystack_callback():
-    """Paystack payment callback - this can be accessed without login"""
+@payments.route('/flutterwave/callback', methods=['GET'])
+def flutterwave_callback():
+    """Flutterwave payment callback - this can be accessed without login"""
     try:
-        reference = request.args.get('reference')
-        trxref = request.args.get('trxref')
+        # Flutterwave passes these parameters
+        status = request.args.get('status')
+        tx_ref = request.args.get('tx_ref')
+        transaction_id = request.args.get('transaction_id')
         
-        # Use reference or trxref (Paystack uses both)
-        payment_reference = reference or trxref
+        print(f"🟡 [FLUTTERWAVE CALLBACK] Received - status: {status}, tx_ref: {tx_ref}, transaction_id: {transaction_id}")
+        
+        # Use transaction_id or tx_ref for verification
+        payment_reference = transaction_id or tx_ref
         
         if not payment_reference:
-            current_app.logger.error("❌ Paystack callback: No reference provided")
+            current_app.logger.error("❌ Flutterwave callback: No reference provided")
             return redirect(url_for('payments.payment_failed'))
         
-        current_app.logger.info(f"🔄 Paystack callback received for reference: {payment_reference}")
+        current_app.logger.info(f"🔄 Flutterwave callback received for reference: {payment_reference}")
         
         payment_service = PaymentService()
         
-        # Verify payment with Paystack
-        verification_result = payment_service.verify_paystack_payment(payment_reference)
+        # Verify payment with Flutterwave
+        verification_result = payment_service.verify_flutterwave_payment(payment_reference)
         
-        if verification_result['success'] and verification_result['data']['status'] == 'success':
-            # Find transaction
+        print(f"🟡 [FLUTTERWAVE CALLBACK] Verification result: {verification_result}")
+        
+        if verification_result['success'] and verification_result['data'].get('status') == 'successful':
+            # Find transaction using tx_ref (Flutterwave's reference)
             transaction = PaymentTransaction.query.filter_by(
-                gateway_payment_id=payment_reference
+                gateway_payment_id=tx_ref  # Use tx_ref to find the transaction
             ).first()
             
             if transaction:
@@ -238,50 +244,24 @@ def paystack_callback():
                 if payment_service.handle_successful_payment(transaction.id, payment_data):
                     current_app.logger.info(f"✅ Payment successful for transaction: {transaction.id}")
                     
-                    # Send success email via Gmail
-                    user = User.query.get(transaction.user_id)
-                    campaign = AdCampaign.query.get(transaction.campaign_id)
-                    package = AdPackage.query.get(campaign.package_id) if campaign else None
-                    
-                    if user and campaign and package:
-                        EmailService.send_ad_purchase_success(user, transaction, campaign, package)
-                        current_app.logger.info(f"📧 Success email queued for {user.email}")
-                    else:
-                        current_app.logger.warning(f"⚠️ Could not find user, campaign, or package for transaction {transaction.id}")
-                    
                     # Redirect to success page with transaction ID
                     return redirect(url_for('payments.payment_success', transaction_id=transaction.id))
                 else:
                     current_app.logger.error(f"❌ Failed to handle successful payment for transaction: {transaction.id}")
             else:
-                current_app.logger.error(f"❌ No transaction found for reference: {payment_reference}")
+                current_app.logger.error(f"❌ No transaction found for tx_ref: {tx_ref}")
         
         # If payment failed, send failure email
-        transaction = PaymentTransaction.query.filter_by(gateway_payment_id=payment_reference).first()
+        transaction = PaymentTransaction.query.filter_by(gateway_payment_id=tx_ref).first()
         if transaction:
-            user = User.query.get(transaction.user_id)
-            campaign = AdCampaign.query.get(transaction.campaign_id)
-            package = AdPackage.query.get(campaign.package_id) if campaign else None
-            
-            if user and package:
-                EmailService.send_ad_purchase_failed(
-                    user=user,
-                    package=package,
-                    transaction=transaction,
-                    campaign=campaign,
-                    error_message="Payment verification failed or was declined"
-                )
-                current_app.logger.info(f"📧 Failure email queued for {user.email}")
+            payment_service.handle_failed_payment(transaction.id, verification_result.get('data', {}))
         
         current_app.logger.error(f"❌ Payment verification failed for reference: {payment_reference}")
         return redirect(url_for('payments.payment_failed'))
         
     except Exception as e:
-        current_app.logger.error(f"❌ Paystack callback error: {str(e)}", exc_info=True)
+        current_app.logger.error(f"❌ Flutterwave callback error: {str(e)}", exc_info=True)
         return redirect(url_for('payments.payment_failed'))
-    
-    
-    
     
     
     
@@ -513,7 +493,7 @@ def track_ad_click(ad_id):
 @payments.route('/create-campaign', methods=['POST'])
 @login_required
 def create_campaign():
-    """Create ad campaign with user-selected budget - CORRECTED VERSION"""
+    """Create ad campaign with user-selected budget and targeting data"""
     try:
         data = request.get_json()
         print(f"🔵 [CREATE CAMPAIGN] Received data: {data}")
@@ -529,8 +509,19 @@ def create_campaign():
         target_url = data.get('target_url')
         call_to_action = data.get('call_to_action', 'Learn More')
         image = data.get('image', '')
+        currency = data.get('currency', 'USD')
+        
+        # ✅ Extract targeting data
+        targeting = data.get('targeting', {})
+        target_gender = targeting.get('gender', 'all')
+        target_age_min = targeting.get('age_min', 18)
+        target_age_max = targeting.get('age_max', 65)
+        target_locations = targeting.get('locations', [])
+        target_interests = targeting.get('interests', [])
+        target_language = targeting.get('language', 'all')
         
         print(f"🔵 [CREATE CAMPAIGN] Parsed: daily_budget={daily_budget}, duration_days={duration_days}, title={title}")
+        print(f"🔵 [CREATE CAMPAIGN] Targeting: gender={target_gender}, age={target_age_min}-{target_age_max}, locations={len(target_locations)}, interests={len(target_interests)}")
         
         # Validate required fields
         validation_errors = []
@@ -551,19 +542,23 @@ def create_campaign():
         try:
             daily_budget = float(daily_budget)
             duration_days = int(duration_days)
+            target_age_min = int(target_age_min)
+            target_age_max = int(target_age_max)
         except (TypeError, ValueError) as e:
             print(f"🔴 [CREATE CAMPAIGN] Numeric conversion error: {e}")
-            return jsonify({'success': False, 'error': 'Invalid budget or duration format'}), 400
+            return jsonify({'success': False, 'error': 'Invalid budget, duration, or age format'}), 400
         
         if daily_budget < 5:
             return jsonify({'success': False, 'error': 'Minimum daily budget is $5'}), 400
         if duration_days < 5:
             return jsonify({'success': False, 'error': 'Minimum duration is 5 days'}), 400
+        if target_age_min < 13 or target_age_max > 80 or target_age_min > target_age_max:
+            return jsonify({'success': False, 'error': 'Invalid age range'}), 400
         
         # Calculate total budget
         total_budget = daily_budget * duration_days
         
-        # Create campaign with CORRECT field names that match your model
+        # ✅ Create campaign with ALL targeting data
         campaign = AdCampaign(
             user_id=current_user.id,
             title=title,
@@ -571,17 +566,34 @@ def create_campaign():
             image=image,
             target_url=target_url,
             call_to_action=call_to_action,
-            budget=total_budget,  # This matches your model's 'budget' field
-            daily_budget=daily_budget,  # Store daily budget separately if needed
+            budget=total_budget,
+            daily_budget=daily_budget,
             duration_days=duration_days,
+            currency=currency,  # ✅ Save currency
             status='pending',
-            payment_status='pending'
+            payment_status='pending',
+            
+            # ✅ Save all targeting data
+            target_gender=json.dumps([target_gender]) if target_gender != 'all' else None,
+            target_age_min=target_age_min,
+            target_age_max=target_age_max,
+            target_countries=json.dumps(target_locations) if target_locations else None,
+            target_interests=json.dumps(target_interests) if target_interests else None,
+            target_language=target_language if target_language != 'all' else None,
+            
+            # Set default values for other targeting fields
+            target_education=None,
+            target_occupation=None,
+            target_relationship=None,
+            target_devices=None,
+            target_platforms=None
         )
         
         db.session.add(campaign)
         db.session.commit()
         
         print(f"✅ [CREATE CAMPAIGN] Campaign created successfully: ID {campaign.id}")
+        print(f"✅ [CREATE CAMPAIGN] Targeting saved: {campaign.get_targeting_data()}")
         
         return jsonify({
             'success': True,
@@ -608,12 +620,11 @@ def initiate_payment():
         print(f"🟡 [INITIATE PAYMENT] Request content type: {request.content_type}")
         print(f"🟡 [INITIATE PAYMENT] Raw data: {request.data}")
 
-
         if not data:
             return jsonify({'success': False, 'error': 'No data provided'}), 400
 
         campaign_id = data.get('campaign_id')
-        amount = data.get('amount')  # This should come from frontend
+        amount = data.get('amount')
         currency = data.get('currency', 'USD').upper()
 
         print(f"🟡 [INITIATE PAYMENT] campaign_id: {campaign_id}, amount: {amount}, currency: {currency}")
@@ -625,13 +636,21 @@ def initiate_payment():
         if not amount:
             return jsonify({'success': False, 'error': 'Amount is required'}), 400
 
+        # ✅ ADD CURRENCY VALIDATION
+        supported_currencies = ['NGN', 'USD', 'GBP', 'EUR']  # Your supported currencies
+        if currency not in supported_currencies:
+            return jsonify({
+                'success': False, 
+                'error': f'Currency {currency} is not supported. Please use one of: {", ".join(supported_currencies)}'
+            }), 400
+
         try:
             campaign_id = int(campaign_id)
             amount = float(amount)
         except (ValueError, TypeError):
             return jsonify({'success': False, 'error': 'Invalid campaign ID or amount format'}), 400
 
-        # Verify campaign exists and belongs to user
+        # Rest of your existing code remains the same...
         campaign = AdCampaign.query.get(campaign_id)
         if not campaign:
             return jsonify({'success': False, 'error': 'Campaign not found'}), 404
@@ -639,21 +658,18 @@ def initiate_payment():
         if campaign.user_id != current_user.id:
             return jsonify({'success': False, 'error': 'Unauthorized access to campaign'}), 403
 
-        # Check if already paid
         if campaign.payment_status == 'paid':
             return jsonify({'success': False, 'error': 'Campaign already paid'}), 400
 
         print(f"🟡 [INITIATE PAYMENT] Campaign found: {campaign.title}, User: {current_user.email}")
 
-        # Initialize payment service
         payment_service = PaymentService()
         
-        # Create payment with Flutterwave
         result = payment_service.create_flutterwave_transaction(
             user=current_user,
             campaign=campaign,
             amount=amount,
-            currency=currency
+            currency=currency  # This now uses validated currency
         )
 
         print(f"🟡 [INITIATE PAYMENT] Payment service result: {result}")
@@ -840,46 +856,46 @@ def diagnose_payment():
     
     
     
-@payments.route('/flutterwave/callback', methods=['GET', 'POST'])
-def flutterwave_callback():
-    """Handle Flutterwave payment callback"""
-    try:
-        if request.method == 'GET':
-            # Handle redirect from Flutterwave
-            transaction_id = request.args.get('transaction_id')
-            status = request.args.get('status')
+# @payments.route('/flutterwave/callback', methods=['GET', 'POST'])
+# def flutterwave_callback():
+#     """Handle Flutterwave payment callback"""
+#     try:
+#         if request.method == 'GET':
+#             # Handle redirect from Flutterwave
+#             transaction_id = request.args.get('transaction_id')
+#             status = request.args.get('status')
             
-            if status == 'successful':
-                # Verify the payment
-                payment_service = PaymentService()
-                verification = payment_service.verify_flutterwave_payment(transaction_id)
+#             if status == 'successful':
+#                 # Verify the payment
+#                 payment_service = PaymentService()
+#                 verification = payment_service.verify_flutterwave_payment(transaction_id)
                 
-                if verification['success']:
-                    payment_data = verification['data']
-                    transaction = PaymentTransaction.query.filter_by(
-                        gateway_payment_id=payment_data.get('tx_ref')
-                    ).first()
+#                 if verification['success']:
+#                     payment_data = verification['data']
+#                     transaction = PaymentTransaction.query.filter_by(
+#                         gateway_payment_id=payment_data.get('tx_ref')
+#                     ).first()
                     
-                    if transaction:
-                        payment_service.handle_successful_payment(transaction.id, payment_data)
-                        flash('Payment successful! Your ad campaign is now active.', 'success')
-                    else:
-                        flash('Transaction not found. Please contact support.', 'error')
-                else:
-                    flash('Payment verification failed.', 'error')
-            else:
-                flash('Payment was not successful. Please try again.', 'error')
+#                     if transaction:
+#                         payment_service.handle_successful_payment(transaction.id, payment_data)
+#                         flash('Payment successful! Your ad campaign is now active.', 'success')
+#                     else:
+#                         flash('Transaction not found. Please contact support.', 'error')
+#                 else:
+#                     flash('Payment verification failed.', 'error')
+#             else:
+#                 flash('Payment was not successful. Please try again.', 'error')
             
-            return redirect(url_for('user.user_dashboard'))
+#             return redirect(url_for('user.user_dashboard'))
         
-        else:
-            # Handle webhook
-            return jsonify({'status': 'webhook_received'})
+#         else:
+#             # Handle webhook
+#             return jsonify({'status': 'webhook_received'})
             
-    except Exception as e:
-        current_app.logger.error(f"Flutterwave callback error: {str(e)}")
-        flash('An error occurred processing your payment.', 'error')
-        return redirect(url_for('user.user_dashboard'))
+#     except Exception as e:
+#         current_app.logger.error(f"Flutterwave callback error: {str(e)}")
+#         flash('An error occurred processing your payment.', 'error')
+#         return redirect(url_for('user.user_dashboard'))
     
     
     
@@ -900,3 +916,32 @@ def verify_payment():
     except Exception as e:
         current_app.logger.error(f"Payment verification failed: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
+
+
+
+@payments.route('/get-supported-currencies', methods=['GET'])
+@login_required
+def get_supported_currencies():
+    """Get list of currencies supported by your Flutterwave account"""
+    try:
+        # For Nigerian Flutterwave accounts, these are typically supported
+        supported_currencies = ['NGN', 'USD', 'GBP', 'EUR']
+        
+        # You could also fetch this dynamically from Flutterwave API
+        # But for now, we'll use the common ones
+        
+        current_app.logger.info(f"✅ Supported currencies requested by user {current_user.id}")
+        
+        return jsonify({
+            'success': True,
+            'currencies': supported_currencies
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"❌ Error getting supported currencies: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'currencies': ['NGN', 'USD']  # Fallback
+        }), 500

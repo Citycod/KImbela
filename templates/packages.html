@@ -254,6 +254,13 @@
       .targeting-section:last-child {
         border-bottom: none;
       }
+
+      .currency-flag {
+        display: inline-block;
+        width: 20px;
+        text-align: center;
+        margin-right: 8px;
+      }
     </style>
   </head>
   <body class="font-inter bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen">
@@ -286,22 +293,66 @@
         <div class="bg-white rounded-xl shadow-md p-6 card-hover lg:col-span-2">
           <h2 class="text-xl font-bold text-primary mb-6">Configure Your Ad</h2>
           
+          <!-- Currency Selection -->
+          <div class="mb-6">
+            <label class="block text-primary font-medium mb-2">Payment Currency</label>
+            <select class="w-full px-4 py-3 border-2 border-border-color rounded-xl text-sm focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-300" id="currency">
+              <!-- African Currencies -->
+              <option value="NGN">🇳🇬 Nigerian Naira (NGN)</option>
+              <option value="GHS">🇬🇭 Ghanaian Cedi (GHS)</option>
+              <option value="KES">🇰🇪 Kenyan Shilling (KES)</option>
+              <option value="ZAR">🇿🇦 South African Rand (ZAR)</option>
+              <option value="EGP">🇪🇬 Egyptian Pound (EGP)</option>
+              <option value="XOF">🇨🇫 West African CFA Franc (XOF)</option>
+              <option value="XAF">🇨🇲 Central African CFA Franc (XAF)</option>
+              
+              <!-- Major Global Currencies -->
+              <option value="USD">🇺🇸 US Dollar (USD)</option>
+              <option value="EUR">🇪🇺 Euro (EUR)</option>
+              <option value="GBP">🇬🇧 British Pound (GBP)</option>
+              <option value="CAD">🇨🇦 Canadian Dollar (CAD)</option>
+              <option value="AUD">🇦🇺 Australian Dollar (AUD)</option>
+              
+              <!-- Asian Currencies -->
+              <option value="CNY">🇨🇳 Chinese Yuan (CNY)</option>
+              <option value="JPY">🇯🇵 Japanese Yen (JPY)</option>
+              <option value="INR">🇮🇳 Indian Rupee (INR)</option>
+              <option value="SGD">🇸🇬 Singapore Dollar (SGD)</option>
+              
+              <!-- Middle East Currencies -->
+              <option value="AED">🇦🇪 UAE Dirham (AED)</option>
+              <option value="SAR">🇸🇦 Saudi Riyal (SAR)</option>
+              
+              <!-- South American Currencies -->
+              <option value="BRL">🇧🇷 Brazilian Real (BRL)</option>
+              <option value="MXN">🇲🇽 Mexican Peso (MXN)</option>
+              
+              <!-- Other Important Currencies -->
+              <option value="CHF">🇨🇭 Swiss Franc (CHF)</option>
+              <option value="NZD">🇳🇿 New Zealand Dollar (NZD)</option>
+              <option value="SEK">🇸🇪 Swedish Krona (SEK)</option>
+              <option value="NOK">🇳🇴 Norwegian Krone (NOK)</option>
+              <option value="DKK">🇩🇰 Danish Krone (DKK)</option>
+            </select>
+            <p class="text-xs text-text-secondary mt-2">Select your preferred payment currency. We support 20+ currencies worldwide.</p>
+          </div>
+          
           <!-- Budget Slider Section -->
           <div class="mb-8">
             <div class="flex justify-between items-center mb-2">
               <label class="text-primary font-medium">Daily Budget</label>
-              <span class="text-text-secondary text-sm">$5 - $10,000</span>
+              <span class="text-text-secondary text-sm" id="budgetRange">$5 - $10,000</span>
             </div>
             
             <div class="budget-display">
-              $<span id="budgetValue">5.00</span> / day
+              <span id="currencySymbol">$</span><span id="budgetValue">5.00</span> / day
             </div>
             
             <input type="range" min="5" max="10000" value="5" step="1" class="slider" id="budgetSlider">
             
             <div class="flex justify-between text-xs text-text-secondary mt-1">
-              <span>$5</span>
-              <span>$10,000</span>
+              <span id="minBudget">$5</span>
+              <span id="maxBudget">$10,000</span>
             </div>
           </div>
           
@@ -358,57 +409,57 @@
               <label class="block text-primary font-medium mb-2">Location</label>
               <select class="multi-select" id="locationTargeting" multiple>
                 <option value="nigeria">🇳🇬 Nigeria</option>
-    <option value="ghana">🇬🇭 Ghana</option>
-    <option value="kenya">🇰🇪 Kenya</option>
-    <option value="south-africa">🇿🇦 South Africa</option>
-    <option value="egypt">🇪🇬 Egypt</option>
-    <option value="morocco">🇲🇦 Morocco</option>
-    <option value="tanzania">🇹🇿 Tanzania</option>
-    <option value="ethiopia">🇪🇹 Ethiopia</option>
-    <option value="algeria">🇩🇿 Algeria</option>
-    <option value="uganda">🇺🇬 Uganda</option>
-    <option value="cameroon">🇨🇲 Cameroon</option>
-    <option value="senegal">🇸🇳 Senegal</option>
-    <option value="ivory-coast">🇨🇮 Ivory Coast</option>
-    <option value="rwanda">🇷🇼 Rwanda</option>
-    <option value="tunisia">🇹🇳 Tunisia</option>
-    <option value="zimbabwe">🇿🇼 Zimbabwe</option>
-    <option value="mozambique">🇲🇿 Mozambique</option>
-    <option value="zambia">🇿🇲 Zambia</option>
-    <option value="botswana">🇧🇼 Botswana</option>
-    <option value="namibia">🇳🇦 Namibia</option>
-    <option value="mali">🇲🇱 Mali</option>
-    <option value="libya">🇱🇾 Libya</option>
-    <option value="sudan">🇸🇩 Sudan</option>
-    <option value="gabon">🇬🇦 Gabon</option>
-    <option value="malawi">🇲🇼 Malawi</option>
+                <option value="ghana">🇬🇭 Ghana</option>
+                <option value="kenya">🇰🇪 Kenya</option>
+                <option value="south-africa">🇿🇦 South Africa</option>
+                <option value="egypt">🇪🇬 Egypt</option>
+                <option value="morocco">🇲🇦 Morocco</option>
+                <option value="tanzania">🇹🇿 Tanzania</option>
+                <option value="ethiopia">🇪🇹 Ethiopia</option>
+                <option value="algeria">🇩🇿 Algeria</option>
+                <option value="uganda">🇺🇬 Uganda</option>
+                <option value="cameroon">🇨🇲 Cameroon</option>
+                <option value="senegal">🇸🇳 Senegal</option>
+                <option value="ivory-coast">🇨🇮 Ivory Coast</option>
+                <option value="rwanda">🇷🇼 Rwanda</option>
+                <option value="tunisia">🇹🇳 Tunisia</option>
+                <option value="zimbabwe">🇿🇼 Zimbabwe</option>
+                <option value="mozambique">🇲🇿 Mozambique</option>
+                <option value="zambia">🇿🇲 Zambia</option>
+                <option value="botswana">🇧🇼 Botswana</option>
+                <option value="namibia">🇳🇦 Namibia</option>
+                <option value="mali">🇲🇱 Mali</option>
+                <option value="libya">🇱🇾 Libya</option>
+                <option value="sudan">🇸🇩 Sudan</option>
+                <option value="gabon">🇬🇦 Gabon</option>
+                <option value="malawi">🇲🇼 Malawi</option>
 
-    <!-- REST OF THE WORLD (25 Countries) -->
-    <option value="united-states">🇺🇸 United States</option>
-    <option value="canada">🇨🇦 Canada</option>
-    <option value="mexico">🇲🇽 Mexico</option>
-    <option value="brazil">🇧🇷 Brazil</option>
-    <option value="argentina">🇦🇷 Argentina</option>
-    <option value="uk">🇬🇧 United Kingdom</option>
-    <option value="france">🇫🇷 France</option>
-    <option value="germany">🇩🇪 Germany</option>
-    <option value="italy">🇮🇹 Italy</option>
-    <option value="spain">🇪🇸 Spain</option>
-    <option value="portugal">🇵🇹 Portugal</option>
-    <option value="netherlands">🇳🇱 Netherlands</option>
-    <option value="sweden">🇸🇪 Sweden</option>
-    <option value="australia">🇦🇺 Australia</option>
-    <option value="japan">🇯🇵 Japan</option>
-    <option value="china">🇨🇳 China</option>
-    <option value="india">🇮🇳 India</option>
-    <option value="south-korea">🇰🇷 South Korea</option>
-    <option value="indonesia">🇮🇩 Indonesia</option>
-    <option value="saudi-arabia">🇸🇦 Saudi Arabia</option>
-    <option value="uae">🇦🇪 United Arab Emirates</option>
-    <option value="turkey">🇹🇷 Turkey</option>
-    <option value="qatar">🇶🇦 Qatar</option>
-    <option value="singapore">🇸🇬 Singapore</option>
-    <option value="thailand">🇹🇭 Thailand</option>
+                <!-- REST OF THE WORLD (25 Countries) -->
+                <option value="united-states">🇺🇸 United States</option>
+                <option value="canada">🇨🇦 Canada</option>
+                <option value="mexico">🇲🇽 Mexico</option>
+                <option value="brazil">🇧🇷 Brazil</option>
+                <option value="argentina">🇦🇷 Argentina</option>
+                <option value="uk">🇬🇧 United Kingdom</option>
+                <option value="france">🇫🇷 France</option>
+                <option value="germany">🇩🇪 Germany</option>
+                <option value="italy">🇮🇹 Italy</option>
+                <option value="spain">🇪🇸 Spain</option>
+                <option value="portugal">🇵🇹 Portugal</option>
+                <option value="netherlands">🇳🇱 Netherlands</option>
+                <option value="sweden">🇸🇪 Sweden</option>
+                <option value="australia">🇦🇺 Australia</option>
+                <option value="japan">🇯🇵 Japan</option>
+                <option value="china">🇨🇳 China</option>
+                <option value="india">🇮🇳 India</option>
+                <option value="south-korea">🇰🇷 South Korea</option>
+                <option value="indonesia">🇮🇩 Indonesia</option>
+                <option value="saudi-arabia">🇸🇦 Saudi Arabia</option>
+                <option value="uae">🇦🇪 United Arab Emirates</option>
+                <option value="turkey">🇹🇷 Turkey</option>
+                <option value="qatar">🇶🇦 Qatar</option>
+                <option value="singapore">🇸🇬 Singapore</option>
+                <option value="thailand">🇹🇭 Thailand</option>
               </select>
               <p class="text-xs text-text-secondary mt-2">Hold Ctrl/Cmd to select multiple locations</p>
             </div>
@@ -430,9 +481,83 @@
               </select>
               <p class="text-xs text-text-secondary mt-2">Hold Ctrl/Cmd to select multiple interests</p>
             </div>
-            
+
+            <!-- Education Level Targeting -->
+            <div class="targeting-section">
+              <label class="block text-primary font-medium mb-2">Education Level</label>
+              <select class="multi-select" id="educationTargeting" multiple>
+                <option value="high-school">High School</option>
+                <option value="some-college">Some College</option>
+                <option value="associate">Associate Degree</option>
+                <option value="bachelors">Bachelor's Degree</option>
+                <option value="masters">Master's Degree</option>
+                <option value="phd">PhD/Doctorate</option>
+                <option value="vocational">Vocational/Trade</option>
+                <option value="professional">Professional Degree</option>
+              </select>
+              <p class="text-xs text-text-secondary mt-2">Hold Ctrl/Cmd to select multiple education levels</p>
+            </div>
+
+            <!-- Occupation Targeting -->
+            <div class="targeting-section">
+              <label class="block text-primary font-medium mb-2">Occupation</label>
+              <select class="multi-select" id="occupationTargeting" multiple>
+                <option value="student">Student</option>
+                <option value="entry-level">Entry Level</option>
+                <option value="professional">Professional</option>
+                <option value="manager">Manager</option>
+                <option value="executive">Executive</option>
+                <option value="entrepreneur">Entrepreneur</option>
+                <option value="freelancer">Freelancer</option>
+                <option value="retired">Retired</option>
+                <option value="unemployed">Unemployed</option>
+                <option value="homemaker">Homemaker</option>
+              </select>
+              <p class="text-xs text-text-secondary mt-2">Hold Ctrl/Cmd to select multiple occupations</p>
+            </div>
+
+            <!-- Relationship Status Targeting -->
+            <div class="targeting-section">
+              <label class="block text-primary font-medium mb-2">Relationship Status</label>
+              <select class="multi-select" id="relationshipTargeting" multiple>
+                <option value="single">Single</option>
+                <option value="dating">Dating</option>
+                <option value="engaged">Engaged</option>
+                <option value="married">Married</option>
+                <option value="divorced">Divorced</option>
+                <option value="widowed">Widowed</option>
+                <option value="separated">Separated</option>
+                <option value="complicated">It's Complicated</option>
+              </select>
+              <p class="text-xs text-text-secondary mt-2">Hold Ctrl/Cmd to select multiple relationship statuses</p>
+            </div>
+
             <!-- Device Targeting -->
-            
+            <div class="targeting-section">
+              <label class="block text-primary font-medium mb-2">Device Type</label>
+              <select class="multi-select" id="deviceTargeting" multiple>
+                <option value="mobile">Mobile</option>
+                <option value="tablet">Tablet</option>
+                <option value="desktop">Desktop</option>
+                <option value="smart-tv">Smart TV</option>
+                <option value="gaming-console">Gaming Console</option>
+              </select>
+              <p class="text-xs text-text-secondary mt-2">Hold Ctrl/Cmd to select multiple device types</p>
+            </div>
+
+            <!-- Platform Targeting -->
+            <div class="targeting-section">
+              <label class="block text-primary font-medium mb-2">Platform</label>
+              <select class="multi-select" id="platformTargeting" multiple>
+                <option value="web">Web</option>
+                <option value="android">Android</option>
+                <option value="ios">iOS</option>
+                <option value="windows">Windows</option>
+                <option value="macos">macOS</option>
+                <option value="linux">Linux</option>
+              </select>
+              <p class="text-xs text-text-secondary mt-2">Hold Ctrl/Cmd to select multiple platforms</p>
+            </div>
             
             <!-- Language Targeting -->
             <div class="targeting-section">
@@ -446,6 +571,13 @@
                 <option value="chinese">Chinese</option>
                 <option value="japanese">Japanese</option>
                 <option value="arabic">Arabic</option>
+                <option value="portuguese">Portuguese</option>
+                <option value="russian">Russian</option>
+                <option value="hindi">Hindi</option>
+                <option value="swahili">Swahili</option>
+                <option value="yoruba">Yoruba</option>
+                <option value="igbo">Igbo</option>
+                <option value="hausa">Hausa</option>
               </select>
             </div>
           </div>
@@ -498,6 +630,9 @@
                 <option value="Download">Download</option>
                 <option value="Get Started">Get Started</option>
                 <option value="Buy Now">Buy Now</option>
+                <option value="Contact Us">Contact Us</option>
+                <option value="Book Now">Book Now</option>
+                <option value="Subscribe">Subscribe</option>
               </select>
             </div>
           </div>
@@ -521,7 +656,7 @@
           
           <!-- Total Price -->
           <div class="total-price">
-            Total: $<span id="totalPrice">25.00</span>
+            Total: <span id="currencySymbolTotal">$</span><span id="totalPrice">25.00</span>
           </div>
           
           <!-- Action Buttons -->
@@ -594,8 +729,34 @@
               <span>Interests</span>
               <span id="summaryInterests">All</span>
             </div>
-            
-            
+            <div class="info-item">
+              <span>Education</span>
+              <span id="summaryEducation">All</span>
+            </div>
+            <div class="info-item">
+              <span>Occupation</span>
+              <span id="summaryOccupation">All</span>
+            </div>
+            <div class="info-item">
+              <span>Relationship</span>
+              <span id="summaryRelationship">All</span>
+            </div>
+            <div class="info-item">
+              <span>Devices</span>
+              <span id="summaryDevices">All</span>
+            </div>
+            <div class="info-item">
+              <span>Platforms</span>
+              <span id="summaryPlatforms">All</span>
+            </div>
+            <div class="info-item">
+              <span>Language</span>
+              <span id="summaryLanguage">All</span>
+            </div>
+            <div class="info-item">
+              <span>Currency</span>
+              <span id="summaryCurrency">USD</span>
+            </div>
           </div>
           
           <!-- Payment Summary -->
@@ -604,7 +765,7 @@
             
             <div class="info-item">
               <span>Daily Budget</span>
-              <span>$<span id="summaryDailyBudget">5.00</span></span>
+              <span><span id="summaryCurrencySymbol">$</span><span id="summaryDailyBudget">5.00</span></span>
             </div>
             <div class="info-item">
               <span>Duration</span>
@@ -612,7 +773,7 @@
             </div>
             <div class="info-item font-bold text-lg">
               <span>Total Amount</span>
-              <span>$<span id="summaryTotal">25.00</span></span>
+              <span><span id="summaryCurrencySymbolTotal">$</span><span id="summaryTotal">25.00</span></span>
             </div>
           </div>
         </div>
@@ -654,18 +815,33 @@
         const budgetValue = document.getElementById('budgetValue');
         const daysInput = document.getElementById('daysInput');
         const totalPrice = document.getElementById('totalPrice');
+        const currencySelect = document.getElementById('currency');
+        
+        // Currency display elements
+        const currencySymbol = document.getElementById('currencySymbol');
+        const currencySymbolTotal = document.getElementById('currencySymbolTotal');
+        const minBudget = document.getElementById('minBudget');
+        const maxBudget = document.getElementById('maxBudget');
+        const budgetRange = document.getElementById('budgetRange');
         
         // Summary elements
         const summaryDailyBudget = document.getElementById('summaryDailyBudget');
         const summaryDays = document.getElementById('summaryDays');
         const summaryTotal = document.getElementById('summaryTotal');
+        const summaryCurrency = document.getElementById('summaryCurrency');
+        const summaryCurrencySymbol = document.getElementById('summaryCurrencySymbol');
+        const summaryCurrencySymbolTotal = document.getElementById('summaryCurrencySymbolTotal');
         
         // Targeting summary elements
         const summaryGender = document.getElementById('summaryGender');
         const summaryAge = document.getElementById('summaryAge');
         const summaryLocations = document.getElementById('summaryLocations');
         const summaryInterests = document.getElementById('summaryInterests');
+        const summaryEducation = document.getElementById('summaryEducation');
+        const summaryOccupation = document.getElementById('summaryOccupation');
+        const summaryRelationship = document.getElementById('summaryRelationship');
         const summaryDevices = document.getElementById('summaryDevices');
+        const summaryPlatforms = document.getElementById('summaryPlatforms');
         const summaryLanguage = document.getElementById('summaryLanguage');
         
         // Estimated results
@@ -691,6 +867,11 @@
         const maxAge = document.getElementById('maxAge');
         const locationTargeting = document.getElementById('locationTargeting');
         const interestsTargeting = document.getElementById('interestsTargeting');
+        const educationTargeting = document.getElementById('educationTargeting');
+        const occupationTargeting = document.getElementById('occupationTargeting');
+        const relationshipTargeting = document.getElementById('relationshipTargeting');
+        const deviceTargeting = document.getElementById('deviceTargeting');
+        const platformTargeting = document.getElementById('platformTargeting');
         const languageTargeting = document.getElementById('languageTargeting');
         
         // Image upload elements
@@ -707,6 +888,35 @@
         let uploadedImageUrl = '';
         let ageRangeMin = 18;
         let ageRangeMax = 65;
+        
+        // Currency configuration
+        const currencyConfig = {
+          'NGN': { symbol: '₦', name: 'Nigerian Naira', min: 2000, max: 4000000 },
+          'GHS': { symbol: 'GH₵', name: 'Ghanaian Cedi', min: 50, max: 100000 },
+          'KES': { symbol: 'KSh', name: 'Kenyan Shilling', min: 500, max: 1000000 },
+          'ZAR': { symbol: 'R', name: 'South African Rand', min: 80, max: 160000 },
+          'EGP': { symbol: 'E£', name: 'Egyptian Pound', min: 150, max: 300000 },
+          'XOF': { symbol: 'CFA', name: 'West African CFA', min: 3000, max: 6000000 },
+          'XAF': { symbol: 'FCFA', name: 'Central African CFA', min: 3000, max: 6000000 },
+          'USD': { symbol: '$', name: 'US Dollar', min: 5, max: 10000 },
+          'EUR': { symbol: '€', name: 'Euro', min: 5, max: 9000 },
+          'GBP': { symbol: '£', name: 'British Pound', min: 4, max: 8000 },
+          'CAD': { symbol: 'C$', name: 'Canadian Dollar', min: 7, max: 13000 },
+          'AUD': { symbol: 'A$', name: 'Australian Dollar', min: 8, max: 15000 },
+          'CNY': { symbol: '¥', name: 'Chinese Yuan', min: 35, max: 70000 },
+          'JPY': { symbol: '¥', name: 'Japanese Yen', min: 700, max: 1400000 },
+          'INR': { symbol: '₹', name: 'Indian Rupee', min: 400, max: 800000 },
+          'SGD': { symbol: 'S$', name: 'Singapore Dollar', min: 7, max: 13000 },
+          'AED': { symbol: 'AED', name: 'UAE Dirham', min: 18, max: 37000 },
+          'SAR': { symbol: 'SR', name: 'Saudi Riyal', min: 19, max: 38000 },
+          'BRL': { symbol: 'R$', name: 'Brazilian Real', min: 25, max: 50000 },
+          'MXN': { symbol: 'MX$', name: 'Mexican Peso', min: 85, max: 170000 },
+          'CHF': { symbol: 'CHF', name: 'Swiss Franc', min: 4, max: 9000 },
+          'NZD': { symbol: 'NZ$', name: 'New Zealand Dollar', min: 8, max: 16000 },
+          'SEK': { symbol: 'kr', name: 'Swedish Krona', min: 50, max: 100000 },
+          'NOK': { symbol: 'kr', name: 'Norwegian Krone', min: 50, max: 100000 },
+          'DKK': { symbol: 'kr', name: 'Danish Krone', min: 35, max: 70000 }
+        };
         
         // Initialize age range slider
         function initAgeRangeSlider() {
@@ -731,9 +941,41 @@
           });
         }
         
+        // Update currency display
+        function updateCurrencyDisplay() {
+          const selectedCurrency = currencySelect.value;
+          const config = currencyConfig[selectedCurrency];
+          
+          if (config) {
+            // Update symbols
+            currencySymbol.textContent = config.symbol;
+            currencySymbolTotal.textContent = config.symbol;
+            summaryCurrencySymbol.textContent = config.symbol;
+            summaryCurrencySymbolTotal.textContent = config.symbol;
+            
+            // Update budget range
+            budgetSlider.min = config.min;
+            budgetSlider.max = config.max;
+            budgetSlider.value = config.min;
+            
+            minBudget.textContent = config.symbol + config.min;
+            maxBudget.textContent = config.symbol + config.max.toLocaleString();
+            budgetRange.textContent = `${config.symbol}${config.min} - ${config.symbol}${config.max.toLocaleString()}`;
+            
+            // Update summary
+            summaryCurrency.textContent = selectedCurrency;
+            
+            // Update values
+            updateValues();
+          }
+        }
+        
         // Format currency
         function formatCurrency(value) {
-          return parseFloat(value).toFixed(2);
+          return parseFloat(value).toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          });
         }
         
         // Calculate estimated results based on budget and targeting
@@ -764,6 +1006,19 @@
           // Interests targeting
           if (targetingFactors.interests && targetingFactors.interests.length > 0) {
             targetingMultiplier *= 0.5; // Narrower audience
+          }
+          
+          // Additional targeting factors
+          if (targetingFactors.education && targetingFactors.education.length > 0) {
+            targetingMultiplier *= 0.8;
+          }
+          
+          if (targetingFactors.occupation && targetingFactors.occupation.length > 0) {
+            targetingMultiplier *= 0.8;
+          }
+          
+          if (targetingFactors.relationship && targetingFactors.relationship.length > 0) {
+            targetingMultiplier *= 0.7;
           }
           
           const scale = budget / 5 * targetingMultiplier;
@@ -798,7 +1053,7 @@
           
           // Locations
           const selectedLocations = Array.from(locationTargeting.selectedOptions).map(option => option.value);
-          summaryLocations.textContent = selectedLocations.length === 0 || selectedLocations.includes('global') ? 'Global' : 
+          summaryLocations.textContent = selectedLocations.length === 0 ? 'Global' : 
                                         selectedLocations.length > 2 ? `${selectedLocations.length} locations` : 
                                         selectedLocations.join(', ');
           
@@ -808,16 +1063,42 @@
                                         selectedInterests.length > 2 ? `${selectedInterests.length} interests` : 
                                         selectedInterests.join(', ');
           
+          // Education
+          const selectedEducation = Array.from(educationTargeting.selectedOptions).map(option => option.value);
+          summaryEducation.textContent = selectedEducation.length === 0 ? 'All' : 
+                                        selectedEducation.length > 2 ? `${selectedEducation.length} levels` : 
+                                        selectedEducation.join(', ');
+          
+          // Occupation
+          const selectedOccupation = Array.from(occupationTargeting.selectedOptions).map(option => option.value);
+          summaryOccupation.textContent = selectedOccupation.length === 0 ? 'All' : 
+                                         selectedOccupation.length > 2 ? `${selectedOccupation.length} occupations` : 
+                                         selectedOccupation.join(', ');
+          
+          // Relationship
+          const selectedRelationship = Array.from(relationshipTargeting.selectedOptions).map(option => option.value);
+          summaryRelationship.textContent = selectedRelationship.length === 0 ? 'All' : 
+                                           selectedRelationship.length > 2 ? `${selectedRelationship.length} statuses` : 
+                                           selectedRelationship.join(', ');
+          
           // Devices
-          const deviceCheckboxes = document.querySelectorAll('input[name="device"]:checked');
-          const selectedDevices = Array.from(deviceCheckboxes).map(cb => cb.value);
-          summaryDevices.textContent = selectedDevices.length === 3 ? 'All' : 
-                                      selectedDevices.length > 1 ? `${selectedDevices.length} devices` : 
-                                      selectedDevices[0] ? selectedDevices[0].charAt(0).toUpperCase() + selectedDevices[0].slice(1) : 'None';
+          const selectedDevices = Array.from(deviceTargeting.selectedOptions).map(option => option.value);
+          summaryDevices.textContent = selectedDevices.length === 0 ? 'All' : 
+                                      selectedDevices.length > 2 ? `${selectedDevices.length} devices` : 
+                                      selectedDevices.join(', ');
+          
+          // Platforms
+          const selectedPlatforms = Array.from(platformTargeting.selectedOptions).map(option => option.value);
+          summaryPlatforms.textContent = selectedPlatforms.length === 0 ? 'All' : 
+                                        selectedPlatforms.length > 2 ? `${selectedPlatforms.length} platforms` : 
+                                        selectedPlatforms.join(', ');
           
           // Language
           summaryLanguage.textContent = languageTargeting.value === 'all' ? 'All' : 
-                                        languageTargeting.options[languageTargeting.selectedIndex].text;
+                                       languageTargeting.options[languageTargeting.selectedIndex].text;
+          
+          // Currency
+          summaryCurrency.textContent = currencySelect.value;
         }
         
         // Update preview
@@ -840,6 +1121,8 @@
         function updateValues() {
           const budget = parseFloat(budgetSlider.value);
           const days = parseInt(daysInput.value);
+          const selectedCurrency = currencySelect.value;
+          const config = currencyConfig[selectedCurrency];
           
           if (days < 5) daysInput.value = 5;
           
@@ -872,12 +1155,22 @@
           
           const selectedLocations = Array.from(locationTargeting.selectedOptions).map(option => option.value);
           const selectedInterests = Array.from(interestsTargeting.selectedOptions).map(option => option.value);
+          const selectedEducation = Array.from(educationTargeting.selectedOptions).map(option => option.value);
+          const selectedOccupation = Array.from(occupationTargeting.selectedOptions).map(option => option.value);
+          const selectedRelationship = Array.from(relationshipTargeting.selectedOptions).map(option => option.value);
+          const selectedDevices = Array.from(deviceTargeting.selectedOptions).map(option => option.value);
+          const selectedPlatforms = Array.from(platformTargeting.selectedOptions).map(option => option.value);
           
           const targetingFactors = {
             gender: selectedGender,
             ageRange: [ageRangeMin, ageRangeMax],
             locations: selectedLocations,
-            interests: selectedInterests
+            interests: selectedInterests,
+            education: selectedEducation,
+            occupation: selectedOccupation,
+            relationship: selectedRelationship,
+            devices: selectedDevices,
+            platforms: selectedPlatforms
           };
           
           const results = calculateEstimatedResults(budget, targetingFactors);
@@ -972,6 +1265,55 @@
             notification.remove();
           }, 5000);
         }
+
+        // Add this function to fetch supported currencies
+        async function fetchSupportedCurrencies() {
+            try {
+                const response = await fetch('/get-supported-currencies');
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateCurrencyDropdown(data.currencies);
+                    console.log('✅ Supported currencies loaded:', data.currencies);
+                } else {
+                    // Fallback to basic currencies
+                    console.warn('⚠️ Using fallback currencies');
+                    updateCurrencyDropdown(['NGN', 'USD']);
+                }
+            } catch (error) {
+                console.error('❌ Error fetching currencies:', error);
+                // Fallback to basic currencies
+                updateCurrencyDropdown(['NGN', 'USD']);
+            }
+        }
+
+        function updateCurrencyDropdown(supportedCurrencies) {
+            const currencySelect = document.getElementById('currency');
+            currencySelect.innerHTML = ''; // Clear existing options
+            
+            // Currency display names
+            const currencyNames = {
+                'NGN': '🇳🇬 Nigerian Naira (NGN)',
+                'USD': '🇺🇸 US Dollar (USD)', 
+                'GBP': '🇬🇧 British Pound (GBP)',
+                'EUR': '🇪🇺 Euro (EUR)'
+            };
+            
+            // Only add supported currencies
+            supportedCurrencies.forEach(currency => {
+                if (currencyNames[currency]) {
+                    const option = document.createElement('option');
+                    option.value = currency;
+                    option.textContent = currencyNames[currency];
+                    currencySelect.appendChild(option);
+                }
+            });
+            
+            // Update currency display after dropdown is populated
+            if (typeof updateCurrencyDisplay === 'function') {
+                updateCurrencyDisplay();
+            }
+        }
         
         // Create campaign and process payment
         function createCampaignAndProcessPayment() {
@@ -982,8 +1324,9 @@
           const description = adDescription.value.trim();
           const url = targetUrl.value.trim();
           const cta = callToAction.value;
+          const currency = currencySelect.value;
           
-          // 2️⃣ Gather targeting data
+          // 2️⃣ Gather ALL targeting data
           const genderRadios = document.querySelectorAll('input[name="gender"]');
           let selectedGender = 'all';
           for (const radio of genderRadios) {
@@ -995,9 +1338,11 @@
           
           const selectedLocations = Array.from(locationTargeting.selectedOptions).map(option => option.value);
           const selectedInterests = Array.from(interestsTargeting.selectedOptions).map(option => option.value);
-          
-          const deviceCheckboxes = document.querySelectorAll('input[name="device"]:checked');
-          const selectedDevices = Array.from(deviceCheckboxes).map(cb => cb.value);
+          const selectedEducation = Array.from(educationTargeting.selectedOptions).map(option => option.value);
+          const selectedOccupation = Array.from(occupationTargeting.selectedOptions).map(option => option.value);
+          const selectedRelationship = Array.from(relationshipTargeting.selectedOptions).map(option => option.value);
+          const selectedDevices = Array.from(deviceTargeting.selectedOptions).map(option => option.value);
+          const selectedPlatforms = Array.from(platformTargeting.selectedOptions).map(option => option.value);
           
           // 3️⃣ Validate required fields
           if (!title) {
@@ -1020,7 +1365,7 @@
           // 4️⃣ Show payment modal
           document.getElementById('paymentModal').classList.remove('hidden');
 
-          // 5️⃣ Prepare campaign payload with targeting
+          // 5️⃣ Prepare campaign payload with ALL targeting data
           const campaignData = {
             daily_budget: budget,
             duration_days: days,
@@ -1029,13 +1374,18 @@
             target_url: url,
             call_to_action: cta,
             image: uploadedImageUrl || '',
+            currency: currency, // ✅ This will be saved in the database
             targeting: {
               gender: selectedGender,
               age_min: ageRangeMin,
               age_max: ageRangeMax,
               locations: selectedLocations,
               interests: selectedInterests,
+              education: selectedEducation,
+              occupation: selectedOccupation,
+              relationship: selectedRelationship,
               devices: selectedDevices,
+              platforms: selectedPlatforms,
               language: languageTargeting.value
             }
           };
@@ -1071,11 +1421,18 @@
             // 7️⃣ Calculate total amount
             const totalAmount = budget * days;
             
-            // 8️⃣ Prepare payment payload
+            // 8️⃣ Prepare payment payload with selected currency
             const paymentPayload = {
               campaign_id: campaignId,
               amount: totalAmount,
-              currency: 'USD'
+              currency: currency, // ✅ This ensures payment is processed in the selected currency
+              payment_options: 'card,account,ussd,banktransfer',
+              redirect_url: window.location.origin + '/payment-callback',
+              meta: {
+                campaign_id: campaignId,
+                user_id: '{{ current_user.id }}',
+                currency: currency // ✅ This will be recorded in the transaction
+              }
             };
 
             console.log('🔵 Initiating payment with payload:', paymentPayload);
@@ -1094,14 +1451,12 @@
               console.log('🔵 Payment initiation response status:', paymentResponse.status);
               
               if (!paymentResponse.ok) {
-                // Try to parse error response
                 return paymentResponse.text().then(text => {
                   let errorMsg = `Payment HTTP error! status: ${paymentResponse.status}`;
                   try {
                     const errorData = JSON.parse(text);
                     errorMsg = errorData.error || errorData.message || errorMsg;
                   } catch (e) {
-                    // If not JSON, use the text directly
                     if (text) errorMsg = text;
                   }
                   throw new Error(errorMsg);
@@ -1128,7 +1483,6 @@
           .catch(error => {
             console.error('🔴 Error in campaign/payment process:', error);
             
-            // Extract the actual error message from the response if available
             let errorMessage = error.message;
             if (error.message.includes('Invalid request') && error.response) {
               try {
@@ -1147,6 +1501,7 @@
         // Event listeners
         budgetSlider.addEventListener('input', updateValues);
         daysInput.addEventListener('input', updateValues);
+        currencySelect.addEventListener('change', updateCurrencyDisplay);
         adTitle.addEventListener('input', updatePreview);
         adDescription.addEventListener('input', updatePreview);
         callToAction.addEventListener('change', updatePreview);
@@ -1159,19 +1514,37 @@
           });
         });
         
-        document.querySelectorAll('input[name="device"]').forEach(checkbox => {
-          checkbox.addEventListener('change', () => {
-            updateTargetingSummary();
-            updateEstimatedResults();
-          });
-        });
-        
         locationTargeting.addEventListener('change', () => {
           updateTargetingSummary();
           updateEstimatedResults();
         });
         
         interestsTargeting.addEventListener('change', () => {
+          updateTargetingSummary();
+          updateEstimatedResults();
+        });
+        
+        educationTargeting.addEventListener('change', () => {
+          updateTargetingSummary();
+          updateEstimatedResults();
+        });
+        
+        occupationTargeting.addEventListener('change', () => {
+          updateTargetingSummary();
+          updateEstimatedResults();
+        });
+        
+        relationshipTargeting.addEventListener('change', () => {
+          updateTargetingSummary();
+          updateEstimatedResults();
+        });
+        
+        deviceTargeting.addEventListener('change', () => {
+          updateTargetingSummary();
+          updateEstimatedResults();
+        });
+        
+        platformTargeting.addEventListener('change', () => {
           updateTargetingSummary();
           updateEstimatedResults();
         });
@@ -1221,8 +1594,12 @@
         
         // Initialize values
         initAgeRangeSlider();
+        updateCurrencyDisplay(); // Initialize currency display
         updateValues();
         updateTargetingSummary();
+        
+        // Fetch supported currencies when page loads
+        fetchSupportedCurrencies();
       });
     </script>
     
