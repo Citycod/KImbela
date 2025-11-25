@@ -1,206 +1,163 @@
-# payment_service.py
-import stripe
 import requests
 import json
-from flask import current_app
+from flask import current_app, url_for
 from extensions import db
-from models import PaymentTransaction, AdCampaign
+from models import PaymentTransaction, AdCampaign, User
 import logging
-import os
+import os, time
 from datetime import datetime
+from flask_mail import Message
+from extensions import mail
 
 logger = logging.getLogger(__name__)
 
 class PaymentService:
     def __init__(self):
-        self.stripe_secret_key = current_app.config.get('STRIPE_SECRET_KEY') or os.getenv('STRIPE_SECRET_KEY')
-        self.paystack_secret_key = current_app.config.get('PAYSTACK_SECRET_KEY') or os.getenv('PAYSTACK_SECRET_KEY')
-        
-        if self.stripe_secret_key:
-            stripe.api_key = self.stripe_secret_key
-
-    def create_paystack_transaction(self, user, campaign, package, currency='NGN'):
-        """Create Paystack transaction"""
+        self.flutterwave_public_key = current_app.config.get('FLUTTERWAVE_PUBLIC_KEY') or os.getenv('PUBLIC_KEY')
+        self.flutterwave_secret_key = current_app.config.get('FLUTTERWAVE_SECRET_KEY') or os.getenv('SECRET_KEY')
+        self.flutterwave_encryption_key = current_app.config.get('FLUTTERWAVE_ENCRYPTION_KEY') or os.getenv('ENCRYPTION_KEY')
+        self.flutterwave_base_url = "https://api.flutterwave.com/v3" 
+    
+    def create_flutterwave_transaction(self, user, campaign, amount, currency='USD'):
+        """Create a Flutterwave payment transaction - DEBUG VERSION"""
         try:
-            current_app.logger.info(f"Creating Paystack transaction for campaign {campaign.id}")
+            print(f"🟡 [FLUTTERWAVE] Starting transaction creation")
+            print(f"🟡 [FLUTTERWAVE] User: {user.email}, Campaign: {campaign.title}, Amount: {amount}, Currency: {currency}")
             
-            # Convert to kobo for Paystack (NGN)
-            amount_kobo = int(package.price * 100)
+            # Generate unique transaction reference
+            tx_ref = f"KIMBELA_AD_{campaign.id}_{int(time.time())}"
+            print(f"🟡 [FLUTTERWAVE] Generated tx_ref: {tx_ref}")
             
-            # Prepare callback URL
-            base_url = current_app.config.get('BASE_URL', 'http://localhost:5000')
-            callback_url = f"{base_url}/paystack/callback"
-            
-            # Prepare request data
-            data = {
-                'email': user.email,
-                'amount': amount_kobo,
-                'currency': currency,
-                'metadata': {
-                    'user_id': user.id,
-                    'campaign_id': campaign.id,
-                    'package_id': package.id,
-                    'type': 'ad_campaign'
+            # Prepare payment data
+            payment_data = {
+                "tx_ref": tx_ref,
+                "amount": float(amount),  # Flutterwave expects string amount
+                "currency": currency,
+                "redirect_url": url_for('payments.paystack_callback', _external=True),
+                "customer": {
+                    "email": user.email,
+                    "name": user.first_name or user.email.split('@')[0]
                 },
-                'callback_url': callback_url
+                "meta": {
+                    "user_id": user.id,
+                    "campaign_id": campaign.id
+                },
+                "customizations": {
+                    "title": "Kimbela Ads",
+                    "description": f"Ad Campaign: {campaign.title}",
+                    "logo": url_for('static', filename='images/logo.png', _external=True)
+                }
             }
             
-            current_app.logger.info(f"Paystack request data: {data}")
+            print(f"🟡 [FLUTTERWAVE] Payment data prepared: {payment_data}")
+            print(f"🟡 [FLUTTERWAVE] Flutterwave API URL: {self.flutterwave_base_url}/payments")
+            print(f"🟡 [FLUTTERWAVE] Using Secret Key: {self.flutterwave_secret_key[:10]}...")
             
-            # Make request to Paystack
+            # Make API request to Flutterwave
             headers = {
-                'Authorization': f'Bearer {self.paystack_secret_key}',
+                'Authorization': f'Bearer {self.flutterwave_secret_key}',
                 'Content-Type': 'application/json'
             }
             
+            print(f"🟡 [FLUTTERWAVE] Making request to Flutterwave API...")
             response = requests.post(
-                'https://api.paystack.co/transaction/initialize',
+                f"{self.flutterwave_base_url}/payments",
                 headers=headers,
-                data=json.dumps(data),
-                timeout=30
+                json=payment_data
             )
             
-            current_app.logger.info(f"Paystack response status: {response.status_code}")
-            current_app.logger.info(f"Paystack response: {response.text}")
+            print(f"🟡 [FLUTTERWAVE] Response status: {response.status_code}")
+            print(f"🟡 [FLUTTERWAVE] Response headers: {dict(response.headers)}")
+            print(f"🟡 [FLUTTERWAVE] Response text: {response.text}")
             
             if response.status_code == 200:
                 result = response.json()
-                if result['status']:
-                    payment_data = result['data']
+                print(f"🟡 [FLUTTERWAVE] Flutterwave API response: {result}")
+                
+                if result.get('status') == 'success':
+                    payment_url = result['data']['link']
+                    print(f"✅ [FLUTTERWAVE] Payment URL generated: {payment_url}")
                     
-                    # Create transaction record
-                    transaction = PaymentTransaction(
+                    # Create payment record
+                    payment = PaymentTransaction(
                         user_id=user.id,
                         campaign_id=campaign.id,
-                        amount=package.price,
+                        amount=amount,
                         currency=currency,
-                        gateway='paystack',
-                        gateway_payment_id=payment_data['reference'],
-                        gateway_status='initialized',
-                        description=f"Ad Campaign: {campaign.title}",
-                        gateway_metadata=json.dumps(payment_data)
+                        gateway_payment_id=tx_ref,
+                        gateway='flutterwave',
+                        status='pending'
                     )
-                    db.session.add(transaction)
-                    
-                    # Update campaign with payment info
-                    campaign.payment_gateway = 'paystack'
-                    campaign.payment_id = payment_data['reference']
-                    campaign.currency = currency
-                    
+                    db.session.add(payment)
                     db.session.commit()
-                    
-                    current_app.logger.info(f"Paystack transaction created: {transaction.id}")
+                    print(f"✅ [FLUTTERWAVE] Payment record created: {payment.id}")
                     
                     return {
                         'success': True,
-                        'authorization_url': payment_data['authorization_url'],
-                        'reference': payment_data['reference'],
-                        'transaction_id': transaction.id
+                        'payment_url': payment_url,
+                        'gateway_payment_id': tx_ref,
+                        'message': 'Payment initiated successfully'
                     }
                 else:
-                    error_msg = result.get('message', 'Paystack API error')
-                    current_app.logger.error(f"Paystack API error: {error_msg}")
+                    error_msg = result.get('message', 'Unknown Flutterwave error')
+                    print(f"🔴 [FLUTTERWAVE] Flutterwave API error: {error_msg}")
                     return {
-                        'success': False, 
-                        'error': error_msg
+                        'success': False,
+                        'error': f'Flutterwave error: {error_msg}'
                     }
-            
-            error_msg = f'HTTP {response.status_code}: {response.text}'
-            current_app.logger.error(f"Paystack HTTP error: {error_msg}")
+            else:
+                print(f"🔴 [FLUTTERWAVE] HTTP error: {response.status_code}")
+                try:
+                    error_data = response.json()
+                    print(f"🔴 [FLUTTERWAVE] Error response: {error_data}")
+                    return {
+                        'success': False,
+                        'error': f'Payment gateway error: {error_data.get("message", "Unknown error")}'
+                    }
+                except:
+                    return {
+                        'success': False,
+                        'error': f'Payment gateway HTTP error: {response.status_code}'
+                    }
+                    
+        except Exception as e:
+            print(f"🔴 [FLUTTERWAVE] Exception in create_flutterwave_transaction: {str(e)}")
+            import traceback
+            print(f"🔴 [FLUTTERWAVE] Traceback: {traceback.format_exc()}")
             return {
-                'success': False, 
-                'error': error_msg
+                'success': False,
+                'error': f'Payment processing error: {str(e)}'
             }
             
-        except Exception as e:
-            current_app.logger.error(f"Paystack transaction creation failed: {str(e)}", exc_info=True)
-            return {'success': False, 'error': str(e)}
 
-    def create_payment_intent(self, user, campaign, package, currency='USD'):
-        """Create Stripe Payment Intent"""
+    def verify_flutterwave_payment(self, transaction_id):
+        """Verify Flutterwave payment"""
         try:
-            # Convert to cents for Stripe
-            amount_cents = int(package.price * 100)
-            
-            # Create PaymentIntent
-            intent = stripe.PaymentIntent.create(
-                amount=amount_cents,
-                currency=currency.lower(),
-                metadata={
-                    'user_id': user.id,
-                    'campaign_id': campaign.id,
-                    'package_id': package.id,
-                    'type': 'ad_campaign'
-                },
-                automatic_payment_methods={
-                    'enabled': True,
-                },
-            )
-            
-            # Create transaction record
-            transaction = PaymentTransaction(
-                user_id=user.id,
-                campaign_id=campaign.id,
-                amount=package.price,
-                currency=currency,
-                gateway='stripe',
-                gateway_payment_id=intent.id,
-                gateway_status='requires_payment_method',
-                description=f"Ad Campaign: {campaign.title}",
-                gateway_metadata=json.dumps({
-                    'client_secret': intent.client_secret,
-                    'status': intent.status
-                })
-            )
-            
-            db.session.add(transaction)
-            
-            # Update campaign with payment info
-            campaign.payment_gateway = 'stripe'
-            campaign.payment_id = intent.id
-            campaign.currency = currency
-            
-            db.session.commit()
-            
-            return {
-                'success': True,
-                'client_secret': intent.client_secret,
-                'payment_intent_id': intent.id,
-                'transaction_id': transaction.id
-            }
-            
-        except Exception as e:
-            current_app.logger.error(f"Stripe payment intent creation failed: {str(e)}", exc_info=True)
-            return {'success': False, 'error': str(e)}
-
-    def verify_paystack_payment(self, reference):
-        """Verify Paystack payment"""
-        try:
-            current_app.logger.info(f"Verifying Paystack payment for reference: {reference}")
+            current_app.logger.info(f"Verifying Flutterwave payment for transaction: {transaction_id}")
             
             headers = {
-                'Authorization': f'Bearer {self.paystack_secret_key}',
+                'Authorization': f'Bearer {self.flutterwave_secret_key}',
                 'Content-Type': 'application/json'
             }
             
             response = requests.get(
-                f'https://api.paystack.co/transaction/verify/{reference}',
+                f'https://api.flutterwave.com/v3/transactions/{transaction_id}/verify',
                 headers=headers,
                 timeout=30
             )
             
-            current_app.logger.info(f"Paystack verification response: {response.status_code}")
+            current_app.logger.info(f"Flutterwave verification response: {response.status_code}")
             
             if response.status_code == 200:
                 result = response.json()
-                current_app.logger.info(f"Paystack verification result: {result}")
+                current_app.logger.info(f"Flutterwave verification result: {result}")
                 
                 return {
-                    'success': result['status'],
+                    'success': result['status'] == 'success',
                     'data': result.get('data', {})
                 }
             
-            current_app.logger.error(f"Paystack verification HTTP error: {response.status_code}")
+            current_app.logger.error(f"Flutterwave verification HTTP error: {response.status_code}")
             return {
                 'success': False, 
                 'error': f'HTTP {response.status_code}',
@@ -208,7 +165,7 @@ class PaymentService:
             }
             
         except Exception as e:
-            current_app.logger.error(f"Paystack verification failed: {str(e)}", exc_info=True)
+            current_app.logger.error(f"Flutterwave verification failed: {str(e)}", exc_info=True)
             return {
                 'success': False, 
                 'error': str(e),
@@ -216,7 +173,7 @@ class PaymentService:
             }
 
     def handle_successful_payment(self, transaction_id, payment_data=None):
-        """Handle successful payment - UPDATED TO PROPERLY UPDATE STATUS"""
+        """Handle successful payment - UPDATED"""
         try:
             transaction = PaymentTransaction.query.get(transaction_id)
             if not transaction:
@@ -227,7 +184,7 @@ class PaymentService:
             
             # Update transaction status
             transaction.status = 'completed'
-            transaction.gateway_status = 'success'
+            transaction.gateway_status = 'successful'
             transaction.gateway_metadata = json.dumps(payment_data) if payment_data else transaction.gateway_metadata
             transaction.updated_at = datetime.utcnow()
             
@@ -238,15 +195,21 @@ class PaymentService:
                 campaign.status = 'active'
                 campaign.payment_gateway = transaction.gateway
                 campaign.payment_id = transaction.gateway_payment_id
+                campaign.start_date = datetime.utcnow()
+                
+                # Calculate end date based on duration_days
+                duration_days = campaign.duration_days
+                campaign.end_date = datetime.utcnow() + timedelta(days=duration_days)
                 campaign.updated_at = datetime.utcnow()
                 
-                current_app.logger.info(f"Updated campaign {campaign.id} to paid and active")
+                current_app.logger.info(f"Updated campaign {campaign.id} to active for {duration_days} days")
+                
+                # Send success email
+                self.send_payment_success_email(transaction.user_id, campaign, transaction)
             else:
                 current_app.logger.error(f"Campaign not found for transaction: {transaction_id}")
             
             db.session.commit()
-            
-            current_app.logger.info(f"Successfully processed payment for transaction: {transaction_id}")
             return True
             
         except Exception as e:
@@ -273,6 +236,9 @@ class PaymentService:
                 campaign.payment_status = 'failed'
                 campaign.status = 'pending'
                 campaign.updated_at = datetime.utcnow()
+                
+                # Send failure email
+                self.send_payment_failed_email(transaction.user_id, campaign, transaction)
             
             db.session.commit()
             return True
@@ -280,4 +246,151 @@ class PaymentService:
         except Exception as e:
             current_app.logger.error(f"Failed payment handling failed: {str(e)}")
             db.session.rollback()
+            return False
+
+    def send_payment_success_email(self, user_id, campaign, transaction):
+        """Send payment success email with campaign details"""
+        try:
+            user = User.query.get(user_id)
+            if not user:
+                return False
+            
+            # Calculate expiry date
+            expiry_date = campaign.end_date.strftime('%B %d, %Y')
+            duration_days = campaign.duration_days
+            
+            subject = "🎉 Your Kimbela Ad Campaign is Live!"
+            
+            html_body = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                    .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                    .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; }}
+                    .content {{ background: #f9f9f9; padding: 20px; border-radius: 0 0 10px 10px; }}
+                    .details {{ background: white; padding: 15px; border-radius: 5px; margin: 10px 0; }}
+                    .footer {{ text-align: center; margin-top: 20px; color: #666; font-size: 12px; }}
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>🎉 Ad Campaign Activated!</h1>
+                        <p>Your Kimbela advertising campaign is now live</p>
+                    </div>
+                    <div class="content">
+                        <p>Hello {user.full_name},</p>
+                        <p>Great news! Your ad campaign has been successfully activated and is now running on Kimbela.</p>
+                        
+                        <div class="details">
+                            <h3>📊 Campaign Details</h3>
+                            <p><strong>Campaign Title:</strong> {campaign.title}</p>
+                            <p><strong>Description:</strong> {campaign.description or 'N/A'}</p>
+                            <p><strong>Daily Budget:</strong> ${transaction.amount:.2f} {transaction.currency}</p>
+                            <p><strong>Duration:</strong> {duration_days} days</p>
+                            <p><strong>Start Date:</strong> {campaign.start_date.strftime('%B %d, %Y')}</p>
+                            <p><strong>Expiry Date:</strong> {expiry_date}</p>
+                            <p><strong>Total Amount Paid:</strong> ${transaction.amount * duration_days:.2f} {transaction.currency}</p>
+                        </div>
+                        
+                        <div class="details">
+                            <h3>📈 What's Next?</h3>
+                            <p>• Your ad is now visible to our community</p>
+                            <p>• Track performance in your dashboard</p>
+                            <p>• Monitor impressions and clicks in real-time</p>
+                            <p>• Campaign will automatically end on {expiry_date}</p>
+                        </div>
+                        
+                        <p>You can view your campaign performance and analytics from your <a href="{current_app.config.get('BASE_URL', 'http://localhost:5000')}/user/dashboard">dashboard</a>.</p>
+                        
+                        <p>Need help? Contact our support team anytime.</p>
+                        
+                        <p>Best regards,<br>The Kimbela Team</p>
+                    </div>
+                    <div class="footer">
+                        <p>© 2024 Kimbela. All rights reserved.</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """
+            
+            msg = Message(
+                subject=subject,
+                recipients=[user.email],
+                html=html_body,
+                sender=current_app.config.get('MAIL_DEFAULT_SENDER')
+            )
+            
+            mail.send(msg)
+            current_app.logger.info(f"Success email sent to {user.email}")
+            return True
+            
+        except Exception as e:
+            current_app.logger.error(f"Failed to send success email: {str(e)}")
+            return False
+
+    def send_payment_failed_email(self, user_id, campaign, transaction):
+        """Send payment failure email"""
+        try:
+            user = User.query.get(user_id)
+            if not user:
+                return False
+            
+            subject = "❌ Payment Failed - Kimbela Ad Campaign"
+            
+            html_body = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                    .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                    .header {{ background: #dc3545; color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; }}
+                    .content {{ background: #f9f9f9; padding: 20px; border-radius: 0 0 10px 10px; }}
+                    .footer {{ text-align: center; margin-top: 20px; color: #666; font-size: 12px; }}
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>❌ Payment Failed</h1>
+                        <p>Your Kimbela ad campaign payment was not successful</p>
+                    </div>
+                    <div class="content">
+                        <p>Hello {user.full_name},</p>
+                        <p>We were unable to process the payment for your ad campaign. Your campaign has been saved as a draft and will not be activated until payment is completed.</p>
+                        
+                        <p><strong>Campaign:</strong> {campaign.title}</p>
+                        <p><strong>Amount:</strong> ${transaction.amount:.2f} {transaction.currency}</p>
+                        
+                        <p>You can retry the payment from your <a href="{current_app.config.get('BASE_URL', 'http://localhost:5000')}/user/dashboard">dashboard</a> or try a different payment method.</p>
+                        
+                        <p>If you believe this is an error, please contact our support team for assistance.</p>
+                        
+                        <p>Best regards,<br>The Kimbela Team</p>
+                    </div>
+                    <div class="footer">
+                        <p>© 2024 Kimbela. All rights reserved.</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """
+            
+            msg = Message(
+                subject=subject,
+                recipients=[user.email],
+                html=html_body,
+                sender=current_app.config.get('MAIL_DEFAULT_SENDER')
+            )
+            
+            mail.send(msg)
+            current_app.logger.info(f"Failure email sent to {user.email}")
+            return True
+            
+        except Exception as e:
+            current_app.logger.error(f"Failed to send failure email: {str(e)}")
             return False

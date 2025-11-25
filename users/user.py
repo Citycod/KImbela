@@ -2406,54 +2406,54 @@ def upload_image():
     
     
     
-@user.route('/initiate-payment', methods=['POST'])
-@login_required
-def initiate_payment():
-    """Initiate payment for matchmaking request"""
-    try:
-        data = request.get_json()
-        request_id = data.get('request_id')
-        payment_method = data.get('payment_method', 'paystack')
-        currency = data.get('currency', 'USD')
+# @user.route('/initiate-payment', methods=['POST'])
+# @login_required
+# def initiate_payment():
+#     """Initiate payment for matchmaking request"""
+#     try:
+#         data = request.get_json()
+#         request_id = data.get('request_id')
+#         payment_method = data.get('payment_method', 'paystack')
+#         currency = data.get('currency', 'USD')
         
-        # Get the matchmaking request
-        matchmaking_request = MatchmakingRequest.query.get(request_id)
-        if not matchmaking_request or matchmaking_request.user_id != current_user.id:
-            return jsonify({'success': False, 'error': 'Invalid request'}), 400
+#         # Get the matchmaking request
+#         matchmaking_request = MatchmakingRequest.query.get(request_id)
+#         if not matchmaking_request or matchmaking_request.user_id != current_user.id:
+#             return jsonify({'success': False, 'error': 'Invalid request'}), 400
         
-        # For demo purposes - in production, integrate with actual payment gateways
-        if payment_method == 'paystack':
-            # In production, you would:
-            # 1. Call Paystack API to initialize transaction
-            # 2. Get authorization_url from Paystack
-            # 3. Return it to frontend
+#         # For demo purposes - in production, integrate with actual payment gateways
+#         if payment_method == 'paystack':
+#             # In production, you would:
+#             # 1. Call Paystack API to initialize transaction
+#             # 2. Get authorization_url from Paystack
+#             # 3. Return it to frontend
             
-            # For demo, simulate Paystack response
-            return jsonify({
-                'success': True,
-                'authorization_url': url_for('user.payment_success', request_id=request_id, _external=True),
-                'reference': f'ref_{request_id}_{int(datetime.utcnow().timestamp())}'
-            })
-        elif payment_method == 'stripe':
-            # In production, you would:
-            # 1. Create Stripe PaymentIntent
-            # 2. Return client_secret and other details
+#             # For demo, simulate Paystack response
+#             return jsonify({
+#                 'success': True,
+#                 'authorization_url': url_for('user.payment_success', request_id=request_id, _external=True),
+#                 'reference': f'ref_{request_id}_{int(datetime.utcnow().timestamp())}'
+#             })
+#         elif payment_method == 'stripe':
+#             # In production, you would:
+#             # 1. Create Stripe PaymentIntent
+#             # 2. Return client_secret and other details
             
-            # For demo, simulate Stripe response
-            return jsonify({
-                'success': True,
-                'client_secret': f'pi_{request_id}_secret',
-                'payment_intent_id': f'pi_{request_id}',
-                'transaction_id': f'txn_{request_id}',
-                # Also provide a success URL for Stripe redirect
-                'success_url': url_for('user.payment_success', request_id=request_id, _external=True)
-            })
-        else:
-            return jsonify({'success': False, 'error': 'Unsupported payment method'}), 400
+#             # For demo, simulate Stripe response
+#             return jsonify({
+#                 'success': True,
+#                 'client_secret': f'pi_{request_id}_secret',
+#                 'payment_intent_id': f'pi_{request_id}',
+#                 'transaction_id': f'txn_{request_id}',
+#                 # Also provide a success URL for Stripe redirect
+#                 'success_url': url_for('user.payment_success', request_id=request_id, _external=True)
+#             })
+#         else:
+#             return jsonify({'success': False, 'error': 'Unsupported payment method'}), 400
             
-    except Exception as e:
-        current_app.logger.error(f"Payment initiation error: {str(e)}")
-        return jsonify({'success': False, 'error': 'Failed to initiate payment'}), 500
+#     except Exception as e:
+#         current_app.logger.error(f"Payment initiation error: {str(e)}")
+#         return jsonify({'success': False, 'error': 'Failed to initiate payment'}), 500
     
     
     

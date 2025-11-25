@@ -726,3 +726,102 @@ def login():
 
 
 
+@auth.route("/forgot-password", methods=["GET", "POST"])
+@limiter.limit("5 per minute")
+def forgot_password():
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+        
+        if not email:
+            flash("Please enter your email address.", "danger")
+            return render_template("forgot_password.html")
+        
+        if not re.match(r"^[^@]+@[^@]+\.[^@]+$", email):
+            flash("Please enter a valid email address.", "danger")
+            return render_template("forgot_password.html")
+        
+        user = User.query.filter_by(email=email, is_active=True).first()
+        
+        # Always show success message even if email doesn't exist (for security)
+        if user:
+            # Generate reset token
+            reset_token = user.generate_password_reset_token()
+            db.session.commit()
+            
+            # Send reset email
+            try:
+                msg = Message(
+                    subject="Reset Your Kimbela Password",
+                    sender=current_app.config["MAIL_DEFAULT_SENDER"],
+                    recipients=[email],
+                )
+                msg.html = render_template(
+                    "password_reset_email.html", 
+                    user=user, 
+                    reset_token=reset_token,
+                    reset_url=url_for('auth.reset_password', token=reset_token, _external=True)
+                )
+                mail.send(msg)
+                print(f"Password reset email sent to {email}")
+            except Exception as e:
+                print(f"Password reset email failed: {e}")
+                flash("Failed to send reset email. Please try again later.", "danger")
+                return render_template("forgot_password.html")
+        
+        flash("If that email exists in our system, we've sent password reset instructions.", "success")
+        return redirect(url_for("auth.login"))
+    
+    return render_template("forgot_password.html")
+
+@auth.route("/reset-password/<token>", methods=["GET", "POST"])
+@limiter.limit("5 per minute")
+def reset_password(token):
+    # Verify token
+    user = User.verify_password_reset_token(token)
+    if not user:
+        flash("Invalid or expired reset token. Please request a new password reset.", "danger")
+        return redirect(url_for("auth.forgot_password"))
+    
+    if request.method == "POST":
+        password = request.form.get("password")
+        confirm_password = request.form.get("confirm_password")
+        
+        errors = {}
+        
+        if not password:
+            errors["password"] = "Password is required."
+        elif not is_strong_password(password):
+            errors["password"] = "Password must be at least 8 characters with uppercase, lowercase, number, and symbol."
+        
+        if not confirm_password:
+            errors["confirm_password"] = "Please confirm your password."
+        elif password != confirm_password:
+            errors["confirm_password"] = "Passwords do not match."
+        
+        if errors:
+            for field, error in errors.items():
+                flash(error, "danger")
+            return render_template("reset_password.html", token=token)
+        
+        # Update password
+        user.set_password(password)
+        user.password_reset_token = None
+        user.password_reset_expires = None
+        db.session.commit()
+        
+        # Send confirmation email
+        try:
+            msg = Message(
+                subject="Your Kimbela Password Has Been Reset",
+                sender=current_app.config["MAIL_DEFAULT_SENDER"],
+                recipients=[user.email],
+            )
+            msg.html = render_template("password_reset_success_email.html", user=user)
+            mail.send(msg)
+        except Exception as e:
+            print(f"Password reset confirmation email failed: {e}")
+        
+        flash("Your password has been reset successfully! You can now login with your new password.", "success")
+        return redirect(url_for("auth.login"))
+    
+    return render_template("reset_password.html", token=token)

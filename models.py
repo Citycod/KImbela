@@ -83,6 +83,25 @@ class User(db.Model, UserMixin):
     admin_role = db.Column(db.String(50), default="moderator")
     admin_permissions = db.Column(db.Text)
     
+    password_reset_token = db.Column(db.String(255), nullable=True, unique=True)
+    password_reset_expires = db.Column(db.DateTime, nullable=True)
+    
+    def generate_password_reset_token(self):
+        """Generate a password reset token that expires in 1 hour"""
+        self.password_reset_token = secrets.token_urlsafe(32)
+        self.password_reset_expires = datetime.utcnow() + timedelta(hours=1)
+        return self.password_reset_token
+
+    @staticmethod
+    def verify_password_reset_token(token):
+        """Verify password reset token and return user if valid"""
+        if not token:
+            return None
+        return User.query.filter(
+            User.password_reset_token == token,
+            User.password_reset_expires > datetime.utcnow()
+        ).first()
+    
     def get_user_reaction(self, post_id):
         """Get user's reaction for a specific post"""
         reaction = Reaction.query.filter_by(
@@ -698,7 +717,6 @@ class AdCampaign(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    package_id = db.Column(db.Integer, db.ForeignKey("ad_packages.id"), nullable=False)
     
     # Ad content
     title = db.Column(db.String(200), nullable=False)
@@ -707,16 +725,13 @@ class AdCampaign(db.Model):
     target_url = db.Column(db.String(500))
     call_to_action = db.Column(db.String(50), default="Learn More")
     
-    # Targeting
-    target_audience = db.Column(db.String(50), default="all")
-    target_countries = db.Column(db.Text)
-    target_interests = db.Column(db.Text)
-    
     # Campaign details
     status = db.Column(db.String(20), default="pending")
     start_date = db.Column(db.DateTime)
     end_date = db.Column(db.DateTime)
-    budget = db.Column(db.Float, nullable=False)
+    budget = db.Column(db.Float, nullable=False)  # Total budget
+    daily_budget = db.Column(db.Float, nullable=False)  # Daily budget - ADD THIS
+    duration_days = db.Column(db.Integer, nullable=False)
     
     # Tracking
     impressions = db.Column(db.Integer, default=0)
@@ -729,11 +744,26 @@ class AdCampaign(db.Model):
     payment_id = db.Column(db.String(255))
     currency = db.Column(db.String(3), default="USD")
     
+    # Targeting fields
+    target_gender = db.Column(db.Text)  # JSON string of genders
+    target_age_min = db.Column(db.Integer, default=18)
+    target_age_max = db.Column(db.Integer, default=65)
+    target_countries = db.Column(db.Text)  # JSON string of countries
+    target_interests = db.Column(db.Text)  # JSON string of interests
+    target_education = db.Column(db.Text)  # JSON string of education levels
+    target_occupation = db.Column(db.Text)  # JSON string of occupations
+    target_relationship = db.Column(db.Text)  # JSON string of relationship statuses
+    
+    # Expiration tracking
+    expiry_notification_sent = db.Column(db.Boolean, default=False)
+    auto_renew = db.Column(db.Boolean, default=False)
+    
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     user = db.relationship("User", back_populates="campaigns")
-    package = db.relationship("AdPackage", foreign_keys=[package_id])
+    
+    
 
 class PaymentTransaction(db.Model):
     __tablename__ = "payment_transactions"
@@ -775,7 +805,7 @@ class AdPackage(db.Model):
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    campaigns = db.relationship("AdCampaign", backref="ad_package", lazy=True)
+    # campaigns = db.relationship("AdCampaign", backref="ad_package", lazy=True)
     
     
 

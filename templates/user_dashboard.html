@@ -565,13 +565,13 @@
         <img
           src="{{ url_for('static', filename='assets/img/kim.png') }}"
           alt="Kimbela"
-          class="h-10"
+          class="h-10 my_logo"
           style="height: 10rem; width: 10rem;"
         />
       </a>
 
       <!-- Search Bar -->
-      <div class="flex-1 flex justify-center" style="margin-right: 0.5rem">
+      <div class="flex-1 flex justify-center searching" style="margin-right: 0.5rem">
         <div class="relative w-full max-w-lg md:max-w-xl">
           <i
             class="bi bi-search absolute left-3 top-1/2 transform -translate-y-1/2 text-fb-text-light"
@@ -580,14 +580,14 @@
             type="text"
             id="globalSearch"
             placeholder="Search users, posts, and more..."
-            class="w-full pl-10 pr-3 py-2 bg-fb-gray rounded-full border-0 focus:ring-2 focus:ring-fb-blue focus:outline-none transition-all text-[0.95rem] md:text-base"
+            class="w-full pl-10 pr-3 py-2 bg-fb-gray rounded-full border-0 focus:ring-2 focus:ring-fb-blue focus:outline-none transition-all text-[0.95rem] md:text-base searching search_input"
           />
           <div
-            class="search-results absolute top-full left-0 right-0 mt-1 bg-white rounded-xl shadow-strong overflow-hidden z-10 hidden"
+            class="search-results absolute top-full left-0 right-0 mt-1 bg-white rounded-xl shadow-strong overflow-hidden z-10 hidden searching_result results"
             id="searchResults"
           >
             <div
-              class="search-results-body max-h-80 overflow-y-auto custom-scrollbar"
+              class="search-results-body max-h-80 overflow-y-auto custom-scrollbar searching_result results"
               id="searchResultsBody"
             ></div>
           </div>
@@ -4479,7 +4479,31 @@
     .ad-modal-content { transform: scale(0.92); }
     #floatingAd button { width: 50px; height: 50px; }
     #floatingAdContent { width: 230px !important; }
+
+
+    .my_logo{
+    display: none;
   }
+
+  .searching{
+    width: 13rem;
+    height: 2rem;
+  }
+
+  .results{
+    font-size: 0.6rem;
+  }
+
+  .searching_result{
+    height: 10rem;
+  }
+
+  .search_input{
+    font-size 0.6rem;
+  }
+  }
+
+  
 </style>
 
 

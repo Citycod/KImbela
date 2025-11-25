@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Sponsored Ad Packages – Kimbela</title>
+    <title>Create Ad Campaign - Kimbela</title>
     <meta name="csrf-token" content="{{ csrf_token }}">
 
     <!-- Tailwind CSS -->
@@ -16,95 +16,113 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
     <script>
-      // Wait for Tailwind to load before configuring
-      document.addEventListener('DOMContentLoaded', function() {
-        if (typeof tailwind !== 'undefined') {
-          tailwind.config = {
-            theme: {
-              extend: {
-                colors: {
-                  primary: '#1f2937',
-                  secondary: '#374151',
-                  accent: '#059669',
-                  'dark-bg': '#111827',
-                  'light-bg': '#f8fafc',
-                  'border-color': '#e5e7eb',
-                  'text-primary': '#1f2937',
-                  'text-secondary': '#6b7280',
-                  'success': '#059669',
-                  'warning': '#d97706',
-                  'premium': '#7c3aed',
-                },
-                fontFamily: {
-                  inter: ["Inter", "sans-serif"],
-                },
-                animation: {
-                  'fade-in': 'fadeIn 0.5s ease-in-out',
-                  'slide-up': 'slideUp 0.3s ease-out',
-                  'pulse-soft': 'pulseSoft 2s infinite',
-                  'float': 'float 6s ease-in-out infinite',
-                },
-                keyframes: {
-                  fadeIn: {
-                    '0%': { opacity: '0' },
-                    '100%': { opacity: '1' },
-                  },
-                  slideUp: {
-                    '0%': { transform: 'translateY(10px)', opacity: '0' },
-                    '100%': { transform: 'translateY(0)', opacity: '1' },
-                  },
-                  pulseSoft: {
-                    '0%, 100%': { opacity: '1' },
-                    '50%': { opacity: '0.8' },
-                  },
-                  float: {
-                    '0%, 100%': { transform: 'translateY(0)' },
-                    '50%': { transform: 'translateY(-10px)' },
-                  }
-                }
-              },
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: '#1f2937',
+              secondary: '#374151',
+              accent: '#059669',
+              'dark-bg': '#111827',
+              'light-bg': '#f8fafc',
+              'border-color': '#e5e7eb',
+              'text-primary': '#1f2937',
+              'text-secondary': '#6b7280',
+              'success': '#059669',
+              'warning': '#d97706',
+              'premium': '#7c3aed',
             },
-          };
-        }
-      });
+            fontFamily: {
+              inter: ["Inter", "sans-serif"],
+            },
+          },
+        },
+      };
     </script>
 
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" />
-
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
-
     <style>
-      /* Enhanced Styles */
-      .glass-effect {
-        background: rgba(255, 255, 255, 0.8);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
+      .slider {
+        -webkit-appearance: none;
+        width: 100%;
+        height: 8px;
+        border-radius: 4px;
+        background: linear-gradient(to right, #059669, #10b981);
+        outline: none;
       }
       
-      .gradient-bg {
-        background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+      .slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: white;
+        border: 2px solid #059669;
+        cursor: pointer;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.2);
       }
       
-      .gradient-premium {
-        background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+      .slider::-moz-range-thumb {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: white;
+        border: 2px solid #059669;
+        cursor: pointer;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.2);
       }
       
-      .gradient-accent {
-        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      .budget-display {
+        background: linear-gradient(to right, #059669, #10b981);
+        color: white;
+        border-radius: 10px;
+        padding: 15px;
+        text-align: center;
+        font-weight: bold;
+        font-size: 1.5rem;
+        margin-bottom: 20px;
       }
       
-      .shadow-soft {
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      .days-input {
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 10px 15px;
+        font-size: 1rem;
+        width: 100%;
+        text-align: center;
       }
       
-      .shadow-medium {
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      .days-input:focus {
+        border-color: #059669;
+        outline: none;
       }
       
-      .shadow-strong {
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      .total-price {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #059669;
+        text-align: center;
+        margin: 20px 0;
+      }
+      
+      .info-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid #f0f0f0;
+      }
+      
+      .info-item:last-child {
+        border-bottom: none;
+      }
+      
+      .card-hover {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      
+      .card-hover:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
       }
       
       .btn-compact {
@@ -116,157 +134,8 @@
       
       .btn-compact:hover {
         transform: translateY(-2px);
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
       }
       
-      .card-hover {
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      }
-      
-      .card-hover:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-      }
-      
-      .feature-list li {
-        position: relative;
-        padding-left: 1.5rem;
-        margin-bottom: 0.5rem;
-        font-size: 0.875rem;
-        line-height: 1.5;
-      }
-      
-      .feature-list li:before {
-        content: "✓";
-        position: absolute;
-        left: 0;
-        color: #059669;
-        font-weight: bold;
-        font-size: 1rem;
-      }
-      
-      .popular-plan {
-        border: 2px solid #7c3aed;
-        position: relative;
-        transform: scale(1.05);
-      }
-      
-      .popular-plan::before {
-        content: "MOST POPULAR";
-        position: absolute;
-        top: -12px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: linear-gradient(135deg, #7c3aed, #6d28d9);
-        color: white;
-        padding: 0.375rem 1.5rem;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: 700;
-        box-shadow: 0 4px 10px rgba(124, 58, 237, 0.4);
-      }
-      
-      .image-upload-area {
-        border: 2px dashed #d1d5db;
-        border-radius: 0.75rem;
-        padding: 2rem;
-        text-align: center;
-        transition: all 0.3s ease;
-        cursor: pointer;
-        background: #f8fafc;
-      }
-      
-      .image-upload-area:hover {
-        border-color: #059669;
-        background: #f0fdf4;
-        transform: scale(1.02);
-      }
-      
-      .image-upload-area.dragover {
-        border-color: #059669;
-        background: #f0fdf4;
-        transform: scale(1.02);
-      }
-      
-      .premium-badge {
-        position: absolute;
-        top: -12px;
-        right: 20px;
-        background: linear-gradient(135deg, #7c3aed, #6d28d9);
-        color: white;
-        padding: 0.5rem 1rem;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: 700;
-        box-shadow: 0 4px 10px rgba(124, 58, 237, 0.4);
-      }
-
-      .step-indicator {
-        display: flex;
-        justify-content: space-between;
-        position: relative;
-        margin-bottom: 2rem;
-      }
-
-      .step-indicator::before {
-        content: "";
-        position: absolute;
-        top: 16px;
-        left: 0;
-        right: 0;
-        height: 2px;
-        background: #e5e7eb;
-        z-index: 1;
-      }
-
-      .step {
-        position: relative;
-        z-index: 2;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        flex: 1;
-      }
-
-      .step-circle {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        background: #e5e7eb;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 600;
-        font-size: 0.875rem;
-        margin-bottom: 0.5rem;
-        transition: all 0.3s ease;
-        border: 2px solid transparent;
-      }
-
-      .step.active .step-circle {
-        background: #059669;
-        color: white;
-        border-color: #059669;
-        box-shadow: 0 4px 10px rgba(5, 150, 105, 0.3);
-      }
-
-      .step.completed .step-circle {
-        background: #059669;
-        color: white;
-      }
-
-      .step-label {
-        font-size: 0.75rem;
-        font-weight: 600;
-        color: #6b7280;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-      }
-
-      .step.active .step-label {
-        color: #059669;
-      }
-
       .loader-spinner {
         width: 48px;
         height: 48px;
@@ -275,125 +144,10 @@
         border-radius: 50%;
         animation: spin 1s linear infinite;
       }
-
+      
       @keyframes spin {
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
-      }
-
-      .ad-preview {
-        border: 1px solid #e5e7eb;
-        border-radius: 12px;
-        overflow: hidden;
-        background: white;
-        transition: all 0.3s ease;
-      }
-
-      .ad-preview:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-      }
-
-      .ad-preview-header {
-        padding: 12px 16px;
-        border-bottom: 1px solid #e5e7eb;
-        font-size: 0.75rem;
-        color: #6b7280;
-        background: #f8fafc;
-      }
-
-      .ad-preview-body {
-        padding: 16px;
-      }
-
-      .ad-preview-image {
-        width: 100%;
-        height: 160px;
-        background: #f3f4f6;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #9ca3af;
-        margin-bottom: 12px;
-        overflow: hidden;
-      }
-
-      .ad-preview-title {
-        font-weight: 600;
-        margin-bottom: 8px;
-        color: #1f2937;
-        font-size: 0.875rem;
-        line-height: 1.4;
-      }
-
-      .ad-preview-description {
-        color: #6b7280;
-        font-size: 0.75rem;
-        margin-bottom: 12px;
-        line-height: 1.5;
-      }
-
-      .ad-preview-cta {
-        display: inline-block;
-        background: #059669;
-        color: white;
-        padding: 8px 16px;
-        border-radius: 6px;
-        font-weight: 500;
-        font-size: 0.75rem;
-        transition: all 0.2s ease;
-      }
-
-      .ad-preview-cta:hover {
-        background: #047857;
-        transform: translateY(-1px);
-      }
-      
-      .interest-tag {
-        display: inline-block;
-        background: #f3f4f6;
-        border: 1px solid #e5e7eb;
-        border-radius: 20px;
-        padding: 6px 12px;
-        margin: 4px;
-        font-size: 0.75rem;
-        cursor: pointer;
-        transition: all 0.2s ease;
-      }
-      
-      .interest-tag:hover {
-        background: #e5e7eb;
-      }
-      
-      .interest-tag.selected {
-        background: #059669;
-        color: white;
-        border-color: #059669;
-      }
-      
-      .country-select {
-        height: 200px;
-        overflow-y: auto;
-        border: 1px solid #e5e7eb;
-        border-radius: 8px;
-        padding: 8px;
-      }
-      
-      .country-option {
-        padding: 8px 12px;
-        cursor: pointer;
-        border-radius: 6px;
-        transition: all 0.2s ease;
-      }
-      
-      .country-option:hover {
-        background: #f3f4f6;
-      }
-      
-      .country-option.selected {
-        background: #059669;
-        color: white;
       }
       
       .success-checkmark {
@@ -446,493 +200,428 @@
           box-shadow: inset 0px 0px 0px 30px #059669;
         }
       }
+      
+      .image-upload-area {
+        border: 2px dashed #d1d5db;
+        border-radius: 0.75rem;
+        padding: 2rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        background: #f8fafc;
+      }
+      
+      .image-upload-area:hover {
+        border-color: #059669;
+        background: #f0fdf4;
+      }
+      
+      .image-upload-area.dragover {
+        border-color: #059669;
+        background: #f0fdf4;
+      }
+      
+      .age-slider-container {
+        margin-top: 10px;
+      }
+      
+      .age-display {
+        text-align: center;
+        font-weight: bold;
+        margin-top: 10px;
+        color: #059669;
+      }
+      
+      .multi-select {
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 10px 15px;
+        font-size: 1rem;
+        width: 100%;
+      }
+      
+      .multi-select:focus {
+        border-color: #059669;
+        outline: none;
+      }
+      
+      .targeting-section {
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #f0f0f0;
+      }
+      
+      .targeting-section:last-child {
+        border-bottom: none;
+      }
     </style>
   </head>
   <body class="font-inter bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen">
-    <!-- Enhanced Loader -->
-    <div class="simple-loader fixed inset-0 bg-white flex flex-col justify-center items-center z-50" id="loader">
-      <div class="text-center animate-fade-in">
-        <div class="loader-spinner mb-4"></div>
-        <div class="text-text-secondary text-sm font-medium">Loading amazing ad packages...</div>
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-40 border-b border-gray-200/50">
+      <div class="container mx-auto px-4 py-4">
+        <div class="flex justify-between items-center">
+          <div class="flex items-center space-x-3">
+            <h1 class="text-xl font-bold text-primary">Kimbela Ads</h1>
+          </div>
+          <div class="flex items-center space-x-4">
+            <a href="{{ url_for('user.user_dashboard') }}" class="bg-primary text-white px-4 py-2.5 rounded-lg btn-compact hover:bg-secondary transition-all duration-300 flex items-center space-x-2">
+              <i class="bi bi-grid-1x2"></i>
+              <span>Dashboard</span>
+            </a>
+          </div>
+        </div>
       </div>
-    </div>
+    </header>
 
     <!-- Main Content -->
-    <div class="main-content min-h-screen">
-      <!-- Enhanced Header -->
-      <header class="glass-effect sticky top-0 z-40 border-b border-gray-200/50">
-        <div class="container mx-auto px-4 py-4">
-          <div class="flex justify-between items-center">
-            <div class="flex items-center space-x-3">
-              
+    <main class="container mx-auto px-4 py-8 max-w-6xl">
+      <div class="text-center mb-10">
+        <h1 class="text-3xl md:text-4xl font-bold text-primary mb-4">Create Your Ad Campaign</h1>
+        <p class="text-text-secondary max-w-2xl mx-auto">Set your budget, duration, and target audience to reach the right people on Kimbela</p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Left Column - Configuration -->
+        <div class="bg-white rounded-xl shadow-md p-6 card-hover lg:col-span-2">
+          <h2 class="text-xl font-bold text-primary mb-6">Configure Your Ad</h2>
+          
+          <!-- Budget Slider Section -->
+          <div class="mb-8">
+            <div class="flex justify-between items-center mb-2">
+              <label class="text-primary font-medium">Daily Budget</label>
+              <span class="text-text-secondary text-sm">$5 - $10,000</span>
             </div>
+            
+            <div class="budget-display">
+              $<span id="budgetValue">5.00</span> / day
+            </div>
+            
+            <input type="range" min="5" max="10000" value="5" step="1" class="slider" id="budgetSlider">
+            
+            <div class="flex justify-between text-xs text-text-secondary mt-1">
+              <span>$5</span>
+              <span>$10,000</span>
+            </div>
+          </div>
+          
+          <!-- Duration Section -->
+          <div class="mb-8">
+            <label class="block text-primary font-medium mb-3">Ad Duration (Days)</label>
             <div class="flex items-center space-x-4">
-              <a href="{{ url_for('user.user_dashboard') }}" class="bg-primary text-white px-4 py-2.5 rounded-lg btn-compact hover:bg-secondary transition-all duration-300 flex items-center space-x-2">
-                <i class="bi bi-grid-1x2"></i>
-                <span>Dashboard</span>
-              </a>
+              <input type="number" id="daysInput" class="days-input" min="5" value="5">
+              <span class="text-text-secondary">days</span>
+            </div>
+            <p class="text-xs text-text-secondary mt-2">Minimum duration: 5 days</p>
+          </div>
+          
+          <!-- Target Audience Section -->
+          <div class="mb-8">
+            <h3 class="text-lg font-semibold text-primary mb-4">Target Audience</h3>
+            
+            <!-- Gender Targeting -->
+            <div class="targeting-section">
+              <label class="block text-primary font-medium mb-2">Gender</label>
+              <div class="flex space-x-4">
+                <label class="flex items-center">
+                  <input type="radio" name="gender" value="all" class="mr-2" checked>
+                  <span>All Genders</span>
+                </label>
+                <label class="flex items-center">
+                  <input type="radio" name="gender" value="male" class="mr-2">
+                  <span>Male</span>
+                </label>
+                <label class="flex items-center">
+                  <input type="radio" name="gender" value="female" class="mr-2">
+                  <span>Female</span>
+                </label>
+                <label class="flex items-center">
+                  <input type="radio" name="gender" value="non-binary" class="mr-2">
+                  <span>Non-binary</span>
+                </label>
+              </div>
+            </div>
+            
+            <!-- Age Range Targeting -->
+            <div class="targeting-section">
+              <label class="block text-primary font-medium mb-2">Age Range</label>
+              <div class="age-slider-container">
+                <div id="ageRangeSlider" class="slider"></div>
+                <div class="age-display">
+                  <span id="minAge">18</span> - <span id="maxAge">65</span> years
+                </div>
+              </div>
+            </div>
+            
+            <!-- Location Targeting -->
+            <div class="targeting-section">
+              <label class="block text-primary font-medium mb-2">Location</label>
+              <select class="multi-select" id="locationTargeting" multiple>
+                <option value="nigeria">🇳🇬 Nigeria</option>
+    <option value="ghana">🇬🇭 Ghana</option>
+    <option value="kenya">🇰🇪 Kenya</option>
+    <option value="south-africa">🇿🇦 South Africa</option>
+    <option value="egypt">🇪🇬 Egypt</option>
+    <option value="morocco">🇲🇦 Morocco</option>
+    <option value="tanzania">🇹🇿 Tanzania</option>
+    <option value="ethiopia">🇪🇹 Ethiopia</option>
+    <option value="algeria">🇩🇿 Algeria</option>
+    <option value="uganda">🇺🇬 Uganda</option>
+    <option value="cameroon">🇨🇲 Cameroon</option>
+    <option value="senegal">🇸🇳 Senegal</option>
+    <option value="ivory-coast">🇨🇮 Ivory Coast</option>
+    <option value="rwanda">🇷🇼 Rwanda</option>
+    <option value="tunisia">🇹🇳 Tunisia</option>
+    <option value="zimbabwe">🇿🇼 Zimbabwe</option>
+    <option value="mozambique">🇲🇿 Mozambique</option>
+    <option value="zambia">🇿🇲 Zambia</option>
+    <option value="botswana">🇧🇼 Botswana</option>
+    <option value="namibia">🇳🇦 Namibia</option>
+    <option value="mali">🇲🇱 Mali</option>
+    <option value="libya">🇱🇾 Libya</option>
+    <option value="sudan">🇸🇩 Sudan</option>
+    <option value="gabon">🇬🇦 Gabon</option>
+    <option value="malawi">🇲🇼 Malawi</option>
+
+    <!-- REST OF THE WORLD (25 Countries) -->
+    <option value="united-states">🇺🇸 United States</option>
+    <option value="canada">🇨🇦 Canada</option>
+    <option value="mexico">🇲🇽 Mexico</option>
+    <option value="brazil">🇧🇷 Brazil</option>
+    <option value="argentina">🇦🇷 Argentina</option>
+    <option value="uk">🇬🇧 United Kingdom</option>
+    <option value="france">🇫🇷 France</option>
+    <option value="germany">🇩🇪 Germany</option>
+    <option value="italy">🇮🇹 Italy</option>
+    <option value="spain">🇪🇸 Spain</option>
+    <option value="portugal">🇵🇹 Portugal</option>
+    <option value="netherlands">🇳🇱 Netherlands</option>
+    <option value="sweden">🇸🇪 Sweden</option>
+    <option value="australia">🇦🇺 Australia</option>
+    <option value="japan">🇯🇵 Japan</option>
+    <option value="china">🇨🇳 China</option>
+    <option value="india">🇮🇳 India</option>
+    <option value="south-korea">🇰🇷 South Korea</option>
+    <option value="indonesia">🇮🇩 Indonesia</option>
+    <option value="saudi-arabia">🇸🇦 Saudi Arabia</option>
+    <option value="uae">🇦🇪 United Arab Emirates</option>
+    <option value="turkey">🇹🇷 Turkey</option>
+    <option value="qatar">🇶🇦 Qatar</option>
+    <option value="singapore">🇸🇬 Singapore</option>
+    <option value="thailand">🇹🇭 Thailand</option>
+              </select>
+              <p class="text-xs text-text-secondary mt-2">Hold Ctrl/Cmd to select multiple locations</p>
+            </div>
+            
+            <!-- Interests Targeting -->
+            <div class="targeting-section">
+              <label class="block text-primary font-medium mb-2">Interests</label>
+              <select class="multi-select" id="interestsTargeting" multiple>
+                <option value="technology">Technology</option>
+                <option value="sports">Sports</option>
+                <option value="fashion">Fashion</option>
+                <option value="travel">Travel</option>
+                <option value="food">Food & Cooking</option>
+                <option value="music">Music</option>
+                <option value="gaming">Gaming</option>
+                <option value="fitness">Fitness</option>
+                <option value="business">Business</option>
+                <option value="education">Education</option>
+              </select>
+              <p class="text-xs text-text-secondary mt-2">Hold Ctrl/Cmd to select multiple interests</p>
+            </div>
+            
+            <!-- Device Targeting -->
+            
+            
+            <!-- Language Targeting -->
+            <div class="targeting-section">
+              <label class="block text-primary font-medium mb-2">Language</label>
+              <select class="w-full px-4 py-3 border-2 border-border-color rounded-xl text-sm focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-300" id="languageTargeting">
+                <option value="all">All Languages</option>
+                <option value="english">English</option>
+                <option value="spanish">Spanish</option>
+                <option value="french">French</option>
+                <option value="german">German</option>
+                <option value="chinese">Chinese</option>
+                <option value="japanese">Japanese</option>
+                <option value="arabic">Arabic</option>
+              </select>
             </div>
           </div>
-        </div>
-      </header>
-
-      <!-- Enhanced Hero Section -->
-      <section class="relative py-20 gradient-bg text-white overflow-hidden">
-        <div class="absolute inset-0 bg-black/10"></div>
-        <div class="absolute top-0 left-0 w-72 h-72 bg-purple-500/10 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
-        <div class="absolute bottom-0 right-0 w-96 h-96 bg-green-500/10 rounded-full translate-x-1/3 translate-y-1/3"></div>
-        <div class="absolute top-1/4 right-1/4 w-64 h-64 bg-blue-500/10 rounded-full animate-float"></div>
-        
-        <div class="container mx-auto px-4 text-center relative z-10">
-          <h1 class="text-4xl md:text-6xl font-black mb-6 animate-fade-in bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
-            Amplify Your Reach
-          </h1>
-          <p class="text-xl md:text-2xl mb-8 max-w-3xl mx-auto text-gray-200 leading-relaxed">
-            Boost your visibility with our powerful sponsored ad packages. Reach the right audience and grow your influence.
-          </p>
-          <div class="flex justify-center space-x-4 animate-slide-up">
-            <a href="#packages" class="bg-white text-primary px-8 py-4 rounded-xl btn-compact hover:bg-gray-50 font-semibold transition-all duration-300 flex items-center space-x-2">
-              <i class="bi bi-rocket-takeoff"></i>
-              <span>View Packages</span>
-            </a>
-            <a href="#how-it-works" class="border-2 border-white/30 text-white px-8 py-4 rounded-xl btn-compact hover:bg-white/10 font-semibold transition-all duration-300">
-              How It Works
-            </a>
-          </div>
-        </div>
-      </section>
-
-      <!-- Enhanced Packages Section -->
-      <section id="packages" class="py-20 bg-transparent">
-        <div class="container mx-auto px-4">
-          <div class="text-center mb-16 animate-fade-in">
-            <h2 class="text-4xl md:text-5xl font-black text-primary mb-4">Sponsored Ad Packages</h2>
-            <p class="text-xl text-text-secondary max-w-2xl mx-auto leading-relaxed">
-              Choose the perfect package to boost your visibility and reach your target audience effectively.
-            </p>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <!-- Starter Package -->
-            <div class="bg-white rounded-2xl shadow-strong overflow-hidden card-hover border border-border-color animate-slide-up">
-              <div class="p-8">
-                <div class="flex items-center justify-between mb-4">
-                  <h3 class="text-2xl font-black text-primary">Starter</h3>
-                  <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <i class="bi bi-star text-primary text-lg"></i>
-                  </div>
-                </div>
-                <p class="text-text-secondary mb-6 text-sm font-medium">Perfect for testing the waters</p>
-                <div class="mb-6">
-                  <span class="text-4xl font-black text-primary">$9.99</span>
-                  <span class="text-text-secondary font-medium">/campaign</span>
-                </div>
-                <ul class="feature-list mb-8 text-text-secondary">
-                  <li>5,000 Impressions</li>
-                  <li>7 Days Duration</li>
-                  <li>Basic Targeting</li>
-                  <li>Performance Analytics</li>
-                </ul>
-                <button class="w-full bg-primary text-white py-4 rounded-xl btn-compact hover:bg-secondary transition-all duration-300 font-semibold btn-select-package" 
-                        data-package-id="1" data-package-name="Starter" data-package-price="9.99" data-duration-days="7" data-impressions="5000">
-                  Select Package
+          
+          <!-- Ad Content -->
+          <div class="mb-8">
+            <h3 class="text-lg font-semibold text-primary mb-4">Ad Content</h3>
+            
+            <div class="mb-4">
+              <label for="adTitle" class="block text-primary font-medium mb-2">Ad Title</label>
+              <input type="text" class="w-full px-4 py-3 border-2 border-border-color rounded-xl text-sm focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-300" 
+                     id="adTitle" placeholder="Enter a compelling title that grabs attention" required>
+            </div>
+            
+            <div class="mb-4">
+              <label for="adDescription" class="block text-primary font-medium mb-2">Description</label>
+              <textarea class="w-full px-4 py-3 border-2 border-border-color rounded-xl text-sm focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-300" 
+                        id="adDescription" rows="3" placeholder="Describe your product or service..."></textarea>
+            </div>
+            
+            <div class="mb-4">
+              <label class="block text-primary font-medium mb-2">Ad Image</label>
+              <div class="image-upload-area" id="imageUploadArea">
+                <i class="bi bi-cloud-arrow-up text-3xl text-text-secondary mb-3"></i>
+                <p class="text-base font-medium text-text-secondary mb-1">Drag & drop or click to upload</p>
+                <p class="text-sm text-text-secondary">Recommended: 1200x630 pixels • JPG, PNG, WEBP</p>
+                <input type="file" id="imageInput" accept="image/*" class="hidden">
+              </div>
+              <div id="imagePreview" class="mt-4 hidden">
+                <img id="previewImage" class="w-full h-48 object-cover rounded-xl border-2 border-border-color shadow-sm">
+                <button type="button" id="removeImage" class="text-sm text-red-500 font-medium mt-2 hover:text-red-700 transition-colors duration-300 flex items-center space-x-1">
+                  <i class="bi bi-trash"></i>
+                  <span>Remove image</span>
                 </button>
               </div>
             </div>
-
-            <!-- Standard Package -->
-            <div class="bg-white rounded-2xl shadow-strong overflow-hidden card-hover popular-plan border-2 border-premium animate-slide-up" style="animation-delay: 0.1s;">
-              <div class="p-8">
-                <div class="flex items-center justify-between mb-4">
-                  <h3 class="text-2xl font-black text-primary">Standard</h3>
-                  <div class="w-12 h-12 bg-premium/10 rounded-lg flex items-center justify-center">
-                    <i class="bi bi-gem text-premium text-lg"></i>
-                  </div>
-                </div>
-                <p class="text-text-secondary mb-6 text-sm font-medium">Great value for growing brands</p>
-                <div class="mb-6">
-                  <span class="text-4xl font-black text-primary">$24.99</span>
-                  <span class="text-text-secondary font-medium">/campaign</span>
-                </div>
-                <ul class="feature-list mb-8 text-text-secondary">
-                  <li>15,000 Impressions</li>
-                  <li>14 Days Duration</li>
-                  <li>Advanced Targeting</li>
-                  <li>Performance Analytics</li>
-                  <li>Priority Placement</li>
-                </ul>
-                <button class="w-full gradient-premium text-white py-4 rounded-xl btn-compact hover:opacity-90 transition-all duration-300 font-semibold btn-select-package" 
-                        data-package-id="2" data-package-name="Standard" data-package-price="24.99" data-duration-days="14" data-impressions="15000">
-                  Select Package
-                </button>
-              </div>
+            
+            <div class="mb-4">
+              <label for="targetUrl" class="block text-primary font-medium mb-2">Target URL</label>
+              <input type="url" class="w-full px-4 py-3 border-2 border-border-color rounded-xl text-sm focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-300" 
+                     id="targetUrl" placeholder="https://example.com/your-landing-page" required>
             </div>
-
-            <!-- Premium Package -->
-            <div class="bg-white rounded-2xl shadow-strong overflow-hidden card-hover border border-border-color relative animate-slide-up" style="animation-delay: 0.2s;">
-              <div class="premium-badge">PREMIUM</div>
-              <div class="p-8">
-                <div class="flex items-center justify-between mb-4">
-                  <h3 class="text-2xl font-black text-primary">Premium</h3>
-                  <div class="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
-                    <i class="bi bi-crown text-accent text-lg"></i>
-                  </div>
-                </div>
-                <p class="text-text-secondary mb-6 text-sm font-medium">Maximum visibility and impact</p>
-                <div class="mb-6">
-                  <span class="text-4xl font-black text-primary">$49.99</span>
-                  <span class="text-text-secondary font-medium">/campaign</span>
-                </div>
-                <ul class="feature-list mb-8 text-text-secondary">
-                  <li>50,000 Impressions</li>
-                  <li>30 Days Duration</li>
-                  <li>Advanced Targeting</li>
-                  <li>Detailed Analytics</li>
-                  <li>Premium Placement</li>
-                  <li>24/7 Support</li>
-                </ul>
-                <button class="w-full gradient-accent text-white py-4 rounded-xl btn-compact hover:opacity-90 transition-all duration-300 font-semibold btn-select-package" 
-                        data-package-id="3" data-package-name="Premium" data-package-price="49.99" data-duration-days="30" data-impressions="50000">
-                  Select Package
-                </button>
-              </div>
-            </div>
-
-            <!-- Enterprise Package -->
-            <div class="bg-white rounded-2xl shadow-strong overflow-hidden card-hover border border-border-color animate-slide-up" style="animation-delay: 0.3s;">
-              <div class="p-8">
-                <div class="flex items-center justify-between mb-4">
-                  <h3 class="text-2xl font-black text-primary">Enterprise</h3>
-                  <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <i class="bi bi-building text-primary text-lg"></i>
-                  </div>
-                </div>
-                <p class="text-text-secondary mb-6 text-sm font-medium">For maximum business growth</p>
-                <div class="mb-6">
-                  <span class="text-4xl font-black text-primary">$99.99</span>
-                  <span class="text-text-secondary font-medium">/campaign</span>
-                </div>
-                <ul class="feature-list mb-8 text-text-secondary">
-                  <li>100,000+ Impressions</li>
-                  <li>60 Days Duration</li>
-                  <li>Hyper-Targeting</li>
-                  <li>Advanced Analytics</li>
-                  <li>Prime Placement</li>
-                  <li>Dedicated Manager</li>
-                  <li>A/B Testing</li>
-                </ul>
-                <button class="w-full bg-primary text-white py-4 rounded-xl btn-compact hover:bg-secondary transition-all duration-300 font-semibold btn-select-package" 
-                        data-package-id="4" data-package-name="Enterprise" data-package-price="99.99" data-duration-days="60" data-impressions="100000">
-                  Select Package
-                </button>
-              </div>
+            
+            <div>
+              <label for="callToAction" class="block text-primary font-medium mb-2">Call to Action</label>
+              <select class="w-full px-4 py-3 border-2 border-border-color rounded-xl text-sm focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-300" id="callToAction">
+                <option value="Learn More">Learn More</option>
+                <option value="Shop Now">Shop Now</option>
+                <option value="Sign Up">Sign Up</option>
+                <option value="Download">Download</option>
+                <option value="Get Started">Get Started</option>
+                <option value="Buy Now">Buy Now</option>
+              </select>
             </div>
           </div>
-        </div>
-      </section>
-
-      <!-- Enhanced Footer -->
-      <footer class="bg-dark-bg text-white py-12">
-        <div class="container mx-auto px-4">
-          <div class="text-center">
-            <p class="text-text-secondary text-sm">&copy; 2025 Kimbela. All rights reserved. Building the future of advertising.</p>
-          </div>
-        </div>
-      </footer>
-    </div>
-
-    <!-- Enhanced Ad Creation Modal -->
-    <div class="modal fixed inset-0 z-50 flex items-center justify-center bg-black/60 hidden" id="adCreationModal">
-      <div class="modal-dialog bg-white rounded-2xl shadow-strong w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto animate-fade-in">
-        <div class="modal-header p-8 border-b border-border-color flex justify-between items-center bg-gradient-to-r from-primary to-secondary text-white rounded-t-2xl">
-          <div>
-            <h3 class="text-2xl font-black">Create Ad Campaign</h3>
-            <p class="text-white/80 text-sm mt-1">Build your perfect advertising campaign</p>
-          </div>
-          <button type="button" class="p-3 rounded-xl hover:bg-white/10 transition-all duration-300 close-modal">
-            <i class="bi bi-x-lg text-xl"></i>
-          </button>
-        </div>
-        
-        <!-- Enhanced Step Indicator -->
-        <div class="px-8 pt-6 bg-white">
-          <div class="step-indicator">
-            <div class="step active" id="step1">
-              <div class="step-circle">1</div>
-              <div class="step-label">Ad Content</div>
+          
+          <!-- Estimated Results -->
+          <div class="mb-6">
+            <h3 class="font-medium text-primary mb-3">Estimated Daily Results</h3>
+            <div class="info-item">
+              <span>Audience Size</span>
+              <span id="audienceSize">9.4K-27K</span>
             </div>
-            <div class="step" id="step2">
-              <div class="step-circle">2</div>
-              <div class="step-label">Targeting</div>
+            <div class="info-item">
+              <span>Link Clicks</span>
+              <span id="linkClicks">141-406</span>
             </div>
-            <div class="step" id="step3">
-              <div class="step-circle">3</div>
-              <div class="step-label">Payment</div>
+            <div class="info-item">
+              <span>Targeted Users</span>
+              <span id="targetedUsers">Calculating...</span>
             </div>
           </div>
-        </div>
-
-        <div class="modal-body p-8">
-          <!-- Step 1: Ad Content -->
-          <div class="step-content active animate-fade-in" id="step1-content">
-            <form id="adForm">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-              <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div class="space-y-6">
-                  <div>
-                    <label for="adTitle" class="block text-lg font-semibold mb-3 text-primary">Ad Title *</label>
-                    <input type="text" class="w-full px-4 py-3 border-2 border-border-color rounded-xl text-sm focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-300" 
-                           id="adTitle" placeholder="Enter a compelling title that grabs attention" required>
-                  </div>
-                  <div>
-                    <label for="adDescription" class="block text-lg font-semibold mb-3 text-primary">Description</label>
-                    <textarea class="w-full px-4 py-3 border-2 border-border-color rounded-xl text-sm focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-300" 
-                              id="adDescription" rows="4" placeholder="Describe your product or service in detail..."></textarea>
-                  </div>
-                  <div>
-                    <label for="targetUrl" class="block text-lg font-semibold mb-3 text-primary">Target URL *</label>
-                    <input type="url" class="w-full px-4 py-3 border-2 border-border-color rounded-xl text-sm focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-300" 
-                           id="targetUrl" placeholder="https://example.com/your-landing-page" required>
-                  </div>
-                  <div>
-                    <label for="callToAction" class="block text-lg font-semibold mb-3 text-primary">Call to Action</label>
-                    <select class="w-full px-4 py-3 border-2 border-border-color rounded-xl text-sm focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-300" id="callToAction">
-                      <option value="Learn More">Learn More</option>
-                      <option value="Shop Now">Shop Now</option>
-                      <option value="Sign Up">Sign Up</option>
-                      <option value="Download">Download</option>
-                      <option value="Get Started">Get Started</option>
-                      <option value="Buy Now">Buy Now</option>
-                    </select>
-                  </div>
-                </div>
-                <div class="space-y-6">
-                  <div>
-                    <label class="block text-lg font-semibold mb-3 text-primary">Ad Image</label>
-                    <div class="image-upload-area" id="imageUploadArea">
-                      <i class="bi bi-cloud-arrow-up text-3xl text-text-secondary mb-3"></i>
-                      <p class="text-base font-medium text-text-secondary mb-1">Drag & drop or click to upload</p>
-                      <p class="text-sm text-text-secondary">Recommended: 1200x630 pixels • JPG, PNG, WEBP</p>
-                      <input type="file" id="imageInput" accept="image/*" class="hidden">
-                    </div>
-                    <div id="imagePreview" class="mt-4 hidden animate-fade-in">
-                      <img id="previewImage" class="w-full h-48 object-cover rounded-xl border-2 border-border-color shadow-soft">
-                      <button type="button" id="removeImage" class="text-sm text-red-500 font-medium mt-2 hover:text-red-700 transition-colors duration-300 flex items-center space-x-1">
-                        <i class="bi bi-trash"></i>
-                        <span>Remove image</span>
-                      </button>
-                    </div>
-                  </div>
-                  
-                  <!-- Enhanced Ad Preview -->
-                  <div class="ad-preview">
-                    <div class="ad-preview-header">
-                      <div class="flex items-center space-x-2">
-                        <i class="bi bi-megaphone text-text-secondary"></i>
-                        <span>Sponsored • Kimbela Ads</span>
-                      </div>
-                    </div>
-                    <div class="ad-preview-body">
-                      <div class="ad-preview-image" id="previewImagePlaceholder">
-                        <i class="bi bi-image text-2xl"></i>
-                        <span class="text-sm ml-2">Image preview</span>
-                      </div>
-                      <div class="ad-preview-title" id="previewTitle">Your Ad Title</div>
-                      <div class="ad-preview-description" id="previewDescription">Your ad description will appear here</div>
-                      <div class="ad-preview-cta" id="previewCta">Learn More</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </form>
+          
+          <!-- Total Price -->
+          <div class="total-price">
+            Total: $<span id="totalPrice">25.00</span>
           </div>
-
-          <!-- Step 2: Targeting -->
-          <div class="step-content hidden animate-fade-in" id="step2-content">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div class="space-y-6">
-                <div>
-                  <label class="block text-lg font-semibold mb-4 text-primary">Target Audience</label>
-                  <div class="space-y-3 bg-gray-50 p-4 rounded-xl">
-                    <label class="flex items-center p-3 border-2 border-border-color rounded-lg cursor-pointer hover:bg-white transition-all duration-300">
-                      <input type="radio" name="audience" value="all" class="mr-3 w-5 h-5 text-accent" checked>
-                      <div>
-                        <div class="font-semibold text-primary">All Users</div>
-                        <div class="text-sm text-text-secondary">Reach the broadest audience</div>
-                      </div>
-                    </label>
-                    <label class="flex items-center p-3 border-2 border-border-color rounded-lg cursor-pointer hover:bg-white transition-all duration-300">
-                      <input type="radio" name="audience" value="custom" class="mr-3 w-5 h-5 text-accent">
-                      <div>
-                        <div class="font-semibold text-primary">Custom Audience</div>
-                        <div class="text-sm text-text-secondary">Target specific user segments</div>
-                      </div>
-                    </label>
-                  </div>
-                </div>
-
-                <div>
-                  <label class="block text-lg font-semibold mb-4 text-primary">Target by Interests</label>
-                  <div class="interests-container max-h-60 overflow-y-auto bg-gray-50 p-4 rounded-xl">
-                    <div class="grid grid-cols-2 gap-2" id="interestsList">
-                      <!-- Interests will be populated by JavaScript -->
-                    </div>
-                  </div>
-                  <p class="text-xs text-text-secondary mt-2">Select up to 10 interests</p>
-                </div>
-              </div>
-              <div class="space-y-6">
-                <div>
-                  <label class="block text-lg font-semibold mb-4 text-primary">Target by Location</label>
-                  <div class="country-select" id="countrySelect">
-                    <!-- Countries will be populated by JavaScript -->
-                  </div>
-                  <p class="text-xs text-text-secondary mt-2">Select one or more countries</p>
-                </div>
-
-                <div>
-                  <label class="block text-lg font-semibold mb-4 text-primary">Target by Age</label>
-                  <div class="flex items-center space-x-4 bg-gray-50 p-4 rounded-xl">
-                    <div class="flex-1">
-                      <label class="block text-sm font-medium mb-2 text-primary">Minimum Age</label>
-                      <select class="w-full px-3 py-2 border-2 border-border-color rounded-lg text-sm focus:ring-2 focus:ring-accent focus:border-transparent" id="minAge">
-                        <option value="13">13</option>
-                        <option value="18" selected>18</option>
-                        <option value="25">25</option>
-                        <option value="35">35</option>
-                      </select>
-                    </div>
-                    <div class="text-text-secondary font-medium">to</div>
-                    <div class="flex-1">
-                      <label class="block text-sm font-medium mb-2 text-primary">Maximum Age</label>
-                      <select class="w-full px-3 py-2 border-2 border-border-color rounded-lg text-sm focus:ring-2 focus:ring-accent focus:border-transparent" id="maxAge">
-                        <option value="24">24</option>
-                        <option value="34">34</option>
-                        <option value="44">44</option>
-                        <option value="54">54</option>
-                        <option value="65" selected>65+</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Step 3: Payment -->
-          <div class="step-content hidden animate-fade-in" id="step3-content">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div class="space-y-6">
-                <div>
-                  <h4 class="text-xl font-black mb-4 text-primary">Payment Method</h4>
-                  <div class="space-y-3">
-                    <label class="flex items-center p-4 border-2 border-border-color rounded-xl cursor-pointer hover:border-accent transition-all duration-300 bg-white">
-                      <input type="radio" name="paymentMethod" value="paystack" class="mr-4 w-5 h-5 text-accent" checked>
-                      <div class="flex-1">
-                        <div class="font-semibold text-primary">Paystack</div>
-                        <div class="text-sm text-text-secondary">Cards, Bank Transfer, Mobile Money (NGN)</div>
-                      </div>
-                      <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                        <i class="bi bi-credit-card text-green-600"></i>
-                      </div>
-                    </label>
-                    <label class="flex items-center p-4 border-2 border-border-color rounded-xl cursor-pointer hover:border-accent transition-all duration-300 bg-white">
-                      <input type="radio" name="paymentMethod" value="stripe" class="mr-4 w-5 h-5 text-accent">
-                      <div class="flex-1">
-                        <div class="font-semibold text-primary">Stripe</div>
-                        <div class="text-sm text-text-secondary">International Cards (USD, EUR, GBP)</div>
-                      </div>
-                      <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <i class="bi bi-globe text-blue-600"></i>
-                      </div>
-                    </label>
-                  </div>
-                </div>
-                
-                <div class="bg-gradient-to-br from-primary/5 to-accent/5 rounded-2xl p-6 border border-primary/10">
-                  <h5 class="font-black text-lg mb-4 text-primary">Campaign Summary</h5>
-                  <div class="space-y-3 text-sm">
-                    <div class="flex justify-between items-center py-2 border-b border-border-color/50">
-                      <span class="text-text-secondary font-medium">Package:</span>
-                      <span id="summaryPackage" class="font-semibold text-primary">-</span>
-                    </div>
-                    <div class="flex justify-between items-center py-2 border-b border-border-color/50">
-                      <span class="text-text-secondary font-medium">Duration:</span>
-                      <span id="summaryDuration" class="font-semibold">-</span>
-                    </div>
-                    <div class="flex justify-between items-center py-2">
-                      <span class="text-text-secondary font-medium">Total Amount:</span>
-                      <span id="summaryTotal" class="text-2xl font-black text-accent">-</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="space-y-6">
-                <div>
-                  <h4 class="text-xl font-black mb-4 text-primary">Final Preview</h4>
-                  <div class="ad-preview transform scale-105">
-                    <div class="ad-preview-header">
-                      <div class="flex items-center space-x-2">
-                        <i class="bi bi-megaphone text-text-secondary"></i>
-                        <span>Sponsored • Kimbela Ads</span>
-                      </div>
-                    </div>
-                    <div class="ad-preview-body">
-                      <div class="ad-preview-image" id="finalPreviewImage">
-                        <i class="bi bi-image text-2xl"></i>
-                        <span class="text-sm ml-2">Image preview</span>
-                      </div>
-                      <div class="ad-preview-title" id="finalPreviewTitle">Your Ad Title</div>
-                      <div class="ad-preview-description" id="finalPreviewDescription">Your ad description will appear here</div>
-                      <div class="ad-preview-cta" id="finalPreviewCta">Learn More</div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div class="bg-accent/10 rounded-2xl p-6 border border-accent/20">
-                  <div class="flex items-center space-x-3 mb-3">
-                    <div class="w-10 h-10 bg-accent rounded-lg flex items-center justify-center">
-                      <i class="bi bi-shield-check text-white"></i>
-                    </div>
-                    <div>
-                      <div class="font-semibold text-primary">Secure Payment</div>
-                      <div class="text-sm text-text-secondary">Your payment information is encrypted</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="modal-footer p-8 border-t border-border-color bg-gray-50 rounded-b-2xl">
-          <div class="flex justify-between items-center">
-            <button type="button" class="px-6 py-3 border-2 border-border-color rounded-xl btn-compact hover:bg-white transition-all duration-300 font-semibold flex items-center space-x-2" id="prevStepBtn" style="display: none;">
-              <i class="bi bi-arrow-left"></i>
-              <span>Previous</span>
+          
+          <!-- Action Buttons -->
+          <div class="flex space-x-4">
+            <button id="createAdBtn" class="flex-1 bg-accent text-white py-3 rounded-xl btn-compact hover:bg-green-700 transition-all duration-300 font-semibold flex items-center justify-center space-x-2">
+              <i class="bi bi-credit-card"></i>
+              <span>Create Ad & Pay</span>
             </button>
-            <div class="flex space-x-3 ml-auto">
-              <button type="button" class="px-6 py-3 border-2 border-border-color rounded-xl btn-compact hover:bg-white transition-all duration-300 font-semibold flex items-center space-x-2 close-modal">
-                <i class="bi bi-x-lg"></i>
-                <span>Cancel</span>
-              </button>
-              <button type="button" class="px-8 py-3 bg-primary text-white rounded-xl btn-compact hover:bg-secondary transition-all duration-300 font-semibold flex items-center space-x-2" id="nextStepBtn">
-                <span>Continue</span>
-                <i class="bi bi-arrow-right"></i>
-              </button>
-              <button type="button" class="px-8 py-3 gradient-accent text-white rounded-xl btn-compact hover:opacity-90 transition-all duration-300 font-semibold flex items-center space-x-2 hidden" id="createCampaignBtn">
-                <i class="bi bi-credit-card"></i>
-                <span>Pay Now</span>
-              </button>
+            <button class="flex-1 border border-border-color text-primary py-3 rounded-xl btn-compact hover:bg-gray-50 transition-all duration-300 font-semibold">
+              Save Draft
+            </button>
+          </div>
+        </div>
+        
+        <!-- Right Column - Preview & Details -->
+        <div class="space-y-6">
+          <!-- Ad Preview -->
+          <div class="bg-white rounded-xl shadow-md p-6 card-hover">
+            <h2 class="text-xl font-bold text-primary mb-4">Ad Preview</h2>
+            <div class="border border-border-color rounded-lg overflow-hidden">
+              <div class="bg-white p-4">
+                <div class="flex items-center space-x-3 mb-3">
+                  <div class="w-10 h-10 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center text-white font-bold">
+                    K
+                  </div>
+                  <div>
+                    <div class="font-medium">your_business</div>
+                    <div class="text-xs text-text-secondary">Sponsored • Kimbela</div>
+                  </div>
+                </div>
+                
+                <div class="mb-3">
+                  <p class="text-primary" id="previewTitle">Your ad title will appear here</p>
+                  <p class="text-text-secondary text-sm mt-1" id="previewDescription">Your ad description will appear here</p>
+                </div>
+                
+                <div class="bg-gray-100 h-48 rounded flex items-center justify-center text-text-secondary" id="previewImagePlaceholder">
+                  <i class="bi bi-image text-3xl"></i>
+                  <span class="ml-2">Ad Image</span>
+                </div>
+                
+                <div class="mt-3">
+                    <button class="w-full bg-accent text-white py-2 rounded text-sm font-medium" id="previewCta">Learn More</button>
+                </div>
+                
+                <div class="flex justify-between text-text-secondary text-sm mt-3">
+                  <span><i class="bi bi-bookmark"></i></span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Targeting Summary -->
+          <div class="bg-white rounded-xl shadow-md p-6 card-hover">
+            <h2 class="text-xl font-bold text-primary mb-4">Targeting Summary</h2>
+            
+            <div class="info-item">
+              <span>Gender</span>
+              <span id="summaryGender">All</span>
+            </div>
+            <div class="info-item">
+              <span>Age Range</span>
+              <span id="summaryAge">18-65</span>
+            </div>
+            <div class="info-item">
+              <span>Locations</span>
+              <span id="summaryLocations">Global</span>
+            </div>
+            <div class="info-item">
+              <span>Interests</span>
+              <span id="summaryInterests">All</span>
+            </div>
+            
+            
+          </div>
+          
+          <!-- Payment Summary -->
+          <div class="bg-white rounded-xl shadow-md p-6 card-hover">
+            <h2 class="text-xl font-bold text-primary mb-4">Payment Summary</h2>
+            
+            <div class="info-item">
+              <span>Daily Budget</span>
+              <span>$<span id="summaryDailyBudget">5.00</span></span>
+            </div>
+            <div class="info-item">
+              <span>Duration</span>
+              <span><span id="summaryDays">5</span> days</span>
+            </div>
+            <div class="info-item font-bold text-lg">
+              <span>Total Amount</span>
+              <span>$<span id="summaryTotal">25.00</span></span>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </main>
 
-    <!-- Enhanced Payment Processing Modal -->
+    <!-- Payment Processing Modal -->
     <div class="modal fixed inset-0 z-50 flex items-center justify-center bg-black/70 hidden" id="paymentModal">
-      <div class="modal-dialog bg-white rounded-2xl shadow-strong w-full max-w-md mx-4 text-center p-8 animate-fade-in">
+      <div class="modal-dialog bg-white rounded-2xl shadow-lg w-full max-w-md mx-4 text-center p-8">
         <div class="w-16 h-16 bg-accent/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
           <i class="bi bi-credit-card-2-front text-accent text-2xl"></i>
         </div>
@@ -945,14 +634,14 @@
 
     <!-- Success Modal -->
     <div class="modal fixed inset-0 z-50 flex items-center justify-center bg-black/70 hidden" id="successModal">
-      <div class="modal-dialog bg-white rounded-2xl shadow-strong w-full max-w-md mx-4 text-center p-8 animate-fade-in">
+      <div class="modal-dialog bg-white rounded-2xl shadow-lg w-full max-w-md mx-4 text-center p-8">
         <svg class="success-checkmark mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
           <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
           <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
         </svg>
         <h3 class="text-2xl font-black mb-2 text-primary">Payment Successful!</h3>
         <p class="text-text-secondary mb-6">Your campaign has been created and is now active.</p>
-        <button class="px-8 py-3 gradient-accent text-white rounded-xl btn-compact hover:opacity-90 transition-all duration-300 font-semibold flex items-center space-x-2 mx-auto" id="successBtn">
+        <button class="px-8 py-3 bg-accent text-white rounded-xl btn-compact hover:bg-green-700 transition-all duration-300 font-semibold flex items-center space-x-2 mx-auto" id="successBtn">
           <i class="bi bi-grid-1x2"></i>
           <span>Go to Dashboard</span>
         </button>
@@ -960,214 +649,539 @@
     </div>
 
     <script>
-      // Interests list
-      const INTERESTS_LIST = [
-        "Reading",
-        "Traveling",
-        "Cooking",
-        "Photography",
-        "Music",
-        "Sports",
-        "Gardening",
-        "Painting",
-        "Dancing",
-        "Hiking",
-        "Movies",
-        "Technology",
-        "Art",
-        "Writing",
-        "Fishing",
-        "Yoga",
-        "Meditation",
-        "Chess",
-        "Gaming",
-        "Knitting",
-        "Bird Watching",
-        "Wine Tasting",
-        "Volunteering",
-        "Learning Languages",
-        "Camping",
-        "Cycling",
-        "Swimming",
-        "Running",
-        "Weightlifting",
-        "Pottery",
-        "Sculpting",
-        "Drawing",
-        "Singing",
-        "Playing Instruments",
-        "Theater",
-        "Dancing",
-        "Poetry",
-        "Blogging",
-        "Podcasting",
-        "DIY Projects",
-        "Woodworking",
-        "Car Restoration",
-        "Home Decorating",
-        "Watching Sports",
-        "Fantasy Sports",
-        "Collecting",
-        "Antique Hunting",
-        "Stargazing",
-        "Meteorology",
-        "Genealogy",
-        "History Research",
-        "Baking",
-        "Coffee Brewing",
-        "Tea Tasting",
-        "Mixology",
-        "Foodie Culture",
-        "Motorcycles",
-        "Sailing",
-        "Scuba Diving",
-        "Rock Climbing",
-        "Mountain Biking",
-        "Fashion",
-        "Makeup Artistry",
-        "Hair Styling",
-        "Fitness Training",
-        "Nutrition",
-        "Philosophy",
-        "Psychology",
-        "Sociology",
-        "Political Science",
-        "Economics",
-        "Astronomy",
-        "Physics",
-        "Biology",
-        "Chemistry",
-        "Mathematics",
-        "Computer Programming",
-        "Web Development",
-        "Data Science",
-        "Artificial Intelligence",
-        "Cryptocurrency",
-        "Stock Trading",
-        "Real Estate",
-        "Entrepreneurship",
-        "Startups",
-      ];
-
-      // Countries list (200+ countries)
-      const COUNTRIES_LIST = [
-        "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", "Argentina", "Armenia", "Australia", "Austria",
-        "Azerbaijan", "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bhutan",
-        "Bolivia", "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria", "Burkina Faso", "Burundi", "Cabo Verde", "Cambodia",
-        "Cameroon", "Canada", "Central African Republic", "Chad", "Chile", "China", "Colombia", "Comoros", "Congo", "Costa Rica",
-        "Croatia", "Cuba", "Cyprus", "Czech Republic", "Denmark", "Djibouti", "Dominica", "Dominican Republic", "Ecuador", "Egypt",
-        "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia", "Eswatini", "Ethiopia", "Fiji", "Finland", "France", "Gabon",
-        "Gambia", "Georgia", "Germany", "Ghana", "Greece", "Grenada", "Guatemala", "Guinea", "Guinea-Bissau", "Guyana",
-        "Haiti", "Honduras", "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel",
-        "Italy", "Jamaica", "Japan", "Jordan", "Kazakhstan", "Kenya", "Kiribati", "Korea, North", "Korea, South", "Kosovo",
-        "Kuwait", "Kyrgyzstan", "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania",
-        "Luxembourg", "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritania", "Mauritius",
-        "Mexico", "Micronesia", "Moldova", "Monaco", "Mongolia", "Montenegro", "Morocco", "Mozambique", "Myanmar", "Namibia",
-        "Nauru", "Nepal", "Netherlands", "New Zealand", "Nicaragua", "Niger", "Nigeria", "North Macedonia", "Norway", "Oman",
-        "Pakistan", "Palau", "Palestine", "Panama", "Papua New Guinea", "Paraguay", "Peru", "Philippines", "Poland", "Portugal",
-        "Qatar", "Romania", "Russia", "Rwanda", "Saint Kitts and Nevis", "Saint Lucia", "Saint Vincent and the Grenadines", "Samoa", "San Marino", "Sao Tome and Principe",
-        "Saudi Arabia", "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "Solomon Islands", "Somalia",
-        "South Africa", "South Sudan", "Spain", "Sri Lanka", "Sudan", "Suriname", "Sweden", "Switzerland", "Syria", "Taiwan",
-        "Tajikistan", "Tanzania", "Thailand", "Timor-Leste", "Togo", "Tonga", "Trinidad and Tobago", "Tunisia", "Turkey", "Turkmenistan",
-        "Tuvalu", "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom", "United States", "Uruguay", "Uzbekistan", "Vanuatu", "Vatican City",
-        "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"
-      ];
-
-      let currentStep = 1;
-      let selectedPackageId = null;
-      let selectedPackageName = '';
-      let selectedPackagePrice = 0;
-      let selectedPackageDuration = 0;
-      let uploadedImageUrl = '';
-      let selectedInterests = [];
-      let selectedCountries = [];
-
       document.addEventListener('DOMContentLoaded', function() {
-        const loader = document.getElementById('loader');
-        setTimeout(() => {
-          if (loader) {
-            loader.style.opacity = '0';
-            setTimeout(() => {
-              loader.style.display = 'none';
-            }, 500);
-          }
-        }, 1000);
-
-        initializeEventListeners();
-        populateInterests();
-        populateCountries();
-      });
-
-      function initializeEventListeners() {
-        // Package Selection
-        document.querySelectorAll('.btn-select-package').forEach(btn => {
-          btn.addEventListener('click', function() {
-            selectedPackageId = this.dataset.packageId;
-            selectedPackageName = this.dataset.packageName;
-            selectedPackagePrice = parseFloat(this.dataset.packagePrice);
-            selectedPackageDuration = parseInt(this.dataset.durationDays);
-
-            // Update summary
-            document.getElementById('summaryPackage').textContent = selectedPackageName;
-            document.getElementById('summaryDuration').textContent = selectedPackageDuration + ' days';
-            document.getElementById('summaryTotal').textContent = '$' + selectedPackagePrice.toFixed(2);
-
-            resetForm();
-            showStep(1);
-            document.getElementById('adCreationModal').classList.remove('hidden');
-          });
-        });
-
-        // Step Navigation
-        document.getElementById('nextStepBtn').addEventListener('click', function() {
-          if (validateStep(currentStep)) {
-            if (currentStep < 3) {
-              showStep(currentStep + 1);
-            }
-          }
-        });
-
-        document.getElementById('prevStepBtn').addEventListener('click', function() {
-          if (currentStep > 1) {
-            showStep(currentStep - 1);
-          }
-        });
-
-        // Create Campaign with Payment
-        document.getElementById('createCampaignBtn').addEventListener('click', function() {
-          const campaignData = getCampaignData();
-          const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
-          
-          if (!campaignData.title || !campaignData.target_url) {
-            showNotification('Please fill in all required fields', 'error');
-            return;
-          }
-          
-          campaignData.payment_method = paymentMethod;
-          
-          document.getElementById('adCreationModal').classList.add('hidden');
-          document.getElementById('paymentModal').classList.remove('hidden');
-          
-          createCampaignAndProcessPayment(campaignData);
-        });
-
-        // Modal Handling
-        document.querySelectorAll('.close-modal').forEach(btn => {
-          btn.addEventListener('click', closeAllModals);
-        });
-
-        // Success Button
-        document.getElementById('successBtn').addEventListener('click', function() {
-          window.location.href = "{{ url_for('user.user_dashboard') }}";
-        });
-
-        // Image Upload Handling
+        const budgetSlider = document.getElementById('budgetSlider');
+        const budgetValue = document.getElementById('budgetValue');
+        const daysInput = document.getElementById('daysInput');
+        const totalPrice = document.getElementById('totalPrice');
+        
+        // Summary elements
+        const summaryDailyBudget = document.getElementById('summaryDailyBudget');
+        const summaryDays = document.getElementById('summaryDays');
+        const summaryTotal = document.getElementById('summaryTotal');
+        
+        // Targeting summary elements
+        const summaryGender = document.getElementById('summaryGender');
+        const summaryAge = document.getElementById('summaryAge');
+        const summaryLocations = document.getElementById('summaryLocations');
+        const summaryInterests = document.getElementById('summaryInterests');
+        const summaryDevices = document.getElementById('summaryDevices');
+        const summaryLanguage = document.getElementById('summaryLanguage');
+        
+        // Estimated results
+        const audienceSize = document.getElementById('audienceSize');
+        const linkClicks = document.getElementById('linkClicks');
+        const targetedUsers = document.getElementById('targetedUsers');
+        
+        // Preview elements
+        const previewTitle = document.getElementById('previewTitle');
+        const previewDescription = document.getElementById('previewDescription');
+        const previewCta = document.getElementById('previewCta');
+        const previewImagePlaceholder = document.getElementById('previewImagePlaceholder');
+        
+        // Form elements
+        const adTitle = document.getElementById('adTitle');
+        const adDescription = document.getElementById('adDescription');
+        const callToAction = document.getElementById('callToAction');
+        const targetUrl = document.getElementById('targetUrl');
+        
+        // Targeting elements
+        const ageRangeSlider = document.getElementById('ageRangeSlider');
+        const minAge = document.getElementById('minAge');
+        const maxAge = document.getElementById('maxAge');
+        const locationTargeting = document.getElementById('locationTargeting');
+        const interestsTargeting = document.getElementById('interestsTargeting');
+        const languageTargeting = document.getElementById('languageTargeting');
+        
+        // Image upload elements
         const imageUploadArea = document.getElementById('imageUploadArea');
         const imageInput = document.getElementById('imageInput');
         const imagePreview = document.getElementById('imagePreview');
         const previewImage = document.getElementById('previewImage');
         const removeImageBtn = document.getElementById('removeImage');
+        
+        // Buttons
+        const createAdBtn = document.getElementById('createAdBtn');
+        const successBtn = document.getElementById('successBtn');
+        
+        let uploadedImageUrl = '';
+        let ageRangeMin = 18;
+        let ageRangeMax = 65;
+        
+        // Initialize age range slider
+        function initAgeRangeSlider() {
+          noUiSlider.create(ageRangeSlider, {
+            start: [18, 65],
+            connect: true,
+            range: {
+              'min': 13,
+              'max': 80
+            },
+            step: 1,
+            behaviour: 'drag',
+          });
+          
+          ageRangeSlider.noUiSlider.on('update', function(values) {
+            ageRangeMin = Math.round(values[0]);
+            ageRangeMax = Math.round(values[1]);
+            minAge.textContent = ageRangeMin;
+            maxAge.textContent = ageRangeMax;
+            updateTargetingSummary();
+            updateEstimatedResults();
+          });
+        }
+        
+        // Format currency
+        function formatCurrency(value) {
+          return parseFloat(value).toFixed(2);
+        }
+        
+        // Calculate estimated results based on budget and targeting
+        function calculateEstimatedResults(budget, targetingFactors = {}) {
+          const baseAudienceMin = 9400;
+          const baseAudienceMax = 27000;
+          const baseClicksMin = 141;
+          const baseClicksMax = 406;
+          
+          // Apply targeting factors
+          let targetingMultiplier = 1;
+          
+          // Gender targeting
+          if (targetingFactors.gender && targetingFactors.gender !== 'all') {
+            targetingMultiplier *= 0.7; // Narrower audience
+          }
+          
+          // Age targeting
+          if (targetingFactors.ageRange && (targetingFactors.ageRange[0] > 18 || targetingFactors.ageRange[1] < 65)) {
+            targetingMultiplier *= 0.8; // Narrower audience
+          }
+          
+          // Location targeting
+          if (targetingFactors.locations && targetingFactors.locations.length > 0 && !targetingFactors.locations.includes('global')) {
+            targetingMultiplier *= 0.6; // Narrower audience
+          }
+          
+          // Interests targeting
+          if (targetingFactors.interests && targetingFactors.interests.length > 0) {
+            targetingMultiplier *= 0.5; // Narrower audience
+          }
+          
+          const scale = budget / 5 * targetingMultiplier;
+          
+          const audienceMin = Math.round(baseAudienceMin * scale);
+          const audienceMax = Math.round(baseAudienceMax * scale);
+          const clicksMin = Math.round(baseClicksMin * scale);
+          const clicksMax = Math.round(baseClicksMax * scale);
+          
+          return {
+            audience: `${(audienceMin/1000).toFixed(1)}K-${(audienceMax/1000).toFixed(1)}K`,
+            clicks: `${clicksMin}-${clicksMax}`,
+            targeted: Math.round((audienceMin + audienceMax) / 2)
+          };
+        }
+        
+        // Update targeting summary
+        function updateTargetingSummary() {
+          // Gender
+          const genderRadios = document.querySelectorAll('input[name="gender"]');
+          let selectedGender = 'All';
+          for (const radio of genderRadios) {
+            if (radio.checked) {
+              selectedGender = radio.value === 'all' ? 'All' : radio.value.charAt(0).toUpperCase() + radio.value.slice(1);
+              break;
+            }
+          }
+          summaryGender.textContent = selectedGender;
+          
+          // Age
+          summaryAge.textContent = `${ageRangeMin}-${ageRangeMax}`;
+          
+          // Locations
+          const selectedLocations = Array.from(locationTargeting.selectedOptions).map(option => option.value);
+          summaryLocations.textContent = selectedLocations.length === 0 || selectedLocations.includes('global') ? 'Global' : 
+                                        selectedLocations.length > 2 ? `${selectedLocations.length} locations` : 
+                                        selectedLocations.join(', ');
+          
+          // Interests
+          const selectedInterests = Array.from(interestsTargeting.selectedOptions).map(option => option.value);
+          summaryInterests.textContent = selectedInterests.length === 0 ? 'All' : 
+                                        selectedInterests.length > 2 ? `${selectedInterests.length} interests` : 
+                                        selectedInterests.join(', ');
+          
+          // Devices
+          const deviceCheckboxes = document.querySelectorAll('input[name="device"]:checked');
+          const selectedDevices = Array.from(deviceCheckboxes).map(cb => cb.value);
+          summaryDevices.textContent = selectedDevices.length === 3 ? 'All' : 
+                                      selectedDevices.length > 1 ? `${selectedDevices.length} devices` : 
+                                      selectedDevices[0] ? selectedDevices[0].charAt(0).toUpperCase() + selectedDevices[0].slice(1) : 'None';
+          
+          // Language
+          summaryLanguage.textContent = languageTargeting.value === 'all' ? 'All' : 
+                                        languageTargeting.options[languageTargeting.selectedIndex].text;
+        }
+        
+        // Update preview
+        function updatePreview() {
+          previewTitle.textContent = adTitle.value || 'Your ad title will appear here';
+          previewDescription.textContent = adDescription.value || 'Your ad description will appear here';
+          previewCta.textContent = callToAction.value;
+          
+          if (uploadedImageUrl) {
+            previewImagePlaceholder.innerHTML = `<img src="${uploadedImageUrl}" class="w-full h-full object-cover rounded-lg" alt="Ad preview">`;
+          } else {
+            previewImagePlaceholder.innerHTML = `
+              <i class="bi bi-image text-3xl"></i>
+              <span class="ml-2">Ad Image</span>
+            `;
+          }
+        }
+        
+        // Update all values when budget or days change
+        function updateValues() {
+          const budget = parseFloat(budgetSlider.value);
+          const days = parseInt(daysInput.value);
+          
+          if (days < 5) daysInput.value = 5;
+          
+          budgetValue.textContent = formatCurrency(budget);
+          summaryDailyBudget.textContent = formatCurrency(budget);
+          summaryDays.textContent = days;
+          
+          const total = budget * days;
+          
+          totalPrice.textContent = formatCurrency(total);
+          summaryTotal.textContent = formatCurrency(total);
+          
+          updateEstimatedResults();
+          updatePreview();
+        }
+        
+        // Update estimated results
+        function updateEstimatedResults() {
+          const budget = parseFloat(budgetSlider.value);
+          
+          // Get targeting factors
+          const genderRadios = document.querySelectorAll('input[name="gender"]');
+          let selectedGender = 'all';
+          for (const radio of genderRadios) {
+            if (radio.checked) {
+              selectedGender = radio.value;
+              break;
+            }
+          }
+          
+          const selectedLocations = Array.from(locationTargeting.selectedOptions).map(option => option.value);
+          const selectedInterests = Array.from(interestsTargeting.selectedOptions).map(option => option.value);
+          
+          const targetingFactors = {
+            gender: selectedGender,
+            ageRange: [ageRangeMin, ageRangeMax],
+            locations: selectedLocations,
+            interests: selectedInterests
+          };
+          
+          const results = calculateEstimatedResults(budget, targetingFactors);
+          audienceSize.textContent = results.audience;
+          linkClicks.textContent = results.clicks;
+          targetedUsers.textContent = results.targeted.toLocaleString();
+        }
+        
+        // Handle image upload
+        function handleImageUpload(file) {
+          if (!file.type.startsWith('image/')) {
+            showNotification('Please select an image file', 'error');
+            return;
+          }
 
+          if (file.size > 5 * 1024 * 1024) {
+            showNotification('Image size should be less than 5MB', 'error');
+            return;
+          }
+
+          const formData = new FormData();
+          formData.append('image', file);
+
+          const uploadArea = document.getElementById('imageUploadArea');
+          const originalContent = uploadArea.innerHTML;
+          uploadArea.innerHTML = `
+            <div class="loader-spinner mx-auto mb-3"></div>
+            <p class="text-sm font-medium">Uploading image...</p>
+          `;
+
+          fetch('/upload-image', {
+            method: 'POST',
+            body: formData,
+            headers: {
+              'X-CSRFToken': getCSRFToken()
+            }
+          })
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+          })
+          .then(data => {
+            if (data.success) {
+              uploadedImageUrl = data.image_url;
+              previewImage.src = uploadedImageUrl;
+              imagePreview.classList.remove('hidden');
+              updatePreview();
+              showNotification('Image uploaded successfully!', 'success');
+            } else {
+              throw new Error(data.error || 'Upload failed');
+            }
+          })
+          .catch(error => {
+            console.error('Upload error:', error);
+            showNotification('Error uploading image: ' + error.message, 'error');
+          })
+          .finally(() => {
+            uploadArea.innerHTML = originalContent;
+          });
+        }
+        
+        // Get CSRF token
+        function getCSRFToken() {
+          const metaTag = document.querySelector('meta[name="csrf-token"]');
+          if (metaTag) {
+            return metaTag.getAttribute('content');
+          }
+          return '';
+        }
+        
+        // Show notification
+        function showNotification(message, type = 'info') {
+          const notification = document.createElement('div');
+          notification.className = `fixed top-4 right-4 z-50 p-4 rounded-xl shadow-lg ${
+            type === 'error' ? 'bg-red-500 text-white' :
+            type === 'success' ? 'bg-accent text-white' :
+            type === 'warning' ? 'bg-warning text-white' :
+            'bg-primary text-white'
+          }`;
+          notification.innerHTML = `
+            <div class="flex items-center space-x-3">
+              <i class="bi bi-${type === 'error' ? 'exclamation-triangle' : type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-circle' : 'info-circle'}"></i>
+              <span class="font-medium">${message}</span>
+            </div>
+          `;
+          
+          document.body.appendChild(notification);
+          
+          setTimeout(() => {
+            notification.remove();
+          }, 5000);
+        }
+        
+        // Create campaign and process payment
+        function createCampaignAndProcessPayment() {
+          // 1️⃣ Gather all inputs
+          const budget = parseFloat(budgetSlider.value);
+          const days = parseInt(daysInput.value);
+          const title = adTitle.value.trim();
+          const description = adDescription.value.trim();
+          const url = targetUrl.value.trim();
+          const cta = callToAction.value;
+          
+          // 2️⃣ Gather targeting data
+          const genderRadios = document.querySelectorAll('input[name="gender"]');
+          let selectedGender = 'all';
+          for (const radio of genderRadios) {
+            if (radio.checked) {
+              selectedGender = radio.value;
+              break;
+            }
+          }
+          
+          const selectedLocations = Array.from(locationTargeting.selectedOptions).map(option => option.value);
+          const selectedInterests = Array.from(interestsTargeting.selectedOptions).map(option => option.value);
+          
+          const deviceCheckboxes = document.querySelectorAll('input[name="device"]:checked');
+          const selectedDevices = Array.from(deviceCheckboxes).map(cb => cb.value);
+          
+          // 3️⃣ Validate required fields
+          if (!title) {
+            showNotification('Ad title is required', 'error');
+            return;
+          }
+          if (!url) {
+            showNotification('Target URL is required', 'error');
+            return;
+          }
+          if (isNaN(budget) || budget < 5) {
+            showNotification('Invalid daily budget', 'error');
+            return;
+          }
+          if (isNaN(days) || days < 5) {
+            showNotification('Invalid duration (min 5 days)', 'error');
+            return;
+          }
+
+          // 4️⃣ Show payment modal
+          document.getElementById('paymentModal').classList.remove('hidden');
+
+          // 5️⃣ Prepare campaign payload with targeting
+          const campaignData = {
+            daily_budget: budget,
+            duration_days: days,
+            title: title,
+            description: description,
+            target_url: url,
+            call_to_action: cta,
+            image: uploadedImageUrl || '',
+            targeting: {
+              gender: selectedGender,
+              age_min: ageRangeMin,
+              age_max: ageRangeMax,
+              locations: selectedLocations,
+              interests: selectedInterests,
+              devices: selectedDevices,
+              language: languageTargeting.value
+            }
+          };
+
+          console.log('🔵 Creating campaign with data:', campaignData);
+
+          // 6️⃣ Create campaign first
+          fetch('/create-campaign', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify(campaignData)
+          })
+          .then(response => {
+            console.log('🔵 Campaign creation response status:', response.status);
+            if (!response.ok) {
+              return response.json().then(errData => {
+                throw new Error(errData.error || `Campaign creation HTTP error! status: ${response.status}`);
+              });
+            }
+            return response.json();
+          })
+          .then(data => {
+            console.log('🔵 Campaign creation response:', data);
+            if (!data.success || !data.campaign_id) {
+              throw new Error(data.error || 'Failed to create campaign');
+            }
+
+            const campaignId = data.campaign_id;
+            
+            // 7️⃣ Calculate total amount
+            const totalAmount = budget * days;
+            
+            // 8️⃣ Prepare payment payload
+            const paymentPayload = {
+              campaign_id: campaignId,
+              amount: totalAmount,
+              currency: 'USD'
+            };
+
+            console.log('🔵 Initiating payment with payload:', paymentPayload);
+
+            // 9️⃣ Initiate payment
+            return fetch('/initiate-payment', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': getCSRFToken()
+              },
+              body: JSON.stringify(paymentPayload)
+            })
+            .then(paymentResponse => {
+              console.log('🔵 Payment initiation response status:', paymentResponse.status);
+              
+              if (!paymentResponse.ok) {
+                // Try to parse error response
+                return paymentResponse.text().then(text => {
+                  let errorMsg = `Payment HTTP error! status: ${paymentResponse.status}`;
+                  try {
+                    const errorData = JSON.parse(text);
+                    errorMsg = errorData.error || errorData.message || errorMsg;
+                  } catch (e) {
+                    // If not JSON, use the text directly
+                    if (text) errorMsg = text;
+                  }
+                  throw new Error(errorMsg);
+                });
+              }
+              return paymentResponse.json();
+            })
+            .then(paymentData => {
+              console.log('🔵 Payment initiation response:', paymentData);
+              
+              if (!paymentData.success) {
+                throw new Error(paymentData.error || paymentData.message || 'Payment initiation failed');
+              }
+              
+              if (!paymentData.payment_url) {
+                throw new Error('No payment URL received from server');
+              }
+
+              // 🔟 Redirect to payment page
+              console.log('🔵 Redirecting to payment page...');
+              window.location.href = paymentData.payment_url;
+            });
+          })
+          .catch(error => {
+            console.error('🔴 Error in campaign/payment process:', error);
+            
+            // Extract the actual error message from the response if available
+            let errorMessage = error.message;
+            if (error.message.includes('Invalid request') && error.response) {
+              try {
+                const errorData = JSON.parse(error.response);
+                errorMessage = errorData.error || errorMessage;
+              } catch (e) {
+                // If parsing fails, use the original message
+              }
+            }
+            
+            showNotification('Payment Error: ' + errorMessage, 'error');
+            document.getElementById('paymentModal').classList.add('hidden');
+          });
+        }
+        
+        // Event listeners
+        budgetSlider.addEventListener('input', updateValues);
+        daysInput.addEventListener('input', updateValues);
+        adTitle.addEventListener('input', updatePreview);
+        adDescription.addEventListener('input', updatePreview);
+        callToAction.addEventListener('change', updatePreview);
+        
+        // Targeting event listeners
+        document.querySelectorAll('input[name="gender"]').forEach(radio => {
+          radio.addEventListener('change', () => {
+            updateTargetingSummary();
+            updateEstimatedResults();
+          });
+        });
+        
+        document.querySelectorAll('input[name="device"]').forEach(checkbox => {
+          checkbox.addEventListener('change', () => {
+            updateTargetingSummary();
+            updateEstimatedResults();
+          });
+        });
+        
+        locationTargeting.addEventListener('change', () => {
+          updateTargetingSummary();
+          updateEstimatedResults();
+        });
+        
+        interestsTargeting.addEventListener('change', () => {
+          updateTargetingSummary();
+          updateEstimatedResults();
+        });
+        
+        languageTargeting.addEventListener('change', () => {
+          updateTargetingSummary();
+          updateEstimatedResults();
+        });
+        
+        // Image upload event listeners
         imageUploadArea.addEventListener('click', () => imageInput.click());
         
         imageUploadArea.addEventListener('dragover', (e) => {
@@ -1199,433 +1213,21 @@
           uploadedImageUrl = '';
           updatePreview();
         });
-
-        // Real-time preview updates
-        document.getElementById('adTitle').addEventListener('input', updatePreview);
-        document.getElementById('adDescription').addEventListener('input', updatePreview);
-        document.getElementById('callToAction').addEventListener('change', updatePreview);
-      }
-
-      function populateInterests() {
-        const interestsContainer = document.getElementById('interestsList');
-        interestsContainer.innerHTML = '';
         
-        INTERESTS_LIST.forEach(interest => {
-          const interestElement = document.createElement('div');
-          interestElement.className = 'interest-tag';
-          interestElement.textContent = interest;
-          interestElement.addEventListener('click', () => {
-            toggleInterest(interest, interestElement);
-          });
-          interestsContainer.appendChild(interestElement);
+        createAdBtn.addEventListener('click', createCampaignAndProcessPayment);
+        successBtn.addEventListener('click', function() {
+          window.location.href = "{{ url_for('user.user_dashboard') }}";
         });
-      }
-
-      function toggleInterest(interest, element) {
-        const index = selectedInterests.indexOf(interest);
-        if (index === -1) {
-          if (selectedInterests.length < 10) {
-            selectedInterests.push(interest);
-            element.classList.add('selected');
-          } else {
-            showNotification('You can only select up to 10 interests', 'warning');
-          }
-        } else {
-          selectedInterests.splice(index, 1);
-          element.classList.remove('selected');
-        }
-      }
-
-      function populateCountries() {
-        const countryContainer = document.getElementById('countrySelect');
-        countryContainer.innerHTML = '';
         
-        COUNTRIES_LIST.forEach(country => {
-          const countryElement = document.createElement('div');
-          countryElement.className = 'country-option';
-          countryElement.textContent = country;
-          countryElement.addEventListener('click', () => {
-            toggleCountry(country, countryElement);
-          });
-          countryContainer.appendChild(countryElement);
-        });
-      }
-
-      function toggleCountry(country, element) {
-        const index = selectedCountries.indexOf(country);
-        if (index === -1) {
-          selectedCountries.push(country);
-          element.classList.add('selected');
-        } else {
-          selectedCountries.splice(index, 1);
-          element.classList.remove('selected');
-        }
-      }
-
-      function handleImageUpload(file) {
-        if (!file.type.startsWith('image/')) {
-          showNotification('Please select an image file (JPEG, PNG, WEBP)', 'error');
-          return;
-        }
-
-        if (file.size > 5 * 1024 * 1024) { // 5MB limit
-          showNotification('Image size should be less than 5MB', 'error');
-          return;
-        }
-
-        const formData = new FormData();
-        formData.append('image', file);
-
-        // Show upload progress
-        const uploadArea = document.getElementById('imageUploadArea');
-        const originalContent = uploadArea.innerHTML;
-        uploadArea.innerHTML = `
-          <div class="loader-spinner mx-auto mb-3"></div>
-          <p class="text-sm font-medium">Uploading image...</p>
-        `;
-
-        fetch('/upload-image', {
-          method: 'POST',
-          body: formData,
-          headers: {
-            'X-CSRFToken': getCSRFToken()
-          }
-        })
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          return response.json();
-        })
-        .then(data => {
-          if (data.success) {
-            uploadedImageUrl = data.image_url;
-            previewImage.src = uploadedImageUrl;
-            document.getElementById('imagePreview').classList.remove('hidden');
-            updatePreview();
-            showNotification('Image uploaded successfully!', 'success');
-          } else {
-            throw new Error(data.error || 'Upload failed');
-          }
-        })
-        .catch(error => {
-          console.error('Upload error:', error);
-          showNotification('Error uploading image: ' + error.message, 'error');
-        })
-        .finally(() => {
-          // Restore original upload area content
-          uploadArea.innerHTML = originalContent;
-          // Re-attach event listeners
-          document.getElementById('imageInput').addEventListener('change', (e) => {
-            if (e.target.files.length > 0) handleImageUpload(e.target.files[0]);
-          });
-        });
-      }
-
-      function updatePreview() {
-        const title = document.getElementById('adTitle').value || 'Your Ad Title';
-        const description = document.getElementById('adDescription').value || 'Your ad description will appear here';
-        const cta = document.getElementById('callToAction').value || 'Learn More';
-
-        // Update preview in step 1
-        document.getElementById('previewTitle').textContent = title;
-        document.getElementById('previewDescription').textContent = description;
-        document.getElementById('previewCta').textContent = cta;
-
-        if (uploadedImageUrl) {
-          document.getElementById('previewImagePlaceholder').innerHTML = `<img src="${uploadedImageUrl}" class="w-full h-full object-cover rounded-lg" alt="Ad preview">`;
-        }
-
-        // Update final preview in step 3
-        document.getElementById('finalPreviewTitle').textContent = title;
-        document.getElementById('finalPreviewDescription').textContent = description;
-        document.getElementById('finalPreviewCta').textContent = cta;
-
-        if (uploadedImageUrl) {
-          document.getElementById('finalPreviewImage').innerHTML = `<img src="${uploadedImageUrl}" class="w-full h-full object-cover rounded-lg" alt="Ad preview">`;
-        }
-      }
-
-      function showStep(step) {
-        // Hide all steps
-        document.querySelectorAll('.step-content').forEach(content => {
-          content.classList.add('hidden');
-        });
-        document.querySelectorAll('.step').forEach(stepEl => {
-          stepEl.classList.remove('active', 'completed');
-        });
-
-        // Show current step
-        const stepContent = document.getElementById(`step${step}-content`);
-        const stepIndicator = document.getElementById(`step${step}`);
-        
-        if (stepContent) {
-          stepContent.classList.remove('hidden');
-        }
-        if (stepIndicator) stepIndicator.classList.add('active');
-
-        // Mark previous steps as completed
-        for (let i = 1; i < step; i++) {
-          const prevStep = document.getElementById(`step${i}`);
-          if (prevStep) prevStep.classList.add('completed');
-        }
-
-        // Update navigation buttons
-        const prevStepBtn = document.getElementById('prevStepBtn');
-        const nextStepBtn = document.getElementById('nextStepBtn');
-        const createCampaignBtn = document.getElementById('createCampaignBtn');
-
-        if (prevStepBtn) {
-          prevStepBtn.style.display = step > 1 ? 'flex' : 'none';
-        }
-        
-        if (step === 3) {
-          if (nextStepBtn) nextStepBtn.classList.add('hidden');
-          if (createCampaignBtn) createCampaignBtn.classList.remove('hidden');
-          updatePreview();
-        } else {
-          if (nextStepBtn) nextStepBtn.classList.remove('hidden');
-          if (createCampaignBtn) createCampaignBtn.classList.add('hidden');
-        }
-
-        currentStep = step;
-      }
-
-      function validateStep(step) {
-        switch(step) {
-          case 1:
-            const title = document.getElementById('adTitle').value;
-            const url = document.getElementById('targetUrl').value;
-            if (!title || !url) {
-              showNotification('Please fill in all required fields (Title and URL)', 'error');
-              return false;
-            }
-            return true;
-          case 2:
-            // Targeting is optional, so always valid
-            return true;
-          case 3:
-            // Payment method selection is required but has default
-            return true;
-          default:
-            return true;
-        }
-      }
-
-      function getCampaignData() {
-        return {
-          package_id: selectedPackageId,
-          title: document.getElementById('adTitle').value,
-          description: document.getElementById('adDescription').value,
-          target_url: document.getElementById('targetUrl').value,
-          image: uploadedImageUrl,
-          call_to_action: document.getElementById('callToAction').value,
-          audience: document.querySelector('input[name="audience"]:checked')?.value || 'all',
-          interests: selectedInterests,
-          countries: selectedCountries,
-          min_age: document.getElementById('minAge').value || '18',
-          max_age: document.getElementById('maxAge').value || '65'
-        };
-      }
-
-      function createCampaignAndProcessPayment(campaignData) {
-        // First create the campaign
-        fetch('/create-campaign', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCSRFToken()
-          },
-          body: JSON.stringify({
-            package_id: campaignData.package_id,
-            ad_data: campaignData
-          })
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            // Now initiate payment with the selected payment method
-            return fetch('/initiate-payment', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCSRFToken()
-              },
-              body: JSON.stringify({
-                campaign_id: data.campaign_id,
-                payment_method: campaignData.payment_method,
-                currency: campaignData.payment_method === 'paystack' ? 'NGN' : 'USD'
-              })
-            });
-          } else {
-            throw new Error(data.error || 'Failed to create campaign');
-          }
-        })
-        .then(response => response.json())
-        .then(paymentData => {
-          if (paymentData.success) {
-            if (paymentData.authorization_url) {
-              // Paystack flow - redirect to payment gateway
-              window.location.href = paymentData.authorization_url;
-            } else if (paymentData.client_secret) {
-              // Stripe flow - process payment on page
-              processStripePayment(paymentData.client_secret, paymentData.payment_intent_id, paymentData.transaction_id);
-            } else {
-              throw new Error('No payment URL or client secret received from server');
-            }
-          } else {
-            throw new Error(paymentData.error || 'Payment initiation failed');
-          }
-        })
-        .catch(error => {
-          console.error('Error in campaign/payment process:', error);
-          showNotification('Error: ' + error.message, 'error');
-          closeAllModals();
-        });
-      }
-
-      function closeAllModals() {
-        document.querySelectorAll('.modal').forEach(modal => {
-          modal.classList.add('hidden');
-        });
-      }
-
-      function resetForm() {
-        const adForm = document.getElementById('adForm');
-        if (adForm) adForm.reset();
-        
-        // Reset targeting to defaults
-        document.querySelector('input[name="audience"][value="all"]').checked = true;
-        document.querySelectorAll('.interest-tag').forEach(tag => tag.classList.remove('selected'));
-        document.querySelectorAll('.country-option').forEach(option => option.classList.remove('selected'));
-        document.getElementById('minAge').value = '18';
-        document.getElementById('maxAge').value = '65';
-        document.querySelector('input[name="paymentMethod"][value="paystack"]').checked = true;
-        
-        uploadedImageUrl = '';
-        document.getElementById('imagePreview').classList.add('hidden');
-        
-        selectedInterests = [];
-        selectedCountries = [];
-        
-        currentStep = 1;
-        updatePreview();
-      }
-
-      function getCSRFToken() {
-        const metaTag = document.querySelector('meta[name="csrf-token"]');
-        if (metaTag) {
-          return metaTag.getAttribute('content');
-        }
-        return '';
-      }
-
-      function showNotification(message, type = 'info') {
-        // Create notification element
-        const notification = document.createElement('div');
-        notification.className = `fixed top-4 right-4 z-50 p-4 rounded-xl shadow-strong animate-slide-up ${
-          type === 'error' ? 'bg-red-500 text-white' :
-          type === 'success' ? 'bg-accent text-white' :
-          type === 'warning' ? 'bg-warning text-white' :
-          'bg-primary text-white'
-        }`;
-        notification.innerHTML = `
-          <div class="flex items-center space-x-3">
-            <i class="bi bi-${type === 'error' ? 'exclamation-triangle' : type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-circle' : 'info-circle'}"></i>
-            <span class="font-medium">${message}</span>
-          </div>
-        `;
-        
-        document.body.appendChild(notification);
-        
-        // Remove notification after 5 seconds
-        setTimeout(() => {
-          notification.remove();
-        }, 5000);
-      }
-
-      // Stripe payment processing function
-      function processStripePayment(clientSecret, paymentIntentId, transactionId) {
-        // This would integrate with Stripe.js
-        // For now, we'll show a message
-        showNotification('Stripe payment integration would be implemented here with Stripe.js', 'info');
-        console.log('Stripe payment details:', { clientSecret, paymentIntentId, transactionId });
-        
-        // In a real implementation, you would:
-        // 1. Load Stripe.js
-        // 2. Create a Stripe instance
-        // 3. Use stripe.confirmCardPayment() or similar methods
-        // 4. Handle the payment result
-      }
-
-      // Function to handle Paystack callback
-      function handlePaystackCallback() {
-        // This would be called after returning from Paystack
-        // Check if payment was successful
-        const urlParams = new URLSearchParams(window.location.search);
-        const reference = urlParams.get('reference');
-        const status = urlParams.get('status');
-        
-        if (reference && status === 'success') {
-          // Verify payment with backend
-          fetch('/verify-payment', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-CSRFToken': getCSRFToken()
-            },
-            body: JSON.stringify({
-              reference: reference
-            })
-          })
-          .then(response => response.json())
-          .then(data => {
-            if (data.success) {
-              // Show success modal
-              document.getElementById('paymentModal').classList.add('hidden');
-              document.getElementById('successModal').classList.remove('hidden');
-              
-              // Update payment status in the database
-              updatePaymentStatus(data.transaction_id, 'completed');
-            } else {
-              showNotification('Payment verification failed', 'error');
-            }
-          })
-          .catch(error => {
-            console.error('Payment verification error:', error);
-            showNotification('Error verifying payment', 'error');
-          });
-        }
-      }
-
-      // Function to update payment status
-      function updatePaymentStatus(transactionId, status) {
-        fetch('/update-payment-status', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCSRFToken()
-          },
-          body: JSON.stringify({
-            transaction_id: transactionId,
-            status: status
-          })
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (!data.success) {
-            console.error('Failed to update payment status:', data.error);
-          }
-        })
-        .catch(error => {
-          console.error('Error updating payment status:', error);
-        });
-      }
-
-      // Check for Paystack callback on page load
-      window.addEventListener('load', function() {
-        handlePaystackCallback();
+        // Initialize values
+        initAgeRangeSlider();
+        updateValues();
+        updateTargetingSummary();
       });
     </script>
+    
+    <!-- Include noUiSlider for age range -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.0/nouislider.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.0/nouislider.min.js"></script>
   </body>
 </html>

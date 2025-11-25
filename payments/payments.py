@@ -10,7 +10,8 @@ import os
 from email_service import EmailService 
 import json
 from datetime import datetime, timedelta
-
+import time
+import time
 payments = Blueprint("payments", __name__)
 
 
@@ -28,134 +29,134 @@ def ad_packages():
 
 
 
-@payments.route('/create-campaign', methods=['POST'])
-@login_required
-def create_campaign():
-    """Create a new ad campaign"""
-    try:
-        data = request.get_json()
-        if not data:
-            return jsonify({'success': False, 'error': 'No data provided'}), 400
+# @payments.route('/create-campaign', methods=['POST'])
+# @login_required
+# def create_campaign():
+#     """Create a new ad campaign"""
+#     try:
+#         data = request.get_json()
+#         if not data:
+#             return jsonify({'success': False, 'error': 'No data provided'}), 400
 
-        package_id = data.get('package_id')
-        ad_data = data.get('ad_data', {})
+#         package_id = data.get('package_id')
+#         ad_data = data.get('ad_data', {})
         
-        if not package_id:
-            return jsonify({'success': False, 'error': 'Package ID is required'}), 400
+#         if not package_id:
+#             return jsonify({'success': False, 'error': 'Package ID is required'}), 400
 
-        # Convert package_id to integer
-        try:
-            package_id = int(package_id)
-        except (ValueError, TypeError):
-            return jsonify({'success': False, 'error': 'Invalid package ID format'}), 400
+#         # Convert package_id to integer
+#         try:
+#             package_id = int(package_id)
+#         except (ValueError, TypeError):
+#             return jsonify({'success': False, 'error': 'Invalid package ID format'}), 400
 
-        # Check if package exists
-        package = AdPackage.query.get(package_id)
+#         # Check if package exists
+#         package = AdPackage.query.get(package_id)
         
-        if not package:
-            return jsonify({'success': False, 'error': f'Package with ID {package_id} not found'})
+#         if not package:
+#             return jsonify({'success': False, 'error': f'Package with ID {package_id} not found'})
 
-        # Validate required fields
-        if not ad_data.get('title'):
-            return jsonify({'success': False, 'error': 'Ad title is required'}), 400
+#         # Validate required fields
+#         if not ad_data.get('title'):
+#             return jsonify({'success': False, 'error': 'Ad title is required'}), 400
             
-        if not ad_data.get('target_url'):
-            return jsonify({'success': False, 'error': 'Target URL is required'}), 400
+#         if not ad_data.get('target_url'):
+#             return jsonify({'success': False, 'error': 'Target URL is required'}), 400
 
-        # Parse targeting data
-        target_countries = ad_data.get('countries', [])
-        target_interests = ad_data.get('interests', [])
+#         # Parse targeting data
+#         target_countries = ad_data.get('countries', [])
+#         target_interests = ad_data.get('interests', [])
         
-        # Calculate end date based on package duration
-        start_date = datetime.utcnow()
-        end_date = start_date + timedelta(days=package.duration_days)
+#         # Calculate end date based on package duration
+#         start_date = datetime.utcnow()
+#         end_date = start_date + timedelta(days=package.duration_days)
         
-        # Create campaign
-        campaign = AdCampaign(
-            user_id=current_user.id,
-            package_id=package_id,
-            title=ad_data.get('title', ''),
-            description=ad_data.get('description', ''),
-            image=ad_data.get('image', ''),
-            target_url=ad_data.get('target_url', ''),
-            call_to_action=ad_data.get('call_to_action', 'Learn More'),
-            target_audience=ad_data.get('audience', 'all'),
-            target_countries=json.dumps(target_countries) if target_countries else None,
-            target_interests=json.dumps(target_interests) if target_interests else None,
-            budget=package.price,
-            status='pending',
-            payment_status='pending',
-            start_date=start_date,
-            end_date=end_date
-        )
+#         # Create campaign
+#         campaign = AdCampaign(
+#             user_id=current_user.id,
+#             package_id=package_id,
+#             title=ad_data.get('title', ''),
+#             description=ad_data.get('description', ''),
+#             image=ad_data.get('image', ''),
+#             target_url=ad_data.get('target_url', ''),
+#             call_to_action=ad_data.get('call_to_action', 'Learn More'),
+#             target_audience=ad_data.get('audience', 'all'),
+#             target_countries=json.dumps(target_countries) if target_countries else None,
+#             target_interests=json.dumps(target_interests) if target_interests else None,
+#             budget=package.price,
+#             status='pending',
+#             payment_status='pending',
+#             start_date=start_date,
+#             end_date=end_date
+#         )
         
-        db.session.add(campaign)
-        db.session.commit()
+#         db.session.add(campaign)
+#         db.session.commit()
         
-        current_app.logger.info(f"✅ Campaign created successfully for user {current_user.id}: {campaign.id}")
+#         current_app.logger.info(f"✅ Campaign created successfully for user {current_user.id}: {campaign.id}")
         
-        return jsonify({
-            'success': True,
-            'campaign_id': campaign.id,
-            'message': 'Campaign created successfully'
-        })
+#         return jsonify({
+#             'success': True,
+#             'campaign_id': campaign.id,
+#             'message': 'Campaign created successfully'
+#         })
         
-    except Exception as e:
-        db.session.rollback()
-        current_app.logger.error(f"❌ Campaign creation failed: {str(e)}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+#     except Exception as e:
+#         db.session.rollback()
+#         current_app.logger.error(f"❌ Campaign creation failed: {str(e)}")
+#         return jsonify({'success': False, 'error': str(e)}), 500
     
     
     
     
     
 
-@payments.route('/initiate-payment', methods=['POST'])
-@login_required
-def initiate_payment():
-    """Initiate payment for a campaign"""
-    try:
-        data = request.get_json()
-        if not data:
-            return jsonify({'success': False, 'error': 'No data provided'}), 400
+# @payments.route('/initiate-payment', methods=['POST'])
+# @login_required
+# def initiate_payment():
+#     """Initiate payment for a campaign"""
+#     try:
+#         data = request.get_json()
+#         if not data:
+#             return jsonify({'success': False, 'error': 'No data provided'}), 400
 
-        campaign_id = data.get('campaign_id')
-        payment_method = data.get('payment_method')
-        currency = data.get('currency', 'USD').upper()
+#         campaign_id = data.get('campaign_id')
+#         payment_method = data.get('payment_method')
+#         currency = data.get('currency', 'USD').upper()
 
-        campaign = AdCampaign.query.get(campaign_id)
-        if not campaign:
-            return jsonify({'success': False, 'error': 'Campaign not found'}), 404
+#         campaign = AdCampaign.query.get(campaign_id)
+#         if not campaign:
+#             return jsonify({'success': False, 'error': 'Campaign not found'}), 404
             
-        if campaign.user_id != current_user.id:
-            return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+#         if campaign.user_id != current_user.id:
+#             return jsonify({'success': False, 'error': 'Unauthorized'}), 403
 
-        package = AdPackage.query.get(campaign.package_id)
-        payment_service = PaymentService()
+#         package = AdPackage.query.get(campaign.package_id)
+#         payment_service = PaymentService()
 
-        # Use the selected payment method
-        if payment_method == 'paystack':
-            result = payment_service.create_paystack_transaction(
-                user=current_user,
-                campaign=campaign,
-                package=package,
-                currency=currency or 'NGN'
-            )
-        else:  # stripe
-            result = payment_service.create_payment_intent(
-                user=current_user,
-                campaign=campaign,
-                package=package,
-                currency=currency or 'USD'
-            )
+#         # Use the selected payment method
+#         if payment_method == 'paystack':
+#             result = payment_service.create_paystack_transaction(
+#                 user=current_user,
+#                 campaign=campaign,
+#                 package=package,
+#                 currency=currency or 'NGN'
+#             )
+#         else:  # stripe
+#             result = payment_service.create_payment_intent(
+#                 user=current_user,
+#                 campaign=campaign,
+#                 package=package,
+#                 currency=currency or 'USD'
+#             )
 
-        current_app.logger.info(f"✅ Payment initiated for campaign {campaign_id} by user {current_user.id}")
+#         current_app.logger.info(f"✅ Payment initiated for campaign {campaign_id} by user {current_user.id}")
 
-        return jsonify(result)
+#         return jsonify(result)
 
-    except Exception as e:
-        current_app.logger.error(f"❌ Payment initiation failed: {str(e)}", exc_info=True)
-        return jsonify({'success': False, 'error': 'Payment initiation failed'}), 500
+#     except Exception as e:
+#         current_app.logger.error(f"❌ Payment initiation failed: {str(e)}", exc_info=True)
+#         return jsonify({'success': False, 'error': 'Payment initiation failed'}), 500
     
     
     
@@ -344,63 +345,63 @@ def payment_failed():
 
 
 
-@payments.route('/verify-payment', methods=['POST'])
-@login_required
-def verify_payment():
-    """Verify payment status (for AJAX calls)"""
-    try:
-        data = request.get_json()
-        reference = data.get('reference')
+# @payments.route('/verify-payment', methods=['POST'])
+# @login_required
+# def verify_payment():
+#     """Verify payment status (for AJAX calls)"""
+#     try:
+#         data = request.get_json()
+#         reference = data.get('reference')
         
-        if not reference:
-            return jsonify({'success': False, 'error': 'No reference provided'})
+#         if not reference:
+#             return jsonify({'success': False, 'error': 'No reference provided'})
         
-        payment_service = PaymentService()
-        result = payment_service.verify_paystack_payment(reference)
+#         payment_service = PaymentService()
+#         result = payment_service.verify_paystack_payment(reference)
         
-        if result['success'] and result['data']['status'] == 'success':
-            # Find and update transaction
-            transaction = PaymentTransaction.query.filter_by(
-                gateway_payment_id=reference,
-                user_id=current_user.id
-            ).first()
+#         if result['success'] and result['data']['status'] == 'success':
+#             # Find and update transaction
+#             transaction = PaymentTransaction.query.filter_by(
+#                 gateway_payment_id=reference,
+#                 user_id=current_user.id
+#             ).first()
             
-            if transaction:
-                payment_service.handle_successful_payment(transaction.id, result['data'])
+#             if transaction:
+#                 payment_service.handle_successful_payment(transaction.id, result['data'])
                 
-                # Send success email
-                campaign = AdCampaign.query.get(transaction.campaign_id)
-                package = AdPackage.query.get(campaign.package_id) if campaign else None
+#                 # Send success email
+#                 campaign = AdCampaign.query.get(transaction.campaign_id)
+#                 package = AdPackage.query.get(campaign.package_id) if campaign else None
                 
-                if campaign and package:
-                    EmailService.send_ad_purchase_success(current_user, transaction, campaign, package)
+#                 if campaign and package:
+#                     EmailService.send_ad_purchase_success(current_user, transaction, campaign, package)
                 
-                return jsonify({
-                    'success': True,
-                    'transaction_id': transaction.id,
-                    'status': 'completed'
-                })
+#                 return jsonify({
+#                     'success': True,
+#                     'transaction_id': transaction.id,
+#                     'status': 'completed'
+#                 })
         
-        # Send failure email if payment failed
-        transaction = PaymentTransaction.query.filter_by(gateway_payment_id=reference).first()
-        if transaction:
-            campaign = AdCampaign.query.get(transaction.campaign_id)
-            package = AdPackage.query.get(campaign.package_id) if campaign else None
+#         # Send failure email if payment failed
+#         transaction = PaymentTransaction.query.filter_by(gateway_payment_id=reference).first()
+#         if transaction:
+#             campaign = AdCampaign.query.get(transaction.campaign_id)
+#             package = AdPackage.query.get(campaign.package_id) if campaign else None
             
-            if package:
-                EmailService.send_ad_purchase_failed(
-                    user=current_user,
-                    package=package,
-                    transaction=transaction,
-                    campaign=campaign,
-                    error_message="Payment verification failed"
-                )
+#             if package:
+#                 EmailService.send_ad_purchase_failed(
+#                     user=current_user,
+#                     package=package,
+#                     transaction=transaction,
+#                     campaign=campaign,
+#                     error_message="Payment verification failed"
+#                 )
         
-        return jsonify({'success': False, 'error': 'Payment verification failed'})
+#         return jsonify({'success': False, 'error': 'Payment verification failed'})
         
-    except Exception as e:
-        current_app.logger.error(f"❌ Payment verification error: {str(e)}")
-        return jsonify({'success': False, 'error': str(e)})
+#     except Exception as e:
+#         current_app.logger.error(f"❌ Payment verification error: {str(e)}")
+#         return jsonify({'success': False, 'error': str(e)})
     
     
     
@@ -505,3 +506,397 @@ def track_ad_click(ad_id):
         return jsonify({'success': True})
     except:
         return jsonify({'success': False})
+    
+    
+    
+    
+@payments.route('/create-campaign', methods=['POST'])
+@login_required
+def create_campaign():
+    """Create ad campaign with user-selected budget - CORRECTED VERSION"""
+    try:
+        data = request.get_json()
+        print(f"🔵 [CREATE CAMPAIGN] Received data: {data}")
+        
+        if not data:
+            return jsonify({'success': False, 'error': 'No data provided'}), 400
+
+        # Extract and validate data with correct field names
+        daily_budget = data.get('daily_budget')
+        duration_days = data.get('duration_days')
+        title = data.get('title')
+        description = data.get('description')
+        target_url = data.get('target_url')
+        call_to_action = data.get('call_to_action', 'Learn More')
+        image = data.get('image', '')
+        
+        print(f"🔵 [CREATE CAMPAIGN] Parsed: daily_budget={daily_budget}, duration_days={duration_days}, title={title}")
+        
+        # Validate required fields
+        validation_errors = []
+        if not title:
+            validation_errors.append('Ad title is required')
+        if not target_url:
+            validation_errors.append('Target URL is required')
+        if not daily_budget:
+            validation_errors.append('Daily budget is required')
+        if not duration_days:
+            validation_errors.append('Duration days is required')
+            
+        if validation_errors:
+            print(f"🔴 [CREATE CAMPAIGN] Validation errors: {validation_errors}")
+            return jsonify({'success': False, 'error': ', '.join(validation_errors)}), 400
+        
+        # Convert and validate numeric fields
+        try:
+            daily_budget = float(daily_budget)
+            duration_days = int(duration_days)
+        except (TypeError, ValueError) as e:
+            print(f"🔴 [CREATE CAMPAIGN] Numeric conversion error: {e}")
+            return jsonify({'success': False, 'error': 'Invalid budget or duration format'}), 400
+        
+        if daily_budget < 5:
+            return jsonify({'success': False, 'error': 'Minimum daily budget is $5'}), 400
+        if duration_days < 5:
+            return jsonify({'success': False, 'error': 'Minimum duration is 5 days'}), 400
+        
+        # Calculate total budget
+        total_budget = daily_budget * duration_days
+        
+        # Create campaign with CORRECT field names that match your model
+        campaign = AdCampaign(
+            user_id=current_user.id,
+            title=title,
+            description=description,
+            image=image,
+            target_url=target_url,
+            call_to_action=call_to_action,
+            budget=total_budget,  # This matches your model's 'budget' field
+            daily_budget=daily_budget,  # Store daily budget separately if needed
+            duration_days=duration_days,
+            status='pending',
+            payment_status='pending'
+        )
+        
+        db.session.add(campaign)
+        db.session.commit()
+        
+        print(f"✅ [CREATE CAMPAIGN] Campaign created successfully: ID {campaign.id}")
+        
+        return jsonify({
+            'success': True,
+            'campaign_id': campaign.id,
+            'message': 'Campaign created successfully'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"🔴 [CREATE CAMPAIGN] Campaign creation failed: {str(e)}")
+        import traceback
+        print(f"🔴 [CREATE CAMPAIGN] Traceback: {traceback.format_exc()}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+    
+
+
+    
+@payments.route('/initiate-payment', methods=['POST'])
+@login_required
+def initiate_payment():
+    """Fixed payment initiation route"""
+    try:
+        data = request.get_json()
+        print(f"🟡 [INITIATE PAYMENT] Request content type: {request.content_type}")
+        print(f"🟡 [INITIATE PAYMENT] Raw data: {request.data}")
+
+
+        if not data:
+            return jsonify({'success': False, 'error': 'No data provided'}), 400
+
+        campaign_id = data.get('campaign_id')
+        amount = data.get('amount')  # This should come from frontend
+        currency = data.get('currency', 'USD').upper()
+
+        print(f"🟡 [INITIATE PAYMENT] campaign_id: {campaign_id}, amount: {amount}, currency: {currency}")
+
+        # Validate required fields
+        if not campaign_id:
+            return jsonify({'success': False, 'error': 'Campaign ID is required'}), 400
+        
+        if not amount:
+            return jsonify({'success': False, 'error': 'Amount is required'}), 400
+
+        try:
+            campaign_id = int(campaign_id)
+            amount = float(amount)
+        except (ValueError, TypeError):
+            return jsonify({'success': False, 'error': 'Invalid campaign ID or amount format'}), 400
+
+        # Verify campaign exists and belongs to user
+        campaign = AdCampaign.query.get(campaign_id)
+        if not campaign:
+            return jsonify({'success': False, 'error': 'Campaign not found'}), 404
+            
+        if campaign.user_id != current_user.id:
+            return jsonify({'success': False, 'error': 'Unauthorized access to campaign'}), 403
+
+        # Check if already paid
+        if campaign.payment_status == 'paid':
+            return jsonify({'success': False, 'error': 'Campaign already paid'}), 400
+
+        print(f"🟡 [INITIATE PAYMENT] Campaign found: {campaign.title}, User: {current_user.email}")
+
+        # Initialize payment service
+        payment_service = PaymentService()
+        
+        # Create payment with Flutterwave
+        result = payment_service.create_flutterwave_transaction(
+            user=current_user,
+            campaign=campaign,
+            amount=amount,
+            currency=currency
+        )
+
+        print(f"🟡 [INITIATE PAYMENT] Payment service result: {result}")
+
+        if result.get('success'):
+            return jsonify(result)
+        else:
+            return jsonify({
+                'success': False,
+                'error': result.get('error', 'Payment initiation failed')
+            }), 400
+
+    except Exception as e:
+        print(f"🔴 [INITIATE PAYMENT] Error: {str(e)}")
+        import traceback
+        print(f"🔴 [INITIATE PAYMENT] Traceback: {traceback.format_exc()}")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
+    
+    
+    
+@payments.route('/debug-payment-service', methods=['GET'])
+@login_required
+def debug_payment_service():
+    """Debug PaymentService configuration"""
+    payment_service = PaymentService()
+    
+    # Test with a recent campaign
+    campaign = AdCampaign.query.filter_by(user_id=current_user.id).order_by(AdCampaign.created_at.desc()).first()
+    
+    debug_info = {
+        'service_initialized': True,
+        'flutterwave_public_key': bool(payment_service.flutterwave_public_key),
+        'flutterwave_secret_key': bool(payment_service.flutterwave_secret_key),
+        'flutterwave_base_url': payment_service.flutterwave_base_url,
+        'test_campaign_available': bool(campaign),
+        'current_user': current_user.email
+    }
+    
+    if campaign:
+        debug_info['campaign_id'] = campaign.id
+        debug_info['campaign_title'] = campaign.title
+        
+        # Test creating a transaction
+        result = payment_service.create_flutterwave_transaction(current_user, campaign, 1.0, 'USD')
+        debug_info['payment_test_result'] = result
+    
+    return jsonify(debug_info)
+    
+    
+    
+    
+@payments.route('/test-payment-flow/<int:campaign_id>', methods=['GET'])
+@login_required
+def test_payment_flow(campaign_id):
+    """Test payment flow for a specific campaign"""
+    try:
+        campaign = AdCampaign.query.get(campaign_id)
+        if not campaign or campaign.user_id != current_user.id:
+            return jsonify({'success': False, 'error': 'Campaign not found or unauthorized'})
+        
+        # Calculate amount based on daily budget and duration
+        amount = campaign.daily_budget * campaign.duration_days
+        
+        payment_service = PaymentService()
+        
+        print(f"🧪 [TEST PAYMENT] Testing with campaign {campaign_id}, amount: {amount}")
+        
+        result = payment_service.create_flutterwave_transaction(
+            current_user, campaign, amount, 'USD'
+        )
+        
+        return jsonify({
+            'success': True,
+            'test_result': result,
+            'campaign': {
+                'id': campaign.id,
+                'title': campaign.title,
+                'daily_budget': campaign.daily_budget,
+                'duration_days': campaign.duration_days,
+                'calculated_amount': amount
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    
+    
+
+print('LEAVING PAYMENTSAASSSSSSS')
+    
+    
+@payments.route('/test-flutterwave-direct', methods=['GET'])
+@login_required
+def test_flutterwave_direct():
+    """Test Flutterwave API directly"""
+    try:
+        payment_service = PaymentService()
+        
+        # Simple test payload
+        test_data = {
+            'tx_ref': f"direct_test_{int(time.time())}",
+            'amount': '10',  # Small test amount
+            'currency': 'USD',
+            'redirect_url': 'http://localhost:5000/user/dashboard',
+            'payment_options': 'card',
+            'customer': {
+                'email': current_user.email,
+                'name': current_user.full_name,
+            },
+            'customizations': {
+                'title': 'Kimbela Test',
+                'description': 'Direct Flutterwave Test',
+            }
+        }
+        
+        headers = {
+            'Authorization': f'Bearer {payment_service.flutterwave_secret_key}',
+            'Content-Type': 'application/json'
+        }
+        
+        print(f"🧪 [DIRECT TEST] Sending to Flutterwave:")
+        print(f"🧪 [DIRECT TEST] URL: https://api.flutterwave.com/v3/payments")
+        print(f"🧪 [DIRECT TEST] Headers: {headers}")
+        print(f"🧪 [DIRECT TEST] Data: {json.dumps(test_data, indent=2)}")
+        
+        response = requests.post(
+            'https://api.flutterwave.com/v3/payments',
+            headers=headers,
+            json=test_data,
+            timeout=30
+        )
+        
+        result = {
+            'status_code': response.status_code,
+            'success': response.status_code == 200,
+            'response': response.json() if response.status_code == 200 else response.text
+        }
+        
+        print(f"🧪 [DIRECT TEST] Flutterwave response:")
+        print(f"🧪 [DIRECT TEST] Status: {result['status_code']}")
+        print(f"🧪 [DIRECT TEST] Response: {json.dumps(result, indent=2)}")
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        print(f"🔴 [DIRECT TEST] Error: {str(e)}")
+        import traceback
+        print(f"🔴 [DIRECT TEST] Traceback: {traceback.format_exc()}")
+        return jsonify({'error': str(e)}), 500
+
+
+
+
+
+    
+@payments.route('/diagnose-payment', methods=['GET'])
+@login_required
+def diagnose_payment():
+    """Diagnose payment configuration"""
+    try:
+        payment_service = PaymentService()
+        
+        diagnostic_info = {
+            'flutterwave_configured': bool(payment_service.flutterwave_secret_key),
+            'base_url': current_app.config.get('BASE_URL'),
+            'environment_variables': {
+                'PUBLIC_KEY_loaded': bool(os.getenv('PUBLIC_KEY')),
+                'SECRET_KEY_loaded': bool(os.getenv('SECRET_KEY')),
+                'ENCRYPTION_KEY_loaded': bool(os.getenv('ENCRYPTION_KEY')),
+            },
+            'current_user': {
+                'id': current_user.id,
+                'email': current_user.email,
+                'name': current_user.full_name
+            }
+        }
+        
+        print(f"🔍 [DIAGNOSTIC] Payment configuration: {json.dumps(diagnostic_info, indent=2)}")
+        
+        return jsonify(diagnostic_info)
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+    
+    
+@payments.route('/flutterwave/callback', methods=['GET', 'POST'])
+def flutterwave_callback():
+    """Handle Flutterwave payment callback"""
+    try:
+        if request.method == 'GET':
+            # Handle redirect from Flutterwave
+            transaction_id = request.args.get('transaction_id')
+            status = request.args.get('status')
+            
+            if status == 'successful':
+                # Verify the payment
+                payment_service = PaymentService()
+                verification = payment_service.verify_flutterwave_payment(transaction_id)
+                
+                if verification['success']:
+                    payment_data = verification['data']
+                    transaction = PaymentTransaction.query.filter_by(
+                        gateway_payment_id=payment_data.get('tx_ref')
+                    ).first()
+                    
+                    if transaction:
+                        payment_service.handle_successful_payment(transaction.id, payment_data)
+                        flash('Payment successful! Your ad campaign is now active.', 'success')
+                    else:
+                        flash('Transaction not found. Please contact support.', 'error')
+                else:
+                    flash('Payment verification failed.', 'error')
+            else:
+                flash('Payment was not successful. Please try again.', 'error')
+            
+            return redirect(url_for('user.user_dashboard'))
+        
+        else:
+            # Handle webhook
+            return jsonify({'status': 'webhook_received'})
+            
+    except Exception as e:
+        current_app.logger.error(f"Flutterwave callback error: {str(e)}")
+        flash('An error occurred processing your payment.', 'error')
+        return redirect(url_for('user.user_dashboard'))
+    
+    
+    
+
+@payments.route('/verify-payment', methods=['POST'])
+@login_required
+def verify_payment():
+    """Verify payment status"""
+    try:
+        data = request.get_json()
+        reference = data.get('reference')
+        
+        payment_service = PaymentService()
+        result = payment_service.verify_flutterwave_payment(reference)
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        current_app.logger.error(f"Payment verification failed: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500

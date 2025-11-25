@@ -8,26 +8,28 @@ from users.user import user as user_blueprint
 from authentication.authenticate import auth
 from admin.admin import admin as admin_blueprint
 from payments.payments import payments as payments_blueprint
-
-
-# from admin import admin as admin_blueprint
 from models import User, Post, Comment, Like, FriendRequest, friendship
 from datetime import datetime, timedelta, timezone
 from extensions import db, socketio
 from messages.messaging import messaging as message_blueprint
-
+from scheduler import init_scheduler  # Add this import
 
 load_dotenv()
 
 csrf = CSRFProtect()
 
-
 def create_app():
     app = Flask(__name__)
+    
     # Stripe configuration
     app.config['STRIPE_SECRET_KEY'] = os.getenv('STRIPE_SECRET_KEY')
     app.config['STRIPE_PUBLISHABLE_KEY'] = os.getenv('STRIPE_PUBLISHABLE_KEY')
     app.config['STRIPE_WEBHOOK_SECRET'] = os.getenv('STRIPE_WEBHOOK_SECRET')
+    
+    # Flutterwave configuration
+    app.config['FLUTTERWAVE_PUBLIC_KEY'] = os.getenv('PUBLIC_KEY')
+    app.config['FLUTTERWAVE_SECRET_KEY'] = os.getenv('SECRET_KEY')
+    app.config['FLUTTERWAVE_ENCRYPTION_KEY'] = os.getenv('ENCRYPTION_KEY')
     
     # Verify webhook secret is loaded
     if not app.config['STRIPE_WEBHOOK_SECRET']:
@@ -72,7 +74,12 @@ def create_app():
     app.register_blueprint(message_blueprint)
     app.register_blueprint(admin_blueprint)
     app.register_blueprint(payments_blueprint)
-    # app.register_blueprint(admin_blueprint)
+
+    # Initialize scheduler - ADD THIS SECTION
+    if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+        with app.app_context():
+            init_scheduler(app)
+            app.logger.info("Scheduler initialized successfully")
 
     # Inject CSRF token into all templates
     @app.context_processor
@@ -100,7 +107,6 @@ def create_app():
                 return f"{value} {period_name}{'s' if value != 1 else ''} ago"
 
         return "just now"
-    
     
     # Register template filters
     @app.template_filter('timeago')
