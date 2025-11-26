@@ -712,7 +712,6 @@ class Reaction(db.Model):
     
     
 # Add these new models to your existing models.py
-# Add these new models to your existing models.py
 class AdCampaign(db.Model):
     __tablename__ = "ad_campaigns"
     
@@ -818,8 +817,14 @@ class PaymentTransaction(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    user = db.relationship("User",  back_populates="transactions", foreign_keys=[user_id])
+    user = db.relationship("User",  back_populates="transactions", foreign_keys=[user_id], overlaps="transaction_user")
     campaign = db.relationship("AdCampaign", back_populates="transactions", foreign_keys=[campaign_id])
+    
+    
+    
+    
+    
+    
 
 class AdPackage(db.Model):
     __tablename__ = "ad_packages"

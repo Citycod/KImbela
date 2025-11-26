@@ -297,61 +297,27 @@
           <div class="mb-6">
             <label class="block text-primary font-medium mb-2">Payment Currency</label>
             <select class="w-full px-4 py-3 border-2 border-border-color rounded-xl text-sm focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-300" id="currency">
-              <!-- African Currencies -->
-              <option value="NGN">🇳🇬 Nigerian Naira (NGN)</option>
-              <option value="GHS">🇬🇭 Ghanaian Cedi (GHS)</option>
-              <option value="KES">🇰🇪 Kenyan Shilling (KES)</option>
-              <option value="ZAR">🇿🇦 South African Rand (ZAR)</option>
-              <option value="EGP">🇪🇬 Egyptian Pound (EGP)</option>
-              <option value="XOF">🇨🇫 West African CFA Franc (XOF)</option>
-              <option value="XAF">🇨🇲 Central African CFA Franc (XAF)</option>
-              
-              <!-- Major Global Currencies -->
+              <!-- Only USD option -->
               <option value="USD">🇺🇸 US Dollar (USD)</option>
-              <option value="EUR">🇪🇺 Euro (EUR)</option>
-              <option value="GBP">🇬🇧 British Pound (GBP)</option>
-              <option value="CAD">🇨🇦 Canadian Dollar (CAD)</option>
-              <option value="AUD">🇦🇺 Australian Dollar (AUD)</option>
-              
-              <!-- Asian Currencies -->
-              <option value="CNY">🇨🇳 Chinese Yuan (CNY)</option>
-              <option value="JPY">🇯🇵 Japanese Yen (JPY)</option>
-              <option value="INR">🇮🇳 Indian Rupee (INR)</option>
-              <option value="SGD">🇸🇬 Singapore Dollar (SGD)</option>
-              
-              <!-- Middle East Currencies -->
-              <option value="AED">🇦🇪 UAE Dirham (AED)</option>
-              <option value="SAR">🇸🇦 Saudi Riyal (SAR)</option>
-              
-              <!-- South American Currencies -->
-              <option value="BRL">🇧🇷 Brazilian Real (BRL)</option>
-              <option value="MXN">🇲🇽 Mexican Peso (MXN)</option>
-              
-              <!-- Other Important Currencies -->
-              <option value="CHF">🇨🇭 Swiss Franc (CHF)</option>
-              <option value="NZD">🇳🇿 New Zealand Dollar (NZD)</option>
-              <option value="SEK">🇸🇪 Swedish Krona (SEK)</option>
-              <option value="NOK">🇳🇴 Norwegian Krone (NOK)</option>
-              <option value="DKK">🇩🇰 Danish Krone (DKK)</option>
             </select>
-            <p class="text-xs text-text-secondary mt-2">Select your preferred payment currency. We support 20+ currencies worldwide.</p>
+            <p class="text-xs text-text-secondary mt-2">All payments are processed in US Dollars (USD).</p>
           </div>
           
           <!-- Budget Slider Section -->
           <div class="mb-8">
             <div class="flex justify-between items-center mb-2">
               <label class="text-primary font-medium">Daily Budget</label>
-              <span class="text-text-secondary text-sm" id="budgetRange">$5 - $10,000</span>
+              <span class="text-text-secondary text-sm" id="budgetRange">$2 - $10,000</span>
             </div>
             
             <div class="budget-display">
-              <span id="currencySymbol">$</span><span id="budgetValue">5.00</span> / day
+              <span id="currencySymbol">$</span><span id="budgetValue">2.00</span> / day
             </div>
             
-            <input type="range" min="5" max="10000" value="5" step="1" class="slider" id="budgetSlider">
+            <input type="range" min="2" max="10000" value="2" step="1" class="slider" id="budgetSlider">
             
             <div class="flex justify-between text-xs text-text-secondary mt-1">
-              <span id="minBudget">$5</span>
+              <span id="minBudget">$2</span>
               <span id="maxBudget">$10,000</span>
             </div>
           </div>
@@ -360,10 +326,10 @@
           <div class="mb-8">
             <label class="block text-primary font-medium mb-3">Ad Duration (Days)</label>
             <div class="flex items-center space-x-4">
-              <input type="number" id="daysInput" class="days-input" min="5" value="5">
+              <input type="number" id="daysInput" class="days-input" min="3" value="3">
               <span class="text-text-secondary">days</span>
             </div>
-            <p class="text-xs text-text-secondary mt-2">Minimum duration: 5 days</p>
+            <p class="text-xs text-text-secondary mt-2">Minimum duration: 3 days</p>
           </div>
           
           <!-- Target Audience Section -->
@@ -386,10 +352,6 @@
                   <input type="radio" name="gender" value="female" class="mr-2">
                   <span>Female</span>
                 </label>
-                <label class="flex items-center">
-                  <input type="radio" name="gender" value="non-binary" class="mr-2">
-                  <span>Non-binary</span>
-                </label>
               </div>
             </div>
             
@@ -399,7 +361,7 @@
               <div class="age-slider-container">
                 <div id="ageRangeSlider" class="slider"></div>
                 <div class="age-display">
-                  <span id="minAge">18</span> - <span id="maxAge">65</span> years
+                  <span id="minAge">31</span> - <span id="maxAge">65</span> years
                 </div>
               </div>
             </div>
@@ -521,42 +483,13 @@
               <label class="block text-primary font-medium mb-2">Relationship Status</label>
               <select class="multi-select" id="relationshipTargeting" multiple>
                 <option value="single">Single</option>
-                <option value="dating">Dating</option>
-                <option value="engaged">Engaged</option>
-                <option value="married">Married</option>
+                <option value="married">Alumni (Married)</option>
                 <option value="divorced">Divorced</option>
                 <option value="widowed">Widowed</option>
                 <option value="separated">Separated</option>
-                <option value="complicated">It's Complicated</option>
+              
               </select>
               <p class="text-xs text-text-secondary mt-2">Hold Ctrl/Cmd to select multiple relationship statuses</p>
-            </div>
-
-            <!-- Device Targeting -->
-            <div class="targeting-section">
-              <label class="block text-primary font-medium mb-2">Device Type</label>
-              <select class="multi-select" id="deviceTargeting" multiple>
-                <option value="mobile">Mobile</option>
-                <option value="tablet">Tablet</option>
-                <option value="desktop">Desktop</option>
-                <option value="smart-tv">Smart TV</option>
-                <option value="gaming-console">Gaming Console</option>
-              </select>
-              <p class="text-xs text-text-secondary mt-2">Hold Ctrl/Cmd to select multiple device types</p>
-            </div>
-
-            <!-- Platform Targeting -->
-            <div class="targeting-section">
-              <label class="block text-primary font-medium mb-2">Platform</label>
-              <select class="multi-select" id="platformTargeting" multiple>
-                <option value="web">Web</option>
-                <option value="android">Android</option>
-                <option value="ios">iOS</option>
-                <option value="windows">Windows</option>
-                <option value="macos">macOS</option>
-                <option value="linux">Linux</option>
-              </select>
-              <p class="text-xs text-text-secondary mt-2">Hold Ctrl/Cmd to select multiple platforms</p>
             </div>
             
             <!-- Language Targeting -->
@@ -656,7 +589,7 @@
           
           <!-- Total Price -->
           <div class="total-price">
-            Total: <span id="currencySymbolTotal">$</span><span id="totalPrice">25.00</span>
+            Total: <span id="currencySymbolTotal">$</span><span id="totalPrice">6.00</span>
           </div>
           
           <!-- Action Buttons -->
@@ -719,7 +652,7 @@
             </div>
             <div class="info-item">
               <span>Age Range</span>
-              <span id="summaryAge">18-65</span>
+              <span id="summaryAge">31-65</span>
             </div>
             <div class="info-item">
               <span>Locations</span>
@@ -742,14 +675,6 @@
               <span id="summaryRelationship">All</span>
             </div>
             <div class="info-item">
-              <span>Devices</span>
-              <span id="summaryDevices">All</span>
-            </div>
-            <div class="info-item">
-              <span>Platforms</span>
-              <span id="summaryPlatforms">All</span>
-            </div>
-            <div class="info-item">
               <span>Language</span>
               <span id="summaryLanguage">All</span>
             </div>
@@ -765,15 +690,15 @@
             
             <div class="info-item">
               <span>Daily Budget</span>
-              <span><span id="summaryCurrencySymbol">$</span><span id="summaryDailyBudget">5.00</span></span>
+              <span><span id="summaryCurrencySymbol">$</span><span id="summaryDailyBudget">2.00</span></span>
             </div>
             <div class="info-item">
               <span>Duration</span>
-              <span><span id="summaryDays">5</span> days</span>
+              <span><span id="summaryDays">3</span> days</span>
             </div>
             <div class="info-item font-bold text-lg">
               <span>Total Amount</span>
-              <span><span id="summaryCurrencySymbolTotal">$</span><span id="summaryTotal">25.00</span></span>
+              <span><span id="summaryCurrencySymbolTotal">$</span><span id="summaryTotal">6.00</span></span>
             </div>
           </div>
         </div>
@@ -840,8 +765,6 @@
         const summaryEducation = document.getElementById('summaryEducation');
         const summaryOccupation = document.getElementById('summaryOccupation');
         const summaryRelationship = document.getElementById('summaryRelationship');
-        const summaryDevices = document.getElementById('summaryDevices');
-        const summaryPlatforms = document.getElementById('summaryPlatforms');
         const summaryLanguage = document.getElementById('summaryLanguage');
         
         // Estimated results
@@ -870,8 +793,6 @@
         const educationTargeting = document.getElementById('educationTargeting');
         const occupationTargeting = document.getElementById('occupationTargeting');
         const relationshipTargeting = document.getElementById('relationshipTargeting');
-        const deviceTargeting = document.getElementById('deviceTargeting');
-        const platformTargeting = document.getElementById('platformTargeting');
         const languageTargeting = document.getElementById('languageTargeting');
         
         // Image upload elements
@@ -889,42 +810,18 @@
         let ageRangeMin = 18;
         let ageRangeMax = 65;
         
-        // Currency configuration
+        // Currency configuration - Only USD
         const currencyConfig = {
-          'NGN': { symbol: '₦', name: 'Nigerian Naira', min: 2000, max: 4000000 },
-          'GHS': { symbol: 'GH₵', name: 'Ghanaian Cedi', min: 50, max: 100000 },
-          'KES': { symbol: 'KSh', name: 'Kenyan Shilling', min: 500, max: 1000000 },
-          'ZAR': { symbol: 'R', name: 'South African Rand', min: 80, max: 160000 },
-          'EGP': { symbol: 'E£', name: 'Egyptian Pound', min: 150, max: 300000 },
-          'XOF': { symbol: 'CFA', name: 'West African CFA', min: 3000, max: 6000000 },
-          'XAF': { symbol: 'FCFA', name: 'Central African CFA', min: 3000, max: 6000000 },
-          'USD': { symbol: '$', name: 'US Dollar', min: 5, max: 10000 },
-          'EUR': { symbol: '€', name: 'Euro', min: 5, max: 9000 },
-          'GBP': { symbol: '£', name: 'British Pound', min: 4, max: 8000 },
-          'CAD': { symbol: 'C$', name: 'Canadian Dollar', min: 7, max: 13000 },
-          'AUD': { symbol: 'A$', name: 'Australian Dollar', min: 8, max: 15000 },
-          'CNY': { symbol: '¥', name: 'Chinese Yuan', min: 35, max: 70000 },
-          'JPY': { symbol: '¥', name: 'Japanese Yen', min: 700, max: 1400000 },
-          'INR': { symbol: '₹', name: 'Indian Rupee', min: 400, max: 800000 },
-          'SGD': { symbol: 'S$', name: 'Singapore Dollar', min: 7, max: 13000 },
-          'AED': { symbol: 'AED', name: 'UAE Dirham', min: 18, max: 37000 },
-          'SAR': { symbol: 'SR', name: 'Saudi Riyal', min: 19, max: 38000 },
-          'BRL': { symbol: 'R$', name: 'Brazilian Real', min: 25, max: 50000 },
-          'MXN': { symbol: 'MX$', name: 'Mexican Peso', min: 85, max: 170000 },
-          'CHF': { symbol: 'CHF', name: 'Swiss Franc', min: 4, max: 9000 },
-          'NZD': { symbol: 'NZ$', name: 'New Zealand Dollar', min: 8, max: 16000 },
-          'SEK': { symbol: 'kr', name: 'Swedish Krona', min: 50, max: 100000 },
-          'NOK': { symbol: 'kr', name: 'Norwegian Krone', min: 50, max: 100000 },
-          'DKK': { symbol: 'kr', name: 'Danish Krone', min: 35, max: 70000 }
+          'USD': { symbol: '$', name: 'US Dollar', min: 2, max: 10000 }
         };
         
         // Initialize age range slider
         function initAgeRangeSlider() {
           noUiSlider.create(ageRangeSlider, {
-            start: [18, 65],
+            start: [31, 65],
             connect: true,
             range: {
-              'min': 13,
+              'min': 31,
               'max': 80
             },
             step: 1,
@@ -1021,7 +918,7 @@
             targetingMultiplier *= 0.7;
           }
           
-          const scale = budget / 5 * targetingMultiplier;
+          const scale = budget / 2 * targetingMultiplier;
           
           const audienceMin = Math.round(baseAudienceMin * scale);
           const audienceMax = Math.round(baseAudienceMax * scale);
@@ -1081,18 +978,6 @@
                                            selectedRelationship.length > 2 ? `${selectedRelationship.length} statuses` : 
                                            selectedRelationship.join(', ');
           
-          // Devices
-          const selectedDevices = Array.from(deviceTargeting.selectedOptions).map(option => option.value);
-          summaryDevices.textContent = selectedDevices.length === 0 ? 'All' : 
-                                      selectedDevices.length > 2 ? `${selectedDevices.length} devices` : 
-                                      selectedDevices.join(', ');
-          
-          // Platforms
-          const selectedPlatforms = Array.from(platformTargeting.selectedOptions).map(option => option.value);
-          summaryPlatforms.textContent = selectedPlatforms.length === 0 ? 'All' : 
-                                        selectedPlatforms.length > 2 ? `${selectedPlatforms.length} platforms` : 
-                                        selectedPlatforms.join(', ');
-          
           // Language
           summaryLanguage.textContent = languageTargeting.value === 'all' ? 'All' : 
                                        languageTargeting.options[languageTargeting.selectedIndex].text;
@@ -1124,7 +1009,7 @@
           const selectedCurrency = currencySelect.value;
           const config = currencyConfig[selectedCurrency];
           
-          if (days < 5) daysInput.value = 5;
+          if (days < 3) daysInput.value = 3;
           
           budgetValue.textContent = formatCurrency(budget);
           summaryDailyBudget.textContent = formatCurrency(budget);
@@ -1158,8 +1043,6 @@
           const selectedEducation = Array.from(educationTargeting.selectedOptions).map(option => option.value);
           const selectedOccupation = Array.from(occupationTargeting.selectedOptions).map(option => option.value);
           const selectedRelationship = Array.from(relationshipTargeting.selectedOptions).map(option => option.value);
-          const selectedDevices = Array.from(deviceTargeting.selectedOptions).map(option => option.value);
-          const selectedPlatforms = Array.from(platformTargeting.selectedOptions).map(option => option.value);
           
           const targetingFactors = {
             gender: selectedGender,
@@ -1168,9 +1051,7 @@
             interests: selectedInterests,
             education: selectedEducation,
             occupation: selectedOccupation,
-            relationship: selectedRelationship,
-            devices: selectedDevices,
-            platforms: selectedPlatforms
+            relationship: selectedRelationship
           };
           
           const results = calculateEstimatedResults(budget, targetingFactors);
@@ -1276,14 +1157,14 @@
                     updateCurrencyDropdown(data.currencies);
                     console.log('✅ Supported currencies loaded:', data.currencies);
                 } else {
-                    // Fallback to basic currencies
-                    console.warn('⚠️ Using fallback currencies');
-                    updateCurrencyDropdown(['NGN', 'USD']);
+                    // Fallback to USD only
+                    console.warn('⚠️ Using USD only');
+                    updateCurrencyDropdown(['USD']);
                 }
             } catch (error) {
                 console.error('❌ Error fetching currencies:', error);
-                // Fallback to basic currencies
-                updateCurrencyDropdown(['NGN', 'USD']);
+                // Fallback to USD only
+                updateCurrencyDropdown(['USD']);
             }
         }
 
@@ -1293,10 +1174,7 @@
             
             // Currency display names
             const currencyNames = {
-                'NGN': '🇳🇬 Nigerian Naira (NGN)',
-                'USD': '🇺🇸 US Dollar (USD)', 
-                'GBP': '🇬🇧 British Pound (GBP)',
-                'EUR': '🇪🇺 Euro (EUR)'
+                'USD': '🇺🇸 US Dollar (USD)'
             };
             
             // Only add supported currencies
@@ -1341,8 +1219,6 @@
           const selectedEducation = Array.from(educationTargeting.selectedOptions).map(option => option.value);
           const selectedOccupation = Array.from(occupationTargeting.selectedOptions).map(option => option.value);
           const selectedRelationship = Array.from(relationshipTargeting.selectedOptions).map(option => option.value);
-          const selectedDevices = Array.from(deviceTargeting.selectedOptions).map(option => option.value);
-          const selectedPlatforms = Array.from(platformTargeting.selectedOptions).map(option => option.value);
           
           // 3️⃣ Validate required fields
           if (!title) {
@@ -1353,12 +1229,12 @@
             showNotification('Target URL is required', 'error');
             return;
           }
-          if (isNaN(budget) || budget < 5) {
+          if (isNaN(budget) || budget < 2) {
             showNotification('Invalid daily budget', 'error');
             return;
           }
-          if (isNaN(days) || days < 5) {
-            showNotification('Invalid duration (min 5 days)', 'error');
+          if (isNaN(days) || days < 3) {
+            showNotification('Invalid duration (min 3 days)', 'error');
             return;
           }
 
@@ -1384,8 +1260,6 @@
               education: selectedEducation,
               occupation: selectedOccupation,
               relationship: selectedRelationship,
-              devices: selectedDevices,
-              platforms: selectedPlatforms,
               language: languageTargeting.value
             }
           };
@@ -1535,16 +1409,6 @@
         });
         
         relationshipTargeting.addEventListener('change', () => {
-          updateTargetingSummary();
-          updateEstimatedResults();
-        });
-        
-        deviceTargeting.addEventListener('change', () => {
-          updateTargetingSummary();
-          updateEstimatedResults();
-        });
-        
-        platformTargeting.addEventListener('change', () => {
           updateTargetingSummary();
           updateEstimatedResults();
         });

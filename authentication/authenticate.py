@@ -158,90 +158,90 @@ def calculate_age(birth_date):
 
 
 
-@auth.route("/test-email",  methods=["GET", "POST"])
+@auth.route("/test-email", methods=["GET", "POST"])
 def test_email():
-    """Test email functionality with real SMTP sending"""
+    """Test email functionality with local debug server"""
     if request.method == "POST":
         test_email = request.form.get("test_email", "").strip() or "test@example.com"
         
         try:
-            print("\n" + "=" * 70)
-            print("🧪 REAL EMAIL TEST STARTING")
-            print("=" * 70)
-            print(f"📧 Target: {test_email}")
-            print(f"🔌 SMTP Server: localhost:1025")
-            print("=" * 70)
+            print(f"\n📧 Attempting to send test email to: {test_email}")
+            print(f"🔧 Using: {current_app.config['MAIL_SERVER']}:{current_app.config['MAIL_PORT']}")
             
-            # Create mock user
-            class MockUser:
-                def __init__(self, email):
-                    self.first_name = "Test"
-                    self.last_name = "User" 
-                    self.email = email
-            
-            mock_user = MockUser(test_email)
+            # Create test email
+            msg = Message(
+                subject="🎉 Kimbela Email Test - SUCCESS!",
+                sender=current_app.config["MAIL_DEFAULT_SENDER"],
+                recipients=[test_email],
+                body=f"""Hello!
 
-            # Test 1: Send verification email
-            print("📨 Sending Verification Email...")
-            msg_verify = Message(
-                subject="Kimbela Verification Code - TEST",
-                sender=current_app.config["MAIL_DEFAULT_SENDER"],
-                recipients=[test_email],
+This is a test email from your Kimbela application.
+
+✅ If you can see this in your terminal, your email setup is working!
+✅ The local SMTP server is correctly intercepting and displaying emails.
+
+Timestamp: {datetime.utcnow()}
+
+This email was not actually sent over the internet, but your Flask application
+successfully processed it through the local debug SMTP server.
+
+Next steps:
+1. You can see all email content in your terminal
+2. For production, configure a real SMTP service
+3. Your email templates and logic will work the same way
+
+Cheers,
+Kimbela Team
+"""
             )
             
-            # Use the template
-            try:
-                msg_verify.html = render_template("verify.html", user=mock_user, otp="123456")
-                print("   ✅ Template rendered successfully")
-            except Exception as e:
-                print(f"   ❌ Template failed: {e}")
-                # Fallback
-                msg_verify.body = f"Your verification code is: 123456"
+            # Add HTML version too
+            msg.html = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body {{ font-family: Arial, sans-serif; margin: 20px; }}
+                    .success {{ color: #28a745; font-weight: bold; }}
+                    .info {{ background: #f8f9fa; padding: 15px; border-radius: 5px; }}
+                </style>
+            </head>
+            <body>
+                <h1 class="success">✅ Kimbela Email Test - SUCCESS!</h1>
+                <p>Hello!</p>
+                <p>This is a test email from your Kimbela application.</p>
+                
+                <div class="info">
+                    <p><strong>Local Debug Mode Active</strong></p>
+                    <p>This email was intercepted by your local SMTP debug server.</p>
+                    <p>Timestamp: {datetime.utcnow()}</p>
+                </div>
+                
+                <p>Your email functionality is working correctly for development!</p>
+                
+                <hr>
+                <p><small>Kimbela Team</small></p>
+            </body>
+            </html>
+            """
             
-            mail.send(msg_verify)
-            print("   ✅ Verification email SENT to SMTP server!")
-            print()
+            mail.send(msg)
             
-            # Test 2: Send welcome email
-            print("📨 Sending Welcome Email...")
-            msg_welcome = Message(
-                subject="Welcome to Kimbela! - TEST",
-                sender=current_app.config["MAIL_DEFAULT_SENDER"],
-                recipients=[test_email],
-            )
-            
-            # Use the template
-            try:
-                msg_welcome.html = render_template("verify.html", user=mock_user)
-                print("   ✅ Template rendered successfully")
-            except Exception as e:
-                print(f"   ❌ Template failed: {e}")
-                # Fallback
-                msg_welcome.body = f"Welcome to Kimbela, {mock_user.first_name}!"
-            
-            mail.send(msg_welcome)
-            print("   ✅ Welcome email SENT to SMTP server!")
-            print()
-            
-            print("=" * 70)
-            print("🎉 REAL EMAIL TEST COMPLETED!")
-            print("📩 Check your SMTP debug server terminal for email output")
-            print("=" * 70)
-            
-            flash("✅ Real emails sent successfully! Check the debug server terminal.", "success")
+            success_msg = f"✅ Test email processed successfully! Check your terminal for output."
+            flash(success_msg, "success")
+            flash("📧 Email content displayed in terminal (not actually sent)", "info")
             
         except Exception as e:
-            error_msg = f"❌ Email sending failed: {str(e)}"
+            error_msg = f"❌ Email processing failed: {str(e)}"
             print(f"ERROR: {e}")
             flash(error_msg, "danger")
             
-            # Check if debug server is running
-            flash("💡 Make sure 'python3 modern_smtp_debug.py' is running in another terminal", "info")
+            # Additional troubleshooting help
+            flash("💡 Make sure the local SMTP server is running on port 1025", "info")
         
         return render_template("test_email.html")
     
     return render_template("test_email.html")
-
 
 
 

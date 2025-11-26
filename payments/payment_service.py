@@ -174,52 +174,99 @@ class PaymentService:
             }
 
     def handle_successful_payment(self, transaction_id, payment_data=None):
-        """Handle successful payment - FIXED"""
+        """Handle successful payment - COMPLETELY FIXED VERSION"""
         try:
+            print(f"🔄 [HANDLE PAYMENT] Starting for transaction: {transaction_id}")
+            
+            # Find transaction
             transaction = PaymentTransaction.query.get(transaction_id)
             if not transaction:
-                current_app.logger.error(f"Transaction not found: {transaction_id}")
+                print(f"🔴 [HANDLE PAYMENT] Transaction not found: {transaction_id}")
                 return False
             
-            current_app.logger.info(f"Handling successful payment for transaction: {transaction_id}")
+            print(f"✅ [HANDLE PAYMENT] Found transaction: {transaction.id}")
+            print(f"✅ [HANDLE PAYMENT] Campaign ID: {transaction.campaign_id}")
             
-            # Update transaction status
+            # Find campaign
+            campaign = AdCampaign.query.get(transaction.campaign_id)
+            if not campaign:
+                print(f"🔴 [HANDLE PAYMENT] Campaign not found: {transaction.campaign_id}")
+                return False
+            
+            print(f"✅ [HANDLE PAYMENT] Found campaign: {campaign.id}")
+            
+            # Log current state before update
+            print(f"📊 [BEFORE UPDATE] Campaign state:")
+            print(f"   - status: {campaign.status}")
+            print(f"   - payment_status: {campaign.payment_status}")
+            print(f"   - start_date: {campaign.start_date}")
+            print(f"   - end_date: {campaign.end_date}")
+            print(f"   - payment_gateway: {campaign.payment_gateway}")
+            print(f"   - payment_id: {campaign.payment_id}")
+            
+            # ✅ UPDATE TRANSACTION FIELDS
             transaction.status = 'completed'
             transaction.gateway_status = 'successful'
-            transaction.gateway_metadata = json.dumps(payment_data) if payment_data else transaction.gateway_metadata
+            if payment_data:
+                transaction.gateway_metadata = json.dumps(payment_data)
             transaction.updated_at = datetime.utcnow()
             
-            # Update campaign status
-            campaign = AdCampaign.query.get(transaction.campaign_id)
-            if campaign:
-                campaign.payment_status = 'paid'
-                campaign.status = 'active'
-                campaign.payment_gateway = transaction.gateway
-                campaign.payment_id = transaction.gateway_payment_id
-                campaign.start_date = datetime.utcnow()
-                
-                # ✅ FIXED: timedelta is now imported
-                # Calculate end date based on duration_days
-                duration_days = getattr(campaign, 'duration_days', 30)  # Default to 30 days if not set
-                campaign.end_date = datetime.utcnow() + timedelta(days=duration_days)
-                campaign.updated_at = datetime.utcnow()
-                
-                current_app.logger.info(f"✅ Updated campaign {campaign.id} to active for {duration_days} days")
-                
-                # Send success email using our internal method
-                self.send_payment_success_email(transaction.user_id, campaign, transaction)
-            else:
-                current_app.logger.error(f"❌ Campaign not found for transaction: {transaction_id}")
+            print(f"✅ [HANDLE PAYMENT] Updated transaction fields")
             
+            # ✅ UPDATE ALL CAMPAIGN FIELDS
+            campaign.payment_status = 'paid'
+            campaign.status = 'active'  # This changes from 'pending' to 'active'
+            campaign.payment_gateway = 'flutterwave'  # Explicitly set gateway
+            campaign.payment_id = transaction.gateway_payment_id  # Use tx_ref as payment_id
+            campaign.start_date = datetime.utcnow()
+            
+            # Calculate end date based on duration_days
+            duration_days = getattr(campaign, 'duration_days', 30)
+            campaign.end_date = datetime.utcnow() + timedelta(days=duration_days)
+            campaign.updated_at = datetime.utcnow()
+            
+            print(f"✅ [HANDLE PAYMENT] Updated campaign fields:")
+            print(f"   - payment_status: {campaign.payment_status}")
+            print(f"   - status: {campaign.status}")
+            print(f"   - payment_gateway: {campaign.payment_gateway}")
+            print(f"   - payment_id: {campaign.payment_id}")
+            print(f"   - start_date: {campaign.start_date}")
+            print(f"   - end_date: {campaign.end_date}")
+            print(f"   - duration_days: {duration_days}")
+            
+            # Commit changes to database
             db.session.commit()
-            current_app.logger.info(f"✅ Payment handling completed successfully for transaction: {transaction_id}")
+            print(f"✅ [HANDLE PAYMENT] Database changes committed")
+            
+            # Refresh and verify the changes
+            db.session.refresh(transaction)
+            db.session.refresh(campaign)
+            
+            print(f"✅ [AFTER COMMIT] Verification:")
+            print(f"   - Campaign status: {campaign.status}")
+            print(f"   - Campaign payment_status: {campaign.payment_status}")
+            print(f"   - Campaign start_date: {campaign.start_date}")
+            print(f"   - Campaign end_date: {campaign.end_date}")
+            print(f"   - Transaction status: {transaction.status}")
+            
+            # Send success email
+            try:
+                self.send_payment_success_email(transaction.user_id, campaign, transaction)
+                print(f"✅ [HANDLE PAYMENT] Success email sent")
+            except Exception as email_error:
+                print(f"⚠️ [HANDLE PAYMENT] Email sending failed: {email_error}")
+            
+            print(f"✅ [HANDLE PAYMENT] Payment handling completed successfully")
             return True
             
         except Exception as e:
-            current_app.logger.error(f"❌ Payment handling failed: {str(e)}", exc_info=True)
+            print(f"🔴 [HANDLE PAYMENT] Error: {str(e)}")
+            import traceback
+            print(f"🔴 [HANDLE PAYMENT] Traceback: {traceback.format_exc()}")
             db.session.rollback()
             return False
-
+    
+    
     def handle_failed_payment(self, transaction_id, payment_data=None):
         """Handle failed payment"""
         try:
