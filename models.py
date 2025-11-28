@@ -54,15 +54,16 @@ class User(db.Model, UserMixin):
     updated_at = db.Column(
         db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
     )
-    # REMOVED DUPLICATE: email_token = db.Column(db.String(255))
-    # REMOVED DUPLICATE: email_token_expires = db.Column(db.DateTime)
+   
     educational_level = db.Column(db.String(50), nullable=True)
     occupation = db.Column(db.String(100), nullable=True)
     ethnicity = db.Column(db.String(50), nullable=True)
     religion = db.Column(db.String(50), nullable=True)
     is_premium = db.Column(db.Boolean, default=False)
-    campaigns = db.relationship("AdCampaign", back_populates="user")
-    transactions = db.relationship("PaymentTransaction", backref="transaction_user", lazy=True)
+    
+    # FIXED: Payment transactions relationship
+    campaigns = db.relationship("AdCampaign", back_populates="user", lazy="dynamic")
+    
     profile_pic = db.Column(
         db.String(500),
         default="https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg",
@@ -86,6 +87,36 @@ class User(db.Model, UserMixin):
     password_reset_token = db.Column(db.String(255), nullable=True, unique=True)
     password_reset_expires = db.Column(db.DateTime, nullable=True)
     
+    # Enhanced blocking system using a proper association table
+    _blocked_users = db.Table(
+        "user_blocks",
+        db.Column("blocker_id", db.Integer, db.ForeignKey("users.id"), primary_key=True),
+        db.Column("blocked_id", db.Integer, db.ForeignKey("users.id"), primary_key=True),
+        db.Column("created_at", db.DateTime, default=datetime.utcnow),
+        db.UniqueConstraint("blocker_id", "blocked_id", name="uq_user_block"),
+    )
+
+    # Relationship for blocked users
+    blocked_users = db.relationship(
+        "User",
+        secondary=_blocked_users,
+        primaryjoin=(_blocked_users.c.blocker_id == id),
+        secondaryjoin=(_blocked_users.c.blocked_id == id),
+        backref=db.backref("blocked_by", lazy="dynamic"),
+        lazy="dynamic",
+    )
+
+    # Friends relationship
+    friends = db.relationship(
+        "User",
+        secondary=friendship,
+        primaryjoin=(friendship.c.user_id == id),
+        secondaryjoin=(friendship.c.friend_id == id),
+        backref=db.backref("friend_of", lazy="dynamic"),
+        lazy="dynamic",
+    )
+
+    # All other User methods remain the same...
     def generate_password_reset_token(self):
         """Generate a password reset token that expires in 1 hour"""
         self.password_reset_token = secrets.token_urlsafe(32)
@@ -117,7 +148,6 @@ class User(db.Model, UserMixin):
             post_id=post_id
         ).first() is not None
 
-    # Add these methods for admin functionality
     def has_admin_permission(self, permission):
         """Check if admin has specific permission"""
         if self.is_super_admin:
@@ -129,25 +159,6 @@ class User(db.Model, UserMixin):
             return permission in permissions
         except:
             return False
-
-    # Enhanced blocking system using a proper association table
-    _blocked_users = db.Table(
-        "user_blocks",
-        db.Column("blocker_id", db.Integer, db.ForeignKey("users.id"), primary_key=True),
-        db.Column("blocked_id", db.Integer, db.ForeignKey("users.id"), primary_key=True),
-        db.Column("created_at", db.DateTime, default=datetime.utcnow),
-        db.UniqueConstraint("blocker_id", "blocked_id", name="uq_user_block"),
-    )
-
-    # Relationship for blocked users
-    blocked_users = db.relationship(
-        "User",
-        secondary=_blocked_users,
-        primaryjoin=(_blocked_users.c.blocker_id == id),
-        secondaryjoin=(_blocked_users.c.blocked_id == id),
-        backref=db.backref("blocked_by", lazy="dynamic"),
-        lazy="dynamic",
-    )
 
     def generate_otp(self):
         """Generate a 6-digit numeric OTP"""
@@ -241,16 +252,6 @@ class User(db.Model, UserMixin):
     def can_interact_with(self, other_user):
         """Check if users can interact (neither has blocked the other)"""
         return not (self.is_blocking(other_user) or other_user.is_blocking(self))
-
-    # Relationships
-    friends = db.relationship(
-        "User",
-        secondary=friendship,
-        primaryjoin=(friendship.c.user_id == id),
-        secondaryjoin=(friendship.c.friend_id == id),
-        backref=db.backref("friend_of", lazy="dynamic"),
-        lazy="dynamic",
-    )
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -742,10 +743,9 @@ class AdCampaign(db.Model):
     payment_status = db.Column(db.String(20), default="pending")
     payment_gateway = db.Column(db.String(20))
     payment_id = db.Column(db.String(255))
-    currency = db.Column(db.String(3), default="USD")  # ✅ ADDED currency field
+    currency = db.Column(db.String(3), default="USD")
     
-    # ✅ ADDED ALL TARGETING FIELDS
-    # Demographic targeting
+    # Targeting fields
     target_gender = db.Column(db.Text)  # JSON string of genders
     target_age_min = db.Column(db.Integer, default=18)
     target_age_max = db.Column(db.Integer, default=65)
@@ -767,13 +767,8 @@ class AdCampaign(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    user = db.relationship("User", back_populates="campaigns")
-    transactions = db.relationship(
-        "PaymentTransaction",
-        back_populates="campaign",
-        lazy=True,
-        cascade="all, delete"
-    )
+    # FIXED: Relationship without conflicts
+    user = db.relationship("User", foreign_keys=[user_id], back_populates="campaigns")
 
     def get_targeting_data(self):
         """Return targeting data as a dictionary"""
@@ -791,40 +786,41 @@ class AdCampaign(db.Model):
             'platforms': json.loads(self.target_platforms) if self.target_platforms else []
         }
     
-    
+
+
+
 
 class PaymentTransaction(db.Model):
-    __tablename__ = "payment_transactions"
+    __tablename__ = 'payment_transactions'
     
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    campaign_id = db.Column(db.Integer, db.ForeignKey("ad_campaigns.id"), nullable=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     
-    # Payment details
-    amount = db.Column(db.Float, nullable=False)
-    currency = db.Column(db.String(3), default="USD")
-    gateway = db.Column(db.String(20), nullable=False)
-    gateway_payment_id = db.Column(db.String(255))
+    # Support both ad campaigns and matchmaking requests
+    campaign_id = db.Column(db.Integer, db.ForeignKey('ad_campaigns.id'), nullable=True)
+    matchmaking_request_id = db.Column(db.Integer, db.ForeignKey('matchmaking_requests.id'), nullable=True)
+    
+    amount = db.Column(db.Numeric(10, 2), nullable=False)
+    currency = db.Column(db.String(3), default='USD')
+    gateway = db.Column(db.String(50))  # 'flutterwave', 'paypal', etc.
+    gateway_reference = db.Column(db.String(100), unique=True)
+    gateway_payment_id = db.Column(db.String(100))
     gateway_status = db.Column(db.String(50))
-    
-    # Status
-    status = db.Column(db.String(20), default="pending")
-    description = db.Column(db.Text)
-    
-    # Metadata
     gateway_metadata = db.Column(db.Text)
+    
+    # Make sure this field exists
+    transaction_type = db.Column(db.String(20), default='ad_campaign')  # 'ad_campaign' or 'matchmaking'
+    
+    status = db.Column(db.String(20), default='pending')  # 'pending', 'completed', 'failed'
+    description = db.Column(db.Text)
     
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    user = db.relationship("User",  back_populates="transactions", foreign_keys=[user_id], overlaps="transaction_user")
-    campaign = db.relationship("AdCampaign", back_populates="transactions", foreign_keys=[campaign_id])
-    
-    
-    
-    
-    
-    
+    # FIXED: Use string references
+    user = db.relationship('User', foreign_keys=[user_id], backref=db.backref('payment_transactions', lazy=True))
+    campaign = db.relationship('AdCampaign', foreign_keys=[campaign_id], backref=db.backref('payments', lazy=True))
+    matchmaking_request = db.relationship('MatchmakingRequest', foreign_keys=[matchmaking_request_id], backref=db.backref('payment_transactions', lazy=True))
 
 class AdPackage(db.Model):
     __tablename__ = "ad_packages"
@@ -862,7 +858,11 @@ class MatchmakingPackage(db.Model):
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    requests = db.relationship("MatchmakingRequest", backref="package", lazy=True)
+    # FIXED: Use string reference for forward declaration
+    matchmaking_requests = db.relationship("MatchmakingRequest", back_populates="package", lazy=True)
+    
+    
+
 
 class MatchmakingRequest(db.Model):
     __tablename__ = "matchmaking_requests"
@@ -877,25 +877,24 @@ class MatchmakingRequest(db.Model):
     partner_gender = db.Column(db.String(20))
     partner_ethnicity = db.Column(db.String(50))
     partner_religion = db.Column(db.String(50))
-    partner_interests = db.Column(db.Text)  # JSON string of interests
-    target_countries = db.Column(db.Text)   # JSON string of countries
+    partner_interests = db.Column(db.Text)
+    target_countries = db.Column(db.Text)
     
     # About the user
     about_you = db.Column(db.Text, nullable=False)
     ideal_partner = db.Column(db.Text, nullable=False)
-    your_interests = db.Column(db.Text)     # JSON string of interests
-    lifestyles = db.Column(db.Text)         # JSON string of lifestyles
+    your_interests = db.Column(db.Text)
+    lifestyles = db.Column(db.Text)
     image = db.Column(db.Text)
     
     # Request details
-    status = db.Column(db.String(20), default="active")
+    status = db.Column(db.String(20), default="pending")
     start_date = db.Column(db.DateTime, default=datetime.utcnow)
     end_date = db.Column(db.DateTime)
     
     # Payment
-    payment_status = db.Column(db.String(20), default="completed")
+    payment_status = db.Column(db.String(20), default="pending")
     payment_gateway = db.Column(db.String(20))
-    payment_id = db.Column(db.String(255))
     
     # Tracking
     views = db.Column(db.Integer, default=0)
@@ -905,35 +904,57 @@ class MatchmakingRequest(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
+    # FIXED: Use string references
     user = db.relationship("User", foreign_keys=[user_id])
-    
+    package = db.relationship("MatchmakingPackage", foreign_keys=[package_id], back_populates="matchmaking_requests")
+
+    # Add property to get payment transaction
+    @property
+    def payment_transaction(self):
+        """Get the payment transaction for this matchmaking request"""
+        return PaymentTransaction.query.filter_by(
+            matchmaking_request_id=self.id
+        ).first()
+
     def get_partner_interests(self):
-        """Parse partner interests from JSON string"""
         if self.partner_interests:
-            return json.loads(self.partner_interests)
+            try:
+                return json.loads(self.partner_interests)
+            except:
+                return []
         return []
     
     def get_target_countries(self):
-        """Parse target countries from JSON string"""
         if self.target_countries:
-            return json.loads(self.target_countries)
+            try:
+                return json.loads(self.target_countries)
+            except:
+                return []
         return []
     
     def get_your_interests(self):
-        """Parse user interests from JSON string"""
         if self.your_interests:
-            return json.loads(self.your_interests)
+            try:
+                return json.loads(self.your_interests)
+            except:
+                return []
         return []
     
     def get_lifestyles(self):
-        """Parse lifestyles from JSON string"""
         if self.lifestyles:
-            return json.loads(self.lifestyles)
+            try:
+                return json.loads(self.lifestyles)
+            except:
+                return []
         return []
     
     def is_active(self):
-        """Check if the request is still active"""
         return self.status == "active" and self.end_date > datetime.utcnow()
+    
+    
+    
+    
+    
 
 class MatchmakingLike(db.Model):
     __tablename__ = "matchmaking_likes"
@@ -958,3 +979,62 @@ class MatchmakingView(db.Model):
     
     user = db.relationship("User", foreign_keys=[user_id])
     request = db.relationship("MatchmakingRequest", foreign_keys=[request_id])
+    
+    
+    
+class MatchmakingPayments(db.Model):
+    __tablename__ = 'matchmaking_payments'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    matchmaking_request_id = db.Column(db.Integer, db.ForeignKey('matchmaking_requests.id'), nullable=False)
+    package_id = db.Column(db.Integer, db.ForeignKey('matchmaking_packages.id'), nullable=False)
+    
+    # Payment details
+    amount = db.Column(db.Float, nullable=False)
+    currency = db.Column(db.String(10), default='USD')
+    gateway = db.Column(db.String(50), default='flutterwave')  # 'flutterwave', 'paypal', etc.
+    gateway_reference = db.Column(db.String(100), unique=True)  # tx_ref for Flutterwave
+    gateway_payment_id = db.Column(db.String(100))  # Flutterwave transaction ID
+    gateway_status = db.Column(db.String(50))  # Status from payment gateway
+    
+    # Payment status
+    status = db.Column(db.String(20), default='pending')  # 'pending', 'completed', 'failed', 'cancelled'
+    payment_status = db.Column(db.String(20), default='pending')  # 'pending', 'paid', 'failed'
+    
+    # Metadata
+    gateway_metadata = db.Column(db.Text)  # JSON response from payment gateway
+    description = db.Column(db.Text)
+    
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    paid_at = db.Column(db.DateTime)  # When payment was completed
+    
+    # Relationships
+    user = db.relationship('User', backref=db.backref('matchmaking_payments', lazy=True))
+    matchmaking_request = db.relationship('MatchmakingRequest', backref=db.backref('payments', lazy=True))
+    package = db.relationship('MatchmakingPackage', backref=db.backref('payments', lazy=True))
+    
+    def __repr__(self):
+        return f'<MatchmakingPayment {self.id} - {self.status} - ${self.amount}>'
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'matchmaking_request_id': self.matchmaking_request_id,
+            'package_id': self.package_id,
+            'amount': self.amount,
+            'currency': self.currency,
+            'gateway': self.gateway,
+            'gateway_reference': self.gateway_reference,
+            'gateway_payment_id': self.gateway_payment_id,
+            'gateway_status': self.gateway_status,
+            'status': self.status,
+            'payment_status': self.payment_status,
+            'description': self.description,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+            'paid_at': self.paid_at.isoformat() if self.paid_at else None
+        }

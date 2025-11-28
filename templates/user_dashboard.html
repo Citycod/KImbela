@@ -952,7 +952,7 @@
 
         <!-- Match Making Request Form -->
         <a
-          href="{{ url_for('user.requests') }}"
+          href="{{ url_for('match.requests') }}"
           class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-pink-50 hover:to-rose-50 transition-all duration-300 mb-2 group border border-transparent hover:border-pink-200 shadow-sm hover:shadow-md"
         >
           <i
@@ -970,7 +970,7 @@
 
         <!-- View Match Requests -->
         <a
-          href="{{ url_for('user.view_requests') }}"
+          href="{{ url_for('match.view_requests') }}"
           class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 transition-all duration-300 mb-2 group border border-transparent hover:border-green-200 shadow-sm hover:shadow-md"
         >
           <i
@@ -1127,13 +1127,13 @@
 
 
         <!-- Match Making Request Form -->
-        <a href="{{ url_for('user.requests') }}" class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-pink-50 hover:to-rose-50 transition-all duration-300 mb-2 group">
+        <a href="{{ url_for('match.requests') }}" class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-pink-50 hover:to-rose-50 transition-all duration-300 mb-2 group">
             <i class="bi bi-heart-fill mr-3 text-lg" style="color: #ec4899"></i>
             <span class="font-medium">Create Match Request</span>
         </a>
 
         <!-- View Match Requests -->
-        <a href="{{ url_for('user.view_requests') }}" class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 transition-all duration-300 mb-2 group">
+        <a href="{{ url_for('match.view_requests') }}" class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 transition-all duration-300 mb-2 group">
             <i class="bi bi-binoculars-fill mr-3 text-lg" style="color: #10b981"></i>
             <span class="font-medium">Browse Match Requests</span>
         </a>
