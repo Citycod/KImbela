@@ -3,8 +3,7 @@ from flask import (
 )
 from flask_login import login_required, current_user
 from extensions import db
-from models import User, AdCampaign, AdPackage, PaymentTransaction
-from .payment_service import PaymentService
+from models import User, AdCampaign, AdPackage, PaymentTransaction, MatchmakingPayments
 import cloudinary.uploader
 import os, requests
 from email_service import EmailService 
@@ -12,6 +11,8 @@ import json
 from datetime import datetime, timedelta
 import time
 import time
+
+
 payments = Blueprint("payments", __name__)
 
 
@@ -68,6 +69,127 @@ def upload_image():
         current_app.logger.error(f"❌ Image upload failed: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
     
+
+
+
+@payments.route('/payment-callback', methods=['GET', 'POST'])
+def payment_callback():
+    """Handle payment callback from Flutterwave and redirect to appropriate pages"""
+    try:
+        from .payment_service import PaymentService, AdCampaignPaymentService, MatchmakingPaymentService, BasePaymentService
+        from flask import redirect, url_for, flash
+        print("🟡 [PAYMENT CALLBACK] Received callback")
+        
+        # Get transaction reference AND transaction ID from request
+        tx_ref = request.args.get('tx_ref') or request.json.get('tx_ref')
+        status = request.args.get('status') or request.json.get('status')
+        transaction_id = request.args.get('transaction_id')  # Flutterwave's transaction ID
+        
+        print(f"🟡 [PAYMENT CALLBACK] tx_ref: {tx_ref}, status: {status}, transaction_id: {transaction_id}")
+        
+        if not tx_ref:
+            flash('Missing transaction reference', 'error')
+            return redirect(url_for('payments.payment_failed'))
+        
+        # Initialize payment services
+        base_service = BasePaymentService()
+        payment_service = PaymentService()
+        ad_service = AdCampaignPaymentService()
+        matchmaking_service = MatchmakingPaymentService()
+        
+        # Determine transaction type and handle accordingly
+        if tx_ref.startswith('KIMBELA_AD_'):
+            # Ad campaign payment
+            transaction = PaymentTransaction.query.filter_by(gateway_payment_id=tx_ref).first()
+            if not transaction:
+                print(f"🔴 [PAYMENT CALLBACK] Ad transaction not found: {tx_ref}")
+                flash('Transaction not found', 'error')
+                return redirect(url_for('payments.payment_failed'))
+            
+            if status == 'successful':
+                # Use transaction_id (Flutterwave's ID) for verification
+                if not transaction_id:
+                    print(f"🔴 [PAYMENT CALLBACK] Missing transaction_id for verification")
+                    flash('Missing transaction ID', 'error')
+                    return redirect(url_for('payments.payment_failed'))
+                
+                verification = base_service.verify_flutterwave_payment(transaction_id)
+                if verification['success']:
+                    # Update transaction and campaign
+                    success = ad_service.handle_ad_payment_success(transaction.id, verification['data'])
+                    if success:
+                        print(f"✅ [PAYMENT CALLBACK] Ad payment processed successfully")
+                        flash('Payment completed successfully! Your campaign is now active.', 'success')
+                        return redirect(url_for('payments.payment_success', transaction_id=transaction.id))
+                    else:
+                        print(f"🔴 [PAYMENT CALLBACK] Failed to process ad payment")
+                        flash('Failed to process payment. Please contact support.', 'error')
+                        return redirect(url_for('payments.payment_failed'))
+                else:
+                    print(f"🔴 [PAYMENT CALLBACK] Payment verification failed: {verification.get('error')}")
+                    flash('Payment verification failed. Please try again.', 'error')
+                    return redirect(url_for('payments.payment_failed'))
+            else:
+                # Payment failed
+                ad_service.handle_ad_payment_failure(transaction.id, {'status': status})
+                flash('Payment failed. Please try again.', 'error')
+                return redirect(url_for('payments.payment_failed'))
+                
+        elif tx_ref.startswith('KIMBELA_MATCH_'):
+            # Matchmaking payment
+            matchmaking_payment = MatchmakingPayments.query.filter_by(gateway_reference=tx_ref).first()
+            if not matchmaking_payment:
+                print(f"🔴 [PAYMENT CALLBACK] Matchmaking payment not found: {tx_ref}")
+                flash('Payment not found', 'error')
+                return redirect(url_for('payments.payment_failed'))
+            
+            if status == 'successful':
+                # Use transaction_id for verification
+                if not transaction_id:
+                    print(f"🔴 [PAYMENT CALLBACK] Missing transaction_id for matchmaking verification")
+                    flash('Missing transaction ID', 'error')
+                    return redirect(url_for('payments.payment_failed'))
+                
+                verification = base_service.verify_flutterwave_payment(transaction_id)
+                if verification['success']:
+                    # Update matchmaking payment and request
+                    success = matchmaking_service.handle_matchmaking_payment_success(
+                        matchmaking_payment, 
+                        verification['data']
+                    )
+                    if success:
+                        print(f"✅ [PAYMENT CALLBACK] Matchmaking payment processed successfully")
+                        flash('Payment completed successfully! Your matchmaking request is now active.', 'success')
+                        return redirect(url_for('payments.payment_success', transaction_id=matchmaking_payment.id))
+                    else:
+                        print(f"🔴 [PAYMENT CALLBACK] Failed to process matchmaking payment")
+                        flash('Failed to process payment. Please contact support.', 'error')
+                        return redirect(url_for('payments.payment_failed'))
+                else:
+                    print(f"🔴 [PAYMENT CALLBACK] Payment verification failed: {verification.get('error')}")
+                    flash('Payment verification failed. Please try again.', 'error')
+                    return redirect(url_for('payments.payment_failed'))
+            else:
+                # Payment failed
+                matchmaking_service.handle_matchmaking_payment_failure(
+                    matchmaking_payment, 
+                    {'status': status}
+                )
+                flash('Payment failed. Please try again.', 'error')
+                return redirect(url_for('payments.payment_failed'))
+        else:
+            print(f"🔴 [PAYMENT CALLBACK] Unknown transaction type: {tx_ref}")
+            flash('Unknown transaction type', 'error')
+            return redirect(url_for('payments.payment_failed'))
+            
+    except Exception as e:
+        print(f"🔴 [PAYMENT CALLBACK] Exception: {str(e)}")
+        import traceback
+        print(f"🔴 [PAYMENT CALLBACK] Traceback: {traceback.format_exc()}")
+        flash('An error occurred during payment processing.', 'error')
+        return redirect(url_for('payments.payment_failed'))
+
+
     
 
 
@@ -96,7 +218,7 @@ def flutterwave_callbackk():
     except Exception as e:
         print(f"🔴 [FLUTTERWAVE_CALLBACK] Exception: {str(e)}")
         flash('An error occurred during payment processing.', 'error')
-        return redirect(url_for('user_dashboard'))
+        return redirect(url_for('user.user_dashboard'))
 
  
  
@@ -110,6 +232,8 @@ def flutterwave_callbackk():
 def flutterwave_callback():
     """Flutterwave payment callback - FIXED VERSION"""
     try:
+        from .payment_service import PaymentService
+        
         status = request.args.get('status')
         tx_ref = request.args.get('tx_ref')
         transaction_id = request.args.get('transaction_id')
@@ -124,7 +248,7 @@ def flutterwave_callback():
         if not transaction:
             print(f"🔴 [CALLBACK] No transaction found for tx_ref: {tx_ref}")
             flash('Transaction not found', 'error')
-            return redirect(url_for('user_dashboard'))
+            return redirect(url_for('user.user_dashboard'))
         
         print(f"✅ [CALLBACK] Found transaction: {transaction.id}")
         
@@ -174,11 +298,13 @@ def flutterwave_callback():
 def payment_success(transaction_id):
     """Handle successful payment - REDIRECT TO DASHBOARD"""
     try:
+        from .payment_service import PaymentService
+        
         transaction = PaymentTransaction.query.get(transaction_id)
         
         if not transaction or transaction.user_id != current_user.id:
             flash('Transaction not found', 'error')
-            return redirect(url_for('user_dashboard'))
+            return redirect(url_for('user.user_dashboard'))
         
         # Verify payment is actually completed
         if transaction.status != 'completed':
@@ -189,7 +315,7 @@ def payment_success(transaction_id):
                 payment_service.handle_successful_payment(transaction.id, verification_result['data'])
             else:
                 flash('Payment verification failed', 'error')
-                return redirect(url_for('user_dashboard'))
+                return redirect(url_for('user.user_dashboard'))
         
         campaign = AdCampaign.query.get(transaction.campaign_id) if transaction.campaign_id else None
         
@@ -201,12 +327,12 @@ def payment_success(transaction_id):
             print(f"   - end_date: {campaign.end_date}")
         
         flash('Payment completed successfully! Your campaign is now active.', 'success')
-        return redirect(url_for('user_dashboard'))
+        return redirect(url_for('user.user_dashboard'))
     
     except Exception as e:
         print(f"🔴 [PAYMENT SUCCESS] Error: {str(e)}")
         flash('An error occurred while processing your payment.', 'error')
-        return redirect(url_for('user_dashboard'))
+        return redirect(url_for('user.user_dashboard'))
     
     
     
@@ -217,7 +343,7 @@ def payment_success(transaction_id):
 def payment_failed():
     """Handle failed payment"""
     current_app.logger.info(f"⚠️ User {current_user.id} viewed payment failed page")
-    return render_template('failed.html')
+    return render_template('payment_failed.html')
 
 
 
@@ -295,6 +421,10 @@ def payment_failed():
 def update_payment_status():
     """Update payment status (for manual updates)"""
     try:
+        from .payment_service import PaymentService
+        
+        if not current_user.is_admin:
+            return jsonify({'success': False, 'error': 'Access denied'})
         data = request.get_json()
         transaction_id = data.get('transaction_id')
         status = data.get('status')
@@ -517,6 +647,8 @@ def create_campaign():
 def initiate_payment():
     """Fixed payment initiation route"""
     try:
+        from .payment_service import PaymentService
+        
         data = request.get_json()
         print(f"🟡 [INITIATE PAYMENT] Request content type: {request.content_type}")
         print(f"🟡 [INITIATE PAYMENT] Raw data: {request.data}")
@@ -594,6 +726,8 @@ def initiate_payment():
 @payments.route('/debug-payment-service', methods=['GET'])
 @login_required
 def debug_payment_service():
+    from .payment_service import PaymentService
+    
     """Debug PaymentService configuration"""
     payment_service = PaymentService()
     
@@ -625,6 +759,8 @@ def debug_payment_service():
 @payments.route('/test-payment-flow/<int:campaign_id>', methods=['GET'])
 @login_required
 def test_payment_flow(campaign_id):
+    from .payment_service import PaymentService
+    
     """Test payment flow for a specific campaign"""
     try:
         campaign = AdCampaign.query.get(campaign_id)
@@ -665,6 +801,7 @@ print('LEAVING PAYMENTSAASSSSSSS')
 @payments.route('/test-flutterwave-direct', methods=['GET'])
 @login_required
 def test_flutterwave_direct():
+    from .payment_service import PaymentService
     """Test Flutterwave API directly"""
     try:
         payment_service = PaymentService()
@@ -729,8 +866,10 @@ def test_flutterwave_direct():
 @payments.route('/diagnose-payment', methods=['GET'])
 @login_required
 def diagnose_payment():
+    
     """Diagnose payment configuration"""
     try:
+        from .payment_service import PaymentService
         payment_service = PaymentService()
         
         diagnostic_info = {
@@ -764,6 +903,7 @@ def diagnose_payment():
 def verify_payment():
     """Verify payment status"""
     try:
+        from .payment_service import PaymentService
         data = request.get_json()
         reference = data.get('reference')
         

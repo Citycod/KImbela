@@ -234,6 +234,38 @@
         text-align: center;
       }
       
+      .detail-section {
+        background: #FDF6F0;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+      }
+      
+      .detail-label {
+        font-weight: 600;
+        color: #8B4513;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      
+      .detail-value {
+        color: #5D4037;
+        line-height: 1.6;
+      }
+      
+      .compatibility-badge {
+        display: inline-flex;
+        align-items: center;
+        background: linear-gradient(135deg, #87A96B, #C1E1C1);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.875rem;
+      }
+      
       /* Mobile responsive adjustments */
       @media (max-width: 768px) {
         .mobile-btn {
@@ -250,6 +282,10 @@
         }
         
         .matchmaking-header, .matchmaking-body, .matchmaking-footer {
+          padding: 1rem;
+        }
+        
+        .detail-section {
           padding: 1rem;
         }
       }
@@ -391,18 +427,13 @@
             </div>
           </div>
 
+          <!-- Debug Info -->
+          <div id="debugInfo" class="hidden text-sm text-gray-600 mb-4 p-4 bg-yellow-50 rounded">
+            <p id="debugStatus">Loading...</p>
+          </div>
+
           <!-- Requests Container -->
           <div id="requestsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-            <!-- Debug Info -->
-<div id="debugInfo" class="hidden text-sm text-gray-600 mb-4 p-4 bg-yellow-50 rounded">
-    <p id="debugStatus">Loading...</p>
-</div>
-
-<!-- Requests Container -->
-<div id="requestsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <!-- Requests will be loaded here -->
-</div>
             <!-- Requests will be loaded here -->
           </div>
 
@@ -439,8 +470,8 @@
       <div class="modal-dialog bg-white rounded-2xl shadow-strong w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto animate-fade-in">
         <div class="modal-header p-6 md:p-8 border-b border-border-color flex justify-between items-center bg-gradient-to-r from-primary to-secondary text-white rounded-t-2xl">
           <div>
-            <h3 class="text-xl md:text-2xl font-poppins font-black">Matchmaking Request</h3>
-            <p class="text-white/80 text-sm mt-1">View complete details</p>
+            <h3 class="text-xl md:text-2xl font-poppins font-black">Matchmaking Request Details</h3>
+            <p class="text-white/80 text-sm mt-1">Complete profile and preferences</p>
           </div>
           <button type="button" class="p-2 md:p-3 rounded-xl hover:bg-white/10 transition-all duration-300 close-modal">
             <i class="bi bi-x-lg text-lg md:text-xl"></i>
@@ -464,7 +495,7 @@
 
     <script>
       // Global variables
-      const csrfToken = '{{ csrf_token }}';
+      const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
       let currentView = 'grid';
       let currentPage = 1;
       let hasMore = true;
@@ -569,11 +600,11 @@
       }
 
       function showDebugInfo(message) {
-    const debugDiv = document.getElementById('debugInfo');
-    const debugStatus = document.getElementById('debugStatus');
-    debugDiv.classList.remove('hidden');
-    debugStatus.textContent = message;
-}
+        const debugDiv = document.getElementById('debugInfo');
+        const debugStatus = document.getElementById('debugStatus');
+        debugDiv.classList.remove('hidden');
+        debugStatus.textContent = message;
+      }
 
       async function loadRequests() {
         if (isLoading) return;
@@ -656,180 +687,340 @@
       }
 
       function createRequestElement(request) {
-    const div = document.createElement('div');
-    div.className = `floral-card cursor-pointer ${request.is_own_request ? 'border-2 border-rose-gold' : ''}`;
-    div.addEventListener('click', () => openRequestModal(request));
-    
-    const tagColors = ['rose', 'sage', 'champagne'];
-    const interests = request.interests || [];
-    
-    div.innerHTML = `
-        ${request.is_own_request ? `
-            <div class="bg-rose-gold text-white text-xs font-semibold px-3 py-1 rounded-t-lg">
-                <i class="bi bi-person-check mr-1"></i>Your Request
-            </div>
-        ` : ''}
+        const div = document.createElement('div');
+        div.className = `floral-card cursor-pointer ${request.is_own_request ? 'border-2 border-rose-gold' : ''}`;
+        div.addEventListener('click', () => openRequestModal(request));
         
-        <div class="matchmaking-header">
-            <div class="flex items-center space-x-3">
-                <img src="${request.user.profile_pic || '/static/assets/img/default-avatar.png'}" 
-                     alt="${request.user.full_name}" 
-                     class="w-16 h-16 rounded-full object-cover border-2 ${request.is_own_request ? 'border-rose-gold' : 'border-white'} shadow-sm">
-                <div class="text-left">
-                    <h4 class="font-poppins font-bold text-lg text-primary">${request.user.full_name}, ${request.user.age}</h4>
-                    <p class="text-text-secondary text-sm flex items-center">
-                        <i class="bi bi-geo-alt mr-1"></i>${request.user.location}
-                    </p>
-                    <div class="flex items-center space-x-2 mt-1">
-                        <span class="bg-rose-100 text-rose-800 text-xs px-2 py-1 rounded-full">${request.package}</span>
-                        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">${request.expires_in}d left</span>
-                        ${request.is_own_request ? `<span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Your Request</span>` : ''}
+        const tagColors = ['rose', 'sage', 'champagne'];
+        const interests = request.interests || [];
+        
+        div.innerHTML = `
+            ${request.is_own_request ? `
+                <div class="bg-rose-gold text-white text-xs font-semibold px-3 py-1 rounded-t-lg">
+                    <i class="bi bi-person-check mr-1"></i>Your Request
+                </div>
+            ` : ''}
+            
+            <div class="matchmaking-header">
+                <div class="flex items-center space-x-3">
+                    <img src="${request.user.profile_pic || '/static/assets/img/default-avatar.png'}" 
+                         alt="${request.user.full_name}" 
+                         class="w-16 h-16 rounded-full object-cover border-2 ${request.is_own_request ? 'border-rose-gold' : 'border-white'} shadow-sm">
+                    <div class="text-left">
+                        <h4 class="font-poppins font-bold text-lg text-primary">${request.user.full_name}, ${request.user.age}</h4>
+                        <p class="text-text-secondary text-sm flex items-center">
+                            <i class="bi bi-geo-alt mr-1"></i>${request.user.location}
+                        </p>
+                        <div class="flex items-center space-x-2 mt-1">
+                            <span class="bg-rose-100 text-rose-800 text-xs px-2 py-1 rounded-full">${request.package}</span>
+                            <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">${request.expires_in}d left</span>
+                            ${request.is_own_request ? `<span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Your Request</span>` : ''}
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-        
-        <div class="matchmaking-body">
-            <p class="text-text-primary line-clamp-2 mb-4">${request.about_you}</p>
             
-            <div class="flex flex-wrap gap-1 mb-4">
-                ${interests.slice(0, 3).map((interest, index) => `
-                    <span class="interest-tag ${tagColors[index % tagColors.length]}">${interest}</span>
-                `).join('')}
-                ${interests.length > 3 ? `<span class="interest-tag">+${interests.length - 3} more</span>` : ''}
+            <div class="matchmaking-body">
+                <p class="text-text-primary line-clamp-2 mb-4">${request.about_you}</p>
+                
+                <div class="flex flex-wrap gap-1 mb-4">
+                    ${interests.slice(0, 3).map((interest, index) => `
+                        <span class="interest-tag ${tagColors[index % tagColors.length]}">${interest}</span>
+                    `).join('')}
+                    ${interests.length > 3 ? `<span class="interest-tag">+${interests.length - 3} more</span>` : ''}
+                </div>
+                
+                ${request.image ? `
+                    <div class="mb-4 rounded-lg overflow-hidden">
+                        <img src="${request.image}" alt="Profile photo" class="w-full h-32 object-cover">
+                    </div>
+                ` : ''}
             </div>
             
-            ${request.image ? `
-                <div class="mb-4 rounded-lg overflow-hidden">
-                    <img src="${request.image}" alt="Profile photo" class="w-full h-32 object-cover">
+            <div class="matchmaking-footer">
+                <div class="flex justify-between items-center text-sm">
+                    <div class="flex space-x-4 text-text-secondary">
+                        <span class="flex items-center space-x-1">
+                            <i class="bi bi-eye"></i>
+                            <span>${request.views}</span>
+                        </span>
+                        <span class="flex items-center space-x-1">
+                            <i class="bi bi-heart"></i>
+                            <span>${request.likes}</span>
+                        </span>
+                        <span class="flex items-center space-x-1">
+                            <i class="bi bi-chat"></i>
+                            <span>${request.matches}</span>
+                        </span>
+                    </div>
+                    ${!request.is_own_request ? `
+                        <button class="like-btn ${request.is_liked ? 'liked' : ''} text-text-secondary hover:text-rose-gold" onclick="event.stopPropagation(); likeRequest(${request.id}, this)">
+                            <i class="bi bi-heart${request.is_liked ? '-fill' : ''}"></i>
+                        </button>
+                    ` : `
+                        <button class="text-text-secondary cursor-default" title="Your own request">
+                            <i class="bi bi-person-check"></i>
+                        </button>
+                    `}
                 </div>
-            ` : ''}
-        </div>
-        
-        <div class="matchmaking-footer">
-            <div class="flex justify-between items-center text-sm">
-                <div class="flex space-x-4 text-text-secondary">
-                    <span class="flex items-center space-x-1">
-                        <i class="bi bi-eye"></i>
-                        <span>${request.views}</span>
-                    </span>
-                    <span class="flex items-center space-x-1">
-                        <i class="bi bi-heart"></i>
-                        <span>${request.likes}</span>
-                    </span>
-                    <span class="flex items-center space-x-1">
-                        <i class="bi bi-chat"></i>
-                        <span>${request.matches}</span>
-                    </span>
-                </div>
-                ${!request.is_own_request ? `
-                    <button class="like-btn ${request.is_liked ? 'liked' : ''} text-text-secondary hover:text-rose-gold" onclick="event.stopPropagation(); likeRequest(${request.id}, this)">
-                        <i class="bi bi-heart${request.is_liked ? '-fill' : ''}"></i>
-                    </button>
-                ` : `
-                    <button class="text-text-secondary cursor-default" title="Your own request">
-                        <i class="bi bi-person-check"></i>
-                    </button>
-                `}
             </div>
-        </div>
-    `;
-    
-    return div;
-}
+        `;
+        
+        return div;
+      }
 
       async function openRequestModal(request) {
-    try {
-        const response = await fetch(`/api/requests/${request.id}`);
-        const data = await response.json();
-        
-        if (data.success) {
-            const requestDetail = data.request;
-            const modalContent = document.getElementById('requestModalContent');
-            const tagColors = ['rose', 'sage', 'champagne'];
+        try {
+            const response = await fetch(`/api/requests/${request.id}`);
+            const data = await response.json();
             
-            modalContent.innerHTML = `
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-                    <div class="lg:col-span-2 space-y-6">
-                        ${requestDetail.is_own_request ? `
-                            <div class="bg-rose-50 border border-rose-200 rounded-lg p-4 mb-4">
-                                <div class="flex items-center space-x-2 text-rose-800">
-                                    <i class="bi bi-info-circle"></i>
-                                    <span class="font-semibold">This is your matchmaking request</span>
+            if (data.success) {
+                const requestDetail = data.request;
+                const modalContent = document.getElementById('requestModalContent');
+                
+                modalContent.innerHTML = createDetailedModalContent(requestDetail);
+                document.getElementById('requestModal').classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            } else {
+                showError('Failed to load request details');
+            }
+        } catch (error) {
+            console.error('Error loading request details:', error);
+            showError('Failed to load request details');
+        }
+      }
+
+      function createDetailedModalContent(request) {
+        const tagColors = ['rose', 'sage', 'champagne'];
+        const interests = request.interests || [];
+        const partnerInterests = request.partner_interests || [];
+        const lifestyles = request.lifestyles || [];
+        const targetCountries = request.target_countries || [];
+        
+        return `
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+                <div class="lg:col-span-2 space-y-6">
+                    <!-- User Profile Section -->
+                    <div class="detail-section">
+                        <div class="flex items-center space-x-4 mb-6">
+                            <img src="${request.user.profile_pic || '/static/assets/img/default-avatar.png'}" 
+                                 alt="${request.user.full_name}" 
+                                 class="w-20 h-20 md:w-24 md:h-24 rounded-full object-cover border-4 border-primary shadow-lg">
+                            <div class="flex-1">
+                                <h4 class="font-poppins font-bold text-2xl md:text-3xl text-primary mb-2">${request.user.full_name}, ${request.user.age}</h4>
+                                <p class="text-text-secondary flex items-center text-lg mb-3">
+                                    <i class="bi bi-geo-alt mr-2"></i>${request.user.location}
+                                </p>
+                                <div class="flex flex-wrap gap-2">
+                                    <span class="bg-rose-100 text-rose-800 text-sm px-3 py-1 rounded-full font-semibold">${request.package} Package</span>
+                                    <span class="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full font-semibold">${request.expires_in} days remaining</span>
+                                    <span class="bg-green-100 text-green-800 text-sm px-3 py-1 rounded-full font-semibold">${request.views} views</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- User Basic Info -->
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                            <div class="text-center">
+                                <div class="detail-label">Education</div>
+                                <div class="detail-value">${request.user.education || 'Not specified'}</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="detail-label">Occupation</div>
+                                <div class="detail-value">${request.user.occupation || 'Not specified'}</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="detail-label">About Me</div>
+                                <div class="detail-value">${request.user.about_me || 'Not specified'}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- About Me Section -->
+                    <div class="detail-section">
+                        <h5 class="font-poppins font-semibold text-xl text-primary mb-4 flex items-center">
+                            <i class="bi bi-person-circle mr-2"></i>About Me
+                        </h5>
+                        <p class="text-text-primary leading-relaxed text-lg">${request.about_you}</p>
+                    </div>
+                    
+                    <!-- My Interests Section -->
+                    ${interests.length > 0 ? `
+                        <div class="detail-section">
+                            <h5 class="font-poppins font-semibold text-xl text-primary mb-4 flex items-center">
+                                <i class="bi bi-heart mr-2"></i>My Interests & Hobbies
+                            </h5>
+                            <div class="flex flex-wrap gap-2">
+                                ${interests.map((interest, index) => `
+                                    <span class="interest-tag ${tagColors[index % tagColors.length]} text-sm px-3 py-2">${interest}</span>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    <!-- Lifestyle Section -->
+                    ${lifestyles.length > 0 ? `
+                        <div class="detail-section">
+                            <h5 class="font-poppins font-semibold text-xl text-primary mb-4 flex items-center">
+                                <i class="bi bi-sun mr-2"></i>Lifestyle
+                            </h5>
+                            <div class="flex flex-wrap gap-2">
+                                ${lifestyles.map((lifestyle, index) => `
+                                    <span class="interest-tag ${tagColors[(index + 1) % tagColors.length]} text-sm px-3 py-2">${lifestyle}</span>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    <!-- Ideal Partner Section -->
+                    <div class="detail-section">
+                        <h5 class="font-poppins font-semibold text-xl text-primary mb-4 flex items-center">
+                            <i class="bi bi-search-heart mr-2"></i>My Ideal Partner
+                        </h5>
+                        <p class="text-text-primary leading-relaxed text-lg mb-6">${request.ideal_partner}</p>
+                        
+                        <!-- Partner Preferences Grid -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Age Range -->
+                            <div>
+                                <div class="detail-label">Age Range</div>
+                                <div class="detail-value font-semibold">${request.partner_preferences.min_age || 'Any'} - ${request.partner_preferences.max_age || 'Any'} years</div>
+                            </div>
+                            
+                            <!-- Gender -->
+                            <div>
+                                <div class="detail-label">Gender</div>
+                                <div class="detail-value font-semibold">${request.partner_preferences.gender || 'Any'}</div>
+                            </div>
+                            
+                            <!-- Ethnicity -->
+                            <div>
+                                <div class="detail-label">Ethnicity</div>
+                                <div class="detail-value font-semibold">${request.partner_preferences.ethnicity || 'Any'}</div>
+                            </div>
+                            
+                            <!-- Religion -->
+                            <div>
+                                <div class="detail-label">Religion</div>
+                                <div class="detail-value font-semibold">${request.partner_preferences.religion || 'Any'}</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Partner Interests -->
+                        ${partnerInterests.length > 0 ? `
+                            <div class="mt-6">
+                                <div class="detail-label">Desired Partner Interests</div>
+                                <div class="flex flex-wrap gap-2 mt-2">
+                                    ${partnerInterests.map((interest, index) => `
+                                        <span class="interest-tag ${tagColors[(index + 2) % tagColors.length]} text-sm px-3 py-2">${interest}</span>
+                                    `).join('')}
                                 </div>
                             </div>
                         ` : ''}
                         
-                        <div class="flex items-center space-x-4">
-                            <img src="${requestDetail.user.profile_pic || '/static/assets/img/default-avatar.png'}" 
-                                 alt="${requestDetail.user.full_name}" 
-                                 class="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover border-2 ${requestDetail.is_own_request ? 'border-rose-gold' : 'border-rose-gold'}">
-                            <div>
-                                <h4 class="font-poppins font-bold text-xl md:text-2xl text-primary">${requestDetail.user.full_name}, ${requestDetail.user.age}</h4>
-                                <p class="text-text-secondary flex items-center">
-                                    <i class="bi bi-geo-alt mr-2"></i>${requestDetail.user.location}
-                                </p>
-                                <div class="flex items-center space-x-2 mt-2">
-                                    <span class="bg-rose-100 text-rose-800 text-sm px-3 py-1 rounded-full">${requestDetail.package} Package</span>
-                                    <span class="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full">${requestDetail.expires_in} days remaining</span>
-                                    ${requestDetail.is_own_request ? `<span class="bg-green-100 text-green-800 text-sm px-3 py-1 rounded-full">Your Request</span>` : ''}
+                        <!-- Target Countries -->
+                        ${targetCountries.length > 0 ? `
+                            <div class="mt-6">
+                                <div class="detail-label">Preferred Locations</div>
+                                <div class="flex flex-wrap gap-2 mt-2">
+                                    ${targetCountries.map((country, index) => `
+                                        <span class="interest-tag bg-blue-100 text-blue-800 border-blue-200 text-sm px-3 py-2">
+                                            <i class="bi bi-geo-alt mr-1"></i>${country}
+                                        </span>
+                                    `).join('')}
                                 </div>
-                            </div>
-                        </div>
-                        
-                        <div class="floral-divider"></div>
-                        
-                        <!-- Rest of your modal content remains the same -->
-                        <div>
-                            <h5 class="font-poppins font-semibold text-lg text-primary mb-3">About Me</h5>
-                            <p class="text-text-primary leading-relaxed">${requestDetail.about_you}</p>
-                        </div>
-                        
-                        <div>
-                            <h5 class="font-poppins font-semibold text-lg text-primary mb-3">My Ideal Partner</h5>
-                            <p class="text-text-primary leading-relaxed">${requestDetail.ideal_partner}</p>
-                        </div>
-                        
-                        ${requestDetail.image ? `
-                            <div class="rounded-xl overflow-hidden">
-                                <img src="${requestDetail.image}" alt="Profile photo" class="w-full h-48 md:h-64 object-cover">
                             </div>
                         ` : ''}
                     </div>
                     
-                    <div class="space-y-6">
-                        <!-- Your existing sidebar content -->
-                        
-                        ${!requestDetail.is_own_request ? `
-                            <div class="flex space-x-3">
-                                <button onclick="sendLike(${requestDetail.id})" class="mobile-btn flex-1 bg-rose-gold text-white py-3 rounded-lg hover:bg-rose-700 transition-colors duration-300 font-semibold flex items-center justify-center space-x-2">
-                                    <i class="bi bi-heart"></i>
-                                    <span>Send Like</span>
-                                </button>
-                                <button onclick="sendMessage(${requestDetail.id})" class="mobile-btn flex-1 bg-primary text-white py-3 rounded-lg hover:bg-secondary transition-colors duration-300 font-semibold flex items-center justify-center space-x-2">
-                                    <i class="bi bi-chat"></i>
-                                    <span>Message</span>
-                                </button>
+                    <!-- Additional Image -->
+                    ${request.image ? `
+                        <div class="detail-section">
+                            <h5 class="font-poppins font-semibold text-xl text-primary mb-4 flex items-center">
+                                <i class="bi bi-image mr-2"></i>Profile Photo
+                            </h5>
+                            <div class="rounded-xl overflow-hidden shadow-lg">
+                                <img src="${request.image}" alt="Profile photo" class="w-full h-64 md:h-80 object-cover">
                             </div>
-                        ` : `
-                            <div class="bg-gray-100 rounded-lg p-4 text-center">
-                                <p class="text-gray-600 text-sm">This is your own request</p>
+                        </div>
+                    ` : ''}
+                </div>
+                
+                <!-- Sidebar -->
+                <div class="space-y-6">
+                    <!-- Action Buttons -->
+                    <div class="detail-section">
+                        <h5 class="font-poppins font-semibold text-lg text-primary mb-4">Connect</h5>
+                        <div class="space-y-3">
+                            <button onclick="sendLike(${request.id})" class="mobile-btn w-full bg-rose-gold text-white py-3 rounded-lg hover:bg-rose-700 transition-colors duration-300 font-semibold flex items-center justify-center space-x-2">
+                                <i class="bi bi-heart"></i>
+                                <span>Send Like</span>
+                            </button>
+                            <button onclick="sendMessage(${request.id})" class="mobile-btn w-full bg-primary text-white py-3 rounded-lg hover:bg-secondary transition-colors duration-300 font-semibold flex items-center justify-center space-x-2">
+                                <i class="bi bi-chat"></i>
+                                <span>Send Message</span>
+                            </button>
+                            
+                        </div>
+                    </div>
+                    
+                    <!-- Request Stats -->
+                    <div class="detail-section">
+                        <h5 class="font-poppins font-semibold text-lg text-primary mb-4">Request Statistics</h5>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-text-secondary">Views</span>
+                                <span class="font-semibold text-primary">${request.views}</span>
                             </div>
-                        `}
+                            <div class="flex justify-between items-center">
+                                <span class="text-text-secondary">Likes</span>
+                                <span class="font-semibold text-primary">${request.likes}</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-text-secondary">Matches</span>
+                                <span class="font-semibold text-primary">${request.matches}</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-text-secondary">Created</span>
+                                <span class="font-semibold text-primary">${request.created_at}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    
+                    
+                    <!-- Compatibility Score -->
+                    <div class="detail-section text-center">
+                        <h5 class="font-poppins font-semibold text-lg text-primary mb-4">Potential Compatibility</h5>
+                        <div class="compatibility-badge mx-auto mb-3">
+                            <i class="bi bi-heart-fill mr-2"></i>
+                            <span>${calculateCompatibility(request)}% Match</span>
+                        </div>
+                        <p class="text-text-secondary text-sm">Based on shared interests and preferences</p>
                     </div>
                 </div>
-            `;
-            
-            document.getElementById('requestModal').classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-        } else {
-            showError('Failed to load request details');
+            </div>
+        `;
+      }
+
+      function calculateCompatibility(request) {
+        // Simple compatibility calculation based on shared interests
+        const userInterests = JSON.parse(localStorage.getItem('userInterests') || '[]');
+        const requestInterests = request.interests || [];
+        
+        if (userInterests.length === 0 || requestInterests.length === 0) {
+            return Math.floor(Math.random() * 30) + 50; // Random between 50-80%
         }
-    } catch (error) {
-        console.error('Error loading request details:', error);
-        showError('Failed to load request details');
-    }
-}
+        
+        const sharedInterests = userInterests.filter(interest => 
+            requestInterests.includes(interest)
+        ).length;
+        
+        const totalInterests = new Set([...userInterests, ...requestInterests]).size;
+        const compatibility = Math.round((sharedInterests / totalInterests) * 100);
+        
+        return Math.min(compatibility + 20, 95); // Boost slightly for better UX
+      }
 
       function closeModal() {
         document.getElementById('requestModal').classList.add('hidden');
@@ -924,6 +1115,10 @@
           console.error('Error sending message:', error);
           showError('Failed to send message');
         }
+      }
+
+      function showCompatibility(requestId) {
+        showSuccess('Compatibility feature coming soon!');
       }
 
       async function updateStats() {

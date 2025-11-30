@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Successful - Kimbela</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+
+    <script>
+        // Check if Tailwind loads properly
+        function checkTailwind() {
+            setTimeout(() => {
+                const bodyStyles = window.getComputedStyle(document.body);
+                const hasTailwind = bodyStyles.margin === '0px' && bodyStyles.fontFamily;
+                
+                if (!hasTailwind) {
+                    console.log('🔄 Tailwind not detected, loading fallback...');
+                    loadFallbackTailwind();
+                } else {
+                    console.log('✅ Tailwind CSS loaded successfully');
+                }
+            }, 500);
+        }
+
+        function loadFallbackTailwind() {
+            // Load from alternative CDN
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = 'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css';
+            link.onload = () => console.log('✅ Fallback Tailwind loaded');
+            link.onerror = () => {
+                console.log('❌ All CDNs failed, using inline styles');
+                loadEmergencyStyles();
+            };
+            document.head.appendChild(link);
+        }
+
+        function loadEmergencyStyles() {
+            const emergencyCSS = `
+                /* EMERGENCY STYLES - Basic Tailwind equivalents */
+                * { box-sizing: border-box; margin: 0; padding: 0; }
+                body { 
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                    background: linear-gradient(135deg, #f0fdf4 0%, #f0f9ff 100%);
+                    line-height: 1.5;
+                    min-height: 100vh;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 1rem;
+                }
+                .bg-white { background-color: white; }
+                .bg-gray-50 { background-color: #f9fafb; }
+                .bg-green-50 { background-color: #f0fdf4; }
+                .bg-blue-50 { background-color: #f0f9ff; }
+                .bg-green-100 { background-color: #dcfce7; }
+                .bg-green-600 { background-color: #16a34a; }
+                .text-white { color: white; }
+                .text-gray-600 { color: #4b5563; }
+                .text-gray-800 { color: #1f2937; }
+                .text-green-500 { color: #10b981; }
+                .text-green-600 { color: #059669; }
+                .text-green-700 { color: #047857; }
+                .font-semibold { font-weight: 600; }
+                .font-bold { font-weight: 700; }
+                .font-black { font-weight: 900; }
+                .rounded-xl { border-radius: 0.75rem; }
+                .rounded-full { border-radius: 9999px; }
+                .shadow-2xl { box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
+                .p-4 { padding: 1rem; }
+                .p-6 { padding: 1.5rem; }
+                .p-8 { padding: 2rem; }
+                .mb-4 { margin-bottom: 1rem; }
+                .mb-6 { margin-bottom: 1.5rem; }
+                .mb-8 { margin-bottom: 2rem; }
+                .mt-6 { margin-top: 1.5rem; }
+                .mx-auto { margin-left: auto; margin-right: auto; }
+                .w-full { width: 100%; }
+                .w-20 { width: 5rem; }
+                .h-20 { height: 5rem; }
+                .flex { display: flex; }
+                .items-center { align-items: center; }
+                .justify-center { justify-content: center; }
+                .justify-between { justify-content: space-between; }
+                .text-center { text-align: center; }
+                .text-left { text-align: left; }
+                .text-3xl { font-size: 1.875rem; }
+                .text-4xl { font-size: 2.25rem; }
+                .text-sm { font-size: 0.875rem; }
+                .space-y-2 > * + * { margin-top: 0.5rem; }
+                .space-y-3 > * + * { margin-top: 0.75rem; }
+                .border { border-width: 1px; }
+                .border-2 { border-width: 2px; }
+                .border-gray-200 { border-color: #e5e7eb; }
+                .border-gray-300 { border-color: #d1d5db; }
+                .border-blue-200 { border-color: #bfdbfe; }
+                .border-green-200 { border-color: #bbf7d0; }
+                .transition-all { transition: all 0.3s ease; }
+                .duration-300 { transition-duration: 300ms; }
+                .hover\\:bg-green-700:hover { background-color: #15803d; }
+                .hover\\:bg-gray-50:hover { background-color: #f9fafb; }
+                .hover\\:translate-y-[-2px]:hover { transform: translateY(-2px); }
+                .max-w-md { max-width: 28rem; }
+                .success-animation {
+                    animation: successScale 0.5s ease-in-out;
+                }
+                @keyframes successScale {
+                    0% { transform: scale(0.8); opacity: 0; }
+                    70% { transform: scale(1.1); }
+                    100% { transform: scale(1); opacity: 1; }
+                }
+            `;
+            
+            const style = document.createElement('style');
+            style.textContent = emergencyCSS;
+            document.head.appendChild(style);
+        }
+
+        // Initialize check when DOM loads
+        document.addEventListener('DOMContentLoaded', checkTailwind);
+    </script>
+
+    <!-- Primary Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .success-animation {
+            animation: successScale 0.5s ease-in-out;
+        }
+        @keyframes successScale {
+            0% { transform: scale(0.8); opacity: 0; }
+            70% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background-color: #f59e0b;
+            opacity: 0.7;
+            animation: confetti-fall 5s linear forwards;
+        }
+        
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100px) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-green-50 to-blue-50 min-h-screen flex items-center justify-center p-4">
+    <!-- Confetti Effect -->
+    <div id="confetti-container"></div>
+    
+    <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 text-center success-animation">
+        <!-- Success Icon -->
+        <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <i class="bi bi-check-circle-fill text-green-500 text-4xl"></i>
+        </div>
+        
+        <!-- Success Message -->
+        <h1 class="text-3xl font-black text-gray-800 mb-4">Payment Successful!</h1>
+        
+        <p class="text-gray-600 mb-6">
+            {% if type == 'ad_campaign' %}
+            Your payment has been processed successfully. Your ad campaign is now active and running.
+            {% elif type == 'matchmaking' %}
+            Your payment has been processed successfully. Your matchmaking request is now active.
+            {% else %}
+            Your payment has been processed successfully.
+            {% endif %}
+        </p>
+        
+        <!-- Transaction Details -->
+        {% if transaction %}
+        <div class="bg-gray-50 rounded-xl p-4 mb-6 text-left border border-gray-200">
+            <h3 class="font-semibold text-gray-800 mb-3 text-center">Transaction Details</h3>
+            <div class="space-y-2">
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Transaction ID:</span>
+                    <span class="font-semibold">#{{ transaction.id }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Amount:</span>
+                    <span class="font-semibold">{{ transaction.currency }} {{ "%.2f"|format(transaction.amount) }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Status:</span>
+                    <span class="font-semibold text-green-600 capitalize">{{ transaction.status }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Payment Method:</span>
+                    <span class="font-semibold capitalize">{{ transaction.gateway }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Date:</span>
+                    <span class="font-semibold">{{ transaction.created_at.strftime('%Y-%m-%d %H:%M') if transaction.created_at else 'N/A' }}</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Campaign Details -->
+        {% if type == 'ad_campaign' and campaign %}
+        <div class="bg-blue-50 rounded-xl p-4 mb-6 text-left border border-blue-200">
+            <h3 class="font-semibold text-gray-800 mb-3 text-center">Campaign Details</h3>
+            <div class="space-y-2">
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Campaign:</span>
+                    <span class="font-semibold">{{ campaign.title }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Duration:</span>
+                    <span class="font-semibold">{{ campaign.duration_days }} days</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Daily Budget:</span>
+                    <span class="font-semibold">{{ campaign.currency }} {{ "%.2f"|format(campaign.daily_budget) }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Total Budget:</span>
+                    <span class="font-semibold">{{ campaign.currency }} {{ "%.2f"|format(campaign.budget) }}</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Matchmaking Details -->
+        {% if type == 'matchmaking' and matchmaking_request %}
+        <div class="bg-purple-50 rounded-xl p-4 mb-6 text-left border border-purple-200">
+            <h3 class="font-semibold text-gray-800 mb-3 text-center">Matchmaking Details</h3>
+            <div class="space-y-2">
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Package:</span>
+                    <span class="font-semibold">{{ matchmaking_request.package.name if matchmaking_request.package else 'Standard' }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Duration:</span>
+                    <span class="font-semibold">{{ matchmaking_request.package.duration_days if matchmaking_request.package else '30' }} days</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Status:</span>
+                    <span class="font-semibold text-green-600 capitalize">{{ matchmaking_request.status }}</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Action Buttons -->
+        <div class="space-y-3">
+            <a href="{{ url_for('user.user_dashboard') }}" 
+               class="w-full bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 transition-all duration-300 flex items-center justify-center space-x-2 hover:translate-y-[-2px] shadow-lg">
+                <i class="bi bi-grid-1x2"></i>
+                <span>Go to Dashboard</span>
+            </a>
+            
+            {% if type == 'ad_campaign' %}
+            <a href="{{ url_for('payments.ad_packages') }}" 
+               class="w-full border-2 border-gray-300 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-50 transition-all duration-300 flex items-center justify-center space-x-2 hover:translate-y-[-2px]">
+                <i class="bi bi-plus-circle"></i>
+                <span>Create Another Campaign</span>
+            </a>
+            {% elif type == 'matchmaking' %}
+            <a href="{{ url_for('match.create_matchmaking_request') }}" 
+               class="w-full border-2 border-gray-300 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-50 transition-all duration-300 flex items-center justify-center space-x-2 hover:translate-y-[-2px]">
+                <i class="bi bi-heart"></i>
+                <span>Create Another Request</span>
+            </a>
+            {% endif %}
+        </div>
+        
+        <!-- Additional Info -->
+        <div class="mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
+            <div class="flex items-center justify-center space-x-2 text-green-700">
+                <i class="bi bi-info-circle"></i>
+                <span class="text-sm font-medium">
+                    {% if type == 'ad_campaign' %}
+                    Your campaign is now active and will start receiving impressions shortly.
+                    {% elif type == 'matchmaking' %}
+                    Your matchmaking request is now active and visible to potential matches.
+                    {% else %}
+                    Your purchase is now active.
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+        
+        <p class="text-sm text-gray-500 mt-6">
+            A confirmation email has been sent to your registered email address.
+        </p>
+
+        <!-- Countdown to auto-redirect -->
+        <div class="mt-4 text-xs text-gray-400">
+            Auto-redirecting to dashboard in <span id="countdown">10</span> seconds...
+        </div>
+    </div>
+
+    <script>
+        // Add some interactive effects
+        document.addEventListener('DOMContentLoaded', function() {
+            // Create confetti effect
+            function createConfetti() {
+                const container = document.getElementById('confetti-container');
+                const colors = ['#f59e0b', '#10b981', '#3b82f6', '#ef4444', '#8b5cf6'];
+                
+                for (let i = 0; i < 50; i++) {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + 'vw';
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.animationDelay = Math.random() * 2 + 's';
+                    confetti.style.width = Math.random() * 10 + 5 + 'px';
+                    confetti.style.height = Math.random() * 10 + 5 + 'px';
+                    container.appendChild(confetti);
+                    
+                    // Remove confetti after animation
+                    setTimeout(() => {
+                        confetti.remove();
+                    }, 5000);
+                }
+            }
+            
+            // Create initial confetti
+            createConfetti();
+            
+            // Add more confetti every 2 seconds for 6 seconds
+            const confettiInterval = setInterval(createConfetti, 2000);
+            setTimeout(() => clearInterval(confettiInterval), 6000);
+            
+            // Add button hover effects
+            const buttons = document.querySelectorAll('a');
+            buttons.forEach(button => {
+                button.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-2px)';
+                });
+                button.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                });
+            });
+            
+            // Countdown timer for auto-redirect
+            let countdown = 10;
+            const countdownElement = document.getElementById('countdown');
+            const countdownInterval = setInterval(() => {
+                countdown--;
+                countdownElement.textContent = countdown;
+                
+                if (countdown <= 0) {
+                    clearInterval(countdownInterval);
+                    window.location.href = "{{ url_for('user.user_dashboard') }}";
+                }
+            }, 1000);
+            
+            // Allow user to cancel auto-redirect by clicking anywhere
+            document.body.addEventListener('click', function() {
+                clearInterval(countdownInterval);
+                countdownElement.textContent = 'redirect cancelled';
+                countdownElement.style.color = '#ef4444';
+            });
+        });
+    </script>
+</body>
+</html>

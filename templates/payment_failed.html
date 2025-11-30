@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Failed - Kimbela</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+
+    <script>
+        // Check if Tailwind loads properly
+        function checkTailwind() {
+            setTimeout(() => {
+                const bodyStyles = window.getComputedStyle(document.body);
+                const hasTailwind = bodyStyles.margin === '0px' && bodyStyles.fontFamily;
+                
+                if (!hasTailwind) {
+                    console.log('🔄 Tailwind not detected, loading fallback...');
+                    loadFallbackTailwind();
+                } else {
+                    console.log('✅ Tailwind CSS loaded successfully');
+                }
+            }, 500);
+        }
+
+        function loadFallbackTailwind() {
+            // Load from alternative CDN
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = 'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css';
+            link.onload = () => console.log('✅ Fallback Tailwind loaded');
+            link.onerror = () => {
+                console.log('❌ All CDNs failed, using inline styles');
+                loadEmergencyStyles();
+            };
+            document.head.appendChild(link);
+        }
+
+        function loadEmergencyStyles() {
+            const emergencyCSS = `
+                /* EMERGENCY STYLES - Basic Tailwind equivalents */
+                * { box-sizing: border-box; margin: 0; padding: 0; }
+                body { 
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                    background: linear-gradient(135deg, #fef2f2 0%, #fff7ed 100%);
+                    line-height: 1.5;
+                    min-height: 100vh;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 1rem;
+                }
+                .bg-white { background-color: white; }
+                .bg-gray-50 { background-color: #f9fafb; }
+                .bg-red-50 { background-color: #fef2f2; }
+                .bg-orange-50 { background-color: #fff7ed; }
+                .bg-red-100 { background-color: #fee2e2; }
+                .bg-red-600 { background-color: #dc2626; }
+                .bg-gray-600 { background-color: #4b5563; }
+                .text-white { color: white; }
+                .text-gray-600 { color: #4b5563; }
+                .text-gray-800 { color: #1f2937; }
+                .text-red-500 { color: #ef4444; }
+                .text-red-600 { color: #dc2626; }
+                .text-red-700 { color: #b91c1c; }
+                .font-semibold { font-weight: 600; }
+                .font-bold { font-weight: 700; }
+                .font-black { font-weight: 900; }
+                .rounded-xl { border-radius: 0.75rem; }
+                .rounded-full { border-radius: 9999px; }
+                .shadow-2xl { box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
+                .p-4 { padding: 1rem; }
+                .p-6 { padding: 1.5rem; }
+                .p-8 { padding: 2rem; }
+                .mb-4 { margin-bottom: 1rem; }
+                .mb-6 { margin-bottom: 1.5rem; }
+                .mb-8 { margin-bottom: 2rem; }
+                .mt-6 { margin-top: 1.5rem; }
+                .mx-auto { margin-left: auto; margin-right: auto; }
+                .w-full { width: 100%; }
+                .w-20 { width: 5rem; }
+                .h-20 { height: 5rem; }
+                .flex { display: flex; }
+                .items-center { align-items: center; }
+                .justify-center { justify-content: center; }
+                .justify-between { justify-content: space-between; }
+                .text-center { text-align: center; }
+                .text-left { text-align: left; }
+                .text-3xl { font-size: 1.875rem; }
+                .text-4xl { font-size: 2.25rem; }
+                .text-sm { font-size: 0.875rem; }
+                .space-y-2 > * + * { margin-top: 0.5rem; }
+                .space-y-3 > * + * { margin-top: 0.75rem; }
+                .border { border-width: 1px; }
+                .border-2 { border-width: 2px; }
+                .border-gray-200 { border-color: #e5e7eb; }
+                .border-gray-300 { border-color: #d1d5db; }
+                .border-red-200 { border-color: #fecaca; }
+                .border-orange-200 { border-color: #fed7aa; }
+                .transition-all { transition: all 0.3s ease; }
+                .duration-300 { transition-duration: 300ms; }
+                .hover\\:bg-red-700:hover { background-color: #b91c1c; }
+                .hover\\:bg-gray-600:hover { background-color: #374151; }
+                .hover\\:bg-gray-50:hover { background-color: #f9fafb; }
+                .hover\\:translate-y-[-2px]:hover { transform: translateY(-2px); }
+                .max-w-md { max-width: 28rem; }
+                .failed-animation {
+                    animation: shake 0.5s ease-in-out;
+                }
+                @keyframes shake {
+                    0%, 100% { transform: translateX(0); }
+                    25% { transform: translateX(-5px); }
+                    75% { transform: translateX(5px); }
+                }
+            `;
+            
+            const style = document.createElement('style');
+            style.textContent = emergencyCSS;
+            document.head.appendChild(style);
+        }
+
+        // Initialize check when DOM loads
+        document.addEventListener('DOMContentLoaded', checkTailwind);
+    </script>
+
+    <!-- Primary Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .failed-animation {
+            animation: shake 0.5s ease-in-out;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        .pulse-alert {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-red-50 to-orange-50 min-h-screen flex items-center justify-center p-4">
+    
+    <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 text-center failed-animation">
+        <!-- Failed Icon -->
+        <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <i class="bi bi-x-circle-fill text-red-500 text-4xl"></i>
+        </div>
+        
+        <!-- Failed Message -->
+        <h1 class="text-3xl font-black text-gray-800 mb-4">Payment Failed</h1>
+        
+        <p class="text-gray-600 mb-6">
+            We were unable to process your payment. Please try again or use a different payment method.
+        </p>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="mb-6 space-y-2">
+                    {% for category, message in messages %}
+                        <div class="p-3 rounded-lg {% if category == 'error' %}bg-red-50 text-red-700 border border-red-200{% else %}bg-gray-50 text-gray-700 border border-gray-200{% endif %}">
+                            <div class="flex items-center justify-center space-x-2">
+                                <i class="bi bi-{% if category == 'error' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
+                                <span class="text-sm font-medium">{{ message }}</span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        
+        <!-- Error Details -->
+        {% if transaction %}
+        <div class="bg-gray-50 rounded-xl p-4 mb-6 text-left border border-gray-200">
+            <h3 class="font-semibold text-gray-800 mb-3 text-center">Transaction Details</h3>
+            <div class="space-y-2">
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Reference:</span>
+                    <span class="font-semibold">#{{ transaction.id }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Amount:</span>
+                    <span class="font-semibold">{{ transaction.currency }} {{ "%.2f"|format(transaction.amount) }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Status:</span>
+                    <span class="font-semibold text-red-600 capitalize">{{ transaction.status }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Payment Method:</span>
+                    <span class="font-semibold capitalize">{{ transaction.gateway }}</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Common Issues -->
+        <div class="bg-orange-50 rounded-xl p-4 mb-6 text-left border border-orange-200">
+            <h3 class="font-semibold text-gray-800 mb-3 text-center">Common Issues</h3>
+            <div class="space-y-2 text-sm text-gray-600">
+                <div class="flex items-start space-x-2">
+                    <i class="bi bi-dot text-orange-500 mt-1"></i>
+                    <span>Insufficient funds in your account</span>
+                </div>
+                <div class="flex items-start space-x-2">
+                    <i class="bi bi-dot text-orange-500 mt-1"></i>
+                    <span>Card declined by your bank</span>
+                </div>
+                <div class="flex items-start space-x-2">
+                    <i class="bi bi-dot text-orange-500 mt-1"></i>
+                    <span>Incorrect card details entered</span>
+                </div>
+                <div class="flex items-start space-x-2">
+                    <i class="bi bi-dot text-orange-500 mt-1"></i>
+                    <span>Network or connectivity issues</span>
+                </div>
+                <div class="flex items-start space-x-2">
+                    <i class="bi bi-dot text-orange-500 mt-1"></i>
+                    <span>Payment timeout</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="space-y-3">
+            <button onclick="retryPayment()" 
+               class="w-full bg-red-600 text-white py-3 rounded-xl font-semibold hover:bg-red-700 transition-all duration-300 flex items-center justify-center space-x-2 hover:translate-y-[-2px] shadow-lg pulse-alert">
+                <i class="bi bi-arrow-clockwise"></i>
+                <span>Try Payment Again</span>
+            </button>
+            
+            <a href="{{ url_for('user.user_dashboard') }}" 
+               class="w-full bg-gray-600 text-white py-3 rounded-xl font-semibold hover:bg-gray-700 transition-all duration-300 flex items-center justify-center space-x-2 hover:translate-y-[-2px]">
+                <i class="bi bi-grid-1x2"></i>
+                <span>Go to Dashboard</span>
+            </a>
+
+            
+        </div>
+        
+        <!-- Support Information -->
+        <div class="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <div class="flex items-center justify-center space-x-2 text-blue-700 mb-2">
+                <i class="bi bi-headset"></i>
+                <span class="text-sm font-medium">Need Help?</span>
+            </div>
+            <p class="text-xs text-blue-600">
+                Contact our support team if you continue to experience issues with your payment.
+            </p>
+            <div class="mt-2 flex justify-center space-x-4 text-xs">
+                <a href="mailto:support@kimbela.com" class="text-blue-600 hover:text-blue-800 flex items-center space-x-1">
+                    <i class="bi bi-envelope"></i>
+                    <span>Email Support</span>
+                </a>
+                <a href="#" class="text-blue-600 hover:text-blue-800 flex items-center space-x-1">
+                    <i class="bi bi-question-circle"></i>
+                    <span>Help Center</span>
+                </a>
+            </div>
+        </div>
+        
+        <p class="text-sm text-gray-500 mt-6">
+            Your transaction has been saved. You can retry the payment from your dashboard.
+        </p>
+
+        <!-- Security Note -->
+        <div class="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
+            <div class="flex items-center justify-center space-x-2 text-green-700">
+                <i class="bi bi-shield-check"></i>
+                <span class="text-xs font-medium">Your payment information is secure and encrypted</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Add interactive effects
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add button hover effects
+            const buttons = document.querySelectorAll('button, a');
+            buttons.forEach(button => {
+                button.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-2px)';
+                });
+                button.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                });
+            });
+
+            // Add continuous subtle shake to the main card
+            setInterval(() => {
+                const card = document.querySelector('.failed-animation');
+                card.style.animation = 'none';
+                setTimeout(() => {
+                    card.style.animation = 'shake 0.5s ease-in-out';
+                }, 10);
+            }, 10000); // Every 10 seconds
+        });
+
+        // Retry payment function
+        function retryPayment() {
+            const retryButton = document.querySelector('button');
+            const originalText = retryButton.innerHTML;
+            
+            // Show loading state
+            retryButton.innerHTML = `
+                <i class="bi bi-arrow-repeat animate-spin"></i>
+                <span>Processing...</span>
+            `;
+            retryButton.disabled = true;
+            
+            // Simulate processing
+            setTimeout(() => {
+                // In a real implementation, this would redirect to the payment page
+                // For now, we'll show a message and reset the button
+                alert('Redirecting to payment page...');
+                window.location.href = "{{ url_for('user.user_dashboard') }}";
+                
+                // Reset button after a delay
+                setTimeout(() => {
+                    retryButton.innerHTML = originalText;
+                    retryButton.disabled = false;
+                }, 2000);
+            }, 1500);
+        }
+
+        // Add keyboard shortcut for retry (Ctrl + R)
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'r') {
+                e.preventDefault();
+                retryPayment();
+            }
+        });
+    </script>
+</body>
+</html>
