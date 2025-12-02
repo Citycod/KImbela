@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Become a Seller - Kimbela Marketplace</title>
+    
+    <!-- Fonts & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Flutterwave -->
+    <script src="https://checkout.flutterwave.com/v3.js"></script>
+    
+    <style>
+        :root {
+            --primary: #5a4500;
+            --primary-dark: #b88900;
+            --secondary: #8B5CF6;
+            --accent: #10B981;
+            --background: #F9FAFB;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            min-height: 100vh;
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .gradient-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        }
+        
+        .gradient-secondary {
+            background: linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%);
+        }
+        
+        .gradient-accent {
+            background: linear-gradient(135deg, #10B981 0%, #3B82F6 100%);
+        }
+        
+        .shadow-soft {
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .hover-lift {
+            transition: all 0.3s ease;
+        }
+        
+        .hover-lift:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .pricing-card-popular {
+            border: 2px solid var(--primary);
+            position: relative;
+            transform: scale(1.05);
+        }
+        
+        .popular-badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        
+        .feature-check {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #374151;
+        }
+        
+        .feature-check i {
+            color: #10B981;
+            font-size: 1.1rem;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .step-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            margin: 0 auto 12px;
+        }
+        
+        .token-option {
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .token-option:hover {
+            border-color: var(--primary);
+            background-color: rgba(90, 69, 0, 0.05);
+        }
+        
+        .token-option.selected {
+            border-color: var(--primary);
+            background-color: rgba(90, 69, 0, 0.1);
+        }
+        
+        .payment-method {
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .payment-method:hover {
+            border-color: var(--primary);
+        }
+        
+        .payment-method.selected {
+            border-color: var(--primary);
+            background-color: rgba(90, 69, 0, 0.05);
+        }
+        
+        .payment-icon {
+            width: 48px;
+            height: 48px;
+            background: #f3f4f6;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-right: 16px;
+        }
+        
+        .testimonial-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .testimonial-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .faq-item {
+            border-bottom: 1px solid #e5e7eb;
+            padding: 20px 0;
+        }
+        
+        .faq-question {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        
+        .faq-answer.open {
+            max-height: 500px;
+        }
+        
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .pricing-card-popular {
+                transform: scale(1);
+            }
+            
+            .popular-badge {
+                top: -10px;
+                font-size: 0.7rem;
+                padding: 3px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="sticky top-0 z-50 glass-effect shadow-soft">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex items-center justify-between">
+                <!-- Logo -->
+                <a href="{{ url_for('marketplace.marketplace_home') }}" class="flex items-center space-x-3">
+                    <img src="{{ url_for('static', filename='assets/img/kim.png') }}" 
+                         alt="Kimbela" 
+                         class="h-10 w-auto">
+                    <div>
+                        <span class="text-lg font-bold gradient-primary bg-clip-text text-transparent">
+                            Kimbela Marketplace
+                        </span>
+                        <div class="text-xs text-gray-500">Become a Seller</div>
+                    </div>
+                </a>
+                
+                <!-- Back to Marketplace -->
+                <a href="{{ url_for('marketplace.marketplace_home') }}" 
+                   class="px-4 py-2 border-2 border-primary text-primary rounded-lg hover:bg-primary/5 transition-colors">
+                    <i class="bi bi-arrow-left mr-2"></i>Back to Marketplace
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 py-8">
+        <!-- Hero Section -->
+        <div class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4">
+                Start Selling on 
+                <span class="gradient-primary bg-clip-text text-transparent">Kimbela Marketplace</span>
+            </h1>
+            <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                Share your expertise, sell digital products, and earn tokens. Join thousands of successful sellers today.
+            </p>
+        </div>
+
+        <!-- Pricing Plans -->
+        <div class="mb-16">
+            <h2 class="text-3xl font-bold text-center mb-2">Choose Your Plan</h2>
+            <p class="text-gray-600 text-center mb-8">Select the perfect plan for your business needs</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                {% for subscription in subscriptions %}
+                <div class="bg-white rounded-2xl shadow-soft p-8 hover-lift {% if subscription.is_popular %}pricing-card-popular{% endif %}">
+                    {% if subscription.is_popular %}
+                    <div class="popular-badge">MOST POPULAR</div>
+                    {% endif %}
+                    
+                    <div class="text-center mb-6">
+                        <h3 class="text-2xl font-bold mb-2">{{ subscription.name }}</h3>
+                        <p class="text-gray-600">{{ subscription.description }}</p>
+                    </div>
+                    
+                    <div class="text-center mb-8">
+                        <div class="text-4xl font-bold text-primary mb-1">
+                            ${{ subscription.price_usd }}
+                        </div>
+                        <div class="text-lg text-gray-600 mb-1">or {{ subscription.price_tokens }} tokens</div>
+                        <div class="text-sm text-gray-500">per month</div>
+                    </div>
+                    
+                    <div class="space-y-4 mb-8">
+                        <div class="feature-check">
+                            <i class="bi bi-check-circle-fill"></i>
+                            <span>{{ subscription.max_services }} service listing{{ 's' if subscription.max_services != 1 }}</span>
+                        </div>
+                        
+                        <div class="feature-check">
+                            <i class="bi bi-check-circle-fill"></i>
+                            <span>{{ subscription.max_images }} images per service</span>
+                        </div>
+                        
+                        {% if subscription.is_featured %}
+                        <div class="feature-check">
+                            <i class="bi bi-check-circle-fill"></i>
+                            <span>Featured listing priority</span>
+                        </div>
+                        {% endif %}
+                        
+                        {% if subscription.can_add_video %}
+                        <div class="feature-check">
+                            <i class="bi bi-check-circle-fill"></i>
+                            <span>Video uploads enabled</span>
+                        </div>
+                        {% endif %}
+                        
+                        {% if subscription.can_add_digital %}
+                        <div class="feature-check">
+                            <i class="bi bi-check-circle-fill"></i>
+                            <span>Digital product sales</span>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="feature-check">
+                            <i class="bi bi-check-circle-fill"></i>
+                            <span>{{ subscription.support_level|title }} support</span>
+                        </div>
+                    </div>
+                    
+                    <button onclick="selectPlan({{ subscription.id }}, '{{ subscription.name }}', {{ subscription.price_usd }}, {{ subscription.price_tokens }})" 
+                            class="w-full py-4 {% if subscription.is_popular %}gradient-primary{% else %}bg-gray-800{% endif %} text-white rounded-xl font-bold text-lg hover:opacity-90 transition-opacity">
+                        {% if subscription.is_popular %}
+                        <i class="bi bi-star-fill mr-2"></i>Get Started
+                        {% else %}
+                        Choose Plan
+                        {% endif %}
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- How It Works -->
+        <div class="bg-gray-50 rounded-2xl p-8 mb-16">
+            <h2 class="text-3xl font-bold text-center mb-2">How It Works</h2>
+            <p class="text-gray-600 text-center mb-8">Start selling in just 4 simple steps</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div class="text-center">
+                    <div class="step-icon">
+                        <i class="bi bi-search"></i>
+                    </div>
+                    <h4 class="font-bold text-lg mb-2">1. Choose Plan</h4>
+                    <p class="text-gray-600">Select a subscription plan that matches your business goals</p>
+                </div>
+                
+                <div class="text-center">
+                    <div class="step-icon">
+                        <i class="bi bi-credit-card"></i>
+                    </div>
+                    <h4 class="font-bold text-lg mb-2">2. Pay & Verify</h4>
+                    <p class="text-gray-600">Complete secure payment through Flutterwave</p>
+                </div>
+                
+                <div class="text-center">
+                    <div class="step-icon">
+                        <i class="bi bi-plus-circle"></i>
+                    </div>
+                    <h4 class="font-bold text-lg mb-2">3. Create Service</h4>
+                    <p class="text-gray-600">Add your service details, images, and pricing</p>
+                </div>
+                
+                <div class="text-center">
+                    <div class="step-icon">
+                        <i class="bi bi-currency-exchange"></i>
+                    </div>
+                    <h4 class="font-bold text-lg mb-2">4. Start Earning</h4>
+                    <p class="text-gray-600">Get contacted by buyers and earn tokens immediately</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Options (Hidden by default, shown when plan is selected) -->
+        <div id="paymentOptions" class="hidden max-w-4xl mx-auto mb-16">
+            <div class="bg-white rounded-2xl shadow-soft p-8">
+                <div class="flex items-center justify-between mb-8">
+                    <div>
+                        <h2 class="text-2xl font-bold" id="selectedPlanName"></h2>
+                        <p class="text-gray-600">Complete your subscription</p>
+                    </div>
+                    <button onclick="goBackToPlans()" class="text-primary hover:underline">
+                        <i class="bi bi-arrow-left mr-1"></i>Change Plan
+                    </button>
+                </div>
+                
+                <!-- Payment Method Selection -->
+                <div class="mb-8">
+                    <h3 class="text-xl font-bold mb-4">Choose Payment Method</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div class="payment-method" onclick="selectPaymentMethod('tokens')" id="tokenPayment">
+                            <div class="flex items-center">
+                                <div class="payment-icon bg-green-100 text-green-600">
+                                    <i class="bi bi-coin"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold">Pay with Tokens</h4>
+                                    <p class="text-sm text-gray-600">Use your Kimbela tokens</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="payment-method" onclick="selectPaymentMethod('flutterwave')" id="flutterwavePayment">
+                            <div class="flex items-center">
+                                <div class="payment-icon bg-blue-100 text-blue-600">
+                                    <i class="bi bi-credit-card"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold">Credit/Debit Card</h4>
+                                    <p class="text-sm text-gray-600">Pay with card via Flutterwave</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Token Payment Section -->
+                <div id="tokenPaymentSection" class="hidden mb-8">
+                    <h3 class="text-xl font-bold mb-4">Pay with Tokens</h3>
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
+                        <div class="flex items-start">
+                            <i class="bi bi-info-circle text-yellow-600 mt-1 mr-2"></i>
+                            <div>
+                                <p class="text-yellow-800 font-medium">Your Balance: <span id="userTokenBalance">0</span> tokens</p>
+                                <p class="text-yellow-700 text-sm mt-1">Plan Cost: <span id="planTokenCost">0</span> tokens/month</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button id="payWithTokensBtn" 
+                                class="px-8 py-3 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                onclick="processTokenPayment()">
+                            Pay with Tokens
+                        </button>
+                        <p class="text-sm text-gray-500 mt-2">Your subscription will start immediately</p>
+                    </div>
+                </div>
+                
+                <!-- Flutterwave Payment Section -->
+                <div id="flutterwavePaymentSection" class="hidden">
+                    <h3 class="text-xl font-bold mb-4">Pay with Card</h3>
+                    <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <p class="font-bold text-lg" id="planPriceDisplay"></p>
+                                <p class="text-gray-600">Monthly subscription</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm text-gray-500">Auto-renews monthly</p>
+                                <p class="text-sm text-gray-500">Cancel anytime</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Payment Details -->
+                        <div class="space-y-3">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Plan:</span>
+                                <span class="font-medium" id="planNameDisplay"></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Billing:</span>
+                                <span class="font-medium">Monthly</span>
+                            </div>
+                            <div class="flex justify-between border-t pt-3">
+                                <span class="text-lg font-bold">Total:</span>
+                                <span class="text-lg font-bold" id="totalPriceDisplay"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Payment Button -->
+                    <div class="text-center">
+                        <button id="payWithCardBtn" 
+                                class="px-8 py-4 gradient-primary text-white rounded-xl font-bold text-lg hover:opacity-90 transition-opacity"
+                                onclick="processFlutterwavePayment()">
+                            <i class="bi bi-credit-card mr-2"></i>Pay Securely with Flutterwave
+                        </button>
+                        <p class="text-sm text-gray-500 mt-2">Secure payment powered by Flutterwave</p>
+                    </div>
+                </div>
+                
+                <!-- Terms and Conditions -->
+                <div class="mt-8 pt-8 border-t border-gray-200">
+                    <div class="flex items-start">
+                        <input type="checkbox" id="agreeTerms" class="mt-1 mr-2">
+                        <label for="agreeTerms" class="text-sm text-gray-600">
+                            I agree to the <a href="#" class="text-primary hover:underline">Terms of Service</a> and <a href="#" class="text-primary hover:underline">Privacy Policy</a>. I understand that my subscription will auto-renew monthly unless cancelled.
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Success Stories -->
+        <div class="mb-16">
+            <h2 class="text-3xl font-bold text-center mb-2">Success Stories</h2>
+            <p class="text-gray-600 text-center mb-8">Hear from our successful sellers</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                <div class="testimonial-card">
+                    <div class="flex items-center mb-4">
+                        <img src="https://randomuser.me/api/portraits/women/32.jpg" 
+                             alt="Sarah Johnson" 
+                             class="testimonial-avatar">
+                        <div class="ml-4">
+                            <h4 class="font-bold">Sarah Johnson</h4>
+                            <p class="text-sm text-gray-600">Relationship Coach</p>
+                            <div class="flex text-yellow-400">
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-gray-700 italic">
+                        "Kimbela Marketplace transformed my coaching business. I've connected with amazing clients and earned over 5,000 tokens in my first month!"
+                    </p>
+                </div>
+                
+                <div class="testimonial-card">
+                    <div class="flex items-center mb-4">
+                        <img src="https://randomuser.me/api/portraits/men/54.jpg" 
+                             alt="Michael Chen" 
+                             class="testimonial-avatar">
+                        <div class="ml-4">
+                            <h4 class="font-bold">Michael Chen</h4>
+                            <p class="text-sm text-gray-600">Legal Consultant</p>
+                            <div class="flex text-yellow-400">
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-half"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-gray-700 italic">
+                        "The professional platform and quality clients on Kimbela helped me grow my legal consultation practice by 300% in just 3 months."
+                    </p>
+                </div>
+                
+                <div class="testimonial-card">
+                    <div class="flex items-center mb-4">
+                        <img src="https://randomuser.me/api/portraits/women/65.jpg" 
+                             alt="Emily Rodriguez" 
+                             class="testimonial-avatar">
+                        <div class="ml-4">
+                            <h4 class="font-bold">Emily Rodriguez</h4>
+                            <p class="text-sm text-gray-600">E-book Author</p>
+                            <div class="flex text-yellow-400">
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-gray-700 italic">
+                        "Selling my relationship e-books on Kimbela has been amazing. The platform handles everything, letting me focus on creating content."
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAQ Section -->
+        <div class="max-w-3xl mx-auto mb-16">
+            <h2 class="text-3xl font-bold text-center mb-2">Frequently Asked Questions</h2>
+            <p class="text-gray-600 text-center mb-8">Find answers to common questions</p>
+            
+            <div class="space-y-4">
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(1)">
+                        <h3 class="text-lg font-semibold">How does the subscription work?</h3>
+                        <i class="bi bi-chevron-down transition-transform" id="faqIcon1"></i>
+                    </div>
+                    <div class="faq-answer" id="faqAnswer1">
+                        <p class="text-gray-600 mt-2">
+                            Your subscription is billed monthly. You can list services according to your plan's limit, and you'll have access to all features for the duration of your subscription. Subscriptions auto-renew unless cancelled.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(2)">
+                        <h3 class="text-lg font-semibold">Can I upgrade or downgrade my plan?</h3>
+                        <i class="bi bi-chevron-down transition-transform" id="faqIcon2"></i>
+                    </div>
+                    <div class="faq-answer" id="faqAnswer2">
+                        <p class="text-gray-600 mt-2">
+                            Yes! You can upgrade or downgrade your plan at any time. When upgrading, you'll be charged the prorated difference. When downgrading, the change will take effect at the start of your next billing cycle.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(3)">
+                        <h3 class="text-lg font-semibold">How do buyers contact me?</h3>
+                        <i class="bi bi-chevron-down transition-transform" id="faqIcon3"></i>
+                    </div>
+                    <div class="faq-answer" id="faqAnswer3">
+                        <p class="text-gray-600 mt-2">
+                            Buyers can contact you through multiple channels: WhatsApp, phone call, email, or Kimbela Messenger. You choose which contact methods to display on your service listings.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(4)">
+                        <h3 class="text-lg font-semibold">How do I get paid?</h3>
+                        <i class="bi bi-chevron-down transition-transform" id="faqIcon4"></i>
+                    </div>
+                    <div class="faq-answer" id="faqAnswer4">
+                        <p class="text-gray-600 mt-2">
+                            You earn Kimbela tokens when buyers purchase your services. These tokens can be used within the platform, converted to cash, or used to purchase other services. Payments are processed securely through our token system.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="faq-item border-none">
+                    <div class="faq-question" onclick="toggleFAQ(5)">
+                        <h3 class="text-lg font-semibold">What happens if I cancel my subscription?</h3>
+                        <i class="bi bi-chevron-down transition-transform" id="faqIcon5"></i>
+                    </div>
+                    <div class="faq-answer" id="faqAnswer5">
+                        <p class="text-gray-600 mt-2">
+                            If you cancel, your subscription will remain active until the end of your current billing period. Your services will remain listed but marked as inactive. You can reactivate at any time by resubscribing.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Final CTA -->
+        <div class="text-center mb-8">
+            <h2 class="text-3xl font-bold mb-4">Ready to Start Selling?</h2>
+            <p class="text-xl text-gray-600 mb-6 max-w-2xl mx-auto">
+                Join thousands of successful sellers on Africa's fastest growing marketplace for professionals and digital creators.
+            </p>
+            <button onclick="scrollToPlans()" 
+                    class="px-8 py-4 gradient-primary text-white rounded-xl font-bold text-lg hover:opacity-90 transition-opacity">
+                <i class="bi bi-rocket-takeoff-fill mr-2"></i>View Pricing Plans
+            </button>
+        </div>
+    </div>
+
+    <!-- Payment Processing Modal -->
+    <div id="paymentModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="p-8">
+                <div class="text-center mb-6">
+                    <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="bi bi-credit-card text-green-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-2">Processing Payment</h3>
+                    <p class="text-gray-600" id="paymentMessage">Please wait while we process your payment...</p>
+                </div>
+                
+                <div class="text-center">
+                    <div class="loading mx-auto mb-4"></div>
+                    <p class="text-sm text-gray-500">Do not close this window</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="p-8">
+                <div class="text-center">
+                    <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="bi bi-check-circle-fill text-green-600 text-3xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-2">Payment Successful!</h3>
+                    <p class="text-gray-600 mb-6">Your subscription has been activated successfully.</p>
+                    
+                    <div class="bg-green-50 border border-green-200 rounded-xl p-4 mb-6">
+                        <div class="flex items-center">
+                            <i class="bi bi-check-circle-fill text-green-600 mr-2"></i>
+                            <div>
+                                <p class="font-medium text-green-800">Subscription Activated</p>
+                                <p class="text-sm text-green-700">You can now create your first service listing</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                        <a href="{{ url_for('marketplace.create_service') }}" 
+                           class="px-6 py-3 gradient-primary text-white rounded-xl font-bold hover:opacity-90 transition-opacity">
+                            <i class="bi bi-plus-circle mr-2"></i>Create First Service
+                        </a>
+                        <a href="{{ url_for('market.seller_dashboard') }}" 
+                           class="px-6 py-3 border-2 border-primary text-primary rounded-xl font-bold hover:bg-primary/5 transition-colors">
+                            Go to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Modal -->
+    <div id="errorModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="p-8">
+                <div class="text-center">
+                    <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="bi bi-x-circle-fill text-red-600 text-3xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-2" id="errorTitle">Payment Failed</h3>
+                    <p class="text-gray-600 mb-6" id="errorMessage">There was an error processing your payment. Please try again.</p>
+                    
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                        <button onclick="closeErrorModal()" 
+                                class="px-6 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-colors">
+                            Try Again
+                        </button>
+                        <button onclick="goBackToPlans()" 
+                                class="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-bold hover:bg-gray-50 transition-colors">
+                            Change Plan
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // Global variables
+        let selectedPlanId = null;
+        let selectedPlanName = '';
+        let selectedPlanPrice = 0;
+        let selectedPlanTokens = 0;
+        let selectedPaymentMethod = null;
+        let userTokenBalance = {{ current_user.tokens if current_user else 0 }};
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load user token balance
+            loadUserTokenBalance();
+            
+            // Set up FAQ toggle
+            setupFAQ();
+            
+            // Check for URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const planId = urlParams.get('plan');
+            if (planId) {
+                // Find and select the plan
+                const planButton = document.querySelector(`[onclick*="selectPlan(${planId}"]`);
+                if (planButton) {
+                    planButton.click();
+                }
+            }
+        });
+
+        // Plan Selection
+        function selectPlan(planId, planName, price, tokens) {
+            selectedPlanId = planId;
+            selectedPlanName = planName;
+            selectedPlanPrice = price;
+            selectedPlanTokens = tokens;
+            
+            // Update UI
+            document.getElementById('selectedPlanName').textContent = planName;
+            document.getElementById('planNameDisplay').textContent = planName;
+            document.getElementById('planPriceDisplay').textContent = `$${price}/month`;
+            document.getElementById('totalPriceDisplay').textContent = `$${price}`;
+            document.getElementById('planTokenCost').textContent = tokens.toLocaleString();
+            
+            // Show payment options
+            document.getElementById('paymentOptions').classList.remove('hidden');
+            
+            // Scroll to payment section
+            document.getElementById('paymentOptions').scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
+            
+            // Reset payment method selection
+            resetPaymentMethodSelection();
+        }
+
+        function goBackToPlans() {
+            selectedPlanId = null;
+            selectedPlanName = '';
+            selectedPlanPrice = 0;
+            selectedPlanTokens = 0;
+            selectedPaymentMethod = null;
+            
+            // Hide payment options
+            document.getElementById('paymentOptions').classList.add('hidden');
+            
+            // Scroll back to plans
+            document.querySelector('.grid.grid-cols-1.md\\:grid-cols-3').scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
+            
+            // Reset all selections
+            resetPaymentMethodSelection();
+        }
+
+        // Payment Method Selection
+        function selectPaymentMethod(method) {
+            selectedPaymentMethod = method;
+            
+            // Update UI
+            document.querySelectorAll('.payment-method').forEach(el => {
+                el.classList.remove('selected');
+            });
+            
+            if (method === 'tokens') {
+                document.getElementById('tokenPayment').classList.add('selected');
+                document.getElementById('tokenPaymentSection').classList.remove('hidden');
+                document.getElementById('flutterwavePaymentSection').classList.add('hidden');
+                
+                // Check if user has enough tokens
+                const tokenBtn = document.getElementById('payWithTokensBtn');
+                if (userTokenBalance >= selectedPlanTokens) {
+                    tokenBtn.disabled = false;
+                    tokenBtn.textContent = `Pay ${selectedPlanTokens.toLocaleString()} Tokens`;
+                } else {
+                    tokenBtn.disabled = true;
+                    tokenBtn.textContent = `Insufficient Tokens`;
+                }
+            } else {
+                document.getElementById('flutterwavePayment').classList.add('selected');
+                document.getElementById('flutterwavePaymentSection').classList.remove('hidden');
+                document.getElementById('tokenPaymentSection').classList.add('hidden');
+            }
+        }
+
+        function resetPaymentMethodSelection() {
+            selectedPaymentMethod = null;
+            document.querySelectorAll('.payment-method').forEach(el => {
+                el.classList.remove('selected');
+            });
+            document.getElementById('tokenPaymentSection').classList.add('hidden');
+            document.getElementById('flutterwavePaymentSection').classList.add('hidden');
+        }
+
+        // Token Payment Processing
+        async function processTokenPayment() {
+            // Check terms agreement
+            if (!document.getElementById('agreeTerms').checked) {
+                showError('Terms Required', 'Please agree to the Terms of Service and Privacy Policy to continue.');
+                return;
+            }
+            
+            // Check token balance
+            if (userTokenBalance < selectedPlanTokens) {
+                showError('Insufficient Tokens', `You need ${selectedPlanTokens} tokens but only have ${userTokenBalance}. Please buy more tokens or use card payment.`);
+                return;
+            }
+            
+            // Show processing modal
+            showPaymentModal('Processing token payment...');
+            
+            try {
+                // Call API to process token payment
+                const response = await fetch('/api/marketplace/subscribe/tokens', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        plan_id: selectedPlanId,
+                        token_amount: selectedPlanTokens
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Update user token balance
+                    userTokenBalance -= selectedPlanTokens;
+                    document.getElementById('userTokenBalance').textContent = userTokenBalance.toLocaleString();
+                    
+                    // Show success modal
+                    hidePaymentModal();
+                    showSuccessModal();
+                } else {
+                    throw new Error(data.error || 'Payment failed');
+                }
+            } catch (error) {
+                hidePaymentModal();
+                showError('Payment Failed', error.message);
+            }
+        }
+
+        // Flutterwave Payment Processing
+        async function processFlutterwavePayment() {
+            // Check terms agreement
+            if (!document.getElementById('agreeTerms').checked) {
+                showError('Terms Required', 'Please agree to the Terms of Service and Privacy Policy to continue.');
+                return;
+            }
+            
+            // Show processing modal
+            showPaymentModal('Redirecting to secure payment...');
+            
+            try {
+                // Get payment data from server
+                const response = await fetch('/api/marketplace/subscribe/initiate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        plan_id: selectedPlanId,
+                        plan_name: selectedPlanName,
+                        amount: selectedPlanPrice
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Initialize Flutterwave payment
+                    FlutterwaveCheckout({
+                        public_key: data.flutterwave_public_key,
+                        tx_ref: data.payment_data.tx_ref,
+                        amount: data.payment_data.amount,
+                        currency: data.payment_data.currency,
+                        payment_options: "card, banktransfer, ussd",
+                        redirect_url: data.payment_data.redirect_url,
+                        customer: data.payment_data.customer,
+                        customizations: data.payment_data.customizations,
+                        meta: data.payment_data.meta,
+                        onclose: function() {
+                            hidePaymentModal();
+                            showError('Payment Cancelled', 'Payment was cancelled. Please try again.');
+                        },
+                        callback: function(response) {
+                            // This will be handled by the redirect_url
+                            hidePaymentModal();
+                            if (response.status === 'successful') {
+                                showSuccessModal();
+                            } else {
+                                showError('Payment Failed', 'There was an error processing your payment. Please try again.');
+                            }
+                        }
+                    });
+                } else {
+                    throw new Error(data.error || 'Failed to initialize payment');
+                }
+            } catch (error) {
+                hidePaymentModal();
+                showError('Payment Error', error.message);
+            }
+        }
+
+        // User Token Balance
+        async function loadUserTokenBalance() {
+            try {
+                const response = await fetch('/api/user/token-balance');
+                const data = await response.json();
+                
+                if (data.success) {
+                    userTokenBalance = data.balance;
+                    document.getElementById('userTokenBalance').textContent = userTokenBalance.toLocaleString();
+                }
+            } catch (error) {
+                console.error('Error loading token balance:', error);
+            }
+        }
+
+        // Modal Functions
+        function showPaymentModal(message) {
+            if (message) {
+                document.getElementById('paymentMessage').textContent = message;
+            }
+            document.getElementById('paymentModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function hidePaymentModal() {
+            document.getElementById('paymentModal').classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        function showSuccessModal() {
+            document.getElementById('successModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function showError(title, message) {
+            document.getElementById('errorTitle').textContent = title;
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('errorModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeErrorModal() {
+            document.getElementById('errorModal').classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        // FAQ Functions
+        function setupFAQ() {
+            // Initialize all FAQs as closed
+            for (let i = 1; i <= 5; i++) {
+                document.getElementById(`faqAnswer${i}`).classList.remove('open');
+                document.getElementById(`faqIcon${i}`).style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function toggleFAQ(faqNumber) {
+            const answer = document.getElementById(`faqAnswer${faqNumber}`);
+            const icon = document.getElementById(`faqIcon${faqNumber}`);
+            
+            if (answer.classList.contains('open')) {
+                answer.classList.remove('open');
+                icon.style.transform = 'rotate(0deg)';
+            } else {
+                // Close all other FAQs
+                for (let i = 1; i <= 5; i++) {
+                    if (i !== faqNumber) {
+                        document.getElementById(`faqAnswer${i}`).classList.remove('open');
+                        document.getElementById(`faqIcon${i}`).style.transform = 'rotate(0deg)';
+                    }
+                }
+                
+                answer.classList.add('open');
+                icon.style.transform = 'rotate(180deg)';
+            }
+        }
+
+        // Utility Functions
+        function scrollToPlans() {
+            document.querySelector('.grid.grid-cols-1.md\\:grid-cols-3').scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD'
+            }).format(amount);
+        }
+
+        // Notification function
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-xl shadow-lg text-white ${
+                type === 'success' ? 'bg-green-500' :
+                type === 'error' ? 'bg-red-500' :
+                type === 'warning' ? 'bg-yellow-500' :
+                'bg-blue-500'
+            }`;
+            notification.innerHTML = `
+                <div class="flex items-center space-x-3">
+                    <i class="bi ${
+                        type === 'success' ? 'bi-check-circle' :
+                        type === 'error' ? 'bi-exclamation-triangle' :
+                        type === 'warning' ? 'bi-exclamation-circle' :
+                        'bi-info-circle'
+                    }"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(100px)';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Escape key closes modals
+            if (e.key === 'Escape') {
+                hidePaymentModal();
+                closeErrorModal();
+                document.getElementById('successModal').classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+        });
+    </script>
+</body>
+</html>

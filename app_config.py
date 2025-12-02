@@ -5,6 +5,7 @@ import os
 from flask_migrate import Migrate
 from extensions import db, bcrypt, login_manager, mail
 from users.user import user as user_blueprint
+from marketplace.market import market as market_blueprint
 from authentication.authenticate import auth
 from admin.admin import admin as admin_blueprint
 from matchmaking.matchmake import match as matchmaking_blueprint
@@ -92,6 +93,7 @@ def create_app():
     app.register_blueprint(admin_blueprint)
     app.register_blueprint(payments_blueprint)
     app.register_blueprint(matchmaking_blueprint)
+    app.register_blueprint(market_blueprint)
 
     # Initialize scheduler - ADD THIS SECTION
     if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':

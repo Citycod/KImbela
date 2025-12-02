@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seller Dashboard - Kimbela Marketplace</title>
+    
+    <!-- Fonts & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #5a4500;
+            --primary-dark: #b88900;
+            --secondary: #8B5CF6;
+            --accent: #10B981;
+            --background: #F9FAFB;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            min-height: 100vh;
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .gradient-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        }
+        
+        .gradient-secondary {
+            background: linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%);
+        }
+        
+        .gradient-accent {
+            background: linear-gradient(135deg, #10B981 0%, #3B82F6 100%);
+        }
+        
+        .shadow-soft {
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .hover-lift {
+            transition: all 0.3s ease;
+        }
+        
+        .hover-lift:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Stats Cards */
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        
+        /* Service Cards */
+        .service-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .service-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .service-image {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+        }
+        
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status-published {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+        
+        .status-draft {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+        
+        .status-pending {
+            background: #DBEAFE;
+            color: #1E40AF;
+        }
+        
+        /* Table */
+        .dashboard-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        
+        .dashboard-table th {
+            background: #F9FAFB;
+            padding: 16px;
+            text-align: left;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 2px solid #E5E7EB;
+        }
+        
+        .dashboard-table td {
+            padding: 16px;
+            border-bottom: 1px solid #E5E7EB;
+            vertical-align: middle;
+        }
+        
+        .dashboard-table tr:hover {
+            background: #F9FAFB;
+        }
+        
+        /* Loading */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        
+        .modal.hidden {
+            display: none;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        /* Tabs */
+        .tab-button {
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            background: transparent;
+            color: #6B7280;
+            cursor: pointer;
+        }
+        
+        .tab-button.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .tab-button:hover:not(.active) {
+            background: #F3F4F6;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            position: sticky;
+            top: 20px;
+            height: calc(100vh - 40px);
+            overflow-y: auto;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: #4B5563;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            margin-bottom: 8px;
+        }
+        
+        .nav-item:hover {
+            background: #F3F4F6;
+            color: var(--primary);
+        }
+        
+        .nav-item.active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+        }
+        
+        .nav-item i {
+            margin-right: 12px;
+            font-size: 18px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .sidebar {
+                height: auto;
+                position: static;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .stat-card {
+                padding: 16px;
+            }
+            
+            .dashboard-table {
+                display: block;
+                overflow-x: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="sticky top-0 z-50 glass-effect shadow-soft">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex items-center justify-between">
+                <!-- Logo -->
+                <a href="{{ url_for('market.main_market') }}" class="flex items-center space-x-3">
+                    <img src="{{ url_for('static', filename='assets/img/kim.png') }}" 
+                         alt="Kimbela" 
+                         class="h-10 w-auto">
+                    <div>
+                        <span class="text-lg font-bold gradient-primary bg-clip-text text-transparent">
+                            Kimbela Marketplace
+                        </span>
+                        <div class="text-xs text-gray-500">Seller Dashboard</div>
+                    </div>
+                </a>
+                
+                <!-- User Menu -->
+                <div class="flex items-center space-x-4">
+                    <a href="{{ url_for('market.create_service') }}" 
+                       class="px-4 py-2 gradient-primary text-white rounded-lg font-bold hover:opacity-90 transition-opacity">
+                        <i class="bi bi-plus-lg mr-2"></i>Create Service
+                    </a>
+                    
+                    <div class="relative group">
+                        <button class="flex items-center space-x-2 focus:outline-none">
+                            <div class="w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center">
+                                <i class="bi bi-person"></i>
+                            </div>
+                            <span class="hidden md:inline font-medium">{{ current_user.username }}</span>
+                            <i class="bi bi-chevron-down"></i>
+                        </button>
+                        
+                        <!-- Dropdown Menu -->
+                        <div class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg py-2 z-50 hidden group-hover:block">
+    {% if current_user.is_authenticated %}
+        <!-- Seller Dashboard -->
+        <a href="{{ url_for('market.seller_dashboard') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+            <i class="bi bi-speedometer2 mr-2"></i>Dashboard
+        </a>
+        
+        <!-- Public Profile -->
+        <a href="{{ url_for('market.seller_profile', seller_id=current_user.id) }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+            <i class="bi bi-person mr-2"></i>Public Profile
+        </a>
+        
+        <!-- Create Service -->
+        <a href="{{ url_for('market.create_service') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+            <i class="bi bi-plus-circle mr-2"></i>Create Service
+        </a>
+        
+        <!-- My Services -->
+        <a href="{{ url_for('market.seller_dashboard') }}#services" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+            <i class="bi bi-briefcase mr-2"></i>My Services
+        </a>
+        
+        <div class="border-t my-2"></div>
+        
+        <!-- Settings (if you have this route) -->
+        {% if url_for('market.seller_settings') != '#' %}
+        <a href="{{ url_for('market.seller_settings') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+            <i class="bi bi-gear mr-2"></i>Settings
+        </a>
+        {% endif %}
+        
+        <!-- Logout -->
+        <a href="{{ url_for('user.logout') }}" class="block px-4 py-2 text-red-600 hover:bg-red-50">
+            <i class="bi bi-box-arrow-right mr-2"></i>Logout
+        </a>
+    {% endif %}
+</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-6">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <!-- Sidebar -->
+            <div class="lg:col-span-1">
+                <div class="sidebar bg-white rounded-2xl p-6 shadow-soft">
+                    <h3 class="font-bold text-lg mb-4">Seller Menu</h3>
+                    
+                    <nav class="space-y-1">
+                        <a href="#overview" class="nav-item active" onclick="switchTab('overview')">
+                            <i class="bi bi-speedometer2"></i>
+                            <span>Overview</span>
+                        </a>
+                        
+                        <a href="#services" class="nav-item" onclick="switchTab('services')">
+                            <i class="bi bi-bag"></i>
+                            <span>My Services</span>
+                            <span class="ml-auto bg-primary text-white text-xs px-2 py-1 rounded-full">12</span>
+                        </a>
+                        
+                        <a href="#orders" class="nav-item" onclick="switchTab('orders')">
+                            <i class="bi bi-cart"></i>
+                            <span>Orders</span>
+                            <span class="ml-auto bg-green-500 text-white text-xs px-2 py-1 rounded-full">5</span>
+                        </a>
+                        
+                        <a href="#reviews" class="nav-item" onclick="switchTab('reviews')">
+                            <i class="bi bi-star"></i>
+                            <span>Reviews</span>
+                            <span class="ml-auto bg-yellow-500 text-white text-xs px-2 py-1 rounded-full">23</span>
+                        </a>
+                        
+                        <a href="#earnings" class="nav-item" onclick="switchTab('earnings')">
+                            <i class="bi bi-cash-coin"></i>
+                            <span>Earnings</span>
+                        </a>
+                        
+                        <a href="#analytics" class="nav-item" onclick="switchTab('analytics')">
+                            <i class="bi bi-graph-up"></i>
+                            <span>Analytics</span>
+                        </a>
+                        
+                        <a href="#messages" class="nav-item" onclick="switchTab('messages')">
+                            <i class="bi bi-chat"></i>
+                            <span>Messages</span>
+                            <span class="ml-auto bg-blue-500 text-white text-xs px-2 py-1 rounded-full">3</span>
+                        </a>
+                    </nav>
+                    
+                    <div class="mt-8 pt-6 border-t">
+                        <h4 class="font-bold text-sm mb-3 text-gray-500">ACCOUNT</h4>
+                        
+                        <a href="{{ url_for('market.seller_profile', seller_id=current_user.id) }}" class="nav-item">
+                            <i class="bi bi-person"></i>
+                            <span>Profile</span>
+                        </a>
+                        
+                        <a href="{{ url_for('market.seller_settings') }}" class="nav-item">
+                            <i class="bi bi-gear"></i>
+                            <span>Settings</span>
+                        </a>
+                        
+                        <a href="{{ url_for('user.logout') }}" class="nav-item text-red-600 hover:text-red-700">
+                            <i class="bi bi-box-arrow-right"></i>
+                            <span>Logout</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="lg:col-span-3">
+                <!-- Welcome Banner -->
+                <div class="gradient-primary rounded-2xl p-6 text-white mb-6">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between">
+                        <div>
+                            <h1 class="text-2xl font-bold mb-2">Welcome back, {{ current_user.username }}! 👋</h1>
+                            <p class="opacity-90">Here's what's happening with your services today.</p>
+                        </div>
+                        <div class="mt-4 md:mt-0">
+                            <a href="{{ url_for('market.create_service') }}" 
+                               class="inline-flex items-center bg-white text-primary px-6 py-3 rounded-xl font-bold hover:bg-opacity-90 transition-all">
+                                <i class="bi bi-plus-lg mr-2"></i> Create New Service
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Stats Overview -->
+                <!-- Stats Overview -->
+<!-- Stats Overview -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div class="stat-card hover-lift">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <p class="text-sm text-gray-600">Total Earnings</p>
+                <h3 class="text-2xl font-bold">KES {{ "%.2f"|format(total_earnings) }}</h3>
+            </div>
+            <div class="stat-icon gradient-primary">
+                <i class="bi bi-cash-coin text-white"></i>
+            </div>
+        </div>
+        <p class="text-sm text-green-600">
+            <i class="bi bi-arrow-up-right mr-1"></i> From {{ total_services }} services
+        </p>
+    </div>
+    
+    <div class="stat-card hover-lift">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <p class="text-sm text-gray-600">Active Services</p>
+                <h3 class="text-2xl font-bold">{{ active_services }}</h3>
+            </div>
+            <div class="stat-icon gradient-secondary">
+                <i class="bi bi-bag text-white"></i>
+            </div>
+        </div>
+        <p class="text-sm text-green-600">
+            <i class="bi bi-arrow-up-right mr-1"></i> Out of {{ total_services }} total
+        </p>
+    </div>
+    
+    <div class="stat-card hover-lift">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <p class="text-sm text-gray-600">Total Views</p>
+                <h3 class="text-2xl font-bold">{{ total_views }}</h3>
+            </div>
+            <div class="stat-icon gradient-accent">
+                <i class="bi bi-eye text-white"></i>
+            </div>
+        </div>
+        <p class="text-sm text-blue-600">
+            <i class="bi bi-mouse mr-1"></i> {{ total_clicks }} clicks
+        </p>
+    </div>
+    
+    <div class="stat-card hover-lift">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <p class="text-sm text-gray-600">Avg. Rating</p>
+                <h3 class="text-2xl font-bold">{{ "%.1f"|format(average_rating) }}</h3>
+            </div>
+            <div class="stat-icon bg-yellow-500">
+                <i class="bi bi-star text-white"></i>
+            </div>
+        </div>
+        <p class="text-sm text-gray-600">
+            <i class="bi bi-chat mr-1"></i> {{ total_reviews }} reviews total
+        </p>
+    </div>
+</div>
+                
+                <!-- Tabs Content -->
+                <div id="tabContent">
+                    <!-- Overview Tab (Default) -->
+                    <div id="overview-tab" class="tab-content active">
+                        <!-- Quick Actions -->
+                        <div class="bg-white rounded-2xl p-6 shadow-soft mb-6">
+                            <h3 class="font-bold text-lg mb-4">Quick Actions</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <a href="{{ url_for('market.create_service') }}" 
+                                   class="flex items-center p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-primary hover:bg-primary/5 transition-all">
+                                    <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mr-4">
+                                        <i class="bi bi-plus-lg text-primary text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold">Create Service</h4>
+                                        <p class="text-sm text-gray-600">Add new service</p>
+                                    </div>
+                                </a>
+                                
+                                <a href="#services" onclick="switchTab('services')"
+                                   class="flex items-center p-4 border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all">
+                                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+                                        <i class="bi bi-pencil text-blue-600 text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold">Manage Services</h4>
+                                        <p class="text-sm text-gray-600">Edit existing services</p>
+                                    </div>
+                                </a>
+                                
+                                <a href="#orders" onclick="switchTab('orders')"
+                                   class="flex items-center p-4 border-2 border-gray-200 rounded-xl hover:border-green-500 hover:bg-green-50 transition-all">
+                                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
+                                        <i class="bi bi-cart-check text-green-600 text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold">Process Orders</h4>
+                                        <p class="text-sm text-gray-600">View pending orders</p>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <!-- Recent Orders -->
+                        <div class="bg-white rounded-2xl p-6 shadow-soft mb-6">
+                            <div class="flex items-center justify-between mb-6">
+                                <h3 class="font-bold text-lg">Recent Orders</h3>
+                                <a href="#orders" onclick="switchTab('orders')" class="text-primary hover:underline text-sm font-medium">
+                                    View All <i class="bi bi-arrow-right ml-1"></i>
+                                </a>
+                            </div>
+                            
+                            <div class="overflow-x-auto">
+                                <table class="dashboard-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Order ID</th>
+                                            <th>Service</th>
+                                            <th>Customer</th>
+                                            <th>Date</th>
+                                            <th>Amount</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td class="font-mono text-sm">#ORD-7821</td>
+                                            <td>Career Coaching Session</td>
+                                            <td>John Doe</td>
+                                            <td>Today, 10:30 AM</td>
+                                            <td class="font-bold">KES 2,500</td>
+                                            <td><span class="status-badge status-published">Completed</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="font-mono text-sm">#ORD-7820</td>
+                                            <td>Resume Review</td>
+                                            <td>Jane Smith</td>
+                                            <td>Yesterday, 3:45 PM</td>
+                                            <td class="font-bold">KES 1,200</td>
+                                            <td><span class="status-badge status-pending">Processing</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="font-mono text-sm">#ORD-7819</td>
+                                            <td>LinkedIn Optimization</td>
+                                            <td>Mike Johnson</td>
+                                            <td>Nov 28, 2024</td>
+                                            <td class="font-bold">KES 3,800</td>
+                                            <td><span class="status-badge status-published">Completed</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="font-mono text-sm">#ORD-7818</td>
+                                            <td>Interview Prep</td>
+                                            <td>Sarah Williams</td>
+                                            <td>Nov 27, 2024</td>
+                                            <td class="font-bold">KES 4,500</td>
+                                            <td><span class="status-badge status-published">Completed</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Recent Services -->
+                        <div class="bg-white rounded-2xl p-6 shadow-soft">
+                            <div class="flex items-center justify-between mb-6">
+                                <h3 class="font-bold text-lg">Recent Services</h3>
+                                <a href="#services" onclick="switchTab('services')" class="text-primary hover:underline text-sm font-medium">
+                                    View All <i class="bi bi-arrow-right ml-1"></i>
+                                </a>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <!-- Service Card -->
+                                <div class="service-card">
+                                    <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" 
+                                         alt="Career Coaching" 
+                                         class="service-image">
+                                    <div class="p-4">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <span class="status-badge status-published">Published</span>
+                                            <span class="font-bold text-primary">KES 2,500</span>
+                                        </div>
+                                        <h4 class="font-bold mb-1">Professional Career Coaching</h4>
+                                        <p class="text-sm text-gray-600 mb-3 line-clamp-2">One-on-one career guidance and strategy session</p>
+                                        <div class="flex items-center justify-between text-sm text-gray-500">
+                                            <span><i class="bi bi-eye mr-1"></i> 245 views</span>
+                                            <span><i class="bi bi-cart mr-1"></i> 12 orders</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Service Card -->
+                                <div class="service-card">
+                                    <img src="https://images.unsplash.com/photo-1586281380349-632531db7ed4?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" 
+                                         alt="Resume Review" 
+                                         class="service-image">
+                                    <div class="p-4">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <span class="status-badge status-draft">Draft</span>
+                                            <span class="font-bold text-primary">KES 1,200</span>
+                                        </div>
+                                        <h4 class="font-bold mb-1">Resume Review & Optimization</h4>
+                                        <p class="text-sm text-gray-600 mb-3 line-clamp-2">Professional resume critique and improvement</p>
+                                        <div class="flex items-center justify-between text-sm text-gray-500">
+                                            <span><i class="bi bi-eye mr-1"></i> 0 views</span>
+                                            <span><i class="bi bi-cart mr-1"></i> 0 orders</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Service Card -->
+                                <div class="service-card">
+                                    <img src="https://images.unsplash.com/photo-1611224923853-80b023f02d71?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" 
+                                         alt="LinkedIn Optimization" 
+                                         class="service-image">
+                                    <div class="p-4">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <span class="status-badge status-published">Published</span>
+                                            <span class="font-bold text-primary">KES 3,800</span>
+                                        </div>
+                                        <h4 class="font-bold mb-1">LinkedIn Profile Optimization</h4>
+                                        <p class="text-sm text-gray-600 mb-3 line-clamp-2">Complete LinkedIn profile makeover</p>
+                                        <div class="flex items-center justify-between text-sm text-gray-500">
+                                            <span><i class="bi bi-eye mr-1"></i> 189 views</span>
+                                            <span><i class="bi bi-cart mr-1"></i> 8 orders</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Services Tab -->
+                    <!-- Services Tab -->
+<div id="services-tab" class="tab-content hidden">
+    <div class="bg-white rounded-2xl p-6 shadow-soft">
+        <div class="flex flex-col md:flex-row md:items-center justify-between mb-6">
+            <h3 class="font-bold text-lg mb-4 md:mb-0">My Services ({{ total_services }})</h3>
+            <div class="flex space-x-3">
+                <div class="relative">
+                    <input type="text" 
+                           placeholder="Search services..." 
+                           class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+                    <i class="bi bi-search absolute left-3 top-3 text-gray-400"></i>
+                </div>
+                <select class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+                    <option>All Status</option>
+                    <option>Published</option>
+                    <option>Draft</option>
+                    <option>Pending</option>
+                </select>
+                <a href="{{ url_for('market.create_service') }}" 
+                   class="px-4 py-2 gradient-primary text-white rounded-lg font-bold hover:opacity-90">
+                    <i class="bi bi-plus-lg mr-2"></i> New
+                </a>
+            </div>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="dashboard-table">
+                <thead>
+                    <tr>
+                        <th>Service</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Status</th>
+                        <th>Views</th>
+                        <th>Earnings</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Loop through services here -->
+                    {% for service in services %}
+                    <tr>
+                        <td>
+                            <div class="flex items-center">
+                                <img src="{{ service.cover_image or url_for('static', filename='assets/img/default-service.jpg') }}" 
+                                     alt="{{ service.title }}" 
+                                     class="w-12 h-12 rounded-lg object-cover mr-3">
+                                <div>
+                                    <h4 class="font-bold">{{ service.title }}</h4>
+                                    <p class="text-sm text-gray-600">{{ service.short_description[:50] if service.short_description else 'No description' }}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            {% if service.category %}
+                                {{ service.category.name }}
+                            {% else %}
+                                Uncategorized
+                            {% endif %}
+                        </td>
+                        <td class="font-bold">
+    {% if service.is_free %}
+        Free
+    {% elif service.price_tokens %}
+        {{ service.price_tokens }} tokens
+    {% else %}
+        Free
+    {% endif %}
+</td>
+<td>
+    {% if service.status == 'active' %}
+    <span class="status-badge status-published">Active</span>
+    {% elif service.status == 'pending' %}
+    <span class="status-badge status-pending">Pending</span>
+    {% elif service.status == 'draft' %}
+    <span class="status-badge status-draft">Draft</span>
+    {% else %}
+    <span class="status-badge status-pending">{{ service.status|title if service.status else 'Unknown' }}</span>
+    {% endif %}
+</td>
+<td class="text-center">{{ service.views }}</td>
+<td class="font-bold">KES {{ "%.2f"|format(service.earnings or 0) }}</td>
+                        <td>
+                            <div class="flex space-x-2">
+                                <a href="{{ url_for('market.edit_service', service_id=service.id) }}" 
+                                   class="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 flex items-center justify-center">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{{ url_for('market.service_detail', slug=service.slug) }}" 
+                                   class="w-8 h-8 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 flex items-center justify-center">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <button onclick="deleteService({{ service.id }})" 
+                                        class="w-8 h-8 bg-red-100 text-red-600 rounded-lg hover:bg-red-200">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+                    
+                    <!-- Orders Tab -->
+                    <div id="orders-tab" class="tab-content hidden">
+                        <div class="bg-white rounded-2xl p-6 shadow-soft">
+                            <h3 class="font-bold text-lg mb-6">Recent Orders (5 pending)</h3>
+                            
+                            <div class="space-y-4">
+                                <!-- Order Item -->
+                                <div class="flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:bg-gray-50">
+                                    <div class="flex items-center">
+                                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+                                            <i class="bi bi-cart text-blue-600"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-bold">#ORD-7820 - Resume Review</h4>
+                                            <p class="text-sm text-gray-600">Jane Smith • Ordered 2 hours ago</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-4">
+                                        <span class="font-bold text-primary">KES 1,200</span>
+                                        <span class="status-badge status-pending">Processing</span>
+                                        <button class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark">
+                                            Process
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- More order items would go here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-bold">Confirm Delete</h2>
+                    <button onclick="closeModal()" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>
+                
+                <p class="text-gray-600 mb-6">Are you sure you want to delete this service? This action cannot be undone.</p>
+                
+                <div class="flex justify-end space-x-3">
+                    <button onclick="closeModal()" 
+                            class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button onclick="confirmDelete()" 
+                            class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                        Delete Service
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        let currentServiceToDelete = null;
+        
+        // Tab Switching
+        function switchTab(tabName) {
+            // Update active nav item
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelector(`[href="#${tabName}"]`).classList.add('active');
+            
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+                content.classList.add('hidden');
+            });
+            
+            document.getElementById(`${tabName}-tab`).classList.remove('hidden');
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+        }
+        
+        // Service Actions
+        // Service Actions
+function editService(serviceId) {
+    window.location.href = `/edit/${serviceId}`;
+}
+
+function viewService(serviceId) {
+    // Get the slug from a data attribute or fetch it
+    const row = document.querySelector(`[data-service-id="${serviceId}"]`);
+    if (row) {
+        const slug = row.dataset.slug;
+        if (slug) {
+            window.location.href = `/marketplace/service/${slug}`;
+        } else {
+            // Fallback - you might need to add slug to data attributes
+            window.location.href = `/service/${serviceId}`;
+        }
+    }
+}
+        function deleteService(serviceId) {
+            currentServiceToDelete = serviceId;
+            document.getElementById('deleteModal').classList.remove('hidden');
+        }
+        
+        function confirmDelete() {
+            if (currentServiceToDelete) {
+                fetch(`/delete_service/${currentServiceToDelete}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Service deleted successfully');
+                        location.reload();
+                    } else {
+                        alert('Error deleting service: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    alert('Error deleting service: ' + error.message);
+                })
+                .finally(() => {
+                    closeModal();
+                });
+            }
+        }
+        
+        function closeModal() {
+            document.getElementById('deleteModal').classList.add('hidden');
+            currentServiceToDelete = null;
+        }
+        
+        // Close modal on ESC
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeModal();
+            }
+        });
+        
+        // Close modal on outside click
+        document.getElementById('deleteModal').addEventListener('click', function(event) {
+            if (event.target === this) {
+                closeModal();
+            }
+        });
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set current date for stats if needed
+            const today = new Date();
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            // You can display this somewhere if needed
+        });
+    </script>
+</body>
+</html>

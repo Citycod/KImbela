@@ -1038,3 +1038,343 @@ class MatchmakingPayments(db.Model):
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
             'paid_at': self.paid_at.isoformat() if self.paid_at else None
         }
+        
+        
+        
+# Add these new models to your existing models.py file
+
+class MarketplaceCategory(db.Model):
+    """Categories for marketplace services"""
+    __tablename__ = "marketplace_categories"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    slug = db.Column(db.String(100), unique=True, nullable=False)
+    icon = db.Column(db.String(50))
+    description = db.Column(db.Text)
+    is_active = db.Column(db.Boolean, default=True)
+    parent_id = db.Column(db.Integer, db.ForeignKey("marketplace_categories.id"), nullable=True)
+    sort_order = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    parent = db.relationship("MarketplaceCategory", remote_side=[id], backref="subcategories")
+    services = db.relationship("MarketplaceService", backref="category", lazy="dynamic")
+    
+    def __repr__(self):
+        return f"<MarketplaceCategory {self.name}>"
+
+
+class MarketplaceService(db.Model):
+    """Services listed in the marketplace"""
+    __tablename__ = "marketplace_services"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    seller_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    category_id = db.Column(db.Integer, db.ForeignKey("marketplace_categories.id"), nullable=False)
+    
+    # Service details
+    title = db.Column(db.String(200), nullable=False)
+    slug = db.Column(db.String(200), unique=True, nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    short_description = db.Column(db.String(500))
+    service_type = db.Column(db.String(50), default="service")  # "service" or "digital"
+    earnings = db.Column(db.Float, default=0.0)
+    
+    # Pricing
+    price_tokens = db.Column(db.Integer, nullable=False, default=0)
+    is_free = db.Column(db.Boolean, default=False)
+    is_featured = db.Column(db.Boolean, default=False)
+    
+    # Digital product specific
+    digital_file = db.Column(db.String(500))  # For e-books, courses, etc.
+    file_size = db.Column(db.String(20))
+    file_type = db.Column(db.String(50))
+    download_count = db.Column(db.Integer, default=0)
+    
+    # Service specific
+    duration = db.Column(db.String(50))  # e.g., "60 min", "4 sessions"
+    availability = db.Column(db.String(200))  # e.g., "Mon-Fri, 9AM-5PM"
+    
+    # Contact methods (JSON encoded)
+    contact_methods = db.Column(db.Text, default=json.dumps(["whatsapp", "phone", "messenger"]))
+    phone_number = db.Column(db.String(20))
+    whatsapp_number = db.Column(db.String(20))
+    email = db.Column(db.String(100))
+    
+    # Media
+    cover_image = db.Column(db.String(500))
+    gallery_images = db.Column(db.Text)  # JSON encoded list of image URLs
+    video_url = db.Column(db.String(500))
+    
+    # Status
+    status = db.Column(db.String(20), default="pending")  # pending, active, rejected, paused, sold_out
+    rejection_reason = db.Column(db.Text)
+    
+    # Features (JSON encoded)
+    features = db.Column(db.Text)
+    
+    # Stats
+    views = db.Column(db.Integer, default=0)
+    clicks = db.Column(db.Integer, default=0)
+    shares = db.Column(db.Integer, default=0)
+    
+    # Seller subscription
+    subscription_id = db.Column(db.Integer, db.ForeignKey("marketplace_subscriptions.id"))
+    subscription_status = db.Column(db.String(20), default="active")
+    subscription_expires = db.Column(db.DateTime)
+    
+    # Review stats
+    average_rating = db.Column(db.Float, default=0.0)
+    review_count = db.Column(db.Integer, default=0)
+    
+    # SEO
+    meta_title = db.Column(db.String(200))
+    meta_description = db.Column(db.Text)
+    keywords = db.Column(db.Text)
+    
+    # Dates
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    published_at = db.Column(db.DateTime)
+    
+    # Relationships
+    seller = db.relationship("User", foreign_keys=[seller_id])
+    subscription = db.relationship("MarketplaceSubscription", back_populates="services")
+    reviews = db.relationship("MarketplaceReview", backref="service", lazy="dynamic", cascade="all, delete-orphan")
+    
+    def __repr__(self):
+        return f"<MarketplaceService {self.title}>"
+    
+    @property
+    def contact_methods_list(self):
+        """Get contact methods as list"""
+        try:
+            return json.loads(self.contact_methods)
+        except:
+            return ["whatsapp", "phone", "messenger"]
+    
+    @property
+    def gallery_images_list(self):
+        """Get gallery images as list"""
+        if self.gallery_images:
+            try:
+                return json.loads(self.gallery_images)
+            except:
+                return []
+        return []
+    
+    @property
+    def features_list(self):
+        """Get features as list"""
+        if self.features:
+            try:
+                return json.loads(self.features)
+            except:
+                return []
+        return []
+    
+    @property
+    def whatsapp_link(self):
+        """Generate WhatsApp link with pre-filled message"""
+        if self.whatsapp_number:
+            message = f"Hi {self.seller.first_name}, I saw your service '{self.title}' on Kimbela Marketplace and I'm interested. Can you tell me more?"
+            phone = self.whatsapp_number.replace("+", "").replace(" ", "")
+            return f"https://wa.me/{phone}?text={requests.utils.quote(message)}"
+        return None
+    
+    @property
+    def is_active(self):
+        """Check if service is active and subscription is valid"""
+        return (
+            self.status == "active" and 
+            self.subscription_status == "active" and
+            (self.subscription_expires is None or self.subscription_expires > datetime.utcnow())
+        )
+
+
+class MarketplaceSubscription(db.Model):
+    """Subscription plans for sellers"""
+    __tablename__ = "marketplace_subscriptions"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    slug = db.Column(db.String(100), unique=True, nullable=False)
+    description = db.Column(db.Text)
+    
+    # Pricing
+    price_tokens = db.Column(db.Integer, nullable=False)
+    price_usd = db.Column(db.Float, nullable=False)
+    billing_period = db.Column(db.String(20), default="monthly")  # monthly, yearly, lifetime
+    trial_days = db.Column(db.Integer, default=0)
+    
+    # Features
+    max_services = db.Column(db.Integer, default=1)  # 0 = unlimited
+    max_images = db.Column(db.Integer, default=5)
+    is_featured = db.Column(db.Boolean, default=False)
+    can_add_video = db.Column(db.Boolean, default=False)
+    can_add_contact = db.Column(db.Boolean, default=True)
+    can_add_digital = db.Column(db.Boolean, default=True)
+    support_level = db.Column(db.String(20), default="basic")  # basic, priority, premium
+    
+    # Display
+    badge_color = db.Column(db.String(20), default="blue")
+    is_popular = db.Column(db.Boolean, default=False)
+    is_active = db.Column(db.Boolean, default=True)
+    
+    # Order
+    sort_order = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    services = db.relationship("MarketplaceService", back_populates="subscription", lazy="dynamic")
+    
+    def __repr__(self):
+        return f"<MarketplaceSubscription {self.name}>"
+
+
+class MarketplaceReview(db.Model):
+    """Reviews for marketplace services"""
+    __tablename__ = "marketplace_reviews"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    service_id = db.Column(db.Integer, db.ForeignKey("marketplace_services.id"), nullable=False)
+    buyer_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    
+    # Review details
+    rating = db.Column(db.Integer, nullable=False)  # 1-5
+    title = db.Column(db.String(200))
+    comment = db.Column(db.Text, nullable=False)
+    
+    # Response
+    seller_response = db.Column(db.Text)
+    seller_response_at = db.Column(db.DateTime)
+    
+    # Status
+    is_verified = db.Column(db.Boolean, default=False)  # Verified purchase
+    is_featured = db.Column(db.Boolean, default=False)
+    status = db.Column(db.String(20), default="approved")  # pending, approved, rejected
+    
+    # Dates
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    buyer = db.relationship("User", foreign_keys=[buyer_id])
+    
+    def __repr__(self):
+        return f"<MarketplaceReview {self.id} - {self.rating} stars>"
+
+
+class MarketplacePayment(db.Model):
+    """Payments for marketplace subscriptions"""
+    __tablename__ = "marketplace_payments"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    subscription_id = db.Column(db.Integer, db.ForeignKey("marketplace_subscriptions.id"), nullable=False)
+    service_id = db.Column(db.Integer, db.ForeignKey("marketplace_services.id"), nullable=True)
+    
+    # Payment details
+    amount = db.Column(db.Float, nullable=False)
+    currency = db.Column(db.String(10), default="USD")
+    tokens_paid = db.Column(db.Integer, nullable=False)
+    
+    # Gateway
+    gateway = db.Column(db.String(50), default="flutterwave")
+    gateway_reference = db.Column(db.String(100), unique=True)
+    gateway_payment_id = db.Column(db.String(100))
+    gateway_status = db.Column(db.String(50))
+    gateway_metadata = db.Column(db.Text)
+    
+    # Status
+    status = db.Column(db.String(20), default="pending")  # pending, completed, failed, refunded
+    payment_method = db.Column(db.String(50))  # card, bank, mobile_money, etc.
+    
+    # Period
+    start_date = db.Column(db.DateTime, default=datetime.utcnow)
+    end_date = db.Column(db.DateTime)
+    
+    # Metadata
+    description = db.Column(db.Text)
+    
+    # Dates
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    paid_at = db.Column(db.DateTime)
+    
+    # Relationships
+    user = db.relationship("User", foreign_keys=[user_id])
+    subscription = db.relationship("MarketplaceSubscription", foreign_keys=[subscription_id])
+    service = db.relationship("MarketplaceService", foreign_keys=[service_id])
+    
+    def __repr__(self):
+        return f"<MarketplacePayment {self.id} - {self.status} - ${self.amount}>"
+
+
+class MarketplaceClick(db.Model):
+    """Track clicks on services"""
+    __tablename__ = "marketplace_clicks"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    service_id = db.Column(db.Integer, db.ForeignKey("marketplace_services.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
+    
+    # Click details
+    click_type = db.Column(db.String(50))  # view, contact, whatsapp, phone, email
+    ip_address = db.Column(db.String(45))
+    user_agent = db.Column(db.Text)
+    
+    # Date
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    service = db.relationship("MarketplaceService", foreign_keys=[service_id])
+    user = db.relationship("User", foreign_keys=[user_id])
+    
+    def __repr__(self):
+        return f"<MarketplaceClick {self.id} - {self.click_type}>"
+    
+    
+    
+class ApiKey(db.Model):
+    __tablename__ = 'api_keys'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    name = db.Column(db.String(100))
+    key = db.Column(db.String(100), unique=True)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    last_used = db.Column(db.DateTime, nullable=True)
+    
+    user = db.relationship('User', backref=db.backref('api_keys', lazy=True))
+
+class LoginHistory(db.Model):
+    __tablename__ = 'login_history'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    ip_address = db.Column(db.String(50))
+    user_agent = db.Column(db.Text)
+    device = db.Column(db.String(200))
+    location = db.Column(db.String(200))
+    success = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    user = db.relationship('User', backref=db.backref('login_history', lazy=True))
+
+class UserSession(db.Model):
+    __tablename__ = 'user_sessions'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    session_id = db.Column(db.String(100), unique=True)
+    ip_address = db.Column(db.String(50))
+    user_agent = db.Column(db.Text)
+    device = db.Column(db.String(200))
+    location = db.Column(db.String(200))
+    last_active = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    user = db.relationship('User', backref=db.backref('active_sessions', lazy=True))

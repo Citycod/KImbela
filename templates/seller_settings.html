@@ -1,0 +1,1848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seller Settings | Kimbela Marketplace</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/marketplace.css') }}">
+    
+    <style>
+        :root {
+            --primary-color: #7C3AED;
+            --primary-hover: #6D28D9;
+            --secondary-color: #F1F5F9;
+            --text-dark: #1E293B;
+            --text-light: #64748B;
+            --border-color: #E2E8F0;
+            --success-color: #10B981;
+            --warning-color: #F59E0B;
+            --danger-color: #EF4444;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #F8FAFC;
+            color: var(--text-dark);
+        }
+        
+        .settings-sidebar {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 2rem;
+        }
+        
+        .settings-content {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            padding: 2rem;
+        }
+        
+        .nav-link-settings {
+            color: var(--text-light);
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 0.25rem;
+            transition: all 0.2s ease;
+        }
+        
+        .nav-link-settings:hover {
+            color: var(--primary-color);
+            background-color: rgba(124, 58, 237, 0.1);
+        }
+        
+        .nav-link-settings.active {
+            color: var(--primary-color);
+            background-color: rgba(124, 58, 237, 0.1);
+            font-weight: 600;
+        }
+        
+        .nav-link-settings i {
+            width: 20px;
+            text-align: center;
+            margin-right: 10px;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-control, .form-select {
+            border: 2px solid var(--border-color);
+            border-radius: 0.75rem;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+        }
+        
+        .btn-save {
+            background: var(--primary-color);
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            border: none;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-save:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(124, 58, 237, 0.3);
+        }
+        
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            border: 4px solid white;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        
+        .upload-btn {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+        
+        .upload-btn input[type=file] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        
+        .notification-item {
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 0;
+        }
+        
+        .notification-item:last-child {
+            border-bottom: none;
+        }
+        
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: var(--primary-color);
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        
+        .api-key {
+            background: var(--secondary-color);
+            border: 2px solid var(--border-color);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            word-break: break-all;
+        }
+        
+        .danger-zone {
+            border: 2px solid var(--danger-color);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            background: rgba(239, 68, 68, 0.05);
+        }
+        
+        .subscription-card {
+            border: 2px solid var(--border-color);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .subscription-card:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        
+        .subscription-card.popular {
+            border-color: var(--primary-color);
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.05), rgba(124, 58, 237, 0.1));
+        }
+        
+        .payment-history-item {
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 0;
+        }
+        
+        .payment-history-item:last-child {
+            border-bottom: none;
+        }
+        
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .status-active {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+        }
+        
+        .status-pending {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning-color);
+        }
+        
+        .status-cancelled {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger-color);
+        }
+        
+        @media (max-width: 768px) {
+            .settings-sidebar {
+                margin-bottom: 1.5rem;
+            }
+            
+            .profile-avatar {
+                width: 80px;
+                height: 80px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('market.main_market') }}">
+                <img src="{{ url_for('static', filename='assets/img/kim.png') }}" alt="Kimbela" height="40">
+                <span class="fw-bold ms-2">Marketplace</span>
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('market.main_market') }}">
+                            <i class="bi bi-shop"></i> Browse Services
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('market.seller_dashboard') }}">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
+                                 class="rounded-circle" width="30" height="30">
+                            <span class="ms-2">{{ current_user.first_name }}</span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('market.seller_profile', seller_id=current_user.id) }}">
+                                    <i class="bi bi-person"></i> My Profile
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('market.seller_dashboard') }}">
+                                    <i class="bi bi-speedometer2"></i> Dashboard
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item active" href="{{ url_for('market.seller_settings') }}">
+                                    <i class="bi bi-gear"></i> Settings
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}">
+                                    <i class="bi bi-box-arrow-right"></i> Logout
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container py-5">
+        <div class="row">
+            <!-- Sidebar Navigation -->
+            <div class="col-lg-3 mb-4">
+                <div class="settings-sidebar p-3">
+                    <h5 class="fw-bold mb-3 px-2">Settings</h5>
+                    <nav class="nav flex-column">
+                        <a class="nav-link-settings active" href="#profile" data-bs-toggle="tab">
+                            <i class="bi bi-person"></i> Profile
+                        </a>
+                        <a class="nav-link-settings" href="#account" data-bs-toggle="tab">
+                            <i class="bi bi-shield-check"></i> Account
+                        </a>
+                        <a class="nav-link-settings" href="#notifications" data-bs-toggle="tab">
+                            <i class="bi bi-bell"></i> Notifications
+                        </a>
+                        <a class="nav-link-settings" href="#subscription" data-bs-toggle="tab">
+                            <i class="bi bi-gem"></i> Subscription
+                        </a>
+                        <a class="nav-link-settings" href="#payment" data-bs-toggle="tab">
+                            <i class="bi bi-credit-card"></i> Payment Methods
+                        </a>
+                        <a class="nav-link-settings" href="#api" data-bs-toggle="tab">
+                            <i class="bi bi-key"></i> API Keys
+                        </a>
+                        <a class="nav-link-settings" href="#security" data-bs-toggle="tab">
+                            <i class="bi bi-lock"></i> Security
+                        </a>
+                        <a class="nav-link-settings" href="#danger" data-bs-toggle="tab">
+                            <i class="bi bi-exclamation-triangle"></i> Danger Zone
+                        </a>
+                    </nav>
+                </div>
+            </div>
+            
+            <!-- Settings Content -->
+            <div class="col-lg-9">
+                <div class="tab-content">
+                    <!-- Profile Tab -->
+                    <div class="tab-pane fade show active settings-content" id="profile">
+                        <h4 class="fw-bold mb-4">Profile Settings</h4>
+                        
+                        <form id="profileForm" method="POST" action="{{ url_for('market.update_profile') }}" enctype="multipart/form-data">
+                            <!-- Profile Picture -->
+                            <div class="row mb-4">
+                                <div class="col-md-3">
+                                    <div class="text-center">
+                                        <img id="profilePreview" 
+                                             src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
+                                             alt="Profile" 
+                                             class="profile-avatar rounded-circle mb-3">
+                                        <div class="upload-btn btn btn-outline-primary btn-sm">
+                                            <i class="bi bi-camera me-2"></i> Change Photo
+                                            <input type="file" id="profile_pic" name="profile_pic" accept="image/*" onchange="previewImage(event)">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-9">
+                                    <div class="alert alert-info">
+                                        <i class="bi bi-info-circle me-2"></i>
+                                        Upload a clear profile picture. Recommended size: 400x400px. Max file size: 2MB.
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Personal Information -->
+                            <h5 class="fw-bold mb-3">Personal Information</h5>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label">First Name</label>
+                                    <input type="text" class="form-control" name="first_name" 
+                                           value="{{ current_user.first_name }}" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Last Name</label>
+                                    <input type="text" class="form-control" name="last_name" 
+                                           value="{{ current_user.last_name }}" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Email Address</label>
+                                    <input type="email" class="form-control" name="email" 
+                                           value="{{ current_user.email }}" required readonly>
+                                    <small class="text-muted">Contact support to change email</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Phone Number</label>
+                                    <input type="tel" class="form-control" name="phone_number" 
+                                           value="{{ current_user.phone_number or '' }}">
+                                </div>
+                            </div>
+                            
+                            <!-- Professional Information -->
+                            <h5 class="fw-bold mb-3">Professional Information</h5>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label">Professional Title</label>
+                                    <input type="text" class="form-control" name="occupation" 
+                                           value="{{ current_user.occupation or '' }}" 
+                                           placeholder="e.g., Professional Coach, Web Developer">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Location</label>
+                                    <input type="text" class="form-control" name="location" 
+                                           value="{{ current_user.location or '' }}" 
+                                           placeholder="e.g., Lagos, Nigeria">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Bio / Description</label>
+                                    <textarea class="form-control" name="bio" rows="4" 
+                                              placeholder="Tell buyers about yourself, your experience, and what makes you unique">{{ current_user.bio or '' }}</textarea>
+                                    <small class="text-muted">This appears on your public profile</small>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Website / Portfolio</label>
+                                    <input type="url" class="form-control" name="website" 
+                                           value="{{ current_user.website or '' }}" 
+                                           placeholder="https://yourwebsite.com">
+                                </div>
+                            </div>
+                            
+                            <!-- Social Links -->
+                            <h5 class="fw-bold mb-3">Social Links</h5>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-4">
+                                    <label class="form-label">
+                                        <i class="bi bi-linkedin text-primary me-2"></i> LinkedIn
+                                    </label>
+                                    <input type="url" class="form-control" name="linkedin" 
+                                           value="{{ current_user.linkedin_url or '' }}">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">
+                                        <i class="bi bi-twitter text-info me-2"></i> Twitter
+                                    </label>
+                                    <input type="url" class="form-control" name="twitter" 
+                                           value="{{ current_user.twitter_url or '' }}">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">
+                                        <i class="bi bi-facebook text-primary me-2"></i> Facebook
+                                    </label>
+                                    <input type="url" class="form-control" name="facebook" 
+                                           value="{{ current_user.facebook_url or '' }}">
+                                </div>
+                            </div>
+                            
+                            <!-- Business Hours -->
+                            <h5 class="fw-bold mb-3">Business Hours</h5>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label">Availability</label>
+                                    <select class="form-select" name="availability">
+                                        <option value="24/7" {% if current_user.availability == '24/7' %}selected{% endif %}>Available 24/7</option>
+                                        <option value="weekdays" {% if current_user.availability == 'weekdays' %}selected{% endif %}>Weekdays Only</option>
+                                        <option value="weekends" {% if current_user.availability == 'weekends' %}selected{% endif %}>Weekends Only</option>
+                                        <option value="custom" {% if current_user.availability == 'custom' %}selected{% endif %}>Custom Hours</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Response Time</label>
+                                    <select class="form-select" name="response_time">
+                                        <option value="1" {% if current_user.response_time == '1' %}selected{% endif %}>Within 1 hour</option>
+                                        <option value="6" {% if current_user.response_time == '6' %}selected{% endif %}>Within 6 hours</option>
+                                        <option value="24" {% if current_user.response_time == '24' %}selected{% endif %}>Within 24 hours</option>
+                                        <option value="48" {% if current_user.response_time == '48' %}selected{% endif %}>Within 48 hours</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-end">
+                                <button type="submit" class="btn-save">
+                                    <i class="bi bi-check-circle me-2"></i> Save Changes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- Account Tab -->
+                    <div class="tab-pane fade settings-content" id="account">
+                        <h4 class="fw-bold mb-4">Account Settings</h4>
+                        
+                        <!-- Account Type -->
+                        <div class="mb-4">
+                            <h5 class="fw-bold mb-3">Account Type</h5>
+                            <div class="alert alert-info d-flex align-items-center">
+                                <i class="bi bi-info-circle fs-4 me-3"></i>
+                                <div>
+                                    <strong>Seller Account</strong>
+                                    <p class="mb-0">You have full access to create and manage services, receive payments, and interact with buyers.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Currency Preferences -->
+                        <form id="accountForm" method="POST" action="{{ url_for('market.update_account_settings') }}">
+                            <div class="mb-4">
+                                <h5 class="fw-bold mb-3">Currency Preferences</h5>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Display Currency</label>
+                                        <select class="form-select" name="display_currency">
+                                            <option value="NGN" {% if current_user.display_currency == 'NGN' %}selected{% endif %}>Nigerian Naira (₦)</option>
+                                            <option value="USD" {% if current_user.display_currency == 'USD' %}selected{% endif %}>US Dollar ($)</option>
+                                            <option value="EUR" {% if current_user.display_currency == 'EUR' %}selected{% endif %}>Euro (€)</option>
+                                            <option value="GBP" {% if current_user.display_currency == 'GBP' %}selected{% endif %}>British Pound (£)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Payout Currency</label>
+                                        <select class="form-select" name="payout_currency">
+                                            <option value="NGN" {% if current_user.payout_currency == 'NGN' %}selected{% endif %}>Nigerian Naira (₦)</option>
+                                            <option value="USD" {% if current_user.payout_currency == 'USD' %}selected{% endif %}>US Dollar ($)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Language Preferences -->
+                            <div class="mb-4">
+                                <h5 class="fw-bold mb-3">Language & Region</h5>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Language</label>
+                                        <select class="form-select" name="language">
+                                            <option value="en" {% if current_user.language == 'en' %}selected{% endif %}>English</option>
+                                            <option value="fr" {% if current_user.language == 'fr' %}selected{% endif %}>French</option>
+                                            <option value="es" {% if current_user.language == 'es' %}selected{% endif %}>Spanish</option>
+                                            <option value="pt" {% if current_user.language == 'pt' %}selected{% endif %}>Portuguese</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Time Zone</label>
+                                        <select class="form-select" name="timezone">
+                                            <option value="Africa/Lagos" {% if current_user.timezone == 'Africa/Lagos' %}selected{% endif %}>West Africa Time (WAT)</option>
+                                            <option value="UTC" {% if current_user.timezone == 'UTC' %}selected{% endif %}>UTC</option>
+                                            <option value="America/New_York" {% if current_user.timezone == 'America/New_York' %}selected{% endif %}>Eastern Time (ET)</option>
+                                            <option value="Europe/London" {% if current_user.timezone == 'Europe/London' %}selected{% endif %}>Greenwich Mean Time (GMT)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Communication Preferences -->
+                            <div class="mb-4">
+                                <h5 class="fw-bold mb-3">Communication Preferences</h5>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="email_marketing" 
+                                           id="email_marketing" {% if current_user.email_marketing %}checked{% endif %}>
+                                    <label class="form-check-label" for="email_marketing">
+                                        Receive marketing emails about new features and promotions
+                                    </label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="email_service_updates" 
+                                           id="email_service_updates" {% if current_user.email_service_updates %}checked{% endif %}>
+                                    <label class="form-check-label" for="email_service_updates">
+                                        Receive service-related updates and announcements
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="email_buyer_inquiries" 
+                                           id="email_buyer_inquiries" {% if current_user.email_buyer_inquiries %}checked{% endif %}>
+                                    <label class="form-check-label" for="email_buyer_inquiries">
+                                        Receive email notifications for new buyer inquiries
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-end">
+                                <button type="submit" class="btn-save">
+                                    <i class="bi bi-check-circle me-2"></i> Save Preferences
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- Notifications Tab -->
+                    <div class="tab-pane fade settings-content" id="notifications">
+                        <h4 class="fw-bold mb-4">Notification Settings</h4>
+                        
+                        <form id="notificationForm" method="POST" action="{{ url_for('market.update_notification_settings') }}">
+                            <!-- Email Notifications -->
+                            <div class="mb-4">
+                                <h5 class="fw-bold mb-3">Email Notifications</h5>
+                                <div class="notification-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="fw-bold mb-1">New Order Received</h6>
+                                            <p class="text-muted mb-0">When a buyer purchases your service</p>
+                                        </div>
+                                        <label class="switch">
+                                            <input type="checkbox" name="email_new_order" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="notification-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="fw-bold mb-1">New Message</h6>
+                                            <p class="text-muted mb-0">When a buyer sends you a message</p>
+                                        </div>
+                                        <label class="switch">
+                                            <input type="checkbox" name="email_new_message" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="notification-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="fw-bold mb-1">New Review</h6>
+                                            <p class="text-muted mb-0">When a buyer leaves a review</p>
+                                        </div>
+                                        <label class="switch">
+                                            <input type="checkbox" name="email_new_review" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="notification-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="fw-bold mb-1">Payment Received</h6>
+                                            <p class="text-muted mb-0">When a payment is completed</p>
+                                        </div>
+                                        <label class="switch">
+                                            <input type="checkbox" name="email_payment_received" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="notification-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="fw-bold mb-1">Subscription Reminders</h6>
+                                            <p class="text-muted mb-0">Before your subscription expires</p>
+                                        </div>
+                                        <label class="switch">
+                                            <input type="checkbox" name="email_subscription_reminder" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Push Notifications -->
+                            <div class="mb-4">
+                                <h5 class="fw-bold mb-3">Push Notifications</h5>
+                                <div class="notification-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="fw-bold mb-1">Browser Notifications</h6>
+                                            <p class="text-muted mb-0">Show desktop notifications for important updates</p>
+                                        </div>
+                                        <label class="switch">
+                                            <input type="checkbox" name="push_browser" 
+                                                   {% if current_user.push_browser %}checked{% endif %}>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="notification-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="fw-bold mb-1">Mobile Push</h6>
+                                            <p class="text-muted mb-0">Send push notifications to your mobile device</p>
+                                        </div>
+                                        <label class="switch">
+                                            <input type="checkbox" name="push_mobile" 
+                                                   {% if current_user.push_mobile %}checked{% endif %}>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- SMS Notifications -->
+                            <div class="mb-4">
+                                <h5 class="fw-bold mb-3">SMS Notifications</h5>
+                                <div class="alert alert-warning">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                    SMS notifications may incur additional charges. Standard carrier rates apply.
+                                </div>
+                                
+                                <div class="notification-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="fw-bold mb-1">Urgent Orders</h6>
+                                            <p class="text-muted mb-0">Receive SMS for high-priority orders</p>
+                                        </div>
+                                        <label class="switch">
+                                            <input type="checkbox" name="sms_urgent" 
+                                                   {% if current_user.sms_urgent %}checked{% endif %}>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="notification-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="fw-bold mb-1">Payment Confirmations</h6>
+                                            <p class="text-muted mb-0">SMS when payments are confirmed</p>
+                                        </div>
+                                        <label class="switch">
+                                            <input type="checkbox" name="sms_payment" 
+                                                   {% if current_user.sms_payment %}checked{% endif %}>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-end">
+                                <button type="submit" class="btn-save">
+                                    <i class="bi bi-check-circle me-2"></i> Save Notification Settings
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- Subscription Tab -->
+                    <div class="tab-pane fade settings-content" id="subscription">
+                        <h4 class="fw-bold mb-4">Subscription Plan</h4>
+                        
+                        <!-- Current Plan -->
+                        <div class="mb-5">
+                            <h5 class="fw-bold mb-3">Current Plan</h5>
+                            {% if current_subscription %}
+                            <div class="subscription-card popular">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <div>
+                                        <h4 class="fw-bold mb-1">{{ current_subscription.name }}</h4>
+                                        <p class="text-muted mb-0">{{ current_subscription.description }}</p>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="h3 fw-bold text-primary">
+                                            ${{ current_subscription.price_usd }}/month
+                                        </span>
+                                        <p class="text-muted mb-0">{{ current_subscription.price_tokens }} tokens</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <p class="mb-2">
+                                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                            Max Services: {{ current_subscription.max_services }}
+                                        </p>
+                                        <p class="mb-2">
+                                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                            Max Images: {{ current_subscription.max_images }}
+                                        </p>
+                                        <p class="mb-0">
+                                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                            {% if current_subscription.is_featured %}
+                                            Featured Listing
+                                            {% else %}
+                                            Basic Listing
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p class="mb-2">
+                                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                            Analytics Dashboard
+                                        </p>
+                                        <p class="mb-2">
+                                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                            Priority Support
+                                        </p>
+                                        <p class="mb-0">
+                                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                            Custom Badge
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span class="status-badge status-active">
+                                            <i class="bi bi-check-circle me-1"></i>
+                                            Active until {{ subscription_expires.strftime('%B %d, %Y') }}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <button class="btn btn-outline-danger btn-sm me-2" 
+                                                onclick="showCancelModal()">
+                                            <i class="bi bi-x-circle me-1"></i> Cancel
+                                        </button>
+                                        <button class="btn btn-primary btn-sm" 
+                                                onclick="showUpgradeModal()">
+                                            <i class="bi bi-arrow-up-circle me-1"></i> Upgrade
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                You don't have an active subscription plan.
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Available Plans -->
+                        <div>
+                            <h5 class="fw-bold mb-3">Available Plans</h5>
+                            <div class="row g-4">
+                                {% for plan in subscription_plans %}
+                                <div class="col-md-6">
+                                    <div class="subscription-card {% if plan.is_popular %}popular{% endif %}">
+                                        {% if plan.is_popular %}
+                                        <div class="badge bg-primary mb-3">Most Popular</div>
+                                        {% endif %}
+                                        
+                                        <h4 class="fw-bold mb-2">{{ plan.name }}</h4>
+                                        <p class="text-muted mb-3">{{ plan.description }}</p>
+                                        
+                                        <div class="mb-3">
+                                            <span class="h2 fw-bold">${{ plan.price_usd }}</span>
+                                            <span class="text-muted">/month</span>
+                                            <p class="text-muted mb-0">{{ plan.price_tokens }} tokens</p>
+                                        </div>
+                                        
+                                        <ul class="list-unstyled mb-4">
+                                            <li class="mb-2">
+                                                <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                                {{ plan.max_services }} Services
+                                            </li>
+                                            <li class="mb-2">
+                                                <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                                {{ plan.max_images }} Images per Service
+                                            </li>
+                                            <li class="mb-2">
+                                                <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                                {% if plan.is_featured %}Featured Listing{% else %}Basic Listing{% endif %}
+                                            </li>
+                                            <li class="mb-2">
+                                                <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                                Analytics Dashboard
+                                            </li>
+                                            <li>
+                                                <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                                Email Support
+                                            </li>
+                                        </ul>
+                                        
+                                        {% if current_subscription and current_subscription.id == plan.id %}
+                                        <button class="btn btn-outline-primary w-100" disabled>
+                                            Current Plan
+                                        </button>
+                                        {% else %}
+                                        <button class="btn btn-primary w-100" onclick="selectPlan({{ plan.id }})">
+                                            Select Plan
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <!-- Billing History -->
+                        <div class="mt-5">
+                            <h5 class="fw-bold mb-3">Billing History</h5>
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Description</th>
+                                            <th>Amount</th>
+                                            <th>Status</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for payment in payment_history %}
+                                        <tr class="payment-history-item">
+                                            <td>{{ payment.created_at.strftime('%b %d, %Y') }}</td>
+                                            <td>{{ payment.description }}</td>
+                                            <td>${{ payment.amount }}</td>
+                                            <td>
+                                                <span class="status-badge 
+                                                    {% if payment.status == 'completed' %}status-active
+                                                    {% elif payment.status == 'pending' %}status-pending
+                                                    {% else %}status-cancelled{% endif %}">
+                                                    {{ payment.status|title }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-secondary" 
+                                                        onclick="viewReceipt({{ payment.id }})">
+                                                    <i class="bi bi-receipt"></i> Receipt
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        {% else %}
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted py-4">
+                                                No payment history found
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Payment Methods Tab -->
+                    <div class="tab-pane fade settings-content" id="payment">
+                        <h4 class="fw-bold mb-4">Payment Methods</h4>
+                        
+                        <!-- Payment Methods -->
+                        <div class="mb-5">
+                            <h5 class="fw-bold mb-3">Saved Payment Methods</h5>
+                            {% if payment_methods %}
+                            <div class="row g-4">
+                                {% for method in payment_methods %}
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                                <div>
+                                                    <h6 class="fw-bold mb-1">
+                                                        {% if method.type == 'card' %}
+                                                        <i class="bi bi-credit-card me-2"></i>
+                                                        Card ending in {{ method.last4 }}
+                                                        {% elif method.type == 'bank' %}
+                                                        <i class="bi bi-bank me-2"></i>
+                                                        Bank Account
+                                                        {% elif method.type == 'mobile' %}
+                                                        <i class="bi bi-phone me-2"></i>
+                                                        Mobile Money
+                                                        {% endif %}
+                                                    </h6>
+                                                    <p class="text-muted mb-0">
+                                                        {% if method.type == 'card' %}
+                                                        {{ method.brand|title }} • Expires {{ method.exp_month }}/{{ method.exp_year }}
+                                                        {% elif method.type == 'bank' %}
+                                                        {{ method.bank_name }} • {{ method.account_number }}
+                                                        {% elif method.type == 'mobile' %}
+                                                        {{ method.provider }} • {{ method.phone_number }}
+                                                        {% endif %}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    {% if method.is_default %}
+                                                    <span class="badge bg-success">Default</span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="d-flex justify-content-between">
+                                                <button class="btn btn-sm btn-outline-danger" 
+                                                        onclick="removePaymentMethod({{ method.id }})">
+                                                    <i class="bi bi-trash"></i> Remove
+                                                </button>
+                                                {% if not method.is_default %}
+                                                <button class="btn btn-sm btn-outline-primary" 
+                                                        onclick="setDefaultPayment({{ method.id }})">
+                                                    <i class="bi bi-check-circle"></i> Set as Default
+                                                </button>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle me-2"></i>
+                                No payment methods saved yet.
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Add Payment Method -->
+                        <div>
+                            <h5 class="fw-bold mb-3">Add Payment Method</h5>
+                            <div class="row g-4">
+                                <div class="col-md-4">
+                                    <div class="card text-center h-100">
+                                        <div class="card-body d-flex flex-column">
+                                            <div class="mb-3">
+                                                <i class="bi bi-credit-card fs-1 text-primary"></i>
+                                            </div>
+                                            <h6 class="fw-bold mb-2">Credit/Debit Card</h6>
+                                            <p class="text-muted flex-grow-1">Visa, Mastercard, Verve</p>
+                                            <button class="btn btn-outline-primary w-100" 
+                                                    onclick="showAddCardModal()">
+                                                Add Card
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <div class="card text-center h-100">
+                                        <div class="card-body d-flex flex-column">
+                                            <div class="mb-3">
+                                                <i class="bi bi-bank fs-1 text-primary"></i>
+                                            </div>
+                                            <h6 class="fw-bold mb-2">Bank Account</h6>
+                                            <p class="text-muted flex-grow-1">Direct bank transfer</p>
+                                            <button class="btn btn-outline-primary w-100" 
+                                                    onclick="showAddBankModal()">
+                                                Add Bank Account
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <div class="card text-center h-100">
+                                        <div class="card-body d-flex flex-column">
+                                            <div class="mb-3">
+                                                <i class="bi bi-phone fs-1 text-primary"></i>
+                                            </div>
+                                            <h6 class="fw-bold mb-2">Mobile Money</h6>
+                                            <p class="text-muted flex-grow-1">M-Pesa, Airtel Money, etc.</p>
+                                            <button class="btn btn-outline-primary w-100" 
+                                                    onclick="showAddMobileModal()">
+                                                Add Mobile Money
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Payout Settings -->
+                        <div class="mt-5">
+                            <h5 class="fw-bold mb-3">Payout Settings</h5>
+                            <form id="payoutForm" method="POST" action="{{ url_for('market.update_payout_settings') }}">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Minimum Payout Amount</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">$</span>
+                                            <input type="number" class="form-control" name="min_payout_amount" 
+                                                   value="{{ current_user.min_payout_amount or 10 }}" 
+                                                   min="1" step="0.01">
+                                        </div>
+                                        <small class="text-muted">Minimum balance required for payout</small>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Payout Schedule</label>
+                                        <select class="form-select" name="payout_schedule">
+                                            <option value="daily" {% if current_user.payout_schedule == 'daily' %}selected{% endif %}>Daily</option>
+                                            <option value="weekly" {% if current_user.payout_schedule == 'weekly' %}selected{% endif %}>Weekly</option>
+                                            <option value="bi-weekly" {% if current_user.payout_schedule == 'bi-weekly' %}selected{% endif %}>Bi-weekly</option>
+                                            <option value="monthly" {% if current_user.payout_schedule == 'monthly' %}selected{% endif %}>Monthly</option>
+                                            <option value="manual" {% if current_user.payout_schedule == 'manual' %}selected{% endif %}>Manual</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label">Tax Identification Number (TIN)</label>
+                                        <input type="text" class="form-control" name="tin" 
+                                               value="{{ current_user.tin or '' }}" 
+                                               placeholder="Enter your TIN if applicable">
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex justify-content-end mt-3">
+                                    <button type="submit" class="btn-save">
+                                        <i class="bi bi-check-circle me-2"></i> Save Payout Settings
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- API Keys Tab -->
+                    <div class="tab-pane fade settings-content" id="api">
+                        <h4 class="fw-bold mb-4">API Keys</h4>
+                        
+                        <!-- API Key Management -->
+                        <div class="mb-5">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="fw-bold mb-0">Your API Keys</h5>
+                                <button class="btn btn-primary" onclick="generateApiKey()">
+                                    <i class="bi bi-plus-circle me-2"></i> Generate New Key
+                                </button>
+                            </div>
+                            
+                            {% if api_keys %}
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Key</th>
+                                            <th>Created</th>
+                                            <th>Last Used</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for key in api_keys %}
+                                        <tr>
+                                            <td>{{ key.name }}</td>
+                                            <td>
+                                                <code class="api-key">{{ key.key[:20] }}...</code>
+                                            </td>
+                                            <td>{{ key.created_at.strftime('%Y-%m-%d') }}</td>
+                                            <td>
+                                                {% if key.last_used %}
+                                                {{ key.last_used.strftime('%Y-%m-%d %H:%M') }}
+                                                {% else %}
+                                                Never
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <span class="status-badge {% if key.is_active %}status-active{% else %}status-cancelled{% endif %}">
+                                                    {{ 'Active' if key.is_active else 'Inactive' }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-secondary me-1" 
+                                                        onclick="copyApiKey('{{ key.key }}')">
+                                                    <i class="bi bi-copy"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger" 
+                                                        onclick="revokeApiKey({{ key.id }})">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle me-2"></i>
+                                No API keys generated yet. Generate a key to use our API.
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- API Documentation -->
+                        <div>
+                            <h5 class="fw-bold mb-3">API Documentation</h5>
+                            <div class="alert alert-secondary">
+                                <i class="bi bi-book me-2"></i>
+                                <strong>Base URL:</strong> <code>https://api.kimbela.com/v1</code>
+                            </div>
+                            
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <h6 class="fw-bold mb-3">
+                                                <i class="bi bi-list-check text-primary me-2"></i>
+                                                Service Management
+                                            </h6>
+                                            <ul class="list-unstyled">
+                                                <li class="mb-2">
+                                                    <code class="bg-light p-1 rounded">GET /services</code>
+                                                    <p class="text-muted small mb-0">List your services</p>
+                                                </li>
+                                                <li class="mb-2">
+                                                    <code class="bg-light p-1 rounded">POST /services</code>
+                                                    <p class="text-muted small mb-0">Create new service</p>
+                                                </li>
+                                                <li class="mb-2">
+                                                    <code class="bg-light p-1 rounded">PUT /services/{id}</code>
+                                                    <p class="text-muted small mb-0">Update service</p>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <h6 class="fw-bold mb-3">
+                                                <i class="bi bi-cart text-primary me-2"></i>
+                                                Order Management
+                                            </h6>
+                                            <ul class="list-unstyled">
+                                                <li class="mb-2">
+                                                    <code class="bg-light p-1 rounded">GET /orders</code>
+                                                    <p class="text-muted small mb-0">List orders</p>
+                                                </li>
+                                                <li class="mb-2">
+                                                    <code class="bg-light p-1 rounded">GET /orders/{id}</code>
+                                                    <p class="text-muted small mb-0">Get order details</p>
+                                                </li>
+                                                <li class="mb-2">
+                                                    <code class="bg-light p-1 rounded">PUT /orders/{id}/status</code>
+                                                    <p class="text-muted small mb-0">Update order status</p>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="alert alert-warning mt-4">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                <strong>Important:</strong> Keep your API keys secure. Never share them publicly or commit them to version control.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Security Tab -->
+                    <div class="tab-pane fade settings-content" id="security">
+                        <h4 class="fw-bold mb-4">Security Settings</h4>
+                        
+                        <!-- Change Password -->
+                        <div class="mb-5">
+                            <h5 class="fw-bold mb-3">Change Password</h5>
+                            <form id="passwordForm" method="POST" action="{{ url_for('market.change_password') }}">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Current Password</label>
+                                        <input type="password" class="form-control" name="current_password" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">New Password</label>
+                                        <input type="password" class="form-control" name="new_password" 
+                                               pattern=".{8,}" title="Minimum 8 characters" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Confirm New Password</label>
+                                        <input type="password" class="form-control" name="confirm_password" required>
+                                    </div>
+                                </div>
+                                
+                                <div class="alert alert-info mt-3">
+                                    <i class="bi bi-shield-check me-2"></i>
+                                    Password must be at least 8 characters long and include uppercase, lowercase, and numbers.
+                                </div>
+                                
+                                <div class="d-flex justify-content-end mt-3">
+                                    <button type="submit" class="btn-save">
+                                        <i class="bi bi-key me-2"></i> Change Password
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <!-- Two-Factor Authentication -->
+                        <div class="mb-5">
+                            <h5 class="fw-bold mb-3">Two-Factor Authentication</h5>
+                            <div class="alert alert-warning">
+                                <i class="bi bi-shield-lock me-2"></i>
+                                Two-factor authentication adds an extra layer of security to your account.
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                                    <h6 class="fw-bold mb-1">2FA Status</h6>
+                                    <p class="text-muted mb-0">
+                                        {% if current_user.two_factor_enabled %}
+                                        <span class="text-success">Enabled</span> - Last used {{ current_user.last_2fa_login.strftime('%B %d, %Y') }}
+                                        {% else %}
+                                        <span class="text-danger">Disabled</span> - Your account is less secure
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                <button class="btn {% if current_user.two_factor_enabled %}btn-outline-danger{% else %}btn-primary{% endif %}" 
+                                        onclick="{% if current_user.two_factor_enabled %}disable2FA(){% else %}enable2FA(){% endif %}">
+                                    {% if current_user.two_factor_enabled %}
+                                    <i class="bi bi-shield-slash me-2"></i> Disable 2FA
+                                    {% else %}
+                                    <i class="bi bi-shield-check me-2"></i> Enable 2FA
+                                    {% endif %}
+                                </button>
+                            </div>
+                            
+                            {% if current_user.two_factor_enabled %}
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle me-2"></i>
+                                Two-factor authentication is enabled. You'll need to enter a code from your authenticator app when logging in.
+                            </div>
+                            {% else %}
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <div class="card h-100">
+                                        <div class="card-body text-center">
+                                            <div class="mb-3">
+                                                <i class="bi bi-phone fs-1 text-primary"></i>
+                                            </div>
+                                            <h6 class="fw-bold mb-2">Authenticator App</h6>
+                                            <p class="text-muted small">Use Google Authenticator or Authy</p>
+                                            <button class="btn btn-outline-primary w-100" onclick="setupAuthenticator()">
+                                                Set Up
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card h-100">
+                                        <div class="card-body text-center">
+                                            <div class="mb-3">
+                                                <i class="bi bi-sms fs-1 text-primary"></i>
+                                            </div>
+                                            <h6 class="fw-bold mb-2">SMS Authentication</h6>
+                                            <p class="text-muted small">Receive codes via SMS</p>
+                                            <button class="btn btn-outline-primary w-100" onclick="setupSMS2FA()">
+                                                Set Up
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Login History -->
+                        <div>
+                            <h5 class="fw-bold mb-3">Login History</h5>
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date & Time</th>
+                                            <th>Device</th>
+                                            <th>Location</th>
+                                            <th>IP Address</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for login in login_history %}
+                                        <tr>
+                                            <td>{{ login.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                            <td>{{ login.device or 'Unknown' }}</td>
+                                            <td>{{ login.location or 'Unknown' }}</td>
+                                            <td>{{ login.ip_address }}</td>
+                                            <td>
+                                                <span class="badge {% if login.success %}bg-success{% else %}bg-danger{% endif %}">
+                                                    {{ 'Success' if login.success else 'Failed' }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        {% else %}
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted py-4">
+                                                No login history available
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <button class="btn btn-outline-secondary" onclick="exportLoginHistory()">
+                                    <i class="bi bi-download me-2"></i> Export History
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="clearLoginHistory()">
+                                    <i class="bi bi-trash me-2"></i> Clear History
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Danger Zone Tab -->
+                    <div class="tab-pane fade settings-content" id="danger">
+                        <h4 class="fw-bold mb-4 text-danger">Danger Zone</h4>
+                        
+                        <div class="danger-zone mb-4">
+                            <h5 class="fw-bold mb-3">
+                                <i class="bi bi-download me-2"></i> Export Your Data
+                            </h5>
+                            <p class="text-muted mb-3">
+                                Download all your data including services, orders, messages, and account information.
+                            </p>
+                            <button class="btn btn-outline-secondary" onclick="exportData()">
+                                <i class="bi bi-download me-2"></i> Export All Data
+                            </button>
+                        </div>
+                        
+                        <div class="danger-zone mb-4">
+                            <h5 class="fw-bold mb-3">
+                                <i class="bi bi-eye-slash me-2"></i> Deactivate Account
+                            </h5>
+                            <p class="text-muted mb-3">
+                                Temporarily deactivate your account. Your services will be hidden and you won't receive any notifications. You can reactivate anytime.
+                            </p>
+                            <button class="btn btn-outline-warning" onclick="deactivateAccount()">
+                                <i class="bi bi-eye-slash me-2"></i> Deactivate Account
+                            </button>
+                        </div>
+                        
+                        <div class="danger-zone">
+                            <h5 class="fw-bold mb-3">
+                                <i class="bi bi-trash me-2"></i> Delete Account
+                            </h5>
+                            <p class="text-muted mb-3">
+                                <strong>Warning:</strong> This action is permanent and cannot be undone. All your data including services, orders, and messages will be permanently deleted.
+                            </p>
+                            <button class="btn btn-outline-danger" onclick="deleteAccount()">
+                                <i class="bi bi-trash me-2"></i> Delete Account Permanently
+                            </button>
+                        </div>
+                        
+                        <!-- Session Management -->
+                        <div class="mt-5">
+                            <h5 class="fw-bold mb-3">Active Sessions</h5>
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Device</th>
+                                            <th>Location</th>
+                                            <th>Last Active</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for session in active_sessions %}
+                                        <tr>
+                                            <td>
+                                                <i class="bi bi-{{ 'laptop' if 'Windows' in session.device or 'Mac' in session.device else 'phone' }} me-2"></i>
+                                                {{ session.device }}
+                                            </td>
+                                            <td>{{ session.location or 'Unknown' }}</td>
+                                            <td>{{ session.last_active.strftime('%Y-%m-%d %H:%M') }}</td>
+                                            <td>
+                                                {% if session.is_current %}
+                                                <span class="badge bg-success">Current</span>
+                                                {% else %}
+                                                <button class="btn btn-sm btn-outline-danger" 
+                                                        onclick="revokeSession('{{ session.session_id }}')">
+                                                    <i class="bi bi-power"></i> Revoke
+                                                </button>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% else %}
+                                        <tr>
+                                            <td colspan="4" class="text-center text-muted py-4">
+                                                No active sessions found
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="d-flex justify-content-end mt-3">
+                                <button class="btn btn-outline-danger" onclick="revokeAllSessions()">
+                                    <i class="bi bi-power me-2"></i> Revoke All Sessions
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white border-top py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <img src="{{ url_for('static', filename='assets/img/kim.png') }}" alt="Kimbela" height="40">
+                    <p class="text-muted small mt-2">
+                        Professional marketplace for African service providers.
+                    </p>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <h6 class="fw-bold">Support</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-decoration-none text-muted">Help Center</a></li>
+                        <li><a href="#" class="text-decoration-none text-muted">Contact Support</a></li>
+                        <li><a href="#" class="text-decoration-none text-muted">Community</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <h6 class="fw-bold">Legal</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-decoration-none text-muted">Terms of Service</a></li>
+                        <li><a href="#" class="text-decoration-none text-muted">Privacy Policy</a></li>
+                        <li><a href="#" class="text-decoration-none text-muted">Cookie Policy</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr>
+            <div class="text-center text-muted small">
+                &copy; {{ now.year }} Kimbela Marketplace. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script>
+        // Preview profile image
+        function previewImage(event) {
+            const input = event.target;
+            const preview = document.getElementById('profilePreview');
+            
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+        
+        // Tab functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set up tab switching
+            const tabLinks = document.querySelectorAll('.nav-link-settings');
+            tabLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const target = this.getAttribute('data-bs-target');
+                    
+                    // Update active states
+                    tabLinks.forEach(l => l.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Show target tab
+                    const tabPanes = document.querySelectorAll('.tab-pane');
+                    tabPanes.forEach(pane => pane.classList.remove('show', 'active'));
+                    document.querySelector(target).classList.add('show', 'active');
+                    
+                    // Update URL hash
+                    window.location.hash = target.substring(1);
+                });
+            });
+            
+            // Restore tab from URL hash
+            if (window.location.hash) {
+                const hash = window.location.hash.substring(1);
+                const targetLink = document.querySelector(`[data-bs-target="#${hash}"]`);
+                if (targetLink) {
+                    targetLink.click();
+                }
+            }
+        });
+        
+        // Form validation
+        function validateForm(formId) {
+            const form = document.getElementById(formId);
+            const inputs = form.querySelectorAll('input[required], select[required], textarea[required]');
+            let isValid = true;
+            
+            inputs.forEach(input => {
+                if (!input.value.trim()) {
+                    input.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    input.classList.remove('is-invalid');
+                }
+            });
+            
+            return isValid;
+        }
+        
+        // Password confirmation
+        document.getElementById('passwordForm')?.addEventListener('submit', function(e) {
+            const newPass = this.querySelector('input[name="new_password"]');
+            const confirmPass = this.querySelector('input[name="confirm_password"]');
+            
+            if (newPass.value !== confirmPass.value) {
+                e.preventDefault();
+                alert('Passwords do not match!');
+                confirmPass.classList.add('is-invalid');
+            }
+        });
+        
+        // API Key functions
+        function copyApiKey(key) {
+            navigator.clipboard.writeText(key).then(() => {
+                alert('API key copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+            });
+        }
+        
+        function generateApiKey() {
+            const name = prompt('Enter a name for this API key:');
+            if (name) {
+                fetch('/api/marketplace/generate-api-key', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ name: name })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(`API Key generated!\n\n${data.key}\n\nMake sure to copy it now. You won't be able to see it again.`);
+                        location.reload();
+                    } else {
+                        alert('Error generating API key: ' + data.error);
+                    }
+                });
+            }
+        }
+        
+        function revokeApiKey(keyId) {
+            if (confirm('Are you sure you want to revoke this API key?')) {
+                fetch(`/api/marketplace/revoke-api-key/${keyId}`, {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error revoking API key: ' + data.error);
+                    }
+                });
+            }
+        }
+        
+        // Subscription functions
+        function selectPlan(planId) {
+            if (confirm('You will be redirected to the payment page. Continue?')) {
+                window.location.href = `/marketplace/upgrade-subscription/${planId}`;
+            }
+        }
+        
+        // Payment method functions
+        function setDefaultPayment(methodId) {
+            fetch(`/api/marketplace/set-default-payment/${methodId}`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            });
+        }
+        
+        function removePaymentMethod(methodId) {
+            if (confirm('Are you sure you want to remove this payment method?')) {
+                fetch(`/api/marketplace/remove-payment-method/${methodId}`, {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                });
+            }
+        }
+        
+        // Security functions
+        function enable2FA() {
+            window.location.href = '/marketplace/enable-2fa';
+        }
+        
+        function disable2FA() {
+            if (confirm('Are you sure you want to disable two-factor authentication? Your account will be less secure.')) {
+                fetch('/api/marketplace/disable-2fa', {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                });
+            }
+        }
+        
+        // Danger zone functions
+        function deactivateAccount() {
+            if (confirm('Are you sure you want to deactivate your account? Your services will be hidden and you won\'t receive notifications.')) {
+                fetch('/api/marketplace/deactivate-account', {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Account deactivated. You can reactivate anytime by logging in.');
+                        window.location.href = '/logout';
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                });
+            }
+        }
+        
+        function deleteAccount() {
+            const confirmText = prompt('Type "DELETE" to confirm permanent account deletion:');
+            if (confirmText === 'DELETE') {
+                if (confirm('This action is PERMANENT. All your data will be lost. Are you absolutely sure?')) {
+                    fetch('/api/marketplace/delete-account', {
+                        method: 'DELETE'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('Account deleted. Thank you for using Kimbela.');
+                            window.location.href = '/';
+                        } else {
+                            alert('Error: ' + data.error);
+                    }
+                    });
+                }
+            } else if (confirmText !== null) {
+                alert('Confirmation text did not match. Account not deleted.');
+            }
+        }
+        
+        function revokeSession(sessionId) {
+            if (confirm('Are you sure you want to revoke this session?')) {
+                fetch(`/api/marketplace/revoke-session/${sessionId}`, {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                });
+            }
+        }
+        
+        function revokeAllSessions() {
+            if (confirm('This will log you out from all devices. Continue?')) {
+                fetch('/api/marketplace/revoke-all-sessions', {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('All sessions revoked. You will be logged out.');
+                        window.location.href = '/logout';
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                });
+            }
+        }
+        
+        // Export functions
+        function exportData() {
+            fetch('/api/marketplace/export-data')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Data export started. You will receive an email with the download link.');
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            });
+        }
+        
+        function exportLoginHistory() {
+            fetch('/api/marketplace/export-login-history')
+            .then(response => response.blob())
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'login-history.csv';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            });
+        }
+        
+        // Auto-save forms
+        const forms = document.querySelectorAll('form');
+        forms.forEach(form => {
+            const inputs = form.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => {
+                input.addEventListener('change', function() {
+                    if (form.id) {
+                        localStorage.setItem(form.id + '_autosave', 'true');
+                    }
+                });
+            });
+            
+            form.addEventListener('submit', function() {
+                if (form.id) {
+                    localStorage.removeItem(form.id + '_autosave');
+                }
+            });
+        });
+        
+        // Check for unsaved changes
+        window.addEventListener('beforeunload', function(e) {
+            let hasUnsavedChanges = false;
+            forms.forEach(form => {
+                if (form.id && localStorage.getItem(form.id + '_autosave')) {
+                    hasUnsavedChanges = true;
+                }
+            });
+            
+            if (hasUnsavedChanges) {
+                e.preventDefault();
+                e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -253,6 +253,28 @@
         .badge-accredited {
             background-color: #8e44ad;
         }
+
+        @media (max-width: 767px){
+            
+
+            .premium{
+                height: 5rem;
+            }
+
+            .group{
+                height: 5rem;
+            }
+        }
+
+        @media (max-width: 480px){
+            .premium{
+                height: 3rem;
+            }
+
+            .group{
+                height: 3rem;
+            }
+        }
     </style>
 </head>
 
@@ -505,7 +527,7 @@
                     <div class="col-lg-4 col-md-6">
                         <div class="portfolio-item">
                             <div class="portfolio-img">
-                                <img src="{{ url_for('static', filename='assets/img/conn.jpeg') }}" class="img-fluid" alt="Connection Management" />
+                                <img src="{{ url_for('static', filename='assets/img/conn.jpeg') }}" class="img-fluid balanced" alt="Connection Management"   style="height: 15.6rem"/>
                                 <div class="portfolio-overlay">
                                     <div class="portfolio-info">
                                         <h4>Balanced Connections</h4>
@@ -520,7 +542,7 @@
                     <div class="col-lg-4 col-md-6">
                         <div class="portfolio-item">
                             <div class="portfolio-img">
-                                <img src="{{ url_for('static', filename='assets/img/diss.webp') }}" class="img-fluid" alt="Group Discussions" style="height: 20.6rem"/>
+                                <img src="{{ url_for('static', filename='assets/img/diss.webp') }}" class="img-fluid group" alt="Group Discussions" style="height: 15.6rem"/>
                                 <div class="portfolio-overlay">
                                     <div class="portfolio-info">
                                         <h4>Group Discussions</h4>
@@ -535,7 +557,7 @@
                     <div class="col-lg-4 col-md-6">
                         <div class="portfolio-item">
                             <div class="portfolio-img">
-                                <img src="{{ url_for('static', filename='assets/img/stu.jpg') }}" class="img-fluid" alt="Premium Services" style="height: 20.6rem" />
+                                <img src="{{ url_for('static', filename='assets/img/stu.jpg') }}" class="img-fluid premium" alt="Premium Services" style="height: 15.6rem" />
                                 <div class="portfolio-overlay">
                                     <div class="portfolio-info">
                                         <h4>Premium Services</h4>
@@ -745,14 +767,7 @@
                     </ul>
                 </div>
 
-                <div class="col-lg-3 col-md-6 footer-newsletter">
-                    <h4>Stay Updated</h4>
-                    <p>Subscribe to our newsletter for platform updates and community events</p>
-                    <form action="" method="post">
-                        <input type="email" name="email" placeholder="Enter your email" class="form-control" />
-                        <input type="submit" value="Subscribe" class="btn btn-primary mt-2" />
-                    </form>
-                </div>
+                
             </div>
         </div>
 

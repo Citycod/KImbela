@@ -339,7 +339,7 @@
 
             .comment-text.expanded {
                 max-height: none;
-
+            }
 
 
               /* Scrollable Comments in Feed */
@@ -930,11 +930,19 @@
             </div>
           </div>
 
-          <div
-            class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-fb-gray transition-colors mb-2"
+          <a
+          href="{{ url_for('market.main_market') }}"
+          class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-orange-50 hover:to-yellow-50 transition-all duration-300 mb-2 group border border-transparent hover:border-orange-200 shadow-sm hover:shadow-md"
+        >
+          <i
+            class="bi bi-megaphone-fill mr-3 text-lg group-hover:scale-110 group-hover:rotate-12 transition-all duration-300"
+            style="color: #f59e0b; animation: pulse-glow 2s infinite"
+          ></i>
+          <span
+            class="font-medium group-hover:text-orange-700 transition-colors duration-300"
+            >Market Place</span
           >
-            <i class="bi bi-cart3 mr-3 text-lg"></i> Market Place
-          </div>
+        </a>
 
           <a
           href="{{ url_for('payments.ad_packages') }}"
@@ -1106,11 +1114,19 @@
           </div>
         </div>
 
-        <div
-          class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-fb-gray transition-colors mb-2"
+        <a
+          href="{{ url_for('market.main_market') }}"
+          class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-orange-50 hover:to-yellow-50 transition-all duration-300 mb-2 group border border-transparent hover:border-orange-200 shadow-sm hover:shadow-md"
         >
-          <i class="bi bi-cart3 mr-3 text-lg"></i> Market Place
-        </div>
+          <i
+            class="bi bi-megaphone-fill mr-3 text-lg group-hover:scale-110 group-hover:rotate-12 transition-all duration-300"
+            style="color: #f59e0b; animation: pulse-glow 2s infinite"
+          ></i>
+          <span
+            class="font-medium group-hover:text-orange-700 transition-colors duration-300"
+            >Market Place</span
+          >
+        </a>
 
 
         <!-- ADD THIS SPONSORED ADS LINK -->

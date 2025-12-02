@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profile | Kimbela Marketplace</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/marketplace.css') }}">
+    
+    <style>
+        :root {
+            --primary-color: #7C3AED;
+            --primary-hover: #6D28D9;
+            --secondary-color: #F1F5F9;
+            --text-dark: #1E293B;
+            --text-light: #64748B;
+            --border-color: #E2E8F0;
+            --success-color: #10B981;
+            --warning-color: #F59E0B;
+            --danger-color: #EF4444;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #F8FAFC;
+            color: var(--text-dark);
+        }
+        
+        .profile-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+        
+        .edit-container {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            padding: 2rem;
+            margin-top: -3rem;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .profile-avatar {
+            width: 150px;
+            height: 150px;
+            border: 5px solid white;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        
+        .upload-btn {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            border-radius: 50px;
+            padding: 0.5rem 1.5rem;
+        }
+        
+        .upload-btn input[type=file] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-control, .form-select, .form-textarea {
+            border: 2px solid var(--border-color);
+            border-radius: 0.75rem;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus, .form-select:focus, .form-textarea:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+        }
+        
+        .btn-save {
+            background: var(--primary-color);
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            border: none;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-save:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(124, 58, 237, 0.3);
+        }
+        
+        .btn-cancel {
+            background: white;
+            color: var(--text-light);
+            padding: 0.75rem 2rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            border: 2px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-cancel:hover {
+            background: var(--secondary-color);
+            border-color: var(--text-light);
+        }
+        
+        .section-card {
+            background: white;
+            border-radius: 1rem;
+            border: 2px solid var(--border-color);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .section-title {
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .social-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            margin-right: 1rem;
+        }
+        
+        .linkedin-bg {
+            background: #0077B5;
+            color: white;
+        }
+        
+        .twitter-bg {
+            background: #1DA1F2;
+            color: white;
+        }
+        
+        .facebook-bg {
+            background: #1877F2;
+            color: white;
+        }
+        
+        .instagram-bg {
+            background: linear-gradient(45deg, #405DE6, #5851DB, #833AB4, #C13584, #E1306C, #FD1D1D);
+            color: white;
+        }
+        
+        .preview-card {
+            background: white;
+            border-radius: 1rem;
+            border: 2px solid var(--border-color);
+            padding: 1.5rem;
+            position: sticky;
+            top: 2rem;
+        }
+        
+        .preview-avatar {
+            width: 100px;
+            height: 100px;
+            border: 3px solid white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .badge-online {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            width: 12px;
+            height: 12px;
+            background-color: var(--success-color);
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+        
+        .character-count {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+        
+        .character-count.warning {
+            color: var(--warning-color);
+        }
+        
+        .character-count.danger {
+            color: var(--danger-color);
+        }
+        
+        .avatar-container {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .remove-avatar {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 30px;
+            height: 30px;
+            background: var(--danger-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 2px solid white;
+            transition: all 0.3s ease;
+        }
+        
+        .remove-avatar:hover {
+            transform: scale(1.1);
+        }
+        
+        @media (max-width: 768px) {
+            .profile-avatar {
+                width: 120px;
+                height: 120px;
+            }
+            
+            .preview-card {
+                margin-top: 2rem;
+                position: static;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('market.main_market') }}">
+                <img src="{{ url_for('static', filename='assets/img/kim.png') }}" alt="Kimbela" height="40">
+                <span class="fw-bold ms-2">Marketplace</span>
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('market.main_market') }}">
+                            <i class="bi bi-shop"></i> Browse Services
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('market.seller_dashboard') }}">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
+                                 class="rounded-circle" width="30" height="30">
+                            <span class="ms-2">{{ current_user.first_name }}</span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('market.seller_profile', seller_id=current_user.id) }}">
+                                    <i class="bi bi-person"></i> My Profile
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('market.seller_dashboard') }}">
+                                    <i class="bi bi-speedometer2"></i> Dashboard
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item active" href="{{ url_for('market.edit_seller_profile') }}">
+                                    <i class="bi bi-pencil"></i> Edit Profile
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('market.seller_settings') }}">
+                                    <i class="bi bi-gear"></i> Settings
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item text-danger" href="{{ url_for('user.logout') }}">
+                                    <i class="bi bi-box-arrow-right"></i> Logout
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Profile Header -->
+    <div class="profile-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="h2 fw-bold mb-2">Edit Your Profile</h1>
+                    <p class="lead mb-0">
+                        Update your profile information to attract more buyers
+                    </p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <a href="{{ url_for('market.seller_profile', seller_id=current_user.id) }}" 
+                       class="btn btn-light">
+                        <i class="bi bi-eye me-2"></i> View Public Profile
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="row">
+            <!-- Edit Form -->
+            <div class="col-lg-8">
+                <div class="edit-container">
+                    <form id="editProfileForm" method="POST" action="{{ url_for('market.update_profile') }}" enctype="multipart/form-data">
+                        <!-- Profile Picture -->
+                        <div class="section-card">
+                            <h4 class="section-title">
+                                <i class="bi bi-camera me-2"></i> Profile Picture
+                            </h4>
+                            
+                            <div class="row align-items-center">
+                                <div class="col-md-3 text-center">
+                                    <div class="avatar-container mb-3">
+                                        <img id="profilePreview" 
+                                             src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
+                                             alt="Profile" 
+                                             class="profile-avatar rounded-circle">
+                                        {% if current_user.profile_pic %}
+                                        <div class="remove-avatar" onclick="removeProfilePicture()">
+                                            <i class="bi bi-x"></i>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-9">
+                                    <div class="mb-4">
+                                        <p class="text-muted mb-3">
+                                            Upload a professional profile picture. This is the first thing buyers see.
+                                        </p>
+                                        <div class="upload-btn btn btn-outline-primary">
+                                            <i class="bi bi-cloud-upload me-2"></i> Choose New Photo
+                                            <input type="file" id="profile_pic" name="profile_pic" 
+                                                   accept="image/*" onchange="previewImage(event)">
+                                        </div>
+                                        <small class="text-muted d-block mt-2">
+                                            Recommended: Square image, at least 400×400px. Max size: 2MB.
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Personal Information -->
+                        <div class="section-card">
+                            <h4 class="section-title">
+                                <i class="bi bi-person-circle me-2"></i> Personal Information
+                            </h4>
+                            
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">First Name *</label>
+                                    <input type="text" class="form-control" name="first_name" 
+                                           value="{{ current_user.first_name }}" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Last Name *</label>
+                                    <input type="text" class="form-control" name="last_name" 
+                                           value="{{ current_user.last_name }}" required>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label class="form-label">Email Address</label>
+                                    <input type="email" class="form-control" value="{{ current_user.email }}" readonly>
+                                    <small class="text-muted">Contact support to change email</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Phone Number</label>
+                                    <input type="tel" class="form-control" name="phone_number" 
+                                           value="{{ current_user.phone_number or '' }}" 
+                                           placeholder="+234 800 000 0000">
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label class="form-label">Professional Title *</label>
+                                    <input type="text" class="form-control" name="occupation" 
+                                           value="{{ current_user.occupation or '' }}" 
+                                           placeholder="e.g., Professional Coach, Web Developer" required>
+                                    <small class="text-muted">This appears below your name</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Location</label>
+                                    <input type="text" class="form-control" name="location" 
+                                           value="{{ current_user.location or '' }}" 
+                                           placeholder="e.g., Lagos, Nigeria">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Bio / Description -->
+                        <div class="section-card">
+                            <h4 class="section-title">
+                                <i class="bi bi-pencil-square me-2"></i> Bio / Description
+                            </h4>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Tell buyers about yourself *</label>
+                                <textarea class="form-control form-textarea" name="bio" rows="5" 
+                                          id="bioTextarea" 
+                                          oninput="updateCharCount()"
+                                          placeholder="Share your experience, expertise, and what makes you unique. This is your chance to impress potential buyers.">{{ current_user.bio or '' }}</textarea>
+                                <div class="d-flex justify-content-between mt-2">
+                                    <small class="text-muted">
+                                        Recommended: 150-300 characters
+                                    </small>
+                                    <small class="character-count" id="charCount">0/1000</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Social Links -->
+                        <div class="section-card">
+                            <h4 class="section-title">
+                                <i class="bi bi-link-45deg me-2"></i> Social Links
+                            </h4>
+                            
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <div class="input-group">
+                                        <span class="input-group-text social-icon linkedin-bg">
+                                            <i class="bi bi-linkedin"></i>
+                                        </span>
+                                        <input type="url" class="form-control" name="linkedin_url" 
+                                               value="{{ current_user.linkedin_url or '' }}" 
+                                               placeholder="https://linkedin.com/in/yourprofile">
+                                    </div>
+                                </div>
+                                
+                                <div class="col-12">
+                                    <div class="input-group">
+                                        <span class="input-group-text social-icon twitter-bg">
+                                            <i class="bi bi-twitter"></i>
+                                        </span>
+                                        <input type="url" class="form-control" name="twitter_url" 
+                                               value="{{ current_user.twitter_url or '' }}" 
+                                               placeholder="https://twitter.com/yourusername">
+                                    </div>
+                                </div>
+                                
+                                <div class="col-12">
+                                    <div class="input-group">
+                                        <span class="input-group-text social-icon facebook-bg">
+                                            <i class="bi bi-facebook"></i>
+                                        </span>
+                                        <input type="url" class="form-control" name="facebook_url" 
+                                               value="{{ current_user.facebook_url or '' }}" 
+                                               placeholder="https://facebook.com/yourprofile">
+                                    </div>
+                                </div>
+                                
+                                <div class="col-12">
+                                    <div class="input-group">
+                                        <span class="input-group-text social-icon instagram-bg">
+                                            <i class="bi bi-instagram"></i>
+                                        </span>
+                                        <input type="url" class="form-control" name="instagram_url" 
+                                               value="{{ current_user.instagram_url or '' }}" 
+                                               placeholder="https://instagram.com/yourusername">
+                                    </div>
+                                </div>
+                                
+                                <div class="col-12">
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="bi bi-globe"></i>
+                                        </span>
+                                        <input type="url" class="form-control" name="website" 
+                                               value="{{ current_user.website or '' }}" 
+                                               placeholder="https://yourportfolio.com">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Business Information -->
+                        <div class="section-card">
+                            <h4 class="section-title">
+                                <i class="bi bi-briefcase me-2"></i> Business Information
+                            </h4>
+                            
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Availability</label>
+                                    <select class="form-select" name="availability">
+                                        <option value="">Select availability</option>
+                                        <option value="24/7" {% if current_user.availability == '24/7' %}selected{% endif %}>Available 24/7</option>
+                                        <option value="weekdays" {% if current_user.availability == 'weekdays' %}selected{% endif %}>Weekdays Only (Mon-Fri)</option>
+                                        <option value="weekends" {% if current_user.availability == 'weekends' %}selected{% endif %}>Weekends Only (Sat-Sun)</option>
+                                        <option value="custom" {% if current_user.availability == 'custom' %}selected{% endif %}>Custom Hours</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label class="form-label">Response Time</label>
+                                    <select class="form-select" name="response_time">
+                                        <option value="">Select response time</option>
+                                        <option value="1" {% if current_user.response_time == '1' %}selected{% endif %}>Within 1 hour</option>
+                                        <option value="3" {% if current_user.response_time == '3' %}selected{% endif %}>Within 3 hours</option>
+                                        <option value="6" {% if current_user.response_time == '6' %}selected{% endif %}>Within 6 hours</option>
+                                        <option value="24" {% if current_user.response_time == '24' %}selected{% endif %}>Within 24 hours</option>
+                                        <option value="48" {% if current_user.response_time == '48' %}selected{% endif %}>Within 48 hours</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-12">
+                                    <label class="form-label">Languages Spoken</label>
+                                    <input type="text" class="form-control" name="languages" 
+                                           value="{{ current_user.languages or '' }}" 
+                                           placeholder="e.g., English, French, Yoruba">
+                                    <small class="text-muted">Separate languages with commas</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Expertise & Skills -->
+                        <div class="section-card">
+                            <h4 class="section-title">
+                                <i class="bi bi-star me-2"></i> Expertise & Skills
+                            </h4>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Skills</label>
+                                <input type="text" class="form-control" id="skillsInput" 
+                                       placeholder="Add your skills (e.g., Coaching, Web Design, Consulting)">
+                                <small class="text-muted">Press Enter or comma to add skills</small>
+                                
+                                <div class="mt-3" id="skillsContainer">
+                                    {% if current_user.skills %}
+                                        {% for skill in current_user.skills.split(',') %}
+                                            {% if skill.strip() %}
+                                            <span class="badge bg-primary me-2 mb-2 p-2">
+                                                {{ skill.strip() }}
+                                                <i class="bi bi-x ms-1" onclick="removeSkill(this)"></i>
+                                            </span>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                                <input type="hidden" name="skills" id="skillsHidden" value="{{ current_user.skills or '' }}">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Years of Experience</label>
+                                <select class="form-select" name="experience_years">
+                                    <option value="">Select years of experience</option>
+                                    <option value="0-1" {% if current_user.experience_years == '0-1' %}selected{% endif %}>0-1 years</option>
+                                    <option value="1-3" {% if current_user.experience_years == '1-3' %}selected{% endif %}>1-3 years</option>
+                                    <option value="3-5" {% if current_user.experience_years == '3-5' %}selected{% endif %}>3-5 years</option>
+                                    <option value="5-10" {% if current_user.experience_years == '5-10' %}selected{% endif %}>5-10 years</option>
+                                    <option value="10+" {% if current_user.experience_years == '10+' %}selected{% endif %}>10+ years</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Certifications</label>
+                                <textarea class="form-control form-textarea" name="certifications" rows="3" 
+                                          placeholder="List any professional certifications you have">{{ current_user.certifications or '' }}</textarea>
+                            </div>
+                        </div>
+                        
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{{ url_for('market.seller_profile', seller_id=current_user.id) }}" 
+                               class="btn-cancel">
+                                <i class="bi bi-x-circle me-2"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn-save">
+                                <i class="bi bi-check-circle me-2"></i> Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Live Preview -->
+            <div class="col-lg-4">
+                <div class="preview-card">
+                    <h4 class="section-title mb-4">
+                        <i class="bi bi-eye me-2"></i> Live Preview
+                    </h4>
+                    
+                    <!-- Profile Preview -->
+                    <div class="text-center mb-4">
+                        <div class="position-relative d-inline-block">
+                            <img id="previewAvatar" 
+                                 src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
+                                 alt="Profile" 
+                                 class="preview-avatar rounded-circle mb-3">
+                            {% if current_user.is_online %}
+                            <span class="badge-online"></span>
+                            {% endif %}
+                        </div>
+                        
+                        <h5 id="previewName" class="fw-bold mb-1">
+                            {{ current_user.first_name }} {{ current_user.last_name }}
+                        </h5>
+                        <p id="previewTitle" class="text-muted mb-2">
+                            {{ current_user.occupation or 'Professional Seller' }}
+                        </p>
+                        
+                        <!-- Rating -->
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-center align-items-center">
+                                <div class="rating-stars me-2">
+                                    <i class="bi bi-star-fill text-warning"></i>
+                                    <i class="bi bi-star-fill text-warning"></i>
+                                    <i class="bi bi-star-fill text-warning"></i>
+                                    <i class="bi bi-star-fill text-warning"></i>
+                                    <i class="bi bi-star-half text-warning"></i>
+                                </div>
+                                <span class="text-muted">4.5 (24 reviews)</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Location & Member Since -->
+                    <div class="mb-4">
+                        <p class="mb-2">
+                            <i class="bi bi-geo-alt me-2 text-muted"></i>
+                            <span id="previewLocation">{{ current_user.location or 'Location not set' }}</span>
+                        </p>
+                        <p class="mb-0">
+                            <i class="bi bi-calendar me-2 text-muted"></i>
+                            Member since {{ current_user.created_at.strftime('%B %Y') }}
+                        </p>
+                    </div>
+                    
+                    <!-- Bio Preview -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold mb-2">About</h6>
+                        <p id="previewBio" class="text-muted small">
+                            {{ current_user.bio or 'No bio added yet. Add a bio to tell buyers about yourself.' }}
+                        </p>
+                    </div>
+                    
+                    <!-- Skills Preview -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold mb-2">Skills</h6>
+                        <div id="previewSkills">
+                            {% if current_user.skills %}
+                                {% for skill in current_user.skills.split(',') %}
+                                    {% if skill.strip() %}
+                                    <span class="badge bg-light text-dark me-1 mb-1">{{ skill.strip() }}</span>
+                                    {% endif %}
+                                {% endfor %}
+                            {% else %}
+                                <span class="text-muted small">No skills added yet</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Social Links Preview -->
+                    <div>
+                        <h6 class="fw-bold mb-2">Connect</h6>
+                        <div class="d-flex">
+                            {% if current_user.linkedin_url %}
+                            <a href="{{ current_user.linkedin_url }}" target="_blank" 
+                               class="me-3 text-decoration-none">
+                                <i class="bi bi-linkedin text-primary fs-5"></i>
+                            </a>
+                            {% endif %}
+                            
+                            {% if current_user.twitter_url %}
+                            <a href="{{ current_user.twitter_url }}" target="_blank" 
+                               class="me-3 text-decoration-none">
+                                <i class="bi bi-twitter text-info fs-5"></i>
+                            </a>
+                            {% endif %}
+                            
+                            {% if current_user.facebook_url %}
+                            <a href="{{ current_user.facebook_url }}" target="_blank" 
+                               class="me-3 text-decoration-none">
+                                <i class="bi bi-facebook text-primary fs-5"></i>
+                            </a>
+                            {% endif %}
+                            
+                            {% if current_user.website %}
+                            <a href="{{ current_user.website }}" target="_blank" 
+                               class="me-3 text-decoration-none">
+                                <i class="bi bi-globe text-dark fs-5"></i>
+                            </a>
+                            {% endif %}
+                            
+                            {% if not current_user.linkedin_url and not current_user.twitter_url and not current_user.facebook_url and not current_user.website %}
+                            <span class="text-muted small">No social links added</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info mt-4">
+                        <i class="bi bi-lightbulb me-2"></i>
+                        <small>
+                            <strong>Tip:</strong> A complete profile attracts 3x more buyers. Make sure all sections are filled.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white border-top py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <img src="{{ url_for('static', filename='assets/img/kim.png') }}" alt="Kimbela" height="40">
+                    <p class="text-muted small mt-2">
+                        Professional marketplace for African service providers.
+                    </p>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <h6 class="fw-bold">Helpful Links</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="{{ url_for('market.main_market') }}" class="text-decoration-none text-muted">Browse Services</a></li>
+                        <li><a href="{{ url_for('market.seller_dashboard') }}" class="text-decoration-none text-muted">Seller Dashboard</a></li>
+                        <li><a href="#" class="text-decoration-none text-muted">Profile Tips</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <h6 class="fw-bold">Need Help?</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-decoration-none text-muted">Profile Guidelines</a></li>
+                        <li><a href="#" class="text-decoration-none text-muted">Contact Support</a></li>
+                        <li><a href="#" class="text-decoration-none text-muted">FAQ</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr>
+            <div class="text-center text-muted small">
+                &copy; {{ now.year }} Kimbela Marketplace. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script>
+        // Preview profile image
+        function previewImage(event) {
+            const input = event.target;
+            const preview = document.getElementById('profilePreview');
+            const livePreview = document.getElementById('previewAvatar');
+            
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    livePreview.src = e.target.result;
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+        
+        // Remove profile picture
+        function removeProfilePicture() {
+            if (confirm('Remove profile picture?')) {
+                const defaultAvatar = "{{ url_for('static', filename='assets/img/default-avatar.png') }}";
+                document.getElementById('profilePreview').src = defaultAvatar;
+                document.getElementById('previewAvatar').src = defaultAvatar;
+                
+                // You might want to add a hidden input to indicate removal
+                // or handle this server-side
+                fetch('{{ url_for("market.remove_profile_picture") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                }).then(response => response.json())
+                  .then(data => {
+                      if (data.success) {
+                          document.querySelector('.remove-avatar').style.display = 'none';
+                      }
+                  });
+            }
+        }
+        
+        // Character count for bio
+        function updateCharCount() {
+            const textarea = document.getElementById('bioTextarea');
+            const charCount = document.getElementById('charCount');
+            const previewBio = document.getElementById('previewBio');
+            const count = textarea.value.length;
+            
+            charCount.textContent = `${count}/1000`;
+            previewBio.textContent = textarea.value || 'No bio added yet. Add a bio to tell buyers about yourself.';
+            
+            // Update character count color
+            charCount.classList.remove('warning', 'danger');
+            if (count > 800) {
+                charCount.classList.add('danger');
+            } else if (count > 500) {
+                charCount.classList.add('warning');
+            }
+        }
+        
+        // Initialize character count
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCharCount();
+            
+            // Live preview updates
+            const nameInputs = document.querySelectorAll('input[name="first_name"], input[name="last_name"]');
+            const titleInput = document.querySelector('input[name="occupation"]');
+            const locationInput = document.querySelector('input[name="location"]');
+            
+            nameInputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    const firstName = document.querySelector('input[name="first_name"]').value;
+                    const lastName = document.querySelector('input[name="last_name"]').value;
+                    document.getElementById('previewName').textContent = `${firstName} ${lastName}`;
+                });
+            });
+            
+            titleInput.addEventListener('input', function() {
+                document.getElementById('previewTitle').textContent = this.value || 'Professional Seller';
+            });
+            
+            locationInput.addEventListener('input', function() {
+                document.getElementById('previewLocation').textContent = this.value || 'Location not set';
+            });
+        });
+        
+        // Skills management
+        document.addEventListener('DOMContentLoaded', function() {
+            const skillsInput = document.getElementById('skillsInput');
+            const skillsHidden = document.getElementById('skillsHidden');
+            const skillsContainer = document.getElementById('skillsContainer');
+            const previewSkills = document.getElementById('previewSkills');
+            
+            skillsInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ',') {
+                    e.preventDefault();
+                    addSkill(this.value.trim());
+                    this.value = '';
+                }
+            });
+            
+            function addSkill(skill) {
+                if (!skill) return;
+                
+                // Add to skills container
+                const badge = document.createElement('span');
+                badge.className = 'badge bg-primary me-2 mb-2 p-2';
+                badge.innerHTML = `${skill} <i class="bi bi-x ms-1" onclick="removeSkill(this)"></i>`;
+                skillsContainer.appendChild(badge);
+                
+                // Add to preview
+                const previewBadge = document.createElement('span');
+                previewBadge.className = 'badge bg-light text-dark me-1 mb-1';
+                previewBadge.textContent = skill;
+                previewSkills.appendChild(previewBadge);
+                
+                // Update hidden input
+                const currentSkills = skillsHidden.value ? skillsHidden.value.split(',') : [];
+                currentSkills.push(skill);
+                skillsHidden.value = currentSkills.join(',');
+            }
+        });
+        
+        function removeSkill(element) {
+            const badge = element.parentElement;
+            const skill = badge.textContent.trim();
+            
+            // Remove from display
+            badge.remove();
+            
+            // Remove from preview
+            const previewSkills = document.getElementById('previewSkills');
+            const previewBadges = previewSkills.querySelectorAll('.badge');
+            previewBadges.forEach(b => {
+                if (b.textContent.trim() === skill) {
+                    b.remove();
+                }
+            });
+            
+            // Update hidden input
+            const skillsHidden = document.getElementById('skillsHidden');
+            const currentSkills = skillsHidden.value ? skillsHidden.value.split(',') : [];
+            const index = currentSkills.indexOf(skill);
+            if (index > -1) {
+                currentSkills.splice(index, 1);
+                skillsHidden.value = currentSkills.join(',');
+            }
+            
+            // If no skills left, show placeholder
+            if (previewSkills.children.length === 0) {
+                const placeholder = document.createElement('span');
+                placeholder.className = 'text-muted small';
+                placeholder.textContent = 'No skills added yet';
+                previewSkills.appendChild(placeholder);
+            }
+        }
+        
+        // Form validation
+        document.getElementById('editProfileForm').addEventListener('submit', function(e) {
+            const firstName = this.querySelector('input[name="first_name"]');
+            const lastName = this.querySelector('input[name="last_name"]');
+            const occupation = this.querySelector('input[name="occupation"]');
+            const bio = this.querySelector('textarea[name="bio"]');
+            
+            let isValid = true;
+            
+            // Reset validation
+            [firstName, lastName, occupation, bio].forEach(input => {
+                input.classList.remove('is-invalid');
+            });
+            
+            // Validate required fields
+            if (!firstName.value.trim()) {
+                firstName.classList.add('is-invalid');
+                isValid = false;
+            }
+            
+            if (!lastName.value.trim()) {
+                lastName.classList.add('is-invalid');
+                isValid = false;
+            }
+            
+            if (!occupation.value.trim()) {
+                occupation.classList.add('is-invalid');
+                isValid = false;
+            }
+            
+            if (!bio.value.trim()) {
+                bio.classList.add('is-invalid');
+                isValid = false;
+            } else if (bio.value.trim().length < 50) {
+                alert('Bio should be at least 50 characters long');
+                isValid = false;
+            }
+            
+            if (!isValid) {
+                e.preventDefault();
+                alert('Please fill in all required fields (*)');
+            }
+        });
+        
+        // Auto-save warning
+        let formChanged = false;
+        const formInputs = document.querySelectorAll('#editProfileForm input, #editProfileForm textarea, #editProfileForm select');
+        
+        formInputs.forEach(input => {
+            input.addEventListener('input', function() {
+                formChanged = true;
+            });
+        });
+        
+        window.addEventListener('beforeunload', function(e) {
+            if (formChanged) {
+                e.preventDefault();
+                e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+            }
+        });
+        
+        // Social links preview update
+        const socialInputs = document.querySelectorAll('input[name$="_url"], input[name="website"]');
+        socialInputs.forEach(input => {
+            input.addEventListener('input', function() {
+                // In a real app, you'd update the preview dynamically
+                // For now, we'll just note that the preview needs to be refreshed
+                console.log('Social link updated:', this.value);
+            });
+        });
+    </script>
+</body>
+</html>
