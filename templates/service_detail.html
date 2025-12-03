@@ -36,7 +36,7 @@
         /* Service detail specific styles */
         .service-image {
             width: 100%;
-            height: 300px;
+            height: 500px;
             object-fit: cover;
             border-radius: 10px;
         }
@@ -197,55 +197,16 @@
             <div class="flex items-center justify-between">
                 <!-- Logo -->
                 <a href="{{ url_for('market.main_market') }}" class="flex items-center gap-2">
-                    <img src="{{ url_for('static', filename='assets/img/kim.png') }}" 
-                         alt="Kimbela" 
-                         class="h-7 w-auto">
+                    
                     <div>
-                        <span class="text-xs font-bold gradient-primary bg-clip-text text-transparent">
+                        <span class="text-xs font-bold  bg-clip-text ">
                             Kimbela Marketplace
                         </span>
                     </div>
                 </a>
                 
                 <!-- User Menu -->
-                <div class="flex items-center gap-2">
-                    {% if current_user.is_authenticated %}
-                    <div class="relative group">
-                        <button class="flex items-center gap-1 focus:outline-none">
-                            <div class="w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-xs overflow-hidden">
-                                {% if current_user.profile_pic %}
-                                <img src="{{ current_user.profile_pic }}" alt="{{ current_user.username }}" class="w-full h-full object-cover">
-                                {% else %}
-                                <i class="bi bi-person"></i>
-                                {% endif %}
-                            </div>
-                            <span class="hidden md:inline font-medium text-xs">{{ current_user.username }}</span>
-                            <i class="bi bi-chevron-down text-xs"></i>
-                        </button>
-                        
-                        <!-- Dropdown Menu -->
-                        <div class="absolute right-0 mt-1 w-40 bg-white rounded-lg shadow-lg py-1 z-50 hidden group-hover:block border border-gray-200">
-                            <a href="{{ url_for('market.seller_dashboard') }}" class="block px-3 py-1 text-xs text-gray-700 hover:bg-gray-100">
-                                <i class="bi bi-speedometer2 mr-1 text-xs"></i>Dashboard
-                            </a>
-                            <a href="{{ url_for('market.seller_profile', seller_id=current_user.id) }}" class="block px-3 py-1 text-xs text-gray-700 hover:bg-gray-100">
-                                <i class="bi bi-person mr-1 text-xs"></i>Profile
-                            </a>
-                            <a href="{{ url_for('market.create_service') }}" class="block px-3 py-1 text-xs text-gray-700 hover:bg-gray-100">
-                                <i class="bi bi-plus-circle mr-1 text-xs"></i>Create Service
-                            </a>
-                            <div class="border-t my-1"></div>
-                            <a href="{{ url_for('user.logout') }}" class="block px-3 py-1 text-xs text-red-600 hover:bg-red-50">
-                                <i class="bi bi-box-arrow-right mr-1 text-xs"></i>Logout
-                            </a>
-                        </div>
-                    </div>
-                    {% else %}
-                    <a href="{{ url_for('user.login') }}" class="btn btn-primary btn-sm">
-                        <i class="bi bi-box-arrow-in-right text-xs"></i> Login
-                    </a>
-                    {% endif %}
-                </div>
+                
             </div>
         </div>
     </nav>
@@ -347,9 +308,7 @@
                                 {{ currency_symbol }}{{ "{:,.2f}".format(service.price) }}
                             </div>
                             {% if service.currency != 'KES' %}
-                            <div class="text-xs text-gray-600">
-                                ≈ KSh {{ "{:,.2f}".format(service.price * 150) }}
-                            </div>
+                            
                             {% endif %}
                             {% endif %}
                         </div>
@@ -594,9 +553,7 @@
                             {% endif %}
                         </div>
                         {% if service.price and service.price > 0 and service.currency != 'KES' %}
-                        <div class="text-xs text-gray-600 text-right">
-                            ≈ KSh {{ "{:,.2f}".format(service.price * 150) }}
-                        </div>
+                        
                         {% endif %}
                     </div>
                     

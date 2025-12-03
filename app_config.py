@@ -1,26 +1,32 @@
+# app_config.py - FIX CACHE INITIALIZATION
 from flask import Flask, session
 from flask_wtf.csrf import CSRFProtect, generate_csrf
 from dotenv import load_dotenv
 import os
 from flask_migrate import Migrate
 from extensions import db, bcrypt, login_manager, mail
+from flask_caching import Cache
+from flask_socketio import SocketIO
+from datetime import datetime, timedelta, timezone
+import humanize
+
+# Import blueprints
 from users.user import user as user_blueprint
 from marketplace.market import market as market_blueprint
 from authentication.authenticate import auth
 from admin.admin import admin as admin_blueprint
 from matchmaking.matchmake import match as matchmaking_blueprint
 from payments.payments import payments as payments_blueprint
-from models import User, Post, Comment, Like, FriendRequest, friendship
-from datetime import datetime, timedelta, timezone
-from extensions import db, socketio
 from messages.messaging import messaging as message_blueprint
+
+from models import User, Post, Comment, Like, FriendRequest, friendship
+from extensions import db, socketio
 from scheduler import init_scheduler
-from flask_caching import Cache  # Add this import
 
 load_dotenv()
 
 csrf = CSRFProtect()
-cache = Cache()  # Initialize cache
+cache = Cache()  # SINGLE cache instance for the whole app
 
 def create_app():
     app = Flask(__name__)
@@ -35,22 +41,19 @@ def create_app():
     app.config['FLUTTERWAVE_SECRET_KEY'] = os.getenv('SECRET_KEY')
     app.config['FLUTTERWAVE_ENCRYPTION_KEY'] = os.getenv('ENCRYPTION_KEY')
     
-    # Redis configuration for caching
-    redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
-    app.config['CACHE_TYPE'] = 'RedisCache'
-    app.config['CACHE_REDIS_URL'] = redis_url
-    app.config['CACHE_DEFAULT_TIMEOUT'] = 300  # 5 minutes default
-    app.config['CACHE_KEY_PREFIX'] = 'kimbela_'
+    # Cache configuration - FIXED
+    app.config['CACHE_TYPE'] = 'SimpleCache'  # Must be exact string
+    app.config['CACHE_DEFAULT_TIMEOUT'] = 300
+    app.config['CACHE_THRESHOLD'] = 1000
     
-    # If Redis is not available, fallback to simple cache
-    try:
-        import redis
-        redis_client = redis.from_url(redis_url)
-        redis_client.ping()
-        app.config['CACHE_TYPE'] = 'RedisCache'
-    except:
-        app.logger.warning("Redis not available, using simple cache")
-        app.config['CACHE_TYPE'] = 'SimpleCache'
+    # Alternative cache config options:
+    # app.config['CACHE_TYPE'] = 'filesystem'
+    # app.config['CACHE_DIR'] = '/tmp/flask-cache'
+    
+    # For Redis (when ready):
+    # app.config['CACHE_TYPE'] = 'RedisCache'
+    # app.config['CACHE_REDIS_URL'] = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+    # app.config['CACHE_KEY_PREFIX'] = 'kimbela_'
     
     # Verify webhook secret is loaded
     if not app.config['STRIPE_WEBHOOK_SECRET']:
@@ -80,14 +83,25 @@ def create_app():
     app.config["MAIL_DEBUG"] = True
 
     # Initialize extensions
-    mail.init_app(app)
-    csrf.init_app(app)
     db.init_app(app)
     bcrypt.init_app(app)
     login_manager.init_app(app)
+    mail.init_app(app)
+    csrf.init_app(app)
+    
+    # Initialize cache FIRST
+    cache.init_app(app)
+    
+    # Verify cache initialization
+    with app.app_context():
+        if 'cache' not in app.extensions:
+            app.logger.warning("Cache not properly initialized, using simple dict cache")
+            # Create a simple cache as fallback
+            from werkzeug.contrib.cache import SimpleCache
+            app.extensions['cache'] = SimpleCache()
+    
     migrate = Migrate(app, db)
     socketio.init_app(app)
-    cache.init_app(app)  # Initialize cache with app
 
     login_manager.login_view = "auth.login"
     login_manager.login_message_category = "info"
@@ -115,7 +129,13 @@ def create_app():
     # Jinja filter: Human-readable "time ago"
     @app.template_filter("time_ago")
     def time_ago_filter(timestamp):
+        if timestamp is None:
+            return "Never"
+        
         now = datetime.now()
+        if timestamp.tzinfo is not None:
+            now = datetime.now(timezone.utc)
+        
         diff = now - timestamp
 
         periods = [
@@ -147,7 +167,6 @@ def create_app():
                 return "Unknown"
         
         now = datetime.utcnow()
-        import humanize
         return humanize.naturaltime(now - dt)
 
     # Jinja filter: Convert UTC to WAT time
@@ -161,7 +180,7 @@ def create_app():
     def datetimeformat(value):
         if value:
             try:
-                return datetime.fromisoformat(value).strftime("%Y-%m-DD")
+                return datetime.fromisoformat(value).strftime("%Y-%m-%d")
             except (ValueError, TypeError):
                 return "N/A"
         return "N/A"

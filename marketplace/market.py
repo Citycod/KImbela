@@ -12,6 +12,8 @@ from datetime import datetime, timedelta
 from sqlalchemy import or_, desc, func
 from werkzeug.utils import secure_filename
 import time
+from cache_utils import cache_response, invalidate_cache
+
 
 market = Blueprint("market", __name__)
 
@@ -36,16 +38,47 @@ def upload_to_cloudinary(file, folder="marketplace"):
         return None
 
 
-def format_price(price):
-    """Format price with commas, handle None values"""
-    if price is None:
-        return "0"
+# In market.py, update the format_price function:
+
+def format_price(price, currency='NGN'):
+    """Format price with currency symbol"""
+    if price is None or price == 0:
+        return "Free"
+    
     try:
         # Convert to float first to handle decimal
         price_float = float(price)
-        return f"{price_float:,.2f}"
+        
+        # Currency symbols mapping
+        currency_symbols = {
+            'USD': '$',
+            'EUR': '€',
+            'GBP': '£',
+            'KES': 'KSh',
+            'NGN': '₦',
+            'GHS': 'GH₵',
+            'ZAR': 'R',
+            'XAF': 'FCFA',
+            'XOF': 'CFA'
+        }
+        
+        symbol = currency_symbols.get(currency, currency)
+        
+        # Format with comma separation
+        formatted = f"{price_float:,.2f}"
+        
+        # Remove .00 if it's a whole number
+        if formatted.endswith('.00'):
+            formatted = formatted[:-3]
+        
+        return f"{symbol}{formatted}"
     except (ValueError, TypeError):
-        return "0"
+        return f"{currency}0"
+    
+
+def format_price_with_currency(price, currency='NGN'):
+    """Format price with currency symbol for display in templates"""
+    return format_price(price, currency)
     
     
 
@@ -98,6 +131,8 @@ def get_featured_sellers(limit=6):
 
 # ==================== MAIN MARKETPLACE ROUTES ====================
 
+# In your main_market route in market.py, update the price filtering section:
+
 @market.route("/main_market", methods=["GET"])
 def main_market():
     """Marketplace homepage"""
@@ -125,13 +160,21 @@ def main_market():
             )
         )
     
-    # Filter by price
-    min_price = request.args.get('min_price', type=int)
-    max_price = request.args.get('max_price', type=int)
-    if min_price is not None:
+    # FIXED: Filter by price with proper handling
+    min_price = request.args.get('min_price')
+    max_price = request.args.get('max_price')
+    
+    if min_price and min_price.isdigit():
+        min_price = int(min_price)
         services_query = services_query.filter(MarketplaceService.price >= min_price)
-    if max_price is not None:
+    else:
+        min_price = None
+    
+    if max_price and max_price.isdigit():
+        max_price = int(max_price)
         services_query = services_query.filter(MarketplaceService.price <= max_price)
+    else:
+        max_price = None
     
     # Filter by service type
     service_type = request.args.get('type')
@@ -171,6 +214,21 @@ def main_market():
         status="active"
     ).order_by(func.random()).limit(6).all()
     
+    # Get price statistics for dynamic range
+    price_stats = db.session.query(
+        func.min(MarketplaceService.price).label('min_price'),
+        func.max(MarketplaceService.price).label('max_price'),
+        func.avg(MarketplaceService.price).label('avg_price')
+    ).filter_by(status="active").first()
+    
+    min_available = price_stats.min_price or 0
+    max_available = price_stats.max_price or 10000
+    avg_price = price_stats.avg_price or 500
+    
+    # Set default price range values
+    current_min = min_price or min_available
+    current_max = max_price or max_available
+    
     return render_template(
         "main_market.html",
         services=services,
@@ -180,8 +238,11 @@ def main_market():
         search_query=search_query,
         category_slug=category_slug,
         sort_by=sort_by,
-        min_price=min_price,
-        max_price=max_price,
+        min_price=current_min,
+        max_price=current_max,
+        min_available=min_available,
+        max_available=max_available,
+        avg_price=avg_price,
         service_type=service_type,
         featured_only=featured_only,
         format_price=format_price,
@@ -280,47 +341,10 @@ def service_detail(slug):
     )
 
 
-# @market.route("/seller/<int:seller_id>", methods=["GET"])
-# def seller_profile(seller_id):
-#     """View seller profile"""
-#     seller = User.query.get_or_404(seller_id)
-    
-#     # Get seller's services
-#     page = request.args.get('page', 1, type=int)
-#     per_page = 12
-    
-#     services_query = MarketplaceService.query.filter_by(
-#         seller_id=seller_id,
-#         status="active"
-#     ).order_by(desc(MarketplaceService.created_at))
-    
-#     services = services_query.paginate(page=page, per_page=per_page, error_out=False)
-    
-#     # Get seller stats
-#     total_services = services_query.count()
-#     total_reviews = MarketplaceReview.query.join(MarketplaceService).filter(
-#         MarketplaceService.seller_id == seller_id
-#     ).count()
-    
-#     # Calculate average rating
-#     avg_rating = db.session.query(
-#         func.avg(MarketplaceReview.rating)
-#     ).join(MarketplaceService).filter(
-#         MarketplaceService.seller_id == seller_id
-#     ).scalar() or 0
-    
-#     return render_template(
-#         "marketplace/seller_profile.html",
-#         seller=seller,
-#         services=services,
-#         total_services=total_services,
-#         total_reviews=total_reviews,
-#         avg_rating=round(avg_rating, 1),
-#         format_price=format_price
-#     )
 
 
 @market.route("/category/<slug>", methods=["GET"])
+@login_required
 def category_detail(slug):
     """View category details"""
     category = MarketplaceCategory.query.filter_by(slug=slug).first_or_404()
@@ -343,7 +367,7 @@ def category_detail(slug):
     ).order_by('sort_order').all()
     
     return render_template(
-        "marketplace/category_detail.html",
+        "category_detail.html",
         category=category,
         services=services,
         subcategories=subcategories,
@@ -462,40 +486,7 @@ def seller_dashboard():
     )
     
     
-# @market.route("/delete_service/<int:service_id>", methods=["DELETE"])
-# @login_required
-# def delete_service(service_id):
-#     """Delete a service - Fixed endpoint"""
-#     service = MarketplaceService.query.get_or_404(service_id)
-    
-#     # Check ownership
-#     if service.seller_id != current_user.id:
-#         return jsonify({"success": False, "error": "Permission denied"}), 403
-    
-#     try:
-#         # Delete related clicks first
-#         MarketplaceClick.query.filter_by(service_id=service_id).delete()
-        
-#         # Delete related reviews
-#         MarketplaceReview.query.filter_by(service_id=service_id).delete()
-        
-#         # Delete the service
-#         db.session.delete(service)
-#         db.session.commit()
-        
-#         return jsonify({
-#             "success": True,
-#             "message": "Service deleted successfully"
-#         })
-    
-#     except Exception as e:
-#         db.session.rollback()
-#         print(f"Error deleting service: {e}")
-#         return jsonify({
-#             "success": False,
-#             "error": str(e)
-#         }), 500
-    
+
 
 @market.route("/create_service", methods=["GET", "POST"])
 @login_required
@@ -638,6 +629,9 @@ def create_service():
         
         db.session.add(service)
         db.session.commit()
+        
+        invalidate_cache(f"dashboard_stats_{current_user.id}_*")
+        invalidate_cache(f"dashboard_services_{current_user.id}_*")
         
         # Redirect to payment if subscription required
         if subscription:
@@ -846,6 +840,9 @@ def delete_service(service_id):
         db.session.delete(service)
         db.session.commit()
         
+        invalidate_cache(f"dashboard_stats_{current_user.id}_*")
+        invalidate_cache(f"dashboard_services_{current_user.id}_*")
+        
         return jsonify({
             "success": True,
             "message": "Service deleted successfully"
@@ -912,7 +909,7 @@ def payment(service_id):
         return redirect(url_for('market.seller_dashboard'))
     
     return render_template(
-        "marketplace/payment.html",
+        "payment.html",
         service=service,
         subscription=subscription,
         format_price=format_price
@@ -1276,60 +1273,60 @@ def admin_services():
     )
     
     return render_template(
-        "marketplace/admin/services.html",
+        "admin/services.html",
         services=services,
         status=status,
         format_price=format_price
     )
 
 
-@market.route("/admin/service/<int:service_id>/approve", methods=["POST"])
-@login_required
-def approve_service(service_id):
-    """Approve a service"""
-    if not current_user.is_admin:
-        return jsonify({'success': False, 'error': 'Admin access required'}), 403
+# @market.route("/admin/service/<int:service_id>/approve", methods=["POST"])
+# @login_required
+# def admin_approve_service(service_id):
+#     """Approve a service"""
+#     if not current_user.is_admin:
+#         return jsonify({'success': False, 'error': 'Admin access required'}), 403
     
-    service = MarketplaceService.query.get_or_404(service_id)
+#     service = MarketplaceService.query.get_or_404(service_id)
     
-    try:
-        service.status = 'active'
-        service.published_at = datetime.utcnow()
-        db.session.commit()
+#     try:
+#         service.status = 'active'
+#         service.published_at = datetime.utcnow()
+#         db.session.commit()
         
-        # TODO: Send email notification to seller
+#         # TODO: Send email notification to seller
         
-        return jsonify({'success': True})
+#         return jsonify({'success': True})
     
-    except Exception as e:
-        db.session.rollback()
-        print(f"Approve service error: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+#     except Exception as e:
+#         db.session.rollback()
+#         print(f"Approve service error: {e}")
+#         return jsonify({'success': False, 'error': str(e)}), 500
 
 
-@market.route("/admin/service/<int:service_id>/reject", methods=["POST"])
-@login_required
-def reject_service(service_id):
-    """Reject a service"""
-    if not current_user.is_admin:
-        return jsonify({'success': False, 'error': 'Admin access required'}), 403
+# @market.route("/admin/service/<int:service_id>/reject", methods=["POST"])
+# @login_required
+# def admin_reject_service(service_id):
+#     """Reject a service"""
+#     if not current_user.is_admin:
+#         return jsonify({'success': False, 'error': 'Admin access required'}), 403
     
-    service = MarketplaceService.query.get_or_404(service_id)
-    reason = request.json.get('reason', '')
+#     service = MarketplaceService.query.get_or_404(service_id)
+#     reason = request.json.get('reason', '')
     
-    try:
-        service.status = 'rejected'
-        service.rejection_reason = reason
-        db.session.commit()
+#     try:
+#         service.status = 'rejected'
+#         service.rejection_reason = reason
+#         db.session.commit()
         
-        # TODO: Send email notification to seller
+#         # TODO: Send email notification to seller
         
-        return jsonify({'success': True})
+#         return jsonify({'success': True})
     
-    except Exception as e:
-        db.session.rollback()
-        print(f"Reject service error: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+#     except Exception as e:
+#         db.session.rollback()
+#         print(f"Reject service error: {e}")
+#         return jsonify({'success': False, 'error': str(e)}), 500
 
 
 @market.route("/admin/featured", methods=["GET", "POST"])
@@ -1365,7 +1362,7 @@ def manage_featured():
     ).order_by(desc(MarketplaceService.created_at)).limit(50).all()
     
     return render_template(
-        "marketplace/admin/featured.html",
+        "admin/featured.html",
         featured_services=featured_services,
         non_featured_services=non_featured_services,
         format_price=format_price
@@ -1737,7 +1734,7 @@ def seller_settings():
         active_sessions = current_user.active_sessions
         
         return render_template(
-            "marketplace/seller_settings.html",
+            "seller_settings.html",
             current_subscription=current_subscription,
             subscription_expires=subscription_expires,
             subscription_plans=subscription_plans,
@@ -1934,47 +1931,7 @@ def seller_profile(seller_id):
         now=datetime.utcnow()
     )
     
-    
-# @market.route("/update-profile", methods=["POST"])
-# @login_required
-# def update_profile():
-#     """Update seller profile"""
-#     try:
-#         current_user.first_name = request.form.get('first_name', current_user.first_name)
-#         current_user.last_name = request.form.get('last_name', current_user.last_name)
-#         current_user.phone_number = request.form.get('phone_number')
-#         current_user.occupation = request.form.get('occupation')
-#         current_user.location = request.form.get('location')
-#         current_user.bio = request.form.get('bio')
-#         current_user.website = request.form.get('website')
-#         current_user.linkedin_url = request.form.get('linkedin_url')
-#         current_user.twitter_url = request.form.get('twitter_url')
-#         current_user.facebook_url = request.form.get('facebook_url')
-#         current_user.instagram_url = request.form.get('instagram_url')
-#         current_user.availability = request.form.get('availability')
-#         current_user.response_time = request.form.get('response_time')
-#         current_user.languages = request.form.get('languages')
-#         current_user.skills = request.form.get('skills')
-#         current_user.experience_years = request.form.get('experience_years')
-#         current_user.certifications = request.form.get('certifications')
-        
-#         # Handle profile picture upload
-#         if 'profile_pic' in request.files:
-#             file = request.files['profile_pic']
-#             if file and allowed_file(file.filename):
-#                 image_url = upload_to_cloudinary(file, "profiles")
-#                 if image_url:
-#                     current_user.profile_pic = image_url
-        
-#         db.session.commit()
-#         flash("Profile updated successfully!", "success")
-        
-#     except Exception as e:
-#         db.session.rollback()
-#         print(f"Update profile error: {e}")
-#         flash("Error updating profile", "danger")
-    
-#     return redirect(url_for('market.seller_profile', seller_id=current_user.id))
+
 
 @market.route("/remove-profile-picture", methods=["POST"])
 @login_required
@@ -1993,6 +1950,7 @@ def remove_profile_picture():
 # ==================== API ENDPOINTS FOR DASHBOARD ====================
 @market.route("/api/dashboard/stats", methods=["GET"])
 @login_required
+@cache_response(timeout=300, key_prefix='dashboard_stats_')
 def get_dashboard_stats():
     """Get real-time dashboard statistics"""
     try:
@@ -2126,6 +2084,7 @@ def get_dashboard_stats():
 
 @market.route("/api/dashboard/services", methods=["GET"])
 @login_required
+@cache_response(timeout=180, key_prefix='dashboard_services_')
 def get_dashboard_services():
     """Get paginated services for dashboard"""
     try:
@@ -2198,6 +2157,7 @@ def get_dashboard_services():
 
 @market.route("/api/dashboard/reviews", methods=["GET"])
 @login_required
+@cache_response(timeout=120, key_prefix='dashboard_reviews_')
 def get_dashboard_reviews():
     """Get seller reviews"""
     try:
@@ -2240,3 +2200,6 @@ def get_dashboard_reviews():
     except Exception as e:
         current_app.logger.error(f"Dashboard reviews error: {str(e)}")
         return jsonify({'success': False, 'error': 'Failed to load reviews'}), 500
+    
+    
+    
