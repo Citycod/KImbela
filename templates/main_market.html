@@ -285,22 +285,22 @@
                         
                         <div class="text-xs text-gray-600 mb-2">
                             Current Range: 
-                            <span id="currentMinDisplay" class="price-display ml-1">{{ format_price(min_price if min_price else min_available, 'NGN') }}</span>
+                            <span id="currentMinDisplay" class="price-display ml-1">{{ format_price(min_price if min_price else min_available) }}</span>
                             to
-                            <span id="currentMaxDisplay" class="price-display ml-1">{{ format_price(max_price if max_price else max_available, 'NGN') }}</span>
+                            <span id="currentMaxDisplay" class="price-display ml-1">{{ format_price(max_price if max_price else max_available) }}</span>
                         </div>
                         
                         <div class="space-y-4">
                             <div>
                                 <div class="flex justify-between text-xs text-gray-600 mb-1">
                                     <span>Min: <span id="minPriceValue">{{ min_price if min_price else min_available|int }}</span></span>
-                                    <span id="minPriceDisplay" class="font-medium">{{ format_price(min_price if min_price else min_available, 'NGN') }}</span>
+                                    <span id="minPriceDisplay" class="font-medium">{{ format_price(min_price if min_price else min_available) }}</span>
                                 </div>
                                 <input type="range" 
                                        name="min_price"
                                        id="minPriceSlider"
                                        min="{{ min_available|int }}" 
-                                       max="{{ max_available|int }}" 
+                                       max="100000000" 
                                        step="50" 
                                        value="{{ min_price if min_price else min_available|int }}"
                                        class="price-slider">
@@ -309,13 +309,13 @@
                             <div>
                                 <div class="flex justify-between text-xs text-gray-600 mb-1">
                                     <span>Max: <span id="maxPriceValue">{{ max_price if max_price else max_available|int }}</span></span>
-                                    <span id="maxPriceDisplay" class="font-medium">{{ format_price(max_price if max_price else max_available, 'NGN') }}</span>
+                                    <span id="maxPriceDisplay" class="font-medium">{{ format_price(max_price if max_price else max_available) }}</span>
                                 </div>
                                 <input type="range" 
                                        name="max_price"
                                        id="maxPriceSlider"
                                        min="{{ min_available|int }}" 
-                                       max="{{ max_available|int }}" 
+                                       max="100000000" 
                                        step="50" 
                                        value="{{ max_price if max_price else max_available|int }}"
                                        class="price-slider">
@@ -354,8 +354,8 @@
                     <h4 class="font-bold mb-1">Start Selling Today!</h4>
                     <p class="text-xs mb-3 opacity-90">Share your expertise and earn tokens</p>
                     <a href="{{ url_for('market.create_service') }}" 
-                       class="block w-full py-2 bg-white text-primary rounded-lg font-bold hover:bg-gray-100 transition-colors text-sm">
-                        <i class="bi bi-plus-circle mr-1"></i> Create Service
+                       class="block w-full py-2 bg-white text-primary rounded-lg font-bold hover:bg-gray-100 transition-colors text-sm" style="color: black;">
+                        <i class="bi bi-plus-circle mr-1" style="color: black;"></i> Create Service
                     </a>
                 </div>
             </div>
@@ -380,7 +380,7 @@
                             {% if services.total %}
                                 {{ services.total }} services found
                                 {% if min_price or max_price %}
-                                    (Price range: {{ format_price(min_price if min_price else min_available, 'NGN') }} - {{ format_price(max_price if max_price else max_available, 'NGN') }})
+                                    (Price range: {{ format_price(min_price if min_price else min_available) }} - {{ format_price(max_price if max_price else max_available) }})
                                 {% endif %}
                             {% else %}
                                 No services found
@@ -566,7 +566,7 @@
                     <h3 class="text-lg font-semibold text-gray-700 mb-2">No services found</h3>
                     <p class="text-gray-600 mb-4 text-sm">
                         {% if min_price or max_price %}
-                            No services found in price range {{ format_price(min_price if min_price else min_available, 'NGN') }} - {{ format_price(max_price if max_price else max_available, 'NGN') }}
+                            No services found in price range {{ format_price(min_price if min_price else min_available) }} - {{ format_price(max_price if max_price else max_available) }}
                         {% else %}
                             Try adjusting your search or filters
                         {% endif %}
@@ -613,26 +613,13 @@
 
     <!-- JavaScript for dynamic price filtering -->
     <script>
-        // Function to format price with currency
+        // Function to format price WITHOUT currency symbol
         function formatCurrency(amount, currency = 'NGN') {
-            // Currency symbols
-            const symbols = {
-                'USD': '$',
-                'EUR': '€',
-                'GBP': '£',
-                'KES': 'KSh',
-                'NGN': '₦',
-                'GHS': 'GH₵',
-                'ZAR': 'R'
-            };
-            
-            const symbol = symbols[currency] || currency;
-            
-            // Format number with commas
+            // Format number with commas (NO currency symbol)
             amount = parseInt(amount) || 0;
             const formatted = amount.toLocaleString('en-US');
             
-            return `${symbol}${formatted}`;
+            return `${formatted}`;
         }
         
         // Update price display when slider changes
@@ -644,8 +631,8 @@
             // Update the numeric value
             valueElement.textContent = value;
             
-            // Format with currency symbol
-            displayElement.textContent = formatCurrency(value, 'NGN');
+            // Format WITHOUT currency symbol
+            displayElement.textContent = formatCurrency(value);
             
             // Update current range display
             updateCurrentRange();
@@ -659,8 +646,8 @@
             const minValue = parseInt(document.getElementById('minPriceSlider').value);
             const maxValue = parseInt(document.getElementById('maxPriceSlider').value);
             
-            document.getElementById('currentMinDisplay').textContent = formatCurrency(minValue, 'NGN');
-            document.getElementById('currentMaxDisplay').textContent = formatCurrency(maxValue, 'NGN');
+            document.getElementById('currentMinDisplay').textContent = formatCurrency(minValue);
+            document.getElementById('currentMaxDisplay').textContent = formatCurrency(maxValue);
         }
         
         // Validate that min price doesn't exceed max price
@@ -686,7 +673,7 @@
         function resetPriceFilter() {
             // Get the min and max available values
             const minAvailable = parseInt(document.getElementById('minPriceSlider').getAttribute('min')) || 0;
-            const maxAvailable = parseInt(document.getElementById('maxPriceSlider').getAttribute('max')) || 10000;
+            const maxAvailable = 100000000; // Set to 100 million
             
             // Reset sliders to available min/max
             document.getElementById('minPriceSlider').value = minAvailable;
