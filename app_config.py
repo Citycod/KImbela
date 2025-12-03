@@ -14,11 +14,13 @@ from models import User, Post, Comment, Like, FriendRequest, friendship
 from datetime import datetime, timedelta, timezone
 from extensions import db, socketio
 from messages.messaging import messaging as message_blueprint
-from scheduler import init_scheduler  # Add this import
+from scheduler import init_scheduler
+from flask_caching import Cache  # Add this import
 
 load_dotenv()
 
 csrf = CSRFProtect()
+cache = Cache()  # Initialize cache
 
 def create_app():
     app = Flask(__name__)
@@ -33,6 +35,23 @@ def create_app():
     app.config['FLUTTERWAVE_SECRET_KEY'] = os.getenv('SECRET_KEY')
     app.config['FLUTTERWAVE_ENCRYPTION_KEY'] = os.getenv('ENCRYPTION_KEY')
     
+    # Redis configuration for caching
+    redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+    app.config['CACHE_TYPE'] = 'RedisCache'
+    app.config['CACHE_REDIS_URL'] = redis_url
+    app.config['CACHE_DEFAULT_TIMEOUT'] = 300  # 5 minutes default
+    app.config['CACHE_KEY_PREFIX'] = 'kimbela_'
+    
+    # If Redis is not available, fallback to simple cache
+    try:
+        import redis
+        redis_client = redis.from_url(redis_url)
+        redis_client.ping()
+        app.config['CACHE_TYPE'] = 'RedisCache'
+    except:
+        app.logger.warning("Redis not available, using simple cache")
+        app.config['CACHE_TYPE'] = 'SimpleCache'
+    
     # Verify webhook secret is loaded
     if not app.config['STRIPE_WEBHOOK_SECRET']:
         app.logger.error("STRIPE_WEBHOOK_SECRET is not set!")
@@ -43,36 +62,22 @@ def create_app():
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(minutes=3000)
     app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
-        "pool_pre_ping": True,  # check connections before use
-        "pool_recycle": 300,  # recycle connections every 5 minutes
-        "pool_size": 5,  # keep a few connections alive
+        "pool_pre_ping": True,
+        "pool_recycle": 300,
+        "pool_size": 5,
         "max_overflow": 10,
     }
 
     # Email configuration
-    # app.config["MAIL_SERVER"] = os.getenv("MAIL_SERVER", "smtp.gmail.com")
-    # app.config["MAIL_PORT"] = int(os.getenv("MAIL_PORT", 587))
-    # app.config["MAIL_USE_TLS"] = os.getenv("MAIL_USE_TLS", "True").lower() == "true"
-    # app.config["MAIL_USE_SSL"] = os.getenv("MAIL_USE_SSL", "False").lower() == "true"
-    # app.config["MAIL_USERNAME"] = os.getenv("MAIL_USERNAME")
-    # app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")
-    # app.config["MAIL_DEFAULT_SENDER"] = os.getenv("MAIL_DEFAULT_SENDER")
-    # app.config['MAIL_DEBUG'] = True
-    # app.config['MAIL_SUPPRESS_SEND'] = False
-    
-    # Email configuration - FIXED VERSION
     app.config["MAIL_SERVER"] = os.getenv("MAIL_SERVER")
     app.config["MAIL_PORT"] = int(os.getenv("MAIL_PORT"))
-    app.config["MAIL_USE_TLS"] = True  # Mailtrap requires TLS
+    app.config["MAIL_USE_TLS"] = True
     app.config["MAIL_USE_SSL"] = False
     app.config["MAIL_USERNAME"] = os.getenv("MAIL_USERNAME")
     app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")
     app.config["MAIL_DEFAULT_SENDER"] = os.getenv("MAIL_DEFAULT_SENDER")
     app.config["MAIL_SUPPRESS_SEND"] = False
     app.config["MAIL_DEBUG"] = True
-
-    
-
 
     # Initialize extensions
     mail.init_app(app)
@@ -82,6 +87,7 @@ def create_app():
     login_manager.init_app(app)
     migrate = Migrate(app, db)
     socketio.init_app(app)
+    cache.init_app(app)  # Initialize cache with app
 
     login_manager.login_view = "auth.login"
     login_manager.login_message_category = "info"
@@ -95,7 +101,7 @@ def create_app():
     app.register_blueprint(matchmaking_blueprint)
     app.register_blueprint(market_blueprint)
 
-    # Initialize scheduler - ADD THIS SECTION
+    # Initialize scheduler
     if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
         with app.app_context():
             init_scheduler(app)
@@ -134,7 +140,6 @@ def create_app():
         if dt is None:
             return "Never"
         
-        # Make sure dt is a datetime object
         if isinstance(dt, str):
             try:
                 dt = datetime.fromisoformat(dt.replace('Z', '+00:00'))
@@ -142,8 +147,8 @@ def create_app():
                 return "Unknown"
         
         now = datetime.utcnow()
+        import humanize
         return humanize.naturaltime(now - dt)
-    
 
     # Jinja filter: Convert UTC to WAT time
     def to_wat(dt):

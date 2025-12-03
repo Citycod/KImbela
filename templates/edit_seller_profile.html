@@ -3,67 +3,207 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Profile | Kimbela Marketplace</title>
+    <title>Edit Profile | Kimbela</title>
     
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/marketplace.css') }}">
     
     <style>
         :root {
-            --primary-color: #7C3AED;
-            --primary-hover: #6D28D9;
-            --secondary-color: #F1F5F9;
-            --text-dark: #1E293B;
-            --text-light: #64748B;
-            --border-color: #E2E8F0;
-            --success-color: #10B981;
-            --warning-color: #F59E0B;
-            --danger-color: #EF4444;
+            --primary: #7C3AED;
+            --primary-light: #8B5CF6;
+            --primary-dark: #6D28D9;
+            --secondary: #F1F5F9;
+            --dark: #1E293B;
+            --gray: #64748B;
+            --light-gray: #E2E8F0;
+            --success: #10B981;
+            --danger: #EF4444;
+            --warning: #F59E0B;
+            --white: #FFFFFF;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --radius-sm: 0.375rem;
+            --radius: 0.5rem;
+            --radius-lg: 0.75rem;
         }
-        
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: #F8FAFC;
-            color: var(--text-dark);
+            color: var(--dark);
+            background-color: #FAFBFC;
+            font-size: 0.875rem;
+            line-height: 1.25rem;
         }
-        
-        .profile-header {
+
+        /* Typography */
+        .text-xs { font-size: 0.75rem; line-height: 1rem; }
+        .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+        .text-base { font-size: 1rem; line-height: 1.5rem; }
+        .text-lg { font-size: 1.125rem; line-height: 1.75rem; }
+
+        /* Navigation */
+        .navbar {
+            padding: 0.5rem 0;
+            background: var(--white);
+            box-shadow: var(--shadow-sm);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .navbar-brand img {
+            height: 1.75rem;
+        }
+
+        .nav-link {
+            font-size: 0.875rem;
+            padding: 0.5rem 0.75rem;
+            color: var(--gray);
+            font-weight: 500;
+        }
+
+        .nav-link:hover {
+            color: var(--primary);
+        }
+
+        .dropdown-menu {
+            font-size: 0.875rem;
+            border: none;
+            box-shadow: var(--shadow-lg);
+            border-radius: var(--radius);
+            padding: 0.5rem;
+            min-width: 12rem;
+        }
+
+        .dropdown-item {
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.875rem;
+        }
+
+        .avatar-xs {
+            width: 1.5rem;
+            height: 1.5rem;
+        }
+
+        /* Header */
+        .page-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 2rem 0;
-            margin-bottom: 2rem;
+            padding: 1.5rem 0;
+            margin-bottom: 1rem;
         }
-        
-        .edit-container {
-            background: white;
-            border-radius: 1rem;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            padding: 2rem;
-            margin-top: -3rem;
+
+        /* Form Elements */
+        .form-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 0.375rem;
+        }
+
+        .form-control, .form-select, .form-textarea {
+            font-size: 0.875rem;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--light-gray);
+            border-radius: var(--radius);
+            transition: all 0.2s ease;
+        }
+
+        .form-control:focus, .form-select:focus, .form-textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+            outline: none;
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 5rem;
+        }
+
+        /* Buttons */
+        .btn {
+            font-size: 0.875rem;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius);
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.2);
+        }
+
+        .btn-outline-secondary {
+            color: var(--gray);
+            border: 1px solid var(--light-gray);
+            background: var(--white);
+        }
+
+        .btn-outline-secondary:hover {
+            background: var(--secondary);
+            border-color: var(--gray);
+        }
+
+        /* Cards */
+        .card {
+            border: 1px solid var(--light-gray);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            background: var(--white);
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--light-gray);
+        }
+
+        /* Avatar Upload */
+        .avatar-upload {
             position: relative;
-            z-index: 10;
+            display: inline-block;
         }
-        
-        .profile-avatar {
-            width: 150px;
-            height: 150px;
-            border: 5px solid white;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+
+        .avatar-preview {
+            width: 5rem;
+            height: 5rem;
+            border: 2px solid var(--white);
+            box-shadow: var(--shadow-md);
         }
-        
+
         .upload-btn {
             position: relative;
             overflow: hidden;
             display: inline-block;
-            border-radius: 50px;
-            padding: 0.5rem 1.5rem;
+            cursor: pointer;
         }
-        
-        .upload-btn input[type=file] {
+
+        .upload-btn input {
             position: absolute;
             left: 0;
             top: 0;
@@ -72,237 +212,182 @@
             height: 100%;
             cursor: pointer;
         }
-        
-        .form-label {
-            font-weight: 600;
-            color: var(--text-dark);
-            margin-bottom: 0.5rem;
-        }
-        
-        .form-control, .form-select, .form-textarea {
-            border: 2px solid var(--border-color);
-            border-radius: 0.75rem;
-            padding: 0.75rem 1rem;
-            transition: all 0.3s ease;
-        }
-        
-        .form-control:focus, .form-select:focus, .form-textarea:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
-        }
-        
-        .btn-save {
-            background: var(--primary-color);
-            color: white;
-            padding: 0.75rem 2rem;
-            border-radius: 0.75rem;
-            font-weight: 600;
-            border: none;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-save:hover {
-            background: var(--primary-hover);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(124, 58, 237, 0.3);
-        }
-        
-        .btn-cancel {
-            background: white;
-            color: var(--text-light);
-            padding: 0.75rem 2rem;
-            border-radius: 0.75rem;
-            font-weight: 600;
-            border: 2px solid var(--border-color);
-            transition: all 0.3s ease;
-        }
-        
-        .btn-cancel:hover {
-            background: var(--secondary-color);
-            border-color: var(--text-light);
-        }
-        
-        .section-card {
-            background: white;
-            border-radius: 1rem;
-            border: 2px solid var(--border-color);
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-        
-        .section-title {
-            font-weight: 700;
-            color: var(--primary-color);
-            margin-bottom: 1.5rem;
-            padding-bottom: 0.75rem;
-            border-bottom: 2px solid var(--border-color);
-        }
-        
-        .social-icon {
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 10px;
-            margin-right: 1rem;
-        }
-        
-        .linkedin-bg {
-            background: #0077B5;
-            color: white;
-        }
-        
-        .twitter-bg {
-            background: #1DA1F2;
-            color: white;
-        }
-        
-        .facebook-bg {
-            background: #1877F2;
-            color: white;
-        }
-        
-        .instagram-bg {
-            background: linear-gradient(45deg, #405DE6, #5851DB, #833AB4, #C13584, #E1306C, #FD1D1D);
-            color: white;
-        }
-        
-        .preview-card {
-            background: white;
-            border-radius: 1rem;
-            border: 2px solid var(--border-color);
-            padding: 1.5rem;
-            position: sticky;
-            top: 2rem;
-        }
-        
-        .preview-avatar {
-            width: 100px;
-            height: 100px;
-            border: 3px solid white;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-        
-        .badge-online {
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            width: 12px;
-            height: 12px;
-            background-color: var(--success-color);
-            border-radius: 50%;
-            border: 2px solid white;
-        }
-        
-        .character-count {
-            font-size: 0.8rem;
-            color: var(--text-light);
-        }
-        
-        .character-count.warning {
-            color: var(--warning-color);
-        }
-        
-        .character-count.danger {
-            color: var(--danger-color);
-        }
-        
-        .avatar-container {
-            position: relative;
-            display: inline-block;
-        }
-        
+
         .remove-avatar {
             position: absolute;
-            top: -5px;
-            right: -5px;
-            width: 30px;
-            height: 30px;
-            background: var(--danger-color);
-            color: white;
+            top: -0.25rem;
+            right: -0.25rem;
+            width: 1.5rem;
+            height: 1.5rem;
+            background: var(--danger);
+            color: var(--white);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            border: 2px solid white;
-            transition: all 0.3s ease;
+            border: 2px solid var(--white);
+            font-size: 0.75rem;
         }
-        
-        .remove-avatar:hover {
-            transform: scale(1.1);
+
+        /* Skills Badges */
+        .skill-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            background: var(--secondary);
+            color: var(--dark);
+            border-radius: var(--radius-sm);
+            display: inline-flex;
+            align-items: center;
+            margin: 0.125rem;
         }
-        
+
+        .skill-badge .bi-x {
+            cursor: pointer;
+            margin-left: 0.25rem;
+            font-size: 0.875rem;
+        }
+
+        /* Social Icons */
+        .social-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius);
+            color: var(--white);
+        }
+
+        .linkedin-bg { background: #0077B5; }
+        .twitter-bg { background: #1DA1F2; }
+        .facebook-bg { background: #1877F2; }
+        .instagram-bg { background: linear-gradient(45deg, #405DE6, #833AB4, #C13584, #E1306C); }
+
+        /* Preview Card */
+        .preview-card {
+            position: sticky;
+            top: 1rem;
+            background: var(--white);
+            border: 1px solid var(--light-gray);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .preview-avatar {
+            width: 4rem;
+            height: 4rem;
+            border: 2px solid var(--white);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* Character Counter */
+        .char-counter {
+            font-size: 0.75rem;
+            color: var(--gray);
+        }
+
+        .char-counter.warning {
+            color: var(--warning);
+        }
+
+        .char-counter.danger {
+            color: var(--danger);
+        }
+
+        /* Responsive */
         @media (max-width: 768px) {
-            .profile-avatar {
-                width: 120px;
-                height: 120px;
+            .page-header {
+                padding: 1rem 0;
+            }
+            
+            .avatar-preview {
+                width: 4rem;
+                height: 4rem;
+            }
+            
+            .card-body {
+                padding: 1rem;
             }
             
             .preview-card {
-                margin-top: 2rem;
                 position: static;
+                margin-top: 1rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            body {
+                font-size: 0.8125rem;
+            }
+            
+            .text-sm { font-size: 0.8125rem; }
+            .text-base { font-size: 0.9375rem; }
+            .text-lg { font-size: 1rem; }
+            
+            .form-control, .form-select, .form-textarea {
+                padding: 0.375rem 0.75rem;
+            }
+            
+            .btn {
+                padding: 0.375rem 0.75rem;
+                font-size: 0.8125rem;
             }
         }
     </style>
 </head>
 <body>
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+    <nav class="navbar navbar-expand-lg">
         <div class="container">
-            <a class="navbar-brand" href="{{ url_for('market.main_market') }}">
-                <img src="{{ url_for('static', filename='assets/img/kim.png') }}" alt="Kimbela" height="40">
-                <span class="fw-bold ms-2">Marketplace</span>
+            <a class="navbar-brand d-flex align-items-center" href="{{ url_for('market.main_market') }}">
+                <img src="{{ url_for('static', filename='assets/img/kim.png') }}" alt="Kimbela">
+                <span class="fw-bold ms-2 text-sm">Marketplace</span>
             </a>
             
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <i class="bi bi-list text-dark"></i>
             </button>
             
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
+                <ul class="navbar-nav ms-auto align-items-center">
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('market.main_market') }}">
-                            <i class="bi bi-shop"></i> Browse Services
+                            <i class="bi bi-shop me-1"></i> Browse
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('market.seller_dashboard') }}">
-                            <i class="bi bi-speedometer2"></i> Dashboard
+                            <i class="bi bi-speedometer2 me-1"></i> Dashboard
                         </a>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
                             <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
-                                 class="rounded-circle" width="30" height="30">
-                            <span class="ms-2">{{ current_user.first_name }}</span>
+                                 class="avatar-xs rounded-circle me-1">
+                            <span class="text-sm">{{ current_user.first_name }}</span>
                         </a>
                         <ul class="dropdown-menu">
                             <li>
-                                <a class="dropdown-item" href="{{ url_for('market.seller_profile', seller_id=current_user.id) }}">
-                                    <i class="bi bi-person"></i> My Profile
+                                <a class="dropdown-item d-flex align-items-center" href="{{ url_for('market.seller_profile', seller_id=current_user.id) }}">
+                                    <i class="bi bi-person me-2"></i> Profile
                                 </a>
                             </li>
                             <li>
-                                <a class="dropdown-item" href="{{ url_for('market.seller_dashboard') }}">
-                                    <i class="bi bi-speedometer2"></i> Dashboard
+                                <a class="dropdown-item d-flex align-items-center" href="{{ url_for('market.seller_dashboard') }}">
+                                    <i class="bi bi-speedometer2 me-2"></i> Dashboard
                                 </a>
                             </li>
                             <li>
-                                <a class="dropdown-item active" href="{{ url_for('market.edit_seller_profile') }}">
-                                    <i class="bi bi-pencil"></i> Edit Profile
+                                <a class="dropdown-item d-flex align-items-center active" href="{{ url_for('market.edit_seller_profile') }}">
+                                    <i class="bi bi-pencil me-2"></i> Edit Profile
                                 </a>
                             </li>
+                            <li><hr class="my-1"></li>
                             <li>
-                                <a class="dropdown-item" href="{{ url_for('market.seller_settings') }}">
-                                    <i class="bi bi-gear"></i> Settings
-                                </a>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <a class="dropdown-item text-danger" href="{{ url_for('user.logout') }}">
-                                    <i class="bi bi-box-arrow-right"></i> Logout
+                                <a class="dropdown-item d-flex align-items-center text-danger" href="{{ url_for('user.logout') }}">
+                                    <i class="bi bi-box-arrow-right me-2"></i> Logout
                                 </a>
                             </li>
                         </ul>
@@ -312,77 +397,68 @@
         </div>
     </nav>
 
-    <!-- Profile Header -->
-    <div class="profile-header">
+    <!-- Header -->
+    <div class="page-header">
         <div class="container">
-            <div class="row align-items-center">
-                <div class="col-md-8">
-                    <h1 class="h2 fw-bold mb-2">Edit Your Profile</h1>
-                    <p class="lead mb-0">
-                        Update your profile information to attract more buyers
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="text-lg fw-bold text-white mb-1">Edit Profile</h1>
+                    <p class="text-sm text-white opacity-90 mb-0">
+                        Update your profile to attract more buyers
                     </p>
                 </div>
-                <div class="col-md-4 text-end">
-                    <a href="{{ url_for('market.seller_profile', seller_id=current_user.id) }}" 
-                       class="btn btn-light">
-                        <i class="bi bi-eye me-2"></i> View Public Profile
-                    </a>
-                </div>
+                <a href="{{ url_for('market.seller_profile', seller_id=current_user.id) }}" 
+                   class="btn btn-light btn-sm">
+                    <i class="bi bi-eye me-1"></i> View Profile
+                </a>
             </div>
         </div>
     </div>
 
     <!-- Main Content -->
     <div class="container">
-        <div class="row">
+        <div class="row g-3">
             <!-- Edit Form -->
             <div class="col-lg-8">
-                <div class="edit-container">
-                    <form id="editProfileForm" method="POST" action="{{ url_for('market.update_profile') }}" enctype="multipart/form-data">
+                <form id="editProfileForm" method="POST" action="{{ url_for('market.update_profile') }}" enctype="multipart/form-data" class="card mb-3">
+                    <div class="card-body">
                         <!-- Profile Picture -->
-                        <div class="section-card">
-                            <h4 class="section-title">
+                        <div class="mb-4">
+                            <h6 class="section-title">
                                 <i class="bi bi-camera me-2"></i> Profile Picture
-                            </h4>
-                            
-                            <div class="row align-items-center">
-                                <div class="col-md-3 text-center">
-                                    <div class="avatar-container mb-3">
-                                        <img id="profilePreview" 
-                                             src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
-                                             alt="Profile" 
-                                             class="profile-avatar rounded-circle">
-                                        {% if current_user.profile_pic %}
-                                        <div class="remove-avatar" onclick="removeProfilePicture()">
-                                            <i class="bi bi-x"></i>
-                                        </div>
-                                        {% endif %}
+                            </h6>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-upload me-4">
+                                    <img id="profilePreview" 
+                                         src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
+                                         alt="Profile" 
+                                         class="avatar-preview rounded-circle">
+                                    {% if current_user.profile_pic %}
+                                    <div class="remove-avatar" onclick="removeProfilePicture()">
+                                        <i class="bi bi-x"></i>
                                     </div>
+                                    {% endif %}
                                 </div>
-                                <div class="col-md-9">
-                                    <div class="mb-4">
-                                        <p class="text-muted mb-3">
-                                            Upload a professional profile picture. This is the first thing buyers see.
-                                        </p>
-                                        <div class="upload-btn btn btn-outline-primary">
-                                            <i class="bi bi-cloud-upload me-2"></i> Choose New Photo
-                                            <input type="file" id="profile_pic" name="profile_pic" 
-                                                   accept="image/*" onchange="previewImage(event)">
-                                        </div>
-                                        <small class="text-muted d-block mt-2">
-                                            Recommended: Square image, at least 400×400px. Max size: 2MB.
-                                        </small>
+                                <div class="flex-grow-1">
+                                    <p class="text-sm text-muted mb-2">
+                                        Upload a professional photo. JPG, PNG, max 2MB.
+                                    </p>
+                                    <div class="upload-btn">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm">
+                                            <i class="bi bi-cloud-upload me-1"></i> Upload Photo
+                                        </button>
+                                        <input type="file" id="profile_pic" name="profile_pic" 
+                                               accept="image/*" onchange="previewImage(event)">
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        
-                        <!-- Personal Information -->
-                        <div class="section-card">
-                            <h4 class="section-title">
-                                <i class="bi bi-person-circle me-2"></i> Personal Information
-                            </h4>
-                            
+
+                        <!-- Personal Info -->
+                        <div class="mb-4">
+                            <h6 class="section-title">
+                                <i class="bi bi-person me-2"></i> Personal Information
+                            </h6>
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label class="form-label">First Name *</label>
@@ -396,12 +472,13 @@
                                 </div>
                                 
                                 <div class="col-md-6">
-                                    <label class="form-label">Email Address</label>
-                                    <input type="email" class="form-control" value="{{ current_user.email }}" readonly>
-                                    <small class="text-muted">Contact support to change email</small>
+                                    <label class="form-label">Email</label>
+                                    <input type="email" class="form-control bg-light" 
+                                           value="{{ current_user.email }}" readonly>
+                                    <div class="form-text text-xs">Contact support to change email</div>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">Phone Number</label>
+                                    <label class="form-label">Phone</label>
                                     <input type="tel" class="form-control" name="phone_number" 
                                            value="{{ current_user.phone_number or '' }}" 
                                            placeholder="+234 800 000 0000">
@@ -411,8 +488,7 @@
                                     <label class="form-label">Professional Title *</label>
                                     <input type="text" class="form-control" name="occupation" 
                                            value="{{ current_user.occupation or '' }}" 
-                                           placeholder="e.g., Professional Coach, Web Developer" required>
-                                    <small class="text-muted">This appears below your name</small>
+                                           placeholder="e.g., Web Developer, Coach" required>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Location</label>
@@ -422,34 +498,32 @@
                                 </div>
                             </div>
                         </div>
-                        
-                        <!-- Bio / Description -->
-                        <div class="section-card">
-                            <h4 class="section-title">
-                                <i class="bi bi-pencil-square me-2"></i> Bio / Description
-                            </h4>
-                            
-                            <div class="mb-3">
-                                <label class="form-label">Tell buyers about yourself *</label>
-                                <textarea class="form-control form-textarea" name="bio" rows="5" 
+
+                        <!-- Bio -->
+                        <div class="mb-4">
+                            <h6 class="section-title">
+                                <i class="bi bi-pencil me-2"></i> Bio
+                            </h6>
+                            <div>
+                                <label class="form-label">About You *</label>
+                                <textarea class="form-control form-textarea" name="bio" rows="4" 
                                           id="bioTextarea" 
                                           oninput="updateCharCount()"
-                                          placeholder="Share your experience, expertise, and what makes you unique. This is your chance to impress potential buyers.">{{ current_user.bio or '' }}</textarea>
+                                          placeholder="Tell buyers about your experience and expertise...">{{ current_user.bio or '' }}</textarea>
                                 <div class="d-flex justify-content-between mt-2">
-                                    <small class="text-muted">
+                                    <div class="form-text text-xs">
                                         Recommended: 150-300 characters
-                                    </small>
-                                    <small class="character-count" id="charCount">0/1000</small>
+                                    </div>
+                                    <div class="char-counter" id="charCount">0/1000</div>
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Social Links -->
-                        <div class="section-card">
-                            <h4 class="section-title">
-                                <i class="bi bi-link-45deg me-2"></i> Social Links
-                            </h4>
-                            
+                        <div class="mb-4">
+                            <h6 class="section-title">
+                                <i class="bi bi-link me-2"></i> Social Links
+                            </h6>
                             <div class="row g-3">
                                 <div class="col-12">
                                     <div class="input-group">
@@ -458,7 +532,7 @@
                                         </span>
                                         <input type="url" class="form-control" name="linkedin_url" 
                                                value="{{ current_user.linkedin_url or '' }}" 
-                                               placeholder="https://linkedin.com/in/yourprofile">
+                                               placeholder="LinkedIn URL">
                                     </div>
                                 </div>
                                 
@@ -469,18 +543,7 @@
                                         </span>
                                         <input type="url" class="form-control" name="twitter_url" 
                                                value="{{ current_user.twitter_url or '' }}" 
-                                               placeholder="https://twitter.com/yourusername">
-                                    </div>
-                                </div>
-                                
-                                <div class="col-12">
-                                    <div class="input-group">
-                                        <span class="input-group-text social-icon facebook-bg">
-                                            <i class="bi bi-facebook"></i>
-                                        </span>
-                                        <input type="url" class="form-control" name="facebook_url" 
-                                               value="{{ current_user.facebook_url or '' }}" 
-                                               placeholder="https://facebook.com/yourprofile">
+                                               placeholder="Twitter URL">
                                     </div>
                                 </div>
                                 
@@ -491,7 +554,7 @@
                                         </span>
                                         <input type="url" class="form-control" name="instagram_url" 
                                                value="{{ current_user.instagram_url or '' }}" 
-                                               placeholder="https://instagram.com/yourusername">
+                                               placeholder="Instagram URL">
                                     </div>
                                 </div>
                                 
@@ -502,71 +565,32 @@
                                         </span>
                                         <input type="url" class="form-control" name="website" 
                                                value="{{ current_user.website or '' }}" 
-                                               placeholder="https://yourportfolio.com">
+                                               placeholder="Website / Portfolio">
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        
-                        <!-- Business Information -->
-                        <div class="section-card">
-                            <h4 class="section-title">
-                                <i class="bi bi-briefcase me-2"></i> Business Information
-                            </h4>
-                            
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label class="form-label">Availability</label>
-                                    <select class="form-select" name="availability">
-                                        <option value="">Select availability</option>
-                                        <option value="24/7" {% if current_user.availability == '24/7' %}selected{% endif %}>Available 24/7</option>
-                                        <option value="weekdays" {% if current_user.availability == 'weekdays' %}selected{% endif %}>Weekdays Only (Mon-Fri)</option>
-                                        <option value="weekends" {% if current_user.availability == 'weekends' %}selected{% endif %}>Weekends Only (Sat-Sun)</option>
-                                        <option value="custom" {% if current_user.availability == 'custom' %}selected{% endif %}>Custom Hours</option>
-                                    </select>
+
+                        <!-- Skills -->
+                        <div class="mb-4">
+                            <h6 class="section-title">
+                                <i class="bi bi-tags me-2"></i> Skills
+                            </h6>
+                            <div>
+                                <label class="form-label">Add Skills</label>
+                                <input type="text" class="form-control mb-2" id="skillsInput" 
+                                       placeholder="Type skill and press Enter">
+                                <div class="form-text text-xs mb-3">
+                                    Press Enter or comma to add skills
                                 </div>
                                 
-                                <div class="col-md-6">
-                                    <label class="form-label">Response Time</label>
-                                    <select class="form-select" name="response_time">
-                                        <option value="">Select response time</option>
-                                        <option value="1" {% if current_user.response_time == '1' %}selected{% endif %}>Within 1 hour</option>
-                                        <option value="3" {% if current_user.response_time == '3' %}selected{% endif %}>Within 3 hours</option>
-                                        <option value="6" {% if current_user.response_time == '6' %}selected{% endif %}>Within 6 hours</option>
-                                        <option value="24" {% if current_user.response_time == '24' %}selected{% endif %}>Within 24 hours</option>
-                                        <option value="48" {% if current_user.response_time == '48' %}selected{% endif %}>Within 48 hours</option>
-                                    </select>
-                                </div>
-                                
-                                <div class="col-12">
-                                    <label class="form-label">Languages Spoken</label>
-                                    <input type="text" class="form-control" name="languages" 
-                                           value="{{ current_user.languages or '' }}" 
-                                           placeholder="e.g., English, French, Yoruba">
-                                    <small class="text-muted">Separate languages with commas</small>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Expertise & Skills -->
-                        <div class="section-card">
-                            <h4 class="section-title">
-                                <i class="bi bi-star me-2"></i> Expertise & Skills
-                            </h4>
-                            
-                            <div class="mb-3">
-                                <label class="form-label">Skills</label>
-                                <input type="text" class="form-control" id="skillsInput" 
-                                       placeholder="Add your skills (e.g., Coaching, Web Design, Consulting)">
-                                <small class="text-muted">Press Enter or comma to add skills</small>
-                                
-                                <div class="mt-3" id="skillsContainer">
+                                <div class="mb-2" id="skillsContainer">
                                     {% if current_user.skills %}
                                         {% for skill in current_user.skills.split(',') %}
                                             {% if skill.strip() %}
-                                            <span class="badge bg-primary me-2 mb-2 p-2">
+                                            <span class="skill-badge">
                                                 {{ skill.strip() }}
-                                                <i class="bi bi-x ms-1" onclick="removeSkill(this)"></i>
+                                                <i class="bi bi-x" onclick="removeSkill(this)"></i>
                                             </span>
                                             {% endif %}
                                         {% endfor %}
@@ -574,160 +598,130 @@
                                 </div>
                                 <input type="hidden" name="skills" id="skillsHidden" value="{{ current_user.skills or '' }}">
                             </div>
-                            
-                            <div class="mb-3">
-                                <label class="form-label">Years of Experience</label>
-                                <select class="form-select" name="experience_years">
-                                    <option value="">Select years of experience</option>
-                                    <option value="0-1" {% if current_user.experience_years == '0-1' %}selected{% endif %}>0-1 years</option>
-                                    <option value="1-3" {% if current_user.experience_years == '1-3' %}selected{% endif %}>1-3 years</option>
-                                    <option value="3-5" {% if current_user.experience_years == '3-5' %}selected{% endif %}>3-5 years</option>
-                                    <option value="5-10" {% if current_user.experience_years == '5-10' %}selected{% endif %}>5-10 years</option>
-                                    <option value="10+" {% if current_user.experience_years == '10+' %}selected{% endif %}>10+ years</option>
-                                </select>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label class="form-label">Certifications</label>
-                                <textarea class="form-control form-textarea" name="certifications" rows="3" 
-                                          placeholder="List any professional certifications you have">{{ current_user.certifications or '' }}</textarea>
-                            </div>
                         </div>
-                        
+
                         <!-- Form Actions -->
-                        <div class="d-flex justify-content-between mt-4">
+                        <div class="d-flex justify-content-between pt-3 border-top">
                             <a href="{{ url_for('market.seller_profile', seller_id=current_user.id) }}" 
-                               class="btn-cancel">
-                                <i class="bi bi-x-circle me-2"></i> Cancel
+                               class="btn btn-outline-secondary">
+                                Cancel
                             </a>
-                            <button type="submit" class="btn-save">
-                                <i class="bi bi-check-circle me-2"></i> Save Changes
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle me-1"></i> Save Changes
                             </button>
                         </div>
-                    </form>
-                </div>
+                    </div>
+                </form>
             </div>
-            
-            <!-- Live Preview -->
+
+            <!-- Preview -->
             <div class="col-lg-4">
                 <div class="preview-card">
-                    <h4 class="section-title mb-4">
-                        <i class="bi bi-eye me-2"></i> Live Preview
-                    </h4>
+                    <h6 class="section-title mb-3">
+                        <i class="bi bi-eye me-2"></i> Preview
+                    </h6>
                     
-                    <!-- Profile Preview -->
                     <div class="text-center mb-4">
-                        <div class="position-relative d-inline-block">
-                            <img id="previewAvatar" 
-                                 src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
-                                 alt="Profile" 
-                                 class="preview-avatar rounded-circle mb-3">
-                            {% if current_user.is_online %}
-                            <span class="badge-online"></span>
-                            {% endif %}
-                        </div>
-                        
-                        <h5 id="previewName" class="fw-bold mb-1">
+                        <img id="previewAvatar" 
+                             src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
+                             alt="Profile" 
+                             class="preview-avatar rounded-circle mb-3">
+                        <h6 id="previewName" class="fw-bold mb-1">
                             {{ current_user.first_name }} {{ current_user.last_name }}
-                        </h5>
-                        <p id="previewTitle" class="text-muted mb-2">
+                        </h6>
+                        <p id="previewTitle" class="text-sm text-muted mb-3">
                             {{ current_user.occupation or 'Professional Seller' }}
                         </p>
                         
-                        <!-- Rating -->
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-center align-items-center">
-                                <div class="rating-stars me-2">
-                                    <i class="bi bi-star-fill text-warning"></i>
-                                    <i class="bi bi-star-fill text-warning"></i>
-                                    <i class="bi bi-star-fill text-warning"></i>
-                                    <i class="bi bi-star-fill text-warning"></i>
-                                    <i class="bi bi-star-half text-warning"></i>
-                                </div>
-                                <span class="text-muted">4.5 (24 reviews)</span>
+                        <div class="d-flex justify-content-center mb-3">
+                            <div class="rating-stars me-2">
+                                <i class="bi bi-star-fill text-warning"></i>
+                                <i class="bi bi-star-fill text-warning"></i>
+                                <i class="bi bi-star-fill text-warning"></i>
+                                <i class="bi bi-star-fill text-warning"></i>
+                                <i class="bi bi-star-half text-warning"></i>
                             </div>
+                            <span class="text-xs text-muted">4.5 (24 reviews)</span>
                         </div>
                     </div>
                     
-                    <!-- Location & Member Since -->
                     <div class="mb-4">
                         <p class="mb-2">
-                            <i class="bi bi-geo-alt me-2 text-muted"></i>
-                            <span id="previewLocation">{{ current_user.location or 'Location not set' }}</span>
+                            <i class="bi bi-geo-alt text-muted me-2"></i>
+                            <span id="previewLocation" class="text-sm">
+                                {{ current_user.location or 'Location not set' }}
+                            </span>
                         </p>
                         <p class="mb-0">
-                            <i class="bi bi-calendar me-2 text-muted"></i>
-                            Member since {{ current_user.created_at.strftime('%B %Y') }}
+                            <i class="bi bi-calendar text-muted me-2"></i>
+                            <span class="text-sm">
+                                Joined {{ current_user.created_at.strftime('%b %Y') }}
+                            </span>
                         </p>
                     </div>
                     
-                    <!-- Bio Preview -->
                     <div class="mb-4">
-                        <h6 class="fw-bold mb-2">About</h6>
-                        <p id="previewBio" class="text-muted small">
-                            {{ current_user.bio or 'No bio added yet. Add a bio to tell buyers about yourself.' }}
+                        <h6 class="fw-bold text-sm mb-2">About</h6>
+                        <p id="previewBio" class="text-sm text-muted mb-0">
+                            {{ current_user.bio or 'No bio added yet.' }}
                         </p>
                     </div>
                     
-                    <!-- Skills Preview -->
                     <div class="mb-4">
-                        <h6 class="fw-bold mb-2">Skills</h6>
+                        <h6 class="fw-bold text-sm mb-2">Skills</h6>
                         <div id="previewSkills">
                             {% if current_user.skills %}
                                 {% for skill in current_user.skills.split(',') %}
                                     {% if skill.strip() %}
-                                    <span class="badge bg-light text-dark me-1 mb-1">{{ skill.strip() }}</span>
+                                    <span class="skill-badge">{{ skill.strip() }}</span>
                                     {% endif %}
                                 {% endfor %}
                             {% else %}
-                                <span class="text-muted small">No skills added yet</span>
+                                <span class="text-xs text-muted">No skills added</span>
                             {% endif %}
                         </div>
                     </div>
                     
-                    <!-- Social Links Preview -->
                     <div>
-                        <h6 class="fw-bold mb-2">Connect</h6>
-                        <div class="d-flex">
+                        <h6 class="fw-bold text-sm mb-2">Connect</h6>
+                        <div class="d-flex gap-2">
                             {% if current_user.linkedin_url %}
                             <a href="{{ current_user.linkedin_url }}" target="_blank" 
-                               class="me-3 text-decoration-none">
-                                <i class="bi bi-linkedin text-primary fs-5"></i>
+                               class="text-decoration-none">
+                                <i class="bi bi-linkedin text-primary"></i>
                             </a>
                             {% endif %}
                             
                             {% if current_user.twitter_url %}
                             <a href="{{ current_user.twitter_url }}" target="_blank" 
-                               class="me-3 text-decoration-none">
-                                <i class="bi bi-twitter text-info fs-5"></i>
+                               class="text-decoration-none">
+                                <i class="bi bi-twitter text-info"></i>
                             </a>
                             {% endif %}
                             
-                            {% if current_user.facebook_url %}
-                            <a href="{{ current_user.facebook_url }}" target="_blank" 
-                               class="me-3 text-decoration-none">
-                                <i class="bi bi-facebook text-primary fs-5"></i>
+                            {% if current_user.instagram_url %}
+                            <a href="{{ current_user.instagram_url }}" target="_blank" 
+                               class="text-decoration-none">
+                                <i class="bi bi-instagram text-danger"></i>
                             </a>
                             {% endif %}
                             
                             {% if current_user.website %}
                             <a href="{{ current_user.website }}" target="_blank" 
-                               class="me-3 text-decoration-none">
-                                <i class="bi bi-globe text-dark fs-5"></i>
+                               class="text-decoration-none">
+                                <i class="bi bi-globe text-dark"></i>
                             </a>
                             {% endif %}
                             
-                            {% if not current_user.linkedin_url and not current_user.twitter_url and not current_user.facebook_url and not current_user.website %}
-                            <span class="text-muted small">No social links added</span>
+                            {% if not current_user.linkedin_url and not current_user.twitter_url and not current_user.instagram_url and not current_user.website %}
+                            <span class="text-xs text-muted">No links added</span>
                             {% endif %}
                         </div>
                     </div>
                     
-                    <div class="alert alert-info mt-4">
-                        <i class="bi bi-lightbulb me-2"></i>
-                        <small>
-                            <strong>Tip:</strong> A complete profile attracts 3x more buyers. Make sure all sections are filled.
-                        </small>
+                    <div class="alert alert-light text-xs mt-4 mb-0 p-2">
+                        <i class="bi bi-lightbulb me-1"></i>
+                        Complete profiles get 3x more views.
                     </div>
                 </div>
             </div>
@@ -735,35 +729,21 @@
     </div>
 
     <!-- Footer -->
-    <footer class="bg-white border-top py-4 mt-5">
+    <footer class="mt-5">
         <div class="container">
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <img src="{{ url_for('static', filename='assets/img/kim.png') }}" alt="Kimbela" height="40">
-                    <p class="text-muted small mt-2">
-                        Professional marketplace for African service providers.
+            <hr class="mb-4">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center">
+                        <img src="{{ url_for('static', filename='assets/img/kim.png') }}" alt="Kimbela" height="20">
+                        <span class="fw-bold ms-2 text-sm">Marketplace</span>
+                    </div>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="text-xs text-muted mb-0">
+                        &copy; {{ now.year }} Kimbela. All rights reserved.
                     </p>
                 </div>
-                <div class="col-md-4 mb-3">
-                    <h6 class="fw-bold">Helpful Links</h6>
-                    <ul class="list-unstyled">
-                        <li><a href="{{ url_for('market.main_market') }}" class="text-decoration-none text-muted">Browse Services</a></li>
-                        <li><a href="{{ url_for('market.seller_dashboard') }}" class="text-decoration-none text-muted">Seller Dashboard</a></li>
-                        <li><a href="#" class="text-decoration-none text-muted">Profile Tips</a></li>
-                    </ul>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <h6 class="fw-bold">Need Help?</h6>
-                    <ul class="list-unstyled">
-                        <li><a href="#" class="text-decoration-none text-muted">Profile Guidelines</a></li>
-                        <li><a href="#" class="text-decoration-none text-muted">Contact Support</a></li>
-                        <li><a href="#" class="text-decoration-none text-muted">FAQ</a></li>
-                    </ul>
-                </div>
-            </div>
-            <hr>
-            <div class="text-center text-muted small">
-                &copy; {{ now.year }} Kimbela Marketplace. All rights reserved.
             </div>
         </div>
     </footer>
@@ -771,9 +751,8 @@
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- Custom JavaScript -->
     <script>
-        // Preview profile image
+        // Image Preview
         function previewImage(event) {
             const input = event.target;
             const preview = document.getElementById('profilePreview');
@@ -789,20 +768,16 @@
             }
         }
         
-        // Remove profile picture
+        // Remove Profile Picture
         function removeProfilePicture() {
             if (confirm('Remove profile picture?')) {
                 const defaultAvatar = "{{ url_for('static', filename='assets/img/default-avatar.png') }}";
                 document.getElementById('profilePreview').src = defaultAvatar;
                 document.getElementById('previewAvatar').src = defaultAvatar;
                 
-                // You might want to add a hidden input to indicate removal
-                // or handle this server-side
                 fetch('{{ url_for("market.remove_profile_picture") }}', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
+                    headers: { 'Content-Type': 'application/json' }
                 }).then(response => response.json())
                   .then(data => {
                       if (data.success) {
@@ -812,7 +787,7 @@
             }
         }
         
-        // Character count for bio
+        // Bio Character Count
         function updateCharCount() {
             const textarea = document.getElementById('bioTextarea');
             const charCount = document.getElementById('charCount');
@@ -820,10 +795,9 @@
             const count = textarea.value.length;
             
             charCount.textContent = `${count}/1000`;
-            previewBio.textContent = textarea.value || 'No bio added yet. Add a bio to tell buyers about yourself.';
+            previewBio.textContent = textarea.value || 'No bio added yet.';
             
-            // Update character count color
-            charCount.classList.remove('warning', 'danger');
+            charCount.className = 'char-counter';
             if (count > 800) {
                 charCount.classList.add('danger');
             } else if (count > 500) {
@@ -831,11 +805,11 @@
             }
         }
         
-        // Initialize character count
+        // Initialize Character Count
         document.addEventListener('DOMContentLoaded', function() {
             updateCharCount();
             
-            // Live preview updates
+            // Live Preview Updates
             const nameInputs = document.querySelectorAll('input[name="first_name"], input[name="last_name"]');
             const titleInput = document.querySelector('input[name="occupation"]');
             const locationInput = document.querySelector('input[name="location"]');
@@ -857,7 +831,7 @@
             });
         });
         
-        // Skills management
+        // Skills Management
         document.addEventListener('DOMContentLoaded', function() {
             const skillsInput = document.getElementById('skillsInput');
             const skillsHidden = document.getElementById('skillsHidden');
@@ -867,30 +841,33 @@
             skillsInput.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter' || e.key === ',') {
                     e.preventDefault();
-                    addSkill(this.value.trim());
-                    this.value = '';
+                    const skill = this.value.trim();
+                    if (skill) {
+                        addSkill(skill);
+                        this.value = '';
+                    }
                 }
             });
             
             function addSkill(skill) {
-                if (!skill) return;
-                
                 // Add to skills container
                 const badge = document.createElement('span');
-                badge.className = 'badge bg-primary me-2 mb-2 p-2';
-                badge.innerHTML = `${skill} <i class="bi bi-x ms-1" onclick="removeSkill(this)"></i>`;
+                badge.className = 'skill-badge';
+                badge.innerHTML = `${skill} <i class="bi bi-x" onclick="removeSkill(this)"></i>`;
                 skillsContainer.appendChild(badge);
                 
                 // Add to preview
                 const previewBadge = document.createElement('span');
-                previewBadge.className = 'badge bg-light text-dark me-1 mb-1';
+                previewBadge.className = 'skill-badge';
                 previewBadge.textContent = skill;
                 previewSkills.appendChild(previewBadge);
                 
                 // Update hidden input
-                const currentSkills = skillsHidden.value ? skillsHidden.value.split(',') : [];
-                currentSkills.push(skill);
-                skillsHidden.value = currentSkills.join(',');
+                const currentSkills = skillsHidden.value ? skillsHidden.value.split(',').filter(s => s.trim()) : [];
+                if (!currentSkills.includes(skill)) {
+                    currentSkills.push(skill);
+                    skillsHidden.value = currentSkills.join(',');
+                }
             }
         });
         
@@ -903,7 +880,7 @@
             
             // Remove from preview
             const previewSkills = document.getElementById('previewSkills');
-            const previewBadges = previewSkills.querySelectorAll('.badge');
+            const previewBadges = previewSkills.querySelectorAll('.skill-badge');
             previewBadges.forEach(b => {
                 if (b.textContent.trim() === skill) {
                     b.remove();
@@ -912,67 +889,46 @@
             
             // Update hidden input
             const skillsHidden = document.getElementById('skillsHidden');
-            const currentSkills = skillsHidden.value ? skillsHidden.value.split(',') : [];
-            const index = currentSkills.indexOf(skill);
-            if (index > -1) {
-                currentSkills.splice(index, 1);
-                skillsHidden.value = currentSkills.join(',');
-            }
+            let currentSkills = skillsHidden.value ? skillsHidden.value.split(',').filter(s => s.trim()) : [];
+            currentSkills = currentSkills.filter(s => s !== skill);
+            skillsHidden.value = currentSkills.join(',');
             
-            // If no skills left, show placeholder
+            // Show placeholder if no skills
             if (previewSkills.children.length === 0) {
                 const placeholder = document.createElement('span');
-                placeholder.className = 'text-muted small';
-                placeholder.textContent = 'No skills added yet';
+                placeholder.className = 'text-xs text-muted';
+                placeholder.textContent = 'No skills added';
                 previewSkills.appendChild(placeholder);
             }
         }
         
-        // Form validation
+        // Form Validation
         document.getElementById('editProfileForm').addEventListener('submit', function(e) {
-            const firstName = this.querySelector('input[name="first_name"]');
-            const lastName = this.querySelector('input[name="last_name"]');
-            const occupation = this.querySelector('input[name="occupation"]');
-            const bio = this.querySelector('textarea[name="bio"]');
-            
+            const requiredFields = this.querySelectorAll('[required]');
             let isValid = true;
             
-            // Reset validation
-            [firstName, lastName, occupation, bio].forEach(input => {
-                input.classList.remove('is-invalid');
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    field.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    field.classList.remove('is-invalid');
+                }
             });
             
-            // Validate required fields
-            if (!firstName.value.trim()) {
-                firstName.classList.add('is-invalid');
-                isValid = false;
-            }
-            
-            if (!lastName.value.trim()) {
-                lastName.classList.add('is-invalid');
-                isValid = false;
-            }
-            
-            if (!occupation.value.trim()) {
-                occupation.classList.add('is-invalid');
-                isValid = false;
-            }
-            
-            if (!bio.value.trim()) {
-                bio.classList.add('is-invalid');
-                isValid = false;
-            } else if (bio.value.trim().length < 50) {
-                alert('Bio should be at least 50 characters long');
+            const bio = document.getElementById('bioTextarea');
+            if (bio.value.trim().length < 50) {
+                alert('Bio should be at least 50 characters');
                 isValid = false;
             }
             
             if (!isValid) {
                 e.preventDefault();
-                alert('Please fill in all required fields (*)');
+                alert('Please fill in all required fields');
             }
         });
         
-        // Auto-save warning
+        // Unsaved Changes Warning
         let formChanged = false;
         const formInputs = document.querySelectorAll('#editProfileForm input, #editProfileForm textarea, #editProfileForm select');
         
@@ -987,16 +943,6 @@
                 e.preventDefault();
                 e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
             }
-        });
-        
-        // Social links preview update
-        const socialInputs = document.querySelectorAll('input[name$="_url"], input[name="website"]');
-        socialInputs.forEach(input => {
-            input.addEventListener('input', function() {
-                // In a real app, you'd update the preview dynamically
-                // For now, we'll just note that the preview needs to be refreshed
-                console.log('Social link updated:', this.value);
-            });
         });
     </script>
 </body>

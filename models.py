@@ -7,6 +7,7 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import url_for
 from sqlalchemy import event
+import requests
 
 # Association table for many-to-many friendship
 friendship = db.Table(
@@ -1079,10 +1080,11 @@ class MarketplaceService(db.Model):
     description = db.Column(db.Text, nullable=False)
     short_description = db.Column(db.String(500))
     service_type = db.Column(db.String(50), default="service")  # "service" or "digital"
-    earnings = db.Column(db.Float, default=0.0)
+    earnings = db.Column(db.Numeric(10, 2), default=0)
+    currency = db.Column(db.String(10), default='NGN')
     
     # Pricing
-    price_tokens = db.Column(db.Integer, nullable=False, default=0)
+    price = db.Column(db.Numeric(10, 2), default=0)
     is_free = db.Column(db.Boolean, default=False)
     is_featured = db.Column(db.Boolean, default=False)
     

@@ -9,6 +9,10 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    
+    <!-- Chart.js for analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
         :root {
@@ -23,12 +27,13 @@
             font-family: 'Poppins', sans-serif;
             background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
             min-height: 100vh;
+            font-size: 14px;
         }
         
         .glass-effect {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
         }
         
         .gradient-primary {
@@ -44,62 +49,64 @@
         }
         
         .shadow-soft {
-            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         }
         
         .hover-lift {
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
         }
         
         .hover-lift:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         }
         
         /* Stats Cards */
         .stat-card {
             background: white;
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
         }
         
         .stat-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
+            font-size: 18px;
         }
         
         /* Service Cards */
         .service-card {
             background: white;
-            border-radius: 16px;
+            border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
+            border: 1px solid #e5e7eb;
         }
         
         .service-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         }
         
         .service-image {
             width: 100%;
-            height: 160px;
+            height: 120px;
             object-fit: cover;
         }
         
         .status-badge {
             display: inline-flex;
             align-items: center;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
+            padding: 3px 10px;
+            border-radius: 16px;
+            font-size: 11px;
             font-weight: 600;
         }
         
@@ -118,24 +125,31 @@
             color: #1E40AF;
         }
         
+        .status-paused {
+            background: #F3F4F6;
+            color: #6B7280;
+        }
+        
         /* Table */
         .dashboard-table {
             width: 100%;
             border-collapse: separate;
             border-spacing: 0;
+            font-size: 13px;
         }
         
         .dashboard-table th {
             background: #F9FAFB;
-            padding: 16px;
+            padding: 12px;
             text-align: left;
             font-weight: 600;
             color: #374151;
-            border-bottom: 2px solid #E5E7EB;
+            border-bottom: 1px solid #E5E7EB;
+            font-size: 12px;
         }
         
         .dashboard-table td {
-            padding: 16px;
+            padding: 12px;
             border-bottom: 1px solid #E5E7EB;
             vertical-align: middle;
         }
@@ -147,10 +161,10 @@
         /* Loading */
         .loading {
             display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #3498db;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #3498db;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
@@ -172,7 +186,7 @@
             align-items: center;
             justify-content: center;
             z-index: 1000;
-            padding: 20px;
+            padding: 16px;
         }
         
         .modal.hidden {
@@ -181,8 +195,8 @@
         
         .modal-content {
             background: white;
-            border-radius: 20px;
-            max-width: 500px;
+            border-radius: 12px;
+            max-width: 400px;
             width: 100%;
             max-height: 90vh;
             overflow-y: auto;
@@ -190,10 +204,11 @@
         
         /* Tabs */
         .tab-button {
-            padding: 12px 24px;
-            border-radius: 12px;
-            font-weight: 600;
-            transition: all 0.3s ease;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 13px;
+            transition: all 0.2s ease;
             border: none;
             background: transparent;
             color: #6B7280;
@@ -220,12 +235,13 @@
         .nav-item {
             display: flex;
             align-items: center;
-            padding: 12px 16px;
-            border-radius: 12px;
+            padding: 8px 12px;
+            border-radius: 8px;
             color: #4B5563;
             text-decoration: none;
-            transition: all 0.3s ease;
-            margin-bottom: 8px;
+            transition: all 0.2s ease;
+            margin-bottom: 4px;
+            font-size: 13px;
         }
         
         .nav-item:hover {
@@ -239,8 +255,82 @@
         }
         
         .nav-item i {
-            margin-right: 12px;
-            font-size: 18px;
+            margin-right: 10px;
+            font-size: 16px;
+        }
+        
+        /* Buttons */
+        .btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 13px;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+        
+        .btn-outline {
+            border: 1px solid #d1d5db;
+            color: #4b5563;
+            background: white;
+        }
+        
+        .btn-outline:hover {
+            background: #f9fafb;
+            border-color: #9ca3af;
+        }
+        
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 20px;
+        }
+        
+        .page-link {
+            padding: 6px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            color: #4b5563;
+            text-decoration: none;
+            font-size: 13px;
+            transition: all 0.2s ease;
+        }
+        
+        .page-link:hover {
+            background: #f3f4f6;
+        }
+        
+        .page-link.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .page-link.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
         
         /* Responsive */
@@ -253,12 +343,37 @@
         
         @media (max-width: 768px) {
             .stat-card {
-                padding: 16px;
+                padding: 12px;
             }
             
             .dashboard-table {
                 display: block;
                 overflow-x: auto;
+                font-size: 12px;
+            }
+            
+            .nav-item {
+                padding: 6px 10px;
+                font-size: 12px;
+            }
+            
+            .btn {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+        }
+        
+        @media (max-width: 640px) {
+            .stat-card {
+                padding: 10px;
+            }
+            
+            .service-card {
+                padding: 8px;
+            }
+            
+            .modal-content {
+                margin: 8px;
             }
         }
     </style>
@@ -266,87 +381,68 @@
 <body>
     <!-- Navigation -->
     <nav class="sticky top-0 z-50 glass-effect shadow-soft">
-        <div class="container mx-auto px-4 py-3">
+        <div class="container mx-auto px-3 py-2">
             <div class="flex items-center justify-between">
                 <!-- Logo -->
-                <a href="{{ url_for('market.main_market') }}" class="flex items-center space-x-3">
-                    <img src="{{ url_for('static', filename='assets/img/kim.png') }}" 
-                         alt="Kimbela" 
-                         class="h-10 w-auto">
+                <a href="{{ url_for('market.main_market') }}" class="flex items-center gap-2">
+                    
                     <div>
-                        <span class="text-lg font-bold gradient-primary bg-clip-text text-transparent">
+                        <span class="text-base font-bold  bg-clip-text ">
                             Kimbela Marketplace
                         </span>
-                        <div class="text-xs text-gray-500">Seller Dashboard</div>
                     </div>
                 </a>
                 
                 <!-- User Menu -->
-                <div class="flex items-center space-x-4">
-                    <a href="{{ url_for('market.create_service') }}" 
-                       class="px-4 py-2 gradient-primary text-white rounded-lg font-bold hover:opacity-90 transition-opacity">
-                        <i class="bi bi-plus-lg mr-2"></i>Create Service
-                    </a>
+                <div class="flex items-center gap-3">
+                    
                     
                     <div class="relative group">
-                        <button class="flex items-center space-x-2 focus:outline-none">
-                            <div class="w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center">
+                        <button class="flex items-center gap-2 focus:outline-none" id="user-menu-button">
+                            <div class="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center text-sm overflow-hidden">
+                                {% if current_user.profile_pic %}
+                                <img src="{{ current_user.profile_pic }}" alt="{{ current_user.username }}" class="w-full h-full object-cover">
+                                {% else %}
                                 <i class="bi bi-person"></i>
+                                {% endif %}
                             </div>
-                            <span class="hidden md:inline font-medium">{{ current_user.username }}</span>
-                            <i class="bi bi-chevron-down"></i>
+                            <span class="hidden md:inline font-medium text-sm">{{ current_user.first_name }}</span>
+                            <i class="bi bi-chevron-down text-xs"></i>
                         </button>
                         
                         <!-- Dropdown Menu -->
-                        <div class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg py-2 z-50 hidden group-hover:block">
-    {% if current_user.is_authenticated %}
-        <!-- Seller Dashboard -->
-        <a href="{{ url_for('market.seller_dashboard') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
-            <i class="bi bi-speedometer2 mr-2"></i>Dashboard
-        </a>
-        
-        <!-- Public Profile -->
-        <a href="{{ url_for('market.seller_profile', seller_id=current_user.id) }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
-            <i class="bi bi-person mr-2"></i>Public Profile
-        </a>
-        
-        <!-- Create Service -->
-        <a href="{{ url_for('market.create_service') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
-            <i class="bi bi-plus-circle mr-2"></i>Create Service
-        </a>
-        
-        <!-- My Services -->
-        <a href="{{ url_for('market.seller_dashboard') }}#services" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
-            <i class="bi bi-briefcase mr-2"></i>My Services
-        </a>
-        
-        <div class="border-t my-2"></div>
-        
-        <!-- Settings (if you have this route) -->
-        {% if url_for('market.seller_settings') != '#' %}
-        <a href="{{ url_for('market.seller_settings') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
-            <i class="bi bi-gear mr-2"></i>Settings
-        </a>
-        {% endif %}
-        
-        <!-- Logout -->
-        <a href="{{ url_for('user.logout') }}" class="block px-4 py-2 text-red-600 hover:bg-red-50">
-            <i class="bi bi-box-arrow-right mr-2"></i>Logout
-        </a>
-    {% endif %}
-</div>
+                        <div class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg py-2 z-50 hidden border border-gray-200" id="user-dropdown">
+                            {% if current_user.is_authenticated %}
+                                <a href="{{ url_for('market.seller_dashboard') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <i class="bi bi-speedometer2 mr-2 text-xs"></i>Dashboard
+                                </a>
+                                <a href="{{ url_for('market.seller_profile', seller_id=current_user.id) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <i class="bi bi-person mr-2 text-xs"></i>Public Profile
+                                </a>
+                                <a href="{{ url_for('market.create_service') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <i class="bi bi-plus-circle mr-2 text-xs"></i>Create Service
+                                </a>
+                                
+                                
+                                <div class="border-t my-1"></div>
+                                
+                                <a href="{{ url_for('user.logout') }}" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                                    <i class="bi bi-box-arrow-right mr-2 text-xs"></i>Logout
+                                </a>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </nav>
 
-    <div class="container mx-auto px-4 py-6">
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+    <div class="container mx-auto px-3 py-4">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
             <!-- Sidebar -->
             <div class="lg:col-span-1">
-                <div class="sidebar bg-white rounded-2xl p-6 shadow-soft">
-                    <h3 class="font-bold text-lg mb-4">Seller Menu</h3>
+                <div class="sidebar bg-white rounded-2xl p-4 shadow-soft">
+                    
                     
                     <nav class="space-y-1">
                         <a href="#overview" class="nav-item active" onclick="switchTab('overview')">
@@ -357,24 +453,7 @@
                         <a href="#services" class="nav-item" onclick="switchTab('services')">
                             <i class="bi bi-bag"></i>
                             <span>My Services</span>
-                            <span class="ml-auto bg-primary text-white text-xs px-2 py-1 rounded-full">12</span>
-                        </a>
-                        
-                        <a href="#orders" class="nav-item" onclick="switchTab('orders')">
-                            <i class="bi bi-cart"></i>
-                            <span>Orders</span>
-                            <span class="ml-auto bg-green-500 text-white text-xs px-2 py-1 rounded-full">5</span>
-                        </a>
-                        
-                        <a href="#reviews" class="nav-item" onclick="switchTab('reviews')">
-                            <i class="bi bi-star"></i>
-                            <span>Reviews</span>
-                            <span class="ml-auto bg-yellow-500 text-white text-xs px-2 py-1 rounded-full">23</span>
-                        </a>
-                        
-                        <a href="#earnings" class="nav-item" onclick="switchTab('earnings')">
-                            <i class="bi bi-cash-coin"></i>
-                            <span>Earnings</span>
+                            <span class="ml-auto bg-primary text-white text-xs px-2 py-1 rounded-full" id="services-count">{{ total_services }}</span>
                         </a>
                         
                         <a href="#analytics" class="nav-item" onclick="switchTab('analytics')">
@@ -382,15 +461,17 @@
                             <span>Analytics</span>
                         </a>
                         
-                        <a href="#messages" class="nav-item" onclick="switchTab('messages')">
-                            <i class="bi bi-chat"></i>
-                            <span>Messages</span>
-                            <span class="ml-auto bg-blue-500 text-white text-xs px-2 py-1 rounded-full">3</span>
+                        <a href="#reviews" class="nav-item" onclick="switchTab('reviews')">
+                            <i class="bi bi-star"></i>
+                            <span>Reviews</span>
+                            <span class="ml-auto bg-yellow-500 text-white text-xs px-2 py-1 rounded-full" id="reviews-count">{{ total_reviews }}</span>
                         </a>
+                        
+                        
                     </nav>
                     
-                    <div class="mt-8 pt-6 border-t">
-                        <h4 class="font-bold text-sm mb-3 text-gray-500">ACCOUNT</h4>
+                    <div class="mt-6 pt-4 border-t">
+                        <h4 class="font-bold text-xs mb-2 text-gray-500">ACCOUNT</h4>
                         
                         <a href="{{ url_for('market.seller_profile', seller_id=current_user.id) }}" class="nav-item">
                             <i class="bi bi-person"></i>
@@ -413,395 +494,346 @@
             <!-- Main Content -->
             <div class="lg:col-span-3">
                 <!-- Welcome Banner -->
-                <div class="gradient-primary rounded-2xl p-6 text-white mb-6">
+                <div class="gradient-primary rounded-2xl p-4 text-white mb-4">
                     <div class="flex flex-col md:flex-row md:items-center justify-between">
                         <div>
-                            <h1 class="text-2xl font-bold mb-2">Welcome back, {{ current_user.username }}! 👋</h1>
-                            <p class="opacity-90">Here's what's happening with your services today.</p>
+                            <h1 class="text-lg font-bold mb-1">Welcome back, {{ current_user.username }}! 👋</h1>
+                            <p class="opacity-90 text-sm">Here's what's happening with your services today.</p>
                         </div>
-                        <div class="mt-4 md:mt-0">
+                        <div class="mt-3 md:mt-0">
                             <a href="{{ url_for('market.create_service') }}" 
-                               class="inline-flex items-center bg-white text-primary px-6 py-3 rounded-xl font-bold hover:bg-opacity-90 transition-all">
-                                <i class="bi bi-plus-lg mr-2"></i> Create New Service
+                               class="btn btn-sm bg-white text-primary hover:bg-opacity-90">
+                                <i class="bi bi-plus-lg text-xs"></i> Create New Service
                             </a>
                         </div>
                     </div>
                 </div>
                 
+                <!-- Time Filter -->
+                <div class="mb-4 flex justify-end">
+                    <select id="timeFilter" onchange="updateStats()" class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-primary/20 focus:border-primary outline-none">
+                        <option value="all">All Time</option>
+                        <option value="week">Last 7 Days</option>
+                        <option value="month">Last 30 Days</option>
+                        <option value="year">Last Year</option>
+                    </select>
+                </div>
+                
                 <!-- Stats Overview -->
-                <!-- Stats Overview -->
-<!-- Stats Overview -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-    <div class="stat-card hover-lift">
-        <div class="flex items-center justify-between mb-4">
-            <div>
-                <p class="text-sm text-gray-600">Total Earnings</p>
-                <h3 class="text-2xl font-bold">KES {{ "%.2f"|format(total_earnings) }}</h3>
-            </div>
-            <div class="stat-icon gradient-primary">
-                <i class="bi bi-cash-coin text-white"></i>
-            </div>
-        </div>
-        <p class="text-sm text-green-600">
-            <i class="bi bi-arrow-up-right mr-1"></i> From {{ total_services }} services
-        </p>
-    </div>
-    
-    <div class="stat-card hover-lift">
-        <div class="flex items-center justify-between mb-4">
-            <div>
-                <p class="text-sm text-gray-600">Active Services</p>
-                <h3 class="text-2xl font-bold">{{ active_services }}</h3>
-            </div>
-            <div class="stat-icon gradient-secondary">
-                <i class="bi bi-bag text-white"></i>
-            </div>
-        </div>
-        <p class="text-sm text-green-600">
-            <i class="bi bi-arrow-up-right mr-1"></i> Out of {{ total_services }} total
-        </p>
-    </div>
-    
-    <div class="stat-card hover-lift">
-        <div class="flex items-center justify-between mb-4">
-            <div>
-                <p class="text-sm text-gray-600">Total Views</p>
-                <h3 class="text-2xl font-bold">{{ total_views }}</h3>
-            </div>
-            <div class="stat-icon gradient-accent">
-                <i class="bi bi-eye text-white"></i>
-            </div>
-        </div>
-        <p class="text-sm text-blue-600">
-            <i class="bi bi-mouse mr-1"></i> {{ total_clicks }} clicks
-        </p>
-    </div>
-    
-    <div class="stat-card hover-lift">
-        <div class="flex items-center justify-between mb-4">
-            <div>
-                <p class="text-sm text-gray-600">Avg. Rating</p>
-                <h3 class="text-2xl font-bold">{{ "%.1f"|format(average_rating) }}</h3>
-            </div>
-            <div class="stat-icon bg-yellow-500">
-                <i class="bi bi-star text-white"></i>
-            </div>
-        </div>
-        <p class="text-sm text-gray-600">
-            <i class="bi bi-chat mr-1"></i> {{ total_reviews }} reviews total
-        </p>
-    </div>
-</div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-4" id="stats-container">
+                    
+                    
+                    <div class="stat-card hover-lift">
+                        <div class="flex items-center justify-between mb-3">
+                            <div>
+                                <p class="text-xs text-gray-600">Active Services</p>
+                                <h3 class="text-lg font-bold" id="active-services">{{ active_services }}</h3>
+                            </div>
+                            <div class="stat-icon gradient-secondary">
+                                <i class="bi bi-bag text-white text-sm"></i>
+                            </div>
+                        </div>
+                        <p class="text-xs text-green-600">
+                            <i class="bi bi-arrow-up-right mr-1 text-xs"></i> Out of {{ total_services }} total
+                        </p>
+                    </div>
+                    
+                    <div class="stat-card hover-lift">
+                        <div class="flex items-center justify-between mb-3">
+                            <div>
+                                <p class="text-xs text-gray-600">Total Views</p>
+                                <h3 class="text-lg font-bold" id="total-views">{{ total_views }}</h3>
+                            </div>
+                            <div class="stat-icon gradient-accent">
+                                <i class="bi bi-eye text-white text-sm"></i>
+                            </div>
+                        </div>
+                        <p class="text-xs text-blue-600">
+                            <i class="bi bi-mouse mr-1 text-xs"></i> {{ total_clicks }} clicks
+                        </p>
+                    </div>
+                    
+                    <div class="stat-card hover-lift">
+                        <div class="flex items-center justify-between mb-3">
+                            <div>
+                                <p class="text-xs text-gray-600">Avg. Rating</p>
+                                <h3 class="text-lg font-bold" id="avg-rating">{{ average_rating }}</h3>
+                            </div>
+                            <div class="stat-icon bg-yellow-500">
+                                <i class="bi bi-star text-white text-sm"></i>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-600">
+                            <i class="bi bi-chat mr-1 text-xs"></i> {{ total_reviews }} reviews
+                        </p>
+                    </div>
+                </div>
                 
                 <!-- Tabs Content -->
                 <div id="tabContent">
                     <!-- Overview Tab (Default) -->
                     <div id="overview-tab" class="tab-content active">
                         <!-- Quick Actions -->
-                        <div class="bg-white rounded-2xl p-6 shadow-soft mb-6">
-                            <h3 class="font-bold text-lg mb-4">Quick Actions</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-white rounded-2xl p-4 shadow-soft mb-4">
+                            <h3 class="font-bold text-base mb-3">Quick Actions</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                                 <a href="{{ url_for('market.create_service') }}" 
-                                   class="flex items-center p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-primary hover:bg-primary/5 transition-all">
-                                    <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mr-4">
-                                        <i class="bi bi-plus-lg text-primary text-xl"></i>
+                                   class="flex items-center p-3 border border-gray-200 rounded-xl hover:border-primary hover:bg-primary/5 transition-all">
+                                    <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mr-3">
+                                        <i class="bi bi-plus-lg text-primary text-base"></i>
                                     </div>
                                     <div>
-                                        <h4 class="font-bold">Create Service</h4>
-                                        <p class="text-sm text-gray-600">Add new service</p>
+                                        <h4 class="font-bold text-sm">Create Service</h4>
+                                        <p class="text-xs text-gray-600">Add new service</p>
                                     </div>
                                 </a>
                                 
-                                <a href="#services" onclick="switchTab('services')"
-                                   class="flex items-center p-4 border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all">
-                                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
-                                        <i class="bi bi-pencil text-blue-600 text-xl"></i>
+                                <a href="#analytics" onclick="switchTab('analytics')"
+                                   class="flex items-center p-3 border border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all">
+                                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                                        <i class="bi bi-graph-up text-blue-600 text-base"></i>
                                     </div>
                                     <div>
-                                        <h4 class="font-bold">Manage Services</h4>
-                                        <p class="text-sm text-gray-600">Edit existing services</p>
+                                        <h4 class="font-bold text-sm">View Analytics</h4>
+                                        <p class="text-xs text-gray-600">Performance insights</p>
                                     </div>
                                 </a>
                                 
-                                <a href="#orders" onclick="switchTab('orders')"
-                                   class="flex items-center p-4 border-2 border-gray-200 rounded-xl hover:border-green-500 hover:bg-green-50 transition-all">
-                                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
-                                        <i class="bi bi-cart-check text-green-600 text-xl"></i>
-                                    </div>
-                                    <div>
-                                        <h4 class="font-bold">Process Orders</h4>
-                                        <p class="text-sm text-gray-600">View pending orders</p>
-                                    </div>
-                                </a>
+                                
                             </div>
                         </div>
                         
-                        <!-- Recent Orders -->
-                        <div class="bg-white rounded-2xl p-6 shadow-soft mb-6">
-                            <div class="flex items-center justify-between mb-6">
-                                <h3 class="font-bold text-lg">Recent Orders</h3>
-                                <a href="#orders" onclick="switchTab('orders')" class="text-primary hover:underline text-sm font-medium">
-                                    View All <i class="bi bi-arrow-right ml-1"></i>
-                                </a>
+                        <!-- Recent Activity -->
+                        <div class="bg-white rounded-2xl p-4 shadow-soft mb-4">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="font-bold text-base">Recent Activity</h3>
                             </div>
                             
-                            <div class="overflow-x-auto">
-                                <table class="dashboard-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Order ID</th>
-                                            <th>Service</th>
-                                            <th>Customer</th>
-                                            <th>Date</th>
-                                            <th>Amount</th>
-                                            <th>Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td class="font-mono text-sm">#ORD-7821</td>
-                                            <td>Career Coaching Session</td>
-                                            <td>John Doe</td>
-                                            <td>Today, 10:30 AM</td>
-                                            <td class="font-bold">KES 2,500</td>
-                                            <td><span class="status-badge status-published">Completed</span></td>
-                                        </tr>
-                                        <tr>
-                                            <td class="font-mono text-sm">#ORD-7820</td>
-                                            <td>Resume Review</td>
-                                            <td>Jane Smith</td>
-                                            <td>Yesterday, 3:45 PM</td>
-                                            <td class="font-bold">KES 1,200</td>
-                                            <td><span class="status-badge status-pending">Processing</span></td>
-                                        </tr>
-                                        <tr>
-                                            <td class="font-mono text-sm">#ORD-7819</td>
-                                            <td>LinkedIn Optimization</td>
-                                            <td>Mike Johnson</td>
-                                            <td>Nov 28, 2024</td>
-                                            <td class="font-bold">KES 3,800</td>
-                                            <td><span class="status-badge status-published">Completed</span></td>
-                                        </tr>
-                                        <tr>
-                                            <td class="font-mono text-sm">#ORD-7818</td>
-                                            <td>Interview Prep</td>
-                                            <td>Sarah Williams</td>
-                                            <td>Nov 27, 2024</td>
-                                            <td class="font-bold">KES 4,500</td>
-                                            <td><span class="status-badge status-published">Completed</span></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                        
-                        <!-- Recent Services -->
-                        <div class="bg-white rounded-2xl p-6 shadow-soft">
-                            <div class="flex items-center justify-between mb-6">
-                                <h3 class="font-bold text-lg">Recent Services</h3>
-                                <a href="#services" onclick="switchTab('services')" class="text-primary hover:underline text-sm font-medium">
-                                    View All <i class="bi bi-arrow-right ml-1"></i>
-                                </a>
-                            </div>
-                            
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                <!-- Service Card -->
-                                <div class="service-card">
-                                    <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" 
-                                         alt="Career Coaching" 
-                                         class="service-image">
-                                    <div class="p-4">
-                                        <div class="flex items-center justify-between mb-2">
-                                            <span class="status-badge status-published">Published</span>
-                                            <span class="font-bold text-primary">KES 2,500</span>
-                                        </div>
-                                        <h4 class="font-bold mb-1">Professional Career Coaching</h4>
-                                        <p class="text-sm text-gray-600 mb-3 line-clamp-2">One-on-one career guidance and strategy session</p>
-                                        <div class="flex items-center justify-between text-sm text-gray-500">
-                                            <span><i class="bi bi-eye mr-1"></i> 245 views</span>
-                                            <span><i class="bi bi-cart mr-1"></i> 12 orders</span>
-                                        </div>
+                            <div class="space-y-3" id="activity-list">
+                                {% for activity in recent_activity[:5] %}
+                                <div class="flex items-center p-3 border border-gray-200 rounded-xl">
+                                    <div class="w-8 h-8 {% if activity.click_type == 'view' %}bg-blue-100 text-blue-600{% elif activity.click_type == 'contact' %}bg-green-100 text-green-600{% else %}bg-gray-100 text-gray-600{% endif %} rounded-lg flex items-center justify-center mr-3">
+                                        {% if activity.click_type == 'view' %}
+                                        <i class="bi bi-eye text-sm"></i>
+                                        {% elif activity.click_type == 'contact' %}
+                                        <i class="bi bi-chat text-sm"></i>
+                                        {% else %}
+                                        <i class="bi bi-mouse text-sm"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-sm">
+                                            {% if activity.click_type == 'view' %}
+                                            Someone viewed your service
+                                            {% elif activity.click_type == 'contact' %}
+                                            New contact request
+                                            {% else %}
+                                            Click on your service
+                                            {% endif %}
+                                        </p>
+                                        <p class="text-xs text-gray-500">{{ activity.created_at.strftime('%b %d, %I:%M %p') }}</p>
                                     </div>
                                 </div>
+                                {% endfor %}
                                 
-                                <!-- Service Card -->
-                                <div class="service-card">
-                                    <img src="https://images.unsplash.com/photo-1586281380349-632531db7ed4?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" 
-                                         alt="Resume Review" 
-                                         class="service-image">
-                                    <div class="p-4">
-                                        <div class="flex items-center justify-between mb-2">
-                                            <span class="status-badge status-draft">Draft</span>
-                                            <span class="font-bold text-primary">KES 1,200</span>
-                                        </div>
-                                        <h4 class="font-bold mb-1">Resume Review & Optimization</h4>
-                                        <p class="text-sm text-gray-600 mb-3 line-clamp-2">Professional resume critique and improvement</p>
-                                        <div class="flex items-center justify-between text-sm text-gray-500">
-                                            <span><i class="bi bi-eye mr-1"></i> 0 views</span>
-                                            <span><i class="bi bi-cart mr-1"></i> 0 orders</span>
-                                        </div>
-                                    </div>
+                                {% if not recent_activity %}
+                                <div class="text-center py-8 text-gray-500">
+                                    <i class="bi bi-activity text-2xl mb-2"></i>
+                                    <p class="text-sm">No recent activity</p>
                                 </div>
-                                
-                                <!-- Service Card -->
-                                <div class="service-card">
-                                    <img src="https://images.unsplash.com/photo-1611224923853-80b023f02d71?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" 
-                                         alt="LinkedIn Optimization" 
-                                         class="service-image">
-                                    <div class="p-4">
-                                        <div class="flex items-center justify-between mb-2">
-                                            <span class="status-badge status-published">Published</span>
-                                            <span class="font-bold text-primary">KES 3,800</span>
-                                        </div>
-                                        <h4 class="font-bold mb-1">LinkedIn Profile Optimization</h4>
-                                        <p class="text-sm text-gray-600 mb-3 line-clamp-2">Complete LinkedIn profile makeover</p>
-                                        <div class="flex items-center justify-between text-sm text-gray-500">
-                                            <span><i class="bi bi-eye mr-1"></i> 189 views</span>
-                                            <span><i class="bi bi-cart mr-1"></i> 8 orders</span>
-                                        </div>
-                                    </div>
-                                </div>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
                     
                     <!-- Services Tab -->
-                    <!-- Services Tab -->
-<div id="services-tab" class="tab-content hidden">
-    <div class="bg-white rounded-2xl p-6 shadow-soft">
-        <div class="flex flex-col md:flex-row md:items-center justify-between mb-6">
-            <h3 class="font-bold text-lg mb-4 md:mb-0">My Services ({{ total_services }})</h3>
-            <div class="flex space-x-3">
-                <div class="relative">
-                    <input type="text" 
-                           placeholder="Search services..." 
-                           class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
-                    <i class="bi bi-search absolute left-3 top-3 text-gray-400"></i>
-                </div>
-                <select class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
-                    <option>All Status</option>
-                    <option>Published</option>
-                    <option>Draft</option>
-                    <option>Pending</option>
-                </select>
-                <a href="{{ url_for('market.create_service') }}" 
-                   class="px-4 py-2 gradient-primary text-white rounded-lg font-bold hover:opacity-90">
-                    <i class="bi bi-plus-lg mr-2"></i> New
-                </a>
-            </div>
-        </div>
-        
-        <div class="overflow-x-auto">
-            <table class="dashboard-table">
-                <thead>
-                    <tr>
-                        <th>Service</th>
-                        <th>Category</th>
-                        <th>Price</th>
-                        <th>Status</th>
-                        <th>Views</th>
-                        <th>Earnings</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Loop through services here -->
-                    {% for service in services %}
-                    <tr>
-                        <td>
-                            <div class="flex items-center">
-                                <img src="{{ service.cover_image or url_for('static', filename='assets/img/default-service.jpg') }}" 
-                                     alt="{{ service.title }}" 
-                                     class="w-12 h-12 rounded-lg object-cover mr-3">
-                                <div>
-                                    <h4 class="font-bold">{{ service.title }}</h4>
-                                    <p class="text-sm text-gray-600">{{ service.short_description[:50] if service.short_description else 'No description' }}</p>
+                    <div id="services-tab" class="tab-content hidden">
+                        <div class="bg-white rounded-2xl p-4 shadow-soft">
+                            <div class="flex flex-col md:flex-row md:items-center justify-between mb-4">
+                                <h3 class="font-bold text-base mb-3 md:mb-0">My Services ({{ total_services }})</h3>
+                                <div class="flex flex-col sm:flex-row gap-2">
+                                    <div class="relative">
+                                        <input type="text" 
+                                               id="service-search"
+                                               placeholder="Search services..." 
+                                               class="pl-8 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-primary/20 focus:border-primary outline-none w-full">
+                                        <i class="bi bi-search absolute left-2.5 top-2.5 text-gray-400 text-sm"></i>
+                                    </div>
+                                    <select id="status-filter" class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-primary/20 focus:border-primary outline-none">
+                                        <option value="all">All Status</option>
+                                        <option value="active">Active</option>
+                                        <option value="pending">Pending</option>
+                                        <option value="draft">Draft</option>
+                                        <option value="paused">Paused</option>
+                                    </select>
+                                    <a href="{{ url_for('market.create_service') }}" 
+                                       class="btn btn-primary btn-sm whitespace-nowrap">
+                                        <i class="bi bi-plus-lg text-xs"></i> New Service
+                                    </a>
                                 </div>
                             </div>
-                        </td>
-                        <td>
-                            {% if service.category %}
-                                {{ service.category.name }}
-                            {% else %}
-                                Uncategorized
-                            {% endif %}
-                        </td>
-                        <td class="font-bold">
-    {% if service.is_free %}
-        Free
-    {% elif service.price_tokens %}
-        {{ service.price_tokens }} tokens
-    {% else %}
-        Free
-    {% endif %}
-</td>
-<td>
-    {% if service.status == 'active' %}
-    <span class="status-badge status-published">Active</span>
-    {% elif service.status == 'pending' %}
-    <span class="status-badge status-pending">Pending</span>
-    {% elif service.status == 'draft' %}
-    <span class="status-badge status-draft">Draft</span>
-    {% else %}
-    <span class="status-badge status-pending">{{ service.status|title if service.status else 'Unknown' }}</span>
-    {% endif %}
-</td>
-<td class="text-center">{{ service.views }}</td>
-<td class="font-bold">KES {{ "%.2f"|format(service.earnings or 0) }}</td>
-                        <td>
-                            <div class="flex space-x-2">
-                                <a href="{{ url_for('market.edit_service', service_id=service.id) }}" 
-                                   class="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 flex items-center justify-center">
-                                    <i class="bi bi-pencil"></i>
-                                </a>
-                                <a href="{{ url_for('market.service_detail', slug=service.slug) }}" 
-                                   class="w-8 h-8 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 flex items-center justify-center">
-                                    <i class="bi bi-eye"></i>
-                                </a>
-                                <button onclick="deleteService({{ service.id }})" 
-                                        class="w-8 h-8 bg-red-100 text-red-600 rounded-lg hover:bg-red-200">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-                    
-                    <!-- Orders Tab -->
-                    <div id="orders-tab" class="tab-content hidden">
-                        <div class="bg-white rounded-2xl p-6 shadow-soft">
-                            <h3 class="font-bold text-lg mb-6">Recent Orders (5 pending)</h3>
                             
+                            <!-- Services Table -->
+                            <div id="services-table-container">
+                                <div class="overflow-x-auto">
+                                    <table class="dashboard-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Service</th>
+                                                <th>Category</th>
+                                                <th>Price</th>
+                                                <th>Status</th>
+                                                <th>Views</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="services-tbody">
+                                            {% for service in services.items %}
+                                            <tr data-service-id="{{ service.id }}">
+                                                <td>
+                                                    <div class="flex items-center">
+                                                        <img src="{{ service.cover_image or url_for('static', filename='assets/img/default-service.jpg') }}" 
+                                                             alt="{{ service.title }}" 
+                                                             class="w-10 h-10 rounded-lg object-cover mr-2">
+                                                        <div>
+                                                            <h4 class="font-bold text-sm">{{ service.title[:30] }}{{ '...' if service.title|length > 30 }}</h4>
+                                                            <p class="text-xs text-gray-600">{{ (service.short_description[:30] if service.short_description else 'No description') }}{{ '...' if service.short_description and service.short_description|length > 30 }}</p>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="text-sm">
+                                                    {% if service.category %}
+                                                        {{ service.category.name }}
+                                                    {% else %}
+                                                        Uncategorized
+                                                    {% endif %}
+                                                </td>
+                                                <td class="font-bold text-sm">
+    {% if service.price is none or service.price == 0 %}
+        Free
+    {% else %}
+        {% set currency_symbol = currency_symbols.get(service.currency, '') %}
+        {{ currency_symbol }}{{ "{:,.2f}".format(service.price) }}
+    {% endif %}
+</td>
+                                                <td>
+                                                    {% if service.status == 'active' %}
+                                                    <span class="status-badge status-published">Active</span>
+                                                    {% elif service.status == 'pending' %}
+                                                    <span class="status-badge status-pending">Pending</span>
+                                                    {% elif service.status == 'draft' %}
+                                                    <span class="status-badge status-draft">Draft</span>
+                                                    {% elif service.status == 'paused' %}
+                                                    <span class="status-badge status-paused">Paused</span>
+                                                    {% else %}
+                                                    <span class="status-badge status-pending">{{ service.status|title if service.status else 'Unknown' }}</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td class="text-center text-sm">{{ service.views or 0 }}</td>
+                                                
+                                                <td>
+                                                    <div class="flex gap-1">
+                                                        <a href="{{ url_for('market.edit_service', service_id=service.id) }}" 
+                                                           class="w-7 h-7 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 flex items-center justify-center text-sm"
+                                                           title="Edit">
+                                                            <i class="bi bi-pencil"></i>
+                                                        </a>
+                                                        <a href="{{ url_for('market.service_detail', slug=service.slug) }}" 
+                                                           class="w-7 h-7 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 flex items-center justify-center text-sm"
+                                                           title="View">
+                                                            <i class="bi bi-eye"></i>
+                                                        </a>
+                                                        <button onclick="confirmDelete({{ service.id }})" 
+                                                                class="w-7 h-7 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 text-sm"
+                                                                title="Delete">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                            
+                                            {% if services.total == 0 %}
+                                            <tr>
+                                                <td colspan="7" class="text-center py-8 text-gray-500">
+                                                    <i class="bi bi-bag text-2xl mb-2"></i>
+                                                    <p class="text-sm">No services found</p>
+                                                    <a href="{{ url_for('market.create_service') }}" class="text-primary text-sm hover:underline">Create your first service</a>
+                                                </td>
+                                            </tr>
+                                            {% endif %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <!-- Pagination -->
+                                {% if services.pages > 1 %}
+                                <div class="pagination mt-4">
+                                    {% if services.has_prev %}
+                                    <a href="{{ url_for('market.seller_dashboard', page=services.prev_num) }}#services" 
+                                       class="page-link">
+                                        <i class="bi bi-chevron-left"></i>
+                                    </a>
+                                    {% else %}
+                                    <span class="page-link disabled">
+                                        <i class="bi bi-chevron-left"></i>
+                                    </span>
+                                    {% endif %}
+                                    
+                                    {% for page_num in services.iter_pages(left_edge=2, right_edge=2, left_current=2, right_current=2) %}
+                                        {% if page_num %}
+                                            {% if page_num == services.page %}
+                                            <span class="page-link active">{{ page_num }}</span>
+                                            {% else %}
+                                            <a href="{{ url_for('market.seller_dashboard', page=page_num) }}#services" 
+                                               class="page-link">{{ page_num }}</a>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="page-link disabled">...</span>
+                                        {% endif %}
+                                    {% endfor %}
+                                    
+                                    {% if services.has_next %}
+                                    <a href="{{ url_for('market.seller_dashboard', page=services.next_num) }}#services" 
+                                       class="page-link">
+                                        <i class="bi bi-chevron-right"></i>
+                                    </a>
+                                    {% else %}
+                                    <span class="page-link disabled">
+                                        <i class="bi bi-chevron-right"></i>
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Analytics Tab -->
+                    <div id="analytics-tab" class="tab-content hidden">
+                        <div class="bg-white rounded-2xl p-4 shadow-soft">
+                            <h3 class="font-bold text-base mb-4">Analytics Overview</h3>
                             <div class="space-y-4">
-                                <!-- Order Item -->
-                                <div class="flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:bg-gray-50">
-                                    <div class="flex items-center">
-                                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
-                                            <i class="bi bi-cart text-blue-600"></i>
-                                        </div>
-                                        <div>
-                                            <h4 class="font-bold">#ORD-7820 - Resume Review</h4>
-                                            <p class="text-sm text-gray-600">Jane Smith • Ordered 2 hours ago</p>
-                                        </div>
-                                    </div>
-                                    <div class="flex items-center space-x-4">
-                                        <span class="font-bold text-primary">KES 1,200</span>
-                                        <span class="status-badge status-pending">Processing</span>
-                                        <button class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark">
-                                            Process
-                                        </button>
-                                    </div>
+                                <div id="analytics-content" class="text-center py-8">
+                                    <div class="loading mx-auto mb-2"></div>
+                                    <p class="text-sm text-gray-600">Loading analytics...</p>
                                 </div>
-                                
-                                <!-- More order items would go here -->
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- Reviews Tab -->
+                    <div id="reviews-tab" class="tab-content hidden">
+                        <div class="bg-white rounded-2xl p-4 shadow-soft">
+                            <h3 class="font-bold text-base mb-4">Customer Reviews</h3>
+                            <div id="reviews-content" class="text-center py-8">
+                                <div class="loading mx-auto mb-2"></div>
+                                <p class="text-sm text-gray-600">Loading reviews...</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    
                 </div>
             </div>
         </div>
@@ -810,24 +842,25 @@
     <!-- Delete Confirmation Modal -->
     <div id="deleteModal" class="modal hidden">
         <div class="modal-content">
-            <div class="p-6">
-                <div class="flex items-center justify-between mb-6">
-                    <h2 class="text-xl font-bold">Confirm Delete</h2>
-                    <button onclick="closeModal()" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200">
+            <div class="p-4">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-base font-bold">Confirm Delete</h2>
+                    <button onclick="closeModal()" class="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 text-sm">
                         <i class="bi bi-x"></i>
                     </button>
                 </div>
                 
-                <p class="text-gray-600 mb-6">Are you sure you want to delete this service? This action cannot be undone.</p>
+                <p class="text-gray-600 text-sm mb-4" id="delete-message">Are you sure you want to delete this service? This action cannot be undone.</p>
                 
-                <div class="flex justify-end space-x-3">
+                <div class="flex justify-end gap-2">
                     <button onclick="closeModal()" 
-                            class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                            class="btn btn-outline btn-sm">
                         Cancel
                     </button>
-                    <button onclick="confirmDelete()" 
-                            class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
-                        Delete Service
+                    <button onclick="performDelete()" 
+                            class="btn bg-red-600 text-white btn-sm hover:bg-red-700"
+                            id="delete-confirm-btn">
+                        <span>Delete Service</span>
                     </button>
                 </div>
             </div>
@@ -837,6 +870,55 @@
     <!-- JavaScript -->
     <script>
         let currentServiceToDelete = null;
+        let currentPage = 1;
+        let currentStatusFilter = 'all';
+        let currentSearchQuery = '';
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check URL hash for tab
+            const hash = window.location.hash.replace('#', '');
+            if (hash && ['overview', 'services', 'analytics', 'reviews', 'earnings'].includes(hash)) {
+                switchTab(hash);
+            }
+            
+            // Set up user menu toggle
+            const userMenuButton = document.getElementById('user-menu-button');
+            const userDropdown = document.getElementById('user-dropdown');
+            
+            userMenuButton.addEventListener('click', function(e) {
+                e.stopPropagation();
+                userDropdown.classList.toggle('hidden');
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!userMenuButton.contains(e.target) && !userDropdown.contains(e.target)) {
+                    userDropdown.classList.add('hidden');
+                }
+            });
+            
+            // Set up service search
+            const serviceSearch = document.getElementById('service-search');
+            if (serviceSearch) {
+                serviceSearch.addEventListener('input', function() {
+                    currentSearchQuery = this.value;
+                    debounceSearch();
+                });
+            }
+            
+            // Set up status filter
+            const statusFilter = document.getElementById('status-filter');
+            if (statusFilter) {
+                statusFilter.addEventListener('change', function() {
+                    currentStatusFilter = this.value;
+                    loadServices();
+                });
+            }
+            
+            // Load initial stats
+            updateStats();
+        });
         
         // Tab Switching
         function switchTab(tabName) {
@@ -852,64 +934,633 @@
                 content.classList.add('hidden');
             });
             
-            document.getElementById(`${tabName}-tab`).classList.remove('hidden');
-            document.getElementById(`${tabName}-tab`).classList.add('active');
+            const tabElement = document.getElementById(`${tabName}-tab`);
+            tabElement.classList.remove('hidden');
+            tabElement.classList.add('active');
+            
+            // Load tab-specific data
+            if (tabName === 'analytics') {
+                loadAnalytics();
+            } else if (tabName === 'reviews') {
+                loadReviews();
+            } else if (tabName === 'earnings') {
+                loadEarnings();
+            }
+            
+            // Update URL hash
+            window.location.hash = tabName;
         }
         
-        // Service Actions
-        // Service Actions
-function editService(serviceId) {
-    window.location.href = `/edit/${serviceId}`;
-}
-
-function viewService(serviceId) {
-    // Get the slug from a data attribute or fetch it
-    const row = document.querySelector(`[data-service-id="${serviceId}"]`);
-    if (row) {
-        const slug = row.dataset.slug;
-        if (slug) {
-            window.location.href = `/marketplace/service/${slug}`;
-        } else {
-            // Fallback - you might need to add slug to data attributes
-            window.location.href = `/service/${serviceId}`;
+        // Debounce search
+        let searchTimeout;
+        function debounceSearch() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                loadServices();
+            }, 500);
         }
-    }
+        
+        // Update stats with time filter
+        async function updateStats() {
+            const timeFilter = document.getElementById('timeFilter').value;
+            
+            try {
+                const response = await fetch(`/api/dashboard/stats?time_filter=${timeFilter}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const stats = data.stats;
+                    
+                    // Update stats display
+                    document.getElementById('total-earnings').textContent = 
+                        formatCurrency(stats.total_earnings, 'KES');
+                    document.getElementById('active-services').textContent = stats.active_services;
+                    document.getElementById('total-views').textContent = stats.total_views.toLocaleString();
+                    document.getElementById('avg-rating').textContent = stats.average_rating;
+                    
+                    // Update counts
+                    document.getElementById('services-count').textContent = stats.total_services;
+                    document.getElementById('reviews-count').textContent = stats.total_reviews;
+                }
+            } catch (error) {
+                console.error('Error updating stats:', error);
+            }
+        }
+        
+        // Load services with AJAX
+        async function loadServices(page = 1) {
+            currentPage = page;
+            
+            try {
+                const params = new URLSearchParams({
+                    page: page,
+                    status: currentStatusFilter,
+                    search: currentSearchQuery
+                });
+                
+                const response = await fetch(`/api/dashboard/services?${params}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateServicesTable(data.services, data.pagination);
+                }
+            } catch (error) {
+                console.error('Error loading services:', error);
+                showError('services-tbody', 'Failed to load services. Please try again.');
+            }
+        }
+        
+        // Update services table
+        function updateServicesTable(services, pagination) {
+            const tbody = document.getElementById('services-tbody');
+            const servicesCount = document.getElementById('services-count');
+            
+            if (services.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center py-8 text-gray-500">
+                            <i class="bi bi-bag text-2xl mb-2"></i>
+                            <p class="text-sm">No services found</p>
+                            <a href="{{ url_for('market.create_service') }}" class="text-primary text-sm hover:underline">Create your first service</a>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            // Update services count
+            servicesCount.textContent = pagination.total;
+            
+            // Build table rows
+            let html = '';
+            services.forEach(service => {
+                const statusBadge = getStatusBadge(service.status);
+                const price = service.is_free ? 'Free' : 
+                    `${getCurrencySymbol(service.currency)}${service.price.toFixed(2)}`;
+                const earnings = `${getCurrencySymbol(service.currency)}${service.earnings.toFixed(2)}`;
+                
+                html += `
+                    <tr data-service-id="${service.id}">
+                        <td>
+                            <div class="flex items-center">
+                                <img src="${service.cover_image || '/static/assets/img/default-service.jpg'}" 
+                                     alt="${service.title}" 
+                                     class="w-10 h-10 rounded-lg object-cover mr-2">
+                                <div>
+                                    <h4 class="font-bold text-sm">${service.title.substring(0, 30)}${service.title.length > 30 ? '...' : ''}</h4>
+                                    <p class="text-xs text-gray-600">${(service.short_description || 'No description').substring(0, 30)}${service.short_description && service.short_description.length > 30 ? '...' : ''}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-sm">${service.category || 'Uncategorized'}</td>
+                        <td class="font-bold text-sm">${price}</td>
+                        <td>${statusBadge}</td>
+                        <td class="text-center text-sm">${service.views}</td>
+                        <td class="font-bold text-sm">${earnings}</td>
+                        <td>
+                            <div class="flex gap-1">
+                                <a href="/edit/${service.id}" 
+                                   class="w-7 h-7 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 flex items-center justify-center text-sm"
+                                   title="Edit">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="/service/${service.slug}" 
+                                   class="w-7 h-7 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 flex items-center justify-center text-sm"
+                                   title="View">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <button onclick="confirmDelete(${service.id})" 
+                                        class="w-7 h-7 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 text-sm"
+                                        title="Delete">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tbody.innerHTML = html;
+            
+            // Update pagination
+            updatePagination(pagination);
+        }
+        
+        // Update pagination controls
+        function updatePagination(pagination) {
+            let container = document.querySelector('#services-table-container .pagination');
+            if (!container) {
+                // Create pagination container if it doesn't exist
+                const tableContainer = document.getElementById('services-table-container');
+                container = document.createElement('div');
+                container.className = 'pagination mt-4';
+                tableContainer.appendChild(container);
+            }
+            
+            let html = '';
+            
+            // Previous button
+            if (pagination.has_prev) {
+                html += `<a href="javascript:void(0)" onclick="loadServices(${pagination.page - 1})" class="page-link">
+                            <i class="bi bi-chevron-left"></i>
+                         </a>`;
+            } else {
+                html += `<span class="page-link disabled"><i class="bi bi-chevron-left"></i></span>`;
+            }
+            
+            // Page numbers
+            const pages = getPageNumbers(pagination.page, pagination.pages);
+            pages.forEach(pageNum => {
+                if (pageNum === '...') {
+                    html += `<span class="page-link disabled">...</span>`;
+                } else if (pageNum === pagination.page) {
+                    html += `<span class="page-link active">${pageNum}</span>`;
+                } else {
+                    html += `<a href="javascript:void(0)" onclick="loadServices(${pageNum})" class="page-link">${pageNum}</a>`;
+                }
+            });
+            
+            // Next button
+            if (pagination.has_next) {
+                html += `<a href="javascript:void(0)" onclick="loadServices(${pagination.page + 1})" class="page-link">
+                            <i class="bi bi-chevron-right"></i>
+                         </a>`;
+            } else {
+                html += `<span class="page-link disabled"><i class="bi bi-chevron-right"></i></span>`;
+            }
+            
+            container.innerHTML = html;
+        }
+        
+        // Helper function for pagination numbers
+        function getPageNumbers(current, total, delta = 2) {
+            const range = [];
+            const rangeWithDots = [];
+            let l;
+            
+            for (let i = 1; i <= total; i++) {
+                if (i === 1 || i === total || (i >= current - delta && i <= current + delta)) {
+                    range.push(i);
+                }
+            }
+            
+            range.forEach((i, index) => {
+                if (index > 0 && i - range[index - 1] !== 1) {
+                    rangeWithDots.push('...');
+                }
+                rangeWithDots.push(i);
+            });
+            
+            return rangeWithDots;
+        }
+        
+        // Get status badge HTML
+        function getStatusBadge(status) {
+            const badges = {
+                'active': '<span class="status-badge status-published">Active</span>',
+                'pending': '<span class="status-badge status-pending">Pending</span>',
+                'draft': '<span class="status-badge status-draft">Draft</span>',
+                'paused': '<span class="status-badge status-paused">Paused</span>'
+            };
+            return badges[status] || `<span class="status-badge status-pending">${status.charAt(0).toUpperCase() + status.slice(1)}</span>`;
+        }
+        
+        // Get currency symbol
+        function getCurrencySymbol(currency) {
+            const symbols = {
+                'USD': '$',
+                'EUR': '€',
+                'GBP': '£',
+                'KES': '#',
+                'NGN': '₦',
+                'GHS': 'GH₵',
+                'ZAR': 'R'
+            };
+            return symbols[currency] || '';
+        }
+        
+        // Format currency
+        function formatCurrency(amount, currency = 'KES') {
+    const symbol = getCurrencySymbol(currency);
+    // Use proper number formatting with commas
+    const formattedAmount = new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(amount);
+    return `${symbol}${formattedAmount}`;
 }
-        function deleteService(serviceId) {
+        
+        // Show error message
+        function showError(elementId, message) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center py-8 text-red-600">
+                            <i class="bi bi-exclamation-triangle text-2xl mb-2"></i>
+                            <p class="text-sm">${message}</p>
+                            <button onclick="location.reload()" class="text-primary text-sm hover:underline mt-2">Retry</button>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+        
+        // Load analytics
+        async function loadAnalytics() {
+            const container = document.getElementById('analytics-content');
+            
+            try {
+                const response = await fetch('/api/dashboard/stats?time_filter=month');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const chartData = data.chart_data;
+                    
+                    // Create chart HTML
+                    let html = `
+                        <div class="mb-6">
+                            <canvas id="analyticsChart" height="250"></canvas>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="bg-blue-50 p-4 rounded-xl">
+                                <p class="text-xs text-blue-600 mb-1">Total Views (30 days)</p>
+                                <h4 class="text-lg font-bold">${chartData.reduce((sum, day) => sum + day.views, 0).toLocaleString()}</h4>
+                            </div>
+                            <div class="bg-green-50 p-4 rounded-xl">
+                                <p class="text-xs text-green-600 mb-1">Total Clicks (30 days)</p>
+                                <h4 class="text-lg font-bold">${chartData.reduce((sum, day) => sum + day.clicks, 0).toLocaleString()}</h4>
+                            </div>
+                            
+                        </div>
+                    `;
+                    
+                    container.innerHTML = html;
+                    
+                    // Initialize chart
+                    setTimeout(() => {
+                        initializeAnalyticsChart(chartData);
+                    }, 100);
+                }
+            } catch (error) {
+                console.error('Error loading analytics:', error);
+                container.innerHTML = `
+                    <div class="text-red-600">
+                        <i class="bi bi-exclamation-triangle text-2xl mb-2"></i>
+                        <p class="text-sm">Error loading analytics</p>
+                        <button onclick="loadAnalytics()" class="text-primary text-sm hover:underline mt-2">Retry</button>
+                    </div>
+                `;
+            }
+        }
+        
+        // Load reviews
+        async function loadReviews() {
+            const container = document.getElementById('reviews-content');
+            
+            try {
+                const response = await fetch('/api/dashboard/reviews');
+                const data = await response.json();
+                
+                if (data.success && data.reviews.length > 0) {
+                    let html = '<div class="space-y-4">';
+                    data.reviews.forEach(review => {
+                        html += `
+                            <div class="border border-gray-200 rounded-xl p-4">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="flex items-center">
+                                        ${getStarsHtml(review.rating)}
+                                        <span class="ml-2 text-sm font-medium">${review.rating}/5</span>
+                                    </div>
+                                    <span class="text-xs text-gray-500">${review.created_at}</span>
+                                </div>
+                                <p class="text-sm mb-2">${review.comment || 'No comment provided'}</p>
+                                <div class="flex items-center justify-between">
+                                    <p class="text-xs text-gray-600">- ${review.customer_name}</p>
+                                    <a href="/service/${review.service_slug}" class="text-xs text-primary hover:underline">View Service</a>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    // Add pagination if needed
+                    if (data.pagination.pages > 1) {
+                        html += `
+                            <div class="pagination mt-4">
+                                ${data.pagination.page > 1 ? 
+                                    `<a href="javascript:void(0)" onclick="loadReviewsPage(${data.pagination.page - 1})" class="page-link">
+                                        <i class="bi bi-chevron-left"></i>
+                                    </a>` : 
+                                    `<span class="page-link disabled"><i class="bi bi-chevron-left"></i></span>`
+                                }
+                                
+                                <span class="page-link active">${data.pagination.page}</span>
+                                
+                                ${data.pagination.page < data.pagination.pages ? 
+                                    `<a href="javascript:void(0)" onclick="loadReviewsPage(${data.pagination.page + 1})" class="page-link">
+                                        <i class="bi bi-chevron-right"></i>
+                                    </a>` : 
+                                    `<span class="page-link disabled"><i class="bi bi-chevron-right"></i></span>`
+                                }
+                            </div>
+                        `;
+                    }
+                    
+                    html += '</div>';
+                    container.innerHTML = html;
+                } else {
+                    container.innerHTML = `
+                        <div class="text-gray-500">
+                            <i class="bi bi-star text-2xl mb-2"></i>
+                            <p class="text-sm">No reviews yet</p>
+                            <p class="text-xs mt-1">Reviews will appear here when customers rate your services.</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading reviews:', error);
+                container.innerHTML = `
+                    <div class="text-red-600">
+                        <i class="bi bi-exclamation-triangle text-2xl mb-2"></i>
+                        <p class="text-sm">Error loading reviews</p>
+                        <button onclick="loadReviews()" class="text-primary text-sm hover:underline mt-2">Retry</button>
+                    </div>
+                `;
+            }
+        }
+        
+        // Load reviews with pagination
+        async function loadReviewsPage(page) {
+            // Similar to loadReviews but with page parameter
+            // You can implement this if needed
+        }
+        
+        // Load earnings
+        async function loadEarnings() {
+            const container = document.getElementById('earnings-content');
+            
+            try {
+                const response = await fetch('/api/dashboard/stats');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const stats = data.stats;
+                    
+                    let html = `
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="bg-blue-50 p-4 rounded-xl">
+                                    <p class="text-xs text-blue-600 mb-1">Total Earnings</p>
+                                    <h4 class="text-lg font-bold">${formatCurrency(stats.total_earnings, '#')}</h4>
+                                </div>
+                                <div class="bg-green-50 p-4 rounded-xl">
+                                    <p class="text-xs text-green-600 mb-1">Active Services</p>
+                                    <h4 class="text-lg font-bold">${stats.active_services}</h4>
+                                </div>
+                                <div class="bg-purple-50 p-4 rounded-xl">
+                                    <p class="text-xs text-purple-600 mb-1">Avg. per Service</p>
+                                    <h4 class="text-lg font-bold">${formatCurrency(stats.total_earnings / (stats.total_services || 1), 'KES')}</h4>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-6">
+                                <h4 class="font-bold text-sm mb-3">Service-wise Earnings</h4>
+                                <div class="space-y-2">
+                                    <p class="text-sm text-gray-600">Detailed earnings breakdown by service will be available soon.</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    container.innerHTML = html;
+                }
+            } catch (error) {
+                console.error('Error loading earnings:', error);
+                container.innerHTML = `
+                    <div class="text-red-600">
+                        <i class="bi bi-exclamation-triangle text-2xl mb-2"></i>
+                        <p class="text-sm">Error loading earnings data</p>
+                        <button onclick="loadEarnings()" class="text-primary text-sm hover:underline mt-2">Retry</button>
+                    </div>
+                `;
+            }
+        }
+        
+        // Helper function for star ratings
+        function getStarsHtml(rating) {
+            let html = '<div class="flex">';
+            for (let i = 1; i <= 5; i++) {
+                if (i <= Math.floor(rating)) {
+                    html += '<i class="bi bi-star-fill text-yellow-500 text-sm"></i>';
+                } else if (i === Math.ceil(rating) && rating % 1 !== 0) {
+                    html += '<i class="bi bi-star-half text-yellow-500 text-sm"></i>';
+                } else {
+                    html += '<i class="bi bi-star text-yellow-500 text-sm"></i>';
+                }
+            }
+            html += '</div>';
+            return html;
+        }
+        
+        // Delete service functions
+        function confirmDelete(serviceId) {
             currentServiceToDelete = serviceId;
             document.getElementById('deleteModal').classList.remove('hidden');
-        }
-        
-        function confirmDelete() {
-            if (currentServiceToDelete) {
-                fetch(`/delete_service/${currentServiceToDelete}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert('Service deleted successfully');
-                        location.reload();
-                    } else {
-                        alert('Error deleting service: ' + data.message);
-                    }
-                })
-                .catch(error => {
-                    alert('Error deleting service: ' + error.message);
-                })
-                .finally(() => {
-                    closeModal();
-                });
-            }
         }
         
         function closeModal() {
             document.getElementById('deleteModal').classList.add('hidden');
             currentServiceToDelete = null;
         }
+        
+       async function performDelete() {
+    if (!currentServiceToDelete) {
+        closeModal();
+        return;
+    }
+    
+    const deleteBtn = document.getElementById('delete-confirm-btn');
+    const originalContent = deleteBtn.innerHTML;
+    deleteBtn.innerHTML = '<span class="loading mr-1"></span> Deleting...';
+    deleteBtn.disabled = true;
+    
+    try {
+        // Get CSRF token
+        const csrfToken = getCSRFToken();
+        
+        // Prepare headers
+        const headers = {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        };
+        
+        // Add CSRF token if available
+        if (csrfToken) {
+            headers['X-CSRFToken'] = csrfToken;
+        }
+        
+        // Use POST method
+        const response = await fetch('/delete_service/' + currentServiceToDelete, {
+            method: 'POST',
+            headers: headers,
+            credentials: 'same-origin'  // Important for cookies
+        });
+        
+        console.log('Response status:', response.status, response.statusText);
+        
+        // Check if response is JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            console.error('Received non-JSON response:', text.substring(0, 500));
+            
+            if (response.status === 400 && text.includes('CSRF token')) {
+                throw new Error('CSRF token missing or invalid. Please refresh the page.');
+            }
+            
+            throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || `Server error: ${response.status}`);
+        }
+        
+        if (data.success) {
+            // Show success message
+            showNotification('Service deleted successfully!', 'success');
+            
+            // Remove the row from the table
+            const row = document.querySelector(`tr[data-service-id="${currentServiceToDelete}"]`);
+            if (row) {
+                row.remove();
+            }
+            
+            // Update counts
+            const servicesCount = document.getElementById('services-count');
+            if (servicesCount) {
+                const currentCount = parseInt(servicesCount.textContent) || 0;
+                servicesCount.textContent = Math.max(0, currentCount - 1);
+            }
+            
+            // Update active services count
+            const activeServices = document.getElementById('active-services');
+            if (activeServices) {
+                const currentActive = parseInt(activeServices.textContent) || 0;
+                activeServices.textContent = Math.max(0, currentActive - 1);
+            }
+            
+            // Update total services in stats
+            updateStats();
+            
+            closeModal();
+        } else {
+            throw new Error(data.error || 'Failed to delete service');
+        }
+    } catch (error) {
+        console.error('Error deleting service:', error);
+        showNotification(`Error: ${error.message}`, 'error');
+    } finally {
+        deleteBtn.innerHTML = originalContent;
+        deleteBtn.disabled = false;
+    }
+}
+
+// Helper function to get CSRF token
+function getCSRFToken() {
+    // Try to get from meta tag
+    const metaTag = document.querySelector('meta[name="csrf-token"]');
+    if (metaTag) {
+        return metaTag.getAttribute('content');
+    }
+    
+    // Try to get from Flask-WTF hidden field
+    const csrfInput = document.querySelector('input[name="csrf_token"]');
+    if (csrfInput) {
+        return csrfInput.value;
+    }
+    
+    // Try to extract from cookie
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+        cookie = cookie.trim();
+        if (cookie.startsWith('csrf_token=')) {
+            return cookie.substring('csrf_token='.length);
+        }
+    }
+    
+    console.warn('CSRF token not found');
+    return null;
+}
+
+// Add this notification function if not already present
+function showNotification(message, type = 'info') {
+    // Remove existing notifications
+    document.querySelectorAll('.notification').forEach(n => n.remove());
+    
+    const notification = document.createElement('div');
+    notification.className = `notification fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-white text-sm ${
+        type === 'success' ? 'bg-green-500' : 
+        type === 'error' ? 'bg-red-500' : 
+        'bg-blue-500'
+    }`;
+    notification.innerHTML = `
+        <div class="flex items-center space-x-2">
+            <i class="bi ${type === 'success' ? 'bi-check-circle' : type === 'error' ? 'bi-exclamation-triangle' : 'bi-info-circle'}"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transform = 'translateX(100px)';
+        setTimeout(() => notification.remove(), 300);
+    }, 5000);
+}
         
         // Close modal on ESC
         document.addEventListener('keydown', function(event) {
@@ -925,13 +1576,90 @@ function viewService(serviceId) {
             }
         });
         
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            // Set current date for stats if needed
-            const today = new Date();
-            const options = { year: 'numeric', month: 'long', day: 'numeric' };
-            // You can display this somewhere if needed
-        });
+        // Simple chart initialization
+        function initializeAnalyticsChart(chartData) {
+            if (typeof Chart === 'undefined') {
+                console.warn('Chart.js is not loaded');
+                return;
+            }
+            
+            const ctx = document.getElementById('analyticsChart');
+            if (!ctx) return;
+            
+            const dates = chartData.map(item => {
+                const date = new Date(item.date);
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            });
+            const views = chartData.map(item => item.views);
+            const clicks = chartData.map(item => item.clicks);
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [
+                        {
+                            label: 'Views',
+                            data: views,
+                            borderColor: '#3B82F6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Clicks',
+                            data: clicks,
+                            borderColor: '#10B981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.4,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: {
+                                    size: 10
+                                }
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                font: {
+                                    size: 10
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
     </script>
 </body>
 </html>

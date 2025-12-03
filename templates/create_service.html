@@ -1079,6 +1079,47 @@
         </div>
     </div>
 
+    <script>
+// Format price input with commas
+document.addEventListener('DOMContentLoaded', function() {
+    const priceInput = document.getElementById('price');
+    if (priceInput) {
+        // Format on blur (add commas)
+        priceInput.addEventListener('blur', function() {
+            const value = this.value.replace(/,/g, '');
+            if (value && !isNaN(value)) {
+                // Format with commas
+                this.value = parseFloat(value).toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+            }
+        });
+        
+        // Remove commas on focus for editing
+        priceInput.addEventListener('focus', function() {
+            this.value = this.value.replace(/,/g, '');
+        });
+        
+        // Remove commas before form submission
+        const form = priceInput.closest('form');
+        if (form) {
+            form.addEventListener('submit', function() {
+                // Remove all commas before submitting
+                priceInput.value = priceInput.value.replace(/,/g, '');
+                
+                // Ensure we have a valid number
+                if (priceInput.value && isNaN(parseFloat(priceInput.value))) {
+                    alert('Please enter a valid price');
+                    priceInput.focus();
+                    return false;
+                }
+            });
+        }
+    }
+});
+</script>
+
     <!-- JavaScript -->
     <script>
         // Form State

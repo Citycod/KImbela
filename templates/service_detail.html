@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ service.title }} - Kimbela Marketplace</title>
+    
+    <!-- Fonts & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #5a4500;
+            --primary-dark: #b88900;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #f8fafc;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        
+        .gradient-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(5px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        /* Service detail specific styles */
+        .service-image {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .service-image {
+                height: 200px;
+            }
+        }
+        
+        .gallery-image {
+            width: 100%;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        
+        .gallery-image:hover {
+            transform: scale(1.05);
+        }
+        
+        .feature-item {
+            padding: 8px 12px;
+            background: #f8fafc;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            font-size: 12px;
+        }
+        
+        .contact-method {
+            padding: 8px 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+        
+        .star-rating {
+            color: #fbbf24;
+        }
+        
+        .review-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+        
+        /* Modal for gallery */
+        .gallery-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .gallery-modal.active {
+            display: flex;
+        }
+        
+        .modal-image {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 640px) {
+            .service-image {
+                height: 180px;
+            }
+            
+            .gallery-image {
+                height: 60px;
+            }
+            
+            body {
+                font-size: 12px;
+            }
+        }
+        
+        /* Formatted numbers */
+        .formatted-amount {
+            font-variant-numeric: tabular-nums;
+        }
+        
+        /* Buttons */
+        .btn {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 12px;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+        
+        .btn-sm {
+            padding: 4px 8px;
+            font-size: 11px;
+        }
+        
+        /* Headings */
+        h1 { font-size: 18px; font-weight: 600; }
+        h2 { font-size: 16px; font-weight: 600; }
+        h3 { font-size: 14px; font-weight: 600; }
+        h4 { font-size: 13px; font-weight: 600; }
+        
+        /* Badges */
+        .badge {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 500;
+        }
+        
+        /* Container */
+        .container {
+            padding: 8px;
+        }
+        
+        @media (min-width: 768px) {
+            .container {
+                padding: 12px;
+            }
+        }
+        
+        /* Navigation */
+        .nav-container {
+            padding: 6px 8px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="sticky top-0 z-50 glass-effect shadow-sm">
+        <div class="container mx-auto px-3 py-1">
+            <div class="flex items-center justify-between">
+                <!-- Logo -->
+                <a href="{{ url_for('market.main_market') }}" class="flex items-center gap-2">
+                    <img src="{{ url_for('static', filename='assets/img/kim.png') }}" 
+                         alt="Kimbela" 
+                         class="h-7 w-auto">
+                    <div>
+                        <span class="text-xs font-bold gradient-primary bg-clip-text text-transparent">
+                            Kimbela Marketplace
+                        </span>
+                    </div>
+                </a>
+                
+                <!-- User Menu -->
+                <div class="flex items-center gap-2">
+                    {% if current_user.is_authenticated %}
+                    <div class="relative group">
+                        <button class="flex items-center gap-1 focus:outline-none">
+                            <div class="w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-xs overflow-hidden">
+                                {% if current_user.profile_pic %}
+                                <img src="{{ current_user.profile_pic }}" alt="{{ current_user.username }}" class="w-full h-full object-cover">
+                                {% else %}
+                                <i class="bi bi-person"></i>
+                                {% endif %}
+                            </div>
+                            <span class="hidden md:inline font-medium text-xs">{{ current_user.username }}</span>
+                            <i class="bi bi-chevron-down text-xs"></i>
+                        </button>
+                        
+                        <!-- Dropdown Menu -->
+                        <div class="absolute right-0 mt-1 w-40 bg-white rounded-lg shadow-lg py-1 z-50 hidden group-hover:block border border-gray-200">
+                            <a href="{{ url_for('market.seller_dashboard') }}" class="block px-3 py-1 text-xs text-gray-700 hover:bg-gray-100">
+                                <i class="bi bi-speedometer2 mr-1 text-xs"></i>Dashboard
+                            </a>
+                            <a href="{{ url_for('market.seller_profile', seller_id=current_user.id) }}" class="block px-3 py-1 text-xs text-gray-700 hover:bg-gray-100">
+                                <i class="bi bi-person mr-1 text-xs"></i>Profile
+                            </a>
+                            <a href="{{ url_for('market.create_service') }}" class="block px-3 py-1 text-xs text-gray-700 hover:bg-gray-100">
+                                <i class="bi bi-plus-circle mr-1 text-xs"></i>Create Service
+                            </a>
+                            <div class="border-t my-1"></div>
+                            <a href="{{ url_for('user.logout') }}" class="block px-3 py-1 text-xs text-red-600 hover:bg-red-50">
+                                <i class="bi bi-box-arrow-right mr-1 text-xs"></i>Logout
+                            </a>
+                        </div>
+                    </div>
+                    {% else %}
+                    <a href="{{ url_for('user.login') }}" class="btn btn-primary btn-sm">
+                        <i class="bi bi-box-arrow-in-right text-xs"></i> Login
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Service Detail -->
+    <div class="container mx-auto px-3 py-4">
+        <!-- Breadcrumb -->
+        <div class="mb-4">
+            <nav class="flex" aria-label="Breadcrumb">
+                <ol class="inline-flex items-center space-x-1 text-xs">
+                    <li class="inline-flex items-center">
+                        <a href="{{ url_for('market.main_market') }}" class="inline-flex items-center text-gray-700 hover:text-primary">
+                            <i class="bi bi-house mr-1"></i> Marketplace
+                        </a>
+                    </li>
+                    <li>
+                        <div class="flex items-center">
+                            <i class="bi bi-chevron-right text-gray-400 text-xs"></i>
+                            <a href="{{ url_for('market.category_detail', slug=service.category.slug) if service.category else '#' }}" 
+                               class="ml-1 text-gray-700 hover:text-primary">
+                                {{ service.category.name if service.category else 'Uncategorized' }}
+                            </a>
+                        </div>
+                    </li>
+                    <li aria-current="page">
+                        <div class="flex items-center">
+                            <i class="bi bi-chevron-right text-gray-400 text-xs"></i>
+                            <span class="ml-1 text-gray-500">{{ service.title[:25] }}{{ '...' if service.title|length > 25 }}</span>
+                        </div>
+                    </li>
+                </ol>
+            </nav>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <!-- Left Column: Service Details -->
+            <div class="lg:col-span-2">
+                <!-- Service Images -->
+                <div class="bg-white rounded-lg p-3 shadow-sm mb-4">
+                    <!-- Main Image -->
+                    <div class="mb-3">
+                        <img src="{{ service.cover_image or url_for('static', filename='assets/img/default-service.jpg') }}" 
+                             alt="{{ service.title }}" 
+                             class="service-image" 
+                             id="main-service-image">
+                    </div>
+                    
+                    <!-- Gallery Images -->
+                    {% if gallery_images and gallery_images|length > 0 %}
+                    <div class="grid grid-cols-4 gap-2">
+                        {% for image in gallery_images %}
+                        <img src="{{ image }}" 
+                             alt="Gallery image {{ loop.index }}" 
+                             class="gallery-image"
+                             onclick="openGalleryModal('{{ image }}')">
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Service Information -->
+                <div class="bg-white rounded-lg p-4 shadow-sm mb-4">
+                    <div class="flex items-start justify-between mb-3">
+                        <div>
+                            <h1 class="text-lg font-bold mb-1">{{ service.title }}</h1>
+                            <div class="flex items-center gap-1 mb-2 flex-wrap">
+                                {% if service.category %}
+                                <span class="badge bg-gray-100 text-gray-700">
+                                    {{ service.category.name }}
+                                </span>
+                                {% endif %}
+                                <span class="badge bg-blue-100 text-blue-700">
+                                    {{ service.service_type|title if service.service_type else 'Service' }}
+                                </span>
+                                {% if service.is_featured %}
+                                <span class="badge bg-yellow-100 text-yellow-700">
+                                    <i class="bi bi-star-fill mr-1 text-xs"></i> Featured
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Price Box -->
+                        <div class="text-right">
+                            {% if service.price is none or service.price == 0 %}
+                            <div class="text-lg font-bold text-green-600 formatted-amount">Free</div>
+                            {% else %}
+                            <div class="text-lg font-bold text-primary formatted-amount">
+                                {% set currency_symbols = {
+                                    'USD': '$',
+                                    'EUR': '€',
+                                    'GBP': '£',
+                                    'KES': 'KSh',
+                                    'NGN': '₦',
+                                    'GHS': 'GH₵',
+                                    'ZAR': 'R'
+                                } %}
+                                {% set currency_symbol = currency_symbols.get(service.currency, '') %}
+                                {{ currency_symbol }}{{ "{:,.2f}".format(service.price) }}
+                            </div>
+                            {% if service.currency != 'KES' %}
+                            <div class="text-xs text-gray-600">
+                                ≈ KSh {{ "{:,.2f}".format(service.price * 150) }}
+                            </div>
+                            {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Rating -->
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="star-rating text-sm">
+                            {% for i in range(1, 6) %}
+                                {% if i <= (service.average_rating or 0)|int %}
+                                <i class="bi bi-star-fill"></i>
+                                {% elif i == (service.average_rating or 0)|round(0, 'ceil')|int and (service.average_rating or 0) % 1 != 0 %}
+                                <i class="bi bi-star-half"></i>
+                                {% else %}
+                                <i class="bi bi-star"></i>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <span class="text-xs font-medium">{{ "%.1f"|format(service.average_rating or 0) }}</span>
+                        <span class="text-xs text-gray-500">({{ service.review_count or 0 }} reviews)</span>
+                        <span class="text-xs text-gray-500 ml-2"><i class="bi bi-eye mr-1"></i> {{ service.views or 0 }}</span>
+                    </div>
+                    
+                    <!-- Description -->
+                    <div class="mb-4">
+                        <h3 class="text-sm font-bold mb-2">Description</h3>
+                        <div class="text-gray-700 text-sm">
+                            {{ service.description|safe }}
+                        </div>
+                    </div>
+                    
+                    <!-- Features/What's Included -->
+                    {% if features and features|length > 0 %}
+                    <div class="mb-4">
+                        <h3 class="text-sm font-bold mb-2">What's Included</h3>
+                        <div class="space-y-1">
+                            {% for feature in features %}
+                            <div class="feature-item">
+                                <i class="bi bi-check-circle text-green-500 mr-2 text-xs"></i>
+                                {{ feature }}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Service Details -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                        {% if service.duration %}
+                        <div>
+                            <h4 class="font-bold text-xs text-gray-600 mb-1">Duration</h4>
+                            <p class="text-gray-800 text-sm">{{ service.duration }}</p>
+                        </div>
+                        {% endif %}
+                        
+                        {% if service.availability %}
+                        <div>
+                            <h4 class="font-bold text-xs text-gray-600 mb-1">Availability</h4>
+                            <p class="text-gray-800 text-sm">{{ service.availability }}</p>
+                        </div>
+                        {% endif %}
+                        
+                        {% if service.created_at %}
+                        <div>
+                            <h4 class="font-bold text-xs text-gray-600 mb-1">Listed On</h4>
+                            <p class="text-gray-800 text-sm">{{ service.created_at.strftime('%b %d, %Y') }}</p>
+                        </div>
+                        {% endif %}
+                        
+                        <div>
+                            <h4 class="font-bold text-xs text-gray-600 mb-1">Service Type</h4>
+                            <p class="text-gray-800 text-sm">{{ service.service_type|title if service.service_type else 'Service' }}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Seller Information -->
+                <div class="bg-white rounded-lg p-4 shadow-sm mb-4">
+                    <h3 class="text-sm font-bold mb-3">About the Seller</h3>
+                    <div class="flex items-start gap-3">
+                        <a href="{{ url_for('market.seller_profile', seller_id=service.seller.id) }}">
+                            <div class="w-12 h-12 rounded-full overflow-hidden">
+                                {% if service.seller.profile_pic %}
+                                <img src="{{ service.seller.profile_pic }}" 
+                                     alt="{{ service.seller.full_name }}" 
+                                     class="w-full h-full object-cover">
+                                {% else %}
+                                <div class="w-full h-full bg-primary text-white flex items-center justify-center">
+                                    <i class="bi bi-person"></i>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </a>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between mb-2">
+                                <div>
+                                    <h4 class="font-bold text-sm">
+                                        <a href="{{ url_for('market.seller_profile', seller_id=service.seller.id) }}" 
+                                           class="hover:text-primary">
+                                            {{ service.seller.full_name or service.seller.username }}
+                                        </a>
+                                    </h4>
+                                    {% if service.seller.occupation %}
+                                    <p class="text-xs text-gray-600">{{ service.seller.occupation }}</p>
+                                    {% endif %}
+                                </div>
+                                <div class="text-right">
+                                    <div class="flex items-center gap-1">
+                                        <i class="bi bi-star-fill text-yellow-500 text-xs"></i>
+                                        <span class="font-medium text-xs">
+                                            {{ "%.1f"|format(service.seller.avg_rating or 0) if service.seller.avg_rating else 'New' }}
+                                        </span>
+                                    </div>
+                                    <p class="text-xs text-gray-500">
+                                        {% set seller_service_count = service.seller.marketplace_services|selectattr('status', 'equalto', 'active')|list|length %}
+                                        {{ seller_service_count }} service{{ 's' if seller_service_count != 1 }}
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            {% if service.seller.bio %}
+                            <p class="text-xs text-gray-700 mb-2">{{ service.seller.bio[:150] }}{{ '...' if service.seller.bio|length > 150 }}</p>
+                            {% endif %}
+                            
+                            <div class="flex items-center gap-2 text-xs text-gray-600">
+                                {% if service.seller.location %}
+                                <span><i class="bi bi-geo-alt mr-1"></i> {{ service.seller.location }}</span>
+                                {% endif %}
+                                {% if service.seller.created_at %}
+                                <span><i class="bi bi-calendar mr-1"></i> {{ service.seller.created_at.strftime('%Y') }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Reviews -->
+                {% if reviews and reviews|length > 0 %}
+                <div class="bg-white rounded-lg p-4 shadow-sm">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-sm font-bold">Customer Reviews</h3>
+                        <div class="text-right">
+                            <div class="flex items-center gap-1">
+                                <div class="star-rating text-sm">
+                                    {% for i in range(1, 6) %}
+                                        {% if i <= (service.average_rating or 0)|int %}
+                                        <i class="bi bi-star-fill"></i>
+                                        {% elif i == (service.average_rating or 0)|round(0, 'ceil')|int and (service.average_rating or 0) % 1 != 0 %}
+                                        <i class="bi bi-star-half"></i>
+                                        {% else %}
+                                        <i class="bi bi-star"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                                <span class="font-bold text-sm">{{ "%.1f"|format(service.average_rating or 0) }}</span>
+                                <span class="text-gray-500 text-xs">({{ service.review_count or 0 }})</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        {% for review in reviews %}
+                        <div class="review-card">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-8 h-8 rounded-full overflow-hidden">
+                                        {% if review.customer and review.customer.profile_pic %}
+                                        <img src="{{ review.customer.profile_pic }}" 
+                                             alt="{{ review.customer.full_name }}" 
+                                             class="w-full h-full object-cover">
+                                        {% else %}
+                                        <div class="w-full h-full bg-gray-200 flex items-center justify-center">
+                                            <i class="bi bi-person text-gray-600 text-xs"></i>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-xs">
+                                            {{ review.customer.full_name if review.customer and review.customer.full_name else 'Anonymous' }}
+                                        </h4>
+                                        <div class="flex items-center gap-1">
+                                            <div class="star-rating text-xs">
+                                                {% for i in range(1, 6) %}
+                                                    {% if i <= review.rating %}
+                                                    <i class="bi bi-star-fill"></i>
+                                                    {% else %}
+                                                    <i class="bi bi-star"></i>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </div>
+                                            <span class="text-xs text-gray-500">{{ review.created_at.strftime('%b %d, %Y') }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {% if review.comment %}
+                            <p class="text-gray-700 text-xs">{{ review.comment }}</p>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    {% if service.review_count and service.review_count > 10 %}
+                    <div class="text-center mt-4">
+                        <a href="{{ url_for('market.seller_profile', seller_id=service.seller.id) }}#reviews" 
+                           class="text-primary hover:underline font-medium text-xs">
+                            View all reviews
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Right Column: Contact & Actions -->
+            <div class="lg:col-span-1">
+                <!-- Contact Card -->
+                <div class="bg-white rounded-lg p-4 shadow-sm sticky top-20">
+                    <h3 class="text-sm font-bold mb-3">Contact Seller</h3>
+                    
+                    <!-- Price Box -->
+                    <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-gray-600 text-xs">Price</span>
+                            {% if service.price is none or service.price == 0 %}
+                            <span class="text-lg font-bold text-green-600 formatted-amount">Free</span>
+                            {% else %}
+                            <span class="text-lg font-bold text-primary formatted-amount">
+                                {% set currency_symbols = {
+                                    'USD': '$',
+                                    'EUR': '€',
+                                    'GBP': '£',
+                                    'KES': 'KSh',
+                                    'NGN': '₦',
+                                    'GHS': 'GH₵',
+                                    'ZAR': 'R'
+                                } %}
+                                {% set currency_symbol = currency_symbols.get(service.currency, '') %}
+                                {{ currency_symbol }}{{ "{:,.2f}".format(service.price) }}
+                            </span>
+                            {% endif %}
+                        </div>
+                        {% if service.price and service.price > 0 and service.currency != 'KES' %}
+                        <div class="text-xs text-gray-600 text-right">
+                            ≈ KSh {{ "{:,.2f}".format(service.price * 150) }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Contact Methods -->
+                    <div class="space-y-2 mb-4">
+                        {% if contact_methods %}
+                            {% if 'whatsapp' in contact_methods and service.whatsapp_number %}
+                            <a href="https://wa.me/{{ service.whatsapp_number|replace('+', '')|replace(' ', '') }}?text=Hi! I'm interested in your service: {{ service.title }}" 
+                               target="_blank"
+                               class="contact-method flex items-center justify-between bg-green-50 border-green-200 hover:bg-green-100 transition-colors">
+                                <div class="flex items-center">
+                                    <i class="bi bi-whatsapp text-green-600 mr-2 text-sm"></i>
+                                    <span class="font-medium text-xs">WhatsApp</span>
+                                </div>
+                                <i class="bi bi-arrow-right text-green-600 text-xs"></i>
+                            </a>
+                            {% endif %}
+                            
+                            {% if 'phone' in contact_methods and service.phone_number %}
+                            <a href="tel:{{ service.phone_number }}" 
+                               class="contact-method flex items-center justify-between bg-blue-50 border-blue-200 hover:bg-blue-100 transition-colors">
+                                <div class="flex items-center">
+                                    <i class="bi bi-telephone text-blue-600 mr-2 text-sm"></i>
+                                    <span class="font-medium text-xs">Call</span>
+                                </div>
+                                <i class="bi bi-arrow-right text-blue-600 text-xs"></i>
+                            </a>
+                            {% endif %}
+                            
+                            {% if 'email' in contact_methods and service.email %}
+                            <a href="mailto:{{ service.email }}?subject=Inquiry about: {{ service.title }}" 
+                               class="contact-method flex items-center justify-between bg-red-50 border-red-200 hover:bg-red-100 transition-colors">
+                                <div class="flex items-center">
+                                    <i class="bi bi-envelope text-red-600 mr-2 text-sm"></i>
+                                    <span class="font-medium text-xs">Email</span>
+                                </div>
+                                <i class="bi bi-arrow-right text-red-600 text-xs"></i>
+                            </a>
+                            {% endif %}
+                        {% else %}
+                            <!-- Default contact methods -->
+                            {% if service.whatsapp_number %}
+                            <a href="https://wa.me/{{ service.whatsapp_number|replace('+', '')|replace(' ', '') }}?text=Hi! I'm interested in your service: {{ service.title }}" 
+                               target="_blank"
+                               class="contact-method flex items-center justify-between bg-green-50 border-green-200 hover:bg-green-100 transition-colors">
+                                <div class="flex items-center">
+                                    <i class="bi bi-whatsapp text-green-600 mr-2 text-sm"></i>
+                                    <span class="font-medium text-xs">WhatsApp</span>
+                                </div>
+                                <i class="bi bi-arrow-right text-green-600 text-xs"></i>
+                            </a>
+                            {% endif %}
+                            
+                            {% if service.phone_number %}
+                            <a href="tel:{{ service.phone_number }}" 
+                               class="contact-method flex items-center justify-between bg-blue-50 border-blue-200 hover:bg-blue-100 transition-colors">
+                                <div class="flex items-center">
+                                    <i class="bi bi-telephone text-blue-600 mr-2 text-sm"></i>
+                                    <span class="font-medium text-xs">Call</span>
+                                </div>
+                                <i class="bi bi-arrow-right text-blue-600 text-xs"></i>
+                            </a>
+                            {% endif %}
+                            
+                            {% if service.email %}
+                            <a href="mailto:{{ service.email }}?subject=Inquiry about: {{ service.title }}" 
+                               class="contact-method flex items-center justify-between bg-red-50 border-red-200 hover:bg-red-100 transition-colors">
+                                <div class="flex items-center">
+                                    <i class="bi bi-envelope text-red-600 mr-2 text-sm"></i>
+                                    <span class="font-medium text-xs">Email</span>
+                                </div>
+                                <i class="bi bi-arrow-right text-red-600 text-xs"></i>
+                            </a>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Safety Tips -->
+                    <div class="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <h4 class="font-bold text-xs text-yellow-800 mb-1 flex items-center">
+                            <i class="bi bi-shield-check mr-1 text-xs"></i> Safety Tips
+                        </h4>
+                        <ul class="text-xs text-yellow-700 space-y-0.5">
+                            <li>• Never pay in advance for services</li>
+                            <li>• Meet in public places if meeting in person</li>
+                            <li>• Verify the seller's identity</li>
+                            <li>• Report any suspicious activity</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Related Services -->
+                {% if related_services and related_services|length > 0 %}
+                <div class="bg-white rounded-lg p-4 shadow-sm mt-4">
+                    <h3 class="text-sm font-bold mb-3">Related Services</h3>
+                    <div class="space-y-3">
+                        {% for related in related_services %}
+                        <a href="{{ url_for('market.service_detail', slug=related.slug) }}" 
+                           class="flex items-center gap-2 p-2 border border-gray-200 rounded-lg hover:border-primary hover:shadow-sm transition-all">
+                            <div class="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
+                                <img src="{{ related.cover_image or url_for('static', filename='assets/img/default-service.jpg') }}" 
+                                     alt="{{ related.title }}" 
+                                     class="w-full h-full object-cover">
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h4 class="font-bold text-xs truncate">{{ related.title }}</h4>
+                                <div class="flex items-center gap-1 mt-1">
+                                    <div class="star-rating text-xs">
+                                        {% for i in range(1, 6) %}
+                                            {% if i <= (related.average_rating or 0)|int %}
+                                            <i class="bi bi-star-fill"></i>
+                                            {% else %}
+                                            <i class="bi bi-star"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                    <span class="text-xs text-gray-500">({{ related.review_count or 0 }})</span>
+                                </div>
+                                <div class="font-bold text-primary text-xs mt-1 formatted-amount">
+                                    {% if related.price is none or related.price == 0 %}
+                                    Free
+                                    {% else %}
+                                    {% set currency_symbols = {
+                                        'USD': '$',
+                                        'EUR': '€',
+                                        'GBP': '£',
+                                        'KES': 'KSh',
+                                        'NGN': '₦',
+                                        'GHS': 'GH₵',
+                                        'ZAR': 'R'
+                                    } %}
+                                    {% set currency_symbol = currency_symbols.get(related.currency, '') %}
+                                    {{ currency_symbol }}{{ "{:,.2f}".format(related.price or 0) }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Seller's Other Services -->
+                {% if seller_services and seller_services|length > 0 %}
+                <div class="bg-white rounded-lg p-4 shadow-sm mt-4">
+                    <h3 class="text-sm font-bold mb-3">More from this Seller</h3>
+                    <div class="space-y-3">
+                        {% for seller_service in seller_services %}
+                        <a href="{{ url_for('market.service_detail', slug=seller_service.slug) }}" 
+                           class="flex items-center gap-2 p-2 border border-gray-200 rounded-lg hover:border-primary hover:shadow-sm transition-all">
+                            <div class="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
+                                <img src="{{ seller_service.cover_image or url_for('static', filename='assets/img/default-service.jpg') }}" 
+                                     alt="{{ seller_service.title }}" 
+                                     class="w-full h-full object-cover">
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h4 class="font-bold text-xs truncate">{{ seller_service.title }}</h4>
+                                <div class="flex items-center gap-1 mt-1">
+                                    <div class="star-rating text-xs">
+                                        {% for i in range(1, 6) %}
+                                            {% if i <= (seller_service.average_rating or 0)|int %}
+                                            <i class="bi bi-star-fill"></i>
+                                            {% else %}
+                                            <i class="bi bi-star"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                    <span class="text-xs text-gray-500">({{ seller_service.review_count or 0 }})</span>
+                                </div>
+                                <div class="font-bold text-primary text-xs mt-1 formatted-amount">
+                                    {% if seller_service.price is none or seller_service.price == 0 %}
+                                    Free
+                                    {% else %}
+                                    {% set currency_symbols = {
+                                        'USD': '$',
+                                        'EUR': '€',
+                                        'GBP': '£',
+                                        'KES': 'KSh',
+                                        'NGN': '₦',
+                                        'GHS': 'GH₵',
+                                        'ZAR': 'R'
+                                    } %}
+                                    {% set currency_symbol = currency_symbols.get(seller_service.currency, '') %}
+                                    {{ currency_symbol }}{{ "{:,.2f}".format(seller_service.price or 0) }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    
+                    {% if service.seller %}
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('market.seller_profile', seller_id=service.seller.id) }}" 
+                           class="text-primary hover:underline font-medium text-xs">
+                            View all from {{ service.seller.full_name or service.seller.username }}
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Gallery Modal -->
+    <div class="gallery-modal" id="galleryModal">
+        <div class="relative w-full h-full flex items-center justify-center">
+            <img src="" alt="Gallery view" class="modal-image" id="modalImage">
+            <button onclick="closeGalleryModal()" 
+                    class="absolute top-3 right-3 w-8 h-8 bg-white text-gray-800 rounded-full flex items-center justify-center hover:bg-gray-100 text-sm">
+                <i class="bi bi-x"></i>
+            </button>
+            <button onclick="prevImage()" 
+                    class="absolute left-3 w-8 h-8 bg-white text-gray-800 rounded-full flex items-center justify-center hover:bg-gray-100 text-sm">
+                <i class="bi bi-chevron-left"></i>
+            </button>
+            <button onclick="nextImage()" 
+                    class="absolute right-3 w-8 h-8 bg-white text-gray-800 rounded-full flex items-center justify-center hover:bg-gray-100 text-sm">
+                <i class="bi bi-chevron-right"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // Gallery functionality
+        let currentGalleryImages = [];
+        let currentImageIndex = 0;
+        
+        function openGalleryModal(imageSrc) {
+            // Get all gallery images
+            const galleryImages = document.querySelectorAll('.gallery-image');
+            currentGalleryImages = Array.from(galleryImages).map(img => img.src);
+            currentImageIndex = currentGalleryImages.indexOf(imageSrc);
+            
+            // Set modal image
+            document.getElementById('modalImage').src = imageSrc;
+            document.getElementById('galleryModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeGalleryModal() {
+            document.getElementById('galleryModal').classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+        
+        function prevImage() {
+            if (currentGalleryImages.length === 0) return;
+            currentImageIndex = (currentImageIndex - 1 + currentGalleryImages.length) % currentGalleryImages.length;
+            document.getElementById('modalImage').src = currentGalleryImages[currentImageIndex];
+        }
+        
+        function nextImage() {
+            if (currentGalleryImages.length === 0) return;
+            currentImageIndex = (currentImageIndex + 1) % currentGalleryImages.length;
+            document.getElementById('modalImage').src = currentGalleryImages[currentImageIndex];
+        }
+        
+        // Close modal on ESC
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeGalleryModal();
+            }
+        });
+        
+        // Log clicks for analytics
+        document.addEventListener('DOMContentLoaded', function() {
+            // Log contact method clicks
+            document.querySelectorAll('a[href^="tel:"], a[href^="mailto:"], a[href^="https://wa.me/"]').forEach(link => {
+                link.addEventListener('click', function() {
+                    const serviceId = {{ service.id }};
+                    const clickType = this.href.includes('wa.me') ? 'whatsapp' : 
+                                    this.href.startsWith('tel:') ? 'phone' : 'email';
+                    
+                    fetch(`/api/log-click/${serviceId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ type: clickType })
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+</html>

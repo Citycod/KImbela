@@ -1,0 +1,1399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Service - Kimbela Marketplace</title>
+    
+    <!-- Fonts & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #5a4500;
+            --primary-dark: #b88900;
+            --secondary: #8B5CF6;
+            --accent: #10B981;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #f8fafc;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(5px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .gradient-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        }
+        
+        .shadow-soft {
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        
+        .form-step {
+            display: none;
+        }
+        
+        .form-step.active {
+            display: block;
+        }
+        
+        /* Form Sections */
+        .form-section {
+            background: white;
+            border-radius: 8px;
+            padding: 12px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            margin-bottom: 12px;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .form-section-title {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        
+        .form-section-icon {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 8px;
+            font-size: 12px;
+        }
+        
+        /* File Upload */
+        .file-upload-area {
+            border: 1px dashed #d1d5db;
+            border-radius: 6px;
+            padding: 20px 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: #f9fafb;
+            font-size: 12px;
+        }
+        
+        .file-upload-area:hover {
+            border-color: var(--primary);
+            background: rgba(90, 69, 0, 0.03);
+        }
+        
+        .file-upload-area.dragover {
+            border-color: var(--primary);
+            background: rgba(90, 69, 0, 0.05);
+        }
+        
+        /* Feature Items */
+        .feature-item {
+            background: #f3f4f6;
+            border-radius: 6px;
+            padding: 8px 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-size: 12px;
+        }
+        
+        /* Selection Cards */
+        .option-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: white;
+            font-size: 12px;
+        }
+        
+        .option-card:hover {
+            border-color: var(--primary);
+        }
+        
+        .option-card.selected {
+            border-color: var(--primary);
+            background: rgba(90, 69, 0, 0.03);
+        }
+        
+        /* Step Indicator */
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            position: relative;
+        }
+        
+        .step-indicator::before {
+            content: '';
+            position: absolute;
+            top: 12px;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #e5e7eb;
+            z-index: 1;
+        }
+        
+        .step {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            flex: 1;
+        }
+        
+        .step-circle {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #e5e7eb;
+            color: #6b7280;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 4px;
+            font-weight: 500;
+            font-size: 11px;
+            transition: all 0.2s ease;
+        }
+        
+        .step.active .step-circle {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+        }
+        
+        .step.completed .step-circle {
+            background: #10b981;
+            color: white;
+        }
+        
+        .step-label {
+            font-size: 10px;
+            color: #6b7280;
+            font-weight: 500;
+        }
+        
+        .step.active .step-label {
+            color: var(--primary);
+        }
+        
+        /* Buttons */
+        .btn {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 12px;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+        
+        .btn-outline {
+            border: 1px solid #d1d5db;
+            color: #4b5563;
+            background: white;
+            padding: 5px 10px;
+        }
+        
+        .btn-outline:hover {
+            background: #f9fafb;
+            border-color: #9ca3af;
+        }
+        
+        /* Form Controls */
+        input, select, textarea {
+            font-size: 12px;
+            padding: 6px 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            width: 100%;
+            transition: all 0.2s ease;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(90, 69, 0, 0.1);
+        }
+        
+        /* Character Counter */
+        .char-counter {
+            text-align: right;
+            font-size: 10px;
+            color: #6b7280;
+            margin-top: 2px;
+        }
+        
+        .char-counter.warning {
+            color: #f59e0b;
+        }
+        
+        .char-counter.error {
+            color: #ef4444;
+        }
+        
+        /* Loading Spinner */
+        .loading {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Image Preview */
+        .image-preview {
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+            margin-bottom: 8px;
+        }
+        
+        .image-preview img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+        }
+        
+        .remove-image {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 24px;
+            height: 24px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 10px;
+        }
+        
+        .remove-image:hover {
+            background: #dc2626;
+        }
+        
+        /* Gallery Grid */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 6px;
+        }
+        
+        .gallery-item {
+            position: relative;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        
+        .gallery-item img {
+            width: 100%;
+            height: 80px;
+            object-fit: cover;
+        }
+        
+        /* Checkbox & Radio */
+        input[type="checkbox"], input[type="radio"] {
+            width: 14px;
+            height: 14px;
+        }
+        
+        /* Labels */
+        label {
+            font-size: 12px;
+            font-weight: 500;
+            color: #374151;
+        }
+        
+        /* Headings */
+        h1, h2, h3, h4 {
+            font-weight: 600;
+        }
+        
+        h2 {
+            font-size: 14px;
+        }
+        
+        h3 {
+            font-size: 13px;
+        }
+        
+        h4 {
+            font-size: 12px;
+        }
+        
+        /* Navigation */
+        .nav-container {
+            padding: 8px 12px;
+        }
+        
+        .logo-text {
+            font-size: 13px;
+        }
+        
+        /* Container */
+        .container {
+            padding: 8px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 640px) {
+            .form-section {
+                padding: 10px;
+            }
+            
+            .option-card {
+                padding: 10px;
+            }
+            
+            .btn {
+                padding: 5px 10px;
+                font-size: 11px;
+            }
+            
+            .step-circle {
+                width: 20px;
+                height: 20px;
+                font-size: 10px;
+            }
+            
+            .file-upload-area {
+                padding: 15px 10px;
+                font-size: 11px;
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            body {
+                font-size: 13px;
+            }
+            
+            .form-section {
+                padding: 16px;
+            }
+            
+            .btn {
+                padding: 6px 14px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="sticky top-0 z-50 glass-effect shadow-soft">
+        <div class="container mx-auto px-3 py-2">
+            <div class="flex items-center justify-between">
+                <!-- Logo -->
+                <a href="{{ url_for('market.seller_dashboard') }}" class="flex items-center space-x-2">
+                    <img src="{{ url_for('static', filename='assets/img/kim.png') }}" 
+                         alt="Kimbela" 
+                         class="h-6 w-auto">
+                    <div>
+                        <span class="text-xs font-bold gradient-primary bg-clip-text text-transparent">
+                            Edit Service
+                        </span>
+                    </div>
+                </a>
+                
+                <!-- Actions -->
+                <div class="flex items-center space-x-1">
+                    <button type="button" onclick="saveDraft()" 
+                            class="btn btn-outline text-xs">
+                        <i class="bi bi-save text-xs"></i> Draft
+                    </button>
+                    
+                    <a href="{{ url_for('market.seller_dashboard') }}" 
+                       class="btn btn-outline text-xs">
+                        <i class="bi bi-x-lg text-xs"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Step Indicator -->
+    <div class="container mx-auto px-3 py-3">
+        <div class="step-indicator max-w-3xl mx-auto">
+            <div class="step active" data-step="1">
+                <div class="step-circle">1</div>
+                <div class="step-label">Basic</div>
+            </div>
+            <div class="step" data-step="2">
+                <div class="step-circle">2</div>
+                <div class="step-label">Details</div>
+            </div>
+            <div class="step" data-step="3">
+                <div class="step-circle">3</div>
+                <div class="step-label">Media</div>
+            </div>
+            <div class="step" data-step="4">
+                <div class="step-circle">4</div>
+                <div class="step-label">Review</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Form -->
+    <div class="container mx-auto px-3 py-3">
+        <form id="editServiceForm" enctype="multipart/form-data" method="POST" action="{{ url_for('market.edit_service', service_id=service.id) }}" class="max-w-3xl mx-auto">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token if csrf_token else '' }}">
+            <input type="hidden" name="feature_count" id="featureCount" value="{{ service.features_list|length }}">
+
+            <!-- Step 1: Basic Information -->
+            <div class="form-step active" id="step-1" data-step="1">
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <div class="form-section-icon">
+                            <i class="bi bi-info-circle"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-bold">Basic Information</h3>
+                        </div>
+                    </div>
+                    
+                    <!-- Title -->
+                    <div class="mb-4">
+                        <label for="title" class="block text-xs font-medium mb-1">
+                            Service Title *
+                        </label>
+                        <input type="text" 
+                               id="title"
+                               name="title"
+                               maxlength="100"
+                               value="{{ service.title }}"
+                               class="w-full text-sm"
+                               placeholder="e.g., Professional Career Coaching"
+                               required>
+                        <div class="char-counter" id="titleCounter">{{ service.title|length }}/100</div>
+                    </div>
+                    
+                    <!-- Category -->
+                    <div class="mb-4">
+                        <label for="category_id" class="block text-xs font-medium mb-1">Category *</label>
+                        <select id="category_id" 
+                                name="category_id"
+                                class="w-full text-sm"
+                                required>
+                            <option value="">Select a category</option>
+                            {% for category in categories %}
+                            <option value="{{ category.id }}" {% if service.category_id == category.id %}selected{% endif %}>
+                                {{ category.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Short Description -->
+                    <div class="mb-4">
+                        <label for="short_description" class="block text-xs font-medium mb-1">
+                            Short Description *
+                        </label>
+                        <textarea id="short_description"
+                                  name="short_description"
+                                  maxlength="200"
+                                  rows="3"
+                                  class="w-full text-sm resize-none"
+                                  placeholder="Brief description..."
+                                  required>{{ service.short_description or '' }}</textarea>
+                        <div class="char-counter" id="shortDescCounter">{{ (service.short_description or '')|length }}/200</div>
+                    </div>
+                </div>
+                
+                <!-- Navigation -->
+                <div class="flex justify-end mt-4">
+                    <button type="button" 
+                            onclick="nextStep()"
+                            class="btn btn-primary text-xs">
+                        Next <i class="bi bi-arrow-right text-xs"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Step 2: Service Details -->
+            <div class="form-step" id="step-2" data-step="2">
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <div class="form-section-icon">
+                            <i class="bi bi-journal-text"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-bold">Service Details</h3>
+                        </div>
+                    </div>
+                    
+                    <!-- Description -->
+                    <div class="mb-4">
+                        <label for="description" class="block text-xs font-medium mb-1">
+                            Description *
+                        </label>
+                        <textarea id="description"
+                                  name="description"
+                                  rows="6"
+                                  class="w-full text-sm resize-none"
+                                  placeholder="Describe your service..."
+                                  required>{{ service.description }}</textarea>
+                    </div>
+                    
+                    <!-- Price -->
+                    <div class="mb-4">
+                        <label for="price" class="block text-xs font-medium mb-1">
+                            Price *
+                            <span class="text-xs text-gray-500">(Enter 0 for free service)</span>
+                        </label>
+                        <div class="relative">
+                            <input type="text" 
+                                   id="price"
+                                   name="price"
+                                   value="{{ service.price or 0 }}"
+                                   class="w-full text-sm pl-8"
+                                   placeholder="0"
+                                   required>
+                            <div class="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
+                                <span class="text-gray-500 text-xs">₦</span>
+                            </div>
+                        </div>
+                        <div class="mt-1 text-xs text-gray-600">
+                            {% if service.price == 0 %}
+                            <span class="text-green-600">Free service</span>
+                            {% else %}
+                            <span>Current price: ₦{{ service.price|default(0) }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Features -->
+                    <div class="mb-4">
+                        <label class="block text-xs font-medium mb-2">Features</label>
+                        
+                        <div id="featuresContainer" class="mb-3">
+                            {% for feature in service.features_list %}
+                            <div class="feature-item" data-index="{{ loop.index0 }}">
+                                <div class="feature-item-text">{{ feature }}</div>
+                                <button type="button" 
+                                        onclick="removeFeature({{ loop.index0 }})"
+                                        class="text-red-500 hover:text-red-700 text-xs">
+                                    <i class="bi bi-x"></i>
+                                </button>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="flex gap-2">
+                            <input type="text" 
+                                   id="featureInput"
+                                   class="flex-1 text-sm"
+                                   placeholder="Add a feature">
+                            <button type="button" 
+                                    onclick="addFeature()"
+                                    class="btn btn-primary text-xs">
+                                Add
+                            </button>
+                        </div>
+                        <input type="hidden" name="features" id="featuresInput" value="{{ service.features|tojson|safe }}">
+                    </div>
+                    
+                    <!-- Duration & Availability -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label for="duration" class="block text-xs font-medium mb-1">
+                                Duration
+                            </label>
+                            <input type="text" 
+                                   id="duration"
+                                   name="duration"
+                                   value="{{ service.duration or '' }}"
+                                   class="w-full text-sm"
+                                   placeholder="e.g., 60 minutes">
+                        </div>
+                        
+                        <div>
+                            <label for="availability" class="block text-xs font-medium mb-1">
+                                Availability
+                            </label>
+                            <input type="text" 
+                                   id="availability"
+                                   name="availability"
+                                   value="{{ service.availability or '' }}"
+                                   class="w-full text-sm"
+                                   placeholder="e.g., Mon-Fri">
+                        </div>
+                    </div>
+                    
+                    <!-- Contact Information -->
+                    <div class="mb-4">
+                        <label class="block text-xs font-medium mb-2">Contact Methods</label>
+                        <div class="grid grid-cols-2 gap-2 mb-4">
+                            <div class="flex items-center">
+                                <input type="checkbox" 
+                                       id="contact_whatsapp" 
+                                       name="contact_whatsapp" 
+                                       class="w-3 h-3 mr-2"
+                                       {% if 'whatsapp' in service.contact_methods_list %}checked{% endif %}>
+                                <label for="contact_whatsapp" class="flex items-center text-xs">
+                                    <i class="bi bi-whatsapp text-green-500 mr-1 text-xs"></i>
+                                    WhatsApp
+                                </label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" 
+                                       id="contact_phone" 
+                                       name="contact_phone" 
+                                       class="w-3 h-3 mr-2"
+                                       {% if 'phone' in service.contact_methods_list %}checked{% endif %}>
+                                <label for="contact_phone" class="flex items-center text-xs">
+                                    <i class="bi bi-telephone text-blue-500 mr-1 text-xs"></i>
+                                    Phone
+                                </label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" 
+                                       id="contact_email" 
+                                       name="contact_email" 
+                                       class="w-3 h-3 mr-2"
+                                       {% if 'email' in service.contact_methods_list %}checked{% endif %}>
+                                <label for="contact_email" class="flex items-center text-xs">
+                                    <i class="bi bi-envelope text-red-500 mr-1 text-xs"></i>
+                                    Email
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-3">
+                            <div>
+                                <label for="whatsapp_number" class="block text-xs font-medium mb-1">WhatsApp Number</label>
+                                <input type="tel" 
+                                       id="whatsapp_number"
+                                       name="whatsapp_number"
+                                       value="{{ service.whatsapp_number or '' }}"
+                                       class="w-full text-sm"
+                                       placeholder="+234 800 000 0000">
+                            </div>
+                            
+                            <div>
+                                <label for="phone_number" class="block text-xs font-medium mb-1">Phone Number</label>
+                                <input type="tel" 
+                                       id="phone_number"
+                                       name="phone_number"
+                                       value="{{ service.phone_number or '' }}"
+                                       class="w-full text-sm"
+                                       placeholder="+234 800 000 0000">
+                            </div>
+                            
+                            <div>
+                                <label for="email" class="block text-xs font-medium mb-1">Email Address</label>
+                                <input type="email" 
+                                       id="email"
+                                       name="email"
+                                       value="{{ service.email or current_user.email }}"
+                                       class="w-full text-sm"
+                                       placeholder="your@email.com"
+                                       required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Navigation -->
+                <div class="flex justify-between mt-4">
+                    <button type="button" 
+                            onclick="prevStep()"
+                            class="btn btn-outline text-xs">
+                        <i class="bi bi-arrow-left text-xs"></i> Back
+                    </button>
+                    
+                    <button type="button" 
+                            onclick="nextStep()"
+                            class="btn btn-primary text-xs">
+                        Next <i class="bi bi-arrow-right text-xs"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Step 3: Media -->
+            <div class="form-step" id="step-3" data-step="3">
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <div class="form-section-icon">
+                            <i class="bi bi-images"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-bold">Media</h3>
+                        </div>
+                    </div>
+                    
+                    <!-- Main Image -->
+                    <div class="mb-4">
+                        <label class="block text-xs font-medium mb-2">
+                            Main Image *
+                        </label>
+                        
+                        {% if service.cover_image %}
+                        <div class="image-preview">
+                            <img src="{{ service.cover_image }}" 
+                                 alt="Current cover image"
+                                 id="mainImagePreview">
+                            <div class="remove-image" onclick="removeMainImage()">
+                                <i class="bi bi-trash"></i>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="file-upload-area" onclick="document.getElementById('cover_image').click()" 
+                             id="mainImageUploadArea">
+                            <div class="text-xl text-gray-400 mb-1">
+                                <i class="bi bi-camera"></i>
+                            </div>
+                            <p class="text-xs mb-1">
+                                {% if service.cover_image %}
+                                    Update Image
+                                {% else %}
+                                    Upload Image
+                                {% endif %}
+                            </p>
+                            <p class="text-xs text-gray-500">JPG, PNG, WebP</p>
+                            <input type="file" 
+                                   id="cover_image" 
+                                   name="cover_image"
+                                   accept="image/*"
+                                   hidden
+                                   onchange="handleMainImageSelect(event)">
+                        </div>
+                    </div>
+                    
+                    <!-- Gallery Images -->
+                    <div class="mb-4">
+                        <label class="block text-xs font-medium mb-2">
+                            Gallery Images
+                        </label>
+                        
+                        {% if service.gallery_images_list %}
+                        <div class="mb-3">
+                            <div class="gallery-grid mb-2">
+                                {% for image in service.gallery_images_list %}
+                                <div class="gallery-item">
+                                    <img src="{{ image }}" alt="Gallery image">
+                                    <div class="absolute top-1 right-1">
+                                        <input type="checkbox" 
+                                               name="remove_gallery" 
+                                               value="{{ image }}"
+                                               id="remove_{{ loop.index }}"
+                                               class="hidden">
+                                        <label for="remove_{{ loop.index }}" 
+                                               class="w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center cursor-pointer hover:bg-red-600 text-xs">
+                                            <i class="bi bi-x"></i>
+                                        </label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="file-upload-area" onclick="document.getElementById('gallery_images').click()" 
+                             id="galleryUploadArea">
+                            <div class="text-xl text-gray-400 mb-1">
+                                <i class="bi bi-collection"></i>
+                            </div>
+                            <p class="text-xs mb-1">Add Gallery Images</p>
+                            <p class="text-xs text-gray-500">Max 5 images</p>
+                            <input type="file" 
+                                   id="gallery_images" 
+                                   name="gallery_images[]"
+                                   accept="image/*"
+                                   multiple
+                                   hidden
+                                   onchange="handleGalleryImagesSelect(event)">
+                        </div>
+                        
+                        <div id="newGalleryPreviews" class="mt-3 hidden">
+                            <div class="gallery-grid" id="galleryPreviews">
+                                <!-- New images will be previewed here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Navigation -->
+                <div class="flex justify-between mt-4">
+                    <button type="button" 
+                            onclick="prevStep()"
+                            class="btn btn-outline text-xs">
+                        <i class="bi bi-arrow-left text-xs"></i> Back
+                    </button>
+                    
+                    <button type="button" 
+                            onclick="nextStep()"
+                            class="btn btn-primary text-xs">
+                        Next <i class="bi bi-arrow-right text-xs"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Step 4: Review -->
+            <div class="form-step" id="step-4" data-step="4">
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <div class="form-section-icon">
+                            <i class="bi bi-eye"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-bold">Review</h3>
+                        </div>
+                    </div>
+                    
+                    <!-- Preview -->
+                    <div class="mb-4">
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <div class="space-y-3">
+                                <!-- Basic Info -->
+                                <div>
+                                    <h4 class="text-xs font-bold text-primary mb-1">Basic Info</h4>
+                                    <div class="space-y-1 text-xs">
+                                        <div><span class="text-gray-600">Title:</span> <span class="font-medium">{{ service.title }}</span></div>
+                                        <div><span class="text-gray-600">Category:</span> <span class="font-medium">
+                                            {% for category in categories %}
+                                                {% if category.id == service.category_id %}{{ category.name }}{% endif %}
+                                            {% endfor %}
+                                        </span></div>
+                                        <div><span class="text-gray-600">Price:</span> <span class="font-medium">
+                                            {% if service.price == 0 %}
+                                                Free
+                                            {% else %}
+                                                ₦{{ service.price }}
+                                            {% endif %}
+                                        </span></div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Features -->
+                                <div>
+                                    <h4 class="text-xs font-bold text-primary mb-1">Features</h4>
+                                    <ul class="list-disc pl-4 space-y-0.5 text-xs" id="previewFeatures">
+                                        {% for feature in service.features_list %}
+                                        <li>{{ feature }}</li>
+                                        {% else %}
+                                        <li class="text-gray-500">No features added</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                
+                                <!-- Status -->
+                                <div>
+                                    <h4 class="text-xs font-bold text-primary mb-1">Status</h4>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs text-gray-600">Current:</span>
+                                        <span class="px-2 py-0.5 rounded text-xs 
+                                            {% if service.status == 'active' %}bg-green-100 text-green-800
+                                            {% elif service.status == 'pending' %}bg-yellow-100 text-yellow-800
+                                            {% elif service.status == 'draft' %}bg-gray-100 text-gray-800
+                                            {% else %}bg-red-100 text-red-800{% endif %}">
+                                            {{ service.status|title }}
+                                        </span>
+                                    </div>
+                                    <div class="mt-2">
+                                        <label for="status" class="block text-xs font-medium mb-1">Update Status</label>
+                                        <select id="status" 
+                                                name="status"
+                                                class="w-full text-xs">
+                                            <option value="draft" {% if service.status == 'draft' %}selected{% endif %}>Draft</option>
+                                            <option value="pending" {% if service.status == 'pending' %}selected{% endif %}>Submit for Review</option>
+                                            {% if service.status == 'active' %}
+                                            <option value="active" selected>Active</option>
+                                            {% endif %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Navigation -->
+                <div class="flex justify-between mt-4">
+                    <button type="button" 
+                            onclick="prevStep()"
+                            class="btn btn-outline text-xs">
+                        <i class="bi bi-arrow-left text-xs"></i> Back
+                    </button>
+                    
+                    <div class="flex gap-2">
+                        <button type="submit" 
+                                id="updateBtn"
+                                class="btn btn-primary text-xs">
+                            <span id="updateText">Update</span>
+                            <span id="updateLoading" class="hidden">
+                                <span class="loading mr-1"></span>
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Form State
+        const formState = {
+            currentStep: 1,
+            totalSteps: 4,
+            features: {{ service.features_list|tojson|safe }},
+            newGalleryImages: []
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            setupCharacterCounters();
+            updateProgress();
+            setupSelectionCards();
+            
+            // Form submission
+            const form = document.getElementById('editServiceForm');
+            form.addEventListener('submit', function(event) {
+                // Prevent double submission
+                if (this.classList.contains('submitting')) {
+                    event.preventDefault();
+                    return;
+                }
+                
+                // Update features input before submission
+                updateFeaturesInput();
+                
+                // Show loading state
+                const updateBtn = document.getElementById('updateBtn');
+                const updateText = document.getElementById('updateText');
+                const updateLoading = document.getElementById('updateLoading');
+                
+                updateBtn.disabled = true;
+                updateText.classList.add('hidden');
+                updateLoading.classList.remove('hidden');
+                
+                // Mark as submitting
+                this.classList.add('submitting');
+            });
+
+            // Initialize price formatting
+            const priceInput = document.getElementById('price');
+            if (priceInput) {
+                priceInput.addEventListener('blur', function() {
+                    const value = this.value.replace(/,/g, '');
+                    if (value && !isNaN(value)) {
+                        this.value = parseFloat(value).toLocaleString('en-US');
+                    }
+                });
+                
+                priceInput.addEventListener('focus', function() {
+                    this.value = this.value.replace(/,/g, '');
+                });
+            }
+        });
+
+        // Step Navigation Functions
+        window.nextStep = function() {
+            if (!validateCurrentStep()) return;
+            
+            const currentStepElement = document.getElementById(`step-${formState.currentStep}`);
+            const nextStepNum = formState.currentStep + 1;
+            
+            if (nextStepNum <= formState.totalSteps) {
+                // Hide current step
+                currentStepElement.classList.remove('active');
+                
+                // Update step indicator
+                document.querySelector(`.step[data-step="${formState.currentStep}"]`).classList.remove('active');
+                document.querySelector(`.step[data-step="${formState.currentStep}"]`).classList.add('completed');
+                document.querySelector(`.step[data-step="${nextStepNum}"]`).classList.add('active');
+                
+                // Show next step
+                const nextStepElement = document.getElementById(`step-${nextStepNum}`);
+                nextStepElement.classList.add('active');
+                
+                // Update form state
+                formState.currentStep = nextStepNum;
+                updateProgress();
+                
+                // Scroll to top
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        };
+
+        window.prevStep = function() {
+            const prevStepNum = formState.currentStep - 1;
+            
+            if (prevStepNum >= 1) {
+                // Hide current step
+                document.getElementById(`step-${formState.currentStep}`).classList.remove('active');
+                
+                // Update step indicator
+                document.querySelector(`.step[data-step="${formState.currentStep}"]`).classList.remove('active');
+                document.querySelector(`.step[data-step="${prevStepNum}"]`).classList.add('active');
+                document.querySelector(`.step[data-step="${formState.currentStep}"]`).classList.remove('completed');
+                
+                // Show previous step
+                document.getElementById(`step-${prevStepNum}`).classList.add('active');
+                
+                // Update form state
+                formState.currentStep = prevStepNum;
+                updateProgress();
+                
+                // Scroll to top
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        };
+
+        function validateCurrentStep() {
+            const currentStep = formState.currentStep;
+            
+            switch(currentStep) {
+                case 1:
+                    return validateStep1();
+                case 2:
+                    return validateStep2();
+                case 3:
+                    return validateStep3();
+                default:
+                    return true;
+            }
+        }
+
+        function validateStep1() {
+            const title = document.getElementById('title').value.trim();
+            const category = document.getElementById('category_id').value;
+            const shortDescription = document.getElementById('short_description').value.trim();
+            
+            if (!title) {
+                alert('Please enter a service title');
+                document.getElementById('title').focus();
+                return false;
+            }
+            
+            if (!category) {
+                alert('Please select a category');
+                document.getElementById('category_id').focus();
+                return false;
+            }
+            
+            if (!shortDescription) {
+                alert('Please enter a short description');
+                document.getElementById('short_description').focus();
+                return false;
+            }
+            
+            return true;
+        }
+
+        function validateStep2() {
+            const description = document.getElementById('description').value.trim();
+            const price = document.getElementById('price').value.replace(/,/g, '');
+            
+            if (!description) {
+                alert('Please enter a description');
+                document.getElementById('description').focus();
+                return false;
+            }
+            
+            if (!price || isNaN(price) || parseFloat(price) < 0) {
+                alert('Please enter a valid price');
+                document.getElementById('price').focus();
+                return false;
+            }
+            
+            return true;
+        }
+
+        function validateStep3() {
+            const mainImageFile = document.getElementById('cover_image').files[0];
+            const hasExistingImage = {{ 'true' if service.cover_image else 'false' }};
+            
+            if (!hasExistingImage && !mainImageFile) {
+                alert('Please upload a main service image');
+                return false;
+            }
+            
+            return true;
+        }
+
+        function updateProgress() {
+            const currentStepSpan = document.getElementById('currentStep');
+            if (currentStepSpan) {
+                currentStepSpan.textContent = formState.currentStep;
+            }
+        }
+
+        // Character Counters
+        function setupCharacterCounters() {
+            const titleInput = document.getElementById('title');
+            const shortDescInput = document.getElementById('short_description');
+            
+            if (titleInput) {
+                titleInput.addEventListener('input', function() {
+                    const counter = document.getElementById('titleCounter');
+                    counter.textContent = `${this.value.length}/100`;
+                });
+            }
+            
+            if (shortDescInput) {
+                shortDescInput.addEventListener('input', function() {
+                    const counter = document.getElementById('shortDescCounter');
+                    counter.textContent = `${this.value.length}/200`;
+                });
+            }
+        }
+
+        // Selection Cards
+        function setupSelectionCards() {
+            document.querySelectorAll('.option-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    const input = this.querySelector('input[type="radio"]');
+                    if (input) {
+                        input.checked = true;
+                        document.querySelectorAll('.option-card').forEach(c => {
+                            c.classList.remove('selected');
+                        });
+                        this.classList.add('selected');
+                    }
+                });
+            });
+        }
+
+        // Features Management
+        window.addFeature = function() {
+            const input = document.getElementById('featureInput');
+            const feature = input.value.trim();
+            
+            if (feature) {
+                formState.features.push(feature);
+                renderFeatures();
+                input.value = '';
+                input.focus();
+                updateFeatureCount();
+            }
+        };
+
+        window.removeFeature = function(index) {
+            formState.features.splice(index, 1);
+            renderFeatures();
+            updateFeatureCount();
+        };
+
+        function renderFeatures() {
+            const container = document.getElementById('featuresContainer');
+            container.innerHTML = '';
+            
+            formState.features.forEach((feature, index) => {
+                const featureElement = document.createElement('div');
+                featureElement.className = 'feature-item';
+                featureElement.innerHTML = `
+                    <div class="feature-item-text">${feature}</div>
+                    <button type="button" onclick="removeFeature(${index})" class="text-red-500 hover:text-red-700 text-xs">
+                        <i class="bi bi-x"></i>
+                    </button>
+                `;
+                container.appendChild(featureElement);
+            });
+        }
+
+        function updateFeatureCount() {
+            document.getElementById('featureCount').value = formState.features.length;
+        }
+
+        function updateFeaturesInput() {
+            document.getElementById('featuresInput').value = JSON.stringify(formState.features);
+        }
+
+        // File Upload Handlers
+        window.handleMainImageSelect = function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('Image must be less than 5MB');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('mainImagePreview');
+                    if (!preview) {
+                        const uploadArea = document.getElementById('mainImageUploadArea');
+                        const previewDiv = document.createElement('div');
+                        previewDiv.className = 'image-preview';
+                        previewDiv.innerHTML = `
+                            <img src="${e.target.result}" alt="New cover image" id="mainImagePreview">
+                            <div class="remove-image" onclick="removeMainImage()">
+                                <i class="bi bi-trash"></i>
+                            </div>
+                        `;
+                        uploadArea.parentNode.insertBefore(previewDiv, uploadArea);
+                    } else {
+                        preview.src = e.target.result;
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+
+        window.removeMainImage = function() {
+            const preview = document.querySelector('.image-preview');
+            if (preview) {
+                preview.remove();
+            }
+            document.getElementById('cover_image').value = '';
+        };
+
+        window.handleGalleryImagesSelect = function(event) {
+            const files = Array.from(event.target.files);
+            const existingCount = {{ service.gallery_images_list|length }};
+            const maxFiles = 5 - existingCount;
+            
+            if (files.length > maxFiles) {
+                alert(`You can only upload ${maxFiles} more images`);
+                return;
+            }
+            
+            // Validate files
+            for (const file of files) {
+                if (file.size > 5 * 1024 * 1024) {
+                    alert(`${file.name} is too large (max 5MB)`);
+                    return;
+                }
+                if (!file.type.startsWith('image/')) {
+                    alert(`${file.name} is not an image`);
+                    return;
+                }
+            }
+            
+            formState.newGalleryImages.push(...files);
+            renderGalleryPreviews();
+        };
+
+        window.removeGalleryImage = function(index) {
+            formState.newGalleryImages.splice(index, 1);
+            renderGalleryPreviews();
+        };
+
+        function renderGalleryPreviews() {
+            const container = document.getElementById('galleryPreviews');
+            const previewsContainer = document.getElementById('newGalleryPreviews');
+            
+            if (formState.newGalleryImages.length === 0) {
+                previewsContainer.classList.add('hidden');
+                return;
+            }
+            
+            previewsContainer.classList.remove('hidden');
+            container.innerHTML = '';
+            
+            formState.newGalleryImages.forEach((file, index) => {
+                const preview = document.createElement('div');
+                preview.className = 'gallery-item';
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.innerHTML = `
+                        <img src="${e.target.result}" alt="New gallery image">
+                        <div class="absolute top-1 right-1">
+                            <button type="button" 
+                                    onclick="removeGalleryImage(${index})"
+                                    class="w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 text-xs">
+                                <i class="bi bi-x"></i>
+                            </button>
+                        </div>
+                    `;
+                };
+                reader.readAsDataURL(file);
+                
+                container.appendChild(preview);
+            });
+        }
+
+        // Save Draft
+        window.saveDraft = function() {
+            // Update features input before saving
+            updateFeaturesInput();
+            
+            // Set status to draft
+            document.getElementById('status').value = 'draft';
+            
+            // Submit form
+            document.getElementById('editServiceForm').submit();
+        };
+
+        // Drag and Drop
+        document.addEventListener('DOMContentLoaded', function() {
+            const uploadAreas = ['mainImageUploadArea', 'galleryUploadArea'];
+            
+            uploadAreas.forEach(areaId => {
+                const area = document.getElementById(areaId);
+                if (area) {
+                    area.addEventListener('dragover', function(e) {
+                        e.preventDefault();
+                        this.classList.add('dragover');
+                    });
+                    
+                    area.addEventListener('dragleave', function(e) {
+                        e.preventDefault();
+                        this.classList.remove('dragover');
+                    });
+                    
+                    area.addEventListener('drop', function(e) {
+                        e.preventDefault();
+                        this.classList.remove('dragover');
+                        
+                        const files = e.dataTransfer.files;
+                        if (files.length > 0) {
+                            if (areaId === 'mainImageUploadArea') {
+                                const input = document.getElementById('cover_image');
+                                input.files = files;
+                                handleMainImageSelect({ target: input });
+                            } else if (areaId === 'galleryUploadArea') {
+                                const input = document.getElementById('gallery_images');
+                                input.files = files;
+                                handleGalleryImagesSelect({ target: input });
+                            }
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
