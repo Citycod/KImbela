@@ -97,7 +97,9 @@ def get_messages(friend_id):
         return jsonify([])
 
 
-@messaging.route("/mark_read/<int:friend_id>", methods=["POST"])  # REMOVED /messaging prefix
+@messaging.route(
+    "/mark_read/<int:friend_id>", methods=["POST"]
+)  # REMOVED /messaging prefix
 @login_required
 def mark_messages_read(friend_id):
     """Mark messages from friend as read"""
@@ -291,32 +293,38 @@ def on_stop_typing(data):
 # def get_unread_message_count():
 #     # Your logic to count unread messages
 #     unread_count = Message.query.filter_by(
-#         receiver_id=current_user.id, 
+#         receiver_id=current_user.id,
 #         status='delivered'
 #     ).count()
 #     return jsonify({'unread_count': unread_count})
 
 
-
-@messaging.route('/unread_count')
+@messaging.route("/unread_count")
 @login_required
 def get_unread_message_count():
     unread_count = Message.query.filter_by(
-        receiver_id=current_user.id, 
-        status='delivered'
+        receiver_id=current_user.id, status="delivered"
     ).count()
-    return jsonify({'unread_count': unread_count})
+    return jsonify({"unread_count": unread_count})
 
-@messaging.route('/friends')
-@login_required  
+
+@messaging.route("/friends")
+@login_required
 def get_friends():
     friends = current_user.friends
-    return jsonify([{
-        'id': friend.id,
-        'name': f"{friend.first_name} {friend.last_name}",
-        'avatar': friend.profile_pic or url_for('static', filename='assets/img/default-avatar.png'),
-        'online': friend.is_online
-    } for friend in friends])
+    return jsonify(
+        [
+            {
+                "id": friend.id,
+                "name": f"{friend.first_name} {friend.last_name}",
+                "avatar": friend.profile_pic
+                or url_for("static", filename="assets/img/default-avatar.png"),
+                "online": friend.is_online,
+            }
+            for friend in friends
+        ]
+    )
+
 
 # @messaging.route('/messages/<int:friend_id>')
 # @login_required
@@ -325,7 +333,7 @@ def get_friends():
 #         ((Message.sender_id == current_user.id) & (Message.receiver_id == friend_id)) |
 #         ((Message.sender_id == friend_id) & (Message.receiver_id == current_user.id))
 #     ).order_by(Message.timestamp.asc()).all()
-    
+
 #     return jsonify([{
 #         'id': msg.id,
 #         'sender_id': msg.sender_id,
@@ -343,9 +351,9 @@ def get_friends():
 #         receiver_id=current_user.id,
 #         status='delivered'
 #     ).all()
-    
+
 #     for msg in messages:
 #         msg.status = 'read'
 #     db.session.commit()
-    
+
 #     return jsonify({'success': True})

@@ -24,15 +24,18 @@ blocked_users = db.Table(
     db.Column("blocked_id", db.Integer, db.ForeignKey("users.id"), primary_key=True),
 )
 
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(user_id)
+
 
 group_members = db.Table(
     "group_members",
     db.Column("user_id", db.Integer, db.ForeignKey("users.id", ondelete="CASCADE")),
     db.Column("group_id", db.Integer, db.ForeignKey("groups.id", ondelete="CASCADE")),
 )
+
 
 # Main User model
 class User(db.Model, UserMixin):
@@ -55,22 +58,22 @@ class User(db.Model, UserMixin):
     updated_at = db.Column(
         db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
     )
-   
+
     educational_level = db.Column(db.String(50), nullable=True)
     occupation = db.Column(db.String(100), nullable=True)
     ethnicity = db.Column(db.String(50), nullable=True)
     religion = db.Column(db.String(50), nullable=True)
     is_premium = db.Column(db.Boolean, default=False)
-    
+
     is_featured_seller = db.Column(db.Boolean, default=False)
-    
+
     # Email preferences
     receive_promotional_emails = db.Column(db.Boolean, default=True)
     receive_subscription_reminders = db.Column(db.Boolean, default=True)
-    
+
     # FIXED: Payment transactions relationship
     campaigns = db.relationship("AdCampaign", back_populates="user", lazy="dynamic")
-    
+
     profile_pic = db.Column(
         db.String(500),
         default="https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg",
@@ -90,27 +93,39 @@ class User(db.Model, UserMixin):
     about_me = db.Column(db.Text, nullable=True)
     admin_role = db.Column(db.String(50), default="moderator")
     admin_permissions = db.Column(db.Text)
-    
+
     password_reset_token = db.Column(db.String(255), nullable=True, unique=True)
     password_reset_expires = db.Column(db.DateTime, nullable=True)
-    
+
     # Marketplace subscription fields
-    marketplace_subscription_id = db.Column(db.Integer, db.ForeignKey('marketplace_subscriptions.id'), nullable=True)
-    marketplace_subscription_status = db.Column(db.String(20), default='inactive')  # inactive, active, expired
+    marketplace_subscription_id = db.Column(
+        db.Integer, db.ForeignKey("marketplace_subscriptions.id"), nullable=True
+    )
+    marketplace_subscription_status = db.Column(
+        db.String(20), default="inactive"
+    )  # inactive, active, expired
     marketplace_subscription_expires = db.Column(db.DateTime)
-    marketplace_subscription_tier = db.Column(db.String(50), default='free')  # free, basic, pro, enterprise
-    marketplace_featured_until = db.Column(db.DateTime)  # When featured visibility expires
-    
+    marketplace_subscription_tier = db.Column(
+        db.String(50), default="free"
+    )  # free, basic, pro, enterprise
+    marketplace_featured_until = db.Column(
+        db.DateTime
+    )  # When featured visibility expires
+
     # Relationship
-    marketplace_subscription = db.relationship('MarketplaceSubscription', foreign_keys=[marketplace_subscription_id])
-    
-    
-    
+    marketplace_subscription = db.relationship(
+        "MarketplaceSubscription", foreign_keys=[marketplace_subscription_id]
+    )
+
     # Enhanced blocking system using a proper association table
     _blocked_users = db.Table(
         "user_blocks",
-        db.Column("blocker_id", db.Integer, db.ForeignKey("users.id"), primary_key=True),
-        db.Column("blocked_id", db.Integer, db.ForeignKey("users.id"), primary_key=True),
+        db.Column(
+            "blocker_id", db.Integer, db.ForeignKey("users.id"), primary_key=True
+        ),
+        db.Column(
+            "blocked_id", db.Integer, db.ForeignKey("users.id"), primary_key=True
+        ),
         db.Column("created_at", db.DateTime, default=datetime.utcnow),
         db.UniqueConstraint("blocker_id", "blocked_id", name="uq_user_block"),
     )
@@ -134,51 +149,50 @@ class User(db.Model, UserMixin):
         backref=db.backref("friend_of", lazy="dynamic"),
         lazy="dynamic",
     )
-    
+
     def get_unsubscribe_token(self):
         """Generate unsubscribe token"""
         import jwt
+
         payload = {
-            'user_id': self.id,
-            'type': 'email_unsubscribe',
-            'exp': datetime.utcnow() + timedelta(days=365)
+            "user_id": self.id,
+            "type": "email_unsubscribe",
+            "exp": datetime.utcnow() + timedelta(days=365),
         }
-        return jwt.encode(payload, current_app.config['SECRET_KEY'], algorithm='HS256')
-    
+        return jwt.encode(payload, current_app.config["SECRET_KEY"], algorithm="HS256")
+
     @property
     def has_active_marketplace_subscription(self):
         """Check if user has an active marketplace subscription"""
         # First check: Do they have a valid subscription status and expiration?
         if not self.marketplace_subscription_expires:
             return False
-        
-        if self.marketplace_subscription_status != 'active':
+
+        if self.marketplace_subscription_status != "active":
             return False
-        
+
         if datetime.utcnow() > self.marketplace_subscription_expires:
             return False
-        
+
         # SECONDARY CHECK: Do they have at least one completed payment?
         # This prevents showing "Subscribed" for users with fake expiration dates
         try:
             from models import MarketplacePayment
+
             completed_payments = MarketplacePayment.query.filter_by(
-                user_id=self.id,
-                status='completed'
+                user_id=self.id, status="completed"
             ).count()
-            
+
             if completed_payments == 0:
                 # No actual payments, so not really subscribed
                 return False
-                
+
         except Exception as e:
             # If we can't check payments, at least use the date check
             print(f"⚠️ Could not check payments for user {self.id}: {e}")
-        
+
         return True
-    
-    
-    
+
     @property
     def is_marketplace_featured(self):
         """Check if seller is currently featured"""
@@ -200,23 +214,20 @@ class User(db.Model, UserMixin):
             return None
         return User.query.filter(
             User.password_reset_token == token,
-            User.password_reset_expires > datetime.utcnow()
+            User.password_reset_expires > datetime.utcnow(),
         ).first()
-    
+
     def get_user_reaction(self, post_id):
         """Get user's reaction for a specific post"""
-        reaction = Reaction.query.filter_by(
-            user_id=self.id, 
-            post_id=post_id
-        ).first()
+        reaction = Reaction.query.filter_by(user_id=self.id, post_id=post_id).first()
         return reaction.reaction_type if reaction else None
-    
+
     def has_reacted_to_post(self, post_id):
         """Check if user has reacted to a post"""
-        return Reaction.query.filter_by(
-            user_id=self.id, 
-            post_id=post_id
-        ).first() is not None
+        return (
+            Reaction.query.filter_by(user_id=self.id, post_id=post_id).first()
+            is not None
+        )
 
     def has_admin_permission(self, permission):
         """Check if admin has specific permission"""
@@ -245,35 +256,52 @@ class User(db.Model, UserMixin):
         blocked_users = self.get_blocked_users()
         result = []
         for user in blocked_users:
-            result.append({
-                "id": user.id,
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-                "profile_pic": user.profile_pic or url_for("static", filename="assets/img/default-avatar.png"),
-                "email": user.email,
-                "created_at": user.created_at,
-            })
+            result.append(
+                {
+                    "id": user.id,
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                    "profile_pic": user.profile_pic
+                    or url_for("static", filename="assets/img/default-avatar.png"),
+                    "email": user.email,
+                    "created_at": user.created_at,
+                }
+            )
         return result
 
     def get_blockers(self):
         """Get list of users who blocked current user"""
-        return User.query.join(
-            self._blocked_users, User.id == self._blocked_users.c.blocker_id
-        ).filter(self._blocked_users.c.blocked_id == self.id).all()
+        return (
+            User.query.join(
+                self._blocked_users, User.id == self._blocked_users.c.blocker_id
+            )
+            .filter(self._blocked_users.c.blocked_id == self.id)
+            .all()
+        )
 
     def is_blocked_by(self, user):
         """Check if this user is blocked by another user"""
-        return db.session.query(self._blocked_users).filter(
-            self._blocked_users.c.blocker_id == user.id,
-            self._blocked_users.c.blocked_id == self.id,
-        ).first() is not None
+        return (
+            db.session.query(self._blocked_users)
+            .filter(
+                self._blocked_users.c.blocker_id == user.id,
+                self._blocked_users.c.blocked_id == self.id,
+            )
+            .first()
+            is not None
+        )
 
     def is_blocking(self, user):
         """Check if this user is blocking another user"""
-        return db.session.query(self._blocked_users).filter(
-            self._blocked_users.c.blocker_id == self.id,
-            self._blocked_users.c.blocked_id == user.id,
-        ).first() is not None
+        return (
+            db.session.query(self._blocked_users)
+            .filter(
+                self._blocked_users.c.blocker_id == self.id,
+                self._blocked_users.c.blocked_id == user.id,
+            )
+            .first()
+            is not None
+        )
 
     def block(self, user):
         """Block a user"""
@@ -289,8 +317,14 @@ class User(db.Model, UserMixin):
 
             # Remove any pending friend requests
             FriendRequest.query.filter(
-                ((FriendRequest.sender_id == self.id) & (FriendRequest.receiver_id == user.id)) |
-                ((FriendRequest.sender_id == user.id) & (FriendRequest.receiver_id == self.id))
+                (
+                    (FriendRequest.sender_id == self.id)
+                    & (FriendRequest.receiver_id == user.id)
+                )
+                | (
+                    (FriendRequest.sender_id == user.id)
+                    & (FriendRequest.receiver_id == self.id)
+                )
             ).delete()
 
             db.session.commit()
@@ -299,8 +333,8 @@ class User(db.Model, UserMixin):
         """Unblock a user"""
         if self.is_blocking(user):
             stmt = self._blocked_users.delete().where(
-                (self._blocked_users.c.blocker_id == self.id) &
-                (self._blocked_users.c.blocked_id == user.id)
+                (self._blocked_users.c.blocker_id == self.id)
+                & (self._blocked_users.c.blocked_id == user.id)
             )
             db.session.execute(stmt)
             db.session.commit()
@@ -315,9 +349,13 @@ class User(db.Model, UserMixin):
 
     def get_blockers_count(self):
         """Get count of users who blocked this user"""
-        return User.query.join(
-            self._blocked_users, User.id == self._blocked_users.c.blocker_id
-        ).filter(self._blocked_users.c.blocked_id == self.id).count()
+        return (
+            User.query.join(
+                self._blocked_users, User.id == self._blocked_users.c.blocker_id
+            )
+            .filter(self._blocked_users.c.blocked_id == self.id)
+            .count()
+        )
 
     def can_interact_with(self, other_user):
         """Check if users can interact (neither has blocked the other)"""
@@ -343,7 +381,8 @@ class User(db.Model, UserMixin):
     def pending_requests(self):
         """IDs of users who sent a PENDING request to me"""
         return [
-            req.sender_id for req in self.received_requests.filter(
+            req.sender_id
+            for req in self.received_requests.filter(
                 FriendRequest.status == FriendRequestStatus.PENDING
             ).all()
         ]
@@ -352,7 +391,8 @@ class User(db.Model, UserMixin):
     def sent_pending_ids(self):
         """IDs of users I sent a PENDING request to"""
         return [
-            req.receiver_id for req in self.sent_requests.filter(
+            req.receiver_id
+            for req in self.sent_requests.filter(
                 FriendRequest.status == FriendRequestStatus.PENDING
             ).all()
         ]
@@ -363,7 +403,9 @@ class User(db.Model, UserMixin):
             return False
         if user in self.friends:
             return False
-        if FriendRequest.query.filter_by(sender_id=self.id, receiver_id=user.id).first():
+        if FriendRequest.query.filter_by(
+            sender_id=self.id, receiver_id=user.id
+        ).first():
             return False
 
         request = FriendRequest(sender=self, receiver=user)
@@ -435,9 +477,18 @@ class User(db.Model, UserMixin):
 
     def has_liked_post(self, post_id):
         """Check if user has liked a specific post"""
-        return Like.query.filter_by(user_id=self.id, post_id=post_id).first() is not None
+        return (
+            Like.query.filter_by(user_id=self.id, post_id=post_id).first() is not None
+        )
 
-    def create_notification(self, actor, notification_type, entity_id=None, entity_type=None, custom_message=None):
+    def create_notification(
+        self,
+        actor,
+        notification_type,
+        entity_id=None,
+        entity_type=None,
+        custom_message=None,
+    ):
         """Create a notification for this user"""
         messages = {
             NotificationType.FRIEND_REQUEST: f"{actor.full_name} sent you a friend request",
@@ -450,7 +501,9 @@ class User(db.Model, UserMixin):
             NotificationType.MENTION: f"{actor.full_name} mentioned you in a post",
         }
 
-        message = custom_message or messages.get(notification_type, "You have a new notification")
+        message = custom_message or messages.get(
+            notification_type, "You have a new notification"
+        )
 
         notification = Notification(
             user_id=self.id,
@@ -478,18 +531,23 @@ class User(db.Model, UserMixin):
     def recent_notifications(self):
         """Get recent notifications (both read and unread)"""
         try:
-            return Notification.query.filter_by(user_id=self.id).order_by(
-                Notification.created_at.desc()
-            ).limit(20).all()
+            return (
+                Notification.query.filter_by(user_id=self.id)
+                .order_by(Notification.created_at.desc())
+                .limit(20)
+                .all()
+            )
         except Exception as e:
             print(f"Error in recent_notifications: {e}")
             return []
+
 
 # Friend request statuses
 class FriendRequestStatus:
     PENDING = "pending"
     ACCEPTED = "accepted"
     DECLINED = "declined"
+
 
 # Friend Request model
 class FriendRequest(db.Model):
@@ -502,14 +560,19 @@ class FriendRequest(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     sender = db.relationship("User", foreign_keys=[sender_id], backref="sent_requests")
-    receiver = db.relationship("User", foreign_keys=[receiver_id], backref="received_requests")
+    receiver = db.relationship(
+        "User", foreign_keys=[receiver_id], backref="received_requests"
+    )
 
-    __table_args__ = (db.UniqueConstraint("sender_id", "receiver_id", name="uq_friend_request"),)
+    __table_args__ = (
+        db.UniqueConstraint("sender_id", "receiver_id", name="uq_friend_request"),
+    )
+
 
 # Post model
 class Post(db.Model):
     __tablename__ = "posts"
-    
+
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.Text, nullable=False)
     image = db.Column(db.String(255))
@@ -519,14 +582,18 @@ class Post(db.Model):
     group_id = db.Column(db.Integer, db.ForeignKey("groups.id"), nullable=True)
 
     author = db.relationship("User", backref="posts")
-    comments = db.relationship("Comment", backref="post", lazy="selectin", cascade="all, delete-orphan")
-    likes = db.relationship("Like", backref="post", lazy="dynamic", cascade="all, delete-orphan")
+    comments = db.relationship(
+        "Comment", backref="post", lazy="selectin", cascade="all, delete-orphan"
+    )
+    likes = db.relationship(
+        "Like", backref="post", lazy="dynamic", cascade="all, delete-orphan"
+    )
 
     @property
     def comments_list(self):
         """Return ordered list of comments for template compatibility"""
         return self.comments.order_by(Comment.created_at.asc()).all()
-    
+
     def get_reaction_count(self):
         """Get total reaction count"""
         return Reaction.query.filter_by(post_id=self.id).count()
@@ -539,31 +606,28 @@ class Post(db.Model):
     def toggle_reaction(self, user_id, reaction_type):
         """Toggle reaction for a post"""
         existing_reaction = Reaction.query.filter_by(
-            user_id=user_id, 
-            post_id=self.id
+            user_id=user_id, post_id=self.id
         ).first()
-        
+
         if existing_reaction:
             if existing_reaction.reaction_type == reaction_type:
                 # Remove reaction if same type clicked again
                 db.session.delete(existing_reaction)
                 db.session.commit()
-                return False, 'removed'
+                return False, "removed"
             else:
                 # Update reaction type
                 existing_reaction.reaction_type = reaction_type
                 db.session.commit()
-                return True, 'updated'
+                return True, "updated"
         else:
             # Add new reaction
             new_reaction = Reaction(
-                user_id=user_id,
-                post_id=self.id,
-                reaction_type=reaction_type
+                user_id=user_id, post_id=self.id, reaction_type=reaction_type
             )
             db.session.add(new_reaction)
             db.session.commit()
-            return True, 'added'
+            return True, "added"
 
     def get_reaction_count(self):
         """Get total reaction count"""
@@ -577,11 +641,15 @@ class Post(db.Model):
     def get_reaction_breakdown(self):
         """Get count of each reaction type"""
         from sqlalchemy import func
-        breakdown = db.session.query(
-            Reaction.reaction_type,
-            func.count(Reaction.id)
-        ).filter(Reaction.post_id == self.id).group_by(Reaction.reaction_type).all()
+
+        breakdown = (
+            db.session.query(Reaction.reaction_type, func.count(Reaction.id))
+            .filter(Reaction.post_id == self.id)
+            .group_by(Reaction.reaction_type)
+            .all()
+        )
         return dict(breakdown)
+
 
 @event.listens_for(FriendRequest, "after_insert")
 def maybe_create_notification(mapper, connection, target):
@@ -598,6 +666,7 @@ def maybe_create_notification(mapper, connection, target):
     db.session.add(notification)
     db.session.commit()
 
+
 # Comment model
 class Comment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -610,6 +679,7 @@ class Comment(db.Model):
     author = db.relationship("User", backref="comments")
     parent = db.relationship("Comment", remote_side=[id], backref="replies")
 
+
 # Like model
 class Like(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -618,6 +688,7 @@ class Like(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     __table_args__ = (db.UniqueConstraint("user_id", "post_id", name="unique_like"),)
+
 
 # Notification Types
 class NotificationType:
@@ -629,6 +700,7 @@ class NotificationType:
     PROFILE_UPDATE = "profile_update"
     NEW_POST = "new_post"
     MENTION = "mention"
+
 
 # Notification Model
 class Notification(db.Model):
@@ -655,11 +727,13 @@ class Notification(db.Model):
             "actor": {
                 "id": self.actor.id,
                 "name": self.actor.full_name,
-                "avatar": self.actor.profile_pic or url_for("static", filename="assets/img/default-avatar.png"),
+                "avatar": self.actor.profile_pic
+                or url_for("static", filename="assets/img/default-avatar.png"),
             },
             "entity_id": self.entity_id,
             "entity_type": self.entity_type,
         }
+
 
 class Message(db.Model):
     __tablename__ = "messages"
@@ -671,7 +745,9 @@ class Message(db.Model):
     status = db.Column(db.String(20), default="sent")
 
     sender = db.relationship("User", foreign_keys=[sender_id], backref="sent_messages")
-    receiver = db.relationship("User", foreign_keys=[receiver_id], backref="received_messages")
+    receiver = db.relationship(
+        "User", foreign_keys=[receiver_id], backref="received_messages"
+    )
 
     def to_dict(self):
         return {
@@ -682,12 +758,14 @@ class Message(db.Model):
             "timestamp": self.timestamp.isoformat(),
             "status": self.status,
             "sender_name": self.sender.full_name,
-            "sender_avatar": self.sender.profile_pic or url_for("static", filename="assets/img/default-avatar.png"),
+            "sender_avatar": self.sender.profile_pic
+            or url_for("static", filename="assets/img/default-avatar.png"),
         }
 
     @staticmethod
     def are_friends(u1, u2):
         return u2 in u1.friends
+
 
 class Group(db.Model):
     __tablename__ = "groups"
@@ -699,13 +777,19 @@ class Group(db.Model):
     image = db.Column(db.String(500))
     is_private = db.Column(db.Boolean, default=False)
     is_active = db.Column(db.Boolean, default=True)
-    created_by = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    created_by = db.Column(
+        db.Integer, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     member_count = db.Column(db.Integer, default=0)
 
-    creator = db.relationship("User", foreign_keys=[created_by], backref="created_groups")
-    members = db.relationship("User", secondary=group_members, backref="user_groups", lazy="dynamic")
-    
+    creator = db.relationship(
+        "User", foreign_keys=[created_by], backref="created_groups"
+    )
+    members = db.relationship(
+        "User", secondary=group_members, backref="user_groups", lazy="dynamic"
+    )
+
     def update_member_count(self):
         """Update the member count from the actual relationship"""
         self.member_count = self.members.count()
@@ -725,6 +809,7 @@ class Group(db.Model):
             "member_count": self.member_count,
         }
 
+
 class SponsoredAd(db.Model):
     __tablename__ = "sponsored_ads"
     id = db.Column(db.Integer, primary_key=True)
@@ -742,6 +827,7 @@ class SponsoredAd(db.Model):
     impressions = db.Column(db.Integer, default=0)
 
     creator = db.relationship("User", foreign_keys=[created_by])
+
 
 class ReportedContent(db.Model):
     __tablename__ = "reported_content"
@@ -761,41 +847,47 @@ class ReportedContent(db.Model):
     reported_user = db.relationship("User", foreign_keys=[reported_user_id])
     resolver = db.relationship("User", foreign_keys=[resolved_by])
 
+
 class Reaction(db.Model):
-    __tablename__ = 'reactions'
-    
+    __tablename__ = "reactions"
+
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
-    post_id = db.Column(db.Integer, db.ForeignKey('posts.id', ondelete='CASCADE'), nullable=False)
+    user_id = db.Column(
+        db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    post_id = db.Column(
+        db.Integer, db.ForeignKey("posts.id", ondelete="CASCADE"), nullable=False
+    )
     reaction_type = db.Column(db.String(20), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     # Fixed relationships with proper cascade
-    user = db.relationship('User', backref=db.backref('reactions', cascade='all, delete-orphan'))
-    post = db.relationship('Post', backref=db.backref('post_reactions', cascade='all, delete-orphan'))
-    
-    __table_args__ = (db.UniqueConstraint('user_id', 'post_id', name='unique_user_post_reaction'),)
-    
-    
-    
-    
-    
-    
-    
+    user = db.relationship(
+        "User", backref=db.backref("reactions", cascade="all, delete-orphan")
+    )
+    post = db.relationship(
+        "Post", backref=db.backref("post_reactions", cascade="all, delete-orphan")
+    )
+
+    __table_args__ = (
+        db.UniqueConstraint("user_id", "post_id", name="unique_user_post_reaction"),
+    )
+
+
 # Add these new models to your existing models.py
 class AdCampaign(db.Model):
     __tablename__ = "ad_campaigns"
-    
+
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    
+
     # Ad content
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
     image = db.Column(db.Text)
     target_url = db.Column(db.String(500))
     call_to_action = db.Column(db.String(50), default="Learn More")
-    
+
     # Campaign details
     status = db.Column(db.String(20), default="pending")
     start_date = db.Column(db.DateTime)
@@ -803,18 +895,18 @@ class AdCampaign(db.Model):
     budget = db.Column(db.Float, nullable=False)  # Total budget
     daily_budget = db.Column(db.Float, nullable=False)  # Daily budget
     duration_days = db.Column(db.Integer, nullable=False)
-    
+
     # Tracking
     impressions = db.Column(db.Integer, default=0)
     clicks = db.Column(db.Integer, default=0)
     click_through_rate = db.Column(db.Float, default=0.0)
-    
+
     # Payment
     payment_status = db.Column(db.String(20), default="pending")
     payment_gateway = db.Column(db.String(20))
     payment_id = db.Column(db.String(255))
     currency = db.Column(db.String(3), default="USD")
-    
+
     # Targeting fields
     target_gender = db.Column(db.Text)  # JSON string of genders
     target_age_min = db.Column(db.Integer, default=18)
@@ -825,76 +917,108 @@ class AdCampaign(db.Model):
     target_occupation = db.Column(db.Text)  # JSON string of occupations
     target_relationship = db.Column(db.Text)  # JSON string of relationship statuses
     target_language = db.Column(db.String(50))  # Single language
-    
+
     # Additional targeting fields
     target_devices = db.Column(db.Text)  # JSON string of devices
     target_platforms = db.Column(db.Text)  # JSON string of platforms
-    
+
     # Expiration tracking
     expiry_notification_sent = db.Column(db.Boolean, default=False)
     auto_renew = db.Column(db.Boolean, default=False)
-    
+
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
+
     # FIXED: Relationship without conflicts
     user = db.relationship("User", foreign_keys=[user_id], back_populates="campaigns")
 
     def get_targeting_data(self):
         """Return targeting data as a dictionary"""
         return {
-            'gender': json.loads(self.target_gender) if self.target_gender else [],
-            'age_min': self.target_age_min,
-            'age_max': self.target_age_max,
-            'countries': json.loads(self.target_countries) if self.target_countries else [],
-            'interests': json.loads(self.target_interests) if self.target_interests else [],
-            'education': json.loads(self.target_education) if self.target_education else [],
-            'occupation': json.loads(self.target_occupation) if self.target_occupation else [],
-            'relationship': json.loads(self.target_relationship) if self.target_relationship else [],
-            'language': self.target_language,
-            'devices': json.loads(self.target_devices) if self.target_devices else [],
-            'platforms': json.loads(self.target_platforms) if self.target_platforms else []
+            "gender": json.loads(self.target_gender) if self.target_gender else [],
+            "age_min": self.target_age_min,
+            "age_max": self.target_age_max,
+            "countries": (
+                json.loads(self.target_countries) if self.target_countries else []
+            ),
+            "interests": (
+                json.loads(self.target_interests) if self.target_interests else []
+            ),
+            "education": (
+                json.loads(self.target_education) if self.target_education else []
+            ),
+            "occupation": (
+                json.loads(self.target_occupation) if self.target_occupation else []
+            ),
+            "relationship": (
+                json.loads(self.target_relationship) if self.target_relationship else []
+            ),
+            "language": self.target_language,
+            "devices": json.loads(self.target_devices) if self.target_devices else [],
+            "platforms": (
+                json.loads(self.target_platforms) if self.target_platforms else []
+            ),
         }
-    
-
-
 
 
 class PaymentTransaction(db.Model):
-    __tablename__ = 'payment_transactions'
-    
+    __tablename__ = "payment_transactions"
+
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+
     # Support both ad campaigns and matchmaking requests
-    campaign_id = db.Column(db.Integer, db.ForeignKey('ad_campaigns.id'), nullable=True)
-    matchmaking_request_id = db.Column(db.Integer, db.ForeignKey('matchmaking_requests.id'), nullable=True)
-    
+    campaign_id = db.Column(db.Integer, db.ForeignKey("ad_campaigns.id"), nullable=True)
+    matchmaking_request_id = db.Column(
+        db.Integer, db.ForeignKey("matchmaking_requests.id"), nullable=True
+    )
+
     amount = db.Column(db.Numeric(10, 2), nullable=False)
-    currency = db.Column(db.String(3), default='USD')
+    currency = db.Column(db.String(3), default="USD")
     gateway = db.Column(db.String(50))  # 'flutterwave', 'paypal', etc.
     gateway_reference = db.Column(db.String(100), unique=True)
     gateway_payment_id = db.Column(db.String(100))
     gateway_status = db.Column(db.String(50))
     gateway_metadata = db.Column(db.Text)
-    
+
     # Make sure this field exists
-    transaction_type = db.Column(db.String(20), default='ad_campaign')  # 'ad_campaign' or 'matchmaking'
-    
-    status = db.Column(db.String(20), default='pending')  # 'pending', 'completed', 'failed'
+    transaction_type = db.Column(
+        db.String(20), default="ad_campaign"
+    )  # 'ad_campaign' or 'matchmaking'
+
+    status = db.Column(
+        db.String(20), default="pending"
+    )  # 'pending', 'completed', 'failed'
     description = db.Column(db.Text)
-    
+
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
+
     # FIXED: Use string references
-    user = db.relationship('User', foreign_keys=[user_id], backref=db.backref('payment_transactions', lazy=True))
-    campaign = db.relationship('AdCampaign', foreign_keys=[campaign_id], backref=db.backref('payments', lazy=True))
-    matchmaking_request = db.relationship('MatchmakingRequest', foreign_keys=[matchmaking_request_id], backref=db.backref('payment_transactions', lazy=True))
+    user = db.relationship(
+        "User",
+        foreign_keys=[user_id],
+        backref=db.backref("payment_transactions", lazy=True),
+    )
+    campaign = db.relationship(
+        "AdCampaign",
+        foreign_keys=[campaign_id],
+        backref=db.backref("payments", lazy=True),
+    )
+    matchmaking_request = db.relationship(
+        "MatchmakingRequest",
+        foreign_keys=[matchmaking_request_id],
+        backref=db.backref("payment_transactions", lazy=True),
+    )
+
 
 class AdPackage(db.Model):
     __tablename__ = "ad_packages"
-    
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text)
@@ -904,21 +1028,16 @@ class AdPackage(db.Model):
     features = db.Column(db.Text)
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     # campaigns = db.relationship("AdCampaign", backref="ad_package", lazy=True)
-    
-    
-
-
-
-
 
 
 # Add these to your existing models
 
+
 class MatchmakingPackage(db.Model):
     __tablename__ = "matchmaking_packages"
-    
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text)
@@ -927,20 +1046,22 @@ class MatchmakingPackage(db.Model):
     features = db.Column(db.Text)
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     # FIXED: Use string reference for forward declaration
-    matchmaking_requests = db.relationship("MatchmakingRequest", back_populates="package", lazy=True)
-    
-    
+    matchmaking_requests = db.relationship(
+        "MatchmakingRequest", back_populates="package", lazy=True
+    )
 
 
 class MatchmakingRequest(db.Model):
     __tablename__ = "matchmaking_requests"
-    
+
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    package_id = db.Column(db.Integer, db.ForeignKey("matchmaking_packages.id"), nullable=False)
-    
+    package_id = db.Column(
+        db.Integer, db.ForeignKey("matchmaking_packages.id"), nullable=False
+    )
+
     # Partner Preferences
     min_age = db.Column(db.Integer)
     max_age = db.Column(db.Integer)
@@ -949,34 +1070,40 @@ class MatchmakingRequest(db.Model):
     partner_religion = db.Column(db.String(50))
     partner_interests = db.Column(db.Text)
     target_countries = db.Column(db.Text)
-    
+
     # About the user
     about_you = db.Column(db.Text, nullable=False)
     ideal_partner = db.Column(db.Text, nullable=False)
     your_interests = db.Column(db.Text)
     lifestyles = db.Column(db.Text)
     image = db.Column(db.Text)
-    
+
     # Request details
     status = db.Column(db.String(20), default="pending")
     start_date = db.Column(db.DateTime, default=datetime.utcnow)
     end_date = db.Column(db.DateTime)
-    
+
     # Payment
     payment_status = db.Column(db.String(20), default="pending")
     payment_gateway = db.Column(db.String(20))
-    
+
     # Tracking
     views = db.Column(db.Integer, default=0)
     likes = db.Column(db.Integer, default=0)
     matches = db.Column(db.Integer, default=0)
-    
+
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
+
     # FIXED: Use string references
     user = db.relationship("User", foreign_keys=[user_id])
-    package = db.relationship("MatchmakingPackage", foreign_keys=[package_id], back_populates="matchmaking_requests")
+    package = db.relationship(
+        "MatchmakingPackage",
+        foreign_keys=[package_id],
+        back_populates="matchmaking_requests",
+    )
 
     # Add property to get payment transaction
     @property
@@ -993,7 +1120,7 @@ class MatchmakingRequest(db.Model):
             except:
                 return []
         return []
-    
+
     def get_target_countries(self):
         if self.target_countries:
             try:
@@ -1001,7 +1128,7 @@ class MatchmakingRequest(db.Model):
             except:
                 return []
         return []
-    
+
     def get_your_interests(self):
         if self.your_interests:
             try:
@@ -1009,7 +1136,7 @@ class MatchmakingRequest(db.Model):
             except:
                 return []
         return []
-    
+
     def get_lifestyles(self):
         if self.lifestyles:
             try:
@@ -1017,132 +1144,160 @@ class MatchmakingRequest(db.Model):
             except:
                 return []
         return []
-    
+
     def is_active(self):
         return self.status == "active" and self.end_date > datetime.utcnow()
-    
-    
-    
-    
-    
+
 
 class MatchmakingLike(db.Model):
     __tablename__ = "matchmaking_likes"
-    
+
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    request_id = db.Column(db.Integer, db.ForeignKey("matchmaking_requests.id"), nullable=False)
+    request_id = db.Column(
+        db.Integer, db.ForeignKey("matchmaking_requests.id"), nullable=False
+    )
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     user = db.relationship("User", foreign_keys=[user_id])
     request = db.relationship("MatchmakingRequest", foreign_keys=[request_id])
-    
-    __table_args__ = (db.UniqueConstraint("user_id", "request_id", name="unique_matchmaking_like"),)
+
+    __table_args__ = (
+        db.UniqueConstraint("user_id", "request_id", name="unique_matchmaking_like"),
+    )
+
 
 class MatchmakingView(db.Model):
     __tablename__ = "matchmaking_views"
-    
+
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    request_id = db.Column(db.Integer, db.ForeignKey("matchmaking_requests.id"), nullable=False)
+    request_id = db.Column(
+        db.Integer, db.ForeignKey("matchmaking_requests.id"), nullable=False
+    )
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     user = db.relationship("User", foreign_keys=[user_id])
     request = db.relationship("MatchmakingRequest", foreign_keys=[request_id])
-    
-    
-    
+
+
 class MatchmakingPayments(db.Model):
-    __tablename__ = 'matchmaking_payments'
-    
+    __tablename__ = "matchmaking_payments"
+
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    matchmaking_request_id = db.Column(db.Integer, db.ForeignKey('matchmaking_requests.id'), nullable=False)
-    package_id = db.Column(db.Integer, db.ForeignKey('matchmaking_packages.id'), nullable=False)
-    
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    matchmaking_request_id = db.Column(
+        db.Integer, db.ForeignKey("matchmaking_requests.id"), nullable=False
+    )
+    package_id = db.Column(
+        db.Integer, db.ForeignKey("matchmaking_packages.id"), nullable=False
+    )
+
     # Payment details
     amount = db.Column(db.Float, nullable=False)
-    currency = db.Column(db.String(10), default='USD')
-    gateway = db.Column(db.String(50), default='flutterwave')  # 'flutterwave', 'paypal', etc.
+    currency = db.Column(db.String(10), default="USD")
+    gateway = db.Column(
+        db.String(50), default="flutterwave"
+    )  # 'flutterwave', 'paypal', etc.
     gateway_reference = db.Column(db.String(100), unique=True)  # tx_ref for Flutterwave
     gateway_payment_id = db.Column(db.String(100))  # Flutterwave transaction ID
     gateway_status = db.Column(db.String(50))  # Status from payment gateway
-    
+
     # Payment status
-    status = db.Column(db.String(20), default='pending')  # 'pending', 'completed', 'failed', 'cancelled'
-    payment_status = db.Column(db.String(20), default='pending')  # 'pending', 'paid', 'failed'
-    
+    status = db.Column(
+        db.String(20), default="pending"
+    )  # 'pending', 'completed', 'failed', 'cancelled'
+    payment_status = db.Column(
+        db.String(20), default="pending"
+    )  # 'pending', 'paid', 'failed'
+
     # Metadata
     gateway_metadata = db.Column(db.Text)  # JSON response from payment gateway
     description = db.Column(db.Text)
-    
+
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
     paid_at = db.Column(db.DateTime)  # When payment was completed
-    
+
     # Relationships
-    user = db.relationship('User', backref=db.backref('matchmaking_payments', lazy=True))
-    matchmaking_request = db.relationship('MatchmakingRequest', backref=db.backref('payments', lazy=True))
-    package = db.relationship('MatchmakingPackage', backref=db.backref('payments', lazy=True))
-    
+    user = db.relationship(
+        "User", backref=db.backref("matchmaking_payments", lazy=True)
+    )
+    matchmaking_request = db.relationship(
+        "MatchmakingRequest", backref=db.backref("payments", lazy=True)
+    )
+    package = db.relationship(
+        "MatchmakingPackage", backref=db.backref("payments", lazy=True)
+    )
+
     def __repr__(self):
-        return f'<MatchmakingPayment {self.id} - {self.status} - ${self.amount}>'
-    
+        return f"<MatchmakingPayment {self.id} - {self.status} - ${self.amount}>"
+
     def to_dict(self):
         return {
-            'id': self.id,
-            'user_id': self.user_id,
-            'matchmaking_request_id': self.matchmaking_request_id,
-            'package_id': self.package_id,
-            'amount': self.amount,
-            'currency': self.currency,
-            'gateway': self.gateway,
-            'gateway_reference': self.gateway_reference,
-            'gateway_payment_id': self.gateway_payment_id,
-            'gateway_status': self.gateway_status,
-            'status': self.status,
-            'payment_status': self.payment_status,
-            'description': self.description,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
-            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
-            'paid_at': self.paid_at.isoformat() if self.paid_at else None
+            "id": self.id,
+            "user_id": self.user_id,
+            "matchmaking_request_id": self.matchmaking_request_id,
+            "package_id": self.package_id,
+            "amount": self.amount,
+            "currency": self.currency,
+            "gateway": self.gateway,
+            "gateway_reference": self.gateway_reference,
+            "gateway_payment_id": self.gateway_payment_id,
+            "gateway_status": self.gateway_status,
+            "status": self.status,
+            "payment_status": self.payment_status,
+            "description": self.description,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "paid_at": self.paid_at.isoformat() if self.paid_at else None,
         }
-        
-        
-        
+
+
 # Add these new models to your existing models.py file
+
 
 class MarketplaceCategory(db.Model):
     """Categories for marketplace services"""
+
     __tablename__ = "marketplace_categories"
-    
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     slug = db.Column(db.String(100), unique=True, nullable=False)
     icon = db.Column(db.String(50))
     description = db.Column(db.Text)
     is_active = db.Column(db.Boolean, default=True)
-    parent_id = db.Column(db.Integer, db.ForeignKey("marketplace_categories.id"), nullable=True)
+    parent_id = db.Column(
+        db.Integer, db.ForeignKey("marketplace_categories.id"), nullable=True
+    )
     sort_order = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     # Relationships
-    parent = db.relationship("MarketplaceCategory", remote_side=[id], backref="subcategories")
+    parent = db.relationship(
+        "MarketplaceCategory", remote_side=[id], backref="subcategories"
+    )
     services = db.relationship("MarketplaceService", backref="category", lazy="dynamic")
-    
+
     def __repr__(self):
         return f"<MarketplaceCategory {self.name}>"
 
 
 class MarketplaceService(db.Model):
     """Services listed in the marketplace"""
+
     __tablename__ = "marketplace_services"
-    
+
     id = db.Column(db.Integer, primary_key=True)
     seller_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    category_id = db.Column(db.Integer, db.ForeignKey("marketplace_categories.id"), nullable=False)
-    
+    category_id = db.Column(
+        db.Integer, db.ForeignKey("marketplace_categories.id"), nullable=False
+    )
+
     # Service details
     title = db.Column(db.String(200), nullable=False)
     slug = db.Column(db.String(200), unique=True, nullable=False)
@@ -1150,87 +1305,100 @@ class MarketplaceService(db.Model):
     short_description = db.Column(db.String(500))
     service_type = db.Column(db.String(50), default="service")  # "service" or "digital"
     earnings = db.Column(db.Numeric(10, 2), default=0)
-    currency = db.Column(db.String(10), default='NGN')
-    
+    currency = db.Column(db.String(10), default="NGN")
+
     # Pricing
     price = db.Column(db.Numeric(10, 2), default=0)
     is_free = db.Column(db.Boolean, default=False)
     is_featured = db.Column(db.Boolean, default=False)
-    
+
     # Digital product specific
     digital_file = db.Column(db.String(500))  # For e-books, courses, etc.
     file_size = db.Column(db.String(20))
     file_type = db.Column(db.String(50))
     download_count = db.Column(db.Integer, default=0)
-    
+
     # Subscription reminder tracking
     expiry_reminder_sent = db.Column(db.Boolean, default=False)
     welcome_email_sent = db.Column(db.Boolean, default=False)
-    
+
     # Ranking score for sorting
     ranking_score = db.Column(db.Float, default=0.0)
-    
+
     # Service specific
     duration = db.Column(db.String(50))  # e.g., "60 min", "4 sessions"
     availability = db.Column(db.String(200))  # e.g., "Mon-Fri, 9AM-5PM"
-    
+
     # Contact methods (JSON encoded)
-    contact_methods = db.Column(db.Text, default=json.dumps(["whatsapp", "phone", "messenger"]))
+    contact_methods = db.Column(
+        db.Text, default=json.dumps(["whatsapp", "phone", "messenger"])
+    )
     phone_number = db.Column(db.String(20))
     whatsapp_number = db.Column(db.String(20))
     email = db.Column(db.String(100))
-    
+
     # Add these fields for better file management
     digital_file = db.Column(db.String(500))  # Cloudinary URL
-    file_name = db.Column(db.String(255))     # Original filename
-    file_size = db.Column(db.Integer)         # Size in bytes
-    file_type = db.Column(db.String(100))     # MIME type
+    file_name = db.Column(db.String(255))  # Original filename
+    file_size = db.Column(db.Integer)  # Size in bytes
+    file_type = db.Column(db.String(100))  # MIME type
     cloudinary_public_id = db.Column(db.String(255))  # Cloudinary public ID
-    
+
     # Media
     cover_image = db.Column(db.String(500))
     gallery_images = db.Column(db.Text)  # JSON encoded list of image URLs
     video_url = db.Column(db.String(500))
-    
+
     # Status
-    status = db.Column(db.String(20), default="pending")  # pending, active, rejected, paused, sold_out
+    status = db.Column(
+        db.String(20), default="pending"
+    )  # pending, active, rejected, paused, sold_out
     rejection_reason = db.Column(db.Text)
-    
+
     # Features (JSON encoded)
     features = db.Column(db.Text)
-    
+
     # Stats
     views = db.Column(db.Integer, default=0)
     clicks = db.Column(db.Integer, default=0)
     shares = db.Column(db.Integer, default=0)
-    
+
     # Seller subscription
-    subscription_id = db.Column(db.Integer, db.ForeignKey("marketplace_subscriptions.id"))
+    subscription_id = db.Column(
+        db.Integer, db.ForeignKey("marketplace_subscriptions.id")
+    )
     subscription_status = db.Column(db.String(20), default="active")
     subscription_expires = db.Column(db.DateTime)
-    
+
     # Review stats
     average_rating = db.Column(db.Float, default=0.0)
     review_count = db.Column(db.Integer, default=0)
-    
+
     # SEO
     meta_title = db.Column(db.String(200))
     meta_description = db.Column(db.Text)
     keywords = db.Column(db.Text)
-    
+
     # Dates
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
     published_at = db.Column(db.DateTime)
-    
+
     # Relationships
     seller = db.relationship("User", foreign_keys=[seller_id])
     subscription = db.relationship("MarketplaceSubscription", back_populates="services")
-    reviews = db.relationship("MarketplaceReview", backref="service", lazy="dynamic", cascade="all, delete-orphan")
-    
+    reviews = db.relationship(
+        "MarketplaceReview",
+        backref="service",
+        lazy="dynamic",
+        cascade="all, delete-orphan",
+    )
+
     def __repr__(self):
         return f"<MarketplaceService {self.title}>"
-    
+
     @property
     def contact_methods_list(self):
         """Get contact methods as list"""
@@ -1238,7 +1406,7 @@ class MarketplaceService(db.Model):
             return json.loads(self.contact_methods)
         except:
             return ["whatsapp", "phone", "messenger"]
-    
+
     @property
     def gallery_images_list(self):
         """Get gallery images as list"""
@@ -1248,7 +1416,7 @@ class MarketplaceService(db.Model):
             except:
                 return []
         return []
-    
+
     @property
     def features_list(self):
         """Get features as list"""
@@ -1258,7 +1426,7 @@ class MarketplaceService(db.Model):
             except:
                 return []
         return []
-    
+
     @property
     def whatsapp_link(self):
         """Generate WhatsApp link with pre-filled message"""
@@ -1267,32 +1435,38 @@ class MarketplaceService(db.Model):
             phone = self.whatsapp_number.replace("+", "").replace(" ", "")
             return f"https://wa.me/{phone}?text={requests.utils.quote(message)}"
         return None
-    
+
     @property
     def is_active(self):
         """Check if service is active and subscription is valid"""
         return (
-            self.status == "active" and 
-            self.subscription_status == "active" and
-            (self.subscription_expires is None or self.subscription_expires > datetime.utcnow())
+            self.status == "active"
+            and self.subscription_status == "active"
+            and (
+                self.subscription_expires is None
+                or self.subscription_expires > datetime.utcnow()
+            )
         )
 
 
 class MarketplaceSubscription(db.Model):
     """Subscription plans for sellers"""
+
     __tablename__ = "marketplace_subscriptions"
-    
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     slug = db.Column(db.String(100), unique=True, nullable=False)
     description = db.Column(db.Text)
-    
+
     # Pricing
     price_tokens = db.Column(db.Integer, nullable=False)
     price_usd = db.Column(db.Float, nullable=False)
-    billing_period = db.Column(db.String(20), default="monthly")  # monthly, yearly, lifetime
+    billing_period = db.Column(
+        db.String(20), default="monthly"
+    )  # monthly, yearly, lifetime
     trial_days = db.Column(db.Integer, default=0)
-    
+
     # Features
     max_services = db.Column(db.Integer, default=1)  # 0 = unlimited
     max_images = db.Column(db.Integer, default=5)
@@ -1300,160 +1474,184 @@ class MarketplaceSubscription(db.Model):
     can_add_video = db.Column(db.Boolean, default=False)
     can_add_contact = db.Column(db.Boolean, default=True)
     can_add_digital = db.Column(db.Boolean, default=True)
-    support_level = db.Column(db.String(20), default="basic")  # basic, priority, premium
-    
+    support_level = db.Column(
+        db.String(20), default="basic"
+    )  # basic, priority, premium
+
     # Display
     badge_color = db.Column(db.String(20), default="blue")
     is_popular = db.Column(db.Boolean, default=False)
     is_active = db.Column(db.Boolean, default=True)
-    
+
     # Order
     sort_order = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     # Relationships
-    services = db.relationship("MarketplaceService", back_populates="subscription", lazy="dynamic")
-    
+    services = db.relationship(
+        "MarketplaceService", back_populates="subscription", lazy="dynamic"
+    )
+
     def __repr__(self):
         return f"<MarketplaceSubscription {self.name}>"
 
 
 class MarketplaceReview(db.Model):
     """Reviews for marketplace services"""
+
     __tablename__ = "marketplace_reviews"
-    
+
     id = db.Column(db.Integer, primary_key=True)
-    service_id = db.Column(db.Integer, db.ForeignKey("marketplace_services.id"), nullable=False)
+    service_id = db.Column(
+        db.Integer, db.ForeignKey("marketplace_services.id"), nullable=False
+    )
     buyer_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    
+
     # Review details
     rating = db.Column(db.Integer, nullable=False)  # 1-5
     title = db.Column(db.String(200))
     comment = db.Column(db.Text, nullable=False)
-    
+
     # Response
     seller_response = db.Column(db.Text)
     seller_response_at = db.Column(db.DateTime)
-    
+
     # Status
     is_verified = db.Column(db.Boolean, default=False)  # Verified purchase
     is_featured = db.Column(db.Boolean, default=False)
     status = db.Column(db.String(20), default="approved")  # pending, approved, rejected
-    
+
     # Dates
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
+
     # Relationships
     buyer = db.relationship("User", foreign_keys=[buyer_id])
-    
+
     def __repr__(self):
         return f"<MarketplaceReview {self.id} - {self.rating} stars>"
 
 
 class MarketplacePayment(db.Model):
     """Payments for marketplace subscriptions"""
+
     __tablename__ = "marketplace_payments"
-    
+
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    subscription_id = db.Column(db.Integer, db.ForeignKey("marketplace_subscriptions.id"), nullable=False)
-    service_id = db.Column(db.Integer, db.ForeignKey("marketplace_services.id"), nullable=True)
-    
+    subscription_id = db.Column(
+        db.Integer, db.ForeignKey("marketplace_subscriptions.id"), nullable=False
+    )
+    service_id = db.Column(
+        db.Integer, db.ForeignKey("marketplace_services.id"), nullable=True
+    )
+
     # Payment details
     amount = db.Column(db.Float, nullable=False)
     currency = db.Column(db.String(10), default="USD")
     tokens_paid = db.Column(db.Integer, nullable=False)
-    
+
     # Gateway
     gateway = db.Column(db.String(50), default="flutterwave")
     gateway_reference = db.Column(db.String(100), unique=True)
     gateway_payment_id = db.Column(db.String(100))
     gateway_status = db.Column(db.String(50))
     gateway_metadata = db.Column(db.Text)
-    
+
     # Status
-    status = db.Column(db.String(20), default="pending")  # pending, completed, failed, refunded
+    status = db.Column(
+        db.String(20), default="pending"
+    )  # pending, completed, failed, refunded
     payment_method = db.Column(db.String(50))  # card, bank, mobile_money, etc.
-    
+
     # Period
     start_date = db.Column(db.DateTime, default=datetime.utcnow)
     end_date = db.Column(db.DateTime)
-    
+
     # Metadata
     description = db.Column(db.Text)
-    
+
     # Dates
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
     paid_at = db.Column(db.DateTime)
-    
+
     # Relationships
     user = db.relationship("User", foreign_keys=[user_id])
-    subscription = db.relationship("MarketplaceSubscription", foreign_keys=[subscription_id])
+    subscription = db.relationship(
+        "MarketplaceSubscription", foreign_keys=[subscription_id]
+    )
     service = db.relationship("MarketplaceService", foreign_keys=[service_id])
-    
+
     def __repr__(self):
         return f"<MarketplacePayment {self.id} - {self.status} - ${self.amount}>"
 
 
 class MarketplaceClick(db.Model):
     """Track clicks on services"""
+
     __tablename__ = "marketplace_clicks"
-    
+
     id = db.Column(db.Integer, primary_key=True)
-    service_id = db.Column(db.Integer, db.ForeignKey("marketplace_services.id"), nullable=False)
+    service_id = db.Column(
+        db.Integer, db.ForeignKey("marketplace_services.id"), nullable=False
+    )
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
-    
+
     # Click details
     click_type = db.Column(db.String(50))  # view, contact, whatsapp, phone, email
     ip_address = db.Column(db.String(45))
     user_agent = db.Column(db.Text)
-    
+
     # Date
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     # Relationships
     service = db.relationship("MarketplaceService", foreign_keys=[service_id])
     user = db.relationship("User", foreign_keys=[user_id])
-    
+
     def __repr__(self):
         return f"<MarketplaceClick {self.id} - {self.click_type}>"
-    
-    
-    
+
+
 class ApiKey(db.Model):
-    __tablename__ = 'api_keys'
-    
+    __tablename__ = "api_keys"
+
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
     name = db.Column(db.String(100))
     key = db.Column(db.String(100), unique=True)
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_used = db.Column(db.DateTime, nullable=True)
-    
-    user = db.relationship('User', backref=db.backref('api_keys', lazy=True))
+
+    user = db.relationship("User", backref=db.backref("api_keys", lazy=True))
+
 
 class LoginHistory(db.Model):
-    __tablename__ = 'login_history'
-    
+    __tablename__ = "login_history"
+
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
     ip_address = db.Column(db.String(50))
     user_agent = db.Column(db.Text)
     device = db.Column(db.String(200))
     location = db.Column(db.String(200))
     success = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    user = db.relationship('User', backref=db.backref('login_history', lazy=True))
+
+    user = db.relationship("User", backref=db.backref("login_history", lazy=True))
+
 
 class UserSession(db.Model):
-    __tablename__ = 'user_sessions'
-    
+    __tablename__ = "user_sessions"
+
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
     session_id = db.Column(db.String(100), unique=True)
     ip_address = db.Column(db.String(50))
     user_agent = db.Column(db.Text)
@@ -1461,18 +1659,14 @@ class UserSession(db.Model):
     location = db.Column(db.String(200))
     last_active = db.Column(db.DateTime, default=datetime.utcnow)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    user = db.relationship('User', backref=db.backref('active_sessions', lazy=True))
-    
-    
-    
-    
-    
-    
+
+    user = db.relationship("User", backref=db.backref("active_sessions", lazy=True))
+
+
 # Add to models.py if not already there
 class MarketplaceSubscriptionPlan(db.Model):
-    __tablename__ = 'marketplace_subscription_plans'
-    
+    __tablename__ = "marketplace_subscription_plans"
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     slug = db.Column(db.String(100), unique=True, nullable=False)
@@ -1487,7 +1681,7 @@ class MarketplaceSubscriptionPlan(db.Model):
     sort_order = db.Column(db.Integer, default=0)
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     # Method to get features as list
     @property
     def features_list(self):

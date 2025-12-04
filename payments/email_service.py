@@ -7,59 +7,64 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class MarketplaceEmailService:
     """Robust email service for marketplace notifications"""
-    
+
     def __init__(self):
         # Don't access current_app in __init__
         self.base_url = None  # Will be set when needed
         self._initialized = False
-    
+
     def _ensure_initialized(self):
         """Lazy initialization to avoid circular imports"""
         if not self._initialized:
-            self.base_url = current_app.config.get('BASE_URL', 'http://localhost:5000')
+            self.base_url = current_app.config.get("BASE_URL", "http://localhost:5000")
             self._initialized = True
-    
+
     def _send_email(self, subject, recipient, html_body, text_body=None):
         """Robust email sending with error handling"""
         try:
             # Ensure we have current_app context
             self._ensure_initialized()
-            
+
             msg = Message(
                 subject=subject,
                 recipients=[recipient],
                 html=html_body,
                 body=text_body,
-                sender=current_app.config.get('MAIL_DEFAULT_SENDER', 'noreply@kimbela.com'),
-                charset='utf-8'
+                sender=current_app.config.get(
+                    "MAIL_DEFAULT_SENDER", "noreply@kimbela.com"
+                ),
+                charset="utf-8",
             )
-            
+
             # Add important headers
             msg.extra_headers = {
-                'X-Priority': '1',
-                'X-Mailer': 'Kimbela Marketplace',
-                'Precedence': 'bulk'
+                "X-Priority": "1",
+                "X-Mailer": "Kimbela Marketplace",
+                "Precedence": "bulk",
             }
-            
+
             mail.send(msg)
             logger.info(f"✅ Email sent to {recipient}: {subject}")
             return True
-            
+
         except Exception as e:
             logger.error(f"❌ Failed to send email to {recipient}: {str(e)}")
             # Log but don't crash the app
             return False
-    
+
     def send_payment_success_email(self, user, marketplace_payment, plan):
         """Send payment success email"""
         try:
             subject = f"🎉 Your Kimbela Marketplace Subscription is Active! - Order #{marketplace_payment.gateway_reference}"
-            
+
             # Calculate expiration
-            expires_at = marketplace_payment.end_date or datetime.utcnow() + timedelta(days=30)
-            
+            expires_at = marketplace_payment.end_date or datetime.utcnow() + timedelta(
+                days=30
+            )
+
             # Create beautiful HTML email
             html_body = f"""
             <!DOCTYPE html>
@@ -506,7 +511,7 @@ class MarketplaceEmailService:
             </body>
             </html>
             """
-            
+
             # Plain text version for email clients that don't support HTML
             text_body = f"""
             WELCOME TO KIMBELA MARKETPLACE!
@@ -543,18 +548,20 @@ class MarketplaceEmailService:
             © {datetime.utcnow().year} Kimbela Marketplace
             This is an automated message. Please do not reply to this email.
             """
-            
+
             return self._send_email(subject, user.email, html_body, text_body)
-            
+
         except Exception as e:
             logger.error(f"Failed to create success email: {str(e)}")
             return False
-    
-    def send_payment_failed_email(self, user, marketplace_payment, plan, error_reason=None):
+
+    def send_payment_failed_email(
+        self, user, marketplace_payment, plan, error_reason=None
+    ):
         """Send payment failure email"""
         try:
             subject = f"❌ Payment Failed - Kimbela Marketplace Order #{marketplace_payment.gateway_reference}"
-            
+
             html_body = f"""
             <!DOCTYPE html>
             <html lang="en">
@@ -758,7 +765,7 @@ class MarketplaceEmailService:
             </body>
             </html>
             """
-            
+
             text_body = f"""
             PAYMENT FAILED - KIMBELA MARKETPLACE
             
@@ -795,9 +802,9 @@ class MarketplaceEmailService:
             © {datetime.utcnow().year} Kimbela Marketplace
             This is an automated message.
             """
-            
+
             return self._send_email(subject, user.email, html_body, text_body)
-            
+
         except Exception as e:
             logger.error(f"Failed to create failure email: {str(e)}")
             return False

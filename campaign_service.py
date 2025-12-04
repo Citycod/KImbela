@@ -7,54 +7,52 @@ from sqlalchemy import and_
 
 logger = logging.getLogger(__name__)
 
+
 class CampaignService:
-    
+
     def check_campaign_expiry(self):
         """Check and expire campaigns that have reached their end date"""
         try:
             now = datetime.utcnow()
             expired_campaigns = AdCampaign.query.filter(
-                and_(
-                    AdCampaign.end_date <= now,
-                    AdCampaign.status == 'active'
-                )
+                and_(AdCampaign.end_date <= now, AdCampaign.status == "active")
             ).all()
-            
+
             for campaign in expired_campaigns:
                 self.expire_campaign(campaign)
-                
+
             return len(expired_campaigns)
-            
+
         except Exception as e:
             logger.error(f"Error checking campaign expiry: {str(e)}")
             return 0
-    
+
     def expire_campaign(self, campaign):
         """Expire a single campaign and send notification"""
         try:
             # Update campaign status
-            campaign.status = 'expired'
+            campaign.status = "expired"
             campaign.updated_at = datetime.utcnow()
-            
+
             # Send expiry notification
             self.send_campaign_expired_email(campaign)
-            
+
             db.session.commit()
             logger.info(f"Campaign {campaign.id} expired successfully")
-            
+
         except Exception as e:
             db.session.rollback()
             logger.error(f"Error expiring campaign {campaign.id}: {str(e)}")
-    
+
     def send_campaign_expired_email(self, campaign):
         """Send email notification when campaign expires"""
         try:
             user = User.query.get(campaign.user_id)
             if not user:
                 return False
-            
+
             subject = "📅 Your Kimbela Ad Campaign Has Ended"
-            
+
             html_body = f"""
             <!DOCTYPE html>
             <html>
@@ -111,29 +109,29 @@ class CampaignService:
             </body>
             </html>
             """
-            
+
             msg = Message(
                 subject=subject,
                 recipients=[user.email],
                 html=html_body,
-                sender=current_app.config.get('MAIL_DEFAULT_SENDER')
+                sender=current_app.config.get("MAIL_DEFAULT_SENDER"),
             )
-            
+
             mail.send(msg)
             logger.info(f"Campaign expiry email sent to {user.email}")
             return True
-            
+
         except Exception as e:
             logger.error(f"Failed to send campaign expiry email: {str(e)}")
             return False
-    
+
     def get_active_campaigns_count(self, user_id=None):
         """Get count of active campaigns"""
-        query = AdCampaign.query.filter_by(status='active')
+        query = AdCampaign.query.filter_by(status="active")
         if user_id:
             query = query.filter_by(user_id=user_id)
         return query.count()
-    
+
     def get_expiring_soon_campaigns(self, days=3):
         """Get campaigns expiring in the next few days"""
         target_date = datetime.utcnow() + timedelta(days=days)
@@ -141,18 +139,18 @@ class CampaignService:
             and_(
                 AdCampaign.end_date <= target_date,
                 AdCampaign.end_date > datetime.utcnow(),
-                AdCampaign.status == 'active'
+                AdCampaign.status == "active",
             )
         ).all()
-    
+
     def send_expiry_reminder(self, campaign):
         """Send reminder email before campaign expires"""
         try:
             user = User.query.get(campaign.user_id)
             days_remaining = (campaign.end_date - datetime.utcnow()).days
-            
+
             subject = f"⏰ Your Ad Campaign Expires in {days_remaining} Days"
-            
+
             html_body = f"""
             <!DOCTYPE html>
             <html>
@@ -192,18 +190,18 @@ class CampaignService:
             </body>
             </html>
             """
-            
+
             msg = Message(
                 subject=subject,
                 recipients=[user.email],
                 html=html_body,
-                sender=current_app.config.get('MAIL_DEFAULT_SENDER')
+                sender=current_app.config.get("MAIL_DEFAULT_SENDER"),
             )
-            
+
             mail.send(msg)
             logger.info(f"Expiry reminder sent to {user.email}")
             return True
-            
+
         except Exception as e:
             logger.error(f"Failed to send expiry reminder: {str(e)}")
             return False

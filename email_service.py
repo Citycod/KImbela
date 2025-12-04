@@ -7,6 +7,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class EmailService:
     @staticmethod
     def send_ad_purchase_success(user, transaction, campaign, package):
@@ -15,35 +16,41 @@ class EmailService:
             msg = Message(
                 subject="🎉 Your Kimbela Ad is Live! - Purchase Confirmed",
                 sender=current_app.config["MAIL_DEFAULT_SENDER"],
-                recipients=[user.email]
+                recipients=[user.email],
             )
-            
+
             msg.html = render_template(
                 "success_ad_purchase.html",
                 user=user,
                 transaction=transaction,
                 campaign=campaign,
-                package=package
+                package=package,
             )
-            
+
             mail.send(msg)
-            current_app.logger.info(f"✅ Success email sent to {user.email} for transaction {transaction.id}")
+            current_app.logger.info(
+                f"✅ Success email sent to {user.email} for transaction {transaction.id}"
+            )
             return True
-            
+
         except Exception as e:
-            current_app.logger.error(f"❌ Failed to send success email to {user.email}: {str(e)}")
+            current_app.logger.error(
+                f"❌ Failed to send success email to {user.email}: {str(e)}"
+            )
             return False
 
     @staticmethod
-    def send_ad_purchase_failed(user, package, transaction=None, error_message="Payment failed", campaign=None):
+    def send_ad_purchase_failed(
+        user, package, transaction=None, error_message="Payment failed", campaign=None
+    ):
         """Send email for failed ad purchase"""
         try:
             msg = Message(
                 subject="⚠️ Payment Issue with Your Kimbela Ad Purchase",
                 sender=current_app.config["MAIL_DEFAULT_SENDER"],
-                recipients=[user.email]
+                recipients=[user.email],
             )
-            
+
             msg.html = render_template(
                 "failed_ad_purchase.html",
                 user=user,
@@ -51,31 +58,39 @@ class EmailService:
                 transaction=transaction,
                 error_message=error_message,
                 campaign=campaign,
-                attempt_date=datetime.utcnow()
+                attempt_date=datetime.utcnow(),
             )
-            
+
             mail.send(msg)
             current_app.logger.info(f"✅ Failed purchase email sent to {user.email}")
             return True
-            
+
         except Exception as e:
-            current_app.logger.error(f"❌ Failed to send failure email to {user.email}: {str(e)}")
+            current_app.logger.error(
+                f"❌ Failed to send failure email to {user.email}: {str(e)}"
+            )
             return False
 
     # MATCHMAKING EMAIL METHODS
     @staticmethod
-    def send_matchmaking_payment_success(user, transaction, matchmaking_request, package):
+    def send_matchmaking_payment_success(
+        user, transaction, matchmaking_request, package
+    ):
         """Send email for successful matchmaking purchase"""
         try:
-            expiry_date = matchmaking_request.end_date.strftime('%B %d, %Y') if matchmaking_request.end_date else 'Not set'
+            expiry_date = (
+                matchmaking_request.end_date.strftime("%B %d, %Y")
+                if matchmaking_request.end_date
+                else "Not set"
+            )
             duration_days = package.duration_days if package else 30
-            
+
             msg = Message(
                 subject="💖 Your Kimbela Matchmaking Request is Active!",
                 sender=current_app.config["MAIL_DEFAULT_SENDER"],
-                recipients=[user.email]
+                recipients=[user.email],
             )
-            
+
             # If you have a template, use it. Otherwise, use the HTML string.
             try:
                 msg.html = render_template(
@@ -85,32 +100,47 @@ class EmailService:
                     matchmaking_request=matchmaking_request,
                     package=package,
                     expiry_date=expiry_date,
-                    duration_days=duration_days
+                    duration_days=duration_days,
                 )
             except:
                 # Fallback to direct HTML if template doesn't exist
                 msg.html = EmailService._get_matchmaking_success_html(
-                    user, transaction, matchmaking_request, package, expiry_date, duration_days
+                    user,
+                    transaction,
+                    matchmaking_request,
+                    package,
+                    expiry_date,
+                    duration_days,
                 )
-            
+
             mail.send(msg)
-            current_app.logger.info(f"✅ Matchmaking success email sent to {user.email}")
+            current_app.logger.info(
+                f"✅ Matchmaking success email sent to {user.email}"
+            )
             return True
-            
+
         except Exception as e:
-            current_app.logger.error(f"❌ Failed to send matchmaking success email to {user.email}: {str(e)}")
+            current_app.logger.error(
+                f"❌ Failed to send matchmaking success email to {user.email}: {str(e)}"
+            )
             return False
 
     @staticmethod
-    def send_matchmaking_payment_failed(user, package, transaction=None, error_message="Payment failed", matchmaking_request=None):
+    def send_matchmaking_payment_failed(
+        user,
+        package,
+        transaction=None,
+        error_message="Payment failed",
+        matchmaking_request=None,
+    ):
         """Send email for failed matchmaking purchase"""
         try:
             msg = Message(
                 subject="❌ Payment Failed - Kimbela Matchmaking Request",
                 sender=current_app.config["MAIL_DEFAULT_SENDER"],
-                recipients=[user.email]
+                recipients=[user.email],
             )
-            
+
             # If you have a template, use it. Otherwise, use the HTML string.
             try:
                 msg.html = render_template(
@@ -120,20 +150,24 @@ class EmailService:
                     transaction=transaction,
                     error_message=error_message,
                     matchmaking_request=matchmaking_request,
-                    attempt_date=datetime.utcnow()
+                    attempt_date=datetime.utcnow(),
                 )
             except:
                 # Fallback to direct HTML if template doesn't exist
                 msg.html = EmailService._get_matchmaking_failed_html(
                     user, package, transaction, error_message, matchmaking_request
                 )
-            
+
             mail.send(msg)
-            current_app.logger.info(f"✅ Matchmaking failure email sent to {user.email}")
+            current_app.logger.info(
+                f"✅ Matchmaking failure email sent to {user.email}"
+            )
             return True
-            
+
         except Exception as e:
-            current_app.logger.error(f"❌ Failed to send matchmaking failure email to {user.email}: {str(e)}")
+            current_app.logger.error(
+                f"❌ Failed to send matchmaking failure email to {user.email}: {str(e)}"
+            )
             return False
 
     @staticmethod
@@ -141,24 +175,32 @@ class EmailService:
         """Send expiry reminder email for matchmaking requests"""
         try:
             days_remaining = (matchmaking_request.end_date - datetime.utcnow()).days
-            package_name = matchmaking_request.package.name if matchmaking_request.package else 'your package'
-            
+            package_name = (
+                matchmaking_request.package.name
+                if matchmaking_request.package
+                else "your package"
+            )
+
             msg = Message(
                 subject=f"⏰ Your Matchmaking Request Expires in {days_remaining} Days",
                 sender=current_app.config["MAIL_DEFAULT_SENDER"],
-                recipients=[user.email]
+                recipients=[user.email],
             )
-            
+
             msg.html = EmailService._get_matchmaking_expiry_html(
                 user, matchmaking_request, days_remaining, package_name
             )
-            
+
             mail.send(msg)
-            current_app.logger.info(f"✅ Expiry reminder sent to {user.email} for request {matchmaking_request.id}")
+            current_app.logger.info(
+                f"✅ Expiry reminder sent to {user.email} for request {matchmaking_request.id}"
+            )
             return True
-            
+
         except Exception as e:
-            current_app.logger.error(f"❌ Failed to send expiry reminder to {user.email}: {str(e)}")
+            current_app.logger.error(
+                f"❌ Failed to send expiry reminder to {user.email}: {str(e)}"
+            )
             return False
 
     @staticmethod
@@ -166,37 +208,41 @@ class EmailService:
         """Check for expiring matchmaking requests and send reminders"""
         try:
             from models import MatchmakingRequest
-            
+
             # Get requests expiring in 1, 3, and 7 days
             today = datetime.utcnow().date()
             reminder_days = [1, 3, 7]
             total_sent = 0
-            
+
             for days in reminder_days:
                 expiry_date = today + timedelta(days=days)
                 expiring_requests = MatchmakingRequest.query.filter(
-                    MatchmakingRequest.status == 'active',
+                    MatchmakingRequest.status == "active",
                     MatchmakingRequest.end_date >= today,
                     MatchmakingRequest.end_date <= expiry_date,
-                    MatchmakingRequest.payment_status == 'paid'
+                    MatchmakingRequest.payment_status == "paid",
                 ).all()
-                
+
                 for request in expiring_requests:
                     user = request.user
                     if user and user.email:
                         EmailService.send_matchmaking_expiry_reminder(user, request)
                         total_sent += 1
-                    
-            current_app.logger.info(f"✅ Expiry reminder check completed. Sent {total_sent} reminders")
+
+            current_app.logger.info(
+                f"✅ Expiry reminder check completed. Sent {total_sent} reminders"
+            )
             return True
-            
+
         except Exception as e:
             current_app.logger.error(f"❌ Error checking expiry reminders: {str(e)}")
             return False
 
     # HTML TEMPLATE METHODS
     @staticmethod
-    def _get_matchmaking_success_html(user, transaction, matchmaking_request, package, expiry_date, duration_days):
+    def _get_matchmaking_success_html(
+        user, transaction, matchmaking_request, package, expiry_date, duration_days
+    ):
         """Generate HTML for matchmaking success email"""
         return f"""
         <!DOCTYPE html>
@@ -252,7 +298,9 @@ class EmailService:
         """
 
     @staticmethod
-    def _get_matchmaking_failed_html(user, package, transaction, error_message, matchmaking_request):
+    def _get_matchmaking_failed_html(
+        user, package, transaction, error_message, matchmaking_request
+    ):
         """Generate HTML for matchmaking failed payment email"""
         return f"""
         <!DOCTYPE html>
@@ -304,7 +352,9 @@ class EmailService:
         """
 
     @staticmethod
-    def _get_matchmaking_expiry_html(user, matchmaking_request, days_remaining, package_name):
+    def _get_matchmaking_expiry_html(
+        user, matchmaking_request, days_remaining, package_name
+    ):
         """Generate HTML for matchmaking expiry reminder email"""
         urgent_html = ""
         if days_remaining <= 3:
@@ -314,7 +364,7 @@ class EmailService:
                 <p style="margin-bottom: 0; color: #856404;">Your request expires soon! Consider extending your package to continue receiving matches.</p>
             </div>
             """
-        
+
         return f"""
         <!DOCTYPE html>
         <html>
@@ -374,14 +424,16 @@ class EmailService:
             msg = Message(
                 subject=subject,
                 sender=current_app.config["MAIL_DEFAULT_SENDER"],
-                recipients=[user.email]
+                recipients=[user.email],
             )
-            
+
             msg.html = render_template(f"{template}", user=user, **kwargs)
             mail.send(msg)
             current_app.logger.info(f"✅ Notification email sent to {user.email}")
             return True
-            
+
         except Exception as e:
-            current_app.logger.error(f"❌ Failed to send notification email to {user.email}: {str(e)}")
+            current_app.logger.error(
+                f"❌ Failed to send notification email to {user.email}: {str(e)}"
+            )
             return False

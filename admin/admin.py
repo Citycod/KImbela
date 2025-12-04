@@ -13,7 +13,16 @@ from flask import (
 from flask_wtf.csrf import generate_csrf
 import uuid
 from io import BytesIO
-from models import User, Group, ReportedContent, Post, Comment, SponsoredAd, AdCampaign, AdPackage
+from models import (
+    User,
+    Group,
+    ReportedContent,
+    Post,
+    Comment,
+    SponsoredAd,
+    AdCampaign,
+    AdPackage,
+)
 
 # from sendgrid import SendGridAPIClient
 # from sendgrid.helpers.mail import Mail, Content
@@ -79,7 +88,6 @@ env_path = os.path.join(os.path.dirname(__file__), ".env")
 load_dotenv(dotenv_path=env_path)
 
 
-
 cloudinary.config(
     cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
     api_key=os.getenv("CLOUDINARY_API_KEY"),
@@ -91,32 +99,26 @@ cloudinary.config(
 admin = Blueprint("admin", __name__)
 
 
-
-
 def allowed_file(filename):
     """Check if file extension is allowed"""
     allowed_extensions = {"png", "jpg", "jpeg", "gif", "mp4", "mov", "avi"}
     return "." in filename and filename.rsplit(".", 1)[1].lower() in allowed_extensions
 
 
-
-
-
 # Add this function to create a timeago filter
 def timeago_filter(dt):
     if dt is None:
         return "Never"
-    
+
     # Make sure dt is a datetime object
     if isinstance(dt, str):
         try:
-            dt = datetime.fromisoformat(dt.replace('Z', '+00:00'))
+            dt = datetime.fromisoformat(dt.replace("Z", "+00:00"))
         except:
             return "Unknown"
-    
+
     now = datetime.utcnow()
     return humanize.naturaltime(now - dt)
-
 
 
 def is_strong_password(password):
@@ -139,10 +141,6 @@ def calculate_age(birth_date):
     if (today.month, today.day) < (birth_date.month, birth_date.day):
         age -= 1
     return age
-
-
-
-
 
 
 @admin.route("/admin_dashboard")
@@ -807,5 +805,3 @@ def admin_users():
     return render_template(
         "admin_dashboard.html", users=users, search=search, status_filter=status_filter
     )
-
-

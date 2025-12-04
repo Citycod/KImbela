@@ -103,32 +103,27 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
-MAIL_USERNAME=os.getenv("MAIL_USERNAME")
-MAIL_PASSWORD=os.getenv("MAIL_PASSWORD")
-MAIL_PORT=os.getenv("MAIL_PORT")
-MAIL_SERVER=os.getenv("MAIL_SERVER")
-MAIL_DEFAULT_SENDER=os.getenv("MAIL_DEFAULT_SENDER")
-
-
-
-
+MAIL_USERNAME = os.getenv("MAIL_USERNAME")
+MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
+MAIL_PORT = os.getenv("MAIL_PORT")
+MAIL_SERVER = os.getenv("MAIL_SERVER")
+MAIL_DEFAULT_SENDER = os.getenv("MAIL_DEFAULT_SENDER")
 
 
 # Add this function to create a timeago filter
 def timeago_filter(dt):
     if dt is None:
         return "Never"
-    
+
     # Make sure dt is a datetime object
     if isinstance(dt, str):
         try:
-            dt = datetime.fromisoformat(dt.replace('Z', '+00:00'))
+            dt = datetime.fromisoformat(dt.replace("Z", "+00:00"))
         except:
             return "Unknown"
-    
+
     now = datetime.utcnow()
     return humanize.naturaltime(now - dt)
-
 
 
 def is_strong_password(password):
@@ -153,21 +148,18 @@ def calculate_age(birth_date):
     return age
 
 
-
-
-
-
-
 @auth.route("/test-email", methods=["GET", "POST"])
 def test_email():
     """Test email functionality with local debug server"""
     if request.method == "POST":
         test_email = request.form.get("test_email", "").strip() or "test@example.com"
-        
+
         try:
             print(f"\n📧 Attempting to send test email to: {test_email}")
-            print(f"🔧 Using: {current_app.config['MAIL_SERVER']}:{current_app.config['MAIL_PORT']}")
-            
+            print(
+                f"🔧 Using: {current_app.config['MAIL_SERVER']}:{current_app.config['MAIL_PORT']}"
+            )
+
             # Create test email
             msg = Message(
                 subject="🎉 Kimbela Email Test - SUCCESS!",
@@ -192,9 +184,9 @@ Next steps:
 
 Cheers,
 Kimbela Team
-"""
+""",
             )
-            
+
             # Add HTML version too
             msg.html = f"""
             <!DOCTYPE html>
@@ -224,27 +216,26 @@ Kimbela Team
             </body>
             </html>
             """
-            
+
             mail.send(msg)
-            
-            success_msg = f"✅ Test email processed successfully! Check your terminal for output."
+
+            success_msg = (
+                f"✅ Test email processed successfully! Check your terminal for output."
+            )
             flash(success_msg, "success")
             flash("📧 Email content displayed in terminal (not actually sent)", "info")
-            
+
         except Exception as e:
             error_msg = f"❌ Email processing failed: {str(e)}"
             print(f"ERROR: {e}")
             flash(error_msg, "danger")
-            
+
             # Additional troubleshooting help
             flash("💡 Make sure the local SMTP server is running on port 1025", "info")
-        
+
         return render_template("test_email.html")
-    
+
     return render_template("test_email.html")
-
-
-
 
 
 @auth.route("/register", methods=["GET", "POST"])
@@ -262,7 +253,7 @@ def register():
         "PhD or Doctorate",
         "Professional Degree",
         "No Formal Education",
-        "Other"
+        "Other",
     ]
 
     INTERESTS_LIST = [
@@ -627,16 +618,17 @@ def verify_page():
                 sender=current_app.config["MAIL_DEFAULT_SENDER"],
                 recipients=[email],
             )
-            msg.html = render_template(
-                "welcome_email.html", user=user
-            )
+            msg.html = render_template("welcome_email.html", user=user)
             mail.send(msg)
             print(f"Welcome email sent to {email}")
         except Exception as e:
             print(f"Welcome email send failed: {e}")
             # Don't flash error to user since verification was successful
 
-        flash("Email verified! Welcome to Kimbela! Check your email for a welcome message.", "success")
+        flash(
+            "Email verified! Welcome to Kimbela! Check your email for a welcome message.",
+            "success",
+        )
         return redirect(url_for("auth.login"))
 
     # GET – show the form
@@ -660,9 +652,7 @@ def resend_verification():
         sender=current_app.config["MAIL_DEFAULT_SENDER"],
         recipients=[email],
     )
-    msg.html = render_template(
-        "verify.html", user=user, verify_url=verify_url
-    )
+    msg.html = render_template("verify.html", user=user, verify_url=verify_url)
     mail.send(msg)
 
     flash("A new token has been sent to your email.", "success")
@@ -725,29 +715,28 @@ def login():
     return render_template("login.html")
 
 
-
 @auth.route("/forgot-password", methods=["GET", "POST"])
 @limiter.limit("5 per minute")
 def forgot_password():
     if request.method == "POST":
         email = request.form.get("email", "").strip().lower()
-        
+
         if not email:
             flash("Please enter your email address.", "danger")
             return render_template("forgot_password.html")
-        
+
         if not re.match(r"^[^@]+@[^@]+\.[^@]+$", email):
             flash("Please enter a valid email address.", "danger")
             return render_template("forgot_password.html")
-        
+
         user = User.query.filter_by(email=email, is_active=True).first()
-        
+
         # Always show success message even if email doesn't exist (for security)
         if user:
             # Generate reset token
             reset_token = user.generate_password_reset_token()
             db.session.commit()
-            
+
             # Send reset email
             try:
                 msg = Message(
@@ -756,10 +745,12 @@ def forgot_password():
                     recipients=[email],
                 )
                 msg.html = render_template(
-                    "password_reset_email.html", 
-                    user=user, 
+                    "password_reset_email.html",
+                    user=user,
                     reset_token=reset_token,
-                    reset_url=url_for('auth.reset_password', token=reset_token, _external=True)
+                    reset_url=url_for(
+                        "auth.reset_password", token=reset_token, _external=True
+                    ),
                 )
                 mail.send(msg)
                 print(f"Password reset email sent to {email}")
@@ -767,11 +758,15 @@ def forgot_password():
                 print(f"Password reset email failed: {e}")
                 flash("Failed to send reset email. Please try again later.", "danger")
                 return render_template("forgot_password.html")
-        
-        flash("If that email exists in our system, we've sent password reset instructions.", "success")
+
+        flash(
+            "If that email exists in our system, we've sent password reset instructions.",
+            "success",
+        )
         return redirect(url_for("auth.login"))
-    
+
     return render_template("forgot_password.html")
+
 
 @auth.route("/reset-password/<token>", methods=["GET", "POST"])
 @limiter.limit("5 per minute")
@@ -779,36 +774,41 @@ def reset_password(token):
     # Verify token
     user = User.verify_password_reset_token(token)
     if not user:
-        flash("Invalid or expired reset token. Please request a new password reset.", "danger")
+        flash(
+            "Invalid or expired reset token. Please request a new password reset.",
+            "danger",
+        )
         return redirect(url_for("auth.forgot_password"))
-    
+
     if request.method == "POST":
         password = request.form.get("password")
         confirm_password = request.form.get("confirm_password")
-        
+
         errors = {}
-        
+
         if not password:
             errors["password"] = "Password is required."
         elif not is_strong_password(password):
-            errors["password"] = "Password must be at least 8 characters with uppercase, lowercase, number, and symbol."
-        
+            errors["password"] = (
+                "Password must be at least 8 characters with uppercase, lowercase, number, and symbol."
+            )
+
         if not confirm_password:
             errors["confirm_password"] = "Please confirm your password."
         elif password != confirm_password:
             errors["confirm_password"] = "Passwords do not match."
-        
+
         if errors:
             for field, error in errors.items():
                 flash(error, "danger")
             return render_template("reset_password.html", token=token)
-        
+
         # Update password
         user.set_password(password)
         user.password_reset_token = None
         user.password_reset_expires = None
         db.session.commit()
-        
+
         # Send confirmation email
         try:
             msg = Message(
@@ -820,8 +820,11 @@ def reset_password(token):
             mail.send(msg)
         except Exception as e:
             print(f"Password reset confirmation email failed: {e}")
-        
-        flash("Your password has been reset successfully! You can now login with your new password.", "success")
+
+        flash(
+            "Your password has been reset successfully! You can now login with your new password.",
+            "success",
+        )
         return redirect(url_for("auth.login"))
-    
+
     return render_template("reset_password.html", token=token)

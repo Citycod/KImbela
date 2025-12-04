@@ -44,19 +44,43 @@ except ImportError as e:
 fake = Faker(["en_US", "en_GB"])
 
 CITIES = [
-    "Lagos", "Abuja", "Port Harcourt", "Kano", "Ibadan", 
-    "London", "Toronto", "Berlin", "New York", "Sydney"
+    "Lagos",
+    "Abuja",
+    "Port Harcourt",
+    "Kano",
+    "Ibadan",
+    "London",
+    "Toronto",
+    "Berlin",
+    "New York",
+    "Sydney",
 ]
 COUNTRIES = ["Nigeria", "United States", "United Kingdom", "Canada", "Germany"]
 RELIGIONS = ["Christianity", "Islam", "Atheism", "Traditional", "Other"]
 ETHNICITIES = [
-    "Yoruba", "Igbo", "Hausa", "Efik", "Tiv", 
-    "English", "German", "Canadian", "American"
+    "Yoruba",
+    "Igbo",
+    "Hausa",
+    "Efik",
+    "Tiv",
+    "English",
+    "German",
+    "Canadian",
+    "American",
 ]
 OCCUPATIONS = [
-    "Software Engineer", "Graphic Designer", "Teacher", "Doctor", "Nurse",
-    "Photographer", "Lawyer", "Architect", "Civil Engineer", "Marketing Specialist",
-    "Entrepreneur", "Chef"
+    "Software Engineer",
+    "Graphic Designer",
+    "Teacher",
+    "Doctor",
+    "Nurse",
+    "Photographer",
+    "Lawyer",
+    "Architect",
+    "Civil Engineer",
+    "Marketing Specialist",
+    "Entrepreneur",
+    "Chef",
 ]
 EDUCATION_LEVELS = ["High School", "Diploma", "B.Sc", "M.Sc", "PhD"]
 INTERESTS = [
@@ -131,12 +155,43 @@ POST_TEMPLATES = [
 ]
 
 FOODS = [
-    "jollof rice", "suya", "egusi soup", "pounded yam", 
-    "lasagna", "sushi", "pizza", "shawarma", "barbecue"
+    "jollof rice",
+    "suya",
+    "egusi soup",
+    "pounded yam",
+    "lasagna",
+    "sushi",
+    "pizza",
+    "shawarma",
+    "barbecue",
 ]
-BOOKS = ["Atomic Habits", "Sapiens", "The Alchemist", "Things Fall Apart", "1984", "The Power of Now"]
-HOBBIES = ["photography", "dancing", "coding", "cooking", "reading", "football", "yoga", "painting"]
-ACTIVITIES = ["movie night", "beach day", "owambe", "picnic", "road trip", "game night", "brunch"]
+BOOKS = [
+    "Atomic Habits",
+    "Sapiens",
+    "The Alchemist",
+    "Things Fall Apart",
+    "1984",
+    "The Power of Now",
+]
+HOBBIES = [
+    "photography",
+    "dancing",
+    "coding",
+    "cooking",
+    "reading",
+    "football",
+    "yoga",
+    "painting",
+]
+ACTIVITIES = [
+    "movie night",
+    "beach day",
+    "owambe",
+    "picnic",
+    "road trip",
+    "game night",
+    "brunch",
+]
 
 
 # === Helper Functions ===
@@ -174,7 +229,7 @@ def create_users(n=50):
         last = fake.last_name()
         email = f"{first.lower()}.{last.lower()}{random.randint(10,99)}@example.com"
         gender = random.choice(GENDERS)
-        
+
         user = User(
             first_name=first,
             last_name=last,
@@ -196,7 +251,9 @@ def create_users(n=50):
             religion=random.choice(RELIGIONS),
             occupation=random.choice(OCCUPATIONS),
             educational_level=random.choice(EDUCATION_LEVELS),
-            is_premium=random.choice([True, False, False, False]),  # ~25% chance premium
+            is_premium=random.choice(
+                [True, False, False, False]
+            ),  # ~25% chance premium
         )
         db.session.add(user)
         users.append(user)
@@ -225,15 +282,15 @@ def create_posts(users, n=50):
             hobby=random.choice(HOBBIES),
             activity=random.choice(ACTIVITIES),
         )
-        
+
         # 60% chance of having an image, 40% text-only
         image = random.choice(POST_IMAGES) if random.random() > 0.4 else None
 
         post = Post(
-            content=content, 
-            image=image, 
+            content=content,
+            image=image,
             author_id=author.id,
-            created_at=fake.date_time_between(start_date='-30d', end_date='now')
+            created_at=fake.date_time_between(start_date="-30d", end_date="now"),
         )
         db.session.add(post)
         posts.append(post)
@@ -253,12 +310,11 @@ def create_posts(users, n=50):
             if liker.id != post.author_id:
                 db.session.execute(
                     db.insert(Like).values(
-                        user_id=liker.id, 
+                        user_id=liker.id,
                         post_id=post.id,
                         created_at=fake.date_time_between_dates(
-                            datetime_start=post.created_at, 
-                            datetime_end='now'
-                        )
+                            datetime_start=post.created_at, datetime_end="now"
+                        ),
                     )
                 )
     db.session.commit()
@@ -275,15 +331,14 @@ def create_posts(users, n=50):
         "Love this perspective!",
         "Well said! 💯",
         "This made my day! 😄",
-        "Inspiring content! 🌟"
+        "Inspiring content! 🌟",
     ]
-    
+
     for post in posts:
         # 80% chance of having comments
         if random.random() > 0.2:
             commenters = random.sample(
-                [u for u in users if u.id != post.author_id], 
-                k=random.randint(1, 8)
+                [u for u in users if u.id != post.author_id], k=random.randint(1, 8)
             )
             for commenter in commenters:
                 comment = Comment(
@@ -291,12 +346,11 @@ def create_posts(users, n=50):
                     author_id=commenter.id,
                     post_id=post.id,
                     created_at=fake.date_time_between_dates(
-                        datetime_start=post.created_at, 
-                        datetime_end='now'
-                    )
+                        datetime_start=post.created_at, datetime_end="now"
+                    ),
                 )
                 db.session.add(comment)
-    
+
     db.session.commit()
     print("✅ Likes and comments added.")
     return posts
@@ -317,38 +371,39 @@ if __name__ == "__main__":
         # db.session.query(Post).delete()
         # db.session.query(User).delete()
         # db.session.commit()
-        
+
         users = create_users(50)
         posts = create_posts(users, 50)
 
         print("\n🎉 SEEDING COMPLETE!")
         print(f"Total Users: {len(users)}")
         print(f"Total Posts: {len(posts)}")
-        
+
         # Count likes and comments
         total_likes = db.session.query(Like).count()
         total_comments = db.session.query(Comment).count()
         print(f"Total Likes: {total_likes}")
         print(f"Total Comments: {total_comments}")
-        
+
         print("\n📧 Example Login Credentials:")
         for i in range(3):
             print(f"   {i+1}. Email: {users[i].email} | Password: SecurePass123!")
-        
+
         print("\n🔍 Sample Data Preview:")
         sample_user = users[0]
         print(f"   User: {sample_user.first_name} {sample_user.last_name}")
         print(f"   Profile Pic: {sample_user.profile_pic}")
         print(f"   Cover Pic: {sample_user.cover_pic}")
-        
+
         sample_post = next((p for p in posts if p.image), None)
         if sample_post:
             print(f"   Sample Post with Image: {sample_post.image}")
-        
+
         print("=" * 50)
 
     except Exception as e:
         print(f"\n❌ SEEDING FAILED: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

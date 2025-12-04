@@ -10,7 +10,13 @@ from flask import (
     current_app,
 )
 
-from models import MatchmakingPackage, MatchmakingRequest, MatchmakingLike, MatchmakingView, User
+from models import (
+    MatchmakingPackage,
+    MatchmakingRequest,
+    MatchmakingLike,
+    MatchmakingView,
+    User,
+)
 
 
 from datetime import datetime
@@ -33,8 +39,10 @@ from werkzeug.utils import secure_filename
 
 import cloudinary.uploader
 import cloudinary.utils
-from scheduler import manual_trigger_matchmaking_expiry_check, manual_trigger_expired_matchmaking_check
-
+from scheduler import (
+    manual_trigger_matchmaking_expiry_check,
+    manual_trigger_expired_matchmaking_check,
+)
 
 
 from flask import (
@@ -106,30 +114,20 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
-
-
-
-
-
-
-
-
-
 # Add this function to create a timeago filter
 def timeago_filter(dt):
     if dt is None:
         return "Never"
-    
+
     # Make sure dt is a datetime object
     if isinstance(dt, str):
         try:
-            dt = datetime.fromisoformat(dt.replace('Z', '+00:00'))
+            dt = datetime.fromisoformat(dt.replace("Z", "+00:00"))
         except:
             return "Unknown"
-    
+
     now = datetime.utcnow()
     return humanize.naturaltime(now - dt)
-
 
 
 def is_strong_password(password):
@@ -172,46 +170,44 @@ def timeago(dt):
     return f"{mins}m ago" if mins > 0 else "just now"
 
     app.jinja_env.filters["timeago"] = timeago
-    
-    
-    
-    
+
+
 # Run this once to create sample packages
 def create_sample_packages():
     packages = [
         MatchmakingPackage(
-            name='Basic',
-            description='Perfect for casual matchmaking',
+            name="Basic",
+            description="Perfect for casual matchmaking",
             price=9.99,
             duration_days=7,
-            features='Basic Profile Listing,7 Days Duration,Basic Matching,Limited Visibility'
+            features="Basic Profile Listing,7 Days Duration,Basic Matching,Limited Visibility",
         ),
         MatchmakingPackage(
-            name='Standard',
-            description='Great for serious connections',
+            name="Standard",
+            description="Great for serious connections",
             price=24.99,
             duration_days=14,
-            features='Enhanced Profile Listing,14 Days Duration,Advanced Matching,Priority Placement,Message Responses'
+            features="Enhanced Profile Listing,14 Days Duration,Advanced Matching,Priority Placement,Message Responses",
         ),
         MatchmakingPackage(
-            name='Premium',
-            description='Maximum visibility and matches',
+            name="Premium",
+            description="Maximum visibility and matches",
             price=49.99,
             duration_days=30,
-            features='Premium Profile Listing,30 Days Duration,Advanced Matching,Top Placement,Unlimited Messages,Personal Matchmaker'
+            features="Premium Profile Listing,30 Days Duration,Advanced Matching,Top Placement,Unlimited Messages,Personal Matchmaker",
         ),
         MatchmakingPackage(
-            name='Elite',
-            description='For exclusive matchmaking',
+            name="Elite",
+            description="For exclusive matchmaking",
             price=99.99,
             duration_days=60,
-            features='Elite Profile Listing,60 Days Duration,VIP Matching,Featured Placement,Unlimited Messages,Dedicated Matchmaker,Background Verification'
-        )
+            features="Elite Profile Listing,60 Days Duration,VIP Matching,Featured Placement,Unlimited Messages,Dedicated Matchmaker,Background Verification",
+        ),
     ]
-    
+
     for package in packages:
         db.session.add(package)
-    
+
     db.session.commit()
 
 
@@ -306,7 +302,6 @@ def user_dashboard():
     )
 
 
-
 @user.route("/like_post/<int:post_id>", methods=["POST"])
 @login_required
 def like_post(post_id):
@@ -336,8 +331,6 @@ def like_post(post_id):
     db.session.commit()
     like_count = Like.query.filter_by(post_id=post_id).count()
     return jsonify(likes=like_count, liked=liked)
-
-
 
 
 # Delete Post
@@ -396,8 +389,6 @@ def add_comment(post_id):
         or url_for("static", filename="assets/img/default-avatar.png"),
         content=content,
     )
-
-
 
 
 @user.route("/get_comments/<int:post_id>")
@@ -852,18 +843,19 @@ def privacy():
     return render_template("privacy.html")
 
 
-
-
-
 @user.route("/get_user_groups")
 @login_required
 def get_user_groups():
     """Get all groups for the dropdown with membership status"""
     try:
-        print(f"🔍 DEBUG: Fetching ALL groups for user: {current_user.id} ({current_user.email})")
+        print(
+            f"🔍 DEBUG: Fetching ALL groups for user: {current_user.id} ({current_user.email})"
+        )
 
         # Get all active groups
-        all_groups = Group.query.filter_by(is_active=True).order_by(Group.name.asc()).all()
+        all_groups = (
+            Group.query.filter_by(is_active=True).order_by(Group.name.asc()).all()
+        )
         print(f"🔍 DEBUG: Found {len(all_groups)} total active groups")
 
         groups_data = []
@@ -871,13 +863,16 @@ def get_user_groups():
             # Check membership using the relationship
             is_member = group.members.filter_by(id=current_user.id).first() is not None
 
-            print(f"🔍 DEBUG: Group '{group.name}' (ID: {group.id}) with {group.member_count} members. User is member: {is_member}")
+            print(
+                f"🔍 DEBUG: Group '{group.name}' (ID: {group.id}) with {group.member_count} members. User is member: {is_member}"
+            )
 
             groups_data.append(
                 {
                     "id": group.id,
                     "name": group.name,
-                    "cover_pic": group.image or "https://via.placeholder.com/100x100/3B82F6/FFFFFF?text=Group",
+                    "cover_pic": group.image
+                    or "https://via.placeholder.com/100x100/3B82F6/FFFFFF?text=Group",
                     "member_count": group.member_count,
                     "is_member": is_member,
                     "unread_count": 0,
@@ -890,6 +885,7 @@ def get_user_groups():
     except Exception as e:
         print(f"❌ ERROR in get_user_groups: {str(e)}")
         import traceback
+
         traceback.print_exc()
         return jsonify([])
 
@@ -910,7 +906,8 @@ def user_groups():
                 {
                     "id": group.id,
                     "name": group.name,
-                    "image": group.image or "https://images.unsplash.com/photo-1611262588024-d12430b98920?w=100&h=100&fit=crop",
+                    "image": group.image
+                    or "https://images.unsplash.com/photo-1611262588024-d12430b98920?w=100&h=100&fit=crop",
                     "member_count": group.member_count,
                     "is_member": True,
                 }
@@ -920,7 +917,6 @@ def user_groups():
     except Exception as e:
         print(f"Error in user_groups: {e}")
         return jsonify([])
-
 
 
 @user.route("/groups/all")
@@ -935,8 +931,7 @@ def all_groups():
     if search:
         query = query.filter(
             db.or_(
-                Group.name.ilike(f"%{search}%"),
-                Group.description.ilike(f"%{search}%")
+                Group.name.ilike(f"%{search}%"), Group.description.ilike(f"%{search}%")
             )
         )
 
@@ -956,13 +951,12 @@ def all_groups():
                 "is_private": group.is_private,
                 "member_count": group.member_count,
                 "created_at": group.created_at.isoformat(),
-                "is_member": group.members.filter_by(id=current_user.id).first() is not None,  # Proper membership check
+                "is_member": group.members.filter_by(id=current_user.id).first()
+                is not None,  # Proper membership check
             }
             for group in groups
         ]
     )
-
-
 
 
 @user.route("/groups/<int:group_id>")
@@ -970,21 +964,22 @@ def all_groups():
 def group_page(group_id):
     """Get group page HTML"""
     group = Group.query.get_or_404(group_id)
-    
+
     # Check membership properly
     is_member = group.members.filter_by(id=current_user.id).first() is not None
-    
-    default_avatar = url_for('static', filename='assets/img/default-avatar.png')
+
+    default_avatar = url_for("static", filename="assets/img/default-avatar.png")
 
     # Get group posts
-    posts = Post.query.filter_by(group_id=group_id)\
+    posts = (
+        Post.query.filter_by(group_id=group_id)
         .options(
             db.joinedload(Post.author),
-            db.joinedload(Post.comments).joinedload(Comment.author)
-        )\
-        .order_by(Post.created_at.desc())\
+            db.joinedload(Post.comments).joinedload(Comment.author),
+        )
+        .order_by(Post.created_at.desc())
         .all()
-    
+    )
 
     return render_template(
         "group_detail.html",
@@ -992,10 +987,8 @@ def group_page(group_id):
         is_member=is_member,
         posts=posts,
         current_user=current_user,
-        default_avatar=default_avatar
+        default_avatar=default_avatar,
     )
-
-
 
 
 @user.route("/comments/<int:comment_id>/report", methods=["POST"])
@@ -1025,30 +1018,32 @@ def report_comment(comment_id):
     return jsonify({"success": True})
 
 
-
-
 # Add these routes to your auth blueprint
 
-@user.route('/groups')
+
+@user.route("/groups")
 @login_required
 def groups_page():
     """Main groups discovery page"""
-    return render_template('groups.html')
+    return render_template("groups.html")
 
-@user.route('/groups/<int:group_id>')
+
+@user.route("/groups/<int:group_id>")
 @login_required
 def group_detail(group_id):
     """Individual group page with posts and interactions"""
     group = Group.query.get_or_404(group_id)
     is_member = current_user in group.members
-    
-    default_avatar = url_for('static', filename='assets/img/default-avatar.png')
-    
+
+    default_avatar = url_for("static", filename="assets/img/default-avatar.png")
+
     # Get posts for this group
-    posts = Post.query.filter_by(group_id=group_id).order_by(Post.created_at.desc()).all()
-    
+    posts = (
+        Post.query.filter_by(group_id=group_id).order_by(Post.created_at.desc()).all()
+    )
+
     return render_template(
-        'group_detail.html',
+        "group_detail.html",
         group=group,
         is_member=is_member,
         posts=posts,
@@ -1056,19 +1051,20 @@ def group_detail(group_id):
         default_avatar=default_avatar,
     )
 
-@user.route("/groups/create", methods=['GET', 'POST'])
+
+@user.route("/groups/create", methods=["GET", "POST"])
 @login_required
 def create_group():
     """Create a new group"""
-    if request.method == 'POST':
+    if request.method == "POST":
         try:
-            name = request.form.get('name', '').strip()
-            description = request.form.get('description', '').strip()
-            category = request.form.get('category', 'social')
-            is_private = request.form.get('is_private') == 'true'
+            name = request.form.get("name", "").strip()
+            description = request.form.get("description", "").strip()
+            category = request.form.get("category", "social")
+            is_private = request.form.get("is_private") == "true"
 
             if not name:
-                return jsonify({'success': False, 'error': 'Group name is required'})
+                return jsonify({"success": False, "error": "Group name is required"})
 
             group = Group(
                 name=name,
@@ -1076,123 +1072,113 @@ def create_group():
                 category=category,
                 is_private=is_private,
                 created_by=current_user.id,
-                member_count=1
+                member_count=1,
             )
 
             # Handle group image
-            if 'image' in request.files:
-                file = request.files['image']
+            if "image" in request.files:
+                file = request.files["image"]
                 if file and file.filename and allowed_file(file.filename):
                     try:
                         result = cloudinary.uploader.upload(
                             file,
-                            folder='kimbela/groups',
+                            folder="kimbela/groups",
                             transformation=[
-                                {'width': 800, 'height': 600, 'crop': 'limit'},
-                                {'quality': 'auto', 'fetch_format': 'auto'},
+                                {"width": 800, "height": 600, "crop": "limit"},
+                                {"quality": "auto", "fetch_format": "auto"},
                             ],
                         )
-                        group.image = result['secure_url']
+                        group.image = result["secure_url"]
                     except Exception as e:
-                        print('Group image upload failed:', e)
+                        print("Group image upload failed:", e)
 
             db.session.add(group)
-            
+
             # Add creator as first member
             group.members.append(current_user)
             db.session.commit()
 
-            return jsonify({'success': True, 'group_id': group.id})
+            return jsonify({"success": True, "group_id": group.id})
 
         except Exception as e:
             db.session.rollback()
-            print('Create group error:', e)
-            return jsonify({'success': False, 'error': 'Failed to create group'})
+            print("Create group error:", e)
+            return jsonify({"success": False, "error": "Failed to create group"})
 
-    return render_template('create_group.html')
-
-
+    return render_template("create_group.html")
 
 
-
-@user.route("/groups/<int:group_id>/join", methods=['POST'])
+@user.route("/groups/<int:group_id>/join", methods=["POST"])
 @login_required
 def join_group(group_id):
     """Join a group"""
     group = Group.query.get_or_404(group_id)
-    
+
     if current_user in group.members.all():  # Use .all() to check membership
-        return jsonify({'success': False, 'error': 'Already a member'})
+        return jsonify({"success": False, "error": "Already a member"})
 
     group.members.append(current_user)
     group.member_count = group.members.count()  # Use .count() instead of len()
     db.session.commit()
 
-    return jsonify({'success': True})
-
-
-
+    return jsonify({"success": True})
 
 
 # Fix the leave_group rout
-@user.route("/groups/<int:group_id>/leave", methods=['POST'])
+@user.route("/groups/<int:group_id>/leave", methods=["POST"])
 @login_required
 def leave_group(group_id):
     """Leave a group"""
     group = Group.query.get_or_404(group_id)
-    
+
     if current_user not in group.members.all():  # Use .all() to check membership
-        return jsonify({'success': False, 'error': 'Not a member'})
+        return jsonify({"success": False, "error": "Not a member"})
 
     group.members.remove(current_user)
     group.member_count = group.members.count()  # Use .count() instead of len()
     db.session.commit()
 
-    return jsonify({'success': True})
+    return jsonify({"success": True})
 
 
-
-
-
-
-@user.route('/groups/<int:group_id>/post', methods=['POST'])
+@user.route("/groups/<int:group_id>/post", methods=["POST"])
 @login_required
 def create_group_post(group_id):
     """Create a post in a group"""
     group = Group.query.get_or_404(group_id)
-    
-    if current_user not in group.members:
-        return jsonify({'success': False, 'error': 'Must be a member to post'})
 
-    post_content = request.form.get('post_content', '').strip()
-    media_file = request.files.get('media')
+    if current_user not in group.members:
+        return jsonify({"success": False, "error": "Must be a member to post"})
+
+    post_content = request.form.get("post_content", "").strip()
+    media_file = request.files.get("media")
 
     if not post_content and not (media_file and media_file.filename):
-        return jsonify({'success': False, 'error': 'Post content or media is required'})
+        return jsonify({"success": False, "error": "Post content or media is required"})
 
     try:
         image_url = None
         video_url = None
 
         if media_file and media_file.filename and allowed_file(media_file.filename):
-            resource_type = 'auto'
-            if media_file.content_type.startswith('video'):
-                resource_type = 'video'
+            resource_type = "auto"
+            if media_file.content_type.startswith("video"):
+                resource_type = "video"
 
             result = cloudinary.uploader.upload(
                 media_file,
-                folder='kimbela/groups/posts',
+                folder="kimbela/groups/posts",
                 resource_type=resource_type,
                 transformation=[
-                    {'width': 800, 'crop': 'limit'},
-                    {'quality': 'auto', 'fetch_format': 'auto'},
+                    {"width": 800, "crop": "limit"},
+                    {"quality": "auto", "fetch_format": "auto"},
                 ],
             )
 
-            if media_file.content_type.startswith('video'):
-                video_url = result['secure_url']
+            if media_file.content_type.startswith("video"):
+                video_url = result["secure_url"]
             else:
-                image_url = result['secure_url']
+                image_url = result["secure_url"]
 
         post = Post(
             content=post_content,
@@ -1200,363 +1186,353 @@ def create_group_post(group_id):
             video=video_url,
             author_id=current_user.id,
             group_id=group_id,  # Now this will work!
-            created_at=datetime.utcnow()
+            created_at=datetime.utcnow(),
         )
-        
+
         db.session.add(post)
         db.session.commit()
 
-        return jsonify({
-            'success': True, 
-            'post_id': post.id,
-            'message': 'Post created successfully!'
-        })
+        return jsonify(
+            {
+                "success": True,
+                "post_id": post.id,
+                "message": "Post created successfully!",
+            }
+        )
 
     except Exception as e:
         db.session.rollback()
-        print('Group post creation error:', e)
-        return jsonify({'success': False, 'error': 'Failed to create post'})
-    
-    
-    
-    
-    
-    
-    
+        print("Group post creation error:", e)
+        return jsonify({"success": False, "error": "Failed to create post"})
 
-@user.route('/groups/<int:group_id>/posts')
+
+@user.route("/groups/<int:group_id>/posts")
 @login_required
 def get_group_posts(group_id):
     """Get posts for a group with pagination"""
-    page = request.args.get('page', 1, type=int)
+    page = request.args.get("page", 1, type=int)
     per_page = 10
-    
-    posts = Post.query.filter_by(group_id=group_id)\
-        .order_by(Post.created_at.desc())\
+
+    posts = (
+        Post.query.filter_by(group_id=group_id)
+        .order_by(Post.created_at.desc())
         .paginate(page=page, per_page=per_page, error_out=False)
-    
+    )
+
     posts_data = []
     for post in posts.items:
-        posts_data.append({
-            'id': post.id,
-            'content': post.content,
-            'image': post.image,
-            'video': post.video,
-            'created_at': post.created_at.isoformat(),
-            'author': {
-                'id': post.author.id,
-                'name': post.author.full_name,
-                'avatar': post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png')
-            },
-            'likes_count': post.likes.count(),
-            'comments_count': post.comments.count(),
-            'user_has_liked': current_user.has_liked_post(post.id) if current_user.is_authenticated else False
-        })
-    
-    return jsonify({
-        'posts': posts_data,
-        'has_next': posts.has_next,
-        'next_page': posts.next_num if posts.has_next else None     
-    })
-    
-    
-    
-    
-    
+        posts_data.append(
+            {
+                "id": post.id,
+                "content": post.content,
+                "image": post.image,
+                "video": post.video,
+                "created_at": post.created_at.isoformat(),
+                "author": {
+                    "id": post.author.id,
+                    "name": post.author.full_name,
+                    "avatar": post.author.profile_pic
+                    or url_for("static", filename="assets/img/default-avatar.png"),
+                },
+                "likes_count": post.likes.count(),
+                "comments_count": post.comments.count(),
+                "user_has_liked": (
+                    current_user.has_liked_post(post.id)
+                    if current_user.is_authenticated
+                    else False
+                ),
+            }
+        )
 
-@user.route('/report_content', methods=['POST'])
+    return jsonify(
+        {
+            "posts": posts_data,
+            "has_next": posts.has_next,
+            "next_page": posts.next_num if posts.has_next else None,
+        }
+    )
+
+
+@user.route("/report_content", methods=["POST"])
 @login_required
 def report_content():
     """Report a post or comment"""
     data = request.get_json()
-    
-    content_type = data.get('content_type')  # 'post' or 'comment'
-    content_id = data.get('content_id')
-    reason = data.get('reason')
-    additional_info = data.get('additional_info', '')
-    
+
+    content_type = data.get("content_type")  # 'post' or 'comment'
+    content_id = data.get("content_id")
+    reason = data.get("reason")
+    additional_info = data.get("additional_info", "")
+
     if not all([content_type, content_id, reason]):
-        return jsonify({'success': False, 'error': 'Missing required fields'})
-    
+        return jsonify({"success": False, "error": "Missing required fields"})
+
     # Determine the reported user based on content type
     reported_user_id = None
-    if content_type == 'post':
+    if content_type == "post":
         post = Post.query.get(content_id)
         if post:
             reported_user_id = post.author_id
-    elif content_type == 'comment':
+    elif content_type == "comment":
         comment = Comment.query.get(content_id)
         if comment:
             reported_user_id = comment.author_id
-    
+
     report = ReportedContent(
         reporter_id=current_user.id,
         reported_user_id=reported_user_id,
         content_type=content_type,
         content_id=content_id,
         reason=f"{reason}: {additional_info}".strip() if additional_info else reason,
-        status='pending'
+        status="pending",
     )
-    
+
     db.session.add(report)
     db.session.commit()
-    
-    return jsonify({'success': True, 'message': 'Content reported successfully'})
+
+    return jsonify({"success": True, "message": "Content reported successfully"})
 
 
-
-
-
-@user.route('/groups/all')
+@user.route("/groups/all")
 @login_required
 def get_all_groups():
     """API endpoint to get all groups with filtering"""
-    page = request.args.get('page', 1, type=int)
-    search = request.args.get('search', '')
-    category = request.args.get('category', '')
-    privacy = request.args.get('privacy', '')
-    
+    page = request.args.get("page", 1, type=int)
+    search = request.args.get("search", "")
+    category = request.args.get("category", "")
+    privacy = request.args.get("privacy", "")
+
     query = Group.query.filter_by(is_active=True)
-    
+
     if search:
         query = query.filter(
             db.or_(
-                Group.name.ilike(f'%{search}%'),
-                Group.description.ilike(f'%{search}%')
+                Group.name.ilike(f"%{search}%"), Group.description.ilike(f"%{search}%")
             )
         )
-    
-    if category and category != 'all':
+
+    if category and category != "all":
         query = query.filter_by(category=category)
-    
-    if privacy == 'public':
+
+    if privacy == "public":
         query = query.filter_by(is_private=False)
-    elif privacy == 'private':
+    elif privacy == "private":
         query = query.filter_by(is_private=True)
-    
+
     groups = query.order_by(Group.member_count.desc()).paginate(
         page=page, per_page=20, error_out=False
     )
-    
+
     groups_data = []
     for group in groups.items:
-        groups_data.append({
-            'id': group.id,
-            'name': group.name,
-            'description': group.description,
-            'image': group.image,
-            'category': group.category,
-            'is_private': group.is_private,
-            'member_count': group.member_count,
-            'created_at': group.created_at.isoformat(),
-            'is_member': current_user in group.members
-        })
-    
+        groups_data.append(
+            {
+                "id": group.id,
+                "name": group.name,
+                "description": group.description,
+                "image": group.image,
+                "category": group.category,
+                "is_private": group.is_private,
+                "member_count": group.member_count,
+                "created_at": group.created_at.isoformat(),
+                "is_member": current_user in group.members,
+            }
+        )
+
     return jsonify(groups_data)
 
 
-
-
-@user.route('/groups/<int:group_id>/members')
+@user.route("/groups/<int:group_id>/members")
 @login_required
 def get_group_members(group_id):
     """Get group members"""
     group = Group.query.get_or_404(group_id)
-    page = request.args.get('page', 1, type=int)
-    
+    page = request.args.get("page", 1, type=int)
+
     members = group.members.paginate(page=page, per_page=50, error_out=False)
-    
+
     members_data = []
     for member in members.items:
-        members_data.append({
-            'id': member.id,
-            'name': member.full_name,
-            'avatar': member.profile_pic or url_for('static', filename='assets/img/default-avatar.png'),
-            'is_online': member.is_online,
-            'last_seen': member.last_seen.isoformat() if member.last_seen else None
-        })
-    
-    return jsonify({
-        'members': members_data,
-        'has_next': members.has_next,
-        'next_page': members.next_num if members.has_next else None
-    })
-    
-    
-    
+        members_data.append(
+            {
+                "id": member.id,
+                "name": member.full_name,
+                "avatar": member.profile_pic
+                or url_for("static", filename="assets/img/default-avatar.png"),
+                "is_online": member.is_online,
+                "last_seen": member.last_seen.isoformat() if member.last_seen else None,
+            }
+        )
+
+    return jsonify(
+        {
+            "members": members_data,
+            "has_next": members.has_next,
+            "next_page": members.next_num if members.has_next else None,
+        }
+    )
 
 
 # Add these routes to your Flask application
-@user.route('/edit_post/<int:post_id>', methods=['POST'])
+@user.route("/edit_post/<int:post_id>", methods=["POST"])
 @login_required
 def edit_group_post(post_id):
     try:
         post = Post.query.get_or_404(post_id)
-        
+
         # Check if the current user is the author
         if post.author_id != current_user.id:
-            return jsonify({'success': False, 'error': 'Unauthorized'}), 403
-        
-        new_content = request.form.get('post_content')
+            return jsonify({"success": False, "error": "Unauthorized"}), 403
+
+        new_content = request.form.get("post_content")
         if new_content:
             post.content = new_content
             db.session.commit()
-            return jsonify({'success': True})
+            return jsonify({"success": True})
         else:
-            return jsonify({'success': False, 'error': 'Content cannot be empty'})
-            
+            return jsonify({"success": False, "error": "Content cannot be empty"})
+
     except Exception as e:
         db.session.rollback()
-        return jsonify({'success': False, 'error': str(e)}), 500
-    
-    
-    
-    
+        return jsonify({"success": False, "error": str(e)}), 500
 
-@user.route('/delete_post/<int:post_id>', methods=['POST'])
+
+@user.route("/delete_post/<int:post_id>", methods=["POST"])
 @login_required
 def delete_group_post(post_id):
     try:
         post = Post.query.get_or_404(post_id)
-        
+
         # Check if the current user is the author
         if post.author_id != current_user.id:
-            return jsonify({'success': False, 'error': 'Unauthorized'}), 403
-        
+            return jsonify({"success": False, "error": "Unauthorized"}), 403
+
         db.session.delete(post)
         db.session.commit()
-        return jsonify({'success': True})
-        
+        return jsonify({"success": True})
+
     except Exception as e:
         db.session.rollback()
-        return jsonify({'success': False, 'error': str(e)}), 500
-    
-    
-    
-    
-    
-    
+        return jsonify({"success": False, "error": str(e)}), 500
 
-@user.route('/delete_comment/<int:comment_id>', methods=['POST'])
+
+@user.route("/delete_comment/<int:comment_id>", methods=["POST"])
 @login_required
 def delete_group_comment(comment_id):
     try:
         comment = Comment.query.get_or_404(comment_id)
-        
+
         # Check if the current user is the author
         if comment.author_id != current_user.id:
-            return jsonify({'success': False, 'error': 'Unauthorized'}), 403
-        
+            return jsonify({"success": False, "error": "Unauthorized"}), 403
+
         db.session.delete(comment)
         db.session.commit()
-        return jsonify({'success': True})
-        
+        return jsonify({"success": True})
+
     except Exception as e:
         db.session.rollback()
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
 
-@user.route('/get_comments/<int:post_id>')
+
+@user.route("/get_comments/<int:post_id>")
 @login_required
 def get_group_comments(post_id):
     try:
         post = Post.query.get_or_404(post_id)
         comments = []
-        
+
         for comment in post.comments_list:
-            comments.append({
-                'id': comment.id,
-                'content': comment.content,
-                'author_name': comment.author.full_name,
-                'author_id': comment.author_id,
-                'avatar': comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png'),
-                'created_at': comment.created_at.strftime('%I:%M %p')
-            })
-        
-        return jsonify({'comments': comments})
-        
+            comments.append(
+                {
+                    "id": comment.id,
+                    "content": comment.content,
+                    "author_name": comment.author.full_name,
+                    "author_id": comment.author_id,
+                    "avatar": comment.author.profile_pic
+                    or url_for("static", filename="assets/img/default-avatar.png"),
+                    "created_at": comment.created_at.strftime("%I:%M %p"),
+                }
+            )
+
+        return jsonify({"comments": comments})
+
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
-    
-    
+        return jsonify({"error": str(e)}), 500
 
 
-@user.route('/like_post/<int:post_id>', methods=['POST'])
+@user.route("/like_post/<int:post_id>", methods=["POST"])
 @login_required
 def like_group_post(post_id):
     try:
         post = Post.query.get_or_404(post_id)
         liked = post.toggle_like(current_user.id)
         db.session.commit()
-        
-        return jsonify({
-            'success': True,
-            'liked': liked,
-            'like_count': len(post.likes_list)
-        })
+
+        return jsonify(
+            {"success": True, "liked": liked, "like_count": len(post.likes_list)}
+        )
     except Exception as e:
         db.session.rollback()
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
 
-@user.route('/add_comment/<int:post_id>', methods=['POST'])
+
+@user.route("/add_comment/<int:post_id>", methods=["POST"])
 @login_required
 def add_group_comment(post_id):
     try:
         data = request.get_json()
-        content = data.get('content', '').strip()
-        
+        content = data.get("content", "").strip()
+
         if not content:
-            return jsonify({'success': False, 'error': 'Comment cannot be empty'})
-        
-        comment = Comment(
-            content=content,
-            author_id=current_user.id,
-            post_id=post_id
-        )
-        
+            return jsonify({"success": False, "error": "Comment cannot be empty"})
+
+        comment = Comment(content=content, author_id=current_user.id, post_id=post_id)
+
         db.session.add(comment)
         db.session.commit()
-        
-        return jsonify({
-            'success': True,
-            'comment': {
-                'id': comment.id,
-                'content': comment.content,
-                'author_name': current_user.full_name,
-                'author_avatar': current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png'),
-                'created_at': 'Just now'
+
+        return jsonify(
+            {
+                "success": True,
+                "comment": {
+                    "id": comment.id,
+                    "content": comment.content,
+                    "author_name": current_user.full_name,
+                    "author_avatar": current_user.profile_pic
+                    or url_for("static", filename="assets/img/default-avatar.png"),
+                    "created_at": "Just now",
+                },
             }
-        })
+        )
     except Exception as e:
         db.session.rollback()
-        return jsonify({'success': False, 'error': str(e)}), 500
-    
-    
-    
-    
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 from models import Reaction
-    
-    
-@user.route('/react_post/<int:post_id>', methods=['POST'])
+
+
+@user.route("/react_post/<int:post_id>", methods=["POST"])
 @login_required
 def react_to_post(post_id):
     """Handle post reactions"""
     try:
         data = request.get_json()
-        reaction_type = data.get('reaction_type', 'like')
-        
+        reaction_type = data.get("reaction_type", "like")
+
         # Validate reaction type
-        valid_reactions = ['like', 'love', 'care', 'haha', 'wow', 'sad', 'angry']
+        valid_reactions = ["like", "love", "care", "haha", "wow", "sad", "angry"]
         if reaction_type not in valid_reactions:
-            return jsonify({'success': False, 'error': 'Invalid reaction type'}), 400
-        
+            return jsonify({"success": False, "error": "Invalid reaction type"}), 400
+
         post = Post.query.get_or_404(post_id)
-        
+
         # Check for existing reaction
         existing_reaction = Reaction.query.filter_by(
-            user_id=current_user.id, 
-            post_id=post_id
+            user_id=current_user.id, post_id=post_id
         ).first()
-        
+
         if existing_reaction:
             if existing_reaction.reaction_type == reaction_type:
                 # Remove reaction if same type clicked again
@@ -1569,32 +1545,30 @@ def react_to_post(post_id):
         else:
             # Add new reaction
             new_reaction = Reaction(
-                user_id=current_user.id,
-                post_id=post_id,
-                reaction_type=reaction_type
+                user_id=current_user.id, post_id=post_id, reaction_type=reaction_type
             )
             db.session.add(new_reaction)
             reacted = True
-        
+
         db.session.commit()
-        
+
         # Get updated reaction count
         reaction_count = Reaction.query.filter_by(post_id=post_id).count()
         user_reaction = Reaction.query.filter_by(
-            user_id=current_user.id, 
-            post_id=post_id
+            user_id=current_user.id, post_id=post_id
         ).first()
-        
-        return jsonify({
-            'success': True,
-            'reacted': reacted,
-            'reaction_type': reaction_type,
-            'total_reactions': reaction_count,
-            'user_reaction': user_reaction.reaction_type if user_reaction else None
-        })
-        
+
+        return jsonify(
+            {
+                "success": True,
+                "reacted": reacted,
+                "reaction_type": reaction_type,
+                "total_reactions": reaction_count,
+                "user_reaction": user_reaction.reaction_type if user_reaction else None,
+            }
+        )
+
     except Exception as e:
         db.session.rollback()
         print(f"Reaction error: {e}")
-        return jsonify({'success': False, 'error': 'Failed to react to post'}), 500
-    
+        return jsonify({"success": False, "error": "Failed to react to post"}), 500
