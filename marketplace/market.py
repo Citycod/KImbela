@@ -5,7 +5,7 @@ from extensions import db
 import traceback
 from models import (
     User, MarketplaceService, MarketplaceCategory, MarketplaceSubscription, 
-    MarketplaceReview, MarketplacePayment, MarketplaceClick, PaymentTransaction
+    MarketplaceReview, MarketplacePayment, MarketplaceClick, PaymentTransaction, MarketplaceSubscriptionPlan
 )
 import cloudinary.uploader
 import os, requests, json, uuid
@@ -24,6 +24,8 @@ import requests
 from io import BytesIO
 from urllib.parse import urlparse, unquote
 import mimetypes
+from payments.payment_service import PaymentService
+from models import MarketplacePayment, MarketplaceSubscriptionPlan, MarketplaceService, MarketplaceCategory, MarketplaceReview, MarketplaceClick, User, PaymentTransaction
 
 from dotenv import load_dotenv
 
@@ -34,6 +36,9 @@ env_path = os.path.join(os.path.dirname(__file__), ".env")
 load_dotenv(dotenv_path=env_path)
 
 market = Blueprint("market", __name__)
+
+# Initialize payment service
+payment_service = PaymentService()
 
 
 cloudinary.config(
@@ -419,7 +424,11 @@ def main_market():
     page = request.args.get('page', 1, type=int)
     per_page = 12
     
+    # Start with base query
     services_query = MarketplaceService.query.filter_by(status="active")
+    
+    # Join with users to check subscription status
+    services_query = services_query.join(User, MarketplaceService.seller_id == User.id)
     
     # Filter by category
     category_slug = request.args.get('category')
@@ -439,7 +448,7 @@ def main_market():
             )
         )
     
-    # FIXED: Filter by price with proper handling
+    # Filter by price with proper handling
     min_price = request.args.get('min_price')
     max_price = request.args.get('max_price')
     
@@ -465,9 +474,23 @@ def main_market():
     if featured_only:
         services_query = services_query.filter_by(is_featured=True)
     
-    # Sort
-    sort_by = request.args.get('sort', 'newest')
-    if sort_by == 'popular':
+    # Sort - Prioritize subscribed sellers
+    sort_by = request.args.get('sort', 'featured')  # Changed default to 'featured'
+    
+    if sort_by == 'featured':
+        # Show subscribed/featured sellers first, then by date
+        services_query = services_query.order_by(
+            db.case(
+                (User.marketplace_subscription_status == 'active', 0),
+                else_=1
+            ),
+            db.case(
+                (User.marketplace_featured_until > datetime.utcnow(), 0),
+                else_=1
+            ),
+            desc(MarketplaceService.created_at)
+        )
+    elif sort_by == 'popular':
         services_query = services_query.order_by(desc(MarketplaceService.views))
     elif sort_by == 'rating':
         services_query = services_query.order_by(desc(MarketplaceService.average_rating))
@@ -484,8 +507,20 @@ def main_market():
     # Get categories
     categories = MarketplaceCategory.query.filter_by(is_active=True).order_by('sort_order').all()
     
-    # Get featured sellers (random)
-    featured_sellers = get_featured_sellers(6)
+    # Get featured sellers (random from subscribed sellers)
+    featured_sellers = User.query.filter(
+        User.marketplace_subscription_status == 'active',
+        User.marketplace_featured_until > datetime.utcnow()
+    ).order_by(func.random()).limit(6).all()
+    
+    # If not enough featured sellers, add random sellers
+    if len(featured_sellers) < 6:
+        additional = 6 - len(featured_sellers)
+        extra_sellers = User.query.filter(
+            User.id.notin_([s.id for s in featured_sellers]),
+            User.id != current_user.id if current_user.is_authenticated else True
+        ).order_by(func.random()).limit(additional).all()
+        featured_sellers.extend(extra_sellers)
     
     # Get featured services
     featured_services = MarketplaceService.query.filter_by(
@@ -527,7 +562,6 @@ def main_market():
         format_price=format_price,
         now=datetime.utcnow()
     )
-
 
 @market.route("/service/<slug>", methods=["GET"])
 def service_detail(slug):
@@ -2638,3 +2672,779 @@ def download_file(service_id):
         flash("Error downloading file. Please try again.", "error")
         return redirect(url_for('market.service_detail', slug=service.slug))
 
+
+
+
+
+
+# Add these routes to market.py
+
+@market.route("/check-subscription", methods=["GET"])
+@login_required
+def check_subscription():
+    """Check user's subscription status"""
+    try:
+        # Check if user has an active subscription
+        has_subscription = current_user.has_active_marketplace_subscription
+        is_featured = current_user.is_marketplace_featured
+        
+        # Check if user's services need attention
+        services = MarketplaceService.query.filter_by(seller_id=current_user.id).all()
+        has_services = len(services) > 0
+        
+        # Determine if we should show subscription modal
+        show_modal = False
+        reason = None
+        
+        if not has_subscription:
+            if has_services:
+                show_modal = True
+                reason = "no_subscription"
+            else:
+                show_modal = False
+        elif current_user.marketplace_subscription_expires and \
+             current_user.marketplace_subscription_expires - datetime.utcnow() < timedelta(days=7):
+            show_modal = True
+            reason = "expiring_soon"
+        
+        return jsonify({
+            'success': True,
+            'has_subscription': has_subscription,
+            'is_featured': is_featured,
+            'subscription_tier': current_user.marketplace_subscription_tier,
+            'expires_at': current_user.marketplace_subscription_expires.isoformat() if current_user.marketplace_subscription_expires else None,
+            'show_modal': show_modal,
+            'reason': reason,
+            'has_services': has_services
+        })
+    
+    except Exception as e:
+        print(f"Error checking subscription: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@market.route("/subscription-plans", methods=["GET"])
+@login_required
+def subscription_plans():
+    """Get available subscription plans"""
+    try:
+        plans = MarketplaceSubscriptionPlan.query.filter_by(is_active=True).order_by('sort_order').all()
+        
+        plans_data = []
+        for plan in plans:
+            plans_data.append({
+                'id': plan.id,
+                'name': plan.name,
+                'slug': plan.slug,
+                'description': plan.description,
+                'price_usd': plan.price,
+                'price_ngn': plan.price_ngn,
+                'duration_days': plan.duration_days,
+                'features': plan.features_list,
+                'is_featured': plan.is_featured,
+                'max_services': plan.max_services
+            })
+        
+        return jsonify({
+            'success': True,
+            'plans': plans_data
+        })
+    
+    except Exception as e:
+        print(f"Error getting plans: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@market.route("/subscribe", methods=["GET", "POST"])
+@login_required
+def subscribe():
+    """Subscribe to a marketplace plan"""
+    if request.method == "GET":
+        # Get all active plans
+        plans = MarketplaceSubscriptionPlan.query.filter_by(is_active=True).order_by('sort_order').all()
+        
+        # Get user's current subscription
+        current_plan = None
+        if current_user.marketplace_subscription_id:
+            current_plan = MarketplaceSubscriptionPlan.query.get(current_user.marketplace_subscription_id)
+        
+        return render_template(
+            "subscribe.html",
+            plans=plans,
+            current_plan=current_plan,
+            current_user=current_user,
+            now=datetime.utcnow()
+        )
+    
+    # POST: Process subscription
+    try:
+        plan_id = request.form.get('plan_id')
+        payment_method = request.form.get('payment_method', 'flutterwave')
+        
+        # Validate plan
+        plan = MarketplaceSubscriptionPlan.query.get_or_404(plan_id)
+        if not plan.is_active:
+            flash("This plan is not available", "danger")
+            return redirect(url_for('market.subscribe'))
+        
+        # Check if user already has this plan
+        if current_user.marketplace_subscription_id == plan.id and \
+           current_user.has_active_marketplace_subscription:
+            flash("You already have an active subscription to this plan", "info")
+            return redirect(url_for('market.seller_dashboard'))
+        
+        # Calculate expiration date
+        expires_at = datetime.utcnow() + timedelta(days=plan.duration_days)
+        
+        # Store subscription info in session for payment processing
+        session['subscription_data'] = {
+            'plan_id': plan.id,
+            'plan_name': plan.name,
+            'price_usd': plan.price,
+            'price_ngn': plan.price_ngn,
+            'duration_days': plan.duration_days,
+            'expires_at': expires_at.isoformat(),
+            'user_id': current_user.id
+        }
+        
+        # Redirect to payment
+        return redirect(url_for('market.subscription_payment'))
+    
+    except Exception as e:
+        print(f"Error subscribing: {e}")
+        flash("An error occurred. Please try again.", "danger")
+        return redirect(url_for('market.subscribe'))
+
+@market.route("/subscription-payment", methods=["GET", "POST"])
+@login_required
+def subscription_payment():
+    """Handle subscription payment"""
+    if 'subscription_data' not in session:
+        flash("No subscription selected", "warning")
+        return redirect(url_for('market.subscribe'))
+    
+    subscription_data = session['subscription_data']
+    
+    if request.method == "GET":
+        return render_template(
+            "subscription_payment.html",
+            subscription_data=subscription_data,
+            current_user=current_user
+        )
+    
+    # POST: Process payment
+    try:
+        # Generate payment reference
+        tx_ref = f"KIMBELA-SUB-{int(time.time())}-{current_user.id}"
+        
+        # Create payment record
+        payment = MarketplacePayment(
+            user_id=current_user.id,
+            amount=subscription_data['price_usd'],
+            currency="USD",
+            gateway="flutterwave",
+            gateway_reference=tx_ref,
+            status="pending",
+            description=f"Marketplace subscription: {subscription_data['plan_name']} for {subscription_data['duration_days']} days"
+        )
+        db.session.add(payment)
+        db.session.commit()
+        
+        # Prepare Flutterwave payment data
+        payment_data = {
+            "tx_ref": tx_ref,
+            "amount": str(subscription_data['price_usd']),
+            "currency": "USD",
+            "redirect_url": url_for('market.subscription_callback', _external=True),
+            "customer": {
+                "email": current_user.email,
+                "name": current_user.full_name,
+                "phone_number": current_user.phone_number
+            },
+            "customizations": {
+                "title": "Kimbela Marketplace Subscription",
+                "description": f"Subscription: {subscription_data['plan_name']}",
+                "logo": url_for('static', filename='assets/img/kim.png', _external=True)
+            },
+            "meta": {
+                "plan_id": subscription_data['plan_id'],
+                "user_id": current_user.id,
+                "payment_id": payment.id,
+                "type": "subscription"
+            }
+        }
+        
+        return jsonify({
+            "success": True,
+            "payment_data": payment_data,
+            "flutterwave_public_key": current_app.config.get('FLUTTERWAVE_PUBLIC_KEY')
+        })
+    
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error initiating subscription payment: {e}")
+        flash("An error occurred. Please try again.", "danger")
+        return redirect(url_for('market.subscription_payment'))
+    
+    
+
+
+@market.route("/init-subscription-plans", methods=["GET"])
+def init_subscription_plans():
+    """Initialize marketplace subscription plans"""
+    try:
+        # Check if user is admin
+        if not current_user.is_authenticated or not current_user.is_admin:
+            return "Admin access required", 403
+        
+        # Check if plans already exist
+        existing_plans = MarketplaceSubscriptionPlan.query.count()
+        if existing_plans > 0:
+            # Optional: Delete existing plans to recreate
+            # MarketplaceSubscriptionPlan.query.delete()
+            # db.session.commit()
+            # print("Deleted existing plans")
+            return f"Plans already exist ({existing_plans} plans found).", 200
+        
+        # Create subscription plans
+        plans = [
+            {
+                "name": "Basic Plan",
+                "slug": "basic",
+                "description": "Perfect for beginners",
+                "price": 9.99,
+                "price_ngn": 5000.00,
+                "duration_days": 30,
+                "max_services": 3,
+                "priority_visibility": False,
+                "features": json.dumps([
+                    "3 service listings",
+                    "5 images per service", 
+                    "Email support"
+                ]),
+                "is_featured": False,
+                "is_active": True,
+                "sort_order": 1
+            },
+            {
+                "name": "Pro Plan", 
+                "slug": "pro",
+                "description": "Best for growing businesses",
+                "price": 19.99,
+                "price_ngn": 10000.00,
+                "duration_days": 30,
+                "max_services": 10,
+                "priority_visibility": True,
+                "features": json.dumps([
+                    "10 service listings",
+                    "10 images per service",
+                    "Featured listing priority",
+                    "Video uploads enabled",
+                    "Priority support"
+                ]),
+                "is_featured": True,
+                "is_active": True,
+                "sort_order": 2
+            },
+            {
+                "name": "Enterprise Plan",
+                "slug": "enterprise", 
+                "description": "For professional sellers",
+                "price": 39.99,
+                "price_ngn": 20000.00,
+                "duration_days": 30,
+                "max_services": 0,  # 0 means unlimited
+                "priority_visibility": True,
+                "features": json.dumps([
+                    "Unlimited service listings",
+                    "20 images per service",
+                    "Premium featured priority",
+                    "Video uploads enabled",
+                    "Digital product sales",
+                    "24/7 Premium support"
+                ]),
+                "is_featured": True,
+                "is_active": True,
+                "sort_order": 3
+            }
+        ]
+        
+        created_count = 0
+        for plan_data in plans:
+            plan = MarketplaceSubscriptionPlan(**plan_data)
+            db.session.add(plan)
+            created_count += 1
+        
+        db.session.commit()
+        
+        return f"✅ Successfully created {created_count} subscription plans!", 200
+    
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Error creating plans: {e}")
+        import traceback
+        print(traceback.format_exc())
+        return f"Error: {e}", 500
+
+
+
+
+
+
+# Add to your market.py routes (temporarily for debugging)
+
+@market.route("/debug-payment", methods=["GET"])
+@login_required
+def debug_payment():
+    """Debug payment service initialization"""
+    try:
+        result = {}
+        
+        # Check if payment_service exists on current_app
+        if hasattr(current_app, 'payment_service'):
+            service = current_app.payment_service
+            result['payment_service_available'] = "✅ Available"
+            result['payment_service_type'] = type(service).__name__
+            
+            # Check the child services
+            if hasattr(service, 'matchmaking_service'):
+                result['matchmaking_service'] = "✅ Available"
+                if hasattr(service.matchmaking_service, 'flutterwave_public_key'):
+                    result['matchmaking_public_key'] = service.matchmaking_service.flutterwave_public_key is not None
+                    if service.matchmaking_service.flutterwave_public_key:
+                        result['matchmaking_public_key_preview'] = service.matchmaking_service.flutterwave_public_key[:20] + '...'
+            
+            if hasattr(service, 'marketplace_service'):
+                result['marketplace_service'] = "✅ Available"
+                if hasattr(service.marketplace_service, 'flutterwave_public_key'):
+                    result['marketplace_public_key'] = service.marketplace_service.flutterwave_public_key is not None
+                    if service.marketplace_service.flutterwave_public_key:
+                        result['marketplace_public_key_preview'] = service.marketplace_service.flutterwave_public_key[:20] + '...'
+            
+            if hasattr(service, 'ad_service'):
+                result['ad_service'] = "✅ Available"
+        else:
+            result['payment_service_available'] = "❌ Not available"
+        
+        # Direct import check
+        from payments.payment_service import PaymentService
+        direct_service = PaymentService()
+        result['direct_import'] = "✅ Available"
+        result['direct_service_type'] = type(direct_service).__name__
+        
+        # Check child services on direct import
+        if hasattr(direct_service, 'marketplace_service'):
+            if hasattr(direct_service.marketplace_service, 'flutterwave_public_key'):
+                result['direct_marketplace_public_key'] = direct_service.marketplace_service.flutterwave_public_key is not None
+        
+        return jsonify({
+            'success': True,
+            'debug_info': result,
+            'env_vars': {
+                'FLW_PUBLIC_KEY_set': os.getenv('FLW_PUBLIC_KEY') is not None,
+                'FLW_SECRET_KEY_set': os.getenv('FLW_SECRET_KEY') is not None,
+                'PUBLIC_KEY_set': os.getenv('PUBLIC_KEY') is not None,
+                'SECRET_KEY_set': os.getenv('SECRET_KEY') is not None
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
+
+
+
+
+@market.route("/become-seller", methods=["POST"])
+@login_required
+def become_seller():
+    """Handle subscription payment"""
+    try:
+        print(f"🟡 [BECOME-SELLER] POST request received")
+        
+        # Validate request
+        if not request.is_json:
+            return jsonify({
+                'success': False,
+                'error': 'Request must be JSON'
+            }), 400
+        
+        data = request.get_json()
+        plan_id = data.get('plan_id')
+        
+        if not plan_id:
+            return jsonify({
+                'success': False,
+                'error': 'No plan selected'
+            }), 400
+        
+        # Get plan
+        plan = MarketplaceSubscriptionPlan.query.get(plan_id)
+        if not plan:
+            print(f"🔴 [BECOME-SELLER] Plan not found: {plan_id}")
+            return jsonify({
+                'success': False,
+                'error': 'Invalid plan selected'
+            }), 404
+        
+        print(f"🟡 [BECOME-SELLER] Found plan: {plan.name}, Price: ${plan.price}")
+        
+        # Check if user already has subscription
+        if current_user.marketplace_subscription_status == 'active':
+            print(f"🔴 [BECOME-SELLER] User already has active subscription")
+            return jsonify({
+                'success': False,
+                'error': 'You already have an active subscription'
+            }), 400
+        
+        # Get marketplace service
+        from payments.payment_service import MarketplacePaymentService
+        marketplace_service = MarketplacePaymentService()
+        
+        # Check if keys are set
+        if not marketplace_service.flutterwave_secret_key:
+            print(f"🔴 [BECOME-SELLER] Flutterwave secret key is not set")
+            return jsonify({
+                'success': False,
+                'error': 'Payment gateway configuration error'
+            }), 500
+        
+        print(f"🟡 [BECOME-SELLER] Creating payment with Flutterwave...")
+        print(f"🟡 [BECOME-SELLER] Secret Key preview: {marketplace_service.flutterwave_secret_key[:20]}...")
+        
+        # Create payment
+        result = marketplace_service.create_marketplace_payment(
+            user=current_user,
+            plan=plan,
+            currency='USD'
+        )
+        
+        print(f"🟡 [BECOME-SELLER] Payment result: {result}")
+        
+        if result.get('success'):
+            return jsonify({
+                'success': True,
+                'payment_url': result['payment_url'],
+                'payment_id': result.get('payment_id'),  # Now returns marketplace_payment.id
+                'gateway_reference': result.get('gateway_reference'),
+                'message': result.get('message', 'Payment initiated successfully')
+            })
+        else:
+            error_msg = result.get('error', 'Payment initiation failed')
+            print(f"🔴 [BECOME-SELLER] Payment failed: {error_msg}")
+            return jsonify({
+                'success': False,
+                'error': error_msg
+            }), 400
+        
+    except Exception as e:
+        print(f"🔴 [BECOME-SELLER] Unhandled exception: {str(e)}")
+        import traceback
+        print(f"🔴 [BECOME-SELLER] Traceback:\n{traceback.format_exc()}")
+        
+        return jsonify({
+            'success': False,
+            'error': f'Internal server error: {str(e)}'
+        }), 500
+        
+        
+
+def create_default_plans():
+    """Create default subscription plans if none exist"""
+    try:
+        plans = [
+            MarketplaceSubscriptionPlan(
+                name="Basic Plan",
+                slug="basic",
+                description="Perfect for beginners",
+                price=9.99,
+                price_ngn=5000.00,
+                duration_days=30,
+                max_services=3,
+                priority_visibility=False,
+                features=json.dumps(["3 service listings", "5 images per service", "Email support"]),
+                is_featured=False,
+                is_active=True,
+                sort_order=1
+            ),
+            MarketplaceSubscriptionPlan(
+                name="Pro Plan",
+                slug="pro",
+                description="Best for growing businesses",
+                price=19.99,
+                price_ngn=10000.00,
+                duration_days=30,
+                max_services=10,
+                priority_visibility=True,
+                features=json.dumps([
+                    "10 service listings",
+                    "10 images per service",
+                    "Featured listing priority",
+                    "Video uploads enabled",
+                    "Priority support"
+                ]),
+                is_featured=True,
+                is_active=True,
+                sort_order=2
+            ),
+            MarketplaceSubscriptionPlan(
+                name="Enterprise Plan",
+                slug="enterprise",
+                description="For professional sellers",
+                price=39.99,
+                price_ngn=20000.00,
+                duration_days=30,
+                max_services=0,  # Unlimited
+                priority_visibility=True,
+                features=json.dumps([
+                    "Unlimited service listings",
+                    "20 images per service",
+                    "Premium featured priority",
+                    "Video uploads enabled",
+                    "Digital product sales",
+                    "24/7 Premium support"
+                ]),
+                is_featured=True,
+                is_active=True,
+                sort_order=3
+            )
+        ]
+        
+        for plan in plans:
+            db.session.add(plan)
+        
+        db.session.commit()
+        print(f"✅ Created {len(plans)} default subscription plans")
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Error creating default plans: {e}")
+    
+    
+    
+
+# Add this callback route for Flutterwave webhook:
+@market.route("/marketplace-payment-callback", methods=["POST"])
+def marketplace_payment_callback():
+    """Handle Flutterwave webhook for marketplace payments"""
+    try:
+        # Get the webhook data
+        webhook_data = request.get_json()
+        
+        print(f"🟡 [MARKETPLACE WEBHOOK] Received: {json.dumps(webhook_data, indent=2)}")
+        
+        # Verify the event is from Flutterwave
+        if request.headers.get('verif-hash'):
+            # Verify the webhook signature
+            # You should implement this based on your Flutterwave dashboard settings
+            pass
+        
+        # Get transaction details
+        event_type = webhook_data.get('event')
+        data = webhook_data.get('data', {})
+        
+        if event_type == 'charge.completed':
+            # Payment was successful
+            tx_ref = data.get('tx_ref')
+            transaction_id = data.get('id')
+            
+            # Find the transaction
+            transaction = PaymentTransaction.query.filter_by(gateway_reference=tx_ref).first()
+            
+            if transaction and transaction.transaction_type == 'marketplace_subscription':
+                # Verify the payment with Flutterwave
+                verification = payment_service.marketplace_service.verify_flutterwave_payment(transaction_id)
+                
+                if verification['success']:
+                    # Handle successful payment
+                    payment_service.handle_marketplace_payment_success(transaction.id, verification['data'])
+                    
+                    return jsonify({'status': 'success'}), 200
+        
+        return jsonify({'status': 'ignored'}), 200
+    
+    except Exception as e:
+        print(f"🔴 [MARKETPLACE WEBHOOK] Error: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+
+
+
+
+# Update the subscription_callback route:
+
+@market.route("/subscription-callback", methods=["GET"])
+@login_required
+def subscription_callback():
+    """Handle Flutterwave payment callback for subscriptions"""
+    try:
+        tx_ref = request.args.get('tx_ref')
+        transaction_id = request.args.get('transaction_id')
+        status = request.args.get('status')
+        
+        print(f"🟡 [SUBSCRIPTION CALLBACK] Processing callback")
+        
+        if not tx_ref:
+            flash("Invalid callback parameters", "danger")
+            return redirect(url_for('market.become_seller'))
+        
+        # Find the marketplace payment
+        marketplace_payment = MarketplacePayment.query.filter_by(gateway_reference=tx_ref).first()
+        
+        if not marketplace_payment:
+            flash("Payment record not found", "danger")
+            return redirect(url_for('market.become_seller'))
+        
+        if marketplace_payment.user_id != current_user.id:
+            flash("Unauthorized access", "danger")
+            return redirect(url_for('market.seller_dashboard'))
+        
+        # Get payment service
+        from payments.payment_service import MarketplacePaymentService
+        payment_service = MarketplacePaymentService()
+        
+        if status == "successful" and transaction_id:
+            print(f"🟡 [CALLBACK] Payment successful, verifying...")
+            
+            # Verify the payment
+            verification = payment_service.verify_flutterwave_payment(transaction_id)
+            
+            if verification['success']:
+                print(f"✅ [CALLBACK] Payment verified")
+                
+                # Handle successful payment
+                success = payment_service.handle_marketplace_payment_success(
+                    marketplace_payment, 
+                    verification['data']
+                )
+                
+                if success:
+                    flash("🎉 Subscription activated successfully! Check your email for confirmation.", "success")
+                else:
+                    flash("Subscription activated but there was an issue sending confirmation email.", "warning")
+            else:
+                # Handle verification failure
+                payment_service.handle_marketplace_payment_failure(
+                    marketplace_payment,
+                    verification.get('data', {'message': 'Verification failed'})
+                )
+                flash("Payment verification failed. Please contact support.", "danger")
+        else:
+            # Handle payment failure
+            error_data = {
+                'status': status or 'cancelled',
+                'message': 'Payment was not completed'
+            }
+            payment_service.handle_marketplace_payment_failure(marketplace_payment, error_data)
+            flash("Payment was not completed. Please try again. Check your email for details.", "warning")
+        
+        return redirect(url_for('market.seller_dashboard'))
+    
+    except Exception as e:
+        print(f"🔴 [CALLBACK] Error: {str(e)}")
+        flash("An error occurred processing your payment", "danger")
+        return redirect(url_for('market.seller_dashboard'))
+    
+    
+    
+@market.route("/test-marketplace-payment-db", methods=["GET"])
+@login_required
+def test_marketplace_payment_db():
+    """Test marketplace payment database operations"""
+    try:
+        # Get a plan
+        plan = MarketplaceSubscriptionPlan.query.first()
+        
+        # Create a test marketplace payment
+        test_payment = MarketplacePayment(
+            user_id=current_user.id,
+            subscription_id=plan.id if plan else 1,
+            amount=9.99,
+            currency="USD",
+            tokens_paid=999,
+            gateway="test",
+            gateway_reference=f"TEST_{int(time.time())}",
+            gateway_status="test",
+            status="completed",
+            description="Test payment",
+            start_date=datetime.utcnow(),
+            end_date=datetime.utcnow() + timedelta(days=30)
+        )
+        
+        db.session.add(test_payment)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'MarketplacePayment created successfully',
+            'payment_id': test_payment.id
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+        
+        
+        
+        
+@market.route("/debug-subscription-status", methods=["GET"])
+@login_required
+def debug_subscription_status():
+    """Debug subscription status for current user"""
+    try:
+        user = current_user
+        
+        # Get all subscription-related fields
+        subscription_info = {
+            'user_id': user.id,
+            'email': user.email,
+            'marketplace_subscription_status': user.marketplace_subscription_status,
+            'marketplace_subscription_id': user.marketplace_subscription_id,
+            'marketplace_subscription_expires': user.marketplace_subscription_expires.isoformat() if user.marketplace_subscription_expires else None,
+            'marketplace_featured_until': user.marketplace_featured_until.isoformat() if user.marketplace_featured_until else None,
+            'marketplace_subscription_tier': user.marketplace_subscription_tier,
+            'now': datetime.utcnow().isoformat()
+        }
+        
+        # Check if subscription is active
+        is_active = user.marketplace_subscription_status == 'active'
+        is_expired = False
+        
+        if user.marketplace_subscription_expires:
+            is_expired = datetime.utcnow() > user.marketplace_subscription_expires
+        
+        subscription_info['is_active_bool'] = is_active
+        subscription_info['is_expired'] = is_expired
+        subscription_info['has_active_subscription'] = is_active and not is_expired
+        
+        # Check property
+        subscription_info['has_active_marketplace_subscription_property'] = user.has_active_marketplace_subscription
+        
+        # Get marketplace payments
+        payments = MarketplacePayment.query.filter_by(user_id=user.id).all()
+        subscription_info['payments'] = [
+            {
+                'id': p.id,
+                'status': p.status,
+                'gateway_status': p.gateway_status,
+                'amount': p.amount,
+                'created_at': p.created_at.isoformat() if p.created_at else None
+            }
+            for p in payments
+        ]
+        
+        return jsonify({
+            'success': True,
+            'subscription_info': subscription_info
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500

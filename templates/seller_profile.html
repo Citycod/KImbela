@@ -140,21 +140,13 @@
                 <!-- Logo -->
                 <a href="{{ url_for('market.main_market') }}" class="flex items-center gap-2">
                     <img src="{{ url_for('static', filename='assets/img/kim.png') }}" 
-                         alt="Kimbela" 
-                         class="h-8 w-auto">
-                    <div>
-                        <span class="text-base font-bold gradient-primary bg-clip-text text-transparent">
-                            Kimbela Marketplace
-                        </span>
-                    </div>
+                             alt="Kimbela Marketplace" 
+                             class="h-10" style="height: 10rem; width: 10rem; position: absolute; top: 0; margin-top: -50px;"/>
                 </a>
                 
                 <!-- User Menu -->
                 <div class="flex items-center gap-3">
-                    <a href="{{ url_for('market.create_service') }}" 
-                       class="btn btn-primary btn-sm hidden md:inline-flex">
-                        <i class="bi bi-plus-lg text-xs"></i> Sell on Kimbela
-                    </a>
+                    
                     
                     {% if current_user.is_authenticated %}
                     <div class="relative group">
@@ -167,13 +159,12 @@
                                 {% endif %}
                             </div>
                             <span class="hidden md:inline font-medium text-sm">{{ current_user.username }}</span>
-                            <i class="bi bi-chevron-down text-xs"></i>
                         </button>
                         
                         <!-- Dropdown Menu -->
                         <div class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg py-2 z-50 hidden group-hover:block border border-gray-200">
-                            <a href="{{ url_for('market.seller_dashboard') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                <i class="bi bi-speedometer2 mr-2 text-xs"></i>Dashboard
+                            <a href="{{ url_for('market.seller_dashboard') }}" class="block px-4 py-2  hover:bg-gray-100" style="color: black;"> 
+                                <i class="bi bi-speedometer2 mr-2 text-xs" style="color: black;"></i>Dashboard
                             </a>
                             <a href="{{ url_for('market.seller_profile', seller_id=current_user.id) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                 <i class="bi bi-person mr-2 text-xs"></i>Profile
@@ -258,18 +249,15 @@
                 <div class="flex gap-2">
                     {% if current_user.is_authenticated and current_user.id == seller.id %}
                     <a href="{{ url_for('market.seller_dashboard') }}" 
-                       class="px-4 py-2 bg-white text-primary rounded-lg font-bold hover:bg-opacity-90">
-                        <i class="bi bi-speedometer2 mr-2"></i>Dashboard
+                       class="px-4 py-2 bg-white  rounded-lg font-bold hover:bg-opacity-90" style="color: black;">
+                        <i class="bi bi-speedometer2 mr-2" style="color: black;"></i>Dashboard
                     </a>
                     <a href="{{ url_for('market.edit_seller_profile') }}" 
                        class="px-4 py-2 bg-white/20 border border-white rounded-lg hover:bg-white/30">
                         <i class="bi bi-pencil mr-2"></i>Edit Profile
                     </a>
                     {% else %}
-                    <a href="{{ url_for('market.create_service') }}" 
-                       class="px-4 py-2 bg-white text-primary rounded-lg font-bold hover:bg-opacity-90">
-                        <i class="bi bi-plus-lg mr-2"></i>Become a Seller
-                    </a>
+                    
                     {% endif %}
                 </div>
             </div>

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
+        <div style="text-align: center; margin-bottom: 30px;">
+            <img src="{{ url_for('static', filename='assets/img/kim.png', _external=True) }}" 
+                 alt="Kimbela Marketplace" style="height: 50px;">
+        </div>
+        
+        <div style="background: #f8f9fa; padding: 30px; border-radius: 10px;">
+            <h2 style="color: #333; margin-bottom: 20px;">{{ subject }}</h2>
+            
+            <p style="color: #666; line-height: 1.6; margin-bottom: 20px;">
+                Hi {{ user.first_name }},
+            </p>
+            
+            <p style="color: #666; line-height: 1.6; margin-bottom: 20px;">
+                {{ message }}
+            </p>
+            
+            <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="color: #333; margin-bottom: 15px;">Benefits of subscribing:</h3>
+                <ul style="color: #666; line-height: 1.6; padding-left: 20px;">
+                    <li>Higher ranking in search results</li>
+                    <li>Featured placement on homepage</li>
+                    <li>5x more customer views</li>
+                    <li>Priority customer support</li>
+                    <li>Detailed analytics dashboard</li>
+                </ul>
+            </div>
+            
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{{ url_for('market.become_seller', _external=True) }}" 
+                   style="background: linear-gradient(135deg, #5a4500 0%, #b88900 100%); 
+                          color: white; 
+                          padding: 12px 30px; 
+                          text-decoration: none; 
+                          border-radius: 8px; 
+                          font-weight: bold;
+                          display: inline-block;">
+                    View Subscription Plans
+                </a>
+            </div>
+            
+            <p style="color: #999; font-size: 12px; line-height: 1.6; margin-top: 30px;">
+                You're receiving this email because you have services listed on Kimbela Marketplace.<br>
+                To unsubscribe from these emails, <a href="{{ unsubscribe_url }}" style="color: #999;">click here</a>.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

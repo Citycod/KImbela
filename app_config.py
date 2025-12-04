@@ -22,6 +22,9 @@ from messages.messaging import messaging as message_blueprint
 from models import User, Post, Comment, Like, FriendRequest, friendship
 from extensions import db, socketio
 from scheduler import init_scheduler
+from payments.payment_service import PaymentService
+
+
 
 load_dotenv()
 
@@ -45,6 +48,8 @@ def create_app():
     app.config['CACHE_TYPE'] = 'SimpleCache'  # Must be exact string
     app.config['CACHE_DEFAULT_TIMEOUT'] = 300
     app.config['CACHE_THRESHOLD'] = 1000
+    
+    app.payment_service = PaymentService()
     
     # Alternative cache config options:
     # app.config['CACHE_TYPE'] = 'filesystem'
@@ -118,8 +123,31 @@ def create_app():
     # Initialize scheduler
     if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
         with app.app_context():
-            init_scheduler(app)
-            app.logger.info("Scheduler initialized successfully")
+            try:
+                init_scheduler(app)
+                app.logger.info("Scheduler initialized successfully with marketplace subscription support")
+                
+                # Test email configuration
+                from flask_mail import Message
+                test_msg = Message(
+                    subject="Kimbela Marketplace - Email Test",
+                    recipients=["admin@kimbela.com"],  # Change to your admin email
+                    body="Email system is working correctly.",
+                    sender=app.config['MAIL_DEFAULT_SENDER']
+                )
+                
+                # Only send test email in production or when explicitly enabled
+                if app.config.get('ENABLE_EMAIL_TEST', False):
+                    try:
+                        mail.send(test_msg)
+                        app.logger.info("Test email sent successfully")
+                    except Exception as e:
+                        app.logger.error(f"Email test failed: {e}")
+                        app.logger.warning("Email notifications may not work properly")
+                
+            except Exception as e:
+                app.logger.error(f"Failed to initialize scheduler: {e}")
+                app.logger.error("Subscription reminders may not work properly")
 
     # Inject CSRF token into all templates
     @app.context_processor

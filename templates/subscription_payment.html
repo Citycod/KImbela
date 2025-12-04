@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment - Kimbela Marketplace</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <script src="https://checkout.flutterwave.com/v3.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-2xl">
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <!-- Back button -->
+            <a href="{{ url_for('market.subscribe') }}" class="inline-flex items-center text-blue-600 mb-6">
+                <i class="bi bi-arrow-left mr-2"></i>
+                Back to Plans
+            </a>
+            
+            <!-- Order Summary -->
+            <h1 class="text-2xl font-bold mb-6">Complete Your Subscription</h1>
+            
+            <div class="bg-gray-50 rounded-lg p-6 mb-6">
+                <h2 class="font-bold mb-4">Order Summary</h2>
+                <div class="space-y-3">
+                    <div class="flex justify-between">
+                        <span>Plan:</span>
+                        <span class="font-bold">{{ subscription_data.plan_name }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Duration:</span>
+                        <span>{{ subscription_data.duration_days }} days</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Price:</span>
+                        <span class="font-bold">₦{{ "{:,.0f}".format(subscription_data.price_ngn) }}</span>
+                    </div>
+                    <div class="border-t pt-3">
+                        <div class="flex justify-between font-bold text-lg">
+                            <span>Total:</span>
+                            <span>₦{{ "{:,.0f}".format(subscription_data.price_ngn) }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Payment Methods -->
+            <h2 class="font-bold mb-4">Select Payment Method</h2>
+            <div class="grid grid-cols-2 gap-4 mb-8">
+                <button id="flutterwave-btn" class="p-4 border-2 border-blue-500 rounded-lg flex items-center justify-center hover:bg-blue-50">
+                    <img src="https://flutterwave.com/images/logo-colored.svg" alt="Flutterwave" class="h-8">
+                </button>
+                <!-- Add more payment methods as needed -->
+            </div>
+            
+            <!-- Payment Form -->
+            <div id="payment-form" style="display: none;">
+                <form id="flutterwave-form">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium mb-2">Email</label>
+                        <input type="email" value="{{ current_user.email }}" 
+                               class="w-full p-3 border rounded-lg" readonly>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium mb-2">Name</label>
+                        <input type="text" value="{{ current_user.full_name }}" 
+                               class="w-full p-3 border rounded-lg" readonly>
+                    </div>
+                    <button type="submit" id="pay-btn" 
+                            class="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700">
+                        Pay ₦{{ "{:,.0f}".format(subscription_data.price_ngn) }}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('flutterwave-btn').addEventListener('click', function() {
+            document.getElementById('payment-form').style.display = 'block';
+        });
+
+        document.getElementById('flutterwave-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Show loading state
+            const payBtn = document.getElementById('pay-btn');
+            payBtn.innerHTML = 'Processing...';
+            payBtn.disabled = true;
+            
+            // Make payment
+            FlutterwaveCheckout({
+                public_key: "{{ current_app.config.get('FLUTTERWAVE_PUBLIC_KEY') }}",
+                tx_ref: "KIMBELA-SUB-{{ subscription_data.plan_id }}-{{ current_user.id }}-{{ timestamp }}",
+                amount: {{ subscription_data.price_usd }},
+                currency: "USD",
+                payment_options: "card, banktransfer, ussd",
+                customer: {
+                    email: "{{ current_user.email }}",
+                    phone_number: "{{ current_user.phone_number }}",
+                    name: "{{ current_user.full_name }}",
+                },
+                customizations: {
+                    title: "Kimbela Marketplace Subscription",
+                    description: "{{ subscription_data.plan_name }} Plan",
+                    logo: "{{ url_for('static', filename='assets/img/kim.png', _external=True) }}",
+                },
+                callback: function(response) {
+                    // Redirect to callback URL
+                    window.location.href = "{{ url_for('market.subscription_callback', _external=True) }}?tx_ref=" + 
+                                          response.tx_ref + "&transaction_id=" + response.transaction_id + 
+                                          "&status=" + response.status;
+                },
+                onclose: function() {
+                    payBtn.innerHTML = 'Pay ₦{{ "{:,.0f}".format(subscription_data.price_ngn) }}';
+                    payBtn.disabled = false;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

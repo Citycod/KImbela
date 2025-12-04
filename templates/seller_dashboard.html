@@ -492,20 +492,39 @@
             <!-- Main Content -->
             <div class="lg:col-span-3">
                 <!-- Welcome Banner -->
-                <div class="gradient-primary rounded-2xl p-4 text-white mb-4">
-                    <div class="flex flex-col md:flex-row md:items-center justify-between">
-                        <div>
-                            <h1 class="text-lg font-bold mb-1">Welcome back, {{ current_user.username }}! 👋</h1>
-                            <p class="opacity-90 text-sm">Here's what's happening with your services today.</p>
-                        </div>
-                        <div class="mt-3 md:mt-0">
-                            <a href="{{ url_for('market.create_service') }}" 
-                               class="btn btn-sm bg-white text-primary hover:bg-opacity-90" style="color: black;">
-                                <i class="bi bi-plus-lg text-xs " style="color: black;"></i> Create New Service
-                            </a>
-                        </div>
-                    </div>
-                </div>
+                <!-- In the welcome banner div -->
+<!-- In the welcome banner div of seller_dashboard.html -->
+<div class="gradient-primary rounded-2xl p-4 text-white mb-4">
+    <div class="flex flex-col md:flex-row md:items-center justify-between">
+        <div>
+            <h1 class="text-lg font-bold mb-1">Welcome back, {{ current_user.username }}! 👋</h1>
+            <p class="opacity-90 text-sm">Here's what's happening with your services today.</p>
+        </div>
+        <div class="mt-3 md:mt-0 flex gap-2">
+            <!-- SUBSCRIBE BUTTON -->
+            {% if not current_user.has_active_marketplace_subscription %}
+    <button onclick="showSubscriptionModal('no_subscription')" 
+            class="btn btn-sm bg-yellow-500 hover:bg-yellow-600 text-white">
+        <i class="bi bi-star-fill mr-1"></i> Boost Visibility
+    </button>
+{% elif current_user.marketplace_featured_until and current_user.marketplace_featured_until > now %}
+    <div class="btn btn-sm bg-green-500 text-white">
+        <i class="bi bi-star-fill mr-1"></i> Featured ✨
+    </div>
+{% else %}
+    {# User has active subscription but is not featured #}
+    <div class="btn btn-sm bg-blue-500 text-white">
+        <i class="bi bi-check-circle mr-1"></i> Subscribed
+    </div>
+{% endif %}
+            
+            <a href="{{ url_for('market.create_service') }}" 
+               class="btn btn-sm bg-white text-primary hover:bg-opacity-90" style="color: black;">
+                <i class="bi bi-plus-lg text-xs " style="color: black;"></i> Create New Service
+            </a>
+        </div>
+    </div>
+</div>
                 
                 <!-- Time Filter -->
                 <div class="mb-4 flex justify-end">
@@ -1658,6 +1677,225 @@ function showNotification(message, type = 'info') {
                 }
             });
         }
+
+
+
+// Add this function to seller_dashboard.html JavaScript
+async function checkSubscriptionStatus() {
+    try {
+        const response = await fetch('/check-subscription');
+        const data = await response.json();
+        
+        if (data.success && data.show_modal) {
+            showSubscriptionModal(data.reason);
+        }
+    } catch (error) {
+        console.error('Error checking subscription:', error);
+    }
+}
+
+function showSubscriptionModal(reason) {
+    // Create modal
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+    modal.innerHTML = `
+        <div class="bg-white rounded-xl max-w-md w-full p-6">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <h3 class="text-lg font-bold">Boost Your Visibility! ✨</h3>
+                    <p class="text-sm text-gray-600 mt-1">Get more customers for your services</p>
+                </div>
+                <button onclick="this.closest('.fixed').remove()" 
+                        class="text-gray-400 hover:text-gray-600">
+                    <i class="bi bi-x text-xl"></i>
+                </button>
+            </div>
+            
+            ${reason === 'no_subscription' ? `
+                <div class="mb-6">
+                    <p class="mb-4">Your services are live but not getting maximum visibility. Subscribe to:</p>
+                    <ul class="space-y-2 mb-6">
+                        <li class="flex items-center">
+                            <i class="bi bi-check-circle-fill text-green-500 mr-2"></i>
+                            <span>Appear higher in search results</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="bi bi-check-circle-fill text-green-500 mr-2"></i>
+                            <span>Get featured on the homepage</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="bi bi-check-circle-fill text-green-500 mr-2"></i>
+                            <span>Reach 5x more customers</span>
+                        </li>
+                    </ul>
+                </div>
+            ` : reason === 'expiring_soon' ? `
+                <div class="mb-6">
+                    <p class="mb-4">Your subscription expires in less than 7 days! Renew now to:</p>
+                    <ul class="space-y-2 mb-6">
+                        <li class="flex items-center">
+                            <i class="bi bi-check-circle-fill text-green-500 mr-2"></i>
+                            <span>Continue getting premium visibility</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="bi bi-check-circle-fill text-green-500 mr-2"></i>
+                            <span>Avoid service downgrade</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="bi bi-check-circle-fill text-green-500 mr-2"></i>
+                            <span>Keep your featured status</span>
+                        </li>
+                    </ul>
+                </div>
+            ` : ''}
+            
+            <div class="flex gap-3">
+                <a href="{{ url_for('market.become_seller') }}" 
+                   class="flex-1 bg-primary  py-3 rounded-lg font-bold text-center hover:opacity-90">
+                    View Plans
+                </a>
+                <button onclick="this.closest('.fixed').remove(); remindLater()" 
+                        class="flex-1 border border-gray-300 py-3 rounded-lg font-bold hover:bg-gray-50">
+                    Remind Later
+                </button>
+            </div>
+            
+            <p class="text-xs text-gray-500 mt-4 text-center">
+                Plans start at $5/month. Cancel anytime.
+            </p>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+}
+
+function remindLater() {
+    // Set localStorage to not show for 24 hours
+    localStorage.setItem('subscription_remind_later', Date.now());
+}
+
+// Check subscription on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if we should show reminder
+    const lastReminder = localStorage.getItem('subscription_remind_later');
+    if (lastReminder && (Date.now() - parseInt(lastReminder)) < 24 * 60 * 60 * 1000) {
+        return; // Don't show if reminded within 24 hours
+    }
+    
+    checkSubscriptionStatus();
+    
+    // Check every 5 minutes
+    setInterval(checkSubscriptionStatus, 300000);
+});
+
+
+
+
+
+
+
+
+
+        // Check subscription status on page load
+document.addEventListener('DOMContentLoaded', function() {
+    checkSubscriptionStatus();
+    
+    // Check every 5 minutes
+    setInterval(checkSubscriptionStatus, 300000);
+});
+
+async function checkSubscriptionStatus() {
+    try {
+        const response = await fetch('/check-subscription');
+        const data = await response.json();
+        
+        if (data.success && data.show_modal) {
+            showSubscriptionModal(data.reason);
+        }
+    } catch (error) {
+        console.error('Error checking subscription:', error);
+    }
+}
+
+function showSubscriptionModal(reason) {
+    // Create modal
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+    modal.innerHTML = `
+        <div class="bg-white rounded-xl max-w-md w-full p-6">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <h3 class="text-lg font-bold">Boost Your Visibility! ✨</h3>
+                    <p class="text-sm text-gray-600 mt-1">Get more customers for your services</p>
+                </div>
+                <button onclick="this.closest('.fixed').remove()" 
+                        class="text-gray-400 hover:text-gray-600">
+                    <i class="bi bi-x text-xl"></i>
+                </button>
+            </div>
+            
+            ${reason === 'no_subscription' ? `
+                <div class="mb-6">
+                    <p class="mb-4">Your services are live but not getting maximum visibility. Subscribe to:</p>
+                    <ul class="space-y-2 mb-6">
+                        <li class="flex items-center">
+                            <i class="bi bi-check-circle-fill text-green-500 mr-2"></i>
+                            <span>Appear higher in search results</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="bi bi-check-circle-fill text-green-500 mr-2"></i>
+                            <span>Get featured on the homepage</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="bi bi-check-circle-fill text-green-500 mr-2"></i>
+                            <span>Reach 5x more customers</span>
+                        </li>
+                    </ul>
+                </div>
+            ` : reason === 'expiring_soon' ? `
+                <div class="mb-6">
+                    <p class="mb-4">Your subscription expires in less than 7 days! Renew now to:</p>
+                    <ul class="space-y-2 mb-6">
+                        <li class="flex items-center">
+                            <i class="bi bi-check-circle-fill text-green-500 mr-2"></i>
+                            <span>Continue getting premium visibility</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="bi bi-check-circle-fill text-green-500 mr-2"></i>
+                            <span>Avoid service downgrade</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="bi bi-check-circle-fill text-green-500 mr-2"></i>
+                            <span>Keep your featured status</span>
+                        </li>
+                    </ul>
+                </div>
+            ` : ''}
+            
+            <div class="flex gap-3">
+                <a href="{{ url_for('market.subscribe') }}" 
+                   class="flex-1 bg-primary  py-3 rounded-lg font-bold text-center hover:opacity-90">
+                    View Plans
+                </a>
+                <button onclick="this.closest('.fixed').remove(); remindLater()" 
+                        class="flex-1 border border-gray-300 py-3 rounded-lg font-bold hover:bg-gray-50">
+                    Remind Later
+                </button>
+            </div>
+            
+            <p class="text-xs text-gray-500 mt-4 text-center">
+                Plans start at ₦1,500/month. Cancel anytime.
+            </p>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+}
+
+function remindLater() {
+    // Set cookie or localStorage to not show for 24 hours
+    localStorage.setItem('subscription_remind_later', Date.now());
+}
     </script>
 </body>
 </html>

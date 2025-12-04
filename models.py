@@ -62,6 +62,12 @@ class User(db.Model, UserMixin):
     religion = db.Column(db.String(50), nullable=True)
     is_premium = db.Column(db.Boolean, default=False)
     
+    is_featured_seller = db.Column(db.Boolean, default=False)
+    
+    # Email preferences
+    receive_promotional_emails = db.Column(db.Boolean, default=True)
+    receive_subscription_reminders = db.Column(db.Boolean, default=True)
+    
     # FIXED: Payment transactions relationship
     campaigns = db.relationship("AdCampaign", back_populates="user", lazy="dynamic")
     
@@ -87,6 +93,18 @@ class User(db.Model, UserMixin):
     
     password_reset_token = db.Column(db.String(255), nullable=True, unique=True)
     password_reset_expires = db.Column(db.DateTime, nullable=True)
+    
+    # Marketplace subscription fields
+    marketplace_subscription_id = db.Column(db.Integer, db.ForeignKey('marketplace_subscriptions.id'), nullable=True)
+    marketplace_subscription_status = db.Column(db.String(20), default='inactive')  # inactive, active, expired
+    marketplace_subscription_expires = db.Column(db.DateTime)
+    marketplace_subscription_tier = db.Column(db.String(50), default='free')  # free, basic, pro, enterprise
+    marketplace_featured_until = db.Column(db.DateTime)  # When featured visibility expires
+    
+    # Relationship
+    marketplace_subscription = db.relationship('MarketplaceSubscription', foreign_keys=[marketplace_subscription_id])
+    
+    
     
     # Enhanced blocking system using a proper association table
     _blocked_users = db.Table(
@@ -116,6 +134,57 @@ class User(db.Model, UserMixin):
         backref=db.backref("friend_of", lazy="dynamic"),
         lazy="dynamic",
     )
+    
+    def get_unsubscribe_token(self):
+        """Generate unsubscribe token"""
+        import jwt
+        payload = {
+            'user_id': self.id,
+            'type': 'email_unsubscribe',
+            'exp': datetime.utcnow() + timedelta(days=365)
+        }
+        return jwt.encode(payload, current_app.config['SECRET_KEY'], algorithm='HS256')
+    
+    @property
+    def has_active_marketplace_subscription(self):
+        """Check if user has an active marketplace subscription"""
+        # First check: Do they have a valid subscription status and expiration?
+        if not self.marketplace_subscription_expires:
+            return False
+        
+        if self.marketplace_subscription_status != 'active':
+            return False
+        
+        if datetime.utcnow() > self.marketplace_subscription_expires:
+            return False
+        
+        # SECONDARY CHECK: Do they have at least one completed payment?
+        # This prevents showing "Subscribed" for users with fake expiration dates
+        try:
+            from models import MarketplacePayment
+            completed_payments = MarketplacePayment.query.filter_by(
+                user_id=self.id,
+                status='completed'
+            ).count()
+            
+            if completed_payments == 0:
+                # No actual payments, so not really subscribed
+                return False
+                
+        except Exception as e:
+            # If we can't check payments, at least use the date check
+            print(f"⚠️ Could not check payments for user {self.id}: {e}")
+        
+        return True
+    
+    
+    
+    @property
+    def is_marketplace_featured(self):
+        """Check if seller is currently featured"""
+        if not self.marketplace_featured_until:
+            return False
+        return self.marketplace_featured_until > datetime.utcnow()
 
     # All other User methods remain the same...
     def generate_password_reset_token(self):
@@ -1094,6 +1163,13 @@ class MarketplaceService(db.Model):
     file_type = db.Column(db.String(50))
     download_count = db.Column(db.Integer, default=0)
     
+    # Subscription reminder tracking
+    expiry_reminder_sent = db.Column(db.Boolean, default=False)
+    welcome_email_sent = db.Column(db.Boolean, default=False)
+    
+    # Ranking score for sorting
+    ranking_score = db.Column(db.Float, default=0.0)
+    
     # Service specific
     duration = db.Column(db.String(50))  # e.g., "60 min", "4 sessions"
     availability = db.Column(db.String(200))  # e.g., "Mon-Fri, 9AM-5PM"
@@ -1387,3 +1463,37 @@ class UserSession(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     user = db.relationship('User', backref=db.backref('active_sessions', lazy=True))
+    
+    
+    
+    
+    
+    
+# Add to models.py if not already there
+class MarketplaceSubscriptionPlan(db.Model):
+    __tablename__ = 'marketplace_subscription_plans'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    slug = db.Column(db.String(100), unique=True, nullable=False)
+    description = db.Column(db.Text)
+    price = db.Column(db.Float, nullable=False)  # Price in USD
+    price_ngn = db.Column(db.Float, nullable=False)  # Price in NGN
+    duration_days = db.Column(db.Integer, nullable=False)  # 30, 90, 365
+    features = db.Column(db.Text)  # JSON encoded features
+    is_featured = db.Column(db.Boolean, default=False)
+    max_services = db.Column(db.Integer, default=5)
+    priority_visibility = db.Column(db.Boolean, default=False)
+    sort_order = db.Column(db.Integer, default=0)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Method to get features as list
+    @property
+    def features_list(self):
+        if self.features:
+            try:
+                return json.loads(self.features)
+            except:
+                return []
+        return []

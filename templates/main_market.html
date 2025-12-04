@@ -474,13 +474,8 @@
                             <div class="flex items-center justify-between mb-3">
                                 <a href="{{ url_for('market.seller_profile', seller_id=service.seller_id) }}" 
                                    class="flex items-center space-x-2 cursor-pointer group">
-                                    <img src="{{ service.seller.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
-                                         alt="{{ service.seller.full_name }}" 
-                                         class="w-6 h-6 rounded-full object-cover border border-gray-200 group-hover:border-primary transition-colors"
-                                         onerror="this.src='{{ url_for('static', filename='assets/img/default-avatar.png') }}'">
-                                    <div>
-                                        <div class="font-medium text-xs group-hover:text-primary transition-colors">{{ service.seller.first_name or service.seller.full_name }}</div>
-                                    </div>
+                                    
+                                        
                                 </a>
                                 <div class="text-right">
                                     {% if not service.price or service.price == 0 %}
