@@ -1104,6 +1104,13 @@ class MarketplaceService(db.Model):
     whatsapp_number = db.Column(db.String(20))
     email = db.Column(db.String(100))
     
+    # Add these fields for better file management
+    digital_file = db.Column(db.String(500))  # Cloudinary URL
+    file_name = db.Column(db.String(255))     # Original filename
+    file_size = db.Column(db.Integer)         # Size in bytes
+    file_type = db.Column(db.String(100))     # MIME type
+    cloudinary_public_id = db.Column(db.String(255))  # Cloudinary public ID
+    
     # Media
     cover_image = db.Column(db.String(500))
     gallery_images = db.Column(db.Text)  # JSON encoded list of image URLs

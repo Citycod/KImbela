@@ -382,15 +382,13 @@
     <!-- Navigation -->
     <nav class="sticky top-0 z-50 glass-effect shadow-soft">
         <div class="container mx-auto px-3 py-2">
-            <div class="flex items-center justify-between">
+            <div class="flex items-center justify-between" style="height: 40px;">
                 <!-- Logo -->
                 <a href="{{ url_for('market.main_market') }}" class="flex items-center gap-2">
                     
-                    <div>
-                        <span class="text-base font-bold  bg-clip-text ">
-                            Kimbela Marketplace
-                        </span>
-                    </div>
+                     <img src="{{ url_for('static', filename='assets/img/kim.png') }}" 
+                             alt="Kimbela Marketplace" 
+                             class="h-10" style="height: 10rem; width: 10rem; position: absolute; top: 0; margin-top: -50px;"/>
                 </a>
                 
                 <!-- User Menu -->

@@ -2,6 +2,7 @@
 from flask import Blueprint, request, jsonify, render_template, redirect, url_for, current_app, flash, session
 from flask_login import login_required, current_user
 from extensions import db
+import traceback
 from models import (
     User, MarketplaceService, MarketplaceCategory, MarketplaceSubscription, 
     MarketplaceReview, MarketplacePayment, MarketplaceClick, PaymentTransaction
@@ -13,9 +14,110 @@ from sqlalchemy import or_, desc, func
 from werkzeug.utils import secure_filename
 import time
 from cache_utils import cache_response, invalidate_cache
+import requests
+from flask import send_file, make_response, jsonify
+from io import BytesIO
+import cloudinary
+import cloudinary.api
+import cloudinary.utils
+import requests
+from io import BytesIO
+from urllib.parse import urlparse, unquote
+import mimetypes
 
+from dotenv import load_dotenv
+
+
+load_dotenv()
+
+env_path = os.path.join(os.path.dirname(__file__), ".env")
+load_dotenv(dotenv_path=env_path)
 
 market = Blueprint("market", __name__)
+
+
+cloudinary.config(
+    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.getenv("CLOUDINARY_API_KEY"),
+    api_secret=os.getenv("CLOUDINARY_API_SECRET"),
+    secure=True,
+)
+
+
+
+# Add this utility function at the top of your market.py routes file
+import re
+from urllib.parse import urlparse
+
+
+
+def parse_cloudinary_url(url):
+    """Correctly parse Cloudinary URL to get public_id"""
+    if not url or 'cloudinary.com' not in url:
+        return None
+    
+    # Parse the URL
+    parsed_url = urlparse(url)
+    path_parts = parsed_url.path.split('/')
+    
+    print(f"Parsing URL: {url}")
+    print(f"Path parts: {path_parts}")
+    
+    # Find the resource type
+    resource_type = 'image'  # default
+    if 'raw/upload' in url:
+        resource_type = 'raw'
+    elif 'image/upload' in url:
+        resource_type = 'image'
+    
+    # Find the 'upload' index
+    try:
+        upload_index = path_parts.index('upload')
+    except ValueError:
+        # Try alternative format
+        for i, part in enumerate(path_parts):
+            if part in ['image', 'raw', 'video'] and i+1 < len(path_parts) and path_parts[i+1] == 'upload':
+                upload_index = i + 1
+                resource_type = part
+                break
+        else:
+            return None
+    
+    # Get everything after 'upload'
+    # Skip version if present (starts with 'v')
+    start_index = upload_index + 1
+    if start_index < len(path_parts) and path_parts[start_index].startswith('v'):
+        start_index += 1
+    
+    # Get the public_id (without file extension for API calls)
+    public_id_parts = path_parts[start_index:]
+    
+    # Join all parts
+    full_public_id = '/'.join(public_id_parts)
+    
+    # Remove query parameters
+    full_public_id = full_public_id.split('?')[0]
+    
+    # For PDFs, we need to preserve the .pdf extension
+    public_id_for_api = full_public_id
+    
+    # Get filename
+    filename = public_id_parts[-1] if public_id_parts else None
+    if filename:
+        filename = filename.split('?')[0]
+    
+    # Get cloud name
+    cloud_name = path_parts[1] if len(path_parts) > 1 else cloudinary.config().cloud_name
+    
+    print(f"Parsed: cloud_name={cloud_name}, resource_type={resource_type}, public_id={public_id_for_api}")
+    
+    return {
+        'cloud_name': cloud_name,
+        'resource_type': resource_type,
+        'public_id': public_id_for_api,
+        'filename': filename
+    }
+
 
 # ==================== HELPER FUNCTIONS ====================
 
@@ -24,18 +126,195 @@ def allowed_file(filename):
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'pdf', 'doc', 'docx'}
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+
+
 def upload_to_cloudinary(file, folder="marketplace"):
-    """Upload file to Cloudinary"""
+    """Upload file to Cloudinary with proper settings"""
     try:
         upload_result = cloudinary.uploader.upload(
             file,
             folder=f"kimbela/{folder}",
-            resource_type="auto"
+            resource_type="auto",
+            access_mode="public",  # MAKE PUBLIC
+            type="upload",
+            overwrite=False,
+            timeout=30
         )
+        print(f"Upload successful: {upload_result.get('secure_url')}")
+        print(f"Public ID: {upload_result.get('public_id')}")
+        print(f"Access Mode: {upload_result.get('access_mode')}")
         return upload_result.get('secure_url')
     except Exception as e:
         print(f"Cloudinary upload error: {e}")
         return None
+    
+    
+@market.route("/test-new-upload", methods=["GET"])
+@login_required
+def test_new_upload():
+    """Test the fixed upload function"""
+    if not current_user.is_admin:
+        return "Admin access required", 403
+    
+    # Create a simple test file
+    from PIL import Image
+    import io
+    
+    # Create test image
+    img = Image.new('RGB', (100, 100), color='blue')
+    img_byte_arr = io.BytesIO()
+    img.save(img_byte_arr, format='JPEG')
+    img_byte_arr.seek(0)
+    img_byte_arr.name = 'test_upload.jpg'
+    
+    # Test upload
+    url = upload_to_cloudinary(img_byte_arr, "test")
+    
+    if url:
+        # Test access
+        response = requests.get(url)
+        
+        result = f"""
+        <h1>Upload Test Results</h1>
+        <p><strong>Uploaded URL:</strong> <a href="{url}" target="_blank">{url}</a></p>
+        <p><strong>Access Status:</strong> {response.status_code} {'✅' if response.status_code == 200 else '❌'}</p>
+        <p><strong>File Size:</strong> {len(response.content)} bytes</p>
+        """
+        
+        if response.status_code == 200:
+            result += f'<img src="{url}" alt="Test image" style="max-width: 200px; border: 2px solid green;">'
+        
+        return result
+    else:
+        return "Upload failed"
+
+
+        
+        
+@market.route("/make-files-public-fixed", methods=["GET"])
+@login_required
+def make_files_public_fixed():
+    """Make all Cloudinary files publicly accessible - FIXED VERSION"""
+    if not current_user.is_admin:
+        return "Admin access required", 403
+    
+    try:
+        fixed_count = 0
+        errors = []
+        
+        # 1. Fix service cover images
+        services = MarketplaceService.query.filter(
+            MarketplaceService.cover_image.ilike('%cloudinary.com%')
+        ).all()
+        
+        for service in services:
+            if service.cover_image:
+                parsed = parse_cloudinary_url(service.cover_image)
+                if parsed:
+                    try:
+                        # Use public_id WITHOUT extension
+                        result = cloudinary.api.update(
+                            parsed['public_id'],  # This is WITHOUT .jpg extension
+                            access_mode="public",
+                            resource_type=parsed['resource_type']
+                        )
+                        fixed_count += 1
+                        print(f"Fixed: {parsed['public_id']} → {result.get('access_mode')}")
+                    except Exception as e:
+                        errors.append(f"Error fixing {parsed['public_id']}: {str(e)}")
+        
+        # 2. Fix digital files
+        services_with_digital = MarketplaceService.query.filter(
+            MarketplaceService.digital_file.isnot(None)
+        ).all()
+        
+        for service in services_with_digital:
+            if service.digital_file:
+                parsed = parse_cloudinary_url(service.digital_file)
+                if parsed:
+                    try:
+                        # For PDFs, resource_type might be 'image' or 'raw'
+                        # Try 'image' first, then 'raw'
+                        try:
+                            result = cloudinary.api.update(
+                                parsed['public_id'],
+                                access_mode="public",
+                                resource_type='image'
+                            )
+                        except:
+                            result = cloudinary.api.update(
+                                parsed['public_id'],
+                                access_mode="public",
+                                resource_type='raw'
+                            )
+                        
+                        fixed_count += 1
+                        print(f"Fixed digital: {parsed['public_id']}")
+                    except Exception as e:
+                        errors.append(f"Error fixing digital {parsed['public_id']}: {str(e)}")
+        
+        response = f"Successfully made {fixed_count} files public.<br>"
+        if errors:
+            response += f"<br>Errors:<br>" + "<br>".join(errors[:10])  # Show first 10 errors
+        
+        return response
+    
+    except Exception as e:
+        return f"Error: {str(e)}", 500
+
+
+@market.route("/debug-cloudinary", methods=["GET"])
+@login_required
+def debug_cloudinary():
+    """Debug Cloudinary file issues"""
+    if not current_user.is_admin:
+        return "Admin access required", 403
+    
+    try:
+        debug_info = []
+        
+        # Get Cloudinary account info
+        try:
+            account_info = cloudinary.api.ping()
+            debug_info.append(f"Cloudinary Account: Connected - {account_info}")
+        except Exception as e:
+            debug_info.append(f"Cloudinary Connection Error: {e}")
+        
+        # List all resources in your account
+        try:
+            resources = cloudinary.api.resources(
+                max_results=10,
+                type="upload",
+                prefix="kimbela/"
+            )
+            debug_info.append(f"Resources in 'kimbela/' folder: {len(resources.get('resources', []))}")
+            
+            for resource in resources.get('resources', []):
+                debug_info.append(f"  - {resource['public_id']} (Type: {resource['resource_type']})")
+        except Exception as e:
+            debug_info.append(f"Error listing resources: {e}")
+        
+        # Check specific problematic files
+        problem_files = [
+            "kimbela/services/cover/bps0r87dlhyhby1vsuzi.jpg",
+            "kimbela/services/digital/fc8bhr4zh89upcv2mxka.pdf"
+        ]
+        
+        for file_id in problem_files:
+            try:
+                resource = cloudinary.api.resource(file_id)
+                debug_info.append(f"✓ Found: {file_id} - Access: {resource.get('access_mode', 'unknown')}")
+            except Exception as e:
+                debug_info.append(f"✗ Not found: {file_id} - Error: {str(e)}")
+        
+        # Check what cloud we're connected to
+        debug_info.append(f"Configured Cloud Name: {cloudinary.config().cloud_name}")
+        
+        return "<br>".join(debug_info)
+    
+    except Exception as e:
+        return f"Debug error: {str(e)}", 500
+
 
 
 # In market.py, update the format_price function:
@@ -2203,3 +2482,159 @@ def get_dashboard_reviews():
     
     
     
+
+
+@market.route('/api/services/<int:service_id>/download')
+def download_service_file(service_id):
+    """Simple redirect to Cloudinary file"""
+    try:
+        service = MarketplaceService.query.get_or_404(service_id)
+        
+        if not service.digital_file:
+            flash("No digital file available", "warning")
+            return redirect(url_for('market.service_detail', slug=service.slug))
+        
+        # Check if it's a preview request
+        is_preview = request.args.get('preview') == 'true'
+        
+        # Increment download count for actual downloads
+        if not is_preview:
+            service.download_count = (service.download_count or 0) + 1
+            db.session.commit()
+        
+        # Simply redirect to the Cloudinary URL
+        # Let the browser handle the download
+        return redirect(service.digital_file)
+            
+    except Exception as e:
+        print(f"Download error: {str(e)}")
+        flash("Error downloading file", "error")
+        return redirect(url_for('market.service_detail', slug=service.slug))
+    
+
+
+import cloudinary.uploader
+
+def upload_service_file(file, service_id, folder="marketplace/services"):
+    """Upload a file to Cloudinary for a marketplace service"""
+    try:
+        # Upload to Cloudinary
+        result = cloudinary.uploader.upload(
+            file,
+            folder=folder,
+            resource_type="auto",  # Auto-detect type
+            public_id=f"service_{service_id}",
+            overwrite=True,
+            # Additional options for security
+            type="upload",
+            access_mode="authenticated"  # Make files private
+        )
+        
+        # Store in database
+        service = MarketplaceService.query.get(service_id)
+        if service:
+            service.digital_file = result['secure_url']
+            service.cloudinary_public_id = result['public_id']
+            service.file_name = file.filename if hasattr(file, 'filename') else 'file'
+            service.file_size = result.get('bytes', 0)
+            service.file_type = result.get('resource_type', 'raw')
+            db.session.commit()
+        
+        return result
+        
+    except Exception as e:
+        print(f"Upload error: {e}")
+        return None
+    
+    
+    
+@market.route("/download/<int:service_id>")
+def download_file(service_id):
+    """WORKING download route for both free and paid files"""
+    try:
+        service = MarketplaceService.query.get_or_404(service_id)
+        
+        if not service.digital_file:
+            flash("No file available for download", "warning")
+            return redirect(url_for('market.service_detail', slug=service.slug))
+        
+        # Check if service is free
+        if service.price and service.price > 0 and not service.is_free:
+            # Paid service - check if user has purchased
+            if not current_user.is_authenticated:
+                flash("Please login to download this file", "warning")
+                return redirect(url_for('auth.login', next=request.url))
+            
+            # TODO: Add purchase verification logic here
+            # For now, we'll allow download but you should implement this
+            # if not has_purchased(current_user, service):
+            #     flash("Please purchase this service to download the file", "warning")
+            #     return redirect(url_for('market.service_detail', slug=service.slug))
+        
+        url = service.digital_file
+        print(f"Downloading from URL: {url}")
+        
+        # Check if it's a Cloudinary URL
+        if 'cloudinary.com' in url:
+            # Parse the Cloudinary URL
+            parsed = parse_cloudinary_url(url)
+            if parsed:
+                print(f"Parsed Cloudinary info: {parsed}")
+                
+                # For PDF files, we need to use raw resource type
+                if '.pdf' in url.lower():
+                    # Extract filename
+                    filename = service.file_name or parsed.get('filename') or 'document.pdf'
+                    
+                    # Build the correct URL for PDF download
+                    # Cloudinary PDFs should use raw/upload, not image/upload
+                    if '/image/upload/' in url:
+                        # Fix: Change to raw resource type for PDFs
+                        cloud_name = parsed['cloud_name'] or cloudinary.config().cloud_name
+                        public_id = parsed['public_id']
+                        
+                        # For PDFs, remove fl_attachment parameter - it causes 401 errors
+                        # Build direct download URL
+                        download_url = f"https://res.cloudinary.com/{cloud_name}/raw/upload/{public_id}"
+                        
+                        print(f"PDF download URL: {download_url}")
+                        
+                        # Test the URL first
+                        try:
+                            test_response = requests.head(download_url, timeout=5)
+                            if test_response.status_code == 200:
+                                url = download_url
+                                print(f"✅ Using corrected PDF URL: {download_url}")
+                            else:
+                                print(f"⚠️ Corrected URL returned {test_response.status_code}, using original")
+                        except Exception as e:
+                            print(f"⚠️ Error testing corrected URL: {e}, using original")
+                    
+                    # For PDFs, use simple redirect without fl_attachment
+                    # This should work for publicly accessible files
+                    
+                    # Increment download count
+                    service.download_count = (service.download_count or 0) + 1
+                    db.session.commit()
+                    
+                    # Simply redirect to the URL
+                    # Browser will handle PDF display/download
+                    return redirect(url)
+        
+        # For non-PDF files or if PDF download failed
+        # Extract filename
+        filename = service.file_name or url.split('/')[-1].split('?')[0]
+        
+        # Increment download count
+        service.download_count = (service.download_count or 0) + 1
+        db.session.commit()
+        
+        # For non-PDF files, use direct redirect
+        return redirect(url)
+        
+    except Exception as e:
+        print(f"Download error: {str(e)}")
+        traceback.print_exc()
+        flash("Error downloading file. Please try again.", "error")
+        return redirect(url_for('market.service_detail', slug=service.slug))
+

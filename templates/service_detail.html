@@ -188,6 +188,43 @@
         .nav-container {
             padding: 6px 8px;
         }
+        
+        /* File download card */
+        .file-download-card {
+            border: 2px dashed #e5e7eb;
+            border-radius: 10px;
+            padding: 16px;
+            margin: 16px 0;
+            background: #f8fafc;
+        }
+        
+        .file-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        
+        .file-size {
+            font-size: 11px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+        
+        /* Payment required overlay */
+        .payment-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            flex-direction: column;
+            text-align: center;
+            padding: 20px;
+        }
     </style>
 </head>
 <body>
@@ -227,13 +264,13 @@
                             <i class="bi bi-chevron-right text-gray-400 text-xs"></i>
                             <a href="{{ url_for('market.category_detail', slug=service.category.slug) if service.category else '#' }}" 
                                class="ml-1 text-gray-700 hover:text-primary">
-                                {{ service.category.name if service.category else 'Uncategorized' }}
+                                
                             </a>
                         </div>
                     </li>
                     <li aria-current="page">
                         <div class="flex items-center">
-                            <i class="bi bi-chevron-right text-gray-400 text-xs"></i>
+                            
                             <span class="ml-1 text-gray-500">{{ service.title[:25] }}{{ '...' if service.title|length > 25 }}</span>
                         </div>
                     </li>
@@ -266,6 +303,374 @@
                     </div>
                     {% endif %}
                 </div>
+                
+                <!-- FILE DOWNLOAD SECTION - ADD THIS -->
+                <!-- FILE DOWNLOAD SECTION - WORKING VERSION -->
+
+        
+        <!-- Check if service is free -->
+        <!-- In service_detail.html, replace the download section with: -->
+
+        <!-- BEAUTIFUL DOWNLOAD SECTION WITH FREE/PAID LOGIC -->
+<!-- ELEGANT COMPACT DOWNLOAD SECTION -->
+{% if service.digital_file %}
+<div class="bg-white rounded-xl shadow-sm p-5 mb-6 border border-gray-200">
+    <!-- Compact Header -->
+    <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center">
+            <div class="mr-3">
+                {% if '.pdf' in service.digital_file.lower() %}
+                <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                    <i class="bi bi-file-earmark-pdf text-red-600 text-lg"></i>
+                </div>
+                {% elif '.doc' in service.digital_file.lower() or '.docx' in service.digital_file.lower() %}
+                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <i class="bi bi-file-earmark-word text-blue-600 text-lg"></i>
+                </div>
+                {% elif '.zip' in service.digital_file.lower() or '.rar' in service.digital_file.lower() %}
+                <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+                    <i class="bi bi-file-earmark-zip text-yellow-600 text-lg"></i>
+                </div>
+                {% else %}
+                <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <i class="bi bi-file-earmark-text text-purple-600 text-lg"></i>
+                </div>
+                {% endif %}
+            </div>
+            <div>
+                <h3 class="text-sm font-semibold text-gray-800">Digital File</h3>
+                <p class="text-xs text-gray-500">
+                    {% if '.pdf' in service.digital_file.lower() %}
+                    PDF Document
+                    {% elif '.doc' in service.digital_file.lower() or '.docx' in service.digital_file.lower() %}
+                    Word Document
+                    {% elif '.zip' in service.digital_file.lower() or '.rar' in service.digital_file.lower() %}
+                    Compressed File
+                    {% else %}
+                    Digital File
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+        
+        <!-- Download count badge -->
+        {% if service.download_count %}
+        <div class="px-2 py-1 bg-gray-100 rounded text-xs text-gray-600">
+            <i class="bi bi-download mr-1"></i>{{ service.download_count }}
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- File info (collapsible) -->
+    <div class="mb-4 text-xs text-gray-600">
+        {% if service.file_name %}
+        <p class="truncate"><i class="bi bi-file-text mr-1"></i> {{ service.file_name }}</p>
+        {% endif %}
+        {% if service.file_size %}
+        <p class="mt-1"><i class="bi bi-hdd mr-1"></i> {{ (service.file_size / 1024)|round|int }} KB</p>
+        {% endif %}
+    </div>
+    
+    <!-- PRICING BADGE -->
+    <div class="mb-4">
+        {% if service.price and service.price > 0 and not service.is_free %}
+        <!-- PAID SERVICE -->
+        <div class="inline-flex items-center px-3 py-1.5 bg-yellow-50 border border-yellow-200 rounded-full">
+            <i class="bi bi-tag text-yellow-600 mr-1.5 text-sm"></i>
+            <span class="text-sm font-semibold text-yellow-800">
+                {% set currency_symbols = {
+                    'USD': '$',
+                    'EUR': '€',
+                    'GBP': '£',
+                    'KES': 'KSh',
+                    'NGN': '₦',
+                    'GHS': 'GH₵',
+                    'ZAR': 'R'
+                } %}
+                {% set currency_symbol = currency_symbols.get(service.currency, '') %}
+                {{ currency_symbol }}{{ "{:,.2f}".format(service.price) }}
+            </span>
+        </div>
+        {% else %}
+        <!-- FREE SERVICE -->
+        <div class="inline-flex items-center px-3 py-1.5 bg-green-50 border border-green-200 rounded-full">
+            <i class="bi bi-gift text-green-600 mr-1.5 text-sm"></i>
+            <span class="text-sm font-semibold text-green-800">Free Download</span>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- DOWNLOAD AREA -->
+    {% if service.price and service.price > 0 and not service.is_free %}
+    <!-- ===== PAID SERVICE ===== -->
+    <div class="space-y-3">
+        <!-- Locked State -->
+        <div class="relative overflow-hidden rounded-lg border border-gray-300">
+            <!-- Blurred overlay -->
+            <div class="absolute inset-0 bg-white/90 backdrop-blur-[1px] z-10 flex flex-col items-center justify-center p-4">
+                <div class="text-center">
+                    
+                    
+                </div>
+            </div>
+            
+            <!-- Locked button (behind) -->
+            <button class="w-full px-4 py-2.5 bg-gray-100 text-gray-500 text-sm font-medium rounded cursor-not-allowed">
+                <i class="bi bi-lock mr-1.5"></i>Download Locked
+            </button>
+        </div>
+        
+        <!-- Preview option -->
+        
+    </div>
+    
+    {% else %}
+    <!-- ===== FREE SERVICE ===== -->
+    <div class="space-y-2.5">
+        <!-- Primary compact download button -->
+        <button onclick="elegantDownload({{ service.id }}, '{{ url_for('market.download_file', service_id=service.id) }}')"
+                class="w-full px-4 py-2.5 bg-gradient-to-r from-green-500 to-green-600 text-white text-sm font-medium rounded-lg hover:from-green-600 hover:to-green-700 transition-all shadow-sm hover:shadow flex items-center justify-center group">
+            <i class="bi bi-cloud-arrow-down mr-2 group-hover:animate-bounce"></i>
+            Download Now
+        </button>
+        
+        <!-- Quick actions row -->
+        <div class="flex gap-2">
+            <!-- Direct download -->
+            <a href="{{ service.digital_file }}" 
+               download
+               onclick="trackDownload({{ service.id }})"
+               class="flex-1 px-3 py-1.5 bg-blue-50 text-blue-700 text-xs font-medium rounded border border-blue-200 hover:bg-blue-100 transition-colors flex items-center justify-center">
+                <i class="bi bi-download mr-1.5"></i>Direct
+            </a>
+            
+            <!-- Preview -->
+            {% if '.pdf' in service.digital_file.lower() %}
+            <a href="{{ service.digital_file }}" 
+               target="_blank"
+               class="flex-1 px-3 py-1.5 bg-gray-50 text-gray-700 text-xs font-medium rounded border border-gray-200 hover:bg-gray-100 transition-colors flex items-center justify-center">
+                <i class="bi bi-eye mr-1.5"></i>Preview
+            </a>
+            {% endif %}
+            
+            <!-- Copy link -->
+            <button onclick="copyDownloadLink('{{ service.digital_file }}')"
+                    class="flex-1 px-3 py-1.5 bg-gray-50 text-gray-700 text-xs font-medium rounded border border-gray-200 hover:bg-gray-100 transition-colors flex items-center justify-center">
+                <i class="bi bi-link-45deg"></i>
+            </button>
+        </div>
+        
+        <!-- PDF tip -->
+        {% if '.pdf' in service.digital_file.lower() %}
+        <div class="mt-2 pt-2 border-t border-gray-100">
+            <p class="text-xs text-gray-500 text-center">
+                <i class="bi bi-lightbulb mr-1"></i>For PDFs, try "Preview" first
+            </p>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- ELEGANT JAVASCRIPT -->
+<script>
+// ELEGANT DOWNLOAD FUNCTION
+async function elegantDownload(serviceId, url) {
+    const button = event.currentTarget;
+    const originalHTML = button.innerHTML;
+    
+    // Show elegant loading state
+    button.innerHTML = '<i class="bi bi-hourglass-split mr-2 animate-spin"></i>Preparing...';
+    button.disabled = true;
+    button.classList.add('opacity-75');
+    
+    try {
+        // Track download
+        await fetch(`/api/track-download/${serviceId}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        });
+        
+        // Determine file type
+        const isPDF = url.includes('.pdf') || url.toLowerCase().includes('pdf');
+        
+        if (isPDF) {
+            // For PDFs: Open in new tab for best experience
+            const newTab = window.open(url, '_blank');
+            
+            // Fallback: Try direct download after 1 second
+            setTimeout(() => {
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = '';
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }, 1000);
+            
+            button.innerHTML = '<i class="bi bi-check-circle mr-2"></i>Opening...';
+        } else {
+            // For other files: Direct download
+            window.location.href = url;
+            button.innerHTML = '<i class="bi bi-check-circle mr-2"></i>Started!';
+        }
+        
+        // Reset button after 2 seconds
+        setTimeout(() => {
+            button.innerHTML = originalHTML;
+            button.disabled = false;
+            button.classList.remove('opacity-75');
+        }, 2000);
+        
+    } catch (error) {
+        console.error('Download error:', error);
+        
+        // Fallback: Open in new tab
+        window.open(url, '_blank');
+        
+        // Reset button
+        button.innerHTML = '<i class="bi bi-exclamation-triangle mr-2"></i>Try Again';
+        setTimeout(() => {
+            button.innerHTML = originalHTML;
+            button.disabled = false;
+            button.classList.remove('opacity-75');
+        }, 2000);
+    }
+}
+
+// Track download
+async function trackDownload(serviceId) {
+    try {
+        await fetch(`/api/track-download/${serviceId}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        });
+    } catch (error) {
+        // Silent fail
+    }
+}
+
+// Copy link with elegant feedback
+function copyDownloadLink(url) {
+    navigator.clipboard.writeText(url).then(() => {
+        showElegantToast('Link copied!', 'success');
+    }).catch(() => {
+        showElegantToast('Failed to copy', 'error');
+    });
+}
+
+// Elegant toast notification
+function showElegantToast(message, type = 'info') {
+    // Remove existing
+    const existing = document.getElementById('elegant-toast');
+    if (existing) existing.remove();
+    
+    // Create toast
+    const toast = document.createElement('div');
+    toast.id = 'elegant-toast';
+    toast.className = `fixed bottom-4 right-4 px-4 py-2 rounded-lg shadow-lg z-50 transform transition-all duration-300 text-sm ${
+        type === 'success' ? 'bg-green-500 text-white' : 
+        type === 'error' ? 'bg-red-500 text-white' : 
+        'bg-blue-500 text-white'
+    }`;
+    toast.innerHTML = `
+        <div class="flex items-center">
+            <i class="bi ${type === 'success' ? 'bi-check-circle' : 'bi-exclamation-circle'} mr-2"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Auto remove
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(10px)';
+        setTimeout(() => toast.remove(), 300);
+    }, 2500);
+}
+
+// Scroll to contact
+function scrollToContact() {
+    const contactCard = document.getElementById('contactCard');
+    if (contactCard) {
+        contactCard.scrollIntoView({ behavior: 'smooth' });
+        
+        // Subtle highlight
+        contactCard.classList.add('ring-2', 'ring-primary');
+        setTimeout(() => {
+            contactCard.classList.remove('ring-2', 'ring-primary');
+        }, 1500);
+    }
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    // Add download attributes
+    document.querySelectorAll('a[href*="cloudinary.com"]').forEach(link => {
+        if (!link.hasAttribute('download')) {
+            link.setAttribute('download', '');
+        }
+    });
+});
+</script>
+
+<!-- Custom CSS for animations -->
+<style>
+/* Bounce animation for download icon */
+@keyframes gentleBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-2px); }
+}
+
+.group:hover .group-hover\:animate-bounce {
+    animation: gentleBounce 0.5s ease infinite;
+}
+
+/* Smooth spin */
+@keyframes smoothSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+    animation: smoothSpin 1s linear infinite;
+}
+
+/* Locked overlay animation */
+@keyframes subtlePulse {
+    0%, 100% { opacity: 0.9; }
+    50% { opacity: 0.95; }
+}
+
+.relative > div:first-child {
+    animation: subtlePulse 3s infinite;
+}
+
+/* Button hover effects */
+button:not(:disabled):hover {
+    transform: translateY(-1px);
+    transition: transform 0.2s ease;
+}
+
+/* Toast animation */
+#elegant-toast {
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+</style>
+{% endif %}
                 
                 <!-- Service Information -->
                 <div class="bg-white rounded-lg p-4 shadow-sm mb-4">
@@ -382,6 +787,20 @@
                             <h4 class="font-bold text-xs text-gray-600 mb-1">Service Type</h4>
                             <p class="text-gray-800 text-sm">{{ service.service_type|title if service.service_type else 'Service' }}</p>
                         </div>
+                        
+                        {% if service.digital_file %}
+                        <div>
+                            <h4 class="font-bold text-xs text-gray-600 mb-1">Digital Content</h4>
+                            <p class="text-gray-800 text-sm flex items-center">
+                                <i class="bi bi-file-earmark-text text-primary mr-1"></i>
+                                {% if service.price is none or service.price == 0 or service.is_free %}
+                                <span class="text-green-600">Free Download Available</span>
+                                {% else %}
+                                <span class="text-primary">File Available After Purchase</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
                 
@@ -527,7 +946,7 @@
             <!-- Right Column: Contact & Actions -->
             <div class="lg:col-span-1">
                 <!-- Contact Card -->
-                <div class="bg-white rounded-lg p-4 shadow-sm sticky top-20">
+                <div class="bg-white rounded-lg p-4 shadow-sm sticky top-20" id="contactCard">
                     <h3 class="text-sm font-bold mb-3">Contact Seller</h3>
                     
                     <!-- Price Box -->
@@ -630,6 +1049,19 @@
                             {% endif %}
                         {% endif %}
                     </div>
+                    
+                    <!-- If service has file but is paid, show reminder -->
+                    <!-- If service has file but is paid, show reminder -->
+                    {% if service.digital_file and service.price and service.price > 0 and not service.is_free %}
+                    <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg mb-3">
+                        <h4 class="font-bold text-xs text-blue-800 mb-1 flex items-center">
+                            <i class="bi bi-info-circle mr-1 text-xs"></i> File Access
+                        </h4>
+                        <p class="text-xs text-blue-700">
+                            This service includes a digital file. Contact the seller to purchase and get download access.
+                        </p>
+                    </div>
+                    {% endif %}
                     
                     <!-- Safety Tips -->
                     <div class="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
@@ -778,8 +1210,93 @@
         </div>
     </div>
 
+
+
+
+<script>
+// Track file downloads
+function logFileDownload(serviceId) {
+    fetch(`/api/log-click/${serviceId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ type: 'download' })
+    }).catch(console.error);
+}
+
+// For direct links with download attribute
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('a[download]').forEach(link => {
+        if (link.href.includes('cloudinary.com')) {
+            const serviceId = {{ service.id }};
+            link.addEventListener('click', function() {
+                logFileDownload(serviceId);
+            });
+        }
+    });
+});
+</script>
+
+
+
     <!-- JavaScript -->
     <script>
+
+       // File download handling
+function handleFileDownload(serviceId, isPreview = false) {
+    let url = `/api/marketplace/services/${serviceId}/download`;
+    if (isPreview) {
+        url += '?preview=true';
+    }
+    
+    // Open in new tab for preview, same tab for download
+    if (isPreview) {
+        window.open(url, '_blank');
+    } else {
+        window.location.href = url;
+    }
+    
+    // Log the download
+    logFileDownload(serviceId);
+    
+    return false;
+}
+
+
+
+// Update your download links to use the new function
+document.addEventListener('DOMContentLoaded', function() {
+    // Update download buttons
+    document.querySelectorAll('a[href*="/download"]').forEach(link => {
+        if (link.href.includes('/api/marketplace/services/')) {
+            const serviceIdMatch = link.href.match(/services\/(\d+)\/download/);
+            if (serviceIdMatch) {
+                const serviceId = serviceIdMatch[1];
+                const isPreview = link.href.includes('preview=true');
+                
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    handleFileDownload(serviceId, isPreview);
+                });
+            }
+        }
+    });
+});
+
+// Copy URL to clipboard
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        alert('URL copied to clipboard');
+    }).catch(err => {
+        console.error('Failed to copy: ', err);
+    });
+}
+
+
+
+
+
         // Gallery functionality
         let currentGalleryImages = [];
         let currentImageIndex = 0;
@@ -820,6 +1337,74 @@
             }
         });
         
+        // Scroll to contact card
+        function scrollToContact() {
+            document.getElementById('contactCard').scrollIntoView({ 
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+        
+        // Log file download
+// Instead of direct Cloudinary URL, use:
+async function downloadFile(serviceId) {
+    try {
+        const response = await fetch(`/api/marketplace/services/${serviceId}/download`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${yourAuthToken}`,
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Download failed');
+        }
+        
+        // Get filename from Content-Disposition header
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename = 'download';
+        
+        if (contentDisposition) {
+            const match = contentDisposition.match(/filename="?(.+?)"?$/);
+            if (match) {
+                filename = match[1];
+            }
+        }
+        
+        // Create blob and download
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+    } catch (error) {
+        console.error('Download error:', error);
+        alert('Failed to download file');
+    }
+}
+
+// Scroll to contact card
+function scrollToContact() {
+    const contactCard = document.getElementById('contactCard');
+    if (contactCard) {
+        contactCard.scrollIntoView({ 
+            behavior: 'smooth',
+            block: 'start'
+        });
+        
+        // Optional: Highlight the contact card
+        contactCard.classList.add('ring-2', 'ring-primary', 'ring-opacity-50');
+        setTimeout(() => {
+            contactCard.classList.remove('ring-2', 'ring-primary', 'ring-opacity-50');
+        }, 3000);
+    }
+}
+        
         // Log clicks for analytics
         document.addEventListener('DOMContentLoaded', function() {
             // Log contact method clicks
@@ -839,6 +1424,58 @@
                 });
             });
         });
+
+
+        function handleDownload(serviceId, url, isProxy = true) {
+    // Log the download
+    fetch(`/api/log-click/${serviceId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+            type: 'download',
+            is_proxy: isProxy 
+        })
+    }).then(response => {
+        if (!response.ok) {
+            console.error('Failed to log download');
+        }
+    }).catch(error => {
+        console.error('Error logging download:', error);
+    });
+    
+    // Open the download
+    if (isProxy) {
+        window.location.href = url;
+    } else {
+        // For direct links, let the browser handle it
+        window.open(url, '_blank');
+    }
+    
+    return false;
+}
+
+// Update your download links
+document.addEventListener('DOMContentLoaded', function() {
+    // For proxy downloads
+    document.querySelectorAll('a[href*="/download/"]').forEach(link => {
+        link.addEventListener('click', function(e) {
+            const serviceId = this.href.match(/download\/(\d+)/)[1];
+            handleDownload(serviceId, this.href, true);
+        });
+    });
+    
+    // For direct downloads
+    document.querySelectorAll('a[download]').forEach(link => {
+        if (link.href.includes('cloudinary.com')) {
+            const serviceId = {{ service.id }};
+            link.addEventListener('click', function(e) {
+                handleDownload(serviceId, this.href, false);
+            });
+        }
+    });
+});
     </script>
 </body>
 </html>
