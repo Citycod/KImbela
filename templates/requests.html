@@ -43,9 +43,25 @@
                         poppins: ["Poppins", "sans-serif"],
                         playfair: ["Playfair Display", "serif"],
                     },
+                    fontSize: {
+                        'xs': ['0.75rem', { lineHeight: '1rem' }],
+                        'sm': ['0.875rem', { lineHeight: '1.25rem' }],
+                        'base': ['0.875rem', { lineHeight: '1.25rem' }],
+                        'lg': ['1rem', { lineHeight: '1.5rem' }],
+                        'xl': ['1.125rem', { lineHeight: '1.75rem' }],
+                        '2xl': ['1.25rem', { lineHeight: '1.75rem' }],
+                        '3xl': ['1.5rem', { lineHeight: '2rem' }],
+                        '4xl': ['1.75rem', { lineHeight: '2.25rem' }],
+                    },
+                    spacing: {
+                        '0.5': '0.125rem',
+                        '1.5': '0.375rem',
+                        '2.5': '0.625rem',
+                        '3.5': '0.875rem',
+                    },
                     animation: {
-                        'fade-in': 'fadeIn 0.5s ease-in-out',
-                        'slide-up': 'slideUp 0.3s ease-out',
+                        'fade-in': 'fadeIn 0.3s ease-in-out',
+                        'slide-up': 'slideUp 0.2s ease-out',
                         'pulse-soft': 'pulseSoft 2s infinite',
                         'float': 'float 6s ease-in-out infinite',
                     },
@@ -55,7 +71,7 @@
                             '100%': { opacity: '1' },
                         },
                         slideUp: {
-                            '0%': { transform: 'translateY(10px)', opacity: '0' },
+                            '0%': { transform: 'translateY(8px)', opacity: '0' },
                             '100%': { transform: 'translateY(0)', opacity: '1' },
                         },
                         pulseSoft: {
@@ -64,7 +80,7 @@
                         },
                         float: {
                             '0%, 100%': { transform: 'translateY(0)' },
-                            '50%': { transform: 'translateY(-10px)' },
+                            '50%': { transform: 'translateY(-8px)' },
                         }
                     }
                 },
@@ -76,7 +92,7 @@
         /* Custom Styles */
         .glass-effect {
             background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(8px);
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
         
@@ -97,78 +113,78 @@
         }
         
         .shadow-soft {
-            box-shadow: 0 4px 6px -1px rgba(139, 69, 19, 0.1), 0 2px 4px -1px rgba(139, 69, 19, 0.06);
+            box-shadow: 0 2px 4px -1px rgba(139, 69, 19, 0.1), 0 1px 2px -1px rgba(139, 69, 19, 0.06);
         }
         
         .shadow-medium {
-            box-shadow: 0 10px 15px -3px rgba(139, 69, 19, 0.1), 0 4px 6px -2px rgba(139, 69, 19, 0.05);
+            box-shadow: 0 4px 6px -3px rgba(139, 69, 19, 0.1), 0 2px 4px -2px rgba(139, 69, 19, 0.05);
         }
         
         .shadow-strong {
-            box-shadow: 0 20px 25px -5px rgba(139, 69, 19, 0.1), 0 10px 10px -5px rgba(139, 69, 19, 0.04);
+            box-shadow: 0 8px 10px -5px rgba(139, 69, 19, 0.1), 0 4px 6px -3px rgba(139, 69, 19, 0.05);
         }
         
-        .btn-compact {
-            padding: 0.625rem 1.25rem;
+        .btn {
+            padding: 8px 16px;
             font-size: 0.875rem;
-            border-radius: 0.5rem;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            font-weight: 500;
         }
         
-        .btn-compact:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(139, 69, 19, 0.1);
+        .btn:hover {
+            transform: translateY(-1px);
         }
         
         .card-hover {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.2s ease;
         }
         
         .card-hover:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 25px 50px -12px rgba(139, 69, 19, 0.25);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px -5px rgba(139, 69, 19, 0.15);
         }
         
         .feature-list li {
             position: relative;
-            padding-left: 1.5rem;
-            margin-bottom: 0.5rem;
+            padding-left: 1.25rem;
+            margin-bottom: 0.375rem;
             font-size: 0.875rem;
-            line-height: 1.5;
+            line-height: 1.4;
         }
         
         .feature-list li:before {
             content: "❤️";
             position: absolute;
             left: 0;
-            font-size: 1rem;
+            font-size: 0.875rem;
         }
         
         .popular-plan {
             border: 2px solid #B76E79;
             position: relative;
-            transform: scale(1.05);
+            transform: scale(1.02);
         }
         
         .popular-plan::before {
-            content: "MOST POPULAR";
+            content: "POPULAR";
             position: absolute;
-            top: -12px;
+            top: -10px;
             left: 50%;
             transform: translateX(-50%);
             background: linear-gradient(135deg, #B76E79, #DCAE96);
             color: white;
-            padding: 0.375rem 1.5rem;
-            border-radius: 20px;
+            padding: 0.25rem 1rem;
+            border-radius: 12px;
             font-size: 0.75rem;
             font-weight: 700;
-            box-shadow: 0 4px 10px rgba(183, 110, 121, 0.4);
+            box-shadow: 0 2px 6px rgba(183, 110, 121, 0.3);
         }
         
         .floral-card {
             background: #FFFFF0;
             border: 1px solid #E8D5C4;
-            border-radius: 16px;
+            border-radius: 12px;
             position: relative;
             overflow: hidden;
         }
@@ -179,15 +195,15 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 4px;
+            height: 3px;
             background: linear-gradient(90deg, #B76E79, #D4A76A, #87A96B);
         }
         
         .loader-spinner {
-            width: 48px;
-            height: 48px;
-            border: 4px solid #E8D5C4;
-            border-top: 4px solid #B76E79;
+            width: 36px;
+            height: 36px;
+            border: 3px solid #E8D5C4;
+            border-top: 3px solid #B76E79;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
@@ -201,9 +217,9 @@
             display: inline-block;
             background: #f3f4f6;
             border: 1px solid #e5e7eb;
-            border-radius: 20px;
-            padding: 6px 12px;
-            margin: 4px;
+            border-radius: 16px;
+            padding: 4px 8px;
+            margin: 3px;
             font-size: 0.75rem;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -220,18 +236,19 @@
         }
         
         .country-select {
-            height: 200px;
+            height: 180px;
             overflow-y: auto;
             border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 8px;
+            border-radius: 6px;
+            padding: 6px;
         }
         
         .country-option {
-            padding: 8px 12px;
+            padding: 6px 10px;
             cursor: pointer;
-            border-radius: 6px;
+            border-radius: 4px;
             transition: all 0.2s ease;
+            font-size: 0.875rem;
         }
         
         .country-option:hover {
@@ -247,13 +264,13 @@
             display: flex;
             justify-content: space-between;
             position: relative;
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
         }
 
         .step-indicator::before {
             content: "";
             position: absolute;
-            top: 16px;
+            top: 12px;
             left: 0;
             right: 0;
             height: 2px;
@@ -271,17 +288,17 @@
         }
 
         .step-circle {
-            width: 32px;
-            height: 32px;
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
             background: #E8D5C4;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 600;
-            font-size: 0.875rem;
-            margin-bottom: 0.5rem;
-            transition: all 0.3s ease;
+            font-size: 0.75rem;
+            margin-bottom: 0.375rem;
+            transition: all 0.2s ease;
             border: 2px solid transparent;
         }
 
@@ -289,7 +306,7 @@
             background: #B76E79;
             color: white;
             border-color: #B76E79;
-            box-shadow: 0 4px 10px rgba(183, 110, 121, 0.3);
+            box-shadow: 0 2px 6px rgba(183, 110, 121, 0.3);
         }
 
         .step.completed .step-circle {
@@ -311,10 +328,10 @@
         
         .image-upload-area {
             border: 2px dashed #d1d5db;
-            border-radius: 0.75rem;
-            padding: 2rem;
+            border-radius: 8px;
+            padding: 1.5rem;
             text-align: center;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
             cursor: pointer;
             background: #f8fafc;
         }
@@ -322,35 +339,35 @@
         .image-upload-area:hover {
             border-color: #B76E79;
             background: #fdf6f0;
-            transform: scale(1.02);
+            transform: scale(1.01);
         }
         
         .image-upload-area.dragover {
             border-color: #B76E79;
             background: #fdf6f0;
-            transform: scale(1.02);
+            transform: scale(1.01);
         }
         
         .premium-badge {
             position: absolute;
-            top: -12px;
-            right: 20px;
+            top: -10px;
+            right: 16px;
             background: linear-gradient(135deg, #B76E79, #DCAE96);
             color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
+            padding: 0.375rem 0.75rem;
+            border-radius: 12px;
             font-size: 0.75rem;
             font-weight: 700;
-            box-shadow: 0 4px 10px rgba(183, 110, 121, 0.4);
+            box-shadow: 0 2px 6px rgba(183, 110, 121, 0.3);
         }
         
         .matchmaking-card {
             background: #FFFFF0;
             border: 1px solid #E8D5C4;
-            border-radius: 16px;
+            border-radius: 12px;
             overflow: hidden;
             position: relative;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
         }
         
         .matchmaking-card::before {
@@ -359,28 +376,28 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 4px;
+            height: 3px;
             background: linear-gradient(90deg, #B76E79, #D4A76A, #87A96B);
         }
         
         .matchmaking-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(139, 69, 19, 0.15);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(139, 69, 19, 0.1);
         }
         
         .matchmaking-header {
             background: linear-gradient(135deg, #F7E7CE 0%, #FFFDD0 100%);
-            padding: 1.5rem;
+            padding: 1rem;
             text-align: center;
             border-bottom: 1px solid #E8D5C4;
         }
         
         .matchmaking-body {
-            padding: 1.5rem;
+            padding: 1rem;
         }
         
         .matchmaking-footer {
-            padding: 1rem 1.5rem;
+            padding: 0.75rem 1rem;
             background: #FDF6F0;
             border-top: 1px solid #E8D5C4;
         }
@@ -388,12 +405,12 @@
         .floral-divider {
             height: 1px;
             background: linear-gradient(90deg, transparent, #D4A76A, transparent);
-            margin: 1rem 0;
+            margin: 0.75rem 0;
         }
         
         .success-checkmark {
-            width: 80px;
-            height: 80px;
+            width: 60px;
+            height: 60px;
             margin: 0 auto;
             border-radius: 50%;
             display: block;
@@ -438,24 +455,24 @@
         
         @keyframes fill {
             100% {
-                box-shadow: inset 0px 0px 0px 30px #B76E79;
+                box-shadow: inset 0px 0px 0px 20px #B76E79;
             }
         }
         
         /* Active Request Banner */
         #activeRequestBanner {
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
         }
         
         .banner-enter {
             opacity: 0;
-            transform: translate(-50%, -20px);
+            transform: translate(-50%, -16px);
         }
         
         .banner-enter-active {
             opacity: 1;
             transform: translate(-50%, 0);
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
         }
         
         .banner-exit {
@@ -465,8 +482,82 @@
         
         .banner-exit-active {
             opacity: 0;
-            transform: translate(-50%, -20px);
-            transition: all 0.3s ease;
+            transform: translate(-50%, -16px);
+            transition: all 0.2s ease;
+        }
+        
+        .select-input {
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 0.875rem;
+            width: 100%;
+            transition: all 0.2s;
+        }
+        
+        .select-input:focus {
+            border-color: #B76E79;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(183, 110, 121, 0.1);
+        }
+        
+        .text-input {
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 0.875rem;
+            width: 100%;
+            transition: all 0.2s;
+        }
+        
+        .text-input:focus {
+            border-color: #B76E79;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(183, 110, 121, 0.1);
+        }
+        
+        .textarea-input {
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 0.875rem;
+            width: 100%;
+            resize: vertical;
+            min-height: 60px;
+            transition: all 0.2s;
+        }
+        
+        .textarea-input:focus {
+            border-color: #B76E79;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(183, 110, 121, 0.1);
+        }
+        
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid #f5f5f5;
+            font-size: 0.875rem;
+        }
+        
+        .info-item:last-child {
+            border-bottom: none;
+        }
+        
+        .radio-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+        
+        .radio-label input[type="radio"] {
+            margin-right: 6px;
+        }
+        
+        .modal {
+            backdrop-filter: blur(4px);
         }
     </style>
 </head>
@@ -474,31 +565,31 @@
     <!-- Loader -->
     <div class="simple-loader fixed inset-0 bg-white flex flex-col justify-center items-center z-50" id="loader">
         <div class="text-center animate-fade-in">
-            <div class="loader-spinner mb-4"></div>
+            <div class="loader-spinner mb-3"></div>
             <div class="text-text-secondary text-sm font-medium">Loading matchmaking packages...</div>
         </div>
     </div>
 
     <!-- Active Request Banner -->
-    <div class="fixed top-20 left-1/2 transform -translate-x-1/2 z-40 hidden" id="activeRequestBanner">
-        <div class="bg-gradient-to-r from-rose-gold to-primary text-white px-6 py-4 rounded-2xl shadow-strong flex items-center space-x-4 animate-slide-up">
-            <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                    <i class="bi bi-heart text-white"></i>
+    <div class="fixed top-16 left-1/2 transform -translate-x-1/2 z-40 hidden" id="activeRequestBanner">
+        <div class="bg-gradient-to-r from-rose-gold to-primary text-white px-4 py-3 rounded-lg shadow-strong flex items-center space-x-3 animate-slide-up">
+            <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                    <i class="bi bi-heart text-white text-sm"></i>
                 </div>
                 <div>
-                    <div class="font-semibold">You have an active matchmaking request</div>
-                    <div class="text-white/80 text-sm" id="bannerRequestDetails">
+                    <div class="font-semibold text-sm">Active matchmaking request</div>
+                    <div class="text-white/80 text-xs" id="bannerRequestDetails">
                         <!-- Details will be populated by JavaScript -->
                     </div>
                 </div>
             </div>
-            <div class="flex items-center space-x-2">
-                <button onclick="viewMyActiveRequest()" class="bg-white text-primary px-4 py-2 rounded-lg hover:bg-ivory transition-colors font-medium text-sm">
-                    View Request
+            <div class="flex items-center space-x-1.5">
+                <button onclick="viewMyActiveRequest()" class="bg-white text-primary px-3 py-1.5 rounded text-sm hover:bg-ivory transition-colors font-medium">
+                    View
                 </button>
                 <button onclick="hideActiveRequestBanner()" class="text-white hover:text-ivory transition-colors">
-                    <i class="bi bi-x-lg"></i>
+                    <i class="bi bi-x-lg text-sm"></i>
                 </button>
             </div>
         </div>
@@ -508,14 +599,14 @@
     <div class="main-content min-h-screen">
         <!-- Header -->
         <header class="glass-effect sticky top-0 z-40 border-b border-rose-200/50">
-            <div class="container mx-auto px-4 py-4">
+            <div class="container mx-auto px-3 sm:px-4 py-2">
                 <div class="flex justify-between items-center">
-                    <div class="flex items-center space-x-3">
-                        <h1 class="text-2xl font-playfair font-bold text-primary">Kimbela Matchmaking</h1>
+                    <div class="flex items-center space-x-2">
+                        <h1 class="text-xl font-playfair font-bold text-primary">Kimbela Matchmaking</h1>
                     </div>
-                    <div class="flex items-center space-x-4">
-                        <a href="{{ url_for('user.user_dashboard') }}" class="bg-primary text-white px-4 py-2.5 rounded-lg btn-compact hover:bg-secondary transition-all duration-300 flex items-center space-x-2">
-                            <i class="bi bi-grid-1x2"></i>
+                    <div class="flex items-center space-x-3">
+                        <a href="{{ url_for('user.user_dashboard') }}" class="bg-primary text-white px-3 py-1.5 rounded btn hover:bg-secondary transition-all duration-300 flex items-center space-x-1.5 text-sm">
+                            <i class="bi bi-grid-1x2 text-xs"></i>
                             <span>Dashboard</span>
                         </a>
                     </div>
@@ -524,25 +615,25 @@
         </header>
 
         <!-- Hero Section -->
-        <section class="relative py-20 gradient-bg text-white overflow-hidden">
+        <section class="relative py-12 gradient-bg text-white overflow-hidden">
             <div class="absolute inset-0 bg-black/10"></div>
-            <div class="absolute top-0 left-0 w-72 h-72 bg-rose-500/10 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
-            <div class="absolute bottom-0 right-0 w-96 h-96 bg-sage-500/10 rounded-full translate-x-1/3 translate-y-1/3"></div>
-            <div class="absolute top-1/4 right-1/4 w-64 h-64 bg-champagne/10 rounded-full animate-float"></div>
+            <div class="absolute top-0 left-0 w-48 h-48 bg-rose-500/10 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+            <div class="absolute bottom-0 right-0 w-64 h-64 bg-sage-500/10 rounded-full translate-x-1/3 translate-y-1/3"></div>
+            <div class="absolute top-1/4 right-1/4 w-48 h-48 bg-champagne/10 rounded-full animate-float"></div>
             
-            <div class="container mx-auto px-4 text-center relative z-10">
-                <h1 class="text-4xl md:text-6xl font-playfair font-black mb-6 animate-fade-in bg-gradient-to-r from-white to-ivory bg-clip-text text-transparent">
+            <div class="container mx-auto px-3 sm:px-4 text-center relative z-10">
+                <h1 class="text-2xl md:text-4xl font-playfair font-bold mb-4 animate-fade-in bg-gradient-to-r from-white to-ivory bg-clip-text text-transparent">
                     Find Your Perfect Match
                 </h1>
-                <p class="text-xl md:text-2xl mb-8 max-w-3xl mx-auto text-ivory leading-relaxed">
-                    Share your preferences and let us help you find the perfect partner. Our matchmaking packages are designed to connect you with compatible individuals.
+                <p class="text-base md:text-lg mb-6 max-w-2xl mx-auto text-ivory leading-relaxed">
+                    Share your preferences and let us help you find the perfect partner.
                 </p>
-                <div class="flex justify-center space-x-4 animate-slide-up">
-                    <a href="#packages" class="bg-white text-primary px-8 py-4 rounded-xl btn-compact hover:bg-ivory font-semibold transition-all duration-300 flex items-center space-x-2">
+                <div class="flex justify-center space-x-3 animate-slide-up">
+                    <a href="#packages" class="bg-white text-primary px-4 py-2.5 rounded-lg btn hover:bg-ivory font-semibold transition-all duration-300 flex items-center space-x-1.5 text-sm">
                         <i class="bi bi-heart"></i>
                         <span>View Packages</span>
                     </a>
-                    <a href="#how-it-works" class="border-2 border-white/30 text-white px-8 py-4 rounded-xl btn-compact hover:bg-white/10 font-semibold transition-all duration-300">
+                    <a href="#how-it-works" class="border border-white/30 text-white px-4 py-2.5 rounded-lg btn hover:bg-white/10 font-semibold transition-all duration-300 text-sm">
                         How It Works
                     </a>
                 </div>
@@ -550,37 +641,37 @@
         </section>
 
         <!-- Packages Section -->
-        <section id="packages" class="py-20 bg-transparent">
-            <div class="container mx-auto px-4">
-                <div class="text-center mb-16 animate-fade-in">
-                    <h2 class="text-4xl md:text-5xl font-playfair font-black text-primary mb-4">Matchmaking Packages</h2>
-                    <p class="text-xl text-text-secondary max-w-2xl mx-auto leading-relaxed">
-                        Choose the perfect package to share your preferences and find your ideal partner.
+        <section id="packages" class="py-12 bg-transparent">
+            <div class="container mx-auto px-3 sm:px-4">
+                <div class="text-center mb-8 animate-fade-in">
+                    <h2 class="text-2xl md:text-3xl font-playfair font-bold text-primary mb-2">Matchmaking Packages</h2>
+                    <p class="text-base text-text-secondary max-w-2xl mx-auto leading-relaxed">
+                        Choose the perfect package to find your ideal partner.
                     </p>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <!-- Basic Package -->
-                    <div class="floral-card rounded-2xl shadow-strong overflow-hidden card-hover animate-slide-up">
-                        <div class="p-8">
-                            <div class="flex items-center justify-between mb-4">
-                                <h3 class="text-2xl font-playfair font-black text-primary">Basic</h3>
-                                <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                                    <i class="bi bi-heart text-primary text-lg"></i>
+                    <div class="floral-card rounded-lg shadow-strong overflow-hidden card-hover animate-slide-up">
+                        <div class="p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="text-lg font-playfair font-bold text-primary">Basic</h3>
+                                <div class="w-10 h-10 bg-primary/10 rounded flex items-center justify-center">
+                                    <i class="bi bi-heart text-primary"></i>
                                 </div>
                             </div>
-                            <p class="text-text-secondary mb-6 text-sm font-medium">Perfect for casual matchmaking</p>
-                            <div class="mb-6">
-                                <span class="text-4xl font-black text-primary">$9.99</span>
-                                <span class="text-text-secondary font-medium">/month</span>
+                            <p class="text-text-secondary mb-4 text-sm">Perfect for casual matchmaking</p>
+                            <div class="mb-4">
+                                <span class="text-2xl font-bold text-primary">$9.99</span>
+                                <span class="text-text-secondary text-sm">/month</span>
                             </div>
-                            <ul class="feature-list mb-8 text-text-secondary">
+                            <ul class="feature-list mb-4 text-text-secondary">
                                 <li>Basic Profile Listing</li>
                                 <li>7 Days Duration</li>
                                 <li>Basic Matching</li>
                                 <li>Limited Visibility</li>
                             </ul>
-                            <button class="w-full bg-primary text-white py-4 rounded-xl btn-compact hover:bg-secondary transition-all duration-300 font-semibold btn-select-package" 
+                            <button class="w-full bg-primary text-white py-2.5 rounded-lg btn hover:bg-secondary transition-all duration-300 font-semibold text-sm btn-select-package" 
                                     data-package-id="1" data-package-name="Basic" data-package-price="9.99" data-duration-days="7">
                                 Select Package
                             </button>
@@ -588,27 +679,27 @@
                     </div>
 
                     <!-- Standard Package -->
-                    <div class="floral-card rounded-2xl shadow-strong overflow-hidden card-hover popular-plan animate-slide-up" style="animation-delay: 0.1s;">
-                        <div class="p-8">
-                            <div class="flex items-center justify-between mb-4">
-                                <h3 class="text-2xl font-playfair font-black text-primary">Standard</h3>
-                                <div class="w-12 h-12 bg-rose-gold/10 rounded-lg flex items-center justify-center">
-                                    <i class="bi bi-gem text-rose-gold text-lg"></i>
+                    <div class="floral-card rounded-lg shadow-strong overflow-hidden card-hover popular-plan animate-slide-up" style="animation-delay: 0.1s;">
+                        <div class="p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="text-lg font-playfair font-bold text-primary">Standard</h3>
+                                <div class="w-10 h-10 bg-rose-gold/10 rounded flex items-center justify-center">
+                                    <i class="bi bi-gem text-rose-gold"></i>
                                 </div>
                             </div>
-                            <p class="text-text-secondary mb-6 text-sm font-medium">Great for serious connections</p>
-                            <div class="mb-6">
-                                <span class="text-4xl font-black text-primary">$24.99</span>
-                                <span class="text-text-secondary font-medium">/month</span>
+                            <p class="text-text-secondary mb-4 text-sm">Great for serious connections</p>
+                            <div class="mb-4">
+                                <span class="text-2xl font-bold text-primary">$24.99</span>
+                                <span class="text-text-secondary text-sm">/month</span>
                             </div>
-                            <ul class="feature-list mb-8 text-text-secondary">
+                            <ul class="feature-list mb-4 text-text-secondary">
                                 <li>Enhanced Profile Listing</li>
                                 <li>14 Days Duration</li>
                                 <li>Advanced Matching</li>
                                 <li>Priority Placement</li>
                                 <li>Message Responses</li>
                             </ul>
-                            <button class="w-full gradient-rose text-white py-4 rounded-xl btn-compact hover:opacity-90 transition-all duration-300 font-semibold btn-select-package" 
+                            <button class="w-full gradient-rose text-white py-2.5 rounded-lg btn hover:opacity-90 transition-all duration-300 font-semibold text-sm btn-select-package" 
                                     data-package-id="2" data-package-name="Standard" data-package-price="24.99" data-duration-days="14">
                                 Select Package
                             </button>
@@ -616,21 +707,21 @@
                     </div>
 
                     <!-- Premium Package -->
-                    <div class="floral-card rounded-2xl shadow-strong overflow-hidden card-hover relative animate-slide-up" style="animation-delay: 0.2s;">
+                    <div class="floral-card rounded-lg shadow-strong overflow-hidden card-hover relative animate-slide-up" style="animation-delay: 0.2s;">
                         <div class="premium-badge">PREMIUM</div>
-                        <div class="p-8">
-                            <div class="flex items-center justify-between mb-4">
-                                <h3 class="text-2xl font-playfair font-black text-primary">Premium</h3>
-                                <div class="w-12 h-12 bg-sage/10 rounded-lg flex items-center justify-center">
-                                    <i class="bi bi-crown text-sage text-lg"></i>
+                        <div class="p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="text-lg font-playfair font-bold text-primary">Premium</h3>
+                                <div class="w-10 h-10 bg-sage/10 rounded flex items-center justify-center">
+                                    <i class="bi bi-crown text-sage"></i>
                                 </div>
                             </div>
-                            <p class="text-text-secondary mb-6 text-sm font-medium">Maximum visibility and matches</p>
-                            <div class="mb-6">
-                                <span class="text-4xl font-black text-primary">$49.99</span>
-                                <span class="text-text-secondary font-medium">/month</span>
+                            <p class="text-text-secondary mb-4 text-sm">Maximum visibility and matches</p>
+                            <div class="mb-4">
+                                <span class="text-2xl font-bold text-primary">$49.99</span>
+                                <span class="text-text-secondary text-sm">/month</span>
                             </div>
-                            <ul class="feature-list mb-8 text-text-secondary">
+                            <ul class="feature-list mb-4 text-text-secondary">
                                 <li>Premium Profile Listing</li>
                                 <li>30 Days Duration</li>
                                 <li>Advanced Matching</li>
@@ -638,7 +729,7 @@
                                 <li>Unlimited Messages</li>
                                 <li>Personal Matchmaker</li>
                             </ul>
-                            <button class="w-full gradient-sage text-white py-4 rounded-xl btn-compact hover:opacity-90 transition-all duration-300 font-semibold btn-select-package" 
+                            <button class="w-full gradient-sage text-white py-2.5 rounded-lg btn hover:opacity-90 transition-all duration-300 font-semibold text-sm btn-select-package" 
                                     data-package-id="3" data-package-name="Premium" data-package-price="49.99" data-duration-days="30">
                                 Select Package
                             </button>
@@ -646,20 +737,20 @@
                     </div>
 
                     <!-- Elite Package -->
-                    <div class="floral-card rounded-2xl shadow-strong overflow-hidden card-hover animate-slide-up" style="animation-delay: 0.3s;">
-                        <div class="p-8">
-                            <div class="flex items-center justify-between mb-4">
-                                <h3 class="text-2xl font-playfair font-black text-primary">Elite</h3>
-                                <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                                    <i class="bi bi-star-fill text-primary text-lg"></i>
+                    <div class="floral-card rounded-lg shadow-strong overflow-hidden card-hover animate-slide-up" style="animation-delay: 0.3s;">
+                        <div class="p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="text-lg font-playfair font-bold text-primary">Elite</h3>
+                                <div class="w-10 h-10 bg-primary/10 rounded flex items-center justify-center">
+                                    <i class="bi bi-star-fill text-primary"></i>
                                 </div>
                             </div>
-                            <p class="text-text-secondary mb-6 text-sm font-medium">For exclusive matchmaking</p>
-                            <div class="mb-6">
-                                <span class="text-4xl font-black text-primary">$99.99</span>
-                                <span class="text-text-secondary font-medium">/month</span>
+                            <p class="text-text-secondary mb-4 text-sm">For exclusive matchmaking</p>
+                            <div class="mb-4">
+                                <span class="text-2xl font-bold text-primary">$99.99</span>
+                                <span class="text-text-secondary text-sm">/month</span>
                             </div>
-                            <ul class="feature-list mb-8 text-text-secondary">
+                            <ul class="feature-list mb-4 text-text-secondary">
                                 <li>Elite Profile Listing</li>
                                 <li>60 Days Duration</li>
                                 <li>VIP Matching</li>
@@ -668,7 +759,7 @@
                                 <li>Dedicated Matchmaker</li>
                                 <li>Background Verification</li>
                             </ul>
-                            <button class="w-full bg-primary text-white py-4 rounded-xl btn-compact hover:bg-secondary transition-all duration-300 font-semibold btn-select-package" 
+                            <button class="w-full bg-primary text-white py-2.5 rounded-lg btn hover:bg-secondary transition-all duration-300 font-semibold text-sm btn-select-package" 
                                     data-package-id="4" data-package-name="Elite" data-package-price="99.99" data-duration-days="60">
                                 Select Package
                             </button>
@@ -679,48 +770,48 @@
         </section>
 
         <!-- How It Works Section -->
-        <section id="how-it-works" class="py-20 bg-light-bg">
-            <div class="container mx-auto px-4">
-                <div class="text-center mb-16">
-                    <h2 class="text-4xl md:text-5xl font-playfair font-black text-primary mb-4">How It Works</h2>
-                    <p class="text-xl text-text-secondary max-w-2xl mx-auto leading-relaxed">
+        <section id="how-it-works" class="py-12 bg-light-bg">
+            <div class="container mx-auto px-3 sm:px-4">
+                <div class="text-center mb-8">
+                    <h2 class="text-2xl md:text-3xl font-playfair font-bold text-primary mb-2">How It Works</h2>
+                    <p class="text-base text-text-secondary max-w-2xl mx-auto leading-relaxed">
                         Our simple process helps you find meaningful connections
                     </p>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div class="text-center p-6">
-                        <div class="w-20 h-20 bg-gradient-rose rounded-full flex items-center justify-center mx-auto mb-6">
-                            <i class="bi bi-pencil-square text-white text-2xl"></i>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="text-center p-4">
+                        <div class="w-16 h-16 bg-gradient-rose rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="bi bi-pencil-square text-white"></i>
                         </div>
-                        <h3 class="text-xl font-semibold text-primary mb-3">1. Create Your Profile</h3>
-                        <p class="text-text-secondary">Share your preferences, interests, and what you're looking for in a partner.</p>
+                        <h3 class="text-base font-semibold text-primary mb-2">1. Create Your Profile</h3>
+                        <p class="text-text-secondary text-sm">Share your preferences and what you're looking for.</p>
                     </div>
 
-                    <div class="text-center p-6">
-                        <div class="w-20 h-20 bg-gradient-sage rounded-full flex items-center justify-center mx-auto mb-6">
-                            <i class="bi bi-heart text-white text-2xl"></i>
+                    <div class="text-center p-4">
+                        <div class="w-16 h-16 bg-gradient-sage rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="bi bi-heart text-white"></i>
                         </div>
-                        <h3 class="text-xl font-semibold text-primary mb-3">2. Get Matched</h3>
-                        <p class="text-text-secondary">Our algorithm connects you with compatible individuals based on your preferences.</p>
+                        <h3 class="text-base font-semibold text-primary mb-2">2. Get Matched</h3>
+                        <p class="text-text-secondary text-sm">Our algorithm connects you with compatible individuals.</p>
                     </div>
 
-                    <div class="text-center p-6">
-                        <div class="w-20 h-20 bg-gradient-champagne rounded-full flex items-center justify-center mx-auto mb-6">
-                            <i class="bi bi-chat-dots text-primary text-2xl"></i>
+                    <div class="text-center p-4">
+                        <div class="w-16 h-16 bg-gradient-champagne rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="bi bi-chat-dots text-primary"></i>
                         </div>
-                        <h3 class="text-xl font-semibold text-primary mb-3">3. Connect & Chat</h3>
-                        <p class="text-text-secondary">Start conversations with your matches and build meaningful connections.</p>
+                        <h3 class="text-base font-semibold text-primary mb-2">3. Connect & Chat</h3>
+                        <p class="text-text-secondary text-sm">Start conversations with your matches.</p>
                     </div>
                 </div>
             </div>
         </section>
 
         <!-- Footer -->
-        <footer class="bg-dark-bg text-white py-12">
-            <div class="container mx-auto px-4">
+        <footer class="bg-dark-bg text-white py-8">
+            <div class="container mx-auto px-3 sm:px-4">
                 <div class="text-center">
-                    <p class="text-text-secondary text-sm">&copy; 2025 Kimbela Matchmaking. All rights reserved. Connecting hearts worldwide.</p>
+                    <p class="text-text-secondary text-xs">&copy; 2025 Kimbela Matchmaking. All rights reserved.</p>
                 </div>
             </div>
         </footer>
@@ -728,19 +819,19 @@
 
     <!-- Matchmaking Request Modal -->
     <div class="modal fixed inset-0 z-50 flex items-center justify-center bg-black/60 hidden" id="matchmakingModal">
-        <div class="modal-dialog bg-white rounded-2xl shadow-strong w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto animate-fade-in">
-            <div class="modal-header p-8 border-b border-border-color flex justify-between items-center bg-gradient-to-r from-primary to-secondary text-white rounded-t-2xl">
+        <div class="modal-dialog bg-white rounded-lg shadow-strong w-full max-w-2xl mx-3 max-h-[90vh] overflow-y-auto animate-fade-in">
+            <div class="modal-header p-4 border-b border-border-color flex justify-between items-center bg-gradient-to-r from-primary to-secondary text-white rounded-t-lg">
                 <div>
-                    <h3 class="text-2xl font-playfair font-black">Create Matchmaking Request</h3>
-                    <p class="text-white/80 text-sm mt-1">Share your preferences to find your perfect match</p>
+                    <h3 class="text-lg font-playfair font-bold">Create Matchmaking Request</h3>
+                    <p class="text-white/80 text-xs mt-1">Share your preferences to find your perfect match</p>
                 </div>
-                <button type="button" class="p-3 rounded-xl hover:bg-white/10 transition-all duration-300 close-modal">
-                    <i class="bi bi-x-lg text-xl"></i>
+                <button type="button" class="p-2 rounded hover:bg-white/10 transition-all duration-300 close-modal">
+                    <i class="bi bi-x-lg"></i>
                 </button>
             </div>
             
             <!-- Step Indicator -->
-            <div class="px-8 pt-6 bg-white">
+            <div class="px-4 pt-4 bg-white">
                 <div class="step-indicator">
                     <div class="step active" id="step1">
                         <div class="step-circle">1</div>
@@ -757,18 +848,17 @@
                 </div>
             </div>
 
-            <div class="modal-body p-8">
+            <div class="modal-body p-4">
                 <!-- Step 1: Preferences -->
                 <div class="step-content active animate-fade-in" id="step1-content">
                     <form id="matchmakingForm">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                            <div class="space-y-6">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            <div class="space-y-4">
                                 <div>
-                                    <label for="partnerAge" class="block text-lg font-semibold mb-3 text-primary">Preferred Partner Age *</label>
-                                    <div class="flex items-center space-x-4">
-                                        <select class="w-full px-4 py-3 border-2 border-border-color rounded-xl text-sm focus:ring-2 focus:ring-rose-gold focus:border-transparent transition-all duration-300" 
-                                                id="minAge" required>
+                                    <label for="partnerAge" class="block text-base font-semibold mb-2 text-primary">Preferred Partner Age *</label>
+                                    <div class="flex items-center space-x-3">
+                                        <select class="select-input" id="minAge" required>
                                             <option value="">Min Age</option>
                                             <option value="31">31</option>
                                             <option value="35">35</option>
@@ -777,8 +867,7 @@
                                             <option value="48">48</option>
                                         </select>
                                         <span class="text-text-secondary">to</span>
-                                        <select class="w-full px-4 py-3 border-2 border-border-color rounded-xl text-sm focus:ring-2 focus:ring-rose-gold focus:border-transparent transition-all duration-300" 
-                                                id="maxAge" required>
+                                        <select class="select-input" id="maxAge" required>
                                             <option value="">Max Age</option>
                                             <option value="55">55</option>
                                             <option value="58">58</option>
@@ -791,54 +880,47 @@
                                 </div>
                                 
                                 <div>
-                                    <label for="partnerGender" class="block text-lg font-semibold mb-3 text-primary">Preferred Gender *</label>
-                                    <div class="grid grid-cols-2 gap-3">
-                                        <label class="flex items-center p-3 border-2 border-border-color rounded-lg cursor-pointer hover:bg-light-bg transition-all duration-300">
-                                            <input type="radio" name="partnerGender" value="male" class="mr-3 w-5 h-5 text-rose-gold">
-                                            <div>
-                                                <div class="font-semibold text-primary">Male</div>
-                                            </div>
+                                    <label for="partnerGender" class="block text-base font-semibold mb-2 text-primary">Preferred Gender *</label>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <label class="radio-label p-2 border border-border-color rounded hover:bg-light-bg transition-all duration-300">
+                                            <input type="radio" name="partnerGender" value="male" class="mr-2">
+                                            <span class="font-semibold text-primary">Male</span>
                                         </label>
-                                        <label class="flex items-center p-3 border-2 border-border-color rounded-lg cursor-pointer hover:bg-light-bg transition-all duration-300">
-                                            <input type="radio" name="partnerGender" value="female" class="mr-3 w-5 h-5 text-rose-gold">
-                                            <div>
-                                                <div class="font-semibold text-primary">Female</div>
-                                            </div>
+                                        <label class="radio-label p-2 border border-border-color rounded hover:bg-light-bg transition-all duration-300">
+                                            <input type="radio" name="partnerGender" value="female" class="mr-2">
+                                            <span class="font-semibold text-primary">Female</span>
                                         </label>
                                         
-                                        <label class="flex items-center p-3 border-2 border-border-color rounded-lg cursor-pointer hover:bg-light-bg transition-all duration-300">
-                                            <input type="radio" name="partnerGender" value="any" class="mr-3 w-5 h-5 text-rose-gold" checked>
-                                            <div>
-                                                <div class="font-semibold text-primary">Any</div>
-                                            </div>
+                                        <label class="radio-label p-2 border border-border-color rounded hover:bg-light-bg transition-all duration-300">
+                                            <input type="radio" name="partnerGender" value="any" class="mr-2" checked>
+                                            <span class="font-semibold text-primary">Any</span>
                                         </label>
                                     </div>
                                 </div>
                                 
                                 <div>
-                                    <label class="block text-lg font-semibold mb-3 text-primary">Preferred Location</label>
+                                    <label class="block text-base font-semibold mb-2 text-primary">Preferred Location</label>
                                     <div class="country-select" id="countrySelect">
                                         <!-- Countries will be populated by JavaScript -->
                                     </div>
-                                    <p class="text-xs text-text-secondary mt-2">Select one or more countries</p>
+                                    <p class="text-xs text-text-secondary mt-1">Select one or more countries</p>
                                 </div>
                             </div>
                             
-                            <div class="space-y-6">
+                            <div class="space-y-4">
                                 <div>
-                                    <label class="block text-lg font-semibold mb-4 text-primary">Partner Interests</label>
-                                    <div class="interests-container max-h-60 overflow-y-auto bg-gray-50 p-4 rounded-xl">
+                                    <label class="block text-base font-semibold mb-3 text-primary">Partner Interests</label>
+                                    <div class="interests-container max-h-48 overflow-y-auto bg-gray-50 p-3 rounded-lg">
                                         <div class="grid grid-cols-2 gap-2" id="interestsList">
                                             <!-- Interests will be populated by JavaScript -->
                                         </div>
                                     </div>
-                                    <p class="text-xs text-text-secondary mt-2">Select up to 10 interests you'd like your partner to have</p>
+                                    <p class="text-xs text-text-secondary mt-1">Select up to 10 interests</p>
                                 </div>
                                 
                                 <div>
-                                    <label for="partnerEthnicity" class="block text-lg font-semibold mb-3 text-primary">Preferred Ethnicity</label>
-                                    <select class="w-full px-4 py-3 border-2 border-border-color rounded-xl text-sm focus:ring-2 focus:ring-rose-gold focus:border-transparent transition-all duration-300" 
-                                            id="partnerEthnicity">
+                                    <label for="partnerEthnicity" class="block text-base font-semibold mb-2 text-primary">Preferred Ethnicity</label>
+                                    <select class="select-input" id="partnerEthnicity">
                                         <option value="">Any Ethnicity</option>
                                         <option value="african">African</option>
                                         <option value="african_american">African American</option>
@@ -861,9 +943,8 @@
                                 </div>
                                 
                                 <div>
-                                    <label for="partnerReligion" class="block text-lg font-semibold mb-3 text-primary">Preferred Religion</label>
-                                    <select class="w-full px-4 py-3 border-2 border-border-color rounded-xl text-sm focus:ring-2 focus:ring-rose-gold focus:border-transparent transition-all duration-300" 
-                                            id="partnerReligion">
+                                    <label for="partnerReligion" class="block text-base font-semibold mb-2 text-primary">Preferred Religion</label>
+                                    <select class="select-input" id="partnerReligion">
                                         <option value="">Any Religion</option>
                                         <option value="christianity">Christianity</option>
                                         <option value="islam">Islam</option>
@@ -880,23 +961,7 @@
                                         <option value="agnosticism">Agnosticism</option>
                                         <option value="spiritual_but_not_religious">Spiritual but not religious</option>
                                         <option value="traditional_beliefs">Traditional / Indigenous Beliefs</option>
-                                        <option value="none">No Religion / Atheist / Agnostic</option>
-                                        <option value="roman_catholic">Roman Catholic</option>
-                                        <option value="anglican">Anglican</option>
-                                        <option value="pentecostal">Pentecostal</option>
-                                        <option value="methodist">Methodist</option>
-                                        <option value="baptist">Baptist</option>
-                                        <option value="seventh_day_adventist">Seventh Day Adventist</option>
-                                        <option value="jehovahs_witnesses">Jehova's Witnesses</option>
-                                        <option value="latter_day_saints">Latter Day Saints</option>
-                                        <option value="mormon">Mormon</option>
-                                        <option value="lutheran">Lutheran</option>
-                                        <option value="presbyterian">Presbyterian</option>
-                                        <option value="episcopal">Episcopal</option>
-                                        <option value="bible_church">Bible Church</option>
-                                        <option value="orthodox_christian">Orthodox Christian</option>
-                                        <option value="white_garment_churches">White Garment Churches</option>
-                                        <option value="other">Other</option>
+                                        <option value="none">No Religion</option>
                                     </select>
                                 </div>
                             </div>
@@ -906,31 +971,31 @@
 
                 <!-- Step 2: About You -->
                 <div class="step-content hidden animate-fade-in" id="step2-content">
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <div class="space-y-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <div class="space-y-4">
                             <div>
-                                <label for="aboutYou" class="block text-lg font-semibold mb-3 text-primary">About You *</label>
-                                <textarea class="w-full px-4 py-3 border-2 border-border-color rounded-xl text-sm focus:ring-2 focus:ring-rose-gold focus:border-transparent transition-all duration-300" 
-                                        id="aboutYou" rows="4" placeholder="Tell potential matches about yourself, your personality, values, and what makes you unique..." required></textarea>
+                                <label for="aboutYou" class="block text-base font-semibold mb-2 text-primary">About You *</label>
+                                <textarea class="textarea-input" 
+                                        id="aboutYou" rows="3" placeholder="Tell potential matches about yourself..." required></textarea>
                             </div>
                             
                             <div>
-                                <label for="idealPartner" class="block text-lg font-semibold mb-3 text-primary">Your Ideal Partner *</label>
-                                <textarea class="w-full px-4 py-3 border-2 border-border-color rounded-xl text-sm focus:ring-2 focus:ring-rose-gold focus:border-transparent transition-all duration-300" 
-                                        id="idealPartner" rows="4" placeholder="Describe your ideal partner - personality traits, values, lifestyle, etc..." required></textarea>
+                                <label for="idealPartner" class="block text-base font-semibold mb-2 text-primary">Your Ideal Partner *</label>
+                                <textarea class="textarea-input" 
+                                        id="idealPartner" rows="3" placeholder="Describe your ideal partner..." required></textarea>
                             </div>
                             
                             <div>
-                                <label class="block text-lg font-semibold mb-3 text-primary">Your Photo</label>
+                                <label class="block text-base font-semibold mb-2 text-primary">Your Photo</label>
                                 <div class="image-upload-area" id="imageUploadArea">
-                                    <i class="bi bi-cloud-arrow-up text-3xl text-text-secondary mb-3"></i>
-                                    <p class="text-base font-medium text-text-secondary mb-1">Drag & drop or click to upload</p>
-                                    <p class="text-sm text-text-secondary">Recommended: Square aspect ratio • JPG, PNG, WEBP</p>
+                                    <i class="bi bi-cloud-arrow-up text-xl text-text-secondary mb-2"></i>
+                                    <p class="text-sm font-medium text-text-secondary mb-1">Drag & drop or click to upload</p>
+                                    <p class="text-xs text-text-secondary">Recommended: Square aspect ratio</p>
                                     <input type="file" id="imageInput" accept="image/*" class="hidden">
                                 </div>
-                                <div id="imagePreview" class="mt-4 hidden animate-fade-in">
-                                    <img id="previewImage" class="w-48 h-48 object-cover rounded-xl border-2 border-border-color shadow-soft mx-auto">
-                                    <button type="button" id="removeImage" class="text-sm text-red-500 font-medium mt-2 hover:text-red-700 transition-colors duration-300 flex items-center space-x-1 mx-auto justify-center">
+                                <div id="imagePreview" class="mt-3 hidden animate-fade-in">
+                                    <img id="previewImage" class="w-36 h-36 object-cover rounded-lg border border-border-color shadow-soft mx-auto">
+                                    <button type="button" id="removeImage" class="text-xs text-red-500 font-medium mt-1 hover:text-red-700 transition-colors duration-300 flex items-center space-x-1 mx-auto justify-center">
                                         <i class="bi bi-trash"></i>
                                         <span>Remove photo</span>
                                     </button>
@@ -938,46 +1003,46 @@
                             </div>
                         </div>
                         
-                        <div class="space-y-6">
+                        <div class="space-y-4">
                             <div>
-                                <label for="yourInterests" class="block text-lg font-semibold mb-4 text-primary">Your Interests</label>
-                                <div class="interests-container max-h-60 overflow-y-auto bg-gray-50 p-4 rounded-xl">
+                                <label for="yourInterests" class="block text-base font-semibold mb-3 text-primary">Your Interests</label>
+                                <div class="interests-container max-h-48 overflow-y-auto bg-gray-50 p-3 rounded-lg">
                                     <div class="grid grid-cols-2 gap-2" id="yourInterestsList">
                                         <!-- Interests will be populated by JavaScript -->
                                     </div>
                                 </div>
-                                <p class="text-xs text-text-secondary mt-2">Select up to 10 of your interests</p>
+                                <p class="text-xs text-text-secondary mt-1">Select up to 10 of your interests</p>
                             </div>
                             
                             <div>
-                                <label for="lifestyle" class="block text-lg font-semibold mb-3 text-primary">Your Lifestyle</label>
-                                <div class="space-y-3">
-                                    <label class="flex items-center p-3 border-2 border-border-color rounded-lg cursor-pointer hover:bg-light-bg transition-all duration-300">
-                                        <input type="checkbox" name="lifestyle" value="active" class="mr-3 w-5 h-5 text-rose-gold">
+                                <label for="lifestyle" class="block text-base font-semibold mb-2 text-primary">Your Lifestyle</label>
+                                <div class="space-y-2">
+                                    <label class="radio-label p-2 border border-border-color rounded hover:bg-light-bg transition-all duration-300">
+                                        <input type="checkbox" name="lifestyle" value="active" class="mr-2">
                                         <div>
-                                            <div class="font-semibold text-primary">Active & Outdoor</div>
-                                            <div class="text-sm text-text-secondary">Enjoy sports, hiking, outdoor activities</div>
+                                            <div class="font-semibold text-primary text-sm">Active & Outdoor</div>
+                                            <div class="text-xs text-text-secondary">Enjoy sports, hiking, outdoor activities</div>
                                         </div>
                                     </label>
-                                    <label class="flex items-center p-3 border-2 border-border-color rounded-lg cursor-pointer hover:bg-light-bg transition-all duration-300">
-                                        <input type="checkbox" name="lifestyle" value="creative" class="mr-3 w-5 h-5 text-rose-gold">
+                                    <label class="radio-label p-2 border border-border-color rounded hover:bg-light-bg transition-all duration-300">
+                                        <input type="checkbox" name="lifestyle" value="creative" class="mr-2">
                                         <div>
-                                            <div class="font-semibold text-primary">Creative & Artsy</div>
-                                            <div class="text-sm text-text-secondary">Enjoy arts, music, creative pursuits</div>
+                                            <div class="font-semibold text-primary text-sm">Creative & Artsy</div>
+                                            <div class="text-xs text-text-secondary">Enjoy arts, music, creative pursuits</div>
                                         </div>
                                     </label>
-                                    <label class="flex items-center p-3 border-2 border-border-color rounded-lg cursor-pointer hover:bg-light-bg transition-all duration-300">
-                                        <input type="checkbox" name="lifestyle" value="homebody" class="mr-3 w-5 h-5 text-rose-gold">
+                                    <label class="radio-label p-2 border border-border-color rounded hover:bg-light-bg transition-all duration-300">
+                                        <input type="checkbox" name="lifestyle" value="homebody" class="mr-2">
                                         <div>
-                                            <div class="font-semibold text-primary">Homebody</div>
-                                            <div class="text-sm text-text-secondary">Prefer quiet nights in, cozy activities</div>
+                                            <div class="font-semibold text-primary text-sm">Homebody</div>
+                                            <div class="text-xs text-text-secondary">Prefer quiet nights in</div>
                                         </div>
                                     </label>
-                                    <label class="flex items-center p-3 border-2 border-border-color rounded-lg cursor-pointer hover:bg-light-bg transition-all duration-300">
-                                        <input type="checkbox" name="lifestyle" value="social" class="mr-3 w-5 h-5 text-rose-gold">
+                                    <label class="radio-label p-2 border border-border-color rounded hover:bg-light-bg transition-all duration-300">
+                                        <input type="checkbox" name="lifestyle" value="social" class="mr-2">
                                         <div>
-                                            <div class="font-semibold text-primary">Social Butterfly</div>
-                                            <div class="text-sm text-text-secondary">Enjoy parties, social events, meeting people</div>
+                                            <div class="font-semibold text-primary text-sm">Social Butterfly</div>
+                                            <div class="text-xs text-text-secondary">Enjoy parties, social events</div>
                                         </div>
                                     </label>
                                 </div>
@@ -988,19 +1053,19 @@
 
                 <!-- Step 3: Payment -->
                 <div class="step-content hidden animate-fade-in" id="step3-content">
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <div class="space-y-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <div class="space-y-4">
                             <div>
-                                <h4 class="text-xl font-playfair font-black mb-4 text-primary">Payment Method</h4>
-                                <div class="space-y-3">
-                                    <label class="flex items-center p-4 border-2 border-border-color rounded-xl cursor-pointer hover:border-rose-gold transition-all duration-300 bg-white">
-                                        <input type="radio" name="paymentMethod" value="flutterwave" class="mr-4 w-5 h-5 text-rose-gold" checked>
+                                <h4 class="text-lg font-playfair font-bold mb-3 text-primary">Payment Method</h4>
+                                <div class="space-y-2">
+                                    <label class="radio-label p-3 border border-border-color rounded-lg hover:border-rose-gold transition-all duration-300 bg-white">
+                                        <input type="radio" name="paymentMethod" value="flutterwave" class="mr-3" checked>
                                         <div class="flex-1">
-                                            <div class="font-semibold text-primary">Flutterwave</div>
-                                            <div class="text-sm text-text-secondary">Cards, Bank Transfer, Mobile Money</div>
+                                            <div class="font-semibold text-primary text-sm">Flutterwave</div>
+                                            <div class="text-xs text-text-secondary">Cards, Bank Transfer, Mobile Money</div>
                                         </div>
-                                        <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                                            <i class="bi bi-credit-card text-green-600"></i>
+                                        <div class="w-6 h-6 bg-green-100 rounded flex items-center justify-center">
+                                            <i class="bi bi-credit-card text-green-600 text-sm"></i>
                                         </div>
                                     </label>
                                 </div>
@@ -1008,65 +1073,64 @@
                             
                             <!-- Currency Selection -->
                             <div>
-                                <label class="block text-lg font-semibold mb-3 text-primary">Payment Currency</label>
-                                <select class="w-full px-4 py-3 border-2 border-border-color rounded-xl text-sm focus:ring-2 focus:ring-rose-gold focus:border-transparent transition-all duration-300" id="currency">
+                                <label class="block text-base font-semibold mb-2 text-primary">Payment Currency</label>
+                                <select class="select-input" id="currency">
                                     <option value="USD">🇺🇸 US Dollar (USD)</option>
-                                    
                                 </select>
-                                <p class="text-xs text-text-secondary mt-2">Select your preferred payment currency</p>
+                                <p class="text-xs text-text-secondary mt-1">Select your preferred payment currency</p>
                             </div>
                             
-                            <div class="bg-gradient-to-br from-primary/5 to-rose-gold/5 rounded-2xl p-6 border border-primary/10">
-                                <h5 class="font-playfair font-black text-lg mb-4 text-primary">Request Summary</h5>
-                                <div class="space-y-3 text-sm">
-                                    <div class="flex justify-between items-center py-2 border-b border-border-color/50">
+                            <div class="bg-gradient-to-br from-primary/5 to-rose-gold/5 rounded-lg p-4 border border-primary/10">
+                                <h5 class="font-playfair font-bold text-base mb-3 text-primary">Request Summary</h5>
+                                <div class="space-y-2 text-sm">
+                                    <div class="flex justify-between items-center py-1.5 border-b border-border-color/50">
                                         <span class="text-text-secondary font-medium">Package:</span>
                                         <span id="summaryPackage" class="font-semibold text-primary">-</span>
                                     </div>
-                                    <div class="flex justify-between items-center py-2 border-b border-border-color/50">
+                                    <div class="flex justify-between items-center py-1.5 border-b border-border-color/50">
                                         <span class="text-text-secondary font-medium">Duration:</span>
                                         <span id="summaryDuration" class="font-semibold">-</span>
                                     </div>
-                                    <div class="flex justify-between items-center py-2">
+                                    <div class="flex justify-between items-center py-1.5">
                                         <span class="text-text-secondary font-medium">Total Amount:</span>
-                                        <span id="summaryTotal" class="text-2xl font-black text-rose-gold">-</span>
+                                        <span id="summaryTotal" class="text-xl font-bold text-rose-gold">-</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="space-y-6">
+                        <div class="space-y-4">
                             <div>
-                                <h4 class="text-xl font-playfair font-black mb-4 text-primary">Request Preview</h4>
+                                <h4 class="text-lg font-playfair font-bold mb-3 text-primary">Request Preview</h4>
                                 <div class="matchmaking-card">
                                     <div class="matchmaking-header">
-                                        <div class="flex items-center justify-center space-x-3">
-                                            <div class="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center">
-                                                <i class="bi bi-heart text-rose-gold text-2xl"></i>
+                                        <div class="flex items-center justify-center space-x-2">
+                                            <div class="w-12 h-12 bg-rose-100 rounded-full flex items-center justify-center">
+                                                <i class="bi bi-heart text-rose-gold"></i>
                                             </div>
                                             <div>
-                                                <h5 class="font-playfair font-bold text-lg text-primary">Matchmaking Request</h5>
-                                                <p class="text-text-secondary text-sm">Looking for a meaningful connection</p>
+                                                <h5 class="font-playfair font-bold text-base text-primary">Matchmaking Request</h5>
+                                                <p class="text-text-secondary text-xs">Looking for a meaningful connection</p>
                                             </div>
                                         </div>
                                     </div>
                                     <div class="matchmaking-body">
-                                        <div class="flex items-center space-x-4 mb-4">
-                                            <div id="previewPhoto" class="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center">
-                                                <i class="bi bi-person text-gray-500 text-xl"></i>
+                                        <div class="flex items-center space-x-3 mb-3">
+                                            <div id="previewPhoto" class="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
+                                                <i class="bi bi-person text-gray-500"></i>
                                             </div>
                                             <div>
-                                                <h6 class="font-semibold text-primary">Your Profile</h6>
-                                                <p class="text-text-secondary text-sm" id="previewAbout">About you will appear here...</p>
+                                                <h6 class="font-semibold text-primary text-sm">Your Profile</h6>
+                                                <p class="text-text-secondary text-xs" id="previewAbout">About you will appear here...</p>
                                             </div>
                                         </div>
                                         <div class="floral-divider"></div>
                                         <div>
-                                            <h6 class="font-semibold text-primary mb-2">Seeking</h6>
-                                            <p class="text-text-secondary text-sm" id="previewSeeking">Your ideal partner description will appear here...</p>
+                                            <h6 class="font-semibold text-primary text-sm mb-1">Seeking</h6>
+                                            <p class="text-text-secondary text-xs" id="previewSeeking">Your ideal partner description...</p>
                                         </div>
                                     </div>
                                     <div class="matchmaking-footer">
-                                        <div class="flex justify-between items-center text-sm">
+                                        <div class="flex justify-between items-center text-xs">
                                             <span class="text-text-secondary" id="previewDuration">Duration: -</span>
                                             <span class="text-rose-gold font-semibold" id="previewPackage">Package: -</span>
                                         </div>
@@ -1074,14 +1138,14 @@
                                 </div>
                             </div>
                             
-                            <div class="bg-rose-gold/10 rounded-2xl p-6 border border-rose-gold/20">
-                                <div class="flex items-center space-x-3 mb-3">
-                                    <div class="w-10 h-10 bg-rose-gold rounded-lg flex items-center justify-center">
-                                        <i class="bi bi-shield-check text-white"></i>
+                            <div class="bg-rose-gold/10 rounded-lg p-4 border border-rose-gold/20">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <div class="w-8 h-8 bg-rose-gold rounded flex items-center justify-center">
+                                        <i class="bi bi-shield-check text-white text-sm"></i>
                                     </div>
                                     <div>
-                                        <div class="font-semibold text-primary">Secure Payment</div>
-                                        <div class="text-sm text-text-secondary">Your payment information is encrypted</div>
+                                        <div class="font-semibold text-primary text-sm">Secure Payment</div>
+                                        <div class="text-xs text-text-secondary">Your payment information is encrypted</div>
                                     </div>
                                 </div>
                             </div>
@@ -1090,22 +1154,22 @@
                 </div>
             </div>
 
-            <div class="modal-footer p-8 border-t border-border-color bg-gray-50 rounded-b-2xl">
+            <div class="modal-footer p-4 border-t border-border-color bg-gray-50 rounded-b-lg">
                 <div class="flex justify-between items-center">
-                    <button type="button" class="px-6 py-3 border-2 border-border-color rounded-xl btn-compact hover:bg-white transition-all duration-300 font-semibold flex items-center space-x-2" id="prevStepBtn" style="display: none;">
+                    <button type="button" class="px-4 py-2 border border-border-color rounded btn hover:bg-white transition-all duration-300 font-semibold flex items-center space-x-1.5 text-sm" id="prevStepBtn" style="display: none;">
                         <i class="bi bi-arrow-left"></i>
                         <span>Previous</span>
                     </button>
-                    <div class="flex space-x-3 ml-auto">
-                        <button type="button" class="px-6 py-3 border-2 border-border-color rounded-xl btn-compact hover:bg-white transition-all duration-300 font-semibold flex items-center space-x-2 close-modal">
+                    <div class="flex space-x-2 ml-auto">
+                        <button type="button" class="px-4 py-2 border border-border-color rounded btn hover:bg-white transition-all duration-300 font-semibold flex items-center space-x-1.5 text-sm close-modal">
                             <i class="bi bi-x-lg"></i>
                             <span>Cancel</span>
                         </button>
-                        <button type="button" class="px-8 py-3 bg-primary text-white rounded-xl btn-compact hover:bg-secondary transition-all duration-300 font-semibold flex items-center space-x-2" id="nextStepBtn">
+                        <button type="button" class="px-4 py-2 bg-primary text-white rounded btn hover:bg-secondary transition-all duration-300 font-semibold flex items-center space-x-1.5 text-sm" id="nextStepBtn">
                             <span>Continue</span>
                             <i class="bi bi-arrow-right"></i>
                         </button>
-                        <button type="button" class="px-8 py-3 gradient-rose text-white rounded-xl btn-compact hover:opacity-90 transition-all duration-300 font-semibold flex items-center space-x-2 hidden" id="createRequestBtn">
+                        <button type="button" class="px-4 py-2 gradient-rose text-white rounded btn hover:opacity-90 transition-all duration-300 font-semibold flex items-center space-x-1.5 text-sm hidden" id="createRequestBtn">
                             <i class="bi bi-credit-card"></i>
                             <span>Pay Now</span>
                         </button>
@@ -1117,27 +1181,27 @@
 
     <!-- Payment Processing Modal -->
     <div class="modal fixed inset-0 z-50 flex items-center justify-center bg-black/70 hidden" id="paymentModal">
-        <div class="modal-dialog bg-white rounded-2xl shadow-strong w-full max-w-md mx-4 text-center p-8 animate-fade-in">
-            <div class="w-16 h-16 bg-rose-gold/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <i class="bi bi-credit-card-2-front text-rose-gold text-2xl"></i>
+        <div class="modal-dialog bg-white rounded-lg shadow-strong w-full max-w-sm mx-3 text-center p-6 animate-fade-in">
+            <div class="w-12 h-12 bg-rose-gold/20 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <i class="bi bi-credit-card-2-front text-rose-gold"></i>
             </div>
-            <h3 class="text-2xl font-playfair font-black mb-2 text-primary">Processing Payment</h3>
-            <p class="text-text-secondary mb-6">Redirecting to secure payment gateway...</p>
-            <div class="loader-spinner mx-auto mb-4"></div>
-            <p class="text-sm text-text-secondary">Please do not close this window</p>
+            <h3 class="text-lg font-playfair font-bold mb-1.5 text-primary">Processing Payment</h3>
+            <p class="text-text-secondary mb-4 text-sm">Redirecting to secure payment gateway...</p>
+            <div class="loader-spinner mx-auto mb-3"></div>
+            <p class="text-xs text-text-secondary">Please do not close this window</p>
         </div>
     </div>
 
     <!-- Success Modal -->
     <div class="modal fixed inset-0 z-50 flex items-center justify-center bg-black/70 hidden" id="successModal">
-        <div class="modal-dialog bg-white rounded-2xl shadow-strong w-full max-w-md mx-4 text-center p-8 animate-fade-in">
-            <svg class="success-checkmark mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+        <div class="modal-dialog bg-white rounded-lg shadow-strong w-full max-w-sm mx-3 text-center p-6 animate-fade-in">
+            <svg class="success-checkmark mx-auto mb-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
                 <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
                 <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
             </svg>
-            <h3 class="text-2xl font-playfair font-black mb-2 text-primary">Request Submitted!</h3>
-            <p class="text-text-secondary mb-6">Your matchmaking request is now active and visible to potential matches.</p>
-            <button class="px-8 py-3 gradient-rose text-white rounded-xl btn-compact hover:opacity-90 transition-all duration-300 font-semibold flex items-center space-x-2 mx-auto" id="successBtn">
+            <h3 class="text-lg font-playfair font-bold mb-1.5 text-primary">Request Submitted!</h3>
+            <p class="text-text-secondary mb-4 text-sm">Your matchmaking request is now active.</p>
+            <button class="px-4 py-2 gradient-rose text-white rounded btn hover:opacity-90 transition-all duration-300 font-semibold flex items-center space-x-1.5 text-sm mx-auto" id="successBtn">
                 <i class="bi bi-grid-1x2"></i>
                 <span>Go to Dashboard</span>
             </button>
@@ -1146,47 +1210,47 @@
 
     <!-- Existing Request Modal -->
     <div class="modal fixed inset-0 z-50 flex items-center justify-center bg-black/70 hidden" id="existingRequestModal">
-        <div class="modal-dialog bg-white rounded-2xl shadow-strong w-full max-w-md mx-4 animate-fade-in">
-            <div class="modal-header p-6 border-b border-border-color flex justify-between items-center bg-gradient-to-r from-primary to-secondary text-white rounded-t-2xl">
+        <div class="modal-dialog bg-white rounded-lg shadow-strong w-full max-w-sm mx-3 animate-fade-in">
+            <div class="modal-header p-4 border-b border-border-color flex justify-between items-center bg-gradient-to-r from-primary to-secondary text-white rounded-t-lg">
                 <div>
-                    <h3 class="text-xl font-playfair font-black">Active Request Found</h3>
-                    <p class="text-white/80 text-sm mt-1">You already have an active matchmaking request</p>
+                    <h3 class="text-base font-playfair font-bold">Active Request Found</h3>
+                    <p class="text-white/80 text-xs mt-0.5">You already have an active matchmaking request</p>
                 </div>
-                <button type="button" class="p-2 rounded-xl hover:bg-white/10 transition-all duration-300 close-existing-modal">
+                <button type="button" class="p-1.5 rounded hover:bg-white/10 transition-all duration-300 close-existing-modal">
                     <i class="bi bi-x-lg"></i>
                 </button>
             </div>
             
-            <div class="modal-body p-6">
-                <div class="bg-gradient-to-br from-primary/5 to-rose-gold/5 rounded-xl p-4 border border-primary/10 mb-4">
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="font-medium text-primary">Package:</span>
-                        <span class="bg-rose-100 text-rose-800 px-2 py-1 rounded text-sm" id="existingPackage">-</span>
+            <div class="modal-body p-4">
+                <div class="bg-gradient-to-br from-primary/5 to-rose-gold/5 rounded-lg p-3 border border-primary/10 mb-3">
+                    <div class="flex justify-between items-center mb-1.5">
+                        <span class="font-medium text-primary text-sm">Package:</span>
+                        <span class="bg-rose-100 text-rose-800 px-2 py-0.5 rounded text-xs" id="existingPackage">-</span>
                     </div>
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="font-medium text-primary">Status:</span>
-                        <span class="capitalize text-primary" id="existingStatus">-</span>
+                    <div class="flex justify-between items-center mb-1.5">
+                        <span class="font-medium text-primary text-sm">Status:</span>
+                        <span class="capitalize text-primary text-sm" id="existingStatus">-</span>
                     </div>
                     <div class="flex justify-between items-center">
-                        <span class="font-medium text-primary">Days Remaining:</span>
-                        <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm" id="existingDaysRemaining">- days</span>
+                        <span class="font-medium text-primary text-sm">Days Remaining:</span>
+                        <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-xs" id="existingDaysRemaining">- days</span>
                     </div>
                 </div>
                 
-                <p class="text-text-secondary mb-4">What would you like to do?</p>
+                <p class="text-text-secondary text-sm mb-3">What would you like to do?</p>
                 
-                <div class="space-y-3">
-                    <button onclick="viewMyActiveRequest()" class="w-full bg-primary text-white py-3 px-4 rounded-xl hover:bg-secondary transition-colors flex items-center justify-center space-x-2">
+                <div class="space-y-2">
+                    <button onclick="viewMyActiveRequest()" class="w-full bg-primary text-white py-2 px-3 rounded hover:bg-secondary transition-colors flex items-center justify-center space-x-1.5 text-sm">
                         <i class="bi bi-eye"></i>
                         <span>View My Active Request</span>
                     </button>
                     
-                    <button onclick="deactivateAndCreateNew()" class="w-full bg-rose-gold text-white py-3 px-4 rounded-xl hover:bg-rose-700 transition-colors flex items-center justify-center space-x-2">
+                    <button onclick="deactivateAndCreateNew()" class="w-full bg-rose-gold text-white py-2 px-3 rounded hover:bg-rose-700 transition-colors flex items-center justify-center space-x-1.5 text-sm">
                         <i class="bi bi-x-circle"></i>
                         <span>Deactivate Current & Create New</span>
                     </button>
                     
-                    <button onclick="closeExistingRequestModal()" class="w-full bg-gray-200 text-gray-700 py-3 px-4 rounded-xl hover:bg-gray-300 transition-colors">
+                    <button onclick="closeExistingRequestModal()" class="w-full bg-gray-200 text-gray-700 py-2 px-3 rounded hover:bg-gray-300 transition-colors text-sm">
                         Cancel
                     </button>
                 </div>
@@ -1300,21 +1364,21 @@
             };
             
             const notification = document.createElement('div');
-            notification.className = `fixed top-4 right-4 z-50 p-4 rounded-xl shadow-strong animate-slide-up border-l-4 ${styles[type]}`;
+            notification.className = `fixed top-3 right-3 z-50 p-3 rounded-lg shadow-strong animate-slide-up border-l-4 ${styles[type]}`;
             notification.innerHTML = `
-                <div class="flex items-center space-x-3">
-                    <i class="bi bi-${icons[type]} text-lg"></i>
-                    <span class="font-medium flex-1">${message}</span>
-                    <button onclick="this.parentElement.parentElement.remove()" class="ml-2 hover:opacity-70">
+                <div class="flex items-center space-x-2">
+                    <i class="bi bi-${icons[type]} text-sm"></i>
+                    <span class="font-medium text-sm flex-1">${message}</span>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-1 hover:opacity-70">
                         <i class="bi bi-x"></i>
                     </button>
                 </div>
             `;
             
-            document.querySelectorAll('[class*="fixed top-4 right-4"]').forEach(notif => notif.remove());
+            document.querySelectorAll('[class*="fixed top-3 right-3"]').forEach(notif => notif.remove());
             document.body.appendChild(notification);
             
-            const duration = type === 'error' ? 8000 : 5000;
+            const duration = type === 'error' ? 5000 : 3000;
             setTimeout(() => {
                 if (notification.parentElement) notification.remove();
             }, duration);
@@ -1492,8 +1556,8 @@
             const about = document.getElementById('aboutYou').value || 'About you will appear here...';
             const seeking = document.getElementById('idealPartner').value || 'Your ideal partner description will appear here...';
 
-            document.getElementById('previewAbout').textContent = about.length > 100 ? about.substring(0, 100) + '...' : about;
-            document.getElementById('previewSeeking').textContent = seeking.length > 100 ? seeking.substring(0, 100) + '...' : seeking;
+            document.getElementById('previewAbout').textContent = about.length > 80 ? about.substring(0, 80) + '...' : about;
+            document.getElementById('previewSeeking').textContent = seeking.length > 80 ? seeking.substring(0, 80) + '...' : seeking;
 
             if (AppState.uploadedImageUrl) {
                 document.getElementById('previewPhoto').innerHTML = `<img src="${AppState.uploadedImageUrl}" class="w-full h-full object-cover rounded-full" alt="Profile photo">`;
@@ -1518,8 +1582,8 @@
             const uploadArea = document.getElementById('imageUploadArea');
             const originalContent = uploadArea.innerHTML;
             uploadArea.innerHTML = `
-                <div class="loader-spinner mx-auto mb-3"></div>
-                <p class="text-sm font-medium">Uploading image...</p>
+                <div class="loader-spinner mx-auto mb-2"></div>
+                <p class="text-xs font-medium">Uploading image...</p>
             `;
 
             fetch('/upload-image', {
@@ -1595,18 +1659,18 @@
             setTimeout(() => {
                 if (!banner.classList.contains('hidden')) {
                     banner.style.opacity = '0';
-                    banner.style.transform = 'translate(-50%, -20px)';
-                    setTimeout(() => banner.classList.add('hidden'), 300);
+                    banner.style.transform = 'translate(-50%, -16px)';
+                    setTimeout(() => banner.classList.add('hidden'), 200);
                 }
-            }, 10000);
+            }, 8000);
         }
 
         function hideActiveRequestBanner() {
             const banner = document.getElementById('activeRequestBanner');
             if (banner) {
                 banner.style.opacity = '0';
-                banner.style.transform = 'translate(-50%, -20px)';
-                setTimeout(() => banner.classList.add('hidden'), 300);
+                banner.style.transform = 'translate(-50%, -16px)';
+                setTimeout(() => banner.classList.add('hidden'), 200);
             }
         }
 
@@ -1637,10 +1701,10 @@
             const modal = document.getElementById('existingRequestModal');
             const originalContent = modal.innerHTML;
             modal.innerHTML = `
-                <div class="modal-dialog bg-white rounded-2xl shadow-strong w-full max-w-md mx-4 text-center p-8">
-                    <div class="loader-spinner mx-auto mb-4"></div>
-                    <h3 class="text-xl font-playfair font-black text-primary mb-2">Deactivating Request</h3>
-                    <p class="text-text-secondary">Please wait while we deactivate your current request...</p>
+                <div class="modal-dialog bg-white rounded-lg shadow-strong w-full max-w-sm mx-3 text-center p-6">
+                    <div class="loader-spinner mx-auto mb-3"></div>
+                    <h3 class="text-base font-playfair font-bold text-primary mb-1.5">Deactivating Request</h3>
+                    <p class="text-text-secondary text-sm">Please wait while we deactivate your current request...</p>
                 </div>
             `;
 
@@ -1655,13 +1719,13 @@
             .then(data => {
                 if (data.success) {
                     modal.innerHTML = `
-                        <div class="modal-dialog bg-white rounded-2xl shadow-strong w-full max-w-md mx-4 text-center p-8">
-                            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <i class="bi bi-check-lg text-green-600 text-2xl"></i>
+                        <div class="modal-dialog bg-white rounded-lg shadow-strong w-full max-w-sm mx-3 text-center p-6">
+                            <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="bi bi-check-lg text-green-600"></i>
                             </div>
-                            <h3 class="text-xl font-playfair font-black text-primary mb-2">Request Deactivated!</h3>
-                            <p class="text-text-secondary mb-4">Your previous request has been deactivated.</p>
-                            <button onclick="reopenCreateModal()" class="px-6 py-3 bg-primary text-white rounded-xl hover:bg-secondary transition-all duration-300 font-semibold">
+                            <h3 class="text-base font-playfair font-bold text-primary mb-1.5">Request Deactivated!</h3>
+                            <p class="text-text-secondary text-sm mb-3">Your previous request has been deactivated.</p>
+                            <button onclick="reopenCreateModal()" class="px-4 py-2 bg-primary text-white rounded hover:bg-secondary transition-all duration-300 font-semibold text-sm">
                                 Create New Request
                             </button>
                         </div>
@@ -1681,7 +1745,7 @@
             closeExistingRequestModal();
             setTimeout(() => {
                 document.getElementById('matchmakingModal').classList.remove('hidden');
-            }, 500);
+            }, 300);
         }
 
         // Payment Processing
@@ -1691,8 +1755,8 @@
             const createBtn = document.getElementById('createRequestBtn');
             const originalText = createBtn.innerHTML;
             createBtn.innerHTML = `
-                <div class="flex items-center space-x-2">
-                    <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <div class="flex items-center space-x-1.5">
+                    <div class="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                     <span>Processing...</span>
                 </div>
             `;
@@ -1805,7 +1869,7 @@
                         
                         setTimeout(() => {
                             window.location.href = paymentData.payment_url;
-                        }, 500);
+                        }, 300);
                     } else {
                         throw new Error(JSON.stringify({
                             type: 'PAYMENT_ERROR',
@@ -2048,9 +2112,9 @@
             setTimeout(() => {
                 if (loader) {
                     loader.style.opacity = '0';
-                    setTimeout(() => loader.style.display = 'none', 500);
+                    setTimeout(() => loader.style.display = 'none', 300);
                 }
-            }, 1000);
+            }, 800);
 
             initializeEventListeners();
             populateInterests();

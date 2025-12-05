@@ -7,11 +7,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
 
     <script src="https://cdn.tailwindcss.com"></script>
 
-<!-- ==== RESPONSIVE FONT-SIZE CONFIG ==== -->
-<script>
+    <script>
         // Check if Tailwind loads properly
         function checkTailwind() {
             setTimeout(() => {
@@ -184,8 +184,24 @@
         }
         
         .post-media {
-            max-height: auto;
             overflow: hidden;
+            margin: 0.75rem 0;
+            border-radius: 12px;
+            background: #f9f9f9;
+            padding: 0.5rem;
+            box-sizing: border-box;
+        }
+        
+        .post-media img,
+        .post-media video {
+            width: 100%;
+            max-width: 520px;
+            height: auto;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
 
         .modal-media-preview {
@@ -326,221 +342,283 @@
         .reactions-container:hover .reactions-tooltip {
             transition-delay: 0.1s;
         }
-    </style>
-    <style>
-    .glass-effect {
-        background: rgba(255, 255, 255, 0.7);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-    
-    .gradient-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
-    
-    .card-hover {
-        transition: all 0.3s ease;
-    }
-    
-    .card-hover:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-    }
-    
-    .custom-scrollbar::-webkit-scrollbar {
-        width: 6px;
-    }
-    
-    .custom-scrollbar::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 10px;
-    }
-    
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-        background: #c1c1c1;
-        border-radius: 10px;
-    }
-    
-    .comments-section {
-        max-height: 300px;
-        overflow-y: auto;
-    }
-    
-    /* REMOVED the max-height constraint for post media */
-    .post-media {
-        /* Removed: max-height: 500px; */
-        overflow: hidden;
-    }
-
-    /* Full size media for images and videos */
-    .post-media img,
-    .post-media video {
-        width: 100%;
-        height: auto;
-        max-height: none; /* Remove any max-height constraints */
-        object-fit: contain; /* This ensures the entire image/video is visible */
-        border-radius: 8px;
-    }
-
-    /* Modal media preview styles */
-    .modal-media-preview {
-        max-height: 300px;
-        overflow-y: auto;
-        border-radius: 12px;
-        margin-top: 1rem;
-    }
-
-    .modal-media-preview img,
-    .modal-media-preview video {
-        max-width: 100%;
-        max-height: 280px;
-        object-fit: contain;
-        border-radius: 8px;
-    }
-
-    .modal-media-preview::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    .modal-media-preview::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 10px;
-    }
-
-    .modal-media-preview::-webkit-scrollbar-thumb {
-        background: #c1c1c1;
-        border-radius: 10px;
-    }
-
-    .modal-media-preview::-webkit-scrollbar-thumb:hover {
-        background: #a8a8a8;
-    }
-
-    .modal-content-scrollable {
-        max-height: 60vh;
-        overflow-y: auto;
-    }
-
-    /* Like animation */
-    .like-animation {
-        animation: likePop 0.3s ease-in-out;
-    }
-
-    @keyframes likePop {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.2); }
-        100% { transform: scale(1); }
-    }
-
-    /* Comment fade in */
-    .comment-fade-in {
-        animation: fadeInUp 0.3s ease-out;
-    }
-
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(10px);
+        
+        /* Mobile-specific optimizations */
+        @media (max-width: 767px) {
+            /* Reduce all font sizes */
+            body {
+                font-size: 14px;
+            }
+            
+            /* Navigation */
+            .nav-logo img {
+                width: 5rem;
+                height: 5rem;
+            }
+            
+            /* Group Header */
+            .group-cover {
+                height: 180px !important;
+            }
+            
+            .group-avatar {
+                width: 80px !important;
+                height: 80px !important;
+            }
+            
+            .group-title {
+                font-size: 1.4rem !important;
+            }
+            
+            .group-stats span {
+                font-size: 0.75rem !important;
+                padding: 0.25rem 0.5rem !important;
+            }
+            
+            /* Action buttons */
+            .action-button {
+                padding: 0.4rem 0.8rem !important;
+                font-size: 0.8rem !important;
+            }
+            
+            .action-button i {
+                font-size: 0.9rem !important;
+            }
+            
+            /* Group description */
+            .group-description {
+                font-size: 0.85rem !important;
+                line-height: 1.4 !important;
+            }
+            
+            /* Main layout */
+            .main-grid {
+                grid-template-columns: 1fr !important;
+                gap: 1rem !important;
+            }
+            
+            /* Sidebar cards */
+            .sidebar-card {
+                padding: 1rem !important;
+            }
+            
+            .sidebar-card h3 {
+                font-size: 0.95rem !important;
+                margin-bottom: 0.75rem !important;
+            }
+            
+            .sidebar-card div {
+                font-size: 0.8rem !important;
+            }
+            
+            .member-avatar {
+                width: 28px !important;
+                height: 28px !important;
+            }
+            
+            .member-name {
+                font-size: 0.8rem !important;
+            }
+            
+            /* Create post card */
+            .create-post-avatar {
+                width: 40px !important;
+                height: 40px !important;
+            }
+            
+            .create-post-input {
+                padding: 0.5rem 0.75rem !important;
+                font-size: 0.85rem !important;
+            }
+            
+            .create-post-actions button {
+                font-size: 0.75rem !important;
+                padding: 0.25rem 0.5rem !important;
+            }
+            
+            /* Post cards */
+            .post-card {
+                padding: 1rem !important;
+            }
+            
+            .post-avatar {
+                width: 36px !important;
+                height: 36px !important;
+            }
+            
+            .post-author {
+                font-size: 0.9rem !important;
+            }
+            
+            .post-time {
+                font-size: 0.75rem !important;
+            }
+            
+            .post-content {
+                font-size: 0.85rem !important;
+                line-height: 1.4 !important;
+            }
+            
+            .post-stats {
+                font-size: 0.75rem !important;
+                padding: 0.5rem !important;
+            }
+            
+            .post-actions button {
+                padding: 0.4rem 0.6rem !important;
+                font-size: 0.75rem !important;
+            }
+            
+            .post-actions i {
+                font-size: 0.9rem !important;
+            }
+            
+            /* Comments */
+            .comment-input-avatar {
+                width: 32px !important;
+                height: 32px !important;
+            }
+            
+            .comment-input {
+                padding: 0.4rem 0.75rem !important;
+                font-size: 0.8rem !important;
+            }
+            
+            .comment-avatar {
+                width: 28px !important;
+                height: 28px !important;
+            }
+            
+            .comment-author {
+                font-size: 0.8rem !important;
+            }
+            
+            .comment-content {
+                font-size: 0.8rem !important;
+                line-height: 1.3 !important;
+            }
+            
+            .comment-time {
+                font-size: 0.7rem !important;
+            }
+            
+            /* Modals */
+            .modal-content {
+                max-width: 95% !important;
+                margin: 0.5rem !important;
+            }
+            
+            .modal-title {
+                font-size: 1rem !important;
+            }
+            
+            .modal-textarea {
+                font-size: 0.85rem !important;
+                padding: 0.75rem !important;
+            }
+            
+            .modal-button {
+                padding: 0.5rem !important;
+                font-size: 0.85rem !important;
+            }
+            
+            /* Empty state */
+            .empty-state-icon {
+                width: 60px !important;
+                height: 60px !important;
+            }
+            
+            .empty-state-title {
+                font-size: 1rem !important;
+            }
+            
+            .empty-state-text {
+                font-size: 0.85rem !important;
+            }
+            
+            /* Load more button */
+            .load-more-button {
+                padding: 0.5rem 1rem !important;
+                font-size: 0.85rem !important;
+            }
         }
-        to {
-            opacity: 1;
-            transform: translateY(0);
+        
+        @media (max-width: 480px) {
+            /* Even smaller for very small screens */
+            .group-cover {
+                height: 150px !important;
+            }
+            
+            .group-avatar {
+                width: 60px !important;
+                height: 60px !important;
+            }
+            
+            .group-title {
+                font-size: 1.2rem !important;
+            }
+            
+            .nav-logo img {
+                width: 4rem !important;
+                height: 4rem !important;
+            }
+            
+            .post-media img,
+            .post-media video {
+                max-width: 100% !important;
+            }
+            
+            .modal-content {
+                max-width: 100% !important;
+                margin: 0 !important;
+                border-radius: 0 !important;
+                height: 100vh !important;
+                max-height: 100vh !important;
+            }
         }
-    }
-
-    /* Share modal styles */
-    .share-option:hover {
-        background-color: #f8fafc;
-        transform: translateX(5px);
-        transition: all 0.2s ease;
-    }
-
-    /* Optional: Add smooth expansion for very large images */
-    .expandable-media {
-        cursor: zoom-in;
-        transition: transform 0.3s ease;
-    }
-
-    .expandable-media.expanded {
-        cursor: zoom-out;
-        transform: scale(1.02);
-    }
-</style>
-
-<style>
-    /* ──────────────────────────────────────────────────────────────
-       POST MEDIA – SMALLER BUT FULLY VISIBLE
-       ────────────────────────────────────────────────────────────── */
-    .post-media {
-        overflow: hidden;                     /* keep the rounded corners clean */
-        margin: 0.75rem 0;                    /* a little breathing room */
-        border-radius: 12px;                  /* slightly larger radius for a nicer look */
-        background: #f9f9f9;                  /* subtle background so the image doesn't touch the card edge */
-        padding: 0.5rem;                      /* tiny inner padding */
-        box-sizing: border-box;
-    }
-    
-    /* Limit the maximum width of the media while preserving aspect ratio */
-    .post-media img,
-    .post-media video {
-        width: 100%;                          /* fill the container width */
-        max-width: 520px;                     /* <-- the "smaller" size you asked for */
-        height: auto;                         /* keep original proportions */
-        object-fit: contain;                  /* show the whole picture/video */
-        display: block;
-        margin: 0 auto;                       /* center if the container is wider */
-        border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    }
+        
+        /* Keep original sizes on desktop */
+        @media (min-width: 768px) {
+            /* Desktop styles remain unchanged */
+        }
     </style>
 </head>
 <body class="font-poppins bg-gray-50">
     <!-- Navigation -->
-<!-- Navigation -->
-<!-- Group Navigation -->
-<nav class="bg-white shadow-lg sticky top-0 z-50">
-    <div class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex justify-between items-center h-20">
-  
-        <!-- Left: Logo -->
-        <div class="flex items-center justify-start w-full md:w-auto">
-          <a href="{{ url_for('user.user_dashboard') }}" class="flex items-center">
-            <img src="{{ url_for('static', filename='assets/img/kim.png') }}" 
-                 alt="Kimbela" 
-                 class="w-32 h-32 md:w-40 md:h-40">
-          </a>
+    <nav class="bg-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+
+                <!-- Left: Logo -->
+                <div class="flex items-center justify-start w-full md:w-auto">
+                    <a href="{{ url_for('user.user_dashboard') }}" class="flex items-center nav-logo">
+                        <img src="{{ url_for('static', filename='assets/img/kim.png') }}" 
+                             alt="Kimbela" 
+                             class="w-32 h-32 md:w-40 md:h-40">
+                    </a>
+                </div>
+
+                <!-- Right: Navigation icons -->
+                <div class="flex items-center space-x-4">
+                    <!-- Profile -->
+                    <a href="{{ url_for('user.profile', user_id=current_user.id) }}" 
+                       class="text-gray-600 hover:text-blue-600 flex items-center p-2 rounded-lg hover:bg-gray-50"
+                       title="Profile">
+                        <i class="bi bi-person text-xl"></i>
+                        <span class="ml-2 hidden lg:inline">Profile</span>
+                    </a>
+                </div>
+                
+            </div>
         </div>
-  
-       
-  
-        <!-- Right: Navigation icons -->
-        <div class="flex items-center space-x-4">
-          <!-- Home -->
-          
-  
-          <!-- Profile -->
-          <a href="{{ url_for('user.profile', user_id=current_user.id) }}" 
-             class="text-gray-600 hover:text-blue-600 flex items-center p-2 rounded-lg hover:bg-gray-50"
-             title="Profile">
-            <i class="bi bi-person text-xl"></i>
-            <span class="ml-2 hidden lg:inline">Profile</span>
-          </a>
-  
-          <!-- Optional: Group settings -->
-          
-        </div>
-        
-      </div>
-    </div>
-  </nav>
-  
+    </nav>
 
     <!-- Group Header -->
     <div class="bg-white shadow-lg">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="relative">
                 <!-- Cover Photo -->
-                <div class="h-64 bg-gradient-to-r from-blue-500 to-purple-600 rounded-b-2xl overflow-hidden">
+                <div class="h-64 bg-gradient-to-r from-blue-500 to-purple-600 rounded-b-2xl overflow-hidden group-cover">
                     {% if group.image %}
                     <img src="{{ group.image }}" alt="{{ group.name }}" class="w-full h-full object-cover">
                     {% endif %}
@@ -548,11 +626,11 @@
                 </div>
                 
                 <!-- Group Info -->
-                <div class="relative -mt-20 px-6 pb-6">
+                <div class="relative -mt-20 px-4 sm:px-6 pb-6">
                     <div class="flex flex-col md:flex-row items-start md:items-end justify-between">
-                        <div class="flex items-end space-x-6">
+                        <div class="flex items-end space-x-4 md:space-x-6">
                             <!-- Group Avatar -->
-                            <div class="w-32 h-32 bg-white rounded-2xl shadow-2xl p-2">
+                            <div class="w-32 h-32 bg-white rounded-2xl shadow-2xl p-2 group-avatar">
                                 <img src="{{ group.image or 'https://images.unsplash.com/photo-1611262588024-d12430b98920?w=400&h=400&fit=crop' }}" 
                                      alt="{{ group.name }}" 
                                      class="w-full h-full object-cover rounded-xl">
@@ -560,23 +638,23 @@
                             
                             <!-- Group Details -->
                             <div class="text-white mb-4">
-                                <h1 class="text-3xl font-bold mb-2">{{ group.name }}</h1>
-                                <div class="flex flex-wrap items-center gap-4 text-sm">
-                                    <span class="bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm">
+                                <h1 class="text-2xl md:text-3xl font-bold mb-2 group-title">{{ group.name }}</h1>
+                                <div class="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm group-stats">
+                                    <span class="bg-white/20 px-2 md:px-3 py-1 rounded-full backdrop-blur-sm">
                                         <i class="bi bi-people mr-1"></i>
                                         {{ group.member_count }} members
                                     </span>
-                                    <span class="bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm">
+                                    <span class="bg-white/20 px-2 md:px-3 py-1 rounded-full backdrop-blur-sm">
                                         <i class="bi bi-grid-3x3-gap mr-1"></i>
                                         {{ group.category|title }}
                                     </span>
                                     {% if group.is_private %}
-                                    <span class="bg-yellow-500/80 px-3 py-1 rounded-full backdrop-blur-sm">
-                                        <i class="bi bi-lock-fill mr-1"></i>Private Group
+                                    <span class="bg-yellow-500/80 px-2 md:px-3 py-1 rounded-full backdrop-blur-sm">
+                                        <i class="bi bi-lock-fill mr-1"></i>Private
                                     </span>
                                     {% else %}
-                                    <span class="bg-green-500/80 px-3py-1 rounded-full backdrop-blur-sm">
-                                        <i class="bi bi-globe mr-1"></i>Public Group
+                                    <span class="bg-green-500/80 px-2 md:px-3 py-1 rounded-full backdrop-blur-sm">
+                                        <i class="bi bi-globe mr-1"></i>Public
                                     </span>
                                     {% endif %}
                                 </div>
@@ -585,28 +663,28 @@
                         
                         <!-- Action Buttons -->
                         <br>
-                        <div class="flex space-x-3 mt-5 md:mt-0" style="margin-bottom: -1rem;">
+                        <div class="flex space-x-2 md:space-x-3 mt-4 md:mt-0 mb-4 md:mb-0" style="margin-bottom: -1rem;">
                             {% if is_member %}
-                            <!-- Create Post Button (Smaller + New Color) -->
+                            <!-- Create Post Button -->
                             <button onclick="openPostModal()" 
-                                    class="px-4 py-2 rounded-lg bg-indigo-500 text-white hover:bg-indigo-600 transition font-medium flex items-center text-sm shadow-sm">
-                                <i class="bi bi-plus-circle mr-1 text-base"></i>
+                                    class="px-3 md:px-4 py-1.5 md:py-2 rounded-lg bg-indigo-500 text-white hover:bg-indigo-600 transition font-medium flex items-center text-xs md:text-sm shadow-sm action-button">
+                                <i class="bi bi-plus-circle mr-1 text-sm md:text-base"></i>
                                 Create Post
                             </button>
                         
-                            <!-- Leave Group (Smaller + Balanced Style) -->
+                            <!-- Leave Group -->
                             <button onclick="leaveGroup({{ group.id }})" 
-                                    class="px-4 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 transition font-medium flex items-center text-sm shadow-sm">
-                                <i class="bi bi-box-arrow-right mr-1 text-base"></i>
+                                    class="px-3 md:px-4 py-1.5 md:py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 transition font-medium flex items-center text-xs md:text-sm shadow-sm action-button">
+                                <i class="bi bi-box-arrow-right mr-1 text-sm md:text-base"></i>
                                 Leave
                             </button>
                         
                             {% else %}
                         
-                            <!-- Join Button (Smaller) -->
+                            <!-- Join Button -->
                             <button onclick="joinGroup({{ group.id }})" 
-                                    class="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition font-medium flex items-center text-sm shadow-sm">
-                                <i class="bi bi-person-plus mr-1 text-base"></i>
+                                    class="px-3 md:px-4 py-1.5 md:py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition font-medium flex items-center text-xs md:text-sm shadow-sm action-button">
+                                <i class="bi bi-person-plus mr-1 text-sm md:text-base"></i>
                                 Join
                             </button>
                         
@@ -617,8 +695,8 @@
                     
                     <!-- Group Description -->
                     {% if group.description %}
-                    <div class="mt-6 max-w-3xl">
-                        <p class="text-gray-700 text-lg leading-relaxed">{{ group.description }}</p>
+                    <div class="mt-4 md:mt-6 max-w-3xl">
+                        <p class="text-gray-700 text-sm md:text-lg leading-relaxed group-description">{{ group.description }}</p>
                     </div>
                     {% endif %}
                 </div>
@@ -627,29 +705,29 @@
     </div>
 
     <!-- Main Content -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-8 main-grid">
             <!-- Sidebar -->
-            <div class="lg:col-span-1 space-y-6">
+            <div class="lg:col-span-1 space-y-4 md:space-y-6">
                 <!-- Group Stats -->
-                <div class="bg-white rounded-2xl shadow-lg p-6">
-                    <h3 class="font-semibold text-gray-900 mb-4">Group Stats</h3>
-                    <div class="space-y-3">
-                        <div class="flex justify-between items-center " style="font-size: 0.9rem;">
+                <div class="bg-white rounded-xl md:rounded-2xl shadow-lg p-4 md:p-6 sidebar-card">
+                    <h3 class="font-semibold text-gray-900 mb-3 md:mb-4">Group Stats</h3>
+                    <div class="space-y-2 md:space-y-3">
+                        <div class="flex justify-between items-center">
                             <span class="text-gray-600">Members</span>
                             <span class="font-semibold">{{ group.member_count }}</span>
                         </div>
-                        <div class="flex justify-between items-center" style="font-size: 0.9rem;">
+                        <div class="flex justify-between items-center">
                             <span class="text-gray-600">Category</span>
                             <span class="font-semibold capitalize">{{ group.category }}</span>
                         </div>
-                        <div class="flex justify-between items-center" style="font-size: 0.9rem;">
+                        <div class="flex justify-between items-center">
                             <span class="text-gray-600">Privacy</span>
                             <span class="font-semibold">
                                 {% if group.is_private %}Private{% else %}Public{% endif %}
                             </span>
                         </div>
-                        <div class="flex justify-between items-center" style="font-size: 0.9rem;">
+                        <div class="flex justify-between items-center">
                             <span class="text-gray-600">Created</span>
                             <span class="font-semibold">{{ group.created_at.strftime('%b %d, %Y') }}</span>
                         </div>
@@ -657,20 +735,20 @@
                 </div>
 
                 <!-- Group Members Preview -->
-                <div class="bg-white rounded-2xl shadow-lg p-6" style="font-size: 0.9rem;">
-                    <h3 class="font-semibold text-gray-900 mb-4">Recent Members</h3>
-                    <div class="space-y-3">
+                <div class="bg-white rounded-xl md:rounded-2xl shadow-lg p-4 md:p-6 sidebar-card">
+                    <h3 class="font-semibold text-gray-900 mb-3 md:mb-4">Recent Members</h3>
+                    <div class="space-y-2 md:space-y-3">
                         {% for member in group.members.limit(5).all() %}
-                        <div class="flex items-center space-x-3" style="font-size: 0.9rem;">
+                        <div class="flex items-center space-x-2 md:space-x-3">
                             <img src="{{ member.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
                                  alt="{{ member.full_name }}" 
-                                 class="w-8 h-8 rounded-full object-cover">
-                            <span class="text-sm font-medium">{{ member.full_name }}</span>
+                                 class="w-8 h-8 rounded-full object-cover member-avatar">
+                            <span class="text-sm font-medium member-name">{{ member.full_name }}</span>
                         </div>
                         {% endfor %}
                     </div>
                     {% if group.member_count > 5 %}
-                    <button class="w-full mt-4 text-blue-600 hover:text-blue-700 text-sm font-semibold">
+                    <button class="w-full mt-3 md:mt-4 text-blue-600 hover:text-blue-700 text-xs md:text-sm font-semibold">
                         View All Members
                     </button>
                     {% endif %}
@@ -681,27 +759,28 @@
             <div class="lg:col-span-3">
                 {% if is_member %}
                 <!-- Create Post Card -->
-                <div class="bg-white rounded-2xl shadow-lg p-6 mb-6 card-hover">
-                    <div class="flex items-center space-x-4">
+                <div class="bg-white rounded-xl md:rounded-2xl shadow-lg p-4 md:p-6 mb-4 md:mb-6 card-hover">
+                    <div class="flex items-center space-x-3 md:space-x-4">
                         <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
                              alt="{{ current_user.full_name }}" 
-                             class="w-12 h-12 rounded-full object-cover">
+                             class="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover create-post-avatar">
                         <div class="flex-1">
                             <button onclick="openPostModal()" 
-                                    class="w-full text-left bg-gray-50 rounded-full px-6 py-3 hover:bg-gray-100 transition-colors duration-300 text-gray-600" style="font-size: 1rem;">
+                                    class="w-full text-left bg-gray-50 rounded-full px-4 py-2 md:px-6 md:py-3 hover:bg-gray-100 transition-colors duration-300 text-gray-600 create-post-input"
+                                    style="font-size: 0.9rem;">
                                 Say something {{ current_user.first_name }}...
                             </button>
                         </div>
                     </div>
-                    <div class="flex justify-between mt-4 pt-4 border-t border-gray-100">
-                        <button onclick="openPostModal()" class="flex items-center text-gray-500 hover:text-blue-600 transition-colors duration-300">
-                            <i class="bi bi-image text-green-500 mr-2"></i>Photo
+                    <div class="flex justify-between mt-3 md:mt-4 pt-3 md:pt-4 border-t border-gray-100">
+                        <button onclick="openPostModal()" class="flex items-center text-gray-500 hover:text-blue-600 transition-colors duration-300 create-post-actions">
+                            <i class="bi bi-image text-green-500 mr-1 md:mr-2 text-sm md:text-base"></i>Photo
                         </button>
-                        <button onclick="openPostModal()" class="flex items-center text-gray-500 hover:text-blue-600 transition-colors duration-300">
-                            <i class="bi bi-camera-video text-red-500 mr-2"></i>Video
+                        <button onclick="openPostModal()" class="flex items-center text-gray-500 hover:text-blue-600 transition-colors duration-300 create-post-actions">
+                            <i class="bi bi-camera-video text-red-500 mr-1 md:mr-2 text-sm md:text-base"></i>Video
                         </button>
-                        <button onclick="openPostModal()" class="flex items-center text-gray-500 hover:text-blue-600 transition-colors duration-300">
-                            <i class="bi bi-emoji-smile text-yellow-500 mr-2"></i>Feeling
+                        <button onclick="openPostModal()" class="flex items-center text-gray-500 hover:text-blue-600 transition-colors duration-300 create-post-actions">
+                            <i class="bi bi-emoji-smile text-yellow-500 mr-1 md:mr-2 text-sm md:text-base"></i>Feeling
                         </button>
                     </div>
                 </div>
@@ -710,42 +789,42 @@
                 <!-- Posts Container -->
                 <div id="postsContainer">
                     {% for post in posts %}
-                    <div class="bg-white rounded-2xl shadow-lg mb-6 card-hover post-card" data-post-id="{{ post.id }}">
+                    <div class="bg-white rounded-xl md:rounded-2xl shadow-lg mb-4 md:mb-6 card-hover post-card" data-post-id="{{ post.id }}">
                         <!-- Post Header -->
-                        <div class="p-6 pb-4">
+                        <div class="p-4 md:p-6 pb-3 md:pb-4">
                             <div class="flex justify-between items-start">
-                                <div class="flex items-center space-x-3">
+                                <div class="flex items-center space-x-2 md:space-x-3">
                                     <img src="{{ post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
                                          alt="{{ post.author.full_name }}" 
-                                         class="w-10 h-10 rounded-full object-cover">
+                                         class="w-8 h-8 md:w-10 md:h-10 rounded-full object-cover post-avatar">
                                     <div>
-                                        <h4 class="font-semibold text-gray-900">{{ post.author.full_name }}</h4>
-                                        <p class="text-sm text-gray-500">{{ post.created_at.strftime('%b %d at %I:%M %p') }}</p>
+                                        <h4 class="font-semibold text-gray-900 text-sm md:text-base post-author">{{ post.author.full_name }}</h4>
+                                        <p class="text-xs md:text-sm text-gray-500 post-time">{{ post.created_at.strftime('%b %d at %I:%M %p') }}</p>
                                     </div>
                                 </div>
                                 <div class="dropdown relative">
-                                    <button class="p-2 rounded-full hover:bg-gray-100 transition-colors duration-300">
-                                        <i class="bi bi-three-dots text-gray-500"></i>
+                                    <button class="p-1 md:p-2 rounded-full hover:bg-gray-100 transition-colors duration-300">
+                                        <i class="bi bi-three-dots text-gray-500 text-sm md:text-base"></i>
                                     </button>
-                                    <div class="dropdown-menu absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-2xl border border-gray-200 hidden z-10">
+                                    <div class="dropdown-menu absolute right-0 mt-1 w-40 md:w-48 bg-white rounded-lg md:rounded-xl shadow-2xl border border-gray-200 hidden z-10">
                                         {% if post.author.id == current_user.id %}
-                                        <button onclick="editPost({{ post.id }})" class="w-full text-left px-4 py-2 hover:bg-gray-50 rounded-t-xl text-blue-600">
-                                            <i class="bi bi-pencil mr-2"></i>Edit Post
+                                        <button onclick="editPost({{ post.id }})" class="w-full text-left px-3 py-2 hover:bg-gray-50 rounded-t-lg md:rounded-t-xl text-blue-600 text-xs md:text-sm">
+                                            <i class="bi bi-pencil mr-1 md:mr-2 text-xs md:text-sm"></i>Edit Post
                                         </button>
-                                        <button onclick="deletePost({{ post.id }})" class="w-full text-left px-4 py-2 hover:bg-gray-50 text-red-600">
-                                            <i class="bi bi-trash mr-2"></i>Delete Post
+                                        <button onclick="deletePost({{ post.id }})" class="w-full text-left px-3 py-2 hover:bg-gray-50 text-red-600 text-xs md:text-sm">
+                                            <i class="bi bi-trash mr-1 md:mr-2 text-xs md:text-sm"></i>Delete Post
                                         </button>
                                         {% endif %}
-                                        <button onclick="reportContent('post', {{ post.id }})" class="w-full text-left px-4 py-2 hover:bg-gray-50 rounded-b-xl text-orange-600">
-                                            <i class="bi bi-flag mr-2"></i>Report Post
+                                        <button onclick="reportContent('post', {{ post.id }})" class="w-full text-left px-3 py-2 hover:bg-gray-50 rounded-b-lg md:rounded-b-xl text-orange-600 text-xs md:text-sm">
+                                            <i class="bi bi-flag mr-1 md:mr-2 text-xs md:text-sm"></i>Report Post
                                         </button>
                                     </div>
                                 </div>
                             </div>
                             
                             <!-- Post Content -->
-                            <div class="mt-4">
-                                <p class="text-gray-800 whitespace-pre-wrap">{{ post.content }}</p>
+                            <div class="mt-3 md:mt-4">
+                                <p class="text-gray-800 whitespace-pre-wrap text-sm md:text-base post-content">{{ post.content }}</p>
                             </div>
                         </div>
 
@@ -766,8 +845,7 @@
                         {% endif %}
 
                         <!-- Post Stats -->
-                       <!-- Post Stats -->
-                        <div class="px-6 py-3 border-t border-gray-100 text-sm text-gray-500">
+                        <div class="px-4 md:px-6 py-2 md:py-3 border-t border-gray-100 text-xs md:text-sm text-gray-500 post-stats">
                             <div class="flex justify-between">
                                 <span id="like-count-{{ post.id }}">{{ post.get_reaction_count() }} reactions</span>
                                 <span id="comment-count-{{ post.id }}">{{ post.comments_list|length }} comments</span>
@@ -775,18 +853,18 @@
                         </div>
 
                         <!-- Post Actions -->
-                        <div class="px-6 py-3 border-t border-gray-100">
+                        <div class="px-4 md:px-6 py-2 md:py-3 border-t border-gray-100">
                             <div class="flex justify-around">
                                 <!-- Like Button with Reactions -->
                                 <div class="reactions-container">
                                     {% set user_reaction = current_user.get_user_reaction(post.id) %}
                                     <button onclick="likePost({{ post.id }})" 
-                                            class="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 like-btn {% if user_reaction %}active-{{ user_reaction }} text-{% if user_reaction == 'like' %}blue{% elif user_reaction == 'love' %}red{% elif user_reaction in ['care', 'haha', 'wow', 'sad'] %}yellow{% elif user_reaction == 'angry' %}red{% endif %}-600{% else %}text-gray-600{% endif %}"
+                                            class="flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-1 md:py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 like-btn {% if user_reaction %}active-{{ user_reaction }} text-{% if user_reaction == 'like' %}blue{% elif user_reaction == 'love' %}red{% elif user_reaction in ['care', 'haha', 'wow', 'sad'] %}yellow{% elif user_reaction == 'angry' %}red{% endif %}-600{% else %}text-gray-600{% endif %}"
                                             id="like-btn-{{ post.id }}"
                                             onmouseenter="showReactions({{ post.id }})"
                                             onmouseleave="hideReactions({{ post.id }})">
                                         <i class="bi {% if user_reaction %}{% if user_reaction == 'like' %}bi-hand-thumbs-up-fill{% elif user_reaction == 'love' %}bi-heart-fill{% elif user_reaction == 'care' %}bi-emoji-heart-eyes{% elif user_reaction == 'haha' %}bi-emoji-laughing{% elif user_reaction == 'wow' %}bi-emoji-surprise{% elif user_reaction == 'sad' %}bi-emoji-frown{% elif user_reaction == 'angry' %}bi-emoji-angry{% endif %}{% else %}bi-hand-thumbs-up{% endif %}" id="like-icon-{{ post.id }}"></i>
-                                        <span id="like-text-{{ post.id }}">
+                                        <span id="like-text-{{ post.id }}" class="text-xs md:text-sm">
                                             {% if user_reaction %}
                                                 {% if user_reaction == 'like' %}Liked{% elif user_reaction == 'love' %}Loved{% elif user_reaction == 'care' %}Cared{% elif user_reaction == 'haha' %}Haha{% elif user_reaction == 'wow' %}Wow{% elif user_reaction == 'sad' %}Sad{% elif user_reaction == 'angry' %}Angry{% endif %}
                                             {% else %}
@@ -797,85 +875,86 @@
                                     
                                     <!-- Reactions Tooltip -->
                                     <div class="reactions-tooltip" id="reactions-{{ post.id }}">
-                                        <div class="reaction-option like" onclick="reactToPost({{ post.id }}, 'like')" title="Like">👍</div>
-                                        <div class="reaction-option love" onclick="reactToPost({{ post.id }}, 'love')" title="Love">❤️</div>
-                                        <div class="reaction-option care" onclick="reactToPost({{ post.id }}, 'care')" title="Care">🥰</div>
-                                        <div class="reaction-option haha" onclick="reactToPost({{ post.id }}, 'haha')" title="Haha">😂</div>
-                                        <div class="reaction-option wow" onclick="reactToPost({{ post.id }}, 'wow')" title="Wow">😮</div>
-                                        <div class="reaction-option sad" onclick="reactToPost({{ post.id }}, 'sad')" title="Sad">😢</div>
-                                        <div class="reaction-option angry" onclick="reactToPost({{ post.id }}, 'angry')" title="Angry">😠</div>
+                                        <div class="reaction-option like text-lg md:text-xl" onclick="reactToPost({{ post.id }}, 'like')" title="Like">👍</div>
+                                        <div class="reaction-option love text-lg md:text-xl" onclick="reactToPost({{ post.id }}, 'love')" title="Love">❤️</div>
+                                        <div class="reaction-option care text-lg md:text-xl" onclick="reactToPost({{ post.id }}, 'care')" title="Care">🥰</div>
+                                        <div class="reaction-option haha text-lg md:text-xl" onclick="reactToPost({{ post.id }}, 'haha')" title="Haha">😂</div>
+                                        <div class="reaction-option wow text-lg md:text-xl" onclick="reactToPost({{ post.id }}, 'wow')" title="Wow">😮</div>
+                                        <div class="reaction-option sad text-lg md:text-xl" onclick="reactToPost({{ post.id }}, 'sad')" title="Sad">😢</div>
+                                        <div class="reaction-option angry text-lg md:text-xl" onclick="reactToPost({{ post.id }}, 'angry')" title="Angry">😠</div>
                                     </div>
                                 </div>
 
                                 <button onclick="focusCommentInput({{ post.id }})" 
-                                        class="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 text-gray-600">
-                                    <i class="bi bi-chat"></i>
-                                    <span>Comment</span>
+                                        class="flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-1 md:py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 text-gray-600">
+                                    <i class="bi bi-chat text-sm md:text-base"></i>
+                                    <span class="text-xs md:text-sm">Comment</span>
                                 </button>
                                 <button onclick="openShareModal({{ post.id }})" 
-                                        class="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 text-gray-600">
-                                    <i class="bi bi-share"></i>
-                                    <span>Share</span>
+                                        class="flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-1 md:py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 text-gray-600">
+                                    <i class="bi bi-share text-sm md:text-base"></i>
+                                    <span class="text-xs md:text-sm">Share</span>
                                 </button>
                             </div>
                         </div>
 
                         <!-- Comments Section -->
-                        <div class="comments-section px-6 py-4 border-t border-gray-100 bg-gray-50">
+                        <div class="comments-section px-4 md:px-6 py-3 md:py-4 border-t border-gray-100 bg-gray-50">
                             <!-- Comment Input -->
-                            <div class="flex items-center space-x-3 mb-4">
+                            <div class="flex items-center space-x-2 md:space-x-3 mb-3 md:mb-4">
                                 <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
                                      alt="{{ current_user.full_name }}" 
-                                     class="w-8 h-8 rounded-full object-cover">
+                                     class="w-7 h-7 md:w-8 md:h-8 rounded-full object-cover comment-input-avatar">
                                 <div class="flex-1 relative">
                                     <input type="text" 
                                            id="commentInput-{{ post.id }}" 
                                            placeholder="Write a comment..." 
-                                           class="w-full bg-white rounded-full px-4 py-2 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
+                                           class="w-full bg-white rounded-full px-3 py-1.5 md:px-4 md:py-2 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 comment-input"
                                            onkeypress="handleCommentKeypress(event, {{ post.id }})">
                                 </div>
                             </div>
 
                             <!-- Comments List -->
-                            <!-- Comments List -->
-<div id="comments-{{ post.id }}">
-    {% for comment in post.comments[:3] %}
-    <div class="flex space-x-3 mb-4 comment-item comment-fade-in" id="comment-{{ comment.id }}">
-        <img src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
-             alt="{{ comment.author.full_name }}" 
-             class="w-8 h-8 rounded-full object-cover flex-shrink-0">
-        <div class="flex-1">
-            <div class="bg-white rounded-2xl px-4 py-3">
-                <div class="flex justify-between items-start mb-1">
-                    <h5 class="font-semibold text-sm">{{ comment.author.full_name }}</h5>
-                    <div class="dropdown relative">
-                        <button class="p-1 rounded-full hover:bg-gray-100 transition-colors duration-300">
-                            <i class="bi bi-three-dots text-gray-400 text-xs"></i>
-                        </button>
-                        <div class="dropdown-menu absolute right-0 mt-1 w-32 bg-white rounded-xl shadow-2xl border border-gray-200 hidden z-10">
-                            {% if comment.author.id == current_user.id %}
-                            <button onclick="deleteComment({{ comment.id }})" class="w-full text-left px-3 py-2 hover:bg-gray-50 rounded-t-xl text-red-600 text-sm">
-                                <i class="bi bi-trash mr-1"></i>Delete
-                            </button>
-                            {% endif %}
-                            <button onclick="reportContent('comment', {{ comment.id }})" class="w-full text-left px-3 py-2 hover:bg-gray-50 rounded-b-xl text-orange-600 text-sm">
-                                <i class="bi bi-flag mr-1"></i>Report
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <p class="text-gray-800 text-sm">{{ comment.content }}</p>
-                <div class="flex items-center space-x-3 mt-2">
-                    <span class="text-xs text-gray-400">{{ comment.created_at.strftime('%I:%M %p') }}</span>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endfor %}
-</div>
+                            <div id="comments-{{ post.id }}">
+                                {% for comment in post.comments[:100]|reverse %}
+                                <div class="flex space-x-2 md:space-x-3 mb-3 md:mb-4 comment-item comment-fade-in" id="comment-{{ comment.id }}">
+                                    
+       
+                                    <img src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
+                                         alt="{{ comment.author.full_name }}" 
+                                         class="w-6 h-6 md:w-8 md:h-8 rounded-full object-cover flex-shrink-0 comment-avatar">
+                                    <div class="flex-1">
+                                        <div class="bg-white rounded-xl md:rounded-2xl px-3 py-2 md:px-4 md:py-3">
+                                            <div class="flex justify-between items-start mb-1">
+                                                <h5 class="font-semibold text-xs md:text-sm comment-author">{{ comment.author.full_name }}</h5>
+                                                <div class="dropdown relative">
+                                                    <button class="p-0.5 md:p-1 rounded-full hover:bg-gray-100 transition-colors duration-300">
+                                                        <i class="bi bi-three-dots text-gray-400 text-xs md:text-xs"></i>
+                                                    </button>
+                                                    <div class="dropdown-menu absolute right-0 mt-1 w-28 md:w-32 bg-white rounded-lg md:rounded-xl shadow-2xl border border-gray-200 hidden z-10">
+                                                        {% if comment.author.id == current_user.id %}
+                                                        <button onclick="deleteComment({{ comment.id }})" class="w-full text-left px-2 py-1.5 md:px-3 md:py-2 hover:bg-gray-50 rounded-t-lg md:rounded-t-xl text-red-600 text-xs md:text-sm">
+                                                            <i class="bi bi-trash mr-1 text-xs md:text-sm"></i>Delete
+                                                        </button>
+                                                        {% endif %}
+                                                        <button onclick="reportContent('comment', {{ comment.id }})" class="w-full text-left px-2 py-1.5 md:px-3 md:py-2 hover:bg-gray-50 rounded-b-lg md:rounded-b-xl text-orange-600 text-xs md:text-sm">
+                                                            <i class="bi bi-flag mr-1 text-xs md:text-sm"></i>Report
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <p class="text-gray-800 text-xs md:text-sm comment-content">{{ comment.content }}</p>
+                                            <div class="flex items-center space-x-2 md:space-x-3 mt-1 md:mt-2">
+                                                <span class="text-xs text-gray-400 comment-time">{{ comment.created_at.strftime('%I:%M %p') }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
 
                             {% if post.comments_list|length > 3 %}
-                            <button onclick="loadAllComments({{ post.id }})" class="text-blue-600 hover:text-blue-700 text-sm font-semibold">
+                            <button onclick="loadAllComments({{ post.id }})" class="text-blue-600 hover:text-blue-700 text-xs md:text-sm font-semibold">
                                 View all {{ post.comments_list|length }} comments
                             </button>
                             {% endif %}
@@ -883,19 +962,19 @@
                     </div>
                     {% else %}
                     <!-- Empty State -->
-                    <div class="bg-white rounded-2xl shadow-lg p-12 text-center">
-                        <div class="w-24 h-24 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <i class="bi bi-chat-square-text text-3xl text-blue-600"></i>
+                    <div class="bg-white rounded-xl md:rounded-2xl shadow-lg p-6 md:p-12 text-center">
+                        <div class="w-16 h-16 md:w-24 md:h-24 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-4 md:mb-6 empty-state-icon">
+                            <i class="bi bi-chat-square-text text-xl md:text-3xl text-blue-600"></i>
                         </div>
-                        <h3 class="text-xl font-semibold text-gray-900 mb-2">No posts yet</h3>
-                        <p class="text-gray-600 mb-6">Be the first to share something in this group!</p>
+                        <h3 class="text-lg md:text-xl font-semibold text-gray-900 mb-2 empty-state-title">No posts yet</h3>
+                        <p class="text-gray-600 mb-4 md:mb-6 text-sm md:text-base empty-state-text">Be the first to share something in this group!</p>
                         {% if is_member %}
                         <button onclick="openPostModal()" 
-                                class="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-colors duration-300 font-semibold inline-flex items-center">
-                            <i class="bi bi-plus-circle mr-2"></i>Create First Post
+                                class="bg-blue-600 text-white px-4 py-2 md:px-6 md:py-3 rounded-lg md:rounded-xl hover:bg-blue-700 transition-colors duration-300 font-semibold inline-flex items-center text-sm md:text-base">
+                            <i class="bi bi-plus-circle mr-1 md:mr-2"></i>Create First Post
                         </button>
                         {% else %}
-                        <p class="text-gray-500">Join the group to start posting</p>
+                        <p class="text-gray-500 text-sm md:text-base">Join the group to start posting</p>
                         {% endif %}
                     </div>
                     {% endfor %}
@@ -903,9 +982,9 @@
 
                 <!-- Load More Button -->
                 {% if posts|length >= 10 %}
-                <div class="text-center mt-8">
+                <div class="text-center mt-4 md:mt-8">
                     <button id="loadMorePosts" 
-                            class="bg-white text-blue-600 px-8 py-3 rounded-xl hover:bg-blue-50 transition-all duration-300 transform hover:scale-105 shadow-lg border border-blue-200 font-semibold">
+                            class="bg-white text-blue-600 px-6 py-2 md:px-8 md:py-3 rounded-lg md:rounded-xl hover:bg-blue-50 transition-all duration-300 transform hover:scale-105 shadow-lg border border-blue-200 font-semibold text-sm md:text-base load-more-button">
                         Load More Posts
                     </button>
                 </div>
@@ -916,10 +995,10 @@
 
     <!-- Create Post Modal -->
     <div id="postModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden flex flex-col">
-            <div class="p-6 border-b border-gray-200 flex justify-between items-center flex-none" style="font-size: 1rem;">
-                <button onclick="closePostModal()" class="p-2 rounded-full hover:bg-gray-100 transition-colors duration-300">
-                    <i class="bi bi-x-lg text-gray-500"></i>
+        <div class="bg-white rounded-xl md:rounded-2xl shadow-2xl w-full max-w-lg md:max-w-2xl mx-2 md:mx-4 max-h-[90vh] overflow-hidden flex flex-col modal-content">
+            <div class="p-4 md:p-6 border-b border-gray-200 flex justify-between items-center flex-none">
+                <button onclick="closePostModal()" class="p-1.5 md:p-2 rounded-full hover:bg-gray-100 transition-colors duration-300">
+                    <i class="bi bi-x-lg text-gray-500 text-lg md:text-xl"></i>
                 </button>
             </div>
             
@@ -927,42 +1006,42 @@
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 
                 <!-- Scrollable Content Area -->
-                <div class="flex-1 overflow-y-auto modal-content-scrollable p-6">
-                    <div class="flex items-center space-x-3 mb-6">
+                <div class="flex-1 overflow-y-auto modal-content-scrollable p-4 md:p-6">
+                    <div class="flex items-center space-x-2 md:space-x-3 mb-4 md:mb-6">
                         <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
                              alt="{{ current_user.full_name }}" 
-                             class="w-10 h-10 rounded-full object-cover">
+                             class="w-8 h-8 md:w-10 md:h-10 rounded-full object-cover">
                         <div>
-                            <h4 class="font-semibold">{{ current_user.full_name }}</h4>
-                            <p class="text-sm text-gray-500">Posting in {{ group.name }}</p>
+                            <h4 class="font-semibold text-sm md:text-base">{{ current_user.full_name }}</h4>
+                            <p class="text-xs md:text-sm text-gray-500">Posting in {{ group.name }}</p>
                         </div>
                     </div>
                     
                     <textarea name="post_content" 
                               id="postContent"
                               placeholder="What's happening in {{ group.name }}?"
-                              class="w-full border-0 focus:ring-0 focus:outline-none text-lg resize-none min-h-[120px]"
+                              class="w-full border-0 focus:ring-0 focus:outline-none text-base md:text-lg resize-none min-h-[100px] md:min-h-[120px] modal-textarea"
                               rows="4"></textarea>
                     
                     <!-- Scrollable Media Preview -->
                     <div id="mediaPreview" class="modal-media-preview"></div>
                 </div>
                 
-                <!-- Fixed Bottom Section - This stays at the bottom -->
-                <div class="p-6 border-t border-gray-200 bg-white flex-none">
-                    <div class="flex items-center justify-between mb-4">
-                        <span class="font-medium text-gray-700">Add to your post</span>
-                        <div class="flex space-x-2">
+                <!-- Fixed Bottom Section -->
+                <div class="p-4 md:p-6 border-t border-gray-200 bg-white flex-none">
+                    <div class="flex items-center justify-between mb-3 md:mb-4">
+                        <span class="font-medium text-gray-700 text-sm md:text-base">Add to your post</span>
+                        <div class="flex space-x-1 md:space-x-2">
                             <button type="button" onclick="document.getElementById('mediaInput').click()" 
-                                    class="p-2 rounded-full hover:bg-gray-100 transition-colors duration-300 text-green-600">
-                                <i class="bi bi-image text-xl"></i>
+                                    class="p-1.5 md:p-2 rounded-full hover:bg-gray-100 transition-colors duration-300 text-green-600">
+                                <i class="bi bi-image text-lg md:text-xl"></i>
                             </button>
                             <input type="file" name="media" id="mediaInput" accept="image/*,video/*" hidden onchange="previewPostMedia(this)">
                         </div>
                     </div>
                     
                     <button type="submit" 
-                            class="w-full bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition-colors duration-300 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                            class="w-full bg-blue-600 text-white py-2.5 md:py-3 rounded-lg md:rounded-xl hover:bg-blue-700 transition-colors duration-300 font-semibold disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base modal-button"
                             id="submitPostBtn">
                         Post to {{ group.name }}
                     </button>
@@ -973,37 +1052,37 @@
 
     <!-- Share Modal -->
     <div id="shareModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4">
-            <div class="p-6 border-b border-gray-200">
-                <h3 class="text-xl font-semibold">Share Post</h3>
+        <div class="bg-white rounded-xl md:rounded-2xl shadow-2xl w-full max-w-sm md:max-w-md mx-2 md:mx-4 modal-content">
+            <div class="p-4 md:p-6 border-b border-gray-200">
+                <h3 class="text-lg md:text-xl font-semibold modal-title">Share Post</h3>
             </div>
             
-            <div class="p-6">
-                <div class="space-y-3 mb-6">
-                    <button onclick="shareToFeed()" class="w-full flex items-center space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-300 share-option">
-                        <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                            <i class="bi bi-newspaper text-blue-600"></i>
+            <div class="p-4 md:p-6">
+                <div class="space-y-2 md:space-y-3 mb-4 md:mb-6">
+                    <button onclick="shareToFeed()" class="w-full flex items-center space-x-3 p-2.5 md:p-3 rounded-lg hover:bg-gray-50 transition-colors duration-300 share-option">
+                        <div class="w-8 h-8 md:w-10 md:h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                            <i class="bi bi-newspaper text-blue-600 text-sm md:text-base"></i>
                         </div>
                         <div class="text-left">
-                            <p class="font-semibold">Share to your feed</p>
-                            <p class="text-sm text-gray-500">Share this post on your timeline</p>
+                            <p class="font-semibold text-sm md:text-base">Share to your feed</p>
+                            <p class="text-xs md:text-sm text-gray-500">Share this post on your timeline</p>
                         </div>
                     </button>
                     
-                    <button onclick="copyPostLink()" class="w-full flex items-center space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-300 share-option">
-                        <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                            <i class="bi bi-link-45deg text-green-600"></i>
+                    <button onclick="copyPostLink()" class="w-full flex items-center space-x-3 p-2.5 md:p-3 rounded-lg hover:bg-gray-50 transition-colors duration-300 share-option">
+                        <div class="w-8 h-8 md:w-10 md:h-10 bg-green-100 rounded-full flex items-center justify-center">
+                            <i class="bi bi-link-45deg text-green-600 text-sm md:text-base"></i>
                         </div>
                         <div class="text-left">
-                            <p class="font-semibold">Copy link</p>
-                            <p class="text-sm text-gray-500">Copy link to this post</p>
+                            <p class="font-semibold text-sm md:text-base">Copy link</p>
+                            <p class="text-xs md:text-sm text-gray-500">Copy link to this post</p>
                         </div>
                     </button>
                 </div>
                 
-                <div class="flex space-x-3">
+                <div class="flex space-x-2 md:space-x-3">
                     <button type="button" onclick="closeShareModal()" 
-                            class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl hover:bg-gray-200 transition-colors duration-300 font-semibold">
+                            class="flex-1 bg-gray-100 text-gray-700 py-2 md:py-3 rounded-lg md:rounded-xl hover:bg-gray-200 transition-colors duration-300 font-semibold text-sm md:text-base modal-button">
                         Cancel
                     </button>
                 </div>
@@ -1013,41 +1092,41 @@
 
     <!-- Report Content Modal -->
     <div id="reportModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4">
-            <div class="p-6 border-b border-gray-200">
-                <h3 class="text-xl font-semibold">Report Content</h3>
+        <div class="bg-white rounded-xl md:rounded-2xl shadow-2xl w-full max-w-sm md:max-w-md mx-2 md:mx-4 modal-content">
+            <div class="p-4 md:p-6 border-b border-gray-200">
+                <h3 class="text-lg md:text-xl font-semibold modal-title">Report Content</h3>
             </div>
             
-            <form id="reportForm" class="p-6">
+            <form id="reportForm" class="p-4 md:p-6">
                 <input type="hidden" id="reportContentType">
                 <input type="hidden" id="reportContentId">
                 
-                <div class="space-y-4 mb-6">
+                <div class="space-y-3 md:space-y-4 mb-4 md:mb-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Reason for reporting</label>
-                        <div class="space-y-2">
-                            <label class="flex items-center">
-                                <input type="radio" name="reportReason" value="Spam" class="mr-3">
+                        <div class="space-y-1 md:space-y-2">
+                            <label class="flex items-center text-xs md:text-sm">
+                                <input type="radio" name="reportReason" value="Spam" class="mr-2 md:mr-3">
                                 <span>Spam</span>
                             </label>
-                            <label class="flex items-center">
-                                <input type="radio" name="reportReason" value="Harassment" class="mr-3">
+                            <label class="flex items-center text-xs md:text-sm">
+                                <input type="radio" name="reportReason" value="Harassment" class="mr-2 md:mr-3">
                                 <span>Harassment or bullying</span>
                             </label>
-                            <label class="flex items-center">
-                                <input type="radio" name="reportReason" value="Hate speech" class="mr-3">
+                            <label class="flex items-center text-xs md:text-sm">
+                                <input type="radio" name="reportReason" value="Hate speech" class="mr-2 md:mr-3">
                                 <span>Hate speech</span>
                             </label>
-                            <label class="flex items-center">
-                                <input type="radio" name="reportReason" value="Inappropriate content" class="mr-3">
+                            <label class="flex items-center text-xs md:text-sm">
+                                <input type="radio" name="reportReason" value="Inappropriate content" class="mr-2 md:mr-3">
                                 <span>Inappropriate content</span>
                             </label>
-                            <label class="flex items-center">
-                                <input type="radio" name="reportReason" value="False information" class="mr-3">
+                            <label class="flex items-center text-xs md:text-sm">
+                                <input type="radio" name="reportReason" value="False information" class="mr-2 md:mr-3">
                                 <span>False information</span>
                             </label>
-                            <label class="flex items-center">
-                                <input type="radio" name="reportReason" value="Other" class="mr-3">
+                            <label class="flex items-center text-xs md:text-sm">
+                                <input type="radio" name="reportReason" value="Other" class="mr-2 md:mr-3">
                                 <span>Other</span>
                             </label>
                         </div>
@@ -1055,17 +1134,17 @@
                     
                     <div id="otherReasonContainer" class="hidden">
                         <textarea id="otherReason" placeholder="Please provide additional details..." 
-                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs md:text-sm"></textarea>
                     </div>
                 </div>
                 
-                <div class="flex space-x-3">
+                <div class="flex space-x-2 md:space-x-3">
                     <button type="button" onclick="closeReportModal()" 
-                            class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl hover:bg-gray-200 transition-colors duration-300 font-semibold">
+                            class="flex-1 bg-gray-100 text-gray-700 py-2 md:py-3 rounded-lg md:rounded-xl hover:bg-gray-200 transition-colors duration-300 font-semibold text-sm md:text-base modal-button">
                         Cancel
                     </button>
                     <button type="submit" 
-                            class="flex-1 bg-orange-600 text-white py-3 rounded-xl hover:bg-orange-700 transition-colors duration-300 font-semibold">
+                            class="flex-1 bg-orange-600 text-white py-2 md:py-3 rounded-lg md:rounded-xl hover:bg-orange-700 transition-colors duration-300 font-semibold text-sm md:text-base modal-button">
                         Submit Report
                     </button>
                 </div>
@@ -1088,7 +1167,7 @@
         // ==================== TOAST NOTIFICATIONS ====================
         function showToast(message, type = 'info') {
             const toast = document.createElement('div');
-            toast.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg text-white font-medium text-sm transition-all duration-300 transform translate-x-full`;
+            toast.className = `fixed top-4 right-4 z-50 px-4 md:px-6 py-2 md:py-3 rounded-lg shadow-lg text-white font-medium text-xs md:text-sm transition-all duration-300 transform translate-x-full`;
             
             const types = {
                 success: 'bg-green-500',
@@ -1177,7 +1256,7 @@
         function updateReactionUI(postId, reactionType, isActive, likeBtn, likeIcon, likeText) {
             // Reset
             likeBtn.className = likeBtn.className.replace(/active-\w+|text-\w+-?\d*/g, '').trim();
-            likeBtn.classList.add('flex', 'items-center', 'space-x-2', 'px-4', 'py-2', 'rounded-lg', 'hover:bg-gray-100', 'transition-colors', 'duration-300');
+            likeBtn.classList.add('flex', 'items-center', 'space-x-1', 'md:space-x-2', 'px-2', 'md:px-4', 'py-1', 'md:py-2', 'rounded-lg', 'hover:bg-gray-100', 'transition-colors', 'duration-300');
             likeIcon.className = 'bi bi-hand-thumbs-up';
             likeText.textContent = 'Like';
         
@@ -1275,7 +1354,7 @@
             const originalText = submitBtn.innerHTML;
             
             submitBtn.disabled = true;
-            submitBtn.innerHTML = `<div class="flex items-center justify-center"><div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>Posting...</div>`;
+            submitBtn.innerHTML = `<div class="flex items-center justify-center"><div class="animate-spin rounded-full h-4 w-4 md:h-5 md:w-5 border-b-2 border-white mr-2"></div>Posting...</div>`;
             
             const formData = new FormData(this);
             formData.append('group_id', groupId);
@@ -1338,23 +1417,23 @@
                 if (data.success || data.id) {
                     const comment = data.comment || data;
                     const div = document.createElement('div');
-                    div.className = 'flex space-x-3 mb-4 comment-item comment-fade-in';
+                    div.className = 'flex space-x-2 md:space-x-3 mb-3 md:mb-4 comment-item comment-fade-in';
                     div.id = `comment-${comment.id}`;
                     div.innerHTML = `
-                        <img src="${comment.author_avatar || '{{ default_avatar }}'}" class="w-8 h-8 rounded-full object-cover">
+                        <img src="${comment.author_avatar || '{{ default_avatar }}'}" class="w-6 h-6 md:w-8 md:h-8 rounded-full object-cover">
                         <div class="flex-1">
-                            <div class="bg-white rounded-2xl px-4 py-3">
+                            <div class="bg-white rounded-xl md:rounded-2xl px-3 py-2 md:px-4 md:py-3">
                                 <div class="flex justify-between items-start mb-1">
-                                    <h5 class="font-semibold text-sm">${comment.author_name || '{{ current_user.full_name }}'}</h5>
+                                    <h5 class="font-semibold text-xs md:text-sm">${comment.author_name || '{{ current_user.full_name }}'}</h5>
                                     <div class="dropdown relative">
-                                        <button class="p-1 rounded-full hover:bg-gray-100"><i class="bi bi-three-dots text-gray-400 text-xs"></i></button>
-                                        <div class="dropdown-menu absolute right-0 mt-1 w-32 bg-white rounded-xl shadow-2xl border border-gray-200 hidden z-10">
-                                            <button onclick="deleteComment(${comment.id})" class="w-full text-left px-3 py-2 hover:bg-gray-50 text-red-600 text-sm"><i class="bi bi-trash mr-1"></i>Delete</button>
+                                        <button class="p-0.5 md:p-1 rounded-full hover:bg-gray-100"><i class="bi bi-three-dots text-gray-400 text-xs"></i></button>
+                                        <div class="dropdown-menu absolute right-0 mt-1 w-28 md:w-32 bg-white rounded-lg md:rounded-xl shadow-2xl border border-gray-200 hidden z-10">
+                                            <button onclick="deleteComment(${comment.id})" class="w-full text-left px-2 py-1.5 md:px-3 md:py-2 hover:bg-gray-50 text-red-600 text-xs md:text-sm"><i class="bi bi-trash mr-1 text-xs md:text-sm"></i>Delete</button>
                                         </div>
                                     </div>
                                 </div>
-                                <p class="text-gray-800 text-sm">${comment.content}</p>
-                                <div class="flex items-center space-x-3 mt-2">
+                                <p class="text-gray-800 text-xs md:text-sm">${comment.content}</p>
+                                <div class="flex items-center space-x-2 md:space-x-3 mt-1 md:mt-2">
                                     <span class="text-xs text-gray-400">Just now</span>
                                 </div>
                             </div>
@@ -1516,17 +1595,17 @@
             const modal = document.createElement('div');
             modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50';
             modal.innerHTML = `
-                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4">
-                    <div class="p-6 border-b border-gray-200 flex justify-between items-center">
-                        <h3 class="text-xl font-semibold">Edit Post</h3>
-                        <button onclick="this.closest('.fixed').remove()" class="p-2 rounded-full hover:bg-gray-100"><i class="bi bi-x-lg"></i></button>
+                <div class="bg-white rounded-xl md:rounded-2xl shadow-2xl w-full max-w-lg md:max-w-2xl mx-2 md:mx-4">
+                    <div class="p-4 md:p-6 border-b border-gray-200 flex justify-between items-center">
+                        <h3 class="text-lg md:text-xl font-semibold">Edit Post</h3>
+                        <button onclick="this.closest('.fixed').remove()" class="p-1.5 md:p-2 rounded-full hover:bg-gray-100"><i class="bi bi-x-lg"></i></button>
                     </div>
-                    <form id="editForm" class="p-6">
+                    <form id="editForm" class="p-4 md:p-6">
                         <input type="hidden" name="csrf_token" value="${csrfToken}">
-                        <textarea name="post_content" class="w-full border border-gray-300 rounded-xl p-4 resize-none" rows="6">${content}</textarea>
-                        <div class="flex space-x-3 mt-4">
-                            <button type="button" onclick="this.closest('.fixed').remove()" class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl hover:bg-gray-200 font-semibold">Cancel</button>
-                            <button type="submit" class="flex-1 bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 font-semibold">Update</button>
+                        <textarea name="post_content" class="w-full border border-gray-300 rounded-lg md:rounded-xl p-3 md:p-4 resize-none text-sm md:text-base" rows="5">${content}</textarea>
+                        <div class="flex space-x-2 md:space-x-3 mt-3 md:mt-4">
+                            <button type="button" onclick="this.closest('.fixed').remove()" class="flex-1 bg-gray-100 text-gray-700 py-2 md:py-3 rounded-lg md:rounded-xl hover:bg-gray-200 font-semibold text-sm md:text-base">Cancel</button>
+                            <button type="submit" class="flex-1 bg-blue-600 text-white py-2 md:py-3 rounded-lg md:rounded-xl hover:bg-blue-700 font-semibold text-sm md:text-base">Update</button>
                         </div>
                     </form>
                 </div>
@@ -1589,24 +1668,24 @@
                     container.innerHTML = '';
                     data.comments.forEach(c => {
                         const div = document.createElement('div');
-                        div.className = 'flex space-x-3 mb-4 comment-item';
+                        div.className = 'flex space-x-2 md:space-x-3 mb-3 md:mb-4 comment-item';
                         div.id = `comment-${c.id}`;
                         div.innerHTML = `
-                            <img src="${c.avatar}" class="w-8 h-8 rounded-full object-cover">
+                            <img src="${c.avatar}" class="w-6 h-6 md:w-8 md:h-8 rounded-full object-cover">
                             <div class="flex-1">
-                                <div class="bg-white rounded-2xl px-4 py-3">
+                                <div class="bg-white rounded-xl md:rounded-2xl px-3 py-2 md:px-4 md:py-3">
                                     <div class="flex justify-between items-start mb-1">
-                                        <h5 class="font-semibold text-sm">${c.author_name}</h5>
+                                        <h5 class="font-semibold text-xs md:text-sm">${c.author_name}</h5>
                                         <div class="dropdown relative">
-                                            <button class="p-1 rounded-full hover:bg-gray-100"><i class="bi bi-three-dots text-gray-400 text-xs"></i></button>
-                                            <div class="dropdown-menu absolute right-0 mt-1 w-32 bg-white rounded-xl shadow-2xl border border-gray-200 hidden z-10">
-                                                ${c.author_id === currentUserId ? `<button onclick="deleteComment(${c.id})" class="w-full text-left px-3 py-2 hover:bg-gray-50 text-red-600 text-sm"><i class="bi bi-trash mr-1"></i>Delete</button>` : ''}
-                                                <button onclick="reportContent('comment', ${c.id})" class="w-full text-left px-3 py-2 hover:bg-gray-50 text-orange-600 text-sm"><i class="bi bi-flag mr-1"></i>Report</button>
+                                            <button class="p-0.5 md:p-1 rounded-full hover:bg-gray-100"><i class="bi bi-three-dots text-gray-400 text-xs"></i></button>
+                                            <div class="dropdown-menu absolute right-0 mt-1 w-28 md:w-32 bg-white rounded-lg md:rounded-xl shadow-2xl border border-gray-200 hidden z-10">
+                                                ${c.author_id === currentUserId ? `<button onclick="deleteComment(${c.id})" class="w-full text-left px-2 py-1.5 md:px-3 md:py-2 hover:bg-gray-50 text-red-600 text-xs md:text-sm"><i class="bi bi-trash mr-1 text-xs md:text-sm"></i>Delete</button>` : ''}
+                                                <button onclick="reportContent('comment', ${c.id})" class="w-full text-left px-2 py-1.5 md:px-3 md:py-2 hover:bg-gray-50 text-orange-600 text-xs md:text-sm"><i class="bi bi-flag mr-1 text-xs md:text-sm"></i>Report</button>
                                             </div>
                                         </div>
                                     </div>
-                                    <p class="text-gray-800 text-sm">${c.content}</p>
-                                    <div class="flex items-center space-x-3 mt-2">
+                                    <p class="text-gray-800 text-xs md:text-sm">${c.content}</p>
+                                    <div class="flex items-center space-x-2 md:space-x-3 mt-1 md:mt-2">
                                         <span class="text-xs text-gray-400">${c.created_at}</span>
                                     </div>
                                 </div>
@@ -1633,7 +1712,7 @@
                 
                 const el = document.createElement(isVideo ? 'video' : 'img');
                 el.src = url;
-                el.className = 'max-w-full max-h-64 rounded-lg object-contain';
+                el.className = 'max-w-full max-h-48 md:max-h-64 rounded-lg object-contain';
                 if (isVideo) el.controls = true;
                 
                 preview.appendChild(el);

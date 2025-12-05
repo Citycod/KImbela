@@ -1477,6 +1477,9 @@ def like_group_post(post_id):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+
+
+
 @user.route("/add_comment/<int:post_id>", methods=["POST"])
 @login_required
 def add_group_comment(post_id):
@@ -1501,6 +1504,7 @@ def add_group_comment(post_id):
                     "author_name": current_user.full_name,
                     "author_avatar": current_user.profile_pic
                     or url_for("static", filename="assets/img/default-avatar.png"),
+                    
                     "created_at": "Just now",
                 },
             }

@@ -35,6 +35,22 @@
             fontFamily: {
               inter: ["Inter", "sans-serif"],
             },
+            fontSize: {
+              'xs': ['0.75rem', { lineHeight: '1rem' }],
+              'sm': ['0.875rem', { lineHeight: '1.25rem' }],
+              'base': ['0.875rem', { lineHeight: '1.25rem' }],
+              'lg': ['1rem', { lineHeight: '1.5rem' }],
+              'xl': ['1.125rem', { lineHeight: '1.75rem' }],
+              '2xl': ['1.25rem', { lineHeight: '1.75rem' }],
+              '3xl': ['1.5rem', { lineHeight: '2rem' }],
+              '4xl': ['1.75rem', { lineHeight: '2.25rem' }],
+            },
+            spacing: {
+              '0.5': '0.125rem',
+              '1.5': '0.375rem',
+              '2.5': '0.625rem',
+              '3.5': '0.875rem',
+            }
           },
         },
       };
@@ -44,8 +60,8 @@
       .slider {
         -webkit-appearance: none;
         width: 100%;
-        height: 8px;
-        border-radius: 4px;
+        height: 6px;
+        border-radius: 3px;
         background: linear-gradient(to right, #059669, #10b981);
         outline: none;
       }
@@ -53,41 +69,41 @@
       .slider::-webkit-slider-thumb {
         -webkit-appearance: none;
         appearance: none;
-        width: 24px;
-        height: 24px;
+        width: 18px;
+        height: 18px;
         border-radius: 50%;
         background: white;
         border: 2px solid #059669;
         cursor: pointer;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
       }
       
       .slider::-moz-range-thumb {
-        width: 24px;
-        height: 24px;
+        width: 18px;
+        height: 18px;
         border-radius: 50%;
         background: white;
         border: 2px solid #059669;
         cursor: pointer;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
       }
       
       .budget-display {
         background: linear-gradient(to right, #059669, #10b981);
         color: white;
-        border-radius: 10px;
-        padding: 15px;
+        border-radius: 6px;
+        padding: 10px;
         text-align: center;
-        font-weight: bold;
-        font-size: 1.5rem;
-        margin-bottom: 20px;
+        font-weight: 600;
+        font-size: 1.125rem;
+        margin-bottom: 12px;
       }
       
       .days-input {
-        border: 2px solid #e5e7eb;
-        border-radius: 8px;
-        padding: 10px 15px;
-        font-size: 1rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        padding: 6px 10px;
+        font-size: 0.875rem;
         width: 100%;
         text-align: center;
       }
@@ -95,21 +111,23 @@
       .days-input:focus {
         border-color: #059669;
         outline: none;
+        box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.1);
       }
       
       .total-price {
-        font-size: 2rem;
-        font-weight: bold;
+        font-size: 1.25rem;
+        font-weight: 700;
         color: #059669;
         text-align: center;
-        margin: 20px 0;
+        margin: 12px 0;
       }
       
       .info-item {
         display: flex;
         justify-content: space-between;
-        padding: 10px 0;
-        border-bottom: 1px solid #f0f0f0;
+        padding: 6px 0;
+        border-bottom: 1px solid #f5f5f5;
+        font-size: 0.875rem;
       }
       
       .info-item:last-child {
@@ -117,30 +135,31 @@
       }
       
       .card-hover {
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: all 0.2s ease;
       }
       
       .card-hover:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-      }
-      
-      .btn-compact {
-        padding: 0.625rem 1.25rem;
-        font-size: 0.875rem;
-        border-radius: 0.5rem;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      }
-      
-      .btn-compact:hover {
         transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      }
+      
+      .btn {
+        padding: 8px 16px;
+        font-size: 0.875rem;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+        font-weight: 500;
+      }
+      
+      .btn:hover {
+        transform: translateY(-1px);
       }
       
       .loader-spinner {
-        width: 48px;
-        height: 48px;
-        border: 4px solid #e5e7eb;
-        border-top: 4px solid #059669;
+        width: 32px;
+        height: 32px;
+        border: 3px solid #e5e7eb;
+        border-top: 3px solid #059669;
         border-radius: 50%;
         animation: spin 1s linear infinite;
       }
@@ -151,8 +170,8 @@
       }
       
       .success-checkmark {
-        width: 80px;
-        height: 80px;
+        width: 50px;
+        height: 50px;
         margin: 0 auto;
         border-radius: 50%;
         display: block;
@@ -197,16 +216,16 @@
       
       @keyframes fill {
         100% {
-          box-shadow: inset 0px 0px 0px 30px #059669;
+          box-shadow: inset 0px 0px 0px 15px #059669;
         }
       }
       
       .image-upload-area {
         border: 2px dashed #d1d5db;
-        border-radius: 0.75rem;
-        padding: 2rem;
+        border-radius: 6px;
+        padding: 16px;
         text-align: center;
-        transition: all 0.3s ease;
+        transition: all 0.2s ease;
         cursor: pointer;
         background: #f8fafc;
       }
@@ -222,58 +241,159 @@
       }
       
       .age-slider-container {
-        margin-top: 10px;
+        margin-top: 6px;
       }
       
       .age-display {
         text-align: center;
-        font-weight: bold;
-        margin-top: 10px;
+        font-weight: 600;
+        margin-top: 6px;
         color: #059669;
+        font-size: 0.875rem;
       }
       
-      .multi-select {
-        border: 2px solid #e5e7eb;
-        border-radius: 8px;
-        padding: 10px 15px;
-        font-size: 1rem;
+      .select-input {
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        padding: 6px 10px;
+        font-size: 0.875rem;
         width: 100%;
+        transition: all 0.2s;
       }
       
-      .multi-select:focus {
+      .select-input:focus {
         border-color: #059669;
         outline: none;
+        box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.1);
+      }
+      
+      .text-input {
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        padding: 6px 10px;
+        font-size: 0.875rem;
+        width: 100%;
+        transition: all 0.2s;
+      }
+      
+      .text-input:focus {
+        border-color: #059669;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.1);
+      }
+      
+      .textarea-input {
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        padding: 6px 10px;
+        font-size: 0.875rem;
+        width: 100%;
+        resize: vertical;
+        min-height: 70px;
+        transition: all 0.2s;
+      }
+      
+      .textarea-input:focus {
+        border-color: #059669;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.1);
       }
       
       .targeting-section {
-        margin-bottom: 24px;
-        padding-bottom: 16px;
-        border-bottom: 1px solid #f0f0f0;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #f5f5f5;
       }
       
       .targeting-section:last-child {
         border-bottom: none;
       }
-
-      .currency-flag {
-        display: inline-block;
-        width: 20px;
-        text-align: center;
-        margin-right: 8px;
+      
+      .radio-label {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        font-size: 0.875rem;
+      }
+      
+      .radio-label input[type="radio"] {
+        margin-right: 6px;
+      }
+      
+      .modal {
+        backdrop-filter: blur(4px);
+      }
+      
+      .noUi-target {
+        background: #f3f4f6;
+        border: none;
+        box-shadow: none;
+        height: 6px;
+      }
+      
+      .noUi-connect {
+        background: linear-gradient(to right, #059669, #10b981);
+      }
+      
+      .noUi-handle {
+        width: 18px !important;
+        height: 18px !important;
+        right: -9px !important;
+        top: -6px !important;
+        border: 2px solid #059669;
+        background: white;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      }
+      
+      .noUi-handle:before, .noUi-handle:after {
+        display: none;
+      }
+      
+      .noUi-handle.noUi-handle-lower {
+        border: 2px solid #059669;
+      }
+      
+      .noUi-handle.noUi-handle-upper {
+        border: 2px solid #059669;
+      }
+      
+      .noUi-tooltip {
+        font-size: 11px;
+        padding: 2px 5px;
+        border-radius: 3px;
+        background: #059669;
+        color: white;
+        border: none;
+      }
+      
+      @media (max-width: 640px) {
+        .budget-display {
+          font-size: 1rem;
+          padding: 8px;
+        }
+        
+        .total-price {
+          font-size: 1.125rem;
+        }
+        
+        .btn {
+          padding: 6px 12px;
+          font-size: 0.8125rem;
+        }
       }
     </style>
   </head>
-  <body class="font-inter bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen">
+  <body class="font-inter bg-gray-50 min-h-screen">
     <!-- Header -->
     <header class="bg-white shadow-sm sticky top-0 z-40 border-b border-gray-200/50">
-      <div class="container mx-auto px-4 py-4">
+      <div class="container mx-auto px-3 sm:px-4 py-2">
         <div class="flex justify-between items-center">
-          <div class="flex items-center space-x-3">
-            <h1 class="text-xl font-bold text-primary">Kimbela Ads</h1>
+          <div class="flex items-center space-x-2">
+            <h1 class="text-lg font-bold text-primary">Kimbela Ads</h1>
           </div>
-          <div class="flex items-center space-x-4">
-            <a href="{{ url_for('user.user_dashboard') }}" class="bg-primary text-white px-4 py-2.5 rounded-lg btn-compact hover:bg-secondary transition-all duration-300 flex items-center space-x-2">
-              <i class="bi bi-grid-1x2"></i>
+          <div class="flex items-center space-x-2">
+            <a href="{{ url_for('user.user_dashboard') }}" class="bg-primary text-white px-3 py-1.5 rounded-md btn hover:bg-secondary flex items-center space-x-1.5 text-sm">
+              <i class="bi bi-grid-1x2 text-xs"></i>
               <span>Dashboard</span>
             </a>
           </div>
@@ -282,32 +402,31 @@
     </header>
 
     <!-- Main Content -->
-    <main class="container mx-auto px-4 py-8 max-w-6xl">
-      <div class="text-center mb-10">
-        <h1 class="text-3xl md:text-4xl font-bold text-primary mb-4">Create Your Ad Campaign</h1>
-        <p class="text-text-secondary max-w-2xl mx-auto">Set your budget, duration, and target audience to reach the right people on Kimbela</p>
+    <main class="container mx-auto px-3 sm:px-4 py-4 max-w-6xl">
+      <div class="text-center mb-6">
+        <h1 class="text-xl sm:text-2xl font-bold text-primary mb-2">Create Your Ad Campaign</h1>
+        <p class="text-text-secondary max-w-2xl mx-auto text-sm">Set your budget, duration, and target audience to reach the right people on Kimbela</p>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <!-- Left Column - Configuration -->
-        <div class="bg-white rounded-xl shadow-md p-6 card-hover lg:col-span-2">
-          <h2 class="text-xl font-bold text-primary mb-6">Configure Your Ad</h2>
+        <div class="bg-white rounded-lg shadow-sm p-4 card-hover lg:col-span-2">
+          <h2 class="text-lg font-bold text-primary mb-4">Configure Your Ad</h2>
           
           <!-- Currency Selection -->
-          <div class="mb-6">
-            <label class="block text-primary font-medium mb-2">Payment Currency</label>
-            <select class="w-full px-4 py-3 border-2 border-border-color rounded-xl text-sm focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-300" id="currency">
-              <!-- Only USD option -->
+          <div class="mb-4">
+            <label class="block text-primary font-medium mb-1 text-sm">Payment Currency</label>
+            <select class="select-input" id="currency">
               <option value="USD">🇺🇸 US Dollar (USD)</option>
             </select>
-            <p class="text-xs text-text-secondary mt-2">All payments are processed in US Dollars (USD).</p>
+            <p class="text-xs text-text-secondary mt-1">All payments are processed in US Dollars (USD).</p>
           </div>
           
           <!-- Budget Slider Section -->
-          <div class="mb-8">
-            <div class="flex justify-between items-center mb-2">
-              <label class="text-primary font-medium">Daily Budget</label>
-              <span class="text-text-secondary text-sm" id="budgetRange">$2 - $10,000</span>
+          <div class="mb-5">
+            <div class="flex justify-between items-center mb-1">
+              <label class="text-primary font-medium text-sm">Daily Budget</label>
+              <span class="text-text-secondary text-xs" id="budgetRange">$2 - $10,000</span>
             </div>
             
             <div class="budget-display">
@@ -323,33 +442,33 @@
           </div>
           
           <!-- Duration Section -->
-          <div class="mb-8">
-            <label class="block text-primary font-medium mb-3">Ad Duration (Days)</label>
-            <div class="flex items-center space-x-4">
+          <div class="mb-5">
+            <label class="block text-primary font-medium mb-1 text-sm">Ad Duration (Days)</label>
+            <div class="flex items-center space-x-2">
               <input type="number" id="daysInput" class="days-input" min="3" value="3">
-              <span class="text-text-secondary">days</span>
+              <span class="text-text-secondary text-sm">days</span>
             </div>
-            <p class="text-xs text-text-secondary mt-2">Minimum duration: 3 days</p>
+            <p class="text-xs text-text-secondary mt-1">Minimum duration: 3 days</p>
           </div>
           
           <!-- Target Audience Section -->
-          <div class="mb-8">
-            <h3 class="text-lg font-semibold text-primary mb-4">Target Audience</h3>
+          <div class="mb-5">
+            <h3 class="text-base font-semibold text-primary mb-3">Target Audience</h3>
             
             <!-- Gender Targeting -->
             <div class="targeting-section">
-              <label class="block text-primary font-medium mb-2">Gender</label>
-              <div class="flex space-x-4">
-                <label class="flex items-center">
-                  <input type="radio" name="gender" value="all" class="mr-2" checked>
+              <label class="block text-primary font-medium mb-1 text-sm">Gender</label>
+              <div class="flex flex-wrap gap-3">
+                <label class="radio-label">
+                  <input type="radio" name="gender" value="all" class="mr-1.5" checked>
                   <span>All Genders</span>
                 </label>
-                <label class="flex items-center">
-                  <input type="radio" name="gender" value="male" class="mr-2">
+                <label class="radio-label">
+                  <input type="radio" name="gender" value="male" class="mr-1.5">
                   <span>Male</span>
                 </label>
-                <label class="flex items-center">
-                  <input type="radio" name="gender" value="female" class="mr-2">
+                <label class="radio-label">
+                  <input type="radio" name="gender" value="female" class="mr-1.5">
                   <span>Female</span>
                 </label>
               </div>
@@ -357,9 +476,9 @@
             
             <!-- Age Range Targeting -->
             <div class="targeting-section">
-              <label class="block text-primary font-medium mb-2">Age Range</label>
+              <label class="block text-primary font-medium mb-1 text-sm">Age Range</label>
               <div class="age-slider-container">
-                <div id="ageRangeSlider" class="slider"></div>
+                <div id="ageRangeSlider"></div>
                 <div class="age-display">
                   <span id="minAge">31</span> - <span id="maxAge">65</span> years
                 </div>
@@ -368,8 +487,8 @@
             
             <!-- Location Targeting -->
             <div class="targeting-section">
-              <label class="block text-primary font-medium mb-2">Location</label>
-              <select class="multi-select" id="locationTargeting" multiple>
+              <label class="block text-primary font-medium mb-1 text-sm">Location</label>
+              <select class="select-input" id="locationTargeting" multiple size="4">
                 <option value="nigeria">🇳🇬 Nigeria</option>
                 <option value="ghana">🇬🇭 Ghana</option>
                 <option value="kenya">🇰🇪 Kenya</option>
@@ -395,8 +514,6 @@
                 <option value="sudan">🇸🇩 Sudan</option>
                 <option value="gabon">🇬🇦 Gabon</option>
                 <option value="malawi">🇲🇼 Malawi</option>
-
-                <!-- REST OF THE WORLD (25 Countries) -->
                 <option value="united-states">🇺🇸 United States</option>
                 <option value="canada">🇨🇦 Canada</option>
                 <option value="mexico">🇲🇽 Mexico</option>
@@ -423,13 +540,13 @@
                 <option value="singapore">🇸🇬 Singapore</option>
                 <option value="thailand">🇹🇭 Thailand</option>
               </select>
-              <p class="text-xs text-text-secondary mt-2">Hold Ctrl/Cmd to select multiple locations</p>
+              <p class="text-xs text-text-secondary mt-1">Hold Ctrl/Cmd to select multiple locations</p>
             </div>
             
             <!-- Interests Targeting -->
             <div class="targeting-section">
-              <label class="block text-primary font-medium mb-2">Interests</label>
-              <select class="multi-select" id="interestsTargeting" multiple>
+              <label class="block text-primary font-medium mb-1 text-sm">Interests</label>
+              <select class="select-input" id="interestsTargeting" multiple size="4">
                 <option value="technology">Technology</option>
                 <option value="sports">Sports</option>
                 <option value="fashion">Fashion</option>
@@ -441,13 +558,13 @@
                 <option value="business">Business</option>
                 <option value="education">Education</option>
               </select>
-              <p class="text-xs text-text-secondary mt-2">Hold Ctrl/Cmd to select multiple interests</p>
+              <p class="text-xs text-text-secondary mt-1">Hold Ctrl/Cmd to select multiple interests</p>
             </div>
 
             <!-- Education Level Targeting -->
             <div class="targeting-section">
-              <label class="block text-primary font-medium mb-2">Education Level</label>
-              <select class="multi-select" id="educationTargeting" multiple>
+              <label class="block text-primary font-medium mb-1 text-sm">Education Level</label>
+              <select class="select-input" id="educationTargeting" multiple size="3">
                 <option value="high-school">High School</option>
                 <option value="some-college">Some College</option>
                 <option value="associate">Associate Degree</option>
@@ -457,13 +574,13 @@
                 <option value="vocational">Vocational/Trade</option>
                 <option value="professional">Professional Degree</option>
               </select>
-              <p class="text-xs text-text-secondary mt-2">Hold Ctrl/Cmd to select multiple education levels</p>
+              <p class="text-xs text-text-secondary mt-1">Hold Ctrl/Cmd to select multiple education levels</p>
             </div>
 
             <!-- Occupation Targeting -->
             <div class="targeting-section">
-              <label class="block text-primary font-medium mb-2">Occupation</label>
-              <select class="multi-select" id="occupationTargeting" multiple>
+              <label class="block text-primary font-medium mb-1 text-sm">Occupation</label>
+              <select class="select-input" id="occupationTargeting" multiple size="3">
                 <option value="student">Student</option>
                 <option value="entry-level">Entry Level</option>
                 <option value="professional">Professional</option>
@@ -475,27 +592,26 @@
                 <option value="unemployed">Unemployed</option>
                 <option value="homemaker">Homemaker</option>
               </select>
-              <p class="text-xs text-text-secondary mt-2">Hold Ctrl/Cmd to select multiple occupations</p>
+              <p class="text-xs text-text-secondary mt-1">Hold Ctrl/Cmd to select multiple occupations</p>
             </div>
 
             <!-- Relationship Status Targeting -->
             <div class="targeting-section">
-              <label class="block text-primary font-medium mb-2">Relationship Status</label>
-              <select class="multi-select" id="relationshipTargeting" multiple>
+              <label class="block text-primary font-medium mb-1 text-sm">Relationship Status</label>
+              <select class="select-input" id="relationshipTargeting" multiple size="3">
                 <option value="single">Single</option>
                 <option value="married">Alumni (Married)</option>
                 <option value="divorced">Divorced</option>
                 <option value="widowed">Widowed</option>
                 <option value="separated">Separated</option>
-              
               </select>
-              <p class="text-xs text-text-secondary mt-2">Hold Ctrl/Cmd to select multiple relationship statuses</p>
+              <p class="text-xs text-text-secondary mt-1">Hold Ctrl/Cmd to select multiple relationship statuses</p>
             </div>
             
             <!-- Language Targeting -->
             <div class="targeting-section">
-              <label class="block text-primary font-medium mb-2">Language</label>
-              <select class="w-full px-4 py-3 border-2 border-border-color rounded-xl text-sm focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-300" id="languageTargeting">
+              <label class="block text-primary font-medium mb-1 text-sm">Language</label>
+              <select class="select-input" id="languageTargeting">
                 <option value="all">All Languages</option>
                 <option value="english">English</option>
                 <option value="spanish">Spanish</option>
@@ -516,47 +632,47 @@
           </div>
           
           <!-- Ad Content -->
-          <div class="mb-8">
-            <h3 class="text-lg font-semibold text-primary mb-4">Ad Content</h3>
+          <div class="mb-5">
+            <h3 class="text-base font-semibold text-primary mb-3">Ad Content</h3>
             
-            <div class="mb-4">
-              <label for="adTitle" class="block text-primary font-medium mb-2">Ad Title</label>
-              <input type="text" class="w-full px-4 py-3 border-2 border-border-color rounded-xl text-sm focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-300" 
+            <div class="mb-3">
+              <label for="adTitle" class="block text-primary font-medium mb-1 text-sm">Ad Title</label>
+              <input type="text" class="text-input" 
                      id="adTitle" placeholder="Enter a compelling title that grabs attention" required>
             </div>
             
-            <div class="mb-4">
-              <label for="adDescription" class="block text-primary font-medium mb-2">Description</label>
-              <textarea class="w-full px-4 py-3 border-2 border-border-color rounded-xl text-sm focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-300" 
-                        id="adDescription" rows="3" placeholder="Describe your product or service..."></textarea>
+            <div class="mb-3">
+              <label for="adDescription" class="block text-primary font-medium mb-1 text-sm">Description</label>
+              <textarea class="textarea-input" 
+                        id="adDescription" placeholder="Describe your product or service..."></textarea>
             </div>
             
-            <div class="mb-4">
-              <label class="block text-primary font-medium mb-2">Ad Image</label>
+            <div class="mb-3">
+              <label class="block text-primary font-medium mb-1 text-sm">Ad Image</label>
               <div class="image-upload-area" id="imageUploadArea">
-                <i class="bi bi-cloud-arrow-up text-3xl text-text-secondary mb-3"></i>
-                <p class="text-base font-medium text-text-secondary mb-1">Drag & drop or click to upload</p>
-                <p class="text-sm text-text-secondary">Recommended: 1200x630 pixels • JPG, PNG, WEBP</p>
+                <i class="bi bi-cloud-arrow-up text-lg text-text-secondary mb-2"></i>
+                <p class="text-sm font-medium text-text-secondary mb-1">Drag & drop or click to upload</p>
+                <p class="text-xs text-text-secondary">Recommended: 1200x630 pixels • JPG, PNG, WEBP</p>
                 <input type="file" id="imageInput" accept="image/*" class="hidden">
               </div>
-              <div id="imagePreview" class="mt-4 hidden">
-                <img id="previewImage" class="w-full h-48 object-cover rounded-xl border-2 border-border-color shadow-sm">
-                <button type="button" id="removeImage" class="text-sm text-red-500 font-medium mt-2 hover:text-red-700 transition-colors duration-300 flex items-center space-x-1">
+              <div id="imagePreview" class="mt-3 hidden">
+                <img id="previewImage" class="w-full h-32 object-cover rounded-md border border-border-color">
+                <button type="button" id="removeImage" class="text-xs text-red-500 font-medium mt-1 hover:text-red-700 transition-colors flex items-center space-x-1">
                   <i class="bi bi-trash"></i>
                   <span>Remove image</span>
                 </button>
               </div>
             </div>
             
-            <div class="mb-4">
-              <label for="targetUrl" class="block text-primary font-medium mb-2">Target URL</label>
-              <input type="url" class="w-full px-4 py-3 border-2 border-border-color rounded-xl text-sm focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-300" 
+            <div class="mb-3">
+              <label for="targetUrl" class="block text-primary font-medium mb-1 text-sm">Target URL</label>
+              <input type="url" class="text-input" 
                      id="targetUrl" placeholder="https://example.com/your-landing-page" required>
             </div>
             
             <div>
-              <label for="callToAction" class="block text-primary font-medium mb-2">Call to Action</label>
-              <select class="w-full px-4 py-3 border-2 border-border-color rounded-xl text-sm focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-300" id="callToAction">
+              <label for="callToAction" class="block text-primary font-medium mb-1 text-sm">Call to Action</label>
+              <select class="select-input" id="callToAction">
                 <option value="Learn More">Learn More</option>
                 <option value="Shop Now">Shop Now</option>
                 <option value="Sign Up">Sign Up</option>
@@ -571,8 +687,8 @@
           </div>
           
           <!-- Estimated Results -->
-          <div class="mb-6">
-            <h3 class="font-medium text-primary mb-3">Estimated Daily Results</h3>
+          <div class="mb-4">
+            <h3 class="font-medium text-primary mb-2 text-sm">Estimated Daily Results</h3>
             <div class="info-item">
               <span>Audience Size</span>
               <span id="audienceSize">9.4K-27K</span>
@@ -593,49 +709,49 @@
           </div>
           
           <!-- Action Buttons -->
-          <div class="flex space-x-4">
-            <button id="createAdBtn" class="flex-1 bg-accent text-white py-3 rounded-xl btn-compact hover:bg-green-700 transition-all duration-300 font-semibold flex items-center justify-center space-x-2">
-              <i class="bi bi-credit-card"></i>
+          <div class="flex flex-col sm:flex-row gap-2">
+            <button id="createAdBtn" class="flex-1 bg-accent text-white py-2 rounded-md btn hover:bg-green-700 font-semibold flex items-center justify-center space-x-2">
+              <i class="bi bi-credit-card text-sm"></i>
               <span>Create Ad & Pay</span>
             </button>
-            <button class="flex-1 border border-border-color text-primary py-3 rounded-xl btn-compact hover:bg-gray-50 transition-all duration-300 font-semibold">
+            <button class="flex-1 border border-border-color text-primary py-2 rounded-md btn hover:bg-gray-50 font-semibold">
               Save Draft
             </button>
           </div>
         </div>
         
         <!-- Right Column - Preview & Details -->
-        <div class="space-y-6">
+        <div class="space-y-4">
           <!-- Ad Preview -->
-          <div class="bg-white rounded-xl shadow-md p-6 card-hover">
-            <h2 class="text-xl font-bold text-primary mb-4">Ad Preview</h2>
-            <div class="border border-border-color rounded-lg overflow-hidden">
-              <div class="bg-white p-4">
-                <div class="flex items-center space-x-3 mb-3">
-                  <div class="w-10 h-10 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center text-white font-bold">
+          <div class="bg-white rounded-lg shadow-sm p-4 card-hover">
+            <h2 class="text-lg font-bold text-primary mb-3">Ad Preview</h2>
+            <div class="border border-border-color rounded-md overflow-hidden">
+              <div class="bg-white p-3">
+                <div class="flex items-center space-x-2 mb-2">
+                  <div class="w-8 h-8 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center text-white font-bold text-sm">
                     K
                   </div>
                   <div>
-                    <div class="font-medium">your_business</div>
+                    <div class="font-medium text-sm">your_business</div>
                     <div class="text-xs text-text-secondary">Sponsored • Kimbela</div>
                   </div>
                 </div>
                 
-                <div class="mb-3">
-                  <p class="text-primary" id="previewTitle">Your ad title will appear here</p>
-                  <p class="text-text-secondary text-sm mt-1" id="previewDescription">Your ad description will appear here</p>
+                <div class="mb-2">
+                  <p class="text-primary text-sm" id="previewTitle">Your ad title will appear here</p>
+                  <p class="text-text-secondary text-xs mt-1" id="previewDescription">Your ad description will appear here</p>
                 </div>
                 
-                <div class="bg-gray-100 h-48 rounded flex items-center justify-center text-text-secondary" id="previewImagePlaceholder">
-                  <i class="bi bi-image text-3xl"></i>
-                  <span class="ml-2">Ad Image</span>
+                <div class="bg-gray-100 h-28 rounded flex items-center justify-center text-text-secondary" id="previewImagePlaceholder">
+                  <i class="bi bi-image text-lg"></i>
+                  <span class="ml-1.5 text-sm">Ad Image</span>
                 </div>
                 
-                <div class="mt-3">
-                    <button class="w-full bg-accent text-white py-2 rounded text-sm font-medium" id="previewCta">Learn More</button>
+                <div class="mt-2">
+                    <button class="w-full bg-accent text-white py-1.5 rounded text-sm font-medium" id="previewCta">Learn More</button>
                 </div>
                 
-                <div class="flex justify-between text-text-secondary text-sm mt-3">
+                <div class="flex justify-between text-text-secondary text-xs mt-2">
                   <span><i class="bi bi-bookmark"></i></span>
                 </div>
               </div>
@@ -643,8 +759,8 @@
           </div>
           
           <!-- Targeting Summary -->
-          <div class="bg-white rounded-xl shadow-md p-6 card-hover">
-            <h2 class="text-xl font-bold text-primary mb-4">Targeting Summary</h2>
+          <div class="bg-white rounded-lg shadow-sm p-4 card-hover">
+            <h2 class="text-lg font-bold text-primary mb-3">Targeting Summary</h2>
             
             <div class="info-item">
               <span>Gender</span>
@@ -685,8 +801,8 @@
           </div>
           
           <!-- Payment Summary -->
-          <div class="bg-white rounded-xl shadow-md p-6 card-hover">
-            <h2 class="text-xl font-bold text-primary mb-4">Payment Summary</h2>
+          <div class="bg-white rounded-lg shadow-sm p-4 card-hover">
+            <h2 class="text-lg font-bold text-primary mb-3">Payment Summary</h2>
             
             <div class="info-item">
               <span>Daily Budget</span>
@@ -696,7 +812,7 @@
               <span>Duration</span>
               <span><span id="summaryDays">3</span> days</span>
             </div>
-            <div class="info-item font-bold text-lg">
+            <div class="info-item font-semibold text-base">
               <span>Total Amount</span>
               <span><span id="summaryCurrencySymbolTotal">$</span><span id="summaryTotal">6.00</span></span>
             </div>
@@ -707,27 +823,27 @@
 
     <!-- Payment Processing Modal -->
     <div class="modal fixed inset-0 z-50 flex items-center justify-center bg-black/70 hidden" id="paymentModal">
-      <div class="modal-dialog bg-white rounded-2xl shadow-lg w-full max-w-md mx-4 text-center p-8">
-        <div class="w-16 h-16 bg-accent/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-          <i class="bi bi-credit-card-2-front text-accent text-2xl"></i>
+      <div class="modal-dialog bg-white rounded-lg shadow-lg w-full max-w-sm mx-4 text-center p-5">
+        <div class="w-12 h-12 bg-accent/20 rounded-lg flex items-center justify-center mx-auto mb-3">
+          <i class="bi bi-credit-card-2-front text-accent text-lg"></i>
         </div>
-        <h3 class="text-2xl font-black mb-2 text-primary">Processing Payment</h3>
-        <p class="text-text-secondary mb-6">Redirecting to secure payment gateway...</p>
-        <div class="loader-spinner mx-auto mb-4"></div>
-        <p class="text-sm text-text-secondary">Please do not close this window</p>
+        <h3 class="text-lg font-bold mb-1.5 text-primary">Processing Payment</h3>
+        <p class="text-text-secondary mb-4 text-sm">Redirecting to secure payment gateway...</p>
+        <div class="loader-spinner mx-auto mb-3"></div>
+        <p class="text-xs text-text-secondary">Please do not close this window</p>
       </div>
     </div>
 
     <!-- Success Modal -->
     <div class="modal fixed inset-0 z-50 flex items-center justify-center bg-black/70 hidden" id="successModal">
-      <div class="modal-dialog bg-white rounded-2xl shadow-lg w-full max-w-md mx-4 text-center p-8">
-        <svg class="success-checkmark mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+      <div class="modal-dialog bg-white rounded-lg shadow-lg w-full max-w-sm mx-4 text-center p-5">
+        <svg class="success-checkmark mx-auto mb-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
           <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
           <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
         </svg>
-        <h3 class="text-2xl font-black mb-2 text-primary">Payment Successful!</h3>
-        <p class="text-text-secondary mb-6">Your campaign has been created and is now active.</p>
-        <button class="px-8 py-3 bg-accent text-white rounded-xl btn-compact hover:bg-green-700 transition-all duration-300 font-semibold flex items-center space-x-2 mx-auto" id="successBtn">
+        <h3 class="text-lg font-bold mb-1.5 text-primary">Payment Successful!</h3>
+        <p class="text-text-secondary mb-4 text-sm">Your campaign has been created and is now active.</p>
+        <button class="px-5 py-2 bg-accent text-white rounded-md btn hover:bg-green-700 font-semibold flex items-center space-x-2 mx-auto text-sm" id="successBtn">
           <i class="bi bi-grid-1x2"></i>
           <span>Go to Dashboard</span>
         </button>
@@ -807,7 +923,7 @@
         const successBtn = document.getElementById('successBtn');
         
         let uploadedImageUrl = '';
-        let ageRangeMin = 18;
+        let ageRangeMin = 31;
         let ageRangeMax = 65;
         
         // Currency configuration - Only USD
@@ -815,27 +931,40 @@
           'USD': { symbol: '$', name: 'US Dollar', min: 2, max: 10000 }
         };
         
-        // Initialize age range slider
+        // Initialize age range slider with noUiSlider
         function initAgeRangeSlider() {
-          noUiSlider.create(ageRangeSlider, {
-            start: [31, 65],
-            connect: true,
-            range: {
-              'min': 31,
-              'max': 80
-            },
-            step: 1,
-            behaviour: 'drag',
-          });
-          
-          ageRangeSlider.noUiSlider.on('update', function(values) {
-            ageRangeMin = Math.round(values[0]);
-            ageRangeMax = Math.round(values[1]);
-            minAge.textContent = ageRangeMin;
-            maxAge.textContent = ageRangeMax;
-            updateTargetingSummary();
-            updateEstimatedResults();
-          });
+          if (typeof noUiSlider !== 'undefined') {
+            noUiSlider.create(ageRangeSlider, {
+              start: [31, 65],
+              connect: true,
+              range: {
+                'min': 31,
+                'max': 80
+              },
+              step: 1,
+              behaviour: 'drag',
+              tooltips: [true, true],
+              format: {
+                to: function(value) {
+                  return Math.round(value);
+                },
+                from: function(value) {
+                  return Number(value);
+                }
+              }
+            });
+            
+            ageRangeSlider.noUiSlider.on('update', function(values) {
+              ageRangeMin = Math.round(values[0]);
+              ageRangeMax = Math.round(values[1]);
+              minAge.textContent = ageRangeMin;
+              maxAge.textContent = ageRangeMax;
+              updateTargetingSummary();
+              updateEstimatedResults();
+            });
+          } else {
+            console.error('noUiSlider not loaded');
+          }
         }
         
         // Update currency display
@@ -891,12 +1020,12 @@
           }
           
           // Age targeting
-          if (targetingFactors.ageRange && (targetingFactors.ageRange[0] > 18 || targetingFactors.ageRange[1] < 65)) {
+          if (targetingFactors.ageRange && (targetingFactors.ageRange[0] > 31 || targetingFactors.ageRange[1] < 65)) {
             targetingMultiplier *= 0.8; // Narrower audience
           }
           
           // Location targeting
-          if (targetingFactors.locations && targetingFactors.locations.length > 0 && !targetingFactors.locations.includes('global')) {
+          if (targetingFactors.locations && targetingFactors.locations.length > 0) {
             targetingMultiplier *= 0.6; // Narrower audience
           }
           
@@ -993,11 +1122,11 @@
           previewCta.textContent = callToAction.value;
           
           if (uploadedImageUrl) {
-            previewImagePlaceholder.innerHTML = `<img src="${uploadedImageUrl}" class="w-full h-full object-cover rounded-lg" alt="Ad preview">`;
+            previewImagePlaceholder.innerHTML = `<img src="${uploadedImageUrl}" class="w-full h-full object-cover rounded" alt="Ad preview">`;
           } else {
             previewImagePlaceholder.innerHTML = `
-              <i class="bi bi-image text-3xl"></i>
-              <span class="ml-2">Ad Image</span>
+              <i class="bi bi-image text-lg"></i>
+              <span class="ml-1.5 text-sm">Ad Image</span>
             `;
           }
         }
@@ -1078,8 +1207,8 @@
           const uploadArea = document.getElementById('imageUploadArea');
           const originalContent = uploadArea.innerHTML;
           uploadArea.innerHTML = `
-            <div class="loader-spinner mx-auto mb-3"></div>
-            <p class="text-sm font-medium">Uploading image...</p>
+            <div class="loader-spinner mx-auto mb-2"></div>
+            <p class="text-xs font-medium">Uploading image...</p>
           `;
 
           fetch('/upload-image', {
@@ -1127,16 +1256,16 @@
         // Show notification
         function showNotification(message, type = 'info') {
           const notification = document.createElement('div');
-          notification.className = `fixed top-4 right-4 z-50 p-4 rounded-xl shadow-lg ${
+          notification.className = `fixed top-4 right-4 z-50 p-3 rounded-lg shadow-lg ${
             type === 'error' ? 'bg-red-500 text-white' :
             type === 'success' ? 'bg-accent text-white' :
             type === 'warning' ? 'bg-warning text-white' :
             'bg-primary text-white'
           }`;
           notification.innerHTML = `
-            <div class="flex items-center space-x-3">
-              <i class="bi bi-${type === 'error' ? 'exclamation-triangle' : type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-circle' : 'info-circle'}"></i>
-              <span class="font-medium">${message}</span>
+            <div class="flex items-center space-x-2">
+              <i class="bi bi-${type === 'error' ? 'exclamation-triangle' : type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-circle' : 'info-circle'} text-sm"></i>
+              <span class="font-medium text-sm">${message}</span>
             </div>
           `;
           
@@ -1144,7 +1273,7 @@
           
           setTimeout(() => {
             notification.remove();
-          }, 5000);
+          }, 3000);
         }
 
         // Add this function to fetch supported currencies
@@ -1155,29 +1284,23 @@
                 
                 if (data.success) {
                     updateCurrencyDropdown(data.currencies);
-                    console.log('✅ Supported currencies loaded:', data.currencies);
                 } else {
-                    // Fallback to USD only
-                    console.warn('⚠️ Using USD only');
                     updateCurrencyDropdown(['USD']);
                 }
             } catch (error) {
-                console.error('❌ Error fetching currencies:', error);
-                // Fallback to USD only
+                console.error('Error fetching currencies:', error);
                 updateCurrencyDropdown(['USD']);
             }
         }
 
         function updateCurrencyDropdown(supportedCurrencies) {
             const currencySelect = document.getElementById('currency');
-            currencySelect.innerHTML = ''; // Clear existing options
+            currencySelect.innerHTML = '';
             
-            // Currency display names
             const currencyNames = {
                 'USD': '🇺🇸 US Dollar (USD)'
             };
             
-            // Only add supported currencies
             supportedCurrencies.forEach(currency => {
                 if (currencyNames[currency]) {
                     const option = document.createElement('option');
@@ -1187,7 +1310,6 @@
                 }
             });
             
-            // Update currency display after dropdown is populated
             if (typeof updateCurrencyDisplay === 'function') {
                 updateCurrencyDisplay();
             }
@@ -1250,7 +1372,7 @@
             target_url: url,
             call_to_action: cta,
             image: uploadedImageUrl || '',
-            currency: currency, // ✅ This will be saved in the database
+            currency: currency,
             targeting: {
               gender: selectedGender,
               age_min: ageRangeMin,
@@ -1264,7 +1386,7 @@
             }
           };
 
-          console.log('🔵 Creating campaign with data:', campaignData);
+          console.log('Creating campaign with data:', campaignData);
 
           // 6️⃣ Create campaign first
           fetch('/create-campaign', {
@@ -1276,7 +1398,7 @@
             body: JSON.stringify(campaignData)
           })
           .then(response => {
-            console.log('🔵 Campaign creation response status:', response.status);
+            console.log('Campaign creation response status:', response.status);
             if (!response.ok) {
               return response.json().then(errData => {
                 throw new Error(errData.error || `Campaign creation HTTP error! status: ${response.status}`);
@@ -1285,7 +1407,7 @@
             return response.json();
           })
           .then(data => {
-            console.log('🔵 Campaign creation response:', data);
+            console.log('Campaign creation response:', data);
             if (!data.success || !data.campaign_id) {
               throw new Error(data.error || 'Failed to create campaign');
             }
@@ -1299,17 +1421,17 @@
             const paymentPayload = {
               campaign_id: campaignId,
               amount: totalAmount,
-              currency: currency, // ✅ This ensures payment is processed in the selected currency
+              currency: currency,
               payment_options: 'card,account,ussd,banktransfer',
               redirect_url: window.location.origin + '/payment-callback',
               meta: {
                 campaign_id: campaignId,
                 user_id: '{{ current_user.id }}',
-                currency: currency // ✅ This will be recorded in the transaction
+                currency: currency
               }
             };
 
-            console.log('🔵 Initiating payment with payload:', paymentPayload);
+            console.log('Initiating payment with payload:', paymentPayload);
 
             // 9️⃣ Initiate payment
             return fetch('/initiate-payment', {
@@ -1322,7 +1444,7 @@
               body: JSON.stringify(paymentPayload)
             })
             .then(paymentResponse => {
-              console.log('🔵 Payment initiation response status:', paymentResponse.status);
+              console.log('Payment initiation response status:', paymentResponse.status);
               
               if (!paymentResponse.ok) {
                 return paymentResponse.text().then(text => {
@@ -1339,7 +1461,7 @@
               return paymentResponse.json();
             })
             .then(paymentData => {
-              console.log('🔵 Payment initiation response:', paymentData);
+              console.log('Payment initiation response:', paymentData);
               
               if (!paymentData.success) {
                 throw new Error(paymentData.error || paymentData.message || 'Payment initiation failed');
@@ -1350,12 +1472,12 @@
               }
 
               // 🔟 Redirect to payment page
-              console.log('🔵 Redirecting to payment page...');
+              console.log('Redirecting to payment page...');
               window.location.href = paymentData.payment_url;
             });
           })
           .catch(error => {
-            console.error('🔴 Error in campaign/payment process:', error);
+            console.error('Error in campaign/payment process:', error);
             
             let errorMessage = error.message;
             if (error.message.includes('Invalid request') && error.response) {
@@ -1458,7 +1580,7 @@
         
         // Initialize values
         initAgeRangeSlider();
-        updateCurrencyDisplay(); // Initialize currency display
+        updateCurrencyDisplay();
         updateValues();
         updateTargetingSummary();
         

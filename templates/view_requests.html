@@ -40,29 +40,21 @@
               roboto: ["Roboto", "sans-serif"],
               poppins: ["Poppins", "sans-serif"],
             },
-            animation: {
-              'fade-in': 'fadeIn 0.5s ease-in-out',
-              'slide-up': 'slideUp 0.3s ease-out',
-              'pulse-soft': 'pulseSoft 2s infinite',
-              'float': 'float 6s ease-in-out infinite',
+            fontSize: {
+              'xs': '0.75rem',     // 12px
+              'sm': '0.875rem',    // 14px
+              'base': '0.9375rem', // 15px - Reduced from 16px
+              'lg': '1.125rem',    // 18px
+              'xl': '1.25rem',     // 20px
+              '2xl': '1.5rem',     // 24px
             },
-            keyframes: {
-              fadeIn: {
-                '0%': { opacity: '0' },
-                '100%': { opacity: '1' },
-              },
-              slideUp: {
-                '0%': { transform: 'translateY(10px)', opacity: '0' },
-                '100%': { transform: 'translateY(0)', opacity: '1' },
-              },
-              pulseSoft: {
-                '0%, 100%': { opacity: '1' },
-                '50%': { opacity: '0.8' },
-              },
-              float: {
-                '0%, 100%': { transform: 'translateY(0)' },
-                '50%': { transform: 'translateY(-10px)' },
-              }
+            spacing: {
+              'xs': '0.25rem',     // 4px
+              'sm': '0.5rem',      // 8px
+              'md': '0.75rem',     // 12px
+              'lg': '1rem',        // 16px
+              'xl': '1.25rem',     // 20px
+              '2xl': '1.5rem',     // 24px
             }
           },
         },
@@ -70,19 +62,23 @@
     </script>
 
     <style>
-      /* Enhanced Styles with Wedding/Floral Theme */
+      /* Minimal Styles */
       body {
         font-family: 'Roboto', sans-serif;
+        font-size: 0.9375rem; /* 15px base */
+        line-height: 1.5;
       }
       
       h1, h2, h3, h4, h5, h6 {
         font-family: 'Poppins', sans-serif;
+        font-weight: 600;
+        line-height: 1.3;
       }
       
       .glass-effect {
-        background: rgba(255, 255, 255, 0.8);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(5px);
+        border-bottom: 1px solid rgba(139, 69, 19, 0.1);
       }
       
       .gradient-bg {
@@ -102,24 +98,20 @@
       }
       
       .shadow-soft {
-        box-shadow: 0 4px 6px -1px rgba(139, 69, 19, 0.1), 0 2px 4px -1px rgba(139, 69, 19, 0.06);
+        box-shadow: 0 2px 4px rgba(139, 69, 19, 0.1);
       }
       
       .shadow-medium {
-        box-shadow: 0 10px 15px -3px rgba(139, 69, 19, 0.1), 0 4px 6px -2px rgba(139, 69, 19, 0.05);
-      }
-      
-      .shadow-strong {
-        box-shadow: 0 20px 25px -5px rgba(139, 69, 19, 0.1), 0 10px 10px -5px rgba(139, 69, 19, 0.04);
+        box-shadow: 0 4px 6px rgba(139, 69, 19, 0.1);
       }
       
       .floral-card {
         background: #FFFFF0;
         border: 1px solid #E8D5C4;
-        border-radius: 16px;
+        border-radius: 12px;
         position: relative;
         overflow: hidden;
-        transition: all 0.3s ease;
+        transition: all 0.2s ease;
       }
       
       .floral-card::before {
@@ -128,49 +120,38 @@
         top: 0;
         left: 0;
         right: 0;
-        height: 4px;
+        height: 3px;
         background: linear-gradient(90deg, #B76E79, #D4A76A, #87A96B);
       }
       
       .floral-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 25px 50px -12px rgba(139, 69, 19, 0.25);
-      }
-      
-      .floral-pattern {
-        background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23D4A76A' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(139, 69, 19, 0.1);
       }
       
       .matchmaking-header {
         background: linear-gradient(135deg, #F7E7CE 0%, #FFFDD0 100%);
-        padding: 1.5rem;
-        text-align: center;
+        padding: 1rem;
         border-bottom: 1px solid #E8D5C4;
       }
       
       .matchmaking-body {
-        padding: 1.5rem;
+        padding: 1rem;
       }
       
       .matchmaking-footer {
-        padding: 1rem 1.5rem;
+        padding: 0.75rem 1rem;
         background: #FDF6F0;
         border-top: 1px solid #E8D5C4;
-      }
-      
-      .floral-divider {
-        height: 1px;
-        background: linear-gradient(90deg, transparent, #D4A76A, transparent);
-        margin: 1rem 0;
       }
       
       .interest-tag {
         display: inline-block;
         background: #f3f4f6;
         border: 1px solid #e5e7eb;
-        border-radius: 20px;
-        padding: 6px 12px;
-        margin: 4px;
+        border-radius: 16px;
+        padding: 4px 8px;
+        margin: 2px;
         font-size: 0.75rem;
         transition: all 0.2s ease;
       }
@@ -194,11 +175,12 @@
       }
       
       .like-btn {
-        transition: all 0.3s ease;
+        transition: all 0.2s ease;
+        font-size: 0.875rem;
       }
       
       .like-btn:hover {
-        transform: scale(1.1);
+        transform: scale(1.05);
       }
       
       .like-btn.liked {
@@ -206,10 +188,10 @@
       }
       
       .loader-spinner {
-        width: 48px;
-        height: 48px;
-        border: 4px solid #E8D5C4;
-        border-top: 4px solid #B76E79;
+        width: 40px;
+        height: 40px;
+        border: 3px solid #E8D5C4;
+        border-top: 3px solid #B76E79;
         border-radius: 50%;
         animation: spin 1s linear infinite;
       }
@@ -222,37 +204,38 @@
       .filter-card {
         background: #FFFFF0;
         border: 1px solid #E8D5C4;
-        border-radius: 12px;
-        padding: 1.5rem;
+        border-radius: 10px;
+        padding: 1rem;
       }
       
       .empty-state {
         background: linear-gradient(135deg, #FDF6F0 0%, #FFFDD0 100%);
         border: 2px dashed #E8D5C4;
-        border-radius: 16px;
-        padding: 3rem;
+        border-radius: 12px;
+        padding: 2rem;
         text-align: center;
       }
       
       .detail-section {
         background: #FDF6F0;
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1rem;
       }
       
       .detail-label {
         font-weight: 600;
         color: #8B4513;
-        margin-bottom: 0.5rem;
-        font-size: 0.9rem;
+        margin-bottom: 0.25rem;
+        font-size: 0.75rem;
         text-transform: uppercase;
         letter-spacing: 0.5px;
       }
       
       .detail-value {
         color: #5D4037;
-        line-height: 1.6;
+        font-size: 0.875rem;
+        line-height: 1.5;
       }
       
       .compatibility-badge {
@@ -260,53 +243,178 @@
         align-items: center;
         background: linear-gradient(135deg, #87A96B, #C1E1C1);
         color: white;
-        padding: 0.5rem 1rem;
-        border-radius: 20px;
+        padding: 0.375rem 0.75rem;
+        border-radius: 16px;
         font-weight: 600;
+        font-size: 0.75rem;
+      }
+      
+      /* Button Base Styles */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.5rem 0.75rem;
         font-size: 0.875rem;
+        font-weight: 500;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+        gap: 0.375rem;
+        border: none;
+        cursor: pointer;
+        line-height: 1.2;
+      }
+      
+      .btn-primary {
+        background-color: #8B4513;
+        color: white;
+      }
+      
+      .btn-primary:hover {
+        background-color: #6B3410;
+      }
+      
+      .btn-secondary {
+        background-color: #D4A76A;
+        color: white;
+      }
+      
+      .btn-secondary:hover {
+        background-color: #B89359;
+      }
+      
+      .btn-rose {
+        background-color: #B76E79;
+        color: white;
+      }
+      
+      .btn-rose:hover {
+        background-color: #9A5A64;
+      }
+      
+      .btn-outline {
+        background-color: transparent;
+        border: 1px solid #E8D5C4;
+        color: #5D4037;
+      }
+      
+      .btn-outline:hover {
+        background-color: #FDF6F0;
+      }
+      
+      /* Compact form controls */
+      .form-input {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+        border: 1px solid #E8D5C4;
+        border-radius: 8px;
+        background-color: white;
+        transition: all 0.2s ease;
+      }
+      
+      .form-input:focus {
+        outline: none;
+        border-color: #B76E79;
+        box-shadow: 0 0 0 2px rgba(183, 110, 121, 0.1);
+      }
+      
+      .form-select {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+        border: 1px solid #E8D5C4;
+        border-radius: 8px;
+        background-color: white;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%238D6E63' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+        background-position: right 0.5rem center;
+        background-repeat: no-repeat;
+        background-size: 1.5em 1.5em;
+        padding-right: 2.5rem;
+        appearance: none;
       }
       
       /* Mobile responsive adjustments */
       @media (max-width: 768px) {
-        .mobile-btn {
-          padding: 0.5rem 1rem !important;
-          font-size: 0.875rem !important;
+        body {
+          font-size: 0.875rem;
         }
         
-        .mobile-btn-icon {
-          margin-right: 0.25rem !important;
+        .btn {
+          padding: 0.375rem 0.625rem;
+          font-size: 0.8125rem;
+          gap: 0.25rem;
+        }
+        
+        .btn i {
+          font-size: 0.875rem;
         }
         
         .filter-card {
-          padding: 1rem;
+          padding: 0.75rem;
         }
         
         .matchmaking-header, .matchmaking-body, .matchmaking-footer {
-          padding: 1rem;
+          padding: 0.75rem;
         }
         
         .detail-section {
-          padding: 1rem;
+          padding: 0.75rem;
+          margin-bottom: 0.75rem;
         }
+        
+        .floral-card {
+          border-radius: 10px;
+        }
+        
+        .interest-tag {
+          padding: 3px 6px;
+          font-size: 0.6875rem;
+        }
+      }
+      
+      @media (max-width: 480px) {
+        body {
+          font-size: 0.8125rem;
+        }
+        
+        .btn {
+          padding: 0.25rem 0.5rem;
+          font-size: 0.75rem;
+        }
+        
+        .form-input, .form-select {
+          padding: 0.375rem 0.625rem;
+          font-size: 0.8125rem;
+        }
+      }
+      
+      /* Utility classes for spacing */
+      .compact-space > * + * {
+        margin-top: 0.75rem;
+      }
+      
+      .compact-space-horizontal > * + * {
+        margin-left: 0.75rem;
       }
     </style>
 </head>
-<body class="font-roboto bg-gradient-to-br from-ivory to-champagne min-h-screen">
-    <!-- Enhanced Header -->
-    <header class="glass-effect sticky top-0 z-40 border-b border-rose-200/50">
-      <div class="container mx-auto px-4 py-4">
+<body class="font-roboto bg-light-bg text-text-primary min-h-screen">
+    <!-- Header -->
+    <header class="glass-effect sticky top-0 z-40">
+      <div class="container mx-auto px-3 py-3">
         <div class="flex justify-between items-center">
-          <div class="flex items-center space-x-3">
-            <h1 class="text-2xl font-poppins font-bold text-primary">Kimbela Matchmaking</h1>
+          <div class="flex items-center gap-2">
+            <h1 class="text-xl font-poppins font-bold text-primary">Kimbela Matchmaking</h1>
           </div>
-          <div class="flex items-center space-x-2 md:space-x-4">
-            <a href="{{ url_for('match.create_request') }}" class="mobile-btn bg-rose-gold text-white px-3 py-2 md:px-4 md:py-2.5 rounded-lg hover:bg-rose-700 transition-all duration-300 flex items-center space-x-1 md:space-x-2">
-              <i class="bi bi-heart mobile-btn-icon"></i>
-              <span class="hidden md:inline">Create Request</span>
+          <div class="flex items-center gap-2">
+            <a href="{{ url_for('match.create_request') }}" class="btn btn-rose">
+              <i class="bi bi-heart"></i>
+              <span class="hidden sm:inline">Create</span>
             </a>
-            <a href="{{ url_for('user.user_dashboard') }}" class="mobile-btn bg-primary text-white px-3 py-2 md:px-4 md:py-2.5 rounded-lg hover:bg-secondary transition-all duration-300 flex items-center space-x-1 md:space-x-2">
-              <i class="bi bi-grid-1x2 mobile-btn-icon"></i>
-              <span class="hidden md:inline">Dashboard</span>
+            <a href="{{ url_for('user.user_dashboard') }}" class="btn btn-primary">
+              <i class="bi bi-grid-1x2"></i>
+              <span class="hidden sm:inline">Dashboard</span>
             </a>
           </div>
         </div>
@@ -314,49 +422,42 @@
     </header>
 
     <!-- Hero Section -->
-    <section class="relative py-12 md:py-16 gradient-bg text-white overflow-hidden">
-      <div class="absolute inset-0 bg-black/10"></div>
-      <div class="absolute top-0 left-0 w-72 h-72 bg-rose-500/10 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
-      <div class="absolute bottom-0 right-0 w-96 h-96 bg-sage-500/10 rounded-full translate-x-1/3 translate-y-1/3"></div>
-      
-      <div class="container mx-auto px-4 text-center relative z-10">
-        <h1 class="text-3xl md:text-5xl font-poppins font-black mb-4 animate-fade-in">
+    <section class="relative py-8 gradient-bg text-white overflow-hidden">
+      <div class="container mx-auto px-3 text-center relative z-10">
+        <h1 class="text-2xl md:text-3xl font-poppins font-bold mb-2">
           Find Your Perfect Match
         </h1>
-        <p class="text-lg md:text-xl text-ivory max-w-2xl mx-auto mb-6 md:mb-8 leading-relaxed">
+        <p class="text-sm md:text-base text-ivory max-w-xl mx-auto opacity-90">
           Browse through genuine matchmaking requests and connect with people looking for meaningful relationships.
         </p>
       </div>
     </section>
 
     <!-- Main Content -->
-    <div class="container mx-auto px-4 py-6 md:py-8">
-      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 md:gap-8">
+    <div class="container mx-auto px-3 py-4">
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
         <!-- Filters Sidebar -->
-        <div class="lg:col-span-1 space-y-6">
+        <div class="lg:col-span-1 compact-space">
           <!-- Search Filter -->
           <div class="filter-card">
-            <h3 class="font-poppins font-semibold text-lg text-primary mb-4">Search & Filter</h3>
-            <div class="space-y-4">
+            <h3 class="font-poppins font-semibold text-lg text-primary mb-3">Search & Filter</h3>
+            <div class="compact-space">
               <div>
-                <label class="block text-sm font-medium text-text-secondary mb-2">Search</label>
-                <input type="text" id="searchInput" placeholder="Search requests..." 
-                       class="w-full px-4 py-2 border border-border-color rounded-lg focus:ring-2 focus:ring-rose-gold focus:border-transparent">
+                <label class="block text-xs font-medium text-text-secondary mb-1">Search</label>
+                <input type="text" id="searchInput" placeholder="Search requests..." class="form-input">
               </div>
               
               <div>
-                <label class="block text-sm font-medium text-text-secondary mb-2">Age Range</label>
-                <div class="flex space-x-2">
-                  <input type="number" id="minAgeFilter" placeholder="Min" 
-                         class="w-1/2 px-3 py-2 border border-border-color rounded-lg focus:ring-2 focus:ring-rose-gold focus:border-transparent">
-                  <input type="number" id="maxAgeFilter" placeholder="Max" 
-                         class="w-1/2 px-3 py-2 border border-border-color rounded-lg focus:ring-2 focus:ring-rose-gold focus:border-transparent">
+                <label class="block text-xs font-medium text-text-secondary mb-1">Age Range</label>
+                <div class="flex gap-2">
+                  <input type="number" id="minAgeFilter" placeholder="Min" class="form-input w-1/2">
+                  <input type="number" id="maxAgeFilter" placeholder="Max" class="form-input w-1/2">
                 </div>
               </div>
               
               <div>
-                <label class="block text-sm font-medium text-text-secondary mb-2">Gender</label>
-                <select id="genderFilter" class="w-full px-3 py-2 border border-border-color rounded-lg focus:ring-2 focus:ring-rose-gold focus:border-transparent">
+                <label class="block text-xs font-medium text-text-secondary mb-1">Gender</label>
+                <select id="genderFilter" class="form-select">
                   <option value="">Any Gender</option>
                   <option value="male">Male</option>
                   <option value="female">Female</option>
@@ -365,35 +466,36 @@
               </div>
               
               <div>
-                <label class="block text-sm font-medium text-text-secondary mb-2">Location</label>
-                <select id="locationFilter" class="w-full px-3 py-2 border border-border-color rounded-lg focus:ring-2 focus:ring-rose-gold focus:border-transparent">
+                <label class="block text-xs font-medium text-text-secondary mb-1">Location</label>
+                <select id="locationFilter" class="form-select">
                   <option value="">Any Location</option>
-                  <!-- Options will be populated by JavaScript -->
                 </select>
               </div>
               
-              <button id="applyFilters" class="mobile-btn w-full bg-rose-gold text-white py-2 rounded-lg hover:bg-rose-700 transition-colors duration-300">
-                Apply Filters
-              </button>
-              <button id="clearFilters" class="mobile-btn w-full bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300 transition-colors duration-300">
-                Clear Filters
-              </button>
+              <div class="flex gap-2">
+                <button id="applyFilters" class="btn btn-rose flex-1">
+                  Apply
+                </button>
+                <button id="clearFilters" class="btn btn-outline flex-1">
+                  Clear
+                </button>
+              </div>
             </div>
           </div>
 
           <!-- Quick Stats -->
           <div class="filter-card">
-            <h3 class="font-poppins font-semibold text-lg text-primary mb-4">Quick Stats</h3>
-            <div class="space-y-3 text-sm">
-              <div class="flex justify-between items-center py-2 border-b border-border-color">
+            <h3 class="font-poppins font-semibold text-lg text-primary mb-3">Quick Stats</h3>
+            <div class="compact-space text-sm">
+              <div class="flex justify-between items-center py-1 border-b border-border-color">
                 <span class="text-text-secondary">Active Requests</span>
                 <span class="font-semibold text-primary" id="activeCount">-</span>
               </div>
-              <div class="flex justify-between items-center py-2 border-b border-border-color">
+              <div class="flex justify-between items-center py-1 border-b border-border-color">
                 <span class="text-text-secondary">Total Matches</span>
                 <span class="font-semibold text-primary" id="totalMatches">-</span>
               </div>
-              <div class="flex justify-between items-center py-2">
+              <div class="flex justify-between items-center py-1">
                 <span class="text-text-secondary">New This Week</span>
                 <span class="font-semibold text-primary" id="newThisWeek">-</span>
               </div>
@@ -404,61 +506,61 @@
         <!-- Requests Grid -->
         <div class="lg:col-span-3">
           <!-- Sort and View Options -->
-          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 compact-space">
             <div>
-              <h2 class="text-2xl font-poppins font-bold text-primary">Matchmaking Requests</h2>
-              <p class="text-text-secondary" id="resultsCount">Loading requests...</p>
+              <h2 class="text-xl font-poppins font-bold text-primary">Matchmaking Requests</h2>
+              <p class="text-sm text-text-secondary" id="resultsCount">Loading requests...</p>
             </div>
-            <div class="flex space-x-2 md:space-x-4">
-              <select id="sortSelect" class="mobile-btn px-3 py-2 border border-border-color rounded-lg focus:ring-2 focus:ring-rose-gold focus:border-transparent">
+            <div class="flex items-center gap-2">
+              <select id="sortSelect" class="form-select">
                 <option value="newest">Newest First</option>
                 <option value="oldest">Oldest First</option>
                 <option value="popular">Most Popular</option>
                 <option value="ending">Ending Soon</option>
               </select>
               <div class="flex bg-gray-100 rounded-lg p-1">
-                <button id="gridView" class="p-2 rounded-md bg-white shadow-sm">
-                  <i class="bi bi-grid-3x3-gap text-rose-gold"></i>
+                <button id="gridView" class="p-1.5 rounded-md bg-white shadow-sm">
+                  <i class="bi bi-grid-3x3-gap text-rose-gold text-sm"></i>
                 </button>
-                <button id="listView" class="p-2 rounded-md">
-                  <i class="bi bi-list text-text-secondary"></i>
+                <button id="listView" class="p-1.5 rounded-md">
+                  <i class="bi bi-list text-text-secondary text-sm"></i>
                 </button>
               </div>
             </div>
           </div>
 
           <!-- Debug Info -->
-          <div id="debugInfo" class="hidden text-sm text-gray-600 mb-4 p-4 bg-yellow-50 rounded">
+          <div id="debugInfo" class="hidden text-xs text-gray-600 mb-3 p-2 bg-yellow-50 rounded">
             <p id="debugStatus">Loading...</p>
           </div>
 
           <!-- Requests Container -->
-          <div id="requestsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div id="requestsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <!-- Requests will be loaded here -->
           </div>
 
           <!-- Loading State -->
-          <div id="loadingState" class="text-center py-12">
-            <div class="loader-spinner mx-auto mb-4"></div>
-            <p class="text-text-secondary">Loading matchmaking requests...</p>
+          <div id="loadingState" class="text-center py-8">
+            <div class="loader-spinner mx-auto mb-3"></div>
+            <p class="text-sm text-text-secondary">Loading matchmaking requests...</p>
           </div>
 
           <!-- Empty State -->
           <div id="emptyState" class="empty-state hidden">
-            <div class="w-24 h-24 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <i class="bi bi-heart text-rose-gold text-3xl"></i>
+            <div class="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <i class="bi bi-heart text-rose-gold text-xl"></i>
             </div>
-            <h3 class="text-2xl font-poppins font-bold text-primary mb-2">No requests found</h3>
-            <p class="text-text-secondary mb-6">Try adjusting your filters or check back later for new requests.</p>
-            <button id="clearAllFilters" class="mobile-btn bg-rose-gold text-white px-6 py-3 rounded-lg hover:bg-rose-700 transition-colors duration-300">
+            <h3 class="text-lg font-poppins font-bold text-primary mb-2">No requests found</h3>
+            <p class="text-sm text-text-secondary mb-4">Try adjusting your filters or check back later.</p>
+            <button id="clearAllFilters" class="btn btn-rose">
               Clear All Filters
             </button>
           </div>
 
           <!-- Load More Button -->
-          <div id="loadMoreContainer" class="text-center mt-8 hidden">
-            <button id="loadMoreBtn" class="mobile-btn bg-white text-rose-gold border border-rose-gold px-8 py-3 rounded-lg hover:bg-rose-50 transition-colors duration-300 font-semibold">
-              Load More Requests
+          <div id="loadMoreContainer" class="text-center mt-4 hidden">
+            <button id="loadMoreBtn" class="btn btn-outline">
+              Load More
             </button>
           </div>
         </div>
@@ -466,29 +568,29 @@
     </div>
 
     <!-- Request Detail Modal -->
-    <div id="requestModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 hidden">
-      <div class="modal-dialog bg-white rounded-2xl shadow-strong w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto animate-fade-in">
-        <div class="modal-header p-6 md:p-8 border-b border-border-color flex justify-between items-center bg-gradient-to-r from-primary to-secondary text-white rounded-t-2xl">
+    <div id="requestModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden">
+      <div class="modal-dialog bg-white rounded-xl shadow-medium w-full max-w-3xl mx-3 max-h-[85vh] overflow-y-auto">
+        <div class="modal-header p-4 border-b border-border-color flex justify-between items-center bg-primary text-white rounded-t-xl">
           <div>
-            <h3 class="text-xl md:text-2xl font-poppins font-black">Matchmaking Request Details</h3>
-            <p class="text-white/80 text-sm mt-1">Complete profile and preferences</p>
+            <h3 class="text-lg font-poppins font-bold">Match Details</h3>
+            <p class="text-white/80 text-xs mt-0.5">Complete profile and preferences</p>
           </div>
-          <button type="button" class="p-2 md:p-3 rounded-xl hover:bg-white/10 transition-all duration-300 close-modal">
-            <i class="bi bi-x-lg text-lg md:text-xl"></i>
+          <button type="button" class="p-1.5 rounded-lg hover:bg-white/10 transition-all close-modal">
+            <i class="bi bi-x-lg text-sm"></i>
           </button>
         </div>
 
-        <div class="modal-body p-6 md:p-8" id="requestModalContent">
+        <div class="modal-body p-4" id="requestModalContent">
           <!-- Content will be loaded by JavaScript -->
         </div>
       </div>
     </div>
 
-    <!-- Enhanced Footer -->
-    <footer class="bg-dark-bg text-white py-12 mt-12">
-      <div class="container mx-auto px-4">
+    <!-- Footer -->
+    <footer class="bg-dark-bg text-white py-6 mt-6">
+      <div class="container mx-auto px-3">
         <div class="text-center">
-          <p class="text-text-secondary text-sm">&copy; 2025 Kimbela Matchmaking. All rights reserved. Connecting hearts worldwide.</p>
+          <p class="text-xs text-text-secondary">&copy; 2025 Kimbela Matchmaking. All rights reserved.</p>
         </div>
       </div>
     </footer>
@@ -520,9 +622,10 @@
         });
 
         // Search
+        let searchTimeout;
         document.getElementById('searchInput').addEventListener('input', function() {
-          clearTimeout(this.searchTimeout);
-          this.searchTimeout = setTimeout(() => {
+          clearTimeout(searchTimeout);
+          searchTimeout = setTimeout(() => {
             currentFilters.search = this.value;
             reloadRequests();
           }, 500);
@@ -554,7 +657,7 @@
           listBtn.querySelector('i').classList.remove('text-rose-gold');
           listBtn.querySelector('i').classList.add('text-text-secondary');
           document.getElementById('requestsContainer').classList.add('grid', 'grid-cols-1', 'md:grid-cols-2');
-          document.getElementById('requestsContainer').classList.remove('space-y-6');
+          document.getElementById('requestsContainer').classList.remove('space-y-4');
         } else {
           listBtn.classList.add('bg-white', 'shadow-sm');
           listBtn.querySelector('i').classList.add('text-rose-gold');
@@ -562,7 +665,7 @@
           gridBtn.querySelector('i').classList.remove('text-rose-gold');
           gridBtn.querySelector('i').classList.add('text-text-secondary');
           document.getElementById('requestsContainer').classList.remove('grid', 'grid-cols-1', 'md:grid-cols-2');
-          document.getElementById('requestsContainer').classList.add('space-y-6');
+          document.getElementById('requestsContainer').classList.add('space-y-4');
         }
         
         renderRequests();
@@ -614,7 +717,6 @@
         document.getElementById('emptyState').classList.add('hidden');
         
         try {
-          // Build query parameters
           const params = new URLSearchParams({
             page: currentPage,
             per_page: 12
@@ -628,9 +730,7 @@
           if (currentFilters.sort) params.append('sort_by', currentFilters.sort);
           
           const response = await fetch(`/api/requests?${params}`, {
-            headers: {
-              'Content-Type': 'application/json',
-            }
+            headers: { 'Content-Type': 'application/json' }
           });
           
           const data = await response.json();
@@ -660,7 +760,6 @@
 
       async function loadMoreRequests() {
         if (isLoading || !hasMore) return;
-        
         currentPage++;
         await loadRequests();
       }
@@ -682,7 +781,6 @@
           container.appendChild(requestElement);
         });
         
-        // Show/hide load more button
         document.getElementById('loadMoreContainer').classList.toggle('hidden', !hasMore);
       }
 
@@ -696,59 +794,52 @@
         
         div.innerHTML = `
             ${request.is_own_request ? `
-                <div class="bg-rose-gold text-white text-xs font-semibold px-3 py-1 rounded-t-lg">
+                <div class="bg-rose-gold text-white text-xs font-semibold px-2 py-1 rounded-t-lg">
                     <i class="bi bi-person-check mr-1"></i>Your Request
                 </div>
             ` : ''}
             
             <div class="matchmaking-header">
-                <div class="flex items-center space-x-3">
+                <div class="flex items-center gap-2">
                     <img src="${request.user.profile_pic || '/static/assets/img/default-avatar.png'}" 
                          alt="${request.user.full_name}" 
-                         class="w-16 h-16 rounded-full object-cover border-2 ${request.is_own_request ? 'border-rose-gold' : 'border-white'} shadow-sm">
-                    <div class="text-left">
-                        <h4 class="font-poppins font-bold text-lg text-primary">${request.user.full_name}, ${request.user.age}</h4>
-                        <p class="text-text-secondary text-sm flex items-center">
+                         class="w-12 h-12 rounded-full object-cover border-2 ${request.is_own_request ? 'border-rose-gold' : 'border-white'}">
+                    <div>
+                        <h4 class="font-poppins font-bold text-base text-primary">${request.user.full_name}, ${request.user.age}</h4>
+                        <p class="text-xs text-text-secondary flex items-center">
                             <i class="bi bi-geo-alt mr-1"></i>${request.user.location}
                         </p>
-                        <div class="flex items-center space-x-2 mt-1">
-                            <span class="bg-rose-100 text-rose-800 text-xs px-2 py-1 rounded-full">${request.package}</span>
-                            <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">${request.expires_in}d left</span>
-                            ${request.is_own_request ? `<span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Your Request</span>` : ''}
+                        <div class="flex items-center gap-1 mt-1">
+                            <span class="bg-rose-100 text-rose-800 text-xs px-1.5 py-0.5 rounded-full">${request.package}</span>
+                            <span class="bg-blue-100 text-blue-800 text-xs px-1.5 py-0.5 rounded-full">${request.expires_in}d left</span>
                         </div>
                     </div>
                 </div>
             </div>
             
             <div class="matchmaking-body">
-                <p class="text-text-primary line-clamp-2 mb-4">${request.about_you}</p>
+                <p class="text-sm text-text-primary line-clamp-2 mb-3">${request.about_you}</p>
                 
-                <div class="flex flex-wrap gap-1 mb-4">
+                <div class="flex flex-wrap gap-1 mb-3">
                     ${interests.slice(0, 3).map((interest, index) => `
                         <span class="interest-tag ${tagColors[index % tagColors.length]}">${interest}</span>
                     `).join('')}
-                    ${interests.length > 3 ? `<span class="interest-tag">+${interests.length - 3} more</span>` : ''}
+                    ${interests.length > 3 ? `<span class="interest-tag">+${interests.length - 3}</span>` : ''}
                 </div>
-                
-                ${request.image ? `
-                    <div class="mb-4 rounded-lg overflow-hidden">
-                        <img src="${request.image}" alt="Profile photo" class="w-full h-32 object-cover">
-                    </div>
-                ` : ''}
             </div>
             
             <div class="matchmaking-footer">
-                <div class="flex justify-between items-center text-sm">
-                    <div class="flex space-x-4 text-text-secondary">
-                        <span class="flex items-center space-x-1">
+                <div class="flex justify-between items-center text-xs">
+                    <div class="flex gap-3 text-text-secondary">
+                        <span class="flex items-center gap-1">
                             <i class="bi bi-eye"></i>
                             <span>${request.views}</span>
                         </span>
-                        <span class="flex items-center space-x-1">
+                        <span class="flex items-center gap-1">
                             <i class="bi bi-heart"></i>
                             <span>${request.likes}</span>
                         </span>
-                        <span class="flex items-center space-x-1">
+                        <span class="flex items-center gap-1">
                             <i class="bi bi-chat"></i>
                             <span>${request.matches}</span>
                         </span>
@@ -777,7 +868,6 @@
             if (data.success) {
                 const requestDetail = data.request;
                 const modalContent = document.getElementById('requestModalContent');
-                
                 modalContent.innerHTML = createDetailedModalContent(requestDetail);
                 document.getElementById('requestModal').classList.remove('hidden');
                 document.body.style.overflow = 'hidden';
@@ -793,223 +883,84 @@
       function createDetailedModalContent(request) {
         const tagColors = ['rose', 'sage', 'champagne'];
         const interests = request.interests || [];
-        const partnerInterests = request.partner_interests || [];
         const lifestyles = request.lifestyles || [];
-        const targetCountries = request.target_countries || [];
         
         return `
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-                <div class="lg:col-span-2 space-y-6">
-                    <!-- User Profile Section -->
-                    <div class="detail-section">
-                        <div class="flex items-center space-x-4 mb-6">
-                            <img src="${request.user.profile_pic || '/static/assets/img/default-avatar.png'}" 
-                                 alt="${request.user.full_name}" 
-                                 class="w-20 h-20 md:w-24 md:h-24 rounded-full object-cover border-4 border-primary shadow-lg">
-                            <div class="flex-1">
-                                <h4 class="font-poppins font-bold text-2xl md:text-3xl text-primary mb-2">${request.user.full_name}, ${request.user.age}</h4>
-                                <p class="text-text-secondary flex items-center text-lg mb-3">
-                                    <i class="bi bi-geo-alt mr-2"></i>${request.user.location}
-                                </p>
-                                <div class="flex flex-wrap gap-2">
-                                    <span class="bg-rose-100 text-rose-800 text-sm px-3 py-1 rounded-full font-semibold">${request.package} Package</span>
-                                    <span class="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full font-semibold">${request.expires_in} days remaining</span>
-                                    <span class="bg-green-100 text-green-800 text-sm px-3 py-1 rounded-full font-semibold">${request.views} views</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- User Basic Info -->
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-                            <div class="text-center">
-                                <div class="detail-label">Education</div>
-                                <div class="detail-value">${request.user.education || 'Not specified'}</div>
-                            </div>
-                            <div class="text-center">
-                                <div class="detail-label">Occupation</div>
-                                <div class="detail-value">${request.user.occupation || 'Not specified'}</div>
-                            </div>
-                            <div class="text-center">
-                                <div class="detail-label">About Me</div>
-                                <div class="detail-value">${request.user.about_me || 'Not specified'}</div>
+            <div class="compact-space">
+                <!-- User Profile -->
+                <div class="detail-section">
+                    <div class="flex items-center gap-3 mb-4">
+                        <img src="${request.user.profile_pic || '/static/assets/img/default-avatar.png'}" 
+                             alt="${request.user.full_name}" 
+                             class="w-16 h-16 rounded-full object-cover border-2 border-primary">
+                        <div>
+                            <h4 class="font-poppins font-bold text-lg text-primary mb-1">${request.user.full_name}, ${request.user.age}</h4>
+                            <p class="text-sm text-text-secondary flex items-center mb-2">
+                                <i class="bi bi-geo-alt mr-1"></i>${request.user.location}
+                            </p>
+                            <div class="flex flex-wrap gap-1">
+                                <span class="bg-rose-100 text-rose-800 text-xs px-2 py-0.5 rounded-full">${request.package}</span>
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-full">${request.expires_in} days left</span>
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- About Me Section -->
-                    <div class="detail-section">
-                        <h5 class="font-poppins font-semibold text-xl text-primary mb-4 flex items-center">
-                            <i class="bi bi-person-circle mr-2"></i>About Me
-                        </h5>
-                        <p class="text-text-primary leading-relaxed text-lg">${request.about_you}</p>
-                    </div>
-                    
-                    <!-- My Interests Section -->
-                    ${interests.length > 0 ? `
-                        <div class="detail-section">
-                            <h5 class="font-poppins font-semibold text-xl text-primary mb-4 flex items-center">
-                                <i class="bi bi-heart mr-2"></i>My Interests & Hobbies
-                            </h5>
-                            <div class="flex flex-wrap gap-2">
-                                ${interests.map((interest, index) => `
-                                    <span class="interest-tag ${tagColors[index % tagColors.length]} text-sm px-3 py-2">${interest}</span>
-                                `).join('')}
-                            </div>
-                        </div>
-                    ` : ''}
-                    
-                    <!-- Lifestyle Section -->
-                    ${lifestyles.length > 0 ? `
-                        <div class="detail-section">
-                            <h5 class="font-poppins font-semibold text-xl text-primary mb-4 flex items-center">
-                                <i class="bi bi-sun mr-2"></i>Lifestyle
-                            </h5>
-                            <div class="flex flex-wrap gap-2">
-                                ${lifestyles.map((lifestyle, index) => `
-                                    <span class="interest-tag ${tagColors[(index + 1) % tagColors.length]} text-sm px-3 py-2">${lifestyle}</span>
-                                `).join('')}
-                            </div>
-                        </div>
-                    ` : ''}
-                    
-                    <!-- Ideal Partner Section -->
-                    <div class="detail-section">
-                        <h5 class="font-poppins font-semibold text-xl text-primary mb-4 flex items-center">
-                            <i class="bi bi-search-heart mr-2"></i>My Ideal Partner
-                        </h5>
-                        <p class="text-text-primary leading-relaxed text-lg mb-6">${request.ideal_partner}</p>
-                        
-                        <!-- Partner Preferences Grid -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <!-- Age Range -->
-                            <div>
-                                <div class="detail-label">Age Range</div>
-                                <div class="detail-value font-semibold">${request.partner_preferences.min_age || 'Any'} - ${request.partner_preferences.max_age || 'Any'} years</div>
-                            </div>
-                            
-                            <!-- Gender -->
-                            <div>
-                                <div class="detail-label">Gender</div>
-                                <div class="detail-value font-semibold">${request.partner_preferences.gender || 'Any'}</div>
-                            </div>
-                            
-                            <!-- Ethnicity -->
-                            <div>
-                                <div class="detail-label">Ethnicity</div>
-                                <div class="detail-value font-semibold">${request.partner_preferences.ethnicity || 'Any'}</div>
-                            </div>
-                            
-                            <!-- Religion -->
-                            <div>
-                                <div class="detail-label">Religion</div>
-                                <div class="detail-value font-semibold">${request.partner_preferences.religion || 'Any'}</div>
-                            </div>
-                        </div>
-                        
-                        <!-- Partner Interests -->
-                        ${partnerInterests.length > 0 ? `
-                            <div class="mt-6">
-                                <div class="detail-label">Desired Partner Interests</div>
-                                <div class="flex flex-wrap gap-2 mt-2">
-                                    ${partnerInterests.map((interest, index) => `
-                                        <span class="interest-tag ${tagColors[(index + 2) % tagColors.length]} text-sm px-3 py-2">${interest}</span>
-                                    `).join('')}
-                                </div>
-                            </div>
-                        ` : ''}
-                        
-                        <!-- Target Countries -->
-                        ${targetCountries.length > 0 ? `
-                            <div class="mt-6">
-                                <div class="detail-label">Preferred Locations</div>
-                                <div class="flex flex-wrap gap-2 mt-2">
-                                    ${targetCountries.map((country, index) => `
-                                        <span class="interest-tag bg-blue-100 text-blue-800 border-blue-200 text-sm px-3 py-2">
-                                            <i class="bi bi-geo-alt mr-1"></i>${country}
-                                        </span>
-                                    `).join('')}
-                                </div>
-                            </div>
-                        ` : ''}
-                    </div>
-                    
-                    <!-- Additional Image -->
-                    ${request.image ? `
-                        <div class="detail-section">
-                            <h5 class="font-poppins font-semibold text-xl text-primary mb-4 flex items-center">
-                                <i class="bi bi-image mr-2"></i>Profile Photo
-                            </h5>
-                            <div class="rounded-xl overflow-hidden shadow-lg">
-                                <img src="${request.image}" alt="Profile photo" class="w-full h-64 md:h-80 object-cover">
-                            </div>
-                        </div>
-                    ` : ''}
                 </div>
                 
-                <!-- Sidebar -->
-                <div class="space-y-6">
-                    <!-- Action Buttons -->
+                <!-- About Me -->
+                <div class="detail-section">
+                    <h5 class="font-poppins font-semibold text-base text-primary mb-2">About Me</h5>
+                    <p class="text-sm text-text-primary">${request.about_you}</p>
+                </div>
+                
+                <!-- Interests -->
+                ${interests.length > 0 ? `
                     <div class="detail-section">
-                        <h5 class="font-poppins font-semibold text-lg text-primary mb-4">Connect</h5>
-                        <div class="space-y-3">
-                            <button onclick="sendLike(${request.id})" class="mobile-btn w-full bg-rose-gold text-white py-3 rounded-lg hover:bg-rose-700 transition-colors duration-300 font-semibold flex items-center justify-center space-x-2">
-                                <i class="bi bi-heart"></i>
-                                <span>Send Like</span>
-                            </button>
-                            <button onclick="sendMessage(${request.id})" class="mobile-btn w-full bg-primary text-white py-3 rounded-lg hover:bg-secondary transition-colors duration-300 font-semibold flex items-center justify-center space-x-2">
-                                <i class="bi bi-chat"></i>
-                                <span>Send Message</span>
-                            </button>
-                            
+                        <h5 class="font-poppins font-semibold text-base text-primary mb-2">Interests</h5>
+                        <div class="flex flex-wrap gap-1">
+                            ${interests.map((interest, index) => `
+                                <span class="interest-tag ${tagColors[index % tagColors.length]}">${interest}</span>
+                            `).join('')}
                         </div>
                     </div>
-                    
-                    <!-- Request Stats -->
-                    <div class="detail-section">
-                        <h5 class="font-poppins font-semibold text-lg text-primary mb-4">Request Statistics</h5>
-                        <div class="space-y-3">
-                            <div class="flex justify-between items-center">
-                                <span class="text-text-secondary">Views</span>
-                                <span class="font-semibold text-primary">${request.views}</span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-text-secondary">Likes</span>
-                                <span class="font-semibold text-primary">${request.likes}</span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-text-secondary">Matches</span>
-                                <span class="font-semibold text-primary">${request.matches}</span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-text-secondary">Created</span>
-                                <span class="font-semibold text-primary">${request.created_at}</span>
-                            </div>
+                ` : ''}
+                
+                <!-- Ideal Partner -->
+                <div class="detail-section">
+                    <h5 class="font-poppins font-semibold text-base text-primary mb-2">Ideal Partner</h5>
+                    <p class="text-sm text-text-primary mb-3">${request.ideal_partner}</p>
+                    <div class="grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                            <div class="detail-label">Age Range</div>
+                            <div class="detail-value">${request.partner_preferences.min_age || 'Any'} - ${request.partner_preferences.max_age || 'Any'}</div>
+                        </div>
+                        <div>
+                            <div class="detail-label">Gender</div>
+                            <div class="detail-value">${request.partner_preferences.gender || 'Any'}</div>
                         </div>
                     </div>
-                    
-                    
-                    
-                    <!-- Compatibility Score -->
-                    <div class="detail-section text-center">
-                        <h5 class="font-poppins font-semibold text-lg text-primary mb-4">Potential Compatibility</h5>
-                        <div class="compatibility-badge mx-auto mb-3">
-                            <i class="bi bi-heart-fill mr-2"></i>
-                            <span>${calculateCompatibility(request)}% Match</span>
-                        </div>
-                        <p class="text-text-secondary text-sm">Based on shared interests and preferences</p>
-                    </div>
+                </div>
+                
+                <!-- Actions -->
+                <div class="flex gap-2">
+                    <button onclick="sendLike(${request.id})" class="btn btn-rose flex-1">
+                        <i class="bi bi-heart"></i>
+                        <span>Send Like</span>
+                    </button>
+                    <button onclick="sendMessage(${request.id})" class="btn btn-primary flex-1">
+                        <i class="bi bi-chat"></i>
+                        <span>Message</span>
+                    </button>
                 </div>
             </div>
         `;
       }
 
       function calculateCompatibility(request) {
-        // Simple compatibility calculation based on shared interests
         const userInterests = JSON.parse(localStorage.getItem('userInterests') || '[]');
         const requestInterests = request.interests || [];
         
         if (userInterests.length === 0 || requestInterests.length === 0) {
-            return Math.floor(Math.random() * 30) + 50; // Random between 50-80%
+            return Math.floor(Math.random() * 30) + 50;
         }
         
         const sharedInterests = userInterests.filter(interest => 
@@ -1019,7 +970,7 @@
         const totalInterests = new Set([...userInterests, ...requestInterests]).size;
         const compatibility = Math.round((sharedInterests / totalInterests) * 100);
         
-        return Math.min(compatibility + 20, 95); // Boost slightly for better UX
+        return Math.min(compatibility + 20, 95);
       }
 
       function closeModal() {
@@ -1054,8 +1005,6 @@
               button.classList.remove('liked');
               likesCount.textContent = data.like_count;
             }
-          } else {
-            showError(data.error || 'Failed to like request');
           }
         } catch (error) {
           console.error('Error liking request:', error);
@@ -1078,9 +1027,7 @@
           if (data.success) {
             showSuccess('Like sent successfully!');
             closeModal();
-            reloadRequests(); // Refresh to update counts
-          } else {
-            showError(data.error || 'Failed to send like');
+            reloadRequests();
           }
         } catch (error) {
           console.error('Error sending like:', error);
@@ -1107,18 +1054,12 @@
           if (data.success) {
             showSuccess('Message sent successfully!');
             closeModal();
-            reloadRequests(); // Refresh to update counts
-          } else {
-            showError(data.error || 'Failed to send message');
+            reloadRequests();
           }
         } catch (error) {
           console.error('Error sending message:', error);
           showError('Failed to send message');
         }
-      }
-
-      function showCompatibility(requestId) {
-        showSuccess('Compatibility feature coming soon!');
       }
 
       async function updateStats() {
@@ -1142,9 +1083,9 @@
         if (currentCount === 0) {
           resultsElement.textContent = 'No requests found';
         } else if (currentCount === totalCount) {
-          resultsElement.textContent = `Showing all ${currentCount} requests`;
+          resultsElement.textContent = `${currentCount} requests`;
         } else {
-          resultsElement.textContent = `Showing ${currentCount} of ${totalCount} requests`;
+          resultsElement.textContent = `${currentCount} of ${totalCount} requests`;
         }
       }
 
@@ -1152,7 +1093,6 @@
         const locations = [...new Set(requests.map(req => req.user.location).filter(Boolean))];
         const select = document.getElementById('locationFilter');
         
-        // Clear existing options except the first one
         while (select.children.length > 1) {
           select.removeChild(select.lastChild);
         }
@@ -1166,12 +1106,10 @@
       }
 
       function showError(message) {
-        // Simple error display - you could use a more sophisticated notification system
         alert('Error: ' + message);
       }
 
       function showSuccess(message) {
-        // Simple success display - you could use a more sophisticated notification system
         alert('Success: ' + message);
       }
 
