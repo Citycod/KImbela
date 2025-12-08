@@ -1516,32 +1516,7 @@
         </div>
 
         <!-- User Profile -->
-        <div class="dropdown relative ml-2">
-          <img
-            src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-            alt="{{ current_user.first_name }}"
-            class="w-10 h-10 rounded-full object-cover cursor-pointer border-2 border-transparent hover:border-fb-blue transition-all"
-            data-bs-toggle="dropdown"
-          />
-          <div
-            class="dropdown-menu absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-strong overflow-hidden z-50 hidden"
-          >
-            <a
-              class="dropdown-item block px-4 py-2 hover:bg-fb-gray transition-colors"
-              href="{{ url_for('user.profile', user_id=current_user.id) }}"
-            >
-              <i class="bi bi-person-circle mr-2"></i> Profile
-            </a>
-
-            <div class="border-t border-fb-border"></div>
-            <a
-              class="dropdown-item block px-4 py-2 text-red-500 hover:bg-red-50 transition-colors"
-              href="{{ url_for('user.logout') }}"
-            >
-              <i class="bi bi-box-arrow-right mr-2"></i> Logout
-            </a>
-          </div>
-        </div>
+        
       </div>
     </nav>
 
@@ -1846,6 +1821,13 @@
             >
           </a>
 
+          <a
+              class="dropdown-item block px-4 py-2 text-red-500 hover:bg-red-50 transition-colors"
+              href="{{ url_for('user.logout') }}"
+            >
+              <i class="bi bi-box-arrow-right mr-2"></i> Logout
+            </a>
+
           <!-- My Match Requests -->
         </div>
       </div>
@@ -2010,6 +1992,14 @@
           ></i>
           <span class="font-medium">Browse Match Requests</span>
         </a>
+
+
+        <a
+              class="dropdown-item block px-4 py-2 text-red-500 hover:bg-red-50 transition-colors"
+              href="{{ url_for('user.logout') }}"
+            >
+              <i class="bi bi-box-arrow-right mr-2"></i> Logout
+            </a>
 
         <!-- Sponsored Section -->
         <div class="mt-8 pt-6 border-t border-fb-border">
