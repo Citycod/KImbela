@@ -1,0 +1,159 @@
+{% for post in posts %}
+<div class="post-card bg-white rounded-2xl shadow-soft mb-6 overflow-hidden card-hover" 
+     data-post-id="{{ post.id }}"
+     data-post-time="{{ post.created_at.timestamp() }}">
+    <div class="p-4 flex justify-between items-start">
+        <div class="flex items-start space-x-3">
+            <img
+                src="{{ post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+                class="w-10 h-10 rounded-full object-cover"
+            />
+            <div>
+                <div class="font-semibold">
+                    {{ post.author.first_name }} {{ post.author.last_name }}
+                </div>
+                <div class="text-sm text-fb-text-light">
+                    {{ post.created_at.strftime('%b %d at %I:%M %p') }}
+                </div>
+            </div>
+        </div>
+        <div class="dropdown relative">
+            <button
+                class="p-2 rounded-full hover:bg-fb-gray transition-colors"
+                data-bs-toggle="dropdown"
+            >
+                <i class="bi bi-three-dots"></i>
+            </button>
+            <div
+                class="dropdown-menu absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-strong overflow-hidden z-10 hidden"
+            >
+                {% if post.author.id == current_user.id %}
+                <a
+                    class="dropdown-item block px-4 py-2 hover:bg-fb-gray transition-colors text-blue-600 edit-post"
+                    href="#"
+                    data-bs-toggle="modal"
+                    data-bs-target="#editPostModal"
+                    data-post-id="{{ post.id }}"
+                >
+                    Edit
+                </a>
+                <a
+                    class="dropdown-item block px-4 py-2 hover:bg-fb-gray transition-colors text-red-600 delete-post"
+                    href="#"
+                    data-post-id="{{ post.id }}"
+                >
+                    Delete
+                    <span
+                        class="loader inline-block ml-1"
+                        style="display: none"
+                    ></span>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="px-4 pb-3">
+        <p
+            class="post-text {% if post.content|length > 100 %}truncated{% endif %}"
+            id="post-text-{{ post.id }}"
+        >
+            {{ post.content }}
+        </p>
+        {% if post.content|length > 100 %}
+        <button
+            class="see-more-btn text-blue-600 font-medium text-sm mt-1"
+            onclick="togglePostText({{ post.id }})"
+        >
+            See More
+        </button>
+        {% endif %}
+        
+        {% if post.image %}
+        <div class="post-media mt-3">
+            <img
+                src="{{ post.image }}"
+                alt="Post"
+                class="w-full rounded-2xl max-h-96 object-cover"
+                loading="lazy"
+            />
+        </div>
+        {% endif %}
+        
+        {% if post.video %}
+        <div class="post-media mt-3">
+            <video controls class="w-full rounded-2xl max-h-96" preload="metadata">
+                <source src="{{ post.video }}" />
+            </video>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Likes/Comments/Share -->
+    <div
+        class="px-4 py-3 border-t border-fb-border flex justify-between text-fb-text-light font-medium"
+    >
+        <button
+            class="action-btn like-btn flex items-center space-x-1 px-2 py-1 rounded-lg hover:bg-fb-gray transition-colors {% if current_user.has_liked_post(post.id) %}text-blue-600{% endif %}"
+            data-post-id="{{ post.id }}"
+        >
+            <i class="bi bi-hand-thumbs-up{% if current_user.has_liked_post(post.id) %}-fill{% endif %}"></i>
+            <span class="like-count">{{ post.likes|length }}</span>
+        </button>
+        <button
+            class="action-btn view-comments flex items-center space-x-1 px-2 py-1 rounded-lg hover:bg-fb-gray transition-colors"
+            data-bs-toggle="modal"
+            data-bs-target="#commentModal"
+            data-post-id="{{ post.id }}"
+        >
+            <i class="bi bi-chat"></i>
+            <span>Comment</span>
+        </button>
+        <button
+            class="action-btn share-btn flex items-center space-x-1 px-2 py-1 rounded-lg hover:bg-fb-gray transition-colors"
+            data-url="{{ url_for('user.user_dashboard', _anchor='post-' ~ post.id) }}"
+        >
+            <i class="bi bi-share"></i>
+            <span>Share</span>
+        </button>
+    </div>
+    
+    <!-- Comments Section -->
+    <div
+        class="comments-section px-4 py-3 bg-gray-50 border-t border-fb-border"
+    >
+        <div class="comment-input flex items-center space-x-2 mb-3">
+            <img
+                src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+                alt=""
+                class="w-8 h-8 rounded-full object-cover"
+            />
+            <input
+                type="text"
+                placeholder="Write a comment..."
+                class="add-comment flex-1 bg-white rounded-full px-4 py-2 border-0 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                data-post-id="{{ post.id }}"
+            />
+        </div>
+        {% for comment in post.comments[:2] %}  <!-- Show only 2 comments initially -->
+        <div
+            class="comment flex space-x-2 mb-3"
+            id="comment-{{ comment.id }}"
+        >
+            <img
+                src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+                alt=""
+                class="w-8 h-8 rounded-full object-cover flex-shrink-0"
+            />
+            <div class="flex-1">
+                <div class="bg-white rounded-2xl px-3 py-2">
+                    <div class="font-semibold text-sm">
+                        {{ comment.author.first_name }}
+                    </div>
+                    <div class="text-sm">{{ comment.content[:100] }}{% if comment.content|length > 100 %}...{% endif %}</div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endfor %}

@@ -9,6 +9,7 @@ from flask import (
     session,
     current_app,
 )
+from sqlalchemy.orm import joinedload
 
 from models import (
     MatchmakingPackage,
@@ -210,7 +211,6 @@ def create_sample_packages():
 
     db.session.commit()
 
-
 @user.route("/user_dashboard", methods=["GET", "POST"])
 @login_required
 def user_dashboard():
@@ -266,41 +266,112 @@ def user_dashboard():
 
         return redirect(url_for("user.user_dashboard"))
 
-    # GET request handling (your existing code)
-    posts = Post.query.order_by(Post.created_at.desc()).all()
-    # 1. Get ALL other users (no block filtering in SQL)
-    all_users = User.query.filter(User.id != current_user.id).all()
-
-    # 2. Filter in Python using your existing methods
-    all_users = [
-        u
-        for u in all_users
-        if not u.is_blocked_by(current_user)  # u did NOT block me
-        and not current_user.is_blocked_by(u)  # I did NOT block u
-    ]
-    # FRIENDS (visible only)
-    friends = [f for f in current_user.friends if f.is_visible_to(current_user)]
-
-    # NON-FRIENDS for suggestions
-    friend_ids = {f.id for f in friends}
-
-    non_friends = [u for u in all_users if u.id not in friend_ids]
-    friend_ids = {friend.id for friend in current_user.friends}
-    non_friends = [u for u in all_users if u.id not in friend_ids]
-    random_three = (
-        sample(non_friends, min(1000, len(non_friends))) if non_friends else []
+    # ====== OPTIMIZED GET REQUEST ======
+    
+    # Get cursor for infinite scroll (last post ID)
+    cursor = request.args.get('cursor', type=int)
+    limit = request.args.get('limit', 10, type=int)
+    
+    # Get current user's blocked users IDs
+    blocked_user_ids = [user.id for user in current_user.blocked_users]
+    blocker_ids = [user.id for user in current_user.blocked_by]
+    
+    # Build posts query with proper relationships eager loaded
+    # Only load relationships that actually exist in your Post model
+    posts_query = Post.query.options(
+        joinedload(Post.author),  # Eager load author
+        joinedload(Post.comments).joinedload(Comment.author),  # Eager load comments with their authors
+        # Remove joinedload(Post.likes) if it's not a relationship
+        # Remove joinedload(Post.post_reactions) if it's not a relationship
     )
-
+    
+    # Filter out posts from blocked users and users who blocked current user
+    posts_query = posts_query.filter(
+        ~Post.author_id.in_(blocked_user_ids),
+        ~Post.author_id.in_(blocker_ids)
+    )
+    
+    # Apply cursor-based pagination
+    if cursor:
+        # For infinite scroll: get posts older than the cursor
+        posts_query = posts_query.filter(Post.id < cursor)
+    
+    # Order and limit
+    posts = posts_query.order_by(Post.created_at.desc()).limit(limit).all()
+    
+    # Get next cursor (ID of the last post for next page)
+    next_cursor = posts[-1].id if posts else None
+    
+    # Check if there are more posts
+    if posts:
+        has_more = Post.query.filter(
+            Post.id < posts[-1].id,
+            ~Post.author_id.in_(blocked_user_ids),
+            ~Post.author_id.in_(blocker_ids)
+        ).count() > 0
+    else:
+        has_more = False
+    
+    # 2. OPTIMIZED FRIENDS QUERY
+    # Get IDs of current user's friends
+    friend_ids = db.session.query(friendship.c.friend_id).filter(
+        friendship.c.user_id == current_user.id
+    ).union_all(
+        db.session.query(friendship.c.user_id).filter(
+            friendship.c.friend_id == current_user.id
+        )
+    ).all()
+    
+    friend_ids = [fid[0] for fid in friend_ids] if friend_ids else []
+    
+    # Get actual friend objects (excluding blocked users)
+    if friend_ids:
+        friends = User.query.filter(
+            User.id.in_(friend_ids),
+            ~User.id.in_(blocked_user_ids),
+            ~User.id.in_(blocker_ids)
+        ).all()
+    else:
+        friends = []
+    
+    # 3. OPTIMIZED SUGGESTIONS (Non-friends)
+    # Get users who are not friends, not blocked, and not blocking
+    non_friend_query = User.query.filter(
+        User.id != current_user.id,
+        ~User.id.in_(friend_ids) if friend_ids else True,
+        ~User.id.in_(blocked_user_ids),
+        ~User.id.in_(blocker_ids)
+    )
+    
+    # Get only 3 random suggestions
+    random_three = non_friend_query.order_by(db.func.random()).limit(3).all()
+    
+    # If this is an AJAX request for infinite scroll, return JSON
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        # Render posts as HTML
+        posts_html = render_template('_posts_partial.html', 
+                                    posts=posts, 
+                                    current_user=current_user)
+        
+        return jsonify({
+            'success': True,
+            'posts': posts_html,
+            'next_cursor': next_cursor,
+            'has_more': has_more,
+            'count': len(posts)
+        })
+    
+    # Regular request - render full page
     return render_template(
         "user_dashboard.html",
-        posts=posts,
+        initial_posts=posts,  # Initial batch of posts
+        next_cursor=next_cursor,
+        has_more=has_more,
         current_user=current_user,
-        all_users=all_users,
         friends=friends,
         random_three=random_three,
         csrf_token=generate_csrf(),
     )
-
 
 @user.route("/like_post/<int:post_id>", methods=["POST"])
 @login_required

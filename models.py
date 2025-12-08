@@ -40,6 +40,26 @@ group_members = db.Table(
 # Main User model
 class User(db.Model, UserMixin):
     __tablename__ = "users"
+    
+    
+    __table_args__ = (
+        # Single column indexes
+        db.Index('idx_users_email', 'email', unique=True),
+        db.Index('idx_users_is_online', 'is_online'),
+        db.Index('idx_users_last_seen', 'last_seen'),
+        db.Index('idx_users_city', 'city'),
+        db.Index('idx_users_country', 'country'),
+        db.Index('idx_users_gender', 'gender'),
+        db.Index('idx_users_created_at', 'created_at'),
+        
+        # Composite indexes for common queries
+        db.Index('idx_users_marketplace_status', 'marketplace_subscription_status', 'marketplace_subscription_expires'),
+        db.Index('idx_users_featured_until', 'marketplace_featured_until'),
+        db.Index('idx_users_city_country', 'city', 'country'),
+        db.Index('idx_users_gender_country', 'gender', 'country'),
+    )
+    
+    
     id = db.Column(db.Integer, primary_key=True)
     first_name = db.Column(db.String(50), nullable=False)
     last_name = db.Column(db.String(50), nullable=False)
@@ -552,6 +572,15 @@ class FriendRequestStatus:
 # Friend Request model
 class FriendRequest(db.Model):
     __tablename__ = "friend_requests"
+    
+    __table_args__ = (
+        db.Index('idx_friend_requests_sender_id', 'sender_id'),
+        db.Index('idx_friend_requests_receiver_id', 'receiver_id'),
+        db.Index('idx_friend_requests_status', 'status'),
+        db.Index('idx_friend_requests_sender_receiver_status', 'sender_id', 'receiver_id', 'status'),
+        db.Index('idx_friend_requests_created_at', 'created_at'),
+    )
+    
 
     id = db.Column(db.Integer, primary_key=True)
     sender_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
@@ -572,6 +601,23 @@ class FriendRequest(db.Model):
 # Post model
 class Post(db.Model):
     __tablename__ = "posts"
+    
+    __table_args__ = (
+        # Foreign key indexes
+        db.Index('idx_posts_author_id', 'author_id'),
+        db.Index('idx_posts_group_id', 'group_id'),
+        
+        # Timestamp indexes (very important for sorting)
+        db.Index('idx_posts_created_at', 'created_at'),
+        
+        # Composite indexes
+        db.Index('idx_posts_author_created', 'author_id', 'created_at'),
+        db.Index('idx_posts_group_created', 'group_id', 'created_at'),
+        
+        # Text search optimization (for LIKE queries)
+        # db.Index('idx_posts_content_trgm', 'content', postgresql_using='gin', postgresql_ops={'content': 'gin_trgm_ops'}),
+    )
+    
 
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.Text, nullable=False)
@@ -669,6 +715,19 @@ def maybe_create_notification(mapper, connection, target):
 
 # Comment model
 class Comment(db.Model):
+    
+    _tablename_ = "comments"
+    
+    __table_args__ = (
+        db.Index('idx_comments_post_id', 'post_id'),
+        db.Index('idx_comments_author_id', 'author_id'),
+        db.Index('idx_comments_parent_id', 'parent_id'),
+        db.Index('idx_comments_created_at', 'created_at'),
+        db.Index('idx_comments_post_created', 'post_id', 'created_at'),
+        db.Index('idx_comments_author_post', 'author_id', 'post_id'),
+    )
+    
+    
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -682,6 +741,16 @@ class Comment(db.Model):
 
 # Like model
 class Like(db.Model):
+    
+    _tablename_ = "likes"
+    
+    __table_args__ = (
+        db.Index('idx_likes_user_id', 'user_id'),
+        db.Index('idx_likes_post_id', 'post_id'),
+        db.Index('idx_likes_user_post', 'user_id', 'post_id'),
+        db.Index('idx_likes_created_at', 'created_at'),
+    )
+    
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     post_id = db.Column(db.Integer, db.ForeignKey("posts.id"), nullable=False)
@@ -704,6 +773,19 @@ class NotificationType:
 
 # Notification Model
 class Notification(db.Model):
+    
+    __tablename__ = "notifications"
+    
+    __table_args__ = (
+        db.Index('idx_notifications_user_id', 'user_id'),
+        db.Index('idx_notifications_actor_id', 'actor_id'),
+        db.Index('idx_notifications_is_read', 'is_read'),
+        db.Index('idx_notifications_created_at', 'created_at'),
+        db.Index('idx_notifications_type', 'type'),
+        db.Index('idx_notifications_user_unread', 'user_id', 'is_read', 'created_at'),
+    )
+    
+    
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     actor_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
@@ -737,6 +819,20 @@ class Notification(db.Model):
 
 class Message(db.Model):
     __tablename__ = "messages"
+    
+    __table_args__ = (
+        # For finding conversations between users
+        db.Index('idx_messages_sender_receiver', 'sender_id', 'receiver_id'),
+        db.Index('idx_messages_receiver_sender', 'receiver_id', 'sender_id'),
+        
+        # Timestamp for chronological ordering
+        db.Index('idx_messages_timestamp', 'timestamp'),
+        
+        # Composite index for conversation history
+        db.Index('idx_messages_conversation', 'sender_id', 'receiver_id', 'timestamp'),
+        db.Index('idx_messages_unread_status', 'receiver_id', 'status'),
+    )
+    
     id = db.Column(db.Integer, primary_key=True)
     sender_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     receiver_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
@@ -850,6 +946,16 @@ class ReportedContent(db.Model):
 
 class Reaction(db.Model):
     __tablename__ = "reactions"
+    
+    
+    __table_args__ = (
+        db.Index('idx_reactions_user_id', 'user_id'),
+        db.Index('idx_reactions_post_id', 'post_id'),
+        db.Index('idx_reactions_user_post', 'user_id', 'post_id'),
+        db.Index('idx_reactions_created_at', 'created_at'),
+        db.Index('idx_reactions_type', 'reaction_type'),
+    )
+    
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(
@@ -1291,6 +1397,35 @@ class MarketplaceService(db.Model):
     """Services listed in the marketplace"""
 
     __tablename__ = "marketplace_services"
+    
+    __table_args__ = (
+        # Foreign key indexes
+        db.Index('idx_services_seller_id', 'seller_id'),
+        db.Index('idx_services_category_id', 'category_id'),
+        db.Index('idx_services_subscription_id', 'subscription_id'),
+        
+        # Status and filtering indexes
+        db.Index('idx_services_status', 'status'),
+        db.Index('idx_services_is_featured', 'is_featured'),
+        db.Index('idx_services_service_type', 'service_type'),
+        db.Index('idx_services_price', 'price'),
+        
+        # Composite indexes for common queries
+        db.Index('idx_services_category_status', 'category_id', 'status'),
+        db.Index('idx_services_featured_status', 'is_featured', 'status'),
+        db.Index('idx_services_seller_status', 'seller_id', 'status'),
+        db.Index('idx_services_created_at', 'created_at'),
+        
+        # For sorting and pagination
+        db.Index('idx_services_rating_views', 'average_rating', 'views'),
+        db.Index('idx_services_price_created', 'price', 'created_at'),
+        
+        # Text search optimization
+        # db.Index('idx_services_title_trgm', 'title', postgresql_using='gin', postgresql_ops={'title': 'gin_trgm_ops'}),
+        # db.Index('idx_services_description_trgm', 'description', postgresql_using='gin', postgresql_ops={'description': 'gin_trgm_ops'}),
+    )
+    
+    
 
     id = db.Column(db.Integer, primary_key=True)
     seller_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)

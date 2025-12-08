@@ -5,38 +5,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dashboard – Kimbela</title>
 
-
     <script>
-        // Check if Tailwind loads properly
-        function checkTailwind() {
-            setTimeout(() => {
-                const bodyStyles = window.getComputedStyle(document.body);
-                const hasTailwind = bodyStyles.margin === '0px' && bodyStyles.fontFamily;
-                
-                if (!hasTailwind) {
-                    console.log('🔄 Tailwind not detected, loading fallback...');
-                    loadFallbackTailwind();
-                } else {
-                    console.log('✅ Tailwind CSS loaded successfully');
-                }
-            }, 500);
-        }
+      // Check if Tailwind loads properly
+      function checkTailwind() {
+        setTimeout(() => {
+          const bodyStyles = window.getComputedStyle(document.body);
+          const hasTailwind =
+            bodyStyles.margin === "0px" && bodyStyles.fontFamily;
 
-        function loadFallbackTailwind() {
-            // Load from alternative CDN
-            const link = document.createElement('link');
-            link.rel = 'stylesheet';
-            link.href = 'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css';
-            link.onload = () => console.log('✅ Fallback Tailwind loaded');
-            link.onerror = () => {
-                console.log('❌ All CDNs failed, using inline styles');
-                loadEmergencyStyles();
-            };
-            document.head.appendChild(link);
-        }
+          if (!hasTailwind) {
+            console.log("🔄 Tailwind not detected, loading fallback...");
+            loadFallbackTailwind();
+          } else {
+            console.log("✅ Tailwind CSS loaded successfully");
+          }
+        }, 500);
+      }
 
-        function loadEmergencyStyles() {
-            const emergencyCSS = `
+      function loadFallbackTailwind() {
+        // Load from alternative CDN
+        const link = document.createElement("link");
+        link.rel = "stylesheet";
+        link.href =
+          "https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css";
+        link.onload = () => console.log("✅ Fallback Tailwind loaded");
+        link.onerror = () => {
+          console.log("❌ All CDNs failed, using inline styles");
+          loadEmergencyStyles();
+        };
+        document.head.appendChild(link);
+      }
+
+      function loadEmergencyStyles() {
+        const emergencyCSS = `
                 /* EMERGENCY STYLES - Basic Tailwind equivalents */
                 * { box-sizing: border-box; margin: 0; padding: 0; }
                 body { 
@@ -126,18 +127,21 @@
                 .custom-scrollbar::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 10px; }
                 .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
             `;
-            
-            const style = document.createElement('style');
-            style.textContent = emergencyCSS;
-            document.head.appendChild(style);
-        }
 
-        // Initialize check when DOM loads
-        document.addEventListener('DOMContentLoaded', checkTailwind);
+        const style = document.createElement("style");
+        style.textContent = emergencyCSS;
+        document.head.appendChild(style);
+      }
+
+      // Initialize check when DOM loads
+      document.addEventListener("DOMContentLoaded", checkTailwind);
     </script>
 
     <!-- Primary Tailwind CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
 
     <!-- Bootstrap Icons -->
     <link
@@ -150,6 +154,157 @@
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
+
+    <style>
+      /* Ultra Compact Modal Media Previews */
+      #mediaPreview,
+      #editMediaPreview {
+        max-height: 60vh !important;
+        overflow: hidden !important;
+      }
+
+      #mediaPreview img,
+      #mediaPreview video,
+      #editMediaPreview img,
+      #editMediaPreview video {
+        max-height: 30vh !important;
+        object-fit: contain !important;
+        border-radius: 8px !important;
+        border: 1px solid #e5e7eb !important;
+        background-color: #f9fafb !important;
+      }
+
+      /* Mobile-specific media preview adjustments */
+      @media (max-width: 640px) {
+        #postModal .modal-dialog,
+        #editPostModal .modal-dialog {
+          width: 95% !important;
+          max-width: 320px !important;
+          margin: 0.5rem !important;
+        }
+
+        #postModal .modal-body,
+        #editPostModal .modal-body {
+          padding: 1rem !important;
+        }
+
+        #mediaPreview img,
+        #mediaPreview video,
+        #editMediaPreview img,
+        #editMediaPreview video {
+          max-height: 25vh !important;
+        }
+
+        textarea[name="post_content"],
+        #editPostContent {
+          font-size: 0.9rem !important;
+          min-height: 80px !important;
+          padding: 0.5rem !important;
+        }
+
+        .modal-header h3 {
+          font-size: 1rem !important;
+        }
+
+        .modal-footer button {
+          padding: 0.75rem !important;
+          font-size: 0.9rem !important;
+        }
+      }
+
+      /* Tablet adjustments */
+      @media (min-width: 641px) and (max-width: 1024px) {
+        #postModal .modal-dialog,
+        #editPostModal .modal-dialog {
+          max-width: 400px !important;
+        }
+
+        #mediaPreview img,
+        #mediaPreview video,
+        #editMediaPreview img,
+        #editMediaPreview video {
+          max-height: 35vh !important;
+        }
+      }
+
+      /* Desktop adjustments - still compact */
+      @media (min-width: 1025px) {
+        #postModal .modal-dialog,
+        #editPostModal .modal-dialog {
+          max-width: 450px !important;
+        }
+
+        #mediaPreview img,
+        #mediaPreview video,
+        #editMediaPreview img,
+        #editMediaPreview video {
+          max-height: 40vh !important;
+        }
+      }
+
+      /* Ensure remove button is visible and clickable */
+      #mediaPreview button,
+      #editMediaPreview button {
+        font-size: 0.75rem !important;
+        padding: 0.5rem 0.75rem !important;
+        margin-top: 0.5rem !important;
+      }
+
+      /* Make textarea more compact */
+      textarea[name="post_content"],
+      #editPostContent {
+        min-height: 100px;
+        max-height: 200px;
+        overflow-y: auto;
+        border: 1px solid #e5e7eb !important;
+        border-radius: 8px !important;
+        padding: 0.75rem !important;
+        font-size: 1rem;
+        line-height: 1.4;
+      }
+
+      /* Compact media controls for video */
+      #mediaPreview video::-webkit-media-controls,
+      #editMediaPreview video::-webkit-media-controls {
+        transform: scale(0.8);
+        transform-origin: bottom right;
+      }
+
+      /* Smooth animations for modal */
+      .modal-dialog {
+        transition: all 0.3s ease !important;
+        animation: modalSlideUp 0.3s ease-out !important;
+      }
+
+      @keyframes modalSlideUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Dark mode support */
+      @media (prefers-color-scheme: dark) {
+        #mediaPreview img,
+        #mediaPreview video,
+        #editMediaPreview img,
+        #editMediaPreview video {
+          background-color: #1f2937 !important;
+          border-color: #374151 !important;
+        }
+
+        textarea[name="post_content"],
+        #editPostContent {
+          background-color: #1f2937 !important;
+          color: #f9fafb !important;
+          border-color: #374151 !important;
+        }
+      }
+    </style>
 
     <style>
       /* Custom scrollbar */
@@ -241,163 +396,409 @@
       }
 
       /* Messenger Fixed Layout Styles */
-#chatArea {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
+      #chatArea {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+      }
 
-#chatMessagesWrapper {
-  flex: 1;
-  min-height: 0; /* Crucial for flexbox scrolling */
-  overflow-y: auto;
-}
+      #chatMessagesWrapper {
+        flex: 1;
+        min-height: 0; /* Crucial for flexbox scrolling */
+        overflow-y: auto;
+      }
 
-#chatMessages {
-  min-height: min-content;
-}
+      #chatMessages {
+        min-height: min-content;
+      }
 
-/* Ensure smooth scrolling */
-#chatMessagesWrapper {
-  scroll-behavior: smooth;
-}
+      /* Ensure smooth scrolling */
+      #chatMessagesWrapper {
+        scroll-behavior: smooth;
+      }
 
-/* Custom scrollbar for messages */
-#chatMessagesWrapper::-webkit-scrollbar {
-  width: 4px;
-}
+      /* Custom scrollbar for messages */
+      #chatMessagesWrapper::-webkit-scrollbar {
+        width: 4px;
+      }
 
-#chatMessagesWrapper::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 10px;
-}
+      #chatMessagesWrapper::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+      }
 
-#chatMessagesWrapper::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 10px;
-}
+      #chatMessagesWrapper::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 10px;
+      }
 
-#chatMessagesWrapper::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
-}
+      #chatMessagesWrapper::-webkit-scrollbar-thumb:hover {
+        background: #a8a8a8;
+      }
     </style>
 
     <style>
-            /* Scrollable Comments in Feed */
-            .comments-section {
-                max-height: 300px;           /* Limit height */
-                overflow-y: auto;            /* Enable vertical scroll */
-                padding-right: 8px;          /* Space for scrollbar */
-            }
+      /* Profile Modal Responsive Styles */
+      @media (max-width: 640px) {
+        /* Make modal much smaller on mobile */
+        #profileModal .modal-dialog {
+          width: 90% !important;
+          max-width: 380px !important;
+          margin: 1rem !important;
+          max-height: 85vh !important;
+        }
 
-            /* Scrollable Comments Modal */
-            #commentModalBody {
-                max-height: 60vh;            /* 60% of viewport height */
-                overflow-y: auto;
-                padding-right: 8px;
-            }
+        /* Reduce header padding */
+        #profileModal .modal-header {
+          padding: 0.75rem 1rem !important;
+        }
 
-            /* Optional: Custom scrollbar for comments */
-            .comments-section::-webkit-scrollbar,
-            #commentModalBody::-webkit-scrollbar {
-                width: 6px;
-            }
+        #profileModal .modal-header h3 {
+          font-size: 1.125rem !important;
+        }
 
-            .comments-section::-webkit-scrollbar-track,
-            #commentModalBody::-webkit-scrollbar-track {
-                background: #f1f1f1;
-                border-radius: 10px;
-            }
+        /* Make profile info container much more compact */
+        #profileModal .profile-info-container {
+          margin-top: -3.5rem !important;
+          padding-bottom: 1rem !important;
+          padding-left: 0.75rem !important;
+          padding-right: 0.75rem !important;
+        }
 
-            .comments-section::-webkit-scrollbar-thumb,
-            #commentModalBody::-webkit-scrollbar-thumb {
-                background: #c1c1c1;
-                border-radius: 10px;
-            }
+        /* Reduce avatar size */
+        #profileModal .profile-avatar {
+          width: 5rem !important;
+          height: 5rem !important;
+          border-width: 2px !important;
+        }
 
-            .comments-section::-webkit-scrollbar-thumb:hover,
-            #commentModalBody::-webkit-scrollbar-thumb:hover {
-                background: #a8a8a8;
-            }
+        /* Make profile name smaller */
+        #profileModal .profile-name {
+          font-size: 1.125rem !important;
+          line-height: 1.2 !important;
+        }
 
-            /* Truncate long comment text with "See More" */
-            .comment-text {
-                max-height: 100px;
-                overflow: hidden;
-                position: relative;
-            }
+        /* Make profile details smaller */
+        #profileModal .profile-details {
+          gap: 0.25rem !important;
+          margin-top: 0.5rem !important;
+        }
 
-            .comment-text.truncated::after {
-                content: '';
-                position: absolute;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                height: 30px;
-                background: linear-gradient(transparent, #f9fafb);
-            }
+        #profileModal .detail-item {
+          font-size: 0.7rem !important;
+          padding: 0.25rem 0.5rem !important;
+        }
 
-            .comment-text.expanded {
-                max-height: none;
-            }
+        /* Reduce bio text */
+        #profileModal .profile-bio {
+          margin-top: 0.5rem !important;
+          font-size: 0.8rem !important;
+          line-height: 1.3 !important;
+        }
 
+        /* Make details section compact */
+        #profileModal .profile-details-section {
+          margin-top: 1rem !important;
+          padding-left: 0.75rem !important;
+          padding-right: 0.75rem !important;
+          padding-bottom: 1rem !important;
+        }
 
-              /* Scrollable Comments in Feed */
-        .comments-section {
-          max-height: 300px;           /* Limit height */
-          overflow-y: auto;            /* Enable vertical scroll */
-          padding-right: 8px;          /* Space for scrollbar */
+        /* Single column layout for details */
+        #profileModal .grid-cols-1 {
+          gap: 0.75rem !important;
+        }
+
+        /* Reduce card padding */
+        #profileModal .detail-card {
+          padding: 0.75rem !important;
+        }
+
+        /* Reduce card title size */
+        #profileModal .detail-card-title {
+          font-size: 0.875rem !important;
+          margin-bottom: 0.5rem !important;
+        }
+
+        /* Reduce detail list spacing */
+        #profileModal .detail-list {
+          gap: 0.5rem !important;
+        }
+
+        /* Reduce detail row font sizes */
+        #profileModal .detail-row {
+          font-size: 0.75rem !important;
+          flex-wrap: nowrap !important;
+        }
+
+        #profileModal .detail-label {
+          min-width: 3.5rem !important;
+          font-size: 0.7rem !important;
+        }
+
+        #profileModal .detail-value {
+          font-size: 0.7rem !important;
+          word-break: break-word !important;
+        }
+
+        /* Reduce modal footer padding */
+        #profileModal .modal-footer {
+          padding: 0.75rem !important;
+        }
+
+        /* Make action buttons smaller */
+        #profileModal .btn {
+          padding: 0.375rem 0.75rem !important;
+          font-size: 0.75rem !important;
+        }
+
+        /* Reduce cover photo height */
+        #profileModal .cover-photo-container {
+          height: 6rem !important;
+        }
+      }
+
+      /* Extra small devices (phones, 480px and down) */
+      @media (max-width: 480px) {
+        /* Even smaller modal */
+        #profileModal .modal-dialog {
+          width: 95% !important;
+          max-width: 340px !important;
+          margin: 0.5rem !important;
+          max-height: 90vh !important;
+        }
+
+        /* Reduce avatar size further */
+        #profileModal .profile-avatar {
+          width: 4rem !important;
+          height: 4rem !important;
+        }
+
+        /* Even smaller profile info */
+        #profileModal .profile-info-container {
+          margin-top: -2.5rem !important;
+        }
+
+        /* Reduce cover photo height further */
+        #profileModal .cover-photo-container {
+          height: 5rem !important;
+        }
+
+        /* Hide some details on very small screens */
+        #profileModal .profile-bio {
+          font-size: 0.7rem !important;
+          line-height: 1.2 !important;
+          max-height: 3rem !important;
+          overflow: hidden !important;
+          text-overflow: ellipsis !important;
+        }
+
+        /* Stack action buttons vertically */
+        #profileModal .modal-footer {
+          flex-direction: column !important;
+          gap: 0.5rem !important;
+        }
+
+        #profileModal .btn {
+          width: 100% !important;
+          margin: 0 !important;
+        }
+      }
+
+      /* Tablet screens (641px to 768px) */
+      @media (min-width: 641px) and (max-width: 768px) {
+        #profileModal .modal-dialog {
+          width: 85% !important;
+          max-width: 500px !important;
+        }
+
+        #profileModal .profile-avatar {
+          width: 6rem !important;
+          height: 6rem !important;
+        }
+
+        #profileModal .cover-photo-container {
+          height: 8rem !important;
+        }
+      }
+    </style>
+
+    <style>
+      /* Ultra Compact Ad Modal for All Screens */
+      #adModal {
+        padding: 0 !important;
+      }
+
+      .ad-modal-content {
+        width: 90vw !important;
+        max-width: 320px !important;
+        border-radius: 16px !important;
+      }
+
+      .ad-body {
+        padding: 1rem !important;
+      }
+
+      /* Mobile-specific ad modal adjustments */
+      @media (max-width: 640px) {
+        .ad-modal-content {
+          max-width: 280px !important;
+          margin: 0 auto;
+        }
+
+        .ad-body {
+          padding: 0.75rem !important;
+        }
+
+        #adModalImage {
+          max-height: 120px !important;
+        }
+
+        .ad-body h3 {
+          font-size: 1rem !important;
+          margin-bottom: 0.5rem !important;
+        }
+
+        .ad-body p {
+          font-size: 0.8rem !important;
+          line-height: 1.3 !important;
+          margin-bottom: 0.75rem !important;
+        }
+
+        .ad-body .flex-col {
+          gap: 0.5rem !important;
+        }
+
+        .ad-body a,
+        .ad-body button {
+          padding: 0.5rem 0.75rem !important;
+          font-size: 0.8rem !important;
+        }
+      }
+
+      /* Tablet adjustments */
+      @media (min-width: 641px) and (max-width: 1024px) {
+        .ad-modal-content {
+          max-width: 300px !important;
+        }
+      }
+    </style>
+
+    <style>
+      /* Scrollable Comments in Feed */
+      .comments-section {
+        max-height: 300px; /* Limit height */
+        overflow-y: auto; /* Enable vertical scroll */
+        padding-right: 8px; /* Space for scrollbar */
       }
 
       /* Scrollable Comments Modal */
       #commentModalBody {
-          max-height: 60vh;            /* 60% of viewport height */
-          overflow-y: auto;
-          padding-right: 8px;
+        max-height: 60vh; /* 60% of viewport height */
+        overflow-y: auto;
+        padding-right: 8px;
       }
 
       /* Optional: Custom scrollbar for comments */
       .comments-section::-webkit-scrollbar,
       #commentModalBody::-webkit-scrollbar {
-          width: 6px;
+        width: 6px;
       }
 
       .comments-section::-webkit-scrollbar-track,
       #commentModalBody::-webkit-scrollbar-track {
-          background: #f1f1f1;
-          border-radius: 10px;
+        background: #f1f1f1;
+        border-radius: 10px;
       }
 
       .comments-section::-webkit-scrollbar-thumb,
       #commentModalBody::-webkit-scrollbar-thumb {
-          background: #c1c1c1;
-          border-radius: 10px;
+        background: #c1c1c1;
+        border-radius: 10px;
       }
 
       .comments-section::-webkit-scrollbar-thumb:hover,
       #commentModalBody::-webkit-scrollbar-thumb:hover {
-          background: #a8a8a8;
+        background: #a8a8a8;
       }
 
       /* Truncate long comment text with "See More" */
       .comment-text {
-          max-height: 100px;
-          overflow: hidden;
-          position: relative;
+        max-height: 100px;
+        overflow: hidden;
+        position: relative;
       }
 
       .comment-text.truncated::after {
-          content: '';
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          height: 30px;
-          background: linear-gradient(transparent, #f9fafb);
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 30px;
+        background: linear-gradient(transparent, #f9fafb);
       }
 
       .comment-text.expanded {
-          max-height: none;
+        max-height: none;
+      }
+
+      /* Scrollable Comments in Feed */
+      .comments-section {
+        max-height: 300px; /* Limit height */
+        overflow-y: auto; /* Enable vertical scroll */
+        padding-right: 8px; /* Space for scrollbar */
+      }
+
+      /* Scrollable Comments Modal */
+      #commentModalBody {
+        max-height: 60vh; /* 60% of viewport height */
+        overflow-y: auto;
+        padding-right: 8px;
+      }
+
+      /* Optional: Custom scrollbar for comments */
+      .comments-section::-webkit-scrollbar,
+      #commentModalBody::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .comments-section::-webkit-scrollbar-track,
+      #commentModalBody::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+      }
+
+      .comments-section::-webkit-scrollbar-thumb,
+      #commentModalBody::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 10px;
+      }
+
+      .comments-section::-webkit-scrollbar-thumb:hover,
+      #commentModalBody::-webkit-scrollbar-thumb:hover {
+        background: #a8a8a8;
+      }
+
+      /* Truncate long comment text with "See More" */
+      .comment-text {
+        max-height: 100px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .comment-text.truncated::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 30px;
+        background: linear-gradient(transparent, #f9fafb);
+      }
+
+      .comment-text.expanded {
+        max-height: none;
       }
 
       .comments-section {
@@ -518,17 +919,458 @@
       .simple-loader {
         transition: opacity 0.3s ease-out;
       }
+
+      #mediaPreview video,
+      #mediaPreview img {
+        max-width: 100%;
+        border-radius: 10px;
+      }
+
+      #mediaPreview video {
+        max-height: 30vh; /* keeps video from taking over small screens */
+        object-fit: cover;
+      }
+
+      #mediaPreview img {
+        max-height: 30vh; /* keeps video from taking over small screens */
+        object-fit: cover;
+      }
     </style>
-  <style>
+
+    <style>
+      /* Mobile-specific post composer adjustments */
+      @media (max-width: 640px) {
+        /* Make composer buttons more compact */
+        .composer-btn {
+          padding: 0.375rem 0.125rem !important;
+          font-size: 0.7rem !important;
+        }
+
+        /* Adjust icon sizes */
+        .composer-btn i {
+          font-size: 0.875rem !important;
+        }
+
+        /* Reduce composer input size */
+        .composer-input {
+          padding: 0.5rem 0.75rem !important;
+          font-size: 0.8rem !important;
+        }
+
+        /* Make profile picture smaller */
+        .composer-card img {
+          width: 2rem !important;
+          height: 2rem !important;
+        }
+      }
+
+      /* Extra small devices (phones, 480px and down) */
+      @media (max-width: 480px) {
+        .composer-btn {
+          padding: 0.25rem 0 !important;
+        }
+
+        .composer-btn i {
+          font-size: 0.75rem !important;
+        }
+
+        .composer-input {
+          font-size: 0.75rem !important;
+          padding: 0.375rem 0.5rem !important;
+        }
+
+        .composer-card {
+          padding: 0.75rem !important;
+        }
+      }
+
+      /* Ensure text is hidden on mobile but visible on desktop */
+      .composer-btn span {
+        display: none;
+      }
+
+      @media (min-width: 640px) {
+        .composer-btn span {
+          display: inline;
+        }
+      }
+
+      /* Smooth hover effects */
+      .composer-btn:hover i {
+        transform: scale(1.1);
+        transition: transform 0.2s ease;
+      }
+
+      .composer-input:hover {
+        background-color: #e5e7eb !important;
+      }
+    </style>
+
+    <style>
+      /* ======================================== */
+      /* BEAUTIFUL TINY LOADERS SYSTEM */
+      /* ======================================== */
+
+      /* Base Loader Class */
+      .tiny-loader {
+        display: inline-block;
+        width: 1rem;
+        height: 1rem;
+        border: 2px solid rgba(0, 0, 0, 0.1);
+        border-radius: 50%;
+        border-top-color: currentColor;
+        animation: spin 0.6s linear infinite;
+      }
+
+      .tiny-loader.white {
+        border-top-color: white;
+      }
+
+      .tiny-loader.primary {
+        border-top-color: #2563eb;
+      }
+
+      .tiny-loader.success {
+        border-top-color: #10b981;
+      }
+
+      .tiny-loader.danger {
+        border-top-color: #ef4444;
+      }
+
+      .tiny-loader.warning {
+        border-top-color: #f59e0b;
+      }
+
+      .tiny-loader.purple {
+        border-top-color: #8b5cf6;
+      }
+
+      /* Different sizes */
+      .tiny-loader.xs {
+        width: 0.75rem;
+        height: 0.75rem;
+        border-width: 1.5px;
+      }
+
+      .tiny-loader.sm {
+        width: 1rem;
+        height: 1rem;
+      }
+
+      .tiny-loader.md {
+        width: 1.25rem;
+        height: 1.25rem;
+      }
+
+      .tiny-loader.lg {
+        width: 1.5rem;
+        height: 1.5rem;
+      }
+
+      /* Pulse loader for page transitions */
+      .pulse-loader {
+        display: inline-block;
+        width: 0.75rem;
+        height: 0.75rem;
+        background: currentColor;
+        border-radius: 50%;
+        animation: pulse 1.5s ease-in-out infinite;
+      }
+
+      /* Dots loader for messaging */
+      .dots-loader {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+      }
+
+      .dots-loader span {
+        width: 4px;
+        height: 4px;
+        background: currentColor;
+        border-radius: 50%;
+        animation: dots 1.4s ease-in-out infinite both;
+      }
+
+      .dots-loader span:nth-child(1) {
+        animation-delay: -0.32s;
+      }
+      .dots-loader span:nth-child(2) {
+        animation-delay: -0.16s;
+      }
+
+      /* Bar loader for uploads */
+      .bar-loader {
+        width: 3rem;
+        height: 3px;
+        background: rgba(0, 0, 0, 0.1);
+        border-radius: 1.5px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .bar-loader::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 40%;
+        background: currentColor;
+        animation: bar 1.5s ease-in-out infinite;
+      }
+
+      /* Inline button loader */
+      .btn-loader {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+      }
+
+      /* Avatar loader */
+      .avatar-loader {
+        width: 2.5rem;
+        height: 2.5rem;
+        border: 2px solid rgba(0, 0, 0, 0.1);
+        border-top-color: #2563eb;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+
+      /* Card skeleton loader */
+      .skeleton-loader {
+        background: linear-gradient(
+          90deg,
+          #f0f0f0 25%,
+          #e0e0e0 50%,
+          #f0f0f0 75%
+        );
+        background-size: 200% 100%;
+        animation: skeleton 1.5s ease-in-out infinite;
+      }
+
+      /* Animations */
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+
+      @keyframes dots {
+        0%,
+        80%,
+        100% {
+          transform: scale(0);
+        }
+        40% {
+          transform: scale(1);
+        }
+      }
+
+      @keyframes bar {
+        0% {
+          transform: translateX(-100%);
+        }
+        50% {
+          transform: translateX(100%);
+        }
+        100% {
+          transform: translateX(200%);
+        }
+      }
+
+      @keyframes skeleton {
+        0% {
+          background-position: 200% 0;
+        }
+        100% {
+          background-position: -200% 0;
+        }
+      }
+
+      /* Loader for modals */
+      .modal-loader {
+        position: absolute;
+        inset: 0;
+        background: rgba(255, 255, 255, 0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+        border-radius: inherit;
+      }
+
+      /* Specific element loaders */
+      .loading-overlay {
+        position: relative;
+      }
+
+      .loading-overlay::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: rgba(255, 255, 255, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 5;
+      }
+
+      .loading-overlay.loading::after {
+        content: "⏳";
+        font-size: 1.5rem;
+      }
+
+      /* Messenger typing loader */
+      .typing-loader {
+        display: flex;
+        gap: 3px;
+        padding: 0.5rem;
+      }
+
+      .typing-loader span {
+        width: 6px;
+        height: 6px;
+        background: #6b7280;
+        border-radius: 50%;
+        animation: typing 1.4s ease-in-out infinite both;
+      }
+
+      .typing-loader span:nth-child(1) {
+        animation-delay: -0.32s;
+      }
+      .typing-loader span:nth-child(2) {
+        animation-delay: -0.16s;
+      }
+
+      @keyframes typing {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-5px);
+        }
+      }
+    </style>
+
+    <style>
+      /* Smooth transitions for loaders */
+      button {
+        transition: all 0.3s ease;
+      }
+
+      .btn-loader {
+        transition: all 0.3s ease;
+      }
+
+      /* Fade in animation for new content */
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .animate-fadeIn {
+        animation: fadeIn 0.3s ease-out;
+      }
+
+      /* Skeleton loading animation */
+      .skeleton-item {
+        background: linear-gradient(
+          90deg,
+          #f0f0f0 25%,
+          #e0e0e0 50%,
+          #f0f0f0 75%
+        );
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
+      }
+
+      /* Button loading states */
+      .btn-loading {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .btn-loading::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.2);
+        animation: shimmer 1.5s infinite;
+      }
+
+      @keyframes shimmer {
+        0% {
+          transform: translateX(-100%);
+        }
+        100% {
+          transform: translateX(100%);
+        }
+      }
+
+      /* Message sending animation */
+      .message-sending {
+        opacity: 0.7;
+      }
+
+      .message-sending::after {
+        content: "";
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        margin-left: 5px;
+        border: 2px solid rgba(0, 0, 0, 0.1);
+        border-top-color: currentColor;
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+      }
+    </style>
+
+    <style>
       /* Final responsive overrides */
-      .loader-spinner { width: clamp(36px, 6vw, 50px); height: clamp(36px, 6vw, 50px); margin-bottom: 0.75rem; }
-      .loader-text { font-size: clamp(0.9rem, 2.5vw, 1rem); }
+      .loader-spinner {
+        width: clamp(36px, 6vw, 50px);
+        height: clamp(36px, 6vw, 50px);
+        margin-bottom: 0.75rem;
+      }
+      .loader-text {
+        font-size: clamp(0.9rem, 2.5vw, 1rem);
+      }
 
       @media (max-width: 767px) {
-        html { font-size: 15px; }
-        body { font-size: 0.95rem; line-height: 1.5; }
+        html {
+          font-size: 15px;
+        }
+        body {
+          font-size: 0.95rem;
+          line-height: 1.5;
+        }
         /* Constrain post media on small screens */
-        .post-media img, .post-media video { max-height: 60vh; }
+        .post-media img,
+        .post-media video {
+          max-height: 60vh;
+        }
       }
     </style>
   </head>
@@ -539,7 +1381,13 @@
           src="{{ url_for('static', filename='assets/img/kim.png') }}"
           alt="Kimbela"
           class="h-10"
-          style="max-width: 60vw; max-height: 60vh; width: 320px; height: 320px; object-fit: contain"
+          style="
+            max-width: 60vw;
+            max-height: 60vh;
+            width: 320px;
+            height: 320px;
+            object-fit: contain;
+          "
         />
       </div>
       <div class="loader-spinner"></div>
@@ -566,12 +1414,15 @@
           src="{{ url_for('static', filename='assets/img/kim.png') }}"
           alt="Kimbela"
           class="h-10 my_logo"
-          style="height: 10rem; width: 10rem;"
+          style="height: 10rem; width: 10rem"
         />
       </a>
 
       <!-- Search Bar -->
-      <div class="flex-1 flex justify-center searching" style="margin-right: 0.5rem">
+      <div
+        class="flex-1 flex justify-center searching"
+        style="margin-right: 0.5rem"
+      >
         <div class="relative w-full max-w-lg md:max-w-xl">
           <i
             class="bi bi-search absolute left-3 top-1/2 transform -translate-y-1/2 text-fb-text-light"
@@ -695,110 +1546,111 @@
     <!-- Messenger Popup -->
     <!-- Messenger Popup -->
     <!-- Messenger Popup - FIXED VERSION -->
-<div
-  id="messengerPopup"
-  class="fixed bottom-0 right-4 w-96 bg-white rounded-t-xl shadow-2xl z-50 hidden flex-col"
-  style="height: 30rem"
->
-  <div
-    class="flex justify-between items-center p-3 border-b bg-fb-blue text-white rounded-t-xl flex-none"
-    style="background: linear-gradient(135deg, #5a4500, #b88900)"
-  >
-    <h3 class="font-semibold">Messenger</h3>
-    <button
-      onclick="closeMessenger()"
-      class="text-white hover:bg-blue-600 p-1 rounded"
-      id="closeMessenger" 
-    >
-      <i class="bi bi-x-lg"></i>
-    </button>
-  </div>
-
-  <!-- Friends List Container -->
-  <div id="friendList" class="flex-1 overflow-y-auto custom-scrollbar">
-    <div id="friendsContainer" class="p-2">
-      <!-- Friends will be loaded here -->
-    </div>
-  </div>
-
-  <!-- Chat Area - FIXED LAYOUT -->
-  <div id="chatArea" class="hidden flex flex-col h-full">
-    <!-- Chat Header -->
     <div
-      id="chatHeader"
-      class="p-3 border-b bg-gray-50 flex items-center justify-between flex-none"
+      id="messengerPopup"
+      class="fixed bottom-0 right-4 w-96 bg-white rounded-t-xl shadow-2xl z-50 hidden flex-col"
+      style="height: 30rem"
     >
-      <div class="flex items-center">
+      <div
+        class="flex justify-between items-center p-3 border-b bg-fb-blue text-white rounded-t-xl flex-none"
+        style="background: linear-gradient(135deg, #5a4500, #b88900)"
+      >
+        <h3 class="font-semibold">Messenger</h3>
         <button
-          onclick="backToFriends()"
-          class="p-1 mr-2 rounded-full hover:bg-gray-200"
+          onclick="closeMessenger()"
+          class="text-white hover:bg-blue-600 p-1 rounded"
+          id="closeMessenger"
         >
-          <i class="bi bi-arrow-left"></i>
+          <i class="bi bi-x-lg"></i>
         </button>
-        <img id="chatAvatar" src="" class="w-8 h-8 rounded-full mr-2" />
-        <div>
-          <p id="chatName" class="font-medium text-sm"></p>
-          <p id="chatStatus" class="text-xs text-green-600">Online</p>
+      </div>
+
+      <!-- Friends List Container -->
+      <div id="friendList" class="flex-1 overflow-y-auto custom-scrollbar">
+        <div id="friendsContainer" class="p-2">
+          <!-- Friends will be loaded here -->
         </div>
       </div>
-    </div>
 
-    <!-- Messages Container - FIXED SCROLLABLE AREA -->
-    <div class="flex-1 overflow-hidden flex flex-col">
-      <!-- Messages + Typing Indicator (scrollable) -->
-      <div
-        id="chatMessagesWrapper"
-        class="flex-1 overflow-y-auto p-3 space-y-2 bg-gray-50"
-      >
-        <div id="chatMessages" class="flex flex-col space-y-2"></div>
-      </div>
-
-      <!-- Typing Indicator -->
-      <div
-        id="typingIndicator"
-        class="hidden px-4 py-2 bg-gray-50 flex-none border-t border-gray-200"
-      >
-        <div class="flex items-center space-x-2 text-gray-500">
-          <div class="flex space-x-1">
-            <div
-              class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-            ></div>
-            <div
-              class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-              style="animation-delay: 0.1s"
-            ></div>
-            <div
-              class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-              style="animation-delay: 0.2s"
-            ></div>
+      <!-- Chat Area - FIXED LAYOUT -->
+      <div id="chatArea" class="hidden flex flex-col h-full">
+        <!-- Chat Header -->
+        <div
+          id="chatHeader"
+          class="p-3 border-b bg-gray-50 flex items-center justify-between flex-none"
+        >
+          <div class="flex items-center">
+            <button
+              onclick="backToFriends()"
+              class="p-1 mr-2 rounded-full hover:bg-gray-200"
+            >
+              <i class="bi bi-arrow-left"></i>
+            </button>
+            <img id="chatAvatar" src="" class="w-8 h-8 rounded-full mr-2" />
+            <div>
+              <p id="chatName" class="font-medium text-sm"></p>
+              <p id="chatStatus" class="text-xs text-green-600">Online</p>
+            </div>
           </div>
-          <span id="typingUserName" class="text-xs"></span>
+        </div>
+
+        <!-- Messages Container - FIXED SCROLLABLE AREA -->
+        <div class="flex-1 overflow-hidden flex flex-col">
+          <!-- Messages + Typing Indicator (scrollable) -->
+          <div
+            id="chatMessagesWrapper"
+            class="flex-1 overflow-y-auto p-3 space-y-2 bg-gray-50"
+          >
+            <div id="chatMessages" class="flex flex-col space-y-2"></div>
+          </div>
+
+          <!-- Typing Indicator -->
+          <div
+            id="typingIndicator"
+            class="hidden px-4 py-2 bg-gray-50 flex-none border-t border-gray-200"
+          >
+            <div class="flex items-center space-x-2 text-gray-500">
+              <div class="flex space-x-1">
+                <div
+                  class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                ></div>
+                <div
+                  class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                  style="animation-delay: 0.1s"
+                ></div>
+                <div
+                  class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                  style="animation-delay: 0.2s"
+                ></div>
+              </div>
+              <span id="typingUserName" class="text-xs"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Message Input (FIXED at bottom - will not move) -->
+        <div class="border-t border-gray-200 bg-white flex-none">
+          <div
+            class="flex items-center space-x-2 p-3"
+            style="margin-bottom: 4rem"
+          >
+            <input
+              type="text"
+              id="chatInput"
+              placeholder="Type a message..."
+              class="flex-1 px-4 py-2 bg-gray-100 rounded-full text-sm border-0 focus:ring-2 focus:ring-fb-blue focus:outline-none"
+            />
+            <button
+              id="sendChatBtn"
+              class="bg-fb-blue text-white px-4 py-2 rounded-full text-sm hover:bg-blue-600 transition-colors flex-none"
+              style="background-color: black"
+            >
+              Send
+            </button>
+          </div>
         </div>
       </div>
     </div>
-
-    <!-- Message Input (FIXED at bottom - will not move) -->
-    <div class="border-t border-gray-200 bg-white flex-none">
-      <div class="flex items-center space-x-2 p-3" style="margin-bottom: 4rem;">
-        <input
-          type="text"
-          id="chatInput"
-          placeholder="Type a message..."
-          class="flex-1 px-4 py-2 bg-gray-100 rounded-full text-sm border-0 focus:ring-2 focus:ring-fb-blue focus:outline-none"
-        />
-        <button
-          id="sendChatBtn"
-          class="bg-fb-blue text-white px-4 py-2 rounded-full text-sm hover:bg-blue-600 transition-colors flex-none"
-          style="background-color: black"
-        >
-          Send
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-   
 
     <!-- MOBILE SIDEBAR -->
     <div
@@ -925,77 +1777,74 @@
                   </p>
                 </div>
               </div>
-
-              
             </div>
           </div>
 
           <a
-          href="{{ url_for('market.main_market') }}"
-          class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-orange-50 hover:to-yellow-50 transition-all duration-300 mb-2 group border border-transparent hover:border-orange-200 shadow-sm hover:shadow-md"
-        >
-          <i
-            class="bi bi-megaphone-fill mr-3 text-lg group-hover:scale-110 group-hover:rotate-12 transition-all duration-300"
-            style="color: #f59e0b; animation: pulse-glow 2s infinite"
-          ></i>
-          <span
-            class="font-medium group-hover:text-orange-700 transition-colors duration-300"
-            >Market Place</span
+            href="{{ url_for('market.main_market') }}"
+            class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-orange-50 hover:to-yellow-50 transition-all duration-300 mb-2 group border border-transparent hover:border-orange-200 shadow-sm hover:shadow-md"
           >
-        </a>
+            <i
+              class="bi bi-shop mr-3 text-lg group-hover:scale-110 group-hover:rotate-12 transition-all duration-300"
+              style="color: #f5260bff; animation: pulse-glow 2s infinite"
+            ></i>
+            <span
+              class="font-medium group-hover:text-orange-700 transition-colors duration-300"
+              >Market Place</span
+            >
+          </a>
 
           <a
-          href="{{ url_for('payments.ad_packages') }}"
-          class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-orange-50 hover:to-yellow-50 transition-all duration-300 mb-2 group border border-transparent hover:border-orange-200 shadow-sm hover:shadow-md"
-        >
-          <i
-            class="bi bi-megaphone-fill mr-3 text-lg group-hover:scale-110 group-hover:rotate-12 transition-all duration-300"
-            style="color: #f59e0b; animation: pulse-glow 2s infinite"
-          ></i>
-          <span
-            class="font-medium group-hover:text-orange-700 transition-colors duration-300"
-            >Create Sponsored Ad</span
+            href="{{ url_for('payments.ad_packages') }}"
+            class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-orange-50 hover:to-yellow-50 transition-all duration-300 mb-2 group border border-transparent hover:border-orange-200 shadow-sm hover:shadow-md"
           >
-        </a>
+            <i
+              class="bi bi-megaphone-fill mr-3 text-lg group-hover:scale-110 group-hover:rotate-12 transition-all duration-300"
+              style="color: #f59e0b; animation: pulse-glow 2s infinite"
+            ></i>
+            <span
+              class="font-medium group-hover:text-orange-700 transition-colors duration-300"
+              >Create Sponsored Ad</span
+            >
+          </a>
 
-        <!-- Match Making Request Form -->
-        <a
-          href="{{ url_for('match.requests') }}"
-          class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-pink-50 hover:to-rose-50 transition-all duration-300 mb-2 group border border-transparent hover:border-pink-200 shadow-sm hover:shadow-md"
-        >
-          <i
-            class="bi bi-heart-fill mr-3 text-lg group-hover:scale-110 group-hover:animate-bounce transition-all duration-300"
-            style="
-              color: #ec4899;
-              animation: heartbeat 1.5s ease-in-out infinite;
-            "
-          ></i>
-          <span
-            class="font-medium group-hover:text-pink-700 transition-colors duration-300"
-            >Create Match Request</span
+          <!-- Match Making Request Form -->
+          <a
+            href="{{ url_for('match.requests') }}"
+            class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-pink-50 hover:to-rose-50 transition-all duration-300 mb-2 group border border-transparent hover:border-pink-200 shadow-sm hover:shadow-md"
           >
-        </a>
+            <i
+              class="bi bi-heart-fill mr-3 text-lg group-hover:scale-110 group-hover:animate-bounce transition-all duration-300"
+              style="
+                color: #ec4899;
+                animation: heartbeat 1.5s ease-in-out infinite;
+              "
+            ></i>
+            <span
+              class="font-medium group-hover:text-pink-700 transition-colors duration-300"
+              >Create Match Request</span
+            >
+          </a>
 
-        <!-- View Match Requests -->
-        <a
-          href="{{ url_for('match.view_requests') }}"
-          class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 transition-all duration-300 mb-2 group border border-transparent hover:border-green-200 shadow-sm hover:shadow-md"
-        >
-          <i
-            class="bi bi-binoculars-fill mr-3 text-lg group-hover:scale-110 group-hover:rotate-45 transition-all duration-300"
-            style="
-              color: #10b981;
-              animation: search-sweep 3s ease-in-out infinite;
-            "
-          ></i>
-          <span
-            class="font-medium group-hover:text-green-700 transition-colors duration-300"
-            >Browse Match Requests</span
+          <!-- View Match Requests -->
+          <a
+            href="{{ url_for('match.view_requests') }}"
+            class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 transition-all duration-300 mb-2 group border border-transparent hover:border-green-200 shadow-sm hover:shadow-md"
           >
-        </a>
+            <i
+              class="bi bi-binoculars-fill mr-3 text-lg group-hover:scale-110 group-hover:rotate-45 transition-all duration-300"
+              style="
+                color: #10b981;
+                animation: search-sweep 3s ease-in-out infinite;
+              "
+            ></i>
+            <span
+              class="font-medium group-hover:text-green-700 transition-colors duration-300"
+              >Browse Match Requests</span
+            >
+          </a>
 
-        <!-- My Match Requests -->
-        
+          <!-- My Match Requests -->
         </div>
       </div>
     </div>
@@ -1110,7 +1959,6 @@
             </div>
 
             <!-- Footer with Create Button -->
-            
           </div>
         </div>
 
@@ -1119,8 +1967,8 @@
           class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-orange-50 hover:to-yellow-50 transition-all duration-300 mb-2 group border border-transparent hover:border-orange-200 shadow-sm hover:shadow-md"
         >
           <i
-            class="bi bi-megaphone-fill mr-3 text-lg group-hover:scale-110 group-hover:rotate-12 transition-all duration-300"
-            style="color: #f59e0b; animation: pulse-glow 2s infinite"
+            class="bi bi-shop mr-3 text-lg group-hover:scale-110 group-hover:rotate-12 transition-all duration-300"
+            style="color: #f5260bff; animation: pulse-glow 2s infinite"
           ></i>
           <span
             class="font-medium group-hover:text-orange-700 transition-colors duration-300"
@@ -1128,33 +1976,38 @@
           >
         </a>
 
-
         <!-- ADD THIS SPONSORED ADS LINK -->
         <a
-            href="{{ url_for('payments.ad_packages') }}"
-            class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-orange-50 hover:to-yellow-50 transition-all duration-300 mb-2 group"
-          >
-            <i
-              class="bi bi-megaphone-fill mr-3 text-lg"
-              style="color: #f59e0b"
-            ></i>
-            <span class="font-medium">Create Sponsored Ad</span>
+          href="{{ url_for('payments.ad_packages') }}"
+          class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-orange-50 hover:to-yellow-50 transition-all duration-300 mb-2 group"
+        >
+          <i
+            class="bi bi-megaphone-fill mr-3 text-lg"
+            style="color: #f59e0b"
+          ></i>
+          <span class="font-medium">Create Sponsored Ad</span>
         </a>
 
-
         <!-- Match Making Request Form -->
-        <a href="{{ url_for('match.requests') }}" class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-pink-50 hover:to-rose-50 transition-all duration-300 mb-2 group">
-            <i class="bi bi-heart-fill mr-3 text-lg" style="color: #ec4899"></i>
-            <span class="font-medium">Create Match Request</span>
+        <a
+          href="{{ url_for('match.requests') }}"
+          class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-pink-50 hover:to-rose-50 transition-all duration-300 mb-2 group"
+        >
+          <i class="bi bi-heart-fill mr-3 text-lg" style="color: #ec4899"></i>
+          <span class="font-medium">Create Match Request</span>
         </a>
 
         <!-- View Match Requests -->
-        <a href="{{ url_for('match.view_requests') }}" class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 transition-all duration-300 mb-2 group">
-            <i class="bi bi-binoculars-fill mr-3 text-lg" style="color: #10b981"></i>
-            <span class="font-medium">Browse Match Requests</span>
+        <a
+          href="{{ url_for('match.view_requests') }}"
+          class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 transition-all duration-300 mb-2 group"
+        >
+          <i
+            class="bi bi-binoculars-fill mr-3 text-lg"
+            style="color: #10b981"
+          ></i>
+          <span class="font-medium">Browse Match Requests</span>
         </a>
-
-        
 
         <!-- Sponsored Section -->
         <div class="mt-8 pt-6 border-t border-fb-border">
@@ -1189,454 +2042,257 @@
       </div>
 
       <!-- MAIN CONTENT -->
-      <div class="flex-1 max-w-2xl mx-auto p-4">
-        <!-- POST COMPOSER -->
-        <div class="bg-white rounded-2xl shadow-soft p-4 mb-6 card-hover">
-          <div class="flex items-center mb-3">
-            <a href="{{ url_for('user.profile', user_id=current_user.id) }}">
-              <img
-                src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-                alt=""
-                class="w-10 h-10 rounded-full object-cover"
-              />
-            </a>
-            <div class="flex-1 ml-3">
-              <div
-                class="composer-input bg-fb-gray rounded-full px-4 py-3 cursor-pointer hover:bg-gray-200 transition-colors"
-                data-bs-toggle="modal"
-                data-bs-target="#postModal"
-              >
-                What's on your mind, {{ current_user.first_name }}?
+      <!-- MAIN CONTENT -->
+<div class="flex-1 max-w-2xl mx-auto p-4">
+  <!-- POST COMPOSER -->
+  <div class="bg-white rounded-2xl shadow-soft p-3 sm:p-4 mb-6 card-hover">
+    <div class="flex items-center mb-3">
+      <a href="{{ url_for('user.profile', user_id=current_user.id) }}">
+        <img
+          src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+          alt=""
+          class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover"
+        />
+      </a>
+      <div class="flex-1 ml-2 sm:ml-3">
+        <div
+          class="composer-input bg-fb-gray rounded-full px-3 sm:px-4 py-2 sm:py-3 cursor-pointer hover:bg-gray-200 transition-colors text-xs sm:text-sm"
+          data-bs-toggle="modal"
+          data-bs-target="#postModal"
+        >
+          What's on your mind, {{ current_user.first_name }}?
+        </div>
+      </div>
+    </div>
+    <div class="flex justify-between pt-2 border-t border-fb-border">
+      <!-- Live Video -->
+      <button
+        class="composer-btn flex items-center justify-center flex-1 py-1.5 sm:py-2 rounded-lg hover:bg-fb-gray transition-colors text-fb-text-light font-medium text-xs sm:text-sm"
+        data-bs-toggle="modal"
+        data-bs-target="#postModal"
+      >
+        <i class="bi bi-camera-video-fill text-red-500 text-base sm:text-lg"></i>
+        <span class="hidden sm:inline ml-1 sm:ml-2">Live Video</span>
+      </button>
+
+      <!-- Photo/Video -->
+      <button
+        class="composer-btn flex items-center justify-center flex-1 py-1.5 sm:py-2 rounded-lg hover:bg-fb-gray transition-colors text-fb-text-light font-medium text-xs sm:text-sm"
+        onclick="document.getElementById('photoInput').click()"
+      >
+        <i class="bi bi-image-fill text-green-500 text-base sm:text-lg"></i>
+        <span class="hidden sm:inline ml-1 sm:ml-2">Photo/Video</span>
+        <input
+          type="file"
+          id="photoInput"
+          accept="image/*,video/*"
+          hidden
+          onchange="previewMedia(this)"
+        />
+      </button>
+
+      <!-- Feeling/Activity -->
+      <button
+        class="composer-btn flex items-center justify-center flex-1 py-1.5 sm:py-2 rounded-lg hover:bg-fb-gray transition-colors text-fb-text-light font-medium text-xs sm:text-sm"
+      >
+        <i class="bi bi-emoji-smile-fill text-yellow-500 text-base sm:text-lg"></i>
+        <span class="hidden sm:inline ml-1 sm:ml-2">Feeling/Activity</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- POSTS FEED - OPTIMIZED FOR INFINITE SCROLL -->
+  <div id="posts-feed" data-has-more="{{ has_more|tojson }}" data-next-cursor="{{ next_cursor }}">
+    
+    <!-- PEOPLE YOU MAY KNOW (Only show if we have random users) -->
+    {% if random_three %}
+    <div class="suggestions-section bg-white rounded-2xl shadow-soft p-4 mb-6">
+      <div class="flex justify-between items-center mb-3 sm:mb-4">
+        <h3 class="font-semibold text-lg">People You May Know</h3>
+      </div>
+      <div class="relative">
+        <div class="suggestions-track overflow-x-auto flex space-x-3 sm:space-x-4 pb-3 sm:pb-4 custom-scrollbar" id="suggestionsTrack">
+          {% for user in random_three %}
+          <div class="suggestion-card bg-gray-50 rounded-2xl p-4 text-center flex-shrink-0 w-48 cursor-pointer card-hover" onclick="openProfileModal({{ user.id }})">
+            <img
+              src="{{ user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+              alt="{{ user.first_name }}"
+              class="w-20 h-20 rounded-full object-cover mx-auto mb-2 sm:mb-3"
+            />
+            <div class="suggestion-name font-semibold">
+              {{ user.first_name }} {{ user.last_name }}
+            </div>
+            <div class="suggestion-mutual text-sm text-fb-text-light mb-3">
+              New to Kimbela
+            </div>
+            {% if user.id in current_user.sent_pending_ids %}
+            <button
+              class="btn-cancel-request w-full py-2 bg-gray-200 text-fb-text rounded-lg font-medium hover:bg-gray-300 transition-colors"
+              onclick="event.stopPropagation(); cancelFriendRequest({{ user.id }})"
+            >
+              Cancel Request
+            </button>
+            {% else %}
+            <button
+              class="btn-add-friend w-full py-2 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+              onclick="event.stopPropagation(); addFriend({{ user.id }})"
+              style="background: linear-gradient(135deg, #5a4500, #b88900);"
+            >
+              Add Friend
+            </button>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- INITIAL POSTS (Loaded server-side) -->
+    {% if initial_posts %}
+      {% for post in initial_posts %}
+      <div class="post-card bg-white rounded-2xl shadow-soft mb-6 overflow-hidden card-hover" data-post-id="{{ post.id }}" id="post-{{ post.id }}">
+        <div class="p-4 flex justify-between items-start">
+          <div class="flex items-start space-x-3">
+            <img
+              src="{{ post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+              class="w-10 h-10 rounded-full object-cover"
+            />
+            <div>
+              <div class="font-semibold">
+                {{ post.author.first_name }} {{ post.author.last_name }}
+              </div>
+              <div class="text-sm text-fb-text-light">
+                {{ post.created_at.strftime('%b %d at %I:%M %p') }}
               </div>
             </div>
           </div>
-          <div class="flex justify-between pt-3 border-t border-fb-border">
+          <div class="dropdown relative">
             <button
-              class="composer-btn flex items-center justify-center flex-1 py-2 rounded-lg hover:bg-fb-gray transition-colors text-fb-text-light font-medium"
-              data-bs-toggle="modal"
-              data-bs-target="#postModal"
+              class="p-2 rounded-full hover:bg-fb-gray transition-colors"
+              data-bs-toggle="dropdown"
             >
-              <i class="bi bi-camera-video-fill text-red-500 mr-2 text-lg"></i>
-              Live Video
+              <i class="bi bi-three-dots"></i>
             </button>
-            <button
-              class="composer-btn flex items-center justify-center flex-1 py-2 rounded-lg hover:bg-fb-gray transition-colors text-fb-text-light font-medium"
-              onclick="document.getElementById('photoInput').click()"
-            >
-              <i class="bi bi-image-fill text-green-500 mr-2 text-lg"></i>
-              Photo/Video
-              <input
-                type="file"
-                id="photoInput"
-                accept="image/*,video/*"
-                hidden
-                onchange="previewMedia(this)"
-              />
-            </button>
-            <button
-              class="composer-btn flex items-center justify-center flex-1 py-2 rounded-lg hover:bg-fb-gray transition-colors text-fb-text-light font-medium"
-            >
-              <i
-                class="bi bi-emoji-smile-fill text-yellow-500 mr-2 text-lg"
-              ></i>
-              Feeling/Activity
-            </button>
+            <div class="dropdown-menu absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-strong overflow-hidden z-10 hidden">
+              {% if post.author.id == current_user.id %}
+              <a
+                class="dropdown-item block px-4 py-2 hover:bg-fb-gray transition-colors text-blue-600 edit-post"
+                href="#"
+                data-bs-toggle="modal"
+                data-bs-target="#editPostModal"
+                data-post-id="{{ post.id }}"
+              >
+                Edit
+              </a>
+              <a
+                class="dropdown-item block px-4 py-2 hover:bg-fb-gray transition-colors text-red-600 delete-post"
+                href="#"
+                data-post-id="{{ post.id }}"
+              >
+                Delete
+                <span class="loader inline-block ml-1" style="display: none"></span>
+              </a>
+              {% endif %}
+            </div>
           </div>
         </div>
-
-        <!-- POSTS FEED -->
-        <div id="posts-feed">
-          {% set first_post = posts[0] if posts else none %} {% if first_post %}
-          <!-- FIRST POST -->
-          <div
-            class="post-card bg-white rounded-2xl shadow-soft mb-6 overflow-hidden card-hover"
-            data-post-id="{{ first_post.id }}"
-          >
-            <div class="p-4 flex justify-between items-start">
-              <div class="flex items-start space-x-3">
-                <img
-                  src="{{ first_post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-                  class="w-10 h-10 rounded-full object-cover"
-                />
-                <div>
-                  <div class="font-semibold">
-                    {{ first_post.author.first_name }} {{
-                    first_post.author.last_name }}
-                  </div>
-                  <div class="text-sm text-fb-text-light">
-                    {{ first_post.created_at.strftime('%b %d at %I:%M %p') }}
-                  </div>
-                </div>
-              </div>
-              <div class="dropdown relative">
-                <button
-                  class="p-2 rounded-full hover:bg-fb-gray transition-colors"
-                  data-bs-toggle="dropdown"
-                >
-                  <i class="bi bi-three-dots"></i>
-                </button>
-                <div
-                  class="dropdown-menu absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-strong overflow-hidden z-10 hidden"
-                >
-                  {% if first_post.author.id == current_user.id %}
-                  <a
-                    class="dropdown-item block px-4 py-2 hover:bg-fb-gray transition-colors text-blue-600 edit-post"
-                    href="#"
-                    data-bs-toggle="modal"
-                    data-bs-target="#editPostModal"
-                    data-post-id="{{ first_post.id }}"
-                  >
-                    Edit
-                  </a>
-                  <a
-                    class="dropdown-item block px-4 py-2 hover:bg-fb-gray transition-colors text-red-600 delete-post"
-                    href="#"
-                    data-post-id="{{ first_post.id }}"
-                  >
-                    Delete
-                    <span
-                      class="loader inline-block ml-1"
-                      style="display: none"
-                    ></span>
-                  </a>
-                  {% endif %}
-                </div>
-              </div>
-            </div>
-            <div class="px-4 pb-3">
-              <p
-                class="post-text {% if first_post.content|length > 100 %}truncated{% endif %}"
-                id="post-text-{{ first_post.id }}"
-              >
-                {{ first_post.content }}
-              </p>
-              {% if first_post.content|length > 100 %}
-              <button
-                class="see-more-btn text-blue-600 font-medium text-sm mt-1"
-                onclick="togglePostText({{ first_post.id }})"
-              >
-                See More
-              </button>
-              {% endif %} {% if first_post.image %}
-              <div class="post-media mt-3">
-                <img
-                  src="{{ first_post.image }}"
-                  alt="Post"
-                  class="w-full rounded-2xl max-h-96 object-cover"
-                />
-              </div>
-              {% endif %} {% if first_post.video %}
-              <div class="post-media mt-3">
-                <video controls class="w-full rounded-2xl max-h-96">
-                  <source src="{{ first_post.video }}" />
-                </video>
-              </div>
-              {% endif %}
-            </div>
-            <div
-              class="px-4 py-3 border-t border-fb-border flex justify-between text-fb-text-light font-medium"
-            >
-              <button
-                class="action-btn like-btn flex items-center space-x-1 px-2 py-1 rounded-lg hover:bg-fb-gray transition-colors {% if current_user.has_liked_post(first_post.id) %}text-blue-600{% endif %}"
-                data-post-id="{{ first_post.id }}"
-              >
-                <i
-                  class="bi bi-hand-thumbs-up{% if current_user.has_liked_post(first_post.id) %}-fill{% endif %}"
-                ></i>
-                <span class="like-count"
-                  >{{ first_post.likes_list|length }}</span
-                >
-              </button>
-              <button
-                class="action-btn view-comments flex items-center space-x-1 px-2 py-1 rounded-lg hover:bg-fb-gray transition-colors"
-                data-bs-toggle="modal"
-                data-bs-target="#commentModal"
-                data-post-id="{{ first_post.id }}"
-              >
-                <i class="bi bi-chat"></i>
-                <span>Comment</span>
-              </button>
-              <button
-                class="action-btn share-btn flex items-center space-x-1 px-2 py-1 rounded-lg hover:bg-fb-gray transition-colors"
-                data-url="{{ url_for('user.user_dashboard', _anchor='post-' ~ first_post.id) }}"
-              >
-                <i class="bi bi-share"></i>
-                <span>Share</span>
-              </button>
-            </div>
-            <div
-              class="comments-section px-4 py-3 bg-gray-50 border-t border-fb-border"
-            >
-              <div class="comment-input flex items-center space-x-2 mb-3">
-                <img
-                  src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-                  alt=""
-                  class="w-8 h-8 rounded-full object-cover"
-                />
-                <input
-                  type="text"
-                  placeholder="Write a comment..."
-                  class="add-comment flex-1 bg-white rounded-full px-4 py-2 border-0 focus:ring-1 focus:ring-blue-500 focus:outline-none"
-                  data-post-id="{{ first_post.id }}"
-                />
-              </div>
-              {% for comment in first_post.comments[:3] %}
-              <div
-                class="comment flex space-x-2 mb-3"
-                id="comment-{{ comment.id }}"
-              >
-                <img
-                  src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-                  alt=""
-                  class="w-8 h-8 rounded-full object-cover flex-shrink-0"
-                />
-                <div class="flex-1">
-                  <div class="bg-white rounded-2xl px-3 py-2">
-                    <div class="font-semibold text-sm">
-                      {{ comment.author.first_name }}
-                    </div>
-                    <div
-                      class="text-sm comment-text {% if comment.content|length > 120 %}truncated{% endif %}"
-                      id="comment-text-{{ comment.id }}"
-                    >
-                      {{ comment.content }}
-                    </div>
-                    {% if comment.content|length > 120 %}
-                    <button
-                      class="text-blue-600 text-xs font-medium mt-1 see-more-comment"
-                      onclick="toggleCommentText({{ comment.id }})"
-                    >
-                      See More
-                    </button>
-                    {% endif %}
-                  </div>
-                </div>
-              </div>
-              {% endfor %}
-            </div>
-          </div>
-
-          <!-- PEOPLE YOU MAY KNOW -->
-          <div
-            class="suggestions-section bg-white rounded-2xl shadow-soft p-4 mb-6"
-          >
-            <div class="flex justify-between items-center mb-3 sm:mb-4">
-              <h3 class="font-semibold text-lg">People You May Know</h3>
-            </div>
-            <div class="relative">
-              <button
-                class="slider-arrow prev absolute left-0 top-1/2 transform -translate-y-1/2 z-10 bg-white rounded-full w-8 h-8 flex items-center justify-center shadow-strong hover:bg-gray-100 transition-colors"
-              >
-                <i class="bi bi-chevron-left"></i>
-              </button>
-              <div
-                class="suggestions-track overflow-x-auto flex space-x-3 sm:space-x-4 pb-3 sm:pb-4 custom-scrollbar"
-                id="suggestionsTrack"
-              >
-                {% for user in random_three %}
-                <div
-                  class="suggestion-card bg-gray-50 rounded-2xl p-4 text-center flex-shrink-0 w-48 cursor-pointer card-hover"
-                  onclick="openProfileModal({{ user.id }})"
-                >
-                  <img
-                    src="{{ user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-                    alt="{{ user.first_name }}"
-                    class="w-20 h-20 rounded-full object-cover mx-auto mb-2 sm:mb-3"
-                  />
-                  <div class="suggestion-name font-semibold">
-                    {{ user.first_name }} {{ user.last_name }}
-                  </div>
-                  <div
-                    class="suggestion-mutual text-sm text-fb-text-light mb-3"
-                  >
-                    New to Kimbela
-                  </div>
-                  {% if user.id in current_user.sent_pending_ids %}
-                  <button
-                    class="btn-cancel-request w-full py-2 bg-gray-200 text-fb-text rounded-lg font-medium hover:bg-gray-300 transition-colors"
-                    onclick="event.stopPropagation(); cancelFriendRequest({{ user.id }})"
-                  >
-                    Cancel Request
-                  </button>
-                  {% else %}
-                  <button
-                    class="btn-add-friend w-full py-2 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
-                    onclick="event.stopPropagation(); addFriend({{ user.id }})"
-                    style="
-                      background: linear-gradient(135deg, #5a4500, #b88900);
-                    "
-                  >
-                    Add Friend
-                  </button>
-                  {% endif %}
-                </div>
-                {% endfor %}
-              </div>
-              <button
-                class="slider-arrow next absolute right-0 top-1/2 transform -translate-y-1/2 z-10 bg-white rounded-full w-8 h-8 flex items-center justify-center shadow-strong hover:bg-gray-100 transition-colors"
-              >
-                <i class="bi bi-chevron-right"></i>
-              </button>
-            </div>
+        <div class="px-4 pb-3">
+          <p class="post-text {% if post.content|length > 100 %}truncated{% endif %}" id="post-text-{{ post.id }}">
+            {{ post.content }}
+          </p>
+          {% if post.content|length > 100 %}
+          <button class="see-more-btn text-blue-600 font-medium text-sm mt-1" onclick="togglePostText({{ post.id }})">
+            See More
+          </button>
+          {% endif %}
+          
+          {% if post.image %}
+          <div class="post-media mt-3">
+            <img src="{{ post.image }}" alt="Post" class="w-full rounded-2xl max-h-96 object-cover" loading="lazy" />
           </div>
           {% endif %}
-
-          <!-- REST OF POSTS -->
-          {% for post in posts[1:] %}
-          <div
-            class="post-card bg-white rounded-2xl shadow-soft mb-6 overflow-hidden card-hover"
-            data-post-id="{{ post.id }}"
-          >
-            <div class="p-4 flex justify-between items-start">
-              <div class="flex items-start space-x-3">
-                <img
-                  src="{{ post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-                  class="w-10 h-10 rounded-full object-cover"
-                />
-                <div>
-                  <div class="font-semibold">
-                    {{ post.author.first_name }} {{ post.author.last_name }}
-                  </div>
-                  <div class="text-sm text-fb-text-light">
-                    {{ post.created_at.strftime('%b %d at %I:%M %p') }}
-                  </div>
-                </div>
+          
+          {% if post.video %}
+          <div class="post-media mt-3">
+            <video controls class="w-full rounded-2xl max-h-96" preload="metadata">
+              <source src="{{ post.video }}" />
+            </video>
+          </div>
+          {% endif %}
+        </div>
+        <div class="px-4 py-3 border-t border-fb-border flex justify-between text-fb-text-light font-medium">
+          <button class="action-btn like-btn flex items-center space-x-1 px-2 py-1 rounded-lg hover:bg-fb-gray transition-colors {% if current_user.has_liked_post(post.id) %}text-blue-600{% endif %}" data-post-id="{{ post.id }}">
+            <i class="bi bi-hand-thumbs-up{% if current_user.has_liked_post(post.id) %}-fill{% endif %}"></i>
+            <span class="like-count">{{ post.likes_list|length }}</span>
+          </button>
+          <button class="action-btn view-comments flex items-center space-x-1 px-2 py-1 rounded-lg hover:bg-fb-gray transition-colors" data-bs-toggle="modal" data-bs-target="#commentModal" data-post-id="{{ post.id }}">
+            <i class="bi bi-chat"></i>
+            <span>Comment</span>
+          </button>
+          <button class="action-btn share-btn flex items-center space-x-1 px-2 py-1 rounded-lg hover:bg-fb-gray transition-colors" data-url="{{ url_for('user.user_dashboard', _anchor='post-' ~ post.id) }}">
+            <i class="bi bi-share"></i>
+            <span>Share</span>
+          </button>
+        </div>
+        <div class="comments-section px-4 py-3 bg-gray-50 border-t border-fb-border">
+          <div class="comment-input flex items-center space-x-2 mb-3">
+            <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" alt="" class="w-8 h-8 rounded-full object-cover" />
+            <input type="text" placeholder="Write a comment..." class="add-comment flex-1 bg-white rounded-full px-4 py-2 border-0 focus:ring-1 focus:ring-blue-500 focus:outline-none" data-post-id="{{ post.id }}" />
+          </div>
+          {% for comment in post.comments[:3] %}
+          <div class="comment flex space-x-2 mb-3" id="comment-{{ comment.id }}">
+            <img src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" alt="" class="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+            <div class="flex-1">
+              <div class="bg-white rounded-2xl px-3 py-2">
+                <div class="font-semibold text-sm">{{ comment.author.first_name }}</div>
+                <div class="text-sm">{{ comment.content }}</div>
               </div>
-              <div class="dropdown relative">
-                <button
-                  class="p-2 rounded-full hover:bg-fb-gray transition-colors"
-                  data-bs-toggle="dropdown"
-                >
-                  <i class="bi bi-three-dots"></i>
-                </button>
-                <div
-                  class="dropdown-menu absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-strong overflow-hidden z-10 hidden"
-                >
-                  {% if post.author.id == current_user.id %}
-                  <a
-                    class="dropdown-item block px-4 py-2 hover:bg-fb-gray transition-colors text-blue-600 edit-post"
-                    href="#"
-                    data-bs-toggle="modal"
-                    data-bs-target="#editPostModal"
-                    data-post-id="{{ post.id }}"
-                  >
-                    Edit
-                  </a>
-                  <a
-                    class="dropdown-item block px-4 py-2 hover:bg-fb-gray transition-colors text-red-600 delete-post"
-                    href="#"
-                    data-post-id="{{ post.id }}"
-                  >
-                    Delete
-                    <span
-                      class="loader inline-block ml-1"
-                      style="display: none"
-                    ></span>
-                  </a>
-                  {% endif %}
-                </div>
-              </div>
-            </div>
-            <div class="px-4 pb-3">
-              <p
-                class="post-text {% if post.content|length > 100 %}truncated{% endif %}"
-                id="post-text-{{ post.id }}"
-              >
-                {{ post.content }}
-              </p>
-              {% if post.content|length > 100 %}
-              <button
-                class="see-more-btn text-blue-600 font-medium text-sm mt-1"
-                onclick="togglePostText({{ post.id }})"
-              >
-                See More
-              </button>
-              {% endif %} {% if post.image %}
-              <div class="post-media mt-3">
-                <img
-                  src="{{ post.image }}"
-                  alt="Post"
-                  class="w-full rounded-2xl max-h-96 object-cover"
-                />
-              </div>
-              {% endif %} {% if post.video %}
-              <div class="post-media mt-3">
-                <video controls class="w-full rounded-2xl max-h-96">
-                  <source src="{{ post.video }}" />
-                </video>
-              </div>
-              {% endif %}
-            </div>
-            <div
-              class="px-4 py-3 border-t border-fb-border flex justify-between text-fb-text-light font-medium"
-            >
-              <button
-                class="action-btn like-btn flex items-center space-x-1 px-2 py-1 rounded-lg hover:bg-fb-gray transition-colors {% if current_user.has_liked_post(post.id) %}text-blue-600{% endif %}"
-                data-post-id="{{ post.id }}"
-              >
-                <i
-                  class="bi bi-hand-thumbs-up{% if current_user.has_liked_post(post.id) %}-fill{% endif %}"
-                ></i>
-                <span class="like-count">{{ post.likes_list|length }}</span>
-              </button>
-              <button
-                class="action-btn view-comments flex items-center space-x-1 px-2 py-1 rounded-lg hover:bg-fb-gray transition-colors"
-                data-bs-toggle="modal"
-                data-bs-target="#commentModal"
-                data-post-id="{{ post.id }}"
-              >
-                <i class="bi bi-chat"></i>
-                <span>Comment</span>
-              </button>
-              <button
-                class="action-btn share-btn flex items-center space-x-1 px-2 py-1 rounded-lg hover:bg-fb-gray transition-colors"
-                data-url="{{ url_for('user.user_dashboard', _anchor='post-' ~ post.id) }}"
-              >
-                <i class="bi bi-share"></i>
-                <span>Share</span>
-              </button>
-            </div>
-            <div
-              class="comments-section px-4 py-3 bg-gray-50 border-t border-fb-border"
-            >
-              <div class="comment-input flex items-center space-x-2 mb-3">
-                <img
-                  src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-                  alt=""
-                  class="w-8 h-8 rounded-full object-cover"
-                />
-                <input
-                  type="text"
-                  placeholder="Write a comment..."
-                  class="add-comment flex-1 bg-white rounded-full px-4 py-2 border-0 focus:ring-1 focus:ring-blue-500 focus:outline-none"
-                  data-post-id="{{ post.id }}"
-                />
-              </div>
-              {% for comment in post.comments[:3] %}
-              <div
-                class="comment flex space-x-2 mb-3"
-                id="comment-{{ comment.id }}"
-              >
-                <img
-                  src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-                  alt=""
-                  class="w-8 h-8 rounded-full object-cover flex-shrink-0"
-                />
-                <div class="flex-1">
-                  <div class="bg-white rounded-2xl px-3 py-2">
-                    <div class="font-semibold text-sm">
-                      {{ comment.author.first_name }}
-                    </div>
-                    <div class="text-sm">{{ comment.content }}</div>
-                  </div>
-                </div>
-              </div>
-              {% endfor %}
             </div>
           </div>
           {% endfor %}
         </div>
       </div>
+      {% endfor %}
+    {% else %}
+    <!-- No posts message -->
+    <div class="bg-white rounded-2xl shadow-soft p-8 text-center">
+      <i class="bi bi-newspaper text-4xl text-gray-400 mb-4"></i>
+      <h3 class="text-xl font-semibold text-gray-700 mb-2">No posts yet</h3>
+      <p class="text-gray-500 mb-4">Be the first to share something!</p>
+      <button class="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors" data-bs-toggle="modal" data-bs-target="#postModal">
+        Create Your First Post
+      </button>
+    </div>
+    {% endif %}
+
+    <!-- INFINITE SCROLL LOADING INDICATOR -->
+    <div id="loading-spinner" class="hidden mb-6">
+      <div class="bg-white rounded-2xl shadow-soft p-8 text-center">
+        <div class="flex flex-col items-center">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-3"></div>
+          <p class="text-gray-600">Loading more posts...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOAD MORE BUTTON (Fallback for non-JS) -->
+    {% if has_more and next_cursor %}
+    <div id="load-more-container" class="text-center mb-6">
+      <button id="load-more-btn" class="px-6 py-3 bg-white text-blue-600 rounded-xl shadow-soft hover:bg-gray-50 transition-colors font-medium border border-gray-200" data-cursor="{{ next_cursor }}">
+        Load More Posts
+      </button>
+    </div>
+    {% endif %}
+
+    <!-- END OF FEED MESSAGE -->
+    <div id="end-of-feed" class="hidden text-center py-8 text-gray-500">
+      <i class="bi bi-check-circle text-2xl mb-2"></i>
+      <p>You've reached the end</p>
+      <p class="text-sm mt-1">No more posts to load</p>
+    </div>
+  </div>
+</div>
 
       <!-- RIGHT SIDEBAR -->
       <div
@@ -1666,8 +2322,13 @@
             <div class="flex-1">
               <div class="font-medium">{{ friend.full_name }}</div>
               <div class="text-xs text-fb-text-light">
-    {% if friend.is_online %}Active now{% else %}Last seen <span class="last-seen" data-last-seen="{{ friend.last_seen.isoformat() if friend.last_seen else '' }}">Some time ago</span>{% endif %}
-</div>
+                {% if friend.is_online %}Active now{% else %}Last seen
+                <span
+                  class="last-seen"
+                  data-last-seen="{{ friend.last_seen.isoformat() if friend.last_seen else '' }}"
+                  >Some time ago</span
+                >{% endif %}
+              </div>
             </div>
           </div>
           {% endfor %} {% if friends|length == 0 %}
@@ -1739,23 +2400,24 @@
 
     <!-- MODALS -->
     <!-- Post Modal -->
+    <!-- Post Modal - Ultra Compact -->
     <div
       class="modal fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden"
       id="postModal"
     >
       <div
-        class="modal-dialog bg-white rounded-2xl shadow-strong w-full max-w-2xl mx-4"
+        class="modal-dialog bg-white rounded-2xl shadow-strong w-full max-w-lg sm:max-w-md md:max-w-lg mx-4"
       >
         <div
-          class="modal-header p-4 border-b border-fb-border flex justify-between items-center"
+          class="modal-header p-3 sm:p-4 border-b border-fb-border flex justify-between items-center"
         >
-          <h3 class="text-xl font-semibold">Create Post</h3>
+          <h3 class="text-lg sm:text-xl font-semibold">Create Post</h3>
           <button
             type="button"
-            class="p-2 rounded-full hover:bg-fb-gray transition-colors"
+            class="p-1.5 sm:p-2 rounded-full hover:bg-fb-gray transition-colors"
             onclick="closeModal('postModal')"
           >
-            <i class="bi bi-x-lg"></i>
+            <i class="bi bi-x-lg text-sm sm:text-base"></i>
           </button>
         </div>
         <form
@@ -1765,38 +2427,39 @@
           id="createPostForm"
         >
           <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
-          <div class="modal-body p-4">
-            <div class="flex items-center space-x-3 mb-4">
+          <div class="modal-body p-3 sm:p-4">
+            <div class="flex items-center space-x-3 mb-3">
               <img
                 src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
                 alt=""
-                class="w-10 h-10 rounded-full object-cover"
+                class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover"
               />
               <div>
-                <div class="font-semibold">
+                <div class="font-semibold text-sm sm:text-base">
                   {{ current_user.first_name }} {{ current_user.last_name }}
                 </div>
               </div>
             </div>
             <textarea
               name="post_content"
-              class="w-full border-0 focus:ring-0 focus:outline-none text-lg resize-none"
-              rows="4"
+              class="w-full border-0 focus:ring-0 focus:outline-none text-base sm:text-lg resize-none"
+              rows="3"
               placeholder="What's on your mind?"
               required
             ></textarea>
-            <div id="mediaPreview" class="mt-3"></div>
+            <!-- Compact Media Preview -->
+            <div id="mediaPreview" class="mt-2"></div>
             <div
-              class="mt-3 flex items-center justify-between p-3 border border-fb-border rounded-xl"
+              class="mt-2 flex items-center justify-between p-2 sm:p-3 border border-fb-border rounded-xl"
             >
-              <span class="font-medium">Add to your post</span>
-              <div class="flex space-x-2">
+              <span class="font-medium text-sm">Add to your post</span>
+              <div class="flex space-x-1 sm:space-x-2">
                 <button
                   type="button"
-                  class="p-2 rounded-full hover:bg-fb-gray transition-colors"
+                  class="p-1.5 sm:p-2 rounded-full hover:bg-fb-gray transition-colors"
                   onclick="document.getElementById('mediaInput').click()"
                 >
-                  <i class="bi bi-image-fill text-green-500 text-xl"></i>
+                  <i class="bi bi-image-fill text-green-500 text-lg"></i>
                 </button>
                 <input
                   type="file"
@@ -1808,17 +2471,17 @@
                 />
                 <button
                   type="button"
-                  class="p-2 rounded-full hover:bg-fb-gray transition-colors"
+                  class="p-1.5 sm:p-2 rounded-full hover:bg-fb-gray transition-colors"
                 >
-                  <i class="bi bi-emoji-smile-fill text-yellow-500 text-xl"></i>
+                  <i class="bi bi-emoji-smile-fill text-yellow-500 text-lg"></i>
                 </button>
               </div>
             </div>
           </div>
-          <div class="modal-footer p-4 border-t border-fb-border">
+          <div class="modal-footer p-3 sm:p-4 border-t border-fb-border">
             <button
               type="submit"
-              class="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+              class="w-full py-2.5 sm:py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors text-sm sm:text-base"
             >
               Post
               <span
@@ -1832,40 +2495,42 @@
     </div>
 
     <!-- Edit Post Modal -->
+    <!-- Edit Post Modal - Ultra Compact -->
     <div
       class="modal fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden"
       id="editPostModal"
     >
       <div
-        class="modal-dialog bg-white rounded-2xl shadow-strong w-full max-w-2xl mx-4"
+        class="modal-dialog bg-white rounded-2xl shadow-strong w-full max-w-lg sm:max-w-md md:max-w-lg mx-4"
       >
         <div
-          class="modal-header p-4 border-b border-fb-border flex justify-between items-center"
+          class="modal-header p-3 sm:p-4 border-b border-fb-border flex justify-between items-center"
         >
-          <h3 class="text-xl font-semibold">Edit Post</h3>
+          <h3 class="text-lg sm:text-xl font-semibold">Edit Post</h3>
           <button
             type="button"
-            class="p-2 rounded-full hover:bg-fb-gray transition-colors"
+            class="p-1.5 sm:p-2 rounded-full hover:bg-fb-gray transition-colors"
             onclick="closeModal('editPostModal')"
           >
-            <i class="bi bi-x-lg"></i>
+            <i class="bi bi-x-lg text-sm sm:text-base"></i>
           </button>
         </div>
         <form id="editPostForm">
           <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
-          <div class="modal-body p-4">
+          <div class="modal-body p-3 sm:p-4">
             <textarea
               name="content"
-              class="w-full border-0 focus:ring-0 focus:outline-none text-lg resize-none text-left"
-              rows="4"
+              class="w-full border-0 focus:ring-0 focus:outline-none text-base sm:text-lg resize-none text-left"
+              rows="3"
               id="editPostContent"
             ></textarea>
-            <div id="editMediaPreview" class="mt-3"></div>
+            <!-- Compact Media Preview -->
+            <div id="editMediaPreview" class="mt-2"></div>
           </div>
-          <div class="modal-footer p-4 border-t border-fb-border">
+          <div class="modal-footer p-3 sm:p-4 border-t border-fb-border">
             <button
               type="submit"
-              class="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+              class="w-full py-2.5 sm:py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors text-sm sm:text-base"
             >
               Save
               <span
@@ -1906,31 +2571,34 @@
     </div>
 
     <!-- Profile Modal -->
+    <!-- Profile Modal -->
     <div
       class="modal fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden"
       id="profileModal"
     >
       <div
-        class="modal-dialog bg-white rounded-2xl shadow-strong w-full max-w-4xl mx-4 max-h-[90vh] overflow-hidden"
+        class="modal-dialog bg-white rounded-xl sm:rounded-2xl shadow-strong w-11/12 sm:w-full max-w-sm sm:max-w-md md:max-w-2xl lg:max-w-4xl mx-2 sm:mx-4 max-h-[85vh] sm:max-h-[90vh] overflow-hidden"
       >
         <div
-          class="modal-header p-4 border-b border-fb-border flex justify-between items-center"
+          class="modal-header p-3 sm:p-4 border-b border-fb-border flex justify-between items-center"
         >
-          <h3 class="text-xl font-semibold">Profile Information</h3>
+          <h3 class="text-lg sm:text-xl font-semibold truncate">
+            Profile Information
+          </h3>
           <button
             type="button"
-            class="p-2 rounded-full hover:bg-fb-gray transition-colors"
+            class="p-1.5 sm:p-2 rounded-full hover:bg-fb-gray transition-colors"
             onclick="closeModal('profileModal')"
           >
-            <i class="bi bi-x-lg"></i>
+            <i class="bi bi-x-lg text-sm sm:text-base"></i>
           </button>
         </div>
         <div
-          class="modal-body p-0 overflow-y-auto max-h-[70vh] custom-scrollbar"
+          class="modal-body p-0 overflow-y-auto max-h-[70vh] sm:max-h-[75vh] custom-scrollbar"
           id="profileModalBody"
         ></div>
         <div
-          class="modal-footer p-4 border-t border-fb-border flex justify-center space-x-3"
+          class="modal-footer p-3 sm:p-4 border-t border-fb-border flex flex-col sm:flex-row justify-center sm:justify-center space-y-2 sm:space-y-0 sm:space-x-3"
           id="profileActions"
         >
           <!-- Filled by JS -->
@@ -1939,428 +2607,591 @@
     </div>
 
     <!-- JavaScript -->
-    <script src="https://cdn.socket.io/4.6.1/socket.io.min.js" crossorigin="anonymous"></script>
-
+    <script
+      src="https://cdn.socket.io/4.6.1/socket.io.min.js"
+      crossorigin="anonymous"
+    ></script>
 
     <script>
-    // ========================================
-    // GLOBAL UTILITIES & INITIALIZATION
-    // ========================================
-    const csrfToken = '{{ csrf_token }}';
-    const currentUserId = {{ current_user.id|tojson }};
+      // ========================================
+      // GLOBAL UTILITIES & INITIALIZATION
+      // ========================================
+      const csrfToken = '{{ csrf_token }}';
+      const currentUserId = {{ current_user.id|tojson }};
 
-    // Global state management
-    const appState = {
-        activeFriendId: null,
-        typingTimer: null,
-        isTyping: false,
-        activeAds: [],
-        adShownThisHour: false,
-        userAdPreferences: JSON.parse(localStorage.getItem('adPreferences') || '{}'),
-        notificationCheckInterval: null,
-        searchTimeout: null
-    };
+      // Global state management
+      const appState = {
+          activeFriendId: null,
+          typingTimer: null,
+          isTyping: false,
+          activeAds: [],
+          adShownThisHour: false,
+          userAdPreferences: JSON.parse(localStorage.getItem('adPreferences') || '{}'),
+          notificationCheckInterval: null,
+          searchTimeout: null
+      };
 
-    // Socket.IO connection
-    const socket = io();
+      // Socket.IO connection
+      const socket = io();
 
+      // ========================================
+      // LOADER UTILITY FUNCTIONS
+      // ========================================
 
-    // ========================================
-    // UTILITY FUNCTIONS
-    // ========================================
+      function showLoader(element, options = {}) {
+          const defaults = {
+              type: 'tiny',
+              size: 'sm',
+              color: 'primary',
+              position: 'append',
+              text: '',
+              preserveText: false
+          };
 
+          const config = { ...defaults, ...options };
+          const originalContent = element.innerHTML;
+          const originalText = element.textContent.trim();
 
-    // ========================================
-    // TIMEAGO UTILITIES
-    // ========================================
+          let loaderHTML = '';
 
-    function formatTimeAgo(dateString) {
-        if (!dateString) return 'Never';
+          switch(config.type) {
+              case 'dots':
+                  loaderHTML = `<span class="dots-loader ${config.color}"><span></span><span></span><span></span></span>`;
+                  break;
+              case 'bar':
+                  loaderHTML = `<span class="bar-loader ${config.color}"></span>`;
+                  break;
+              case 'pulse':
+                  loaderHTML = `<span class="pulse-loader ${config.color}"></span>`;
+                  break;
+              default:
+                  loaderHTML = `<span class="tiny-loader ${config.size} ${config.color}"></span>`;
+          }
 
-        const date = new Date(dateString);
-        const now = new Date();
-        const diffMs = now - date;
-        const diffSecs = Math.floor(diffMs / 1000);
-        const diffMins = Math.floor(diffSecs / 60);
-        const diffHours = Math.floor(diffMins / 60);
-        const diffDays = Math.floor(diffHours / 24);
-        const diffWeeks = Math.floor(diffDays / 7);
-        const diffMonths = Math.floor(diffDays / 30);
-        const diffYears = Math.floor(diffDays / 365);
+          if (config.text) {
+              loaderHTML = `<span class="btn-loader">${loaderHTML}<span class="text-sm ml-1">${config.text}</span></span>`;
+          } else if (config.preserveText) {
+              loaderHTML = `<span class="btn-loader">${loaderHTML}<span class="text-sm ml-1">${originalText}</span></span>`;
+          }
 
-        if (diffSecs < 60) return 'Just now';
-        if (diffMins < 60) return `${diffMins}m ago`;
-        if (diffHours < 24) return `${diffHours}h ago`;
-        if (diffDays < 7) return `${diffDays}d ago`;
-        if (diffWeeks < 4) return `${diffWeeks}w ago`;
-        if (diffMonths < 12) return `${diffMonths}mo ago`;
-        return `${diffYears}y ago`;
-    }
+          element.dataset.originalContent = originalContent;
+          element.dataset.loading = 'true';
 
-    function initializeTimeAgo() {
-        // Update all last-seen elements
-        document.querySelectorAll('.last-seen').forEach(element => {
-            const lastSeen = element.getAttribute('data-last-seen');
-            if (lastSeen) {
-                element.textContent = formatTimeAgo(lastSeen);
-            }
-        });
-    }
+          switch(config.position) {
+              case 'prepend':
+                  element.innerHTML = loaderHTML + originalContent;
+                  break;
+              case 'replace':
+                  element.innerHTML = loaderHTML;
+                  break;
+              case 'inline':
+                  element.innerHTML = `<span class="inline-flex items-center gap-1">${loaderHTML}${originalContent}</span>`;
+                  break;
+              default:
+                  element.innerHTML = originalContent + loaderHTML;
+          }
 
-    function startTimeAgoUpdates() {
-        initializeTimeAgo();
-        setInterval(initializeTimeAgo, 60000); // Update every minute
-    }
+          element.disabled = true;
+          return element;
+      }
 
-    function showToast(message, type = 'info') {
-        const toast = document.createElement('div');
-        toast.className = `fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-strong text-white ${
-              type === 'success' ? 'bg-green-500' :
-              type === 'danger' ? 'bg-red-500' :
-              type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500'
-          }`;
-        toast.textContent = message;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3000);
-    }
+      function hideLoader(element) {
+          if (element.dataset.loading === 'true') {
+              element.innerHTML = element.dataset.originalContent || '';
+              element.disabled = false;
+              delete element.dataset.loading;
+              delete element.dataset.originalContent;
+          }
+          return element;
+      }
 
-    function formatNotificationTime(timestamp) {
-        const now = new Date();
-        const notificationTime = new Date(timestamp);
-        const diffInSeconds = Math.floor((now - notificationTime) / 1000);
+      function showModalLoader(modalId) {
+          const modal = document.getElementById(modalId);
+          if (modal) {
+              const loader = document.createElement('div');
+              loader.className = 'modal-loader';
+              loader.innerHTML = '<span class="tiny-loader md primary"></span>';
+              modal.appendChild(loader);
+              return loader;
+          }
+          return null;
+      }
 
-        if (diffInSeconds < 60) return 'Just now';
-        if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-        if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-        if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
-        return notificationTime.toLocaleDateString();
-    }
+      function hideModalLoader(modalId) {
+          const modal = document.getElementById(modalId);
+          if (modal) {
+              const loader = modal.querySelector('.modal-loader');
+              if (loader) loader.remove();
+          }
+      }
 
-    function calculateAge(birthDate) {
-        if (!birthDate) return '';
-        const today = new Date();
-        const birth = new Date(birthDate);
-        let age = today.getFullYear() - birth.getFullYear();
-        const monthDiff = today.getMonth() - birth.getMonth();
-        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-            age--;
-        }
-        return age;
-    }
+      function quickLoader(button, action = 'show') {
+          if (action === 'show') {
+              const originalText = button.innerHTML;
+              button.dataset.originalText = originalText;
+              button.innerHTML = `<span class="inline-flex items-center gap-1"><span class="tiny-loader xs white"></span>${button.textContent.trim()}</span>`;
+              button.disabled = true;
+          } else {
+              if (button.dataset.originalText) {
+                  button.innerHTML = button.dataset.originalText;
+                  delete button.dataset.originalText;
+              }
+              button.disabled = false;
+          }
+      }
 
-    function highlightMatch(text, query) {
-        if (!query || !query.trim()) return text;
-        const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const regex = new RegExp(`(${escapedQuery})`, 'gi');
-        return text.replace(regex, '<span class="bg-yellow-200 px-1 rounded">$1</span>');
-    }
+      // ========================================
+      // TIMEAGO UTILITIES
+      // ========================================
 
-    function debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
-    }
+      function formatTimeAgo(dateString) {
+          if (!dateString) return 'Never';
 
-    // ========================================
-    // MODAL MANAGEMENT
-    // ========================================
+          const date = new Date(dateString);
+          const now = new Date();
+          const diffMs = now - date;
+          const diffSecs = Math.floor(diffMs / 1000);
+          const diffMins = Math.floor(diffSecs / 60);
+          const diffHours = Math.floor(diffMins / 60);
+          const diffDays = Math.floor(diffHours / 24);
+          const diffWeeks = Math.floor(diffDays / 7);
+          const diffMonths = Math.floor(diffDays / 30);
+          const diffYears = Math.floor(diffDays / 365);
 
-    function openModal(modalId) {
-        const modal = document.getElementById(modalId);
-        if (modal) {
-            modal.classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-        }
-    }
+          if (diffSecs < 60) return 'Just now';
+          if (diffMins < 60) return `${diffMins}m ago`;
+          if (diffHours < 24) return `${diffHours}h ago`;
+          if (diffDays < 7) return `${diffDays}d ago`;
+          if (diffWeeks < 4) return `${diffWeeks}w ago`;
+          if (diffMonths < 12) return `${diffMonths}mo ago`;
+          return `${diffYears}y ago`;
+      }
 
-    function closeModal(modalId) {
-        const modal = document.getElementById(modalId);
-        if (modal) {
-            modal.classList.add('hidden');
-            document.body.style.overflow = '';
-        }
-    }
+      function initializeTimeAgo() {
+          document.querySelectorAll('.last-seen').forEach(element => {
+              const lastSeen = element.getAttribute('data-last-seen');
+              if (lastSeen) {
+                  element.textContent = formatTimeAgo(lastSeen);
+              }
+          });
+      }
 
-    // ========================================
-    // MOBILE MENU
-    // ========================================
+      function startTimeAgoUpdates() {
+          initializeTimeAgo();
+          setInterval(initializeTimeAgo, 60000);
+      }
 
-    function toggleMobileMenu() {
-        const overlay = document.getElementById('mobileSidebarOverlay');
-        const sidebar = document.getElementById('mobileSidebar');
+      function showToast(message, type = 'info') {
+          const toast = document.createElement('div');
+          toast.className = `fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-strong text-white ${
+                type === 'success' ? 'bg-green-500' :
+                type === 'danger' ? 'bg-red-500' :
+                type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500'
+            }`;
+          toast.textContent = message;
+          document.body.appendChild(toast);
+          setTimeout(() => toast.remove(), 3000);
+      }
 
-        if (!overlay || !sidebar) return;
+      function formatNotificationTime(timestamp) {
+          const now = new Date();
+          const notificationTime = new Date(timestamp);
+          const diffInSeconds = Math.floor((now - notificationTime) / 1000);
 
-        if (overlay.style.display === 'block') {
-            overlay.style.display = 'none';
-            sidebar.classList.remove('translate-x-0');
-            sidebar.classList.add('-translate-x-full');
-        } else {
-            overlay.style.display = 'block';
-            sidebar.classList.remove('-translate-x-full');
-            sidebar.classList.add('translate-x-0');
-        }
-    }
+          if (diffInSeconds < 60) return 'Just now';
+          if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+          if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+          if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+          return notificationTime.toLocaleDateString();
+      }
 
-    // ========================================
-    // DROPDOWN MANAGEMENT
-    // ========================================
+      function calculateAge(birthDate) {
+          if (!birthDate) return '';
+          const today = new Date();
+          const birth = new Date(birthDate);
+          let age = today.getFullYear() - birth.getFullYear();
+          const monthDiff = today.getMonth() - birth.getMonth();
+          if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+              age--;
+          }
+          return age;
+      }
 
-    function initializeDropdowns() {
-        document.addEventListener('click', function(e) {
-            // Close all dropdowns when clicking outside
-            if (!e.target.closest('.dropdown')) {
-                document.querySelectorAll('.dropdown-menu').forEach(menu => {
-                    menu.classList.add('hidden');
-                });
-            }
+      function highlightMatch(text, query) {
+          if (!query || !query.trim()) return text;
+          const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const regex = new RegExp(`(${escapedQuery})`, 'gi');
+          return text.replace(regex, '<span class="bg-yellow-200 px-1 rounded">$1</span>');
+      }
 
-            // Toggle dropdowns - FIXED VERSION
-            const dropdownToggle = e.target.closest('[data-bs-toggle="dropdown"], [data-bs-toggle="groups-dropdown"], [data-bs-toggle="groups-dropdown-mobile"]');
-            if (dropdownToggle) {
-                const dropdown = dropdownToggle.closest('.dropdown');
-                const menu = dropdown.querySelector('.dropdown-menu');
+      function debounce(func, wait) {
+          let timeout;
+          return function executedFunction(...args) {
+              const later = () => {
+                  clearTimeout(timeout);
+                  func(...args);
+              };
+              clearTimeout(timeout);
+              timeout = setTimeout(later, wait);
+          };
+      }
 
-                if (menu) {
-                    // Close all other dropdowns first
-                    document.querySelectorAll('.dropdown-menu').forEach(otherMenu => {
-                        if (otherMenu !== menu) {
-                            otherMenu.classList.add('hidden');
-                        }
-                    });
+      // ========================================
+      // MODAL MANAGEMENT
+      // ========================================
 
-                    // Toggle current dropdown
-                    menu.classList.toggle('hidden');
+      function openModal(modalId) {
+          const modal = document.getElementById(modalId);
+          if (modal) {
+              modal.classList.remove('hidden');
+              document.body.style.overflow = 'hidden';
+          }
+      }
 
-                    // Load groups if it's a groups dropdown
-                    if (menu.id === 'groupsDropdownMenu' || menu.id === 'groupsDropdownMenuMobile') {
-                        if (!menu.classList.contains('hidden')) {
-                            loadGroups();
-                        }
-                    }
-                }
-            }
-        });
-    }
+      function closeModal(modalId) {
+          const modal = document.getElementById(modalId);
+          if (modal) {
+              modal.classList.add('hidden');
+              document.body.style.overflow = '';
+          }
+      }
 
-    // ========================================
-    // SUGGESTIONS SLIDER
-    // ========================================
+      // ========================================
+      // MOBILE MENU
+      // ========================================
 
-    function scrollSuggestions(dir) {
-        const track = document.getElementById('suggestionsTrack');
-        if (!track) return;
+      function toggleMobileMenu() {
+          const overlay = document.getElementById('mobileSidebarOverlay');
+          const sidebar = document.getElementById('mobileSidebar');
 
-        const card = track.querySelector('.suggestion-card');
-        if (!card) return;
+          if (!overlay || !sidebar) return;
 
-        const cardWidth = card.offsetWidth + 16; // 16px margin
-        const visibleWidth = track.offsetWidth;
-        const scrollAmount = Math.floor(visibleWidth / cardWidth) * cardWidth;
+          if (overlay.style.display === 'block') {
+              overlay.style.display = 'none';
+              sidebar.classList.remove('translate-x-0');
+              sidebar.classList.add('-translate-x-full');
+          } else {
+              overlay.style.display = 'block';
+              sidebar.classList.remove('-translate-x-full');
+              sidebar.classList.add('translate-x-0');
+          }
+      }
 
-        track.scrollBy({
-            left: dir * scrollAmount,
-            behavior: 'smooth'
-        });
+      // ========================================
+      // DROPDOWN MANAGEMENT
+      // ========================================
 
-        updateArrowVisibility(track);
-    }
+      function initializeDropdowns() {
+          document.addEventListener('click', function(e) {
+              if (!e.target.closest('.dropdown')) {
+                  document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                      menu.classList.add('hidden');
+                  });
+              }
 
-    function updateArrowVisibility(track) {
-        const prevArrow = document.querySelector('.slider-arrow.prev');
-        const nextArrow = document.querySelector('.slider-arrow.next');
-        if (!prevArrow || !nextArrow) return;
+              const dropdownToggle = e.target.closest('[data-bs-toggle="dropdown"], [data-bs-toggle="groups-dropdown"], [data-bs-toggle="groups-dropdown-mobile"]');
+              if (dropdownToggle) {
+                  const dropdown = dropdownToggle.closest('.dropdown');
+                  const menu = dropdown.querySelector('.dropdown-menu');
 
-        const maxScroll = track.scrollWidth - track.clientWidth;
-        prevArrow.classList.toggle('opacity-50', track.scrollLeft <= 10);
-        prevArrow.classList.toggle('cursor-not-allowed', track.scrollLeft <= 10);
-        nextArrow.classList.toggle('opacity-50', track.scrollLeft >= maxScroll - 10);
-        nextArrow.classList.toggle('cursor-not-allowed', track.scrollLeft >= maxScroll - 10);
-    }
+                  if (menu) {
+                      document.querySelectorAll('.dropdown-menu').forEach(otherMenu => {
+                          if (otherMenu !== menu) {
+                              otherMenu.classList.add('hidden');
+                          }
+                      });
 
-    // ========================================
-    // MEDIA PREVIEW
-    // ========================================
+                      menu.classList.toggle('hidden');
 
-    function previewMedia(input) {
-        const preview = document.getElementById('mediaPreview');
-        if (!preview) return;
+                      if (menu.id === 'groupsDropdownMenu' || menu.id === 'groupsDropdownMenuMobile') {
+                          if (!menu.classList.contains('hidden')) {
+                              loadGroups();
+                          }
+                      }
+                  }
+              }
+          });
+      }
 
-        preview.innerHTML = '';
-        const file = input.files[0];
-        if (file) {
-            const url = URL.createObjectURL(file);
-            const el = file.type.startsWith('image/') ? document.createElement('img') : document.createElement('video');
-            el.src = url;
-            if (file.type.startsWith('video/')) {
-                el.controls = true;
-            }
-            el.classList.add('w-full', 'rounded-2xl', 'max-h-96', 'object-cover');
-            preview.appendChild(el);
-        }
-    }
+      // ========================================
+      // SUGGESTIONS SLIDER
+      // ========================================
 
-    // ========================================
-    // FRIEND SYSTEM
-    // ========================================
+      function scrollSuggestions(dir) {
+          const track = document.getElementById('suggestionsTrack');
+          if (!track) return;
 
-    async function addFriend(userId) {
-        const btn = event.target;
-        if (!btn) return;
+          const card = track.querySelector('.suggestion-card');
+          if (!card) return;
 
-        try {
-            btn.disabled = true;
-            btn.classList.add('opacity-70');
+          const cardWidth = card.offsetWidth + 16;
+          const visibleWidth = track.offsetWidth;
+          const scrollAmount = Math.floor(visibleWidth / cardWidth) * cardWidth;
 
-            const response = await fetch(`/add_friend/${userId}`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': csrfToken
-                }
-            });
+          track.scrollBy({
+              left: dir * scrollAmount,
+              behavior: 'smooth'
+          });
 
-            if (!response.ok) throw new Error('Network error');
+          updateArrowVisibility(track);
+      }
 
-            const data = await response.json();
+      function updateArrowVisibility(track) {
+          const prevArrow = document.querySelector('.slider-arrow.prev');
+          const nextArrow = document.querySelector('.slider-arrow.next');
+          if (!prevArrow || !nextArrow) return;
 
-            if (data.success) {
-                btn.textContent = 'Cancel Request';
-                btn.className = 'btn-cancel-request w-full py-2 bg-gray-200 text-fb-text rounded-lg font-medium hover:bg-gray-300 transition-colors';
-                btn.onclick = (e) => {
-                    e.stopPropagation();
-                    cancelFriendRequest(userId);
-                };
-                showToast('Friend request sent!', 'success');
-            } else {
-                throw new Error(data.error || 'Failed to send request');
-            }
-        } catch (error) {
-            console.error('Error adding friend:', error);
-            showToast('Error sending friend request', 'danger');
-        } finally {
-            btn.disabled = false;
-            btn.classList.remove('opacity-70');
-        }
-    }
+          const maxScroll = track.scrollWidth - track.clientWidth;
+          prevArrow.classList.toggle('opacity-50', track.scrollLeft <= 10);
+          prevArrow.classList.toggle('cursor-not-allowed', track.scrollLeft <= 10);
+          nextArrow.classList.toggle('opacity-50', track.scrollLeft >= maxScroll - 10);
+          nextArrow.classList.toggle('cursor-not-allowed', track.scrollLeft >= maxScroll - 10);
+      }
 
-    async function cancelFriendRequest(userId) {
-        const btn = event.target;
-        if (!btn) return;
+      // ========================================
+      // MEDIA PREVIEW WITH LOADER
+      // ========================================
 
-        try {
-            btn.disabled = true;
-            btn.classList.add('opacity-70');
+      // Update the previewMedia function in the script section
+      function previewMedia(input) {
+          const preview = document.getElementById('mediaPreview');
+          const editPreview = document.getElementById('editMediaPreview');
+          const targetPreview = preview || editPreview;
 
-            const response = await fetch(`/cancel_friend_request/${userId}`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': csrfToken
-                }
-            });
+          if (!targetPreview) return;
 
-            if (!response.ok) throw new Error('Network error');
+          targetPreview.innerHTML = '';
+          const file = input.files[0];
+          if (file) {
+              // Show loading while preparing preview
+              targetPreview.innerHTML = `
+                  <div class="flex items-center justify-center p-3 bg-gray-50 rounded-xl">
+                      <span class="tiny-loader sm primary"></span>
+                      <span class="ml-2 text-gray-600 text-xs">Preparing...</span>
+                  </div>
+              `;
 
-            const data = await response.json();
+              setTimeout(() => {
+                  const url = URL.createObjectURL(file);
+                  const el = file.type.startsWith('image/') ?
+                      document.createElement('img') :
+                      document.createElement('video');
 
-            if (data.success) {
-                btn.textContent = 'Add Friend';
-                btn.className = 'btn-add-friend w-full py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors';
-                btn.onclick = (e) => {
-                    e.stopPropagation();
-                    addFriend(userId);
-                };
-                showToast('Friend request cancelled', 'info');
-            } else {
-                throw new Error(data.error || 'Failed to cancel request');
-            }
-        } catch (error) {
-            console.error('Error canceling friend request:', error);
-            showToast('Error canceling friend request', 'danger');
-        } finally {
-            btn.disabled = false;
-            btn.classList.remove('opacity-70');
-        }
-    }
+                  el.src = url;
 
-    // ========================================
-    // PROFILE MODAL
-    // ========================================
+                  // Ultra compact styling for all screens
+                  if (file.type.startsWith('video/')) {
+                      el.controls = true;
+                      el.className = 'w-full h-32 sm:h-40 md:h-48 rounded-lg object-cover border border-gray-200';
+                  } else {
+                      el.className = 'w-full h-32 sm:h-40 md:h-48 rounded-lg object-cover border border-gray-200';
+                  }
 
-    async function openProfileModal(userId) {
-        try {
-            const response = await fetch(`/get_user_profile/${userId}`);
-            if (!response.ok) throw new Error('Failed to load profile');
+                  targetPreview.innerHTML = '';
+                  targetPreview.appendChild(el);
 
-            const data = await response.json();
-            displayProfileModal(data, userId);
-        } catch (error) {
-            console.error('Error loading profile:', error);
-            showToast('Failed to load profile', 'danger');
-        }
-    }
+                  // Add remove button
+                  const removeBtn = document.createElement('button');
+                  removeBtn.type = 'button';
+                  removeBtn.className = 'mt-2 px-3 py-1.5 bg-red-100 text-red-600 text-xs rounded-lg hover:bg-red-200 transition-colors flex items-center';
+                  removeBtn.innerHTML = '<i class="bi bi-trash mr-1"></i> Remove';
+                  removeBtn.onclick = () => {
+                      targetPreview.innerHTML = '';
+                      input.value = '';
+                  };
 
-    function displayProfileModal(data, userId) {
-        const modalBody = document.getElementById('profileModalBody');
-        const profileActions = document.getElementById('profileActions');
+                  targetPreview.appendChild(removeBtn);
+              }, 300);
+          }
+      }
 
-        if (!modalBody || !profileActions) return;
+      // ========================================
+      // FRIEND SYSTEM WITH LOADERS
+      // ========================================
 
-        const dob = data.dob ? new Date(data.dob).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        }) : 'Not specified';
+      async function addFriend(userId) {
+          const btn = event.target;
+          if (!btn) return;
 
-        const age = data.dob ? calculateAge(new Date(data.dob)) : '';
+          // Show loader
+          const originalText = btn.innerHTML;
+          btn.innerHTML = `<span class="inline-flex items-center gap-1"><span class="tiny-loader xs white"></span>Adding...</span>`;
+          btn.disabled = true;
+          btn.classList.add('opacity-70');
 
-        modalBody.innerHTML = `
+          try {
+              const response = await fetch(`/add_friend/${userId}`, {
+                  method: 'POST',
+                  headers: { 'X-CSRFToken': csrfToken }
+              });
+
+              if (!response.ok) throw new Error('Network error');
+
+              const data = await response.json();
+
+              if (data.success) {
+                  btn.innerHTML = `<span class="inline-flex items-center gap-1"><i class="bi bi-check"></i>Cancel Request</span>`;
+                  btn.className = 'btn-cancel-request w-full py-2 bg-gray-200 text-fb-text rounded-lg font-medium hover:bg-gray-300 transition-colors';
+                  btn.onclick = (e) => {
+                      e.stopPropagation();
+                      cancelFriendRequest(userId);
+                  };
+                  showToast('Friend request sent!', 'success');
+              } else {
+                  throw new Error(data.error || 'Failed to send request');
+              }
+          } catch (error) {
+              console.error('Error adding friend:', error);
+              btn.innerHTML = originalText;
+              showToast('Error sending friend request', 'danger');
+          } finally {
+              btn.disabled = false;
+              btn.classList.remove('opacity-70');
+          }
+      }
+
+      async function cancelFriendRequest(userId) {
+          const btn = event.target;
+          if (!btn) return;
+
+          // Show loader
+          const originalText = btn.innerHTML;
+          btn.innerHTML = `<span class="inline-flex items-center gap-1"><span class="tiny-loader xs"></span>Cancelling...</span>`;
+          btn.disabled = true;
+          btn.classList.add('opacity-70');
+
+          try {
+              const response = await fetch(`/cancel_friend_request/${userId}`, {
+                  method: 'POST',
+                  headers: { 'X-CSRFToken': csrfToken }
+              });
+
+              if (!response.ok) throw new Error('Network error');
+
+              const data = await response.json();
+
+              if (data.success) {
+                  btn.innerHTML = `<span class="inline-flex items-center gap-1"><i class="bi bi-person-plus"></i>Add Friend</span>`;
+                  btn.className = 'btn-add-friend w-full py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors';
+                  btn.onclick = (e) => {
+                      e.stopPropagation();
+                      addFriend(userId);
+                  };
+                  showToast('Friend request cancelled', 'info');
+              } else {
+                  throw new Error(data.error || 'Failed to cancel request');
+              }
+          } catch (error) {
+              console.error('Error canceling friend request:', error);
+              btn.innerHTML = originalText;
+              showToast('Error canceling friend request', 'danger');
+          } finally {
+              btn.disabled = false;
+              btn.classList.remove('opacity-70');
+          }
+      }
+
+      // ========================================
+      // PROFILE MODAL WITH LOADER
+      // ========================================
+
+      async function openProfileModal(userId) {
+          // Show loader in modal body
+          const modalBody = document.getElementById('profileModalBody');
+          const profileActions = document.getElementById('profileActions');
+
+          if (modalBody) {
+              modalBody.innerHTML = `
+                  <div class="flex flex-col items-center justify-center p-8">
+                      <span class="avatar-loader mb-4"></span>
+                      <div class="text-gray-500">Loading profile...</div>
+                  </div>
+              `;
+          }
+
+          if (profileActions) {
+              profileActions.innerHTML = '';
+          }
+
+          openModal('profileModal');
+
+          try {
+              const response = await fetch(`/get_user_profile/${userId}`);
+              if (!response.ok) throw new Error('Failed to load profile');
+
+              const data = await response.json();
+              displayProfileModal(data, userId);
+          } catch (error) {
+              console.error('Error loading profile:', error);
+              if (modalBody) {
+                  modalBody.innerHTML = `
+                      <div class="text-center p-8 text-red-500">
+                          <i class="bi bi-exclamation-triangle text-3xl mb-3"></i>
+                          <p>Failed to load profile</p>
+                      </div>
+                  `;
+              }
+              showToast('Failed to load profile', 'danger');
+          }
+      }
+
+      function displayProfileModal(data, userId) {
+          const modalBody = document.getElementById('profileModalBody');
+          const profileActions = document.getElementById('profileActions');
+
+          if (!modalBody || !profileActions) return;
+
+          const dob = data.dob ? new Date(data.dob).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+          }) : 'Not specified';
+
+          const age = data.dob ? calculateAge(new Date(data.dob)) : '';
+
+          // Responsive HTML that adapts to screen size
+          modalBody.innerHTML = `
               <div class="profile-modal-content">
                   <div class="profile-header relative">
-                      <div class="cover-photo-container h-48 overflow-hidden rounded-t-2xl">
+                      <div class="cover-photo-container h-32 sm:h-48 overflow-hidden rounded-t-2xl">
                           <img src="${data.cover_pic || 'https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg'}"
                                alt="Cover" class="cover-photo w-full h-full object-cover">
                           <div class="profile-overlay absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
                       </div>
-                      <div class="profile-info-container text-center relative -mt-16 pb-6 px-6">
+                      <div class="profile-info-container text-center relative -mt-12 sm:-mt-16 pb-4 sm:pb-6 px-4 sm:px-6">
                           <div class="profile-avatar-container inline-block">
                               <img src="${data.profile_pic}" alt="${data.first_name}"
-                                   class="profile-avatar w-32 h-32 rounded-full border-4 border-white object-cover shadow-strong">
+                                   class="profile-avatar w-16 h-16 sm:w-32 sm:h-32 rounded-full border-2 sm:border-4 border-white object-cover shadow-strong">
                           </div>
-                          <div class="profile-text-content mt-4">
-                              <h3 class="profile-name text-2xl font-bold">${data.first_name} ${data.last_name}</h3>
-                              <div class="profile-details flex flex-wrap justify-center gap-2 mt-2">
-                                  ${data.marital_status ? `<span class="detail-item inline-flex items-center gap-1 bg-gray-100 px-3 py-1 rounded-full text-sm"><i class="bi bi-heart-fill text-red-500"></i> ${data.marital_status}</span>` : ''}
-                                  ${data.city && data.country ? `<span class="detail-item inline-flex items-center gap-1 bg-gray-100 px-3 py-1 rounded-full text-sm"><i class="bi bi-geo-alt-fill text-blue-500"></i> ${data.city}, ${data.country}</span>` : ''}
-                                  ${age ? `<span class="detail-item inline-flex items-center gap-1 bg-gray-100 px-3 py-1 rounded-full text-sm"><i class="bi bi-balloon-fill text-purple-500"></i> ${age} years old</span>` : ''}
+                          <div class="profile-text-content mt-2 sm:mt-4">
+                              <h3 class="profile-name text-lg sm:text-2xl font-bold leading-tight">${data.first_name} ${data.last_name}</h3>
+                              <div class="profile-details flex flex-wrap justify-center gap-1 sm:gap-2 mt-1 sm:mt-2">
+                                  ${data.marital_status ? `<span class="detail-item inline-flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-full text-xs sm:text-sm"><i class="bi bi-heart-fill text-red-500 text-xs"></i> ${data.marital_status}</span>` : ''}
+                                  ${data.city && data.country ? `<span class="detail-item inline-flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-full text-xs sm:text-sm"><i class="bi bi-geo-alt-fill text-blue-500 text-xs"></i> <span class="hidden sm:inline">${data.city}, ${data.country}</span><span class="sm:hidden">${data.city}</span></span>` : ''}
+                                  ${age ? `<span class="detail-item inline-flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-full text-xs sm:text-sm"><i class="bi bi-balloon-fill text-purple-500 text-xs"></i> ${age}</span>` : ''}
                               </div>
-                              ${data.bio ? `<div class="profile-bio mt-3 max-w-2xl mx-auto"><p class="bio-text text-gray-700">${data.bio}</p></div>` : ''}
+                              ${data.bio ? `<div class="profile-bio mt-2 sm:mt-3 max-w-2xl mx-auto"><p class="bio-text text-gray-700 text-sm sm:text-base leading-snug sm:leading-relaxed">${data.bio}</p></div>` : ''}
                           </div>
                       </div>
                   </div>
 
-                  <div class="profile-details-section mt-6 px-6 pb-6">
-                      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div class="detail-card bg-gray-50 rounded-2xl p-6">
-                              <h6 class="detail-card-title font-semibold text-lg mb-4 flex items-center"><i class="bi bi-person-badge-fill mr-2 text-blue-500"></i>Personal Information</h6>
-                              <div class="detail-list space-y-3">
-                                  ${data.email ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">Email:</span><span class="detail-value">${data.email}</span></div>` : ''}
-                                  ${data.phone_number ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">Phone:</span><span class="detail-value">${data.phone_number}</span></div>` : ''}
-                                  ${data.gender ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">Gender:</span><span class="detail-value">${data.gender}</span></div>` : ''}
-                                  ${data.dob ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">Date of Birth:</span><span class="detail-value">${dob}</span></div>` : ''}
+                  <div class="profile-details-section mt-4 sm:mt-6 px-4 sm:px-6 pb-4 sm:pb-6">
+                      <div class="grid grid-cols-1 ${window.innerWidth > 768 ? 'md:grid-cols-2' : ''} gap-4 sm:gap-6">
+                          <div class="detail-card bg-gray-50 rounded-xl sm:rounded-2xl p-3 sm:p-6">
+                              <h6 class="detail-card-title font-semibold text-sm sm:text-lg mb-2 sm:mb-4 flex items-center"><i class="bi bi-person-badge-fill mr-2 text-blue-500 text-sm"></i>Personal Info</h6>
+                              <div class="detail-list space-y-2 sm:space-y-3">
+                                  ${data.email ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 text-xs min-w-16 sm:min-w-24">Email:</span><span class="detail-value text-xs sm:text-sm truncate">${data.email}</span></div>` : ''}
+                                  ${data.phone_number ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 text-xs min-w-16 sm:min-w-24">Phone:</span><span class="detail-value text-xs sm:text-sm">${data.phone_number}</span></div>` : ''}
+                                  ${data.gender ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 text-xs min-w-16 sm:min-w-24">Gender:</span><span class="detail-value text-xs sm:text-sm">${data.gender}</span></div>` : ''}
+                                  ${data.dob ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 text-xs min-w-16 sm:min-w-24">Birth:</span><span class="detail-value text-xs sm:text-sm">${dob}</span></div>` : ''}
                               </div>
                           </div>
-                          <div class="detail-card bg-gray-50 rounded-2xl p-6">
-                              <h6 class="detail-card-title font-semibold text-lg mb-4 flex items-center"><i class="bi bi-geo-fill mr-2 text-green-500"></i>Location & Interests</h6>
-                              <div class="detail-list space-y-3">
-                                  ${data.city ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">City:</span><span class="detail-value">${data.city}</span></div>` : ''}
-                                  ${data.country ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">Country:</span><span class="detail-value">${data.country}</span></div>` : ''}
-                                  ${data.interests ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">Interests:</span><span class="detail-value">${data.interests}</span></div>` : ''}
+                          <div class="detail-card bg-gray-50 rounded-xl sm:rounded-2xl p-3 sm:p-6">
+                              <h6 class="detail-card-title font-semibold text-sm sm:text-lg mb-2 sm:mb-4 flex items-center"><i class="bi bi-geo-fill mr-2 text-green-500 text-sm"></i>Location & Interests</h6>
+                              <div class="detail-list space-y-2 sm:space-y-3">
+                                  ${data.city ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 text-xs min-w-16 sm:min-w-24">City:</span><span class="detail-value text-xs sm:text-sm">${data.city}</span></div>` : ''}
+                                  ${data.country ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 text-xs min-w-16 sm:min-w-24">Country:</span><span class="detail-value text-xs sm:text-sm">${data.country}</span></div>` : ''}
+                                  ${data.interests ? `<div class="detail-row flex items-start"><span class="detail-label font-medium text-gray-600 text-xs min-w-16 sm:min-w-24 flex-shrink-0">Interests:</span><span class="detail-value text-xs sm:text-sm">${data.interests}</span></div>` : ''}
                               </div>
                           </div>
                       </div>
@@ -2368,41 +3199,38 @@
               </div>
           `;
 
-          // Get friend status and update actions
           const isFriend = {{ current_user.friend_ids|tojson }}.includes(userId);
           const isBlocked = {{ current_user.blocks|map(attribute='id')|list|tojson }}.includes(userId);
 
           let actionsHTML = '';
           if (isFriend) {
               actionsHTML = `
-                  <button class="btn btn-primary px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors" onclick="startChat(${userId})">
+                  <button class="btn btn-primary px-3 py-1.5 sm:px-4 sm:py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors text-sm sm:text-base" onclick="startChat(${userId})">
                       <i class="bi bi-chat-dots me-1"></i> Message
                   </button>
                   ${isBlocked ? `
-                      <button class="btn btn-success px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors" onclick="unblockUserFromModal(${userId})">
+                      <button class="btn btn-success px-3 py-1.5 sm:px-4 sm:py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors text-sm sm:text-base" onclick="unblockUserFromModal(${userId})">
                           <i class="bi bi-check-circle me-1"></i> Unblock
                       </button>
                   ` : `
-                      <button class="btn btn-outline-danger px-4 py-2 border border-red-500 text-red-500 rounded-lg font-medium hover:bg-red-50 transition-colors" onclick="blockUser(${userId})">
+                      <button class="btn btn-outline-danger px-3 py-1.5 sm:px-4 sm:py-2 border border-red-500 text-red-500 rounded-lg font-medium hover:bg-red-50 transition-colors text-sm sm:text-base" onclick="blockUser(${userId})">
                           <i class="bi bi-slash-circle me-1"></i> Block
                       </button>
                   `}
               `;
           } else {
               actionsHTML = `
-                  <button class="btn btn-primary px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors" onclick="addFriend(${userId})">
+                  <button class="btn btn-primary px-3 py-1.5 sm:px-4 sm:py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors text-sm sm:text-base" onclick="addFriend(${userId})">
                       <i class="bi bi-person-plus me-1"></i> Add Friend
                   </button>
-                  
               `;
           }
 
           profileActions.innerHTML = actionsHTML;
-          openModal('profileModal');
       }
 
       // ========================================
-      // POST INTERACTIONS
+      // POST INTERACTIONS WITH LOADERS
       // ========================================
 
       function initializePostInteractions() {
@@ -2460,6 +3288,11 @@
       }
 
       async function handleLikePost(postId, likeBtn) {
+          // Show loader
+          const likeCount = likeBtn.querySelector('.like-count');
+          const originalCount = likeCount.textContent;
+          likeCount.innerHTML = `<span class="tiny-loader xs primary"></span>`;
+
           try {
               const response = await fetch(`/like_post/${postId}`, {
                   method: 'POST',
@@ -2474,7 +3307,8 @@
               const data = await response.json();
               if (data.error) throw new Error(data.error);
 
-              likeBtn.querySelector('.like-count').textContent = data.likes;
+              // Update UI
+              likeCount.textContent = data.likes;
               if (data.liked) {
                   likeBtn.classList.add('text-blue-600');
                   likeBtn.querySelector('i').className = 'bi bi-hand-thumbs-up-fill';
@@ -2484,12 +3318,23 @@
               }
           } catch (error) {
               console.error('Error liking post:', error);
+              likeCount.textContent = originalCount;
               showToast('Failed to like post', 'danger');
           }
       }
 
       async function handleDeletePost(postId) {
           if (!confirm('Are you sure you want to delete this post?')) return;
+
+          const deleteBtn = event.target.closest('.delete-post');
+          if (deleteBtn) {
+              // Show loader
+              const loaderSpan = deleteBtn.querySelector('.loader');
+              if (loaderSpan) {
+                  loaderSpan.innerHTML = '<span class="tiny-loader xs danger"></span>';
+                  loaderSpan.style.display = 'inline-block';
+              }
+          }
 
           try {
               const response = await fetch(`/delete_post/${postId}`, {
@@ -2501,12 +3346,24 @@
 
               const postElement = document.querySelector(`[data-post-id="${postId}"]`);
               if (postElement) {
-                  postElement.remove();
-                  showToast('Post deleted successfully', 'success');
+                  // Show success loader briefly
+                  postElement.style.opacity = '0.5';
+                  postElement.innerHTML = `<div class="flex items-center justify-center p-4"><span class="tiny-loader success"></span><span class="ml-2">Deleting...</span></div>`;
+
+                  setTimeout(() => {
+                      postElement.remove();
+                      showToast('Post deleted successfully', 'success');
+                  }, 500);
               }
           } catch (error) {
               console.error('Error deleting post:', error);
               showToast('Failed to delete post', 'danger');
+
+              // Hide loader
+              if (deleteBtn) {
+                  const loaderSpan = deleteBtn.querySelector('.loader');
+                  if (loaderSpan) loaderSpan.style.display = 'none';
+              }
           }
       }
 
@@ -2525,6 +3382,15 @@
               const formData = new FormData(this);
               formData.append('post_id', postId);
 
+              // Show loader in submit button
+              const submitBtn = this.querySelector('button[type="submit"]');
+              const loaderSpan = submitBtn.querySelector('.loader');
+              if (loaderSpan) {
+                  loaderSpan.innerHTML = '<span class="tiny-loader xs white"></span>';
+                  loaderSpan.style.display = 'inline-block';
+              }
+              submitBtn.disabled = true;
+
               try {
                   const response = await fetch('/edit_post', {
                       method: 'POST',
@@ -2540,6 +3406,10 @@
               } catch (error) {
                   console.error('Error editing post:', error);
                   showToast('Failed to edit post', 'danger');
+
+                  // Hide loader
+                  if (loaderSpan) loaderSpan.style.display = 'none';
+                  submitBtn.disabled = false;
               }
           };
 
@@ -2547,9 +3417,19 @@
       }
 
       async function handleAddComment(postId, content, inputElement) {
-          try {
-              inputElement.disabled = true;
+          // Show loader in input
+          const originalPlaceholder = inputElement.placeholder;
+          inputElement.placeholder = 'Posting...';
+          inputElement.disabled = true;
 
+          // Add sending indicator to input
+          const parent = inputElement.parentElement;
+          const sendingIndicator = document.createElement('span');
+          sendingIndicator.className = 'absolute right-3 tiny-loader xs primary';
+          parent.style.position = 'relative';
+          parent.appendChild(sendingIndicator);
+
+          try {
               const response = await fetch(`/add_comment/${postId}`, {
                   method: 'POST',
                   headers: {
@@ -2564,10 +3444,16 @@
               const data = await response.json();
               inputElement.value = '';
 
+              // Remove sending indicator
+              sendingIndicator.remove();
+              inputElement.placeholder = originalPlaceholder;
+              inputElement.disabled = false;
+
               const container = inputElement.closest('.comments-section');
               if (container) {
-                  container.insertAdjacentHTML('beforeend', `
-                      <div class="comment flex space-x-2 mb-3" id="comment-${data.id}">
+                  // Add comment with fade-in effect
+                  const commentHTML = `
+                      <div class="comment flex space-x-2 mb-3 animate-fadeIn">
                           <img src="${data.avatar}" alt="" class="w-8 h-8 rounded-full object-cover flex-shrink-0">
                           <div class="flex-1">
                               <div class="bg-white rounded-2xl px-3 py-2">
@@ -2576,19 +3462,34 @@
                               </div>
                           </div>
                       </div>
-                  `);
+                  `;
+                  container.insertAdjacentHTML('beforeend', commentHTML);
               }
 
               showToast('Comment added!', 'success');
           } catch (error) {
               console.error('Error adding comment:', error);
-              showToast('Failed to add comment', 'danger');
-          } finally {
+              sendingIndicator.remove();
+              inputElement.placeholder = originalPlaceholder;
               inputElement.disabled = false;
+              showToast('Failed to add comment', 'danger');
           }
       }
 
       async function handleViewComments(postId) {
+          // Show loader in modal
+          const modalBody = document.getElementById('commentModalBody');
+          if (modalBody) {
+              modalBody.innerHTML = `
+                  <div class="flex items-center justify-center p-8">
+                      <span class="tiny-loader md primary"></span>
+                      <span class="ml-3 text-gray-500">Loading comments...</span>
+                  </div>
+              `;
+          }
+
+          openModal('commentModal');
+
           try {
               const response = await fetch(`/get_comments/${postId}`);
               if (!response.ok) throw new Error('Network error');
@@ -2597,9 +3498,10 @@
               displayCommentsModal(comments);
           } catch (error) {
               console.error('Error loading comments:', error);
-              document.getElementById('commentModalBody').innerHTML =
-                  '<div class="text-center py-8 text-red-500">Failed to load comments</div>';
-              openModal('commentModal');
+              if (modalBody) {
+                  modalBody.innerHTML =
+                      '<div class="text-center py-8 text-red-500">Failed to load comments</div>';
+              }
           }
       }
 
@@ -2611,7 +3513,6 @@
 
           if (comments.length === 0) {
               body.innerHTML = '<div class="text-center py-8 text-gray-500">No comments yet</div>';
-              openModal('commentModal');
               return;
           }
 
@@ -2639,8 +3540,6 @@
                   </div>
               `;
           });
-
-          openModal('commentModal');
       }
 
       // ========================================
@@ -2694,11 +3593,17 @@
       }
 
       // ========================================
-      // BLOCK USER SYSTEM
+      // BLOCK USER SYSTEM WITH LOADERS
       // ========================================
 
       async function blockUser(userId) {
           if (!confirm("Block this user? They won't see your posts or be able to contact you.")) return;
+
+          // Show loader on button
+          const button = event.target;
+          const originalText = button.innerHTML;
+          button.innerHTML = `<span class="inline-flex items-center gap-1"><span class="tiny-loader xs white"></span>Blocking...</span>`;
+          button.disabled = true;
 
           try {
               const response = await fetch(`/block_user/${userId}`, {
@@ -2718,15 +3623,25 @@
                   setTimeout(() => location.reload(), 1500);
               } else {
                   showToast(data.error || 'Error blocking user', 'danger');
+                  button.innerHTML = originalText;
+                  button.disabled = false;
               }
           } catch (error) {
               console.error('Error blocking user:', error);
               showToast('Error blocking user. Please try again.', 'danger');
+              button.innerHTML = originalText;
+              button.disabled = false;
           }
       }
 
       async function unblockUserFromModal(userId) {
           if (!confirm("Unblock this user? They will be able to see your posts again.")) return;
+
+          // Show loader on button
+          const button = event.target;
+          const originalText = button.innerHTML;
+          button.innerHTML = `<span class="inline-flex items-center gap-1"><span class="tiny-loader xs white"></span>Unblocking...</span>`;
+          button.disabled = true;
 
           try {
               const response = await fetch(`/unblock_user/${userId}`, {
@@ -2745,15 +3660,19 @@
                   closeModal('profileModal');
               } else {
                   showToast(data.error || 'Failed to unblock', 'danger');
+                  button.innerHTML = originalText;
+                  button.disabled = false;
               }
           } catch (error) {
               console.error('Error unblocking user:', error);
               showToast('Error unblocking user', 'danger');
+              button.innerHTML = originalText;
+              button.disabled = false;
           }
       }
 
       // ========================================
-      // NOTIFICATION SYSTEM
+      // NOTIFICATION SYSTEM WITH LOADERS
       // ========================================
 
       function initializeNotifications() {
@@ -2792,6 +3711,21 @@
       async function loadNotifications() {
           const list = document.getElementById('notificationsList');
           if (!list) return;
+
+          // Show loading skeleton
+          list.innerHTML = `
+              <div class="space-y-3 p-3">
+                  ${Array(3).fill().map(() => `
+                      <div class="flex items-center space-x-3 p-3 animate-pulse">
+                          <div class="w-10 h-10 rounded-full bg-gray-200"></div>
+                          <div class="flex-1 space-y-2">
+                              <div class="h-3 bg-gray-200 rounded w-3/4"></div>
+                              <div class="h-2 bg-gray-200 rounded w-1/2"></div>
+                          </div>
+                      </div>
+                  `).join('')}
+              </div>
+          `;
 
           try {
               const response = await fetch('/notifications');
@@ -2876,25 +3810,15 @@
           }
       }
 
-      async function markAllAsRead() {
-          try {
-              await fetch('/notifications/read', {
-                  method: 'POST',
-                  headers: {
-                      'X-CSRFToken': csrfToken,
-                      'Content-Type': 'application/json'
-                  }
-              });
-              updateNotificationBadge();
-              loadNotifications();
-              showToast('All notifications marked as read', 'success');
-          } catch (error) {
-              console.error('Error marking all notifications as read:', error);
-              showToast('Failed to mark notifications as read', 'danger');
-          }
-      }
-
       async function acceptFriendRequest(userId, notifId) {
+          const button = event.target;
+          if (!button) return;
+
+          // Show loader on button
+          const originalContent = button.innerHTML;
+          button.innerHTML = `<span class="tiny-loader xs white"></span>`;
+          button.disabled = true;
+
           try {
               const response = await fetch(`/accept_friend_request/${userId}`, {
                   method: 'POST',
@@ -2910,17 +3834,29 @@
               const data = await response.json();
               if (data.success) {
                   await markNotificationAsRead(notifId);
+                  button.innerHTML = `<i class="bi bi-check"></i> Accepted`;
+                  button.className = 'px-3 py-1 bg-green-100 text-green-700 text-xs rounded-lg';
                   showToast('Friend request accepted!', 'success');
               } else {
-                  showToast(data.error || 'Failed to accept request', 'danger');
+                  throw new Error(data.error || 'Failed to accept request');
               }
           } catch (error) {
               console.error('Error accepting friend request:', error);
+              button.innerHTML = originalContent;
+              button.disabled = false;
               showToast('Failed to accept friend request', 'danger');
           }
       }
 
       async function declineFriendRequest(userId, notifId) {
+          const button = event.target;
+          if (!button) return;
+
+          // Show loader on button
+          const originalContent = button.innerHTML;
+          button.innerHTML = `<span class="tiny-loader xs"></span>`;
+          button.disabled = true;
+
           try {
               const response = await fetch(`/decline_friend_request/${userId}`, {
                   method: 'POST',
@@ -2936,12 +3872,16 @@
               const data = await response.json();
               if (data.success) {
                   await markNotificationAsRead(notifId);
+                  button.innerHTML = `<i class="bi bi-x"></i> Declined`;
+                  button.className = 'px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-lg';
                   showToast('Request declined', 'info');
               } else {
-                  showToast(data.error || 'Failed to decline request', 'danger');
+                  throw new Error(data.error || 'Failed to decline request');
               }
           } catch (error) {
               console.error('Error declining friend request:', error);
+              button.innerHTML = originalContent;
+              button.disabled = false;
               showToast('Failed to decline friend request', 'danger');
           }
       }
@@ -2958,7 +3898,7 @@
       }
 
       // ========================================
-      // SEARCH SYSTEM
+      // SEARCH SYSTEM WITH LOADERS
       // ========================================
 
       function initializeSearch() {
@@ -3067,9 +4007,12 @@
           if (!searchResultsBody) return;
 
           searchResultsBody.innerHTML = `
-              <div class="search-loading text-center p-4 text-gray-500">
-                  <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
-                  <div class="mt-2">Searching...</div>
+              <div class="search-loading text-center p-6">
+                  <div class="flex flex-col items-center justify-center">
+                      <span class="tiny-loader md primary mb-3"></span>
+                      <div class="text-gray-500 text-sm">Searching...</div>
+                      <div class="text-xs text-gray-400 mt-1">Looking for matches</div>
+                  </div>
               </div>
           `;
           showSearchResults();
@@ -3165,7 +4108,7 @@
       }
 
       // ========================================
-      // MESSENGER SYSTEM
+      // MESSENGER SYSTEM WITH LOADERS
       // ========================================
 
       // Socket event listeners
@@ -3263,6 +4206,16 @@
 
       async function loadFriends() {
           try {
+              const friendsContainer = document.getElementById("friendsContainer");
+              if (friendsContainer) {
+                  friendsContainer.innerHTML = `
+                      <div class="flex justify-center items-center p-8">
+                          <span class="tiny-loader md primary"></span>
+                          <span class="ml-3 text-gray-500">Loading friends...</span>
+                      </div>
+                  `;
+              }
+
               const response = await fetch("/friends");
               if (!response.ok) throw new Error('Network error');
 
@@ -3270,6 +4223,15 @@
               displayFriends(friends);
           } catch (error) {
               console.error("Error loading friends:", error);
+              const friendsContainer = document.getElementById("friendsContainer");
+              if (friendsContainer) {
+                  friendsContainer.innerHTML = `
+                      <div class="text-center p-6 text-red-500">
+                          <i class="bi bi-exclamation-triangle"></i>
+                          <p class="text-sm">Failed to load friends</p>
+                      </div>
+                  `;
+              }
               showToast("Failed to load friends", "danger");
           }
       }
@@ -3340,6 +4302,16 @@
 
       async function loadMessages(friendId) {
           try {
+              const chatContainer = document.getElementById("chatMessages");
+              if (chatContainer) {
+                  chatContainer.innerHTML = `
+                      <div class="flex justify-center items-center py-8">
+                          <span class="tiny-loader md primary"></span>
+                          <span class="ml-2 text-gray-500 text-sm">Loading messages...</span>
+                      </div>
+                  `;
+              }
+
               const response = await fetch(`/messages/${friendId}`);
               if (!response.ok) throw new Error('Network error');
 
@@ -3347,6 +4319,15 @@
               displayMessages(messages);
           } catch (error) {
               console.error("Error loading messages:", error);
+              const chatContainer = document.getElementById("chatMessages");
+              if (chatContainer) {
+                  chatContainer.innerHTML = `
+                      <div class="text-center p-6 text-red-500">
+                          <i class="bi bi-exclamation-triangle"></i>
+                          <p class="text-sm">Failed to load messages</p>
+                      </div>
+                  `;
+              }
               showToast("Failed to load messages", "danger");
           }
       }
@@ -3448,12 +4429,24 @@
 
           stopTyping();
 
+          // Show sending indicator
+          const sendBtn = document.getElementById("sendChatBtn");
+          const originalContent = sendBtn.innerHTML;
+          sendBtn.innerHTML = `<span class="tiny-loader xs white"></span>`;
+          sendBtn.disabled = true;
+
           socket.emit("send_message", {
               friend_id: appState.activeFriendId,
               content: content,
           });
 
           input.value = "";
+
+          // Restore button after 1 second
+          setTimeout(() => {
+              sendBtn.innerHTML = originalContent;
+              sendBtn.disabled = false;
+          }, 1000);
       }
 
       function handleTyping() {
@@ -3612,12 +4605,13 @@
       }
 
       // ========================================
-      // GROUPS SYSTEM
+      // GROUPS SYSTEM WITH LOADERS
       // ========================================
 
       async function loadGroups() {
           console.log('🔍 Loading ALL groups...');
 
+          // Show loading state
           showGroupsLoading('groupsList');
           showGroupsLoading('groupsListMobile');
 
@@ -3778,15 +4772,16 @@
           const button = event.target.closest('button');
           if (!button) return;
 
+          // Show loader with better styling
           const originalContent = button.innerHTML;
-
           button.innerHTML = `
-              <div class="flex items-center">
-                  <div class="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin mr-1"></div>
-                  Joining...
-              </div>
+              <span class="inline-flex items-center gap-1">
+                  <span class="tiny-loader xs white"></span>
+                  <span class="text-xs">Joining...</span>
+              </span>
           `;
           button.disabled = true;
+          button.classList.add('opacity-70');
 
           try {
               const response = await fetch(`/groups/${groupId}/join`, {
@@ -3801,16 +4796,24 @@
 
               const data = await response.json();
               if (data.success) {
+                  // Show success state
+                  button.innerHTML = `<span class="inline-flex items-center gap-1"><i class="bi bi-check-circle"></i>Joined</span>`;
+                  button.className = 'text-xs bg-green-100 text-green-700 px-3 py-1.5 rounded-lg transition-all duration-300 flex items-center';
+
+                  setTimeout(() => {
+                      loadGroups();
+                  }, 1000);
+
                   showToast('🎉 Successfully joined the group!', 'success');
-                  setTimeout(() => loadGroups(), 500);
               } else {
                   throw new Error(data.error || 'Failed to join group');
               }
           } catch (err) {
               console.error('Error joining group:', err);
-              showToast(err.message || 'Error joining group', 'danger');
               button.innerHTML = originalContent;
               button.disabled = false;
+              button.classList.remove('opacity-70');
+              showToast(err.message || 'Error joining group', 'danger');
           }
       }
 
@@ -3824,15 +4827,16 @@
           const button = event.target.closest('button');
           if (!button) return;
 
+          // Show loader
           const originalContent = button.innerHTML;
-
           button.innerHTML = `
-              <div class="flex items-center">
-                  <div class="w-3 h-3 border-2 border-green-700 border-t-transparent rounded-full animate-spin mr-1"></div>
-                  Leaving...
-              </div>
+              <span class="inline-flex items-center gap-1">
+                  <span class="tiny-loader xs"></span>
+                  <span class="text-xs">Leaving...</span>
+              </span>
           `;
           button.disabled = true;
+          button.classList.add('opacity-70');
 
           try {
               const response = await fetch(`/groups/${groupId}/leave`, {
@@ -3847,16 +4851,20 @@
 
               const data = await response.json();
               if (data.success) {
+                  button.innerHTML = `<span class="text-xs">Left</span>`;
+                  setTimeout(() => {
+                      loadGroups();
+                  }, 1000);
                   showToast('👋 Left the group successfully', 'info');
-                  setTimeout(() => loadGroups(), 500);
               } else {
                   throw new Error(data.error || 'Failed to leave group');
               }
           } catch (err) {
               console.error('Error leaving group:', err);
-              showToast(err.message || 'Error leaving group', 'danger');
               button.innerHTML = originalContent;
               button.disabled = false;
+              button.classList.remove('opacity-70');
+              showToast(err.message || 'Error leaving group', 'danger');
           }
       }
 
@@ -4130,6 +5138,51 @@
       });
 
       // ========================================
+      // POST CREATION WITH LOADERS
+      // ========================================
+
+      document.addEventListener('DOMContentLoaded', function() {
+          const createPostForm = document.getElementById('createPostForm');
+          if (createPostForm) {
+              createPostForm.addEventListener('submit', async function(e) {
+                  e.preventDefault();
+
+                  const submitBtn = this.querySelector('button[type="submit"]');
+                  const loaderSpan = submitBtn.querySelector('.loader');
+
+                  // Show loader
+                  if (loaderSpan) {
+                      loaderSpan.innerHTML = '<span class="tiny-loader xs white"></span>';
+                      loaderSpan.style.display = 'inline-block';
+                  }
+                  submitBtn.disabled = true;
+
+                  try {
+                      const formData = new FormData(this);
+                      const response = await fetch(this.action, {
+                          method: 'POST',
+                          body: formData
+                      });
+
+                      if (response.ok) {
+                          showToast('Post created successfully!', 'success');
+                          setTimeout(() => location.reload(), 1000);
+                      } else {
+                          throw new Error('Failed to create post');
+                      }
+                  } catch (error) {
+                      console.error('Error creating post:', error);
+                      showToast('Failed to create post', 'danger');
+
+                      // Hide loader
+                      if (loaderSpan) loaderSpan.style.display = 'none';
+                      submitBtn.disabled = false;
+                  }
+              });
+          }
+      });
+
+      // ========================================
       // INITIALIZATION
       // ========================================
 
@@ -4264,9 +5317,286 @@
       }
 
       window.debugAds = debugAdSystem;
-</script>
+
+
+      // ========================================
+// INFINITE SCROLL / LOAD MORE SYSTEM
+// ========================================
+
+let isLoading = false;
+let hasMorePosts = {{ has_more|tojson|default(false) }};
+let nextCursor = {{ next_cursor|tojson|default(None) }};
+const POSTS_PER_LOAD = 10;
+
+// Initialize infinite scroll
+function initializeInfiniteScroll() {
+    const loadMoreBtn = document.getElementById('load-more-btn');
+    const loadingSpinner = document.getElementById('loading-spinner');
+    const postsFeed = document.getElementById('posts-feed');
+    
+    if (!loadMoreBtn || !postsFeed) return;
+    
+    // Click handler for Load More button
+    loadMoreBtn.addEventListener('click', loadMorePosts);
+    
+    // Intersection Observer for auto-load when scrolling
+    const observer = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && !isLoading && hasMorePosts) {
+            loadMorePosts();
+        }
+    }, {
+        rootMargin: '200px', // Load 200px before reaching the bottom
+        threshold: 0.1
+    });
+    
+    observer.observe(loadMoreBtn);
+    
+    // Handle scroll events for Facebook-style loading
+    window.addEventListener('scroll', debounce(() => {
+        const scrollPosition = window.innerHeight + window.scrollY;
+        const scrollThreshold = document.body.offsetHeight - 500;
+        
+        if (scrollPosition >= scrollThreshold && !isLoading && hasMorePosts) {
+            loadMorePosts();
+        }
+    }, 300));
+}
+
+// Load more posts function
+async function loadMorePosts() {
+    if (isLoading || !hasMorePosts || !nextCursor) return;
+    
+    isLoading = true;
+    
+    const loadMoreBtn = document.getElementById('load-more-btn');
+    const loadingSpinner = document.getElementById('loading-spinner');
+    const postsFeed = document.getElementById('posts-feed');
+    
+    // Show loading state
+    if (loadMoreBtn) loadMoreBtn.classList.add('hidden');
+    if (loadingSpinner) loadingSpinner.classList.remove('hidden');
+    
+    try {
+        const response = await fetch(`/user_dashboard?cursor=${nextCursor}&limit=${POSTS_PER_LOAD}`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        });
+        
+        if (!response.ok) throw new Error('Network error');
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Append new posts
+            if (data.posts && postsFeed) {
+                postsFeed.insertAdjacentHTML('beforeend', data.posts);
+                
+                // Reinitialize event listeners for new posts
+                setTimeout(() => {
+                    initializePostInteractions();
+                }, 100);
+            }
+            
+            // Update state
+            hasMorePosts = data.has_more;
+            nextCursor = data.next_cursor;
+            
+            // Update load more button
+            if (loadMoreBtn && data.has_more) {
+                loadMoreBtn.dataset.cursor = nextCursor || '';
+                loadMoreBtn.classList.remove('hidden');
+            } else {
+                // No more posts - show end of feed message
+                const endOfFeed = document.getElementById('end-of-feed');
+                if (endOfFeed) endOfFeed.classList.remove('hidden');
+            }
+            
+            // Show toast for new posts loaded
+            if (data.count > 0) {
+                showToast(`Loaded ${data.count} more posts`, 'success');
+            }
+        }
+    } catch (error) {
+        console.error('Error loading more posts:', error);
+        showToast('Failed to load more posts', 'danger');
+        
+        // Show button again on error
+        if (loadMoreBtn) loadMoreBtn.classList.remove('hidden');
+    } finally {
+        isLoading = false;
+        if (loadingSpinner) loadingSpinner.classList.add('hidden');
+    }
+}
+
+// Optimized scroll handler
+function initializeOptimizedScroll() {
+    let ticking = false;
+    
+    window.addEventListener('scroll', () => {
+        if (!ticking) {
+            window.requestAnimationFrame(() => {
+                checkScrollPosition();
+                ticking = false;
+            });
+            ticking = true;
+        }
+    });
+}
+
+// Check if we should load more
+function checkScrollPosition() {
+    if (isLoading || !hasMorePosts) return;
+    
+    const scrollPosition = window.innerHeight + window.scrollY;
+    const documentHeight = document.documentElement.scrollHeight;
+    const threshold = 500; // Load 500px before bottom
+    
+    if (scrollPosition >= documentHeight - threshold) {
+        loadMorePosts();
+    }
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    initializeInfiniteScroll();
+    initializeOptimizedScroll();
+    
+    // Facebook-style "loading on scroll" indicator
+    createScrollIndicator();
+});
+
+// Create a Facebook-style loading indicator
+function createScrollIndicator() {
+    const indicator = document.createElement('div');
+    indicator.id = 'scroll-load-indicator';
+    indicator.className = 'fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-full shadow-lg hidden z-50';
+    indicator.innerHTML = '<i class="bi bi-arrow-clockwise animate-spin mr-2"></i> Loading posts...';
+    document.body.appendChild(indicator);
+}
+
+// Show/hide scroll indicator
+function showScrollIndicator(show = true) {
+    const indicator = document.getElementById('scroll-load-indicator');
+    if (indicator) {
+        if (show) {
+            indicator.classList.remove('hidden');
+        } else {
+            indicator.classList.add('hidden');
+        }
+    }
+}
+
+// Update the loadMorePosts function to use the indicator
+async function loadMorePostsWithIndicator() {
+    if (isLoading || !hasMorePosts || !nextCursor) return;
+    
+    isLoading = true;
+    showScrollIndicator(true);
+    
+    try {
+        // ... same fetch code as above ...
+    } catch (error) {
+        // ... error handling ...
+    } finally {
+        isLoading = false;
+        showScrollIndicator(false);
+    }
+}
+
+// Handle scroll events more efficiently
+window.addEventListener('scroll', debounce(() => {
+    if (isLoading || !hasMorePosts) return;
+    
+    const scrollBottom = window.innerHeight + window.scrollY;
+    const threshold = document.documentElement.offsetHeight - 1000;
+    
+    if (scrollBottom >= threshold) {
+        loadMorePosts();
+    }
+}, 200));
+
+// Add a "Back to Top" button for long feeds
+function addBackToTopButton() {
+    const button = document.createElement('button');
+    button.id = 'back-to-top';
+    button.className = 'fixed bottom-4 left-4 bg-gray-800 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg hover:bg-gray-900 transition-colors hidden z-50';
+    button.innerHTML = '<i class="bi bi-arrow-up"></i>';
+    button.title = 'Back to top';
+    
+    button.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    
+    document.body.appendChild(button);
+    
+    // Show/hide based on scroll
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 1000) {
+            button.classList.remove('hidden');
+        } else {
+            button.classList.add('hidden');
+        }
+    });
+}
+    </script>
 
     <style>
+
+      /* Infinite scroll animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.post-card {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+/* Smooth loading spinner */
+#loading-spinner .animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Scroll indicator animation */
+#scroll-load-indicator {
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Back to top button */
+#back-to-top {
+    transition: all 0.3s ease;
+}
+
+#back-to-top:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+
       .read-receipt {
         background: #1877f2 !important;
       }
@@ -4275,251 +5605,333 @@
       }
 
       /* ======================================== */
-/* ULTRA-COOL AD SYSTEM STYLES */
-/* ======================================== */
+      /* ULTRA-COOL AD SYSTEM STYLES */
+      /* ======================================== */
 
-/* Modal Ad Animations */
-.ad-modal-content {
-    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
+      /* Modal Ad Animations */
+      .ad-modal-content {
+        transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
 
-/* Floating Widget Animations */
-#floatingAd {
-    transform: translateY(10px);
-    opacity: 0;
-    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
+      /* Floating Widget Animations */
+      #floatingAd {
+        transform: translateY(10px);
+        opacity: 0;
+        transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
 
-#floatingAdContent {
-    box-shadow: 
-        0 20px 25px -5px rgba(0, 0, 0, 0.1),
-        0 10px 10px -5px rgba(0, 0, 0, 0.04),
-        0 0 0 1px rgba(255, 255, 255, 0.1);
-}
+      #floatingAdContent {
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+          0 10px 10px -5px rgba(0, 0, 0, 0.04),
+          0 0 0 1px rgba(255, 255, 255, 0.1);
+      }
 
-/* Native Ad Styling */
-#nativeAd {
-    border-left: 4px solid #8b5cf6;
-    background: linear-gradient(135deg, #ffffff 0%, #fafafe 100%);
-}
+      /* Native Ad Styling */
+      #nativeAd {
+        border-left: 4px solid #8b5cf6;
+        background: linear-gradient(135deg, #ffffff 0%, #fafafe 100%);
+      }
 
-/* Hover Effects */
-.ad-hover:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-}
+      /* Hover Effects */
+      .ad-hover:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+      }
 
-/* Loading Animation for Ad Images */
-.ad-image-loading {
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-    background-size: 200% 100%;
-    animation: loading 1.5s infinite;
-}
+      /* Loading Animation for Ad Images */
+      .ad-image-loading {
+        background: linear-gradient(
+          90deg,
+          #f0f0f0 25%,
+          #e0e0e0 50%,
+          #f0f0f0 75%
+        );
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
+      }
 
-@keyframes loading {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-}
+      @keyframes loading {
+        0% {
+          background-position: 200% 0;
+        }
+        100% {
+          background-position: -200% 0;
+        }
+      }
 
-/* Pulse Animation for Floating Widget */
-@keyframes gentle-pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-}
+      /* Pulse Animation for Floating Widget */
+      @keyframes gentle-pulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.05);
+        }
+      }
 
-.floating-ad-pulse {
-    animation: gentle-pulse 2s ease-in-out infinite;
-}
+      .floating-ad-pulse {
+        animation: gentle-pulse 2s ease-in-out infinite;
+      }
 
-/* Backdrop Blur for Modern Look */
-.ad-backdrop {
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-}
+      /* Backdrop Blur for Modern Look */
+      .ad-backdrop {
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+      }
 
-/* Gradient Borders */
-.gradient-border {
-    position: relative;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    padding: 2px;
-    border-radius: 16px;
-}
+      /* Gradient Borders */
+      .gradient-border {
+        position: relative;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 2px;
+        border-radius: 16px;
+      }
 
-.gradient-border > div {
-    background: white;
-    border-radius: 14px;
-}
+      .gradient-border > div {
+        background: white;
+        border-radius: 14px;
+      }
     </style>
 
     <!-- ======================================== -->
-<!-- ULTRA-COOL AD SYSTEM -->
-<!-- ======================================== -->
+    <!-- ULTRA-COOL AD SYSTEM -->
+    <!-- ======================================== -->
 
-<!-- Smart Modal Ad -->
-<div id="adModal" 
-     class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/60 backdrop-blur-sm"
-     style="margin-top: 5rem;">
-  <div class="ad-modal-content relative mx-2 sm:mx-4 w-full max-w-lg sm:max-w-xl md:max-w-2xl rounded-3xl bg-gradient-to-br from-white to-gray-50 shadow-2xl transform transition-all duration-500 scale-95 opacity-0">
-    
-    <!-- Close Button -->
-    <button onclick="closeAdModal()" 
-            class="absolute -top-3 -right-3 z-10 bg-white rounded-full w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center shadow-lg hover:scale-110 transition-transform duration-200 border border-gray-200">
-      <i class="bi bi-x-lg text-gray-600 text-xs sm:text-sm"></i>
-    </button>
+    <!-- Smart Modal Ad -->
+    <div
+      id="adModal"
+      class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/60 backdrop-blur-sm"
+      style="margin-top: 5rem"
+    >
+      <div
+        class="ad-modal-content relative mx-2 sm:mx-4 w-full max-w-lg sm:max-w-xl md:max-w-2xl rounded-3xl bg-gradient-to-br from-white to-gray-50 shadow-2xl transform transition-all duration-500 scale-95 opacity-0"
+      >
+        <!-- Close Button -->
+        <button
+          onclick="closeAdModal()"
+          class="absolute -top-3 -right-3 z-10 bg-white rounded-full w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center shadow-lg hover:scale-110 transition-transform duration-200 border border-gray-200"
+        >
+          <i class="bi bi-x-lg text-gray-600 text-xs sm:text-sm"></i>
+        </button>
 
-    <!-- Ad Content -->
-    <div class="ad-body p-4 sm:p-6">
-      <div class="flex flex-col md:flex-row gap-4 sm:gap-6 items-center">
+        <!-- Ad Content -->
+        <div class="ad-body p-4 sm:p-6">
+          <div class="flex flex-col md:flex-row gap-4 sm:gap-6 items-center">
+            <!-- Ad Image -->
+            <div class="flex-shrink-0 w-full md:w-2/5">
+              <div
+                class="relative rounded-2xl overflow-hidden aspect-square bg-gradient-to-br from-blue-500 to-purple-600"
+              >
+                <img
+                  id="adModalImage"
+                  src=""
+                  alt="Ad"
+                  class="w-full h-full object-cover"
+                />
+                <div class="absolute top-3 left-3">
+                  <span
+                    class="bg-yellow-400 text-yellow-900 px-2 py-1 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wide shadow-lg"
+                  >
+                    Sponsored
+                  </span>
+                </div>
+              </div>
+            </div>
 
-        <!-- Ad Image -->
-        <div class="flex-shrink-0 w-full md:w-2/5">
-          <div class="relative rounded-2xl overflow-hidden aspect-square bg-gradient-to-br from-blue-500 to-purple-600">
-            <img id="adModalImage" src="" alt="Ad" class="w-full h-full object-cover">
-            <div class="absolute top-3 left-3">
-              <span class="bg-yellow-400 text-yellow-900 px-2 py-1 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wide shadow-lg">
-                Sponsored
-              </span>
+            <!-- Ad Text -->
+            <div class="flex-1 text-center md:text-left">
+              <h3
+                id="adModalTitle"
+                class="text-xl sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-3 leading-tight"
+              ></h3>
+              <p
+                id="adModalDescription"
+                class="text-gray-600 mb-3 sm:mb-4 leading-relaxed text-sm sm:text-base"
+              ></p>
+
+              <!-- CTA Buttons -->
+              <div
+                class="flex flex-col sm:flex-row gap-3 justify-center md:justify-start"
+              >
+                <a
+                  id="adModalLink"
+                  href="#"
+                  target="_blank"
+                  class="inline-flex items-center justify-center px-5 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm sm:text-base font-semibold rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                >
+                  <span id="adModalCTA"></span>
+                  <i class="bi bi-arrow-up-right ml-2"></i>
+                </a>
+
+                <button
+                  onclick="adNotInterested()"
+                  class="inline-flex items-center justify-center px-5 sm:px-6 py-2.5 sm:py-3 bg-gray-100 text-gray-600 font-medium rounded-xl hover:bg-gray-200 transition-all duration-300 text-sm sm:text-base"
+                >
+                  <i class="bi bi-hand-thumbs-down mr-2"></i>
+                  Not Interested
+                </button>
+              </div>
+
+              <!-- Advertiser Info -->
+              <div class="mt-4 pt-3 sm:pt-4 border-t border-gray-200">
+                <p class="text-[10px] sm:text-xs text-gray-500">
+                  Advertisement • You can close this ad
+                </p>
+              </div>
             </div>
           </div>
         </div>
+      </div>
+    </div>
 
-        <!-- Ad Text -->
-        <div class="flex-1 text-center md:text-left">
-          <h3 id="adModalTitle" class="text-xl sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-3 leading-tight"></h3>
-          <p id="adModalDescription" class="text-gray-600 mb-3 sm:mb-4 leading-relaxed text-sm sm:text-base"></p>
+    <!-- Floating Corner Widget -->
+    <!-- Floating Corner Widget - Compact Version -->
+    <div
+      id="floatingAd"
+      class="fixed bottom-4 right-4 z-50 transition-all duration-500"
+    >
+      <div class="relative group">
+        <!-- Main Button - Smaller -->
+        <button
+          onclick="toggleFloatingAd()"
+          class="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl shadow-lg flex items-center justify-center text-white hover:from-orange-600 hover:to-red-600 transition-all duration-300"
+        >
+          <i class="bi bi-megaphone-fill text-sm"></i>
+        </button>
 
-          <!-- CTA Buttons -->
-          <div class="flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
-            <a id="adModalLink" href="#" target="_blank" 
-               class="inline-flex items-center justify-center px-5 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm sm:text-base font-semibold rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
-              <span id="adModalCTA"></span>
-              <i class="bi bi-arrow-up-right ml-2"></i>
-            </a>
+        <!-- Notification Badge - Smaller -->
+        <span
+          class="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full border border-white animate-pulse"
+        ></span>
 
-            <button onclick="adNotInterested()" 
-                    class="inline-flex items-center justify-center px-5 sm:px-6 py-2.5 sm:py-3 bg-gray-100 text-gray-600 font-medium rounded-xl hover:bg-gray-200 transition-all duration-300 text-sm sm:text-base">
-              <i class="bi bi-hand-thumbs-down mr-2"></i>
-              Not Interested
-            </button>
+        <!-- Expanded Content - Much Smaller -->
+        <div
+          id="floatingAdContent"
+          class="absolute bottom-12 right-0 w-48 bg-white rounded-lg shadow-xl p-3 hidden transform origin-bottom-right transition-all duration-300 scale-95 opacity-0 border border-gray-200"
+        >
+          <div class="flex items-start space-x-2 mb-2">
+            <div
+              class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center flex-shrink-0"
+            >
+              <i class="bi bi-star-fill text-white text-xs"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <h4
+                class="font-bold text-gray-900 text-xs truncate"
+                id="floatingAdTitle"
+              >
+                Special Offer!
+              </h4>
+              <p
+                class="text-gray-600 text-xs mt-0.5 truncate"
+                id="floatingAdDesc"
+              >
+                Amazing deals
+              </p>
+            </div>
           </div>
+          <a
+            href="#"
+            target="_blank"
+            id="floatingAdLink"
+            class="block w-full py-1.5 bg-gradient-to-r from-green-500 to-green-600 text-white text-center rounded text-xs font-medium hover:from-green-600 hover:to-green-700 transition-colors"
+          >
+            Discover Now
+          </a>
+        </div>
+      </div>
+    </div>
 
-          <!-- Advertiser Info -->
-          <div class="mt-4 pt-3 sm:pt-4 border-t border-gray-200">
-            <p class="text-[10px] sm:text-xs text-gray-500">Advertisement • You can close this ad</p>
+    <!-- Native Content Ad -->
+    <div
+      id="nativeAd"
+      class="bg-white rounded-xl shadow-soft overflow-hidden mb-6 border border-purple-200 hidden"
+    >
+      <div class="p-3 sm:p-4 flex justify-between items-start">
+        <div class="flex items-center space-x-3">
+          <div
+            class="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center"
+          >
+            <i class="bi bi-award-fill text-white text-sm"></i>
+          </div>
+          <div>
+            <div class="font-semibold flex items-center text-xs sm:text-sm">
+              <span id="nativeAdAdvertiser">Featured Partner</span>
+              <span
+                class="ml-2 bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium"
+              >
+                Sponsored
+              </span>
+            </div>
+            <div class="text-xs text-gray-400">Advertisement</div>
           </div>
         </div>
       </div>
-    </div>
-  </div>
-</div>
 
+      <div class="px-3 sm:px-4 pb-3">
+        <h3
+          id="nativeAdTitle"
+          class="font-bold text-base sm:text-lg mb-1 sm:mb-2 text-gray-900"
+        ></h3>
+        <p
+          id="nativeAdDescription"
+          class="text-gray-700 text-xs sm:text-sm mb-2 sm:mb-3"
+        ></p>
 
-<!-- Floating Corner Widget -->
-<div id="floatingAd" class="fixed bottom-5 right-5 z-50 transition-all duration-500 transform hover:scale-105">
-  <div class="relative group">
-
-    <!-- Main Button -->
-    <button onclick="toggleFloatingAd()" 
-            class="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl shadow-2xl flex items-center justify-center text-white hover:from-orange-600 hover:to-red-600 transition-all duration-300 transform hover:rotate-12">
-      <i class="bi bi-megaphone-fill text-sm sm:text-lg"></i>
-    </button>
-
-    <!-- Notification Badge -->
-    <span class="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-green-400 rounded-full flex items-center justify-center text-[10px] sm:text-xs font-bold text-white animate-pulse border-2 border-white">
-      <i class="bi bi-lightning-fill"></i>
-    </span>
-
-    <!-- Expanded Content -->
-    <div id="floatingAdContent" 
-         class="absolute bottom-14 sm:bottom-16 right-0 w-60 sm:w-72 md:w-80 bg-white rounded-2xl shadow-2xl p-4 hidden transform origin-bottom-right transition-all duration-300 scale-95 opacity-0 border border-gray-200">
-      <div class="flex items-start space-x-3 mb-3">
-        <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center flex-shrink-0">
-          <i class="bi bi-star-fill text-white"></i>
+        <!-- Ad Image -->
+        <div
+          class="rounded-xl overflow-hidden mb-3 bg-gradient-to-br from-blue-50 to-purple-50"
+        >
+          <img
+            id="nativeAdImage"
+            src=""
+            alt="Ad"
+            class="w-full h-32 sm:h-48 object-cover"
+          />
         </div>
-        <div class="flex-1">
-          <h4 class="font-bold text-gray-900 text-sm" id="floatingAdTitle">Special Offer!</h4>
-          <p class="text-gray-600 text-xs mt-1" id="floatingAdDesc">Amazing deals waiting for you</p>
-        </div>
-      </div>
-      <a href="#" target="_blank" id="floatingAdLink" 
-         class="block w-full py-2 bg-gradient-to-r from-green-500 to-green-600 text-white text-center rounded-lg text-sm font-semibold hover:from-green-600 hover:to-green-700 transition-all duration-300 transform hover:scale-105">
-        Discover Now
-      </a>
-    </div>
-  </div>
-</div>
 
-
-<!-- Native Content Ad -->
-<div id="nativeAd" 
-     class="bg-white rounded-xl shadow-soft overflow-hidden mb-6 border border-purple-200 hidden">
-  <div class="p-3 sm:p-4 flex justify-between items-start">
-    <div class="flex items-center space-x-3">
-      <div class="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-        <i class="bi bi-award-fill text-white text-sm"></i>
-      </div>
-      <div>
-        <div class="font-semibold flex items-center text-xs sm:text-sm">
-          <span id="nativeAdAdvertiser">Featured Partner</span>
-          <span class="ml-2 bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium">
-            Sponsored
-          </span>
-        </div>
-        <div class="text-xs text-gray-400">Advertisement</div>
+        <!-- CTA -->
+        <a
+          href="#"
+          target="_blank"
+          id="nativeAdLink"
+          class="inline-flex items-center justify-center w-full py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl text-sm sm:text-base hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105"
+        >
+          <span id="nativeAdCTA">Learn More</span>
+          <i class="bi bi-arrow-up-right ml-2"></i>
+        </a>
       </div>
     </div>
-  </div>
 
-  <div class="px-3 sm:px-4 pb-3">
-    <h3 id="nativeAdTitle" class="font-bold text-base sm:text-lg mb-1 sm:mb-2 text-gray-900"></h3>
-    <p id="nativeAdDescription" class="text-gray-700 text-xs sm:text-sm mb-2 sm:mb-3"></p>
-
-    <!-- Ad Image -->
-    <div class="rounded-xl overflow-hidden mb-3 bg-gradient-to-br from-blue-50 to-purple-50">
-      <img id="nativeAdImage" src="" alt="Ad" class="w-full h-32 sm:h-48 object-cover">
-    </div>
-
-    <!-- CTA -->
-    <a href="#" target="_blank" id="nativeAdLink" 
-       class="inline-flex items-center justify-center w-full py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl text-sm sm:text-base hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105">
-      <span id="nativeAdCTA">Learn More</span>
-      <i class="bi bi-arrow-up-right ml-2"></i>
-    </a>
-  </div>
-</div>
-
-<style>
-  @media (max-width: 480px) {
-    .ad-modal-content { transform: scale(0.92); }
-    #floatingAd button { width: 50px; height: 50px; }
-    #floatingAdContent { width: 230px !important; }
+    <style>
+      @media (max-width: 480px) {
+        .ad-modal-content { transform: scale(0.92); }
+        #floatingAd button { width: 50px; height: 50px; }
+        #floatingAdContent { width: 230px !important; }
 
 
-    .my_logo{
-    display: none;
-  }
+        .my_logo{
+        display: none;
+      }
 
-  .searching{
-    width: 13rem;
-    height: 2rem;
-  }
+      .searching{
+        width: 13rem;
+        height: 2rem;
+      }
 
-  .results{
-    font-size: 0.6rem;
-  }
+      .results{
+        font-size: 0.6rem;
+      }
 
-  .searching_result{
-    height: 10rem;
-  }
+      .searching_result{
+        height: 10rem;
+      }
 
-  .search_input{
-    font-size 0.6rem;
-  }
-  }
-
-  
-</style>
-
-
+      .search_input{
+        font-size 0.6rem;
+      }
+      }
+    </style>
   </body>
 </html>

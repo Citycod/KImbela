@@ -39,8 +39,8 @@ Flask-WTF==1.2.1
 fonttools==4.58.4
 fpdf==1.7.2
 geographiclib==2.0
-gevent==25.9.1
-greenlet==3.1.1
+gevent
+greenlet
 gunicorn==23.0.0
 h11==0.16.0
 humanize==4.14.0

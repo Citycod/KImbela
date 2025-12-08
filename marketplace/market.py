@@ -467,7 +467,6 @@ def get_featured_sellers(limit=6):
 
 # In your main_market route in market.py, update the price filtering section:
 
-
 @market.route("/main_market", methods=["GET"])
 def main_market():
     """Marketplace homepage"""
@@ -475,7 +474,7 @@ def main_market():
     page = request.args.get("page", 1, type=int)
     per_page = 12
 
-    # Start with base query
+    # Start with base query - CRITICAL: Make sure this is MarketplaceService.query
     services_query = MarketplaceService.query.filter_by(status="active")
 
     # Join with users to check subscription status
@@ -486,7 +485,8 @@ def main_market():
     if category_slug:
         category = MarketplaceCategory.query.filter_by(slug=category_slug).first()
         if category:
-            services_query = services_query.filter_by(category_id=category.id)
+            # FIXED: Use MarketplaceService.category_id, not User.category_id
+            services_query = services_query.filter(MarketplaceService.category_id == category.id)
 
     # Filter by search
     search_query = request.args.get("q")
@@ -533,20 +533,20 @@ def main_market():
         services_query = services_query.order_by(
             db.case((User.marketplace_subscription_status == "active", 0), else_=1),
             db.case((User.marketplace_featured_until > datetime.utcnow(), 0), else_=1),
-            desc(MarketplaceService.created_at),
+            db.desc(MarketplaceService.created_at),
         )
     elif sort_by == "popular":
-        services_query = services_query.order_by(desc(MarketplaceService.views))
+        services_query = services_query.order_by(db.desc(MarketplaceService.views))
     elif sort_by == "rating":
         services_query = services_query.order_by(
-            desc(MarketplaceService.average_rating)
+            db.desc(MarketplaceService.average_rating)
         )
     elif sort_by == "price_low":
         services_query = services_query.order_by(MarketplaceService.price)
     elif sort_by == "price_high":
-        services_query = services_query.order_by(desc(MarketplaceService.price))
+        services_query = services_query.order_by(db.desc(MarketplaceService.price))
     else:  # newest
-        services_query = services_query.order_by(desc(MarketplaceService.created_at))
+        services_query = services_query.order_by(db.desc(MarketplaceService.created_at))
 
     # Paginate
     services = services_query.paginate(page=page, per_page=per_page, error_out=False)
