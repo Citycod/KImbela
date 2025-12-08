@@ -631,7 +631,7 @@
                 <div class="flex justify-center space-x-3 animate-slide-up">
                     <a href="#packages" class="bg-white text-primary px-4 py-2.5 rounded-lg btn hover:bg-ivory font-semibold transition-all duration-300 flex items-center space-x-1.5 text-sm">
                         <i class="bi bi-heart"></i>
-                        <span>View Packages</span>
+                        <span>View Package</span>
                     </a>
                     <a href="#how-it-works" class="border border-white/30 text-white px-4 py-2.5 rounded-lg btn hover:bg-white/10 font-semibold transition-all duration-300 text-sm">
                         How It Works
@@ -644,125 +644,40 @@
         <section id="packages" class="py-12 bg-transparent">
             <div class="container mx-auto px-3 sm:px-4">
                 <div class="text-center mb-8 animate-fade-in">
-                    <h2 class="text-2xl md:text-3xl font-playfair font-bold text-primary mb-2">Matchmaking Packages</h2>
+                    <h2 class="text-2xl md:text-3xl font-playfair font-bold text-primary mb-2">Matchmaking Package</h2>
                     <p class="text-base text-text-secondary max-w-2xl mx-auto leading-relaxed">
-                        Choose the perfect package to find your ideal partner.
+                        Get started with our simple, affordable matchmaking service.
                     </p>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <!-- Basic Package -->
-                    <div class="floral-card rounded-lg shadow-strong overflow-hidden card-hover animate-slide-up">
-                        <div class="p-4">
-                            <div class="flex items-center justify-between mb-3">
-                                <h3 class="text-lg font-playfair font-bold text-primary">Basic</h3>
-                                <div class="w-10 h-10 bg-primary/10 rounded flex items-center justify-center">
-                                    <i class="bi bi-heart text-primary"></i>
+                <!-- Single Package - Only $10/month -->
+                <div class="flex justify-center">
+                    <div class="floral-card rounded-lg shadow-strong overflow-hidden card-hover popular-plan animate-slide-up w-full max-w-md">
+                        <div class="p-6 text-center">
+                            <div class="flex items-center justify-center mb-4">
+                                <div class="w-16 h-16 bg-rose-gold/10 rounded-full flex items-center justify-center">
+                                    <i class="bi bi-heart text-rose-gold text-2xl"></i>
                                 </div>
                             </div>
-                            <p class="text-text-secondary mb-4 text-sm">Perfect for casual matchmaking</p>
-                            <div class="mb-4">
-                                <span class="text-2xl font-bold text-primary">$9.99</span>
-                                <span class="text-text-secondary text-sm">/month</span>
+                            <h3 class="text-xl font-playfair font-bold text-primary mb-2">Matchmaking Service</h3>
+                            <p class="text-text-secondary mb-4">Premium matchmaking to find your perfect partner</p>
+                            <div class="mb-6">
+                                <span class="text-3xl font-bold text-primary">$10</span>
+                                <span class="text-text-secondary text-base">/month</span>
                             </div>
-                            <ul class="feature-list mb-4 text-text-secondary">
-                                <li>Basic Profile Listing</li>
-                                <li>7 Days Duration</li>
-                                <li>Basic Matching</li>
-                                <li>Limited Visibility</li>
-                            </ul>
-                            <button class="w-full bg-primary text-white py-2.5 rounded-lg btn hover:bg-secondary transition-all duration-300 font-semibold text-sm btn-select-package" 
-                                    data-package-id="1" data-package-name="Basic" data-package-price="9.99" data-duration-days="7">
-                                Select Package
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Standard Package -->
-                    <div class="floral-card rounded-lg shadow-strong overflow-hidden card-hover popular-plan animate-slide-up" style="animation-delay: 0.1s;">
-                        <div class="p-4">
-                            <div class="flex items-center justify-between mb-3">
-                                <h3 class="text-lg font-playfair font-bold text-primary">Standard</h3>
-                                <div class="w-10 h-10 bg-rose-gold/10 rounded flex items-center justify-center">
-                                    <i class="bi bi-gem text-rose-gold"></i>
-                                </div>
-                            </div>
-                            <p class="text-text-secondary mb-4 text-sm">Great for serious connections</p>
-                            <div class="mb-4">
-                                <span class="text-2xl font-bold text-primary">$24.99</span>
-                                <span class="text-text-secondary text-sm">/month</span>
-                            </div>
-                            <ul class="feature-list mb-4 text-text-secondary">
+                            <ul class="feature-list mb-6 text-text-secondary text-left mx-auto max-w-xs">
                                 <li>Enhanced Profile Listing</li>
-                                <li>14 Days Duration</li>
-                                <li>Advanced Matching</li>
+                                <li>30 Days Duration</li>
+                                <li>Advanced Matching Algorithm</li>
                                 <li>Priority Placement</li>
                                 <li>Message Responses</li>
+                                <li>Personalized Recommendations</li>
                             </ul>
-                            <button class="w-full gradient-rose text-white py-2.5 rounded-lg btn hover:opacity-90 transition-all duration-300 font-semibold text-sm btn-select-package" 
-                                    data-package-id="2" data-package-name="Standard" data-package-price="24.99" data-duration-days="14">
-                                Select Package
+                            <button class="w-full gradient-rose text-white py-3 rounded-lg btn hover:opacity-90 transition-all duration-300 font-semibold text-base btn-select-package" 
+                                    data-package-id="1" data-package-name="Matchmaking" data-package-price="10" data-duration-days="30">
+                                Start Matchmaking - $10/month
                             </button>
-                        </div>
-                    </div>
-
-                    <!-- Premium Package -->
-                    <div class="floral-card rounded-lg shadow-strong overflow-hidden card-hover relative animate-slide-up" style="animation-delay: 0.2s;">
-                        <div class="premium-badge">PREMIUM</div>
-                        <div class="p-4">
-                            <div class="flex items-center justify-between mb-3">
-                                <h3 class="text-lg font-playfair font-bold text-primary">Premium</h3>
-                                <div class="w-10 h-10 bg-sage/10 rounded flex items-center justify-center">
-                                    <i class="bi bi-crown text-sage"></i>
-                                </div>
-                            </div>
-                            <p class="text-text-secondary mb-4 text-sm">Maximum visibility and matches</p>
-                            <div class="mb-4">
-                                <span class="text-2xl font-bold text-primary">$49.99</span>
-                                <span class="text-text-secondary text-sm">/month</span>
-                            </div>
-                            <ul class="feature-list mb-4 text-text-secondary">
-                                <li>Premium Profile Listing</li>
-                                <li>30 Days Duration</li>
-                                <li>Advanced Matching</li>
-                                <li>Top Placement</li>
-                                <li>Unlimited Messages</li>
-                                <li>Personal Matchmaker</li>
-                            </ul>
-                            <button class="w-full gradient-sage text-white py-2.5 rounded-lg btn hover:opacity-90 transition-all duration-300 font-semibold text-sm btn-select-package" 
-                                    data-package-id="3" data-package-name="Premium" data-package-price="49.99" data-duration-days="30">
-                                Select Package
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Elite Package -->
-                    <div class="floral-card rounded-lg shadow-strong overflow-hidden card-hover animate-slide-up" style="animation-delay: 0.3s;">
-                        <div class="p-4">
-                            <div class="flex items-center justify-between mb-3">
-                                <h3 class="text-lg font-playfair font-bold text-primary">Elite</h3>
-                                <div class="w-10 h-10 bg-primary/10 rounded flex items-center justify-center">
-                                    <i class="bi bi-star-fill text-primary"></i>
-                                </div>
-                            </div>
-                            <p class="text-text-secondary mb-4 text-sm">For exclusive matchmaking</p>
-                            <div class="mb-4">
-                                <span class="text-2xl font-bold text-primary">$99.99</span>
-                                <span class="text-text-secondary text-sm">/month</span>
-                            </div>
-                            <ul class="feature-list mb-4 text-text-secondary">
-                                <li>Elite Profile Listing</li>
-                                <li>60 Days Duration</li>
-                                <li>VIP Matching</li>
-                                <li>Featured Placement</li>
-                                <li>Unlimited Messages</li>
-                                <li>Dedicated Matchmaker</li>
-                                <li>Background Verification</li>
-                            </ul>
-                            <button class="w-full bg-primary text-white py-2.5 rounded-lg btn hover:bg-secondary transition-all duration-300 font-semibold text-sm btn-select-package" 
-                                    data-package-id="4" data-package-name="Elite" data-package-price="99.99" data-duration-days="60">
-                                Select Package
-                            </button>
+                            <p class="text-xs text-text-secondary mt-3">Only one plan available - Simple, affordable, effective</p>
                         </div>
                     </div>
                 </div>
@@ -823,7 +738,7 @@
             <div class="modal-header p-4 border-b border-border-color flex justify-between items-center bg-gradient-to-r from-primary to-secondary text-white rounded-t-lg">
                 <div>
                     <h3 class="text-lg font-playfair font-bold">Create Matchmaking Request</h3>
-                    <p class="text-white/80 text-xs mt-1">Share your preferences to find your perfect match</p>
+                    <p class="text-white/80 text-xs mt-1">Share your preferences to find your perfect match - $10/month</p>
                 </div>
                 <button type="button" class="p-2 rounded hover:bg-white/10 transition-all duration-300 close-modal">
                     <i class="bi bi-x-lg"></i>
@@ -1085,17 +1000,18 @@
                                 <div class="space-y-2 text-sm">
                                     <div class="flex justify-between items-center py-1.5 border-b border-border-color/50">
                                         <span class="text-text-secondary font-medium">Package:</span>
-                                        <span id="summaryPackage" class="font-semibold text-primary">-</span>
+                                        <span id="summaryPackage" class="font-semibold text-primary">Matchmaking</span>
                                     </div>
                                     <div class="flex justify-between items-center py-1.5 border-b border-border-color/50">
                                         <span class="text-text-secondary font-medium">Duration:</span>
-                                        <span id="summaryDuration" class="font-semibold">-</span>
+                                        <span id="summaryDuration" class="font-semibold">30 days</span>
                                     </div>
                                     <div class="flex justify-between items-center py-1.5">
                                         <span class="text-text-secondary font-medium">Total Amount:</span>
-                                        <span id="summaryTotal" class="text-xl font-bold text-rose-gold">-</span>
+                                        <span id="summaryTotal" class="text-xl font-bold text-rose-gold">$10.00</span>
                                     </div>
                                 </div>
+                                <p class="text-xs text-text-secondary mt-2 text-center">Fixed price - $10/month</p>
                             </div>
                         </div>
                         <div class="space-y-4">
@@ -1109,7 +1025,7 @@
                                             </div>
                                             <div>
                                                 <h5 class="font-playfair font-bold text-base text-primary">Matchmaking Request</h5>
-                                                <p class="text-text-secondary text-xs">Looking for a meaningful connection</p>
+                                                <p class="text-text-secondary text-xs">$10/month - 30 days duration</p>
                                             </div>
                                         </div>
                                     </div>
@@ -1131,8 +1047,8 @@
                                     </div>
                                     <div class="matchmaking-footer">
                                         <div class="flex justify-between items-center text-xs">
-                                            <span class="text-text-secondary" id="previewDuration">Duration: -</span>
-                                            <span class="text-rose-gold font-semibold" id="previewPackage">Package: -</span>
+                                            <span class="text-text-secondary" id="previewDuration">Duration: 30 days</span>
+                                            <span class="text-rose-gold font-semibold" id="previewPackage">Package: Matchmaking</span>
                                         </div>
                                     </div>
                                 </div>
@@ -1148,6 +1064,7 @@
                                         <div class="text-xs text-text-secondary">Your payment information is encrypted</div>
                                     </div>
                                 </div>
+                                <p class="text-xs text-text-secondary">Fixed price: $10 per month. Cancel anytime.</p>
                             </div>
                         </div>
                     </div>
@@ -1171,7 +1088,7 @@
                         </button>
                         <button type="button" class="px-4 py-2 gradient-rose text-white rounded btn hover:opacity-90 transition-all duration-300 font-semibold flex items-center space-x-1.5 text-sm hidden" id="createRequestBtn">
                             <i class="bi bi-credit-card"></i>
-                            <span>Pay Now</span>
+                            <span>Pay $10 Now</span>
                         </button>
                     </div>
                 </div>
@@ -1186,7 +1103,7 @@
                 <i class="bi bi-credit-card-2-front text-rose-gold"></i>
             </div>
             <h3 class="text-lg font-playfair font-bold mb-1.5 text-primary">Processing Payment</h3>
-            <p class="text-text-secondary mb-4 text-sm">Redirecting to secure payment gateway...</p>
+            <p class="text-text-secondary mb-4 text-sm">Processing your $10 payment...</p>
             <div class="loader-spinner mx-auto mb-3"></div>
             <p class="text-xs text-text-secondary">Please do not close this window</p>
         </div>
@@ -1200,7 +1117,7 @@
                 <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
             </svg>
             <h3 class="text-lg font-playfair font-bold mb-1.5 text-primary">Request Submitted!</h3>
-            <p class="text-text-secondary mb-4 text-sm">Your matchmaking request is now active.</p>
+            <p class="text-text-secondary mb-4 text-sm">Your matchmaking request is now active for $10/month.</p>
             <button class="px-4 py-2 gradient-rose text-white rounded btn hover:opacity-90 transition-all duration-300 font-semibold flex items-center space-x-1.5 text-sm mx-auto" id="successBtn">
                 <i class="bi bi-grid-1x2"></i>
                 <span>Go to Dashboard</span>
@@ -1225,7 +1142,7 @@
                 <div class="bg-gradient-to-br from-primary/5 to-rose-gold/5 rounded-lg p-3 border border-primary/10 mb-3">
                     <div class="flex justify-between items-center mb-1.5">
                         <span class="font-medium text-primary text-sm">Package:</span>
-                        <span class="bg-rose-100 text-rose-800 px-2 py-0.5 rounded text-xs" id="existingPackage">-</span>
+                        <span class="bg-rose-100 text-rose-800 px-2 py-0.5 rounded text-xs" id="existingPackage">Matchmaking</span>
                     </div>
                     <div class="flex justify-between items-center mb-1.5">
                         <span class="font-medium text-primary text-sm">Status:</span>
@@ -1259,13 +1176,13 @@
     </div>
 
     <script>
-        // Application State
+        // Application State - Updated for single price
         const AppState = {
             currentStep: 1,
-            selectedPackageId: null,
-            selectedPackageName: '',
-            selectedPackagePrice: 0,
-            selectedPackageDuration: 0,
+            selectedPackageId: 1, // Always 1 for the single package
+            selectedPackageName: 'Matchmaking',
+            selectedPackagePrice: 10, // Fixed $10
+            selectedPackageDuration: 30, // Fixed 30 days
             uploadedImageUrl: '',
             selectedInterests: [],
             selectedYourInterests: [],
@@ -1311,34 +1228,14 @@
             "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"
         ];
 
+        // Single package configuration
         const PACKAGE_CONFIGURATIONS = {
             1: {
-                id: "BASIC",
-                name: "Basic",
-                price: 9.99,
-                description: "Basic matchmaking package",
-                flutterwave_id: "MATCH_BAS"
-            },
-            2: {
-                id: "STANDARD",
-                name: "Standard",
-                price: 24.99,
-                description: "Standard matchmaking package",
-                flutterwave_id: "MATCH_STD"
-            },
-            3: {
-                id: "PREMIUM",
-                name: "Premium",
-                price: 49.99,
-                description: "Premium matchmaking package",
-                flutterwave_id: "MATCH_PREM"
-            },
-            4: {
-                id: "ELITE",
-                name: "Elite",
-                price: 99.99,
-                description: "Elite matchmaking package",
-                flutterwave_id: "MATCH_ELITE"
+                id: "MATCHMAKING",
+                name: "Matchmaking",
+                price: 10.00,
+                description: "Premium matchmaking service",
+                flutterwave_id: "MATCH_10"
             }
         };
 
@@ -1650,10 +1547,9 @@
             if (!banner || !details) return;
             
             const daysRemaining = activeRequest.days_remaining || 0;
-            const packageName = activeRequest.package || 'Active';
             const status = activeRequest.status || 'active';
             
-            details.innerHTML = `${packageName} Package • ${daysRemaining} days remaining • ${status.charAt(0).toUpperCase() + status.slice(1)}`;
+            details.innerHTML = `Matchmaking Package • ${daysRemaining} days remaining • ${status.charAt(0).toUpperCase() + status.slice(1)}`;
             banner.classList.remove('hidden');
             
             setTimeout(() => {
@@ -1679,9 +1575,9 @@
             
             closeAllModals();
             
-            document.getElementById('existingPackage').textContent = AppState.existingRequestData.package;
-            document.getElementById('existingStatus').textContent = AppState.existingRequestData.status;
-            document.getElementById('existingDaysRemaining').textContent = AppState.existingRequestData.days_remaining + ' days';
+            document.getElementById('existingPackage').textContent = 'Matchmaking';
+            document.getElementById('existingStatus').textContent = AppState.existingRequestData.status || 'active';
+            document.getElementById('existingDaysRemaining').textContent = (AppState.existingRequestData.days_remaining || 0) + ' days';
             
             document.getElementById('existingRequestModal').classList.remove('hidden');
         }
@@ -1748,7 +1644,7 @@
             }, 300);
         }
 
-        // Payment Processing
+        // Payment Processing - Updated for fixed $10 price
         function createRequestAndProcessPayment(requestData) {
             console.log('Starting payment process with data:', requestData);
             
@@ -1801,10 +1697,10 @@
                     const paymentPayload = {
                         request_id: data.request_id,
                         currency: requestData.currency || 'USD',
-                        amount: AppState.selectedPackagePrice.toString(),
+                        amount: '10.00', // Fixed $10
                         campaign_id: AppState.selectedPackageId,
-                        campaign_title: AppState.selectedPackageName,
-                        campaign_description: `Matchmaking package subscription - ${AppState.selectedPackageName}`
+                        campaign_title: 'Matchmaking Service',
+                        campaign_description: 'Premium matchmaking service - $10/month'
                     };
 
                     console.log('Initiating payment with data:', paymentPayload);
@@ -1980,7 +1876,7 @@
 
         // Event Listeners
         function initializeEventListeners() {
-            // Package Selection
+            // Package Selection - Only one button now
             document.querySelectorAll('.btn-select-package').forEach(btn => {
                 btn.addEventListener('click', function() {
                     // Check for active request before proceeding
@@ -1991,17 +1887,11 @@
                         return;
                     }
                     
-                    AppState.selectedPackageId = this.dataset.packageId;
-                    AppState.selectedPackageName = this.dataset.packageName;
-                    AppState.selectedPackagePrice = parseFloat(this.dataset.packagePrice);
-                    AppState.selectedPackageDuration = parseInt(this.dataset.durationDays);
-
-                    document.getElementById('summaryPackage').textContent = AppState.selectedPackageName;
-                    document.getElementById('summaryDuration').textContent = AppState.selectedPackageDuration + ' days';
-                    document.getElementById('summaryTotal').textContent = '$' + AppState.selectedPackagePrice.toFixed(2);
-
-                    document.getElementById('previewDuration').textContent = 'Duration: ' + AppState.selectedPackageDuration + ' days';
-                    document.getElementById('previewPackage').textContent = 'Package: ' + AppState.selectedPackageName;
+                    // Always use fixed values
+                    AppState.selectedPackageId = 1;
+                    AppState.selectedPackageName = 'Matchmaking';
+                    AppState.selectedPackagePrice = 10.00;
+                    AppState.selectedPackageDuration = 30;
 
                     resetForm();
                     showStep(1);
@@ -2031,11 +1921,6 @@
 
                 if (!requestData.about_you || !requestData.ideal_partner) {
                     showNotification('Please fill in "About You" and "Ideal Partner" fields.', 'error');
-                    return;
-                }
-
-                if (!AppState.selectedPackageId || AppState.selectedPackagePrice === 0) {
-                    showNotification('Please select a package first.', 'error');
                     return;
                 }
 

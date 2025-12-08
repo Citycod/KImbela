@@ -210,7 +210,7 @@
         }
 
         .logo-container img {
-            max-height: 160px; /* Increased from 100px */
+            max-height: 220px; /* Increased from 100px */
             width: auto;
             transition: var(--transition);
         }
@@ -655,7 +655,7 @@
             }
             
             .logo-container img { 
-                max-height: 140px; 
+                max-height: 220px; 
             } 
             
             .register-title {
@@ -773,7 +773,7 @@
                     <a href="{{ url_for('user.index') }}">
                         <img src="{{ url_for('static', filename='assets/img/kim.png') }}" 
                              alt="Kimbela" 
-                             class="logo-image">
+                             class="logo-image" style="width: 15rem; height: 15rem;">
                     </a>
                 </div>
                 
@@ -1114,7 +1114,7 @@
                 // Adjust logo size for very small screens
                 const logo = document.querySelector('.logo-container img');
                 if (logo) {
-                    logo.style.maxHeight = '140px';
+                    logo.style.maxHeight = '200px';
                 }
             }
 

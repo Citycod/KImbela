@@ -712,10 +712,7 @@
                                                         <img src="{{ service.cover_image or url_for('static', filename='assets/img/default-service.jpg') }}" 
                                                              alt="{{ service.title }}" 
                                                              class="w-10 h-10 rounded-lg object-cover mr-2">
-                                                        <div>
-                                                            <h4 class="font-bold text-sm">{{ service.title[:30] }}{{ '...' if service.title|length > 30 }}</h4>
-                                                            <p class="text-xs text-gray-600">{{ (service.short_description[:30] if service.short_description else 'No description') }}{{ '...' if service.short_description and service.short_description|length > 30 }}</p>
-                                                        </div>
+                                                        
                                                     </div>
                                                 </td>
                                                 <td class="text-sm">
@@ -1883,9 +1880,7 @@ function showSubscriptionModal(reason) {
                 </button>
             </div>
             
-            <p class="text-xs text-gray-500 mt-4 text-center">
-                Plans start at ₦1,500/month. Cancel anytime.
-            </p>
+            
         </div>
     `;
     

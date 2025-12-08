@@ -1372,6 +1372,70 @@
           max-height: 60vh;
         }
       }
+
+      /* Ensure navbar items don't get hidden */
+nav {
+  min-width: 320px; /* Minimum width for iPhone 5/SE */
+}
+
+/* Profile dropdown visibility */
+.dropdown img {
+  min-width: 36px;
+  min-height: 36px;
+}
+
+/* Hide messenger/notifications on very small screens */
+@media (max-width: 480px) {
+  .hidden-sm {
+    display: none !important;
+  }
+  
+  /* Show only essential items */
+  nav .flex-shrink-0 {
+    flex-shrink: 0;
+  }
+  
+  /* Adjust search bar on very small screens */
+  .max-w-xs {
+    max-width: 180px !important;
+  }
+  
+  /* Ensure profile image is visible */
+  .dropdown img {
+    width: 36px !important;
+    height: 36px !important;
+  }
+}
+
+/* For iPhone X specifically */
+@media (max-width: 375px) {
+  /* Reduce spacing */
+  nav {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+  
+  /* Make search bar smaller */
+  .max-w-xs {
+    max-width: 150px !important;
+  }
+  
+  /* Smaller profile image */
+  .dropdown img {
+    width: 32px !important;
+    height: 32px !important;
+  }
+  
+  /* Smaller menu button */
+  .lg\\:hidden {
+    padding: 0.25rem !important;
+  }
+}
+
+/* Ensure nothing gets cut off */
+.flex-shrink-0 {
+  flex-shrink: 0;
+}
     </style>
   </head>
   <body class="font-poppins bg-fb-gray text-fb-text">
@@ -1393,155 +1457,124 @@
       <div class="loader-spinner"></div>
       <div class="loader-text">Loading your dashboard...</div>
     </div>
+
+
     <!-- NAVBAR -->
-    <nav
-      class="fixed top-0 left-0 right-0 z-50 bg-white shadow-soft border-b border-fb-border h-16 flex items-center px-4"
-    >
-      <!-- Mobile Menu Button -->
-      <button
-        class="lg:hidden p-2 rounded-full hover:bg-fb-gray transition-colors mr-2"
-        onclick="toggleMobileMenu()"
-      >
-        <i class="bi bi-list text-xl"></i>
-      </button>
+    <!-- NAVBAR -->
+<nav class="fixed top-0 left-0 right-0 z-50 bg-white shadow-soft border-b border-fb-border h-16 flex items-center px-3 sm:px-4">
+  <!-- Mobile Menu Button -->
+  <button
+    class="lg:hidden p-2 rounded-full hover:bg-fb-gray transition-colors mr-2 flex-shrink-0"
+    onclick="toggleMobileMenu()"
+  >
+    <i class="bi bi-list text-xl"></i>
+  </button>
 
-      <!-- Logo -->
-      <a
-        href="{{ url_for('user.user_dashboard') }}"
-        class="flex items-center mr-4"
-      >
-        <img
-          src="{{ url_for('static', filename='assets/img/kim.png') }}"
-          alt="Kimbela"
-          class="h-10 my_logo"
-          style="height: 10rem; width: 10rem"
-        />
-      </a>
+  <!-- Logo - Smaller on mobile -->
+  <a
+    href="{{ url_for('user.user_dashboard') }}"
+    class="flex items-center mr-2 flex-shrink-0"
+  >
+    <img
+      src="{{ url_for('static', filename='assets/img/kim.png') }}"
+      alt="Kimbela"
+      class="h-8 w-auto object-contain"
+      style="max-height: 2rem;"
+    />
+  </a>
 
-      <!-- Search Bar -->
+  <!-- Search Bar - Adjusted for mobile -->
+  <div class="flex-1 flex justify-center" style="margin-right: 0.5rem">
+    <div class="relative w-full max-w-xs sm:max-w-lg md:max-w-xl">
+      <i
+        class="bi bi-search absolute left-3 top-1/2 transform -translate-y-1/2 text-fb-text-light"
+      ></i>
+      <input
+        type="text"
+        id="globalSearch"
+        placeholder="Search..."
+        class="w-full pl-9 pr-3 py-2 bg-fb-gray rounded-full border-0 focus:ring-2 focus:ring-fb-blue focus:outline-none transition-all text-sm"
+      />
       <div
-        class="flex-1 flex justify-center searching"
-        style="margin-right: 0.5rem"
+        class="search-results absolute top-full left-0 right-0 mt-1 bg-white rounded-xl shadow-strong overflow-hidden z-10 hidden"
+        id="searchResults"
       >
-        <div class="relative w-full max-w-lg md:max-w-xl">
-          <i
-            class="bi bi-search absolute left-3 top-1/2 transform -translate-y-1/2 text-fb-text-light"
-          ></i>
-          <input
-            type="text"
-            id="globalSearch"
-            placeholder="Search users, posts, and more..."
-            class="w-full pl-10 pr-3 py-2 bg-fb-gray rounded-full border-0 focus:ring-2 focus:ring-fb-blue focus:outline-none transition-all text-[0.95rem] md:text-base searching search_input"
-          />
-          <div
-            class="search-results absolute top-full left-0 right-0 mt-1 bg-white rounded-xl shadow-strong overflow-hidden z-10 hidden searching_result results"
-            id="searchResults"
-          >
-            <div
-              class="search-results-body max-h-80 overflow-y-auto custom-scrollbar searching_result results"
-              id="searchResultsBody"
-            ></div>
-          </div>
-        </div>
+        <div
+          class="search-results-body max-h-80 overflow-y-auto custom-scrollbar"
+          id="searchResultsBody"
+        ></div>
       </div>
+    </div>
+  </div>
 
-      <!-- Spacer -->
+  <!-- Navigation Icons - Ensure they're always visible -->
+  <div class="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
+    <!-- Messenger -->
+    <div class="hidden sm:block">
+      <button
+        onclick="openMessenger()"
+        class="p-2 rounded-full hover:bg-fb-gray transition-colors relative"
+        title="Messenger"
+        id="openMessaging"
+      >
+        <i class="bi bi-messenger text-lg sm:text-xl"></i>
+        <span
+          id="unreadMessagesBadge"
+          class="notification-badge absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center hidden"
+          style="font-size: 0.6rem;"
+          >0</span
+        >
+      </button>
+    </div>
 
-      <!-- Navigation Icons -->
-      <div class="flex items-center space-x-2">
-        <!-- Messenger -->
-        <div>
-          <button
-            onclick="openMessenger()"
-            class="p-2 rounded-full hover:bg-fb-gray transition-colors relative"
-            title="Messenger"
-            id="openMessaging"
-          >
-            <i class="bi bi-messenger text-xl"></i>
-            <span
-              id="unreadMessagesBadge"
-              class="notification-badge absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden"
-              >0</span
-            >
-          </button>
-        </div>
-
-        <!-- Notifications -->
-        <div class="dropdown relative">
-          <div
-            class="p-2 rounded-full hover:bg-fb-gray transition-colors cursor-pointer relative"
-            data-bs-toggle="dropdown"
-            id="notificationDropdown"
-          >
-            <i class="bi bi-bell text-xl"></i>
-            <span
-              class="notification-badge absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden"
-              id="notificationBadge"
-              >0</span
-            >
-          </div>
-          <div
-            class="dropdown-menu absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-strong overflow-hidden z-50 hidden"
-            id="notificationDropdownMenu"
-          >
-            <div
-              class="p-3 border-b border-fb-border flex justify-between items-center"
-            >
-              <h3 class="font-semibold">Notifications</h3>
-              <button class="text-sm text-fb-blue font-medium">
-                Mark all as read
-              </button>
-            </div>
-            <div
-              class="max-h-96 overflow-y-auto custom-scrollbar"
-              id="notificationsList"
-            >
-              <div
-                class="flex justify-center items-center p-4 text-fb-text-light"
-              >
-                <div
-                  class="animate-spin rounded-full h-6 w-6 border-b-2 border-fb-blue"
-                ></div>
-                <span class="ml-2">Loading...</span>
-              </div>
-            </div>
-            <div class="p-2 border-t border-fb-border text-center">
-              <a href="#" class="text-fb-blue text-sm font-medium"
-                >See all notifications</a
-              >
-            </div>
-          </div>
-        </div>
-
-        <!-- User Profile -->
-        <div class="dropdown relative ml-2">
-          <img
-            src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-            alt="{{ current_user.first_name }}"
-            class="w-10 h-10 rounded-full object-cover cursor-pointer border-2 border-transparent hover:border-fb-blue transition-all"
-            data-bs-toggle="dropdown"
-          />
-          <div
-            class="dropdown-menu absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-strong overflow-hidden z-50 hidden"
-          >
-            <a
-              class="dropdown-item block px-4 py-2 hover:bg-fb-gray transition-colors"
-              href="{{ url_for('user.profile', user_id=current_user.id) }}"
-            >
-              <i class="bi bi-person-circle mr-2"></i> Profile
-            </a>
-
-            <div class="border-t border-fb-border"></div>
-            <a
-              class="dropdown-item block px-4 py-2 text-red-500 hover:bg-red-50 transition-colors"
-              href="{{ url_for('user.logout') }}"
-            >
-              <i class="bi bi-box-arrow-right mr-2"></i> Logout
-            </a>
-          </div>
-        </div>
+    <!-- Notifications -->
+    <div class="dropdown relative hidden sm:block">
+      <div
+        class="p-2 rounded-full hover:bg-fb-gray transition-colors cursor-pointer relative"
+        data-bs-toggle="dropdown"
+        id="notificationDropdown"
+      >
+        <i class="bi bi-bell text-lg sm:text-xl"></i>
+        <span
+          class="notification-badge absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center hidden"
+          style="font-size: 0.6rem;"
+          id="notificationBadge"
+          >0</span
+        >
       </div>
-    </nav>
+      <!-- ... dropdown menu ... -->
+    </div>
+
+    <!-- User Profile - Always visible -->
+    <div class="dropdown relative">
+      <img
+        src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+        alt="{{ current_user.first_name }}"
+        class="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover cursor-pointer border-2 border-transparent hover:border-fb-blue transition-all flex-shrink-0"
+        data-bs-toggle="dropdown"
+        onerror="this.onerror=null; this.src='{{ url_for('static', filename='assets/img/default-avatar.png') }}';"
+      />
+      <div
+        class="dropdown-menu absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-strong overflow-hidden z-50 hidden"
+      >
+        <a
+          class="dropdown-item block px-4 py-2 hover:bg-fb-gray transition-colors"
+          href="{{ url_for('user.profile', user_id=current_user.id) }}"
+        >
+          <i class="bi bi-person-circle mr-2"></i> Profile
+        </a>
+
+        <div class="border-t border-fb-border"></div>
+        <a
+          class="dropdown-item block px-4 py-2 text-red-500 hover:bg-red-50 transition-colors"
+          href="{{ url_for('user.logout') }}"
+        >
+          <i class="bi bi-box-arrow-right mr-2"></i> Logout
+        </a>
+      </div>
+    </div>
+  </div>
+</nav>
 
     <!-- Messenger Popup -->
     <!-- Messenger Popup -->

@@ -23,6 +23,7 @@ from models import (
     MarketplaceClick,
     PaymentTransaction,
     MarketplaceSubscriptionPlan,
+    MarketplaceSubscription
 )
 import cloudinary.uploader
 import os, requests, json, uuid
@@ -1798,7 +1799,6 @@ def manage_featured():
 
 # ==================== DATA INITIALIZATION ====================
 
-
 @market.route("/init-data", methods=["GET"])
 def init_marketplace_data():
     """Initialize marketplace data (run once)"""
@@ -1866,16 +1866,16 @@ def init_marketplace_data():
                 )
                 db.session.add(category)
 
-        # Create subscription plans
+        # Create subscription plans - using correct field names based on HTML
         subscriptions = [
             {
-                "name": "Free",
-                "slug": "free",
-                "description": "Basic listing for new sellers",
-                "price": 0,
-                "price_usd": 0,
-                "max_services": 1,
-                "max_images": 3,
+                "name": "Starter",
+                "slug": "starter",
+                "description": "Perfect for beginners",
+                "price": 200,  # Naira price
+                "price_usd": 2.00,
+                "max_services": 3,
+                "max_images": 5,
                 "is_featured": False,
                 "badge_color": "gray",
                 "sort_order": 1,
@@ -1883,57 +1883,67 @@ def init_marketplace_data():
             {
                 "name": "Basic",
                 "slug": "basic",
-                "description": "Perfect for individual sellers",
-                "price": 50,
-                "price_usd": 5,
-                "max_services": 3,
-                "max_images": 5,
+                "description": "Great for growing sellers",
+                "price": 500,  # Naira price
+                "price_usd": 5.00,
+                "max_services": 10,
+                "max_images": 10,
                 "is_featured": False,
                 "badge_color": "blue",
                 "sort_order": 2,
             },
             {
-                "name": "Professional",
-                "slug": "professional",
-                "description": "Best for serious sellers",
-                "price": 150,
-                "price_usd": 15,
-                "max_services": 10,
-                "max_images": 10,
+                "name": "Pro",
+                "slug": "pro",
+                "description": "Best for established sellers",
+                "price": 1000,  # Naira price
+                "price_usd": 10.00,
+                "max_services": 20,
+                "max_images": 20,
                 "is_featured": True,
                 "badge_color": "purple",
-                "is_popular": True,
                 "sort_order": 3,
             },
             {
-                "name": "Enterprise",
-                "slug": "enterprise",
-                "description": "For professional service providers",
-                "price": 500,
-                "price_usd": 50,
-                "max_services": 50,
-                "max_images": 20,
+                "name": "Premium",
+                "slug": "premium",
+                "description": "For power sellers",
+                "price": 1500,  # Naira price
+                "price_usd": 15.00,
+                "max_services": 0,  # 0 = unlimited
+                "max_images": 0,  # 0 = unlimited
                 "is_featured": True,
                 "badge_color": "gold",
                 "sort_order": 4,
-            },
+            }
         ]
 
         for sub_data in subscriptions:
             if not MarketplaceSubscription.query.filter_by(
                 slug=sub_data["slug"]
             ).first():
-                subscription = MarketplaceSubscription(**sub_data)
+                # Create subscription using correct field names
+                subscription = MarketplaceSubscription(
+                    name=sub_data["name"],
+                    slug=sub_data["slug"],
+                    description=sub_data["description"],
+                    price_usd=sub_data["price_usd"],  # Use price_usd if that's what your model expects
+                    max_services=sub_data["max_services"],
+                    max_images=sub_data["max_images"],
+                    is_featured=sub_data.get("is_featured", False),
+                    badge_color=sub_data.get("badge_color", "gray"),
+                    sort_order=sub_data["sort_order"]
+                )
                 db.session.add(subscription)
+                print(f"Created subscription: {sub_data['name']} - ${sub_data['price_usd']}/month")
 
         db.session.commit()
-        return "Marketplace data initialized successfully!"
+        return "Marketplace data initialized successfully with 4 subscription plans!"
 
     except Exception as e:
         db.session.rollback()
         print(f"Init data error: {e}")
         return f"Error: {e}", 500
-
 
 # Add these to your marketplace routes
 
@@ -3376,12 +3386,12 @@ def become_seller():
             return jsonify({"success": False, "error": "No plan selected"}), 400
 
         # Get plan
-        plan = MarketplaceSubscriptionPlan.query.get(plan_id)
+        plan = MarketplaceSubscription.query.get(plan_id)
         if not plan:
             print(f"🔴 [BECOME-SELLER] Plan not found: {plan_id}")
             return jsonify({"success": False, "error": "Invalid plan selected"}), 404
 
-        print(f"🟡 [BECOME-SELLER] Found plan: {plan.name}, Price: ${plan.price}")
+        print(f"🟡 [BECOME-SELLER] Found plan: {plan.name}, Price: ${plan.price_usd}")
 
         # Check if user already has subscription
         if current_user.marketplace_subscription_status == "active":

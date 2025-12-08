@@ -1086,14 +1086,14 @@ class MarketplacePaymentService(BasePaymentService):
         try:
             print(f"🟡 [MARKETPLACE PAYMENT] Starting payment for plan: {plan.name}")
             print(
-                f"🟡 [MARKETPLACE PAYMENT] User: {user.id}, Amount: ${plan.price} {currency}"
+                f"🟡 [MARKETPLACE PAYMENT] User: {user.id}, Amount: ${plan.price_usd} {currency}"
             )
 
             # Generate transaction reference
             import time
 
             tx_ref = f"KIMBELA_MARKET_{user.id}_{int(time.time())}"
-            payment_amount = plan.price
+            payment_amount = plan.price_usd
 
             # Prepare payment data
             payment_data = {
