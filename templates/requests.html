@@ -1647,6 +1647,8 @@
         // Payment Processing - Updated for fixed $10 price
         function createRequestAndProcessPayment(requestData) {
             console.log('Starting payment process with data:', requestData);
+            // Add this debug line at the beginning of your function
+            console.log('AppState.selectedPackageId:', AppState.selectedPackageId);
             
             const createBtn = document.getElementById('createRequestBtn');
             const originalText = createBtn.innerHTML;
@@ -1888,7 +1890,7 @@
                     }
                     
                     // Always use fixed values
-                    AppState.selectedPackageId = 1;
+                    AppState.selectedPackageId = 5;
                     AppState.selectedPackageName = 'Matchmaking';
                     AppState.selectedPackagePrice = 10.00;
                     AppState.selectedPackageDuration = 30;
