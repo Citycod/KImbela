@@ -9,6 +9,9 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <link href="{{ url_for('static', filename='assets/img/fav.png') }}" rel="icon" />
+    <link href="{{ url_for('static', filename='assets/img/fav.png') }}" rel="apple-touch-icon" />
     
     <style>
         :root {
@@ -979,17 +982,36 @@ button:not(:disabled):hover {
                     <!-- Contact Methods -->
                     <div class="space-y-2 mb-4">
                         {% if contact_methods %}
-                            {% if 'whatsapp' in contact_methods and service.whatsapp_number %}
-                            <a href="https://wa.me/{{ service.whatsapp_number|replace('+', '')|replace(' ', '') }}?text=Hi! I'm interested in your service: {{ service.title }}" 
-                               target="_blank"
-                               class="contact-method flex items-center justify-between bg-green-50 border-green-200 hover:bg-green-100 transition-colors">
-                                <div class="flex items-center">
-                                    <i class="bi bi-whatsapp text-green-600 mr-2 text-sm"></i>
-                                    <span class="font-medium text-xs">WhatsApp</span>
-                                </div>
-                                <i class="bi bi-arrow-right text-green-600 text-xs"></i>
-                            </a>
-                            {% endif %}
+                           <!-- WhatsApp Link (with data attributes) -->
+<!-- Replace the entire WhatsApp section with: -->
+<!-- WhatsApp Link - USING THE FIXED URL -->
+{% if 'whatsapp' in contact_methods and whatsapp_url %}
+    <a href="{{ whatsapp_url }}" 
+       target="_blank"
+       class="contact-method flex items-center justify-between bg-green-50 border-green-200 hover:bg-green-100 transition-colors"
+       data-service-id="{{ service.id }}"
+       data-click-type="whatsapp">
+        <div class="flex items-center">
+            <i class="bi bi-whatsapp text-green-600 mr-2 text-sm"></i>
+            <span class="font-medium text-xs">WhatsApp</span>
+        </div>
+        <i class="bi bi-arrow-right text-green-600 text-xs"></i>
+    </a>
+{% elif service.whatsapp_number %}
+    <!-- Fallback if no URL generated -->
+    <a href="https://wa.me/{{ service.whatsapp_number|replace('+', '')|replace(' ', '')|replace('-', '')|replace('(', '')|replace(')', '')|replace('.', '') }}?text=Hi!%20I'm%20interested%20in%20your%20service:%20{{ service.title|urlencode }}" 
+       target="_blank"
+       class="contact-method flex items-center justify-between bg-green-50 border-green-200 hover:bg-green-100 transition-colors"
+       data-service-id="{{ service.id }}"
+       data-click-type="whatsapp">
+        <div class="flex items-center">
+            <i class="bi bi-whatsapp text-green-600 mr-2 text-sm"></i>
+            <span class="font-medium text-xs">WhatsApp (Fallback)</span>
+        </div>
+        <i class="bi bi-arrow-right text-green-600 text-xs"></i>
+    </a>
+{% endif %}
+
                             
                             {% if 'phone' in contact_methods and service.phone_number %}
                             <a href="tel:{{ service.phone_number }}" 
@@ -1210,6 +1232,12 @@ button:not(:disabled):hover {
         </div>
     </div>
 
+    <!-- Add this at the bottom of your template for debugging -->
+<script>
+console.log("Service ID from template: {{ service.id }}");
+console.log("Number of contact links:", document.querySelectorAll('a[data-service-id]').length);
+</script>
+
 
 
 
@@ -1406,24 +1434,37 @@ function scrollToContact() {
 }
         
         // Log clicks for analytics
-        document.addEventListener('DOMContentLoaded', function() {
-            // Log contact method clicks
-            document.querySelectorAll('a[href^="tel:"], a[href^="mailto:"], a[href^="https://wa.me/"]').forEach(link => {
-                link.addEventListener('click', function() {
-                    const serviceId = {{ service.id }};
-                    const clickType = this.href.includes('wa.me') ? 'whatsapp' : 
-                                    this.href.startsWith('tel:') ? 'phone' : 'email';
-                    
-                    fetch(`/api/log-click/${serviceId}`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ type: clickType })
-                    });
-                });
+        // Log clicks for analytics
+// Update the click event listener with better error handling
+// Replace your click event listener with this SIMPLE version:
+document.querySelectorAll('a[data-service-id]').forEach(link => {
+    link.addEventListener('click', function(e) {
+        const serviceId = this.getAttribute('data-service-id');
+        const clickType = this.getAttribute('data-click-type');
+        
+        if (!serviceId || !clickType) return;
+        
+        console.log(`Contact click logged - Service: ${serviceId}, Type: ${clickType}`);
+        
+        // SIMPLE GET REQUEST - No CSRF issues
+        // This uses an image beacon technique - very reliable
+        const beacon = new Image();
+        beacon.src = `/api/log-click/${serviceId}?type=${encodeURIComponent(clickType)}&_=${Date.now()}`;
+        
+        // Also try fetch as backup
+        fetch(`/api/log-click/${serviceId}?type=${encodeURIComponent(clickType)}`)
+            .then(response => {
+                if (response.ok) {
+                    console.log('✅ Click logged successfully');
+                } else {
+                    console.warn('⚠️ Click logging failed (non-critical)');
+                }
+            })
+            .catch(error => {
+                console.warn('⚠️ Could not reach server (non-critical)');
             });
-        });
+    });
+});
 
 
         function handleDownload(serviceId, url, isProxy = true) {
