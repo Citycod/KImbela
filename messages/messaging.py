@@ -10,7 +10,7 @@ messaging = Blueprint("messaging", __name__)
 
 
 # === ROUTES ===
-@messaging.route("/friends")  # REMOVED /messaging prefix
+@messaging.route("/friends")  
 @login_required
 def get_messaging_friends():
     """Get friends list for messaging"""
@@ -44,7 +44,7 @@ def get_messaging_friends():
         return jsonify([])
 
 
-@messaging.route("/messages/<int:friend_id>")  # REMOVED /messaging prefix
+@messaging.route("/messages/<int:friend_id>")  
 @login_required
 def get_messages(friend_id):
     """Get messages between current user and friend"""
@@ -99,7 +99,7 @@ def get_messages(friend_id):
 
 @messaging.route(
     "/mark_read/<int:friend_id>", methods=["POST"]
-)  # REMOVED /messaging prefix
+)  
 @login_required
 def mark_messages_read(friend_id):
     """Mark messages from friend as read"""

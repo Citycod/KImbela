@@ -210,24 +210,24 @@ def create_sample_packages():
         db.session.add(package)
 
     db.session.commit()
-
+    
+    
+    
+    
+    
 @user.route("/user_dashboard", methods=["GET", "POST"])
 @login_required
 def user_dashboard():
+    # ===== POST REQUEST =====
     if request.method == "POST":
-        # Handle post creation here
         post_content = request.form.get("post_content")
         media_file = request.files.get("media")
 
-        if post_content or (media_file and media_file.filename != ""):
-            image_url = None
-            video_url = None
+        image_url = None
+        video_url = None
 
-            if (
-                media_file
-                and media_file.filename != ""
-                and allowed_file(media_file.filename)
-            ):
+        if post_content or (media_file and media_file.filename != ""):
+            if media_file and allowed_file(media_file.filename):
                 try:
                     resource_type = "auto"
                     if media_file.content_type.startswith("video"):
@@ -252,7 +252,7 @@ def user_dashboard():
                     print(f"Media upload error: {e}")
                     flash("Failed to upload media.", "danger")
 
-            # Create post
+            # Create new post
             new_post = Post(
                 content=post_content or "",
                 image=image_url,
@@ -266,112 +266,270 @@ def user_dashboard():
 
         return redirect(url_for("user.user_dashboard"))
 
-    # ====== OPTIMIZED GET REQUEST ======
-    
-    # Get cursor for infinite scroll (last post ID)
-    cursor = request.args.get('cursor', type=int)
-    limit = request.args.get('limit', 10, type=int)
-    
-    # Get current user's blocked users IDs
-    blocked_user_ids = [user.id for user in current_user.blocked_users]
-    blocker_ids = [user.id for user in current_user.blocked_by]
-    
-    # Build posts query with proper relationships eager loaded
-    # Only load relationships that actually exist in your Post model
-    posts_query = Post.query.options(
-        joinedload(Post.author),  # Eager load author
-        joinedload(Post.comments).joinedload(Comment.author),  # Eager load comments with their authors
-        # Remove joinedload(Post.likes) if it's not a relationship
-        # Remove joinedload(Post.post_reactions) if it's not a relationship
-    )
-    
-    # Filter out posts from blocked users and users who blocked current user
-    posts_query = posts_query.filter(
-        ~Post.author_id.in_(blocked_user_ids),
-        ~Post.author_id.in_(blocker_ids)
-    )
-    
-    # Apply cursor-based pagination
-    if cursor:
-        # For infinite scroll: get posts older than the cursor
-        posts_query = posts_query.filter(Post.id < cursor)
-    
-    # Order and limit
-    posts = posts_query.order_by(Post.created_at.desc()).limit(limit).all()
-    
-    # Get next cursor (ID of the last post for next page)
-    next_cursor = posts[-1].id if posts else None
-    
-    # Check if there are more posts
-    if posts:
-        has_more = Post.query.filter(
-            Post.id < posts[-1].id,
-            ~Post.author_id.in_(blocked_user_ids),
-            ~Post.author_id.in_(blocker_ids)
-        ).count() > 0
-    else:
-        has_more = False
-    
-    # 2. OPTIMIZED FRIENDS QUERY
-    # Get IDs of current user's friends
-    friend_ids = db.session.query(friendship.c.friend_id).filter(
-        friendship.c.user_id == current_user.id
-    ).union_all(
-        db.session.query(friendship.c.user_id).filter(
-            friendship.c.friend_id == current_user.id
+    # ===== GET REQUEST =====
+
+    # --- Parameters for infinite scroll ---
+    cursor = request.args.get("cursor", type=int)
+    limit = request.args.get("limit", 10, type=int)
+
+    # --- Blocked users IDs ---
+    blocked_ids = {user.id for user in current_user.blocked_users}
+    blocked_ids.update(user.id for user in current_user.blocked_by)
+
+    # --- POSTS QUERY ---
+    posts_query = (
+        Post.query
+        .options(
+            joinedload(Post.author),
+            joinedload(Post.comments).joinedload(Comment.author)
         )
-    ).all()
-    
-    friend_ids = [fid[0] for fid in friend_ids] if friend_ids else []
-    
-    # Get actual friend objects (excluding blocked users)
-    if friend_ids:
-        friends = User.query.filter(
-            User.id.in_(friend_ids),
-            ~User.id.in_(blocked_user_ids),
-            ~User.id.in_(blocker_ids)
-        ).all()
-    else:
-        friends = []
-    
-    # 3. OPTIMIZED SUGGESTIONS (Non-friends)
-    # Get users who are not friends, not blocked, and not blocking
-    non_friend_query = User.query.filter(
-        User.id != current_user.id,
-        ~User.id.in_(friend_ids) if friend_ids else True,
-        ~User.id.in_(blocked_user_ids),
-        ~User.id.in_(blocker_ids)
+        .filter(~Post.author_id.in_(blocked_ids))
     )
-    
-    # Get only 3 random suggestions
-    random_three = non_friend_query.order_by(db.func.random()).limit(3).all()
-    
-    # If this is an AJAX request for infinite scroll, return JSON
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        # Render posts as HTML
-        posts_html = render_template('_posts_partial.html', 
-                                    posts=posts, 
-                                    current_user=current_user)
-        
-        return jsonify({
-            'success': True,
-            'posts': posts_html,
-            'next_cursor': next_cursor,
-            'has_more': has_more,
-            'count': len(posts)
-        })
-    
-    # Regular request - render full page
+
+    if cursor:
+        posts_query = posts_query.filter(Post.id < cursor)
+
+    # Fetch limit+1 for has_more check
+    posts = posts_query.order_by(Post.created_at.desc()).limit(limit + 1).all()
+    has_more = len(posts) > limit
+    posts = posts[:limit]
+    next_cursor = posts[-1].id if posts else None
+
+    # --- FRIENDS QUERY ---
+    friend_subq = (
+        db.session.query(friendship.c.friend_id)
+        .filter(friendship.c.user_id == current_user.id)
+        .union_all(
+            db.session.query(friendship.c.user_id)
+            .filter(friendship.c.friend_id == current_user.id)
+        )
+    ).subquery()
+
+    friends = (
+        User.query
+        .filter(User.id.in_(friend_subq))
+        .filter(~User.id.in_(blocked_ids))
+        .all()
+    )
+
+    # --- SUGGESTIONS QUERY ---
+    eligible_users_q = User.query.filter(
+        User.id != current_user.id,
+        ~User.id.in_(friend_subq),
+        ~User.id.in_(blocked_ids)
+    )
+
+    eligible_count = eligible_users_q.count()
+    random_three = []
+    if eligible_count > 0:
+        offset = random.randint(0, max(eligible_count - 3, 0))
+        random_three = eligible_users_q.offset(offset).limit(3).all()
+
+    # --- AJAX RESPONSE ---
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        posts_html = render_template(
+            "_posts_partial.html",
+            posts=posts,
+            current_user=current_user
+        )
+        return jsonify(
+            {
+                "success": True,
+                "posts": posts_html,
+                "next_cursor": next_cursor,
+                "has_more": has_more,
+                "count": len(posts),
+            }
+        )
+
+    # --- FULL PAGE RENDER ---
     return render_template(
         "user_dashboard.html",
-        initial_posts=posts,  # Initial batch of posts
+        initial_posts=posts,
         next_cursor=next_cursor,
         has_more=has_more,
         current_user=current_user,
         friends=friends,
         random_three=random_three,
         csrf_token=generate_csrf(),
-    )
+    )   
+    
+    
+    
+    
+
+
+# @user.route("/user_dashboard", methods=["GET", "POST"])
+# @login_required
+# def user_dashboard():
+#     if request.method == "POST":
+#         # Handle post creation here
+#         post_content = request.form.get("post_content")
+#         media_file = request.files.get("media")
+
+#         if post_content or (media_file and media_file.filename != ""):
+#             image_url = None
+#             video_url = None
+
+#             if (
+#                 media_file
+#                 and media_file.filename != ""
+#                 and allowed_file(media_file.filename)
+#             ):
+#                 try:
+#                     resource_type = "auto"
+#                     if media_file.content_type.startswith("video"):
+#                         resource_type = "video"
+
+#                     result = cloudinary.uploader.upload(
+#                         media_file,
+#                         folder="kimbela/posts",
+#                         resource_type=resource_type,
+#                         transformation=[
+#                             {"width": 800, "crop": "limit"},
+#                             {"quality": "auto", "fetch_format": "auto"},
+#                         ],
+#                     )
+
+#                     if media_file.content_type.startswith("video"):
+#                         video_url = result["secure_url"]
+#                     else:
+#                         image_url = result["secure_url"]
+
+#                 except Exception as e:
+#                     print(f"Media upload error: {e}")
+#                     flash("Failed to upload media.", "danger")
+
+#             # Create post
+#             new_post = Post(
+#                 content=post_content or "",
+#                 image=image_url,
+#                 video=video_url,
+#                 author_id=current_user.id,
+#                 created_at=datetime.utcnow(),
+#             )
+#             db.session.add(new_post)
+#             db.session.commit()
+#             flash("Post created!", "success")
+
+#         return redirect(url_for("user.user_dashboard"))
+
+#     # ====== OPTIMIZED GET REQUEST ======
+
+#     # Get cursor for infinite scroll (last post ID)
+#     cursor = request.args.get("cursor", type=int)
+#     limit = request.args.get("limit", 10, type=int)
+
+#     # Get current user's blocked users IDs
+#     blocked_user_ids = [user.id for user in current_user.blocked_users]
+#     blocker_ids = [user.id for user in current_user.blocked_by]
+
+#     # Build posts query with proper relationships eager loaded
+#     # Only load relationships that actually exist in your Post model
+#     posts_query = Post.query.options(
+#         joinedload(Post.author),  # Eager load author
+#         joinedload(Post.comments).joinedload(
+#             Comment.author
+#         ),  # Eager load comments with their authors
+#         # Remove joinedload(Post.likes) if it's not a relationship
+#         # Remove joinedload(Post.post_reactions) if it's not a relationship
+#     )
+
+#     # Filter out posts from blocked users and users who blocked current user
+#     posts_query = posts_query.filter(
+#         ~Post.author_id.in_(blocked_user_ids), ~Post.author_id.in_(blocker_ids)
+#     )
+
+#     # Apply cursor-based pagination
+#     if cursor:
+#         # For infinite scroll: get posts older than the cursor
+#         posts_query = posts_query.filter(Post.id < cursor)
+
+#     # Order and limit
+#     posts = posts_query.order_by(Post.created_at.desc()).limit(limit).all()
+
+#     # Get next cursor (ID of the last post for next page)
+#     next_cursor = posts[-1].id if posts else None
+
+#     # Check if there are more posts
+#     if posts:
+#         has_more = (
+#             Post.query.filter(
+#                 Post.id < posts[-1].id,
+#                 ~Post.author_id.in_(blocked_user_ids),
+#                 ~Post.author_id.in_(blocker_ids),
+#             ).count()
+#             > 0
+#         )
+#     else:
+#         has_more = False
+
+#     # 2. OPTIMIZED FRIENDS QUERY
+#     # Get IDs of current user's friends
+#     friend_ids = (
+#         db.session.query(friendship.c.friend_id)
+#         .filter(friendship.c.user_id == current_user.id)
+#         .union_all(
+#             db.session.query(friendship.c.user_id).filter(
+#                 friendship.c.friend_id == current_user.id
+#             )
+#         )
+#         .all()
+#     )
+
+#     friend_ids = [fid[0] for fid in friend_ids] if friend_ids else []
+
+#     # Get actual friend objects (excluding blocked users)
+#     if friend_ids:
+#         friends = User.query.filter(
+#             User.id.in_(friend_ids),
+#             ~User.id.in_(blocked_user_ids),
+#             ~User.id.in_(blocker_ids),
+#         ).all()
+#     else:
+#         friends = []
+
+#     # 3. OPTIMIZED SUGGESTIONS (Non-friends)
+#     # Get users who are not friends, not blocked, and not blocking
+#     non_friend_query = User.query.filter(
+#         User.id != current_user.id,
+#         ~User.id.in_(friend_ids) if friend_ids else True,
+#         ~User.id.in_(blocked_user_ids),
+#         ~User.id.in_(blocker_ids),
+#     )
+
+#     # Get only 3 random suggestions
+#     random_three = non_friend_query.order_by(db.func.random()).limit(3).all()
+
+#     # If this is an AJAX request for infinite scroll, return JSON
+#     if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+#         # Render posts as HTML
+#         posts_html = render_template(
+#             "_posts_partial.html", posts=posts, current_user=current_user
+#         )
+
+#         return jsonify(
+#             {
+#                 "success": True,
+#                 "posts": posts_html,
+#                 "next_cursor": next_cursor,
+#                 "has_more": has_more,
+#                 "count": len(posts),
+#             }
+#         )
+
+#     # Regular request - render full page
+#     return render_template(
+#         "user_dashboard.html",
+#         initial_posts=posts,  # Initial batch of posts
+#         next_cursor=next_cursor,
+#         has_more=has_more,
+#         current_user=current_user,
+#         friends=friends,
+#         random_three=random_three,
+#         csrf_token=generate_csrf(),
+#     )
+
 
 @user.route("/like_post/<int:post_id>", methods=["POST"])
 @login_required
@@ -1548,9 +1706,6 @@ def like_group_post(post_id):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-
-
-
 @user.route("/add_comment/<int:post_id>", methods=["POST"])
 @login_required
 def add_group_comment(post_id):
@@ -1575,7 +1730,6 @@ def add_group_comment(post_id):
                     "author_name": current_user.full_name,
                     "author_avatar": current_user.profile_pic
                     or url_for("static", filename="assets/img/default-avatar.png"),
-                    
                     "created_at": "Just now",
                 },
             }

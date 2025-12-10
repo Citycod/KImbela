@@ -25,7 +25,7 @@ from models import (
     MarketplaceClick,
     PaymentTransaction,
     MarketplaceSubscriptionPlan,
-    MarketplaceSubscription
+    MarketplaceSubscription,
 )
 import cloudinary.uploader
 import os, requests, json, uuid
@@ -83,13 +83,14 @@ import re
 from urllib.parse import urlparse
 
 
-
 def log_service_activity(service_id, action, user_id=None):
     """Log service activities (views, clicks, etc.)"""
     try:
         # You can save to database if needed
-        print(f"📊 Service Activity: service_id={service_id}, action={action}, user_id={user_id}")
-        
+        print(
+            f"📊 Service Activity: service_id={service_id}, action={action}, user_id={user_id}"
+        )
+
         # Example database logging (uncomment if you have ServiceActivity model):
         # activity = ServiceActivity(
         #     service_id=service_id,
@@ -99,11 +100,9 @@ def log_service_activity(service_id, action, user_id=None):
         # )
         # db.session.add(activity)
         # db.session.commit()
-        
+
     except Exception as e:
         print(f"❌ Failed to log service activity: {e}")
-
-
 
 
 def parse_cloudinary_url(url):
@@ -495,6 +494,7 @@ def get_featured_sellers(limit=6):
 
 from collections import defaultdict
 
+
 @market.route("/main_market", methods=["GET"])
 def main_market():
     """Marketplace homepage - Only shows services from subscribed sellers"""
@@ -505,14 +505,14 @@ def main_market():
     # =========== CRITICAL CHANGE: Only show services from subscribed sellers ===========
     # Start with base query for active services from subscribed sellers only
     services_query = MarketplaceService.query.filter_by(status="active")
-    
+
     # Join with users and ONLY include sellers with active subscriptions
     services_query = services_query.join(
-        User, 
+        User,
         and_(
             MarketplaceService.seller_id == User.id,
-            User.marketplace_subscription_status == "active"  # ONLY subscribed sellers
-        )
+            User.marketplace_subscription_status == "active",  # ONLY subscribed sellers
+        ),
     )
 
     # Filter by category
@@ -520,7 +520,9 @@ def main_market():
     if category_slug:
         category = MarketplaceCategory.query.filter_by(slug=category_slug).first()
         if category:
-            services_query = services_query.filter(MarketplaceService.category_id == category.id)
+            services_query = services_query.filter(
+                MarketplaceService.category_id == category.id
+            )
 
     # Filter by search
     search_query = request.args.get("q")
@@ -562,27 +564,29 @@ def main_market():
     # =========== LIMIT SERVICES PER SELLER BASED ON SUBSCRIPTION PLAN ===========
     # First, get all subscribed sellers with their services
     all_services = services_query.all()
-    
+
     # Group services by seller
     seller_services = defaultdict(list)
     for service in all_services:
         seller_services[service.seller_id].append(service)
-    
+
     # Now limit services per seller based on their subscription PLAN (not just status)
     limited_services = []
-    
+
     # Get all sellers with their subscription PLAN info
     seller_ids = list(seller_services.keys())
     sellers = User.query.filter(User.id.in_(seller_ids)).all()
-    
+
     for seller in sellers:
         services_list = seller_services[seller.id]
-        
+
         # Determine limit based on subscription PLAN NAME
-        if seller.marketplace_subscription:  # This should exist since we filtered by active status
+        if (
+            seller.marketplace_subscription
+        ):  # This should exist since we filtered by active status
             # FIXED: Use 'name' instead of 'plan_name'
             plan_name = seller.marketplace_subscription.name
-            
+
             # Map plan names to display limits
             if "Starter" in plan_name:
                 limit = 3
@@ -598,55 +602,54 @@ def main_market():
         else:
             # Should not happen due to our filter, but just in case
             continue  # Skip this seller entirely
-        
+
         # Apply limit
         if limit:
             # Sort services by creation date (newest first) or featured status
             sorted_services = sorted(
-                services_list, 
-                key=lambda x: (-x.is_featured, x.created_at), 
-                reverse=True
+                services_list,
+                key=lambda x: (-x.is_featured, x.created_at),
+                reverse=True,
             )
             limited_services.extend(sorted_services[:limit])
         else:
             # No limit - add all services
             limited_services.extend(services_list)
-    
+
     # Count how many sellers are being displayed
     displayed_seller_ids = set()
     for service in limited_services:
         displayed_seller_ids.add(service.seller_id)
-    
+
     total_sellers_displayed = len(displayed_seller_ids)
-    
+
     # Create pagination from our limited services
     total_services = len(limited_services)
     start_idx = (page - 1) * per_page
     end_idx = start_idx + per_page
-    
+
     # Apply sorting to limited services
     sort_by = request.args.get("sort", "newest")
-    
+
     # Helper function for subscription priority
     def get_subscription_priority(plan_name):
-        priority_map = {
-            "Premium": 4,
-            "Pro": 3,
-            "Basic": 2,
-            "Starter": 1,
-            "": 0
-        }
+        priority_map = {"Premium": 4, "Pro": 3, "Basic": 2, "Starter": 1, "": 0}
         return priority_map.get(plan_name, 0)
-    
+
     if sort_by == "featured":
         # Sort by: 1) Featured status, 2) Subscription level, 3) Date
-        limited_services.sort(key=lambda x: (
-            -x.is_featured,  # Featured first (True = 1, False = 0)
-            -get_subscription_priority(
-                x.seller.marketplace_subscription.name if x.seller.marketplace_subscription else ""
+        limited_services.sort(
+            key=lambda x: (
+                -x.is_featured,  # Featured first (True = 1, False = 0)
+                -get_subscription_priority(
+                    x.seller.marketplace_subscription.name
+                    if x.seller.marketplace_subscription
+                    else ""
+                ),
+                x.created_at if x.created_at else datetime.min,
             ),
-            x.created_at if x.created_at else datetime.min
-        ), reverse=True)
+            reverse=True,
+        )
     elif sort_by == "popular":
         limited_services.sort(key=lambda x: x.views or 0, reverse=True)
     elif sort_by == "rating":
@@ -656,11 +659,13 @@ def main_market():
     elif sort_by == "price_high":
         limited_services.sort(key=lambda x: x.price or 0, reverse=True)
     else:  # newest
-        limited_services.sort(key=lambda x: x.created_at if x.created_at else datetime.min, reverse=True)
-    
+        limited_services.sort(
+            key=lambda x: x.created_at if x.created_at else datetime.min, reverse=True
+        )
+
     # Get paginated slice
     paginated_services = limited_services[start_idx:end_idx]
-    
+
     class CustomPagination:
         def __init__(self, items, page, per_page, total):
             self.items = items  # This is now an attribute, not a method
@@ -672,28 +677,33 @@ def main_market():
             self.has_prev = page > 1
             self.next_num = page + 1 if page < self.pages else None
             self.prev_num = page - 1 if page > 1 else None
-            
-        def iter_pages(self, left_edge=2, right_edge=2, left_current=2, right_current=2):
+
+        def iter_pages(
+            self, left_edge=2, right_edge=2, left_current=2, right_current=2
+        ):
             last = 0
             for num in range(1, self.pages + 1):
                 if (
                     num <= left_edge
-                    or (num > self.page - left_current - 1 and num < self.page + right_current)
+                    or (
+                        num > self.page - left_current - 1
+                        and num < self.page + right_current
+                    )
                     or num > self.pages - right_edge
                 ):
                     if last + 1 != num:
                         yield None
                     yield num
                     last = num
-    
+
     # Create a simple pagination dictionary instead of using Pagination class
     services = CustomPagination(
         items=paginated_services,  # This will be accessible as services.items
         page=page,
         per_page=per_page,
-        total=total_services
+        total=total_services,
     )
-    
+
     # For statistics - get count of ALL services from subscribed sellers (before limiting)
     total_subscribed_services = len(all_services)
     # =========== END LIMIT LOGIC ===========
@@ -783,7 +793,6 @@ def main_market():
     )
 
 
-
 @market.route("/service/<slug>", methods=["GET"])
 def service_detail(slug):
     """View service details"""
@@ -869,51 +878,51 @@ def service_detail(slug):
         "GHS": "GH₵",
         "ZAR": "R",
     }
-    
+
     # ========== FIXED WHATSAPP URL GENERATION ==========
     def generate_whatsapp_url(phone_number, message):
         """Generate a properly formatted WhatsApp URL with country code"""
         if not phone_number:
             return None
-        
+
         import re
         from urllib.parse import quote
-        
+
         # Clean phone number - remove all non-digit characters
-        digits = re.sub(r'\D', '', str(phone_number))
-        
+        digits = re.sub(r"\D", "", str(phone_number))
+
         if not digits:
             return None
-        
+
         # Convert to WhatsApp format
-        if digits.startswith('0') and len(digits) == 11:
+        if digits.startswith("0") and len(digits) == 11:
             # Format: 08012345678 → 2348012345678
-            whatsapp_number = '234' + digits[1:]
+            whatsapp_number = "234" + digits[1:]
         elif len(digits) == 10:
             # Format: 8012345678 → 2348012345678
-            whatsapp_number = '234' + digits
-        elif digits.startswith('234') and len(digits) == 13:
+            whatsapp_number = "234" + digits
+        elif digits.startswith("234") and len(digits) == 13:
             # Already correct: 2348012345678
             whatsapp_number = digits
         else:
             # Try to use as-is
             whatsapp_number = digits
-        
+
         # Remove any remaining non-digits (just in case)
-        whatsapp_number = re.sub(r'\D', '', whatsapp_number)
-        
+        whatsapp_number = re.sub(r"\D", "", whatsapp_number)
+
         # Encode message
         encoded_message = quote(message)
-        
+
         # Generate URL
         return f"https://wa.me/{whatsapp_number}?text={encoded_message}"
-    
+
     # Generate WhatsApp URL for the service
     whatsapp_url = None
     if service.whatsapp_number:
         message = f"Hi! I'm interested in your service: {service.title}"
         whatsapp_url = generate_whatsapp_url(service.whatsapp_number, message)
-        
+
         # Debug logging
         print(f"📱 WhatsApp Debug for service {service.id}:")
         print(f"  Raw number: {service.whatsapp_number}")
@@ -1769,49 +1778,58 @@ def api_services():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-
-
 @market.route("/api/log-click/<int:service_id>", methods=["GET", "POST", "OPTIONS"])
 def log_contact_click(service_id):
     """Log user clicks on contact methods - accepts GET and POST"""
     # Handle CORS preflight
-    if request.method == 'OPTIONS':
-        response = jsonify({'status': 'ok'})
-        response.headers.add('Access-Control-Allow-Origin', '*')
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-        response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    if request.method == "OPTIONS":
+        response = jsonify({"status": "ok"})
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        response.headers.add(
+            "Access-Control-Allow-Headers", "Content-Type,Authorization"
+        )
+        response.headers.add(
+            "Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS"
+        )
         return response
-    
+
     try:
-        print(f"📊 [LOG-CLICK] Received {request.method} request for service {service_id}")
-        
+        print(
+            f"📊 [LOG-CLICK] Received {request.method} request for service {service_id}"
+        )
+
         # Get click type from either GET params or POST JSON
         click_type = None
-        
-        if request.method == 'GET':
-            click_type = request.args.get('type', 'unknown')
-        elif request.method == 'POST':
+
+        if request.method == "GET":
+            click_type = request.args.get("type", "unknown")
+        elif request.method == "POST":
             if request.is_json:
                 data = request.get_json()
-                click_type = data.get('type', 'unknown')
+                click_type = data.get("type", "unknown")
             else:
-                click_type = request.form.get('type', 'unknown')
-        
+                click_type = request.form.get("type", "unknown")
+
         if not click_type:
-            click_type = 'unknown'
-        
+            click_type = "unknown"
+
         print(f"📊 Click type: {click_type}")
-        
+
         # Get the service
         service = MarketplaceService.query.get(service_id)
         if not service:
             print(f"❌ Service not found: {service_id}")
-            return jsonify({
-                "success": False, 
-                "error": "Service not found",
-                "service_id": service_id
-            }), 404
-        
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Service not found",
+                        "service_id": service_id,
+                    }
+                ),
+                404,
+            )
+
         # Log to MarketplaceClick table
         click = MarketplaceClick(
             service_id=service_id,
@@ -1821,37 +1839,37 @@ def log_contact_click(service_id):
             user_agent=request.user_agent.string,
         )
         db.session.add(click)
-        
+
         # Also update service click count if it's a contact click
-        if click_type in ['whatsapp', 'phone', 'email', 'messenger']:
+        if click_type in ["whatsapp", "phone", "email", "messenger"]:
             service.clicks = (service.clicks or 0) + 1
-        
+
         db.session.commit()
-        
+
         print(f"✅ Click logged - Service: {service_id}, Type: {click_type}")
-        
-        response = jsonify({
-            "success": True, 
-            "message": "Click logged",
-            "service_id": service_id,
-            "click_type": click_type
-        })
-        
+
+        response = jsonify(
+            {
+                "success": True,
+                "message": "Click logged",
+                "service_id": service_id,
+                "click_type": click_type,
+            }
+        )
+
         # Add CORS headers
-        response.headers.add('Access-Control-Allow-Origin', '*')
-        
+        response.headers.add("Access-Control-Allow-Origin", "*")
+
         return response
-        
+
     except Exception as e:
         db.session.rollback()
         print(f"❌ Error logging click: {e}")
-        
-        response = jsonify({
-            "success": False, 
-            "error": str(e),
-            "service_id": service_id
-        })
-        response.headers.add('Access-Control-Allow-Origin', '*')
+
+        response = jsonify(
+            {"success": False, "error": str(e), "service_id": service_id}
+        )
+        response.headers.add("Access-Control-Allow-Origin", "*")
         return response, 500
 
 
@@ -1859,27 +1877,33 @@ def log_contact_click(service_id):
 def log_contact_click_fallback(service_id):
     """Fallback endpoint for legacy JavaScript calls"""
     # Handle CORS preflight
-    if request.method == 'OPTIONS':
-        response = jsonify({'status': 'ok'})
-        response.headers.add('Access-Control-Allow-Origin', '*')
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-        response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    if request.method == "OPTIONS":
+        response = jsonify({"status": "ok"})
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        response.headers.add(
+            "Access-Control-Allow-Headers", "Content-Type,Authorization"
+        )
+        response.headers.add(
+            "Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS"
+        )
         return response
-    
+
     try:
         print(f"📊 [FALLBACK] Received request for service {service_id}")
-        
+
         # Get data
         data = {}
         if request.is_json:
             data = request.get_json()
         elif request.form:
             data = dict(request.form)
-        
-        click_type = data.get('type', 'unknown')
-        
-        print(f"📊 Legacy endpoint: Click logged - Service: {service_id}, Type: {click_type}")
-        
+
+        click_type = data.get("type", "unknown")
+
+        print(
+            f"📊 Legacy endpoint: Click logged - Service: {service_id}, Type: {click_type}"
+        )
+
         # Try to log to database too
         try:
             service = MarketplaceService.query.get(service_id)
@@ -1895,32 +1919,34 @@ def log_contact_click_fallback(service_id):
                 db.session.commit()
         except Exception as db_error:
             print(f"⚠️ Could not save to database in fallback: {db_error}")
-        
-        response = jsonify({
-            "success": True, 
-            "message": "Click logged via fallback",
-            "service_id": service_id,
-            "endpoint": "fallback"
-        })
-        response.headers.add('Access-Control-Allow-Origin', '*')
-        
+
+        response = jsonify(
+            {
+                "success": True,
+                "message": "Click logged via fallback",
+                "service_id": service_id,
+                "endpoint": "fallback",
+            }
+        )
+        response.headers.add("Access-Control-Allow-Origin", "*")
+
         return response
-        
+
     except Exception as e:
         print(f"❌ Error in fallback: {e}")
-        
+
         # Always return success to not break UI
-        response = jsonify({
-            "success": True,  
-            "message": "Logged",
-            "service_id": service_id,
-            "endpoint": "fallback_error"
-        })
-        response.headers.add('Access-Control-Allow-Origin', '*')
+        response = jsonify(
+            {
+                "success": True,
+                "message": "Logged",
+                "service_id": service_id,
+                "endpoint": "fallback_error",
+            }
+        )
+        response.headers.add("Access-Control-Allow-Origin", "*")
         return response, 200
-    
-    
-    
+
 
 @market.route("/debug-log-click/<int:service_id>", methods=["GET", "POST"])
 def debug_log_click(service_id):
@@ -1929,7 +1955,7 @@ def debug_log_click(service_id):
     print(f"Method: {request.method}")
     print(f"Headers: {dict(request.headers)}")
     print(f"Content-Type: {request.content_type}")
-    
+
     if request.method == "POST":
         try:
             if request.is_json:
@@ -1940,17 +1966,16 @@ def debug_log_click(service_id):
                 print(f"Form data: {request.form}")
         except Exception as e:
             print(f"Error reading data: {e}")
-    
-    return jsonify({
-        "debug": True,
-        "service_id": service_id,
-        "method": request.method,
-        "content_type": request.content_type,
-        "has_json": request.is_json
-    })
 
-
-
+    return jsonify(
+        {
+            "debug": True,
+            "service_id": service_id,
+            "method": request.method,
+            "content_type": request.content_type,
+            "has_json": request.is_json,
+        }
+    )
 
 
 @market.route("/api/seller/<int:seller_id>/stats", methods=["GET"])
@@ -2162,6 +2187,7 @@ def manage_featured():
 
 # ==================== DATA INITIALIZATION ====================
 
+
 @market.route("/init-data", methods=["GET"])
 def init_marketplace_data():
     """Initialize marketplace data (run once)"""
@@ -2278,7 +2304,7 @@ def init_marketplace_data():
                 "is_featured": True,
                 "badge_color": "gold",
                 "sort_order": 4,
-            }
+            },
         ]
 
         for sub_data in subscriptions:
@@ -2290,15 +2316,19 @@ def init_marketplace_data():
                     name=sub_data["name"],
                     slug=sub_data["slug"],
                     description=sub_data["description"],
-                    price_usd=sub_data["price_usd"],  # Use price_usd if that's what your model expects
+                    price_usd=sub_data[
+                        "price_usd"
+                    ],  # Use price_usd if that's what your model expects
                     max_services=sub_data["max_services"],
                     max_images=sub_data["max_images"],
                     is_featured=sub_data.get("is_featured", False),
                     badge_color=sub_data.get("badge_color", "gray"),
-                    sort_order=sub_data["sort_order"]
+                    sort_order=sub_data["sort_order"],
                 )
                 db.session.add(subscription)
-                print(f"Created subscription: {sub_data['name']} - ${sub_data['price_usd']}/month")
+                print(
+                    f"Created subscription: {sub_data['name']} - ${sub_data['price_usd']}/month"
+                )
 
         db.session.commit()
         return "Marketplace data initialized successfully with 4 subscription plans!"
@@ -2307,6 +2337,7 @@ def init_marketplace_data():
         db.session.rollback()
         print(f"Init data error: {e}")
         return f"Error: {e}", 500
+
 
 # Add these to your marketplace routes
 
@@ -4152,41 +4183,38 @@ def debug_subscription_status():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-
-
-
 @market.route("/test-whatsapp/<phone>")
 def test_whatsapp(phone):
     """Test WhatsApp link format with detailed debugging"""
     import re
     from urllib.parse import quote
-    
+
     # Test different cleaning methods
     phone_str = str(phone).strip()
-    digits_only = re.sub(r'\D', '', phone_str)
-    
+    digits_only = re.sub(r"\D", "", phone_str)
+
     # Method 1: Simple cleaning
     cleaned_simple = digits_only
-    
+
     # Method 2: With country code logic
-    if digits_only.startswith('0') and len(digits_only) == 11:
-        cleaned_with_cc = '234' + digits_only[1:]
-    elif digits_only.startswith('234') and len(digits_only) == 13:
+    if digits_only.startswith("0") and len(digits_only) == 11:
+        cleaned_with_cc = "234" + digits_only[1:]
+    elif digits_only.startswith("234") and len(digits_only) == 13:
         cleaned_with_cc = digits_only
     elif len(digits_only) == 10:
-        cleaned_with_cc = '234' + digits_only
+        cleaned_with_cc = "234" + digits_only
     else:
         cleaned_with_cc = digits_only
-    
+
     # Remove any non-digits that might remain
-    cleaned_with_cc = re.sub(r'\D', '', cleaned_with_cc)
-    
+    cleaned_with_cc = re.sub(r"\D", "", cleaned_with_cc)
+
     message = "Hi! I'm interested in your service: Test Service"
     encoded_message = quote(message)
-    
+
     whatsapp_url_simple = f"https://wa.me/{cleaned_simple}?text={encoded_message}"
     whatsapp_url_with_cc = f"https://wa.me/{cleaned_with_cc}?text={encoded_message}"
-    
+
     return f"""
     <h1>WhatsApp Link Test</h1>
     <p><strong>Original:</strong> {phone}</p>

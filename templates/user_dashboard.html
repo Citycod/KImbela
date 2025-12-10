@@ -158,6 +158,54 @@
     />
 
     <style>
+
+      /* Full Screen Image Viewer Styles */
+#imageViewerModal {
+    transition: opacity 0.3s ease;
+}
+
+#fullscreenImage {
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* Hover effect for clickable images */
+.clickable-image {
+    transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.clickable-image:hover {
+    transform: scale(1.02);
+    filter: brightness(1.05);
+    cursor: zoom-in;
+}
+
+/* Ensure all images in posts are clickable */
+.post-media img,
+.comment img,
+.suggestion-card img,
+.friend-list img,
+.profile-avatar,
+.composer-card img {
+    cursor: zoom-in;
+}
+
+/* Touch-friendly on mobile */
+@media (max-width: 640px) {
+    #imageViewerModal .max-w-full {
+        padding: 0.5rem;
+    }
+    
+    .clickable-image:active {
+        transform: scale(0.98);
+    }
+}
+
+
       /* Ultra Compact Modal Media Previews */
       #mediaPreview,
       #editMediaPreview {
@@ -2004,7 +2052,7 @@
             </a>
 
         <!-- Sponsored Section -->
-        <div class="mt-8 pt-6 border-t border-fb-border">
+        <!--<div class="mt-8 pt-6 border-t border-fb-border">
           <h3 class="text-sm font-semibold text-fb-text-light mb-3">
             Sponsored
           </h3>
@@ -2032,7 +2080,7 @@
               </div>
             </div>
           </div>
-        </div>
+        </div>-->
       </div>
 
       <!-- MAIN CONTENT -->
@@ -2203,7 +2251,9 @@
           
           {% if post.image %}
           <div class="post-media mt-3">
-            <img src="{{ post.image }}" alt="Post" class="w-full rounded-2xl max-h-96 object-cover" loading="lazy" />
+              <div class="image-container cursor-pointer" onclick="openImageViewer('{{ post.image }}', 'Post by {{ post.author.first_name }}')">
+                  <img src="{{ post.image }}" alt="Post" class="w-full rounded-2xl max-h-96 object-cover clickable-image" loading="lazy" />
+              </div>
           </div>
           {% endif %}
           
@@ -2294,7 +2344,6 @@
       >
         <div class="flex justify-between items-center mb-3 sm:mb-4">
           <h3 class="font-semibold">Friends</h3>
-          <a href="#" class="text-blue-600 text-sm font-medium">See All</a>
         </div>
         <div class="space-y-3">
           {% for friend in friends %}
@@ -2334,7 +2383,7 @@
         </div>
 
         <!-- Birthday Section -->
-        <div class="mt-8 pt-6 border-t border-fb-border">
+        <!-- <div class="mt-8 pt-6 border-t border-fb-border">
           <h3 class="text-sm font-semibold text-fb-text-light mb-3">
             Birthdays
           </h3>
@@ -2353,42 +2402,10 @@
               </p>
             </div>
           </div>
-        </div>
+        </div> -->
 
         <!-- Events Section -->
-        <div class="mt-6">
-          <h3 class="text-sm font-semibold text-fb-text-light mb-3">
-            Upcoming Events
-          </h3>
-          <div class="space-y-3">
-            <div
-              class="flex items-start space-x-3 p-2 rounded-lg hover:bg-fb-gray transition-colors cursor-pointer"
-            >
-              <div
-                class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0"
-              >
-                <i class="bi bi-calendar-event text-blue-600"></i>
-              </div>
-              <div>
-                <h4 class="font-medium text-sm">Team Meeting</h4>
-                <p class="text-xs text-fb-text-light">Tomorrow • 10:00 AM</p>
-              </div>
-            </div>
-            <div
-              class="flex items-start space-x-3 p-2 rounded-lg hover:bg-fb-gray transition-colors cursor-pointer"
-            >
-              <div
-                class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0"
-              >
-                <i class="bi bi-music-note-beamed text-purple-600"></i>
-              </div>
-              <div>
-                <h4 class="font-medium text-sm">Concert</h4>
-                <p class="text-xs text-fb-text-light">Sat • 7:00 PM</p>
-              </div>
-            </div>
-          </div>
-        </div>
+       
       </div>
     </div>
 
@@ -2599,6 +2616,73 @@
         </div>
       </div>
     </div>
+
+
+    <!-- Full Screen Image Viewer Modal -->
+<div id="imageViewerModal" class="fixed inset-0 z-[9999] hidden items-center justify-center bg-black/95 backdrop-blur-sm">
+    <div class="relative w-full h-full flex items-center justify-center">
+        <!-- Close Button -->
+        <button
+            onclick="closeImageViewer()"
+            class="absolute top-4 right-4 sm:top-6 sm:right-6 z-10 bg-white/10 hover:bg-white/20 text-white rounded-full w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center transition-all duration-200 backdrop-blur-sm border border-white/20"
+        >
+            <i class="bi bi-x-lg text-lg sm:text-xl"></i>
+        </button>
+        
+        <!-- Download Button -->
+        <button
+            id="downloadImageBtn"
+            onclick="downloadCurrentImage()"
+            class="absolute top-4 right-16 sm:top-6 sm:right-20 z-10 bg-white/10 hover:bg-white/20 text-white rounded-full w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center transition-all duration-200 backdrop-blur-sm border border-white/20"
+            title="Download image"
+        >
+            <i class="bi bi-download text-lg sm:text-xl"></i>
+        </button>
+        
+        <!-- Navigation Arrows -->
+        <button
+            onclick="navigateImageViewer(-1)"
+            class="absolute left-4 sm:left-6 z-10 bg-white/10 hover:bg-white/20 text-white rounded-full w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center transition-all duration-200 backdrop-blur-sm border border-white/20"
+        >
+            <i class="bi bi-chevron-left text-lg sm:text-xl"></i>
+        </button>
+        <button
+            onclick="navigateImageViewer(1)"
+            class="absolute right-28 sm:right-32 z-10 bg-white/10 hover:bg-white/20 text-white rounded-full w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center transition-all duration-200 backdrop-blur-sm border border-white/20"
+        >
+            <i class="bi bi-chevron-right text-lg sm:text-xl"></i>
+        </button>
+        
+        <!-- Image Container -->
+        <div class="max-w-full max-h-full p-4 sm:p-8 flex items-center justify-center">
+            <img
+                id="fullscreenImage"
+                src=""
+                alt=""
+                class="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+            />
+        </div>
+        
+        <!-- Image Info -->
+        <div
+            id="imageInfo"
+            class="absolute bottom-4 left-0 right-0 text-center text-white px-4 py-2 bg-black/50 backdrop-blur-sm"
+        >
+            <p class="text-sm sm:text-base font-medium" id="imageTitle"></p>
+            <p class="text-xs text-gray-300 mt-1" id="imageInfoText">Click anywhere to close | Use arrow keys to navigate</p>
+        </div>
+        
+        <!-- Loading Indicator -->
+        <div id="imageLoading" class="absolute inset-0 flex items-center justify-center hidden">
+            <div class="relative">
+                <div class="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin"></div>
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <i class="bi bi-image text-white text-xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
     <!-- JavaScript -->
     <script
@@ -5390,6 +5474,7 @@ async function loadMorePosts() {
                 // Reinitialize event listeners for new posts
                 setTimeout(() => {
                     initializePostInteractions();
+                    initializeImageClickHandlers(); // Add this line
                 }, 100);
             }
             
@@ -5424,6 +5509,307 @@ async function loadMorePosts() {
     }
 }
 
+
+
+// Touch/swipe support for mobile
+function initializeTouchGestures() {
+    let touchStartX = 0;
+    let touchEndX = 0;
+    
+    document.addEventListener('touchstart', function(e) {
+        const modal = document.getElementById('imageViewerModal');
+        if (!modal || modal.classList.contains('hidden')) return;
+        
+        touchStartX = e.changedTouches[0].screenX;
+    });
+    
+    document.addEventListener('touchend', function(e) {
+        const modal = document.getElementById('imageViewerModal');
+        if (!modal || modal.classList.contains('hidden')) return;
+        
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+    });
+    
+    function handleSwipe() {
+        const swipeThreshold = 50;
+        const diff = touchStartX - touchEndX;
+        
+        if (Math.abs(diff) > swipeThreshold) {
+            if (diff > 0) {
+                // Swipe left - next image
+                navigateImageViewer(1);
+            } else {
+                // Swipe right - previous image
+                navigateImageViewer(-1);
+            }
+        }
+    }
+}
+
+
+
+// ========================================
+// IMAGE VIEWER SYSTEM
+// ========================================
+
+let currentImageIndex = 0;
+let imageCollection = [];
+
+// Open image in fullscreen viewer
+function openImageViewer(imageUrl, title = 'Image') {
+    imageCollection = [imageUrl];
+    currentImageIndex = 0;
+    displayImage(imageUrl, title);
+}
+
+// Open gallery of images from a post
+function openImageGallery(imageUrls, startIndex = 0, title = 'Gallery') {
+    imageCollection = Array.isArray(imageUrls) ? imageUrls : [imageUrls];
+    currentImageIndex = startIndex;
+    
+    if (imageCollection.length > 0) {
+        displayImage(imageCollection[currentImageIndex], title);
+    }
+}
+
+// Display image in modal
+function displayImage(imageUrl, title) {
+    const modal = document.getElementById('imageViewerModal');
+    const imageElement = document.getElementById('fullscreenImage');
+    const titleElement = document.getElementById('imageTitle');
+    const loadingElement = document.getElementById('imageLoading');
+    const downloadBtn = document.getElementById('downloadImageBtn');
+    
+    if (!modal || !imageElement) return;
+    
+    // Show loading
+    if (loadingElement) loadingElement.classList.remove('hidden');
+    imageElement.classList.add('hidden');
+    
+    // Set image source
+    imageElement.src = imageUrl;
+    imageElement.alt = title;
+    
+    // Set title
+    if (titleElement) {
+        titleElement.textContent = title;
+    }
+    
+    // Show/hide navigation arrows
+    const prevBtn = modal.querySelector('button:nth-child(3)');
+    const nextBtn = modal.querySelector('button:nth-child(4)');
+    
+    if (prevBtn && nextBtn) {
+        prevBtn.classList.toggle('hidden', imageCollection.length <= 1);
+        nextBtn.classList.toggle('hidden', imageCollection.length <= 1);
+    }
+    
+    // Show/hide download button
+    if (downloadBtn) {
+        downloadBtn.classList.remove('hidden');
+    }
+    
+    // Show modal
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    
+    // When image loads
+    imageElement.onload = function() {
+        if (loadingElement) loadingElement.classList.add('hidden');
+        imageElement.classList.remove('hidden');
+        
+        // Add image info text
+        const infoElement = document.getElementById('imageInfoText');
+        if (infoElement && imageCollection.length > 1) {
+            infoElement.textContent = `Image ${currentImageIndex + 1} of ${imageCollection.length} | Click anywhere to close | Use arrow keys to navigate`;
+        }
+    };
+    
+    // Handle image load error
+    imageElement.onerror = function() {
+        if (loadingElement) loadingElement.classList.add('hidden');
+        showToast('Failed to load image', 'danger');
+        closeImageViewer();
+    };
+}
+
+// Close image viewer
+function closeImageViewer() {
+    const modal = document.getElementById('imageViewerModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        document.body.style.overflow = '';
+        
+        // Reset image
+        const imageElement = document.getElementById('fullscreenImage');
+        if (imageElement) {
+            imageElement.src = '';
+            imageElement.classList.add('hidden');
+        }
+        
+        // Reset collection
+        imageCollection = [];
+        currentImageIndex = 0;
+    }
+}
+
+// Navigate between images
+function navigateImageViewer(direction) {
+    if (imageCollection.length <= 1) return;
+    
+    currentImageIndex += direction;
+    
+    // Loop around
+    if (currentImageIndex < 0) {
+        currentImageIndex = imageCollection.length - 1;
+    } else if (currentImageIndex >= imageCollection.length) {
+        currentImageIndex = 0;
+    }
+    
+    const title = document.getElementById('imageTitle')?.textContent || 'Image';
+    displayImage(imageCollection[currentImageIndex], title);
+}
+
+// Download current image
+function downloadCurrentImage() {
+    const imageUrl = imageCollection[currentImageIndex];
+    if (!imageUrl) return;
+    
+    // Create download link
+    const link = document.createElement('a');
+    link.href = imageUrl;
+    link.download = `image-${Date.now()}.jpg`;
+    link.target = '_blank';
+    
+    // Trigger download
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showToast('Download started', 'success');
+}
+
+// Collect all images on the page for gallery view
+function collectAllImagesOnPage() {
+    const images = [];
+    
+    // Collect from posts
+    document.querySelectorAll('.post-media img').forEach(img => {
+        if (img.src && !images.includes(img.src)) {
+            images.push(img.src);
+        }
+    });
+    
+    // Collect from profiles
+    document.querySelectorAll('.clickable-image').forEach(img => {
+        if (img.src && !images.includes(img.src)) {
+            images.push(img.src);
+        }
+    });
+    
+    return images;
+}
+
+// Open gallery from current image
+function openGalleryFromCurrentImage(currentImageElement) {
+    const allImages = collectAllImagesOnPage();
+    const currentImageUrl = currentImageElement.src;
+    const currentIndex = allImages.indexOf(currentImageUrl);
+    
+    if (currentIndex !== -1) {
+        openImageGallery(allImages, currentIndex, 'Page Gallery');
+    } else {
+        openImageViewer(currentImageUrl, 'Image');
+    }
+}
+
+// Initialize keyboard navigation
+function initializeImageViewerKeyboard() {
+    document.addEventListener('keydown', function(e) {
+        const modal = document.getElementById('imageViewerModal');
+        if (!modal || modal.classList.contains('hidden')) return;
+        
+        switch(e.key) {
+            case 'Escape':
+                closeImageViewer();
+                break;
+            case 'ArrowLeft':
+                navigateImageViewer(-1);
+                break;
+            case 'ArrowRight':
+                navigateImageViewer(1);
+                break;
+            case ' ':
+            case 'Enter':
+                e.preventDefault();
+                break;
+        }
+    });
+}
+
+// Initialize click handlers for all images
+function initializeImageClickHandlers() {
+    // For post images
+    document.querySelectorAll('.post-media img').forEach(img => {
+        img.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const postCard = this.closest('.post-card');
+            const postAuthor = postCard?.querySelector('.font-semibold')?.textContent || 'User';
+            openImageViewer(this.src, `Post by ${postAuthor}`);
+        });
+    });
+    
+    // For profile images
+    document.querySelectorAll('.clickable-image').forEach(img => {
+        if (!img.closest('.post-media')) {
+            img.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const userName = this.closest('[onclick*="openProfileModal"]')?.getAttribute('onclick')?.match(/'([^']+)'/)?.[1] || 'User';
+                openImageViewer(this.src, `${userName}'s Profile Picture`);
+            });
+        }
+    });
+    
+    // For suggestion cards
+    document.querySelectorAll('.suggestion-card img').forEach(img => {
+        img.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const userName = this.closest('.suggestion-card')?.querySelector('.suggestion-name')?.textContent || 'User';
+            openImageViewer(this.src, `${userName}'s Profile Picture`);
+        });
+    });
+}
+
+// Close modal when clicking on backdrop
+document.addEventListener('click', function(e) {
+    const modal = document.getElementById('imageViewerModal');
+    if (modal && !modal.classList.contains('hidden')) {
+        const content = modal.querySelector('img');
+        if (content && !content.contains(e.target) && e.target !== modal.querySelector('button')) {
+            closeImageViewer();
+        }
+    }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // Optimized scroll handler
 function initializeOptimizedScroll() {
     let ticking = false;
@@ -5456,9 +5842,21 @@ function checkScrollPosition() {
 document.addEventListener('DOMContentLoaded', () => {
     initializeInfiniteScroll();
     initializeOptimizedScroll();
+    initializeTouchGestures();
     
     // Facebook-style "loading on scroll" indicator
     createScrollIndicator();
+
+    // Initialize image viewer
+    initializeImageViewerKeyboard();
+    initializeImageClickHandlers();
+    
+    // For dynamically loaded content (like infinite scroll)
+    const observer = new MutationObserver(() => {
+        initializeImageClickHandlers();
+    });
+    
+    observer.observe(document.body, { childList: true, subtree: true });
 });
 
 // Create a Facebook-style loading indicator
@@ -5693,15 +6091,13 @@ function addBackToTopButton() {
     <!-- ======================================== -->
 
     <!-- Smart Modal Ad -->
-    <div
+    <!--<div
       id="adModal"
       class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/60 backdrop-blur-sm"
-      style="margin-top: 5rem"
-    >
+      style="margin-top: 5rem">
       <div
         class="ad-modal-content relative mx-2 sm:mx-4 w-full max-w-lg sm:max-w-xl md:max-w-2xl rounded-3xl bg-gradient-to-br from-white to-gray-50 shadow-2xl transform transition-all duration-500 scale-95 opacity-0"
       >
-        <!-- Close Button -->
         <button
           onclick="closeAdModal()"
           class="absolute -top-3 -right-3 z-10 bg-white rounded-full w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center shadow-lg hover:scale-110 transition-transform duration-200 border border-gray-200"
@@ -5709,10 +6105,8 @@ function addBackToTopButton() {
           <i class="bi bi-x-lg text-gray-600 text-xs sm:text-sm"></i>
         </button>
 
-        <!-- Ad Content -->
         <div class="ad-body p-4 sm:p-6">
           <div class="flex flex-col md:flex-row gap-4 sm:gap-6 items-center">
-            <!-- Ad Image -->
             <div class="flex-shrink-0 w-full md:w-2/5">
               <div
                 class="relative rounded-2xl overflow-hidden aspect-square bg-gradient-to-br from-blue-500 to-purple-600"
@@ -5733,7 +6127,6 @@ function addBackToTopButton() {
               </div>
             </div>
 
-            <!-- Ad Text -->
             <div class="flex-1 text-center md:text-left">
               <h3
                 id="adModalTitle"
@@ -5744,7 +6137,6 @@ function addBackToTopButton() {
                 class="text-gray-600 mb-3 sm:mb-4 leading-relaxed text-sm sm:text-base"
               ></p>
 
-              <!-- CTA Buttons -->
               <div
                 class="flex flex-col sm:flex-row gap-3 justify-center md:justify-start"
               >
@@ -5767,7 +6159,6 @@ function addBackToTopButton() {
                 </button>
               </div>
 
-              <!-- Advertiser Info -->
               <div class="mt-4 pt-3 sm:pt-4 border-t border-gray-200">
                 <p class="text-[10px] sm:text-xs text-gray-500">
                   Advertisement • You can close this ad
@@ -5777,7 +6168,7 @@ function addBackToTopButton() {
           </div>
         </div>
       </div>
-    </div>
+    </div>-->
 
     <!-- Floating Corner Widget -->
     <!-- Floating Corner Widget - Compact Version -->

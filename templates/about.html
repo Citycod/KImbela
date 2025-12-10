@@ -4,13 +4,26 @@
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>About - More Peace Technology LLC</title>
-    <meta name="description" content="Learn about More Peace Technology LLC, a leader in professional interior and exterior home improvement services, with over 15 years of experience." />
-    <meta name="keywords" content="home improvement, flooring, painting, remodeling, landscaping, about us" />
+    <title>About Us - Kimbela</title>
+    <meta name="description" content="Learn about Kimbela, a unique social platform for mature singles (31+) seeking authentic, meaningful friendships based on respect, integrity, and shared values." />
+    <meta name="keywords" content="about kimbela, mature dating platform, friendship community, social network values, meaningful connections" />
 
     <!-- Favicons -->
     <link href="{{ url_for('static', filename='assets/img/fav.png') }}" rel="icon" />
     <link href="{{ url_for('static', filename='assets/img/fav.png') }}" rel="apple-touch-icon" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:title" content="About Kimbela - For Connections That Make Sense">
+    <meta property="og:description" content="Discover the story behind Kimbela, a community built on respect, integrity, and meaningful connections.">
+    <meta property="og:image" content="https://kimbela.com/kimbela-logo.png">
+    <meta property="og:url" content="https://kimbela.com/about">
+    <meta property="og:type" content="website">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="About Kimbela - For Connections That Make Sense">
+    <meta name="twitter:description" content="Discover the story behind Kimbela, a community built on respect, integrity, and meaningful connections.">
+    <meta name="twitter:image" content="https://kimbela.com/kimbela-logo.png">
 
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com" rel="preconnect" />
@@ -19,153 +32,32 @@
         rel="stylesheet" />
 
     <!-- Vendor CSS Files -->
-    <link href="assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
-    <link href="assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet" />
-    <link href="assets/vendor/aos/aos.css" rel="stylesheet" />
-    <link href="assets/vendor/swiper/swiper-bundle.min.css" rel="stylesheet" />
-    <link href="assets/vendor/glightbox/css/glightbox.min.css" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='assets/vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='assets/vendor/bootstrap-icons/bootstrap-icons.css') }}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='assets/vendor/aos/aos.css') }}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='assets/vendor/swiper/swiper-bundle.min.css') }}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='assets/vendor/glightbox/css/glightbox.min.css') }}" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 
     <!-- Main CSS File -->
-    <link href="assets/css/main.css" rel="stylesheet" />
-
-    <script>
-        // Check if Tailwind loads properly
-        function checkTailwind() {
-            setTimeout(() => {
-                const bodyStyles = window.getComputedStyle(document.body);
-                const hasTailwind = bodyStyles.margin === '0px' && bodyStyles.fontFamily;
-                
-                if (!hasTailwind) {
-                    console.log('🔄 Tailwind not detected, loading fallback...');
-                    loadFallbackTailwind();
-                } else {
-                    console.log('✅ Tailwind CSS loaded successfully');
-                }
-            }, 500);
-        }
-
-        function loadFallbackTailwind() {
-            // Load from alternative CDN
-            const link = document.createElement('link');
-            link.rel = 'stylesheet';
-            link.href = 'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css';
-            link.onload = () => console.log('✅ Fallback Tailwind loaded');
-            link.onerror = () => {
-                console.log('❌ All CDNs failed, using inline styles');
-                loadEmergencyStyles();
-            };
-            document.head.appendChild(link);
-        }
-
-        function loadEmergencyStyles() {
-            const emergencyCSS = `
-                /* EMERGENCY STYLES - Basic Tailwind equivalents */
-                * { box-sizing: border-box; margin: 0; padding: 0; }
-                body { 
-                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                    background-color: #f3f4f6; 
-                    line-height: 1.5;
-                }
-                .bg-white { background-color: white; }
-                .bg-gray-50 { background-color: #f9fafb; }
-                .bg-gray-100 { background-color: #f3f4f6; }
-                .bg-blue-600 { background-color: #2563eb; }
-                .bg-red-500 { background-color: #ef4444; }
-                .bg-green-500 { background-color: #10b981; }
-                .text-white { color: white; }
-                .text-gray-700 { color: #374151; }
-                .text-gray-500 { color: #6b7280; }
-                .text-blue-600 { color: #2563eb; }
-                .font-semibold { font-weight: 600; }
-                .font-bold { font-weight: 700; }
-                .rounded-lg { border-radius: 0.5rem; }
-                .rounded-xl { border-radius: 0.75rem; }
-                .rounded-2xl { border-radius: 1rem; }
-                .rounded-full { border-radius: 9999px; }
-                .shadow { box-shadow: 0 1px 3px 0 rgba(0,0,0,0.1); }
-                .shadow-md { box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-                .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
-                .p-2 { padding: 0.5rem; }
-                .p-3 { padding: 0.75rem; }
-                .p-4 { padding: 1rem; }
-                .p-6 { padding: 1.5rem; }
-                .m-2 { margin: 0.5rem; }
-                .m-4 { margin: 1rem; }
-                .mb-2 { margin-bottom: 0.5rem; }
-                .mb-4 { margin-bottom: 1rem; }
-                .mb-6 { margin-bottom: 1.5rem; }
-                .mt-4 { margin-top: 1rem; }
-                .flex { display: flex; }
-                .hidden { display: none; }
-                .items-center { align-items: center; }
-                .justify-center { justify-content: center; }
-                .justify-between { justify-content: space-between; }
-                .w-full { width: 100%; }
-                .h-screen { height: 100vh; }
-                .h-10 { height: 2.5rem; }
-                .h-16 { height: 4rem; }
-                .w-10 { width: 2.5rem; }
-                .w-16 { width: 4rem; }
-                .fixed { position: fixed; }
-                .relative { position: relative; }
-                .absolute { position: absolute; }
-                .inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
-                .top-0 { top: 0; }
-                .left-0 { left: 0; }
-                .right-0 { right: 0; }
-                .z-50 { z-index: 50; }
-                .border { border-width: 1px; }
-                .border-b { border-bottom-width: 1px; }
-                .border-gray-200 { border-color: #e5e7eb; }
-                .border-gray-300 { border-color: #d1d5db; }
-                .cursor-pointer { cursor: pointer; }
-                .transition-colors { transition: color 0.15s ease; }
-                .hover\\:bg-gray-100:hover { background-color: #f3f4f6; }
-                .hover\\:bg-blue-700:hover { background-color: #1d4ed8; }
-                .space-x-2 > * + * { margin-left: 0.5rem; }
-                .space-x-3 > * + * { margin-left: 0.75rem; }
-                .space-y-2 > * + * { margin-top: 0.5rem; }
-                .space-y-3 > * + * { margin-top: 0.75rem; }
-                .grid { display: grid; }
-                .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
-                .max-w-2xl { max-width: 42rem; }
-                .max-w-md { max-width: 28rem; }
-                .mx-auto { margin-left: auto; margin-right: auto; }
-                .object-cover { object-fit: cover; }
-                .text-center { text-align: center; }
-                .text-sm { font-size: 0.875rem; }
-                .text-lg { font-size: 1.125rem; }
-                .text-xl { font-size: 1.25rem; }
-                .text-2xl { font-size: 1.5rem; }
-                .text-3xl { font-size: 1.875rem; }
-                .leading-tight { line-height: 1.25; }
-                .overflow-hidden { overflow: hidden; }
-                .overflow-y-auto { overflow-y: auto; }
-                
-                /* Custom scrollbar */
-                .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-                .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
-                .custom-scrollbar::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 10px; }
-                .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
-            `;
-            
-            const style = document.createElement('style');
-            style.textContent = emergencyCSS;
-            document.head.appendChild(style);
-        }
-
-        // Initialize check when DOM loads
-        document.addEventListener('DOMContentLoaded', checkTailwind);
-    </script>
+    <link href="{{ url_for('static', filename='assets/css/main.css') }}" rel="stylesheet" />
 
     <!-- Primary Tailwind CSS -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 
-    <!-- Custom CSS for About Page and Carousel -->
     <style>
+        /* Custom styles for Kimbela About Page */
+        :root {
+            --primary-color: #8e44ad;
+            --secondary-color: #9b59b6;
+            --accent-color: #f39c12;
+            --light-color: #f8f9fa;
+            --dark-color: #2c3e50;
+        }
+        
         .service-icon {
             font-size: 2.5rem;
-            color: #0d6efd;
+            color: #8e44ad;
             margin-bottom: 1rem;
         }
         
@@ -187,32 +79,193 @@
             transform: translateY(-5px);
         }
         
+        .btn-primary {
+            background-color: #8e44ad;
+            border-color: #8e44ad;
+        }
+        
+        .btn-primary:hover {
+            background-color: #7d3c98;
+            border-color: #7d3c98;
+        }
+        
+        .feature-card.active {
+            border-color: #8e44ad;
+        }
+        
+        .feature-card.active .feature-icon {
+            color: #8e44ad;
+        }
+        
+        .badge-accredited {
+            background-color: #8e44ad;
+        }
+        
+        /* About Page Specific Styles */
+        .about-hero {
+            background: linear-gradient(135deg, rgba(142, 68, 173, 0.1) 0%, rgba(155, 89, 182, 0.1) 100%);
+            padding: 100px 0 60px;
+        }
+        
+        .page-title {
+            padding: 60px 0;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .page-title h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: var(--dark-color);
+            margin-bottom: 20px;
+        }
+        
+        .timeline {
+            position: relative;
+            padding: 20px 0;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 25px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--primary-color);
+        }
+        
         .timeline-item {
             position: relative;
-            padding-left: 40px;
-            margin-bottom: 20px;
+            padding-left: 60px;
+            margin-bottom: 40px;
         }
         
         .timeline-dot {
             position: absolute;
-            left: 0;
-            top: 5px;
+            left: 20px;
+            top: 0;
             width: 12px;
             height: 12px;
-            background: #0d6efd;
+            background: var(--primary-color);
             border-radius: 50%;
+            border: 3px solid white;
+        }
+        
+        .timeline-content h4 {
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .values-section {
+            background: var(--light-color);
+            padding: 80px 0;
+        }
+        
+        .value-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+        
+        .value-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .value-icon {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+        
+        .team-member {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .team-member img {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 20px;
+            border: 5px solid white;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .team-member h4 {
+            color: var(--dark-color);
+            margin-bottom: 5px;
+        }
+        
+        .team-member span {
+            color: var(--primary-color);
+            font-weight: 500;
         }
         
         .about-carousel .swiper-slide img {
             width: 100%;
             height: 400px;
             object-fit: cover;
-            border-radius: 8px;
+            border-radius: 10px;
         }
         
-        .about-carousel .swiper-button-prev,
-        .about-carousel .swiper-button-next {
-            color: #0d6efd;
+        .mission-vision {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+        
+        .mission, .vision {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .mission h3, .vision h3 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+        
+        @media (max-width: 767px) {
+            .page-title h1 {
+                font-size: 2.5rem;
+            }
+            
+            .about-hero {
+                padding: 80px 0 40px;
+            }
+            
+            .timeline::before {
+                left: 20px;
+            }
+            
+            .timeline-item {
+                padding-left: 50px;
+            }
+            
+            .timeline-dot {
+                left: 15px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .page-title h1 {
+                font-size: 2rem;
+            }
+            
+            .mission-vision {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -220,17 +273,16 @@
 <body class="about-page">
     <header id="header" class="header d-flex align-items-center sticky-top">
         <div class="header-container container-fluid container-xl position-relative d-flex align-items-center justify-content-end">
-            <a href="index.html" class="logo d-flex align-items-center me-auto" style="background: none">
-                <!-- Uncomment the line below if you also wish to use an image logo -->
-                <img src="assets/img/kim.png" alt="" style="width: 10rem; height: 10rem" />
+            <a href="{{ url_for('user.index') }}" class="logo d-flex align-items-center me-auto" style="background: none">
+                <img src="{{ url_for('static', filename='assets/img/kim.png') }}" alt="" style="width: 10rem; height: 10rem" />
             </a>
 
             <nav id="navmenu" class="navmenu">
                 <ul>
-                    <li><a href="index.html" class="active">Home</a></li>
-                    <li><a href="about.html">About Us</a></li>
-                    <li><a href="portfolio.html">Portfolio</a></li>
-                    <li><a href="contact.html">Contact Us</a></li>
+                    <li><a href="{{ url_for('user.index') }}">Home</a></li>
+                    <li><a href="{{ url_for('user.about') }}" class="active">About Us</a></li>
+                    <li><a href="{{ url_for('user.features') }}">Features</a></li>
+                    <li><a href="{{ url_for('auth.login') }}">Login</a></li>
                 </ul>
                 <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
             </nav>
@@ -239,73 +291,46 @@
 
     <main class="main">
         <!-- Page Title -->
-        <div class="page-title light-background">
-            <div class="container d-lg-flex justify-content-between align-items-center">
-                <h1 class="mb-2 mb-lg-0">About Us</h1>
-                <nav class="breadcrumbs">
-                    <ol>
-                        <li><a href="index.html">Home</a></li>
-                        <li class="current">About Us</li>
-                    </ol>
-                </nav>
+        <section class="page-title">
+            <div class="container">
+                <div class="row justify-content-center text-center">
+                    <div class="col-lg-8" data-aos="fade-up">
+                        <h1>About Kimbela</h1>
+                        <p class="lead">
+                            Discover the story behind our mission to create meaningful connections for mature singles
+                        </p>
+                        <nav class="breadcrumbs mt-4">
+                            <ol>
+                                <li><a href="{{ url_for('user.index') }}">Home</a></li>
+                                <li class="current">About Us</li>
+                            </ol>
+                        </nav>
+                    </div>
+                </div>
             </div>
-        </div>
+        </section>
         <!-- End Page Title -->
 
-        <!-- History Section -->
-        <section id="history" class="history section">
-            <div class="container" data-aos="fade-up" data-aos-delay="100">
+        <!-- Our Story Section -->
+        <section id="our-story" class="section">
+            <div class="container" data-aos="fade-up">
                 <div class="row align-items-center g-5">
-                    <div class="col-lg-6">
-                        <div class="about-content" data-aos="fade-up" data-aos-delay="200">
-                            <h3>Our Story</h3>
-                            <h2>Transforming Spaces with Passion and Precision</h2>
-                            <p>
-                                More Peace Technology LLC was founded with a mission to bring beauty and functionality to homes and businesses through expert interior and exterior services. With over 15 years of experience, we pride ourselves on delivering high-quality craftsmanship
-                                and exceptional customer service.
+                    <div class="col-lg-6" data-aos="fade-right" data-aos-delay="100">
+                        <div class="about-content">
+                            <h2 class="mb-4">Our Story</h2>
+                            <p class="lead mb-4">
+                                Kimbela was born from a simple observation: mature singles seeking authentic connections often find themselves navigating platforms that don't align with their values or life stage.
                             </p>
-                            <div class="timeline">
-                                <div class="timeline-item">
-                                    <div class="timeline-dot"></div>
-                                    <div class="timeline-content">
-                                        <h4>2008</h4>
-                                        <p>
-                                            Founded More Peace Technology, focusing on flooring and painting services.
-                                        </p>
-                                    </div>
-                                </div>
-                                <div class="timeline-item">
-                                    <div class="timeline-dot"></div>
-                                    <div class="timeline-content">
-                                        <h4>2012</h4>
-                                        <p>
-                                            Expanded to offer kitchen and bathroom remodeling services.
-                                        </p>
-                                    </div>
-                                </div>
-                                <div class="timeline-item">
-                                    <div class="timeline-dot"></div>
-                                    <div class="timeline-content">
-                                        <h4>2018</h4>
-                                        <p>
-                                            Introduced landscaping and outdoor living solutions, including patios and fireplaces.
-                                        </p>
-                                    </div>
-                                </div>
-                                <div class="timeline-item">
-                                    <div class="timeline-dot"></div>
-                                    <div class="timeline-content">
-                                        <h4>2025</h4>
-                                        <p>
-                                            Completed over 82 projects with a 98% client satisfaction rate.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
+                            <p>
+                                Founded in 2020, our platform emerged as a response to the growing need for a respectful, secure, and meaningful space where individuals 31+ could build genuine friendships based on shared values rather than superficial interactions.
+                            </p>
+                            <p>
+                                What started as a vision to create a different kind of social platform has grown into a vibrant community of thousands who appreciate the depth, respect, and authenticity that Kimbela offers.
+                            </p>
                         </div>
                     </div>
-                    <div class="col-lg-6">
-                        <div class="about-carousel swiper init-swiper" data-aos="zoom-in" data-aos-delay="300">
+                    <div class="col-lg-6" data-aos="zoom-in" data-aos-delay="200">
+                        <div class="about-carousel swiper init-swiper">
                             <script type="application/json" class="swiper-config">
                                 {
                                     "loop": true,
@@ -323,19 +348,13 @@
                             </script>
                             <div class="swiper-wrapper">
                                 <div class="swiper-slide">
-                                    <img src="assets/img/16.webp" alt="Flooring Project" class="img-fluid" />
+                                    <img src="{{ url_for('static', filename='assets/img/bel.webp') }}" alt="Kimbela Community" class="img-fluid" />
                                 </div>
                                 <div class="swiper-slide">
-                                    <img src="assets/img/2.jpg" alt="Kitchen Remodel" class="img-fluid" />
+                                    <img src="{{ url_for('static', filename='assets/img/bel2.webp') }}" alt="Meaningful Connections" class="img-fluid" />
                                 </div>
                                 <div class="swiper-slide">
-                                    <img src="assets/img/17.jpg" alt="Landscaping Project" class="img-fluid" />
-                                </div>
-                                <div class="swiper-slide">
-                                    <img src="assets/img/paint1.jpg" alt="Painting Project" class="img-fluid" />
-                                </div>
-                                <div class="swiper-slide">
-                                    <img src="assets/img/5.jpg" alt="Outdoor Patio" class="img-fluid" />
+                                    <img src="{{ url_for('static', filename='assets/img/bel3.webp') }}" alt="Community Events" class="img-fluid" />
                                 </div>
                             </div>
                             <div class="swiper-navigation">
@@ -343,43 +362,214 @@
                                 <div class="swiper-button-next"></div>
                             </div>
                         </div>
-                        <div class="mission-vision" data-aos="fade-up" data-aos-delay="400">
-                            <div class="mission">
-                                <h3>Our Mission</h3>
-                                <p>
-                                    To deliver top-quality home improvement services that enhance the beauty and functionality of every space we touch.
-                                </p>
-                            </div>
-                            <div class="vision">
-                                <h3>Our Vision</h3>
-                                <p>
-                                    To be the trusted leader in interior and exterior home improvement, known for innovation, reliability, and customer satisfaction.
-                                </p>
-                            </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- /Our Story Section -->
+
+        <!-- Mission & Vision -->
+        <section class="section light-background">
+            <div class="container" data-aos="fade-up">
+                <div class="mission-vision">
+                    <div class="mission" data-aos="fade-right" data-aos-delay="100">
+                        <h3><i class="bi bi-compass-fill me-2"></i>Our Mission</h3>
+                        <p>
+                            To provide a safe, respectful, and meaningful platform where mature singles can build authentic friendships based on shared values, mutual respect, and genuine connection.
+                        </p>
+                    </div>
+                    <div class="vision" data-aos="fade-left" data-aos-delay="200">
+                        <h3><i class="bi bi-eye-fill me-2"></i>Our Vision</h3>
+                        <p>
+                            To become the leading global community for mature singles seeking meaningful connections, setting new standards for authenticity and respect in social platforms.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- /Mission & Vision -->
+
+        <!-- Our Journey Timeline -->
+        <section id="journey" class="section">
+            <div class="container" data-aos="fade-up">
+                <div class="section-title text-center mb-5">
+                    <h2>Our Journey</h2>
+                    <p>Milestones that shaped Kimbela into what it is today</p>
+                </div>
+                
+                <div class="timeline">
+                    <div class="timeline-item" data-aos="fade-up" data-aos-delay="100">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-content">
+                            <h4>2020</h4>
+                            <p>
+                                Kimbela was founded with a vision to create a different kind of social platform for mature singles. Launched with basic connection features and a strict 31+ age policy.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item" data-aos="fade-up" data-aos-delay="200">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-content">
+                            <h4>2021</h4>
+                            <p>
+                                Introduced community groups and interest-based discussions. Grew to 1000+ members with emphasis on safety features and content moderation.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item" data-aos="fade-up" data-aos-delay="300">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-content">
+                            <h4>2022</h4>
+                            <p>
+                                Launched mentorship program and premium services on personal growth and relationships.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item" data-aos="fade-up" data-aos-delay="400">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-content">
+                            <h4>2023</h4>
+                            <p>
+                                Reached 2000+ community members. Introduced advanced matching algorithms and enhanced privacy features. Received industry recognition for innovation.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item" data-aos="fade-up" data-aos-delay="500">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-content">
+                            <h4>2024</h4>
+                            <p>
+                                Expanded globally, celebrated thousands of success stories and meaningful connections.
+                            </p>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
-        <!-- /History Section -->
+        <!-- /Our Journey Timeline -->
+
+        <!-- Our Values -->
+        <section class="values-section">
+            <div class="container" data-aos="fade-up">
+                <div class="section-title text-center mb-5">
+                    <h2>Our Core Values</h2>
+                    <p>The principles that guide everything we do at Kimbela</p>
+                </div>
+                
+                <div class="row g-4">
+                    <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="100">
+                        <div class="value-card">
+                            <div class="value-icon">
+                                <i class="bi bi-shield-check"></i>
+                            </div>
+                            <h3>Safety First</h3>
+                            <p>
+                                We prioritize the safety and privacy of our members with robust security measures and strict content policies.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="200">
+                        <div class="value-card">
+                            <div class="value-icon">
+                                <i class="bi bi-heart-fill"></i>
+                            </div>
+                            <h3>Authenticity</h3>
+                            <p>
+                                We foster genuine connections based on real values, interests, and life experiences rather than superficial attributes.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="300">
+                        <div class="value-card">
+                            <div class="value-icon">
+                                <i class="bi bi-people-fill"></i>
+                            </div>
+                            <h3>Community</h3>
+                            <p>
+                                We build supportive communities where members can grow, learn, and connect with like-minded individuals.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="400">
+                        <div class="value-card">
+                            <div class="value-icon">
+                                <i class="bi bi-award-fill"></i>
+                            </div>
+                            <h3>Excellence</h3>
+                            <p>
+                                We continuously improve our platform to provide the best possible experience for our community members.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="500">
+                        <div class="value-card">
+                            <div class="value-icon">
+                                <i class="bi bi-hand-thumbs-up-fill"></i>
+                            </div>
+                            <h3>Respect</h3>
+                            <p>
+                                We maintain a respectful environment where every member is valued and treated with dignity.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="600">
+                        <div class="value-card">
+                            <div class="value-icon">
+                                <i class="bi bi-lightbulb-fill"></i>
+                            </div>
+                            <h3>Innovation</h3>
+                            <p>
+                                We embrace innovation to create better ways for people to connect meaningfully in the digital age.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- /Our Values -->
+
+        <!-- CTA Section -->
+        <section id="cta" class="cta section">
+            <div class="container" data-aos="fade-up">
+                <div class="row justify-content-center">
+                    <div class="col-lg-8 text-center">
+                        <h2>Ready to Join Our Community?</h2>
+                        <p>
+                            Become part of a platform that values authentic relationships, personal growth, and mutual respect.
+                        </p>
+                        <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg mt-3">Create Your Profile</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- /CTA Section -->
     </main>
 
     <footer id="footer" class="footer position-relative light-background">
         <div class="container footer-top">
             <div class="row gy-4">
                 <div class="col-lg-4 col-md-6 footer-about">
-                    <a href="index.html" class="logo d-flex align-items-center">
-                        <span class="sitename">More Peace Technology</span>
+                    <a href="{{ url_for('user.index') }}" class="logo d-flex align-items-center">
+                        <span class="sitename">Kimbela</span>
                     </a>
                     <div class="footer-contact pt-3">
-                        <p>Professional interior and exterior services</p>
+                        <p>For connections that make sense</p>
                         <p class="mt-3">
-                            <strong>Phone:</strong> <span>+1 (443) 355-3697</span>
+                            <strong>Email:</strong> <span>ask@kimbela.com</span>
                         </p>
-                        <p><strong>Email:</strong> <span>info@morepeacetech.com</span></p>
+                        <p><strong>Support:</strong> <span>support@kimbela.com</span></p>
                         <p>
-                            <strong>Hours:</strong>
-                            <span>Mon-Fri: 8AM - 6PM, Sat: 9AM - 4PM</span>
+                            <strong>Community:</strong>
+                            <span>Mature singles 31+ seeking meaningful connections</span>
                         </p>
                     </div>
                     <div class="social-links d-flex mt-4">
@@ -389,66 +579,62 @@
                         <a href=""><i class="bi bi-youtube"></i></a>
                     </div>
                 </div>
+
                 <div class="col-lg-2 col-md-3 footer-links">
                     <h4>Quick Links</h4>
                     <ul>
-                        <li><a href="index.html">Home</a></li>
-                        <li><a href="about.html">About Us</a></li>
-                        <li><a href="portfolio.html">Portfolio</a></li>
-                        <li><a href="contact.html">Contact Us</a></li>
+                        <li><a href="{{ url_for('user.index') }}">Home</a></li>
+                        <li><a href="{{ url_for('user.about') }}">About Us</a></li>
+                        <li><a href="{{ url_for('user.features') }}">Features</a></li>
+                        <li><a href="{{ url_for('auth.login') }}">Login</a></li>
                     </ul>
                 </div>
+
                 <div class="col-lg-3 col-md-3 footer-links">
-                    <h4>Our Services</h4>
+                    <h4>Our Features</h4>
                     <ul>
-                        <li><a href="portfolio.html#flooring">Flooring</a></li>
-                        <li><a href="portfolio.html#painting">Painting</a></li>
-                        <li><a href="portfolio.html#remodeling">Remodeling</a></li>
-                        <li><a href="portfolio.html#landscaping">Landscaping</a></li>
-                        <li><a href="portfolio.html">View All Services</a></li>
+                        <li><a href="{{ url_for('user.features') }}#connections">Friend Connections</a></li>
+                        <li><a href="{{ url_for('user.features') }}#groups">Group Discussions</a></li>
+                        <li><a href="{{ url_for('user.features') }}#mentorship">Mentorship</a></li>
+                        <li><a href="{{ url_for('user.features') }}#premium">Premium Services</a></li>
+                        <li><a href="{{ url_for('user.features') }}">View All Features</a></li>
                     </ul>
-                </div>
-                <div class="col-lg-3 col-md-6 footer-newsletter">
-                    <h4>Stay Updated</h4>
-                    <p>Subscribe to our newsletter for updates and special offers</p>
-                    <form action="" method="post">
-                        <input type="email" name="email" placeholder="Enter your email" class="form-control" />
-                        <input type="submit" value="Subscribe" class="btn btn-primary mt-2" />
-                    </form>
                 </div>
             </div>
         </div>
+
         <div class="container copyright text-center mt-4">
             <p>
                 © <span>Copyright</span>
-                <strong class="px-1 sitename">More Peace Technology</strong>
+                <strong class="px-1 sitename">Kimbela</strong>
                 <span>All Rights Reserved</span>
             </p>
             <div class="credits">
-                Designed by <a href="https://technest-gules.vercel.app/">Tech Nest</a>
+                Designed for meaningful connections
+            </div>
+            <div class="credits mt-2">
+                <small>Designed with ❤️ by <a href="https://technest-gules.vercel.app/" target="_blank" style="color: #8e44ad; text-decoration: none;">TechNest Solutions</a></small>
             </div>
         </div>
     </footer>
 
     <!-- Scroll Top -->
-    <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i
-    ></a>
+    <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
 
     <!-- Preloader -->
     <div id="preloader"></div>
 
     <!-- Vendor JS Files -->
-    <script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-    <script src="assets/vendor/php-email-form/validate.js"></script>
-    <script src="assets/vendor/aos/aos.js"></script>
-    <script src="assets/vendor/swiper/swiper-bundle.min.js"></script>
-    <script src="assets/vendor/purecounter/purecounter_vanilla.js"></script>
-    <script src="assets/vendor/imagesloaded/imagesloaded.pkgd.min.js"></script>
-    <script src="assets/vendor/isotope-layout/isotope.pkgd.min.js"></script>
-    <script src="assets/vendor/glightbox/js/glightbox.min.js"></script>
+    <script src="{{ url_for('static', filename='assets/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='assets/vendor/php-email-form/validate.js') }}"></script>
+    <script src="{{ url_for('static', filename='assets/vendor/aos/aos.js') }}"></script>
+    <script src="{{ url_for('static', filename='assets/vendor/swiper/swiper-bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='assets/vendor/purecounter/purecounter_vanilla.js') }}"></script>
+    <script src="{{ url_for('static', filename='assets/vendor/imagesloaded/imagesloaded.pkgd.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='assets/vendor/isotope-layout/isotope.pkgd.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='assets/vendor/glightbox/js/glightbox.min.js') }}"></script>
 
     <!-- Main JS File -->
-    <script src="assets/js/main.js"></script>
+    <script src="{{ url_for('static', filename='assets/js/main.js') }}"></script>
 </body>
-
 </html>
