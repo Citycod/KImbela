@@ -10,6 +10,7 @@ from flask import (
     current_app,
 )
 from sqlalchemy.orm import joinedload
+from sqlalchemy import func
 
 from models import (
     MatchmakingPackage,
@@ -214,7 +215,6 @@ def create_sample_packages():
     
     
     
-    
 @user.route("/user_dashboard", methods=["GET", "POST"])
 @login_required
 def user_dashboard():
@@ -277,12 +277,17 @@ def user_dashboard():
     blocked_ids.update(user.id for user in current_user.blocked_by)
 
     # --- POSTS QUERY ---
+    from sqlalchemy import func
+    
     posts_query = (
         Post.query
         .options(
             joinedload(Post.author),
             joinedload(Post.comments).joinedload(Comment.author)
         )
+        .outerjoin(Post.likes)  # Join with likes
+        .group_by(Post.id)  # Group by post to avoid duplicates
+        .add_columns(func.count(Post.likes).label('likes_count'))  # Add count column
         .filter(~Post.author_id.in_(blocked_ids))
     )
 
@@ -290,9 +295,16 @@ def user_dashboard():
         posts_query = posts_query.filter(Post.id < cursor)
 
     # Fetch limit+1 for has_more check
-    posts = posts_query.order_by(Post.created_at.desc()).limit(limit + 1).all()
-    has_more = len(posts) > limit
-    posts = posts[:limit]
+    query_results = posts_query.order_by(Post.created_at.desc()).limit(limit + 1).all()
+    
+    # Extract posts and their likes count
+    posts_with_counts = []
+    for post, likes_count in query_results:
+        post.likes_count = likes_count
+        posts_with_counts.append(post)
+    
+    has_more = len(posts_with_counts) > limit
+    posts = posts_with_counts[:limit]
     next_cursor = posts[-1].id if posts else None
 
     # --- FRIENDS QUERY ---
@@ -352,8 +364,7 @@ def user_dashboard():
         friends=friends,
         random_three=random_three,
         csrf_token=generate_csrf(),
-    )   
-    
+    )
     
     
     

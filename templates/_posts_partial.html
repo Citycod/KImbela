@@ -97,7 +97,7 @@
             data-post-id="{{ post.id }}"
         >
             <i class="bi bi-hand-thumbs-up{% if current_user.has_liked_post(post.id) %}-fill{% endif %}"></i>
-            <span class="like-count">{{ post.likes|length }}</span>
+            <span class="like-count">{{ post.likes_count }}</span>
         </button>
         <button
             class="action-btn view-comments flex items-center space-x-1 px-2 py-1 rounded-lg hover:bg-fb-gray transition-colors"

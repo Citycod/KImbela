@@ -1370,11 +1370,153 @@
         }
         /* Constrain post media on small screens */
         .post-media img,
-        .post-media video {
-          max-height: 60vh;
+        .post-media video, 
+        .initial{
+          max-height: 200vh;
+          max-width: 100% !important; 
+        }
+      }
+
+      @media (max-width: 768px) {
+        html {
+          font-size: 15px;
+        }
+        body {
+          font-size: 0.95rem;
+          line-height: 1.5;
+        }
+        /* Constrain post media on small screens */
+        .post-media img,
+        .post-media video,
+        .initial {
+          max-height: 200vh;
+          max-width: 100% !important; 
+        }
+      }
+
+
+      @media (max-width: 480px) {
+        html {
+          font-size: 15px;
+        }
+        body {
+          font-size: 0.95rem;
+          line-height: 1.5;
+        }
+        /* Constrain post media on small screens */
+        .post-media img,
+        .post-media video,
+        .initial {
+          max-height: 200vh;
+          max-width: 100% !important; 
         }
       }
     </style>
+
+
+    <style>
+/* ======================================== */
+/* FIX POST IMAGES ON MOBILE - CONTROL CONTAINER */
+/* ======================================== */
+
+/* First, ensure the post card container doesn't overflow */
+.post-card {
+    overflow: hidden !important;
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+/* Control the post media container */
+.post-media {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+/* On mobile screens, make images fit within screen */
+@media (max-width: 768px) {
+    .post-card {
+        border-radius: 12px !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+    
+    .post-card > div:not(.post-media) {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+    
+    .post-media {
+        width: 100vw !important;
+        max-width: 100vw !important;
+        margin-left: -1rem !important;
+        margin-right: -1rem !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+    
+    .post-media img,
+    .post-media video {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        max-height: 70vh !important;
+        object-fit: contain !important;
+        border-radius: 0 !important;
+    }
+}
+
+/* For very small screens (phones) */
+@media (max-width: 480px) {
+    .post-media {
+        margin-left: -0.5rem !important;
+        margin-right: -0.5rem !important;
+    }
+    
+    .post-media img,
+    .post-media video {
+        max-height: 60vh !important;
+    }
+}
+
+/* Tablet screens */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .post-media img,
+    .post-media video {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        max-height: 80vh !important;
+        object-fit: contain !important;
+    }
+}
+
+/* Ensure no horizontal scrolling on mobile */
+body {
+    overflow-x: hidden !important;
+}
+
+/* Fix the main content container */
+.max-w-2xl {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+}
+
+@media (min-width: 768px) {
+    .max-w-2xl {
+        max-width: 42rem !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+}
+</style>
+    
   </head>
   <body class="font-poppins bg-fb-gray text-fb-text">
     <div class="simple-loader" id="loader">
@@ -1492,9 +1634,7 @@
               class="p-3 border-b border-fb-border flex justify-between items-center"
             >
               <h3 class="font-semibold">Notifications</h3>
-              <button class="text-sm text-fb-blue font-medium">
-                Mark all as read
-              </button>
+              
             </div>
             <div
               class="max-h-96 overflow-y-auto custom-scrollbar"
@@ -1509,11 +1649,7 @@
                 <span class="ml-2">Loading...</span>
               </div>
             </div>
-            <div class="p-2 border-t border-fb-border text-center">
-              <a href="#" class="text-fb-blue text-sm font-medium"
-                >See all notifications</a
-              >
-            </div>
+            
           </div>
         </div>
 
@@ -2145,7 +2281,7 @@
     <!-- INITIAL POSTS (Loaded server-side) -->
     {% if initial_posts %}
       {% for post in initial_posts %}
-      <div class="post-card bg-white rounded-2xl shadow-soft mb-6 overflow-hidden card-hover" data-post-id="{{ post.id }}" id="post-{{ post.id }}">
+      <div class="post-card bg-white rounded-2xl shadow-soft mb-6 overflow-hidden card-hover initial" data-post-id="{{ post.id }}" id="post-{{ post.id }}">
         <div class="p-4 flex justify-between items-start">
           <div class="flex items-start space-x-3">
             <img
