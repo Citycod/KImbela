@@ -1,0 +1,2450 @@
+/* SIMPLE DASHBOARD CSS */
+
+.simple-loader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #f0f2f5;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    transition: opacity 0.3s ease;
+}
+
+.loader-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid #e5e7eb;
+    border-top: 4px solid #1877f2;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 1rem;
+}
+
+.loader-text {
+    color: #606770;
+    font-size: 1rem;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+/* NAVBAR */
+
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 64px;
+    background: white;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    padding: 0 1rem;
+    z-index: 100;
+}
+
+.logo {
+    height: 40px;
+    width: auto;
+}
+
+.search-container {
+    flex: 1;
+    max-width: 600px;
+    margin: 0 2rem;
+}
+
+.search-container input {
+    width: 100%;
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    border: 1px solid #e5e7eb;
+    background: #f0f2f5;
+}
+
+.nav-icons button {
+    padding: 0.5rem;
+    margin-left: 0.5rem;
+    font-size: 1.25rem;
+    color: #6b7280;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+
+/* DASHBOARD LAYOUT */
+
+.dashboard-container {
+    display: flex;
+    padding-top: 64px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.left-sidebar {
+    width: 240px;
+    padding: 1rem;
+    background: white;
+    border-right: 1px solid #e5e7eb;
+    position: sticky;
+    top: 64px;
+    height: calc(100vh - 64px);
+    overflow-y: auto;
+}
+
+.sidebar-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    margin-bottom: 0.25rem;
+    border-radius: 0.5rem;
+    color: #4b5563;
+    text-decoration: none;
+}
+
+.sidebar-item:hover {
+    background: #f3f4f6;
+}
+
+.sidebar-item.active {
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+.sidebar-item i {
+    margin-right: 0.75rem;
+    font-size: 1.25rem;
+}
+
+
+/* MAIN FEED */
+
+.main-feed {
+    flex: 1;
+    max-width: 600px;
+    padding: 1rem;
+}
+
+.post-composer {
+    background: white;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid #e5e7eb;
+}
+
+.composer-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 9999px;
+    margin-right: 1rem;
+}
+
+.composer-input {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    background: #f3f4f6;
+    border-radius: 9999px;
+    cursor: pointer;
+    color: #6b7280;
+}
+
+.composer-actions {
+    display: flex;
+    justify-content: space-around;
+    border-top: 1px solid #e5e7eb;
+    padding-top: 1rem;
+}
+
+.composer-actions button {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    font-size: 0.875rem;
+}
+
+.composer-actions button i {
+    margin-right: 0.5rem;
+    font-size: 1.25rem;
+}
+
+
+/* POST CARD */
+
+.post-card {
+    background: white;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid #e5e7eb;
+}
+
+.post-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.post-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 9999px;
+    margin-right: 0.75rem;
+}
+
+.post-author {
+    font-weight: 600;
+}
+
+.post-time {
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+.post-content {
+    margin-bottom: 1rem;
+    line-height: 1.5;
+}
+
+.post-media {
+    margin-bottom: 1rem;
+}
+
+.post-media img,
+.post-media video {
+    width: 100%;
+    border-radius: 0.5rem;
+    max-height: 500px;
+    object-fit: contain;
+}
+
+.post-actions {
+    display: flex;
+    justify-content: space-around;
+    border-top: 1px solid #e5e7eb;
+    padding-top: 0.75rem;
+}
+
+.post-actions button {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    border-radius: 0.375rem;
+}
+
+.post-actions button:hover {
+    background: #f3f4f6;
+}
+
+.post-actions button i {
+    margin-right: 0.5rem;
+}
+
+
+/* RIGHT SIDEBAR */
+
+.right-sidebar {
+    width: 300px;
+    padding: 1rem;
+    background: white;
+    border-left: 1px solid #e5e7eb;
+    position: sticky;
+    top: 64px;
+    height: calc(100vh - 64px);
+    overflow-y: auto;
+}
+
+.right-sidebar h3 {
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.friends-list {
+    padding-top: 0.5rem;
+}
+
+.friend-item {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    margin-bottom: 0.5rem;
+}
+
+.friend-item:hover {
+    background: #f3f4f6;
+}
+
+.friend-avatar {
+    position: relative;
+    margin-right: 0.75rem;
+}
+
+.friend-avatar img {
+    width: 40px;
+    height: 40px;
+    border-radius: 9999px;
+}
+
+.online-dot {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 10px;
+    height: 10px;
+    background: #10b981;
+    border: 2px solid white;
+    border-radius: 9999px;
+}
+
+.friend-name {
+    font-weight: 500;
+}
+
+.friend-status {
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+
+/* LOADING SPINNER */
+
+.loading-spinner {
+    text-align: center;
+    padding: 2rem;
+}
+
+.loading-spinner .spinner {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    border: 3px solid #e5e7eb;
+    border-top: 3px solid #2563eb;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+}
+
+
+/* SUGGESTIONS */
+
+.suggestions-card {
+    background: white;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid #e5e7eb;
+}
+
+.suggestions-card h3 {
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.suggestions-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+.suggestion-item {
+    text-align: center;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid #e5e7eb;
+}
+
+.suggestion-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 9999px;
+    margin: 0 auto 0.75rem;
+    object-fit: cover;
+}
+
+.suggestion-name {
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+    font-size: 0.875rem;
+}
+
+.btn-add-friend {
+    width: 100%;
+    padding: 0.5rem;
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+}
+
+.btn-add-friend:hover {
+    background: #1d4ed8;
+}
+
+
+/* RESPONSIVE */
+
+@media (max-width: 1024px) {
+    .right-sidebar {
+        display: none;
+    }
+    .left-sidebar {
+        width: 200px;
+    }
+}
+
+@media (max-width: 768px) {
+    .left-sidebar {
+        display: none;
+    }
+    .search-container {
+        display: none;
+    }
+    .dashboard-container {
+        padding: 0;
+    }
+    .main-feed {
+        padding: 0.5rem;
+        max-width: 100%;
+    }
+    .suggestions-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .suggestions-grid {
+        grid-template-columns: 1fr;
+    }
+    .post-composer {
+        padding: 0.75rem;
+    }
+    .composer-actions button {
+        font-size: 0.75rem;
+        padding: 0.5rem;
+    }
+}
+
+
+/* Ultra Compact Modal Media Previews */
+
+#mediaPreview,
+#editMediaPreview {
+    max-height: 60vh !important;
+    overflow: hidden !important;
+}
+
+#mediaPreview img,
+#mediaPreview video,
+#editMediaPreview img,
+#editMediaPreview video {
+    max-height: 30vh !important;
+    object-fit: contain !important;
+    border-radius: 8px !important;
+    border: 1px solid #e5e7eb !important;
+    background-color: #f9fafb !important;
+}
+
+
+/* Mobile-specific media preview adjustments */
+
+@media (max-width: 640px) {
+    #postModal .modal-dialog,
+    #editPostModal .modal-dialog {
+        width: 95% !important;
+        max-width: 320px !important;
+        margin: 0.5rem !important;
+    }
+    #postModal .modal-body,
+    #editPostModal .modal-body {
+        padding: 1rem !important;
+    }
+    #mediaPreview img,
+    #mediaPreview video,
+    #editMediaPreview img,
+    #editMediaPreview video {
+        max-height: 25vh !important;
+    }
+    textarea[name="post_content"],
+    #editPostContent {
+        font-size: 0.9rem !important;
+        min-height: 80px !important;
+        padding: 0.5rem !important;
+    }
+    .modal-header h3 {
+        font-size: 1rem !important;
+    }
+    .modal-footer button {
+        padding: 0.75rem !important;
+        font-size: 0.9rem !important;
+    }
+}
+
+
+/* Tablet adjustments */
+
+@media (min-width: 641px) and (max-width: 1024px) {
+    #postModal .modal-dialog,
+    #editPostModal .modal-dialog {
+        max-width: 400px !important;
+    }
+    #mediaPreview img,
+    #mediaPreview video,
+    #editMediaPreview img,
+    #editMediaPreview video {
+        max-height: 35vh !important;
+    }
+}
+
+
+/* Desktop adjustments - still compact */
+
+@media (min-width: 1025px) {
+    #postModal .modal-dialog,
+    #editPostModal .modal-dialog {
+        max-width: 450px !important;
+    }
+    #mediaPreview img,
+    #mediaPreview video,
+    #editMediaPreview img,
+    #editMediaPreview video {
+        max-height: 40vh !important;
+    }
+}
+
+
+/* Ensure remove button is visible and clickable */
+
+#mediaPreview button,
+#editMediaPreview button {
+    font-size: 0.75rem !important;
+    padding: 0.5rem 0.75rem !important;
+    margin-top: 0.5rem !important;
+}
+
+
+/* Make textarea more compact */
+
+textarea[name="post_content"],
+#editPostContent {
+    min-height: 100px;
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 8px !important;
+    padding: 0.75rem !important;
+    font-size: 1rem;
+    line-height: 1.4;
+}
+
+
+/* Compact media controls for video */
+
+#mediaPreview video::-webkit-media-controls,
+#editMediaPreview video::-webkit-media-controls {
+    transform: scale(0.8);
+    transform-origin: bottom right;
+}
+
+
+/* Smooth animations for modal */
+
+.modal-dialog {
+    transition: all 0.3s ease !important;
+    animation: modalSlideUp 0.3s ease-out !important;
+}
+
+@keyframes modalSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+/* Dark mode support */
+
+@media (prefers-color-scheme: dark) {
+    #mediaPreview img,
+    #mediaPreview video,
+    #editMediaPreview img,
+    #editMediaPreview video {
+        background-color: #1f2937 !important;
+        border-color: #374151 !important;
+    }
+    textarea[name="post_content"],
+    #editPostContent {
+        background-color: #1f2937 !important;
+        color: #f9fafb !important;
+        border-color: #374151 !important;
+    }
+}
+
+
+/* Custom scrollbar */
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+
+/* Custom animations */
+
+@keyframes highlight {
+    0%,
+    100% {
+        background-color: transparent;
+    }
+    50% {
+        background-color: rgba(255, 243, 205, 0.8);
+    }
+}
+
+.highlight-animation {
+    animation: highlight 2s ease-in-out;
+}
+
+
+/* Glass effect */
+
+.glass-effect {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+
+/* Gradient backgrounds */
+
+.gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.gradient-secondary {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.gradient-success {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+
+/* Shadow effects */
+
+.shadow-soft {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.shadow-medium {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.shadow-strong {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+
+/* Custom button effects */
+
+.btn-hover-effect {
+    transition: all 0.3s ease;
+}
+
+.btn-hover-effect:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+
+/* Card hover effects */
+
+.card-hover {
+    transition: all 0.3s ease;
+}
+
+.card-hover:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+
+/* Messenger Fixed Layout Styles */
+
+#chatArea {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+#chatMessagesWrapper {
+    flex: 1;
+    min-height: 0;
+    /* Crucial for flexbox scrolling */
+    overflow-y: auto;
+}
+
+#chatMessages {
+    min-height: min-content;
+}
+
+
+/* Ensure smooth scrolling */
+
+#chatMessagesWrapper {
+    scroll-behavior: smooth;
+}
+
+
+/* Custom scrollbar for messages */
+
+#chatMessagesWrapper::-webkit-scrollbar {
+    width: 4px;
+}
+
+#chatMessagesWrapper::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+#chatMessagesWrapper::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 10px;
+}
+
+#chatMessagesWrapper::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+
+/* Profile Modal Responsive Styles */
+
+@media (max-width: 640px) {
+    /* Make modal much smaller on mobile */
+    #profileModal .modal-dialog {
+        width: 90% !important;
+        max-width: 380px !important;
+        margin: 1rem !important;
+        max-height: 85vh !important;
+    }
+    /* Reduce header padding */
+    #profileModal .modal-header {
+        padding: 0.75rem 1rem !important;
+    }
+    #profileModal .modal-header h3 {
+        font-size: 1.125rem !important;
+    }
+    /* Make profile info container much more compact */
+    #profileModal .profile-info-container {
+        margin-top: -3.5rem !important;
+        padding-bottom: 1rem !important;
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+    }
+    /* Reduce avatar size */
+    #profileModal .profile-avatar {
+        width: 5rem !important;
+        height: 5rem !important;
+        border-width: 2px !important;
+    }
+    /* Make profile name smaller */
+    #profileModal .profile-name {
+        font-size: 1.125rem !important;
+        line-height: 1.2 !important;
+    }
+    /* Make profile details smaller */
+    #profileModal .profile-details {
+        gap: 0.25rem !important;
+        margin-top: 0.5rem !important;
+    }
+    #profileModal .detail-item {
+        font-size: 0.7rem !important;
+        padding: 0.25rem 0.5rem !important;
+    }
+    /* Reduce bio text */
+    #profileModal .profile-bio {
+        margin-top: 0.5rem !important;
+        font-size: 0.8rem !important;
+        line-height: 1.3 !important;
+    }
+    /* Make details section compact */
+    #profileModal .profile-details-section {
+        margin-top: 1rem !important;
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+        padding-bottom: 1rem !important;
+    }
+    /* Single column layout for details */
+    #profileModal .grid-cols-1 {
+        gap: 0.75rem !important;
+    }
+    /* Reduce card padding */
+    #profileModal .detail-card {
+        padding: 0.75rem !important;
+    }
+    /* Reduce card title size */
+    #profileModal .detail-card-title {
+        font-size: 0.875rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+    /* Reduce detail list spacing */
+    #profileModal .detail-list {
+        gap: 0.5rem !important;
+    }
+    /* Reduce detail row font sizes */
+    #profileModal .detail-row {
+        font-size: 0.75rem !important;
+        flex-wrap: nowrap !important;
+    }
+    #profileModal .detail-label {
+        min-width: 3.5rem !important;
+        font-size: 0.7rem !important;
+    }
+    #profileModal .detail-value {
+        font-size: 0.7rem !important;
+        word-break: break-word !important;
+    }
+    /* Reduce modal footer padding */
+    #profileModal .modal-footer {
+        padding: 0.75rem !important;
+    }
+    /* Make action buttons smaller */
+    #profileModal .btn {
+        padding: 0.375rem 0.75rem !important;
+        font-size: 0.75rem !important;
+    }
+    /* Reduce cover photo height */
+    #profileModal .cover-photo-container {
+        height: 6rem !important;
+    }
+}
+
+
+/* Extra small devices (phones, 480px and down) */
+
+@media (max-width: 480px) {
+    /* Even smaller modal */
+    #profileModal .modal-dialog {
+        width: 95% !important;
+        max-width: 340px !important;
+        margin: 0.5rem !important;
+        max-height: 90vh !important;
+    }
+    /* Reduce avatar size further */
+    #profileModal .profile-avatar {
+        width: 4rem !important;
+        height: 4rem !important;
+    }
+    /* Even smaller profile info */
+    #profileModal .profile-info-container {
+        margin-top: -2.5rem !important;
+    }
+    /* Reduce cover photo height further */
+    #profileModal .cover-photo-container {
+        height: 5rem !important;
+    }
+    /* Hide some details on very small screens */
+    #profileModal .profile-bio {
+        font-size: 0.7rem !important;
+        line-height: 1.2 !important;
+        max-height: 3rem !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+    /* Stack action buttons vertically */
+    #profileModal .modal-footer {
+        flex-direction: column !important;
+        gap: 0.5rem !important;
+    }
+    #profileModal .btn {
+        width: 100% !important;
+        margin: 0 !important;
+    }
+}
+
+
+/* Tablet screens (641px to 768px) */
+
+@media (min-width: 641px) and (max-width: 768px) {
+    #profileModal .modal-dialog {
+        width: 85% !important;
+        max-width: 500px !important;
+    }
+    #profileModal .profile-avatar {
+        width: 6rem !important;
+        height: 6rem !important;
+    }
+    #profileModal .cover-photo-container {
+        height: 8rem !important;
+    }
+}
+
+
+/* Ultra Compact Ad Modal for All Screens */
+
+#adModal {
+    padding: 0 !important;
+}
+
+.ad-modal-content {
+    width: 90vw !important;
+    max-width: 320px !important;
+    border-radius: 16px !important;
+}
+
+.ad-body {
+    padding: 1rem !important;
+}
+
+
+/* Mobile-specific ad modal adjustments */
+
+@media (max-width: 640px) {
+    .ad-modal-content {
+        max-width: 280px !important;
+        margin: 0 auto;
+    }
+    .ad-body {
+        padding: 0.75rem !important;
+    }
+    #adModalImage {
+        max-height: 120px !important;
+    }
+    .ad-body h3 {
+        font-size: 1rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+    .ad-body p {
+        font-size: 0.8rem !important;
+        line-height: 1.3 !important;
+        margin-bottom: 0.75rem !important;
+    }
+    .ad-body .flex-col {
+        gap: 0.5rem !important;
+    }
+    .ad-body a,
+    .ad-body button {
+        padding: 0.5rem 0.75rem !important;
+        font-size: 0.8rem !important;
+    }
+}
+
+
+/* Tablet adjustments */
+
+@media (min-width: 641px) and (max-width: 1024px) {
+    .ad-modal-content {
+        max-width: 300px !important;
+    }
+}
+
+
+/* Scrollable Comments in Feed */
+
+.comments-section {
+    max-height: 300px;
+    /* Limit height */
+    overflow-y: auto;
+    /* Enable vertical scroll */
+    padding-right: 8px;
+    /* Space for scrollbar */
+}
+
+
+/* Scrollable Comments Modal */
+
+#commentModalBody {
+    max-height: 60vh;
+    /* 60% of viewport height */
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+
+/* Optional: Custom scrollbar for comments */
+
+.comments-section::-webkit-scrollbar,
+#commentModalBody::-webkit-scrollbar {
+    width: 6px;
+}
+
+.comments-section::-webkit-scrollbar-track,
+#commentModalBody::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.comments-section::-webkit-scrollbar-thumb,
+#commentModalBody::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 10px;
+}
+
+.comments-section::-webkit-scrollbar-thumb:hover,
+#commentModalBody::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+
+/* Truncate long comment text with "See More" */
+
+.comment-text {
+    max-height: 100px;
+    overflow: hidden;
+    position: relative;
+}
+
+.comment-text.truncated::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 30px;
+    background: linear-gradient(transparent, #f9fafb);
+}
+
+.comment-text.expanded {
+    max-height: none;
+}
+
+
+/* Scrollable Comments in Feed */
+
+.comments-section {
+    max-height: 300px;
+    /* Limit height */
+    overflow-y: auto;
+    /* Enable vertical scroll */
+    padding-right: 8px;
+    /* Space for scrollbar */
+}
+
+
+/* Scrollable Comments Modal */
+
+#commentModalBody {
+    max-height: 60vh;
+    /* 60% of viewport height */
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+
+/* Optional: Custom scrollbar for comments */
+
+.comments-section::-webkit-scrollbar,
+#commentModalBody::-webkit-scrollbar {
+    width: 6px;
+}
+
+.comments-section::-webkit-scrollbar-track,
+#commentModalBody::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.comments-section::-webkit-scrollbar-thumb,
+#commentModalBody::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 10px;
+}
+
+.comments-section::-webkit-scrollbar-thumb:hover,
+#commentModalBody::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+
+/* Truncate long comment text with "See More" */
+
+.comment-text {
+    max-height: 100px;
+    overflow: hidden;
+    position: relative;
+}
+
+.comment-text.truncated::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 30px;
+    background: linear-gradient(transparent, #f9fafb);
+}
+
+.comment-text.expanded {
+    max-height: none;
+}
+
+.comments-section {
+    max-height: 300px;
+    min-height: 120px;
+    /* Optional: set a minimum height */
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+.message-bubble {
+    max-width: 70%;
+    word-wrap: break-word;
+}
+
+.message-own {
+    background: linear-gradient(135deg, #0084ff 0%, #0099ff 100%);
+    color: white;
+    border-radius: 18px 18px 4px 18px;
+    margin-left: auto;
+}
+
+.message-other {
+    background: #f0f2f5;
+    color: #1c1e21;
+    border-radius: 18px 18px 18px 4px;
+}
+
+.message-status {
+    font-size: 0.7rem;
+    margin-top: 2px;
+}
+
+.typing-indicator {
+    display: inline-flex;
+    align-items: center;
+}
+
+#messengerPopup {
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e4e6eb;
+}
+
+
+/* Simple Loader Styles */
+
+.simple-loader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #f0f2f5;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    transition: opacity 1s ease-out;
+}
+
+.loader-logo {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    color: #1877f2;
+}
+
+.loader-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid #e5e7eb;
+    border-top: 4px solid #1877f2;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 1rem;
+}
+
+.loader-text {
+    color: #606770;
+    font-size: 1rem;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.loader-hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+
+/* Fade-in animation for main content */
+
+.main-content {
+    opacity: 0;
+    animation: fadeInContent 0.6s ease-out forwards;
+    animation-delay: 0.1s;
+    /* Small delay after loader disappears */
+}
+
+@keyframes fadeInContent {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+/* Faster loader transition */
+
+.simple-loader {
+    transition: opacity 0.3s ease-out;
+}
+
+#mediaPreview video,
+#mediaPreview img {
+    max-width: 100%;
+    border-radius: 10px;
+}
+
+#mediaPreview video {
+    max-height: 30vh;
+    /* keeps video from taking over small screens */
+    object-fit: cover;
+}
+
+#mediaPreview img {
+    max-height: 30vh;
+    /* keeps video from taking over small screens */
+    object-fit: cover;
+}
+
+
+/* Mobile-specific post composer adjustments */
+
+@media (max-width: 640px) {
+    /* Make composer buttons more compact */
+    .composer-btn {
+        padding: 0.375rem 0.125rem !important;
+        font-size: 0.7rem !important;
+    }
+    /* Adjust icon sizes */
+    .composer-btn i {
+        font-size: 0.875rem !important;
+    }
+    /* Reduce composer input size */
+    .composer-input {
+        padding: 0.5rem 0.75rem !important;
+        font-size: 0.8rem !important;
+    }
+    /* Make profile picture smaller */
+    .composer-card img {
+        width: 2rem !important;
+        height: 2rem !important;
+    }
+}
+
+
+/* Extra small devices (phones, 480px and down) */
+
+@media (max-width: 480px) {
+    .composer-btn {
+        padding: 0.25rem 0 !important;
+    }
+    .composer-btn i {
+        font-size: 0.75rem !important;
+    }
+    .composer-input {
+        font-size: 0.75rem !important;
+        padding: 0.375rem 0.5rem !important;
+    }
+    .composer-card {
+        padding: 0.75rem !important;
+    }
+}
+
+
+/* Ensure text is hidden on mobile but visible on desktop */
+
+.composer-btn span {
+    display: none;
+}
+
+@media (min-width: 640px) {
+    .composer-btn span {
+        display: inline;
+    }
+}
+
+
+/* Smooth hover effects */
+
+.composer-btn:hover i {
+    transform: scale(1.1);
+    transition: transform 0.2s ease;
+}
+
+.composer-input:hover {
+    background-color: #e5e7eb !important;
+}
+
+
+/* ======================================== */
+
+
+/* BEAUTIFUL TINY LOADERS SYSTEM */
+
+
+/* ======================================== */
+
+
+/* Base Loader Class */
+
+.tiny-loader {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    border-top-color: currentColor;
+    animation: spin 0.6s linear infinite;
+}
+
+.tiny-loader.white {
+    border-top-color: white;
+}
+
+.tiny-loader.primary {
+    border-top-color: #2563eb;
+}
+
+.tiny-loader.success {
+    border-top-color: #10b981;
+}
+
+.tiny-loader.danger {
+    border-top-color: #ef4444;
+}
+
+.tiny-loader.warning {
+    border-top-color: #f59e0b;
+}
+
+.tiny-loader.purple {
+    border-top-color: #8b5cf6;
+}
+
+
+/* Different sizes */
+
+.tiny-loader.xs {
+    width: 0.75rem;
+    height: 0.75rem;
+    border-width: 1.5px;
+}
+
+.tiny-loader.sm {
+    width: 1rem;
+    height: 1rem;
+}
+
+.tiny-loader.md {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.tiny-loader.lg {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+
+/* Pulse loader for page transitions */
+
+.pulse-loader {
+    display: inline-block;
+    width: 0.75rem;
+    height: 0.75rem;
+    background: currentColor;
+    border-radius: 50%;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+
+/* Dots loader for messaging */
+
+.dots-loader {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.dots-loader span {
+    width: 4px;
+    height: 4px;
+    background: currentColor;
+    border-radius: 50%;
+    animation: dots 1.4s ease-in-out infinite both;
+}
+
+.dots-loader span:nth-child(1) {
+    animation-delay: -0.32s;
+}
+
+.dots-loader span:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+
+/* Bar loader for uploads */
+
+.bar-loader {
+    width: 3rem;
+    height: 3px;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 1.5px;
+    overflow: hidden;
+    position: relative;
+}
+
+.bar-loader::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 40%;
+    background: currentColor;
+    animation: bar 1.5s ease-in-out infinite;
+}
+
+
+/* Inline button loader */
+
+.btn-loader {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+
+/* Avatar loader */
+
+.avatar-loader {
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    border-top-color: #2563eb;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+
+/* Card skeleton loader */
+
+.skeleton-loader {
+    background: linear-gradient( 90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: skeleton 1.5s ease-in-out infinite;
+}
+
+
+/* Animations */
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes pulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+@keyframes dots {
+    0%,
+    80%,
+    100% {
+        transform: scale(0);
+    }
+    40% {
+        transform: scale(1);
+    }
+}
+
+@keyframes bar {
+    0% {
+        transform: translateX(-100%);
+    }
+    50% {
+        transform: translateX(100%);
+    }
+    100% {
+        transform: translateX(200%);
+    }
+}
+
+@keyframes skeleton {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+
+/* Loader for modals */
+
+.modal-loader {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    border-radius: inherit;
+}
+
+
+/* Specific element loaders */
+
+.loading-overlay {
+    position: relative;
+}
+
+.loading-overlay::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+}
+
+.loading-overlay.loading::after {
+    content: "⏳";
+    font-size: 1.5rem;
+}
+
+
+/* Messenger typing loader */
+
+.typing-loader {
+    display: flex;
+    gap: 3px;
+    padding: 0.5rem;
+}
+
+.typing-loader span {
+    width: 6px;
+    height: 6px;
+    background: #6b7280;
+    border-radius: 50%;
+    animation: typing 1.4s ease-in-out infinite both;
+}
+
+.typing-loader span:nth-child(1) {
+    animation-delay: -0.32s;
+}
+
+.typing-loader span:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+@keyframes typing {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-5px);
+    }
+}
+
+
+/* Smooth transitions for loaders */
+
+button {
+    transition: all 0.3s ease;
+}
+
+.btn-loader {
+    transition: all 0.3s ease;
+}
+
+
+/* Fade in animation for new content */
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fadeIn {
+    animation: fadeIn 0.3s ease-out;
+}
+
+
+/* Skeleton loading animation */
+
+.skeleton-item {
+    background: linear-gradient( 90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+}
+
+
+/* Button loading states */
+
+.btn-loading {
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-loading::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.2);
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+
+/* Message sending animation */
+
+.message-sending {
+    opacity: 0.7;
+}
+
+.message-sending::after {
+    content: "";
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    margin-left: 5px;
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+
+/* Final responsive overrides */
+
+.loader-spinner {
+    width: clamp(36px, 6vw, 50px);
+    height: clamp(36px, 6vw, 50px);
+    margin-bottom: 0.75rem;
+}
+
+.loader-text {
+    font-size: clamp(0.9rem, 2.5vw, 1rem);
+}
+
+@media (max-width: 767px) {
+    html {
+        font-size: 15px;
+    }
+    body {
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+    /* Constrain post media on small screens */
+    .post-media img,
+    .post-media video,
+    .initial {
+        max-height: 200vh;
+        max-width: 100% !important;
+    }
+}
+
+@media (max-width: 768px) {
+    html {
+        font-size: 15px;
+    }
+    body {
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+    /* Constrain post media on small screens */
+    .post-media img,
+    .post-media video,
+    .initial {
+        max-height: 200vh;
+        max-width: 100% !important;
+    }
+}
+
+@media (max-width: 480px) {
+    html {
+        font-size: 15px;
+    }
+    body {
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+    /* Constrain post media on small screens */
+    .post-media img,
+    .post-media video,
+    .initial {
+        max-height: 200vh;
+        max-width: 100% !important;
+    }
+}
+
+
+/* ======================================== */
+
+
+/* FIX POST IMAGES ON MOBILE - CONTROL CONTAINER */
+
+
+/* ======================================== */
+
+
+/* First, ensure the post card container doesn't overflow */
+
+.post-card {
+    overflow: hidden !important;
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+
+/* Control the post media container */
+
+.post-media {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+
+/* On mobile screens, make images fit within screen */
+
+@media (max-width: 768px) {
+    .post-card {
+        border-radius: 12px !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+    .post-card>div:not(.post-media) {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+    .post-media {
+        width: 100vw !important;
+        max-width: 100vw !important;
+        margin-left: -1rem !important;
+        margin-right: -1rem !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+    .post-media img,
+    .post-media video {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        max-height: 70vh !important;
+        object-fit: contain !important;
+        border-radius: 0 !important;
+    }
+}
+
+
+/* For very small screens (phones) */
+
+@media (max-width: 480px) {
+    .post-media {
+        margin-left: -0.5rem !important;
+        margin-right: -0.7rem !important;
+    }
+    .post-media img,
+    .post-media video {
+        max-height: 60vh !important;
+    }
+}
+
+
+/* Tablet screens */
+
+@media (min-width: 769px) and (max-width: 1024px) {
+    .post-media img,
+    .post-media video {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        max-height: 80vh !important;
+        object-fit: contain !important;
+    }
+}
+
+
+/* Ensure no horizontal scrolling on mobile */
+
+body {
+    overflow-x: hidden !important;
+}
+
+
+/* Fix the main content container */
+
+.max-w-2xl {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+}
+
+@media (min-width: 768px) {
+    .max-w-2xl {
+        max-width: 42rem !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .ad-modal-content {
+        transform: scale(0.92);
+    }
+    #floatingAd button {
+        width: 50px;
+        height: 50px;
+    }
+    #floatingAdContent {
+        width: 230px !important;
+    }
+    .my_logo {
+        display: none;
+    }
+    .searching {
+        width: 13rem;
+        height: 2rem;
+    }
+    .results {
+        font-size: 0.6rem;
+    }
+    .searching_result {
+        height: 10rem;
+    }
+    .search_input {
+        font-size: 0.6rem;
+    }
+}
+
+
+/* Infinite scroll animations */
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.post-card {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+
+/* Smooth loading spinner */
+
+#loading-spinner .animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+/* Scroll indicator animation */
+
+#scroll-load-indicator {
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+/* Back to top button */
+
+#back-to-top {
+    transition: all 0.3s ease;
+}
+
+#back-to-top:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.read-receipt {
+    background: #1877f2 !important;
+}
+
+.tick i {
+    font-size: 0.8rem;
+}
+
+
+/* ======================================== */
+
+
+/* ULTRA-COOL AD SYSTEM STYLES */
+
+
+/* ======================================== */
+
+
+/* Modal Ad Animations */
+
+.ad-modal-content {
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+
+/* Floating Widget Animations */
+
+#floatingAd {
+    transform: translateY(10px);
+    opacity: 0;
+    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+#floatingAdContent {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+
+/* Native Ad Styling */
+
+#nativeAd {
+    border-left: 4px solid #8b5cf6;
+    background: linear-gradient(135deg, #ffffff 0%, #fafafe 100%);
+}
+
+
+/* Hover Effects */
+
+.ad-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+
+/* Loading Animation for Ad Images */
+
+.ad-image-loading {
+    background: linear-gradient( 90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+
+/* Pulse Animation for Floating Widget */
+
+@keyframes gentle-pulse {
+    0%,
+    100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.floating-ad-pulse {
+    animation: gentle-pulse 2s ease-in-out infinite;
+}
+
+
+/* Backdrop Blur for Modern Look */
+
+.ad-backdrop {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+
+/* Gradient Borders */
+
+.gradient-border {
+    position: relative;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 2px;
+    border-radius: 16px;
+}
+
+.gradient-border>div {
+    background: white;
+    border-radius: 14px;
+}
+
+
+/* Backdrop Blur for Modern Look */
+
+.ad-backdrop {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+
+/* Gradient Borders */
+
+.gradient-border {
+    position: relative;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 2px;
+    border-radius: 16px;
+}
+
+.gradient-border>div {
+    background: white;
+    border-radius: 14px;
+}
+
+
+/* Backdrop Blur for Modern Look */
+
+.ad-backdrop {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+
+/* Gradient Borders */
+
+.gradient-border {
+    position: relative;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 2px;
+    border-radius: 16px;
+}
+
+.gradient-border>div {
+    background: white;
+    border-radius: 14px;
+}
+
+
+/* Backdrop Blur for Modern Look */
+
+.ad-backdrop {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+
+/* Gradient Borders */
+
+.gradient-border {
+    position: relative;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 2px;
+    border-radius: 16px;
+}
+
+.gradient-border>div {
+    background: white;
+    border-radius: 14px;
+}
+
+.gradient-border>div {
+    background: white;
+    border-radius: 14px;
+}
+
+
+/* Progress bar animations */
+
+@keyframes pulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -200px 0;
+    }
+    100% {
+        background-position: 200px 0;
+    }
+}
+
+#uploadProgressBar {
+    position: relative;
+    overflow: hidden;
+}
+
+#uploadProgressBar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.3) 50%, rgba(255, 255, 255, 0) 100%);
+    background-size: 200px 100%;
+    animation: shimmer 2s infinite;
+}
+
+
+/* Upload status animations */
+
+#uploadStatus {
+    transition: all 0.3s ease;
+}
+
+#uploadSpeed {
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+}
+
+
+/* Upload container animation */
+
+#uploadProgressContainer {
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+/* Cancel button animation */
+
+#cancelUploadBtn:hover {
+    transform: scale(1.05);
+    transition: transform 0.2s ease;
+}
+
+#cancelUploadBtn:active {
+    transform: scale(0.95);
+}
+
+
+/* Messenger Styles */
+
+#messengerPopup {
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+}
+
+#chatMessagesWrapper {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+#chatMessagesWrapper::-webkit-scrollbar {
+    width: 6px;
+}
+
+#chatMessagesWrapper::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 3px;
+}
+
+#chatMessagesWrapper::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+#chatMessagesWrapper::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+.message-content {
+    word-break: break-word;
+    position: relative;
+}
+
+.message-mine .message-content {
+    margin-left: auto;
+    background: linear-gradient(135deg, #5a4500, #b88900) !important;
+    color: white;
+}
+
+.message-theirs .message-content {
+    margin-right: auto;
+    background: #f3f4f6 !important;
+    color: #1f2937;
+}
+
+.friend-item {
+    transition: all 0.2s ease;
+}
+
+.friend-item:hover {
+    background: #f9fafb;
+    transform: translateX(2px);
+}
+
+#typingIndicator {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+
+/* Messenger Styles */
+
+#messengerPopup {
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    border: 1px solid #e5e7eb;
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#chatMessagesWrapper {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+#chatMessagesWrapper::-webkit-scrollbar {
+    width: 6px;
+}
+
+#chatMessagesWrapper::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 3px;
+}
+
+#chatMessagesWrapper::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+#chatMessagesWrapper::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+.message-mine .bg-blue-100 {
+    background: linear-gradient(135deg, #5a4500, #b88900) !important;
+    color: white;
+}
+
+.message-theirs .bg-gray-100 {
+    background: #f3f4f6 !important;
+    color: #1f2937;
+}
+
+.friend-item {
+    transition: all 0.2s ease;
+}
+
+.friend-item:hover {
+    background: #f9fafb;
+    transform: translateX(2px);
+}
+
+#typingIndicator {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+
+/* Message status indicators */
+
+.message-status {
+    font-size: 0.75rem;
+    opacity: 0.7;
+}
+
+
+/* Notification badge animation */
+
+@keyframes pulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.bg-red-500 {
+    animation: pulse 2s infinite;
+}
+
+
+
+/* Progress Bar Animations */
+@keyframes progressPulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+#uploadProgressBar {
+    animation: progressPulse 2s infinite;
+}
+
+#videoProcessingBar {
+    animation: progressPulse 1.5s infinite;
+}
+
+/* File Preview Styles */
+.file-preview {
+    transition: all 0.3s ease;
+}
+
+.file-preview:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Upload Speed Animation */
+#uploadSpeedContainer i {
+    animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-2px); }
+}

@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard – Kimbela</title>
+    
+    <!-- External CSS (NO inline styles) -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Single external CSS file -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+</head>
+<body class="font-poppins bg-gray-100">
+    <!-- Simple loader -->
+    <div id="loader" class="simple-loader">
+        <div class="loader-spinner"></div>
+        <div class="loader-text">Loading your dashboard...</div>
+    </div>
+
+    <!-- NAVBAR (Simplified) -->
+    <nav class="navbar">
+        <!-- Minimal navbar content -->
+        <a href="{{ url_for('user.user_dashboard') }}">
+            <img src="{{ url_for('static', filename='assets/img/kim.png') }}" alt="Kimbela" class="logo">
+        </a>
+        
+        <!-- Simple search -->
+        <div class="search-container">
+            <input type="text" placeholder="Search..." id="globalSearch">
+        </div>
+        
+        <!-- Basic icons -->
+        <div class="nav-icons">
+            <button onclick="openMessenger()">
+                <i class="bi bi-messenger"></i>
+            </button>
+            <button onclick="toggleNotifications()">
+                <i class="bi bi-bell"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <div class="dashboard-container">
+        <!-- LEFT SIDEBAR (Mobile hidden by default) -->
+        <div class="left-sidebar">
+            <!-- Minimal sidebar items -->
+            <a href="{{ url_for('user.user_dashboard') }}" class="sidebar-item active">
+                <i class="bi bi-house-door"></i> Home
+            </a>
+            <a href="{{ url_for('user.profile', user_id=current_user.id) }}" class="sidebar-item">
+                <i class="bi bi-person"></i> Profile
+            </a>
+            <!-- Add more as needed -->
+        </div>
+
+        <!-- CENTER FEED -->
+        <div class="main-feed">
+            <!-- POST COMPOSER (Simple) -->
+            <div class="post-composer">
+                <div class="composer-header">
+                    <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
+                         alt="{{ current_user.first_name }}" class="user-avatar">
+                    <div class="composer-input" onclick="openPostModal()">
+                        What's on your mind, {{ current_user.first_name }}?
+                    </div>
+                </div>
+                <div class="composer-actions">
+                    <button onclick="openPostModal()">
+                        <i class="bi bi-image text-green-500"></i> Photo/Video
+                    </button>
+                    <button onclick="openPostModal()">
+                        <i class="bi bi-emoji-smile text-yellow-500"></i> Feeling
+                    </button>
+                </div>
+            </div>
+
+            <!-- PEOPLE YOU MAY KNOW (Only show if exists) -->
+            {% if random_three %}
+            <div class="suggestions-card">
+                <h3>People You May Know</h3>
+                <div class="suggestions-grid">
+                    {% for user in random_three %}
+                    <div class="suggestion-item">
+                        <img src="{{ user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
+                             alt="{{ user.first_name }}" class="suggestion-avatar">
+                        <div class="suggestion-info">
+                            <div class="suggestion-name">{{ user.first_name }} {{ user.last_name }}</div>
+                            <button class="btn-add-friend" onclick="addFriend({{ user.id }})">
+                                Add Friend
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- POSTS FEED -->
+            <div id="posts-feed" 
+                 data-has-more="{{ has_more|tojson }}" 
+                 data-next-cursor="{{ next_cursor }}">
+                
+                {% if initial_posts %}
+                    {% for post in initial_posts %}
+                    <div class="post-card" data-post-id="{{ post.id }}">
+                        <!-- Post content will be loaded here -->
+                        {% include '_post_item.html' %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                <!-- No posts message -->
+                <div class="empty-feed">
+                    <i class="bi bi-newspaper"></i>
+                    <h3>No posts yet</h3>
+                    <p>Be the first to share something!</p>
+                    <button onclick="openPostModal()">Create Your First Post</button>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Loading indicator -->
+            <div id="loading-spinner" class="loading-spinner hidden">
+                <div class="spinner"></div>
+                <p>Loading more posts...</p>
+            </div>
+
+            <!-- End of feed -->
+            <div id="end-of-feed" class="end-of-feed hidden">
+                <i class="bi bi-check-circle"></i>
+                <p>You've reached the end</p>
+            </div>
+        </div>
+
+        <!-- RIGHT SIDEBAR (Friends) -->
+        <div class="right-sidebar">
+            <h3>Friends</h3>
+            <div class="friends-list">
+                {% for friend in friends %}
+                <div class="friend-item" onclick="openProfileModal({{ friend.id }})">
+                    <div class="friend-avatar">
+                        <img src="{{ friend.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
+                             alt="{{ friend.first_name }}">
+                        {% if friend.is_online %}
+                        <span class="online-dot"></span>
+                        {% endif %}
+                    </div>
+                    <div class="friend-info">
+                        <div class="friend-name">{{ friend.first_name }} {{ friend.last_name }}</div>
+                        <div class="friend-status">
+                            {% if friend.is_online %}Online{% else %}Offline{% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                
+                {% if friends|length == 0 %}
+                <div class="no-friends">
+                    <i class="bi bi-people"></i>
+                    <p>No friends yet</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALS (Load only when needed) -->
+    <div id="postModal" class="modal hidden">
+        <!-- Simple post modal -->
+    </div>
+
+    <!-- External JavaScript -->
+    <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+    
+    <!-- Minimal JavaScript -->
+    <script>
+        // Simple loader hide
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                document.getElementById('loader').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('loader').style.display = 'none';
+                }, 300);
+            }, 800);
+        });
+
+        // Infinite scroll
+        let isLoading = false;
+        let hasMore = {{ has_more|tojson }};
+        let nextCursor = {{ next_cursor|tojson }};
+        
+        window.addEventListener('scroll', debounce(() => {
+            if (isLoading || !hasMore) return;
+            
+            const scrollBottom = window.innerHeight + window.scrollY;
+            const documentHeight = document.documentElement.scrollHeight;
+            
+            if (scrollBottom >= documentHeight - 500) {
+                loadMorePosts();
+            }
+        }, 300));
+        
+        async function loadMorePosts() {
+            if (isLoading || !hasMore || !nextCursor) return;
+            
+            isLoading = true;
+            document.getElementById('loading-spinner').classList.remove('hidden');
+            
+            try {
+                const response = await fetch(`/user_dashboard?cursor=${nextCursor}&limit=5`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const postsFeed = document.getElementById('posts-feed');
+                    postsFeed.insertAdjacentHTML('beforeend', data.posts_html);
+                    hasMore = data.has_more;
+                    nextCursor = data.next_cursor;
+                    
+                    if (!hasMore) {
+                        document.getElementById('end-of-feed').classList.remove('hidden');
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading posts:', error);
+            } finally {
+                isLoading = false;
+                document.getElementById('loading-spinner').classList.add('hidden');
+            }
+        }
+        
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Simple post like function
+        async function likePost(postId, button) {
+            try {
+                const response = await fetch(`/like_post/${postId}`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                
+                if (data.liked) {
+                    button.innerHTML = `<i class="bi bi-hand-thumbs-up-fill"></i> ${data.likes}`;
+                    button.classList.add('text-blue-600');
+                } else {
+                    button.innerHTML = `<i class="bi bi-hand-thumbs-up"></i> ${data.likes}`;
+                    button.classList.remove('text-blue-600');
+                }
+            } catch (error) {
+                console.error('Error liking post:', error);
+            }
+        }
+    </script>
+</body>
+</html>

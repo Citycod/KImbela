@@ -41,11 +41,11 @@ from werkzeug.utils import secure_filename
 
 import cloudinary.uploader
 import cloudinary.utils
-from scheduler import (
-    manual_trigger_matchmaking_expiry_check,
-    manual_trigger_expired_matchmaking_check,
-)
-
+# from scheduler import (
+#     manual_trigger_matchmaking_expiry_check,
+#     manual_trigger_expired_matchmaking_check,
+# )
+from extensions import db, bcrypt, mail, socketio 
 
 from flask import (
     Blueprint,
@@ -93,6 +93,16 @@ from flask import jsonify, request
 from random import sample
 from datetime import datetime
 from payments.payment_service import PaymentService
+from flask_caching import Cache
+
+
+cache = Cache()
+
+
+
+
+
+
 
 load_dotenv()
 
@@ -214,99 +224,112 @@ def create_sample_packages():
     
     
     
-    
+from sqlalchemy import select, func, exists, and_
+from sqlalchemy.orm import joinedload, contains_eager
+from flask_caching import Cache
+
+from werkzeug.exceptions import RequestEntityTooLarge
+
+from werkzeug.exceptions import RequestEntityTooLarge
+
 @user.route("/user_dashboard", methods=["GET", "POST"])
 @login_required
 def user_dashboard():
     # ===== POST REQUEST =====
     if request.method == "POST":
-        post_content = request.form.get("post_content")
-        media_file = request.files.get("media")
+        # Check if it's an AJAX request for progress tracking
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' and request.headers.get('X-File-Upload') == 'true':
+            return handle_ajax_post_upload()
+        
+        # Regular form submission
+        try:
+            post_content = request.form.get("post_content", "").strip()
+            media_file = request.files.get("media")
 
-        image_url = None
-        video_url = None
+            image_url = None
+            video_url = None
 
-        if post_content or (media_file and media_file.filename != ""):
-            if media_file and allowed_file(media_file.filename):
+            if post_content or (media_file and media_file.filename != ""):
+                if media_file and allowed_file(media_file.filename):
+                    # Check file size before uploading (additional safety check)
+                    media_file.seek(0, 2)  # Seek to end
+                    file_size = media_file.tell()
+                    media_file.seek(0)  # Reset to beginning
+                    
+                    MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB
+                    
+                    if file_size > MAX_FILE_SIZE:
+                        flash(f"File is too large! Maximum size is {MAX_FILE_SIZE//(1024*1024)}MB", "danger")
+                        return redirect(url_for("user.user_dashboard"))
+                    
+                    try:
+                        resource_type = "auto"
+                        if media_file.content_type.startswith("video"):
+                            resource_type = "video"
+
+                        result = cloudinary.uploader.upload(
+                            media_file,
+                            folder="kimbela/posts",
+                            resource_type=resource_type,
+                            transformation=[
+                                {"width": 800, "crop": "limit"},
+                                {"quality": "auto", "fetch_format": "auto"},
+                            ],
+                        )
+
+                        if media_file.content_type.startswith("video"):
+                            video_url = result["secure_url"]
+                        else:
+                            image_url = result["secure_url"]
+
+                    except Exception as e:
+                        print(f"Media upload error: {e}")
+                        flash("Failed to upload media. The file might be corrupted or too large.", "danger")
+
+                # Create new post
+                new_post = Post(
+                    content=post_content or "",
+                    image=image_url,
+                    video=video_url,
+                    author_id=current_user.id,
+                    created_at=datetime.utcnow(),
+                )
+                db.session.add(new_post)
+                db.session.commit()
+                flash("Post created successfully!", "success")
+                
+                # Clear cache after new post
                 try:
-                    resource_type = "auto"
-                    if media_file.content_type.startswith("video"):
-                        resource_type = "video"
-
-                    result = cloudinary.uploader.upload(
-                        media_file,
-                        folder="kimbela/posts",
-                        resource_type=resource_type,
-                        transformation=[
-                            {"width": 800, "crop": "limit"},
-                            {"quality": "auto", "fetch_format": "auto"},
-                        ],
-                    )
-
-                    if media_file.content_type.startswith("video"):
-                        video_url = result["secure_url"]
-                    else:
-                        image_url = result["secure_url"]
-
+                    from extensions import cache
+                    cache.delete(f"user_dashboard_{current_user.id}")
                 except Exception as e:
-                    print(f"Media upload error: {e}")
-                    flash("Failed to upload media.", "danger")
+                    print(f"Cache clear error: {e}")
 
-            # Create new post
-            new_post = Post(
-                content=post_content or "",
-                image=image_url,
-                video=video_url,
-                author_id=current_user.id,
-                created_at=datetime.utcnow(),
-            )
-            db.session.add(new_post)
-            db.session.commit()
-            flash("Post created!", "success")
-
-        return redirect(url_for("user.user_dashboard"))
-
+            return redirect(url_for("user.user_dashboard"))
+            
+        except RequestEntityTooLarge:
+            flash("File is too large! Maximum file size is 100MB.", "danger")
+            return redirect(url_for("user.user_dashboard"))
+        except Exception as e:
+            print(f"Error creating post: {e}")
+            flash("An error occurred while creating your post. Please try again.", "danger")
+            return redirect(url_for("user.user_dashboard"))
+    
     # ===== GET REQUEST =====
-
+    user_id = current_user.id
+    
     # --- Parameters for infinite scroll ---
     cursor = request.args.get("cursor", type=int)
     limit = request.args.get("limit", 10, type=int)
-
-    # --- Blocked users IDs ---
-    blocked_ids = {user.id for user in current_user.blocked_users}
-    blocked_ids.update(user.id for user in current_user.blocked_by)
-
-    # --- POSTS QUERY ---
-    from sqlalchemy import func
     
-    posts_query = (
-        Post.query
-        .options(
-            joinedload(Post.author),
-            joinedload(Post.comments).joinedload(Comment.author)
-        )
-        .outerjoin(Post.likes)  # Join with likes
-        .group_by(Post.id)  # Group by post to avoid duplicates
-        .add_columns(func.count(Post.likes).label('likes_count'))  # Add count column
-        .filter(~Post.author_id.in_(blocked_ids))
-    )
-
-    if cursor:
-        posts_query = posts_query.filter(Post.id < cursor)
-
-    # Fetch limit+1 for has_more check
-    query_results = posts_query.order_by(Post.created_at.desc()).limit(limit + 1).all()
+    # --- GET VISIBLE POSTS USING THE NEW FUNCTION ---
+    posts_data = get_visible_posts(user_id, cursor=cursor, limit=limit + 1)  # +1 for has_more check
     
-    # Extract posts and their likes count
-    posts_with_counts = []
-    for post, likes_count in query_results:
-        post.likes_count = likes_count
-        posts_with_counts.append(post)
-    
-    has_more = len(posts_with_counts) > limit
-    posts = posts_with_counts[:limit]
+    # posts_data is already a list of Post objects, so no need to process them
+    has_more = len(posts_data) > limit
+    posts = posts_data[:limit]  # Take only limit items
     next_cursor = posts[-1].id if posts else None
-
+    
     # --- FRIENDS QUERY ---
     friend_subq = (
         db.session.query(friendship.c.friend_id)
@@ -315,8 +338,18 @@ def user_dashboard():
             db.session.query(friendship.c.user_id)
             .filter(friendship.c.friend_id == current_user.id)
         )
-    ).subquery()
-
+    )
+    
+    # Get blocked users efficiently
+    from sqlalchemy import text
+    blocked_query = text("""
+        SELECT blocked_id FROM user_blocks WHERE blocker_id = :user_id
+        UNION
+        SELECT blocker_id FROM user_blocks WHERE blocked_id = :user_id
+    """)
+    blocked_ids_result = db.session.execute(blocked_query, {'user_id': user_id})
+    blocked_ids = {row[0] for row in blocked_ids_result}
+    
     friends = (
         User.query
         .filter(User.id.in_(friend_subq))
@@ -325,18 +358,26 @@ def user_dashboard():
     )
 
     # --- SUGGESTIONS QUERY ---
-    eligible_users_q = User.query.filter(
+    # Get users who are not friends and not blocked
+    not_friends_and_not_blocked = User.query.filter(
         User.id != current_user.id,
         ~User.id.in_(friend_subq),
         ~User.id.in_(blocked_ids)
     )
 
-    eligible_count = eligible_users_q.count()
+    eligible_count = not_friends_and_not_blocked.count()
     random_three = []
     if eligible_count > 0:
+        import random
         offset = random.randint(0, max(eligible_count - 3, 0))
-        random_three = eligible_users_q.offset(offset).limit(3).all()
+        random_three = not_friends_and_not_blocked.offset(offset).limit(3).all()
 
+        # Add friend request status to each user
+        for user in random_three:
+            user.friend_request_status = current_user.get_friend_request_status(user.id)
+
+
+    
     # --- AJAX RESPONSE ---
     if request.headers.get("X-Requested-With") == "XMLHttpRequest":
         posts_html = render_template(
@@ -353,7 +394,7 @@ def user_dashboard():
                 "count": len(posts),
             }
         )
-
+    
     # --- FULL PAGE RENDER ---
     return render_template(
         "user_dashboard.html",
@@ -365,6 +406,271 @@ def user_dashboard():
         random_three=random_three,
         csrf_token=generate_csrf(),
     )
+    
+    
+def handle_ajax_post_upload():
+    """Handle AJAX post upload with progress simulation"""
+    try:
+        post_content = request.form.get("post_content", "").strip()
+        media_file = request.files.get("media")
+        
+        if not post_content and not (media_file and media_file.filename):
+            return jsonify({"success": False, "error": "Post cannot be empty"})
+        
+        image_url = None
+        video_url = None
+        
+        if media_file and media_file.filename != "" and allowed_file(media_file.filename):
+            # Check file size
+            media_file.seek(0, 2)
+            file_size = media_file.tell()
+            media_file.seek(0)
+            
+            MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB
+            
+            if file_size > MAX_FILE_SIZE:
+                return jsonify({
+                    "success": False, 
+                    "error": f"File too large! Maximum size is {MAX_FILE_SIZE//(1024*1024)}MB"
+                })
+            
+            try:
+                resource_type = "auto"
+                if media_file.content_type.startswith("video"):
+                    resource_type = "video"
+                
+                # Upload to cloudinary
+                result = cloudinary.uploader.upload(
+                    media_file,
+                    folder="kimbela/posts",
+                    resource_type=resource_type,
+                    transformation=[
+                        {"width": 800, "crop": "limit"},
+                        {"quality": "auto", "fetch_format": "auto"},
+                    ],
+                )
+                
+                if media_file.content_type.startswith("video"):
+                    video_url = result["secure_url"]
+                else:
+                    image_url = result["secure_url"]
+                    
+            except Exception as e:
+                print(f"Media upload error: {e}")
+                return jsonify({"success": False, "error": "Failed to upload media."})
+        
+        # Create the post
+        new_post = Post(
+            content=post_content or "",
+            image=image_url,
+            video=video_url,
+            author_id=current_user.id,
+            created_at=datetime.utcnow(),
+        )
+        db.session.add(new_post)
+        db.session.commit()
+        
+        # Clear cache
+        try:
+            from extensions import cache
+            cache.delete(f"user_dashboard_{current_user.id}")
+        except:
+            pass
+        
+        return jsonify({
+            "success": True, 
+            "message": "Post created successfully!",
+            "post_id": new_post.id
+        })
+        
+    except Exception as e:
+        print(f"Error creating post: {e}")
+        
+        # Check if it's a request entity too large error
+        import werkzeug
+        if isinstance(e, werkzeug.exceptions.RequestEntityTooLarge):
+            return jsonify({
+                "success": False, 
+                "error": "File is too large! Maximum size is 100MB."
+            })
+        
+        return jsonify({"success": False, "error": "An error occurred while creating the post."})
+    
+    
+
+def get_visible_posts(user_id, cursor=None, limit=10):
+    """Get posts visible to the user"""
+    from sqlalchemy import text
+    
+    query = text("""
+        SELECT p.* 
+        FROM posts p
+        WHERE p.author_id NOT IN (
+            -- Users blocked by current user
+            SELECT blocked_id 
+            FROM user_blocks 
+            WHERE blocker_id = :user_id
+            UNION
+            -- Users who blocked current user
+            SELECT blocker_id 
+            FROM user_blocks 
+            WHERE blocked_id = :user_id
+        )
+        {cursor_clause}
+        ORDER BY p.created_at DESC
+        LIMIT :limit
+    """.format(cursor_clause="AND p.id < :cursor" if cursor else ""))
+    
+    params = {'user_id': user_id, 'limit': limit}
+    if cursor:
+        params['cursor'] = cursor
+    
+    result = db.session.execute(query, params)
+    
+    # Get post IDs
+    post_ids = [row[0] for row in result.fetchall()]
+    
+    # Fetch Post objects with all necessary relationships
+    posts = []
+    if post_ids:
+        posts = Post.query.options(
+            joinedload(Post.author),
+            joinedload(Post.likes)
+        ).filter(Post.id.in_(post_ids)).order_by(Post.created_at.desc()).all()
+        
+        # Add likes count to each post
+        for post in posts:
+            post.likes_count = len(post.likes)
+    
+    return posts
+
+# Add this temporarily to see query performance
+
+# ===== OPTIMIZED HELPER FUNCTIONS =====
+
+def get_posts_with_pagination(user_id, cursor=None, limit=10):
+    """
+    Optimized function to get posts with pagination
+    """
+    # Get blocked users in a separate query
+    user = User.query.options(joinedload(User.blocked_users), 
+                              joinedload(User.blocked_by)).get(user_id)
+    
+    blocked_ids = {u.id for u in user.blocked_users}
+    blocked_ids.update(u.id for u in user.blocked_by)
+    
+    # Build posts query
+    query = Post.query.options(
+        joinedload(Post.author),
+        joinedload(Post.comments).joinedload(Comment.author)
+    ).filter(~Post.author_id.in_(list(blocked_ids)))  # Convert to list for IN clause
+    
+    if cursor:
+        query = query.filter(Post.id < cursor)
+    
+    # Get posts and count likes efficiently
+    posts = query.order_by(Post.created_at.desc()).limit(limit + 1).all()
+    
+    # Prefetch likes count in batch
+    if posts:
+        post_ids = [p.id for p in posts]
+        
+        # Single query to get all likes counts
+        from sqlalchemy import select, func
+        likes_query = select(Like.post_id, func.count(Like.id).label('likes_count'))\
+            .where(Like.post_id.in_(post_ids))\
+            .group_by(Like.post_id)
+        
+        likes_counts = {row[0]: row[1] for row in db.session.execute(likes_query).fetchall()}
+        
+        # Attach likes count to each post
+        for post in posts:
+            post.likes_count = likes_counts.get(post.id, 0)
+    
+    # Check if there are more posts
+    has_more = len(posts) > limit
+    posts = posts[:limit]
+    next_cursor = posts[-1].id if posts else None
+    
+    return posts, next_cursor, has_more
+
+
+def get_user_friends(user_id):
+    """
+    Optimized function to get user's friends without the warning
+    """
+    # Get blocked users
+    user = User.query.get(user_id)
+    blocked_ids = {u.id for u in user.blocked_users}
+    blocked_ids.update(u.id for u in user.blocked_by)
+    
+    # Fix the SQLAlchemy warning by using explicit select
+    from sqlalchemy import select
+    
+    # Create explicit subqueries instead of using .subquery() directly
+    friends_as_user = select(friendship.c.friend_id)\
+        .where(friendship.c.user_id == user_id)
+    
+    friends_as_friend = select(friendship.c.user_id)\
+        .where(friendship.c.friend_id == user_id)
+    
+    # Combine using union_all with scalar_subquery
+    friend_ids_query = friends_as_user.union_all(friends_as_friend).scalar_subquery()
+    
+    # Main query
+    friends = User.query\
+        .filter(User.id.in_(friend_ids_query))\
+        .filter(~User.id.in_(list(blocked_ids)))\
+        .all()
+    
+    return friends
+
+
+def get_friend_suggestions(user_id):
+    """
+    Optimized function to get friend suggestions
+    """
+    # Get blocked users
+    user = User.query.get(user_id)
+    blocked_ids = {u.id for u in user.blocked_users}
+    blocked_ids.update(u.id for u in user.blocked_by)
+    
+    # Get friend IDs using explicit select
+    from sqlalchemy import select
+    
+    friends_as_user = select(friendship.c.friend_id)\
+        .where(friendship.c.user_id == user_id)
+    
+    friends_as_friend = select(friendship.c.user_id)\
+        .where(friendship.c.friend_id == user_id)
+    
+    friend_ids_query = friends_as_user.union_all(friends_as_friend).scalar_subquery()
+    
+    # Get suggestions (not friends, not blocked, not self)
+    eligible_users = User.query\
+        .filter(User.id != user_id)\
+        .filter(~User.id.in_(friend_ids_query))\
+        .filter(~User.id.in_(list(blocked_ids)))
+    
+    # Get count and random suggestions efficiently
+    count = eligible_users.count()
+    
+    if count <= 3:
+        return eligible_users.all()
+    
+    # Get 3 random users using OFFSET method (more efficient than ORDER BY RANDOM())
+    offset = random.randint(0, count - 3)
+    return eligible_users.offset(offset).limit(3).all()
+
+
+# ===== CACHE CLEARING ON POST CREATION =====
+
+@user.route("/clear_dashboard_cache", methods=["POST"])
+@login_required
+def clear_dashboard_cache():
+    """Clear dashboard cache when user creates a new post"""
+    cache.delete(f"user_dashboard_{current_user.id}")
+    return jsonify({"success": True})
     
     
     
@@ -706,42 +1012,125 @@ def create_notification(user_id, actor_id, type_, message, entity_id=None):
 
 
 # In your add_friend route
+# In your user.py, update the add_friend route:
+
 @user.route("/add_friend/<int:user_id>", methods=["POST"])
 @login_required
 def add_friend(user_id):
-    if user_id == current_user.id:
-        return jsonify(error="Can't add yourself"), 400
+    """Add a friend"""
+    try:
+        target_user = User.query.get(user_id)
 
-    # Prevent duplicate DB rows
-    existing = FriendRequest.query.filter_by(
-        sender_id=current_user.id, receiver_id=user_id
-    ).first()
-    if existing:
-        return jsonify(error="Request already sent"), 400
+        if not target_user:
+            return jsonify({"success": False, "error": "User not found"}), 404
 
-    req = FriendRequest(sender_id=current_user.id, receiver_id=user_id)
-    # **FLAG** so the signal knows we already handled it
-    req._skip_notification = True
-    db.session.add(req)
+        if target_user.id == current_user.id:
+            return jsonify({"success": False, "error": "You cannot add yourself as a friend"})
 
-    # ---- CREATE NOTIFICATION MANUALLY (only once) ----
-    create_notification(
-        actor_id=current_user.id,
-        user_id=user_id,
-        type_="friend_request",
-        message=f"{current_user.full_name} sent you a friend request",
-        entity_id=req.id,
-    )
-    db.session.commit()
-    return jsonify(success=True)
+        if current_user.is_friend_with(target_user):
+            return jsonify({"success": False, "error": "Already friends"})
+
+        existing_request = FriendRequest.query.filter(
+            ((FriendRequest.sender_id == current_user.id) &
+             (FriendRequest.receiver_id == target_user.id)) |
+            ((FriendRequest.sender_id == target_user.id) &
+             (FriendRequest.receiver_id == current_user.id))
+        ).first()
+
+        if existing_request:
+            return jsonify({"success": False, "error": "Friend request already sent"})
+
+        # Create friend request
+        friend_request = FriendRequest(
+            sender_id=current_user.id,
+            receiver_id=target_user.id,
+            status='pending',
+            created_at=datetime.utcnow()
+        )
+
+        db.session.add(friend_request)
+
+        # IMPORTANT: Commit FIRST to get the friend_request.id
+        db.session.commit()
+
+        # NOW create notification
+        notification = Notification(
+            user_id=target_user.id,
+            actor_id=current_user.id,
+            type="friend_request",
+            message=f"{current_user.full_name} sent you a friend request",
+            entity_id=friend_request.id,  # Now this has a value
+            created_at=datetime.utcnow(),
+            is_read=False
+        )
+
+        db.session.add(notification)
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "Friend request sent successfully"
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error adding friend: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @user.route("/cancel_friend_request/<int:user_id>", methods=["POST"])
 @login_required
 def cancel_friend_request(user_id):
-    user = User.query.get_or_404(user_id)
-    # You'll need to implement this method in your User model
-    return jsonify(success=True)
+    """Cancel a pending friend request"""
+    try:
+        target_user = User.query.get(user_id)
+
+        if not target_user:
+            return jsonify({"success": False, "error": "User not found"}), 404
+
+        # Find the pending friend request
+        friend_request = FriendRequest.query.filter(
+            (FriendRequest.sender_id == current_user.id) &
+            (FriendRequest.receiver_id == target_user.id) &
+            (FriendRequest.status == 'pending')
+        ).first()
+
+        if not friend_request:
+            return jsonify({"success": False, "error": "No pending friend request found"})
+
+        # Delete the friend request
+        db.session.delete(friend_request)
+
+        # Also delete the notification if it exists
+        notification = Notification.query.filter(
+            Notification.actor_id == current_user.id,
+            Notification.user_id == target_user.id,
+            Notification.type == 'friend_request',
+            Notification.entity_id == friend_request.id
+        ).first()
+
+        if notification:
+            db.session.delete(notification)
+
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "Friend request cancelled"
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error cancelling friend request: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+
+
 
 
 @user.route("/get_user_profile/<int:user_id>")
@@ -773,8 +1162,38 @@ def get_user_profile(user_id):
 @user.route("/notifications")
 @login_required
 def get_notifications():
-    notifications = current_user.recent_notifications
-    return jsonify([notification.to_dict() for notification in notifications])
+    # get 5 notifications
+    notifications = (
+        Notification.query.filter_by(user_id=current_user.id)
+        .order_by(Notification.created_at.desc())
+        .limit(10)
+        .all()
+    )
+    
+    result = []
+    for n in notifications:
+        notification_data = {
+            "id": n.id,
+            "type": n.type,
+            "message": n.message,
+            "is_read": n.is_read,
+            "created_at": n.created_at.isoformat(),
+            "entity_id": n.entity_id  # Add this for linking to posts/users
+        }
+        
+        # Add actor information if it exists
+        if n.actor_id:
+            actor = User.query.get(n.actor_id)
+            if actor:
+                notification_data["actor"] = {
+                    "id": actor.id,
+                    "name": f"{actor.first_name} {actor.last_name}",
+                    "avatar": actor.profile_pic or url_for('static', filename='assets/img/default-avatar.png')
+                }
+        
+        result.append(notification_data)
+    
+    return jsonify(result)
 
 
 @user.route("/notifications/read", methods=["POST"])
@@ -798,11 +1217,272 @@ def mark_notification_read(notification_id):
     return jsonify(success=True)
 
 
+
+
+
+from flask_caching import Cache
+from datetime import datetime, timedelta
+from flask import current_app
+from sqlalchemy import text
+
+# Initialize cache (if not already done in extensions.py)
+cache = Cache()
+
+
 @user.route("/notifications/count")
 @login_required
 def get_unread_count():
-    count = current_user.unread_notifications_count
-    return jsonify(count=count)
+    """Get unread notification count - OPTIMIZED"""
+    try:
+        # Use raw SQL for maximum performance
+        from sqlalchemy import text
+
+        query = text("""
+            SELECT COUNT(*) as count 
+            FROM notifications 
+            WHERE user_id = :user_id 
+            AND is_read = FALSE
+            AND created_at > NOW() - INTERVAL '30 days'
+        """)
+
+        result = db.session.execute(query, {'user_id': current_user.id})
+        count = result.fetchone()[0] or 0
+
+        return jsonify({'count': count})
+
+    except Exception as e:
+        print(f"Error in get_unread_count: {e}")
+        return jsonify({'count': 0})
+        
+        
+        
+@user.route("/debug/notifications")
+@login_required
+def debug_notifications():
+    """Debug notifications to see what's wrong"""
+    from sqlalchemy import text
+    
+    user_id = current_user.id
+    
+    # Check database structure
+    query = text("""
+        SELECT column_name, data_type 
+        FROM information_schema.columns 
+        WHERE table_name = 'notifications'
+    """)
+    
+    columns = db.session.execute(query).fetchall()
+    
+    # Check actual notifications
+    notifications = Notification.query.filter_by(user_id=user_id).order_by(Notification.created_at.desc()).limit(10).all()
+    
+    # Check if any are unread
+    unread = Notification.query.filter_by(user_id=user_id, is_read=False).count()
+    
+    return jsonify({
+        'user_id': user_id,
+        'notification_columns': [dict(c) for c in columns],
+        'total_notifications': Notification.query.filter_by(user_id=user_id).count(),
+        'unread_notifications': unread,
+        'recent_notifications': [
+            {
+                'id': n.id,
+                'type': n.type,
+                'message': n.message,
+                'is_read': n.is_read,
+                'created_at': n.created_at.isoformat(),
+                'actor_id': n.actor_id
+            } for n in notifications
+        ],
+        'has_is_read_column': any(c[0] == 'is_read' for c in columns),
+        'has_read_column': any(c[0] == 'read' for c in columns)
+    })
+    
+    
+@user.route("/debug/posts")
+@login_required
+def debug_posts():
+    """Debug posts to see why they're not appearing"""
+    
+    # Check your Post model structure
+    from sqlalchemy import text
+    
+    query = text("""
+        SELECT column_name, data_type 
+        FROM information_schema.columns 
+        WHERE table_name = 'posts'
+        ORDER BY ordinal_position
+    """)
+    
+    columns = db.session.execute(query).fetchall()
+    
+    # Check recent posts
+    recent_posts = Post.query.order_by(Post.created_at.desc()).limit(5).all()
+    
+    # Check YOUR recent posts
+    my_posts = Post.query.filter_by(author_id=current_user.id).order_by(Post.created_at.desc()).limit(5).all()
+    
+    # Check blocked users
+    blocked_ids = [u.id for u in current_user.blocked_users]
+    blocker_ids = [u.id for u in current_user.blocked_by]
+    
+    return jsonify({
+        'post_columns': [dict(c) for c in columns],
+        'my_recent_posts': [
+            {
+                'id': p.id,
+                'content': p.content[:50] + '...' if p.content and len(p.content) > 50 else p.content,
+                'author_id': p.author_id,
+                'created_at': p.created_at.isoformat(),
+                'has_image': bool(p.image),
+                'has_video': bool(p.video)
+            } for p in my_posts
+        ],
+        'recent_global_posts': [
+            {
+                'id': p.id,
+                'content': p.content[:50] + '...' if p.content and len(p.content) > 50 else p.content,
+                'author_id': p.author_id,
+                'author_name': p.author.full_name if p.author else 'Unknown',
+                'created_at': p.created_at.isoformat()
+            } for p in recent_posts
+        ],
+        'blocked_users': blocked_ids,
+        'blocked_by': blocker_ids,
+        'post_count': Post.query.count(),
+        'my_post_count': Post.query.filter_by(author_id=current_user.id).count()
+    })
+
+
+def compute_notification_count(user_id):
+    """
+    Efficiently compute unread notification count
+    """
+    from models import Notification  # Import here to avoid circular imports
+    
+    # Use direct SQL count for maximum performance
+    count = db.session.query(db.func.count(Notification.id))\
+        .filter(
+            Notification.user_id == user_id,
+            Notification.is_read == False,
+            # Add time filter if you want to limit to recent notifications
+            # Notification.created_at >= datetime.utcnow() - timedelta(days=30)
+        )\
+        .scalar()
+    
+    return count or 0
+
+
+# ===== REAL-TIME UPDATES WITH SOCKET.IO =====
+@user.route("/notifications")
+@login_required
+def notifications():
+    """
+    Get actual notifications (not just count) with pagination
+    """
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 20, type=int)
+    
+    notifications = Notification.query\
+        .filter_by(user_id=current_user.id)\
+        .order_by(Notification.created_at.desc())\
+        .paginate(page=page, per_page=per_page, error_out=False)
+    
+    # Mark as read when viewed (optional)
+    if page == 1:  # Only mark as read when viewing first page
+        unread_ids = [n.id for n in notifications.items if not n.read]
+        if unread_ids:
+            Notification.query.filter(Notification.id.in_(unread_ids))\
+                .update({"read": True}, synchronize_session=False)
+            db.session.commit()
+            
+            # Clear the cached count
+            cache.delete(f"notification_count_{current_user.id}")
+    
+    # Return HTML or JSON based on request
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return jsonify({
+            "notifications": [n.to_dict() for n in notifications.items],
+            "total": notifications.total,
+            "pages": notifications.pages,
+            "current_page": page
+        })
+    
+    return render_template("notifications.html", notifications=notifications)
+
+
+# ===== SOCKET.IO EVENT FOR REAL-TIME UPDATES =====
+@socketio.on("request_notification_count")
+def handle_notification_count_request(data):
+    """
+    Handle real-time notification count requests via WebSocket
+    """
+    if not current_user.is_authenticated:
+        return
+    
+    user_id = current_user.id
+    cache_key = f"notification_count_{user_id}"
+    
+    # Get count (from cache or fresh)
+    count = cache.get(cache_key)
+    if count is None:
+        count = compute_notification_count(user_id)
+        cache.set(cache_key, count, timeout=30)
+    
+    # Send count to the specific user
+    emit("notification_count_update", {"count": count}, room=f"user_{user_id}")
+
+
+# ===== CACHE INVALIDATION TRIGGERS =====
+def invalidate_notification_cache(user_id):
+    """
+    Call this whenever a new notification is created or marked read
+    """
+    cache_key = f"notification_count_{user_id}"
+    cache.delete(cache_key)
+    
+    # Also emit real-time update via Socket.IO
+    socketio.emit("notification_count_update", 
+                 {"count": compute_notification_count(user_id)}, 
+                 room=f"user_{user_id}")
+
+
+# ===== EXAMPLE: TRIGGER CACHE INVALIDATION =====
+# Add these to places where notifications change:
+
+# 1. When creating a new notification:
+def create_notification(user_id, message, type="info"):
+    from models import Notification
+    
+    notification = Notification(
+        user_id=user_id,
+        message=message,
+        type=type,
+        read=False,
+        created_at=datetime.utcnow()
+    )
+    db.session.add(notification)
+    db.session.commit()
+    
+    # Invalidate cache
+    invalidate_notification_cache(user_id)
+    
+    return notification
+
+# 2. When marking all notifications as read:
+@user.route("/notifications/mark_all_read", methods=["POST"])
+@login_required
+def mark_all_read():
+    updated = Notification.query\
+        .filter_by(user_id=current_user.id, read=False)\
+        .update({"read": True}, synchronize_session=False)
+    
+    if updated:
+        db.session.commit()
+        invalidate_notification_cache(current_user.id)
+        
+    return jsonify({"success": True, "marked_read": updated})
+
 
 
 @user.route("/accept_friend_request/<int:user_id>", methods=["POST"])
@@ -1088,51 +1768,101 @@ def privacy():
 def get_user_groups():
     """Get all groups for the dropdown with membership status"""
     try:
-        print(
-            f"🔍 DEBUG: Fetching ALL groups for user: {current_user.id} ({current_user.email})"
-        )
+        print(f"🔍 Fetching groups for user: {current_user.id}")
 
         # Get all active groups
-        all_groups = (
-            Group.query.filter_by(is_active=True).order_by(Group.name.asc()).all()
-        )
-        print(f"🔍 DEBUG: Found {len(all_groups)} total active groups")
+        all_groups = Group.query.filter_by(is_active=True).order_by(Group.name.asc()).all()
+        print(f"🔍 Found {len(all_groups)} active groups")
 
         groups_data = []
         for group in all_groups:
-            # Check membership using the relationship
+            # Get member count and check membership
+            member_count = group.members.count()
             is_member = group.members.filter_by(id=current_user.id).first() is not None
 
-            print(
-                f"🔍 DEBUG: Group '{group.name}' (ID: {group.id}) with {group.member_count} members. User is member: {is_member}"
-            )
+            groups_data.append({
+                "id": group.id,
+                "name": group.name,
+                "cover_pic": group.image or "https://via.placeholder.com/100x100/3B82F6/FFFFFF?text=Group",
+                "member_count": member_count,
+                "is_member": is_member,
+                "unread_count": 0
+            })
 
-            groups_data.append(
-                {
-                    "id": group.id,
-                    "name": group.name,
-                    "cover_pic": group.image
-                    or "https://via.placeholder.com/100x100/3B82F6/FFFFFF?text=Group",
-                    "member_count": group.member_count,
-                    "is_member": is_member,
-                    "unread_count": 0,
-                }
-            )
-
-        print(f"🔍 DEBUG: Returning {len(groups_data)} groups as JSON")
+        print(f"🔍 Returning {len(groups_data)} groups")
         return jsonify(groups_data)
 
     except Exception as e:
         print(f"❌ ERROR in get_user_groups: {str(e)}")
         import traceback
-
         traceback.print_exc()
-        return jsonify([])
+        return jsonify({"error": str(e)}), 500
+
+
+# ===== MESSAGING ROUTES =====
+
+@user.route("/api/friends")
+@login_required
+def get_friends_api():
+    """Get friends list for messaging"""
+    try:
+        friends = []
+        for friend in current_user.friends:
+            if current_user.can_interact_with(friend):
+                friends.append({
+                    "id": friend.id,
+                    "name": friend.full_name,
+                    "avatar": friend.profile_pic or url_for("static", filename="assets/img/default-avatar.png"),
+                    "online": friend.is_online,
+                    "unread_count": 0  # You can implement this later
+                })
+
+        return jsonify(friends)
+    except Exception as e:
+        print(f"❌ Error getting friends: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@user.route("/api/messages/<int:friend_id>")
+@login_required
+def get_messages_api(friend_id):
+    """Get messages between current user and friend"""
+    try:
+        friend = User.query.get_or_404(friend_id)
+
+        # Check if users are friends
+        if not current_user.is_friend_with(friend):
+            return jsonify({"error": "You must be friends to message"}), 403
+
+        # Get messages
+        messages = Message.query.filter(
+            ((Message.sender_id == current_user.id) & (Message.receiver_id == friend_id)) |
+            ((Message.sender_id == friend_id) & (Message.receiver_id == current_user.id))
+        ).order_by(Message.timestamp.asc()).all()
+
+        # Prepare response
+        messages_data = []
+        for msg in messages:
+            messages_data.append({
+                "id": msg.id,
+                "sender_id": msg.sender_id,
+                "receiver_id": msg.receiver_id,
+                "content": msg.content,
+                "timestamp": msg.timestamp.isoformat(),
+                "status": msg.status,
+                "sender_name": msg.sender.full_name,
+                "sender_avatar": msg.sender.profile_pic or url_for("static", filename="assets/img/default-avatar.png")
+            })
+
+        return jsonify(messages_data)
+
+    except Exception as e:
+        print(f"❌ Error getting messages: {e}")
+        return jsonify({"error": str(e)}), 500
+
 
 
 # Add these routes to your auth blueprint
-
-
 @user.route("/groups/user_groups")
 @login_required
 def user_groups():
@@ -1812,3 +2542,10 @@ def react_to_post(post_id):
         db.session.rollback()
         print(f"Reaction error: {e}")
         return jsonify({"success": False, "error": "Failed to react to post"}), 500
+    
+    
+
+import time
+start = time.time()
+# result = db.session.query(...).all()
+print(f"Query took {time.time() - start:.2f} seconds")

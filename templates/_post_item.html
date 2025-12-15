@@ -1,0 +1,52 @@
+<div class="post-header">
+    <img src="{{ post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
+         alt="{{ post.author.first_name }}" class="post-avatar">
+    <div>
+        <div class="post-author">{{ post.author.first_name }} {{ post.author.last_name }}</div>
+        <div class="post-time">{{ post.created_at.strftime('%b %d at %I:%M %p') }}</div>
+    </div>
+</div>
+
+<div class="post-content">
+    {{ post.content }}
+</div>
+
+{% if post.image %}
+<div class="post-media">
+    <img src="{{ post.image }}" 
+         alt="Post image" 
+         loading="lazy"
+         onclick="openImageModal('{{ post.image }}')">
+</div>
+{% endif %}
+
+{% if post.video %}
+<div class="post-media">
+    <video controls preload="metadata">
+        <source src="{{ post.video }}">
+    </video>
+</div>
+{% endif %}
+
+<div class="post-actions">
+    <button onclick="likePost({{ post.id }}, this)" 
+            class="like-btn {% if post.is_liked %}text-blue-600{% endif %}">
+        <i class="bi bi-hand-thumbs-up{% if post.is_liked %}-fill{% endif %}"></i>
+        <span class="like-count">{{ post.likes_count }}</span>
+    </button>
+    
+    <button onclick="showComments({{ post.id }})">
+        <i class="bi bi-chat"></i>
+        <span>Comment</span>
+    </button>
+    
+    <button onclick="sharePost({{ post.id }})">
+        <i class="bi bi-share"></i>
+        <span>Share</span>
+    </button>
+</div>
+
+<!-- Comments section (hidden initially) -->
+<div id="comments-{{ post.id }}" class="comments-section hidden">
+    <!-- Comments will be loaded here when needed -->
+</div>

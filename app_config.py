@@ -1,178 +1,373 @@
-# app_config.py - FIXED VERSION
-from flask import Flask, session, render_template, request
-from flask_wtf.csrf import CSRFProtect, generate_csrf
+# app_config.py - UPDATED (fix eventlet issues)
+from flask import Flask, g, request, flash, redirect, url_for, render_template
+from flask_login import login_required, current_user
+from flask_wtf.csrf import generate_csrf
 from dotenv import load_dotenv
 import os
-from flask_migrate import Migrate
-from extensions import db, bcrypt, login_manager, mail
-from flask_caching import Cache
-from flask_socketio import SocketIO
-from datetime import datetime, timedelta, timezone
-import humanize
+from datetime import datetime, timedelta
+from flask import jsonify
+from werkzeug.exceptions import RequestEntityTooLarge
+import time
 
-# Import blueprints
-from users.user import user as user_blueprint
-from marketplace.market import market as market_blueprint
-from authentication.authenticate import auth
-from admin.admin import admin as admin_blueprint
-from matchmaking.matchmake import match as matchmaking_blueprint
-from payments.payments import payments as payments_blueprint
-from messages.messaging import messaging as message_blueprint
-
-from models import User, Post, Comment, Like, FriendRequest, friendship
-from extensions import db, socketio
-from scheduler import init_scheduler
-from payments.payment_service import PaymentService
+# Import extensions (make sure socketio is initialized with threading)
+from extensions import db, bcrypt, login_manager, mail, csrf, cache, socketio
 
 load_dotenv()
 
-csrf = CSRFProtect()
-cache = Cache(config={"CACHE_TYPE": "SimpleCache"})  # FIXED cache initialization
-
-
 def create_app():
     app = Flask(__name__)
-
-    # ========== BASIC CONFIG ==========
-    app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024
+    
+    @app.errorhandler(RequestEntityTooLarge)
+    def handle_file_too_large(error):
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({
+                "success": False,
+                "error": "File is too large! Maximum size is 100MB."
+            }), 413
+        else:
+            flash("File is too large! Maximum file size is 100MB.", "danger")
+            return redirect(url_for("user.user_dashboard"))
+    
+    # ========== BASIC APP CONFIG ==========
+    app.config["MAX_CONTENT_LENGTH"] = 100 * 1024 * 1024  # 100MB
     app.config["UPLOAD_FOLDER"] = "uploads"
     app.config["ALLOWED_EXTENSIONS"] = {"jpg", "jpeg", "png", "gif", "mp4", "mov"}
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
-
+    
+    # ========== SECURITY & SESSION ==========
+    app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key-12345")
+    app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=12)
+    
     # ========== CACHE CONFIG ==========
     app.config["CACHE_TYPE"] = "SimpleCache"
-    app.config["CACHE_DEFAULT_TIMEOUT"] = 180
-
-    # ========== PAYMENT CONFIG ==========
-    app.config["STRIPE_SECRET_KEY"] = os.getenv("STRIPE_SECRET_KEY")
-    app.config["STRIPE_PUBLISHABLE_KEY"] = os.getenv("STRIPE_PUBLISHABLE_KEY")
-    app.config["STRIPE_WEBHOOK_SECRET"] = os.getenv("STRIPE_WEBHOOK_SECRET")
-
-    # Flutterwave
-    app.config["FLUTTERWAVE_PUBLIC_KEY"] = os.getenv("PUBLIC_KEY")
-    app.config["FLUTTERWAVE_SECRET_KEY"] = os.getenv("SECRET_KEY")
-    app.config["FLUTTERWAVE_ENCRYPTION_KEY"] = os.getenv("ENCRYPTION_KEY")
-
+    app.config["CACHE_DEFAULT_TIMEOUT"] = 300
+    
     # ========== DATABASE CONFIG ==========
     app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("SQLALCHEMY_DATABASE_URI")
-    app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY")
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=12)
     app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
         "pool_pre_ping": True,
         "pool_recycle": 1800,
-        "pool_size": 10,
-        "max_overflow": 20,
+        "pool_size": 20,
+        "max_overflow": 40,
+        "pool_timeout": 30,
     }
-
+    
     # ========== EMAIL CONFIG ==========
-    app.config["MAIL_SERVER"] = os.getenv("MAIL_SERVER")
+    app.config["MAIL_SERVER"] = os.getenv("MAIL_SERVER", "smtp.gmail.com")
     app.config["MAIL_PORT"] = int(os.getenv("MAIL_PORT", 587))
     app.config["MAIL_USE_TLS"] = True
     app.config["MAIL_USERNAME"] = os.getenv("MAIL_USERNAME")
     app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")
     app.config["MAIL_DEFAULT_SENDER"] = os.getenv("MAIL_DEFAULT_SENDER")
-
+    
+    # ========== SOCKET.IO CONFIG ==========
+    app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY", "dev-secret-key-12345")
+    
     # ========== INITIALIZE EXTENSIONS ==========
-    # Initialize cache FIRST
+    csrf.init_app(app)
     cache.init_app(app)
-
-    # Initialize other extensions
     db.init_app(app)
     bcrypt.init_app(app)
     login_manager.init_app(app)
-    mail.init_app(app)
-    csrf.init_app(app)
-
-    migrate = Migrate(app, db)
-
-    # Initialize Socket.IO
-    socketio.init_app(app, cors_allowed_origins="*")
-
-    # ========== LOGIN MANAGER ==========
     login_manager.login_view = "auth.login"
     login_manager.login_message_category = "info"
-
+    mail.init_app(app)
+    
+    # IMPORTANT: Initialize Socket.IO with minimal config
+    # Don't pass extra parameters that cause issues
+    socketio.init_app(app)
+    
     # ========== REGISTER BLUEPRINTS ==========
-    app.register_blueprint(auth)
-    app.register_blueprint(user_blueprint)
-    app.register_blueprint(message_blueprint)
-    app.register_blueprint(admin_blueprint)
-    app.register_blueprint(payments_blueprint)
-    app.register_blueprint(matchmaking_blueprint)
-    app.register_blueprint(market_blueprint)
+    def register_blueprints():
+        """Register all blueprints"""
+        from authentication.authenticate import auth
+        from users.user import user as user_blueprint
+        from marketplace.market import market as market_blueprint
+        from admin.admin import admin as admin_blueprint
+        from matchmaking.matchmake import match as matchmaking_blueprint
+        from payments.payments import payments as payments_blueprint
+        from messages.messaging import messaging as message_blueprint
+        
+        app.register_blueprint(auth)
+        app.register_blueprint(user_blueprint)
+        app.register_blueprint(message_blueprint)
+        app.register_blueprint(admin_blueprint)
+        app.register_blueprint(payments_blueprint)
+        app.register_blueprint(matchmaking_blueprint)
+        app.register_blueprint(market_blueprint)
+    
+    register_blueprints()
+    
+    # ========== IMPORT SOCKET.IO EVENT HANDLERS ==========
+    # Use the simplified version
+    try:
+        import socketio_events
+        print("✅ Socket.IO event handlers imported successfully")
+    except Exception as e:
+        print(f"⚠️ Could not import Socket.IO handlers: {e}")
 
-    # ========== SCHEDULER ==========
-    if not app.debug or os.environ.get("WERKZEUG_RUN_MAIN") == "true":
-        with app.app_context():
-            try:
-                init_scheduler(app)
-                app.logger.info("Scheduler initialized")
-            except Exception as e:
-                app.logger.error(f"Scheduler error: {e}")
-
+    
     # ========== CONTEXT PROCESSORS ==========
     @app.context_processor
     def inject_csrf_token():
         return dict(csrf_token=generate_csrf())
-
+    
+    @app.context_processor
+    def inject_now():
+        return {"now": datetime.utcnow()}
+    
     # ========== TEMPLATE FILTERS ==========
     @app.template_filter("time_ago")
     def time_ago_filter(timestamp):
         if timestamp is None:
             return "Never"
-
+        
+        cache_key = f"time_ago_{hash(str(timestamp))}"
+        cached = cache.get(cache_key)
+        if cached:
+            return cached
+        
         now = datetime.utcnow()
         diff = now - timestamp
-
+        
         if diff.days > 365:
-            return f"{diff.days // 365}y ago"
+            result = f"{diff.days // 365}y ago"
         elif diff.days > 30:
-            return f"{diff.days // 30}mo ago"
+            result = f"{diff.days // 30}mo ago"
         elif diff.days > 0:
-            return f"{diff.days}d ago"
+            result = f"{diff.days}d ago"
         elif diff.seconds > 3600:
-            return f"{diff.seconds // 3600}h ago"
+            result = f"{diff.seconds // 3600}h ago"
         elif diff.seconds > 60:
-            return f"{diff.seconds // 60}m ago"
+            result = f"{diff.seconds // 60}m ago"
         else:
-            return "just now"
-
-    @app.template_filter("timeago")
-    def timeago(dt):
-        if dt is None:
-            return "Never"
-        return time_ago_filter(dt)
-
-    @app.template_filter("datetimeformat")
-    def datetimeformat(value):
-        if value:
-            try:
-                return datetime.fromisoformat(value).strftime("%Y-%m-%d")
-            except:
-                return "N/A"
-        return "N/A"
-
-    @app.template_filter("monthformat")
-    def monthformat(value):
-        if value:
-            try:
-                return datetime.fromisoformat(value).strftime("%b")
-            except:
-                return "N/A"
-        return "N/A"
-
-    # ========== BEFORE REQUEST ==========
+            result = "just now"
+        
+        cache.set(cache_key, result, timeout=30)
+        return result
+    
+    # ========== DATABASE SESSION CLEANUP ==========
+    @app.teardown_appcontext
+    def shutdown_session(exception=None):
+        db.session.remove()
+    
+    # ========== PERFORMANCE MONITORING ==========
+    @app.before_request
+    def before_request():
+        g.start_time = time.time()
+    
+    @app.after_request
+    def after_request(response):
+        if hasattr(g, 'start_time'):
+            diff = time.time() - g.start_time
+            if diff > 1.0:
+                app.logger.warning(
+                    f"Slow request: {request.method} {request.path} "
+                    f"took {diff:.2f} seconds"
+                )
+        return response
+    
+    # ========== UPDATE LAST SEEN ==========
     @app.before_request
     def update_last_seen():
         from flask_login import current_user
-
         if current_user.is_authenticated:
-            current_user.last_seen = datetime.utcnow()
-            db.session.commit()
-
+            if not current_user.last_seen or \
+               (datetime.utcnow() - current_user.last_seen).seconds > 300:
+                current_user.last_seen = datetime.utcnow()
+                try:
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+    
+    # ========== SIMPLE TEST ROUTE ==========
+    @app.route('/socket-test')
+    def socket_test():
+        return '''
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Socket.IO Test</title>
+            <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+        </head>
+        <body>
+            <h1>Socket.IO Test</h1>
+            <button onclick="connect()">Connect</button>
+            <button onclick="ping()">Ping</button>
+            <div id="output"></div>
+            
+            <script>
+                let socket = null;
+                const output = document.getElementById('output');
+                
+                function log(msg) {
+                    output.innerHTML += '<div>' + msg + '</div>';
+                }
+                
+                function connect() {
+                    socket = io();
+                    socket.on('connect', () => log('✅ Connected'));
+                    socket.on('disconnect', () => log('❌ Disconnected'));
+                    socket.on('connect_error', (err) => log('❌ Error: ' + err.message));
+                }
+                
+                function ping() {
+                    if (socket) {
+                        socket.emit('ping', {}, (response) => {
+                            log('🏓 Response: ' + JSON.stringify(response));
+                        });
+                    }
+                }
+            </script>
+        </body>
+        </html>
+        '''
+    
     return app
 
 
-# Create app instance for production
+# Create the app instance
 app = create_app()
+print("✅ App created successfully")
+
+
+@app.route('/test-messaging')
+def test_messaging():
+    """Test messaging functionality"""
+    if not current_user.is_authenticated:
+        return redirect(url_for('auth.login'))
+    
+    return f'''
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Messaging Test</title>
+        <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+        <style>
+            body {{ font-family: Arial, sans-serif; padding: 20px; }}
+            .log {{ background: #f5f5f5; padding: 10px; border-radius: 5px; margin: 10px 0; height: 300px; overflow-y: auto; }}
+            .success {{ color: green; }}
+            .error {{ color: red; }}
+            button {{ padding: 10px; margin: 5px; }}
+        </style>
+    </head>
+    <body>
+        <h1>Messaging System Test</h1>
+        <p>User: {current_user.full_name} (ID: {current_user.id})</p>
+        
+        <div>
+            <button onclick="connect()">Connect Socket</button>
+            <button onclick="ping()">Test Ping</button>
+            <button onclick="getFriends()">Load Friends</button>
+        </div>
+        
+        <div>
+            <input id="friendId" placeholder="Friend ID" type="number">
+            <input id="message" placeholder="Message">
+            <button onclick="sendMessage()">Send Message</button>
+        </div>
+        
+        <div id="log" class="log"></div>
+        
+        <script>
+            let socket = null;
+            const logElement = document.getElementById('log');
+            
+            function log(msg, type = 'info') {{
+                const time = new Date().toLocaleTimeString();
+                const div = document.createElement('div');
+                div.className = type;
+                div.textContent = `[${{time}}] ${{msg}}`;
+                logElement.appendChild(div);
+                logElement.scrollTop = logElement.scrollHeight;
+            }}
+            
+            function connect() {{
+                if (socket) socket.disconnect();
+                
+                socket = io({{
+                    transports: ['websocket', 'polling']
+                }});
+                
+                socket.on('connect', () => {{
+                    log('✅ Connected to Socket.IO', 'success');
+                }});
+                
+                socket.on('connected', (data) => {{
+                    log(`📨 Server: ${{JSON.stringify(data)}}`, 'success');
+                }});
+                
+                socket.on('disconnect', (reason) => {{
+                    log(`⚠️ Disconnected: ${{reason}}`);
+                }});
+                
+                socket.on('error', (data) => {{
+                    log(`❌ Error: ${{JSON.stringify(data)}}`, 'error');
+                }});
+                
+                socket.on('new_message', (data) => {{
+                    log(`📨 New message: ${{JSON.stringify(data)}}`, 'success');
+                }});
+                
+                socket.on('message_sent', (data) => {{
+                    log(`✅ Message sent: ${{JSON.stringify(data)}}`, 'success');
+                }});
+                
+                socket.on('chat_joined', (data) => {{
+                    log(`💬 Joined chat: ${{JSON.stringify(data)}}`, 'success');
+                }});
+            }}
+            
+            function ping() {{
+                if (socket && socket.connected) {{
+                    socket.emit('ping', {{test: 'data'}}, (response) => {{
+                        log(`🏓 Ping response: ${{JSON.stringify(response)}}`, 'success');
+                    }});
+                }} else {{
+                    log('⚠️ Not connected', 'error');
+                }}
+            }}
+            
+            function getFriends() {{
+                fetch('/api/messaging/friends')
+                    .then(r => r.json())
+                    .then(data => {{
+                        if (data.success) {{
+                            log(`👥 Friends loaded: ${{data.friends.length}}`, 'success');
+                            data.friends.forEach(friend => {{
+                                log(`  • ${{friend.name}} (ID: ${{friend.id}}, Online: ${{friend.online}})`);
+                            }});
+                        }} else {{
+                            log(`❌ Failed to load friends: ${{data.error}}`, 'error');
+                        }}
+                    }})
+                    .catch(e => log(`❌ Error: ${{e}}`, 'error'));
+            }}
+            
+            function sendMessage() {{
+                const friendId = document.getElementById('friendId').value;
+                const message = document.getElementById('message').value;
+                
+                if (!friendId || !message) {{
+                    log('⚠️ Please enter friend ID and message', 'error');
+                    return;
+                }}
+                
+                if (socket && socket.connected) {{
+                    socket.emit('send_message', {{
+                        friend_id: parseInt(friendId),
+                        content: message
+                    }});
+                    log(`📤 Sending message to ${{friendId}}: "${{message}}"`);
+                }} else {{
+                    log('⚠️ Not connected to Socket.IO', 'error');
+                }}
+            }}
+            
+            // Auto-connect
+            window.onload = connect;
+        </script>
+    </body>
+    </html>
+    '''

@@ -32,10 +32,10 @@ from extensions import db, bcrypt
 from werkzeug.utils import secure_filename
 import cloudinary.uploader
 import cloudinary.utils
-from scheduler import (
-    manual_trigger_matchmaking_expiry_check,
-    manual_trigger_expired_matchmaking_check,
-)
+# from scheduler import (
+#     manual_trigger_matchmaking_expiry_check,
+#     manual_trigger_expired_matchmaking_check,
+# )
 import logging, secrets, re
 from payments.payment_service import MatchmakingPaymentService
 from flask_mail import Message

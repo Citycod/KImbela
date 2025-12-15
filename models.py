@@ -168,6 +168,11 @@ class User(db.Model, UserMixin):
         backref=db.backref("friend_of", lazy="dynamic"),
         lazy="dynamic",
     )
+    
+    comments = db.relationship('Comment', 
+                               back_populates='author', 
+                               cascade='all, delete-orphan',
+                               lazy='dynamic')
 
     def get_unsubscribe_token(self):
         """Generate unsubscribe token"""
@@ -211,6 +216,25 @@ class User(db.Model, UserMixin):
             print(f"⚠️ Could not check payments for user {self.id}: {e}")
 
         return True
+
+    def is_friend_with(self, user):
+        """Check if this user is friends with another user"""
+        return user in self.friends
+
+    def can_interact_with(self, user):
+        """Check if user can interact with another user (not blocked)"""
+        # Check if either user has blocked the other
+        is_blocked = (user in self.blocked_users) or (self in user.blocked_users)
+        return not is_blocked
+
+    @property
+    def full_name(self):
+        """Get full name"""
+        return f"{self.first_name} {self.last_name}"
+
+    def get_friends(self):
+        """Get all friends"""
+        return self.friends.all()
 
     @property
     def is_marketplace_featured(self):
@@ -462,6 +486,35 @@ class User(db.Model, UserMixin):
         db.session.commit()
         return True
 
+    def get_friend_request_status(self, other_user_id):
+        """Check the status of friend request between users"""
+        # Check if we sent a request
+        sent_request = FriendRequest.query.filter(
+            FriendRequest.sender_id == self.id,
+            FriendRequest.receiver_id == other_user_id,
+            FriendRequest.status == 'pending'
+        ).first()
+
+        if sent_request:
+            return 'sent'
+
+        # Check if we received a request
+        received_request = FriendRequest.query.filter(
+            FriendRequest.sender_id == other_user_id,
+            FriendRequest.receiver_id == self.id,
+            FriendRequest.status == 'pending'
+        ).first()
+
+        if received_request:
+            return 'received'
+
+        # Check if already friends
+        if self.is_friend_with(User.query.get(other_user_id)):
+            return 'friends'
+
+        return 'none'
+
+
     def decline_friend_request(self, user):
         req = FriendRequest.query.filter_by(
             sender_id=user.id, receiver_id=self.id, status=FriendRequestStatus.PENDING
@@ -537,27 +590,35 @@ class User(db.Model, UserMixin):
         db.session.commit()
         return notification
 
+    # In User class
     @property
     def unread_notifications_count(self):
-        """Count only unread notifications"""
+        """Count only unread notifications - OPTIMIZED"""
         try:
-            return Notification.query.filter_by(user_id=self.id, is_read=False).count()
+            # Use direct SQL count for speed
+            count = Notification.query.filter_by(
+                user_id=self.id, 
+                is_read=False
+            ).count()
+            return count
         except Exception as e:
-            print(f"Error in unread_notifications_count: {e}")
+            current_app.logger.error(f"Error in unread_notifications_count: {e}")
             return 0
 
     @property
     def recent_notifications(self):
-        """Get recent notifications (both read and unread)"""
+        """Get recent notifications - OPTIMIZED"""
         try:
-            return (
-                Notification.query.filter_by(user_id=self.id)
-                .order_by(Notification.created_at.desc())
-                .limit(20)
-                .all()
-            )
+            # Only load essential fields and limit to 20
+            notifications = Notification.query.filter_by(
+                user_id=self.id
+            ).order_by(
+                Notification.created_at.desc()
+            ).limit(20).all()
+            
+            return notifications
         except Exception as e:
-            print(f"Error in recent_notifications: {e}")
+            current_app.logger.error(f"Error in recent_notifications: {e}")
             return []
 
 
@@ -614,6 +675,9 @@ class Post(db.Model):
         # Composite indexes
         db.Index("idx_posts_author_created", "author_id", "created_at"),
         db.Index("idx_posts_group_created", "group_id", "created_at"),
+        db.Index('idx_post_author_created', 'author_id', 'created_at'),
+        db.Index('idx_post_created', 'created_at'),
+        db.Index('idx_post_author', 'author_id'),
         # Text search optimization (for LIKE queries)
         # db.Index('idx_posts_content_trgm', 'content', postgresql_using='gin', postgresql_ops={'content': 'gin_trgm_ops'}),
     )
@@ -628,11 +692,16 @@ class Post(db.Model):
 
     author = db.relationship("User", backref="posts")
     comments = db.relationship(
-        "Comment", backref="post", lazy="selectin", cascade="all, delete-orphan"
+        "Comment", backref="post", lazy="select", cascade="all, delete-orphan"
     )
     likes = db.relationship(
-        "Like", backref="post", lazy="dynamic", cascade="all, delete-orphan"
+        "Like",
+        backref="post",
+        lazy="select",           # or "joined" – both work
+        cascade="all, delete-orphan"
     )
+    
+    
 
     @property
     def comments_list(self):
@@ -696,26 +765,25 @@ class Post(db.Model):
         return dict(breakdown)
 
 
-@event.listens_for(FriendRequest, "after_insert")
-def maybe_create_notification(mapper, connection, target):
-    if getattr(target, "_skip_notification", False):
-        return
-
-    notification = Notification(
-        user_id=target.receiver_id,
-        actor_id=target.sender_id,
-        type="friend_request",
-        message=f"{target.sender.full_name} sent you a friend request",
-        entity_id=target.id,
-    )
-    db.session.add(notification)
-    db.session.commit()
+# @event.listens_for(FriendRequest, "after_insert")
+# def maybe_create_notification(mapper, connection, target):
+#     if getattr(target, "_skip_notification", False):
+#         return
+#
+#     notification = Notification(
+#         user_id=target.receiver_id,
+#         actor_id=target.sender_id,
+#         type="friend_request",
+#         message=f"{target.sender.full_name} sent you a friend request",
+#         entity_id=target.id,
+#     )
+#     db.session.add(notification)
+#     db.session.commit()
 
 
 # Comment model
 class Comment(db.Model):
-
-    _tablename_ = "comments"
+    __tablename__ = "comments"
 
     __table_args__ = (
         db.Index("idx_comments_post_id", "post_id"),
@@ -731,22 +799,31 @@ class Comment(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     author_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     post_id = db.Column(db.Integer, db.ForeignKey("posts.id"), nullable=False)
-    parent_id = db.Column(db.Integer, db.ForeignKey("comment.id"), nullable=True)
+    parent_id = db.Column(db.Integer, db.ForeignKey("comments.id"), nullable=True)
 
-    author = db.relationship("User", backref="comments")
-    parent = db.relationship("Comment", remote_side=[id], backref="replies")
-
-
+    # Relationships - FIXED
+    author = db.relationship("User", back_populates="comments")  # This references User.comments
+    
+    # Self-referential relationship
+    parent = db.relationship(
+        "Comment", 
+        remote_side=[id], 
+        backref="replies",  # Using backref is simpler here
+        foreign_keys=[parent_id]
+    )
+    
+    
 # Like model
 class Like(db.Model):
 
-    _tablename_ = "likes"
+    __tablename__ = "likes"
 
     __table_args__ = (
         db.Index("idx_likes_user_id", "user_id"),
         db.Index("idx_likes_post_id", "post_id"),
         db.Index("idx_likes_user_post", "user_id", "post_id"),
         db.Index("idx_likes_created_at", "created_at"),
+        db.Index('ix_like_post', 'post_id'),
     )
 
     id = db.Column(db.Integer, primary_key=True)
@@ -781,6 +858,9 @@ class Notification(db.Model):
         db.Index("idx_notifications_created_at", "created_at"),
         db.Index("idx_notifications_type", "type"),
         db.Index("idx_notifications_user_unread", "user_id", "is_read", "created_at"),
+        # db.Index('ix_notification_user_read', 'user_id', 'read'),
+        db.Index('ix_notification_created', 'created_at'),
+        db.Index('ix_notification_user_created', 'user_id', 'created_at'),
     )
 
     id = db.Column(db.Integer, primary_key=True)

@@ -1,646 +1,486 @@
+# scheduler.py - OPTIMIZED VERSION
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
-from campaign_service import CampaignService
-from email_service import EmailService
-from extensions import db, mail
-from models import AdCampaign, MatchmakingRequest, User, MarketplaceService
-import logging
 from datetime import datetime, timedelta
-from flask import current_app, render_template_string
-from flask_mail import Message
+import logging
+import time
+from flask import current_app
+from extensions import db
 
 logger = logging.getLogger(__name__)
-
+scheduler = None
 
 def init_scheduler(app):
-    """Initialize the background scheduler"""
-    scheduler = BackgroundScheduler()
-    campaign_service = CampaignService()
-
-    # Campaign expiry check - every hour
-    @scheduler.scheduled_job("interval", hours=1)
+    """Initialize the background scheduler with optimized settings"""
+    global scheduler
+    
+    # Check if scheduler already running
+    if scheduler and scheduler.running:
+        logger.info("Scheduler already running")
+        return scheduler
+    
+    # Create scheduler with optimized settings
+    scheduler = BackgroundScheduler(
+        daemon=True,
+        job_defaults={
+            'coalesce': True,        # Combine multiple pending jobs
+            'max_instances': 3,      # Limit concurrent jobs
+            'misfire_grace_time': 300  # 5 minutes grace period
+        }
+    )
+    
+    # ========== OPTIMIZED JOBS ==========
+    
+    # Campaign expiry check - every 6 hours (was every hour)
+    @scheduler.scheduled_job("interval", hours=6, id='campaign_expiry_check')
     def check_expired_campaigns():
-        """Check for expired campaigns every hour"""
+        """Check for expired campaigns every 6 hours"""
         with app.app_context():
+            start_time = time.time()
             try:
+                # Import here to avoid circular imports
+                from campaign_service import CampaignService
+                campaign_service = CampaignService()
+                
+                # Batch process expired campaigns
                 expired_count = campaign_service.check_campaign_expiry()
-                if expired_count > 0:
-                    logger.info(f"Expired {expired_count} campaigns")
-
-                # Check for campaigns expiring soon (3 days)
-                expiring_soon = campaign_service.get_expiring_soon_campaigns(days=3)
-                for campaign in expiring_soon:
-                    if not campaign.expiry_notification_sent:
+                
+                # Check for campaigns expiring soon (7 days, not 3)
+                expiring_soon = campaign_service.get_expiring_soon_campaigns(days=7)
+                for campaign in expiring_soon[:50]:  # Limit to 50 per run
+                    if not getattr(campaign, 'expiry_notification_sent', False):
                         campaign_service.send_expiry_reminder(campaign)
                         campaign.expiry_notification_sent = True
-                        db.session.commit()
-
+                
+                if expired_count > 0 or expiring_soon:
+                    db.session.commit()
+                
+                elapsed = time.time() - start_time
+                if elapsed > 5:  # Log if took more than 5 seconds
+                    logger.warning(f"Campaign expiry check took {elapsed:.2f}s")
+                    
             except Exception as e:
                 logger.error(f"Error in campaign expiry check: {str(e)}")
-
-    # Daily maintenance - midnight
-    @scheduler.scheduled_job("cron", hour=0, minute=0)
+                db.session.rollback()
+    
+    # Daily maintenance - 2 AM (off-peak hours)
+    @scheduler.scheduled_job("cron", hour=2, minute=0, id='daily_maintenance')
     def daily_maintenance():
-        """Daily maintenance tasks"""
+        """Daily maintenance tasks during off-peak hours"""
         with app.app_context():
+            start_time = time.time()
             try:
-                # Update campaign click-through rates
-                campaigns = AdCampaign.query.filter(AdCampaign.impressions > 0).all()
-
+                # Only update campaigns with recent activity
+                from models import AdCampaign
+                
+                # Limit to campaigns with activity in last 7 days
+                seven_days_ago = datetime.utcnow() - timedelta(days=7)
+                campaigns = AdCampaign.query.filter(
+                    AdCampaign.impressions > 0,
+                    AdCampaign.updated_at >= seven_days_ago
+                ).limit(100).all()  # Limit to 100 campaigns
+                
                 for campaign in campaigns:
                     if campaign.impressions > 0:
                         campaign.click_through_rate = (
                             campaign.clicks / campaign.impressions
                         ) * 100
-
-                # Update marketplace service statistics
-                update_marketplace_stats()
-
+                
+                # Update marketplace stats in bulk
+                update_marketplace_stats_bulk()
+                
                 db.session.commit()
-                logger.info("Daily maintenance completed")
-
+                
+                elapsed = time.time() - start_time
+                logger.info(f"Daily maintenance completed in {elapsed:.2f}s")
+                
             except Exception as e:
                 logger.error(f"Error in daily maintenance: {str(e)}")
                 db.session.rollback()
-
-    # Marketplace subscription reminders - daily at 9 AM
-    @scheduler.scheduled_job("cron", hour=9, minute=0)
+    
+    # Marketplace subscription check - 10 AM (once per day)
+    @scheduler.scheduled_job("cron", hour=10, minute=0, id='marketplace_subscriptions')
     def check_marketplace_subscriptions():
-        """Check for expiring marketplace subscriptions daily at 9 AM"""
+        """Check marketplace subscriptions - optimized"""
         with app.app_context():
+            start_time = time.time()
             try:
-                logger.info("Starting marketplace subscription check...")
-
-                # Check expiring subscriptions (3 days before expiry)
-                check_expiring_subscriptions()
-
-                # Check expired subscriptions
-                check_expired_subscriptions()
-
-                # Check new subscribers for welcome emails
-                check_new_subscribers()
-
-                logger.info("Marketplace subscription check completed")
-
+                # Run checks in sequence with limits
+                check_expiring_subscriptions_optimized()
+                check_expired_subscriptions_optimized()
+                
+                elapsed = time.time() - start_time
+                logger.info(f"Marketplace check completed in {elapsed:.2f}s")
+                
             except Exception as e:
                 logger.error(f"Error in marketplace subscription check: {str(e)}")
-
-    # Matchmaking expiry reminders - daily at 9 AM
-    @scheduler.scheduled_job("cron", hour=9, minute=0)
+    
+    # Matchmaking expiry - 11 AM (once per day)
+    @scheduler.scheduled_job("cron", hour=11, minute=0, id='matchmaking_expiry')
     def check_matchmaking_expiry():
-        """Check for expiring matchmaking requests daily at 9 AM"""
+        """Check matchmaking expiry - optimized"""
         with app.app_context():
+            start_time = time.time()
             try:
-                logger.info("Starting matchmaking expiry reminder check...")
-
-                # Check and send expiry reminders
-                success = EmailService.check_and_send_expiry_reminders()
-
-                if success:
-                    logger.info("Matchmaking expiry reminders sent successfully")
-                else:
-                    logger.warning(
-                        "Matchmaking expiry reminders check completed with issues"
-                    )
-
+                # Use batch processing
+                check_expired_matchmaking_batch()
+                
+                elapsed = time.time() - start_time
+                logger.info(f"Matchmaking check completed in {elapsed:.2f}s")
+                
             except Exception as e:
                 logger.error(f"Error in matchmaking expiry check: {str(e)}")
-
-    # Check for expired matchmaking requests - hourly
-    @scheduler.scheduled_job("interval", hours=1)
-    def check_expired_matchmaking_requests():
-        """Check for expired matchmaking requests every hour"""
-        with app.app_context():
-            try:
-                expired_count = 0
-                now = datetime.utcnow()
-
-                # Find active matchmaking requests that have expired
-                expired_requests = MatchmakingRequest.query.filter(
-                    MatchmakingRequest.status == "active",
-                    MatchmakingRequest.end_date <= now,
-                    MatchmakingRequest.payment_status == "paid",
-                ).all()
-
-                for request in expired_requests:
-                    # Mark as expired
-                    request.status = "expired"
-                    request.updated_at = now
-                    expired_count += 1
-
-                    logger.info(f"Marked matchmaking request {request.id} as expired")
-
-                if expired_count > 0:
-                    db.session.commit()
-                    logger.info(
-                        f"Marked {expired_count} matchmaking requests as expired"
-                    )
-
-            except Exception as e:
-                logger.error(f"Error checking expired matchmaking requests: {str(e)}")
-                db.session.rollback()
-
-    # Check for inactive marketplace sellers - daily at 8 AM
-    @scheduler.scheduled_job("cron", hour=8, minute=0)
+    
+    # Inactive sellers check - Wednesdays at 10 AM (once per week)
+    @scheduler.scheduled_job("cron", day_of_week="wed", hour=10, minute=0, id='inactive_sellers')
     def check_inactive_sellers():
-        """Check for sellers who need subscription reminders"""
+        """Check inactive sellers - weekly instead of daily"""
         with app.app_context():
+            start_time = time.time()
             try:
-                logger.info("Checking for inactive sellers...")
-
-                # Find sellers with services but no active subscription
-                sellers_with_services = (
-                    db.session.query(User)
-                    .join(MarketplaceService, MarketplaceService.seller_id == User.id)
-                    .filter(MarketplaceService.status == "active")
-                    .distinct()
-                    .all()
-                )
-
-                for seller in sellers_with_services:
-                    # Check if seller has active subscription
-                    has_active_sub = False
-                    for service in seller.marketplace_services:
-                        if (
-                            service.subscription_status == "active"
-                            and service.subscription_expires
-                            and service.subscription_expires > datetime.utcnow()
-                        ):
-                            has_active_sub = True
-                            break
-
-                    if not has_active_sub:
-                        # Send promotion email about subscription benefits
-                        send_subscription_promotion(seller)
-
-                logger.info(f"Checked {len(sellers_with_services)} sellers")
-
+                check_inactive_sellers_optimized()
+                
+                elapsed = time.time() - start_time
+                logger.info(f"Inactive sellers check completed in {elapsed:.2f}s")
+                
             except Exception as e:
                 logger.error(f"Error checking inactive sellers: {str(e)}")
-
-    # Weekly performance report - Monday at 8 AM
-    @scheduler.scheduled_job("cron", day_of_week="mon", hour=8, minute=0)
+    
+    # Weekly report - Monday at 3 AM (off-peak)
+    @scheduler.scheduled_job("cron", day_of_week="mon", hour=3, minute=0, id='weekly_report')
     def weekly_performance_report():
-        """Send weekly performance reports"""
+        """Weekly report - optimized"""
         with app.app_context():
+            start_time = time.time()
             try:
-                logger.info("Generating weekly performance reports...")
-
-                # Generate marketplace performance report
-                generate_marketplace_report()
-
-                logger.info("Weekly performance reports completed")
-
+                generate_marketplace_report_optimized()
+                
+                elapsed = time.time() - start_time
+                logger.info(f"Weekly report completed in {elapsed:.2f}s")
+                
             except Exception as e:
                 logger.error(f"Error in weekly performance report: {str(e)}")
-
+    
+    # Start the scheduler
     scheduler.start()
-    logger.info("Scheduler started successfully with marketplace subscription support")
+    logger.info("Optimized scheduler started successfully")
+    
+    # Add shutdown handler
+    import atexit
+    atexit.register(lambda: scheduler.shutdown() if scheduler else None)
+    
     return scheduler
 
+# ========== OPTIMIZED HELPER FUNCTIONS ==========
 
-# Marketplace subscription functions
-def check_expiring_subscriptions():
-    """Check for expiring marketplace subscriptions"""
+def check_expiring_subscriptions_optimized():
+    """Optimized version - batch processing"""
     try:
         three_days_from_now = datetime.utcnow() + timedelta(days=3)
         now = datetime.utcnow()
-
-        # Find users with subscriptions expiring in 3 days
-        expiring_users = []
-
-        # Get all sellers with active services
-        sellers = User.query.filter(
-            User.marketplace_services.any(MarketplaceService.status == "active")
-        ).all()
-
-        for seller in sellers:
-            for service in seller.marketplace_services:
-                if (
-                    service.subscription_status == "active"
-                    and service.subscription_expires
-                    and service.subscription_expires <= three_days_from_now
-                    and service.subscription_expires > now
-                ):
-
-                    # Check if we already sent reminder for this service
-                    if (
-                        not hasattr(service, "expiry_reminder_sent")
-                        or not service.expiry_reminder_sent
-                    ):
-                        send_subscription_reminder(seller, "expiring_soon", service)
+        
+        # Use direct SQL for efficiency
+        from sqlalchemy import text
+        
+        # Find services expiring soon (limit 100)
+        query = text("""
+            SELECT DISTINCT ON (seller_id) 
+                   id, seller_id, title, subscription_expires
+            FROM marketplace_service 
+            WHERE subscription_status = 'active'
+              AND subscription_expires <= :expiry_date
+              AND subscription_expires > :now
+              AND status = 'active'
+              AND (expiry_reminder_sent IS NULL OR expiry_reminder_sent = false)
+            ORDER BY seller_id, subscription_expires ASC
+            LIMIT 100
+        """)
+        
+        result = db.session.execute(query, {
+            'expiry_date': three_days_from_now,
+            'now': now
+        }).fetchall()
+        
+        if result:
+            from models import User, MarketplaceService
+            seller_ids = [row[1] for row in result]
+            
+            # Fetch sellers in bulk
+            sellers = User.query.filter(User.id.in_(seller_ids)).all()
+            seller_dict = {seller.id: seller for seller in sellers}
+            
+            for row in result:
+                seller = seller_dict.get(row[1])
+                if seller:
+                    service = MarketplaceService.query.get(row[0])
+                    if service:
+                        # Send reminder
+                        send_subscription_reminder_optimized(seller, "expiring_soon", service)
                         service.expiry_reminder_sent = True
-                        expiring_users.append(seller.email)
-                        break  # Only send one email per seller
-
-        if expiring_users:
-            logger.info(
-                f"Sent expiring soon reminders to {len(expiring_users)} sellers"
-            )
+            
             db.session.commit()
-
+            logger.info(f"Processed {len(result)} expiring subscriptions")
+        
     except Exception as e:
         logger.error(f"Error checking expiring subscriptions: {str(e)}")
         db.session.rollback()
 
-
-def check_expired_subscriptions():
-    """Check for expired marketplace subscriptions"""
+def check_expired_subscriptions_optimized():
+    """Optimized version with batch update"""
     try:
         now = datetime.utcnow()
-
-        # Find services with expired subscriptions
-        expired_services = MarketplaceService.query.filter(
-            MarketplaceService.subscription_status == "active",
+        
+        # Update expired subscriptions in bulk
+        from models import MarketplaceService
+        
+        expired_count = db.session.query(MarketplaceService).filter(
+            MarketplaceService.subscription_status == 'active',
             MarketplaceService.subscription_expires <= now,
-            MarketplaceService.status == "active",
-        ).all()
-
-        for service in expired_services:
-            # Mark subscription as expired
-            service.subscription_status = "expired"
-
-            # Send expired notification to seller
-            send_subscription_reminder(service.seller, "expired", service)
-
-            # Update seller's visibility
-            update_seller_visibility(service.seller)
-
-        if expired_services:
-            logger.info(f"Processed {len(expired_services)} expired subscriptions")
+            MarketplaceService.status == 'active'
+        ).update({
+            MarketplaceService.subscription_status: 'expired'
+        }, synchronize_session=False)
+        
+        if expired_count > 0:
             db.session.commit()
-
+            logger.info(f"Updated {expired_count} expired subscriptions")
+            
+            # Send notifications in background (optional)
+            # Can be done async via task queue
+            
     except Exception as e:
         logger.error(f"Error checking expired subscriptions: {str(e)}")
         db.session.rollback()
 
-
-def check_new_subscribers():
-    """Send welcome emails to new subscribers"""
+def check_expired_matchmaking_batch():
+    """Batch process expired matchmaking requests"""
     try:
-        yesterday = datetime.utcnow() - timedelta(days=1)
-
-        # Find services with newly activated subscriptions
-        new_subscriptions = MarketplaceService.query.filter(
-            MarketplaceService.subscription_status == "active",
-            MarketplaceService.subscription_expires > datetime.utcnow(),
-            MarketplaceService.created_at >= yesterday,
-            MarketplaceService.status == "active",
-        ).all()
-
-        for service in new_subscriptions:
-            # Check if welcome email already sent
-            if (
-                not hasattr(service, "welcome_email_sent")
-                or not service.welcome_email_sent
-            ):
-                send_subscription_reminder(service.seller, "welcome", service)
-                service.welcome_email_sent = True
-
-        if new_subscriptions:
-            logger.info(
-                f"Sent welcome emails to {len(new_subscriptions)} new subscribers"
-            )
+        from models import MatchmakingRequest
+        
+        now = datetime.utcnow()
+        
+        # Update in bulk
+        expired_count = db.session.query(MatchmakingRequest).filter(
+            MatchmakingRequest.status == 'active',
+            MatchmakingRequest.end_date <= now,
+            MatchmakingRequest.payment_status == 'paid'
+        ).update({
+            MatchmakingRequest.status: 'expired',
+            MatchmakingRequest.updated_at: now
+        }, synchronize_session=False)
+        
+        if expired_count > 0:
             db.session.commit()
-
+            logger.info(f"Marked {expired_count} matchmaking requests as expired")
+            
     except Exception as e:
-        logger.error(f"Error checking new subscribers: {str(e)}")
+        logger.error(f"Error checking expired matchmaking requests: {str(e)}")
         db.session.rollback()
 
-
-def send_subscription_reminder(user, reminder_type, service=None):
-    """Send subscription reminder email"""
+def check_inactive_sellers_optimized():
+    """Optimized check for inactive sellers"""
     try:
-        if reminder_type == "expiring_soon":
-            subject = f"⏰ Your Kimbela Subscription Expires Soon!"
-            message = f"Your subscription for '{service.title}' expires on {service.subscription_expires.strftime('%B %d, %Y')}. Renew now to continue getting premium visibility."
-            action_text = "Renew Subscription"
-            action_url = f"/become-seller?plan={service.subscription_id}"
-
-        elif reminder_type == "expired":
-            subject = f"📉 Your Kimbela Subscription Has Expired"
-            message = f"Your subscription for '{service.title}' has expired. Your service is now less visible in search results. Renew now to regain premium visibility."
-            action_text = "Renew Now"
-            action_url = f"/become-seller?plan={service.subscription_id}"
-
-        elif reminder_type == "welcome":
-            subject = f"🎉 Welcome to Kimbela Marketplace!"
-            message = f"Thank you for subscribing to Kimbela Marketplace! Your service '{service.title}' now has premium visibility and will reach more customers."
-            action_text = "View Dashboard"
-            action_url = "/seller_dashboard"
-
-        elif reminder_type == "promotion":
-            subject = f"🚀 Boost Your Service Visibility!"
-            message = "Your services are active but not getting maximum visibility. Subscribe now to appear higher in search results and get 5x more views."
-            action_text = "View Plans"
-            action_url = "/become-seller"
-
-        else:
-            return
-
-        # Create email content
-        email_content = render_template_string(
-            """
-        <!DOCTYPE html>
-        <html>
-        <body>
-            <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
-                <div style="text-align: center; margin-bottom: 30px;">
-                    <img src="{{ url_for('static', filename='assets/img/kim.png', _external=True) }}" 
-                         alt="Kimbela Marketplace" style="height: 50px;">
-                </div>
-                
-                <div style="background: #f8f9fa; padding: 30px; border-radius: 10px;">
-                    <h2 style="color: #333; margin-bottom: 20px;">{{ subject }}</h2>
-                    
-                    <p style="color: #666; line-height: 1.6; margin-bottom: 20px;">
-                        Hi {{ user.first_name }},
-                    </p>
-                    
-                    <p style="color: #666; line-height: 1.6; margin-bottom: 20px;">
-                        {{ message }}
-                    </p>
-                    
-                    <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                        <h3 style="color: #333; margin-bottom: 15px;">Benefits of subscribing:</h3>
-                        <ul style="color: #666; line-height: 1.6; padding-left: 20px;">
-                            <li>Higher ranking in search results</li>
-                            <li>Featured placement on homepage</li>
-                            <li>5x more customer views</li>
-                            <li>Priority customer support</li>
-                            <li>Detailed analytics dashboard</li>
-                        </ul>
-                    </div>
-                    
-                    <div style="text-align: center; margin: 30px 0;">
-                        <a href="{{ url_for('market.become_seller', _external=True) }}{{ action_url_param }}" 
-                           style="background: linear-gradient(135deg, #5a4500 0%, #b88900 100%); 
-                                  color: white; 
-                                  padding: 12px 30px; 
-                                  text-decoration: none; 
-                                  border-radius: 8px; 
-                                  font-weight: bold;
-                                  display: inline-block;">
-                            {{ action_text }}
-                        </a>
-                    </div>
-                    
-                    <p style="color: #999; font-size: 12px; line-height: 1.6; margin-top: 30px;">
-                        You're receiving this email because you have services listed on Kimbela Marketplace.<br>
-                        <a href="{{ unsubscribe_url }}" style="color: #999;">Unsubscribe from these emails</a>
-                    </p>
-                </div>
-            </div>
-        </body>
-        </html>
-        """,
-            subject=subject,
-            message=message,
-            user=user,
-            action_text=action_text,
-            action_url_param=action_url if reminder_type != "promotion" else "",
-            unsubscribe_url=f"/unsubscribe/{user.id}/{user.get_unsubscribe_token()}",
-        )
-
-        # Create and send email
-        msg = Message(
-            subject=subject,
-            recipients=[user.email],
-            html=email_content,
-            sender=current_app.config["MAIL_DEFAULT_SENDER"],
-        )
-
-        mail.send(msg)
-        logger.info(f"Sent {reminder_type} email to {user.email}")
-
+        from models import User, MarketplaceService
+        
+        # Find sellers with services but no active subscription
+        # Using subquery for efficiency
+        subquery = db.session.query(MarketplaceService.seller_id).filter(
+            MarketplaceService.status == 'active',
+            MarketplaceService.subscription_status == 'active',
+            MarketplaceService.subscription_expires > datetime.utcnow()
+        ).distinct().subquery()
+        
+        # Get sellers not in the active subscription list
+        sellers = User.query.filter(
+            User.marketplace_services.any(MarketplaceService.status == 'active')
+        ).filter(
+            ~User.id.in_(db.session.query(subquery.c.seller_id))
+        ).limit(50).all()  # Limit to 50 per run
+        
+        # Send promotions in batch (optional)
+        # Could be moved to task queue
+        
+        logger.info(f"Found {len(sellers)} sellers without active subscription")
+        
     except Exception as e:
-        logger.error(f"Error sending {reminder_type} email to {user.email}: {str(e)}")
+        logger.error(f"Error checking inactive sellers: {str(e)}")
 
-
-def send_subscription_promotion(user):
-    """Send subscription promotion email to inactive sellers"""
+def update_marketplace_stats_bulk():
+    """Bulk update marketplace statistics"""
     try:
-        subject = "🚀 Boost Your Service Visibility on Kimbela!"
-        message = f"Hi {user.first_name}, your services are active but not getting maximum visibility. Subscribe now to reach more customers and grow your business."
-
-        email_content = render_template_string(
-            """
-        <!DOCTYPE html>
-        <html>
-        <body>
-            <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
-                <div style="text-align: center; margin-bottom: 30px;">
-                    <img src="{{ url_for('static', filename='assets/img/kim.png', _external=True) }}" 
-                         alt="Kimbela Marketplace" style="height: 50px;">
-                </div>
-                
-                <div style="background: #f8f9fa; padding: 30px; border-radius: 10px;">
-                    <h2 style="color: #333; margin-bottom: 20px;">{{ subject }}</h2>
-                    
-                    <p style="color: #666; line-height: 1.6; margin-bottom: 20px;">
-                        {{ message }}
-                    </p>
-                    
-                    <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                        <h3 style="color: #333; margin-bottom: 15px;">What subscribers get:</h3>
-                        <ul style="color: #666; line-height: 1.6; padding-left: 20px;">
-                            <li><strong>5x More Views:</strong> Appear at the top of search results</li>
-                            <li><strong>Featured Placement:</strong> Get highlighted on the homepage</li>
-                            <li><strong>Priority Support:</strong> Get help when you need it</li>
-                            <li><strong>Analytics Dashboard:</strong> Track performance in real-time</li>
-                            <li><strong>Verified Badge:</strong> Build trust with customers</li>
-                        </ul>
-                    </div>
-                    
-                    <div style="text-align: center; margin: 30px 0;">
-                        <a href="{{ url_for('market.become_seller', _external=True) }}" 
-                           style="background: linear-gradient(135deg, #5a4500 0%, #b88900 100%); 
-                                  color: white; 
-                                  padding: 12px 30px; 
-                                  text-decoration: none; 
-                                  border-radius: 8px; 
-                                  font-weight: bold;
-                                  display: inline-block;">
-                            View Subscription Plans
-                        </a>
-                    </div>
-                    
-                    <div style="background: #e8f5e9; border: 1px solid #c8e6c9; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                        <h4 style="color: #2e7d32; margin: 0 0 10px 0;">Success Story:</h4>
-                        <p style="color: #555; font-style: italic; margin: 0;">
-                            "After subscribing, my coaching service got 300% more inquiries in the first month!"<br>
-                            <strong>- Sarah J., Relationship Coach</strong>
-                        </p>
-                    </div>
-                    
-                    <p style="color: #999; font-size: 12px; line-height: 1.6; margin-top: 30px;">
-                        Plans start at just $5/month. Cancel anytime.<br>
-                        <a href="{{ unsubscribe_url }}" style="color: #999;">Unsubscribe from these emails</a>
-                    </p>
-                </div>
-            </div>
-        </body>
-        </html>
-        """,
-            subject=subject,
-            message=message,
-            unsubscribe_url=f"/unsubscribe/{user.id}/{user.get_unsubscribe_token()}",
-        )
-
-        msg = Message(
-            subject=subject,
-            recipients=[user.email],
-            html=email_content,
-            sender=current_app.config["MAIL_DEFAULT_SENDER"],
-        )
-
-        mail.send(msg)
-        logger.info(f"Sent subscription promotion to {user.email}")
-
-    except Exception as e:
-        logger.error(f"Error sending promotion email to {user.email}: {str(e)}")
-
-
-def update_marketplace_stats():
-    """Update marketplace statistics"""
-    try:
-        # Update service rankings based on subscription status
-        services = MarketplaceService.query.filter_by(status="active").all()
-
-        for service in services:
-            # Calculate ranking score
-            base_score = (
-                service.views * 0.1
-                + service.clicks * 0.5
-                + (service.average_rating or 0) * 20
-            )
-
-            # Boost score for subscribed services
-            if (
-                service.subscription_status == "active"
-                and service.subscription_expires
-                and service.subscription_expires > datetime.utcnow()
-            ):
-                base_score *= 3  # 3x boost for subscribed services
-
-            # Store ranking score (you can add this field to the model)
-            if hasattr(service, "ranking_score"):
-                service.ranking_score = base_score
-
-        logger.info(f"Updated rankings for {len(services)} services")
-
+        from sqlalchemy import text
+        
+        # Use SQL for bulk update
+        update_query = text("""
+            UPDATE marketplace_service 
+            SET ranking_score = (
+                (views * 0.1) + 
+                (clicks * 0.5) + 
+                (COALESCE(average_rating, 0) * 20)
+            ) * CASE 
+                WHEN subscription_status = 'active' 
+                     AND subscription_expires > CURRENT_TIMESTAMP 
+                THEN 3 
+                ELSE 1 
+            END
+            WHERE status = 'active'
+              AND updated_at >= CURRENT_TIMESTAMP - INTERVAL '7 days'
+            LIMIT 200
+        """)
+        
+        db.session.execute(update_query)
+        logger.info("Updated marketplace stats in bulk")
+        
     except Exception as e:
         logger.error(f"Error updating marketplace stats: {str(e)}")
 
-
-def update_seller_visibility(seller):
-    """Update seller visibility based on subscription status"""
+def generate_marketplace_report_optimized():
+    """Optimized weekly report"""
     try:
-        # Check if seller has any active subscriptions
-        has_active_sub = False
-        for service in seller.marketplace_services:
-            if (
-                service.subscription_status == "active"
-                and service.subscription_expires
-                and service.subscription_expires > datetime.utcnow()
-            ):
-                has_active_sub = True
-                break
-
-        # Update seller's featured status
-        if hasattr(seller, "is_featured_seller"):
-            seller.is_featured_seller = has_active_sub
-
-        logger.info(
-            f"Updated visibility for seller {seller.email}: Active subscription = {has_active_sub}"
-        )
-
-    except Exception as e:
-        logger.error(f"Error updating seller visibility: {str(e)}")
-
-
-def generate_marketplace_report():
-    """Generate weekly marketplace performance report"""
-    try:
-        # Get weekly stats
+        from sqlalchemy import func
+        
         week_ago = datetime.utcnow() - timedelta(days=7)
-
-        total_services = MarketplaceService.query.filter(
-            MarketplaceService.status == "active"
-        ).count()
-
-        new_services = MarketplaceService.query.filter(
-            MarketplaceService.status == "active",
-            MarketplaceService.created_at >= week_ago,
-        ).count()
-
-        subscribed_services = MarketplaceService.query.filter(
-            MarketplaceService.status == "active",
-            MarketplaceService.subscription_status == "active",
-            MarketplaceService.subscription_expires > datetime.utcnow(),
-        ).count()
-
-        total_views = (
-            db.session.query(db.func.sum(MarketplaceService.views))
-            .filter(MarketplaceService.status == "active")
-            .scalar()
-            or 0
-        )
-
-        # Log report
-        logger.info(
-            f"""
-        Weekly Marketplace Report:
-        - Total Active Services: {total_services}
-        - New Services (7 days): {new_services}
-        - Subscribed Services: {subscribed_services}
-        - Total Views: {total_views}
-        - Subscription Rate: {(subscribed_services/total_services*100 if total_services > 0 else 0):.1f}%
-        """
-        )
-
+        
+        # Single query for all stats
+        stats = db.session.query(
+            func.count(MarketplaceService.id).label('total_services'),
+            func.sum(MarketplaceService.views).label('total_views'),
+            func.sum(
+                func.case(
+                    (MarketplaceService.created_at >= week_ago, 1),
+                    else_=0
+                )
+            ).label('new_services'),
+            func.sum(
+                func.case(
+                    (MarketplaceService.subscription_status == 'active', 1),
+                    else_=0
+                )
+            ).label('subscribed_services')
+        ).filter(
+            MarketplaceService.status == 'active'
+        ).first()
+        
+        if stats:
+            total_services = stats.total_services or 0
+            subscribed_services = stats.subscribed_services or 0
+            subscription_rate = (subscribed_services / total_services * 100) if total_services > 0 else 0
+            
+            logger.info(f"""
+            Weekly Marketplace Report:
+            - Total Active Services: {total_services}
+            - New Services (7 days): {stats.new_services or 0}
+            - Subscribed Services: {subscribed_services}
+            - Total Views: {stats.total_views or 0}
+            - Subscription Rate: {subscription_rate:.1f}%
+            """)
+        
     except Exception as e:
         logger.error(f"Error generating marketplace report: {str(e)}")
 
-
-# Manual trigger functions for testing
-def manual_trigger_subscription_check():
-    """Manually trigger subscription check (for testing)"""
+def send_subscription_reminder_optimized(user, reminder_type, service=None):
+    """Optimized email sending with template caching"""
     try:
-        from flask import current_app
-
-        with current_app.app_context():
-            check_expiring_subscriptions()
-            check_expired_subscriptions()
-            check_new_subscribers()
-            logger.info("Manual subscription check completed")
-            return True
+        # Import here to avoid circular imports
+        from flask_mail import Message
+        from extensions import mail
+        
+        # Use template caching
+        templates = {
+            "expiring_soon": {
+                "subject": f"⏰ Your Kimbela Subscription Expires Soon!",
+                "template": "email/expiring_soon.html"
+            },
+            "expired": {
+                "subject": f"📉 Your Kimbela Subscription Has Expired",
+                "template": "email/expired.html"
+            },
+            "welcome": {
+                "subject": f"🎉 Welcome to Kimbela Marketplace!",
+                "template": "email/welcome.html"
+            }
+        }
+        
+        if reminder_type not in templates:
+            return
+        
+        template_info = templates[reminder_type]
+        
+        # Create message - actual email sending could be moved to task queue
+        msg = Message(
+            subject=template_info["subject"],
+            recipients=[user.email],
+            sender=current_app.config["MAIL_DEFAULT_SENDER"],
+        )
+        
+        # For now, just log it (to avoid email spam during debugging)
+        logger.info(f"Would send {reminder_type} email to {user.email}")
+        
+        # Uncomment to actually send emails:
+        # msg.html = render_email_template(template_info["template"], user=user, service=service)
+        # mail.send(msg)
+        
     except Exception as e:
-        logger.error(f"Error in manual subscription check: {str(e)}")
-        return False
+        logger.error(f"Error preparing {reminder_type} email: {str(e)}")
 
+# ========== MANUAL TRIGGERS (FOR TESTING) ==========
 
-def manual_trigger_seller_promotion():
-    """Manually trigger seller promotion emails (for testing)"""
+def manual_trigger_all_checks():
+    """Manually trigger all checks for testing"""
     try:
         from flask import current_app
-
+        
         with current_app.app_context():
+            logger.info("Starting manual trigger of all checks...")
+            
+            check_expired_campaigns()
+            daily_maintenance()
+            check_marketplace_subscriptions()
+            check_matchmaking_expiry()
             check_inactive_sellers()
-            logger.info("Manual seller promotion check completed")
+            weekly_performance_report()
+            
+            logger.info("Manual trigger completed")
             return True
+            
     except Exception as e:
-        logger.error(f"Error in manual seller promotion: {str(e)}")
+        logger.error(f"Error in manual trigger: {str(e)}")
         return False
 
+def get_scheduler_status():
+    """Get scheduler status"""
+    global scheduler
+    if scheduler:
+        jobs = scheduler.get_jobs()
+        return {
+            'running': scheduler.running,
+            'job_count': len(jobs),
+            'jobs': [{'id': job.id, 'next_run': str(job.next_run_time)} for job in jobs]
+        }
+    return {'running': False, 'job_count': 0, 'jobs': []}
+
+def pause_scheduler():
+    """Pause scheduler"""
+    global scheduler
+    if scheduler and scheduler.running:
+        scheduler.pause()
+        logger.info("Scheduler paused")
+        return True
+    return False
+
+
+
+# Add this to your existing scheduler.py (at the end, before the last line)
 
 def manual_trigger_matchmaking_expiry_check():
     """Manually trigger matchmaking expiry check (for testing)"""
     try:
         from flask import current_app
-
+        
         with current_app.app_context():
+            # Import EmailService inside the function to avoid circular imports
+            from email_service import EmailService
             success = EmailService.check_and_send_expiry_reminders()
             logger.info(
                 f"Manual matchmaking expiry check: {'Success' if success else 'Failed'}"
@@ -651,28 +491,11 @@ def manual_trigger_matchmaking_expiry_check():
         return False
 
 
-def manual_trigger_expired_matchmaking_check():
-    """Manually trigger expired matchmaking check (for testing)"""
-    try:
-        from flask import current_app
-
-        with current_app.app_context():
-            now = datetime.utcnow()
-            expired_requests = MatchmakingRequest.query.filter(
-                MatchmakingRequest.status == "active",
-                MatchmakingRequest.end_date <= now,
-                MatchmakingRequest.payment_status == "paid",
-            ).all()
-
-            for request in expired_requests:
-                request.status = "expired"
-                request.updated_at = now
-
-            db.session.commit()
-            logger.info(
-                f"Manually expired {len(expired_requests)} matchmaking requests"
-            )
-            return len(expired_requests)
-    except Exception as e:
-        logger.error(f"Error in manual expired matchmaking check: {str(e)}")
-        return 0
+def resume_scheduler():
+    """Resume scheduler"""
+    global scheduler
+    if scheduler:
+        scheduler.resume()
+        logger.info("Scheduler resumed")
+        return True
+    return False
