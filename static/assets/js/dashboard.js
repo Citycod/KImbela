@@ -1614,33 +1614,108 @@ const SearchSystem = {
 // MESSENGER SYSTEM
 // ========================================
 
+// ========================================
+// MESSENGER SYSTEM - SINGLE VERSION
+// ========================================
+
 const Messenger = {
     state: {
         socket: null,
         activeFriendId: null,
         isTyping: false,
-        typingTimeout: null
+        typingTimeout: null,
+        unreadCounts: {},
+        currentFriend: null
     },
 
+    // Initialize messenger
+    init() {
+        this.connectSocket();
+        this.setupEventListeners();
+        this.updateUnreadBadge();
+
+        // Check for Messenger popup elements
+        if (document.getElementById('messengerPopup')) {
+            console.log('✅ Messenger initialized');
+        }
+
+        return this;
+    },
+
+    // Setup all event listeners
+    setupEventListeners() {
+        // Open/close messenger
+        const openBtn = document.getElementById('openMessaging');
+        const closeBtn = document.querySelector('[onclick="closeMessenger()"]');
+        const backBtn = document.querySelector('[onclick="backToFriends()"]');
+        const sendBtn = document.getElementById('sendChatBtn');
+        const chatInput = document.getElementById('chatInput');
+
+        if (openBtn) {
+            openBtn.addEventListener('click', () => this.open());
+        }
+
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => this.close());
+        }
+
+        if (backBtn) {
+            backBtn.addEventListener('click', () => this.backToFriends());
+        }
+
+        if (sendBtn) {
+            sendBtn.addEventListener('click', () => this.sendMessage());
+        }
+
+        if (chatInput) {
+            chatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    this.sendMessage();
+                }
+            });
+
+            chatInput.addEventListener('input', (e) => {
+                this.handleTyping();
+            });
+
+            // Stop typing when input is cleared
+            chatInput.addEventListener('blur', () => {
+                this.stopTyping();
+            });
+        }
+    },
+
+    // Open messenger popup
     async open() {
         const popup = document.getElementById('messengerPopup');
-        if (!popup) return;
+        if (!popup) {
+            console.error('Messenger popup not found');
+            return;
+        }
 
         popup.classList.remove('hidden');
         await this.loadFriends();
-        this.connectSocket();
+
+        if (!this.state.socket || !this.state.socket.connected) {
+            this.connectSocket();
+        }
     },
 
+    // Close messenger popup
     close() {
         const popup = document.getElementById('messengerPopup');
         if (popup) {
             popup.classList.add('hidden');
             this.backToFriends();
+            this.stopTyping();
         }
     },
 
+    // Go back to friends list
     backToFriends() {
         this.state.activeFriendId = null;
+        this.state.currentFriend = null;
 
         const friendList = document.getElementById('friendList');
         const chatArea = document.getElementById('chatArea');
@@ -1648,15 +1723,14 @@ const Messenger = {
         if (friendList) friendList.classList.remove('hidden');
         if (chatArea) chatArea.classList.add('hidden');
 
-        const messagesContainer = document.getElementById('chatMessages');
-        if (messagesContainer) messagesContainer.innerHTML = '';
-
         const chatInput = document.getElementById('chatInput');
         if (chatInput) chatInput.value = '';
 
         this.hideTypingIndicator();
+        this.stopTyping();
     },
 
+    // Load friends list
     async loadFriends() {
         try {
             const friendsContainer = document.getElementById('friendsContainer');
@@ -1669,11 +1743,14 @@ const Messenger = {
                 `;
             }
 
-            const response = await fetch('/api/friends'); // Changed from '/friends' to '/api/friends'
+            const response = await fetch('/api/messaging/friends');
             if (!response.ok) throw new Error('Network error');
 
-            const friends = await response.json();
-            this.displayFriends(friends);
+            const data = await response.json();
+            if (data.success) {
+                this.displayFriends(data.friends);
+                this.updateUnreadBadge();
+            }
         } catch (error) {
             console.error('Error loading friends:', error);
             const friendsContainer = document.getElementById('friendsContainer');
@@ -1688,6 +1765,7 @@ const Messenger = {
         }
     },
 
+    // Display friends in the list
     displayFriends(friends) {
         const container = document.getElementById('friendsContainer');
         if (!container) return;
@@ -1706,14 +1784,21 @@ const Messenger = {
 
         friends.forEach(friend => {
             const friendElement = document.createElement('div');
-            friendElement.className = 'flex items-center p-3 hover:bg-gray-50 cursor-pointer rounded-lg transition-colors';
+            friendElement.className = 'flex items-center p-3 hover:bg-gray-50 cursor-pointer rounded-lg transition-colors mb-1';
             friendElement.onclick = () => this.openChat(friend.id, friend.name, friend.avatar, friend.online);
 
             friendElement.innerHTML = `
                 <div class="relative">
-                    <img src="${friend.avatar || window.defaultAvatar}" alt="${friend.name}" class="w-12 h-12 rounded-full object-cover">
+                    <img src="${friend.avatar || window.defaultAvatar}"
+                         alt="${friend.name}"
+                         class="w-12 h-12 rounded-full object-cover">
                     ${friend.online ? `
                         <span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></span>
+                    ` : ''}
+                    ${friend.unread_count > 0 ? `
+                        <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                            ${friend.unread_count > 9 ? '9+' : friend.unread_count}
+                        </span>
                     ` : ''}
                 </div>
                 <div class="ml-3 flex-1">
@@ -1728,9 +1813,17 @@ const Messenger = {
         });
     },
 
-    openChat(friendId, friendName, friendAvatar, friendOnline) {
+    // Open chat with a friend
+    async openChat(friendId, friendName, friendAvatar, friendOnline) {
         this.state.activeFriendId = friendId;
+        this.state.currentFriend = {
+            id: friendId,
+            name: friendName,
+            avatar: friendAvatar,
+            online: friendOnline
+        };
 
+        // Update UI
         const friendList = document.getElementById('friendList');
         const chatArea = document.getElementById('chatArea');
         const chatName = document.getElementById('chatName');
@@ -1746,13 +1839,23 @@ const Messenger = {
             chatStatus.className = `text-xs ${friendOnline ? 'text-green-600' : 'text-gray-500'}`;
         }
 
-        this.loadMessages(friendId);
-        this.state.socket?.emit('join_chat', { friend_id: friendId });
+        // Load messages
+        await this.loadMessages(friendId);
 
+        // Join chat room via socket
+        if (this.state.socket && this.state.socket.connected) {
+            this.state.socket.emit('join_chat', { friend_id: friendId });
+        }
+
+        // Focus input
         const chatInput = document.getElementById('chatInput');
         if (chatInput) chatInput.focus();
+
+        // Mark messages as read
+        await this.markAsRead(friendId);
     },
 
+    // Load messages for a chat
     async loadMessages(friendId) {
         try {
             const chatContainer = document.getElementById('chatMessages');
@@ -1765,11 +1868,13 @@ const Messenger = {
                 `;
             }
 
-            const response = await fetch(`/api/messages/${friendId}`); // Changed from `/messages/${friendId}`
+            const response = await fetch(`/api/messaging/messages/${friendId}`);
             if (!response.ok) throw new Error('Network error');
 
-            const messages = await response.json();
-            this.displayMessages(messages);
+            const data = await response.json();
+            if (data.success) {
+                this.displayMessages(data.messages);
+            }
         } catch (error) {
             console.error('Error loading messages:', error);
             const chatContainer = document.getElementById('chatMessages');
@@ -1777,13 +1882,14 @@ const Messenger = {
                 chatContainer.innerHTML = `
                     <div class="text-center p-6 text-gray-500">
                         <i class="bi bi-chat-dots text-2xl mb-2"></i>
-                        <p class="text-sm">No messages yet</p>
+                        <p class="text-sm">Failed to load messages</p>
                     </div>
                 `;
             }
         }
     },
 
+    // Display messages in chat
     displayMessages(messages) {
         const chatContainer = document.getElementById('chatMessages');
         if (!chatContainer) return;
@@ -1794,7 +1900,7 @@ const Messenger = {
             chatContainer.innerHTML = `
                 <div class="text-center p-6 text-gray-500">
                     <i class="bi bi-chat-dots text-2xl mb-2"></i>
-                    <p class="text-sm">No messages yet</p>
+                    <p class="text-sm">No messages yet. Start a conversation!</p>
                 </div>
             `;
             return;
@@ -1807,6 +1913,7 @@ const Messenger = {
         this.scrollToBottom();
     },
 
+    // Append a single message
     appendMessage(msg, shouldScroll = true) {
         const chatContainer = document.getElementById('chatMessages');
         if (!chatContainer) return;
@@ -1818,18 +1925,23 @@ const Messenger = {
         });
 
         const messageElement = document.createElement('div');
-        messageElement.className = `flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-2`;
-
+        messageElement.className = `flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-3`;
         messageElement.innerHTML = `
             <div class="max-w-xs lg:max-w-md">
                 <div class="${isOwnMessage ? 'bg-blue-100' : 'bg-gray-100'} rounded-2xl px-4 py-2">
-                    ${!isOwnMessage ? `<div class="font-semibold text-sm mb-1">${msg.sender_name || 'User'}</div>` : ''}
+                    ${!isOwnMessage ? `
+                        <div class="flex items-center mb-1">
+                            <img src="${msg.sender_avatar || window.defaultAvatar}"
+                                 class="w-4 h-4 rounded-full mr-1">
+                            <span class="text-xs font-medium">${msg.sender_name || 'User'}</span>
+                        </div>
+                    ` : ''}
                     <div class="text-sm">${msg.content || ''}</div>
-                    <div class="text-xs text-gray-500 mt-1 text-right">
-                        ${time}
-                        ${isOwnMessage ?
-                            `<span class="ml-1">${msg.status === 'read' ? '✓✓' : msg.status === 'delivered' ? '✓✓' : '✓'}</span>` :
-                            ''}
+                    <div class="flex justify-end items-center mt-1">
+                        <span class="text-[10px] text-gray-500">${time}</span>
+                        ${isOwnMessage ? `
+                            <i class="bi ${msg.status === 'read' ? 'bi-check2-all text-blue-500' : 'bi-check2 text-gray-400'} ml-1 text-xs"></i>
+                        ` : ''}
                     </div>
                 </div>
             </div>
@@ -1842,35 +1954,30 @@ const Messenger = {
         }
     },
 
-    scrollToBottom() {
-        const messagesWrapper = document.getElementById('chatMessagesWrapper');
-        if (messagesWrapper) {
-            setTimeout(() => {
-                messagesWrapper.scrollTop = messagesWrapper.scrollHeight;
-            }, 50);
-        }
-    },
-
-    sendMessage() {
+    // Send a message
+    async sendMessage() {
         const input = document.getElementById('chatInput');
         if (!input || !this.state.activeFriendId) return;
 
         const content = input.value.trim();
         if (!content) return;
 
-        if (this.state.socket?.connected) {
+        if (this.state.socket && this.state.socket.connected) {
+            // Send via WebSocket for real-time
             this.state.socket.emit('send_message', {
                 friend_id: this.state.activeFriendId,
                 content: content
             });
         } else {
-            this.sendMessageViaAPI(content);
+            // Fallback to HTTP API
+            await this.sendMessageViaAPI(content);
         }
 
         input.value = '';
-        this.sendTypingIndicator('stop');
+        this.stopTyping();
     },
 
+    // Send message via HTTP API (fallback)
     async sendMessageViaAPI(content) {
         try {
             const response = await fetch('/api/messaging/send', {
@@ -1886,7 +1993,6 @@ const Messenger = {
             });
 
             const data = await response.json();
-
             if (data.success && data.message) {
                 this.appendMessage(data.message, true);
             } else if (data.error) {
@@ -1898,70 +2004,65 @@ const Messenger = {
         }
     },
 
-    sendTypingIndicator(action) {
-        if (!this.state.activeFriendId || !this.state.socket?.connected) return;
+    // Handle typing indicator
+    handleTyping() {
+        if (!this.state.activeFriendId || !this.state.socket) return;
 
-        if (action === 'start' && !this.state.isTyping) {
+        if (!this.state.isTyping) {
             this.state.isTyping = true;
             this.state.socket.emit('typing_start', { friend_id: this.state.activeFriendId });
+        }
 
-            if (this.state.typingTimeout) {
-                clearTimeout(this.state.typingTimeout);
-            }
+        // Clear existing timeout
+        if (this.state.typingTimeout) {
+            clearTimeout(this.state.typingTimeout);
+        }
 
-            this.state.typingTimeout = setTimeout(() => {
-                this.sendTypingIndicator('stop');
-            }, 2000);
+        // Set timeout to stop typing
+        this.state.typingTimeout = setTimeout(() => {
+            this.stopTyping();
+        }, 2000);
+    },
 
-        } else if (action === 'stop' && this.state.isTyping) {
+    // Stop typing indicator
+    stopTyping() {
+        if (this.state.isTyping && this.state.activeFriendId && this.state.socket) {
             this.state.isTyping = false;
             this.state.socket.emit('typing_stop', { friend_id: this.state.activeFriendId });
+        }
 
-            if (this.state.typingTimeout) {
-                clearTimeout(this.state.typingTimeout);
-                this.state.typingTimeout = null;
-            }
+        if (this.state.typingTimeout) {
+            clearTimeout(this.state.typingTimeout);
+            this.state.typingTimeout = null;
         }
     },
 
+    // Show typing indicator for other user
     showTypingIndicator(userName) {
-        const typingIndicator = document.getElementById('typingIndicator');
-        const typingUserName = document.getElementById('typingUserName');
+        const indicator = document.getElementById('typingIndicator');
+        const userNameEl = document.getElementById('typingUserName');
 
-        if (typingIndicator && typingUserName) {
-            typingUserName.textContent = `${userName} is typing...`;
-            typingIndicator.classList.remove('hidden');
+        if (userNameEl) {
+            userNameEl.textContent = `${userName} is typing...`;
+        }
+        if (indicator) {
+            indicator.classList.remove('hidden');
         }
     },
 
+    // Hide typing indicator
     hideTypingIndicator() {
-        const typingIndicator = document.getElementById('typingIndicator');
-        if (typingIndicator) {
-            typingIndicator.classList.add('hidden');
+        const indicator = document.getElementById('typingIndicator');
+        if (indicator) {
+            indicator.classList.add('hidden');
         }
     },
 
+    // Connect to Socket.IO
     connectSocket() {
-        if (this.state.socket?.connected) return;
-
-        // In your Socket.IO connection setup
-        socket.on('friend_request_update', (data) => {
-            switch(data.type) {
-                case 'request_sent':
-                    Toast.show('Friend request sent!', 'success');
-                    break;
-                case 'request_cancelled':
-                    Toast.show('Friend request cancelled', 'info');
-                    // Update any UI elements showing this user
-                    updateFriendButtons(data.sender_id, 'none');
-                    break;
-        case 'request_accepted':
-            Toast.show(`You are now friends with ${data.friend_name}!`, 'success');
-            // Update any UI elements showing this user
-            updateFriendButtons(data.friend_id, 'friends');
-            break;
-    }
-});
+        if (this.state.socket && this.state.socket.connected) {
+            return;
+        }
 
         this.state.socket = io({
             transports: ['websocket', 'polling'],
@@ -1969,12 +2070,14 @@ const Messenger = {
             reconnectionAttempts: 5
         });
 
+        // Socket event handlers
         this.state.socket.on('connect', () => {
-            console.log('✅ Connected to messaging');
+            console.log('✅ Connected to messaging server');
         });
 
         this.state.socket.on('new_message', (msg) => {
-            if (msg.sender_id === this.state.activeFriendId || msg.receiver_id === this.state.activeFriendId) {
+            if (msg.sender_id === this.state.activeFriendId ||
+                msg.receiver_id === this.state.activeFriendId) {
                 this.appendMessage(msg, true);
             }
             this.updateUnreadBadge();
@@ -1986,14 +2089,71 @@ const Messenger = {
             }
         });
 
-        this.state.socket.on('user_stopped_typing', () => {
-            this.hideTypingIndicator();
+        this.state.socket.on('user_stopped_typing', (data) => {
+            if (data.user_id === this.state.activeFriendId) {
+                this.hideTypingIndicator();
+            }
+        });
+
+        this.state.socket.on('friend_online', (data) => {
+            console.log(`Friend ${data.user_id} is online`);
+            this.updateFriendStatus(data.user_id, true);
+        });
+
+        this.state.socket.on('friend_offline', (data) => {
+            console.log(`Friend ${data.user_id} is offline`);
+            this.updateFriendStatus(data.user_id, false);
+        });
+
+        this.state.socket.on('error', (error) => {
+            console.error('Socket error:', error);
         });
     },
 
+    // Update friend online status
+    updateFriendStatus(friendId, isOnline) {
+        // Update in friends list if open
+        const friendElement = document.querySelector(`[onclick*="openChat(${friendId}"]`);
+        if (friendElement) {
+            const statusIndicator = friendElement.querySelector('.status-indicator');
+            const statusText = friendElement.querySelector('.status-text');
 
+            if (statusIndicator) {
+                statusIndicator.className = `absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${isOnline ? 'bg-green-500' : 'bg-gray-400'}`;
+            }
 
+            if (statusText) {
+                statusText.textContent = isOnline ? 'Online' : 'Offline';
+                statusText.className = `text-xs ${isOnline ? 'text-green-600' : 'text-gray-500'}`;
+            }
+        }
 
+        // Update in chat header if active
+        if (this.state.activeFriendId === friendId) {
+            const chatStatus = document.getElementById('chatStatus');
+            if (chatStatus) {
+                chatStatus.textContent = isOnline ? 'Online' : 'Offline';
+                chatStatus.className = `text-xs ${isOnline ? 'text-green-600' : 'text-gray-500'}`;
+            }
+        }
+    },
+
+    // Mark messages as read
+    async markAsRead(friendId) {
+        try {
+            await fetch(`/api/messaging/mark-read/${friendId}`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken
+                }
+            });
+            this.updateUnreadBadge();
+        } catch (error) {
+            console.error('Error marking as read:', error);
+        }
+    },
+
+    // Update unread badge
     async updateUnreadBadge() {
         try {
             const response = await fetch('/api/messaging/unread_count');
@@ -2016,49 +2176,63 @@ const Messenger = {
         }
     },
 
+    // Scroll chat to bottom
+    scrollToBottom() {
+        const messagesWrapper = document.getElementById('chatMessagesWrapper');
+        if (messagesWrapper) {
+            setTimeout(() => {
+                messagesWrapper.scrollTop = messagesWrapper.scrollHeight;
+            }, 50);
+        }
+    },
+
+    // Start chat with user (called from profile, etc.)
     startChat(userId) {
         this.open();
         setTimeout(() => {
-            // Find and open chat with user
-            const friendElements = document.querySelectorAll('.friend-item');
+            // Try to find and click the friend in the list
+            const friendElements = document.querySelectorAll('#friendsContainer > div');
             friendElements.forEach(el => {
-                if (el.onclick && el.onclick.toString().includes(userId)) {
+                if (el.onclick && el.onclick.toString().includes(`openChat(${userId}`)) {
                     el.click();
                 }
             });
         }, 500);
-    },
-
-    init() {
-        const openBtn = document.getElementById('openMessaging');
-        const sendBtn = document.getElementById('sendChatBtn');
-        const chatInput = document.getElementById('chatInput');
-        const backBtn = document.querySelector('[onclick="backToFriends()"]');
-
-        if (openBtn) openBtn.addEventListener('click', () => this.open());
-        if (sendBtn) sendBtn.addEventListener('click', () => this.sendMessage());
-        if (chatInput) {
-            chatInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    this.sendMessage();
-                }
-            });
-
-            chatInput.addEventListener('input', () => {
-                if (this.state.activeFriendId && chatInput.value.trim()) {
-                    this.sendTypingIndicator('start');
-                } else {
-                    this.sendTypingIndicator('stop');
-                }
-            });
-        }
-        if (backBtn) backBtn.addEventListener('click', () => this.backToFriends());
-
-        this.updateUnreadBadge();
-        setInterval(() => this.updateUnreadBadge(), 30000);
     }
 };
+
+// Make sure to update the global function references
+window.openMessenger = function() {
+    Messenger.open();
+};
+
+window.closeMessenger = function() {
+    Messenger.close();
+};
+
+window.backToFriends = function() {
+    Messenger.backToFriends();
+};
+
+window.handleTyping = function() {
+    Messenger.handleTyping();
+};
+
+window.sendMessage = function() {
+    Messenger.sendMessage();
+};
+
+// Initialize messenger when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    if (typeof currentUserId !== 'undefined' && currentUserId) {
+        Messenger.init();
+    }
+});
+
+
+
+
+
 
 
 function updateFriendButtons(userId, status) {
@@ -3254,3 +3428,547 @@ window.cancelUpload = function() {
 
     Toast.show('Upload cancelled', 'info');
 };
+
+
+
+// Chat System - Enhanced Real-Time Messaging
+class EnhancedMessenger {
+    constructor() {
+        this.currentChatId = null;
+        this.socket = null;
+        this.messages = {};
+        this.typingTimeout = null;
+        this.isTyping = false;
+        this.lastMessageId = null;
+        this.unreadCounts = {};
+        this.init();
+    }
+
+    init() {
+        this.connectSocket();
+        this.loadFriends();
+        this.setupEventListeners();
+        this.restoreLastChat();
+    }
+
+    connectSocket() {
+        // Connect to WebSocket server
+        this.socket = io({
+            transports: ['websocket', 'polling'],
+            upgrade: true,
+            reconnection: true,
+            reconnectionAttempts: 10,
+            reconnectionDelay: 1000
+        });
+
+        this.socket.on('connect', () => {
+            console.log('Socket connected');
+            this.socket.emit('join', { user_id: window.currentUserId });
+        });
+
+        this.socket.on('new_message', (data) => {
+            this.handleNewMessage(data);
+        });
+
+        this.socket.on('user_typing', (data) => {
+            this.showTypingIndicator(data.user_name);
+        });
+
+        this.socket.on('user_stopped_typing', (data) => {
+            this.hideTypingIndicator();
+        });
+
+        this.socket.on('error', (data) => {
+            console.error('Socket error:', data.error);
+        });
+
+        // Reconnect logic
+        this.socket.on('disconnect', () => {
+            console.log('Socket disconnected, attempting to reconnect...');
+        });
+    }
+
+    async loadFriends() {
+        try {
+            const response = await fetch(`/api/messaging/friends`);
+            if (!response.ok) throw new Error('Failed to load friends');
+
+            const data = await response.json();
+            if (data.success) {
+                this.renderFriendsList(data.friends);
+                this.updateUnreadBadges();
+            }
+        } catch (error) {
+            console.error('Error loading friends:', error);
+            this.showError('Failed to load conversations');
+        }
+    }
+
+    renderFriendsList(friends) {
+        const container = document.getElementById('friendsContainer');
+        if (!container) return;
+
+        // Group conversations by friend
+        const conversations = this.groupConversations(friends);
+
+        container.innerHTML = conversations.map(friend => `
+            <div class="friend-item p-2 hover:bg-gray-100 rounded-lg cursor-pointer transition-colors mb-1"
+                 onclick="Messenger.openChat(${friend.id})"
+                 data-friend-id="${friend.id}">
+                <div class="flex items-center">
+                    <div class="relative">
+                        <img src="${friend.avatar}"
+                             class="w-10 h-10 rounded-full object-cover">
+                        ${friend.is_online ?
+                            '<span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border border-white"></span>' :
+                            ''}
+                        ${friend.unread_count > 0 ?
+                            `<span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                                ${friend.unread_count}
+                            </span>` :
+                            ''}
+                    </div>
+                    <div class="ml-3 flex-1 min-w-0">
+                        <div class="flex justify-between items-start">
+                            <p class="font-medium text-sm truncate">${friend.name}</p>
+                            <span class="text-xs text-gray-500">${this.formatTime(friend.last_message_time)}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <p class="text-xs text-gray-500 truncate">
+                                ${friend.last_message || 'No messages yet'}
+                            </p>
+                            ${friend.unread_count > 0 ?
+                                '<i class="bi bi-check2-all text-blue-500 ml-1"></i>' :
+                                '<i class="bi bi-check2 text-gray-400 ml-1"></i>'}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    groupConversations(friends) {
+        // Group messages by friend and calculate unread counts
+        return friends.map(friend => {
+            const unreadCount = this.unreadCounts[friend.id] || 0;
+            return {
+                ...friend,
+                unread_count: unreadCount
+            };
+        }).sort((a, b) => {
+            // Sort by unread count first, then by last message time
+            if (b.unread_count !== a.unread_count) {
+                return b.unread_count - a.unread_count;
+            }
+            return new Date(b.last_message_time || 0) - new Date(a.last_message_time || 0);
+        });
+    }
+
+    async openChat(friendId) {
+        this.currentChatId = friendId;
+
+        // Save to localStorage for restoration
+        localStorage.setItem('lastChatId', friendId);
+
+        // Update UI
+        document.getElementById('friendList').classList.add('hidden');
+        document.getElementById('chatArea').classList.remove('hidden');
+
+        // Load friend info
+        await this.loadFriendInfo(friendId);
+
+        // Load messages
+        await this.loadMessages(friendId, true);
+
+        // Mark as read
+        await this.markAsRead(friendId);
+
+        // Focus input
+        document.getElementById('chatInput').focus();
+    }
+
+    async loadMessages(friendId, initialLoad = false) {
+        const messagesContainer = document.getElementById('chatMessages');
+        const loadingEl = document.getElementById('messagesLoading');
+        const noMessagesEl = document.getElementById('noMessages');
+
+        if (initialLoad) {
+            messagesContainer.innerHTML = '';
+            loadingEl.classList.remove('hidden');
+            noMessagesEl.classList.add('hidden');
+        }
+
+        try {
+            const response = await fetch(`/api/messaging/messages/${friendId}`);
+            if (!response.ok) throw new Error('Failed to load messages');
+
+            const data = await response.json();
+
+            loadingEl.classList.add('hidden');
+
+            if (data.success && data.messages.length > 0) {
+                this.renderMessages(data.messages);
+                this.scrollToBottom();
+                this.lastMessageId = data.messages[data.messages.length - 1].id;
+            } else {
+                noMessagesEl.classList.remove('hidden');
+            }
+        } catch (error) {
+            console.error('Error loading messages:', error);
+            loadingEl.classList.add('hidden');
+            this.showError('Failed to load messages');
+        }
+    }
+
+    renderMessages(messages) {
+        const container = document.getElementById('chatMessages');
+
+        messages.forEach(message => {
+            const messageEl = this.createMessageElement(message);
+            container.appendChild(messageEl);
+
+            // Group messages by time
+            this.groupMessagesByTime(container);
+        });
+    }
+
+    createMessageElement(message) {
+        const div = document.createElement('div');
+        div.className = `message ${message.is_mine ? 'my-message' : 'their-message'}`;
+        div.dataset.messageId = message.id;
+
+        // Format time correctly (fix timezone issue)
+        const time = this.formatMessageTime(message.timestamp);
+
+        div.innerHTML = `
+            <div class="flex ${message.is_mine ? 'justify-end' : 'justify-start'}">
+                <div class="max-w-[70%] ${message.is_mine ? 'bg-blue-100' : 'bg-gray-100'} rounded-2xl px-3 py-2">
+                    ${!message.is_mine ? `
+                        <div class="flex items-center mb-1">
+                            <img src="${message.sender_avatar}" class="w-4 h-4 rounded-full mr-1">
+                            <span class="text-xs font-medium">${message.sender_name}</span>
+                        </div>
+                    ` : ''}
+                    <p class="text-sm">${this.escapeHtml(message.content)}</p>
+                    <div class="flex justify-end items-center mt-1">
+                        <span class="text-[10px] text-gray-500">${time}</span>
+                        ${message.is_mine ? `
+                            <i class="bi ${message.status === 'read' ? 'bi-check2-all text-blue-500' : 'bi-check2 text-gray-400'} ml-1 text-xs"></i>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        return div;
+    }
+
+    groupMessagesByTime(container) {
+        const messages = container.querySelectorAll('.message');
+        let lastTime = null;
+
+        messages.forEach((message, index) => {
+            const timeText = message.querySelector('span')?.textContent;
+            if (timeText && timeText !== lastTime) {
+                // Add time separator
+                const timeDiv = document.createElement('div');
+                timeDiv.className = 'time-separator text-center my-2';
+                timeDiv.innerHTML = `<span class="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full">${timeText}</span>`;
+
+                if (index > 0) {
+                    message.parentNode.insertBefore(timeDiv, message);
+                }
+                lastTime = timeText;
+            }
+        });
+    }
+
+    async sendMessage() {
+        const input = document.getElementById('chatInput');
+        const content = input.value.trim();
+
+        if (!content || !this.currentChatId) return;
+
+        // Clear input
+        input.value = '';
+
+        // Send via WebSocket for real-time
+        if (this.socket && this.socket.connected) {
+            this.socket.emit('send_message', {
+                friend_id: this.currentChatId,
+                content: content
+            });
+        } else {
+            // Fallback to HTTP
+            await this.sendMessageViaHTTP(content);
+        }
+
+        // Stop typing indicator
+        this.stopTyping();
+    }
+
+    async sendMessageViaHTTP(content) {
+        try {
+            const response = await fetch('/api/messaging/send', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': window.csrfToken
+                },
+                body: JSON.stringify({
+                    receiver_id: this.currentChatId,
+                    content: content
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    this.handleNewMessage(data.message);
+                }
+            }
+        } catch (error) {
+            console.error('Error sending message:', error);
+            this.showError('Failed to send message');
+        }
+    }
+
+    handleNewMessage(message) {
+        // Check if this message is for current chat
+        const isForCurrentChat = message.receiver_id === this.currentChatId ||
+                                message.sender_id === this.currentChatId;
+
+        if (isForCurrentChat) {
+            // Add to current chat
+            const messageEl = this.createMessageElement(message);
+            document.getElementById('chatMessages').appendChild(messageEl);
+            this.scrollToBottom();
+
+            // Update last message
+            this.updateFriendLastMessage(this.currentChatId, message.content);
+        } else {
+            // Update unread count for that friend
+            this.incrementUnreadCount(message.sender_id);
+        }
+
+        // Update UI
+        this.updateUnreadBadges();
+    }
+
+    handleTyping() {
+        if (!this.currentChatId || !this.socket) return;
+
+        if (!this.isTyping) {
+            this.isTyping = true;
+            this.socket.emit('typing', { friend_id: this.currentChatId });
+        }
+
+        // Clear existing timeout
+        if (this.typingTimeout) {
+            clearTimeout(this.typingTimeout);
+        }
+
+        // Set timeout to stop typing indicator
+        this.typingTimeout = setTimeout(() => {
+            this.stopTyping();
+        }, 1000);
+    }
+
+    stopTyping() {
+        if (this.isTyping && this.currentChatId && this.socket) {
+            this.isTyping = false;
+            this.socket.emit('stop_typing', { friend_id: this.currentChatId });
+        }
+
+        if (this.typingTimeout) {
+            clearTimeout(this.typingTimeout);
+        }
+    }
+
+    showTypingIndicator(userName) {
+        const indicator = document.getElementById('typingIndicator');
+        const userNameEl = document.getElementById('typingUserName');
+
+        if (userNameEl) {
+            userNameEl.textContent = userName;
+        }
+        indicator.classList.remove('hidden');
+    }
+
+    hideTypingIndicator() {
+        const indicator = document.getElementById('typingIndicator');
+        indicator.classList.add('hidden');
+    }
+
+    async markAsRead(friendId) {
+        try {
+            await fetch(`/api/messaging/mark-read/${friendId}`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': window.csrfToken
+                }
+            });
+
+            // Clear unread count
+            this.unreadCounts[friendId] = 0;
+            this.updateUnreadBadges();
+        } catch (error) {
+            console.error('Error marking as read:', error);
+        }
+    }
+
+    incrementUnreadCount(friendId) {
+        if (!this.unreadCounts[friendId]) {
+            this.unreadCounts[friendId] = 0;
+        }
+        this.unreadCounts[friendId]++;
+
+        // Update badge
+        this.updateUnreadBadges();
+    }
+
+    updateUnreadBadges() {
+        // Calculate total unread messages
+        const totalUnread = Object.values(this.unreadCounts).reduce((a, b) => a + b, 0);
+
+        // Update main badge
+        const badge = document.getElementById('unreadMessagesBadge');
+        if (badge) {
+            if (totalUnread > 0) {
+                badge.textContent = totalUnread > 99 ? '99+' : totalUnread;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        // Update individual friend badges
+        document.querySelectorAll('.friend-item').forEach(item => {
+            const friendId = item.dataset.friendId;
+            const unreadCount = this.unreadCounts[friendId] || 0;
+            const badge = item.querySelector('.notification-badge');
+
+            if (badge) {
+                if (unreadCount > 0) {
+                    badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+            }
+        });
+    }
+
+    formatTime(timestamp) {
+        if (!timestamp) return '';
+
+        const date = new Date(timestamp);
+        const now = new Date();
+        const diff = now - date;
+
+        // If within 24 hours, show relative time
+        if (diff < 86400000) {
+            const hours = date.getHours();
+            const minutes = date.getMinutes();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            const displayHours = hours % 12 || 12;
+            return `${displayHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+        }
+
+        // If within a week, show day name
+        if (diff < 604800000) {
+            return date.toLocaleDateString('en-US', { weekday: 'short' });
+        }
+
+        // Otherwise show date
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+
+    formatMessageTime(timestamp) {
+        // Convert to local time
+        const date = new Date(timestamp);
+        return date.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        });
+    }
+
+    scrollToBottom() {
+        const container = document.getElementById('chatMessagesWrapper');
+        if (container) {
+            container.scrollTop = container.scrollHeight;
+        }
+    }
+
+    restoreLastChat() {
+        const lastChatId = localStorage.getItem('lastChatId');
+        if (lastChatId) {
+            setTimeout(() => {
+                this.openChat(parseInt(lastChatId));
+            }, 500);
+        }
+    }
+
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    showError(message) {
+        // Simple error notification
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'fixed top-20 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+        errorDiv.textContent = message;
+        document.body.appendChild(errorDiv);
+
+        setTimeout(() => {
+            errorDiv.remove();
+        }, 3000);
+    }
+}
+
+// Initialize messenger
+window.Messenger = new EnhancedMessenger();
+
+// Helper functions for HTML
+function openMessenger() {
+    const popup = document.getElementById('messengerPopup');
+    popup.classList.remove('hidden');
+    popup.classList.add('flex');
+
+    // Load friends if not loaded
+    if (Messenger) {
+        Messenger.loadFriends();
+    }
+}
+
+function closeMessenger() {
+    const popup = document.getElementById('messengerPopup');
+    popup.classList.add('hidden');
+    popup.classList.remove('flex');
+
+    // Stop typing if active
+    if (Messenger) {
+        Messenger.stopTyping();
+    }
+}
+
+function backToFriends() {
+    document.getElementById('friendList').classList.remove('hidden');
+    document.getElementById('chatArea').classList.add('hidden');
+    Messenger.currentChatId = null;
+}
+
+function sendMessage() {
+    if (Messenger) {
+        Messenger.sendMessage();
+    }
+}
+
+function handleTyping() {
+    if (Messenger) {
+        Messenger.handleTyping();
+    }
+}

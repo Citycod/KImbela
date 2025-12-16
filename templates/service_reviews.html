@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reviews - {{ service.title }} - Kimbela Marketplace</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        .star-rating { color: #fbbf24; }
+        .review-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+        .verified-badge { background: #10b981; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; }
+        .helpful-btn { padding: 4px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 12px; }
+        .helpful-btn.active { background: #3b82f6; color: white; border-color: #3b82f6; }
+        .rating-bar { height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden; }
+        .rating-fill { height: 100%; background: #fbbf24; }
+    </style>
+    <meta name="csrf-token" content="{{ csrf_token }}">
+
+    <!-- Add these to your HTML head section -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+    <style>
+/* Custom Toast styles */
+.toastify-custom {
+    border-radius: 8px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-weight: 500;
+}
+
+.toastify-success {
+    background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.toastify-error {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.toastify-info {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.toastify-warning {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+</style>
+
+    <style>
+    /* Transparent Loader */
+    .transparent-loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.8);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        backdrop-filter: blur(2px);
+    }
+
+    .loader-content {
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        min-width: 200px;
+    }
+
+    .spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #3b82f6;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 15px;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .loader-text {
+        color: #4b5563;
+        font-weight: 500;
+    }
+</style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation (reuse from your existing template) -->
+
+    <div class="container mx-auto px-4 py-8">
+        <!-- Breadcrumb -->
+        <nav class="mb-6">
+            <ol class="flex items-center space-x-2 text-sm">
+                <li><a href="{{ url_for('market.main_market') }}" class="text-blue-600 hover:underline">Marketplace</a></li>
+                <li><i class="bi bi-chevron-right text-gray-400"></i></li>
+                <li><a href="{{ url_for('market.service_detail', slug=service.slug) }}" class="text-blue-600 hover:underline">{{ service.title[:30] }}{{ '...' if service.title|length > 30 }}</a></li>
+                <li><i class="bi bi-chevron-right text-gray-400"></i></li>
+                <li class="text-gray-600">Reviews</li>
+            </ol>
+        </nav>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <!-- Left Sidebar: Rating Summary -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-lg shadow-sm p-6 sticky top-4">
+                    <h2 class="text-lg font-bold mb-4">Customer Reviews</h2>
+
+                    <!-- Overall Rating -->
+                    <div class="text-center mb-6">
+                        <div class="text-4xl font-bold text-gray-800 mb-2">{{ "%.1f"|format(average_rating) }}</div>
+                        <div class="star-rating text-xl mb-2">
+                            {% for i in range(1, 6) %}
+                                {% if i <= average_rating|int %}
+                                    <i class="bi bi-star-fill"></i>
+                                {% elif i == average_rating|round(0, 'ceil')|int and average_rating % 1 != 0 %}
+                                    <i class="bi bi-star-half"></i>
+                                {% else %}
+                                    <i class="bi bi-star"></i>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <div class="text-gray-600 text-sm">Based on {{ total_reviews }} reviews</div>
+                    </div>
+
+                    <!-- Rating Breakdown -->
+                    <div class="space-y-3">
+                        {% for star in range(5, 0, -1) %}
+                        <div class="flex items-center">
+                            <div class="w-10 text-sm text-gray-600">{{ star }} star</div>
+                            <div class="flex-1 mx-3">
+                                <div class="rating-bar">
+                                    <div class="rating-fill" style="width: {{ rating_stats[star].percentage }}%"></div>
+                                </div>
+                            </div>
+                            <div class="w-10 text-sm text-gray-600 text-right">{{ rating_stats[star].percentage }}%</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Write Review Button -->
+                    {% if current_user.is_authenticated and current_user.id != service.seller_id %}
+                    <button onclick="openReviewModal('service', {{ service.id }})"
+                            class="w-full mt-6 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                        <i class="bi bi-pencil-square mr-2"></i>Write a Review
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Main Content: Reviews List -->
+            <div class="lg:col-span-3">
+                <!-- Sort Options -->
+                <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-bold">{{ total_reviews }} Reviews</h3>
+                        <div class="flex space-x-2">
+                            <select id="sortSelect" onchange="sortReviews()" class="border rounded-lg px-3 py-1 text-sm">
+                                <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Newest First</option>
+                                <option value="highest" {% if sort_by == 'highest' %}selected{% endif %}>Highest Rated</option>
+                                <option value="lowest" {% if sort_by == 'lowest' %}selected{% endif %}>Lowest Rated</option>
+                                <option value="helpful" {% if sort_by == 'helpful' %}selected{% endif %}>Most Helpful</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reviews List -->
+                <div id="reviewsList">
+                    {% if reviews.items %}
+                        {% for review in reviews.items %}
+                        <div class="review-card bg-white">
+                            <div class="flex items-start justify-between mb-3">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 rounded-full overflow-hidden mr-3">
+                                        {% if review.buyer.profile_pic %}
+                                        <img src="{{ review.buyer.profile_pic }}" alt="{{ review.buyer.full_name }}" class="w-full h-full object-cover">
+                                        {% else %}
+                                        <div class="w-full h-full bg-gray-200 flex items-center justify-center">
+                                            <i class="bi bi-person text-gray-600"></i>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold">{{ review.buyer.full_name }}</h4>
+                                        <div class="flex items-center space-x-2 text-sm text-gray-600">
+                                            <div class="star-rating">
+                                                {% for i in range(1, 6) %}
+                                                    {% if i <= review.rating %}
+                                                    <i class="bi bi-star-fill"></i>
+                                                    {% else %}
+                                                    <i class="bi bi-star"></i>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </div>
+                                            <span>•</span>
+                                            <span>{{ review.created_at.strftime('%b %d, %Y') }}</span>
+                                            {% if review.is_verified_purchase %}
+                                            <span class="verified-badge">
+                                                <i class="bi bi-patch-check-fill mr-1"></i>Verified Purchase
+                                            </span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {% if review.title %}
+                            <h5 class="font-bold text-lg mb-2">{{ review.title }}</h5>
+                            {% endif %}
+
+                            <p class="text-gray-700 mb-4">{{ review.comment }}</p>
+
+                            <!-- Review Images -->
+                            {% if review.review_images_list %}
+                            <div class="flex space-x-2 mb-4">
+                                {% for image in review.review_images_list %}
+                                <img src="{{ image }}" alt="Review image" class="w-20 h-20 object-cover rounded-lg cursor-pointer hover:opacity-90" onclick="openImageModal('{{ image }}')">
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+
+                            <!-- Seller Response -->
+                            {% if review.seller_response %}
+                            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
+                                <div class="flex items-center mb-2">
+                                    <i class="bi bi-shop text-blue-600 mr-2"></i>
+                                    <span class="font-bold text-blue-800">Seller Response</span>
+                                    <span class="text-gray-500 text-sm ml-auto">{{ review.seller_response_at.strftime('%b %d, %Y') }}</span>
+                                </div>
+                                <p class="text-gray-700">{{ review.seller_response }}</p>
+                            </div>
+                            {% endif %}
+
+                            <!-- Helpful Actions -->
+                           <!-- <div class="flex items-center justify-between border-t pt-3">
+                                <div class="flex space-x-3">
+                                    <button onclick="voteHelpful({{ review.id }}, true)"
+        class="helpful-btn">
+    <i class="bi bi-hand-thumbs-up mr-1"></i>
+    Helpful ({{ review.helpful_count or 0 }})
+</button>
+<button onclick="voteHelpful({{ review.id }}, false)"
+        class="helpful-btn">
+    <i class="bi bi-hand-thumbs-down mr-1"></i>
+    Not Helpful ({{ review.not_helpful_count or 0 }})
+</button>
+                                </div> -->
+
+                                {% if current_user.is_authenticated and current_user.id == review.buyer_id %}
+                                <button onclick="deleteReview({{ review.id }})" class="text-red-600 hover:text-red-800 text-sm">
+                                    <i class="bi bi-trash mr-1"></i>Delete
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                        <!-- Pagination -->
+                        {% if reviews.pages > 1 %}
+                        <div class="flex justify-center mt-8">
+                            <nav class="flex items-center space-x-2">
+                                {% if reviews.has_prev %}
+                                <a href="?page={{ reviews.prev_num }}&sort={{ sort_by }}" class="px-3 py-1 border rounded-lg hover:bg-gray-50">
+                                    <i class="bi bi-chevron-left"></i>
+                                </a>
+                                {% endif %}
+
+                                {% for page_num in reviews.iter_pages() %}
+                                    {% if page_num %}
+                                        {% if page_num == reviews.page %}
+                                        <span class="px-3 py-1 bg-blue-600 text-white rounded-lg">{{ page_num }}</span>
+                                        {% else %}
+                                        <a href="?page={{ page_num }}&sort={{ sort_by }}" class="px-3 py-1 border rounded-lg hover:bg-gray-50">{{ page_num }}</a>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="px-3 py-1">...</span>
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if reviews.has_next %}
+                                <a href="?page={{ reviews.next_num }}&sort={{ sort_by }}" class="px-3 py-1 border rounded-lg hover:bg-gray-50">
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+                                {% endif %}
+                            </nav>
+                        </div>
+                        {% endif %}
+
+                    {% else %}
+                        <div class="text-center py-12">
+                            <i class="bi bi-chat-square-text text-4xl text-gray-300 mb-4"></i>
+                            <h3 class="text-xl font-bold text-gray-600 mb-2">No reviews yet</h3>
+                            <p class="text-gray-500 mb-6">Be the first to review this service!</p>
+                            {% if current_user.is_authenticated and current_user.id != service.seller_id %}
+                            <button onclick="openReviewModal('service', {{ service.id }})"
+                                    class="bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                                <i class="bi bi-pencil-square mr-2"></i>Write First Review
+                            </button>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Review Modal -->
+    <div id="reviewModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold">Write a Review</h3>
+                    <button onclick="closeReviewModal()" class="text-gray-500 hover:text-gray-700">
+                        <i class="bi bi-x text-2xl"></i>
+                    </button>
+                </div>
+
+                <form id="reviewForm">
+                    <input type="hidden" id="reviewType" name="review_type">
+                    <input type="hidden" id="reviewServiceId" name="service_id">
+                    <input type="hidden" id="reviewSellerId" name="seller_id">
+
+                    <!-- Rating -->
+                    <div class="mb-6">
+                        <label class="block text-gray-700 mb-2">Your Rating</label>
+                        <div class="flex space-x-1" id="starRating">
+                            {% for i in range(1, 6) %}
+                            <i class="bi bi-star text-3xl text-gray-300 cursor-pointer hover:text-yellow-400"
+                               data-rating="{{ i }}"
+                               onmouseover="hoverStars({{ i }})"
+                               onmouseout="resetStars()"
+                               onclick="selectRating({{ i }})"></i>
+                            {% endfor %}
+                        </div>
+                        <input type="hidden" id="selectedRating" name="rating" required>
+                        <div id="ratingError" class="text-red-600 text-sm mt-1 hidden">Please select a rating</div>
+                    </div>
+
+                    <!-- Title -->
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2">Review Title (Optional)</label>
+                        <input type="text" name="title" class="w-full border rounded-lg px-3 py-2"
+                               placeholder="Summarize your experience">
+                    </div>
+
+                    <!-- Comment -->
+                    <div class="mb-6">
+                        <label class="block text-gray-700 mb-2">Your Review</label>
+                        <textarea name="comment" rows="5" class="w-full border rounded-lg px-3 py-2"
+                                  placeholder="Share details of your experience..." required></textarea>
+                        <div class="text-sm text-gray-500 mt-1">Minimum 10 characters</div>
+                    </div>
+
+                    <!-- Images -->
+                    <div class="mb-6">
+                        <label class="block text-gray-700 mb-2">Add Photos (Optional)</label>
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                            <input type="file" id="reviewImages" name="review_images"
+                                   class="hidden" multiple accept="image/*" onchange="previewImages()">
+                            <label for="reviewImages" class="cursor-pointer">
+                                <i class="bi bi-camera text-3xl text-gray-400 mb-2"></i>
+                                <p class="text-gray-600">Click to upload photos</p>
+                            </label>
+                        </div>
+                        <div id="imagePreview" class="mt-3 grid grid-cols-3 gap-2 hidden"></div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 font-medium">
+                        Submit Review
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Modal -->
+    <div id="imageModal" class="fixed inset-0 bg-black bg-opacity-90 hidden items-center justify-center z-50">
+        <div class="relative max-w-4xl max-h-[90vh]">
+            <img id="modalImage" src="" alt="Review image" class="max-w-full max-h-full">
+            <button onclick="closeImageModal()" class="absolute top-4 right-4 text-white text-2xl">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+    </div>
+
+    <script>
+    let currentRating = 0;
+
+    function openReviewModal(type, id) {
+        document.getElementById('reviewModal').classList.remove('hidden');
+        document.getElementById('reviewModal').classList.add('flex');
+        document.getElementById('reviewType').value = type;
+
+        if (type === 'service') {
+            document.getElementById('reviewServiceId').value = id;
+            document.getElementById('reviewSellerId').value = '';
+        } else {
+            document.getElementById('reviewSellerId').value = id;
+            document.getElementById('reviewServiceId').value = '';
+        }
+
+        // Reset form
+        currentRating = 0;
+        resetStars();
+        document.getElementById('reviewForm').reset();
+        document.getElementById('imagePreview').classList.add('hidden');
+        document.getElementById('imagePreview').innerHTML = '';
+    }
+
+    function closeReviewModal() {
+        document.getElementById('reviewModal').classList.add('hidden');
+        document.getElementById('reviewModal').classList.remove('flex');
+    }
+
+    function hoverStars(rating) {
+        const stars = document.querySelectorAll('#starRating i');
+        stars.forEach((star, index) => {
+            if (index < rating) {
+                star.classList.add('bi-star-fill', 'text-yellow-400');
+                star.classList.remove('bi-star', 'text-gray-300');
+            }
+        });
+    }
+
+    function resetStars() {
+        const stars = document.querySelectorAll('#starRating i');
+        stars.forEach((star, index) => {
+            if (index < currentRating) {
+                star.classList.add('bi-star-fill', 'text-yellow-400');
+                star.classList.remove('bi-star', 'text-gray-300');
+            } else {
+                star.classList.add('bi-star', 'text-gray-300');
+                star.classList.remove('bi-star-fill', 'text-yellow-400');
+            }
+        });
+    }
+
+    function selectRating(rating) {
+        currentRating = rating;
+        document.getElementById('selectedRating').value = rating;
+        document.getElementById('ratingError').classList.add('hidden');
+    }
+
+    function previewImages() {
+        const input = document.getElementById('reviewImages');
+        const preview = document.getElementById('imagePreview');
+        preview.innerHTML = '';
+
+        if (input.files.length > 0) {
+            preview.classList.remove('hidden');
+
+            for (let i = 0; i < Math.min(3, input.files.length); i++) {
+                const file = input.files[i];
+                const reader = new FileReader();
+
+                reader.onload = function(e) {
+                    const div = document.createElement('div');
+                    div.className = 'relative';
+                    div.innerHTML = `
+                        <img src="${e.target.result}" class="w-full h-24 object-cover rounded-lg">
+                        <button type="button" onclick="removeImage(${i})" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center">
+                            <i class="bi bi-x text-sm"></i>
+                        </button>
+                    `;
+                    preview.appendChild(div);
+                }
+
+                reader.readAsDataURL(file);
+            }
+        } else {
+            preview.classList.add('hidden');
+        }
+    }
+
+    function removeImage(index) {
+        const input = document.getElementById('reviewImages');
+        const dt = new DataTransfer();
+
+        // Add all files except the one to remove
+        for (let i = 0; i < input.files.length; i++) {
+            if (i !== index) {
+                dt.items.add(input.files[i]);
+            }
+        }
+
+        input.files = dt.files;
+        previewImages();
+    }
+
+    // Vote helpful
+    async function voteHelpful(reviewId, isHelpful) {
+        if (!{{ 'true' if current_user.is_authenticated else 'false' }}) {
+            showToast('Please login to vote', 'warning');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/review-helpful', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    review_id: reviewId,
+                    is_helpful: isHelpful
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                // Update button counts
+                const helpfulBtn = document.querySelector(`button[onclick="voteHelpful(${reviewId}, true)"]`);
+                const notHelpfulBtn = document.querySelector(`button[onclick="voteHelpful(${reviewId}, false)"]`);
+
+                if (helpfulBtn) {
+                    helpfulBtn.innerHTML = `<i class="bi bi-hand-thumbs-up mr-1"></i>Helpful (${result.helpful_count})`;
+                    helpfulBtn.classList.toggle('active', result.user_vote === 'helpful');
+                }
+
+                if (notHelpfulBtn) {
+                    notHelpfulBtn.innerHTML = `<i class="bi bi-hand-thumbs-down mr-1"></i>Not Helpful (${result.not_helpful_count})`;
+                    notHelpfulBtn.classList.toggle('active', result.user_vote === 'not_helpful');
+                }
+
+                showToast('Vote recorded!', 'success');
+            } else {
+                showToast('Error: ' + result.error, 'error');
+            }
+        } catch (error) {
+            console.error('Error voting:', error);
+            showToast('Error recording vote', 'error');
+        }
+    }
+
+    // Image modal
+    function openImageModal(src) {
+        document.getElementById('modalImage').src = src;
+        document.getElementById('imageModal').classList.remove('hidden');
+        document.getElementById('imageModal').classList.add('flex');
+    }
+
+    function closeImageModal() {
+        document.getElementById('imageModal').classList.add('hidden');
+        document.getElementById('imageModal').classList.remove('flex');
+    }
+
+    // Sort reviews
+    function sortReviews() {
+        const sortBy = document.getElementById('sortSelect').value;
+        window.location.href = `?sort=${sortBy}`;
+    }
+
+    // Close modals on ESC
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeReviewModal();
+            closeImageModal();
+        }
+    });
+
+    // Loader functions
+    function showLoader(text = 'Processing...') {
+        const loader = document.getElementById('transparentLoader');
+        const loaderText = loader.querySelector('.loader-text');
+        loaderText.textContent = text;
+        loader.style.display = 'flex';
+
+        // Prevent background scrolling
+        document.body.style.overflow = 'hidden';
+    }
+
+    function hideLoader() {
+        const loader = document.getElementById('transparentLoader');
+        loader.style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+
+    // Toast notification functions
+    function showToast(message, type = 'info', duration = 3000) {
+        const typeClasses = {
+            'success': 'toastify-success',
+            'error': 'toastify-error',
+            'warning': 'toastify-warning',
+            'info': 'toastify-info'
+        };
+
+        Toastify({
+            text: message,
+            duration: duration,
+            gravity: "top",
+            position: "right",
+            className: `toastify-custom ${typeClasses[type] || 'toastify-info'}`,
+            stopOnFocus: true,
+            onClick: function(){} // Callback after click
+        }).showToast();
+    }
+
+    // Custom confirmation dialog
+    function showConfirmDialog(title, message, confirmText = 'Confirm', cancelText = 'Cancel') {
+        return new Promise((resolve) => {
+            const dialogHTML = `
+                <div id="confirmDialog" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[10000]">
+                    <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">${title}</h3>
+                        <p class="text-gray-600 mb-6">${message}</p>
+                        <div class="flex justify-end space-x-3">
+                            <button id="confirmCancel" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                                ${cancelText}
+                            </button>
+                            <button id="confirmOk" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                                ${confirmText}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Remove existing dialog if any
+            const existingDialog = document.getElementById('confirmDialog');
+            if (existingDialog) {
+                existingDialog.remove();
+            }
+
+            // Add dialog to body
+            document.body.insertAdjacentHTML('beforeend', dialogHTML);
+            const dialog = document.getElementById('confirmDialog');
+
+            // Handle button clicks
+            document.getElementById('confirmOk').onclick = () => {
+                dialog.remove();
+                resolve(true);
+            };
+
+            document.getElementById('confirmCancel').onclick = () => {
+                dialog.remove();
+                resolve(false);
+            };
+
+            // Close on outside click
+            dialog.onclick = (e) => {
+                if (e.target === dialog) {
+                    dialog.remove();
+                    resolve(false);
+                }
+            };
+
+            // Close on Escape key
+            const escapeHandler = (e) => {
+                if (e.key === 'Escape') {
+                    dialog.remove();
+                    document.removeEventListener('keydown', escapeHandler);
+                    resolve(false);
+                }
+            };
+            document.addEventListener('keydown', escapeHandler);
+        });
+    }
+
+    // Updated delete review function with toast
+    async function deleteReview(reviewId) {
+        // Custom confirm with better UI
+        const confirmed = await showConfirmDialog(
+            'Delete Review',
+            'Are you sure you want to delete this review? This action cannot be undone.',
+            'Delete',
+            'Cancel'
+        );
+
+        if (!confirmed) return;
+
+        showLoader('Deleting review...');
+
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+
+            if (!csrfToken) {
+                hideLoader();
+                showToast('CSRF token not found. Please refresh the page.', 'error');
+                return;
+            }
+
+            const response = await fetch(`/api/review/${reviewId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                credentials: 'include'
+            });
+
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const text = await response.text();
+                hideLoader();
+                console.error('Expected JSON but got:', text.substring(0, 200));
+                showToast('Server returned an unexpected response', 'error');
+                return;
+            }
+
+            const result = await response.json();
+
+            if (result.success) {
+                hideLoader();
+                showToast('Review deleted successfully!', 'success');
+
+                // Reload after a short delay
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            } else {
+                hideLoader();
+                showToast('Error: ' + result.error, 'error');
+            }
+        } catch (error) {
+            hideLoader();
+            console.error('Error deleting review:', error);
+            showToast(`Error deleting review: ${error.message}`, 'error');
+        }
+    }
+
+    // Submit review form with toast
+    document.getElementById('reviewForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        if (!currentRating) {
+            document.getElementById('ratingError').classList.remove('hidden');
+            showToast('Please select a rating', 'warning');
+            return;
+        }
+
+        const formData = new FormData(this);
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+
+        if (csrfToken) {
+            formData.append('csrf_token', csrfToken);
+        }
+
+        showLoader('Submitting review...');
+
+        try {
+            const response = await fetch('/submit-review', {
+                method: 'POST',
+                body: formData
+            });
+
+            const responseText = await response.text();
+
+            try {
+                const result = JSON.parse(responseText);
+
+                if (result.success) {
+                    hideLoader();
+                    showToast('Review submitted successfully!', 'success');
+                    closeReviewModal();
+
+                    // Delay reload to show toast
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    hideLoader();
+                    showToast('Error: ' + result.error, 'error');
+                }
+            } catch (jsonError) {
+                hideLoader();
+                console.error("Failed to parse JSON:", jsonError);
+                showToast('Server returned an unexpected response', 'error');
+            }
+        } catch (error) {
+            hideLoader();
+            console.error('Network error:', error);
+            showToast('Network error. Please try again.', 'error');
+        }
+    });
+
+    // Optional: Auto-hide loader on escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            hideLoader();
+        }
+    });
+
+    // Optional: Click outside to close loader
+    document.getElementById('transparentLoader').addEventListener('click', function(e) {
+        if (e.target.id === 'transparentLoader') {
+            hideLoader();
+        }
+    });
+</script>
+
+<!-- Transparent Loader -->
+<div id="transparentLoader" class="transparent-loader">
+    <div class="loader-content">
+        <div class="spinner"></div>
+        <div class="loader-text">Processing...</div>
+    </div>
+</div>
+</body>
+</html>

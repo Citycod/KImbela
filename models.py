@@ -186,6 +186,72 @@ class User(db.Model, UserMixin):
         return jwt.encode(payload, current_app.config["SECRET_KEY"], algorithm="HS256")
 
     @property
+    def avg_rating(self):
+        """Get average rating for seller"""
+        if hasattr(self, 'seller_rating') and self.seller_rating:
+            return self.seller_rating.average_rating
+        return 0.0
+
+    @property
+    def review_count(self):
+        """Get total review count for seller"""
+        if hasattr(self, 'seller_rating') and self.seller_rating:
+            return self.seller_rating.total_reviews
+        return 0
+
+    def get_reviews(self, limit=None, service_id=None):
+        """Get seller reviews"""
+        query = MarketplaceReview.query.filter_by(
+            seller_id=self.id,
+            status='approved'
+        ).order_by(MarketplaceReview.created_at.desc())
+
+        if service_id:
+            query = query.filter_by(service_id=service_id)
+
+        if limit:
+            query = query.limit(limit)
+
+        return query.all()
+
+    def has_purchased_from(self, seller_id):
+        """Check if user has purchased from seller (for verified reviews)"""
+        # This should check your purchase/order records
+        # For now, returning True for demo purposes
+        return True  # Implement actual purchase verification
+
+    def can_review_seller(self, seller_id):
+        """Check if user can review seller"""
+        if self.id == seller_id:
+            return False  # Cannot review yourself
+
+        # Check if already reviewed recently
+        existing_review = MarketplaceReview.query.filter_by(
+            buyer_id=self.id,
+            seller_id=seller_id,
+            review_type='seller'
+        ).first()
+
+        return existing_review is None
+
+    def can_review_service(self, service_id):
+        """Check if user can review service"""
+        service = MarketplaceService.query.get(service_id)
+        if not service:
+            return False
+
+        if self.id == service.seller_id:
+            return False  # Cannot review your own service
+
+        # Check if already reviewed
+        existing_review = MarketplaceReview.query.filter_by(
+            buyer_id=self.id,
+            service_id=service_id
+        ).first()
+
+        return existing_review is None
+
+    @property
     def has_active_marketplace_subscription(self):
         """Check if user has an active marketplace subscription"""
         # First check: Do they have a valid subscription status and expiration?
@@ -1650,6 +1716,44 @@ class MarketplaceService(db.Model):
             )
         )
 
+    def update_review_stats(self):
+        """Update service review statistics"""
+        reviews = MarketplaceReview.query.filter_by(
+            service_id=self.id,
+            status='approved'
+        ).all()
+
+        if reviews:
+            total_rating = sum([r.rating for r in reviews])
+            self.average_rating = round(total_rating / len(reviews), 1)
+            self.review_count = len(reviews)
+        else:
+            self.average_rating = 0.0
+            self.review_count = 0
+
+        db.session.commit()
+
+    def get_reviews(self, limit=None, sort='newest'):
+        """Get service reviews with sorting"""
+        query = MarketplaceReview.query.filter_by(
+            service_id=self.id,
+            status='approved'
+        )
+
+        if sort == 'helpful':
+            query = query.order_by(MarketplaceReview.helpful_count.desc())
+        elif sort == 'highest':
+            query = query.order_by(MarketplaceReview.rating.desc())
+        elif sort == 'lowest':
+            query = query.order_by(MarketplaceReview.rating.asc())
+        else:  # newest
+            query = query.order_by(MarketplaceReview.created_at.desc())
+
+        if limit:
+            query = query.limit(limit)
+
+        return query.all()
+
 
 class MarketplaceSubscription(db.Model):
     """Subscription plans for sellers"""
@@ -1708,11 +1812,15 @@ class MarketplaceReview(db.Model):
         db.Integer, db.ForeignKey("marketplace_services.id"), nullable=False
     )
     buyer_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    seller_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
 
     # Review details
     rating = db.Column(db.Integer, nullable=False)  # 1-5
     title = db.Column(db.String(200))
     comment = db.Column(db.Text, nullable=False)
+
+    # Type of review (service or seller) - ADD THIS
+    review_type = db.Column(db.String(20), default='service')  # 'service' or 'seller'
 
     # Response
     seller_response = db.Column(db.Text)
@@ -1723,6 +1831,20 @@ class MarketplaceReview(db.Model):
     is_featured = db.Column(db.Boolean, default=False)
     status = db.Column(db.String(20), default="approved")  # pending, approved, rejected
 
+    # For compatibility with your route - ADD THIS
+    # Or rename is_verified to is_verified_purchase in your route
+    @property
+    def is_verified_purchase(self):
+        """Alias for is_verified"""
+        return self.is_verified
+
+    @is_verified_purchase.setter
+    def is_verified_purchase(self, value):
+        self.is_verified = value
+
+    # Review images - ADD THIS
+    review_images = db.Column(db.Text)  # JSON encoded list of image URLs
+
     # Dates
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(
@@ -1732,8 +1854,114 @@ class MarketplaceReview(db.Model):
     # Relationships
     buyer = db.relationship("User", foreign_keys=[buyer_id])
 
+    # Add this method:
+    def has_user_voted(self, user_id, is_helpful):
+        """Check if a user has voted on this review"""
+        from models import ReviewHelpfulVote  # Import here to avoid circular imports
+
+        vote = ReviewHelpfulVote.query.filter_by(
+            review_id=self.id,
+            user_id=user_id,
+            is_helpful=is_helpful
+        ).first()
+
+        return vote is not None
+
+    # Also add a method to check if user voted at all (for either helpful or not helpful)
+    def get_user_vote(self, user_id):
+        """Get user's vote on this review"""
+        from models import ReviewHelpfulVote
+
+        vote = ReviewHelpfulVote.query.filter_by(
+            review_id=self.id,
+            user_id=user_id
+        ).first()
+
+        if vote:
+            return 'helpful' if vote.is_helpful else 'not_helpful'
+        return None
+
     def __repr__(self):
         return f"<MarketplaceReview {self.id} - {self.rating} stars>"
+
+    @property
+    def review_images_list(self):
+        """Get review images as list"""
+        if self.review_images:
+            try:
+                import json
+                return json.loads(self.review_images)
+            except:
+                return []
+        return []
+
+
+
+class SellerRating(db.Model):
+    """Aggregate seller ratings (updated when new reviews are added)"""
+    __tablename__ = "seller_ratings"
+
+    id = db.Column(db.Integer, primary_key=True)
+    seller_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False, unique=True)
+
+    # Aggregate stats
+    average_rating = db.Column(db.Float, default=0.0)
+    total_reviews = db.Column(db.Integer, default=0)
+    rating_1 = db.Column(db.Integer, default=0)  # Count of 1-star ratings
+    rating_2 = db.Column(db.Integer, default=0)  # Count of 2-star ratings
+    rating_3 = db.Column(db.Integer, default=0)  # Count of 3-star ratings
+    rating_4 = db.Column(db.Integer, default=0)  # Count of 4-star ratings
+    rating_5 = db.Column(db.Integer, default=0)  # Count of 5-star ratings
+
+    # Communication rating (if applicable)
+    communication_rating = db.Column(db.Float, default=0.0)
+
+    # Last updated
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def update_stats(self):
+        """Update aggregate stats from reviews"""
+        from models import MarketplaceReview  # Import here to avoid circular import
+
+        reviews = MarketplaceReview.query.filter_by(
+            seller_id=self.seller_id,
+            status='approved'
+        ).all()
+
+        self.total_reviews = len(reviews)
+
+        if reviews:
+            total_rating = sum([r.rating for r in reviews])
+            self.average_rating = round(total_rating / self.total_reviews, 1)
+
+            # Reset counts
+            self.rating_1 = 0
+            self.rating_2 = 0
+            self.rating_3 = 0
+            self.rating_4 = 0
+            self.rating_5 = 0
+
+            # Count ratings
+            for review in reviews:
+                if review.rating == 1:
+                    self.rating_1 += 1
+                elif review.rating == 2:
+                    self.rating_2 += 1
+                elif review.rating == 3:
+                    self.rating_3 += 1
+                elif review.rating == 4:
+                    self.rating_4 += 1
+                elif review.rating == 5:
+                    self.rating_5 += 1
+
+        db.session.commit()
+
+    def get_rating_percentage(self, star):
+        """Get percentage for specific star rating"""
+        if self.total_reviews == 0:
+            return 0
+        count = getattr(self, f'rating_{star}', 0)
+        return round((count / self.total_reviews) * 100, 1)
 
 
 class MarketplacePayment(db.Model):
@@ -1893,3 +2121,5 @@ class MarketplaceSubscriptionPlan(db.Model):
             except:
                 return []
         return []
+
+

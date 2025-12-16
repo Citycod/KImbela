@@ -739,7 +739,24 @@ button:not(:disabled):hover {
                         <span class="text-xs text-gray-500">({{ service.review_count or 0 }} reviews)</span>
                         <span class="text-xs text-gray-500 ml-2"><i class="bi bi-eye mr-1"></i> {{ service.views or 0 }}</span>
                     </div>
-                    
+
+                    <!-- After the rating section in service_detail.html -->
+                    <div class="mt-2">
+                        <a href="{{ url_for('market.service_reviews', slug=service.slug) }}"
+                           class="text-blue-600 hover:underline text-sm">
+                            View all {{ service.review_count }} reviews
+                        </a>
+                        {% if current_user.is_authenticated and current_user.id != service.seller_id %}
+                        <span class="mx-2">•</span>
+                        <button onclick="openReviewModal('service', {{ service.id }})"
+                                class="text-blue-600 hover:underline text-sm">
+                            Write a review
+                        </button>
+                        {% endif %}
+                    </div>
+                    <br>
+                    <br>
+
                     <!-- Description -->
                     <div class="mb-4">
                         <h3 class="text-sm font-bold mb-2">Description</h3>

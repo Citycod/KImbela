@@ -3,8 +3,23 @@ from flask import Blueprint, jsonify, request, url_for
 from flask_login import login_required, current_user
 from extensions import db
 from models import Message, User
+from flask import Blueprint, jsonify, request, url_for, current_app
+from flask_login import login_required, current_user
+from sqlalchemy import or_, and_, desc
+from datetime import datetime, timedelta
+from extensions import db, socketio, cache
+from models import Message, User
+import json, pytz
+from flask_socketio import SocketIO, emit
+
 
 messaging = Blueprint("messaging", __name__)
+
+# Initialize SocketIO
+
+
+# Cache configuration
+CACHE_TIMEOUT = 300  # 5 minutes
 
 # ========== ROUTES ONLY ==========
 @messaging.route("/api/messaging/friends")
@@ -29,7 +44,7 @@ def get_friends_for_messaging():
                     "online": friend.is_online,
                     "unread_count": unread_count
                 })
-        
+
         return jsonify({"success": True, "friends": friends})
     except Exception as e:
         print(f"❌ Error getting friends: {e}")
@@ -42,41 +57,42 @@ def get_messages_with_friend(friend_id):
     """Get messages between current user and friend"""
     try:
         friend = User.query.get_or_404(friend_id)
-        
+
         # Check permissions
         if not current_user.can_interact_with(friend):
             return jsonify({"success": False, "error": "Cannot message this user"}), 403
-        
+
         if not current_user.is_friend_with(friend):
             return jsonify({"success": False, "error": "You must be friends to message"}), 403
 
-        # Get messages
-        messages = Message.query.filter(
+        # FIX: Use db.session.query() instead of Message.query
+        messages = db.session.query(Message).filter(
             ((Message.sender_id == current_user.id) & (Message.receiver_id == friend_id)) |
             ((Message.sender_id == friend_id) & (Message.receiver_id == current_user.id))
         ).order_by(Message.timestamp.asc()).all()
 
         # Mark unread messages as read
-        unread_messages = Message.query.filter(
-            Message.sender_id == friend_id,
-            Message.receiver_id == current_user.id,
-            Message.status == "delivered"
-        ).all()
+        unread_messages = db.session.query(Message).filter_by(
+            sender_id=friend_id,
+            receiver_id=current_user.id,
+            status="delivered"
+        ).update({"status": "read"})
 
-        for msg in unread_messages:
-            msg.status = "read"
-        
         db.session.commit()
 
         # Prepare response
         messages_data = []
         for msg in messages:
+            local_timestamp = msg.timestamp
+            if msg.timestamp.tzinfo is None:
+                local_timestamp = msg.timestamp.replace(tzinfo=pytz.UTC)
+
             messages_data.append({
                 "id": msg.id,
                 "sender_id": msg.sender_id,
                 "receiver_id": msg.receiver_id,
                 "content": msg.content,
-                "timestamp": msg.timestamp.isoformat(),
+                "timestamp": local_timestamp.isoformat(),
                 "status": msg.status,
                 "is_mine": msg.sender_id == current_user.id,
                 "sender_name": msg.sender.full_name,
@@ -84,10 +100,37 @@ def get_messages_with_friend(friend_id):
             })
 
         return jsonify({"success": True, "messages": messages_data})
-        
+
     except Exception as e:
         print(f"❌ Error getting messages: {e}")
+        db.session.rollback()
         return jsonify({"success": False, "error": str(e)}), 500
+
+
+@messaging.route("/api/messaging/mark-read/<int:friend_id>", methods=["POST"])
+@login_required
+def mark_messages_as_read(friend_id):
+    """Mark all messages from friend as read"""
+    try:
+        # Mark delivered messages as read
+        updated = Message.query.filter_by(
+            sender_id=friend_id,
+            receiver_id=current_user.id,
+            status="delivered"
+        ).update({"status": "read"})
+
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "marked_read": updated
+        })
+    except Exception as e:
+        print(f"❌ Error marking messages as read: {e}")
+        db.session.rollback()
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 
 
 @messaging.route("/api/messaging/send", methods=["POST"])
@@ -109,7 +152,7 @@ def send_message():
         # Check permissions
         if not current_user.can_interact_with(friend):
             return jsonify({"success": False, "error": "Cannot message this user"}), 403
-        
+
         if not current_user.is_friend_with(friend):
             return jsonify({"success": False, "error": "You must be friends to message"}), 403
 
@@ -158,7 +201,7 @@ def get_unread_message_count():
             receiver_id=current_user.id,
             status="delivered"
         ).count()
-        
+
         return jsonify({"success": True, "unread_count": unread_count})
     except Exception as e:
         print(f"❌ Error getting unread count: {e}")

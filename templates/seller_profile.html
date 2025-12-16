@@ -226,6 +226,21 @@
                         {% endif %}
                     </p>
                     {% endif %}
+
+                    <!-- After seller info -->
+                    <div class="mt-4">
+                        <a href="{{ url_for('market.seller_reviews', seller_id=seller.id) }}"
+                           class="text-blue-600 hover:underline">
+                            View all {{ seller.review_count }} seller reviews
+                        </a>
+                        {% if current_user.is_authenticated and current_user.id != seller.id %}
+                        <span class="mx-2">•</span>
+                        <button onclick="openReviewModal('seller', {{ seller.id }})"
+                                class="text-blue-600 hover:underline">
+                            Review this seller
+                        </button>
+                        {% endif %}
+                    </div>
                     
                     <!-- Stats -->
                     <div class="flex flex-wrap gap-4">

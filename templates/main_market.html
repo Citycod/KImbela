@@ -523,15 +523,7 @@
                             <!-- In the service card (around line 370), modify the seller section: -->
 <div class="flex items-center justify-between mb-3">
     <div class="flex items-center space-x-2">
-        <a href="{{ url_for('market.seller_profile', seller_id=service.seller_id) }}" 
-           class="flex items-center space-x-2 cursor-pointer group">
-            <img src="{{ service.seller.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
-                 alt="{{ service.seller.full_name }}" 
-                 class="w-6 h-6 md:w-8 md:h-8 rounded-full object-cover">
-            <div>
-                <p class="text-xs md:text-sm font-medium">{{ service.seller.full_name }}</p>
-            </div>
-        </a>
+
         
         <!-- Subscription Plan Badge -->
         {% if service.seller.marketplace_subscription %}

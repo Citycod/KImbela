@@ -26,6 +26,7 @@ from models import (
     PaymentTransaction,
     MarketplaceSubscriptionPlan,
     MarketplaceSubscription,
+    SellerRating,
 )
 import cloudinary.uploader
 import os, requests, json, uuid
@@ -4240,3 +4241,541 @@ def test_whatsapp(phone):
     <p>Starts with 234: {digits_only.startswith('234')}</p>
     <p>Expected WhatsApp format: 234XXXXXXXXXX (13 digits)</p>
     """
+
+
+# Add these routes to market.py
+
+@market.route('/service/<slug>/reviews', methods=['GET'])
+def service_reviews(slug):
+    """View all reviews for a service"""
+    service = MarketplaceService.query.filter_by(slug=slug).first_or_404()
+
+    # Get sort parameter
+    sort_by = request.args.get('sort', 'newest')
+    page = request.args.get('page', 1, type=int)
+    per_page = 10
+
+    # Get reviews with pagination
+    query = MarketplaceReview.query.filter_by(
+        service_id=service.id,
+        status='approved'
+    )
+
+    # Apply sorting
+    if sort_by == 'helpful':
+        query = query.order_by(MarketplaceReview.helpful_count.desc())
+    elif sort_by == 'highest':
+        query = query.order_by(MarketplaceReview.rating.desc())
+    elif sort_by == 'lowest':
+        query = query.order_by(MarketplaceReview.rating.asc())
+    else:  # newest
+        query = query.order_by(MarketplaceReview.created_at.desc())
+
+    reviews = query.paginate(page=page, per_page=per_page, error_out=False)
+
+    # Get rating breakdown
+    rating_stats = {
+        5: MarketplaceReview.query.filter_by(service_id=service.id, rating=5, status='approved').count(),
+        4: MarketplaceReview.query.filter_by(service_id=service.id, rating=4, status='approved').count(),
+        3: MarketplaceReview.query.filter_by(service_id=service.id, rating=3, status='approved').count(),
+        2: MarketplaceReview.query.filter_by(service_id=service.id, rating=2, status='approved').count(),
+        1: MarketplaceReview.query.filter_by(service_id=service.id, rating=1, status='approved').count(),
+    }
+
+    total_reviews = sum(rating_stats.values())
+
+    # Calculate percentages
+    for star in rating_stats:
+        if total_reviews > 0:
+            rating_stats[star] = {
+                'count': rating_stats[star],
+                'percentage': round((rating_stats[star] / total_reviews) * 100, 1)
+            }
+        else:
+            rating_stats[star] = {'count': 0, 'percentage': 0}
+
+    return render_template(
+        'service_reviews.html',
+        service=service,
+        reviews=reviews,
+        sort_by=sort_by,
+        rating_stats=rating_stats,
+        total_reviews=total_reviews,
+        average_rating=service.average_rating,
+        now=datetime.utcnow()
+    )
+
+
+@market.route('/seller/<int:seller_id>/reviews', methods=['GET'])
+def seller_reviews(seller_id):
+    """View all reviews for a seller"""
+    seller = User.query.get_or_404(seller_id)
+
+    # Get sort parameter
+    sort_by = request.args.get('sort', 'newest')
+    page = request.args.get('page', 1, type=int)
+    per_page = 10
+
+    # Get reviews with pagination
+    query = MarketplaceReview.query.filter_by(
+        seller_id=seller_id,
+        status='approved'
+    )
+
+    # Apply sorting
+    if sort_by == 'helpful':
+        query = query.order_by(MarketplaceReview.helpful_count.desc())
+    elif sort_by == 'highest':
+        query = query.order_by(MarketplaceReview.rating.desc())
+    elif sort_by == 'lowest':
+        query = query.order_by(MarketplaceReview.rating.asc())
+    else:  # newest
+        query = query.order_by(MarketplaceReview.created_at.desc())
+
+    reviews = query.paginate(page=page, per_page=per_page, error_out=False)
+
+    # Get seller rating stats
+    seller_rating = SellerRating.query.filter_by(seller_id=seller_id).first()
+    if not seller_rating:
+        # Create if doesn't exist
+        seller_rating = SellerRating(seller_id=seller_id)
+        seller_rating.update_stats()
+
+    rating_stats = {
+        5: seller_rating.rating_5,
+        4: seller_rating.rating_4,
+        3: seller_rating.rating_3,
+        2: seller_rating.rating_2,
+        1: seller_rating.rating_1,
+    }
+
+    # Calculate percentages
+    for star in rating_stats:
+        if seller_rating.total_reviews > 0:
+            rating_stats[star] = {
+                'count': rating_stats[star],
+                'percentage': seller_rating.get_rating_percentage(star)
+            }
+        else:
+            rating_stats[star] = {'count': 0, 'percentage': 0}
+
+    return render_template(
+        'seller_reviews.html',
+        seller=seller,
+        reviews=reviews,
+        sort_by=sort_by,
+        rating_stats=rating_stats,
+        total_reviews=seller_rating.total_reviews,
+        average_rating=seller_rating.average_rating,
+        now=datetime.utcnow()
+    )
+
+
+@market.route('/submit-review', methods=['POST'])
+@login_required
+def submit_review():
+    """Submit a review for service or seller"""
+    try:
+        # Get form data
+        review_type = request.form.get('review_type', 'service')
+        rating = request.form.get('rating', type=int)
+        comment = request.form.get('comment', '').strip()
+        title = request.form.get('title', '').strip()
+        service_id = request.form.get('service_id', type=int)
+        seller_id = request.form.get('seller_id', type=int)
+
+        print(f"DEBUG - Received review submission:")
+        print(f"  review_type: {review_type}")
+        print(f"  rating: {rating}")
+        print(f"  service_id: {service_id}")
+        print(f"  seller_id: {seller_id}")
+
+        if not rating or rating < 1 or rating > 5:
+            return jsonify({'success': False, 'error': 'Please select a rating between 1 and 5 stars'})
+
+        if not comment or len(comment) < 10:
+            return jsonify({'success': False, 'error': 'Review comment must be at least 10 characters'})
+
+        review = None
+
+        if review_type == 'service':
+            if not service_id:
+                return jsonify({'success': False, 'error': 'Service ID required'})
+
+            service = MarketplaceService.query.get_or_404(service_id)
+
+            # Get seller_id from the service
+            seller_id = service.seller_id
+
+            print(f"  Found service: {service.title}")
+            print(f"  Service seller_id: {seller_id}")
+
+            # Check if user is trying to review their own service
+            if current_user.id == seller_id:
+                return jsonify({'success': False, 'error': 'You cannot review your own service'})
+
+            # Check if user already reviewed this service
+            existing_review = MarketplaceReview.query.filter_by(
+                buyer_id=current_user.id,
+                service_id=service_id
+            ).first()
+
+            if existing_review:
+                return jsonify({'success': False, 'error': 'You have already reviewed this service'})
+
+            # Create service review - USE is_verified NOT is_verified_purchase
+            review = MarketplaceReview(
+                service_id=service_id,
+                seller_id=seller_id,
+                buyer_id=current_user.id,
+                rating=rating,
+                title=title,
+                comment=comment,
+                review_type='service',  # Make sure this field exists in model
+                is_verified=True,  # Use is_verified, not is_verified_purchase
+                status='approved'
+            )
+
+        else:  # seller review
+            if not seller_id:
+                return jsonify({'success': False, 'error': 'Seller ID required'})
+
+            seller = User.query.get_or_404(seller_id)
+
+            if current_user.id == seller_id:
+                return jsonify({'success': False, 'error': 'You cannot review yourself'})
+
+            # Check if user already reviewed this seller
+            existing_review = MarketplaceReview.query.filter_by(
+                buyer_id=current_user.id,
+                seller_id=seller_id,
+                review_type='seller'
+            ).first()
+
+            if existing_review:
+                return jsonify({'success': False, 'error': 'You have already reviewed this seller'})
+
+            # Create seller review - USE is_verified NOT is_verified_purchase
+            review = MarketplaceReview(
+                seller_id=seller_id,
+                buyer_id=current_user.id,
+                rating=rating,
+                title=title,
+                comment=comment,
+                review_type='seller',  # Make sure this field exists in model
+                is_verified=True,  # Use is_verified, not is_verified_purchase
+                status='approved'
+            )
+
+        # Handle review images
+        review_images = []
+        if 'review_images' in request.files:
+            files = request.files.getlist('review_images')
+            for file in files[:3]:  # Limit to 3 images
+                if file and file.filename != '' and allowed_file(file.filename):
+                    print(f"  Uploading image: {file.filename}")
+                    image_url = upload_to_cloudinary(file, 'reviews')
+                    if image_url:
+                        review_images.append(image_url)
+
+        if review_images:
+            review.review_images = json.dumps(review_images)
+
+        print(f"  Creating review with data:")
+        print(f"    service_id: {review.service_id}")
+        print(f"    seller_id: {review.seller_id}")
+        print(f"    buyer_id: {review.buyer_id}")
+        print(f"    review_type: {review.review_type}")
+
+        db.session.add(review)
+        db.session.commit()
+
+        print(f"  ✅ Review created with ID: {review.id}")
+
+        # Update service statistics if it's a service review
+        if review.service_id:
+            service = MarketplaceService.query.get(review.service_id)
+            if service:
+                # Calculate new average rating
+                if service.review_count is None:
+                    service.review_count = 0
+                    service.average_rating = 0.0
+
+                new_total_rating = (service.average_rating * service.review_count) + review.rating
+                service.review_count += 1
+                service.average_rating = new_total_rating / service.review_count
+
+                db.session.commit()
+                print(
+                    f"  ✅ Updated service stats: average_rating={service.average_rating}, review_count={service.review_count}")
+
+        return jsonify({
+            'success': True,
+            'message': 'Review submitted successfully!',
+            'review_id': review.id,
+            'review_type': review.review_type
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        print(f'❌ Error submitting review: {str(e)}')
+        import traceback
+        print(traceback.format_exc())
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@market.route('/api/review-helpful', methods=['POST'])
+@login_required
+def review_helpful():
+    """Mark review as helpful or not helpful"""
+    try:
+        # Get JSON data
+        if not request.is_json:
+            return jsonify({'success': False, 'error': 'Request must be JSON'}), 400
+
+        data = request.get_json()
+        review_id = data.get('review_id', type=int)
+        is_helpful = data.get('is_helpful', type=bool)
+
+        if not review_id:
+            return jsonify({'success': False, 'error': 'Review ID required'})
+
+        if is_helpful is None:
+            return jsonify({'success': False, 'error': 'is_helpful value required'})
+
+        review = MarketplaceReview.query.get_or_404(review_id)
+
+        # Check if ReviewHelpfulVote model exists
+        try:
+            from models import ReviewHelpfulVote
+        except ImportError:
+            # Create ReviewHelpfulVote model if it doesn't exist
+            class ReviewHelpfulVote(db.Model):
+                __tablename__ = "review_helpful_votes"
+                id = db.Column(db.Integer, primary_key=True)
+                review_id = db.Column(db.Integer, db.ForeignKey('marketplace_reviews.id', ondelete='CASCADE'),
+                                      nullable=False)
+                user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+                is_helpful = db.Column(db.Boolean, nullable=False)
+                created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+            db.create_all()  # This will create the table if it doesn't exist
+
+        # Check if user already voted
+        existing_vote = ReviewHelpfulVote.query.filter_by(
+            review_id=review_id,
+            user_id=current_user.id
+        ).first()
+
+        if existing_vote:
+            # Update existing vote
+            if existing_vote.is_helpful != is_helpful:
+                # Update counts
+                if existing_vote.is_helpful:
+                    review.helpful_count = max(0, review.helpful_count - 1)
+                else:
+                    review.not_helpful_count = max(0, review.not_helpful_count - 1)
+
+                if is_helpful:
+                    review.helpful_count += 1
+                else:
+                    review.not_helpful_count += 1
+
+                existing_vote.is_helpful = is_helpful
+                existing_vote.created_at = datetime.utcnow()
+        else:
+            # Create new vote
+            vote = ReviewHelpfulVote(
+                review_id=review_id,
+                user_id=current_user.id,
+                is_helpful=is_helpful
+            )
+            db.session.add(vote)
+
+            if is_helpful:
+                review.helpful_count = (review.helpful_count or 0) + 1
+            else:
+                review.not_helpful_count = (review.not_helpful_count or 0) + 1
+
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'helpful_count': review.helpful_count or 0,
+            'not_helpful_count': review.not_helpful_count or 0,
+            'user_vote': 'helpful' if is_helpful else 'not_helpful'
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error in review_helpful: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@market.route('/api/review-reply', methods=['POST'])
+@login_required
+def review_reply():
+    """Seller reply to a review"""
+    try:
+        review_id = request.json.get('review_id', type=int)
+        reply_text = request.json.get('reply', '').strip()
+
+        if not review_id:
+            return jsonify({'success': False, 'error': 'Review ID required'})
+
+        if not reply_text or len(reply_text) < 5:
+            return jsonify({'success': False, 'error': 'Reply must be at least 5 characters'})
+
+        review = MarketplaceReview.query.get_or_404(review_id)
+
+        # Check if user is the seller
+        if current_user.id != review.seller_id and not current_user.is_admin:
+            return jsonify({'success': False, 'error': 'Only the seller can reply to reviews'})
+
+        # Check if already replied
+        if review.seller_response:
+            return jsonify({'success': False, 'error': 'You have already replied to this review'})
+
+        review.seller_response = reply_text
+        review.seller_response_at = datetime.utcnow()
+
+        # Notify the buyer
+        buyer = User.query.get(review.buyer_id)
+        if buyer:
+            buyer.create_notification(
+                actor=current_user,
+                notification_type='review_reply',
+                entity_id=review.id,
+                entity_type='review',
+                custom_message=f'{current_user.full_name} replied to your review'
+            )
+
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'message': 'Reply submitted successfully',
+            'reply': reply_text,
+            'reply_date': review.seller_response_at.isoformat()
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@market.route('/api/user-reviews', methods=['GET'])
+@login_required
+def get_user_reviews():
+    """Get reviews written by current user"""
+    try:
+        page = request.args.get('page', 1, type=int)
+        per_page = 10
+        review_type = request.args.get('type', 'all')  # all, service, seller
+
+        query = MarketplaceReview.query.filter_by(buyer_id=current_user.id)
+
+        if review_type != 'all':
+            query = query.filter_by(review_type=review_type)
+
+        query = query.order_by(MarketplaceReview.created_at.desc())
+
+        reviews = query.paginate(page=page, per_page=per_page, error_out=False)
+
+        reviews_data = []
+        for review in reviews.items:
+            review_data = {
+                'id': review.id,
+                'rating': review.rating,
+                'title': review.title,
+                'comment': review.comment,
+                'review_type': review.review_type,
+                'status': review.status,
+                'is_verified': review.is_verified_purchase,
+                'created_at': review.created_at.isoformat(),
+                'seller_response': review.seller_response,
+                'seller_response_at': review.seller_response_at.isoformat() if review.seller_response_at else None,
+                'helpful_count': review.helpful_count,
+                'not_helpful_count': review.not_helpful_count,
+                'review_images': review.review_images_list
+            }
+
+            if review.service_id:
+                review_data['service'] = {
+                    'id': review.service.id,
+                    'title': review.service.title,
+                    'slug': review.service.slug,
+                    'cover_image': review.service.cover_image
+                }
+
+            review_data['seller'] = {
+                'id': review.seller.id,
+                'name': review.seller.full_name,
+                'avatar': review.seller.profile_pic
+            }
+
+            reviews_data.append(review_data)
+
+        return jsonify({
+            'success': True,
+            'reviews': reviews_data,
+            'pagination': {
+                'page': reviews.page,
+                'pages': reviews.pages,
+                'total': reviews.total,
+                'has_next': reviews.has_next,
+                'has_prev': reviews.has_prev
+            }
+        })
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@market.route('/api/review/<int:review_id>', methods=['DELETE'])
+@login_required
+def delete_review(review_id):
+    """Delete a review (only by author or admin)"""
+    try:
+        review = MarketplaceReview.query.get_or_404(review_id)
+
+        # Check permissions
+        if review.buyer_id != current_user.id and not current_user.is_admin:
+            return jsonify({'success': False, 'error': 'Permission denied'}), 403
+
+        # Store info before deletion
+        seller_id = review.seller_id
+        service_id = review.service_id
+
+        db.session.delete(review)
+        db.session.commit()
+
+        # Update service statistics
+        if service_id:
+            service = MarketplaceService.query.get(service_id)
+            if service:
+                service.update_review_stats()
+
+        # FIXED: Remove SellerRating reference since it doesn't exist
+        # Update seller stats on User model instead
+        try:
+            seller = User.query.get(seller_id)
+            if seller:
+                # Update seller's average rating if you have that field
+                # You could add this to your User model if needed
+                pass
+        except Exception as e:
+            # Log error but don't fail the whole operation
+            print(f"Error updating seller stats: {str(e)}")
+
+        return jsonify({
+            'success': True,
+            'message': 'Review deleted successfully'
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error deleting review: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500

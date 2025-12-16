@@ -371,3 +371,99 @@ def test_messaging():
     </body>
     </html>
     '''
+
+
+@app.route('/api/messaging/friends')
+@login_required
+def get_messaging_friends():
+    """Get friends with last message info for messaging"""
+    try:
+        friends = []
+        for friend in current_user.friends:
+            # Get last message
+            last_message = Message.query.filter(
+                ((Message.sender_id == current_user.id) & (Message.receiver_id == friend.id)) |
+                ((Message.sender_id == friend.id) & (Message.receiver_id == current_user.id))
+            ).order_by(Message.timestamp.desc()).first()
+
+            # Count unread messages
+            unread_count = Message.query.filter_by(
+                sender_id=friend.id,
+                receiver_id=current_user.id,
+                status="delivered"
+            ).count()
+
+            friends.append({
+                'id': friend.id,
+                'name': friend.full_name,
+                'avatar': friend.profile_pic or url_for('static', filename='assets/img/default-avatar.png'),
+                'is_online': friend.is_online,
+                'last_message': last_message.content if last_message else None,
+                'last_message_time': last_message.timestamp.isoformat() if last_message else None,
+                'unread_count': unread_count
+            })
+
+        return jsonify({'success': True, 'friends': friends})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/messaging/send', methods=['POST'])
+@login_required
+def send_message_api():
+    """Send a message via HTTP (fallback)"""
+    try:
+        data = request.get_json()
+        receiver_id = data.get('receiver_id')
+        content = data.get('content')
+
+        if not receiver_id or not content:
+            return jsonify({'success': False, 'error': 'Missing data'}), 400
+
+        receiver = User.query.get_or_404(receiver_id)
+
+        # Create message
+        message = Message(
+            sender_id=current_user.id,
+            receiver_id=receiver_id,
+            content=content,
+            status='delivered'
+        )
+        db.session.add(message)
+        db.session.commit()
+
+        # Prepare response
+        message_data = {
+            'id': message.id,
+            'sender_id': message.sender_id,
+            'receiver_id': message.receiver_id,
+            'content': message.content,
+            'timestamp': message.timestamp.isoformat(),
+            'status': message.status,
+            'is_mine': True,
+            'sender_name': current_user.full_name,
+            'sender_avatar': current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png')
+        }
+
+        return jsonify({'success': True, 'message': message_data})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/messaging/mark-read/<int:friend_id>', methods=['POST'])
+@login_required
+def mark_messages_read(friend_id):
+    """Mark all messages from friend as read"""
+    try:
+        Message.query.filter_by(
+            sender_id=friend_id,
+            receiver_id=current_user.id,
+            status="delivered"
+        ).update({"status": "read"})
+        db.session.commit()
+
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500

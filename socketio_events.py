@@ -156,84 +156,60 @@ def handle_join_chat(data):
         print(f'❌ Join chat error: {e}')
         emit('error', {'message': str(e)})
 
+
 @socketio.on('send_message')
 def handle_send_message(data):
-    """Send a message"""
     try:
-        if not current_user.is_authenticated:
-            emit('error', {'message': 'Not authenticated'})
-            return
-            
-        friend_id = data.get('friend_id')
-        content = data.get('content', '').strip()
-        
-        if not friend_id or not content:
-            emit('error', {'message': 'Missing friend_id or content'})
-            return
-            
-        # Check if users are friends and can message
-        friend = User.query.get(friend_id)
-        if not friend:
-            emit('error', {'message': 'User not found'})
-            return
-            
-        if not current_user.is_friend_with(friend):
-            emit('error', {'message': 'You are not friends with this user'})
-            return
-            
-        # Create message
+        from models import Message, db
+        from flask_login import current_user
+
+        friend_id = data['friend_id']
+        content = data['content']
+
+        # Create and save message
         message = Message(
             sender_id=current_user.id,
             receiver_id=friend_id,
             content=content,
-            status='sent'
+            status='delivered'
         )
-        
         db.session.add(message)
         db.session.commit()
-        
-        # Update status if friend is online
-        if friend.is_online:
-            message.status = 'delivered'
-            db.session.commit()
-        
-        # Prepare message data
-        message_data = {
+
+        # Emit to sender
+        emit('new_message', {
             'id': message.id,
             'sender_id': message.sender_id,
             'receiver_id': message.receiver_id,
             'content': message.content,
             'timestamp': message.timestamp.isoformat(),
             'status': message.status,
+            'is_mine': True,
             'sender_name': current_user.full_name,
-            'sender_avatar': current_user.profile_pic or '/static/assets/img/default-avatar.png'
-        }
-        
-        # Send to chat room
-        room = f'chat_{min(current_user.id, friend_id)}_{max(current_user.id, friend_id)}'
-        emit('new_message', message_data, room=room)
-        
-        # Also send to friend's personal room for notifications
-        emit('new_message_notification', {
-            'message': message_data,
-            'from_user': current_user.full_name,
-            'from_user_id': current_user.id
-        }, room=f'user_{friend_id}')
-        
-        # Return confirmation to sender
-        emit('message_sent', {
-            'success': True,
-            'message_id': message.id,
+            'sender_avatar': current_user.profile_pic or url_for("static", filename="assets/img/default-avatar.png")
+        }, room=request.sid)
+
+        # Emit to receiver if online
+        emit('new_message', {
+            'id': message.id,
+            'sender_id': message.sender_id,
+            'receiver_id': message.receiver_id,
+            'content': message.content,
             'timestamp': message.timestamp.isoformat(),
-            'message_data': message_data
-        })
-        
-        print(f'📨 Message sent from {current_user.id} to {friend_id} (room: {room})')
-        
+            'status': message.status,
+            'is_mine': False,
+            'sender_name': current_user.full_name,
+            'sender_avatar': current_user.profile_pic or url_for("static", filename="assets/img/default-avatar.png")
+        }, room=f"user_{friend_id}")
+
     except Exception as e:
-        print(f'❌ Send message error: {e}')
-        traceback.print_exc()
-        emit('error', {'message': str(e)})
+        print(f"Error sending message: {e}")
+        emit('error', {'error': str(e)})
+
+
+
+
+
 
 # Typing indicators
 @socketio.on('typing_start')

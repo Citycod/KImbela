@@ -329,13 +329,23 @@
     <!-- Messenger Popup -->
     <!-- Messenger Popup - FIXED VERSION -->
     <!-- In your HTML template, update the messenger popup section -->
+<!-- Messenger Popup - IMPROVED VERSION -->
 <div id="messengerPopup" class="fixed bottom-4 right-4 w-80 sm:w-96 h-[500px] bg-white rounded-xl shadow-2xl z-50 hidden flex-col border border-gray-200">
+    <!-- Header -->
     <div class="flex-none p-3 border-b bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-t-xl">
         <div class="flex items-center justify-between">
-            <h3 class="font-semibold text-sm sm:text-base">Messenger</h3>
-            <button onclick="closeMessenger()" class="text-white hover:bg-blue-700 p-1 rounded">
-                <i class="bi bi-x-lg"></i>
-            </button>
+            <div class="flex items-center">
+                <h3 class="font-semibold text-sm sm:text-base">Messenger</h3>
+                <span id="unreadChatsBadge" class="ml-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden">0</span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button onclick="markAllAsRead()" class="text-white hover:bg-blue-700 p-1 rounded text-xs" title="Mark all as read">
+                    <i class="bi bi-check-all"></i>
+                </button>
+                <button onclick="closeMessenger()" class="text-white hover:bg-blue-700 p-1 rounded">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -344,7 +354,7 @@
         <div id="friendsContainer" class="p-2">
             <div class="text-center p-4 text-gray-500">
                 <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
-                <p class="mt-2 text-sm">Loading friends...</p>
+                <p class="mt-2 text-sm">Loading conversations...</p>
             </div>
         </div>
     </div>
@@ -352,20 +362,39 @@
     <!-- Chat Area -->
     <div id="chatArea" class="flex-1 flex flex-col hidden">
         <!-- Chat Header -->
-        <div class="flex-none p-3 border-b bg-gray-50 flex items-center">
-            <button onclick="backToFriends()" class="p-1 mr-2 rounded-full hover:bg-gray-200 sm:hidden">
-                <i class="bi bi-arrow-left"></i>
-            </button>
-            <img id="chatAvatar" src="" class="w-8 h-8 rounded-full mr-2">
-            <div class="flex-1">
-                <p id="chatName" class="font-medium text-sm"></p>
-                <p id="chatStatus" class="text-xs text-green-600">Online</p>
+        <div class="flex-none p-3 border-b bg-gray-50 flex items-center justify-between">
+            <div class="flex items-center">
+                <button onclick="backToFriends()" class="p-1 mr-2 rounded-full hover:bg-gray-200">
+                    <i class="bi bi-arrow-left"></i>
+                </button>
+                <img id="chatAvatar" src="" class="w-8 h-8 rounded-full mr-2">
+                <div>
+                    <p id="chatName" class="font-medium text-sm"></p>
+                    <p id="chatStatus" class="text-xs text-green-600">Online</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button onclick="loadMoreMessages()" class="text-xs text-blue-600 hover:text-blue-800 p-1" title="Load older messages">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </button>
+                <button onclick="clearChat()" class="text-xs text-gray-600 hover:text-red-600 p-1" title="Clear chat">
+                    <i class="bi bi-trash"></i>
+                </button>
             </div>
         </div>
 
-        <!-- Messages Container -->
-        <div class="flex-1 overflow-y-auto p-3 bg-gray-50" id="chatMessagesWrapper">
+        <!-- Messages Container with Max Height -->
+        <div class="flex-1 overflow-y-auto p-3 bg-gray-50" id="chatMessagesWrapper" style="max-height: 350px;">
+            <div id="messagesLoading" class="hidden text-center py-4">
+                <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
+                <p class="text-xs text-gray-500 mt-2">Loading messages...</p>
+            </div>
             <div id="chatMessages" class="space-y-2"></div>
+            <div id="noMessages" class="hidden text-center py-8 text-gray-400">
+                <i class="bi bi-chat-dots text-2xl mb-2"></i>
+                <p class="text-sm">No messages yet</p>
+                <p class="text-xs">Start the conversation!</p>
+            </div>
         </div>
 
         <!-- Typing Indicator -->
@@ -377,15 +406,20 @@
                     <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
                 </div>
                 <span id="typingUserName" class="text-xs"></span>
+                <span class="text-xs">is typing...</span>
             </div>
         </div>
 
         <!-- Message Input -->
         <div class="border-t bg-white p-3">
             <div class="flex items-center space-x-2">
+                <button class="p-2 text-gray-500 hover:text-blue-600">
+                    <i class="bi bi-emoji-smile"></i>
+                </button>
                 <input type="text" id="chatInput" placeholder="Type a message..."
-                    class="flex-1 px-4 py-2 bg-gray-100 rounded-full text-sm border-0 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                <button id="sendChatBtn" class="bg-blue-600 text-white px-4 py-2 rounded-full text-sm hover:bg-blue-700 transition-colors">
+                    class="flex-1 px-4 py-2 bg-gray-100 rounded-full text-sm border-0 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    oninput="handleTyping()">
+                <button id="sendChatBtn" onclick="sendMessage()" class="bg-blue-600 text-white px-4 py-2 rounded-full text-sm hover:bg-blue-700 transition-colors">
                     Send
                 </button>
             </div>

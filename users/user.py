@@ -18,6 +18,7 @@ from models import (
     MatchmakingLike,
     MatchmakingView,
     User,
+    Message
 )
 
 
