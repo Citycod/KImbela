@@ -498,49 +498,84 @@ const PostSystem = {
 
     async addComment(postId, content, inputElement) {
         const originalPlaceholder = inputElement.placeholder;
-        inputElement.placeholder = 'Posting...';
-        inputElement.disabled = true;
+    inputElement.placeholder = 'Posting...';
+    inputElement.disabled = true;
 
-        try {
-            const response = await fetch(`/add_comment/${postId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken
-                },
-                body: JSON.stringify({ content })
-            });
+    try {
+        const response = await fetch(`/add_comment/${postId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ content })
+        });
 
-            if (!response.ok) throw new Error('Network error');
+        // Check if response is HTML instead of JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
 
-            const data = await response.json();
-            inputElement.value = '';
-
-            // Add comment to UI
-            const container = inputElement.closest('.comments-section');
-            if (container) {
-                const commentHTML = `
-                    <div class="comment flex space-x-2 mb-3 animate-fadeIn">
-                        <img src="${data.avatar || window.defaultAvatar}" alt="" class="w-8 h-8 rounded-full object-cover flex-shrink-0">
-                        <div class="flex-1">
-                            <div class="bg-white rounded-2xl px-3 py-2">
-                                <div class="font-semibold text-sm">${data.name || 'User'}</div>
-                                <div class="text-sm">${data.content}</div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                container.insertAdjacentHTML('beforeend', commentHTML);
+            // Check if it's an HTML login page
+            if (text.includes('<!DOCTYPE html>') || text.includes('login') || response.status === 401) {
+                throw new Error('Authentication required. Please log in again.');
             }
 
-            Toast.show('Comment added!', 'success');
-        } catch (error) {
-            console.error('Error adding comment:', error);
-            Toast.show('Failed to add comment', 'danger');
-        } finally {
-            inputElement.placeholder = originalPlaceholder;
-            inputElement.disabled = false;
+            throw new Error('Server returned unexpected response');
         }
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || 'Failed to add comment');
+        }
+
+        inputElement.value = '';
+
+        // Get comment data from the comment object
+        const comment = data.comment;
+        if (!comment) {
+            throw new Error('No comment data returned');
+        }
+
+        // Add comment to UI
+        const container = inputElement.closest('.comments-section');
+        if (container) {
+            const commentHTML = `
+                <div class="comment flex space-x-2 mb-3 animate-fadeIn">
+                    <img src="${comment.avatar || defaultAvatar}" alt="" class="w-8 h-8 rounded-full object-cover flex-shrink-0">
+                    <div class="flex-1">
+                        <div class="bg-white rounded-2xl px-3 py-2">
+                            <div class="flex justify-between items-start">
+                                <div class="font-semibold text-sm">${comment.name || 'User'}</div>
+                                <div class="text-xs text-gray-500">
+                                    Just now
+                                </div>
+                            </div>
+                            <div class="text-sm mt-1">${comment.content}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', commentHTML);
+        }
+
+        Toast.show('Comment added!', 'success');
+    } catch (error) {
+        console.error('Error adding comment:', error);
+
+        if (error.message.includes('Authentication')) {
+            Toast.show('Please log in again to continue', 'warning');
+            setTimeout(() => {
+                window.location.href = '/login';
+            }, 2000);
+        } else {
+            Toast.show('Failed to add comment: ' + error.message, 'danger');
+        }
+    } finally {
+        inputElement.placeholder = originalPlaceholder;
+        inputElement.disabled = false;
+    }
     },
 
     async viewComments(postId) {
@@ -572,37 +607,37 @@ const PostSystem = {
 
     displayCommentsModal(comments) {
         const body = document.getElementById('commentModalBody');
-        if (!body) return;
+    if (!body) return;
 
-        body.innerHTML = '';
+    body.innerHTML = '';
 
-        if (!comments || comments.length === 0) {
-            body.innerHTML = '<div class="text-center py-8 text-gray-500">No comments yet</div>';
-            return;
-        }
+    if (!comments || comments.length === 0) {
+        body.innerHTML = '<div class="text-center py-8 text-gray-500">No comments yet</div>';
+        return;
+    }
 
-        comments.forEach(comment => {
-            const isLong = comment.content?.length > 150;
-            body.innerHTML += `
-                <div class="comment mb-5 border-b pb-4">
-                    <div class="flex space-x-3">
-                        <img src="${comment.avatar || window.defaultAvatar}" class="w-10 h-10 rounded-full object-cover flex-shrink-0">
-                        <div class="flex-1">
-                            <div class="bg-gray-50 rounded-2xl px-4 py-3">
-                                <div class="font-semibold">${comment.name || 'User'}</div>
-                                <div class="text-sm ${isLong ? 'truncated' : ''}">
-                                    ${comment.content || ''}
-                                </div>
-                                ${isLong ? `
-                                <button class="text-blue-600 text-xs font-medium mt-2" onclick="this.previousElementSibling.classList.toggle('truncated'); this.textContent = this.previousElementSibling.classList.contains('truncated') ? 'See More' : 'See Less'">
-                                    See More
-                                </button>` : ''}
+    comments.forEach(comment => {
+        const isLong = comment.content?.length > 150;
+        body.innerHTML += `
+            <div class="comment mb-5 border-b pb-4">
+                <div class="flex space-x-3">
+                    <img src="${comment.avatar || defaultAvatar}" class="w-10 h-10 rounded-full object-cover flex-shrink-0">
+                    <div class="flex-1">
+                        <div class="bg-gray-50 rounded-2xl px-4 py-3">
+                            <div class="font-semibold">${comment.name || 'User'}</div>
+                            <div class="text-sm ${isLong ? 'truncated' : ''}">
+                                ${comment.content || ''}
                             </div>
+                            ${isLong ? `
+                            <button class="text-blue-600 text-xs font-medium mt-2" onclick="this.previousElementSibling.classList.toggle('truncated'); this.textContent = this.previousElementSibling.classList.contains('truncated') ? 'See More' : 'See Less'">
+                                See More
+                            </button>` : ''}
                         </div>
                     </div>
                 </div>
-            `;
-        });
+            </div>
+        `;
+    });
     },
 
     initInteractions() {

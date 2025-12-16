@@ -914,7 +914,7 @@ def add_comment(post_id):
     content = request.json.get("content", "").strip()
 
     if not content:
-        return jsonify(error="Empty"), 400
+        return jsonify(success=False, error="Comment cannot be empty"), 400
 
     comment = Comment(content=content, author_id=current_user.id, post_id=post_id)
     db.session.add(comment)
@@ -930,11 +930,17 @@ def add_comment(post_id):
         )
 
     return jsonify(
-        id=comment.id,
-        name=f"{current_user.first_name} {current_user.last_name}",
-        avatar=current_user.profile_pic
-        or url_for("static", filename="assets/img/default-avatar.png"),
-        content=content,
+        success=True,
+        comment={
+            "id": comment.id,
+            "name": f"{current_user.first_name} {current_user.last_name}",
+            "avatar": current_user.profile_pic
+            or url_for("static", filename="assets/img/default-avatar.png"),
+            "content": content,
+            "created_at": comment.created_at.isoformat(),
+            "created_at_formatted": comment.created_at.strftime('%b %d, %Y at %I:%M %p'),
+            "created_at_short": comment.created_at.strftime('%b %d, %H:%M'),
+        }
     )
 
 
@@ -957,6 +963,8 @@ def get_comments(post_id):
                 or url_for("static", filename="assets/img/default-avatar.png"),
                 "content": c.content,
                 "created_at": c.created_at.isoformat(),
+                "created_at_formatted": c.created_at.strftime('%b %d, %Y at %I:%M %p'),
+                "created_at_short": c.created_at.strftime('%b %d, %H:%M'),
                 "replies": [],  # handle replies later
             }
         )
