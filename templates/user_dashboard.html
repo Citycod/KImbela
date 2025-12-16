@@ -21,6 +21,19 @@
     <!-- Add this to your HTML template -->
 <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
 
+      <!-- Add this in the head or body before the script tag that loads dashboard.js -->
+<script>
+    // Set global variables for current user
+    window.currentUserInfo = {
+        id: {{ current_user.id }},
+        name: '{{ current_user.full_name|replace("'", "\\'") }}',
+        avatar: '{{ current_user.profile_pic or url_for("static", filename="assets/img/default-avatar.png") }}',
+        firstName: '{{ current_user.first_name|replace("'", "\\'") }}',
+        lastName: '{{ current_user.last_name|replace("'", "\\'") }}'
+    };
+    window.defaultAvatar = '{{ url_for("static", filename="assets/img/default-avatar.png") }}';
+</script>
+
     <script>
       // Check if Tailwind loads properly
       function checkTailwind() {
@@ -181,6 +194,126 @@
         window.defaultAvatar = '{{ url_for('static', filename='assets/img/default-avatar.png') }}';
     </script>
 
+
+    <style>
+        /* Facebook-style Reactions */
+.reactions-container {
+    position: relative;
+    display: inline-block;
+}
+
+.reactions-tooltip {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-10px);
+    background: white;
+    border-radius: 50px;
+    padding: 4px 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    border: 1px solid #e5e7eb;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.reactions-tooltip.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(-15px);
+}
+
+.reaction-option {
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    transform: scale(1);
+    filter: grayscale(100%);
+}
+
+.reaction-option:hover {
+    transform: scale(1.4) translateY(-5px);
+    filter: grayscale(0%);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.reaction-option.like:hover { color: #1877f2; }
+.reaction-option.love:hover { color: #f02849; }
+.reaction-option.care:hover { color: #f7b928; }
+.reaction-option.haha:hover { color: #f7b928; }
+.reaction-option.wow:hover { color: #f7b928; }
+.reaction-option.sad:hover { color: #f7b928; }
+.reaction-option.angry:hover { color: #e9710f; }
+
+/* Active reaction styles */
+.like-btn.active-like { color: #1877f2; }
+.like-btn.active-love { color: #f02849; }
+.like-btn.active-care { color: #f7b928; }
+.like-btn.active-haha { color: #f7b928; }
+.like-btn.active-wow { color: #f7b928; }
+.like-btn.active-sad { color: #f7b928; }
+.like-btn.active-angry { color: #e9710f; }
+
+/* Reaction tooltip delay */
+.reactions-container:hover .reactions-tooltip {
+    transition-delay: 0.1s;
+}
+
+/* Comment fade in */
+.comment-fade-in {
+    animation: fadeInUp 0.3s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Like animation */
+.like-animation {
+    animation: likePop 0.3s ease-in-out;
+}
+
+@keyframes likePop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+/* Comments section */
+.comments-section {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.comments-section::-webkit-scrollbar {
+    width: 6px;
+}
+
+.comments-section::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.comments-section::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 10px;
+}
+
+.comments-section::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+    </style>
     
   
   </head>
@@ -735,7 +868,7 @@
                 <p class="text-sm font-medium">Loading amazing groups...</p>
                 <p class="text-xs mt-1 text-gray-400">
                   Finding the best communities for you
-                </p>
+                  </p>
               </div>
             </div>
 
@@ -831,7 +964,6 @@
       </div>
 
       <!-- MAIN CONTENT -->
-      <!-- MAIN CONTENT -->
 <div class="flex-1 max-w-2xl mx-auto p-4">
   <!-- POST COMPOSER -->
   <div class="bg-white rounded-2xl shadow-soft p-3 sm:p-4 mb-6 card-hover">
@@ -881,13 +1013,13 @@
       </button>
 
       <!-- Feeling/Activity -->
-      
+
     </div>
   </div>
 
   <!-- POSTS FEED - OPTIMIZED FOR INFINITE SCROLL -->
   <div id="posts-feed" data-has-more="{{ has_more|tojson }}" data-next-cursor="{{ next_cursor }}">
-    
+
     <!-- PEOPLE YOU MAY KNOW -->
 {% if random_three %}
 <div class="suggestions-section bg-white rounded-2xl shadow-soft p-4 mb-6">
@@ -1016,13 +1148,13 @@
             See More
           </button>
           {% endif %}
-          
+
           {% if post.image %}
           <div class="post-media mt-3">
             <img src="{{ post.image }}" alt="Post" class="w-full rounded-2xl max-h-96 object-cover" loading="lazy" />
           </div>
           {% endif %}
-          
+
           {% if post.video %}
           <div class="post-media mt-3">
             <video controls class="w-full rounded-2xl max-h-96" preload="metadata">
@@ -1031,36 +1163,115 @@
           </div>
           {% endif %}
         </div>
-        <div class="px-4 py-3 border-t border-fb-border flex justify-between text-fb-text-light font-medium">
-          <button class="action-btn like-btn flex items-center space-x-1 px-2 py-1 rounded-lg hover:bg-fb-gray transition-colors {% if current_user.has_liked_post(post.id) %}text-blue-600{% endif %}" data-post-id="{{ post.id }}">
-            <i class="bi bi-hand-thumbs-up{% if current_user.has_liked_post(post.id) %}-fill{% endif %}"></i>
-            <span class="like-count">{{ post.likes_list|length }}</span>
-          </button>
-          <button class="action-btn view-comments flex items-center space-x-1 px-2 py-1 rounded-lg hover:bg-fb-gray transition-colors" data-bs-toggle="modal" data-bs-target="#commentModal" data-post-id="{{ post.id }}">
-            <i class="bi bi-chat"></i>
-            <span>Comment</span>
-          </button>
-          <button class="action-btn share-btn flex items-center space-x-1 px-2 py-1 rounded-lg hover:bg-fb-gray transition-colors" data-url="{{ url_for('user.user_dashboard', _anchor='post-' ~ post.id) }}">
-            <i class="bi bi-share"></i>
-            <span>Share</span>
-          </button>
-        </div>
-        <div class="comments-section px-4 py-3 bg-gray-50 border-t border-fb-border">
-          <div class="comment-input flex items-center space-x-2 mb-3">
-            <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" alt="" class="w-8 h-8 rounded-full object-cover" />
-            <input type="text" placeholder="Write a comment..." class="add-comment flex-1 bg-white rounded-full px-4 py-2 border-0 focus:ring-1 focus:ring-blue-500 focus:outline-none" data-post-id="{{ post.id }}" />
-          </div>
-          {% for comment in post.comments[:3] %}
-          <div class="comment flex space-x-2 mb-3" id="comment-{{ comment.id }}">
-            <img src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" alt="" class="w-8 h-8 rounded-full object-cover flex-shrink-0" />
-            <div class="flex-1">
-              <div class="bg-white rounded-2xl px-3 py-2">
-                <div class="font-semibold text-sm">{{ comment.author.first_name }}</div>
-                <div class="text-sm">{{ comment.content }}</div>
-              </div>
+
+        <!-- Post Stats -->
+        <div class="px-4 md:px-6 py-2 md:py-3 border-t border-gray-100 text-xs md:text-sm text-gray-500 post-stats">
+            <div class="flex justify-between">
+                <span id="like-count-{{ post.id }}">{{ post.get_reaction_count() }} reactions</span>
+                <span id="comment-count-{{ post.id }}">{{ post.comments_list|length }} comments</span>
             </div>
-          </div>
-          {% endfor %}
+        </div>
+
+        <!-- Post Actions -->
+        <div class="px-4 md:px-6 py-2 md:py-3 border-t border-gray-100">
+            <div class="flex justify-around">
+                <!-- Like Button with Reactions -->
+                <div class="reactions-container">
+                    {% set user_reaction = current_user.get_user_reaction(post.id) %}
+                    <button onclick="likePost({{ post.id }})"
+                            class="flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-1 md:py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 like-btn {% if user_reaction %}active-{{ user_reaction }} text-{% if user_reaction == 'like' %}blue{% elif user_reaction == 'love' %}red{% elif user_reaction in ['care', 'haha', 'wow', 'sad'] %}yellow{% elif user_reaction == 'angry' %}red{% endif %}-600{% else %}text-gray-600{% endif %}"
+                            id="like-btn-{{ post.id }}"
+                            onmouseenter="showReactions({{ post.id }})"
+                            onmouseleave="hideReactions({{ post.id }})">
+                        <i class="bi {% if user_reaction %}{% if user_reaction == 'like' %}bi-hand-thumbs-up-fill{% elif user_reaction == 'love' %}bi-heart-fill{% elif user_reaction == 'care' %}bi-emoji-heart-eyes{% elif user_reaction == 'haha' %}bi-emoji-laughing{% elif user_reaction == 'wow' %}bi-emoji-surprise{% elif user_reaction == 'sad' %}bi-emoji-frown{% elif user_reaction == 'angry' %}bi-emoji-angry{% endif %}{% else %}bi-hand-thumbs-up{% endif %}" id="like-icon-{{ post.id }}"></i>
+                        <span id="like-text-{{ post.id }}" class="text-xs md:text-sm">
+                            {% if user_reaction %}
+                                {% if user_reaction == 'like' %}Liked{% elif user_reaction == 'love' %}Loved{% elif user_reaction == 'care' %}Cared{% elif user_reaction == 'haha' %}Haha{% elif user_reaction == 'wow' %}Wow{% elif user_reaction == 'sad' %}Sad{% elif user_reaction == 'angry' %}Angry{% endif %}
+                            {% else %}
+                                Like
+                            {% endif %}
+                        </span>
+                    </button>
+
+                    <!-- Reactions Tooltip -->
+                    <div class="reactions-tooltip" id="reactions-{{ post.id }}">
+                        <div class="reaction-option like text-lg md:text-xl" onclick="reactToPost({{ post.id }}, 'like')" title="Like">👍</div>
+                        <div class="reaction-option love text-lg md:text-xl" onclick="reactToPost({{ post.id }}, 'love')" title="Love">❤️</div>
+                        <div class="reaction-option care text-lg md:text-xl" onclick="reactToPost({{ post.id }}, 'care')" title="Care">🥰</div>
+                        <div class="reaction-option haha text-lg md:text-xl" onclick="reactToPost({{ post.id }}, 'haha')" title="Haha">😂</div>
+                        <div class="reaction-option wow text-lg md:text-xl" onclick="reactToPost({{ post.id }}, 'wow')" title="Wow">😮</div>
+                        <div class="reaction-option sad text-lg md:text-xl" onclick="reactToPost({{ post.id }}, 'sad')" title="Sad">😢</div>
+                        <div class="reaction-option angry text-lg md:text-xl" onclick="reactToPost({{ post.id }}, 'angry')" title="Angry">😠</div>
+                    </div>
+                </div>
+
+                <button onclick="focusCommentInput({{ post.id }})"
+                        class="flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-1 md:py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 text-gray-600">
+                    <i class="bi bi-chat text-sm md:text-base"></i>
+                    <span class="text-xs md:text-sm">Comment</span>
+                </button>
+
+            </div>
+        </div>
+
+        <!-- Comments Section -->
+        <div class="comments-section px-4 md:px-6 py-3 md:py-4 border-t border-gray-100 bg-gray-50">
+            <!-- Comment Input -->
+            <div class="flex items-center space-x-2 md:space-x-3 mb-3 md:mb-4">
+                <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+                     alt="{{ current_user.full_name }}"
+                     class="w-7 h-7 md:w-8 md:h-8 rounded-full object-cover comment-input-avatar">
+                <div class="flex-1 relative">
+                    <input type="text"
+                           id="commentInput-{{ post.id }}"
+                           placeholder="Write a comment..."
+                           class="w-full bg-white rounded-full px-3 py-1.5 md:px-4 md:py-2 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 comment-input"
+                           onkeypress="handleCommentKeypress(event, {{ post.id }})">
+                </div>
+            </div>
+
+            <!-- Comments List -->
+            <div id="comments-{{ post.id }}">
+                {% for comment in post.comments[:20]|reverse %}
+                <div class="flex space-x-2 md:space-x-3 mb-3 md:mb-4 comment-item comment-fade-in" id="comment-{{ comment.id }}">
+                    <img src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+                         alt="{{ comment.author.full_name }}"
+                         class="w-6 h-6 md:w-8 md:h-8 rounded-full object-cover flex-shrink-0 comment-avatar">
+                    <div class="flex-1">
+                        <div class="bg-white rounded-xl md:rounded-2xl px-3 py-2 md:px-4 md:py-3">
+                            <div class="flex justify-between items-start mb-1">
+                                <h5 class="font-semibold text-xs md:text-sm comment-author">{{ comment.author.full_name }}</h5>
+                                <div class="dropdown relative">
+                                    <button class="p-0.5 md:p-1 rounded-full hover:bg-gray-100 transition-colors duration-300">
+                                        <i class="bi bi-three-dots text-gray-400 text-xs md:text-xs"></i>
+                                    </button>
+                                    <div class="dropdown-menu absolute right-0 mt-1 w-28 md:w-32 bg-white rounded-lg md:rounded-xl shadow-2xl border border-gray-200 hidden z-10">
+                                        {% if comment.author.id == current_user.id %}
+                                        <button onclick="deleteComment({{ comment.id }})" class="w-full text-left px-2 py-1.5 md:px-3 md:py-2 hover:bg-gray-50 rounded-t-lg md:rounded-t-xl text-red-600 text-xs md:text-sm">
+                                            <i class="bi bi-trash mr-1 text-xs md:text-sm"></i>Delete
+                                        </button>
+                                        {% endif %}
+                                        <button onclick="reportContent('comment', {{ comment.id }})" class="w-full text-left px-2 py-1.5 md:px-3 md:py-2 hover:bg-gray-50 rounded-b-lg md:rounded-b-xl text-orange-600 text-xs md:text-sm">
+                                            <i class="bi bi-flag mr-1 text-xs md:text-sm"></i>Report
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-gray-800 text-xs md:text-sm comment-content">{{ comment.content }}</p>
+                            <div class="flex items-center space-x-2 md:space-x-3 mt-1 md:mt-2">
+                                <span class="text-xs text-gray-400 comment-time">{{ comment.created_at.strftime('%I:%M %p') }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% if post.comments_list|length > 3 %}
+            <button onclick="loadAllComments({{ post.id }})" class="text-blue-600 hover:text-blue-700 text-xs md:text-sm font-semibold">
+                View all {{ post.comments_list|length }} comments
+            </button>
+            {% endif %}
         </div>
       </div>
       {% endfor %}
@@ -1549,6 +1760,13 @@
       </div>
     </div>
 
+  <script>
+    // Make current user info globally available
+    window.currentUserAvatar = '{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}';
+    window.currentUserName = '{{ current_user.full_name }}';
+    window.currentUserId = {{ current_user.id }};
+    window.defaultAvatar = '{{ url_for('static', filename='assets/img/default-avatar.png') }}';
+</script>
    
   </body>
 </html>

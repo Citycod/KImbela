@@ -496,87 +496,87 @@ const PostSystem = {
         Modal.open('editPostModal');
     },
 
-    async addComment(postId, content, inputElement) {
-        const originalPlaceholder = inputElement.placeholder;
-    inputElement.placeholder = 'Posting...';
-    inputElement.disabled = true;
-
-    try {
-        const response = await fetch(`/add_comment/${postId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken
-            },
-            body: JSON.stringify({ content })
-        });
-
-        // Check if response is HTML instead of JSON
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            const text = await response.text();
-
-            // Check if it's an HTML login page
-            if (text.includes('<!DOCTYPE html>') || text.includes('login') || response.status === 401) {
-                throw new Error('Authentication required. Please log in again.');
-            }
-
-            throw new Error('Server returned unexpected response');
-        }
-
-        const data = await response.json();
-
-        if (!response.ok || !data.success) {
-            throw new Error(data.error || 'Failed to add comment');
-        }
-
-        inputElement.value = '';
-
-        // Get comment data from the comment object
-        const comment = data.comment;
-        if (!comment) {
-            throw new Error('No comment data returned');
-        }
-
-        // Add comment to UI
-        const container = inputElement.closest('.comments-section');
-        if (container) {
-            const commentHTML = `
-                <div class="comment flex space-x-2 mb-3 animate-fadeIn">
-                    <img src="${comment.avatar || defaultAvatar}" alt="" class="w-8 h-8 rounded-full object-cover flex-shrink-0">
-                    <div class="flex-1">
-                        <div class="bg-white rounded-2xl px-3 py-2">
-                            <div class="flex justify-between items-start">
-                                <div class="font-semibold text-sm">${comment.name || 'User'}</div>
-                                <div class="text-xs text-gray-500">
-                                    Just now
-                                </div>
-                            </div>
-                            <div class="text-sm mt-1">${comment.content}</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            container.insertAdjacentHTML('beforeend', commentHTML);
-        }
-
-        Toast.show('Comment added!', 'success');
-    } catch (error) {
-        console.error('Error adding comment:', error);
-
-        if (error.message.includes('Authentication')) {
-            Toast.show('Please log in again to continue', 'warning');
-            setTimeout(() => {
-                window.location.href = '/login';
-            }, 2000);
-        } else {
-            Toast.show('Failed to add comment: ' + error.message, 'danger');
-        }
-    } finally {
-        inputElement.placeholder = originalPlaceholder;
-        inputElement.disabled = false;
-    }
-    },
+//    async addComment(postId, content, inputElement) {
+//       const originalPlaceholder = inputElement.placeholder;
+//    inputElement.placeholder = 'Posting...';
+//    inputElement.disabled = true;
+//
+//    try {
+//        const response = await fetch(`/add_comment/${postId}`, {
+//            method: 'POST',
+//            headers: {
+//                'Content-Type': 'application/json',
+//                'X-CSRFToken': csrfToken
+//            },
+//            body: JSON.stringify({ content })
+//        });
+//
+//        // Check if response is HTML instead of JSON
+//        const contentType = response.headers.get('content-type');
+//        if (!contentType || !contentType.includes('application/json')) {
+//            const text = await response.text();
+//
+//            // Check if it's an HTML login page
+//            if (text.includes('<!DOCTYPE html>') || text.includes('login') || response.status === 401) {
+//                throw new Error('Authentication required. Please log in again.');
+//            }
+//
+//            throw new Error('Server returned unexpected response');
+//        }
+//
+//        const data = await response.json();
+//
+//        if (!response.ok || !data.success) {
+//            throw new Error(data.error || 'Failed to add comment');
+//        }
+//
+//        inputElement.value = '';
+//
+//        // Get comment data from the comment object
+//        const comment = data.comment;
+//        if (!comment) {
+//            throw new Error('No comment data returned');
+//        }
+//
+//        // Add comment to UI
+//        const container = inputElement.closest('.comments-section');
+//        if (container) {
+//            const commentHTML = `
+//                <div class="comment flex space-x-2 mb-3 animate-fadeIn">
+//                    <img src="${comment.avatar || defaultAvatar}" alt="" class="w-8 h-8 rounded-full object-cover flex-shrink-0">
+//                    <div class="flex-1">
+//                        <div class="bg-white rounded-2xl px-3 py-2">
+//                            <div class="flex justify-between items-start">
+//                                <div class="font-semibold text-sm">${comment.name || 'User'}</div>
+//                                <div class="text-xs text-gray-500">
+//                                    Just now
+//                                </div>
+//                            </div>
+//                            <div class="text-sm mt-1">${comment.content}</div>
+//                        </div>
+//                    </div>
+//                </div>
+//            `;
+//            container.insertAdjacentHTML('beforeend', commentHTML);
+//        }
+//
+//        Toast.show('Comment added!', 'success');
+//    } catch (error) {
+//        console.error('Error adding comment:', error);
+//
+//        if (error.message.includes('Authentication')) {
+//            Toast.show('Please log in again to continue', 'warning');
+//            setTimeout(() => {
+//                window.location.href = '/login';
+//            }, 2000);
+//        } else {
+//            Toast.show('Failed to add comment: ' + error.message, 'danger');
+//        }
+//    } finally {
+//        inputElement.placeholder = originalPlaceholder;
+//        inputElement.disabled = false;
+//    }
+//    },
 
     async viewComments(postId) {
         const modalBody = document.getElementById('commentModalBody');
@@ -4007,3 +4007,365 @@ function handleTyping() {
         Messenger.handleTyping();
     }
 }
+
+
+
+
+// ==================== REACTION SYSTEM ====================
+let currentReactionPostId = null;
+let reactionTimeout = null;
+
+function showReactions(postId) {
+    const tooltip = document.getElementById(`reactions-${postId}`);
+    if (!tooltip) return;
+
+    clearTimeout(reactionTimeout);
+    tooltip.classList.add('show');
+    currentReactionPostId = postId;
+}
+
+function hideReactions(postId) {
+    const tooltip = document.getElementById(`reactions-${postId}`);
+    if (!tooltip) return;
+
+    reactionTimeout = setTimeout(() => {
+        tooltip.classList.remove('show');
+        currentReactionPostId = null;
+    }, 300);
+}
+
+async function reactToPost(postId, reactionType) {
+    const likeBtn = document.getElementById(`like-btn-${postId}`);
+    const likeIcon = document.getElementById(`like-icon-${postId}`);
+    const likeText = document.getElementById(`like-text-${postId}`);
+    const likeCount = document.getElementById(`like-count-${postId}`);
+    const tooltip = document.getElementById(`reactions-${postId}`);
+
+    if (!likeBtn || !likeIcon || !likeText) return;
+
+    // Hide tooltip
+    tooltip?.classList.remove('show');
+
+    // Optimistic update
+    const wasActive = likeBtn.classList.contains(`active-${reactionType}`);
+    updateReactionUI(postId, reactionType, !wasActive, likeBtn, likeIcon, likeText);
+
+    try {
+        const response = await fetch(`/react_post/${postId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ reaction_type: reactionType })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            updateReactionUI(postId, data.user_reaction || null, true, likeBtn, likeIcon, likeText);
+            likeCount.textContent = `${data.total_reactions} ${data.total_reactions === 1 ? 'reaction' : 'reactions'}`;
+            Toast.show(getReactionMessage(data.user_reaction, data.reacted), 'success');
+        } else {
+            updateReactionUI(postId, null, false, likeBtn, likeIcon, likeText);
+            Toast.show(data.error || 'Failed to react', 'danger');
+        }
+    } catch (error) {
+        console.error('Reaction error:', error);
+        updateReactionUI(postId, null, false, likeBtn, likeIcon, likeText);
+        Toast.show('Network error', 'danger');
+    }
+}
+
+function updateReactionUI(postId, reactionType, isActive, likeBtn, likeIcon, likeText) {
+    // Reset
+    likeBtn.className = likeBtn.className.replace(/active-\w+|text-\w+-?\d*/g, '').trim();
+    likeBtn.classList.add('flex', 'items-center', 'space-x-1', 'md:space-x-2', 'px-2', 'md:px-4', 'py-1', 'md:py-2', 'rounded-lg', 'hover:bg-gray-100', 'transition-colors', 'duration-300');
+    likeIcon.className = 'bi bi-hand-thumbs-up';
+    likeText.textContent = 'Like';
+
+    if (isActive && reactionType) {
+        const config = {
+            like:  { icon: 'bi-hand-thumbs-up-fill',  text: 'Liked',   color: 'text-blue-600' },
+            love:  { icon: 'bi-heart-fill',           text: 'Loved',   color: 'text-red-600' },
+            care:  { icon: 'bi-emoji-heart-eyes',     text: 'Cared',   color: 'text-yellow-600' },
+            haha:  { icon: 'bi-emoji-laughing',       text: 'Haha',    color: 'text-yellow-500' },
+            wow:   { icon: 'bi-emoji-surprise',       text: 'Wow',     color: 'text-orange-500' },
+            sad:   { icon: 'bi-emoji-frown',          text: 'Sad',     color: 'text-indigo-600' },
+            angry: { icon: 'bi-emoji-angry',          text: 'Angry',   color: 'text-red-700' }
+        };
+
+        const r = config[reactionType];
+        if (r) {
+            likeBtn.classList.add(`active-${reactionType}`, r.color);
+            likeIcon.className = `${r.icon} like-animation`;
+            likeText.textContent = r.text;
+        }
+    }
+}
+
+function getReactionMessage(reactionType, reacted) {
+    const messages = {
+        like:  reacted ? 'You liked this post!' : 'Like removed',
+        love:  reacted ? 'You loved this post!' : 'Love removed',
+        care:  reacted ? 'You cared!' : 'Care removed',
+        haha:  reacted ? 'Haha!' : 'Haha removed',
+        wow:   reacted ? 'Wow!' : 'Wow removed',
+        sad:   reacted ? 'Sad' : 'Sad removed',
+        angry: reacted ? 'Angry' : 'Angry removed'
+    };
+    return messages[reactionType] || (reacted ? 'Reacted!' : 'Reaction removed');
+}
+
+function likePost(postId) {
+    reactToPost(postId, 'like');
+}
+
+// Keep tooltip open on hover
+document.addEventListener('mouseover', e => {
+    if (e.target.closest('.reactions-tooltip')) clearTimeout(reactionTimeout);
+});
+document.addEventListener('mouseout', e => {
+    if (e.target.closest('.reactions-tooltip') && currentReactionPostId) {
+        hideReactions(currentReactionPostId);
+    }
+});
+
+// ==================== COMMENT SYSTEM ====================
+function handleCommentKeypress(event, postId) {
+    if (event.key === 'Enter' && !event.shiftKey && event.target.value.trim()) {
+        event.preventDefault();
+        addComment(postId, event.target.value.trim());
+    }
+}
+
+async function addComment(postId, content) {
+    const input = document.getElementById(`commentInput-${postId}`);
+    const container = document.getElementById(`comments-${postId}`);
+    const count = document.getElementById(`comment-count-${postId}`);
+
+    // Store original state
+    input.disabled = true;
+    const placeholder = input.placeholder;
+    input.placeholder = 'Posting...';
+
+    try {
+        const response = await fetch(`/add_comment/${postId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ content })
+        });
+
+        // Check if response is JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            if (text.includes('login') || response.status === 401) {
+                throw new Error('Please log in to comment');
+            }
+            throw new Error('Server error');
+        }
+
+        const data = await response.json();
+
+        if (data.success || data.id) {
+            const comment = data.comment || data;
+
+            // Use global user info
+            const userAvatar = window.currentUserInfo?.avatar || window.defaultAvatar;
+            const userName = window.currentUserInfo?.name || 'You';
+
+            // Create the comment element
+            const div = document.createElement('div');
+            div.className = 'flex space-x-2 md:space-x-3 mb-3 md:mb-4 comment-item comment-fade-in';
+            div.id = `comment-${comment.id || data.id}`;
+            div.innerHTML = `
+                <img src="${userAvatar}" class="w-6 h-6 md:w-8 md:h-8 rounded-full object-cover">
+                <div class="flex-1">
+                    <div class="bg-white rounded-xl md:rounded-2xl px-3 py-2 md:px-4 md:py-3">
+                        <div class="flex justify-between items-start mb-1">
+                            <h5 class="font-semibold text-xs md:text-sm">${userName}</h5>
+                            <div class="dropdown relative">
+                                <button class="p-0.5 md:p-1 rounded-full hover:bg-gray-100"><i class="bi bi-three-dots text-gray-400 text-xs"></i></button>
+                                <div class="dropdown-menu absolute right-0 mt-1 w-28 md:w-32 bg-white rounded-lg md:rounded-xl shadow-2xl border border-gray-200 hidden z-10">
+                                    <button onclick="deleteComment(${comment.id || data.id})" class="w-full text-left px-2 py-1.5 md:px-3 md:py-2 hover:bg-gray-50 text-red-600 text-xs md:text-sm">
+                                        <i class="bi bi-trash mr-1 text-xs md:text-sm"></i>Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-gray-800 text-xs md:text-sm">${content}</p>
+                        <div class="flex items-center space-x-2 md:space-x-3 mt-1 md:mt-2">
+                            <span class="text-xs text-gray-400">Just now</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Add to container (prepend to show newest first)
+            if (container.children.length > 0) {
+                container.insertBefore(div, container.firstChild);
+            } else {
+                container.appendChild(div);
+            }
+
+            // Clear input
+            input.value = '';
+
+            // Update comment count
+            const current = parseInt(count.textContent) || 0;
+            count.textContent = `${current + 1} comments`;
+
+            // Show success message
+            Toast.show('Comment added!', 'success');
+
+            // Scroll to the new comment
+            setTimeout(() => {
+                div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 100);
+        } else {
+            Toast.show(data.error || 'Failed to add comment', 'danger');
+        }
+    } catch (error) {
+        console.error('Comment error:', error);
+
+        if (error.message.includes('log in')) {
+            Toast.show('Please log in again to comment', 'warning');
+            setTimeout(() => {
+                window.location.href = '/login';
+            }, 2000);
+        } else {
+            Toast.show('Failed to add comment: ' + error.message, 'danger');
+        }
+    } finally {
+        // Restore input state
+        input.disabled = false;
+        input.placeholder = placeholder;
+        input.focus();
+    }
+}
+
+async function deleteComment(commentId) {
+    if (!confirm('Delete this comment?')) return;
+
+    try {
+        const response = await fetch(`/delete_comment/${commentId}`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' }
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            const el = document.getElementById(`comment-${commentId}`);
+            el.style.opacity = '0';
+            el.style.transform = 'translateX(-50%)';
+            setTimeout(() => el.remove(), 300);
+            Toast.show('Comment deleted', 'info');
+        } else {
+            Toast.show(data.error || 'Failed', 'danger');
+        }
+    } catch (error) {
+        console.error(error);
+        Toast.show('Network error', 'danger');
+    }
+}
+
+function focusCommentInput(postId) {
+    document.getElementById(`commentInput-${postId}`)?.focus();
+}
+
+async function loadAllComments(postId) {
+    try {
+        const res = await fetch(`/get_comments/${postId}`);
+        const data = await res.json();
+        if (data.comments) {
+            const container = document.getElementById(`comments-${postId}`);
+            const btn = container.nextElementSibling;
+            container.innerHTML = '';
+            data.comments.forEach(c => {
+                const div = document.createElement('div');
+                div.className = 'flex space-x-2 md:space-x-3 mb-3 md:mb-4 comment-item';
+                div.id = `comment-${c.id}`;
+                div.innerHTML = `
+                    <img src="${c.avatar}" class="w-6 h-6 md:w-8 md:h-8 rounded-full object-cover">
+                    <div class="flex-1">
+                        <div class="bg-white rounded-xl md:rounded-2xl px-3 py-2 md:px-4 md:py-3">
+                            <div class="flex justify-between items-start mb-1">
+                                <h5 class="font-semibold text-xs md:text-sm">${c.author_name}</h5>
+                                <div class="dropdown relative">
+                                    <button class="p-0.5 md:p-1 rounded-full hover:bg-gray-100"><i class="bi bi-three-dots text-gray-400 text-xs"></i></button>
+                                    <div class="dropdown-menu absolute right-0 mt-1 w-28 md:w-32 bg-white rounded-lg md:rounded-xl shadow-2xl border border-gray-200 hidden z-10">
+                                        ${c.author_id === currentUserId ? `<button onclick="deleteComment(${c.id})" class="w-full text-left px-2 py-1.5 md:px-3 md:py-2 hover:bg-gray-50 text-red-600 text-xs md:text-sm"><i class="bi bi-trash mr-1 text-xs md:text-sm"></i>Delete</button>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-gray-800 text-xs md:text-sm">${c.content}</p>
+                            <div class="flex items-center space-x-2 md:space-x-3 mt-1 md:mt-2">
+                                <span class="text-xs text-gray-400">${c.created_at}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+            if (btn && btn.tagName === 'BUTTON') btn.remove();
+        }
+    } catch (error) {
+        Toast.show('Failed to load comments', 'danger');
+    }
+}
+
+// ==================== SHARE MODAL ====================
+let currentSharePostId = null;
+
+function openShareModal(postId) {
+    currentSharePostId = postId;
+    // You can implement a share modal here similar to the group page
+    // For now, let's just copy the link
+    copyPostLink();
+}
+
+function copyPostLink() {
+    const url = `${window.location.origin}/post/${currentSharePostId}`;
+    navigator.clipboard.writeText(url).then(() => {
+        Toast.show('Link copied!', 'success');
+    }).catch(() => {
+        const textarea = document.createElement('textarea');
+        textarea.value = url;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        Toast.show('Link copied!', 'success');
+    });
+}
+
+// ==================== EVENT LISTENERS ====================
+document.addEventListener('DOMContentLoaded', () => {
+    // Close dropdowns
+    document.addEventListener('click', e => {
+        if (!e.target.closest('.dropdown')) {
+            document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.add('hidden'));
+        }
+        if (e.target.closest('.dropdown button')) {
+            const menu = e.target.closest('.dropdown').querySelector('.dropdown-menu');
+            menu.classList.toggle('hidden');
+        }
+    });
+});
+
+// Expose functions to HTML
+window.showReactions = showReactions;
+window.hideReactions = hideReactions;
+window.reactToPost = reactToPost;
+window.likePost = likePost;
+window.handleCommentKeypress = handleCommentKeypress;
+window.addComment = addComment;
+window.deleteComment = deleteComment;
+window.focusCommentInput = focusCommentInput;
+window.loadAllComments = loadAllComments;
+window.openShareModal = openShareModal;
+window.copyPostLink = copyPostLink;
