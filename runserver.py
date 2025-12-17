@@ -81,7 +81,8 @@
 
 
 
-
+import eventlet
+eventlet.monkey_patch()
 ## runserver.py - SIMPLIFIED
 from app_config import app, socketio
 from extensions import socketio

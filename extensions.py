@@ -1,4 +1,4 @@
-# extensions.py - UPDATED with better WebSocket handling
+# extensions.py - FIXED
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager
@@ -15,19 +15,19 @@ mail = Mail()
 csrf = CSRFProtect()
 cache = Cache()
 
-# Initialize Socket.IO with better WebSocket support
+# FIXED: Use eventlet for true WebSocket support
 socketio = SocketIO(
-    async_mode='threading',
+    async_mode='eventlet',
     cors_allowed_origins="*",
-    logger=True,  # Enable logging to debug
-    engineio_logger=True,  # Enable Engine.IO logging
+    logger=True,
+    engineio_logger=True,
     ping_timeout=60,
     ping_interval=25,
+    message_queue='redis://redis:6379/0',
     max_http_buffer_size=1e8,
-    # WebSocket specific settings
     allow_upgrades=True,
     http_compression=True,
     compression_threshold=1024,
 )
 
-print("✅ Extensions initialized with WebSocket support")
+print("✅ Extensions initialized with WebSocket support (eventlet)")

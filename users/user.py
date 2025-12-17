@@ -257,7 +257,7 @@ def user_dashboard():
                     file_size = media_file.tell()
                     media_file.seek(0)  # Reset to beginning
                     
-                    MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB
+                    MAX_FILE_SIZE = 400 * 1024 * 1024  # 100MB
                     
                     if file_size > MAX_FILE_SIZE:
                         flash(f"File is too large! Maximum size is {MAX_FILE_SIZE//(1024*1024)}MB", "danger")
@@ -430,7 +430,7 @@ def handle_ajax_post_upload():
             file_size = media_file.tell()
             media_file.seek(0)
             
-            MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB
+            MAX_FILE_SIZE = 400 * 1024 * 1024  # 100MB
             
             if file_size > MAX_FILE_SIZE:
                 return jsonify({

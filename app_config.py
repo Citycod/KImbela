@@ -30,7 +30,7 @@ def create_app():
             return redirect(url_for("user.user_dashboard"))
 
     # ========== BASIC APP CONFIG ==========
-    app.config["MAX_CONTENT_LENGTH"] = 100 * 1024 * 1024  # 100MB
+    app.config["MAX_CONTENT_LENGTH"] = 400 * 1024 * 1024  # 100MB
     app.config["UPLOAD_FOLDER"] = "uploads"
     app.config["ALLOWED_EXTENSIONS"] = {"jpg", "jpeg", "png", "gif", "mp4", "mov"}
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
