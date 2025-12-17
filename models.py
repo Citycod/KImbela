@@ -1603,8 +1603,8 @@ class MarketplaceService(db.Model):
     contact_methods = db.Column(
         db.Text, default=json.dumps(["whatsapp", "phone", "messenger"])
     )
-    phone_number = db.Column(db.String(20))
-    whatsapp_number = db.Column(db.String(20))
+    phone_number = db.Column(db.String(30))
+    whatsapp_number = db.Column(db.String(30))
     email = db.Column(db.String(100))
 
     # Add these fields for better file management

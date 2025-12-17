@@ -2,28 +2,27 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies for WeasyPrint
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
-    build-essential \
-    libcairo2 \
-    libpango-1.0-0 \
-    libpangocairo-1.0-0 \
-    libgdk-pixbuf-2.0-0 \
-    libffi-dev \
+    gcc \
+    g++ \
+    curl \
     libpq-dev \
-    libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy and install Python dependencies
+# Copy requirements and install Python packages
 COPY requirements.txt .
-RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the application code
+# Copy application code
 COPY . .
 
-# Expose the port
+# Create non-root user
+RUN useradd -m -u 1000 flaskuser && chown -R flaskuser:flaskuser /app
+USER flaskuser
+
+# Expose port
 EXPOSE 5000
 
-# Command to run the application
-CMD ["gunicorn", "--timeout", "60", "--workers", "2", "--bind", "0.0.0.0:5000", "runserver:app"]
+# Start the application
+CMD ["gunicorn", "--worker-class", "geventwebsocket.gunicorn.workers.GeventWebSocketWorker", "--workers", "2", "--bind", "0.0.0.0:5000", "runserver:app"]
