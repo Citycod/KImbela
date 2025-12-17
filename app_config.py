@@ -8,7 +8,6 @@ from datetime import datetime, timedelta
 from flask import jsonify
 from werkzeug.exceptions import RequestEntityTooLarge
 import time
-import resend
 
 # Import extensions (make sure socketio is initialized with threading)
 from extensions import db, bcrypt, login_manager, mail, csrf, cache, socketio
@@ -53,7 +52,8 @@ def create_app():
         "max_overflow": 40,
         "pool_timeout": 30,
     }
-    
+
+    import resend
     # ========== EMAIL CONFIG ==========
     # app.config["MAIL_SERVER"] = os.getenv("MAIL_SERVER", "smtp.gmail.com")
     # app.config["MAIL_PORT"] = int(os.getenv("MAIL_PORT", 587))
