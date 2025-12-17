@@ -318,6 +318,9 @@ def user_dashboard():
     
     # ===== GET REQUEST =====
     user_id = current_user.id
+
+
+
     
     # --- Parameters for infinite scroll ---
     cursor = request.args.get("cursor", type=int)
@@ -496,15 +499,15 @@ def handle_ajax_post_upload():
             })
         
         return jsonify({"success": False, "error": "An error occurred while creating the post."})
-    
-    
+
 
 def get_visible_posts(user_id, cursor=None, limit=10):
     """Get posts visible to the user"""
     from sqlalchemy import text
-    
+
+    # Simple query to get post IDs
     query = text("""
-        SELECT p.* 
+        SELECT p.id 
         FROM posts p
         WHERE p.author_id NOT IN (
             -- Users blocked by current user
@@ -521,28 +524,25 @@ def get_visible_posts(user_id, cursor=None, limit=10):
         ORDER BY p.created_at DESC
         LIMIT :limit
     """.format(cursor_clause="AND p.id < :cursor" if cursor else ""))
-    
+
     params = {'user_id': user_id, 'limit': limit}
     if cursor:
         params['cursor'] = cursor
-    
+
     result = db.session.execute(query, params)
-    
-    # Get post IDs
     post_ids = [row[0] for row in result.fetchall()]
-    
-    # Fetch Post objects with all necessary relationships
+
+    # Fetch posts with relationships
     posts = []
     if post_ids:
         posts = Post.query.options(
             joinedload(Post.author),
+            joinedload(Post.comments).joinedload(Comment.author),
             joinedload(Post.likes)
         ).filter(Post.id.in_(post_ids)).order_by(Post.created_at.desc()).all()
-        
-        # Add likes count to each post
-        for post in posts:
-            post.likes_count = len(post.likes)
-    
+
+
+
     return posts
 
 # Add this temporarily to see query performance
@@ -944,31 +944,39 @@ def add_comment(post_id):
     )
 
 
-@user.route("/get_comments/<int:post_id>")
+@user.route('/get_comments/<int:post_id>')
+@login_required
 def get_comments(post_id):
-    post = Post.query.get_or_404(post_id)
-    # Order comments by created_at DESCENDING (newest first)
-    comments = (
-        Comment.query.filter_by(post_id=post_id)
-        .order_by(Comment.created_at.desc())
-        .all()
-    )
-    result = []
-    for c in comments:
-        result.append(
-            {
-                "id": c.id,
-                "name": f"{c.author.first_name} {c.author.last_name}",
-                "avatar": c.author.profile_pic
-                or url_for("static", filename="assets/img/default-avatar.png"),
-                "content": c.content,
-                "created_at": c.created_at.isoformat(),
-                "created_at_formatted": c.created_at.strftime('%b %d, %Y at %I:%M %p'),
-                "created_at_short": c.created_at.strftime('%b %d, %H:%M'),
-                "replies": [],  # handle replies later
-            }
-        )
-    return jsonify(result)
+    try:
+        limit = request.args.get('limit', 20, type=int)
+
+        # Get all comments or limit based on request
+        if limit == 0:  # 0 means get all
+            comments = Comment.query.filter_by(post_id=post_id) \
+                .order_by(Comment.created_at.desc()) \
+                .all()
+        else:
+            comments = Comment.query.filter_by(post_id=post_id) \
+                .order_by(Comment.created_at.desc()) \
+                .limit(limit) \
+                .all()
+
+        comments_data = []
+        for comment in comments:
+            author = comment.author
+            comments_data.append({
+                'id': comment.id,
+                'content': comment.content,
+                'created_at': comment.created_at.strftime('%I:%M %p'),
+                'author_id': author.id,
+                'author_name': author.full_name,
+                'avatar': author.profile_pic or url_for('static', filename='assets/img/default-avatar.png')
+            })
+
+        return jsonify({'comments': comments_data})
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 @user.route("/debug/notification_status")

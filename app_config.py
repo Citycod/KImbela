@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from flask import jsonify
 from werkzeug.exceptions import RequestEntityTooLarge
 import time
+import resend
 
 # Import extensions (make sure socketio is initialized with threading)
 from extensions import db, bcrypt, login_manager, mail, csrf, cache, socketio
@@ -54,12 +55,18 @@ def create_app():
     }
     
     # ========== EMAIL CONFIG ==========
-    app.config["MAIL_SERVER"] = os.getenv("MAIL_SERVER", "smtp.gmail.com")
-    app.config["MAIL_PORT"] = int(os.getenv("MAIL_PORT", 587))
-    app.config["MAIL_USE_TLS"] = True
-    app.config["MAIL_USERNAME"] = os.getenv("MAIL_USERNAME")
-    app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")
-    app.config["MAIL_DEFAULT_SENDER"] = os.getenv("MAIL_DEFAULT_SENDER")
+    # app.config["MAIL_SERVER"] = os.getenv("MAIL_SERVER", "smtp.gmail.com")
+    # app.config["MAIL_PORT"] = int(os.getenv("MAIL_PORT", 587))
+    # app.config["MAIL_USE_TLS"] = True
+    # app.config["MAIL_USERNAME"] = os.getenv("MAIL_USERNAME")
+    # app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")
+    # app.config["MAIL_DEFAULT_SENDER"] = os.getenv("MAIL_DEFAULT_SENDER")
+
+    # ========== EMAIL CONFIG ==========
+    # Configure Resend
+    resend.api_key = os.getenv("RESEND_API_KEY", "")
+    app.config["RESEND_API_KEY"] = os.getenv("RESEND_API_KEY", "")
+    app.config["MAIL_DEFAULT_SENDER"] = os.getenv("MAIL_DEFAULT_SENDER", "noreply@resend.dev")
     
     # ========== SOCKET.IO CONFIG ==========
     app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY", "dev-secret-key-12345")

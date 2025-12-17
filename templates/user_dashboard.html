@@ -4,35 +4,56 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dashboard – Kimbela</title>
-    
+
     <!-- Favicon -->
-    <link href="{{ url_for('static', filename='assets/img/fav.png') }}" rel="icon" />
-    <link href="{{ url_for('static', filename='assets/img/fav.png') }}" rel="apple-touch-icon" />
-    
+    <link
+      href="{{ url_for('static', filename='assets/img/fav.png') }}"
+      rel="icon"
+    />
+    <link
+      href="{{ url_for('static', filename='assets/img/fav.png') }}"
+      rel="apple-touch-icon"
+    />
+
     <!-- CSS Files -->
-    <link href="{{ url_for('static', filename='assets/css/main.css') }}" rel="stylesheet" />
-    <link href="{{ url_for('static', filename='assets/css/dashboard.css') }}" rel="stylesheet" />
-    
+    <link
+      href="{{ url_for('static', filename='assets/css/main.css') }}"
+      rel="stylesheet"
+    />
+    <link
+      href="{{ url_for('static', filename='assets/css/dashboard.css') }}"
+      rel="stylesheet"
+    />
+
     <!-- External CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
 
     <!-- Add this to your HTML template -->
-<script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+    <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
 
-      <!-- Add this in the head or body before the script tag that loads dashboard.js -->
-<script>
-    // Set global variables for current user
-    window.currentUserInfo = {
-        id: {{ current_user.id }},
-        name: '{{ current_user.full_name|replace("'", "\\'") }}',
-        avatar: '{{ current_user.profile_pic or url_for("static", filename="assets/img/default-avatar.png") }}',
-        firstName: '{{ current_user.first_name|replace("'", "\\'") }}',
-        lastName: '{{ current_user.last_name|replace("'", "\\'") }}'
-    };
-    window.defaultAvatar = '{{ url_for("static", filename="assets/img/default-avatar.png") }}';
-</script>
+    <!-- Add this in the head or body before the script tag that loads dashboard.js -->
+    <script>
+      // Set global variables for current user
+      window.currentUserInfo = {
+          id: {{ current_user.id }},
+          name: '{{ current_user.full_name|replace("'", "\\'") }}',
+          avatar: '{{ current_user.profile_pic or url_for("static", filename="assets/img/default-avatar.png") }}',
+          firstName: '{{ current_user.first_name|replace("'", "\\'") }}',
+          lastName: '{{ current_user.last_name|replace("'", "\\'") }}'
+      };
+      window.defaultAvatar = '{{ url_for("static", filename="assets/img/default-avatar.png") }}';
+    </script>
 
     <script>
       // Check if Tailwind loads properly
@@ -69,9 +90,9 @@
         const emergencyCSS = `
                 /* EMERGENCY STYLES - Basic Tailwind equivalents */
                 * { box-sizing: border-box; margin: 0; padding: 0; }
-                body { 
+                body {
                     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                    background-color: #f3f4f6; 
+                    background-color: #f3f4f6;
                     line-height: 1.5;
                 }
                 .bg-white { background-color: white; }
@@ -149,7 +170,7 @@
                 .leading-tight { line-height: 1.25; }
                 .overflow-hidden { overflow: hidden; }
                 .overflow-y-auto { overflow-y: auto; }
-                
+
                 /* Custom scrollbar */
                 .custom-scrollbar::-webkit-scrollbar { width: 6px; }
                 .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
@@ -185,590 +206,690 @@
     />
 
     <script>
-        window.csrfToken = '{{ csrf_token }}';
-        window.currentUserId = {{ current_user.id|tojson }};
-        window.hasMorePosts = {{ has_more|tojson|default(false) }};
-        window.nextCursor = {{ next_cursor|tojson|default(None) }};
-        window.friendIds = {{ current_user.friend_ids|tojson }};
-        window.blockedUserIds = {{ current_user.blocks|map(attribute='id')|list|tojson }};
-        window.defaultAvatar = '{{ url_for('static', filename='assets/img/default-avatar.png') }}';
+      window.csrfToken = '{{ csrf_token }}';
+      window.currentUserId = {{ current_user.id|tojson }};
+      window.hasMorePosts = {{ has_more|tojson|default(false) }};
+      window.nextCursor = {{ next_cursor|tojson|default(None) }};
+      window.friendIds = {{ current_user.friend_ids|tojson }};
+      window.blockedUserIds = {{ current_user.blocks|map(attribute='id')|list|tojson }};
+      window.defaultAvatar = '{{ url_for('static', filename='assets/img/default-avatar.png') }}';
     </script>
 
-
     <style>
-        /* Facebook-style Reactions */
-.reactions-container {
-    position: relative;
-    display: inline-block;
-}
+      /* Facebook-style Reactions */
+      .reactions-container {
+        position: relative;
+        display: inline-block;
+      }
 
-.reactions-tooltip {
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%) translateY(-10px);
-    background: white;
-    border-radius: 50px;
-    padding: 4px 8px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-    border: 1px solid #e5e7eb;
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.reactions-tooltip.show {
-    opacity: 1;
-    visibility: visible;
-    transform: translateX(-50%) translateY(-15px);
-}
-
-.reaction-option {
-    font-size: 1.5rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    transform: scale(1);
-    filter: grayscale(100%);
-}
-
-.reaction-option:hover {
-    transform: scale(1.4) translateY(-5px);
-    filter: grayscale(0%);
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.reaction-option.like:hover { color: #1877f2; }
-.reaction-option.love:hover { color: #f02849; }
-.reaction-option.care:hover { color: #f7b928; }
-.reaction-option.haha:hover { color: #f7b928; }
-.reaction-option.wow:hover { color: #f7b928; }
-.reaction-option.sad:hover { color: #f7b928; }
-.reaction-option.angry:hover { color: #e9710f; }
-
-/* Active reaction styles */
-.like-btn.active-like { color: #1877f2; }
-.like-btn.active-love { color: #f02849; }
-.like-btn.active-care { color: #f7b928; }
-.like-btn.active-haha { color: #f7b928; }
-.like-btn.active-wow { color: #f7b928; }
-.like-btn.active-sad { color: #f7b928; }
-.like-btn.active-angry { color: #e9710f; }
-
-/* Reaction tooltip delay */
-.reactions-container:hover .reactions-tooltip {
-    transition-delay: 0.1s;
-}
-
-/* Comment fade in */
-.comment-fade-in {
-    animation: fadeInUp 0.3s ease-out;
-}
-
-@keyframes fadeInUp {
-    from {
+      .reactions-tooltip {
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%) translateY(-10px);
+        background: white;
+        border-radius: 50px;
+        padding: 4px 8px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        border: 1px solid #e5e7eb;
         opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
+        visibility: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .reactions-tooltip.show {
         opacity: 1;
-        transform: translateY(0);
-    }
-}
+        visibility: visible;
+        transform: translateX(-50%) translateY(-15px);
+      }
 
-/* Like animation */
-.like-animation {
-    animation: likePop 0.3s ease-in-out;
-}
+      .reaction-option {
+        font-size: 1.5rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        transform: scale(1);
+        filter: grayscale(100%);
+      }
 
-@keyframes likePop {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.2); }
-    100% { transform: scale(1); }
-}
+      .reaction-option:hover {
+        transform: scale(1.4) translateY(-5px);
+        filter: grayscale(0%);
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      }
 
-/* Comments section */
-.comments-section {
-    max-height: 300px;
-    overflow-y: auto;
-}
+      .reaction-option.like:hover {
+        color: #1877f2;
+      }
+      .reaction-option.love:hover {
+        color: #f02849;
+      }
+      .reaction-option.care:hover {
+        color: #f7b928;
+      }
+      .reaction-option.haha:hover {
+        color: #f7b928;
+      }
+      .reaction-option.wow:hover {
+        color: #f7b928;
+      }
+      .reaction-option.sad:hover {
+        color: #f7b928;
+      }
+      .reaction-option.angry:hover {
+        color: #e9710f;
+      }
 
-.comments-section::-webkit-scrollbar {
-    width: 6px;
-}
+      /* Active reaction styles */
+      .like-btn.active-like {
+        color: #1877f2;
+      }
+      .like-btn.active-love {
+        color: #f02849;
+      }
+      .like-btn.active-care {
+        color: #f7b928;
+      }
+      .like-btn.active-haha {
+        color: #f7b928;
+      }
+      .like-btn.active-wow {
+        color: #f7b928;
+      }
+      .like-btn.active-sad {
+        color: #f7b928;
+      }
+      .like-btn.active-angry {
+        color: #e9710f;
+      }
 
-.comments-section::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
-}
+      /* Reaction tooltip delay */
+      .reactions-container:hover .reactions-tooltip {
+        transition-delay: 0.1s;
+      }
 
-.comments-section::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 10px;
-}
+      /* Comment fade in */
+      .comment-fade-in {
+        animation: fadeInUp 0.3s ease-out;
+      }
 
-.comments-section::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
-}
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Like animation */
+      .like-animation {
+        animation: likePop 0.3s ease-in-out;
+      }
+
+      @keyframes likePop {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.2);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      /* Comments section */
+      .comments-section {
+        max-height: 300px;
+        overflow-y: auto;
+      }
+
+      .comments-section::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .comments-section::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+      }
+
+      .comments-section::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 10px;
+      }
+
+      .comments-section::-webkit-scrollbar-thumb:hover {
+        background: #a8a8a8;
+      }
+
+      /* Comment fade animation */
+      .comment-fade-in {
+        animation: commentFadeIn 0.3s ease-out;
+      }
+
+      @keyframes commentFadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Comment count animation */
+      .comment-count-update {
+        animation: countPulse 0.5s ease-in-out;
+      }
+
+      @keyframes countPulse {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.1);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
     </style>
-    
-  
-  </head>
-  <body class="font-poppins bg-fb-gray text-fb-text" >
 
-    <div class="simple-loader" id="loader">
-      <div class="loader-logo">
-        <img
-          src="{{ url_for('static', filename='assets/img/kim.png') }}"
-          alt="Kimbela"
-          class="h-10"
-          style="
-            max-width: 60vw;
-            max-height: 60vh;
-            width: 320px;
-            height: 320px;
-            object-fit: contain;
-          "
+      <style>
+  /* Tiny Comment Loader */
+  .comment-loader {
+    display: inline-block;
+    position: relative;
+    width: 20px;
+    height: 20px;
+  }
+
+  .comment-loader::after {
+    content: '';
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 16px;
+    height: 16px;
+    margin: 2px;
+    border-radius: 50%;
+    border: 2px solid #3b82f6;
+    border-color: #3b82f6 transparent #3b82f6 transparent;
+    animation: comment-loader-spin 1.2s linear infinite;
+  }
+
+  @keyframes comment-loader-spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* Alternative: Dots loader */
+  .comment-dots-loader {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    width: 20px;
+    height: 20px;
+  }
+
+  .comment-dots-loader span {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #3b82f6;
+    animation: comment-dots-bounce 1.4s ease-in-out infinite both;
+  }
+
+  .comment-dots-loader span:nth-child(1) {
+    animation-delay: -0.32s;
+  }
+
+  .comment-dots-loader span:nth-child(2) {
+    animation-delay: -0.16s;
+  }
+
+  @keyframes comment-dots-bounce {
+    0%, 80%, 100% {
+      transform: scale(0);
+    }
+    40% {
+      transform: scale(1);
+    }
+  }
+
+  /* Minimal line loader */
+  .comment-line-loader {
+    display: inline-block;
+    position: relative;
+    width: 20px;
+    height: 4px;
+    background: #e5e7eb;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .comment-line-loader::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 20px;
+    background: linear-gradient(90deg, transparent, #3b82f6, transparent);
+    animation: comment-line-slide 1.5s ease-in-out infinite;
+  }
+
+  @keyframes comment-line-slide {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(200%);
+    }
+  }
+
+  /* Heart beat loader (for love reactions) */
+  .comment-heart-loader {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    position: relative;
+  }
+
+  .comment-heart-loader::before,
+  .comment-heart-loader::after {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 0;
+    width: 8px;
+    height: 12px;
+    background: #ef4444;
+    border-radius: 8px 8px 0 0;
+    transform: rotate(-45deg);
+    transform-origin: 0 100%;
+    animation: comment-heart-beat 1.2s ease-in-out infinite both;
+  }
+
+  .comment-heart-loader::after {
+    left: 0;
+    transform: rotate(45deg);
+    transform-origin: 100% 100%;
+  }
+
+  @keyframes comment-heart-beat {
+    0%, 100% {
+      transform: scale(0.8);
+      opacity: 0.7;
+    }
+    50% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  /* Send icon loader */
+  .comment-send-loader {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    position: relative;
+  }
+
+  .comment-send-loader i {
+    color: #3b82f6;
+    animation: comment-send-rotate 1.2s ease-in-out infinite;
+  }
+
+  @keyframes comment-send-rotate {
+    0% {
+      transform: rotate(0deg);
+      opacity: 0.6;
+    }
+    50% {
+      transform: rotate(180deg);
+      opacity: 1;
+    }
+    100% {
+      transform: rotate(360deg);
+      opacity: 0.6;
+    }
+  }
+</style>
+  </head>
+  <body class="font-poppins bg-fb-gray text-fb-text">
+  <div class="simple-loader" id="loader">
+    <div class="loader-logo">
+      <img
+        src="{{ url_for('static', filename='assets/img/kim.png') }}"
+        alt="Kimbela"
+        class="h-10"
+        style="
+          max-width: 60vw;
+          max-height: 60vh;
+          width: 320px;
+          height: 320px;
+          object-fit: contain;
+        "
+      />
+    </div>
+    <div class="loader-spinner"></div>
+    <div class="loader-text">Loading your dashboard...</div>
+  </div>
+
+  <!-- NAVBAR -->
+  <nav
+    class="fixed top-0 left-0 right-0 z-50 bg-white shadow-soft border-b border-fb-border h-16 flex items-center px-4"
+  >
+    <!-- Mobile Menu Button -->
+    <button
+      class="lg:hidden p-2 rounded-full hover:bg-fb-gray transition-colors mr-2"
+      onclick="toggleMobileMenu()"
+    >
+      <i class="bi bi-list text-xl"></i>
+    </button>
+
+    <!-- Logo -->
+    <a
+      href="{{ url_for('user.user_dashboard') }}"
+      class="flex items-center mr-4"
+    >
+      <img
+        src="{{ url_for('static', filename='assets/img/kim.png') }}"
+        alt="Kimbela"
+        class="h-10 my_logo"
+        style="height: 10rem; width: 10rem"
+      />
+    </a>
+
+    <!-- Search Bar -->
+    <div
+      class="flex-1 flex justify-center searching"
+      style="margin-right: 0.5rem"
+    >
+      <div class="relative w-full max-w-lg md:max-w-xl">
+        <i
+          class="bi bi-search absolute left-3 top-1/2 transform -translate-y-1/2 text-fb-text-light"
+        ></i>
+        <input
+          type="text"
+          id="globalSearch"
+          placeholder="Search users, posts, and more..."
+          class="w-full pl-10 pr-3 py-2 bg-fb-gray rounded-full border-0 focus:ring-2 focus:ring-fb-blue focus:outline-none transition-all text-[0.95rem] md:text-base searching search_input"
         />
+        <div
+          class="search-results absolute top-full left-0 right-0 mt-1 bg-white rounded-xl shadow-strong overflow-hidden z-10 hidden searching_result results"
+          id="searchResults"
+        >
+          <div
+            class="search-results-body max-h-80 overflow-y-auto custom-scrollbar searching_result results"
+            id="searchResultsBody"
+          ></div>
+        </div>
       </div>
-      <div class="loader-spinner"></div>
-      <div class="loader-text">Loading your dashboard...</div>
     </div>
 
-    
-    <!-- NAVBAR -->
-    <nav
-      class="fixed top-0 left-0 right-0 z-50 bg-white shadow-soft border-b border-fb-border h-16 flex items-center px-4"
-    >
-      <!-- Mobile Menu Button -->
-      <button
-        class="lg:hidden p-2 rounded-full hover:bg-fb-gray transition-colors mr-2"
-        onclick="toggleMobileMenu()"
-      >
-        <i class="bi bi-list text-xl"></i>
-      </button>
+    <!-- Spacer -->
 
-      <!-- Logo -->
-      <a
-        href="{{ url_for('user.user_dashboard') }}"
-        class="flex items-center mr-4"
-      >
-        <img
-          src="{{ url_for('static', filename='assets/img/kim.png') }}"
-          alt="Kimbela"
-          class="h-10 my_logo"
-          style="height: 10rem; width: 10rem"
-        />
-      </a>
-
-      <!-- Search Bar -->
-      <div
-        class="flex-1 flex justify-center searching"
-        style="margin-right: 0.5rem"
-      >
-        <div class="relative w-full max-w-lg md:max-w-xl">
-          <i
-            class="bi bi-search absolute left-3 top-1/2 transform -translate-y-1/2 text-fb-text-light"
-          ></i>
-          <input
-            type="text"
-            id="globalSearch"
-            placeholder="Search users, posts, and more..."
-            class="w-full pl-10 pr-3 py-2 bg-fb-gray rounded-full border-0 focus:ring-2 focus:ring-fb-blue focus:outline-none transition-all text-[0.95rem] md:text-base searching search_input"
-          />
-          <div
-            class="search-results absolute top-full left-0 right-0 mt-1 bg-white rounded-xl shadow-strong overflow-hidden z-10 hidden searching_result results"
-            id="searchResults"
+    <!-- Navigation Icons -->
+    <div class="flex items-center space-x-2">
+      <!-- Messenger -->
+      <div>
+        <button
+          onclick="openMessenger()"
+          class="p-2 rounded-full hover:bg-fb-gray transition-colors relative"
+          title="Messenger"
+          id="openMessaging"
+        >
+          <i class="bi bi-messenger text-xl"></i>
+          <span
+            id="unreadMessagesBadge"
+            class="notification-badge absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden"
+            >0</span
           >
-            <div
-              class="search-results-body max-h-80 overflow-y-auto custom-scrollbar searching_result results"
-              id="searchResultsBody"
-            ></div>
-          </div>
-        </div>
+        </button>
       </div>
 
-      <!-- Spacer -->
-
-      <!-- Navigation Icons -->
-      <div class="flex items-center space-x-2">
-        <!-- Messenger -->
-        <div>
-          <button
-            onclick="openMessenger()"
-            class="p-2 rounded-full hover:bg-fb-gray transition-colors relative"
-            title="Messenger"
-            id="openMessaging"
+      <!-- Notifications -->
+      <div class="dropdown relative">
+        <div
+          class="p-2 rounded-full hover:bg-fb-gray transition-colors cursor-pointer relative"
+          data-bs-toggle="dropdown"
+          id="notificationDropdown"
+        >
+          <i class="bi bi-bell text-xl"></i>
+          <span
+            class="notification-badge absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden"
+            id="notificationBadge"
+            >0</span
           >
-            <i class="bi bi-messenger text-xl"></i>
-            <span
-              id="unreadMessagesBadge"
-              class="notification-badge absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden"
-              >0</span
-            >
-          </button>
         </div>
-
-        <!-- Notifications -->
-        <div class="dropdown relative">
+        <div
+          class="dropdown-menu absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-strong overflow-hidden z-50 hidden"
+          id="notificationDropdownMenu"
+        >
           <div
-            class="p-2 rounded-full hover:bg-fb-gray transition-colors cursor-pointer relative"
-            data-bs-toggle="dropdown"
-            id="notificationDropdown"
+            class="p-3 border-b border-fb-border flex justify-between items-center"
           >
-            <i class="bi bi-bell text-xl"></i>
-            <span
-              class="notification-badge absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden"
-              id="notificationBadge"
-              >0</span
-            >
+            <h3 class="font-semibold">Notifications</h3>
           </div>
           <div
-            class="dropdown-menu absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-strong overflow-hidden z-50 hidden"
-            id="notificationDropdownMenu"
+            class="max-h-96 overflow-y-auto custom-scrollbar"
+            id="notificationsList"
           >
             <div
-              class="p-3 border-b border-fb-border flex justify-between items-center"
-            >
-              <h3 class="font-semibold">Notifications</h3>
-              
-            </div>
-            <div
-              class="max-h-96 overflow-y-auto custom-scrollbar"
-              id="notificationsList"
+              class="flex justify-center items-center p-4 text-fb-text-light"
             >
               <div
-                class="flex justify-center items-center p-4 text-fb-text-light"
-              >
-                <div
-                  class="animate-spin rounded-full h-6 w-6 border-b-2 border-fb-blue"
-                ></div>
-                <span class="ml-2">Loading...</span>
-              </div>
+                class="animate-spin rounded-full h-6 w-6 border-b-2 border-fb-blue"
+              ></div>
+              <span class="ml-2">Loading...</span>
             </div>
-            
           </div>
         </div>
-
-        <!-- User Profile -->
-        
       </div>
-    </nav>
 
-    <!-- Messenger Popup -->
-    <!-- Messenger Popup -->
-    <!-- Messenger Popup - FIXED VERSION -->
-    <!-- In your HTML template, update the messenger popup section -->
-<!-- Messenger Popup - IMPROVED VERSION -->
-<div id="messengerPopup" class="fixed bottom-4 right-4 w-80 sm:w-96 h-[500px] bg-white rounded-xl shadow-2xl z-50 hidden flex-col border border-gray-200">
+      <!-- User Profile -->
+    </div>
+  </nav>
+
+  <!-- Messenger Popup -->
+  <!-- Messenger Popup -->
+  <!-- Messenger Popup - FIXED VERSION -->
+  <!-- In your HTML template, update the messenger popup section -->
+  <!-- Messenger Popup - IMPROVED VERSION -->
+  <div
+    id="messengerPopup"
+    class="fixed bottom-4 right-4 w-80 sm:w-96 h-[500px] bg-white rounded-xl shadow-2xl z-50 hidden flex-col border border-gray-200"
+  >
     <!-- Header -->
-    <div class="flex-none p-3 border-b bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-t-xl">
-        <div class="flex items-center justify-between">
-            <div class="flex items-center">
-                <h3 class="font-semibold text-sm sm:text-base">Messenger</h3>
-                <span id="unreadChatsBadge" class="ml-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden">0</span>
-            </div>
-            <div class="flex items-center space-x-2">
-                <button onclick="markAllAsRead()" class="text-white hover:bg-blue-700 p-1 rounded text-xs" title="Mark all as read">
-                    <i class="bi bi-check-all"></i>
-                </button>
-                <button onclick="closeMessenger()" class="text-white hover:bg-blue-700 p-1 rounded">
-                    <i class="bi bi-x-lg"></i>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Friends List Container -->
-    <div id="friendList" class="flex-1 overflow-y-auto">
-        <div id="friendsContainer" class="p-2">
-            <div class="text-center p-4 text-gray-500">
-                <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
-                <p class="mt-2 text-sm">Loading conversations...</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Chat Area -->
-    <div id="chatArea" class="flex-1 flex flex-col hidden">
-        <!-- Chat Header -->
-        <div class="flex-none p-3 border-b bg-gray-50 flex items-center justify-between">
-            <div class="flex items-center">
-                <button onclick="backToFriends()" class="p-1 mr-2 rounded-full hover:bg-gray-200">
-                    <i class="bi bi-arrow-left"></i>
-                </button>
-                <img id="chatAvatar" src="" class="w-8 h-8 rounded-full mr-2">
-                <div>
-                    <p id="chatName" class="font-medium text-sm"></p>
-                    <p id="chatStatus" class="text-xs text-green-600">Online</p>
-                </div>
-            </div>
-            <div class="flex items-center space-x-2">
-                <button onclick="loadMoreMessages()" class="text-xs text-blue-600 hover:text-blue-800 p-1" title="Load older messages">
-                    <i class="bi bi-arrow-clockwise"></i>
-                </button>
-                <button onclick="clearChat()" class="text-xs text-gray-600 hover:text-red-600 p-1" title="Clear chat">
-                    <i class="bi bi-trash"></i>
-                </button>
-            </div>
-        </div>
-
-        <!-- Messages Container with Max Height -->
-        <div class="flex-1 overflow-y-auto p-3 bg-gray-50" id="chatMessagesWrapper" style="max-height: 350px;">
-            <div id="messagesLoading" class="hidden text-center py-4">
-                <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
-                <p class="text-xs text-gray-500 mt-2">Loading messages...</p>
-            </div>
-            <div id="chatMessages" class="space-y-2"></div>
-            <div id="noMessages" class="hidden text-center py-8 text-gray-400">
-                <i class="bi bi-chat-dots text-2xl mb-2"></i>
-                <p class="text-sm">No messages yet</p>
-                <p class="text-xs">Start the conversation!</p>
-            </div>
-        </div>
-
-        <!-- Typing Indicator -->
-        <div id="typingIndicator" class="hidden px-3 py-2 bg-gray-50 border-t">
-            <div class="flex items-center space-x-2 text-gray-500">
-                <div class="flex space-x-1">
-                    <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                    <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
-                    <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
-                </div>
-                <span id="typingUserName" class="text-xs"></span>
-                <span class="text-xs">is typing...</span>
-            </div>
-        </div>
-
-        <!-- Message Input -->
-        <div class="border-t bg-white p-3">
-            <div class="flex items-center space-x-2">
-                <button class="p-2 text-gray-500 hover:text-blue-600">
-                    <i class="bi bi-emoji-smile"></i>
-                </button>
-                <input type="text" id="chatInput" placeholder="Type a message..."
-                    class="flex-1 px-4 py-2 bg-gray-100 rounded-full text-sm border-0 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    oninput="handleTyping()">
-                <button id="sendChatBtn" onclick="sendMessage()" class="bg-blue-600 text-white px-4 py-2 rounded-full text-sm hover:bg-blue-700 transition-colors">
-                    Send
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-    <!-- MOBILE SIDEBAR -->
     <div
-      class="fixed inset-0 z-40 lg:hidden"
-      id="mobileSidebarOverlay"
-      style="display: none"
+      class="flex-none p-3 border-b bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-t-xl"
     >
-      <div
-        class="absolute inset-0 bg-black bg-opacity-50"
-        onclick="toggleMobileMenu()"
-      ></div>
-      <div
-        class="absolute top-0 left-0 bottom-0 w-80 bg-white shadow-strong transform -translate-x-full transition-transform duration-300"
-        id="mobileSidebar"
-      >
-        <div class="p-4 border-b border-fb-border flex items-center">
-          <img
-            src="{{ url_for('static', filename='assets/img/kim.png') }}"
-            alt="Kimbela"
-            class="h-8 mr-2"
-          />
-          <span class="text-xl font-bold">Kimbela</span>
+      <div class="flex items-center justify-between">
+        <div class="flex items-center">
+          <h3 class="font-semibold text-sm sm:text-base">Messenger</h3>
+          <span
+            id="unreadChatsBadge"
+            class="ml-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden"
+            >0</span
+          >
+        </div>
+        <div class="flex items-center space-x-2">
           <button
-            class="ml-auto p-2 rounded-full hover:bg-fb-gray"
-            onclick="toggleMobileMenu()"
+            onclick="markAllAsRead()"
+            class="text-white hover:bg-blue-700 p-1 rounded text-xs"
+            title="Mark all as read"
+          >
+            <i class="bi bi-check-all"></i>
+          </button>
+          <button
+            onclick="closeMessenger()"
+            class="text-white hover:bg-blue-700 p-1 rounded"
           >
             <i class="bi bi-x-lg"></i>
           </button>
         </div>
-        <div class="p-4">
+      </div>
+    </div>
+
+    <!-- Friends List Container -->
+    <div id="friendList" class="flex-1 overflow-y-auto">
+      <div id="friendsContainer" class="p-2">
+        <div class="text-center p-4 text-gray-500">
           <div
-            class="sidebar-item flex items-center p-3 rounded-lg bg-blue-50 text-blue-600 font-medium mb-2"
-          >
-            <i class="bi bi-house-door mr-3 text-lg"></i> Home
-          </div>
-          <a
-            href="{{ url_for('user.profile', user_id=current_user.id) }}"
-            class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-fb-gray transition-colors mb-2"
-          >
-            <i class="bi bi-person mr-3 text-lg"></i> Profile
-          </a>
-
-          <!-- In MOBILE SIDEBAR section, replace the Groups item with: -->
-          <!-- Mobile Groups Dropdown -->
-
-          <div class="dropdown relative">
-            <div
-              class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-300 mb-2 cursor-pointer group"
-              data-bs-toggle="groups-dropdown-mobile"
-            >
-              <i
-                class="bi bi-people-fill mr-3 text-lg text-blue-600 group-hover:text-purple-600 transition-colors duration-300"
-              ></i>
-              <span
-                class="font-medium group-hover:text-blue-700 transition-colors duration-300"
-                >Groups</span
-              >
-              <i
-                class="bi bi-chevron-down ml-auto text-sm text-gray-400 group-hover:text-blue-500 transform group-hover:rotate-180 transition-all duration-300"
-              ></i>
-            </div>
-
-            <div
-              class="dropdown-menu absolute left-0 mt-1 w-85 bg-white rounded-2xl shadow-2xl overflow-hidden z-10 hidden border border-gray-100"
-              id="groupsDropdownMenuMobile"
-              style="
-                background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);
-              "
-            >
-              <!-- Same beautiful content as desktop -->
-              <div
-                class="p-4 border-b border-gray-100 bg-gradient-to-r from-blue-600 to-purple-600 text-white"
-              >
-                <div class="flex items-center justify-between">
-                  <div>
-                    <h4 class="font-bold text-lg">Discover Groups</h4>
-                    <p class="text-blue-100 text-sm mt-1">
-                      Connect with amazing communities
-                    </p>
-                  </div>
-                  <div
-                    class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center"
-                  >
-                    <i class="bi bi-people-fill text-lg"></i>
-                  </div>
-                </div>
-              </div>
-
-              <div class="p-3 bg-white/50">
-                <div class="relative">
-                  <i
-                    class="bi bi-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                  ></i>
-                  <input
-                    type="text"
-                    placeholder="Search groups..."
-                    class="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 text-sm"
-                    oninput="searchGroups(this.value)"
-                  />
-                </div>
-              </div>
-
-              <div
-                class="max-h-64 overflow-y-auto custom-scrollbar bg-gradient-to-b from-white to-blue-50/30"
-                id="groupsListMobile"
-              >
-                <div
-                  class="flex flex-col items-center justify-center p-8 text-gray-500"
-                >
-                  <div class="relative mb-4">
-                    <div
-                      class="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"
-                    ></div>
-                    <div
-                      class="absolute inset-0 flex items-center justify-center"
-                    >
-                      <i class="bi bi-people text-blue-600"></i>
-                    </div>
-                  </div>
-                  <p class="text-sm font-medium">Loading amazing groups...</p>
-                  <p class="text-xs mt-1 text-gray-400">
-                    Finding the best communities for you
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <a
-            href="{{ url_for('market.main_market') }}"
-            class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-orange-50 hover:to-yellow-50 transition-all duration-300 mb-2 group border border-transparent hover:border-orange-200 shadow-sm hover:shadow-md"
-          >
-            <i
-              class="bi bi-shop mr-3 text-lg group-hover:scale-110 group-hover:rotate-12 transition-all duration-300"
-              style="color: #f5260bff; animation: pulse-glow 2s infinite"
-            ></i>
-            <span
-              class="font-medium group-hover:text-orange-700 transition-colors duration-300"
-              >Market Place</span
-            >
-          </a>
-
-          <a
-            href="{{ url_for('payments.ad_packages') }}"
-            class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-orange-50 hover:to-yellow-50 transition-all duration-300 mb-2 group border border-transparent hover:border-orange-200 shadow-sm hover:shadow-md"
-          >
-            <i
-              class="bi bi-megaphone-fill mr-3 text-lg group-hover:scale-110 group-hover:rotate-12 transition-all duration-300"
-              style="color: #f59e0b; animation: pulse-glow 2s infinite"
-            ></i>
-            <span
-              class="font-medium group-hover:text-orange-700 transition-colors duration-300"
-              >Create Sponsored Ad</span
-            >
-          </a>
-
-          <!-- Match Making Request Form -->
-          <a
-            href="{{ url_for('match.requests') }}"
-            class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-pink-50 hover:to-rose-50 transition-all duration-300 mb-2 group border border-transparent hover:border-pink-200 shadow-sm hover:shadow-md"
-          >
-            <i
-              class="bi bi-heart-fill mr-3 text-lg group-hover:scale-110 group-hover:animate-bounce transition-all duration-300"
-              style="
-                color: #ec4899;
-                animation: heartbeat 1.5s ease-in-out infinite;
-              "
-            ></i>
-            <span
-              class="font-medium group-hover:text-pink-700 transition-colors duration-300"
-              >Create Match Request</span
-            >
-          </a>
-
-          <!-- View Match Requests -->
-          <a
-            href="{{ url_for('match.view_requests') }}"
-            class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 transition-all duration-300 mb-2 group border border-transparent hover:border-green-200 shadow-sm hover:shadow-md"
-          >
-            <i
-              class="bi bi-binoculars-fill mr-3 text-lg group-hover:scale-110 group-hover:rotate-45 transition-all duration-300"
-              style="
-                color: #10b981;
-                animation: search-sweep 3s ease-in-out infinite;
-              "
-            ></i>
-            <span
-              class="font-medium group-hover:text-green-700 transition-colors duration-300"
-              >Browse Match Requests</span
-            >
-          </a>
-
-          <a
-              class="dropdown-item block px-4 py-2 text-red-500 hover:bg-red-50 transition-colors"
-              href="{{ url_for('user.logout') }}"
-            >
-              <i class="bi bi-box-arrow-right mr-2"></i> Logout
-            </a>
-
-          <!-- My Match Requests -->
+            class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"
+          ></div>
+          <p class="mt-2 text-sm">Loading conversations...</p>
         </div>
       </div>
     </div>
 
-    <!-- DASHBOARD CONTAINER -->
-    <div class="pt-16 flex">
-      <!-- LEFT SIDEBAR -->
+    <!-- Chat Area -->
+    <div id="chatArea" class="flex-1 flex flex-col hidden">
+      <!-- Chat Header -->
       <div
-        class="hidden lg:block w-96 h-screen sticky top-16 overflow-y-auto custom-scrollbar bg-white border-r border-fb-border p-4"
+        class="flex-none p-3 border-b bg-gray-50 flex items-center justify-between"
       >
+        <div class="flex items-center">
+          <button
+            onclick="backToFriends()"
+            class="p-1 mr-2 rounded-full hover:bg-gray-200"
+          >
+            <i class="bi bi-arrow-left"></i>
+          </button>
+          <img id="chatAvatar" src="" class="w-8 h-8 rounded-full mr-2" />
+          <div>
+            <p id="chatName" class="font-medium text-sm"></p>
+            <p id="chatStatus" class="text-xs text-green-600">Online</p>
+          </div>
+        </div>
+        <div class="flex items-center space-x-2">
+          <button
+            onclick="loadMoreMessages()"
+            class="text-xs text-blue-600 hover:text-blue-800 p-1"
+            title="Load older messages"
+          >
+            <i class="bi bi-arrow-clockwise"></i>
+          </button>
+          <button
+            onclick="clearChat()"
+            class="text-xs text-gray-600 hover:text-red-600 p-1"
+            title="Clear chat"
+          >
+            <i class="bi bi-trash"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Messages Container with Max Height -->
+      <div
+        class="flex-1 overflow-y-auto p-3 bg-gray-50"
+        id="chatMessagesWrapper"
+        style="max-height: 350px"
+      >
+        <div id="messagesLoading" class="hidden text-center py-4">
+          <div
+            class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"
+          ></div>
+          <p class="text-xs text-gray-500 mt-2">Loading messages...</p>
+        </div>
+        <div id="chatMessages" class="space-y-2"></div>
+        <div id="noMessages" class="hidden text-center py-8 text-gray-400">
+          <i class="bi bi-chat-dots text-2xl mb-2"></i>
+          <p class="text-sm">No messages yet</p>
+          <p class="text-xs">Start the conversation!</p>
+        </div>
+      </div>
+
+      <!-- Typing Indicator -->
+      <div id="typingIndicator" class="hidden px-3 py-2 bg-gray-50 border-t">
+        <div class="flex items-center space-x-2 text-gray-500">
+          <div class="flex space-x-1">
+            <div
+              class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+            ></div>
+            <div
+              class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+              style="animation-delay: 0.1s"
+            ></div>
+            <div
+              class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+              style="animation-delay: 0.2s"
+            ></div>
+          </div>
+          <span id="typingUserName" class="text-xs"></span>
+          <span class="text-xs">is typing...</span>
+        </div>
+      </div>
+
+      <!-- Message Input -->
+      <div class="border-t bg-white p-3">
+        <div class="flex items-center space-x-2">
+          <button class="p-2 text-gray-500 hover:text-blue-600">
+            <i class="bi bi-emoji-smile"></i>
+          </button>
+          <input
+            type="text"
+            id="chatInput"
+            placeholder="Type a message..."
+            class="flex-1 px-4 py-2 bg-gray-100 rounded-full text-sm border-0 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            oninput="handleTyping()"
+          />
+          <button
+            id="sendChatBtn"
+            onclick="sendMessage()"
+            class="bg-blue-600 text-white px-4 py-2 rounded-full text-sm hover:bg-blue-700 transition-colors"
+          >
+            Send
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MOBILE SIDEBAR -->
+  <div
+    class="fixed inset-0 z-40 lg:hidden"
+    id="mobileSidebarOverlay"
+    style="display: none"
+  >
+    <div
+      class="absolute inset-0 bg-black bg-opacity-50"
+      onclick="toggleMobileMenu()"
+    ></div>
+    <div
+      class="absolute top-0 left-0 bottom-0 w-80 bg-white shadow-strong transform -translate-x-full transition-transform duration-300"
+      id="mobileSidebar"
+    >
+      <div class="p-4 border-b border-fb-border flex items-center">
+        <img
+          src="{{ url_for('static', filename='assets/img/kim.png') }}"
+          alt="Kimbela"
+          class="h-8 mr-2"
+        />
+        <span class="text-xl font-bold">Kimbela</span>
+        <button
+          class="ml-auto p-2 rounded-full hover:bg-fb-gray"
+          onclick="toggleMobileMenu()"
+        >
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+      <div class="p-4">
         <div
           class="sidebar-item flex items-center p-3 rounded-lg bg-blue-50 text-blue-600 font-medium mb-2"
         >
@@ -781,21 +902,17 @@
           <i class="bi bi-person mr-3 text-lg"></i> Profile
         </a>
 
-        <!-- In your LEFT SIDEBAR section, replace the current Groups item with: -->
-        <!-- Desktop Groups Dropdown -->
+        <!-- In MOBILE SIDEBAR section, replace the Groups item with: -->
+        <!-- Mobile Groups Dropdown -->
+
         <div class="dropdown relative">
           <div
-            class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-300 mb-2 cursor-pointer group border border-transparent hover:border-blue-200 shadow-sm hover:shadow-md"
-            data-bs-toggle="groups-dropdown"
+            class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-300 mb-2 cursor-pointer group"
+            data-bs-toggle="groups-dropdown-mobile"
           >
-            <div class="relative">
-              <i
-                class="bi bi-people-fill mr-3 text-lg text-blue-600 group-hover:text-purple-600 transition-colors duration-300"
-              ></i>
-              <div
-                class="absolute -top-1 -right-1 w-2 h-2 bg-green-400 rounded-full animate-pulse"
-              ></div>
-            </div>
+            <i
+              class="bi bi-people-fill mr-3 text-lg text-blue-600 group-hover:text-purple-600 transition-colors duration-300"
+            ></i>
             <span
               class="font-medium group-hover:text-blue-700 transition-colors duration-300"
               >Groups</span
@@ -806,13 +923,13 @@
           </div>
 
           <div
-            class="dropdown-menu absolute left-0 mt-2 w-94 bg-white rounded-2xl shadow-2xl overflow-hidden z-10 hidden border border-gray-100 transform origin-top transition-all duration-300 scale-95 group-hover:scale-100"
-            id="groupsDropdownMenu"
+            class="dropdown-menu absolute left-0 mt-1 w-85 bg-white rounded-2xl shadow-2xl overflow-hidden z-10 hidden border border-gray-100"
+            id="groupsDropdownMenuMobile"
             style="
               background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);
             "
           >
-            <!-- Header with gradient -->
+            <!-- Same beautiful content as desktop -->
             <div
               class="p-4 border-b border-gray-100 bg-gradient-to-r from-blue-600 to-purple-600 text-white"
             >
@@ -831,27 +948,12 @@
               </div>
             </div>
 
-            <!-- Search Bar -->
-            <div class="p-3 bg-white/50">
-              <div class="relative">
-                <i
-                  class="bi bi-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                ></i>
-                <input
-                  type="text"
-                  placeholder="Search groups..."
-                  class="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 text-sm"
-                  oninput="searchGroups(this.value)"
-                />
-              </div>
-            </div>
 
-            <!-- Groups List -->
+
             <div
-              class="max-h-80 overflow-y-auto custom-scrollbar bg-gradient-to-b from-white to-blue-50/30"
-              id="groupsList"
+              class="max-h-64 overflow-y-auto custom-scrollbar bg-gradient-to-b from-white to-blue-50/30"
+              id="groupsListMobile"
             >
-              <!-- Loading State -->
               <div
                 class="flex flex-col items-center justify-center p-8 text-gray-500"
               >
@@ -868,11 +970,9 @@
                 <p class="text-sm font-medium">Loading amazing groups...</p>
                 <p class="text-xs mt-1 text-gray-400">
                   Finding the best communities for you
-                  </p>
+                </p>
               </div>
             </div>
-
-            <!-- Footer with Create Button -->
           </div>
         </div>
 
@@ -890,875 +990,1252 @@
           >
         </a>
 
-        <!-- ADD THIS SPONSORED ADS LINK -->
         <a
           href="{{ url_for('payments.ad_packages') }}"
-          class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-orange-50 hover:to-yellow-50 transition-all duration-300 mb-2 group"
+          class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-orange-50 hover:to-yellow-50 transition-all duration-300 mb-2 group border border-transparent hover:border-orange-200 shadow-sm hover:shadow-md"
         >
           <i
-            class="bi bi-megaphone-fill mr-3 text-lg"
-            style="color: #f59e0b"
+            class="bi bi-megaphone-fill mr-3 text-lg group-hover:scale-110 group-hover:rotate-12 transition-all duration-300"
+            style="color: #f59e0b; animation: pulse-glow 2s infinite"
           ></i>
-          <span class="font-medium">Create Sponsored Ad</span>
+          <span
+            class="font-medium group-hover:text-orange-700 transition-colors duration-300"
+            >Create Sponsored Ad</span
+          >
         </a>
 
         <!-- Match Making Request Form -->
         <a
           href="{{ url_for('match.requests') }}"
-          class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-pink-50 hover:to-rose-50 transition-all duration-300 mb-2 group"
+          class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-pink-50 hover:to-rose-50 transition-all duration-300 mb-2 group border border-transparent hover:border-pink-200 shadow-sm hover:shadow-md"
         >
-          <i class="bi bi-heart-fill mr-3 text-lg" style="color: #ec4899"></i>
-          <span class="font-medium">Create Match Request</span>
+          <i
+            class="bi bi-heart-fill mr-3 text-lg group-hover:scale-110 group-hover:animate-bounce transition-all duration-300"
+            style="
+              color: #ec4899;
+              animation: heartbeat 1.5s ease-in-out infinite;
+            "
+          ></i>
+          <span
+            class="font-medium group-hover:text-pink-700 transition-colors duration-300"
+            >Create Match Request</span
+          >
         </a>
 
         <!-- View Match Requests -->
         <a
           href="{{ url_for('match.view_requests') }}"
-          class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 transition-all duration-300 mb-2 group"
+          class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 transition-all duration-300 mb-2 group border border-transparent hover:border-green-200 shadow-sm hover:shadow-md"
         >
           <i
-            class="bi bi-binoculars-fill mr-3 text-lg"
-            style="color: #10b981"
+            class="bi bi-binoculars-fill mr-3 text-lg group-hover:scale-110 group-hover:rotate-45 transition-all duration-300"
+            style="
+              color: #10b981;
+              animation: search-sweep 3s ease-in-out infinite;
+            "
           ></i>
-          <span class="font-medium">Browse Match Requests</span>
+          <span
+            class="font-medium group-hover:text-green-700 transition-colors duration-300"
+            >Browse Match Requests</span
+          >
         </a>
 
-
         <a
-              class="dropdown-item block px-4 py-2 text-red-500 hover:bg-red-50 transition-colors"
-              href="{{ url_for('user.logout') }}"
-            >
-              <i class="bi bi-box-arrow-right mr-2"></i> Logout
-            </a>
-
-        <!-- Sponsored Section -->
-        <!--<div class="mt-8 pt-6 border-t border-fb-border">
-          <h3 class="text-sm font-semibold text-fb-text-light mb-3">
-            Sponsored
-          </h3>
-          <div class="space-y-4">
-            <div
-              class="flex items-start space-x-3 p-2 rounded-lg hover:bg-fb-gray transition-colors cursor-pointer"
-            >
-              <div
-                class="w-16 h-16 bg-gradient-primary rounded-lg flex-shrink-0"
-              ></div>
-              <div>
-                <h4 class="font-medium text-sm">Amazing Product</h4>
-                <p class="text-xs text-fb-text-light">amazingproduct.com</p>
-              </div>
-            </div>
-            <div
-              class="flex items-start space-x-3 p-2 rounded-lg hover:bg-fb-gray transition-colors cursor-pointer"
-            >
-              <div
-                class="w-16 h-16 bg-gradient-secondary rounded-lg flex-shrink-0"
-              ></div>
-              <div>
-                <h4 class="font-medium text-sm">Creative Solutions</h4>
-                <p class="text-xs text-fb-text-light">creativesolutions.co</p>
-              </div>
-            </div>
-          </div>
-        </div>-->
-      </div>
-
-      <!-- MAIN CONTENT -->
-<div class="flex-1 max-w-2xl mx-auto p-4">
-  <!-- POST COMPOSER -->
-  <div class="bg-white rounded-2xl shadow-soft p-3 sm:p-4 mb-6 card-hover">
-    <div class="flex items-center mb-3">
-      <a href="{{ url_for('user.profile', user_id=current_user.id) }}">
-        <img
-          src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-          alt=""
-          class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover"
-        />
-      </a>
-      <div class="flex-1 ml-2 sm:ml-3">
-        <div
-          class="composer-input bg-fb-gray rounded-full px-3 sm:px-4 py-2 sm:py-3 cursor-pointer hover:bg-gray-200 transition-colors text-xs sm:text-sm"
-          data-bs-toggle="modal"
-          data-bs-target="#postModal"
+          class="dropdown-item block px-4 py-2 text-red-500 hover:bg-red-50 transition-colors"
+          href="{{ url_for('user.logout') }}"
         >
-          What's on your mind, {{ current_user.first_name }}?
-        </div>
+          <i class="bi bi-box-arrow-right mr-2"></i> Logout
+        </a>
+
+        <!-- My Match Requests -->
       </div>
-    </div>
-    <div class="flex justify-between pt-2 border-t border-fb-border">
-      <!-- Live Video -->
-      <button
-        class="composer-btn flex items-center justify-center flex-1 py-1.5 sm:py-2 rounded-lg hover:bg-fb-gray transition-colors text-fb-text-light font-medium text-xs sm:text-sm"
-        data-bs-toggle="modal"
-        data-bs-target="#postModal"
-      >
-        <i class="bi bi-camera-video-fill text-red-500 text-base sm:text-lg"></i>
-        <span class="hidden sm:inline ml-1 sm:ml-2">Live Video</span>
-      </button>
-
-      <!-- Photo/Video -->
-      <button
-        class="composer-btn flex items-center justify-center flex-1 py-1.5 sm:py-2 rounded-lg hover:bg-fb-gray transition-colors text-fb-text-light font-medium text-xs sm:text-sm"
-        onclick="document.getElementById('photoInput').click()"
-      >
-        <i class="bi bi-image-fill text-green-500 text-base sm:text-lg"></i>
-        <span class="hidden sm:inline ml-1 sm:ml-2">Photo/Video</span>
-        <input
-          type="file"
-          id="photoInput"
-          accept="image/*,video/*"
-          hidden
-          onchange="previewMedia(this)"
-        />
-      </button>
-
-      <!-- Feeling/Activity -->
-
     </div>
   </div>
 
-  <!-- POSTS FEED - OPTIMIZED FOR INFINITE SCROLL -->
-  <div id="posts-feed" data-has-more="{{ has_more|tojson }}" data-next-cursor="{{ next_cursor }}">
-
-    <!-- PEOPLE YOU MAY KNOW -->
-{% if random_three %}
-<div class="suggestions-section bg-white rounded-2xl shadow-soft p-4 mb-6">
-  <div class="flex justify-between items-center mb-3 sm:mb-4">
-    <h3 class="font-semibold text-lg">People You May Know</h3>
-  </div>
-  <div class="relative">
-    <div class="suggestions-track overflow-x-auto flex space-x-3 sm:space-x-4 pb-3 sm:pb-4 custom-scrollbar" id="suggestionsTrack">
-      {% for user in random_three %}
-      <div class="suggestion-card bg-gray-50 rounded-2xl p-4 text-center flex-shrink-0 w-48 cursor-pointer card-hover" onclick="openProfileModal({{ user.id }})">
-        <img
-          src="{{ user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-          alt="{{ user.first_name }}"
-          class="w-20 h-20 rounded-full object-cover mx-auto mb-2 sm:mb-3"
-        />
-        <div class="suggestion-name font-semibold">
-          {{ user.first_name }} {{ user.last_name }}
-        </div>
-        <div class="suggestion-mutual text-sm text-fb-text-light mb-3">
-          New to Kimbela
-        </div>
-
-        <!-- Dynamic Button based on status -->
-        {% if user.friend_request_status == 'sent' %}
-        <button
-          class="btn-cancel-request w-full py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors"
-          onclick="event.stopPropagation(); cancelFriendRequest({{ user.id }}, this)"
-          data-user-id="{{ user.id }}"
-        >
-          <i class="bi bi-clock-history mr-1"></i> Cancel Request
-        </button>
-        {% elif user.friend_request_status == 'received' %}
-        <div class="space-y-2">
-          <button
-            class="w-full py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
-            onclick="event.stopPropagation(); acceptFriendRequest({{ user.id }}, this)"
-          >
-            <i class="bi bi-check-lg mr-1"></i> Accept
-          </button>
-          <button
-            class="w-full py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors"
-            onclick="event.stopPropagation(); declineFriendRequest({{ user.id }}, this)"
-          >
-            <i class="bi bi-x-lg mr-1"></i> Decline
-          </button>
-        </div>
-        {% elif user.friend_request_status == 'friends' %}
-        <button
-          class="w-full py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
-          onclick="event.stopPropagation(); Messenger.startChat({{ user.id }})"
-        >
-          <i class="bi bi-chat-dots mr-1"></i> Message
-        </button>
-        {% else %}
-        <button
-          class="btn-add-friend w-full py-2 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
-          onclick="event.stopPropagation(); addFriend({{ user.id }}, this)"
-          data-user-id="{{ user.id }}"
-          style="background: linear-gradient(135deg, #5a4500, #b88900);"
-        >
-          <i class="bi bi-person-plus mr-1"></i> Add Friend
-        </button>
-        {% endif %}
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-</div>
-{% endif %}
-
-    <!-- INITIAL POSTS (Loaded server-side) -->
-    {% if initial_posts %}
-      {% for post in initial_posts %}
-      <div class="post-card bg-white rounded-2xl shadow-soft mb-6 overflow-hidden card-hover initial" data-post-id="{{ post.id }}" id="post-{{ post.id }}">
-        <div class="p-4 flex justify-between items-start">
-          <div class="flex items-start space-x-3">
-            <img
-              src="{{ post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-              class="w-10 h-10 rounded-full object-cover"
-            />
-            <div>
-              <div class="font-semibold">
-                {{ post.author.first_name }} {{ post.author.last_name }}
-              </div>
-              <div class="text-sm text-fb-text-light">
-                {{ post.created_at.strftime('%b %d at %I:%M %p') }}
-              </div>
-            </div>
-          </div>
-          <div class="dropdown relative">
-            <button
-              class="p-2 rounded-full hover:bg-fb-gray transition-colors"
-              data-bs-toggle="dropdown"
-            >
-              <i class="bi bi-three-dots"></i>
-            </button>
-            <div class="dropdown-menu absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-strong overflow-hidden z-10 hidden">
-              {% if post.author.id == current_user.id %}
-              <a
-                class="dropdown-item block px-4 py-2 hover:bg-fb-gray transition-colors text-blue-600 edit-post"
-                href="#"
-                data-bs-toggle="modal"
-                data-bs-target="#editPostModal"
-                data-post-id="{{ post.id }}"
-              >
-                Edit
-              </a>
-              <a
-                class="dropdown-item block px-4 py-2 hover:bg-fb-gray transition-colors text-red-600 delete-post"
-                href="#"
-                data-post-id="{{ post.id }}"
-              >
-                Delete
-                <span class="loader inline-block ml-1" style="display: none"></span>
-              </a>
-              {% endif %}
-            </div>
-          </div>
-        </div>
-        <div class="px-4 pb-3">
-          <p class="post-text {% if post.content|length > 100 %}truncated{% endif %}" id="post-text-{{ post.id }}">
-            {{ post.content }}
-          </p>
-          {% if post.content|length > 100 %}
-          <button class="see-more-btn text-blue-600 font-medium text-sm mt-1" onclick="togglePostText({{ post.id }})">
-            See More
-          </button>
-          {% endif %}
-
-          {% if post.image %}
-          <div class="post-media mt-3">
-            <img src="{{ post.image }}" alt="Post" class="w-full rounded-2xl max-h-96 object-cover" loading="lazy" />
-          </div>
-          {% endif %}
-
-          {% if post.video %}
-          <div class="post-media mt-3">
-            <video controls class="w-full rounded-2xl max-h-96" preload="metadata">
-              <source src="{{ post.video }}" />
-            </video>
-          </div>
-          {% endif %}
-        </div>
-
-        <!-- Post Stats -->
-        <div class="px-4 md:px-6 py-2 md:py-3 border-t border-gray-100 text-xs md:text-sm text-gray-500 post-stats">
-            <div class="flex justify-between">
-                <span id="like-count-{{ post.id }}">{{ post.get_reaction_count() }} reactions</span>
-                <span id="comment-count-{{ post.id }}">{{ post.comments_list|length }} comments</span>
-            </div>
-        </div>
-
-        <!-- Post Actions -->
-        <div class="px-4 md:px-6 py-2 md:py-3 border-t border-gray-100">
-            <div class="flex justify-around">
-                <!-- Like Button with Reactions -->
-                <div class="reactions-container">
-                    {% set user_reaction = current_user.get_user_reaction(post.id) %}
-                    <button onclick="likePost({{ post.id }})"
-                            class="flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-1 md:py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 like-btn {% if user_reaction %}active-{{ user_reaction }} text-{% if user_reaction == 'like' %}blue{% elif user_reaction == 'love' %}red{% elif user_reaction in ['care', 'haha', 'wow', 'sad'] %}yellow{% elif user_reaction == 'angry' %}red{% endif %}-600{% else %}text-gray-600{% endif %}"
-                            id="like-btn-{{ post.id }}"
-                            onmouseenter="showReactions({{ post.id }})"
-                            onmouseleave="hideReactions({{ post.id }})">
-                        <i class="bi {% if user_reaction %}{% if user_reaction == 'like' %}bi-hand-thumbs-up-fill{% elif user_reaction == 'love' %}bi-heart-fill{% elif user_reaction == 'care' %}bi-emoji-heart-eyes{% elif user_reaction == 'haha' %}bi-emoji-laughing{% elif user_reaction == 'wow' %}bi-emoji-surprise{% elif user_reaction == 'sad' %}bi-emoji-frown{% elif user_reaction == 'angry' %}bi-emoji-angry{% endif %}{% else %}bi-hand-thumbs-up{% endif %}" id="like-icon-{{ post.id }}"></i>
-                        <span id="like-text-{{ post.id }}" class="text-xs md:text-sm">
-                            {% if user_reaction %}
-                                {% if user_reaction == 'like' %}Liked{% elif user_reaction == 'love' %}Loved{% elif user_reaction == 'care' %}Cared{% elif user_reaction == 'haha' %}Haha{% elif user_reaction == 'wow' %}Wow{% elif user_reaction == 'sad' %}Sad{% elif user_reaction == 'angry' %}Angry{% endif %}
-                            {% else %}
-                                Like
-                            {% endif %}
-                        </span>
-                    </button>
-
-                    <!-- Reactions Tooltip -->
-                    <div class="reactions-tooltip" id="reactions-{{ post.id }}">
-                        <div class="reaction-option like text-lg md:text-xl" onclick="reactToPost({{ post.id }}, 'like')" title="Like">👍</div>
-                        <div class="reaction-option love text-lg md:text-xl" onclick="reactToPost({{ post.id }}, 'love')" title="Love">❤️</div>
-                        <div class="reaction-option care text-lg md:text-xl" onclick="reactToPost({{ post.id }}, 'care')" title="Care">🥰</div>
-                        <div class="reaction-option haha text-lg md:text-xl" onclick="reactToPost({{ post.id }}, 'haha')" title="Haha">😂</div>
-                        <div class="reaction-option wow text-lg md:text-xl" onclick="reactToPost({{ post.id }}, 'wow')" title="Wow">😮</div>
-                        <div class="reaction-option sad text-lg md:text-xl" onclick="reactToPost({{ post.id }}, 'sad')" title="Sad">😢</div>
-                        <div class="reaction-option angry text-lg md:text-xl" onclick="reactToPost({{ post.id }}, 'angry')" title="Angry">😠</div>
-                    </div>
-                </div>
-
-                <button onclick="focusCommentInput({{ post.id }})"
-                        class="flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-1 md:py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 text-gray-600">
-                    <i class="bi bi-chat text-sm md:text-base"></i>
-                    <span class="text-xs md:text-sm">Comment</span>
-                </button>
-
-            </div>
-        </div>
-
-        <!-- Comments Section -->
-        <div class="comments-section px-4 md:px-6 py-3 md:py-4 border-t border-gray-100 bg-gray-50">
-            <!-- Comment Input -->
-            <div class="flex items-center space-x-2 md:space-x-3 mb-3 md:mb-4">
-                <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-                     alt="{{ current_user.full_name }}"
-                     class="w-7 h-7 md:w-8 md:h-8 rounded-full object-cover comment-input-avatar">
-                <div class="flex-1 relative">
-                    <input type="text"
-                           id="commentInput-{{ post.id }}"
-                           placeholder="Write a comment..."
-                           class="w-full bg-white rounded-full px-3 py-1.5 md:px-4 md:py-2 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 comment-input"
-                           onkeypress="handleCommentKeypress(event, {{ post.id }})">
-                </div>
-            </div>
-
-            <!-- Comments List -->
-            <div id="comments-{{ post.id }}">
-                {% for comment in post.comments[:20]|reverse %}
-                <div class="flex space-x-2 md:space-x-3 mb-3 md:mb-4 comment-item comment-fade-in" id="comment-{{ comment.id }}">
-                    <img src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-                         alt="{{ comment.author.full_name }}"
-                         class="w-6 h-6 md:w-8 md:h-8 rounded-full object-cover flex-shrink-0 comment-avatar">
-                    <div class="flex-1">
-                        <div class="bg-white rounded-xl md:rounded-2xl px-3 py-2 md:px-4 md:py-3">
-                            <div class="flex justify-between items-start mb-1">
-                                <h5 class="font-semibold text-xs md:text-sm comment-author">{{ comment.author.full_name }}</h5>
-                                <div class="dropdown relative">
-                                    <button class="p-0.5 md:p-1 rounded-full hover:bg-gray-100 transition-colors duration-300">
-                                        <i class="bi bi-three-dots text-gray-400 text-xs md:text-xs"></i>
-                                    </button>
-                                    <div class="dropdown-menu absolute right-0 mt-1 w-28 md:w-32 bg-white rounded-lg md:rounded-xl shadow-2xl border border-gray-200 hidden z-10">
-                                        {% if comment.author.id == current_user.id %}
-                                        <button onclick="deleteComment({{ comment.id }})" class="w-full text-left px-2 py-1.5 md:px-3 md:py-2 hover:bg-gray-50 rounded-t-lg md:rounded-t-xl text-red-600 text-xs md:text-sm">
-                                            <i class="bi bi-trash mr-1 text-xs md:text-sm"></i>Delete
-                                        </button>
-                                        {% endif %}
-                                        <button onclick="reportContent('comment', {{ comment.id }})" class="w-full text-left px-2 py-1.5 md:px-3 md:py-2 hover:bg-gray-50 rounded-b-lg md:rounded-b-xl text-orange-600 text-xs md:text-sm">
-                                            <i class="bi bi-flag mr-1 text-xs md:text-sm"></i>Report
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            <p class="text-gray-800 text-xs md:text-sm comment-content">{{ comment.content }}</p>
-                            <div class="flex items-center space-x-2 md:space-x-3 mt-1 md:mt-2">
-                                <span class="text-xs text-gray-400 comment-time">{{ comment.created_at.strftime('%I:%M %p') }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-
-            {% if post.comments_list|length > 3 %}
-            <button onclick="loadAllComments({{ post.id }})" class="text-blue-600 hover:text-blue-700 text-xs md:text-sm font-semibold">
-                View all {{ post.comments_list|length }} comments
-            </button>
-            {% endif %}
-        </div>
-      </div>
-      {% endfor %}
-    {% else %}
-    <!-- No posts message -->
-    <div class="bg-white rounded-2xl shadow-soft p-8 text-center">
-      <i class="bi bi-newspaper text-4xl text-gray-400 mb-4"></i>
-      <h3 class="text-xl font-semibold text-gray-700 mb-2">No posts yet</h3>
-      <p class="text-gray-500 mb-4">Be the first to share something!</p>
-      <button class="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors" data-bs-toggle="modal" data-bs-target="#postModal">
-        Create Your First Post
-      </button>
-    </div>
-    {% endif %}
-
-    <!-- INFINITE SCROLL LOADING INDICATOR -->
-    <div id="loading-spinner" class="hidden mb-6">
-      <div class="bg-white rounded-2xl shadow-soft p-8 text-center">
-        <div class="flex flex-col items-center">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-3"></div>
-          <p class="text-gray-600">Loading more posts...</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- LOAD MORE BUTTON (Fallback for non-JS) -->
-    {% if has_more and next_cursor %}
-    <div id="load-more-container" class="text-center mb-6">
-      <button id="load-more-btn" class="px-6 py-3 bg-white text-blue-600 rounded-xl shadow-soft hover:bg-gray-50 transition-colors font-medium border border-gray-200" data-cursor="{{ next_cursor }}">
-        Load More Posts
-      </button>
-    </div>
-    {% endif %}
-
-    <!-- END OF FEED MESSAGE -->
-    <div id="end-of-feed" class="hidden text-center py-8 text-gray-500">
-      <i class="bi bi-check-circle text-2xl mb-2"></i>
-      <p>You've reached the end</p>
-      <p class="text-sm mt-1">No more posts to load</p>
-    </div>
-  </div>
-</div>
-
-      <!-- RIGHT SIDEBAR -->
+  <!-- DASHBOARD CONTAINER -->
+  <div class="pt-16 flex">
+    <!-- LEFT SIDEBAR -->
+    <div
+      class="hidden lg:block w-96 h-screen sticky top-16 overflow-y-auto custom-scrollbar bg-white border-r border-fb-border p-4"
+    >
       <div
-        class="hidden lg:block w-96 h-screen sticky top-16 overflow-y-auto custom-scrollbar bg-white border-l border-fb-border p-4"
+        class="sidebar-item flex items-center p-3 rounded-lg bg-blue-50 text-blue-600 font-medium mb-2"
       >
-        <div class="flex justify-between items-center mb-3 sm:mb-4">
-          <h3 class="font-semibold">Friends</h3>
-        </div>
-        <div class="space-y-3">
-          {% for friend in friends %}
-          <div
-            class="flex items-center space-x-3 p-2 rounded-lg hover:bg-fb-gray transition-colors cursor-pointer"
-            onclick="event.preventDefault(); openProfileModal({{ friend.id }})"
+        <i class="bi bi-house-door mr-3 text-lg"></i> Home
+      </div>
+      <a
+        href="{{ url_for('user.profile', user_id=current_user.id) }}"
+        class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-fb-gray transition-colors mb-2"
+      >
+        <i class="bi bi-person mr-3 text-lg"></i> Profile
+      </a>
+
+      <!-- In your LEFT SIDEBAR section, replace the current Groups item with: -->
+      <!-- Desktop Groups Dropdown -->
+      <div class="dropdown relative">
+        <div
+          class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-300 mb-2 cursor-pointer group border border-transparent hover:border-blue-200 shadow-sm hover:shadow-md"
+          data-bs-toggle="groups-dropdown"
+        >
+          <div class="relative">
+            <i
+              class="bi bi-people-fill mr-3 text-lg text-blue-600 group-hover:text-purple-600 transition-colors duration-300"
+            ></i>
+            <div
+              class="absolute -top-1 -right-1 w-2 h-2 bg-green-400 rounded-full animate-pulse"
+            ></div>
+          </div>
+          <span
+            class="font-medium group-hover:text-blue-700 transition-colors duration-300"
+            >Groups</span
           >
-            <div class="relative">
-              <img
-                src="{{ friend.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-                class="w-10 h-10 rounded-full object-cover"
-              />
-              {% if friend.is_online %}
-              <span
-                class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"
-              ></span>
-              {% endif %}
-            </div>
-            <div class="flex-1">
-              <div class="font-medium">{{ friend.full_name }}</div>
-              <div class="text-xs text-fb-text-light">
-                {% if friend.is_online %}Active now{% else %}Last seen
-                <span
-                  class="last-seen"
-                  data-last-seen="{{ friend.last_seen.isoformat() if friend.last_seen else '' }}"
-                  >Some time ago</span
-                >{% endif %}
+          <i
+            class="bi bi-chevron-down ml-auto text-sm text-gray-400 group-hover:text-blue-500 transform group-hover:rotate-180 transition-all duration-300"
+          ></i>
+        </div>
+
+        <div
+          class="dropdown-menu absolute left-0 mt-2 w-94 bg-white rounded-2xl shadow-2xl overflow-hidden z-10 hidden border border-gray-100 transform origin-top transition-all duration-300 scale-95 group-hover:scale-100"
+          id="groupsDropdownMenu"
+          style="
+            background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);
+          "
+        >
+          <!-- Header with gradient -->
+          <div
+            class="p-4 border-b border-gray-100 bg-gradient-to-r from-blue-600 to-purple-600 text-white"
+          >
+            <div class="flex items-center justify-between">
+              <div>
+                <h4 class="font-bold text-lg">Discover Groups</h4>
+                <p class="text-blue-100 text-sm mt-1">
+                  Connect with amazing communities
+                </p>
+              </div>
+              <div
+                class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center"
+              >
+                <i class="bi bi-people-fill text-lg"></i>
               </div>
             </div>
           </div>
-          {% endfor %} {% if friends|length == 0 %}
-          <div class="text-center text-fb-text-light p-4">
-            <i class="bi bi-people text-4xl mb-2 block"></i>
-            <p>No friends yet</p>
-          </div>
-          {% endif %}
-        </div>
 
-        <!-- Birthday Section -->
-        <!-- <div class="mt-8 pt-6 border-t border-fb-border">
-          <h3 class="text-sm font-semibold text-fb-text-light mb-3">
-            Birthdays
-          </h3>
+          <!-- Search Bar -->
+<!--          <div class="p-3 bg-white/50">-->
+<!--            <div class="relative">-->
+<!--              <i-->
+<!--                class="bi bi-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"-->
+<!--              ></i>-->
+<!--              <input-->
+<!--                type="text"-->
+<!--                placeholder="Search groups..."-->
+<!--                class="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 text-sm"-->
+<!--                oninput="searchGroups(this.value)"-->
+<!--              />-->
+<!--            </div>-->
+<!--          </div>-->
+
+          <!-- Groups List -->
           <div
-            class="flex items-center space-x-3 p-2 rounded-lg hover:bg-fb-gray transition-colors cursor-pointer"
+            class="max-h-80 overflow-y-auto custom-scrollbar bg-gradient-to-b from-white to-blue-50/30"
+            id="groupsList"
           >
+            <!-- Loading State -->
             <div
-              class="w-10 h-10 bg-gradient-success rounded-full flex items-center justify-center"
+              class="flex flex-col items-center justify-center p-8 text-gray-500"
             >
-              <i class="bi bi-gift-fill text-white"></i>
-            </div>
-            <div>
-              <p class="text-sm">
-                <span class="font-medium">John Doe</span> and
-                <span class="font-medium">2 others</span> have birthdays today.
+              <div class="relative mb-4">
+                <div
+                  class="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"
+                ></div>
+                <div
+                  class="absolute inset-0 flex items-center justify-center"
+                >
+                  <i class="bi bi-people text-blue-600"></i>
+                </div>
+              </div>
+              <p class="text-sm font-medium">Loading amazing groups...</p>
+              <p class="text-xs mt-1 text-gray-400">
+                Finding the best communities for you
               </p>
             </div>
           </div>
-        </div> -->
 
-        <!-- Events Section -->
-       
+          <!-- Footer with Create Button -->
+        </div>
       </div>
-    </div>
 
-    <!-- MODALS -->
-    <!-- Post Modal -->
-    <!-- Post Modal - Updated Version -->
-<div class="modal fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden" id="postModal">
-    <div class="modal-dialog bg-white rounded-2xl shadow-strong w-full max-w-lg sm:max-w-md md:max-w-lg mx-4">
-        <div class="modal-header p-3 sm:p-4 border-b border-fb-border flex justify-between items-center">
-            <h3 class="text-lg sm:text-xl font-semibold">Create Post</h3>
-            <button type="button" class="p-1.5 sm:p-2 rounded-full hover:bg-fb-gray transition-colors" onclick="closeModal('postModal')">
-                <i class="bi bi-x-lg text-sm sm:text-base"></i>
-            </button>
-        </div>
-
-        <form method="POST" enctype="multipart/form-data" action="{{ url_for('user.user_dashboard') }}" id="createPostForm">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
-
-            <div class="modal-body p-3 sm:p-4">
-                <!-- Author info -->
-                <div class="flex items-center space-x-3 mb-3">
-                    <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-                         alt="" class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover" />
-                    <div>
-                        <div class="font-semibold text-sm sm:text-base">
-                            {{ current_user.first_name }} {{ current_user.last_name }}
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Post content -->
-                <textarea name="post_content" class="w-full border-0 focus:ring-0 focus:outline-none text-base sm:text-lg resize-none"
-                          rows="3" placeholder="What's on your mind?" required></textarea>
-
-                <!-- Media Preview -->
-                <div id="mediaPreview" class="mt-2"></div>
-
-                <!-- Enhanced Upload Progress -->
-                <div id="uploadProgressContainer" class="hidden mt-4 bg-gray-50 rounded-xl p-4 border border-gray-200">
-                    <div class="flex items-center justify-between mb-3">
-                        <div>
-                            <h4 class="font-semibold text-sm text-gray-800">Uploading Media</h4>
-                            <p id="uploadFileName" class="text-xs text-gray-500 truncate"></p>
-                        </div>
-                        <span id="uploadPercentage" class="font-bold text-blue-600 text-sm">0%</span>
-                    </div>
-
-                    <!-- Main Progress Bar -->
-                    <div class="w-full bg-gray-200 rounded-full h-2 mb-2 overflow-hidden">
-                        <div id="uploadProgressBar" class="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-300 ease-out" style="width: 0%"></div>
-                    </div>
-
-                    <!-- Status Info -->
-                    <div class="flex justify-between items-center text-xs text-gray-600 mt-2">
-                        <div class="flex items-center space-x-3">
-                            <span id="uploadStatus" class="font-medium">Starting upload...</span>
-                            <div class="flex items-center space-x-1" id="uploadSpeedContainer">
-                                <i class="bi bi-lightning-charge-fill text-yellow-500"></i>
-                                <span id="uploadSpeed">-</span>
-                            </div>
-                        </div>
-                        <span id="uploadTimeRemaining" class="text-gray-500">-</span>
-                    </div>
-
-                    <!-- Detailed Progress (for videos) -->
-                    <div id="videoUploadDetails" class="hidden mt-3 pt-3 border-t border-gray-200">
-                        <div class="text-xs text-gray-600 mb-1">Video Processing</div>
-                        <div class="w-full bg-gray-200 rounded-full h-1.5 mb-1">
-                            <div id="videoProcessingBar" class="h-1.5 bg-green-500 rounded-full" style="width: 0%"></div>
-                        </div>
-                        <div class="flex justify-between text-xs text-gray-500">
-                            <span>Encoding</span>
-                            <span id="videoProcessingStatus">Waiting...</span>
-                        </div>
-                    </div>
-
-                    <!-- Cancel Button -->
-                    <div class="mt-3 pt-3 border-t border-gray-200">
-                        <button type="button" onclick="cancelUpload()" class="w-full py-2 bg-gray-200 text-gray-700 rounded-lg font-medium text-sm hover:bg-gray-300 transition-colors flex items-center justify-center">
-                            <i class="bi bi-x-circle mr-2"></i>
-                            Cancel Upload
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Upload options -->
-                <div class="mt-2 flex items-center justify-between p-2 sm:p-3 border border-fb-border rounded-xl bg-gray-50">
-                    <span class="font-medium text-sm text-gray-700">Add to your post</span>
-                    <div class="flex space-x-1 sm:space-x-2">
-                        <button type="button" class="p-1.5 sm:p-2 rounded-full hover:bg-white transition-colors bg-white shadow-sm" onclick="validateAndOpenFilePicker()">
-                            <i class="bi bi-image-fill text-green-500 text-lg"></i>
-                        </button>
-                        <input type="file" name="media" id="mediaInput" accept="image/*,video/*" hidden onchange="handleFileSelection(this)" />
-                        <button type="button" class="p-1.5 sm:p-2 rounded-full hover:bg-white transition-colors bg-white shadow-sm">
-                            <i class="bi bi-emoji-smile-fill text-yellow-500 text-lg"></i>
-                        </button>
-                        <button type="button" class="p-1.5 sm:p-2 rounded-full hover:bg-white transition-colors bg-white shadow-sm">
-                            <i class="bi bi-geo-alt-fill text-red-500 text-lg"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- File size info -->
-                <div class="text-xs text-gray-500 mt-2 text-center bg-blue-50 p-2 rounded-lg">
-                    <i class="bi bi-info-circle mr-1 text-blue-500"></i>
-                    Maximum file size: 100MB. Supported: Images (JPG, PNG, GIF, WebP) and Videos (MP4, WebM, OGG, MOV)
-                </div>
-            </div>
-
-            <div class="modal-footer p-3 sm:p-4 border-t border-fb-border">
-                <button type="submit" class="w-full py-2.5 sm:py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-colors text-sm sm:text-base shadow-md">
-                    <span class="flex items-center justify-center">
-                        <i class="bi bi-send mr-2"></i>
-                        Post Now
-                    </span>
-                    <span class="loader inline-block ml-1" style="display: none"></span>
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
-    <!-- Edit Post Modal -->
-    <!-- Edit Post Modal - Ultra Compact -->
-    <div
-      class="modal fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden"
-      id="editPostModal"
-    >
-      <div
-        class="modal-dialog bg-white rounded-2xl shadow-strong w-full max-w-lg sm:max-w-md md:max-w-lg mx-4"
+      <a
+        href="{{ url_for('market.main_market') }}"
+        class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-orange-50 hover:to-yellow-50 transition-all duration-300 mb-2 group border border-transparent hover:border-orange-200 shadow-sm hover:shadow-md"
       >
-        <div
-          class="modal-header p-3 sm:p-4 border-b border-fb-border flex justify-between items-center"
+        <i
+          class="bi bi-shop mr-3 text-lg group-hover:scale-110 group-hover:rotate-12 transition-all duration-300"
+          style="color: #f5260bff; animation: pulse-glow 2s infinite"
+        ></i>
+        <span
+          class="font-medium group-hover:text-orange-700 transition-colors duration-300"
+          >Market Place</span
         >
-          <h3 class="text-lg sm:text-xl font-semibold">Edit Post</h3>
-          <button
-            type="button"
-            class="p-1.5 sm:p-2 rounded-full hover:bg-fb-gray transition-colors"
-            onclick="closeModal('editPostModal')"
+      </a>
+
+      <!-- ADD THIS SPONSORED ADS LINK -->
+      <a
+        href="{{ url_for('payments.ad_packages') }}"
+        class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-orange-50 hover:to-yellow-50 transition-all duration-300 mb-2 group"
+      >
+        <i
+          class="bi bi-megaphone-fill mr-3 text-lg"
+          style="color: #f59e0b"
+        ></i>
+        <span class="font-medium">Create Sponsored Ad</span>
+      </a>
+
+      <!-- Match Making Request Form -->
+      <a
+        href="{{ url_for('match.requests') }}"
+        class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-pink-50 hover:to-rose-50 transition-all duration-300 mb-2 group"
+      >
+        <i class="bi bi-heart-fill mr-3 text-lg" style="color: #ec4899"></i>
+        <span class="font-medium">Create Match Request</span>
+      </a>
+
+      <!-- View Match Requests -->
+      <a
+        href="{{ url_for('match.view_requests') }}"
+        class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 transition-all duration-300 mb-2 group"
+      >
+        <i
+          class="bi bi-binoculars-fill mr-3 text-lg"
+          style="color: #10b981"
+        ></i>
+        <span class="font-medium">Browse Match Requests</span>
+      </a>
+
+      <a
+        class="dropdown-item block px-4 py-2 text-red-500 hover:bg-red-50 transition-colors"
+        href="{{ url_for('user.logout') }}"
+      >
+        <i class="bi bi-box-arrow-right mr-2"></i> Logout
+      </a>
+
+      <!-- Sponsored Section -->
+      <!--<div class="mt-8 pt-6 border-t border-fb-border">
+        <h3 class="text-sm font-semibold text-fb-text-light mb-3">
+          Sponsored
+        </h3>
+        <div class="space-y-4">
+          <div
+            class="flex items-start space-x-3 p-2 rounded-lg hover:bg-fb-gray transition-colors cursor-pointer"
           >
-            <i class="bi bi-x-lg text-sm sm:text-base"></i>
-          </button>
-        </div>
-        <form id="editPostForm">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
-          <div class="modal-body p-3 sm:p-4">
-            <textarea
-              name="content"
-              class="w-full border-0 focus:ring-0 focus:outline-none text-base sm:text-lg resize-none text-left"
-              rows="3"
-              id="editPostContent"
-            ></textarea>
-            <!-- Compact Media Preview -->
-            <div id="editMediaPreview" class="mt-2"></div>
+            <div
+              class="w-16 h-16 bg-gradient-primary rounded-lg flex-shrink-0"
+            ></div>
+            <div>
+              <h4 class="font-medium text-sm">Amazing Product</h4>
+              <p class="text-xs text-fb-text-light">amazingproduct.com</p>
+            </div>
           </div>
-          <div class="modal-footer p-3 sm:p-4 border-t border-fb-border">
-            <button
-              type="submit"
-              class="w-full py-2.5 sm:py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors text-sm sm:text-base"
+          <div
+            class="flex items-start space-x-3 p-2 rounded-lg hover:bg-fb-gray transition-colors cursor-pointer"
+          >
+            <div
+              class="w-16 h-16 bg-gradient-secondary rounded-lg flex-shrink-0"
+            ></div>
+            <div>
+              <h4 class="font-medium text-sm">Creative Solutions</h4>
+              <p class="text-xs text-fb-text-light">creativesolutions.co</p>
+            </div>
+          </div>
+        </div>
+      </div>-->
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="flex-1 max-w-2xl mx-auto p-4">
+      <!-- POST COMPOSER -->
+      <div
+        class="bg-white rounded-2xl shadow-soft p-3 sm:p-4 mb-6 card-hover"
+      >
+        <div class="flex items-center mb-3">
+          <a href="{{ url_for('user.profile', user_id=current_user.id) }}">
+            <img
+              src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+              alt=""
+              class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover"
+            />
+          </a>
+          <div class="flex-1 ml-2 sm:ml-3">
+            <div
+              class="composer-input bg-fb-gray rounded-full px-3 sm:px-4 py-2 sm:py-3 cursor-pointer hover:bg-gray-200 transition-colors text-xs sm:text-sm"
+              data-bs-toggle="modal"
+              data-bs-target="#postModal"
             >
-              Save
-              <span
-                class="loader inline-block ml-1"
-                style="display: none"
-              ></span>
+              What's on your mind, {{ current_user.first_name }}?
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between pt-2 border-t border-fb-border">
+          <!-- Live Video -->
+          <button
+            class="composer-btn flex items-center justify-center flex-1 py-1.5 sm:py-2 rounded-lg hover:bg-fb-gray transition-colors text-fb-text-light font-medium text-xs sm:text-sm"
+            data-bs-toggle="modal"
+            data-bs-target="#postModal"
+          >
+            <i
+              class="bi bi-camera-video-fill text-red-500 text-base sm:text-lg"
+            ></i>
+            <span class="hidden sm:inline ml-1 sm:ml-2">Live Video</span>
+          </button>
+
+          <!-- Photo/Video -->
+          <button
+            class="composer-btn flex items-center justify-center flex-1 py-1.5 sm:py-2 rounded-lg hover:bg-fb-gray transition-colors text-fb-text-light font-medium text-xs sm:text-sm"
+            onclick="document.getElementById('photoInput').click()"
+          >
+            <i
+              class="bi bi-image-fill text-green-500 text-base sm:text-lg"
+            ></i>
+            <span class="hidden sm:inline ml-1 sm:ml-2">Photo/Video</span>
+            <input
+              type="file"
+              id="photoInput"
+              accept="image/*,video/*"
+              hidden
+              onchange="previewMedia(this)"
+            />
+          </button>
+
+          <!-- Feeling/Activity -->
+        </div>
+      </div>
+
+      <!-- POSTS FEED - OPTIMIZED FOR INFINITE SCROLL -->
+      <div
+        id="posts-feed"
+        data-has-more="{{ has_more|tojson }}"
+        data-next-cursor="{{ next_cursor }}"
+      >
+        <!-- PEOPLE YOU MAY KNOW -->
+        {% if random_three %}
+        <div
+          class="suggestions-section bg-white rounded-2xl shadow-soft p-4 mb-6"
+        >
+          <div class="flex justify-between items-center mb-3 sm:mb-4">
+            <h3 class="font-semibold text-lg">People You May Know</h3>
+          </div>
+          <div class="relative">
+            <div
+              class="suggestions-track overflow-x-auto flex space-x-3 sm:space-x-4 pb-3 sm:pb-4 custom-scrollbar"
+              id="suggestionsTrack"
+            >
+              {% for user in random_three %}
+              <div
+                class="suggestion-card bg-gray-50 rounded-2xl p-4 text-center flex-shrink-0 w-48 cursor-pointer card-hover"
+                onclick="openProfileModal({{ user.id }})"
+              >
+                <img
+                  src="{{ user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+                  alt="{{ user.first_name }}"
+                  class="w-20 h-20 rounded-full object-cover mx-auto mb-2 sm:mb-3"
+                />
+                <div class="suggestion-name font-semibold">
+                  {{ user.first_name }} {{ user.last_name }}
+                </div>
+                <div
+                  class="suggestion-mutual text-sm text-fb-text-light mb-3"
+                >
+                  New to Kimbela
+                </div>
+
+                <!-- Dynamic Button based on status -->
+                {% if user.friend_request_status == 'sent' %}
+                <button
+                  class="btn-cancel-request w-full py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors"
+                  onclick="event.stopPropagation(); cancelFriendRequest({{ user.id }}, this)"
+                  data-user-id="{{ user.id }}"
+                >
+                  <i class="bi bi-clock-history mr-1"></i> Cancel Request
+                </button>
+                {% elif user.friend_request_status == 'received' %}
+                <div class="space-y-2">
+                  <button
+                    class="w-full py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                    onclick="event.stopPropagation(); acceptFriendRequest({{ user.id }}, this)"
+                  >
+                    <i class="bi bi-check-lg mr-1"></i> Accept
+                  </button>
+                  <button
+                    class="w-full py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors"
+                    onclick="event.stopPropagation(); declineFriendRequest({{ user.id }}, this)"
+                  >
+                    <i class="bi bi-x-lg mr-1"></i> Decline
+                  </button>
+                </div>
+                {% elif user.friend_request_status == 'friends' %}
+                <button
+                  class="w-full py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
+                  onclick="event.stopPropagation(); Messenger.startChat({{ user.id }})"
+                >
+                  <i class="bi bi-chat-dots mr-1"></i> Message
+                </button>
+                {% else %}
+                <button
+                  class="btn-add-friend w-full py-2 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                  onclick="event.stopPropagation(); addFriend({{ user.id }}, this)"
+                  data-user-id="{{ user.id }}"
+                  style="
+                    background: linear-gradient(135deg, #5a4500, #b88900);
+                  "
+                >
+                  <i class="bi bi-person-plus mr-1"></i> Add Friend
+                </button>
+                {% endif %}
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- INITIAL POSTS (Loaded server-side) -->
+        {% if initial_posts %}
+          {% for post in initial_posts %}
+          <div
+            class="post-card bg-white rounded-2xl shadow-soft mb-6 overflow-hidden card-hover initial"
+            data-post-id="{{ post.id }}"
+            id="post-{{ post.id }}"
+          >
+            <div class="p-4 flex justify-between items-start">
+              <div class="flex items-start space-x-3">
+                <img
+                  src="{{ post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+                  class="w-10 h-10 rounded-full object-cover"
+                />
+                <div>
+                  <div class="font-semibold">
+                    {{ post.author.first_name }} {{ post.author.last_name }}
+                  </div>
+                  <div class="text-sm text-fb-text-light">
+                    {{ post.created_at.strftime('%b %d at %I:%M %p') }}
+                  </div>
+                </div>
+              </div>
+              <div class="dropdown relative">
+                <button
+                  class="p-2 rounded-full hover:bg-fb-gray transition-colors"
+                  data-bs-toggle="dropdown"
+                >
+                  <i class="bi bi-three-dots"></i>
+                </button>
+                <div
+                  class="dropdown-menu absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-strong overflow-hidden z-10 hidden"
+                >
+                  {% if post.author.id == current_user.id %}
+                  <a
+                    class="dropdown-item block px-4 py-2 hover:bg-fb-gray transition-colors text-blue-600 edit-post"
+                    href="#"
+                    data-bs-toggle="modal"
+                    data-bs-target="#editPostModal"
+                    data-post-id="{{ post.id }}"
+                  >
+                    Edit
+                  </a>
+                  <a
+                    class="dropdown-item block px-4 py-2 hover:bg-fb-gray transition-colors text-red-600 delete-post"
+                    href="#"
+                    data-post-id="{{ post.id }}"
+                  >
+                    Delete
+                    <span
+                      class="loader inline-block ml-1"
+                      style="display: none"
+                    ></span>
+                  </a>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+            <div class="px-4 pb-3">
+              <p
+                class="post-text {% if post.content|length > 100 %}truncated{% endif %}"
+                id="post-text-{{ post.id }}"
+              >
+                {{ post.content }}
+              </p>
+              {% if post.content|length > 100 %}
+              <button
+                class="see-more-btn text-blue-600 font-medium text-sm mt-1"
+                onclick="togglePostText({{ post.id }})"
+              >
+                See More
+              </button>
+              {% endif %}
+
+              {% if post.image %}
+              <div class="post-media mt-3">
+                <img
+                  src="{{ post.image }}"
+                  alt="Post"
+                  class="w-full rounded-2xl max-h-96 object-cover"
+                  loading="lazy"
+                />
+              </div>
+              {% endif %}
+
+              {% if post.video %}
+              <div class="post-media mt-3">
+                <video
+                  controls
+                  class="w-full rounded-2xl max-h-96"
+                  preload="metadata"
+                >
+                  <source src="{{ post.video }}" />
+                </video>
+              </div>
+              {% endif %}
+            </div>
+
+            <!-- Post Stats -->
+            <div class="post-stats">
+              <div class="flex justify-between">
+                <span id="like-count-{{ post.id }}"
+                  >{{ post.likes_count }} reactions</span
+                >
+                <span
+                  id="comment-count-{{ post.id }}"
+                  data-total-comments="{{ post.comments_count }}"
+                >
+                  {{ post.comments_count }} comments
+                </span>
+              </div>
+            </div>
+
+            <!-- Post Actions -->
+            <div class="px-4 md:px-6 py-2 md:py-3 border-t border-gray-100">
+              <div class="flex justify-around">
+                <!-- Like Button with Reactions -->
+                <div class="reactions-container">
+                  {% set user_reaction = current_user.get_user_reaction(post.id) %}
+                  <button
+                    onclick="likePost({{ post.id }})"
+                    class="flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-1 md:py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 like-btn {% if user_reaction %}active-{{ user_reaction }} text-{% if user_reaction == 'like' %}blue{% elif user_reaction == 'love' %}red{% elif user_reaction in ['care', 'haha', 'wow', 'sad'] %}yellow{% elif user_reaction == 'angry' %}red{% endif %}-600{% else %}text-gray-600{% endif %}"
+                    id="like-btn-{{ post.id }}"
+                    onmouseenter="showReactions({{ post.id }})"
+                    onmouseleave="hideReactions({{ post.id }})"
+                  >
+                    <i
+                      class="bi {% if user_reaction %}{% if user_reaction == 'like' %}bi-hand-thumbs-up-fill{% elif user_reaction == 'love' %}bi-heart-fill{% elif user_reaction == 'care' %}bi-emoji-heart-eyes{% elif user_reaction == 'haha' %}bi-emoji-laughing{% elif user_reaction == 'wow' %}bi-emoji-surprise{% elif user_reaction == 'sad' %}bi-emoji-frown{% elif user_reaction == 'angry' %}bi-emoji-angry{% endif %}{% else %}bi-hand-thumbs-up{% endif %}"
+                      id="like-icon-{{ post.id }}"
+                    ></i>
+                    <span
+                      id="like-text-{{ post.id }}"
+                      class="text-xs md:text-sm"
+                    >
+                      {% if user_reaction %}
+                        {% if user_reaction == 'like' %}Liked
+                        {% elif user_reaction == 'love' %}Loved
+                        {% elif user_reaction == 'care' %}Cared
+                        {% elif user_reaction == 'haha' %}Haha
+                        {% elif user_reaction == 'wow' %}Wow
+                        {% elif user_reaction == 'sad' %}Sad
+                        {% elif user_reaction == 'angry' %}Angry
+                        {% endif %}
+                      {% else %}
+                        Like
+                      {% endif %}
+                    </span>
+                  </button>
+
+                  <!-- Reactions Tooltip -->
+                  <div class="reactions-tooltip" id="reactions-{{ post.id }}">
+                    <div
+                      class="reaction-option like text-lg md:text-xl"
+                      onclick="reactToPost({{ post.id }}, 'like')"
+                      title="Like"
+                    >
+                      👍
+                    </div>
+                    <div
+                      class="reaction-option love text-lg md:text-xl"
+                      onclick="reactToPost({{ post.id }}, 'love')"
+                      title="Love"
+                    >
+                      ❤️
+                    </div>
+                    <div
+                      class="reaction-option care text-lg md:text-xl"
+                      onclick="reactToPost({{ post.id }}, 'care')"
+                      title="Care"
+                    >
+                      🥰
+                    </div>
+                    <div
+                      class="reaction-option haha text-lg md:text-xl"
+                      onclick="reactToPost({{ post.id }}, 'haha')"
+                      title="Haha"
+                    >
+                      😂
+                    </div>
+                    <div
+                      class="reaction-option wow text-lg md:text-xl"
+                      onclick="reactToPost({{ post.id }}, 'wow')"
+                      title="Wow"
+                    >
+                      😮
+                    </div>
+                    <div
+                      class="reaction-option sad text-lg md:text-xl"
+                      onclick="reactToPost({{ post.id }}, 'sad')"
+                      title="Sad"
+                    >
+                      😢
+                    </div>
+                    <div
+                      class="reaction-option angry text-lg md:text-xl"
+                      onclick="reactToPost({{ post.id }}, 'angry')"
+                      title="Angry"
+                    >
+                      😠
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onclick="focusCommentInput({{ post.id }})"
+                  class="flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-1 md:py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 text-gray-600"
+                >
+                  <i class="bi bi-chat text-sm md:text-base"></i>
+                  <span class="text-xs md:text-sm">Comment</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Comments Section -->
+            <div
+              class="comments-section px-4 md:px-6 py-3 md:py-4 border-t border-gray-100 bg-gray-50"
+            >
+              <!-- Comment Input -->
+              <div
+                class="flex items-center space-x-2 md:space-x-3 mb-3 md:mb-4"
+              >
+                <img
+                  src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+                  alt="{{ current_user.full_name }}"
+                  class="w-7 h-7 md:w-8 md:h-8 rounded-full object-cover comment-input-avatar"
+                />
+                <div class="flex-1 relative">
+                  <input
+                    type="text"
+                    id="commentInput-{{ post.id }}"
+                    placeholder="Write a comment..."
+                    class="w-full bg-white rounded-full px-3 py-1.5 md:px-4 md:py-2 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 comment-input"
+                    onkeypress="handleCommentKeypress(event, {{ post.id }})"
+                  />
+
+
+
+                </div>
+              </div>
+
+              <!-- Comments List -->
+              <div id="comments-{{ post.id }}">
+                {% for comment in post.comments[:20]|reverse %}
+                <div
+                  class="flex space-x-2 md:space-x-3 mb-3 md:mb-4 comment-item comment-fade-in"
+                  id="comment-{{ comment.id }}"
+                >
+                  <img
+                    src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+                    alt="{{ comment.author.full_name }}"
+                    class="w-6 h-6 md:w-8 md:h-8 rounded-full object-cover flex-shrink-0 comment-avatar"
+                  />
+                  <div class="flex-1">
+                    <div
+                      class="bg-white rounded-xl md:rounded-2xl px-3 py-2 md:px-4 md:py-3"
+                    >
+                      <div class="flex justify-between items-start mb-1">
+                        <h5
+                          class="font-semibold text-xs md:text-sm comment-author"
+                        >
+                          {{ comment.author.full_name }}
+                        </h5>
+                        <div class="dropdown relative">
+                          <button
+                            class="p-0.5 md:p-1 rounded-full hover:bg-gray-100 transition-colors duration-300"
+                          >
+                            <i
+                              class="bi bi-three-dots text-gray-400 text-xs md:text-xs"
+                            ></i>
+                          </button>
+                          <div
+                            class="dropdown-menu absolute right-0 mt-1 w-28 md:w-32 bg-white rounded-lg md:rounded-xl shadow-2xl border border-gray-200 hidden z-10"
+                          >
+                            {% if comment.author.id == current_user.id %}
+                            <button
+                              onclick="deleteComment({{ comment.id }})"
+                              class="w-full text-left px-2 py-1.5 md:px-3 md:py-2 hover:bg-gray-50 rounded-t-lg md:rounded-t-xl text-red-600 text-xs md:text-sm"
+                            >
+                              <i class="bi bi-trash mr-1 text-xs md:text-sm"></i
+                              >Delete
+                            </button>
+                            {% endif %}
+                            <button
+                              onclick="reportContent('comment', {{ comment.id }})"
+                              class="w-full text-left px-2 py-1.5 md:px-3 md:py-2 hover:bg-gray-50 rounded-b-lg md:rounded-b-xl text-orange-600 text-xs md:text-sm"
+                            >
+                              <i class="bi bi-flag mr-1 text-xs md:text-sm"></i
+                              >Report
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                      <p
+                        class="text-gray-800 text-xs md:text-sm comment-content"
+                      >
+                        {{ comment.content }}
+                      </p>
+                      <div
+                        class="flex items-center space-x-2 md:space-x-3 mt-1 md:mt-2"
+                      >
+                        <span class="text-xs text-gray-400 comment-time"
+                          >{{ comment.created_at.strftime('%I:%M %p') }}</span
+                        >
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+
+              <!-- Use len() as a temporary fix -->
+              {% set comments_count = post.comments|length if post.comments else 0 %}
+              {% if comments_count > 3 %}
+             <!-- <button
+                onclick="loadAllComments({{ post.id }})"
+                class="text-blue-600 hover:text-blue-700 text-xs md:text-sm font-semibold"
+              >
+                View all {{ comments_count }} comments
+              </button> -->
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <!-- No posts message -->
+          <div class="bg-white rounded-2xl shadow-soft p-8 text-center">
+            <i class="bi bi-newspaper text-4xl text-gray-400 mb-4"></i>
+            <h3 class="text-xl font-semibold text-gray-700 mb-2">No posts yet</h3>
+            <p class="text-gray-500 mb-4">Be the first to share something!</p>
+            <button
+              class="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+              data-bs-toggle="modal"
+              data-bs-target="#postModal"
+            >
+              Create Your First Post
             </button>
           </div>
-        </form>
-      </div>
-    </div>
+        {% endif %}
 
-    <!-- Comment Modal -->
-    <div
-      class="modal fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden"
-      id="commentModal"
-    >
-      <div
-        class="modal-dialog bg-white rounded-2xl shadow-strong w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden"
-      >
-        <div
-          class="modal-header p-4 border-b border-fb-border flex justify-between items-center"
-        >
-          <h3 class="text-xl font-semibold">Comments</h3>
+        <!-- INFINITE SCROLL LOADING INDICATOR -->
+        <div id="loading-spinner" class="hidden mb-6">
+          <div class="bg-white rounded-2xl shadow-soft p-8 text-center">
+            <div class="flex flex-col items-center">
+              <div
+                class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-3"
+              ></div>
+              <p class="text-gray-600">Loading more posts...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- LOAD MORE BUTTON (Fallback for non-JS) -->
+        {% if has_more and next_cursor %}
+        <div id="load-more-container" class="text-center mb-6">
           <button
-            type="button"
-            class="p-2 rounded-full hover:bg-fb-gray transition-colors"
-            onclick="closeModal('commentModal')"
+            id="load-more-btn"
+            class="px-6 py-3 bg-white text-blue-600 rounded-xl shadow-soft hover:bg-gray-50 transition-colors font-medium border border-gray-200"
+            data-cursor="{{ next_cursor }}"
           >
-            <i class="bi bi-x-lg"></i>
+            Load More Posts
           </button>
         </div>
-        <div
-          class="modal-body p-4 overflow-y-auto max-h-[70vh] custom-scrollbar"
-          id="commentModalBody"
-        ></div>
+        {% endif %}
+
+        <!-- END OF FEED MESSAGE -->
+        <div id="end-of-feed" class="hidden text-center py-8 text-gray-500">
+          <i class="bi bi-check-circle text-2xl mb-2"></i>
+          <p>You've reached the end</p>
+          <p class="text-sm mt-1">No more posts to load</p>
+        </div>
       </div>
     </div>
 
-    <!-- Profile Modal -->
-    <!-- Profile Modal -->
+    <!-- RIGHT SIDEBAR -->
     <div
-      class="modal fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden"
-      id="profileModal"
+      class="hidden lg:block w-96 h-screen sticky top-16 overflow-y-auto custom-scrollbar bg-white border-l border-fb-border p-4"
+    >
+      <div class="flex justify-between items-center mb-3 sm:mb-4">
+        <h3 class="font-semibold">Friends</h3>
+      </div>
+      <div class="space-y-3">
+        {% for friend in friends %}
+        <div
+          class="flex items-center space-x-3 p-2 rounded-lg hover:bg-fb-gray transition-colors cursor-pointer"
+          onclick="event.preventDefault(); openProfileModal({{ friend.id }})"
+        >
+          <div class="relative">
+            <img
+              src="{{ friend.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+              class="w-10 h-10 rounded-full object-cover"
+            />
+            {% if friend.is_online %}
+            <span
+              class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"
+            ></span>
+            {% endif %}
+          </div>
+          <div class="flex-1">
+            <div class="font-medium">{{ friend.full_name }}</div>
+            <div class="text-xs text-fb-text-light">
+              {% if friend.is_online %}Active now{% else %}Last seen
+              <span
+                class="last-seen"
+                data-last-seen="{{ friend.last_seen.isoformat() if friend.last_seen else '' }}"
+                >Some time ago</span
+              >{% endif %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+
+        {% if friends|length == 0 %}
+        <div class="text-center text-fb-text-light p-4">
+          <i class="bi bi-people text-4xl mb-2 block"></i>
+          <p>No friends yet</p>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Birthday Section -->
+      <!-- <div class="mt-8 pt-6 border-t border-fb-border">
+        <h3 class="text-sm font-semibold text-fb-text-light mb-3">
+          Birthdays
+        </h3>
+        <div
+          class="flex items-center space-x-3 p-2 rounded-lg hover:bg-fb-gray transition-colors cursor-pointer"
+        >
+          <div
+            class="w-10 h-10 bg-gradient-success rounded-full flex items-center justify-center"
+          >
+            <i class="bi bi-gift-fill text-white"></i>
+          </div>
+          <div>
+            <p class="text-sm">
+              <span class="font-medium">John Doe</span> and
+              <span class="font-medium">2 others</span> have birthdays today.
+            </p>
+          </div>
+        </div>
+      </div> -->
+
+      <!-- Events Section -->
+    </div>
+  </div>
+
+  <!-- MODALS -->
+  <!-- Post Modal -->
+  <!-- Post Modal - Updated Version -->
+  <div
+    class="modal fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden"
+    id="postModal"
+  >
+    <div
+      class="modal-dialog bg-white rounded-2xl shadow-strong w-full max-w-lg sm:max-w-md md:max-w-lg mx-4"
     >
       <div
-        class="modal-dialog bg-white rounded-xl sm:rounded-2xl shadow-strong w-11/12 sm:w-full max-w-sm sm:max-w-md md:max-w-2xl lg:max-w-4xl mx-2 sm:mx-4 max-h-[85vh] sm:max-h-[90vh] overflow-hidden"
+        class="modal-header p-3 sm:p-4 border-b border-fb-border flex justify-between items-center"
       >
-        <div
-          class="modal-header p-3 sm:p-4 border-b border-fb-border flex justify-between items-center"
+        <h3 class="text-lg sm:text-xl font-semibold">Create Post</h3>
+        <button
+          type="button"
+          class="p-1.5 sm:p-2 rounded-full hover:bg-fb-gray transition-colors"
+          onclick="closeModal('postModal')"
         >
-          <h3 class="text-lg sm:text-xl font-semibold truncate">
-            Profile Information
-          </h3>
-          <button
-            type="button"
-            class="p-1.5 sm:p-2 rounded-full hover:bg-fb-gray transition-colors"
-            onclick="closeModal('profileModal')"
+          <i class="bi bi-x-lg text-sm sm:text-base"></i>
+        </button>
+      </div>
+
+      <form
+        method="POST"
+        enctype="multipart/form-data"
+        action="{{ url_for('user.user_dashboard') }}"
+        id="createPostForm"
+      >
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+
+        <div class="modal-body p-3 sm:p-4">
+          <!-- Author info -->
+          <div class="flex items-center space-x-3 mb-3">
+            <img
+              src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+              alt=""
+              class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover"
+            />
+            <div>
+              <div class="font-semibold text-sm sm:text-base">
+                {{ current_user.first_name }} {{ current_user.last_name }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Post content -->
+          <textarea
+            name="post_content"
+            class="w-full border-0 focus:ring-0 focus:outline-none text-base sm:text-lg resize-none"
+            rows="3"
+            placeholder="What's on your mind?"
+            required
+          ></textarea>
+
+          <!-- Media Preview -->
+          <div id="mediaPreview" class="mt-2"></div>
+
+          <!-- Enhanced Upload Progress -->
+
+
+            <!-- Cancel Button -->
+            <div class="mt-3 pt-3 border-t border-gray-200">
+              <button
+                type="button"
+                onclick="cancelUpload()"
+                class="w-full py-2 bg-gray-200 text-gray-700 rounded-lg font-medium text-sm hover:bg-gray-300 transition-colors flex items-center justify-center"
+              >
+                <i class="bi bi-x-circle mr-2"></i>
+                Cancel Upload
+              </button>
+            </div>
+
+
+          <!-- Upload options -->
+          <div
+            class="mt-2 flex items-center justify-between p-2 sm:p-3 border border-fb-border rounded-xl bg-gray-50"
           >
-            <i class="bi bi-x-lg text-sm sm:text-base"></i>
+            <span class="font-medium text-sm text-gray-700"
+              >Add to your post</span
+            >
+            <div class="flex space-x-1 sm:space-x-2">
+              <button
+                type="button"
+                class="p-1.5 sm:p-2 rounded-full hover:bg-white transition-colors bg-white shadow-sm"
+                onclick="validateAndOpenFilePicker()"
+              >
+                <i class="bi bi-image-fill text-green-500 text-lg"></i>
+              </button>
+              <input
+                type="file"
+                name="media"
+                id="mediaInput"
+                accept="image/*,video/*"
+                hidden
+                onchange="handleFileSelection(this)"
+              />
+              <button
+                type="button"
+                class="p-1.5 sm:p-2 rounded-full hover:bg-white transition-colors bg-white shadow-sm"
+              >
+                <i class="bi bi-emoji-smile-fill text-yellow-500 text-lg"></i>
+              </button>
+              <button
+                type="button"
+                class="p-1.5 sm:p-2 rounded-full hover:bg-white transition-colors bg-white shadow-sm"
+              >
+                <i class="bi bi-geo-alt-fill text-red-500 text-lg"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- File size info -->
+          <div
+            class="text-xs text-gray-500 mt-2 text-center bg-blue-50 p-2 rounded-lg"
+          >
+            <i class="bi bi-info-circle mr-1 text-blue-500"></i>
+            Maximum file size: 100MB. Supported: Images (JPG, PNG, GIF, WebP)
+            and Videos (MP4, WebM, OGG, MOV)
+          </div>
+        </div>
+
+        <div class="modal-footer p-3 sm:p-4 border-t border-fb-border">
+          <button
+            type="submit"
+            class="w-full py-2.5 sm:py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-colors text-sm sm:text-base shadow-md"
+          >
+            <span class="flex items-center justify-center">
+              <i class="bi bi-send mr-2"></i>
+              Post Now
+            </span>
+            <span
+              class="loader inline-block ml-1"
+              style="display: none"
+            ></span>
           </button>
         </div>
-        <div
-          class="modal-body p-0 overflow-y-auto max-h-[70vh] sm:max-h-[75vh] custom-scrollbar"
-          id="profileModalBody"
-        ></div>
-        <div
-          class="modal-footer p-3 sm:p-4 border-t border-fb-border flex flex-col sm:flex-row justify-center sm:justify-center space-y-2 sm:space-y-0 sm:space-x-3"
-          id="profileActions"
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Post Modal -->
+  <!-- Edit Post Modal - Ultra Compact -->
+  <div
+    class="modal fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden"
+    id="editPostModal"
+  >
+    <div
+      class="modal-dialog bg-white rounded-2xl shadow-strong w-full max-w-lg sm:max-w-md md:max-w-lg mx-4"
+    >
+      <div
+        class="modal-header p-3 sm:p-4 border-b border-fb-border flex justify-between items-center"
+      >
+        <h3 class="text-lg sm:text-xl font-semibold">Edit Post</h3>
+        <button
+          type="button"
+          class="p-1.5 sm:p-2 rounded-full hover:bg-fb-gray transition-colors"
+          onclick="closeModal('editPostModal')"
         >
-          <!-- Filled by JS -->
+          <i class="bi bi-x-lg text-sm sm:text-base"></i>
+        </button>
+      </div>
+      <form id="editPostForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+        <div class="modal-body p-3 sm:p-4">
+          <textarea
+            name="content"
+            class="w-full border-0 focus:ring-0 focus:outline-none text-base sm:text-lg resize-none text-left"
+            rows="3"
+            id="editPostContent"
+          ></textarea>
+          <!-- Compact Media Preview -->
+          <div id="editMediaPreview" class="mt-2"></div>
         </div>
+        <div class="modal-footer p-3 sm:p-4 border-t border-fb-border">
+          <button
+            type="submit"
+            class="w-full py-2.5 sm:py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors text-sm sm:text-base"
+          >
+            Save
+            <span
+              class="loader inline-block ml-1"
+              style="display: none"
+            ></span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Comment Modal -->
+  <div
+    class="modal fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden"
+    id="commentModal"
+  >
+    <div
+      class="modal-dialog bg-white rounded-2xl shadow-strong w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden"
+    >
+      <div
+        class="modal-header p-4 border-b border-fb-border flex justify-between items-center"
+      >
+        <h3 class="text-xl font-semibold">Comments</h3>
+        <button
+          type="button"
+          class="p-2 rounded-full hover:bg-fb-gray transition-colors"
+          onclick="closeModal('commentModal')"
+        >
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+      <div
+        class="modal-body p-4 overflow-y-auto max-h-[70vh] custom-scrollbar"
+        id="commentModalBody"
+      ></div>
+    </div>
+  </div>
+
+  <!-- Profile Modal -->
+  <!-- Profile Modal -->
+  <div
+    class="modal fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden"
+    id="profileModal"
+  >
+    <div
+      class="modal-dialog bg-white rounded-xl sm:rounded-2xl shadow-strong w-11/12 sm:w-full max-w-sm sm:max-w-md md:max-w-2xl lg:max-w-4xl mx-2 sm:mx-4 max-h-[85vh] sm:max-h-[90vh] overflow-hidden"
+    >
+      <div
+        class="modal-header p-3 sm:p-4 border-b border-fb-border flex justify-between items-center"
+      >
+        <h3 class="text-lg sm:text-xl font-semibold truncate">
+          Profile Information
+        </h3>
+        <button
+          type="button"
+          class="p-1.5 sm:p-2 rounded-full hover:bg-fb-gray transition-colors"
+          onclick="closeModal('profileModal')"
+        >
+          <i class="bi bi-x-lg text-sm sm:text-base"></i>
+        </button>
+      </div>
+      <div
+        class="modal-body p-0 overflow-y-auto max-h-[70vh] sm:max-h-[75vh] custom-scrollbar"
+        id="profileModalBody"
+      ></div>
+      <div
+        class="modal-footer p-3 sm:p-4 border-t border-fb-border flex flex-col sm:flex-row justify-center sm:justify-center space-y-2 sm:space-y-0 sm:space-x-3"
+        id="profileActions"
+      >
+        <!-- Filled by JS -->
       </div>
     </div>
+  </div>
 
-    <!-- JavaScript -->
-    <script
-      src="https://cdn.socket.io/4.6.1/socket.io.min.js"
-      crossorigin="anonymous"
-    ></script>
+  <!-- JavaScript -->
+  <script
+    src="https://cdn.socket.io/4.6.1/socket.io.min.js"
+    crossorigin="anonymous"
+  ></script>
 
-   <!--  <script src="{{ url_for('static', filename='assets/js/main.js') }}"></script> -->
-    <script type="application/json" id="app-config">
+  <!--  <script src="{{ url_for('static', filename='assets/js/main.js') }}"></script> -->
+  <script type="application/json" id="app-config">
     {
         "csrfToken": "{{ csrf_token }}",
         "currentUserId": {{ current_user.id|tojson|safe }}
     }
-    </script>
-    <script>
-        // Parse the JSON and make it available globally
-        window.APP_CONFIG = JSON.parse(document.getElementById('app-config').textContent);
-    </script>
-    <script src="{{ url_for('static', filename='assets/js/dashboard.js') }}"></script>
+  </script>
+  <script>
+    // Parse the JSON and make it available globally
+    window.APP_CONFIG = JSON.parse(
+      document.getElementById("app-config").textContent
+    );
+  </script>
+  <script src="{{ url_for('static', filename='assets/js/dashboard.js') }}"></script>
 
-    
+  <!-- Floating Corner Widget -->
+  <!-- Floating Corner Widget - Compact Version -->
+  <div
+    id="floatingAd"
+    class="fixed bottom-4 right-4 z-50 transition-all duration-500"
+  >
+    <div class="relative group">
+      <!-- Main Button - Smaller -->
+      <button
+        onclick="toggleFloatingAd()"
+        class="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl shadow-lg flex items-center justify-center text-white hover:from-orange-600 hover:to-red-600 transition-all duration-300"
+      >
+        <i class="bi bi-megaphone-fill text-sm"></i>
+      </button>
 
-    
-   
+      <!-- Notification Badge - Smaller -->
+      <span
+        class="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full border border-white animate-pulse"
+      ></span>
 
-    <!-- Floating Corner Widget -->
-    <!-- Floating Corner Widget - Compact Version -->
-    <div
-      id="floatingAd"
-      class="fixed bottom-4 right-4 z-50 transition-all duration-500"
-    >
-      <div class="relative group">
-        <!-- Main Button - Smaller -->
-        <button
-          onclick="toggleFloatingAd()"
-          class="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl shadow-lg flex items-center justify-center text-white hover:from-orange-600 hover:to-red-600 transition-all duration-300"
-        >
-          <i class="bi bi-megaphone-fill text-sm"></i>
-        </button>
-
-        <!-- Notification Badge - Smaller -->
-        <span
-          class="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full border border-white animate-pulse"
-        ></span>
-
-        <!-- Expanded Content - Much Smaller -->
-        <div
-          id="floatingAdContent"
-          class="absolute bottom-12 right-0 w-48 bg-white rounded-lg shadow-xl p-3 hidden transform origin-bottom-right transition-all duration-300 scale-95 opacity-0 border border-gray-200"
-        >
-          <div class="flex items-start space-x-2 mb-2">
-            <div
-              class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center flex-shrink-0"
-            >
-              <i class="bi bi-star-fill text-white text-xs"></i>
-            </div>
-            <div class="flex-1 min-w-0">
-              <h4
-                class="font-bold text-gray-900 text-xs truncate"
-                id="floatingAdTitle"
-              >
-                Special Offer!
-              </h4>
-              <p
-                class="text-gray-600 text-xs mt-0.5 truncate"
-                id="floatingAdDesc"
-              >
-                Amazing deals
-              </p>
-            </div>
-          </div>
-          <a
-            href="#"
-            target="_blank"
-            id="floatingAdLink"
-            class="block w-full py-1.5 bg-gradient-to-r from-green-500 to-green-600 text-white text-center rounded text-xs font-medium hover:from-green-600 hover:to-green-700 transition-colors"
-          >
-            Discover Now
-          </a>
-        </div>
-      </div>
-    </div>
-
-    <!-- Native Content Ad -->
-    <div
-      id="nativeAd"
-      class="bg-white rounded-xl shadow-soft overflow-hidden mb-6 border border-purple-200 hidden"
-    >
-      <div class="p-3 sm:p-4 flex justify-between items-start">
-        <div class="flex items-center space-x-3">
+      <!-- Expanded Content - Much Smaller -->
+      <div
+        id="floatingAdContent"
+        class="absolute bottom-12 right-0 w-48 bg-white rounded-lg shadow-xl p-3 hidden transform origin-bottom-right transition-all duration-300 scale-95 opacity-0 border border-gray-200"
+      >
+        <div class="flex items-start space-x-2 mb-2">
           <div
-            class="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center"
+            class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center flex-shrink-0"
           >
-            <i class="bi bi-award-fill text-white text-sm"></i>
+            <i class="bi bi-star-fill text-white text-xs"></i>
           </div>
-          <div>
-            <div class="font-semibold flex items-center text-xs sm:text-sm">
-              <span id="nativeAdAdvertiser">Featured Partner</span>
-              <span
-                class="ml-2 bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium"
-              >
-                Sponsored
-              </span>
-            </div>
-            <div class="text-xs text-gray-400">Advertisement</div>
+          <div class="flex-1 min-w-0">
+            <h4
+              class="font-bold text-gray-900 text-xs truncate"
+              id="floatingAdTitle"
+            >
+              Special Offer!
+            </h4>
+            <p
+              class="text-gray-600 text-xs mt-0.5 truncate"
+              id="floatingAdDesc"
+            >
+              Amazing deals
+            </p>
           </div>
         </div>
-      </div>
-
-      <div class="px-3 sm:px-4 pb-3">
-        <h3
-          id="nativeAdTitle"
-          class="font-bold text-base sm:text-lg mb-1 sm:mb-2 text-gray-900"
-        ></h3>
-        <p
-          id="nativeAdDescription"
-          class="text-gray-700 text-xs sm:text-sm mb-2 sm:mb-3"
-        ></p>
-
-        <!-- Ad Image -->
-        <div
-          class="rounded-xl overflow-hidden mb-3 bg-gradient-to-br from-blue-50 to-purple-50"
-        >
-          <img
-            id="nativeAdImage"
-            src=""
-            alt="Ad"
-            class="w-full h-32 sm:h-48 object-cover"
-          />
-        </div>
-
-        <!-- CTA -->
         <a
           href="#"
           target="_blank"
-          id="nativeAdLink"
-          class="inline-flex items-center justify-center w-full py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl text-sm sm:text-base hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105"
+          id="floatingAdLink"
+          class="block w-full py-1.5 bg-gradient-to-r from-green-500 to-green-600 text-white text-center rounded text-xs font-medium hover:from-green-600 hover:to-green-700 transition-colors"
         >
-          <span id="nativeAdCTA">Learn More</span>
-          <i class="bi bi-arrow-up-right ml-2"></i>
+          Discover Now
         </a>
       </div>
     </div>
+  </div>
+
+  <!-- Native Content Ad -->
+  <div
+    id="nativeAd"
+    class="bg-white rounded-xl shadow-soft overflow-hidden mb-6 border border-purple-200 hidden"
+  >
+    <div class="p-3 sm:p-4 flex justify-between items-start">
+      <div class="flex items-center space-x-3">
+        <div
+          class="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center"
+        >
+          <i class="bi bi-award-fill text-white text-sm"></i>
+        </div>
+        <div>
+          <div class="font-semibold flex items-center text-xs sm:text-sm">
+            <span id="nativeAdAdvertiser">Featured Partner</span>
+            <span
+              class="ml-2 bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium"
+            >
+              Sponsored
+            </span>
+          </div>
+          <div class="text-xs text-gray-400">Advertisement</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="px-3 sm:px-4 pb-3">
+      <h3
+        id="nativeAdTitle"
+        class="font-bold text-base sm:text-lg mb-1 sm:mb-2 text-gray-900"
+      ></h3>
+      <p
+        id="nativeAdDescription"
+        class="text-gray-700 text-xs sm:text-sm mb-2 sm:mb-3"
+      ></p>
+
+      <!-- Ad Image -->
+      <div
+        class="rounded-xl overflow-hidden mb-3 bg-gradient-to-br from-blue-50 to-purple-50"
+      >
+        <img
+          id="nativeAdImage"
+          src=""
+          alt="Ad"
+          class="w-full h-32 sm:h-48 object-cover"
+        />
+      </div>
+
+      <!-- CTA -->
+      <a
+        href="#"
+        target="_blank"
+        id="nativeAdLink"
+        class="inline-flex items-center justify-center w-full py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl text-sm sm:text-base hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105"
+      >
+        <span id="nativeAdCTA">Learn More</span>
+        <i class="bi bi-arrow-up-right ml-2"></i>
+      </a>
+    </div>
+  </div>
 
   <script>
     // Make current user info globally available
@@ -1766,7 +2243,6 @@
     window.currentUserName = '{{ current_user.full_name }}';
     window.currentUserId = {{ current_user.id }};
     window.defaultAvatar = '{{ url_for('static', filename='assets/img/default-avatar.png') }}';
-</script>
-   
-  </body>
+  </script>
+</body>
 </html>

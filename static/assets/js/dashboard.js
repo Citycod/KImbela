@@ -417,7 +417,7 @@ const PostSystem = {
             console.error('Error liking post:', error);
             if (likeCount) likeCount.textContent = originalCount;
             if (icon) icon.className = originalIcon;
-            Toast.show('Failed to like post', 'danger');
+//            Toast.show('Failed to like post', 'danger');
         } finally {
             likeBtn.disabled = false;
         }
@@ -4142,7 +4142,7 @@ function handleCommentKeypress(event, postId) {
 async function addComment(postId, content) {
     const input = document.getElementById(`commentInput-${postId}`);
     const container = document.getElementById(`comments-${postId}`);
-    const count = document.getElementById(`comment-count-${postId}`);
+    const countElement = document.getElementById(`comment-count-${postId}`);
 
     // Store original state
     input.disabled = true;
@@ -4191,7 +4191,7 @@ async function addComment(postId, content) {
                             <div class="dropdown relative">
                                 <button class="p-0.5 md:p-1 rounded-full hover:bg-gray-100"><i class="bi bi-three-dots text-gray-400 text-xs"></i></button>
                                 <div class="dropdown-menu absolute right-0 mt-1 w-28 md:w-32 bg-white rounded-lg md:rounded-xl shadow-2xl border border-gray-200 hidden z-10">
-                                    <button onclick="deleteComment(${comment.id || data.id})" class="w-full text-left px-2 py-1.5 md:px-3 md:py-2 hover:bg-gray-50 text-red-600 text-xs md:text-sm">
+                                    <button onclick="deleteComment(${comment.id || data.id}, ${postId})" class="w-full text-left px-2 py-1.5 md:px-3 md:py-2 hover:bg-gray-50 text-red-600 text-xs md:text-sm">
                                         <i class="bi bi-trash mr-1 text-xs md:text-sm"></i>Delete
                                     </button>
                                 </div>
@@ -4216,8 +4216,7 @@ async function addComment(postId, content) {
             input.value = '';
 
             // Update comment count
-            const current = parseInt(count.textContent) || 0;
-            count.textContent = `${current + 1} comments`;
+            updateCommentCount(postId, 1, 'add');
 
             // Show success message
             Toast.show('Comment added!', 'success');
@@ -4245,6 +4244,58 @@ async function addComment(postId, content) {
         input.disabled = false;
         input.placeholder = placeholder;
         input.focus();
+    }
+}
+
+// Helper function to update comment count
+function updateCommentCount(postId, change, operation = 'add') {
+    const countElement = document.getElementById(`comment-count-${postId}`);
+    if (!countElement) return;
+
+    // Get current count from data attribute or text
+    let currentCount = parseInt(countElement.getAttribute('data-total-comments')) || 0;
+
+    // Update the count
+    if (operation === 'add') {
+        currentCount += change;
+    } else if (operation === 'subtract') {
+        currentCount = Math.max(0, currentCount - change);
+    }
+
+    // Update both the text and the data attribute
+    countElement.textContent = `${currentCount} ${currentCount === 1 ? 'comment' : 'comments'}`;
+    countElement.setAttribute('data-total-comments', currentCount);
+}
+
+// Update deleteComment function to accept postId
+async function deleteComment(commentId, postId = null) {
+    if (!confirm('Delete this comment?')) return;
+
+    try {
+        const response = await fetch(`/delete_comment/${commentId}`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' }
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            const el = document.getElementById(`comment-${commentId}`);
+            el.style.opacity = '0';
+            el.style.transform = 'translateX(-50%)';
+            setTimeout(() => el.remove(), 300);
+
+            // Update comment count if we know the postId
+            if (postId) {
+                updateCommentCount(postId, 1, 'subtract');
+            }
+
+            Toast.show('Comment deleted', 'info');
+        } else {
+            Toast.show(data.error || 'Failed', 'danger');
+        }
+    } catch (error) {
+        console.error(error);
+        Toast.show('Network error', 'danger');
     }
 }
 
@@ -4279,12 +4330,17 @@ function focusCommentInput(postId) {
 
 async function loadAllComments(postId) {
     try {
-        const res = await fetch(`/get_comments/${postId}`);
+        const countElement = document.getElementById(`comment-count-${postId}`);
+        const totalComments = parseInt(countElement?.getAttribute('data-total-comments')) || 0;
+
+        const res = await fetch(`/get_comments/${postId}?limit=${totalComments}`);
         const data = await res.json();
+
         if (data.comments) {
             const container = document.getElementById(`comments-${postId}`);
             const btn = container.nextElementSibling;
             container.innerHTML = '';
+
             data.comments.forEach(c => {
                 const div = document.createElement('div');
                 div.className = 'flex space-x-2 md:space-x-3 mb-3 md:mb-4 comment-item';
@@ -4298,7 +4354,7 @@ async function loadAllComments(postId) {
                                 <div class="dropdown relative">
                                     <button class="p-0.5 md:p-1 rounded-full hover:bg-gray-100"><i class="bi bi-three-dots text-gray-400 text-xs"></i></button>
                                     <div class="dropdown-menu absolute right-0 mt-1 w-28 md:w-32 bg-white rounded-lg md:rounded-xl shadow-2xl border border-gray-200 hidden z-10">
-                                        ${c.author_id === currentUserId ? `<button onclick="deleteComment(${c.id})" class="w-full text-left px-2 py-1.5 md:px-3 md:py-2 hover:bg-gray-50 text-red-600 text-xs md:text-sm"><i class="bi bi-trash mr-1 text-xs md:text-sm"></i>Delete</button>` : ''}
+                                        ${c.author_id === currentUserId ? `<button onclick="deleteComment(${c.id}, ${postId})" class="w-full text-left px-2 py-1.5 md:px-3 md:py-2 hover:bg-gray-50 text-red-600 text-xs md:text-sm"><i class="bi bi-trash mr-1 text-xs md:text-sm"></i>Delete</button>` : ''}
                                     </div>
                                 </div>
                             </div>
@@ -4311,6 +4367,7 @@ async function loadAllComments(postId) {
                 `;
                 container.appendChild(div);
             });
+
             if (btn && btn.tagName === 'BUTTON') btn.remove();
         }
     } catch (error) {

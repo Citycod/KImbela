@@ -6,7 +6,7 @@ import json  # Add this import
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import url_for
-from sqlalchemy import event
+from sqlalchemy import event, func
 import requests
 
 friendship = db.Table(
@@ -766,8 +766,10 @@ class Post(db.Model):
         lazy="select",           # or "joined" – both work
         cascade="all, delete-orphan"
     )
-    
-    
+
+    @property
+    def comments_count(self):
+        return len(self.comments) if self.comments else 0
 
     @property
     def comments_list(self):
