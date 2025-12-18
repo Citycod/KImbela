@@ -15,7 +15,7 @@
     <!-- Styles -->
     <style>
         :root {
-            --primary: #5a4500;
+            --primary: #FF7F50;
             --primary-dark: #b88900;
             --secondary: #8B5CF6;
             --accent: #10B981;
@@ -352,14 +352,14 @@
 </head>
 <body>
     <!-- Navigation -->
-    <nav class="sticky top-0 z-50 glass-effect shadow-sm">
+    <nav class="sticky top-0 z-50 glass-effect shadow-sm" style="height: 4rem;">
         <div class="container mx-auto px-3 py-2">
             <div class="flex items-center justify-between" style="height: 40px;">
                 <!-- Logo -->
                 <a href="{{ url_for('market.main_market') }}" class="flex items-center gap-2" >
                     <img src="{{ url_for('static', filename='assets/img/kim.png') }}" 
                              alt="Kimbela Marketplace" 
-                             class="h-10" style="height: 10rem; width: 10rem; position: absolute; top: 0; margin-top: -50px;"/>
+                             class="h-10" style="height: 4rem; width: 7rem; position: absolute; top: 0; "/>
                     <div>
                         
                     </div>

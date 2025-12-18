@@ -823,8 +823,8 @@ const FriendSystem = {
             const data = await response.json();
 
             if (data.success) {
-                // Update button back to "Add Friend"
-                button.innerHTML = '<i class="bi bi-person-plus mr-1"></i> Add Friend';
+                // Update button back to "Connect"
+                button.innerHTML = '<i class="bi bi-person-plus mr-1"></i> Connect';
                 button.className = 'w-full py-2 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors';
                 button.onclick = (e) => {
                     e.stopPropagation();
@@ -928,7 +928,7 @@ const FriendSystem = {
                             onclick="event.stopPropagation(); FriendSystem.add(${userId}, this)"
                             style="background: linear-gradient(135deg, #5a4500, #b88900);"
                         >
-                            <i class="bi bi-person-plus mr-1"></i> Add Friend
+                            <i class="bi bi-person-plus mr-1"></i> Connect
                         </button>
                     `;
                 }
@@ -996,7 +996,7 @@ const FriendSystem = {
                 buttonHTML = `
                     <button class="btn btn-primary px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
                             onclick="FriendSystem.add(${userId}, this)">
-                        <i class="bi bi-person-plus mr-1"></i> Add Friend
+                        <i class="bi bi-person-plus mr-1"></i> Connect
                     </button>
                 `;
                 break;
@@ -1161,7 +1161,7 @@ const ProfileSystem = {
         } else {
             actionsHTML = `
                 <button class="btn btn-primary px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors" onclick="FriendSystem.add(${userId}, this)">
-                    <i class="bi bi-person-plus me-1"></i> Add Friend
+                    <i class="bi bi-person-plus me-1"></i> Connect
                 </button>
             `;
         }
@@ -2328,7 +2328,7 @@ function updateFriendButtons(userId, status) {
         if (button) {
             switch(status) {
                 case 'none':
-                    button.innerHTML = '<i class="bi bi-person-plus mr-1"></i> Add Friend';
+                    button.innerHTML = '<i class="bi bi-person-plus mr-1"></i> Connect';
                     button.className = 'w-full py-2 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors';
                     button.style.background = 'linear-gradient(135deg, #5a4500, #b88900)';
                     button.onclick = (e) => {

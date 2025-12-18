@@ -137,14 +137,14 @@
 </head>
 <body>
     <!-- Navigation -->
-    <nav class="sticky top-0 z-50 glass-effect shadow-sm">
+    <nav class="sticky top-0 z-50 glass-effect shadow-sm" style="height: 4rem;">
         <div class="container mx-auto px-3 py-2">
             <div class="flex items-center justify-between">
                 <!-- Logo -->
                 <a href="{{ url_for('market.main_market') }}" class="flex items-center gap-2">
                     <img src="{{ url_for('static', filename='assets/img/kim.png') }}" 
                              alt="Kimbela Marketplace" 
-                             class="h-10" style="height: 10rem; width: 10rem; position: absolute; top: 0; margin-top: -50px;"/>
+                             class="h-10" style="height: 4rem; width: 7rem; position: absolute; top: 0;"/>
                 </a>
                 
                 <!-- User Menu -->
@@ -229,10 +229,7 @@
 
                     <!-- After seller info -->
                     <div class="mt-4">
-                        <a href="{{ url_for('market.seller_reviews', seller_id=seller.id) }}"
-                           class="text-blue-600 hover:underline">
-                            View all {{ seller.review_count }} seller reviews
-                        </a>
+
                         {% if current_user.is_authenticated and current_user.id != seller.id %}
                         <span class="mx-2">•</span>
                         <button onclick="openReviewModal('seller', {{ seller.id }})"
