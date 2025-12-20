@@ -139,7 +139,7 @@ def init_background_tasks():
 if __name__ == '__main__':
     print("=" * 50)
     print("🚀 Starting Kimbela Server")
-    print("📡 Web: http://localhost:5000")
+    print("📡 Web: http://localhost:5001")
     print("🔌 Socket.IO: Ready")
     print("=" * 50)
     
@@ -147,7 +147,7 @@ if __name__ == '__main__':
     socketio.run(
         app,
         host='0.0.0.0',
-        port=5000,
+        port=5001,
         debug=True,
         allow_unsafe_werkzeug=True,
         use_reloader=False  # Keep this False to avoid issues

@@ -400,6 +400,37 @@
           transform: scale(1);
         }
       }
+
+      /* Ensure ad containers are visible */
+.nativeAd {
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: block !important;
+}
+
+#floatingAd {
+    display: block !important;
+}
+
+/* Ad animations */
+@keyframes fadeInAd {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.nativeAd {
+    animation: fadeInAd 0.5s ease-out;
+}
+
+/* Make sure ads don't get hidden by other elements */
+.nativeAd {
+    position: relative;
+    z-index: 10;
+}
+
+#floatingAd {
+    z-index: 100;
+}
     </style>
 
       <style>
@@ -2162,10 +2193,8 @@
   </div>
 
   <!-- Native Content Ad -->
-  <div
-    id="nativeAd"
-    class="bg-white rounded-xl shadow-soft overflow-hidden mb-6 border border-purple-200 hidden"
-  >
+
+  <div id="nativeAd" class="bg-white rounded-xl shadow-soft overflow-hidden mb-6 border border-purple-200 nativeAd">
     <div class="p-3 sm:p-4 flex justify-between items-start">
       <div class="flex items-center space-x-3">
         <div

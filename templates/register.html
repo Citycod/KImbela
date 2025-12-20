@@ -919,6 +919,19 @@
                             </div>
                         </div>
 
+                         <!-- NEW: Religion Field -->
+                        <div class="form-group">
+                            <label for="religion" class="form-label">Religion</label>
+                            <select class="form-control {% if errors.religion %}is-invalid{% endif %}"
+                                    id="religion" name="religion">
+                                <option value="">Select Religion</option>
+                                {% for religion in religions %}
+                                    <option value="{{ religion }}" {% if request.form.religion == religion %}selected{% endif %}>{{ religion }}</option>
+                                {% endfor %}
+                            </select>
+                            {% if errors.religion %}<div class="invalid-feedback">{{ errors.religion }}</div>{% endif %}
+                        </div>
+
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="city" class="form-label">City</label>

@@ -1062,6 +1062,7 @@ const ProfileSystem = {
             if (!response.ok) throw new Error('Failed to load profile');
 
             const data = await response.json();
+            console.log('Profile data received:', JSON.stringify(data, null, 2));
             this.displayProfileModal(data, userId);
         } catch (error) {
             console.error('Error loading profile:', error);
@@ -1083,6 +1084,11 @@ const ProfileSystem = {
 
         if (!modalBody || !profileActions) return;
 
+        // Debug log to see what data we're getting
+        console.log('Full profile data:', data);
+        console.log('Religion value:', data.religion);
+        console.log('Religion type:', typeof data.religion);
+
         const dob = data.dob ? new Date(data.dob).toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'long',
@@ -1090,6 +1096,16 @@ const ProfileSystem = {
         }) : 'Not specified';
 
         const age = data.dob ? TimeUtils.calculateAge(new Date(data.dob)) : '';
+
+        // Helper function to safely display values
+        const safeValue = (value) => {
+            if (value === null || value === undefined || value === '') {
+                return null;
+            }
+            return value;
+        };
+
+        const religion = safeValue(data.religion);
 
         modalBody.innerHTML = `
             <div class="profile-modal-content">
@@ -1109,6 +1125,7 @@ const ProfileSystem = {
                                 ${data.marital_status ? `<span class="inline-flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-full text-sm"><i class="bi bi-heart-fill text-red-500 text-xs"></i> ${data.marital_status}</span>` : ''}
                                 ${data.city && data.country ? `<span class="inline-flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-full text-sm"><i class="bi bi-geo-alt-fill text-blue-500 text-xs"></i> ${data.city}, ${data.country}</span>` : ''}
                                 ${age ? `<span class="inline-flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-full text-sm"><i class="bi bi-balloon-fill text-purple-500 text-xs"></i> ${age}</span>` : ''}
+                                ${data.religion ? `<span class="inline-flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-full text-sm"><i class="bi bi-star-fill text-yellow-500 text-xs"></i> ${data.religion}</span>` : ''}
                             </div>
                             ${data.bio ? `<div class="profile-bio mt-3 max-w-2xl mx-auto"><p class="bio-text text-gray-700">${data.bio}</p></div>` : ''}
                         </div>
@@ -1124,6 +1141,7 @@ const ProfileSystem = {
                                 ${data.phone_number ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">Phone:</span><span class="detail-value text-sm">${data.phone_number}</span></div>` : ''}
                                 ${data.gender ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">Gender:</span><span class="detail-value text-sm">${data.gender}</span></div>` : ''}
                                 ${data.dob ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">Birth:</span><span class="detail-value text-sm">${dob}</span></div>` : ''}
+                                ${data.religion ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">Religion:</span><span class="detail-value text-sm">${data.religion}</span></div>` : ''}
                             </div>
                         </div>
                         <div class="detail-card bg-gray-50 rounded-2xl p-6">
@@ -2830,6 +2848,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('groupsList') || document.getElementById('groupsListMobile')) {
         Groups.init();
     }
+
+    // Initialize Ad System
+    if (document.getElementById('nativeAd') || document.getElementById('floatingAd')) {
+        setTimeout(() => {
+            AdSystem.init();
+        }, 2000); // Wait 2 seconds after page load
+    }
 });
 
 // Make Groups globally available
@@ -3182,6 +3207,13 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => loader.style.display = 'none', 300);
         }
     }, 500);
+
+    // Initialize Ad System FIRST
+    setTimeout(() => {
+        if (document.getElementById('nativeAd') || document.getElementById('floatingAd')) {
+            AdSystem.init();
+        }
+    }, 1000);
 
     // Initialize all systems
     Dropdown.init();
@@ -4479,3 +4511,318 @@ window.focusCommentInput = focusCommentInput;
 window.loadAllComments = loadAllComments;
 window.openShareModal = openShareModal;
 window.copyPostLink = copyPostLink;
+
+
+
+
+// ========================================
+// SPONSORED ADS SYSTEM
+// ========================================
+
+// ========================================
+// SPONSORED ADS SYSTEM - UPDATED VERSION
+// ========================================
+
+const AdSystem = {
+    // Ad containers
+    containers: {
+        native: document.getElementById('nativeAd'),
+        floating: document.getElementById('floatingAdContent')
+    },
+
+    // Ad state
+    state: {
+        activeAds: [],
+        currentAdIndex: 0,
+        adFrequency: 5 * 60 * 1000, // 5 minutes between ads (shorter for testing)
+        rotationInterval: null,
+        initialized: false
+    },
+
+    // Initialize ad system
+    async init() {
+        console.log('🤑 Initializing Ad System...');
+
+        // Show containers if they exist
+        if (this.containers.native) {
+            this.containers.native.classList.remove('hidden');
+        }
+
+        // Load ads immediately
+        await this.loadAds();
+
+        // Start ad rotation if we have ads
+        if (this.state.activeAds.length > 0) {
+            this.startRotation();
+        }
+
+        this.state.initialized = true;
+        return this;
+    },
+
+    // Load ads from server
+    async loadAds() {
+        try {
+            console.log('📡 Loading sponsored ads...');
+
+            const response = await fetch('/api/ads/sponsored', {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                cache: 'no-cache'
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: Failed to load ads`);
+            }
+
+            const data = await response.json();
+
+            if (data.success && data.ads && data.ads.length > 0) {
+                this.state.activeAds = data.ads;
+                console.log(`✅ Loaded ${data.ads.length} sponsored ads`);
+
+                // Show first ad immediately
+                this.displayAd(0);
+
+                // Start rotation for multiple ads
+                if (this.state.activeAds.length > 1) {
+                    this.startRotation();
+                }
+
+            } else {
+                console.log('📭 No sponsored ads available');
+                this.showNoAdsMessage();
+            }
+
+        } catch (error) {
+            console.error('❌ Error loading ads:', error);
+            this.showErrorState();
+        }
+    },
+
+    // Display a specific ad
+    displayAd(adIndex) {
+        if (!this.state.activeAds || this.state.activeAds.length === 0) {
+            console.log('No ads to display');
+            return;
+        }
+
+        // Get the ad
+        const ad = this.state.activeAds[adIndex % this.state.activeAds.length];
+
+        // Update native ad
+        this.updateNativeAd(ad);
+
+        // Update floating ad
+        this.updateFloatingAd(ad);
+
+        // Track impression
+        this.trackAdImpression(ad.id);
+
+        console.log(`📢 Displaying ad: ${ad.title}`);
+    },
+
+    // Update native ad container
+    updateNativeAd(ad) {
+        if (!this.containers.native) return;
+
+        const elements = {
+            advertiser: document.getElementById('nativeAdAdvertiser'),
+            title: document.getElementById('nativeAdTitle'),
+            description: document.getElementById('nativeAdDescription'),
+            image: document.getElementById('nativeAdImage'),
+            link: document.getElementById('nativeAdLink'),
+            cta: document.getElementById('nativeAdCTA')
+        };
+
+        // Update all elements
+        if (elements.advertiser) {
+            elements.advertiser.textContent = ad.advertiser_name || 'Sponsored Partner';
+        }
+
+        if (elements.title) {
+            elements.title.textContent = ad.title || 'Special Offer';
+        }
+
+        if (elements.description) {
+            elements.description.textContent = ad.description || 'Check out this amazing offer!';
+        }
+
+        if (elements.image) {
+            elements.image.src = ad.image_url || 'https://via.placeholder.com/400x200/3B82F6/FFFFFF?text=Sponsored+Ad';
+            elements.image.alt = ad.title || 'Sponsored Advertisement';
+        }
+
+        if (elements.link) {
+            elements.link.href = ad.cta_url || '#';
+            elements.link.target = '_blank';
+            // Add click tracking
+            elements.link.onclick = () => this.trackAdClick(ad.id);
+        }
+
+        if (elements.cta) {
+            elements.cta.textContent = ad.cta_text || 'Learn More';
+        }
+
+        // Make sure container is visible
+        this.containers.native.classList.remove('hidden');
+    },
+
+    // Update floating ad
+    updateFloatingAd(ad) {
+        if (!this.containers.floating) return;
+
+        const elements = {
+            title: document.getElementById('floatingAdTitle'),
+            desc: document.getElementById('floatingAdDesc'),
+            link: document.getElementById('floatingAdLink')
+        };
+
+        if (elements.title) {
+            elements.title.textContent = ad.title?.substring(0, 30) || 'Special Offer!';
+        }
+
+        if (elements.desc) {
+            elements.desc.textContent = ad.description?.substring(0, 40) || 'Amazing deals available';
+        }
+
+        if (elements.link) {
+            elements.link.href = ad.cta_url || '#';
+            elements.link.onclick = () => this.trackAdClick(ad.id);
+        }
+    },
+
+    // Start ad rotation
+    startRotation() {
+        if (this.state.activeAds.length <= 1) return;
+
+        // Clear any existing interval
+        if (this.state.rotationInterval) {
+            clearInterval(this.state.rotationInterval);
+        }
+
+        // Rotate ads every 30 seconds (for testing, adjust as needed)
+        this.state.rotationInterval = setInterval(() => {
+            this.state.currentAdIndex = (this.state.currentAdIndex + 1) % this.state.activeAds.length;
+            this.displayAd(this.state.currentAdIndex);
+        }, 30000); // 30 seconds
+    },
+
+    // Stop rotation
+    stopRotation() {
+        if (this.state.rotationInterval) {
+            clearInterval(this.state.rotationInterval);
+            this.state.rotationInterval = null;
+        }
+    },
+
+    // Toggle floating ad visibility
+    toggleFloatingAd() {
+        const content = this.containers.floating;
+        if (!content) return;
+
+        if (content.classList.contains('hidden')) {
+            content.classList.remove('hidden');
+            setTimeout(() => {
+                content.classList.remove('opacity-0');
+                content.classList.remove('scale-95');
+                content.classList.add('opacity-100');
+                content.classList.add('scale-100');
+            }, 10);
+        } else {
+            content.classList.add('opacity-0');
+            content.classList.add('scale-95');
+            setTimeout(() => {
+                content.classList.add('hidden');
+            }, 300);
+        }
+    },
+
+    // Track ad click
+    trackAdClick(adId) {
+        console.log(`📊 Tracking click for ad ${adId}`);
+        // In a real implementation, you would send this to your backend
+        fetch(`/api/ads/${adId}/click`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'Content-Type': 'application/json'
+            }
+        }).catch(console.error);
+
+        // You can also use analytics or other tracking services here
+        if (typeof gtag !== 'undefined') {
+            gtag('event', 'ad_click', {
+                'ad_id': adId,
+                'event_category': 'ads',
+                'event_label': 'sponsored_ad'
+            });
+        }
+    },
+
+    // Track ad impression
+    trackAdImpression(adId) {
+        console.log(`📊 Tracking impression for ad ${adId}`);
+        fetch(`/api/ads/${adId}/impression`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'Content-Type': 'application/json'
+            }
+        }).catch(console.error);
+
+        // Analytics tracking
+        if (typeof gtag !== 'undefined') {
+            gtag('event', 'ad_impression', {
+                'ad_id': adId,
+                'event_category': 'ads',
+                'event_label': 'sponsored_ad'
+            });
+        }
+    },
+
+    // Show no ads message
+    showNoAdsMessage() {
+        if (this.containers.native) {
+            this.containers.native.innerHTML = `
+                <div class="p-6 text-center">
+                    <i class="bi bi-megaphone text-3xl text-gray-300 mb-3"></i>
+                    <p class="text-gray-500">No sponsored ads available at the moment</p>
+                    <p class="text-sm text-gray-400 mt-1">Check back later for amazing offers!</p>
+                </div>
+            `;
+        }
+    },
+
+    // Show error state
+    showErrorState() {
+        if (this.containers.native) {
+            this.containers.native.innerHTML = `
+                <div class="p-6 text-center">
+                    <i class="bi bi-exclamation-triangle text-3xl text-yellow-500 mb-3"></i>
+                    <p class="text-gray-500">Unable to load sponsored ads</p>
+                    <button onclick="AdSystem.loadAds()" class="mt-3 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700">
+                        Retry
+                    </button>
+                </div>
+            `;
+        }
+    },
+
+    // Refresh ads
+    refresh() {
+        this.stopRotation();
+        this.loadAds();
+    }
+};
+
+// Make functions globally available
+window.toggleFloatingAd = function() {
+    AdSystem.toggleFloatingAd();
+};
+
+window.refreshAds = function() {
+    AdSystem.refresh();
+};

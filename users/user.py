@@ -1146,35 +1146,44 @@ def cancel_friend_request(user_id):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-
-
-
-
 @user.route("/get_user_profile/<int:user_id>")
 @login_required
 def get_user_profile(user_id):
     user = User.query.get_or_404(user_id)
-    return jsonify(
-        {
-            "first_name": user.first_name,
-            "last_name": user.last_name,
-            "email": user.email,
-            "profile_pic": user.profile_pic
-            or url_for("static", filename="assets/img/default-avatar.png"),
-            "cover_pic": user.cover_pic,
-            "bio": user.bio,
-            "city": user.city,
-            "country": user.country,
-            "gender": user.gender,
-            "dob": user.dob.isoformat() if user.dob else None,
-            "phone_number": user.phone_number,
-            "marital_status": user.marital_status,
-            "interests": user.interests,
-            "profile_url": url_for("user.profile", user_id=user.id),
-            "friends_count": user.friends.count(),
-        }
-    )
 
+    # DEBUG: Print everything about religion
+    print(f"=== DEBUG for user_id: {user_id} ===")
+    print(f"User religion value from DB: {user.religion}")
+    print(f"User religion type: {type(user.religion)}")
+    print(f"Religion is None: {user.religion is None}")
+    print(f"Religion == '': {user.religion == ''}")
+
+    # Create the response dictionary
+    response_data = {
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "email": user.email,
+        "profile_pic": user.profile_pic or url_for("static", filename="assets/img/default-avatar.png"),
+        "cover_pic": user.cover_pic,
+        "bio": user.bio,
+        "city": user.city,
+        "country": user.country,
+        "gender": user.gender,
+        "religion": user.religion,  # This should be included even if None
+        "dob": user.dob.isoformat() if user.dob else None,
+        "phone_number": user.phone_number,
+        "marital_status": user.marital_status,
+        "interests": user.interests,
+        "profile_url": url_for("user.profile", user_id=user.id),
+        "friends_count": user.friends.count(),
+    }
+
+    # DEBUG: Print the response data
+    print(f"Response data keys: {response_data.keys()}")
+    print(f"Response data religion value: {response_data.get('religion')}")
+    print("=== END DEBUG ===\n")
+
+    return jsonify(response_data)
 
 @user.route("/notifications")
 @login_required
