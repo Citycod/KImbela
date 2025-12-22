@@ -699,6 +699,79 @@
                             <input type="email" name="email" value="{{ user.email }}"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
                         </div>
+
+                        <!-- Religion Dropdown -->
+<div>
+    <label class="block text-xs font-bold text-gray-700 mb-1">Religion</label>
+    <select name="religion" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
+        <option value="">Select Religion</option>
+        <option value="Islam" {% if user.religion == 'Islam' %}selected{% endif %}>Islam</option>
+        <option value="Roman Catholic" {% if user.religion == 'Roman Catholic' %}selected{% endif %}>Roman Catholic</option>
+        <option value="No religion / Atheist / Agnostic" {% if user.religion == 'No religion / Atheist / Agnostic' %}selected{% endif %}>No religion / Atheist / Agnostic</option>
+        <option value="Hinduism" {% if user.religion == 'Hinduism' %}selected{% endif %}>Hinduism</option>
+        <option value="Buddhism" {% if user.religion == 'Buddhism' %}selected{% endif %}>Buddhism</option>
+        <option value="Pentecostal" {% if user.religion == 'Pentecostal' %}selected{% endif %}>Pentecostal</option>
+        <option value="Traditional / Indigenous beliefs" {% if user.religion == 'Traditional / Indigenous beliefs' %}selected{% endif %}>Traditional / Indigenous beliefs</option>
+        <option value="Orthodox Christian" {% if user.religion == 'Orthodox Christian' %}selected{% endif %}>Orthodox Christian</option>
+        <option value="Charismatic" {% if user.religion == 'Charismatic' %}selected{% endif %}>Charismatic</option>
+        <option value="Non-denominational churches" {% if user.religion == 'Non-denominational churches' %}selected{% endif %}>Non-denominational churches</option>
+        <option value="Anglican" {% if user.religion == 'Anglican' %}selected{% endif %}>Anglican</option>
+        <option value="Baptist" {% if user.religion == 'Baptist' %}selected{% endif %}>Baptist</option>
+        <option value="Methodist" {% if user.religion == 'Methodist' %}selected{% endif %}>Methodist</option>
+        <option value="Seventh-day Adventist" {% if user.religion == 'Seventh-day Adventist' %}selected{% endif %}>Seventh-day Adventist</option>
+        <option value="Jehovah's Witness" {% if user.religion == "Jehovah's Witness" %}selected{% endif %}>Jehovah's Witness</option>
+        <option value="Latter-day Saints (Mormons)" {% if user.religion == 'Latter-day Saints (Mormons)' %}selected{% endif %}>Latter-day Saints (Mormons)</option>
+        <option value="Sikhism" {% if user.religion == 'Sikhism' %}selected{% endif %}>Sikhism</option>
+        <option value="Judaism" {% if user.religion == 'Judaism' %}selected{% endif %}>Judaism</option>
+        <option value="Bahá'í Faith" {% if user.religion == "Bahá'í Faith" %}selected{% endif %}>Bahá'í Faith</option>
+        <option value="Jainism" {% if user.religion == 'Jainism' %}selected{% endif %}>Jainism</option>
+        <option value="White Garment Churches" {% if user.religion == 'White Garment Churches' %}selected{% endif %}>White Garment Churches</option>
+        <option value="Other" {% if user.religion == 'Other' %}selected{% endif %}>Other</option>
+    </select>
+</div>
+
+                        <!-- Ethnicity Dropdown -->
+<div>
+    <label class="block text-xs font-bold text-gray-700 mb-1">Ethnicity</label>
+    <select name="ethnicity" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
+        <option value="">Select Ethnicity</option>
+        <option value="African" {% if user.ethnicity == 'African' %}selected{% endif %}>African</option>
+        <option value="African American" {% if user.ethnicity == 'African American' %}selected{% endif %}>African American</option>
+        <option value="Asian" {% if user.ethnicity == 'Asian' %}selected{% endif %}>Asian</option>
+        <option value="Caucasian" {% if user.ethnicity == 'Caucasian' %}selected{% endif %}>Caucasian</option>
+        <option value="Hispanic/Latino" {% if user.ethnicity == 'Hispanic/Latino' %}selected{% endif %}>Hispanic/Latino</option>
+        <option value="Native American" {% if user.ethnicity == 'Native American' %}selected{% endif %}>Native American</option>
+        <option value="Pacific Islander" {% if user.ethnicity == 'Pacific Islander' %}selected{% endif %}>Pacific Islander</option>
+        <option value="Middle Eastern" {% if user.ethnicity == 'Middle Eastern' %}selected{% endif %}>Middle Eastern</option>
+        <option value="Mixed Race" {% if user.ethnicity == 'Mixed Race' %}selected{% endif %}>Mixed Race</option>
+        <option value="Caribbean" {% if user.ethnicity == 'Caribbean' %}selected{% endif %}>Caribbean</option>
+        <option value="European" {% if user.ethnicity == 'European' %}selected{% endif %}>European</option>
+        <option value="South Asian" {% if user.ethnicity == 'South Asian' %}selected{% endif %}>South Asian</option>
+        <option value="East Asian" {% if user.ethnicity == 'East Asian' %}selected{% endif %}>East Asian</option>
+        <option value="Southeast Asian" {% if user.ethnicity == 'Southeast Asian' %}selected{% endif %}>Southeast Asian</option>
+        <option value="Indigenous Australian" {% if user.ethnicity == 'Indigenous Australian' %}selected{% endif %}>Indigenous Australian</option>
+        <option value="Maori" {% if user.ethnicity == 'Maori' %}selected{% endif %}>Maori</option>
+        <option value="Other" {% if user.ethnicity == 'Other' %}selected{% endif %}>Other</option>
+    </select>
+</div>
+
+                        <!-- Educational Level Dropdown -->
+<div>
+    <label class="block text-xs font-bold text-gray-700 mb-1">Educational Level</label>
+    <select name="educational_level" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
+        <option value="">Select Educational Level</option>
+        <option value="Primary or Elementary School" {% if user.educational_level == 'Primary or Elementary School' %}selected{% endif %}>Primary or Elementary School</option>
+        <option value="Middle School or Junior High School" {% if user.educational_level == 'Middle School or Junior High School' %}selected{% endif %}>Middle School or Junior High School</option>
+        <option value="High School" {% if user.educational_level == 'High School' %}selected{% endif %}>High School</option>
+        <option value="Vocational College" {% if user.educational_level == 'Vocational College' %}selected{% endif %}>Vocational College</option>
+        <option value="Associate Degree" {% if user.educational_level == 'Associate Degree' %}selected{% endif %}>Associate Degree</option>
+        <option value="Bachelor's Degree" {% if user.educational_level == "Bachelor's Degree" %}selected{% endif %}>Bachelor's Degree</option>
+        <option value="Master's Degree" {% if user.educational_level == 'Master\'s Degree' %}selected{% endif %}>Master's Degree</option>
+        <option value="PhD or Doctorate" {% if user.educational_level == 'PhD or Doctorate' %}selected{% endif %}>PhD or Doctorate</option>
+        <option value="No Formal Education" {% if user.educational_level == 'No Formal Education' %}selected{% endif %}>No Formal Education</option>
+        <option value="Other" {% if user.educational_level == 'Other' %}selected{% endif %}>Other</option>
+    </select>
+</div>
                         
                         <div>
                             <label class="block text-xs font-bold text-gray-700 mb-1">Phone Number</label>

@@ -251,7 +251,6 @@ def register():
         "Bachelor's Degree",
         "Master's Degree",
         "PhD or Doctorate",
-        "Professional Degree",
         "No Formal Education",
         "Other",
     ]
@@ -353,11 +352,14 @@ def register():
         'Pentecostal',
         'Traditional / Indigenous beliefs',
         'Orthodox Christian',
+        'Charismatic',
+        'Non-denominational churches'
         'Anglican',
         'Baptist',
         'Methodist',
         'Seventh - day Adventist',
         'Jehovah’s Witness',
+        'Latter-day Saints (Mormons)',
         'Sikhism',
         'Judaism',
         "Bahá'í Faith",

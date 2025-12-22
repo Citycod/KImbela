@@ -1041,40 +1041,105 @@ window.declineFriendRequest = function(userId, button) {
 // PROFILE SYSTEM
 // ========================================
 
+// ========================================
+// PROFILE SYSTEM - UPDATED VERSION
+// ========================================
+
 const ProfileSystem = {
     async openProfileModal(userId) {
-        const modalBody = document.getElementById('profileModalBody');
-        const profileActions = document.getElementById('profileActions');
+        try {
+            const modalBody = document.getElementById('profileModalBody');
+            const profileActions = document.getElementById('profileActions');
 
-        if (modalBody) {
+            if (!modalBody || !profileActions) {
+                console.error('Profile modal elements not found');
+                return;
+            }
+
+            // Show loading state
             modalBody.innerHTML = `
-                <div class="flex flex-col items-center justify-center p-8">
+                <div class="flex flex-col items-center justify-center p-8 min-h-[400px]">
                     <span class="tiny-loader md"></span>
-                    <div class="text-gray-500 mt-2">Loading profile...</div>
+                    <div class="text-gray-500 mt-3">Loading profile...</div>
                 </div>
             `;
-        }
 
-        Modal.open('profileModal');
+            // Clear previous actions
+            profileActions.innerHTML = '';
 
-        try {
+            // Open modal first
+            Modal.open('profileModal');
+
+            // Load profile data
             const response = await fetch(`/get_user_profile/${userId}`);
-            if (!response.ok) throw new Error('Failed to load profile');
 
-            const data = await response.json();
-            console.log('Profile data received:', JSON.stringify(data, null, 2));
+            console.log('Response status:', response.status);
+            console.log('Response headers:', Object.fromEntries([...response.headers.entries()]));
+
+            // Try to get response text first to see what the server is returning
+            const responseText = await response.text();
+            console.log('Raw response text:', responseText.substring(0, 500)); // First 500 chars
+
+            if (!response.ok) {
+                // Try to parse as JSON if possible
+                let errorMessage = `HTTP ${response.status}: Failed to load profile`;
+                try {
+                    const errorData = JSON.parse(responseText);
+                    errorMessage = errorData.error || errorData.message || errorMessage;
+                } catch (e) {
+                    // Not JSON, use raw text or status
+                    if (responseText.includes('<!DOCTYPE html>') || responseText.includes('<html')) {
+                        errorMessage = 'Server returned HTML instead of JSON. Please check server logs.';
+                    } else if (responseText.trim()) {
+                        errorMessage = responseText.substring(0, 200);
+                    }
+                }
+                throw new Error(errorMessage);
+            }
+
+            // Try to parse as JSON
+            let data;
+            try {
+                data = JSON.parse(responseText);
+            } catch (e) {
+                console.error('Failed to parse JSON:', e);
+                console.error('Response text that failed to parse:', responseText);
+                throw new Error('Server returned invalid JSON. Please check server logs.');
+            }
+
+            if (data.error) {
+                throw new Error(data.error);
+            }
+
+            console.log('Profile data loaded successfully:', data);
             this.displayProfileModal(data, userId);
+
         } catch (error) {
             console.error('Error loading profile:', error);
+            console.error('Full error:', error.stack);
+
+            const modalBody = document.getElementById('profileModalBody');
             if (modalBody) {
                 modalBody.innerHTML = `
-                    <div class="text-center p-8 text-red-500">
-                        <i class="bi bi-exclamation-triangle text-3xl mb-3"></i>
-                        <p>Failed to load profile</p>
+                    <div class="text-center p-8 text-red-500 min-h-[400px] flex flex-col items-center justify-center">
+                        <i class="bi bi-exclamation-triangle text-4xl mb-4"></i>
+                        <p class="text-lg font-medium mb-2">Failed to load profile</p>
+                        <p class="text-sm text-gray-600 mb-4">${error.message}</p>
+                        <div class="flex space-x-2">
+                            <button onclick="ProfileSystem.openProfileModal(${userId})"
+                                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                                Try Again
+                            </button>
+                            <button onclick="Modal.close('profileModal')"
+                                    class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                                Close
+                            </button>
+                        </div>
                     </div>
                 `;
             }
-            Toast.show('Failed to load profile', 'danger');
+
+            Toast.show('Failed to load profile: ' + error.message, 'danger');
         }
     },
 
@@ -1084,107 +1149,230 @@ const ProfileSystem = {
 
         if (!modalBody || !profileActions) return;
 
-        // Debug log to see what data we're getting
-        console.log('Full profile data:', data);
-        console.log('Religion value:', data.religion);
-        console.log('Religion type:', typeof data.religion);
+        try {
+            // Safely parse data with defaults
+            const userData = {
+                first_name: data.first_name || '',
+                last_name: data.last_name || '',
+                profile_pic: data.profile_pic || window.defaultAvatar || '/static/assets/img/default-avatar.png',
+                cover_pic: data.cover_pic || 'https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg',
+                bio: data.bio || '',
+                email: data.email || '',
+                phone_number: data.phone_number || '',
+                gender: data.gender || '',
+                dob: data.dob || '',
+                religion: data.religion || '',
+                marital_status: data.marital_status || '',
+                city: data.city || '',
+                country: data.country || '',
+                interests: data.interests || ''
+            };
 
-        const dob = data.dob ? new Date(data.dob).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        }) : 'Not specified';
+            // Format date of birth
+            const dob = userData.dob ? new Date(userData.dob).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            }) : 'Not specified';
 
-        const age = data.dob ? TimeUtils.calculateAge(new Date(data.dob)) : '';
+            const age = userData.dob ? TimeUtils.calculateAge(userData.dob) : '';
 
-        // Helper function to safely display values
-        const safeValue = (value) => {
-            if (value === null || value === undefined || value === '') {
-                return null;
-            }
-            return value;
-        };
-
-        const religion = safeValue(data.religion);
-
-        modalBody.innerHTML = `
-            <div class="profile-modal-content">
-                <div class="profile-header relative">
-                    <div class="cover-photo-container h-48 overflow-hidden rounded-t-2xl">
-                        <img src="${data.cover_pic || 'https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg'}"
-                             alt="Cover" class="cover-photo w-full h-full object-cover">
-                    </div>
-                    <div class="profile-info-container text-center relative -mt-16 pb-6 px-6">
-                        <div class="profile-avatar-container inline-block">
-                            <img src="${data.profile_pic || window.defaultAvatar}" alt="${data.first_name}"
-                                 class="profile-avatar w-32 h-32 rounded-full border-4 border-white object-cover shadow-strong">
+            modalBody.innerHTML = `
+                <div class="profile-modal-content">
+                    <div class="profile-header relative">
+                        <div class="cover-photo-container h-48 overflow-hidden rounded-t-2xl">
+                            <img src="${userData.cover_pic}"
+                                 alt="Cover"
+                                 class="cover-photo w-full h-full object-cover"
+                                 onerror="this.src='https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg'">
                         </div>
-                        <div class="profile-text-content mt-4">
-                            <h3 class="profile-name text-2xl font-bold">${data.first_name || ''} ${data.last_name || ''}</h3>
-                            <div class="profile-details flex flex-wrap justify-center gap-2 mt-2">
-                                ${data.marital_status ? `<span class="inline-flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-full text-sm"><i class="bi bi-heart-fill text-red-500 text-xs"></i> ${data.marital_status}</span>` : ''}
-                                ${data.city && data.country ? `<span class="inline-flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-full text-sm"><i class="bi bi-geo-alt-fill text-blue-500 text-xs"></i> ${data.city}, ${data.country}</span>` : ''}
-                                ${age ? `<span class="inline-flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-full text-sm"><i class="bi bi-balloon-fill text-purple-500 text-xs"></i> ${age}</span>` : ''}
-                                ${data.religion ? `<span class="inline-flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-full text-sm"><i class="bi bi-star-fill text-yellow-500 text-xs"></i> ${data.religion}</span>` : ''}
+                        <div class="profile-info-container text-center relative -mt-16 pb-6 px-6">
+                            <div class="profile-avatar-container inline-block">
+                                <img src="${userData.profile_pic}"
+                                     alt="${userData.first_name}"
+                                     class="profile-avatar w-32 h-32 rounded-full border-4 border-white object-cover shadow-strong"
+                                     onerror="this.src='${window.defaultAvatar || '/static/assets/img/default-avatar.png'}'">
                             </div>
-                            ${data.bio ? `<div class="profile-bio mt-3 max-w-2xl mx-auto"><p class="bio-text text-gray-700">${data.bio}</p></div>` : ''}
+                            <div class="profile-text-content mt-4">
+                                <h3 class="profile-name text-2xl font-bold">${userData.first_name} ${userData.last_name}</h3>
+                                <div class="profile-details flex flex-wrap justify-center gap-2 mt-2">
+                                    ${userData.marital_status ? `
+                                        <span class="inline-flex items-center gap-1 bg-gray-100 px-3 py-1.5 rounded-full text-sm">
+                                            <i class="bi bi-heart-fill text-red-500 text-xs"></i>
+                                            ${userData.marital_status}
+                                        </span>` : ''}
+                                    ${userData.city && userData.country ? `
+                                        <span class="inline-flex items-center gap-1 bg-gray-100 px-3 py-1.5 rounded-full text-sm">
+                                            <i class="bi bi-geo-alt-fill text-blue-500 text-xs"></i>
+                                            ${userData.city}, ${userData.country}
+                                        </span>` : ''}
+                                    ${age ? `
+                                        <span class="inline-flex items-center gap-1 bg-gray-100 px-3 py-1.5 rounded-full text-sm">
+                                            <i class="bi bi-balloon-fill text-purple-500 text-xs"></i>
+                                            ${age}
+                                        </span>` : ''}
+                                    ${userData.religion ? `
+                                        <span class="inline-flex items-center gap-1 bg-gray-100 px-3 py-1.5 rounded-full text-sm">
+                                            <i class="bi bi-star-fill text-yellow-500 text-xs"></i>
+                                            ${userData.religion}
+                                        </span>` : ''}
+                                </div>
+                                ${userData.bio ? `
+                                    <div class="profile-bio mt-4 max-w-2xl mx-auto">
+                                        <p class="bio-text text-gray-700 text-sm leading-relaxed">${userData.bio}</p>
+                                    </div>` : ''}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="profile-details-section mt-6 px-6 pb-6">
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div class="detail-card bg-gray-50 rounded-2xl p-6">
+                                <h6 class="detail-card-title font-semibold text-lg mb-4 flex items-center">
+                                    <i class="bi bi-person-badge-fill mr-2 text-blue-500"></i>Personal Info
+                                </h6>
+                                <div class="detail-list space-y-3">
+                                    ${userData.email ? `
+                                        <div class="detail-row flex items-start">
+                                            <span class="detail-label font-medium text-gray-600 min-w-24">Email:</span>
+                                            <span class="detail-value text-sm">${userData.email}</span>
+                                        </div>` : ''}
+                                    ${userData.phone_number ? `
+                                        <div class="detail-row flex items-start">
+                                            <span class="detail-label font-medium text-gray-600 min-w-24">Phone:</span>
+                                            <span class="detail-value text-sm">${userData.phone_number}</span>
+                                        </div>` : ''}
+                                    ${userData.gender ? `
+                                        <div class="detail-row flex items-start">
+                                            <span class="detail-label font-medium text-gray-600 min-w-24">Gender:</span>
+                                            <span class="detail-value text-sm">${userData.gender}</span>
+                                        </div>` : ''}
+                                    ${userData.dob ? `
+                                        <div class="detail-row flex items-start">
+                                            <span class="detail-label font-medium text-gray-600 min-w-24">Birth:</span>
+                                            <span class="detail-value text-sm">${dob}</span>
+                                        </div>` : ''}
+                                    ${userData.religion ? `
+                                        <div class="detail-row flex items-start">
+                                            <span class="detail-label font-medium text-gray-600 min-w-24">Religion:</span>
+                                            <span class="detail-value text-sm">${userData.religion}</span>
+                                        </div>` : ''}
+                                </div>
+                            </div>
+                            <div class="detail-card bg-gray-50 rounded-2xl p-6">
+                                <h6 class="detail-card-title font-semibold text-lg mb-4 flex items-center">
+                                    <i class="bi bi-geo-fill mr-2 text-green-500"></i>Location & Interests
+                                </h6>
+                                <div class="detail-list space-y-3">
+                                    ${userData.city ? `
+                                        <div class="detail-row flex items-start">
+                                            <span class="detail-label font-medium text-gray-600 min-w-24">City:</span>
+                                            <span class="detail-value text-sm">${userData.city}</span>
+                                        </div>` : ''}
+                                    ${userData.country ? `
+                                        <div class="detail-row flex items-start">
+                                            <span class="detail-label font-medium text-gray-600 min-w-24">Country:</span>
+                                            <span class="detail-value text-sm">${userData.country}</span>
+                                        </div>` : ''}
+                                    ${userData.interests ? `
+                                        <div class="detail-row flex items-start">
+                                            <span class="detail-label font-medium text-gray-600 min-w-24">Interests:</span>
+                                            <span class="detail-value text-sm">${userData.interests}</span>
+                                        </div>` : ''}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-
-                <div class="profile-details-section mt-6 px-6 pb-6">
-                    <div class="grid md:grid-cols-2 gap-6">
-                        <div class="detail-card bg-gray-50 rounded-2xl p-6">
-                            <h6 class="detail-card-title font-semibold text-lg mb-4 flex items-center"><i class="bi bi-person-badge-fill mr-2 text-blue-500"></i>Personal Info</h6>
-                            <div class="detail-list space-y-3">
-                                ${data.email ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">Email:</span><span class="detail-value text-sm">${data.email}</span></div>` : ''}
-                                ${data.phone_number ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">Phone:</span><span class="detail-value text-sm">${data.phone_number}</span></div>` : ''}
-                                ${data.gender ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">Gender:</span><span class="detail-value text-sm">${data.gender}</span></div>` : ''}
-                                ${data.dob ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">Birth:</span><span class="detail-value text-sm">${dob}</span></div>` : ''}
-                                ${data.religion ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">Religion:</span><span class="detail-value text-sm">${data.religion}</span></div>` : ''}
-                            </div>
-                        </div>
-                        <div class="detail-card bg-gray-50 rounded-2xl p-6">
-                            <h6 class="detail-card-title font-semibold text-lg mb-4 flex items-center"><i class="bi bi-geo-fill mr-2 text-green-500"></i>Location & Interests</h6>
-                            <div class="detail-list space-y-3">
-                                ${data.city ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">City:</span><span class="detail-value text-sm">${data.city}</span></div>` : ''}
-                                ${data.country ? `<div class="detail-row flex"><span class="detail-label font-medium text-gray-600 min-w-24">Country:</span><span class="detail-value text-sm">${data.country}</span></div>` : ''}
-                                ${data.interests ? `<div class="detail-row flex items-start"><span class="detail-label font-medium text-gray-600 min-w-24 flex-shrink-0">Interests:</span><span class="detail-value text-sm">${data.interests}</span></div>` : ''}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        const isFriend = window.friendIds?.includes(userId) || false;
-        const isBlocked = appState.blockedUserIds?.includes(userId) || false;
-
-        let actionsHTML = '';
-        if (isFriend) {
-            actionsHTML = `
-                <button class="btn btn-primary px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors" onclick="Messenger.startChat(${userId})">
-                    <i class="bi bi-chat-dots me-1"></i> Message
-                </button>
-                ${isBlocked ? `
-                    <button class="btn btn-success px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors" onclick="BlockSystem.unblock(${userId})">
-                        <i class="bi bi-check-circle me-1"></i> Unblock
-                    </button>
-                ` : `
-                    <button class="btn btn-outline-danger px-4 py-2 border border-red-500 text-red-500 rounded-lg font-medium hover:bg-red-50 transition-colors" onclick="BlockSystem.block(${userId})">
-                        <i class="bi bi-slash-circle me-1"></i> Block
-                    </button>
-                `}
             `;
-        } else {
-            actionsHTML = `
-                <button class="btn btn-primary px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors" onclick="FriendSystem.add(${userId}, this)">
-                    <i class="bi bi-person-plus me-1"></i> Connect
+
+            // Determine friend status and set appropriate buttons
+            this.updateProfileActions(userId);
+
+        } catch (error) {
+            console.error('Error displaying profile modal:', error);
+            modalBody.innerHTML = `
+                <div class="text-center p-8 text-red-500">
+                    <i class="bi bi-exclamation-triangle text-3xl mb-3"></i>
+                    <p>Error displaying profile data</p>
+                </div>
+            `;
+        }
+    },
+
+    async updateProfileActions(userId) {
+        const profileActions = document.getElementById('profileActions');
+        if (!profileActions) return;
+
+        try {
+            // Check friend status
+            const response = await fetch(`/check_friend_status/${userId}`);
+            if (response.ok) {
+                const data = await response.json();
+
+                let actionsHTML = '';
+
+                switch(data.status) {
+                    case 'friends':
+                        actionsHTML = `
+                            <div class="flex flex-wrap gap-2">
+                                <button class="btn btn-primary px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                                        onclick="Messenger.startChat(${userId})">
+                                    <i class="bi bi-chat-dots mr-1"></i> Message
+                                </button>
+                                <button class="btn btn-outline-danger px-4 py-2 border border-red-500 text-red-500 rounded-lg font-medium hover:bg-red-50 transition-colors"
+                                        onclick="BlockSystem.block(${userId})">
+                                    <i class="bi bi-slash-circle mr-1"></i> Block
+                                </button>
+                            </div>
+                        `;
+                        break;
+
+                    case 'request_sent':
+                        actionsHTML = `
+                            <button class="btn btn-secondary px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors"
+                                    onclick="FriendSystem.cancelRequest(${userId}, this)">
+                                <i class="bi bi-clock-history mr-1"></i> Cancel Request
+                            </button>
+                        `;
+                        break;
+
+                    case 'request_received':
+                        actionsHTML = `
+                            <div class="flex space-x-2">
+                                <button class="btn btn-success px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
+                                        onclick="FriendSystem.acceptFriendRequest(${userId}, this)">
+                                    <i class="bi bi-check-lg mr-1"></i> Accept
+                                </button>
+                                <button class="btn btn-danger px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
+                                        onclick="FriendSystem.declineFriendRequest(${userId}, this)">
+                                    <i class="bi bi-x-lg mr-1"></i> Decline
+                                </button>
+                            </div>
+                        `;
+                        break;
+
+                    default:
+                        actionsHTML = `
+                            <button class="btn btn-primary px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-medium hover:from-blue-600 hover:to-purple-700 transition-all"
+                                    onclick="FriendSystem.add(${userId}, this)">
+                                <i class="bi bi-person-plus mr-1"></i> Connect
+                            </button>
+                        `;
+                }
+
+                profileActions.innerHTML = actionsHTML;
+            }
+        } catch (error) {
+            console.error('Error checking friend status:', error);
+            // Fallback to basic add friend button
+            profileActions.innerHTML = `
+                <button class="btn btn-primary px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-medium hover:from-blue-600 hover:to-purple-700 transition-all"
+                        onclick="FriendSystem.add(${userId}, this)">
+                    <i class="bi bi-person-plus mr-1"></i> Connect
                 </button>
             `;
         }
-
-        profileActions.innerHTML = actionsHTML;
     }
 };
 

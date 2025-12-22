@@ -1158,11 +1158,14 @@ def get_user_profile(user_id):
     print(f"Religion is None: {user.religion is None}")
     print(f"Religion == '': {user.religion == ''}")
 
+    # FIXED: Use the User model's existing method
+    friend_status = current_user.get_friend_request_status(user_id)  # 'none', 'sent', 'received', or 'friends'
+
     # Create the response dictionary
     response_data = {
         "first_name": user.first_name,
         "last_name": user.last_name,
-        "email": user.email,
+        # "email": user.email,
         "profile_pic": user.profile_pic or url_for("static", filename="assets/img/default-avatar.png"),
         "cover_pic": user.cover_pic,
         "bio": user.bio,
@@ -1171,11 +1174,15 @@ def get_user_profile(user_id):
         "gender": user.gender,
         "religion": user.religion,  # This should be included even if None
         "dob": user.dob.isoformat() if user.dob else None,
-        "phone_number": user.phone_number,
+        # "phone_number": user.phone_number,
         "marital_status": user.marital_status,
+        "occupation": user.occupation,
+        "educational_level": user.educational_level,
+        "ethnicity": user.ethnicity,
         "interests": user.interests,
         "profile_url": url_for("user.profile", user_id=user.id),
         "friends_count": user.friends.count(),
+        'friend_status': friend_status  # 'none', 'sent', 'received', or 'friends'
     }
 
     # DEBUG: Print the response data
@@ -1644,6 +1651,65 @@ def profile(user_id):
         flash("You can only edit your own profile.", "warning")
         return redirect(url_for("user.profile", user_id=current_user.id))
 
+    # Define options for dropdowns
+    EDUCATIONAL_LEVELS = [
+        "Primary or Elementary School",
+        "Middle School or Junior High School",
+        "High School",
+        "Vocational College",
+        "Associate Degree",
+        "Bachelor's Degree",
+        "Master's Degree",
+        "PhD or Doctorate",
+        "No Formal Education",
+        "Other",
+    ]
+
+    RELIGIONS = [
+        'Islam',
+        'Roman Catholic',
+        'No religion / Atheist / Agnostic',
+        'Hinduism',
+        'Buddhism',
+        'Pentecostal',
+        'Traditional / Indigenous beliefs',
+        'Orthodox Christian',
+        'Charismatic',
+        'Non-denominational churches',
+        'Anglican',
+        'Baptist',
+        'Methodist',
+        'Seventh-day Adventist',
+        'Jehovah\'s Witness',
+        'Latter-day Saints (Mormons)',
+        'Sikhism',
+        'Judaism',
+        "Bahá'í Faith",
+        'Jainism',
+        'White Garment Churches',
+        'Other'
+    ]
+
+    ETHNICITIES = [
+        "African",
+        "African American",
+        "Asian",
+        "Caucasian",
+        "Hispanic/Latino",
+        "Native American",
+        "Pacific Islander",
+        "Middle Eastern",
+        "Mixed Race",
+        "Caribbean",
+        "European",
+        "South Asian",
+        "East Asian",
+        "Southeast Asian",
+        "Indigenous Australian",
+        "Maori",
+        "Other",
+    ]
+
     if request.method == "POST":
         try:
             # Handle profile fields from registration form
@@ -1667,6 +1733,9 @@ def profile(user_id):
                 "interests", current_user.interests
             )
             current_user.bio = request.form.get("bio", current_user.bio)
+            current_user.religion = request.form.get("religion", current_user.religion)
+            current_user.educational_level = request.form.get("educational_level", current_user.educational_level)
+            current_user.ethnicity = request.form.get("ethnicity", current_user.ethnicity)
 
             # Handle date of birth
             dob_str = request.form.get("dob")
@@ -1749,8 +1818,10 @@ def profile(user_id):
         friends=friends,
         blocked_users=blocked_users,
         datetime=datetime,
+        educational_levels=EDUCATIONAL_LEVELS,
+        religions=RELIGIONS,
+        ethnicities=ETHNICITIES,
     )
-
 
 @user.route("/logout")
 @login_required
