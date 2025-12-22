@@ -775,6 +775,21 @@
             font-size: var(--font-size-sm);
             margin-top: 0.25rem;
         }
+
+        /* Improve dropdown styling */
+select.form-control {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+    padding-right: 2.5rem;
+    cursor: pointer;
+}
+
+select.form-control:focus {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%238e44ad' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+}
     </style>
 </head>
 
@@ -846,112 +861,148 @@
                     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 
                     <!-- ==== STEP 1 ==== -->
-                    <div class="form-step active" id="step1">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="first_name" class="form-label">First Name</label>
-                                <input type="text" class="form-control {% if errors.first_name %}is-invalid{% endif %}"
-                                       id="first_name" name="first_name" value="{{ request.form.first_name }}" required>
-                                {% if errors.first_name %}<div class="invalid-feedback">{{ errors.first_name }}</div>{% endif %}
-                            </div>
-                            <div class="form-group">
-                                <label for="last_name" class="form-label">Last Name</label>
-                                <input type="text" class="form-control {% if errors.last_name %}is-invalid{% endif %}"
-                                       id="last_name" name="last_name" value="{{ request.form.last_name }}" required>
-                                {% if errors.last_name %}<div class="invalid-feedback">{{ errors.last_name }}</div>{% endif %}
-                            </div>
-                        </div>
+                    <!-- ==== STEP 1 ==== -->
+<div class="form-step active" id="step1">
+    <div class="form-row">
+        <div class="form-group">
+            <label for="first_name" class="form-label">First Name</label>
+            <input type="text" class="form-control {% if errors.first_name %}is-invalid{% endif %}"
+                   id="first_name" name="first_name" value="{{ request.form.first_name }}" required>
+            {% if errors.first_name %}<div class="invalid-feedback">{{ errors.first_name }}</div>{% endif %}
+        </div>
+        <div class="form-group">
+            <label for="last_name" class="form-label">Last Name</label>
+            <input type="text" class="form-control {% if errors.last_name %}is-invalid{% endif %}"
+                   id="last_name" name="last_name" value="{{ request.form.last_name }}" required>
+            {% if errors.last_name %}<div class="invalid-feedback">{{ errors.last_name }}</div>{% endif %}
+        </div>
+    </div>
 
-                        <div class="form-group">
-                            <label for="email" class="form-label">Email Address</label>
-                            <input type="email" class="form-control {% if errors.email %}is-invalid{% endif %}"
-                                   id="email" name="email" value="{{ request.form.email }}" required>
-                            {% if errors.email %}<div class="invalid-feedback">{{ errors.email }}</div>{% endif %}
-                        </div>
+    <div class="form-group">
+        <label for="email" class="form-label">Email Address</label>
+        <input type="email" class="form-control {% if errors.email %}is-invalid{% endif %}"
+               id="email" name="email" value="{{ request.form.email }}" required>
+        {% if errors.email %}<div class="invalid-feedback">{{ errors.email }}</div>{% endif %}
+    </div>
 
-                        <div class="form-group">
-                            <label for="phone_number" class="form-label">Phone Number</label>
-                            <input type="tel" class="form-control {% if errors.phone_number %}is-invalid{% endif %}"
-                                   id="phone_number" name="phone_number" value="{{ request.form.phone_number }}" required>
-                            {% if errors.phone_number %}<div class="invalid-feedback">{{ errors.phone_number }}</div>{% endif %}
-                        </div>
+    <div class="form-group">
+        <label for="phone_number" class="form-label">Phone Number</label>
+        <input type="tel" class="form-control {% if errors.phone_number %}is-invalid{% endif %}"
+               id="phone_number" name="phone_number" value="{{ request.form.phone_number }}" required>
+        {% if errors.phone_number %}<div class="invalid-feedback">{{ errors.phone_number }}</div>{% endif %}
+    </div>
 
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="dob" class="form-label">Date of Birth</label>
-                                <input type="date" class="form-control {% if errors.dob %}is-invalid{% endif %}"
-                                       id="dob" name="dob" max="{{ max_dob }}" value="{{ request.form.dob or '' }}" required>
-                                
-                                <!-- Live Age Feedback -->
-                                <div id="ageFeedback" class="mt-2" style="font-size: var(--font-size-sm); display: none;">
-                                    <small id="ageText" class="text-muted"></small>
-                                </div>
-                            
-                                <!-- Error from server -->
-                                {% if errors.dob %}
-                                    <div class="invalid-feedback d-block">{{ errors.dob }}</div>
-                                {% endif %}
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="gender" class="form-label">Gender</label>
-                                <select class="form-control {% if errors.gender %}is-invalid{% endif %}"
-                                        id="gender" name="gender" required>
-                                    <option value="">Select Gender</option>
-                                    <option value="Male" {% if request.form.gender == 'Male' %}selected{% endif %}>Male</option>
-                                    <option value="Female" {% if request.form.gender == 'Female' %}selected{% endif %}>Female</option>
-                                </select>
-                                {% if errors.gender %}<div class="invalid-feedback">{{ errors.gender }}</div>{% endif %}
-                            </div>
-                        </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label for="dob" class="form-label">Date of Birth</label>
+            <input type="date" class="form-control {% if errors.dob %}is-invalid{% endif %}"
+                   id="dob" name="dob" max="{{ max_dob }}" value="{{ request.form.dob or '' }}" required>
 
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="marital_status" class="form-label">Marital Status</label>
-                                <select class="form-control {% if errors.marital_status %}is-invalid{% endif %}"
-                                        id="marital_status" name="marital_status" required>
-                                    <option value="">Marital Status</option>
-                                    <option value="Single" {% if request.form.marital_status == 'Single' %}selected{% endif %}>Single</option>
-                                    <option value="Divorced" {% if request.form.marital_status == 'Divorced' %}selected{% endif %}>Divorced</option>
-                                    <option value="Widowed" {% if request.form.marital_status == 'Widowed' %}selected{% endif %}>Widowed</option>
-                                </select>
-                                {% if errors.marital_status %}<div class="invalid-feedback">{{ errors.marital_status }}</div>{% endif %}
-                            </div>
-                        </div>
+            <!-- Live Age Feedback -->
+            <div id="ageFeedback" class="mt-2" style="font-size: var(--font-size-sm); display: none;">
+                <small id="ageText" class="text-muted"></small>
+            </div>
 
-                         <!-- NEW: Religion Field -->
-                        <div class="form-group">
-                            <label for="religion" class="form-label">Religion</label>
-                            <select class="form-control {% if errors.religion %}is-invalid{% endif %}"
-                                    id="religion" name="religion">
-                                <option value="">Select Religion</option>
-                                {% for religion in religions %}
-                                    <option value="{{ religion }}" {% if request.form.religion == religion %}selected{% endif %}>{{ religion }}</option>
-                                {% endfor %}
-                            </select>
-                            {% if errors.religion %}<div class="invalid-feedback">{{ errors.religion }}</div>{% endif %}
-                        </div>
+            <!-- Error from server -->
+            {% if errors.dob %}
+                <div class="invalid-feedback d-block">{{ errors.dob }}</div>
+            {% endif %}
+        </div>
 
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="city" class="form-label">City</label>
-                                <input type="text" class="form-control {% if errors.city %}is-invalid{% endif %}"
-                                       id="city" name="city" value="{{ request.form.city }}" required>
-                                {% if errors.city %}<div class="invalid-feedback">{{ errors.city }}</div>{% endif %}
-                            </div>
-                            <div class="form-group">
-                                <label for="country" class="form-label">Country</label>
-                                <input type="text" class="form-control {% if errors.country %}is-invalid{% endif %}"
-                                       id="country" name="country" value="{{ request.form.country }}" required>
-                                {% if errors.country %}<div class="invalid-feedback">{{ errors.country }}</div>{% endif %}
-                            </div>
-                        </div>
+        <div class="form-group">
+            <label for="gender" class="form-label">Gender</label>
+            <select class="form-control {% if errors.gender %}is-invalid{% endif %}"
+                    id="gender" name="gender" required>
+                <option value="">Select Gender</option>
+                <option value="Male" {% if request.form.gender == 'Male' %}selected{% endif %}>Male</option>
+                <option value="Female" {% if request.form.gender == 'Female' %}selected{% endif %}>Female</option>
+            </select>
+            {% if errors.gender %}<div class="invalid-feedback">{{ errors.gender }}</div>{% endif %}
+        </div>
+    </div>
 
-                        <div class="form-navigation">
-                            <button type="button" class="btn-nav" id="prevStep1" disabled><i class="bi bi-chevron-left"></i></button>
-                            <button type="button" class="btn-nav next" id="nextStep1"><i class="bi bi-chevron-right"></i></button>
-                        </div>
-                    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label for="marital_status" class="form-label">Marital Status</label>
+            <select class="form-control {% if errors.marital_status %}is-invalid{% endif %}"
+                    id="marital_status" name="marital_status" required>
+                <option value="">Marital Status</option>
+                <option value="Single" {% if request.form.marital_status == 'Single' %}selected{% endif %}>Single</option>
+                <option value="Divorced" {% if request.form.marital_status == 'Divorced' %}selected{% endif %}>Divorced</option>
+                <option value="Widowed" {% if request.form.marital_status == 'Widowed' %}selected{% endif %}>Widowed</option>
+            </select>
+            {% if errors.marital_status %}<div class="invalid-feedback">{{ errors.marital_status }}</div>{% endif %}
+        </div>
+    </div>
+
+    <!-- NEW: Religion Field -->
+    <div class="form-group">
+        <label for="religion" class="form-label">Religion</label>
+        <select class="form-control {% if errors.religion %}is-invalid{% endif %}"
+                id="religion" name="religion">
+            <option value="">Select Religion</option>
+            {% for religion in religions %}
+                <option value="{{ religion }}" {% if request.form.religion == religion %}selected{% endif %}>{{ religion }}</option>
+            {% endfor %}
+        </select>
+        {% if errors.religion %}<div class="invalid-feedback">{{ errors.religion }}</div>{% endif %}
+    </div>
+
+    <!-- NEW: Ethnicity Field -->
+    <div class="form-group">
+        <label for="ethnicity" class="form-label">Ethnicity</label>
+        <select class="form-control {% if errors.ethnicity %}is-invalid{% endif %}"
+                id="ethnicity" name="ethnicity">
+            <option value="">Select Ethnicity</option>
+            {% for ethnicity in ethnicities %}
+                <option value="{{ ethnicity }}" {% if request.form.ethnicity == ethnicity %}selected{% endif %}>{{ ethnicity }}</option>
+            {% endfor %}
+        </select>
+        {% if errors.ethnicity %}<div class="invalid-feedback">{{ errors.ethnicity }}</div>{% endif %}
+    </div>
+
+    <!-- NEW: Educational Level Field -->
+    <div class="form-group">
+        <label for="educational_level" class="form-label">Educational Level</label>
+        <select class="form-control {% if errors.educational_level %}is-invalid{% endif %}"
+                id="educational_level" name="educational_level">
+            <option value="">Select Educational Level</option>
+            {% for level in educational_levels %}
+                <option value="{{ level }}" {% if request.form.educational_level == level %}selected{% endif %}>{{ level }}</option>
+            {% endfor %}
+        </select>
+        {% if errors.educational_level %}<div class="invalid-feedback">{{ errors.educational_level }}</div>{% endif %}
+    </div>
+
+    <!-- NEW: Occupation Field -->
+    <div class="form-group">
+        <label for="occupation" class="form-label">Occupation</label>
+        <input type="text" class="form-control {% if errors.occupation %}is-invalid{% endif %}"
+               id="occupation" name="occupation" value="{{ request.form.occupation }}"
+               placeholder="Your profession or occupation">
+        {% if errors.occupation %}<div class="invalid-feedback">{{ errors.occupation }}</div>{% endif %}
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label for="city" class="form-label">City</label>
+            <input type="text" class="form-control {% if errors.city %}is-invalid{% endif %}"
+                   id="city" name="city" value="{{ request.form.city }}" required>
+            {% if errors.city %}<div class="invalid-feedback">{{ errors.city }}</div>{% endif %}
+        </div>
+        <div class="form-group">
+            <label for="country" class="form-label">Country</label>
+            <input type="text" class="form-control {% if errors.country %}is-invalid{% endif %}"
+                   id="country" name="country" value="{{ request.form.country }}" required>
+            {% if errors.country %}<div class="invalid-feedback">{{ errors.country }}</div>{% endif %}
+        </div>
+    </div>
+
+    <div class="form-navigation">
+        <button type="button" class="btn-nav" id="prevStep1" disabled><i class="bi bi-chevron-left"></i></button>
+        <button type="button" class="btn-nav next" id="nextStep1"><i class="bi bi-chevron-right"></i></button>
+    </div>
+</div>
 
                     <!-- ==== STEP 2 ==== -->
                     <div class="form-step" id="step2">
@@ -1170,35 +1221,45 @@
             };
             
             // STEP 1 → STEP 2 VALIDATION
-            nextBtn1.addEventListener('click', () => {
-                const fields = ['first_name', 'last_name', 'email', 'phone_number', 'dob', 'gender', 'marital_status', 'city', 'country'];
-                let ok = true;
-                
-                fields.forEach(id => {
-                    const el = document.getElementById(id);
-                    const val = el.value.trim();
-                    
-                    if (!val) {
-                        el.classList.add('is-invalid');
-                        ok = false;
-                    } else if (id === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
-                        el.classList.add('is-invalid');
-                        ok = false;
-                    } else if (id === 'dob') {
-                        const d = new Date(val);
-                        if (isNaN(d.getTime()) || calculateAge(d) < 31) {
-                            el.classList.add('is-invalid');
-                            ok = false;
-                        } else {
-                            el.classList.remove('is-invalid');
-                        }
-                    } else {
-                        el.classList.remove('is-invalid');
-                    }
-                });
-                
-                if (ok) goTo(2);
-            });
+nextBtn1.addEventListener('click', () => {
+    const requiredFields = ['first_name', 'last_name', 'email', 'phone_number', 'dob', 'gender', 'marital_status', 'city', 'country'];
+    const optionalFields = ['religion', 'ethnicity', 'educational_level', 'occupation'];
+    const allFields = [...requiredFields, ...optionalFields];
+    let ok = true;
+
+    allFields.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+
+        // For required fields
+        if (requiredFields.includes(id)) {
+            const val = el.value.trim();
+
+            if (!val) {
+                el.classList.add('is-invalid');
+                ok = false;
+            } else if (id === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
+                el.classList.add('is-invalid');
+                ok = false;
+            } else if (id === 'dob') {
+                const d = new Date(val);
+                if (isNaN(d.getTime()) || calculateAge(d) < 31) {
+                    el.classList.add('is-invalid');
+                    ok = false;
+                } else {
+                    el.classList.remove('is-invalid');
+                }
+            } else {
+                el.classList.remove('is-invalid');
+            }
+        } else {
+            // For optional fields, just remove any invalid styling
+            el.classList.remove('is-invalid');
+        }
+    });
+
+    if (ok) goTo(2);
+});
             
             // BACK BUTTON
             prevBtn2.addEventListener('click', () => goTo(1));
