@@ -353,7 +353,7 @@ def register():
         'Traditional / Indigenous beliefs',
         'Orthodox Christian',
         'Charismatic',
-        'Non-denominational churches'
+        'Non-denominational churches',
         'Anglican',
         'Baptist',
         'Methodist',

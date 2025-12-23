@@ -790,6 +790,80 @@ select.form-control {
 select.form-control:focus {
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%238e44ad' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
 }
+
+
+        /* Interests Checkbox Styling */
+.interests-container {
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-color) #e9ecef;
+}
+
+.interests-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.interests-container::-webkit-scrollbar-track {
+    background: #e9ecef;
+    border-radius: 3px;
+}
+
+.interests-container::-webkit-scrollbar-thumb {
+    background-color: var(--primary-color);
+    border-radius: 3px;
+}
+
+.interests-container::-webkit-scrollbar-thumb:hover {
+    background-color: var(--secondary-color);
+}
+
+.form-check-input:checked {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.form-check-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.25rem rgba(142, 68, 173, 0.25);
+}
+
+.form-check {
+    margin-bottom: 0.5rem;
+    min-height: 1.4rem;
+}
+
+.form-check-label {
+    cursor: pointer;
+    user-select: none;
+}
+
+/* For better mobile view of checkboxes */
+@media (max-width: 768px) {
+    .interests-container {
+        max-height: 180px;
+        padding: 0.75rem;
+    }
+
+    .interests-container .row {
+        margin-left: -0.5rem;
+        margin-right: -0.5rem;
+    }
+
+    .interests-container .col-md-6 {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .interests-container {
+        max-height: 160px;
+        padding: 0.6rem;
+    }
+
+    .form-check-label {
+        font-size: var(--font-size-xs);
+    }
+}
     </style>
 </head>
 
@@ -1031,11 +1105,32 @@ select.form-control:focus {
                             {% if errors.confirm_password %}<div class="invalid-feedback">{{ errors.confirm_password }}</div>{% endif %}
                         </div>
 
-                        <div class="form-group">
-                            <label for="interests" class="form-label">Interests & Hobbies</label>
-                            <textarea class="form-control" id="interests" name="interests" rows="3"
-                                      placeholder="Tell us about your interests, hobbies, and what you're looking for in connections...">{{ request.form.interests }}</textarea>
+                        <!-- ===== INTERESTS CHECKBOX SECTION ===== -->
+    <div class="form-group">
+        <label class="form-label">Interests & Hobbies</label>
+        <div class="interests-container" style="max-height: 200px; overflow-y: auto; border: 1.5px solid #e9ecef; border-radius: var(--border-radius); padding: 1rem; background-color: #f8f9fa;">
+            <div class="row">
+                {% for interest in interests_list %}
+                    <div class="col-md-6 col-lg-4 mb-2">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox"
+                                   name="interests"
+                                   value="{{ interest }}"
+                                   id="interest_{{ loop.index }}"
+                                   {% if interest in request.form.getlist('interests') %}checked{% endif %}>
+                            <label class="form-check-label" for="interest_{{ loop.index }}" style="font-size: var(--font-size-sm);">
+                                {{ interest }}
+                            </label>
                         </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        <small class="text-muted" style="font-size: var(--font-size-sm); margin-top: 0.5rem; display: block;">
+            Select your interests to help us match you with like-minded people
+        </small>
+    </div>
+    <!-- ===== END INTERESTS SECTION ===== -->
 
                         <div class="terms-container">
                             <div class="terms-checkbox">
@@ -1080,243 +1175,471 @@ select.form-control:focus {
     <script src="{{ url_for('static', filename='assets/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ url_for('static', filename='assets/vendor/aos/aos.js') }}"></script>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            // Initialize AOS
-            AOS.init({ duration: 600, easing: 'ease-in-out', once: true, offset: 50 });
-            
-            // Core elements
-            const steps = document.querySelectorAll('.form-step');
-            const indicators = document.querySelectorAll('.step');
-            const progressBar = document.getElementById('progressBar');
-            const nextBtn1 = document.getElementById('nextStep1');
-            const prevBtn2 = document.getElementById('prevStep2');
-            const form = document.getElementById('registerForm');
-            
-            const dobInput = document.getElementById('dob');
-            const ageFeedback = document.getElementById('ageFeedback');
-            const ageText = document.getElementById('ageText');
-            
-            const pwdInput = document.getElementById('password');
-            const pwdConfirm = document.getElementById('confirm_password');
-            
-            // Helper: go to a step
-            function goTo(step) {
-                steps.forEach(s => s.classList.remove('active'));
-                document.getElementById(`step${step}`).classList.add('active');
-                
-                indicators.forEach((s, i) => {
-                    s.classList.remove('active', 'completed');
-                    if (i + 1 < step) s.classList.add('completed');
-                    if (i + 1 === step) s.classList.add('active');
-                });
-                
-                progressBar.style.width = `${((step - 1) / (steps.length - 1)) * 100}%`;
-            }
-            
-            // AGE CALCULATION
-            function calculateAge(birth) {
-                const today = new Date();
-                let age = today.getFullYear() - birth.getFullYear();
-                const m = today.getMonth() - birth.getMonth();
-                const d = today.getDate() - birth.getDate();
-                
-                if (m < 0 || (m === 0 && d < 0)) age--;
-                return age;
-            }
-            
-            function updateAge() {
-                const val = dobInput.value.trim();
-                if (!val) {
-                    ageFeedback.style.display = 'none';
-                    nextBtn1.disabled = true;
-                    dobInput.classList.remove('is-invalid');
-                    return;
-                }
-                
-                const birth = new Date(val);
-                if (isNaN(birth.getTime())) {
-                    ageText.innerHTML = `<span class="text-danger">Invalid date</span>`;
-                    ageFeedback.style.display = 'block';
-                    dobInput.classList.add('is-invalid');
-                    nextBtn1.disabled = true;
-                    return;
-                }
-                
-                const age = calculateAge(birth);
-                if (age >= 31) {
-                    ageText.innerHTML = `<span class="text-success">Age: ${age} years ✓</span>`;
-                    ageFeedback.style.display = 'block';
-                    dobInput.classList.remove('is-invalid');
-                    nextBtn1.disabled = false;
-                } else {
-                    ageText.innerHTML = `<span class="text-danger">You must be 31+ (currently ${age})</span>`;
-                    ageFeedback.style.display = 'block';
-                    dobInput.classList.add('is-invalid');
-                    nextBtn1.disabled = true;
-                }
-            }
-            
-            dobInput.addEventListener('change', updateAge);
-            if (dobInput.value) updateAge();
-            nextBtn1.disabled = true;
-            
-            // PASSWORD STRENGTH
-            const strengthBar = document.querySelector('#passwordStrength .password-strength-bar');
-            const strengthBox = document.getElementById('passwordStrength');
-            
-            pwdInput.addEventListener('input', () => {
-                const v = pwdInput.value;
-                let score = 0;
-                
-                if (v.length >= 8) score++;
-                if (/[A-Z]/.test(v)) score++;
-                if (/[a-z]/.test(v)) score++;
-                if (/\d/.test(v)) score++;
-                if (/[^A-Za-z0-9]/.test(v)) score++;
-                
-                strengthBox.className = 'password-strength mt-2';
-                if (score <= 2) strengthBox.classList.add('weak');
-                else if (score <= 4) strengthBox.classList.add('medium');
-                else strengthBox.classList.add('strong');
-                
-                strengthBar.style.width = score === 5 ? '100%' : `${score * 20}%`;
-            });
-            
-            // CONFIRM PASSWORD LIVE MATCH
-            const confirmMsg = document.createElement('div');
-            confirmMsg.style.fontSize = 'var(--font-size-sm)';
-            confirmMsg.style.marginTop = '0.5rem';
-            confirmMsg.style.display = 'none';
-            pwdConfirm.parentElement.parentElement.appendChild(confirmMsg);
-            
-            pwdConfirm.addEventListener('input', () => {
-                if (!pwdConfirm.value) {
-                    confirmMsg.style.display = 'none';
-                    pwdConfirm.classList.remove('is-invalid');
-                    return;
-                }
-                if (pwdConfirm.value === pwdInput.value) {
-                    confirmMsg.innerHTML = '<small class="text-success">Passwords match ✓</small>';
-                    confirmMsg.style.display = 'block';
-                    pwdConfirm.classList.remove('is-invalid');
-                } else {
-                    confirmMsg.innerHTML = '<small class="text-danger">Passwords do not match.</small>';
-                    confirmMsg.style.display = 'block';
-                    pwdConfirm.classList.add('is-invalid');
+   <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // ========== INITIALIZATION ==========
+        AOS.init({
+            duration: 600,
+            easing: 'ease-in-out',
+            once: true,
+            offset: 50
+        });
+
+        // ========== DOM ELEMENTS ==========
+        const steps = document.querySelectorAll('.form-step');
+        const indicators = document.querySelectorAll('.step');
+        const progressBar = document.getElementById('progressBar');
+        const form = document.getElementById('registerForm');
+
+        // Navigation buttons
+        const nextBtn1 = document.getElementById('nextStep1');
+        const prevBtn2 = document.getElementById('prevStep2');
+
+        // Form fields
+        const dobInput = document.getElementById('dob');
+        const ageFeedback = document.getElementById('ageFeedback');
+        const ageText = document.getElementById('ageText');
+        const pwdInput = document.getElementById('password');
+        const pwdConfirm = document.getElementById('confirm_password');
+
+        // ========== STEP NAVIGATION ==========
+        let currentStep = 1;
+
+        function goToStep(step) {
+            if (step < 1 || step > steps.length) return;
+
+            // Update current step
+            currentStep = step;
+
+            // Hide all steps, show active
+            steps.forEach(s => s.classList.remove('active'));
+            document.getElementById(`step${step}`).classList.add('active');
+
+            // Update progress indicators
+            indicators.forEach((indicator, index) => {
+                indicator.classList.remove('active', 'completed');
+
+                if (index + 1 < step) {
+                    indicator.classList.add('completed');
+                } else if (index + 1 === step) {
+                    indicator.classList.add('active');
                 }
             });
-            
-            // TOGGLE PASSWORD VISIBILITY
-            window.togglePassword = function (id) {
-                const el = document.getElementById(id);
-                const icon = el.parentElement.querySelector('i');
-                if (el.type === 'password') {
-                    el.type = 'text';
-                    icon.classList.replace('bi-eye', 'bi-eye-slash');
-                } else {
-                    el.type = 'password';
-                    icon.classList.replace('bi-eye-slash', 'bi-eye');
-                }
-            };
-            
-            // STEP 1 → STEP 2 VALIDATION
-nextBtn1.addEventListener('click', () => {
-    const requiredFields = ['first_name', 'last_name', 'email', 'phone_number', 'dob', 'gender', 'marital_status', 'city', 'country'];
-    const optionalFields = ['religion', 'ethnicity', 'educational_level', 'occupation'];
-    const allFields = [...requiredFields, ...optionalFields];
-    let ok = true;
 
-    allFields.forEach(id => {
-        const el = document.getElementById(id);
-        if (!el) return;
-
-        // For required fields
-        if (requiredFields.includes(id)) {
-            const val = el.value.trim();
-
-            if (!val) {
-                el.classList.add('is-invalid');
-                ok = false;
-            } else if (id === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
-                el.classList.add('is-invalid');
-                ok = false;
-            } else if (id === 'dob') {
-                const d = new Date(val);
-                if (isNaN(d.getTime()) || calculateAge(d) < 31) {
-                    el.classList.add('is-invalid');
-                    ok = false;
-                } else {
-                    el.classList.remove('is-invalid');
-                }
-            } else {
-                el.classList.remove('is-invalid');
-            }
-        } else {
-            // For optional fields, just remove any invalid styling
-            el.classList.remove('is-invalid');
+            // Update progress bar
+            const progressPercent = ((step - 1) / (steps.length - 1)) * 100;
+            progressBar.style.width = `${progressPercent}%`;
         }
-    });
 
-    if (ok) goTo(2);
-});
-            
-            // BACK BUTTON
-            prevBtn2.addEventListener('click', () => goTo(1));
-            
-            // FORM SUBMISSION
-            form.addEventListener('submit', function(e) {
-                const submitBtn = form.querySelector('button[type="submit"]');
-                const originalText = submitBtn.innerHTML;
-                
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Creating Account...';
-            });
-            
-            // SUCCESS STEP
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        {% if category == 'success' and 'successful' in message|lower %}
-                            goTo(3);
-                        {% endif %}
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-            
-            // Auto-hide alerts after 5 seconds
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(alert => {
-                setTimeout(() => {
-                    const bsAlert = new bootstrap.Alert(alert);
-                    bsAlert.close();
-                }, 5000);
-            });
-            
-            // Adjust logo size for mobile on load
-            if (window.innerWidth <= 576) {
-                const logo = document.querySelector('.logo-container img');
-                if (logo) {
-                    logo.style.maxHeight = '140px';
+        // ========== AGE VALIDATION ==========
+        function calculateAge(birthDate) {
+            const today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const monthDiff = today.getMonth() - birthDate.getMonth();
+
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+
+            return age;
+        }
+
+        function validateAge() {
+            const dobValue = dobInput.value.trim();
+
+            if (!dobValue) {
+                ageFeedback.style.display = 'none';
+                dobInput.classList.remove('is-invalid', 'is-valid');
+                nextBtn1.disabled = true;
+                return false;
+            }
+
+            const birthDate = new Date(dobValue);
+
+            if (isNaN(birthDate.getTime())) {
+                ageText.innerHTML = `<span class="text-danger">Invalid date format</span>`;
+                ageFeedback.style.display = 'block';
+                dobInput.classList.add('is-invalid');
+                dobInput.classList.remove('is-valid');
+                nextBtn1.disabled = true;
+                return false;
+            }
+
+            const age = calculateAge(birthDate);
+
+            if (age >= 31) {
+                ageText.innerHTML = `<span class="text-success">Age: ${age} years ✓ Eligible</span>`;
+                ageFeedback.style.display = 'block';
+                dobInput.classList.remove('is-invalid');
+                dobInput.classList.add('is-valid');
+                nextBtn1.disabled = false;
+                return true;
+            } else {
+                ageText.innerHTML = `<span class="text-danger">You must be 31+ years old (currently ${age})</span>`;
+                ageFeedback.style.display = 'block';
+                dobInput.classList.add('is-invalid');
+                dobInput.classList.remove('is-valid');
+                nextBtn1.disabled = true;
+                return false;
+            }
+        }
+
+        // ========== PASSWORD VALIDATION ==========
+        function checkPasswordStrength(password) {
+            let score = 0;
+            const checks = [
+                password.length >= 8,
+                /[A-Z]/.test(password),
+                /[a-z]/.test(password),
+                /\d/.test(password),
+                /[^A-Za-z0-9]/.test(password)
+            ];
+
+            score = checks.filter(Boolean).length;
+            return score;
+        }
+
+        function updatePasswordStrength() {
+            const password = pwdInput.value;
+            const strengthBox = document.getElementById('passwordStrength');
+            const strengthBar = strengthBox.querySelector('.password-strength-bar');
+            const score = checkPasswordStrength(password);
+
+            // Reset classes
+            strengthBox.className = 'password-strength';
+
+            // Apply strength class and update bar
+            if (password.length === 0) {
+                strengthBar.style.width = '0%';
+            } else if (score <= 2) {
+                strengthBox.classList.add('weak');
+                strengthBar.style.width = `${score * 20}%`;
+            } else if (score <= 4) {
+                strengthBox.classList.add('medium');
+                strengthBar.style.width = `${score * 20}%`;
+            } else {
+                strengthBox.classList.add('strong');
+                strengthBar.style.width = '100%';
+            }
+        }
+
+        function validatePasswordMatch() {
+            const password = pwdInput.value;
+            const confirmPassword = pwdConfirm.value;
+            const matchDiv = pwdConfirm.parentElement.parentElement.querySelector('.password-match-feedback');
+
+            if (!matchDiv) {
+                const newDiv = document.createElement('div');
+                newDiv.className = 'password-match-feedback';
+                newDiv.style.fontSize = 'var(--font-size-sm)';
+                newDiv.style.marginTop = '0.5rem';
+                pwdConfirm.parentElement.parentElement.appendChild(newDiv);
+            }
+
+            const matchDivElement = pwdConfirm.parentElement.parentElement.querySelector('.password-match-feedback');
+
+            if (confirmPassword.length === 0) {
+                matchDivElement.style.display = 'none';
+                pwdConfirm.classList.remove('is-invalid', 'is-valid');
+                return false;
+            }
+
+            if (password === confirmPassword) {
+                matchDivElement.innerHTML = '<small class="text-success">Passwords match ✓</small>';
+                matchDivElement.style.display = 'block';
+                pwdConfirm.classList.remove('is-invalid');
+                pwdConfirm.classList.add('is-valid');
+                return true;
+            } else {
+                matchDivElement.innerHTML = '<small class="text-danger">Passwords do not match</small>';
+                matchDivElement.style.display = 'block';
+                pwdConfirm.classList.add('is-invalid');
+                pwdConfirm.classList.remove('is-valid');
+                return false;
+            }
+        }
+
+        // ========== PASSWORD VISIBILITY TOGGLE ==========
+        function togglePasswordVisibility(fieldId) {
+            const field = document.getElementById(fieldId);
+            const icon = field.parentElement.querySelector('i');
+
+            if (field.type === 'password') {
+                field.type = 'text';
+                icon.classList.replace('bi-eye', 'bi-eye-slash');
+            } else {
+                field.type = 'password';
+                icon.classList.replace('bi-eye-slash', 'bi-eye');
+            }
+        }
+
+        // ========== INTERESTS MANAGEMENT ==========
+        function setupInterestsManager() {
+            const interestsContainer = document.querySelector('.interests-container');
+            if (!interestsContainer) return;
+
+            // Create select all controls
+            const controlsDiv = document.createElement('div');
+            controlsDiv.className = 'interests-controls mb-2 d-flex justify-content-between align-items-center';
+            controlsDiv.innerHTML = `
+                <small class="text-muted" id="selectedCount">0 interests selected</small>
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" class="btn btn-outline-primary btn-sm" id="selectAllBtn">
+                        Select All
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="clearAllBtn">
+                        Clear All
+                    </button>
+                </div>
+            `;
+
+            interestsContainer.parentElement.insertBefore(controlsDiv, interestsContainer);
+
+            const selectAllBtn = document.getElementById('selectAllBtn');
+            const clearAllBtn = document.getElementById('clearAllBtn');
+            const countElement = document.getElementById('selectedCount');
+            const checkboxes = interestsContainer.querySelectorAll('input[type="checkbox"]');
+
+            function updateInterestsCount() {
+                const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+                countElement.textContent = `${checkedCount} interests selected`;
+
+                // Update select all button text
+                if (checkedCount === checkboxes.length) {
+                    selectAllBtn.textContent = 'Deselect All';
+                } else {
+                    selectAllBtn.textContent = 'Select All';
                 }
+            }
+
+            function selectAllInterests() {
+                const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+
+                checkboxes.forEach(cb => {
+                    cb.checked = !allChecked;
+                    // Trigger change event
+                    cb.dispatchEvent(new Event('change'));
+                });
+            }
+
+            function clearAllInterests() {
+                checkboxes.forEach(cb => {
+                    cb.checked = false;
+                    // Trigger change event
+                    cb.dispatchEvent(new Event('change'));
+                });
+            }
+
+            // Event listeners
+            selectAllBtn.addEventListener('click', selectAllInterests);
+            clearAllBtn.addEventListener('click', clearAllInterests);
+
+            checkboxes.forEach(cb => {
+                cb.addEventListener('change', updateInterestsCount);
+            });
+
+            // Initial count
+            updateInterestsCount();
+        }
+
+        // ========== FORM VALIDATION ==========
+        function validateStep1() {
+            const requiredFields = [
+                'first_name', 'last_name', 'email', 'phone_number',
+                'dob', 'gender', 'marital_status', 'city', 'country'
+            ];
+
+            let isValid = true;
+
+            requiredFields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (!field) return;
+
+                const value = field.value.trim();
+                let fieldValid = true;
+
+                // Basic required validation
+                if (!value) {
+                    fieldValid = false;
+                }
+
+                // Email format validation
+                if (fieldId === 'email' && value) {
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailRegex.test(value)) {
+                        fieldValid = false;
+                    }
+                }
+
+                // Phone number basic validation
+                if (fieldId === 'phone_number' && value) {
+                    const phoneRegex = /^\+?[\d\s\-\(\)]{10,}$/;
+                    if (!phoneRegex.test(value)) {
+                        fieldValid = false;
+                    }
+                }
+
+                // Date validation
+                if (fieldId === 'dob' && value) {
+                    fieldValid = validateAge();
+                }
+
+                // Update field styling
+                if (fieldValid) {
+                    field.classList.remove('is-invalid');
+                    field.classList.add('is-valid');
+                } else {
+                    field.classList.add('is-invalid');
+                    field.classList.remove('is-valid');
+                    isValid = false;
+                }
+            });
+
+            return isValid;
+        }
+
+        // ========== EVENT LISTENERS ==========
+        // Age validation
+        dobInput.addEventListener('input', validateAge);
+
+        // Password validation
+        pwdInput.addEventListener('input', function() {
+            updatePasswordStrength();
+            validatePasswordMatch();
+        });
+
+        pwdConfirm.addEventListener('input', validatePasswordMatch);
+
+        // Password visibility toggle
+        window.togglePassword = togglePasswordVisibility;
+
+        // Step navigation
+        nextBtn1.addEventListener('click', function() {
+            if (validateStep1()) {
+                goToStep(2);
             }
         });
-        
-        // Handle window resize
-        window.addEventListener('resize', function() {
+
+        prevBtn2.addEventListener('click', function() {
+            goToStep(1);
+        });
+
+        // Form submission
+        form.addEventListener('submit', function(e) {
+            // Validate step 2 before submission
+            if (currentStep === 2) {
+                const passwordValid = checkPasswordStrength(pwdInput.value) >= 3;
+                const passwordsMatch = pwdInput.value === pwdConfirm.value;
+                const termsChecked = document.getElementById('terms').checked;
+
+                if (!passwordValid) {
+                    e.preventDefault();
+                    pwdInput.classList.add('is-invalid');
+                    alert('Password must be stronger. Include uppercase, lowercase, numbers, and symbols.');
+                    return;
+                }
+
+                if (!passwordsMatch) {
+                    e.preventDefault();
+                    pwdConfirm.classList.add('is-invalid');
+                    alert('Passwords do not match.');
+                    return;
+                }
+
+                if (!termsChecked) {
+                    e.preventDefault();
+                    document.getElementById('terms').focus();
+                    alert('You must agree to the Terms of Service and Privacy Policy.');
+                    return;
+                }
+
+                // Show loading state
+                const submitBtn = form.querySelector('button[type="submit"]');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Creating Account...';
+            }
+        });
+
+        // ========== INITIAL SETUP ==========
+        // Initial validation
+        validateAge();
+        updatePasswordStrength();
+        setupInterestsManager();
+
+        // Check for success message and go to step 3
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    {% if category == 'success' and ('successful' in message|lower or 'verification' in message|lower) %}
+                        goToStep(3);
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        // Auto-hide alerts
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(alert => {
+            const bsAlert = new bootstrap.Alert(alert);
+            setTimeout(() => {
+                bsAlert.close();
+            }, 5000);
+        });
+
+        // Responsive logo adjustment
+        function adjustLogoSize() {
             const logo = document.querySelector('.logo-container img');
             if (!logo) return;
-            
-            if (window.innerWidth <= 576) {
-                logo.style.maxHeight = '140px';
-            } else if (window.innerWidth <= 480) {
-                logo.style.maxHeight = '120px';
-            } else if (window.innerWidth <= 360) {
+
+            const width = window.innerWidth;
+
+            if (width <= 360) {
                 logo.style.maxHeight = '100px';
+            } else if (width <= 480) {
+                logo.style.maxHeight = '120px';
+            } else if (width <= 576) {
+                logo.style.maxHeight = '140px';
             } else {
                 logo.style.maxHeight = '160px';
             }
+        }
+
+        // Initial adjustment
+        adjustLogoSize();
+
+        // Adjust on resize
+        window.addEventListener('resize', adjustLogoSize);
+
+        // ========== KEYBOARD NAVIGATION ==========
+        document.addEventListener('keydown', function(e) {
+            // Enter key moves to next step (except in textareas)
+            if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+                if (currentStep === 1 && e.target !== nextBtn1) {
+                    e.preventDefault();
+                    nextBtn1.click();
+                }
+            }
+
+            // Escape key goes back
+            if (e.key === 'Escape' && currentStep === 2) {
+                prevBtn2.click();
+            }
         });
-    </script>
+
+        // ========== TOUCH DEVICE OPTIMIZATION ==========
+        if ('ontouchstart' in window) {
+            // Increase tap targets on touch devices
+            const labels = document.querySelectorAll('label');
+            labels.forEach(label => {
+                label.style.padding = '0.25rem 0';
+            });
+
+            const buttons = document.querySelectorAll('button');
+            buttons.forEach(button => {
+                button.style.minHeight = '44px';
+            });
+        }
+    });
+</script>
 </body>
 </html>
