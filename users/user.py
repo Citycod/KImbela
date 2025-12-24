@@ -18,7 +18,9 @@ from models import (
     MatchmakingLike,
     MatchmakingView,
     User,
-    Message
+    Message,
+    SponsoredAd,
+    AdCampaign
 )
 
 
@@ -1144,6 +1146,128 @@ def cancel_friend_request(user_id):
         import traceback
         traceback.print_exc()
         return jsonify({"success": False, "error": str(e)}), 500
+
+
+@user.route("/api/ads/sponsored")
+def get_sponsored_ads():
+    try:
+        from datetime import datetime
+        current_time = datetime.utcnow()
+
+        print(f"🔍 [DEBUG] Loading sponsored ads at: {current_time}")
+
+        # Query for active ads within date range
+        active_ads = AdCampaign.query.filter(
+            AdCampaign.status == 'active',
+            AdCampaign.start_date <= current_time,
+            AdCampaign.end_date >= current_time
+        ).all()
+
+        print(f"🔍 [DEBUG] Found {len(active_ads)} active ads")
+
+        # Log each ad for debugging
+        for ad in active_ads:
+            print(f"  - ID: {ad.id}, Title: '{ad.title}'")
+            print(f"    Status: {ad.status}, Budget: {ad.budget}")
+            print(f"    Start: {ad.start_date}, End: {ad.end_date}")
+            print(f"    Image field exists: {hasattr(ad, 'image')}")
+            print(f"    User ID: {ad.user_id}")
+
+        ads_data = []
+        for ad in active_ads:
+            # Get advertiser name from user relationship
+            advertiser_name = 'Sponsored Partner'
+
+            # Try to get user info
+            if hasattr(ad, 'user'):
+                user = ad.user
+                if user:
+                    if hasattr(user, 'business_name') and user.business_name:
+                        advertiser_name = user.business_name
+                    elif hasattr(user, 'full_name') and user.full_name:
+                        advertiser_name = user.full_name
+                    elif hasattr(user, 'username'):
+                        advertiser_name = user.username
+
+            # Get image URL - your field is called 'image', not 'image_url'
+            image_url = ad.image if hasattr(ad,
+                                            'image') and ad.image else 'https://via.placeholder.com/600x300/4F46E5/FFFFFF?text=Sponsored+Ad'
+
+            # Get CTA URL - your field is called 'target_url'
+            cta_url = ad.target_url if hasattr(ad, 'target_url') and ad.target_url else '#'
+
+            # Get CTA text - your field is called 'call_to_action'
+            cta_text = ad.call_to_action if hasattr(ad, 'call_to_action') and ad.call_to_action else 'Learn More'
+
+            ads_data.append({
+                'id': ad.id,
+                'title': ad.title or 'Special Offer',
+                'description': ad.description or 'Discover amazing opportunities!',
+                'image_url': image_url,
+                'advertiser_name': advertiser_name,
+                'cta_url': cta_url,
+                'cta_text': cta_text,
+                'budget': float(ad.budget or 0),
+                'clicks': ad.clicks or 0,
+                'impressions': ad.impressions or 0,
+                'start_date': ad.start_date.isoformat() if ad.start_date else None,
+                'end_date': ad.end_date.isoformat() if ad.end_date else None
+            })
+
+        print(f"✅ [DEBUG] Returning {len(ads_data)} ads")
+
+        return jsonify({
+            'success': True,
+            'ads': ads_data,
+            'count': len(ads_data),
+            'timestamp': current_time.isoformat()
+        })
+
+    except Exception as e:
+        print(f"❌ [ERROR] in get_sponsored_ads: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'ads': []
+        }), 500
+
+
+@user.route("/api/ads/<int:ad_id>/impression", methods=["POST"])
+def track_ad_impression(ad_id):
+    try:
+        ad = AdCampaign.query.get(ad_id)
+        if ad:
+            # Initialize if None
+            if ad.impressions is None:
+                ad.impressions = 0
+            ad.impressions += 1
+            db.session.commit()
+            print(f"📊 Tracked impression for ad {ad_id}. Total: {ad.impressions}")
+            return jsonify({'success': True})
+        return jsonify({'success': False, 'error': 'Ad not found'}), 404
+    except Exception as e:
+        print(f"❌ Error tracking impression: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@user.route("/api/ads/<int:ad_id>/click", methods=["POST"])
+def track_ad_click(ad_id):
+    try:
+        ad = AdCampaign.query.get(ad_id)
+        if ad:
+            # Initialize if None
+            if ad.clicks is None:
+                ad.clicks = 0
+            ad.clicks += 1
+            db.session.commit()
+            print(f"📊 Tracked click for ad {ad_id}. Total: {ad.clicks}")
+            return jsonify({'success': True})
+        return jsonify({'success': False, 'error': 'Ad not found'}), 404
+    except Exception as e:
+        print(f"❌ Error tracking click: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 
 
 @user.route("/get_user_profile/<int:user_id>")

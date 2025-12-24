@@ -935,7 +935,7 @@ textarea[name="post_content"],
 
 .ad-modal-content {
     width: 90vw !important;
-    max-width: 320px !important;
+    max-width: 650px !important;
     border-radius: 16px !important;
 }
 

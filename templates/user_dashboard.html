@@ -599,6 +599,37 @@
       opacity: 0.6;
     }
   }
+
+        /* Ensure ad containers are visible */
+.nativeAd {
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: block !important;
+}
+
+#floatingAd {
+    display: block !important;
+}
+
+/* Ad animations */
+@keyframes fadeInAd {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.nativeAd {
+    animation: fadeInAd 0.5s ease-out;
+}
+
+/* Make sure ads don't get hidden by other elements */
+.nativeAd {
+    position: relative;
+    z-index: 10;
+}
+
+#floatingAd {
+    z-index: 100;
+}
 </style>
   </head>
   <body class="font-poppins bg-fb-gray text-fb-text">
@@ -2200,62 +2231,63 @@
 
   <!-- Native Content Ad -->
 
-  <div id="nativeAd" class="bg-white rounded-xl shadow-soft overflow-hidden mb-6 border border-purple-200 nativeAd">
-    <div class="p-3 sm:p-4 flex justify-between items-start">
-      <div class="flex items-center space-x-3">
-        <div
-          class="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center"
-        >
-          <i class="bi bi-award-fill text-white text-sm"></i>
-        </div>
-        <div>
-          <div class="font-semibold flex items-center text-xs sm:text-sm">
-            <span id="nativeAdAdvertiser">Featured Partner</span>
-            <span
-              class="ml-2 bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium"
-            >
-              Sponsored
-            </span>
+
+  <div id="adModal"
+     class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/60 backdrop-blur-sm"
+     style="margin-top: 5rem;">
+  <div class="ad-modal-content relative mx-2 sm:mx-4 w-full max-w-lg sm:max-w-xl md:max-w-2xl rounded-3xl bg-gradient-to-br from-white to-gray-50 shadow-2xl transform transition-all duration-500 scale-95 opacity-0" style="width: 7rem;">
+
+    <!-- Close Button -->
+    <button onclick="AdSystem.closeAdModal()"
+            class="absolute -top-3 -right-3 z-10 bg-white rounded-full w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center shadow-lg hover:scale-110 transition-transform duration-200 border border-gray-200">
+      <i class="bi bi-x-lg text-gray-600 text-xs sm:text-sm"></i>
+    </button>
+
+    <!-- Ad Content -->
+    <div class="ad-body p-4 sm:p-6" >
+      <div class="flex flex-col md:flex-row gap-4 sm:gap-6 items-center">
+
+        <!-- Ad Image -->
+        <div class="flex-shrink-0 w-full md:w-2/5">
+          <div class="relative rounded-2xl overflow-hidden aspect-square bg-gradient-to-br from-blue-500 to-purple-600">
+            <img id="adModalImage" src="" alt="Ad" class="w-full h-full object-cover">
+            <div class="absolute top-3 left-3">
+              <span class="bg-yellow-400 text-yellow-900 px-2 py-1 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wide shadow-lg">
+                Sponsored
+              </span>
+            </div>
           </div>
-          <div class="text-xs text-gray-400">Advertisement</div>
+        </div>
+
+        <!-- Ad Text -->
+        <div class="flex-1 text-center md:text-left">
+          <h3 id="adModalTitle" class="text-xl sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-3 leading-tight" style="font-size: 1.4rem;"></h3>
+          <p id="adModalDescription" class="text-gray-600 mb-3 sm:mb-4 leading-relaxed text-sm sm:text-base"></p>
+
+          <!-- CTA Buttons -->
+          <div class="flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
+            <a id="adModalLink" href="#" target="_blank"
+               class="inline-flex items-center justify-center px-5 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm sm:text-base font-semibold rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
+              <span id="adModalCTA" ></span>
+              <i class="bi bi-arrow-up-right ml-2"></i>
+            </a>
+
+            <button onclick="adNotInterested()"
+                    class="inline-flex items-center justify-center px-5 sm:px-6 py-2.5 sm:py-3 bg-gray-100 text-gray-600 font-medium rounded-xl hover:bg-gray-200 transition-all duration-300 text-sm sm:text-base">
+              <i class="bi bi-hand-thumbs-down mr-2"></i>
+              Not Interested
+            </button>
+          </div>
+
+          <!-- Advertiser Info -->
+          <div class="mt-4 pt-3 sm:pt-4 border-t border-gray-200">
+            <p class="text-[10px] sm:text-xs text-gray-500">Advertisement • You can close this ad</p>
+          </div>
         </div>
       </div>
-    </div>
-
-    <div class="px-3 sm:px-4 pb-3">
-      <h3
-        id="nativeAdTitle"
-        class="font-bold text-base sm:text-lg mb-1 sm:mb-2 text-gray-900"
-      ></h3>
-      <p
-        id="nativeAdDescription"
-        class="text-gray-700 text-xs sm:text-sm mb-2 sm:mb-3"
-      ></p>
-
-      <!-- Ad Image -->
-      <div
-        class="rounded-xl overflow-hidden mb-3 bg-gradient-to-br from-blue-50 to-purple-50"
-      >
-        <img
-          id="nativeAdImage"
-          src=""
-          alt="Ad"
-          class="w-full h-32 sm:h-48 object-cover"
-        />
-      </div>
-
-      <!-- CTA -->
-      <a
-        href="#"
-        target="_blank"
-        id="nativeAdLink"
-        class="inline-flex items-center justify-center w-full py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl text-sm sm:text-base hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105"
-      >
-        <span id="nativeAdCTA">Learn More</span>
-        <i class="bi bi-arrow-up-right ml-2"></i>
-      </a>
     </div>
   </div>
+</div>
 
   <script>
     // Make current user info globally available
