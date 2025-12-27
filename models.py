@@ -767,6 +767,14 @@ class Post(db.Model):
         cascade="all, delete-orphan"
     )
 
+    emoji_data = db.Column(db.JSON, nullable=True)
+
+    def get_emoji_data(self):
+        """Get parsed emoji/sticker/GIF data"""
+        if self.emoji_data:
+            return self.emoji_data
+        return {}
+
     @property
     def comments_count(self):
         return len(self.comments) if self.comments else 0

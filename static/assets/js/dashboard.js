@@ -854,99 +854,139 @@ const FriendSystem = {
     },
 
     async acceptFriendRequest(userId, button) {
-        if (!button) return;
+    if (!button) return;
 
-        const container = button.closest('.suggestion-card') || button.closest('.profile-actions');
-        const originalHTML = container ? container.innerHTML : null;
+    const container = button.closest('.suggestion-card') || button.closest('.profile-actions') || document.getElementById('profileActions');
 
-        Loader.quick(button, 'show');
+    Loader.quick(button, 'show');
 
-        try {
-            const response = await fetch(`/accept_friend_request/${userId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken
-                }
-            });
+    try {
+        // Get notification ID if it exists (from notification dropdown)
+        const notificationId = button.closest('.notification-item')?.dataset?.notificationId ||
+                               button.dataset.notificationId || null;
 
-            const data = await response.json();
+        const response = await fetch(`/accept_friend_request/${userId}`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken || '',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                notification_id: notificationId || null
+            })
+        });
 
-            if (data.success) {
-                // Update UI to show "Friends" status
-                if (container) {
-                    container.innerHTML = `
-                        <button
-                            class="w-full py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
-                            onclick="event.stopPropagation(); Messenger.startChat(${userId})"
-                        >
-                            <i class="bi bi-chat-dots mr-1"></i> Message
-                        </button>
-                    `;
-                }
-
-                Toast.show('Friend request accepted!', 'success');
-
-                // Update the profile modal
-                this.updateProfileModalButton(userId, 'friends');
-            } else {
-                Toast.show(data.error || 'Failed to accept request', 'danger');
-            }
-        } catch (error) {
-            console.error('Error accepting friend request:', error);
-            Toast.show('Network error. Please try again.', 'danger');
-        } finally {
-            Loader.quick(button, 'hide');
+        // Check content type safely
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            console.error('Non-JSON response:', text);
+            throw new Error('Server error (possible login issue or bad request)');
         }
-    },
 
-    async declineFriendRequest(userId, button) {
-        if (!button) return;
+        const data = await response.json();
 
-        const container = button.closest('.suggestion-card') || button.closest('.profile-actions');
-        const originalHTML = container ? container.innerHTML : null;
-
-        Loader.quick(button, 'show');
-
-        try {
-            const response = await fetch(`/decline_friend_request/${userId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken
-                }
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                // Update UI to show "Add Friend" again
-                if (container) {
-                    container.innerHTML = `
-                        <button
-                            class="btn-add-friend w-full py-2 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
-                            onclick="event.stopPropagation(); FriendSystem.add(${userId}, this)"
-                            style="background: linear-gradient(135deg, #5a4500, #b88900);"
-                        >
-                            <i class="bi bi-person-plus mr-1"></i> Connect
-                        </button>
-                    `;
-                }
-
-                Toast.show('Friend request declined', 'info');
-
-                // Update the profile modal
-                this.updateProfileModalButton(userId, 'none');
-            } else {
-                Toast.show(data.error || 'Failed to decline request', 'danger');
+        if (data.success) {
+            // Update suggestion card or profile actions
+            if (container) {
+                container.innerHTML = `
+                    <button class="w-full py-2.5 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+                            onclick="event.stopPropagation(); Messenger.startChat(${userId})">
+                        <i class="bi bi-chat-dots"></i> Message
+                    </button>
+                `;
             }
-        } catch (error) {
-            console.error('Error declining friend request:', error);
-            Toast.show('Network error. Please try again.', 'danger');
-        } finally {
-            Loader.quick(button, 'hide');
+
+            Toast.show('Friend request accepted!', 'success');
+
+            // Refresh profile modal buttons if open
+            if (typeof ProfileSystem !== 'undefined') {
+                ProfileSystem.updateProfileActions(userId);
+            }
+
+            // Update notification badge
+            if (typeof NotificationSystem !== 'undefined') {
+                NotificationSystem.updateBadge();
+            }
+        } else {
+            Toast.show(data.error || 'Failed to accept request', 'danger');
         }
-    },
+    } catch (error) {
+        console.error('Error accepting friend request:', error);
+        Toast.show('Failed to accept. Please try again.', 'danger');
+    } finally {
+        Loader.quick(button, 'hide');
+    }
+},
+
+
+async declineFriendRequest(userId, button) {
+    if (!button) return;
+
+    const container = button.closest('.suggestion-card') || button.closest('.profile-actions');
+
+    Loader.quick(button, 'show');
+
+    try {
+        // Get notification ID if it exists
+        const notificationId = button.closest('.notification-item')?.dataset?.notificationId ||
+                               button.dataset.notificationId || null;
+
+        const response = await fetch(`/decline_friend_request/${userId}`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken || '',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                notification_id: notificationId || null
+            })
+        });
+
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            console.error('Server returned non-JSON:', text.substring(0, 500));
+            throw new Error('Server error - please check login status');
+        }
+
+        const data = await response.json();
+
+        if (data.success) {
+            if (container) {
+                container.innerHTML = `
+                    <button
+                        class="btn-add-friend w-full py-2 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                        onclick="event.stopPropagation(); FriendSystem.add(${userId}, this)"
+                        style="background: linear-gradient(135deg, #5a4500, #b88900);"
+                    >
+                        <i class="bi bi-person-plus mr-1"></i> Connect
+                    </button>
+                `;
+            }
+
+            Toast.show('Friend request declined', 'info');
+
+            if (typeof ProfileSystem !== 'undefined') {
+                ProfileSystem.updateProfileActions(userId);
+            }
+
+            // Update notification badge
+            if (typeof NotificationSystem !== 'undefined') {
+                NotificationSystem.updateBadge();
+            }
+        } else {
+            Toast.show(data.error || 'Failed to decline request', 'danger');
+        }
+    } catch (error) {
+        console.error('Error declining friend request:', error);
+        Toast.show('Failed to decline request. Check login status.', 'danger');
+    } finally {
+        Loader.quick(button, 'hide');
+    }
+},
+
+
 
     updateProfileModalButton(userId, status) {
         const profileActions = document.getElementById('profileActions');
@@ -1046,7 +1086,7 @@ window.declineFriendRequest = function(userId, button) {
 // ========================================
 
 const ProfileSystem = {
-    async openProfileModal(userId) {
+    async openProfileModal(userId, fromFriendRequestNotification = false) {
         try {
             const modalBody = document.getElementById('profileModalBody');
             const profileActions = document.getElementById('profileActions');
@@ -1112,7 +1152,7 @@ const ProfileSystem = {
             }
 
             console.log('Profile data loaded successfully:', data);
-            this.displayProfileModal(data, userId);
+            this.displayProfileModal(data, userId, fromFriendRequestNotification);
 
         } catch (error) {
             console.error('Error loading profile:', error);
@@ -1126,7 +1166,7 @@ const ProfileSystem = {
                         <p class="text-lg font-medium mb-2">Failed to load profile</p>
                         <p class="text-sm text-gray-600 mb-4">${error.message}</p>
                         <div class="flex space-x-2">
-                            <button onclick="ProfileSystem.openProfileModal(${userId})"
+                            <button onclick="ProfileSystem.openProfileModal(${userId}, false)"
                                     class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                                 Try Again
                             </button>
@@ -1143,7 +1183,7 @@ const ProfileSystem = {
         }
     },
 
-    displayProfileModal(data, userId) {
+    displayProfileModal(data, userId, fromFriendRequestNotification = false) {
         const modalBody = document.getElementById('profileModalBody');
         const profileActions = document.getElementById('profileActions');
 
@@ -1286,15 +1326,35 @@ const ProfileSystem = {
                 </div>
             `;
 
-            // Determine friend status and set appropriate buttons
-            this.updateProfileActions(userId);
+            // Set action buttons based on how the modal was opened
+            if (fromFriendRequestNotification) {
+                profileActions.innerHTML = `
+                    <div class="flex flex-wrap gap-4 justify-center py-6">
+                        <button class="px-8 py-3.5 bg-green-600 text-white text-lg font-medium rounded-xl hover:bg-green-700 transition-all shadow-lg flex items-center gap-2"
+                                onclick="FriendSystem.acceptFriendRequest(${userId}, this)">
+                            <i class="bi bi-check-lg text-xl"></i> Accept
+                        </button>
+                        <button class="px-8 py-3.5 bg-red-600 text-white text-lg font-medium rounded-xl hover:bg-red-700 transition-all shadow-lg flex items-center gap-2"
+                                onclick="FriendSystem.declineFriendRequest(${userId}, this)">
+                            <i class="bi bi-x-lg text-xl"></i> Decline
+                        </button>
+                        <button class="px-8 py-3.5 bg-gray-300 text-gray-800 text-lg font-medium rounded-xl hover:bg-gray-400 transition-all"
+                                onclick="Modal.close('profileModal')">
+                            Cancel
+                        </button>
+                    </div>
+                `;
+            } else {
+                this.updateProfileActions(userId);
+            }
 
         } catch (error) {
             console.error('Error displaying profile modal:', error);
             modalBody.innerHTML = `
-                <div class="text-center p-8 text-red-500">
-                    <i class="bi bi-exclamation-triangle text-3xl mb-3"></i>
-                    <p>Error displaying profile data</p>
+                <div class="text-center p-8 text-red-500 min-h-[400px] flex flex-col items-center justify-center">
+                    <i class="bi bi-exclamation-triangle text-5xl mb-4"></i>
+                    <p class="text-xl font-medium">Error displaying profile</p>
+                    <p class="text-sm mt-2 text-gray-600">${error.message || 'Unknown error'}</p>
                 </div>
             `;
         }
@@ -1516,53 +1576,62 @@ const NotificationSystem = {
             const isFriendRequest = notification.type === 'friend_request';
 
             return `
-                <div class="notification-item p-3 border-b border-gray-100 ${notification.is_read ? '' : 'bg-blue-50 border-l-4 border-l-blue-500'}"
-                    ${!isFriendRequest ? `onclick="NotificationSystem.handleClick(${notification.id}, '${notification.type}', ${notification.entity_id || 0})"` : ''}>
+                            <div class="notification-item p-3 border-b border-gray-100 ${notification.is_read ? '' : 'bg-blue-50 border-l-4 border-l-blue-500'} cursor-pointer"
+                onclick="NotificationSystem.handleNotificationClick(event, ${notification.id}, '${notification.type}', ${actorId || 0})">
 
-                    <div class="flex items-start space-x-3">
-                        <img src="${actorAvatar}" alt="${actorName}" class="w-10 h-10 rounded-full object-cover"
-                             onerror="this.src='${window.defaultAvatar || '/static/assets/img/default-avatar.png'}'">
-                        <div class="flex-1">
-                            <div class="notification-text text-sm">${notification.message || ''}</div>
-                            <div class="notification-time text-xs text-gray-500 mt-1">${TimeUtils.formatNotificationTime(notification.created_at)}</div>
-                            ${isFriendRequest ? `
-                            <div class="notification-actions flex space-x-2 mt-2">
-                                ${!notification.is_read && actorId ? `
-                                    <button class="notification-action-btn px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors"
-                                            onclick="event.stopPropagation(); NotificationSystem.acceptFriendRequest(${actorId}, ${notification.id})">
-                                            Accept
-                                    </button>
-                                    <button class="notification-action-btn px-3 py-1 bg-gray-200 text-gray-700 text-xs rounded-lg hover:bg-gray-300 transition-colors"
-                                            onclick="event.stopPropagation(); NotificationSystem.declineFriendRequest(${actorId}, ${notification.id})">
-                                            Decline
-                                    </button>
-                                ` : `<small class="text-gray-500 text-xs">Request pending</small>`}
-                            </div>
-                            ` : ''}
+                <div class="flex items-start space-x-3">
+                    <img src="${actorAvatar}" alt="${actorName}" class="w-10 h-10 rounded-full object-cover"
+                         onerror="this.src='${window.defaultAvatar || '/static/assets/img/default-avatar.png'}'">
+                    <div class="flex-1">
+                        <div class="notification-text text-sm">${notification.message || ''}</div>
+                        <div class="notification-time text-xs text-gray-500 mt-1">${TimeUtils.formatNotificationTime(notification.created_at)}</div>
+                        ${isFriendRequest ? `
+                        <div class="notification-actions flex space-x-2 mt-2">
+                            ${!notification.is_read && actorId ? `
+                                <button class="notification-action-btn px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors"
+                                        onclick="event.stopPropagation(); NotificationSystem.acceptFriendRequest(${actorId}, ${notification.id})">
+                                        Accept
+                                </button>
+                                <button class="notification-action-btn px-3 py-1 bg-gray-200 text-gray-700 text-xs rounded-lg hover:bg-gray-300 transition-colors"
+                                        onclick="event.stopPropagation(); NotificationSystem.declineFriendRequest(${actorId}, ${notification.id})">
+                                        Decline
+                                </button>
+                            ` : `<small class="text-gray-500 text-xs">Request handled</small>`}
                         </div>
+                        ` : ''}
                     </div>
                 </div>
+            </div>
             `;
         }).join('');
     },
 
-    async handleClick(id, type, entityId) {
-        await this.markAsRead(id);
+    async handleNotificationClick(event, id, type, actorId) {
+    // Prevent action if clicked on Accept/Decline buttons in notification
+    if (event.target.closest('.notification-action-btn')) {
+        return;
+    }
 
-        switch (type) {
-            case 'friend_request':
-            case 'friend_accepted':
-            case 'profile_update':
-                ProfileSystem.openProfileModal(entityId);
-                break;
-            case 'post_like':
-            case 'new_comment':
-                this.scrollToPost(entityId);
-                break;
-        }
+    // Mark as read
+    await this.markAsRead(id);
 
-        const dropdownMenu = document.getElementById('notificationDropdownMenu');
-        if (dropdownMenu) dropdownMenu.classList.add('hidden');
+    let openFromFriendRequest = false;
+
+    // Special case: if it's a friend request notification, remember that
+    if (type === 'friend_request' && actorId) {
+        openFromFriendRequest = true;
+    }
+
+    // Open profile modal with extra context
+    ProfileSystem.openProfileModal(actorId, openFromFriendRequest);
+
+    // Close dropdown
+    const dropdownElement = document.getElementById('notificationDropdown');
+    const bsDropdown = bootstrap.Dropdown.getInstance(dropdownElement);
+    if (bsDropdown) {
+        bsDropdown.hide();
+    }
+
     },
 
     async markAsRead(id) {

@@ -630,6 +630,46 @@
 #floatingAd {
     z-index: 100;
 }
+
+        /* Tooltip styling for composer buttons */
+.composer-btn {
+  position: relative;
+}
+
+.composer-btn .tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #374151; /* gray-700 */
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease-in-out;
+  z-index: 10;
+  margin-bottom: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.composer-btn .tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 4px;
+  border-style: solid;
+  border-color: #374151 transparent transparent transparent;
+}
+
+.composer-btn:hover .tooltip {
+  opacity: 1;
+  visibility: visible;
+}
 </style>
   </head>
   <body class="font-poppins bg-fb-gray text-fb-text">
@@ -1336,34 +1376,30 @@
         </div>
         <div class="flex justify-between pt-2 border-t border-fb-border">
           <!-- Live Video -->
-          <button
-            class="composer-btn flex items-center justify-center flex-1 py-1.5 sm:py-2 rounded-lg hover:bg-fb-gray transition-colors text-fb-text-light font-medium text-xs sm:text-sm"
-            data-bs-toggle="modal"
-            data-bs-target="#postModal"
-          >
-            <i
-              class="bi bi-camera-video-fill text-red-500 text-base sm:text-lg"
-            ></i>
-            <span class="hidden sm:inline ml-1 sm:ml-2">Live Video</span>
-          </button>
+         <button
+  class="composer-btn flex items-center justify-center flex-1 py-1.5 sm:py-2 rounded-lg hover:bg-fb-gray transition-colors text-fb-text-light font-medium text-xs sm:text-sm relative"
+  data-bs-toggle="modal"
+  data-bs-target="#postModal"
+>
+  <i class="bi bi-camera-video-fill text-red-500 text-base sm:text-lg"></i>
+  <span class="tooltip">Video</span>
+</button>
 
           <!-- Photo/Video -->
           <button
-            class="composer-btn flex items-center justify-center flex-1 py-1.5 sm:py-2 rounded-lg hover:bg-fb-gray transition-colors text-fb-text-light font-medium text-xs sm:text-sm"
-            onclick="document.getElementById('photoInput').click()"
-          >
-            <i
-              class="bi bi-image-fill text-green-500 text-base sm:text-lg"
-            ></i>
-            <span class="hidden sm:inline ml-1 sm:ml-2">Photo/Video</span>
-            <input
-              type="file"
-              id="photoInput"
-              accept="image/*,video/*"
-              hidden
-              onchange="previewMedia(this)"
-            />
-          </button>
+  class="composer-btn flex items-center justify-center flex-1 py-1.5 sm:py-2 rounded-lg hover:bg-fb-gray transition-colors text-fb-text-light font-medium text-xs sm:text-sm relative"
+  onclick="document.getElementById('photoInput').click()"
+>
+  <i class="bi bi-image-fill text-green-500 text-base sm:text-lg"></i>
+  <span class="tooltip">Photo</span>
+  <input
+    type="file"
+    id="photoInput"
+    accept="image/*,video/*"
+    hidden
+    onchange="previewMedia(this)"
+  />
+</button>
 
           <!-- Feeling/Activity -->
         </div>
