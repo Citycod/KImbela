@@ -341,13 +341,16 @@ def user_dashboard():
                 video=video_url,
                 author_id=current_user.id,
                 created_at=datetime.utcnow(),
-                emoji_data=emoji_info,  # Store as JSON
-                likes_count=0,
-                comments_count=0
+                emoji_data=emoji_info
             )
 
-            db.session.add(new_post)
-            db.session.commit()
+            try:
+                db.session.add(new_post)
+                db.session.commit()
+                print(f"✅ Post saved with ID: {new_post.id}")
+            except Exception as e:
+                db.session.rollback()
+                print(f"❌ DB error while saving post: {e}")
 
             # Create notification for post followers (optional)
             # You can add notification logic here

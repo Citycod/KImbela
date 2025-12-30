@@ -670,6 +670,323 @@
   opacity: 1;
   visibility: visible;
 }
+
+
+
+        /* Enhanced Chat Styles */
+#messengerPopup {
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15),
+              0 0 0 1px rgba(255, 255, 255, 0.1),
+              inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Tab Animation */
+.tab-button.active {
+  @apply text-blue-600 border-blue-500;
+  background: linear-gradient(to right, rgba(59, 130, 246, 0.1), transparent);
+}
+
+/* Message Bubbles */
+.message-bubble {
+  max-width: 70%;
+  position: relative;
+  animation: messageSlideIn 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+
+.message-bubble.sent {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  color: white;
+  border-radius: 18px 4px 18px 18px;
+  margin-left: auto;
+}
+
+.message-bubble.received {
+  background: white;
+  color: #374151;
+  border-radius: 4px 18px 18px 18px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e5e7eb;
+}
+
+.message-time {
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+/* Message Status Indicators */
+.message-status {
+  font-size: 10px;
+}
+
+.message-status.delivered {
+  color: #10b981;
+}
+
+.message-status.read {
+  color: #3b82f6;
+}
+
+/* Smooth Animations */
+@keyframes messageSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+/* Typing Animation */
+.typing-dot {
+  width: 8px;
+  height: 8px;
+  background: #3b82f6;
+  border-radius: 50%;
+  display: inline-block;
+  animation: typing 1.4s infinite both;
+}
+
+.typing-dot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.typing-dot:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes typing {
+  0%, 80%, 100% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1);
+  }
+}
+
+/* Gradient Text */
+.gradient-text {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Enhanced Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #3b82f6, #8b5cf6);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #2563eb, #7c3aed);
+}
+
+/* Hover Effects */
+.hover-lift {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+}
+
+/* Glass Morphism */
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Message Reactions */
+.message-reaction {
+  position: absolute;
+  bottom: -8px;
+  right: -8px;
+  background: white;
+  border-radius: 12px;
+  padding: 2px 6px;
+  font-size: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  animation: popIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Voice Message Waveform */
+.voice-waveform {
+  height: 40px;
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+  border-radius: 20px;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.voice-waveform .bar {
+  width: 2px;
+  background: linear-gradient(180deg, #3b82f6, #8b5cf6);
+  border-radius: 1px;
+  animation: wave 1s ease-in-out infinite;
+}
+
+@keyframes wave {
+  0%, 100% {
+    height: 4px;
+  }
+  50% {
+    height: 20px;
+  }
+}
+
+/* Message Seen Indicator */
+.seen-by {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-top: 2px;
+}
+
+.seen-by img {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid white;
+}
+
+/* Message Options Hover */
+.message-options {
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.message-bubble:hover .message-options {
+  opacity: 1;
+}
+
+/* Attachment Preview */
+.attachment-preview {
+  background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+  border-radius: 12px;
+  padding: 12px;
+  margin-top: 8px;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Online Status Pulse */
+.status-pulse {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+/* Chat Transition */
+.chat-transition-enter {
+  opacity: 0;
+  transform: translateX(20px);
+}
+
+.chat-transition-enter-active {
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+.chat-transition-exit {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.chat-transition-exit-active {
+  opacity: 0;
+  transform: translateX(-20px);
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+.custom-scrollbar {
+  scroll-behavior: smooth;
+}
+
+        /* Add to your existing styles */
+#friendList {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+#chatArea {
+    display: none;
+}
+
+#chatArea:not(.hidden) {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
 </style>
   </head>
   <body class="font-poppins bg-fb-gray text-fb-text">
@@ -810,155 +1127,339 @@
 
 
   <!-- Messenger Popup - IMPROVED VERSION -->
-  <div
-    id="messengerPopup"
-    class="fixed bottom-4 right-4 w-80 sm:w-96 h-[500px] bg-white rounded-xl shadow-2xl z-50 hidden flex-col border border-gray-200"
-  >
-    <!-- Header -->
-    <div
-      class="flex-none p-3 border-b bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-t-xl"
-    >
-      <div class="flex items-center justify-between">
-        <div class="flex items-center">
-          <h3 class="font-semibold text-sm sm:text-base">Messenger</h3>
-          <span
-            id="unreadChatsBadge"
-            class="ml-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden"
-            >0</span
-          >
-        </div>
-        <div class="flex items-center space-x-2">
-          <button
-            onclick="markAllAsRead()"
-            class="text-white hover:bg-blue-700 p-1 rounded text-xs"
-            title="Mark all as read"
-          >
-            <i class="bi bi-check-all"></i>
-          </button>
-          <button
-            onclick="closeMessenger()"
-            class="text-white hover:bg-blue-700 p-1 rounded"
-          >
-            <i class="bi bi-x-lg"></i>
-          </button>
-        </div>
-      </div>
+  <!-- Messenger Popup - PREMIUM VERSION -->
+<div id="messengerPopup"
+     class="fixed bottom-4 right-4 w-[380px] max-h-[50px] bg-white rounded-2xl shadow-2xl z-50 hidden flex flex-col border-0 overflow-hidden transform transition-all duration-300 scale-95 opacity-0 group hover:scale-100">
+
+  <!-- Premium Header with Gradient -->
+  <div class="flex-none p-4 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-500 text-white rounded-t-2xl relative overflow-hidden">
+    <!-- Animated background elements -->
+    <div class="absolute top-0 left-0 w-full h-full opacity-10">
+      <div class="absolute top-4 left-4 w-20 h-20 bg-white rounded-full"></div>
+      <div class="absolute bottom-4 right-4 w-32 h-32 bg-white rounded-full"></div>
     </div>
 
-    <!-- Friends List Container -->
-    <div id="friendList" class="flex-1 overflow-y-auto">
-      <div id="friendsContainer" class="p-2">
-        <div class="text-center p-4 text-gray-500">
-          <div
-            class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"
-          ></div>
-          <p class="mt-2 text-sm">Loading conversations...</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Chat Area -->
-    <div id="chatArea" class="flex-1 flex flex-col hidden">
-      <!-- Chat Header -->
-      <div
-        class="flex-none p-3 border-b bg-gray-50 flex items-center justify-between"
-      >
-        <div class="flex items-center">
-          <button
-            onclick="backToFriends()"
-            class="p-1 mr-2 rounded-full hover:bg-gray-200"
-          >
-            <i class="bi bi-arrow-left"></i>
-          </button>
-          <img id="chatAvatar" src="" class="w-8 h-8 rounded-full mr-2" />
-          <div>
-            <p id="chatName" class="font-medium text-sm"></p>
-<!--            <p id="chatStatus" class="text-xs text-green-600">Online</p>-->
+    <div class="flex items-center justify-between relative z-10">
+      <div class="flex items-center space-x-3">
+        <div class="relative">
+          <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+            <i class="bi bi-chat-dots-fill text-xl"></i>
           </div>
+          <span id="unreadChatsBadge"
+                class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center shadow-lg animate-pulse hidden">
+            0
+          </span>
         </div>
-        <div class="flex items-center space-x-2">
-          <button
-            onclick="loadMoreMessages()"
-            class="text-xs text-blue-600 hover:text-blue-800 p-1"
-            title="Load older messages"
-          >
-<!--            <i class="bi bi-arrow-clockwise"></i>-->
-          </button>
-          <button
-            onclick="clearChat()"
-            class="text-xs text-gray-600 hover:text-red-600 p-1"
-            title="Clear chat"
-          >
-            <i class="bi bi-trash"></i>
-          </button>
+        <div>
+          <h3 class="font-bold text-lg tracking-tight">Messages</h3>
+          <p class="text-blue-100 text-xs opacity-80">Connect instantly</p>
         </div>
       </div>
 
-      <!-- Messages Container with Max Height -->
-      <div
-        class="flex-1 overflow-y-auto p-3 bg-gray-50"
-        id="chatMessagesWrapper"
-        style="max-height: 200px"
-      >
-        <div id="messagesLoading" class="hidden text-center py-4">
-          <div
-            class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"
-          ></div>
-          <p class="text-xs text-gray-500 mt-2">Loading messages...</p>
-        </div>
-        <div id="chatMessages" class="space-y-2"></div>
-        <div id="noMessages" class="hidden text-center py-8 text-gray-400">
-          <i class="bi bi-chat-dots text-2xl mb-2"></i>
-          <p class="text-sm">No messages yet</p>
-          <p class="text-xs">Start the conversation!</p>
-        </div>
-      </div>
+      <div class="flex items-center space-x-2">
+        <!-- Video Call Button -->
+        <button onclick="startVideoCall()"
+                class="p-2 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-sm transition-all duration-300 transform hover:scale-110"
+                title="Video call">
+          <i class="bi bi-camera-video text-sm"></i>
+        </button>
 
-      <!-- Typing Indicator -->
-      <div id="typingIndicator" class="hidden px-3 py-2 bg-gray-50 border-t">
-        <div class="flex items-center space-x-2 text-gray-500">
-          <div class="flex space-x-1">
-            <div
-              class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-            ></div>
-            <div
-              class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-              style="animation-delay: 0.1s"
-            ></div>
-            <div
-              class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-              style="animation-delay: 0.2s"
-            ></div>
-          </div>
-          <span id="typingUserName" class="text-xs"></span>
-<!--          <span class="text-xs">is typing...</span>-->
-        </div>
-      </div>
+        <!-- Settings Button -->
+        <button onclick="toggleChatSettings()"
+                class="p-2 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-sm transition-all duration-300 transform hover:scale-110"
+                title="Settings">
+          <i class="bi bi-gear text-sm"></i>
+        </button>
 
-      <!-- Message Input -->
-      <div class="border-t bg-white p-3">
-        <div class="flex items-center space-x-2">
-          <button class="p-2 text-gray-500 hover:text-blue-600">
-<!--            <i class="bi bi-emoji-smile"></i>-->
-          </button>
-          <input
-            type="text"
-            id="chatInput"
-            placeholder="Type a message..."
-            class="flex-1 px-4 py-2 bg-gray-100 rounded-full text-sm border-0 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            oninput="handleTyping()"
-          />
-          <button
-            id="sendChatBtn"
-            onclick="sendMessage()"
-            class="bg-blue-600 text-white px-4 py-2 rounded-full text-sm hover:bg-blue-700 transition-colors"
-          >
-            Send
-          </button>
-        </div>
+        <!-- Close Button -->
+        <button onclick="closeMessenger()"
+                class="p-2 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-sm transition-all duration-300 transform hover:scale-110"
+                title="Close">
+          <i class="bi bi-x-lg text-sm"></i>
+        </button>
       </div>
     </div>
   </div>
+
+  <!-- Tab Navigation -->
+
+
+  <!-- Search Bar -->
+
+
+  <!-- Tab Content -->
+  <div class="flex-1 overflow-y-auto flex flex-col">
+    <!-- Friends List (Chats Tab) -->
+     <div id="friendList" class="flex-1 overflow-y-auto flex flex-col" data-tab="chats">
+      <div id="friendsContainer" class="p-2 space-y-1">
+        <!-- Loading State -->
+        <div class="flex flex-col items-center justify-center p-8 text-gray-500">
+          <div class="relative mb-4">
+            <div class="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+            <div class="absolute inset-0 flex items-center justify-center">
+              <i class="bi bi-chat-dots text-blue-600 text-xl"></i>
+            </div>
+          </div>
+          <p class="text-sm font-medium text-gray-600">Loading conversations...</p>
+          <p class="text-xs mt-1 text-gray-400">Getting your messages ready</p>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div id="noChats" class="hidden flex-col items-center justify-center p-8 text-gray-400">
+        <div class="w-16 h-16 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full flex items-center justify-center mb-4">
+          <i class="bi bi-chat-dots text-2xl text-gray-400"></i>
+        </div>
+        <p class="text-sm font-medium text-gray-500">No conversations yet</p>
+        <p class="text-xs mt-1">Start a conversation with friends!</p>
+        <button onclick="suggestFriends()"
+                class="mt-4 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-sm rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all duration-300 transform hover:scale-105">
+          <i class="bi bi-plus-circle mr-2"></i>
+          Find Friends
+        </button>
+      </div>
+    </div>
+
+
+  </div>
+
+  <!-- Active Chat Area (Hidden by default) -->
+  <div id="chatArea" class="flex flex-col hidden bg-gradient-to-b from-gray-50 to-white max-h-[30px]">
+
+
+    <!-- Chat Header -->
+    <div class="flex-none p-4 border-b border-gray-100 bg-white/95 backdrop-blur-sm flex items-center justify-between shadow-sm">
+      <div class="flex items-center space-x-3">
+        <button onclick="backToFriends()"
+                class="p-2 rounded-full hover:bg-gray-100 transition-all duration-300 transform hover:rotate-90">
+          <i class="bi bi-arrow-left text-gray-600"></i>
+        </button>
+
+        <!-- User Avatar with Online Status -->
+
+
+        <div class="flex-1 min-w-0">
+  <div class="flex items-center space-x-2">
+    <h4 id="chatName" class="font-bold text-gray-900 truncate"></h4>
+    <span id="chatVerified" class="hidden">
+      <i class="bi bi-patch-check-fill text-blue-500 text-sm"></i>
+    </span>
+  </div>
+  <p id="chatLastSeen" class="text-xs text-gray-500 mt-0.5"></p>
+</div>
+      </div>
+
+      <!-- Chat Actions -->
+      <div class="flex items-center space-x-1">
+        <!-- Call Button -->
+<!--        <button onclick="startVoiceCall()"-->
+<!--                class="p-2.5 rounded-full hover:bg-blue-50 text-blue-600 transition-all duration-300 transform hover:scale-110"-->
+<!--                title="Voice call">-->
+<!--          <i class="bi bi-telephone-fill text-sm"></i>-->
+<!--        </button>-->
+
+        <!-- Video Call Button -->
+<!--        <button onclick="startVideoCall()"-->
+<!--                class="p-2.5 rounded-full hover:bg-purple-50 text-purple-600 transition-all duration-300 transform hover:scale-110"-->
+<!--                title="Video call">-->
+<!--          <i class="bi bi-camera-video-fill text-sm"></i>-->
+<!--        </button>-->
+
+        <!-- More Options -->
+<!--        <div class="dropdown relative">-->
+<!--          <button class="p-2.5 rounded-full hover:bg-gray-100 text-gray-600 transition-all duration-300"-->
+<!--                  onclick="toggleChatOptions()">-->
+<!--            <i class="bi bi-three-dots-vertical"></i>-->
+<!--          </button>-->
+<!--          <div class="dropdown-menu absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-2xl border border-gray-200 hidden z-10">-->
+<!--            <button onclick="viewProfile()"-->
+<!--                    class="w-full text-left px-4 py-3 hover:bg-gray-50 rounded-t-xl flex items-center space-x-2">-->
+<!--              <i class="bi bi-person text-gray-500"></i>-->
+<!--              <span class="text-sm">View Profile</span>-->
+<!--            </button>-->
+<!--            <button onclick="clearChat()"-->
+<!--                    class="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center space-x-2">-->
+<!--              <i class="bi bi-trash text-gray-500"></i>-->
+<!--              <span class="text-sm">Clear Chat</span>-->
+<!--            </button>-->
+<!--            <button onclick="muteChat()"-->
+<!--                    class="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center space-x-2">-->
+<!--              <i class="bi bi-bell-slash text-gray-500"></i>-->
+<!--              <span class="text-sm">Mute Notifications</span>-->
+<!--            </button>-->
+<!--            <button onclick="blockUser()"-->
+<!--                    class="w-full text-left px-4 py-3 hover:bg-gray-50 rounded-b-xl text-red-600 flex items-center space-x-2">-->
+<!--              <i class="bi bi-slash-circle text-red-500"></i>-->
+<!--              <span class="text-sm">Block User</span>-->
+<!--            </button>-->
+<!--          </div>-->
+<!--        </div>-->
+      </div>
+    </div>
+
+    <!-- Messages Container -->
+    <div id="chatMessagesWrapper"
+         class="flex-1 overflow-y-auto p-4 bg-gradient-to-b from-white to-gray-50/30 custom-scrollbar"
+         onscroll="handleMessageScroll()">
+      <!-- Date Separator -->
+      <div class="flex justify-center mb-4">
+        <span class="px-3 py-1 bg-gray-100 text-gray-500 text-xs rounded-full">Today</span>
+      </div>
+
+      <!-- Loading More Messages -->
+      <div id="messagesLoading" class="hidden flex-col items-center justify-center py-4">
+        <div class="flex space-x-1">
+          <div class="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
+          <div class="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+          <div class="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+        </div>
+        <p class="text-xs text-gray-500 mt-2">Loading messages...</p>
+      </div>
+
+      <!-- Messages Container -->
+      <div id="chatMessages" class="space-y-2"></div>
+
+      <!-- Empty State -->
+      <div id="noMessages" class="hidden flex-col items-center justify-center py-12 text-gray-400">
+        <div class="w-20 h-20 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full flex items-center justify-center mb-4">
+          <i class="bi bi-chat-dots text-3xl text-gray-300"></i>
+        </div>
+        <p class="text-sm font-medium text-gray-500">No messages yet</p>
+        <p class="text-xs mt-1 text-gray-400">Say hello and start the conversation!</p>
+        <button onclick="sendFirstMessage()"
+                class="mt-4 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-sm rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all duration-300 transform hover:scale-105">
+          <i class="bi bi-send mr-2"></i>
+          Send First Message
+        </button>
+      </div>
+
+      <!-- Scroll to Bottom Button -->
+      <button id="scrollToBottomBtn"
+              onclick="scrollToBottom()"
+              class="fixed bottom-20 right-6 w-10 h-10 bg-white border border-gray-200 rounded-full shadow-lg flex items-center justify-center text-gray-600 hover:text-blue-600 hover:border-blue-400 transition-all duration-300 transform hover:scale-110 hidden">
+        <i class="bi bi-chevron-down"></i>
+      </button>
+    </div>
+
+    <!-- Typing Indicator -->
+    <div id="typingIndicator" class="hidden px-4 py-3 bg-white/90 backdrop-blur-sm border-t border-gray-100">
+      <div class="flex items-center space-x-3">
+        <div class="flex space-x-1">
+          <div class="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
+          <div class="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+          <div class="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+        </div>
+        <span id="typingUserName" class="text-sm text-gray-600 font-medium"></span>
+        <span class="text-sm text-gray-500">is typing</span>
+      </div>
+    </div>
+
+    <!-- Message Input Area -->
+    <div class="flex-none p-4 border-t border-gray-100 bg-white/95 backdrop-blur-sm">
+      <div class="flex items-center space-x-2">
+        <!-- Attachment Button -->
+        <div class="dropdown relative">
+          <button onclick="toggleAttachmentMenu()"
+                  class="p-2.5 rounded-full hover:bg-gray-100 text-gray-600 transition-all duration-300 transform hover:scale-110">
+            <i class="bi bi-plus-circle text-lg"></i>
+          </button>
+          <div class="dropdown-menu absolute bottom-full mb-2 w-48 bg-white rounded-xl shadow-2xl border border-gray-200 hidden z-10">
+            <button onclick="attachPhoto()"
+                    class="w-full text-left px-4 py-3 hover:bg-gray-50 rounded-t-xl flex items-center space-x-2">
+              <i class="bi bi-image text-green-500"></i>
+              <span class="text-sm">Photo/Video</span>
+            </button>
+            <button onclick="attachFile()"
+                    class="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center space-x-2">
+              <i class="bi bi-file-earmark text-blue-500"></i>
+              <span class="text-sm">Document</span>
+            </button>
+            <button onclick="recordAudio()"
+                    class="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center space-x-2">
+              <i class="bi bi-mic text-red-500"></i>
+              <span class="text-sm">Voice Message</span>
+            </button>
+            <button onclick="shareLocation()"
+                    class="w-full text-left px-4 py-3 hover:bg-gray-50 rounded-b-xl flex items-center space-x-2">
+              <i class="bi bi-geo-alt text-purple-500"></i>
+              <span class="text-sm">Location</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Emoji Button -->
+        <button onclick="toggleEmojiPicker()"
+                class="p-2.5 rounded-full hover:bg-gray-100 text-gray-600 transition-all duration-300 transform hover:scale-110">
+          <i class="bi bi-emoji-smile text-lg"></i>
+        </button>
+
+        <!-- Message Input -->
+        <div class="flex-1 relative">
+          <!-- Change this line: -->
+<textarea id="chatInput"
+          placeholder="Type a message..."
+          rows="1"
+          oninput="autoResizeTextarea(this); handleTyping()"
+          onkeypress="handleChatInputKeypress(event)"
+          class="w-full px-4 py-3 bg-gray-100 border-0 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:bg-white focus:shadow-lg transition-all duration-300 resize-none max-h-32 min-h-[44px] text-sm"
+          style="height: 44px;"></textarea>
+
+          <!-- Attachment Preview -->
+          <div id="attachmentPreview" class="mt-2 hidden"></div>
+        </div>
+
+        <!-- Send Button -->
+        <button id="sendChatBtn"
+                onclick="sendMessage()"
+                disabled
+                class="p-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg">
+          <i class="bi bi-send text-sm"></i>
+        </button>
+
+        <!-- Voice Message Button (Alternative) -->
+        <button id="voiceMessageBtn"
+                onclick="startVoiceMessage()"
+                class="p-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-full hover:from-green-600 hover:to-emerald-700 transition-all duration-300 transform hover:scale-110 hidden">
+          <i class="bi bi-mic-fill text-sm"></i>
+        </button>
+      </div>
+
+      <!-- Quick Actions -->
+
+    </div>
+  </div>
+</div>
+
+<!-- Voice Message Recorder -->
+<div id="voiceRecorder" class="fixed bottom-20 right-4 w-80 bg-white rounded-2xl shadow-2xl border border-gray-200 hidden z-50">
+  <div class="p-4">
+    <div class="flex items-center justify-between mb-3">
+      <h4 class="font-bold text-gray-900">Voice Message</h4>
+      <button onclick="closeVoiceRecorder()" class="text-gray-400 hover:text-gray-600">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <div class="flex items-center justify-center space-x-4">
+      <div class="w-16 h-16 bg-gradient-to-r from-red-100 to-pink-100 rounded-full flex items-center justify-center">
+        <i class="bi bi-mic-fill text-2xl text-red-500"></i>
+      </div>
+      <div class="flex-1">
+        <div id="recordingTimer" class="text-2xl font-bold text-gray-900">00:00</div>
+        <div class="text-xs text-gray-500 mt-1">Hold to record, release to send</div>
+      </div>
+    </div>
+    <div class="mt-4 flex justify-center">
+      <button id="recordButton"
+              onmousedown="startRecording()"
+              onmouseup="stopRecording()"
+              ontouchstart="startRecording()"
+              ontouchend="stopRecording()"
+              class="px-8 py-3 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-full hover:from-red-600 hover:to-pink-600 transition-all duration-300">
+        Hold to Record
+      </button>
+    </div>
+  </div>
+</div>
 
   <!-- MOBILE SIDEBAR -->
   <div
@@ -2044,7 +2545,7 @@
             class="text-xs text-gray-500 mt-2 text-center bg-blue-50 p-2 rounded-lg"
           >
             <i class="bi bi-info-circle mr-1 text-blue-500"></i>
-            Maximum file size: 100MB. Supported: Images (JPG, PNG, GIF, WebP)
+            Maximum file size: 100MB. Supported: Images (JPG, PNG, GIF)
             and Videos (MP4, WebM, OGG, MOV)
           </div>
         </div>
