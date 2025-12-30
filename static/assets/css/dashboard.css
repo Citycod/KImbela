@@ -718,11 +718,15 @@ textarea[name="post_content"],
 
 /* Messenger Fixed Layout Styles */
 
-#chatArea {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
+#chatArea{
+  display:flex;
+  flex-direction:column;
+  max-height:700px;   /* your target */
+  overflow:hidden;    /* keep header/footer inside */
+  min-height:0;       /* flex scrolling magic */
+  height:auto;        /* don't force 100% */
 }
+
 
 #chatMessagesWrapper {
     flex: 1;
@@ -1161,10 +1165,13 @@ textarea[name="post_content"],
     align-items: center;
 }
 
-#messengerPopup {
-    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
-    border: 1px solid #e4e6eb;
+#messengerPopup{
+  max-height:700px;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
 }
+
 
 
 /* Simple Loader Styles */

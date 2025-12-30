@@ -94,6 +94,31 @@ window.openModal = function(modalId) {
     }
 };
 
+
+function handleChatInputKeypress(event) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        // Check if messenger is initialized
+        if (typeof window.Messenger !== 'undefined') {
+            window.Messenger.sendMessage();
+        } else {
+            console.error('Messenger not initialized');
+        }
+    }
+}
+
+// Make it globally available
+window.handleChatInputKeypress = handleChatInputKeypress;
+
+
+window.handleMessageScroll = function() {
+    // Check if messenger is initialized
+    if (typeof window.Messenger !== 'undefined' &&
+        typeof window.Messenger.handleMessageScroll === 'function') {
+        window.Messenger.handleMessageScroll();
+    }
+};
+
 window.toggleMobileMenu = function() {
     const overlay = document.getElementById('mobileSidebarOverlay');
     const sidebar = document.getElementById('mobileSidebar');
@@ -546,87 +571,7 @@ const PostSystem = {
         Modal.open('editPostModal');
     },
 
-//    async addComment(postId, content, inputElement) {
-//       const originalPlaceholder = inputElement.placeholder;
-//    inputElement.placeholder = 'Posting...';
-//    inputElement.disabled = true;
-//
-//    try {
-//        const response = await fetch(`/add_comment/${postId}`, {
-//            method: 'POST',
-//            headers: {
-//                'Content-Type': 'application/json',
-//                'X-CSRFToken': csrfToken
-//            },
-//            body: JSON.stringify({ content })
-//        });
-//
-//        // Check if response is HTML instead of JSON
-//        const contentType = response.headers.get('content-type');
-//        if (!contentType || !contentType.includes('application/json')) {
-//            const text = await response.text();
-//
-//            // Check if it's an HTML login page
-//            if (text.includes('<!DOCTYPE html>') || text.includes('login') || response.status === 401) {
-//                throw new Error('Authentication required. Please log in again.');
-//            }
-//
-//            throw new Error('Server returned unexpected response');
-//        }
-//
-//        const data = await response.json();
-//
-//        if (!response.ok || !data.success) {
-//            throw new Error(data.error || 'Failed to add comment');
-//        }
-//
-//        inputElement.value = '';
-//
-//        // Get comment data from the comment object
-//        const comment = data.comment;
-//        if (!comment) {
-//            throw new Error('No comment data returned');
-//        }
-//
-//        // Add comment to UI
-//        const container = inputElement.closest('.comments-section');
-//        if (container) {
-//            const commentHTML = `
-//                <div class="comment flex space-x-2 mb-3 animate-fadeIn">
-//                    <img src="${comment.avatar || defaultAvatar}" alt="" class="w-8 h-8 rounded-full object-cover flex-shrink-0">
-//                    <div class="flex-1">
-//                        <div class="bg-white rounded-2xl px-3 py-2">
-//                            <div class="flex justify-between items-start">
-//                                <div class="font-semibold text-sm">${comment.name || 'User'}</div>
-//                                <div class="text-xs text-gray-500">
-//                                    Just now
-//                                </div>
-//                            </div>
-//                            <div class="text-sm mt-1">${comment.content}</div>
-//                        </div>
-//                    </div>
-//                </div>
-//            `;
-//            container.insertAdjacentHTML('beforeend', commentHTML);
-//        }
-//
-//        Toast.show('Comment added!', 'success');
-//    } catch (error) {
-//        console.error('Error adding comment:', error);
-//
-//        if (error.message.includes('Authentication')) {
-//            Toast.show('Please log in again to continue', 'warning');
-//            setTimeout(() => {
-//                window.location.href = '/login';
-//            }, 2000);
-//        } else {
-//            Toast.show('Failed to add comment: ' + error.message, 'danger');
-//        }
-//    } finally {
-//        inputElement.placeholder = originalPlaceholder;
-//        inputElement.disabled = false;
-//    }
-//    },
+
 
     async viewComments(postId) {
         const modalBody = document.getElementById('commentModalBody');
@@ -2187,29 +2132,39 @@ const Messenger = {
         const friendList = document.getElementById('friendList');
         const chatArea = document.getElementById('chatArea');
         const chatName = document.getElementById('chatName');
-        const chatAvatar = document.getElementById('chatAvatar');
-        const chatStatus = document.getElementById('chatStatus');
+        const chatLastSeen = document.getElementById('chatLastSeen');
 
-        if (friendList) friendList.classList.add('hidden');
-        if (chatArea) chatArea.classList.remove('hidden');
-        if (chatName) chatName.textContent = friendName;
-        if (chatAvatar) chatAvatar.src = friendAvatar || window.defaultAvatar;
-        if (chatStatus) {
-            chatStatus.textContent = friendOnline ? 'Online' : 'Offline';
-            chatStatus.className = `text-xs ${friendOnline ? 'text-green-600' : 'text-gray-500'}`;
+        if (friendList) {
+            friendList.classList.add('hidden');
         }
 
-        // Load messages
+        if (chatArea) {
+            chatArea.classList.remove('hidden');
+        }
+
+        if (chatName) {
+            chatName.textContent = friendName || 'Friend';
+        }
+
+        if (chatLastSeen) {
+            chatLastSeen.textContent = friendOnline ? 'Online' : 'Offline';
+            chatLastSeen.className = `text-xs ${friendOnline ? 'text-green-600' : 'text-gray-500'} mt-0.5`;
+        }
+
+        // Load messages - IMPORTANT: Wait for messages to load before scrolling
         await this.loadMessages(friendId);
 
-        // Join chat room via socket
-        if (this.state.socket && this.state.socket.connected) {
-            this.state.socket.emit('join_chat', { friend_id: friendId });
-        }
+        // Scroll to bottom after messages are loaded
+        setTimeout(() => {
+            this.scrollToBottom(true); // Force scroll to bottom
+        }, 100);
 
         // Focus input
         const chatInput = document.getElementById('chatInput');
-        if (chatInput) chatInput.focus();
+        if (chatInput) {
+            chatInput.focus();
+            this.toggleSendVoiceButtons();
+        }
 
         // Mark messages as read
         await this.markAsRead(friendId);
@@ -2562,38 +2517,92 @@ const Messenger = {
 };
 
 // Make sure to update the global function references
+// Replace the openMessenger function:
 window.openMessenger = function() {
     const popup = document.getElementById('messengerPopup');
     if (popup) {
-        popup.classList.remove('hidden');
-        popup.classList.add('flex');
+        // Ensure friends list is shown, chat area is hidden
+        const friendList = document.getElementById('friendList');
+        const chatArea = document.getElementById('chatArea');
 
+        if (friendList) {
+            friendList.classList.remove('hidden');
+            friendList.style.display = 'flex';
+        }
+
+        if (chatArea) {
+            chatArea.classList.add('hidden');
+            chatArea.style.display = 'none';
+        }
+
+        // Show popup with animation
+        popup.classList.remove('hidden', 'scale-95', 'opacity-0');
+        popup.classList.add('flex', 'scale-100', 'opacity-100');
+
+        // Load friends
         if (window.Messenger) {
             window.Messenger.loadFriends();
         }
     }
 };
 
+// Replace the closeMessenger function:
 window.closeMessenger = function() {
     const popup = document.getElementById('messengerPopup');
     if (popup) {
-        popup.classList.add('hidden');
-        popup.classList.remove('flex');
+        // Hide with animation
+        popup.classList.remove('scale-100', 'opacity-100');
+        popup.classList.add('scale-95', 'opacity-0');
 
-        if (window.Messenger) {
-            window.Messenger.stopTyping();
-            window.Messenger.currentChatId = null;
-        }
+        setTimeout(() => {
+            popup.classList.add('hidden');
+            popup.classList.remove('flex');
+
+            // Reset to friends list
+            window.backToFriends();
+
+            // Clear any active state
+            if (window.Messenger) {
+                window.Messenger.state.activeFriendId = null;
+                window.Messenger.state.currentFriend = null;
+            }
+        }, 300);
     }
 };
 
-window.backToFriends = function() {
-    document.getElementById('friendList')?.classList.remove('hidden');
-    document.getElementById('chatArea')?.classList.add('hidden');
+// Replace the existing backToFriends function with this:
 
-    if (window.Messenger) {
-        window.Messenger.currentChatId = null;
-        window.Messenger.stopTyping();
+window.backToFriends = function() {
+    // Check if messenger exists and has the method
+    if (window.Messenger && typeof window.Messenger.backToFriends === 'function') {
+        window.Messenger.backToFriends();
+    } else {
+        // Fallback implementation
+        const friendList = document.getElementById('friendList');
+        const chatArea = document.getElementById('chatArea');
+
+        if (friendList && chatArea) {
+            // Show friends list
+            friendList.classList.remove('hidden');
+            friendList.style.display = 'flex';
+
+            // Hide chat area
+            chatArea.classList.add('hidden');
+            chatArea.style.display = 'none';
+        }
+
+        // Clear chat input
+        const chatInput = document.getElementById('chatInput');
+        if (chatInput) {
+            chatInput.value = '';
+            chatInput.style.height = 'auto';
+        }
+
+        // Clear any active chat state
+        if (window.Messenger) {
+            window.Messenger.state.activeFriendId = null;
+            window.Messenger.state.currentFriend = null;
+        }
     }
 };
 
@@ -2616,6 +2625,23 @@ document.addEventListener('DOMContentLoaded', () => {
         window.Messenger = new EnhancedMessenger();
         window.Messenger.init();
         window.messengerInitialized = true;
+
+        // Add scroll event listener for the chat area
+        const chatArea = document.getElementById('chatMessagesWrapper');
+        if (chatArea) {
+            chatArea.addEventListener('DOMNodeInserted', () => {
+                // When new messages are added, scroll to bottom if at bottom
+                if (window.Messenger) {
+                    const isNearBottom = chatArea.scrollHeight - chatArea.scrollTop - chatArea.clientHeight < 100;
+                    if (isNearBottom) {
+                        setTimeout(() => {
+                            window.Messenger.scrollToBottom(true);
+                        }, 50);
+                    }
+                }
+            });
+        }
+
     }
 });
 
@@ -4477,1719 +4503,1224 @@ window.cancelUpload = function() {
 
 
 
-// Chat System - Enhanced Real-Time Messaging
-//class EnhancedMessenger {
-//    constructor() {
-//        this.currentChatId = null;
-//        this.socket = null;
-//        this.messages = {};
-//        this.typingTimeout = null;
-//        this.isTyping = false;
-//        this.lastMessageId = null;
-//        this.unreadCounts = {};
-//        this.socketInitialized = false;
-//        this.eventListenersSetup = false;
-//
-//        // Store active typing indicators to prevent duplicates
-//        this.activeTypingIndicators = new Set();
-//    }
-//
-//    init() {
-//        // Only initialize once
-//        if (this.initialized) return;
-//
-//        this.connectSocket();
-//        this.loadFriends();
-//        this.setupEventListeners();
-//        this.restoreLastChat();
-//        this.initialized = true;
-//
-//        console.log('✅ Messenger initialized');
-//    }
-//
-//    connectSocket() {
-//        // Prevent multiple socket connections
-//        if (this.socket && this.socket.connected) {
-//            return;
-//        }
-//
-//        this.socket = io({
-//            transports: ['websocket', 'polling'],
-//            reconnection: true,
-//            reconnectionAttempts: 5,
-//            reconnectionDelay: 1000
-//        });
-//
-//        this.socket.on('connect', () => {
-//            console.log('📡 Socket connected');
-//            this.socket.emit('join', { user_id: window.currentUserId });
-//            this.socketInitialized = true;
-//        });
-//
-//        // Handle incoming messages - DEBOUNCED
-//        this.socket.on('new_message', (data) => {
-//            this.handleNewMessage(data);
-//        });
-//
-//        // Handle typing indicators with deduplication
-//        this.socket.on('user_typing', (data) => {
-//            if (!this.activeTypingIndicators.has(data.user_id)) {
-//                this.activeTypingIndicators.add(data.user_id);
-//                this.showTypingIndicator(data.user_name);
-//            }
-//        });
-//
-//        this.socket.on('user_stopped_typing', (data) => {
-//            this.activeTypingIndicators.delete(data.user_id);
-//            this.hideTypingIndicator();
-//        });
-//
-//        this.socket.on('message_status', (data) => {
-//            this.updateMessageStatus(data.message_id, data.status);
-//        });
-//
-//        this.socket.on('error', (data) => {
-//            console.error('Socket error:', data.error);
-//        });
-//
-//        this.socket.on('disconnect', () => {
-//            console.log('Socket disconnected');
-//            this.socketInitialized = false;
-//        });
-//    }
-//
-//    setupEventListeners() {
-//        // Prevent duplicate event listeners
-//        if (this.eventListenersSetup) return;
-//
-//        const chatInput = document.getElementById('chatInput');
-//        const sendBtn = document.getElementById('sendChatBtn');
-//
-//        if (chatInput) {
-//            // Remove existing listeners to prevent duplicates
-//            const newInput = chatInput.cloneNode(true);
-//            chatInput.parentNode.replaceChild(newInput, chatInput);
-//
-//            // Add fresh listeners
-//            newInput.addEventListener('keypress', (e) => {
-//                if (e.key === 'Enter' && !e.shiftKey) {
-//                    e.preventDefault();
-//                    this.sendMessage();
-//                }
-//            });
-//
-//            newInput.addEventListener('input', () => {
-//                this.handleTyping();
-//            });
-//
-//            newInput.addEventListener('blur', () => {
-//                this.stopTyping();
-//            });
-//        }
-//
-//        if (sendBtn) {
-//            sendBtn.addEventListener('click', () => {
-//                this.sendMessage();
-//            });
-//        }
-//
-//        this.eventListenersSetup = true;
-//    }
-//
-//    async sendMessage() {
-//        const input = document.getElementById('chatInput');
-//        const content = input?.value.trim();
-//
-//        if (!content || !this.currentChatId) return;
-//
-//        // Clear input immediately
-//        input.value = '';
-//
-//        // Show message locally first
-//        const tempMessage = {
-//            id: 'temp_' + Date.now(),
-//            content: content,
-//            sender_id: window.currentUserId,
-//            receiver_id: this.currentChatId,
-//            is_mine: true,
-//            status: 'sending',
-//            timestamp: new Date().toISOString()
-//        };
-//
-//        this.appendMessage(tempMessage);
-//
-//        try {
-//            // Send via WebSocket if available
-//            if (this.socket && this.socket.connected) {
-//                this.socket.emit('send_message', {
-//                    friend_id: this.currentChatId,
-//                    content: content,
-//                    temp_id: tempMessage.id
-//                });
-//            } else {
-//                // Fallback to HTTP
-//                await this.sendMessageViaHTTP(content, tempMessage.id);
-//            }
-//
-//            // Stop typing indicator
-//            this.stopTyping();
-//
-//        } catch (error) {
-//            console.error('Error sending message:', error);
-//            this.showError('Failed to send message');
-//            this.markMessageAsFailed(tempMessage.id);
-//        }
-//    }
-//
-//    async sendMessageViaHTTP(content, tempId) {
-//        try {
-//            const response = await fetch('/api/messaging/send', {
-//                method: 'POST',
-//                headers: {
-//                    'Content-Type': 'application/json',
-//                    'X-CSRFToken': window.csrfToken
-//                },
-//                body: JSON.stringify({
-//                    receiver_id: this.currentChatId,
-//                    content: content,
-//                    temp_id: tempId
-//                })
-//            });
-//
-//            const data = await response.json();
-//
-//            if (data.success) {
-//                // Replace temp message with real message
-//                this.replaceTempMessage(tempId, data.message);
-//            } else {
-//                throw new Error(data.error || 'Failed to send');
-//            }
-//        } catch (error) {
-//            throw error;
-//        }
-//    }
-//
-//    handleNewMessage(message) {
-//        // Check if this message is for current chat
-//        const isForCurrentChat = message.receiver_id === this.currentChatId ||
-//                                message.sender_id === this.currentChatId;
-//
-//        // Check if message already exists to prevent duplicates
-//        const existingMessage = document.querySelector(`[data-message-id="${message.id}"]`);
-//        if (existingMessage) {
-//            console.log('Duplicate message detected, ignoring');
-//            return;
-//        }
-//
-//        if (isForCurrentChat && this.currentChatId) {
-//            // Add to current chat
-//            this.appendMessage(message);
-//
-//            // Mark as read
-//            this.markAsRead(this.currentChatId);
-//        } else if (message.sender_id !== window.currentUserId) {
-//            // Update unread count for that friend
-//            this.incrementUnreadCount(message.sender_id);
-//        }
-//
-//        // Update UI
-//        this.updateUnreadBadges();
-//    }
-//
-//    appendMessage(message) {
-//        const container = document.getElementById('chatMessages');
-//        if (!container) return;
-//
-//        // Check if message already exists
-//        if (document.querySelector(`[data-message-id="${message.id}"]`)) {
-//            return;
-//        }
-//
-//        const messageEl = this.createMessageElement(message);
-//        container.appendChild(messageEl);
-//        this.scrollToBottom();
-//    }
-//
-//    replaceTempMessage(tempId, realMessage) {
-//        const tempElement = document.querySelector(`[data-message-id="${tempId}"]`);
-//        if (tempElement) {
-//            const realElement = this.createMessageElement(realMessage);
-//            tempElement.replaceWith(realElement);
-//        } else {
-//            this.appendMessage(realMessage);
-//        }
-//    }
-//
-//    markMessageAsFailed(messageId) {
-//        const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
-//        if (messageElement) {
-//            const statusIcon = messageElement.querySelector('.message-status');
-//            if (statusIcon) {
-//                statusIcon.className = 'bi bi-exclamation-circle text-red-500 ml-1 text-xs';
-//                statusIcon.title = 'Failed to send';
-//            }
-//        }
-//    }
-//
-//    handleTyping() {
-//        if (!this.currentChatId || !this.socket || !this.socket.connected) return;
-//
-//        if (!this.isTyping) {
-//            this.isTyping = true;
-//            this.socket.emit('typing', {
-//                friend_id: this.currentChatId,
-//                timestamp: Date.now() // Add timestamp to prevent duplicates
-//            });
-//        }
-//
-//        // Clear existing timeout
-//        if (this.typingTimeout) {
-//            clearTimeout(this.typingTimeout);
-//        }
-//
-//        // Set timeout to stop typing indicator
-//        this.typingTimeout = setTimeout(() => {
-//            this.stopTyping();
-//        }, 1500);
-//    }
-//
-//    stopTyping() {
-//        if (this.isTyping && this.currentChatId && this.socket && this.socket.connected) {
-//            this.isTyping = false;
-//            this.socket.emit('stop_typing', {
-//                friend_id: this.currentChatId,
-//                timestamp: Date.now()
-//            });
-//        }
-//
-//        if (this.typingTimeout) {
-//            clearTimeout(this.typingTimeout);
-//            this.typingTimeout = null;
-//        }
-//    }
-//
-//    showTypingIndicator(userName) {
-//        const indicator = document.getElementById('typingIndicator');
-//        if (!indicator) return;
-//
-//        // Check if already showing
-//        if (!indicator.classList.contains('hidden')) return;
-//
-//        const userNameEl = document.getElementById('typingUserName');
-//        if (userNameEl) {
-//            userNameEl.textContent = `${userName} is typing`;
-//        }
-//
-//        indicator.classList.remove('hidden');
-//
-//        // Auto-hide after 3 seconds (safety)
-//        setTimeout(() => {
-//            this.hideTypingIndicator();
-//        }, 3000);
-//    }
-//
-//    hideTypingIndicator() {
-//        const indicator = document.getElementById('typingIndicator');
-//        if (indicator) {
-//            indicator.classList.add('hidden');
-//        }
-//        this.activeTypingIndicators.delete(this.currentChatId);
-//    }
-//
-//    async markAsRead(friendId) {
-//        try {
-//            await fetch(`/api/messaging/mark-read/${friendId}`, {
-//                method: 'POST',
-//                headers: {
-//                    'X-CSRFToken': window.csrfToken
-//                }
-//            });
-//
-//            // Clear unread count
-//            this.unreadCounts[friendId] = 0;
-//            this.updateUnreadBadges();
-//        } catch (error) {
-//            console.error('Error marking as read:', error);
-//        }
-//    }
-//
-//    incrementUnreadCount(friendId) {
-//        if (!this.unreadCounts[friendId]) {
-//            this.unreadCounts[friendId] = 0;
-//        }
-//        this.unreadCounts[friendId]++;
-//
-//        // Update badge
-//        this.updateUnreadBadges();
-//    }
-//
-//    updateUnreadBadges() {
-//        // Calculate total unread messages
-//        const totalUnread = Object.values(this.unreadCounts).reduce((a, b) => a + b, 0);
-//
-//        // Update main badge
-//        const badge = document.getElementById('unreadMessagesBadge');
-//        if (badge) {
-//            if (totalUnread > 0) {
-//                badge.textContent = totalUnread > 99 ? '99+' : totalUnread;
-//                badge.classList.remove('hidden');
-//            } else {
-//                badge.classList.add('hidden');
-//            }
-//        }
-//
-//        // Update individual friend badges
-//        document.querySelectorAll('.friend-item').forEach(item => {
-//            const friendId = item.dataset.friendId;
-//            const unreadCount = this.unreadCounts[friendId] || 0;
-//            const badge = item.querySelector('.notification-badge');
-//
-//            if (badge) {
-//                if (unreadCount > 0) {
-//                    badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
-//                    badge.classList.remove('hidden');
-//                } else {
-//                    badge.classList.add('hidden');
-//                }
-//            }
-//        });
-//    }
-//
-//    formatTime(timestamp) {
-//        if (!timestamp) return '';
-//
-//        const date = new Date(timestamp);
-//        const now = new Date();
-//        const diff = now - date;
-//
-//        // If within 24 hours, show relative time
-//        if (diff < 86400000) {
-//            const hours = date.getHours();
-//            const minutes = date.getMinutes();
-//            const ampm = hours >= 12 ? 'PM' : 'AM';
-//            const displayHours = hours % 12 || 12;
-//            return `${displayHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
-//        }
-//
-//        // If within a week, show day name
-//        if (diff < 604800000) {
-//            return date.toLocaleDateString('en-US', { weekday: 'short' });
-//        }
-//
-//        // Otherwise show date
-//        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-//    }
-//
-//    formatMessageTime(timestamp) {
-//        // Convert to local time
-//        const date = new Date(timestamp);
-//        return date.toLocaleTimeString('en-US', {
-//            hour: '2-digit',
-//            minute: '2-digit',
-//            hour12: true
-//        });
-//    }
-//
-//    scrollToBottom() {
-//        const container = document.getElementById('chatMessagesWrapper');
-//        if (container) {
-//            container.scrollTop = container.scrollHeight;
-//        }
-//    }
-//
-//    restoreLastChat() {
-//        const lastChatId = localStorage.getItem('lastChatId');
-//        if (lastChatId) {
-//            setTimeout(() => {
-//                this.openChat(parseInt(lastChatId));
-//            }, 500);
-//        }
-//    }
-//
-//    escapeHtml(text) {
-//        const div = document.createElement('div');
-//        div.textContent = text;
-//        return div.innerHTML;
-//    }
-//
-//    showError(message) {
-//        // Simple error notification
-//        const errorDiv = document.createElement('div');
-//        errorDiv.className = 'fixed top-20 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
-//        errorDiv.textContent = message;
-//        document.body.appendChild(errorDiv);
-//
-//        setTimeout(() => {
-//            errorDiv.remove();
-//        }, 3000);
-//    }
-//}
-//
-//// Initialize messenger
-//window.Messenger = new EnhancedMessenger();
-//
-//// Helper functions for HTML
-//function openMessenger() {
-//    const popup = document.getElementById('messengerPopup');
-//    popup.classList.remove('hidden');
-//    popup.classList.add('flex');
-//
-//    // Load friends if not loaded
-//    if (Messenger) {
-//        Messenger.loadFriends();
-//    }
-//}
-//
-//function closeMessenger() {
-//    const popup = document.getElementById('messengerPopup');
-//    popup.classList.add('hidden');
-//    popup.classList.remove('flex');
-//
-//    // Stop typing if active
-//    if (Messenger) {
-//        Messenger.stopTyping();
-//    }
-//}
-//
-//function backToFriends() {
-//    document.getElementById('friendList').classList.remove('hidden');
-//    document.getElementById('chatArea').classList.add('hidden');
-//    Messenger.currentChatId = null;
-//}
-//
-//function sendMessage() {
-//    if (Messenger) {
-//        Messenger.sendMessage();
-//    }
-//}
-//
-//function handleTyping() {
-//    if (Messenger) {
-//        Messenger.handleTyping();
-//    }
-//}
 
 
 // ========================================
 // ENHANCED MESSENGER - COMPLETE REWRITTEN VERSION
 // ========================================
 
-class EnhancedMessenger {
+// Modern Enhanced Messenger
+class ModernMessenger {
     constructor() {
-        this.currentChatId = null;
-        this.socket = null;
-        this.messages = {};
-        this.typingTimeout = null;
-        this.isTyping = false;
-        this.lastMessageId = null;
-        this.unreadCounts = {};
-        this.socketInitialized = false;
-        this.eventListenersSetup = false;
-        this.lastMessageDate = null; // Track last message date for grouping
+        this.state = {
+            socket: null,
+            activeFriendId: null,
+            isTyping: false,
+            typingTimeout: null,
+            unreadCounts: {},
+            currentFriend: null,
+            isConnected: false,
+            voiceRecording: false,
+            recordingStartTime: null,
+            recordingInterval: null
+        };
 
-        // Store active typing indicators to prevent duplicates
-        this.activeTypingIndicators = new Set();
-
-        // Track processed message IDs to prevent duplicates
-        this.processedMessageIds = new Set();
-
-        console.log('🔄 EnhancedMessenger initialized');
+        this.init();
     }
 
-    // ==================== INITIALIZATION ====================
-
+    // Initialize messenger
     init() {
-        // Only initialize once
-        if (this.initialized) {
-            console.log('⚠️ Messenger already initialized');
-            return;
-        }
-
         this.connectSocket();
         this.setupEventListeners();
-        this.loadFriends();
-        this.restoreLastChat();
-        this.initialized = true;
+        this.updateUnreadBadge();
+        this.setupVoiceRecording();
 
-        console.log('✅ Messenger fully initialized');
+        console.log('🎯 Modern Messenger initialized');
         return this;
     }
 
-    // ==================== SOCKET CONNECTION ====================
+    // ========================================
+// CHAT INPUT HANDLER
+// ========================================
 
-    connectSocket() {
-        // Prevent multiple socket connections
-        if (this.socket && this.socket.connected) {
-            console.log('📡 Socket already connected');
-            return;
-        }
 
-        console.log('🔌 Connecting to socket server...');
 
-        this.socket = io({
-            transports: ['websocket', 'polling'],
-            reconnection: true,
-            reconnectionAttempts: 10,
-            reconnectionDelay: 1000,
-            timeout: 20000
-        });
-
-        // Socket event handlers
-        this.socket.on('connect', () => {
-            console.log('✅ Socket connected successfully');
-            this.socket.emit('join', { user_id: window.currentUserId });
-            this.socketInitialized = true;
-
-            // Rejoin current chat if any
-            if (this.currentChatId) {
-                this.socket.emit('join_chat', { friend_id: this.currentChatId });
-            }
-        });
-
-        this.socket.on('new_message', (data) => {
-            this.handleIncomingMessage(data);
-        });
-
-        this.socket.on('user_typing', (data) => {
-            this.handleUserTyping(data);
-        });
-
-        this.socket.on('user_stopped_typing', (data) => {
-            this.handleUserStoppedTyping(data);
-        });
-
-        this.socket.on('message_status', (data) => {
-            this.updateMessageStatus(data.message_id, data.status);
-        });
-
-        this.socket.on('friend_online', (data) => {
-            this.updateFriendStatus(data.user_id, true);
-        });
-
-        this.socket.on('friend_offline', (data) => {
-            this.updateFriendStatus(data.user_id, false);
-        });
-
-        this.socket.on('error', (error) => {
-            console.error('❌ Socket error:', error);
-            Toast.show('Connection error. Reconnecting...', 'warning');
-        });
-
-        this.socket.on('disconnect', (reason) => {
-            console.log('🔌 Socket disconnected:', reason);
-            this.socketInitialized = false;
-
-            if (reason === 'io server disconnect') {
-                // Server disconnected, try to reconnect
-                this.socket.connect();
-            }
-        });
-
-        this.socket.on('reconnect', (attemptNumber) => {
-            console.log(`🔄 Reconnected after ${attemptNumber} attempts`);
-            Toast.show('Reconnected successfully', 'success');
-        });
-    }
-
-    // ==================== EVENT LISTENERS ====================
-
+    // Setup all event listeners
     setupEventListeners() {
-        // Prevent duplicate event listeners
-        if (this.eventListenersSetup) {
-            console.log('⚠️ Event listeners already set up');
-            return;
-        }
-
-        console.log('🔧 Setting up event listeners...');
-
-        // Messenger open/close buttons
-        document.addEventListener('click', (e) => {
-            // Open messenger
-            if (e.target.closest('#openMessaging') || e.target.closest('[onclick*="openMessenger"]')) {
-                e.preventDefault();
-                this.open();
-                return;
-            }
-
-            // Close messenger
-            if (e.target.closest('[onclick*="closeMessenger"]') ||
-                (e.target.id === 'messengerPopup' && e.target.classList.contains('flex'))) {
-                e.preventDefault();
-                this.close();
-                return;
-            }
-
-            // Back to friends list
-            if (e.target.closest('[onclick*="backToFriends"]')) {
-                e.preventDefault();
-                this.backToFriends();
-                return;
-            }
-        });
-
-        // Send message button
+        // Open/close messenger
+        const openBtn = document.getElementById('openMessaging');
+        const closeBtn = document.querySelector('[onclick="closeMessenger()"]');
+        const backBtn = document.querySelector('[onclick="backToFriends()"]');
         const sendBtn = document.getElementById('sendChatBtn');
-        if (sendBtn) {
-            // Remove existing listeners
-            const newSendBtn = sendBtn.cloneNode(true);
-            sendBtn.parentNode.replaceChild(newSendBtn, sendBtn);
+        const chatInput = document.getElementById('chatInput');
+        const voiceBtn = document.getElementById('voiceMessageBtn');
 
-            newSendBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.sendMessage();
-            });
+        if (openBtn) {
+            openBtn.addEventListener('click', () => this.open());
         }
 
-        // Chat input
-        const chatInput = document.getElementById('chatInput');
-        if (chatInput) {
-            // Remove existing listeners
-            const newChatInput = chatInput.cloneNode(true);
-            chatInput.parentNode.replaceChild(newChatInput, chatInput);
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => this.close());
+        }
 
-            newChatInput.addEventListener('keypress', (e) => {
+        if (backBtn) {
+            backBtn.addEventListener('click', () => this.backToFriends());
+        }
+
+        if (sendBtn) {
+            sendBtn.addEventListener('click', () => this.sendMessage());
+        }
+
+        if (voiceBtn) {
+            voiceBtn.addEventListener('click', () => this.startVoiceMessage());
+        }
+
+        if (chatInput) {
+            chatInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
                     this.sendMessage();
                 }
             });
 
-            newChatInput.addEventListener('input', () => {
+            chatInput.addEventListener('input', (e) => {
                 this.handleTyping();
+                this.toggleSendVoiceButtons();
             });
 
-            newChatInput.addEventListener('blur', () => {
+            chatInput.addEventListener('blur', () => {
                 this.stopTyping();
             });
 
-            // Focus input when chat opens
-            newChatInput.addEventListener('focus', () => {
-                this.scrollToBottom();
+            // Auto-resize textarea
+            chatInput.addEventListener('input', (e) => {
+                this.autoResizeTextarea(e.target);
             });
         }
 
-        this.eventListenersSetup = true;
-        console.log('✅ Event listeners set up successfully');
+        // Tab switching
+        document.querySelectorAll('.tab-button').forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                const tabName = e.currentTarget.dataset.tab;
+                this.switchTab(tabName);
+            });
+        });
+
+        // Chat actions
+        this.setupChatActions();
     }
 
-    // ==================== UI MANAGEMENT ====================
+    // Setup chat action listeners
+    setupChatActions() {
+        // Call buttons
+        const voiceCallBtn = document.querySelector('[onclick="startVoiceCall()"]');
+        const videoCallBtn = document.querySelector('[onclick="startVideoCall()"]');
 
+        if (voiceCallBtn) {
+            voiceCallBtn.addEventListener('click', () => this.startVoiceCall());
+        }
+
+        if (videoCallBtn) {
+            videoCallBtn.addEventListener('click', () => this.startVideoCall());
+        }
+
+        // Attachment menu
+        const attachBtn = document.querySelector('[onclick="toggleAttachmentMenu()"]');
+        if (attachBtn) {
+            attachBtn.addEventListener('click', (e) => this.toggleAttachmentMenu(e));
+        }
+
+        // Emoji picker
+        const emojiBtn = document.querySelector('[onclick="toggleEmojiPicker()"]');
+        if (emojiBtn) {
+            emojiBtn.addEventListener('click', () => this.toggleEmojiPicker());
+        }
+
+        // Quick actions
+        document.querySelectorAll('#quickActions button').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const action = e.currentTarget.textContent.toLowerCase();
+                this.handleQuickAction(action);
+            });
+        });
+
+        // Scroll to bottom button
+        const scrollBtn = document.getElementById('scrollToBottomBtn');
+        if (scrollBtn) {
+            scrollBtn.addEventListener('click', () => this.scrollToBottom());
+        }
+
+        // Handle message scroll
+        const messagesWrapper = document.getElementById('chatMessagesWrapper');
+        if (messagesWrapper) {
+            messagesWrapper.addEventListener('scroll', () => this.handleMessageScroll());
+        }
+    }
+
+    // Auto-resize textarea
+    autoResizeTextarea(textarea) {
+        textarea.style.height = 'auto';
+        const maxHeight = 128; // Max 6 lines
+        const newHeight = Math.min(textarea.scrollHeight, maxHeight);
+        textarea.style.height = newHeight + 'px';
+    }
+
+    // Toggle between send and voice buttons
+    toggleSendVoiceButtons() {
+        const chatInput = document.getElementById('chatInput');
+        const voiceBtn = document.getElementById('voiceMessageBtn');
+        const sendBtn = document.getElementById('sendChatBtn');
+
+        if (!chatInput || !voiceBtn || !sendBtn) return;
+
+        if (chatInput.value.trim() === '') {
+            voiceBtn.classList.remove('hidden');
+            sendBtn.classList.add('hidden');
+            sendBtn.disabled = true;
+        } else {
+            voiceBtn.classList.add('hidden');
+            sendBtn.classList.remove('hidden');
+            sendBtn.disabled = false;
+        }
+    }
+
+    // Switch between tabs
+    switchTab(tabName) {
+        // Update active tab
+        document.querySelectorAll('.tab-button').forEach(tab => {
+            tab.classList.toggle('active', tab.dataset.tab === tabName);
+        });
+
+        // Show selected content
+        document.querySelectorAll('[data-tab]').forEach(content => {
+            content.classList.toggle('hidden', content.dataset.tab !== tabName);
+        });
+
+        // Load content for tab
+        if (tabName === 'chats') this.loadFriends();
+        else if (tabName === 'online') this.loadOnlineFriends();
+        else if (tabName === 'requests') this.loadChatRequests();
+    }
+
+    // Open messenger popup
     async open() {
         const popup = document.getElementById('messengerPopup');
         if (!popup) {
-            console.error('❌ Messenger popup not found');
+            console.error('Messenger popup not found');
             return;
         }
 
-        popup.classList.remove('hidden');
-        popup.classList.add('flex');
+        // Show with animation
+        popup.classList.remove('hidden', 'scale-95', 'opacity-0');
+        popup.classList.add('flex', 'scale-100', 'opacity-100');
 
-        // Load friends list
         await this.loadFriends();
 
-        // Reconnect socket if needed
-        if (!this.socket || !this.socket.connected) {
+        if (!this.state.socket || !this.state.isConnected) {
             this.connectSocket();
         }
-
-        // Focus input if chat is open
-        if (this.currentChatId) {
-            setTimeout(() => {
-                const input = document.getElementById('chatInput');
-                if (input) input.focus();
-            }, 100);
-        }
-
-        console.log('💬 Messenger opened');
     }
 
+    // Close messenger popup
     close() {
         const popup = document.getElementById('messengerPopup');
         if (popup) {
-            popup.classList.add('hidden');
-            popup.classList.remove('flex');
-            this.backToFriends();
-            this.stopTyping();
-
-            // Clear any active typing indicators
-            this.activeTypingIndicators.clear();
-
-            console.log('💬 Messenger closed');
+            popup.classList.remove('scale-100', 'opacity-100');
+            popup.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                popup.classList.add('hidden');
+                popup.classList.remove('flex');
+                this.backToFriends();
+                this.stopTyping();
+            }, 300);
         }
     }
 
+    // Go back to friends list
     backToFriends() {
-        this.currentChatId = null;
-        this.lastMessageDate = null;
+        this.state.activeFriendId = null;
+        this.state.currentFriend = null;
 
         const friendList = document.getElementById('friendList');
         const chatArea = document.getElementById('chatArea');
-        const chatInput = document.getElementById('chatInput');
 
         if (friendList) friendList.classList.remove('hidden');
         if (chatArea) chatArea.classList.add('hidden');
+
+        const chatInput = document.getElementById('chatInput');
         if (chatInput) {
             chatInput.value = '';
-            chatInput.blur();
+            this.autoResizeTextarea(chatInput);
         }
 
         this.hideTypingIndicator();
         this.stopTyping();
-
-        // Leave socket room if connected
-        if (this.socket && this.socket.connected && this.currentChatId) {
-            this.socket.emit('leave_chat', { friend_id: this.currentChatId });
-        }
-
-        console.log('👥 Returned to friends list');
+        this.toggleSendVoiceButtons();
     }
 
-    // ==================== FRIENDS MANAGEMENT ====================
-
+    // Load friends list with modern design
     async loadFriends() {
         try {
             const friendsContainer = document.getElementById('friendsContainer');
             if (friendsContainer) {
                 friendsContainer.innerHTML = `
-                    <div class="flex flex-col items-center justify-center p-8">
-                        <div class="w-12 h-12 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin mb-3"></div>
-                        <div class="text-gray-500 text-sm">Loading conversations...</div>
+                    <div class="flex flex-col items-center justify-center p-8 text-gray-500">
+                        <div class="relative mb-4">
+                            <div class="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <i class="bi bi-people text-blue-600 text-xl"></i>
+                            </div>
+                        </div>
+                        <p class="text-sm font-medium text-gray-600">Loading conversations...</p>
+                        <p class="text-xs mt-1 text-gray-400">Getting your messages ready</p>
                     </div>
                 `;
             }
 
-            const response = await fetch('/api/messaging/friends', {
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Cache-Control': 'no-cache'
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
+            const response = await fetch('/api/messaging/friends');
+            if (!response.ok) throw new Error('Network error');
 
             const data = await response.json();
+            if (data.success) {
+                this.displayFriends(data.friends);
+                this.updateUnreadBadge();
 
-            if (data.success && Array.isArray(data.friends)) {
-                this.renderFriendsList(data.friends);
-                this.updateUnreadBadges();
-            } else {
-                throw new Error('Invalid response format');
+                // Show/hide empty state
+                const noChats = document.getElementById('noChats');
+                if (noChats) {
+                    noChats.classList.toggle('hidden', data.friends && data.friends.length > 0);
+                }
             }
         } catch (error) {
-            console.error('❌ Error loading friends:', error);
-            this.showError('Failed to load conversations', 'friendsContainer');
+            console.error('Error loading friends:', error);
+            const friendsContainer = document.getElementById('friendsContainer');
+            if (friendsContainer) {
+                friendsContainer.innerHTML = `
+                    <div id="noChats" class="flex flex-col items-center justify-center p-8 text-gray-400">
+                        <div class="w-16 h-16 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full flex items-center justify-center mb-4">
+                            <i class="bi bi-chat-dots text-2xl text-gray-300"></i>
+                        </div>
+                        <p class="text-sm font-medium text-gray-500">No conversations yet</p>
+                        <p class="text-xs mt-1">Start a conversation with friends!</p>
+                        <button onclick="suggestFriends()"
+                                class="mt-4 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-sm rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all duration-300 transform hover:scale-105">
+                            <i class="bi bi-plus-circle mr-2"></i>
+                            Find Friends
+                        </button>
+                    </div>
+                `;
+            }
         }
     }
 
-    renderFriendsList(friends) {
+    // Display friends in modern design
+    displayFriends(friends) {
         const container = document.getElementById('friendsContainer');
         if (!container) return;
 
+        container.innerHTML = '';
+
         if (!friends || friends.length === 0) {
             container.innerHTML = `
-                <div class="text-center p-6">
-                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                        <i class="bi bi-people text-gray-400 text-2xl"></i>
+                <div id="noChats" class="flex flex-col items-center justify-center p-8 text-gray-400">
+                    <div class="w-16 h-16 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full flex items-center justify-center mb-4">
+                        <i class="bi bi-chat-dots text-2xl text-gray-300"></i>
                     </div>
-                    <p class="text-gray-700 font-medium mb-2">No conversations yet</p>
-                    <p class="text-gray-500 text-sm">Start chatting with your friends!</p>
+                    <p class="text-sm font-medium text-gray-500">No conversations yet</p>
+                    <p class="text-xs mt-1">Start a conversation with friends!</p>
+                    <button onclick="suggestFriends()"
+                            class="mt-4 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-sm rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all duration-300 transform hover:scale-105">
+                        <i class="bi bi-plus-circle mr-2"></i>
+                        Find Friends
+                    </button>
                 </div>
             `;
             return;
         }
 
-        // Sort friends by last message time (newest first)
-        const sortedFriends = [...friends].sort((a, b) => {
-            const timeA = a.last_message_time ? new Date(a.last_message_time).getTime() : 0;
-            const timeB = b.last_message_time ? new Date(b.last_message_time).getTime() : 0;
-            return timeB - timeA;
-        });
-
-        const fragment = document.createDocumentFragment();
-
-        sortedFriends.forEach(friend => {
+        friends.forEach(friend => {
             const friendElement = this.createFriendElement(friend);
-            fragment.appendChild(friendElement);
+            container.appendChild(friendElement);
         });
-
-        container.innerHTML = '';
-        container.appendChild(fragment);
     }
 
+    // Create modern friend element
     createFriendElement(friend) {
-        const div = document.createElement('div');
-        div.className = 'friend-item p-3 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-100 last:border-b-0';
-        div.dataset.friendId = friend.id;
+        const element = document.createElement('div');
+        element.className = 'friend-item flex items-center p-3 rounded-xl hover:bg-gray-50/80 transition-all duration-300 cursor-pointer hover-lift';
+        element.onclick = () => this.openChat(friend.id, friend.name, friend.avatar, friend.online);
 
-        // Format last message time
-        const timeText = friend.last_message_time ? this.formatChatTime(friend.last_message_time) : '';
-
-        // Truncate last message
-        const lastMessage = friend.last_message ?
-            (friend.last_message.length > 40 ? friend.last_message.substring(0, 40) + '...' : friend.last_message) :
-            'No messages yet';
-
-        div.innerHTML = `
-            <div class="flex items-center" onclick="Messenger.openChat(${friend.id})">
-                <div class="relative flex-shrink-0">
-                    <img src="${friend.avatar || window.defaultAvatar}"
-                         alt="${friend.name}"
-                         class="w-12 h-12 rounded-full object-cover border-2 ${friend.is_online ? 'border-green-500' : 'border-gray-300'}">
-
-                    ${friend.is_online ? `
-                        <span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></span>
+        element.innerHTML = `
+            <div class="relative">
+                <img src="${friend.avatar || window.defaultAvatar}"
+                     alt="${friend.name}"
+                     class="w-12 h-12 rounded-2xl object-cover border-2 border-white shadow">
+                ${friend.online ? `
+                    <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white status-pulse"></div>
+                ` : ''}
+                ${friend.unread_count > 0 ? `
+                    <span class="absolute -top-1 -right-1 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xs px-1.5 py-0.5 rounded-full shadow">
+                        ${friend.unread_count > 9 ? '9+' : friend.unread_count}
+                    </span>
+                ` : ''}
+            </div>
+            <div class="flex-1 ml-3 min-w-0">
+                <div class="flex items-center space-x-2">
+                    <h4 class="font-semibold text-gray-900 truncate">${friend.name}</h4>
+                    ${friend.is_verified ? `
+                        <i class="bi bi-patch-check-fill text-blue-500 text-sm"></i>
                     ` : ''}
-
-                    ${friend.unread_count > 0 ? `
-                        <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
-                            ${friend.unread_count > 9 ? '9+' : friend.unread_count}
+                </div>
+                <div class="flex items-center justify-between mt-1">
+                    <p class="text-xs text-gray-500 truncate">
+                        ${friend.last_message ? friend.last_message.content || 'Sent a message' : 'No messages yet'}
+                    </p>
+                    ${friend.last_message ? `
+                        <span class="text-xs text-gray-400 ml-2">
+                            ${new Date(friend.last_message.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                         </span>
                     ` : ''}
                 </div>
-
-                <div class="ml-3 flex-1 min-w-0">
-                    <div class="flex justify-between items-start">
-                        <p class="font-medium text-gray-800 truncate">${friend.name}</p>
-                        <span class="text-xs text-gray-500 whitespace-nowrap">${timeText}</span>
-                    </div>
-
-                    <div class="flex justify-between items-center">
-                        <p class="text-sm text-gray-600 truncate">${lastMessage}</p>
-                        ${friend.unread_count > 0 ? `
-                            <i class="bi bi-check2-all text-blue-500 ml-1 flex-shrink-0"></i>
-                        ` : `
-                            <i class="bi bi-check2 text-gray-400 ml-1 flex-shrink-0"></i>
-                        `}
-                    </div>
-                </div>
             </div>
         `;
 
-        return div;
+        return element;
     }
 
-    // ==================== CHAT MANAGEMENT ====================
 
-    async openChat(friendId) {
-        if (!friendId) {
-            console.error('❌ No friend ID provided');
-            return;
-        }
 
-        // Store last chat for restoration
-        localStorage.setItem('lastChatId', friendId);
+    // Open chat with a friend
+    // In your ModernMessenger class, update the openChat method:
 
-        this.currentChatId = friendId;
-        this.lastMessageDate = null;
-        this.processedMessageIds.clear();
+async openChat(friendId, friendName, friendAvatar, friendOnline) {
+    this.state.activeFriendId = friendId;
+    this.state.currentFriend = {
+        id: friendId,
+        name: friendName,
+        avatar: friendAvatar,
+        online: friendOnline
+    };
 
-        console.log(`💬 Opening chat with friend ${friendId}`);
+    // Update UI - Hide friends list, show chat area
+    const friendList = document.getElementById('friendList');
+    const chatArea = document.getElementById('chatArea');
+    const chatName = document.getElementById('chatName');
+    const chatLastSeen = document.getElementById('chatLastSeen');
 
-        // Update UI to show chat area
-        const friendList = document.getElementById('friendList');
-        const chatArea = document.getElementById('chatArea');
-
-        if (friendList) friendList.classList.add('hidden');
-        if (chatArea) chatArea.classList.remove('hidden');
-
-        // Load friend info and messages
-        await this.loadFriendInfo(friendId);
-        await this.loadMessages(friendId, true);
-
-        // Mark messages as read
-        await this.markAsRead(friendId);
-
-        // Join socket room for real-time updates
-        if (this.socket && this.socket.connected) {
-            this.socket.emit('join_chat', { friend_id: friendId });
-        }
-
-        // Focus input
-        setTimeout(() => {
-            const chatInput = document.getElementById('chatInput');
-            if (chatInput) {
-                chatInput.focus();
-                this.scrollToBottom();
-            }
-        }, 100);
+    if (friendList) {
+        friendList.classList.add('hidden');
+//        friendList.style.display = 'none';
     }
 
-    async loadFriendInfo(friendId) {
+    if (chatArea) {
+        chatArea.classList.remove('hidden');
+//        chatArea.style.display = 'flex';
+    }
+
+    // Set friend info
+    if (chatName) {
+        chatName.textContent = friendName || 'Friend';
+    }
+
+    if (chatLastSeen) {
+        chatLastSeen.textContent = friendOnline ? 'Online' : 'Offline';
+        chatLastSeen.className = `text-xs ${friendOnline ? 'text-green-600' : 'text-gray-500'} mt-0.5`;
+    }
+
+    // Load messages
+    await this.loadMessages(friendId);
+
+    // Focus input
+    const chatInput = document.getElementById('chatInput');
+    if (chatInput) {
+        chatInput.focus();
+        this.toggleSendVoiceButtons();
+    }
+
+    // Mark messages as read
+    await this.markAsRead(friendId);
+}
+
+    // Load messages with modern design
+    async loadMessages(friendId, loadMore = false) {
         try {
-            const chatName = document.getElementById('chatName');
-            const chatAvatar = document.getElementById('chatAvatar');
-            const chatStatus = document.getElementById('chatStatus');
+            const chatContainer = document.getElementById('chatMessages');
+            const messagesLoading = document.getElementById('messagesLoading');
 
-            if (!chatName || !chatAvatar) return;
-
-            // Get friend info from friends list or API
-            const friendElement = document.querySelector(`.friend-item[data-friend-id="${friendId}"]`);
-            if (friendElement) {
-                const img = friendElement.querySelector('img');
-                const name = friendElement.querySelector('.font-medium');
-
-                if (img) chatAvatar.src = img.src;
-                if (name) chatName.textContent = name.textContent;
-
-                // Update status
-                if (chatStatus) {
-                    const isOnline = img.classList.contains('border-green-500');
-                    chatStatus.textContent = isOnline ? 'Online' : 'Offline';
-                    chatStatus.className = `text-xs ${isOnline ? 'text-green-600' : 'text-gray-500'}`;
+            if (!loadMore) {
+                if (chatContainer) {
+                    chatContainer.innerHTML = `
+                        <div class="flex flex-col items-center justify-center py-8">
+                            <div class="flex space-x-1 mb-2">
+                                <div class="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
+                                <div class="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+                                <div class="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                            </div>
+                            <p class="text-xs text-gray-500">Loading messages...</p>
+                        </div>
+                    `;
                 }
+            } else if (messagesLoading) {
+                messagesLoading.classList.remove('hidden');
             }
-        } catch (error) {
-            console.error('Error loading friend info:', error);
-        }
-    }
 
-    async loadMessages(friendId, initialLoad = false) {
-        const messagesContainer = document.getElementById('chatMessages');
-        const loadingEl = document.getElementById('messagesLoading');
-        const noMessagesEl = document.getElementById('noMessages');
-
-        if (!messagesContainer) return;
-
-        if (initialLoad) {
-            messagesContainer.innerHTML = '';
-            if (loadingEl) loadingEl.classList.remove('hidden');
-            if (noMessagesEl) noMessagesEl.classList.add('hidden');
-            this.lastMessageDate = null;
-        }
-
-        try {
-            const response = await fetch(`/api/messaging/messages/${friendId}`, {
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Cache-Control': 'no-cache'
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
+            const response = await fetch(`/api/messaging/messages/${friendId}${loadMore ? '?older=true' : ''}`);
+            if (!response.ok) throw new Error('Network error');
 
             const data = await response.json();
-
-            if (loadingEl) loadingEl.classList.add('hidden');
-
-            if (data.success && Array.isArray(data.messages) && data.messages.length > 0) {
-                this.renderMessages(data.messages);
-                this.scrollToBottom();
-                this.lastMessageId = data.messages[data.messages.length - 1].id;
-            } else {
-                if (noMessagesEl) noMessagesEl.classList.remove('hidden');
+            if (data.success) {
+                this.displayMessages(data.messages, loadMore);
             }
         } catch (error) {
-            console.error('❌ Error loading messages:', error);
-            if (loadingEl) loadingEl.classList.add('hidden');
-            this.showError('Failed to load messages', 'chatMessages');
+            console.error('Error loading messages:', error);
+            const chatContainer = document.getElementById('chatMessages');
+            if (chatContainer) {
+                chatContainer.innerHTML = `
+                    <div id="noMessages" class="flex flex-col items-center justify-center py-12 text-gray-400">
+                        <div class="w-20 h-20 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full flex items-center justify-center mb-4">
+                            <i class="bi bi-chat-dots text-3xl text-gray-300"></i>
+                        </div>
+                        <p class="text-sm font-medium text-gray-500">No messages yet</p>
+                        <p class="text-xs mt-1 text-gray-400">Say hello and start the conversation!</p>
+                        <button onclick="sendFirstMessage()"
+                                class="mt-4 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-sm rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all duration-300 transform hover:scale-105">
+                            <i class="bi bi-send mr-2"></i>
+                            Send First Message
+                        </button>
+                    </div>
+                `;
+            }
+        } finally {
+            const messagesLoading = document.getElementById('messagesLoading');
+            if (messagesLoading) {
+                messagesLoading.classList.add('hidden');
+            }
         }
     }
 
-    renderMessages(messages) {
-        const container = document.getElementById('chatMessages');
-        if (!container) return;
+    // Display messages with modern design
+    displayMessages(messages, prepend = false) {
+    const chatContainer = document.getElementById('chatMessages');
+    if (!chatContainer) return;
 
-        // Clear existing messages if it's a fresh load
-        if (!this.lastMessageDate) {
-            container.innerHTML = '';
+    if (!messages || messages.length === 0) {
+        const noMessages = document.getElementById('noMessages');
+        if (noMessages) {
+            noMessages.classList.remove('hidden');
+        } else {
+            chatContainer.innerHTML = `
+                <div id="noMessages" class="flex flex-col items-center justify-center py-12 text-gray-400">
+                    <div class="w-20 h-20 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full flex items-center justify-center mb-4">
+                        <i class="bi bi-chat-dots text-3xl text-gray-300"></i>
+                    </div>
+                    <p class="text-sm font-medium text-gray-500">No messages yet</p>
+                    <p class="text-xs mt-1 text-gray-400">Say hello and start the conversation!</p>
+                    <button onclick="sendFirstMessage()"
+                            class="mt-4 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-sm rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all duration-300 transform hover:scale-105">
+                        <i class="bi bi-send mr-2"></i>
+                        Send First Message
+                    </button>
+                </div>
+            `;
         }
+        return;
+    }
 
+    // Hide no messages
+    const noMessages = document.getElementById('noMessages');
+    if (noMessages) noMessages.classList.add('hidden');
+
+    if (prepend) {
+        // Prepend older messages at the beginning
         const fragment = document.createDocumentFragment();
-
-        messages.forEach(message => {
-            // Skip if already processed
-            if (this.processedMessageIds.has(message.id)) {
-                return;
-            }
-
-            this.processedMessageIds.add(message.id);
-
-            // Add date separator if needed
-            const messageDate = this.getDatePart(message.timestamp);
-            if (!this.lastMessageDate || this.lastMessageDate !== messageDate) {
-                this.lastMessageDate = messageDate;
-                const dateSeparator = this.createDateSeparator(messageDate);
-                fragment.appendChild(dateSeparator);
-            }
-
-            // Add message
-            const messageElement = this.createMessageElement(message);
-            fragment.appendChild(messageElement);
+        messages.reverse().forEach(msg => {
+            const messageElement = this.createMessageElement(msg);
+            fragment.prepend(messageElement);
+        });
+        chatContainer.prepend(fragment);
+    } else {
+        // Clear and show new messages
+        chatContainer.innerHTML = '';
+        messages.forEach(msg => {
+            this.appendMessage(msg, false);
         });
 
-        container.appendChild(fragment);
+        // Scroll to bottom after all messages are added
+        setTimeout(() => {
+            this.scrollToBottom(true);
+        }, 50);
     }
+}
 
-    createDateSeparator(dateString) {
-        const div = document.createElement('div');
-        div.className = 'date-separator flex items-center justify-center my-6';
+    // Create modern message element
+    createMessageElement(msg) {
+        const isOwnMessage = msg.sender_id === window.currentUserId;
+        const time = new Date(msg.timestamp).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
 
-        const today = new Date();
-        const date = new Date(dateString);
-        let displayText = '';
+        const element = document.createElement('div');
+        element.className = `flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-3 message-bubble ${isOwnMessage ? 'sent' : 'received'}`;
 
-        if (this.isToday(date)) {
-            displayText = 'Today';
-        } else if (this.isYesterday(date)) {
-            displayText = 'Yesterday';
-        } else {
-            displayText = date.toLocaleDateString('en-US', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            });
-        }
-
-        div.innerHTML = `
-            <div class="flex items-center">
-                <div class="flex-1 h-px bg-gray-300"></div>
-                <span class="mx-3 text-xs font-medium text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-                    ${displayText}
-                </span>
-                <div class="flex-1 h-px bg-gray-300"></div>
-            </div>
-        `;
-
-        return div;
-    }
-
-    createMessageElement(message) {
-        const div = document.createElement('div');
-        div.className = `message mb-4 ${message.sender_id === window.currentUserId ? 'own-message' : 'other-message'}`;
-        div.dataset.messageId = message.id;
-
-        const isOwnMessage = message.sender_id === window.currentUserId;
-        const time = this.formatMessageTime(message.timestamp);
-
-        div.innerHTML = `
-            <div class="flex ${isOwnMessage ? 'justify-end' : 'justify-start'}">
-                <div class="max-w-[75%] ${isOwnMessage ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-800'} rounded-2xl px-4 py-3 shadow-sm">
+        element.innerHTML = `
+            <div class="max-w-xs lg:max-w-md">
+                <div class="p-3">
                     ${!isOwnMessage ? `
-                        <div class="flex items-center mb-2">
-                            <img src="${message.sender_avatar || window.defaultAvatar}"
-                                 alt="${message.sender_name || 'User'}"
-                                 class="w-5 h-5 rounded-full mr-2">
-                            <span class="text-xs font-medium">${message.sender_name || 'User'}</span>
+                        <div class="flex items-center mb-1">
+                            <img src="${msg.sender_avatar || window.defaultAvatar}"
+                                 class="w-4 h-4 rounded-full mr-1 object-cover">
+                            <span class="text-xs font-medium">${msg.sender_name || 'User'}</span>
                         </div>
                     ` : ''}
-
-                    <div class="text-sm leading-relaxed">${this.escapeHtml(message.content)}</div>
-
-                    <div class="flex justify-end items-center mt-2 pt-1 ${isOwnMessage ? 'text-blue-200' : 'text-gray-500'} border-t ${isOwnMessage ? 'border-blue-400' : 'border-gray-200'}">
-                        <span class="text-xs mr-2">${time}</span>
+                    <div class="text-sm">${msg.content || ''}</div>
+                    <div class="flex justify-end items-center mt-1 space-x-2">
+                        <span class="message-time text-xs opacity-70">${time}</span>
                         ${isOwnMessage ? `
-                            <i class="bi ${message.status === 'read' ? 'bi-check2-all' : 'bi-check2'} text-xs"></i>
+                            <span class="message-status ${msg.status} text-xs">
+                                <i class="bi ${msg.status === 'read' ? 'bi-check2-all text-blue-500' : 'bi-check2 text-gray-400'}"></i>
+                            </span>
                         ` : ''}
                     </div>
                 </div>
+                ${msg.reaction ? `
+                    <div class="message-reaction">
+                        <span class="text-lg">${msg.reaction}</span>
+                        <span class="text-xs">${msg.reactionCount || 1}</span>
+                    </div>
+                ` : ''}
             </div>
         `;
 
-        return div;
+        return element;
     }
 
-    // ==================== MESSAGING ====================
+    // Append a single message
+    appendMessage(msg, shouldScroll = true) {
+        const chatContainer = document.getElementById('chatMessages');
+        if (!chatContainer) return;
 
+        // Hide no messages
+        const noMessages = document.getElementById('noMessages');
+        if (noMessages) noMessages.classList.add('hidden');
+
+        const messageElement = this.createMessageElement(msg);
+        chatContainer.appendChild(messageElement);
+
+        if (shouldScroll) {
+            this.scrollToBottom();
+        }
+    }
+
+    // Send a message
     async sendMessage() {
         const input = document.getElementById('chatInput');
-        if (!input || !this.currentChatId) return;
+        if (!input || !this.state.activeFriendId) return;
 
         const content = input.value.trim();
         if (!content) return;
 
-        console.log(`📤 Sending message to ${this.currentChatId}: ${content.substring(0, 50)}...`);
-
-        // Create temporary message for immediate display
-        const tempId = 'temp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        const tempMessage = {
-            id: tempId,
-            content: content,
-            sender_id: window.currentUserId,
-            sender_name: window.currentUserInfo?.name || 'You',
-            sender_avatar: window.currentUserInfo?.avatar || window.defaultAvatar,
-            timestamp: new Date().toISOString(),
-            is_mine: true,
-            status: 'sending'
-        };
-
-        // Clear input immediately
-        input.value = '';
-
-        // Add temp message to UI
-        this.appendMessage(tempMessage);
-
-        try {
-            // Send via WebSocket if available
-            if (this.socket && this.socket.connected) {
-                this.socket.emit('send_message', {
-                    friend_id: this.currentChatId,
-                    content: content,
-                    temp_id: tempId
-                });
-            } else {
-                // Fallback to HTTP
-                await this.sendMessageViaHTTP(content, tempId);
-            }
-
-            // Stop typing indicator
-            this.stopTyping();
-
-        } catch (error) {
-            console.error('❌ Error sending message:', error);
-            this.markMessageAsFailed(tempId);
-            Toast.show('Failed to send message', 'danger');
+        if (this.state.socket && this.state.isConnected) {
+            // Send via WebSocket for real-time
+            this.state.socket.emit('send_message', {
+                friend_id: this.state.activeFriendId,
+                content: content
+            });
+        } else {
+            // Fallback to HTTP API
+            await this.sendMessageViaAPI(content);
         }
+
+        input.value = '';
+        this.autoResizeTextarea(input);
+        this.stopTyping();
+        this.toggleSendVoiceButtons();
     }
 
-    async sendMessageViaHTTP(content, tempId) {
+    // Send message via HTTP API (fallback)
+    async sendMessageViaAPI(content) {
         try {
             const response = await fetch('/api/messaging/send', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': window.csrfToken
+                    'X-CSRFToken': csrfToken
                 },
                 body: JSON.stringify({
-                    receiver_id: this.currentChatId,
-                    content: content,
-                    temp_id: tempId
+                    friend_id: this.state.activeFriendId,
+                    content: content
                 })
             });
 
             const data = await response.json();
-
             if (data.success && data.message) {
-                this.replaceTempMessage(tempId, data.message);
-            } else {
-                throw new Error(data.error || 'Failed to send message');
+                this.appendMessage(data.message, true);
+            } else if (data.error) {
+                Toast.show(data.error, 'danger');
             }
         } catch (error) {
-            throw error;
+            console.error('Error sending message:', error);
+            Toast.show('Failed to send message', 'danger');
         }
     }
 
-    handleIncomingMessage(message) {
-        // Skip if already processed
-        if (this.processedMessageIds.has(message.id)) {
-            console.log('⚠️ Duplicate message detected, skipping');
-            return;
-        }
-
-        this.processedMessageIds.add(message.id);
-
-        console.log(`📥 Incoming message from ${message.sender_id}: ${message.content.substring(0, 50)}...`);
-
-        // Check if message is for current chat
-        const isForCurrentChat = (message.receiver_id === this.currentChatId && message.sender_id === window.currentUserId) ||
-                                (message.sender_id === this.currentChatId && message.receiver_id === window.currentUserId);
-
-        if (isForCurrentChat && this.currentChatId) {
-            // Add to current chat
-            this.appendMessage(message);
-
-            // Mark as read
-            this.markAsRead(this.currentChatId);
-
-            // Play notification sound (optional)
-            this.playNotificationSound();
-        } else if (message.sender_id !== window.currentUserId) {
-            // Update unread count for that friend
-            this.incrementUnreadCount(message.sender_id);
-
-            // Show desktop notification (if allowed)
-            this.showDesktopNotification(message);
-        }
-
-        // Update UI
-        this.updateUnreadBadges();
-
-        // Update friends list if open
-        this.updateFriendLastMessage(message.sender_id, message.content);
-    }
-
-    appendMessage(message) {
-        const container = document.getElementById('chatMessages');
-        if (!container) return;
-
-        // Check if message already exists
-        if (document.querySelector(`[data-message-id="${message.id}"]`)) {
-            return;
-        }
-
-        // Add date separator if needed
-        const messageDate = this.getDatePart(message.timestamp);
-        if (!this.lastMessageDate || this.lastMessageDate !== messageDate) {
-            this.lastMessageDate = messageDate;
-            const dateSeparator = this.createDateSeparator(messageDate);
-            container.appendChild(dateSeparator);
-        }
-
-        // Add message
-        const messageElement = this.createMessageElement(message);
-        container.appendChild(messageElement);
-
-        // Scroll to bottom
-        this.scrollToBottom();
-
-        // Remove "no messages" placeholder if present
-        const noMessagesEl = document.getElementById('noMessages');
-        if (noMessagesEl) noMessagesEl.classList.add('hidden');
-    }
-
-    replaceTempMessage(tempId, realMessage) {
-        const tempElement = document.querySelector(`[data-message-id="${tempId}"]`);
-        if (tempElement) {
-            const realElement = this.createMessageElement(realMessage);
-            tempElement.replaceWith(realElement);
-        }
-    }
-
-    markMessageAsFailed(messageId) {
-        const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
-        if (messageElement) {
-            const statusIcon = messageElement.querySelector('.bi-check2, .bi-check2-all');
-            if (statusIcon) {
-                statusIcon.className = 'bi bi-exclamation-circle text-red-500';
-                statusIcon.title = 'Failed to send';
-
-                // Add retry button
-                const retryBtn = document.createElement('button');
-                retryBtn.className = 'ml-2 text-xs text-red-600 hover:text-red-800';
-                retryBtn.textContent = 'Retry';
-                retryBtn.onclick = () => this.retryFailedMessage(messageId);
-
-                statusIcon.parentNode.appendChild(retryBtn);
-            }
-        }
-    }
-
-    async retryFailedMessage(messageId) {
-        // Extract message content from failed message
-        const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
-        if (!messageElement) return;
-
-        const content = messageElement.querySelector('.text-sm')?.textContent;
-        if (!content) return;
-
-        // Remove the failed message
-        messageElement.remove();
-
-        // Send again
-        const input = document.getElementById('chatInput');
-        if (input) {
-            input.value = content;
-            this.sendMessage();
-        }
-    }
-
-    // ==================== TYPING INDICATORS ====================
-
+    // Handle typing indicator
     handleTyping() {
-        if (!this.currentChatId || !this.socket || !this.socket.connected) return;
+        if (!this.state.activeFriendId || !this.state.socket) return;
 
-        if (!this.isTyping) {
-            this.isTyping = true;
-            this.socket.emit('typing', {
-                friend_id: this.currentChatId,
-                timestamp: Date.now()
+        if (!this.state.isTyping) {
+            this.state.isTyping = true;
+            this.state.socket.emit('typing_start', {
+                friend_id: this.state.activeFriendId,
+                user_name: window.currentUserName || 'Someone'
             });
-            console.log('✍️ Started typing indicator');
         }
 
         // Clear existing timeout
-        if (this.typingTimeout) {
-            clearTimeout(this.typingTimeout);
+        if (this.state.typingTimeout) {
+            clearTimeout(this.state.typingTimeout);
         }
 
-        // Set timeout to stop typing indicator
-        this.typingTimeout = setTimeout(() => {
+        // Set timeout to stop typing
+        this.state.typingTimeout = setTimeout(() => {
             this.stopTyping();
-        }, 1500);
+        }, 2000);
     }
 
+    // Stop typing indicator
     stopTyping() {
-        if (this.isTyping && this.currentChatId && this.socket && this.socket.connected) {
-            this.isTyping = false;
-            this.socket.emit('stop_typing', {
-                friend_id: this.currentChatId,
-                timestamp: Date.now()
-            });
-            console.log('⏹️ Stopped typing indicator');
+        if (this.state.isTyping && this.state.activeFriendId && this.state.socket) {
+            this.state.isTyping = false;
+            this.state.socket.emit('typing_stop', { friend_id: this.state.activeFriendId });
         }
 
-        if (this.typingTimeout) {
-            clearTimeout(this.typingTimeout);
-            this.typingTimeout = null;
+        if (this.state.typingTimeout) {
+            clearTimeout(this.state.typingTimeout);
+            this.state.typingTimeout = null;
         }
     }
 
-    handleUserTyping(data) {
-        if (data.user_id === this.currentChatId && !this.activeTypingIndicators.has(data.user_id)) {
-            this.activeTypingIndicators.add(data.user_id);
-            this.showTypingIndicator(data.user_name);
-        }
-    }
-
-    handleUserStoppedTyping(data) {
-        if (data.user_id === this.currentChatId) {
-            this.activeTypingIndicators.delete(data.user_id);
-            this.hideTypingIndicator();
-        }
-    }
-
+    // Show typing indicator for other user
     showTypingIndicator(userName) {
         const indicator = document.getElementById('typingIndicator');
-        if (!indicator) return;
-
-        // Check if already showing
-        if (!indicator.classList.contains('hidden')) return;
-
         const userNameEl = document.getElementById('typingUserName');
+
         if (userNameEl) {
-            userNameEl.textContent = `${userName} is typing`;
+            userNameEl.textContent = userName;
         }
-
-        indicator.classList.remove('hidden');
-
-        // Auto-hide after 5 seconds (safety)
-        setTimeout(() => {
-            this.hideTypingIndicator();
-        }, 5000);
+        if (indicator) {
+            indicator.classList.remove('hidden');
+        }
     }
 
+    // Hide typing indicator
     hideTypingIndicator() {
         const indicator = document.getElementById('typingIndicator');
         if (indicator) {
             indicator.classList.add('hidden');
         }
-        this.activeTypingIndicators.delete(this.currentChatId);
     }
 
-    // ==================== TIME FORMATTING ====================
+    // Connect to Socket.IO with modern features
+    connectSocket() {
+        if (this.state.socket && this.state.isConnected) {
+            return;
+        }
 
-    formatMessageTime(timestamp) {
-    if (!timestamp) return '';
-
-    const date = new Date(timestamp);
-    const now = new Date();
-
-    // Always show both date and time for clarity
-    const dateStr = date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-    });
-
-    const timeStr = date.toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-    });
-
-    return `${dateStr} • ${timeStr}`;
-}
-
-    formatChatTime(timestamp) {
-    if (!timestamp) return '';
-
-    const date = new Date(timestamp);
-    const now = new Date();
-
-    if (this.isToday(date)) {
-        return date.toLocaleTimeString('en-US', {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: true
+        this.state.socket = io({
+            transports: ['websocket', 'polling'],
+            reconnection: true,
+            reconnectionAttempts: 5,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000
         });
-    } else if (this.isYesterday(date)) {
-        return 'Yesterday';
-    } else if (now.getFullYear() === date.getFullYear()) {
-        return date.toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric'
+
+        // Socket event handlers
+        this.state.socket.on('connect', () => {
+            console.log('✅ Connected to messaging server');
+            this.state.isConnected = true;
+
+            // Update connection status indicator
+            const popup = document.getElementById('messengerPopup');
+            if (popup) {
+                popup.classList.remove('disconnected');
+                popup.classList.add('connected');
+            }
         });
-    } else {
-        return date.toLocaleDateString('en-US', {
-            year: '2-digit',
-            month: 'short',
-            day: 'numeric'
+
+        this.state.socket.on('disconnect', () => {
+            console.log('🔌 Disconnected from messaging server');
+            this.state.isConnected = false;
+
+            // Update connection status indicator
+            const popup = document.getElementById('messengerPopup');
+            if (popup) {
+                popup.classList.remove('connected');
+                popup.classList.add('disconnected');
+            }
+        });
+
+        this.state.socket.on('new_message', (msg) => {
+            if (msg.sender_id === this.state.activeFriendId ||
+                msg.receiver_id === this.state.activeFriendId) {
+                this.appendMessage(msg, true);
+
+                // Play notification sound if not in active chat
+                if (msg.sender_id !== window.currentUserId) {
+                    this.playNotificationSound();
+                }
+            }
+            this.updateUnreadBadge();
+        });
+
+        this.state.socket.on('user_typing', (data) => {
+            if (data.user_id === this.state.activeFriendId) {
+                this.showTypingIndicator(data.user_name);
+            }
+        });
+
+        this.state.socket.on('user_stopped_typing', (data) => {
+            if (data.user_id === this.state.activeFriendId) {
+                this.hideTypingIndicator();
+            }
+        });
+
+        this.state.socket.on('friend_online', (data) => {
+            console.log(`Friend ${data.user_id} is online`);
+            this.updateFriendStatus(data.user_id, true);
+        });
+
+        this.state.socket.on('friend_offline', (data) => {
+            console.log(`Friend ${data.user_id} is offline`);
+            this.updateFriendStatus(data.user_id, false);
+        });
+
+        this.state.socket.on('message_delivered', (data) => {
+            this.updateMessageStatus(data.message_id, 'delivered');
+        });
+
+        this.state.socket.on('message_read', (data) => {
+            this.updateMessageStatus(data.message_id, 'read');
+        });
+
+        this.state.socket.on('error', (error) => {
+            console.error('Socket error:', error);
+            Toast.show('Connection error', 'danger');
         });
     }
-}
 
-    isToday(date) {
-        const today = new Date();
-        return date.getDate() === today.getDate() &&
-               date.getMonth() === today.getMonth() &&
-               date.getFullYear() === today.getFullYear();
+    // Update friend online status
+    updateFriendStatus(friendId, isOnline) {
+        // Update in friends list if open
+        const friendElements = document.querySelectorAll('.friend-item');
+        friendElements.forEach(element => {
+            const statusIndicator = element.querySelector('.status-pulse, .bg-green-500, .bg-gray-400');
+            if (statusIndicator && element.onclick && element.onclick.toString().includes(`openChat(${friendId}`)) {
+                statusIndicator.className = `absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${isOnline ? 'bg-green-500 status-pulse' : 'bg-gray-400'}`;
+            }
+        });
+
+        // Update in chat header if active
+        if (this.state.activeFriendId === friendId) {
+            const chatStatus = document.getElementById('chatStatus');
+            const lastSeen = document.getElementById('chatLastSeen');
+
+            if (chatStatus) {
+                chatStatus.className = `absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${isOnline ? 'bg-green-500 status-pulse' : 'bg-gray-400'}`;
+            }
+
+            if (lastSeen) {
+                lastSeen.textContent = isOnline ? 'Online' : 'Last seen recently';
+            }
+        }
     }
 
-    isYesterday(date) {
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        return date.getDate() === yesterday.getDate() &&
-               date.getMonth() === yesterday.getMonth() &&
-               date.getFullYear() === yesterday.getFullYear();
+    // Update message status
+    updateMessageStatus(messageId, status) {
+        const messageElements = document.querySelectorAll('.message-bubble.sent');
+        messageElements.forEach(element => {
+            const statusIcon = element.querySelector('.message-status i');
+            if (statusIcon) {
+                statusIcon.className = `bi ${status === 'read' ? 'bi-check2-all text-blue-500' : 'bi-check2 text-gray-400'}`;
+            }
+        });
     }
 
-    getDatePart(timestamp) {
-        const date = new Date(timestamp);
-        return date.toISOString().split('T')[0]; // Returns YYYY-MM-DD
-    }
-
-    // ==================== UTILITIES ====================
-
+    // Mark messages as read
     async markAsRead(friendId) {
         try {
             await fetch(`/api/messaging/mark-read/${friendId}`, {
                 method: 'POST',
                 headers: {
-                    'X-CSRFToken': window.csrfToken
+                    'X-CSRFToken': csrfToken
                 }
             });
-
-            // Clear unread count locally
-            this.unreadCounts[friendId] = 0;
-            this.updateUnreadBadges();
-
-            // Update friends list UI
-            const friendElement = document.querySelector(`.friend-item[data-friend-id="${friendId}"]`);
-            if (friendElement) {
-                const unreadBadge = friendElement.querySelector('.bg-red-500');
-                if (unreadBadge) unreadBadge.remove();
-
-                const checkIcon = friendElement.querySelector('.bi-check2-all, .bi-check2');
-                if (checkIcon) checkIcon.className = 'bi bi-check2-all text-blue-500 ml-1 flex-shrink-0';
-            }
+            this.updateUnreadBadge();
         } catch (error) {
             console.error('Error marking as read:', error);
         }
     }
 
-    incrementUnreadCount(friendId) {
-        if (!this.unreadCounts[friendId]) {
-            this.unreadCounts[friendId] = 0;
-        }
-        this.unreadCounts[friendId]++;
-
-        this.updateUnreadBadges();
-    }
-
-    updateUnreadBadges() {
-        // Calculate total unread messages
-        const totalUnread = Object.values(this.unreadCounts).reduce((a, b) => a + b, 0);
-
-        // Update main badge
-        const badge = document.getElementById('unreadMessagesBadge');
-        if (badge) {
-            if (totalUnread > 0) {
-                badge.textContent = totalUnread > 99 ? '99+' : totalUnread;
-                badge.classList.remove('hidden');
-            } else {
-                badge.classList.add('hidden');
-            }
-        }
-    }
-
-    updateFriendLastMessage(friendId, messageContent) {
-        const friendElement = document.querySelector(`.friend-item[data-friend-id="${friendId}"]`);
-        if (friendElement) {
-            const messageElement = friendElement.querySelector('.text-sm.text-gray-600');
-            if (messageElement) {
-                const truncated = messageContent.length > 40 ?
-                    messageContent.substring(0, 40) + '...' : messageContent;
-                messageElement.textContent = truncated;
-            }
-
-            // Update time
-            const timeElement = friendElement.querySelector('.text-xs.text-gray-500');
-            if (timeElement) {
-                timeElement.textContent = this.formatChatTime(new Date().toISOString());
-            }
-
-            // Move to top of list
-            const container = friendElement.parentNode;
-            if (container && friendElement !== container.firstElementChild) {
-                container.insertBefore(friendElement, container.firstElementChild);
-            }
-        }
-    }
-
-    updateFriendStatus(friendId, isOnline) {
-        const friendElement = document.querySelector(`.friend-item[data-friend-id="${friendId}"]`);
-        if (friendElement) {
-            const avatar = friendElement.querySelector('img');
-            if (avatar) {
-                avatar.className = avatar.className.replace(/border-(green|gray)-500/g, '') +
-                                 ` border-2 ${isOnline ? 'border-green-500' : 'border-gray-300'}`;
-            }
-
-            // Update status dot
-            let statusDot = friendElement.querySelector('.absolute.bottom-0.right-0');
-            if (!statusDot) {
-                const relativeDiv = friendElement.querySelector('.relative');
-                if (relativeDiv) {
-                    statusDot = document.createElement('span');
-                    statusDot.className = `absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${isOnline ? 'bg-green-500' : 'bg-gray-400'}`;
-                    relativeDiv.appendChild(statusDot);
-                }
-            } else {
-                statusDot.className = `absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${isOnline ? 'bg-green-500' : 'bg-gray-400'}`;
-            }
-
-            // Update in chat header if active
-            if (this.currentChatId === friendId) {
-                const chatStatus = document.getElementById('chatStatus');
-                if (chatStatus) {
-                    chatStatus.textContent = isOnline ? 'Online' : 'Offline';
-                    chatStatus.className = `text-xs ${isOnline ? 'text-green-600' : 'text-gray-500'}`;
-                }
-            }
-        }
-    }
-
-    updateMessageStatus(messageId, status) {
-        const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
-        if (messageElement) {
-            const statusIcon = messageElement.querySelector('.bi-check2, .bi-check2-all');
-            if (statusIcon) {
-                statusIcon.className = status === 'read' ?
-                    'bi bi-check2-all text-blue-500' :
-                    'bi bi-check2 text-gray-400';
-            }
-        }
-    }
-
-    scrollToBottom() {
-        const wrapper = document.getElementById('chatMessagesWrapper');
-        if (wrapper) {
-            setTimeout(() => {
-                wrapper.scrollTop = wrapper.scrollHeight;
-            }, 50);
-        }
-    }
-
-    restoreLastChat() {
-        const lastChatId = localStorage.getItem('lastChatId');
-        if (lastChatId) {
-            setTimeout(() => {
-                this.openChat(parseInt(lastChatId));
-            }, 1000);
-        }
-    }
-
-    playNotificationSound() {
-        // Optional: Play a subtle notification sound
+    // Update unread badge
+    async updateUnreadBadge() {
         try {
-            const audio = new Audio('/static/audio/notification.mp3');
-            audio.volume = 0.3;
-            audio.play().catch(e => console.log('Notification sound disabled'));
+            const response = await fetch('/api/messaging/unread_count');
+            if (!response.ok) return;
+
+            const data = await response.json();
+            if (data.success) {
+                const badge = document.getElementById('unreadMessagesBadge');
+                const chatBadge = document.getElementById('unreadChatsBadge');
+
+                if (badge) {
+                    if (data.unread_count > 0) {
+                        badge.textContent = data.unread_count > 99 ? '99+' : data.unread_count;
+                        badge.classList.remove('hidden');
+                    } else {
+                        badge.classList.add('hidden');
+                    }
+                }
+
+                if (chatBadge) {
+                    if (data.unread_count > 0) {
+                        chatBadge.textContent = data.unread_count > 9 ? '9+' : data.unread_count;
+                        chatBadge.classList.remove('hidden');
+                    } else {
+                        chatBadge.classList.add('hidden');
+                    }
+                }
+            }
         } catch (error) {
-            // Sound not available, continue silently
+            console.error('Error updating unread count:', error);
         }
     }
 
-    showDesktopNotification(message) {
-        // Check if notifications are allowed
-        if (!("Notification" in window)) return;
+    // Scroll chat to bottom
+    scrollToBottom(force = false) {
+    const wrapper = document.getElementById('chatMessagesWrapper');
+    const container = document.getElementById('chatMessages');
 
-        if (Notification.permission === "granted") {
-            new Notification(`New message from ${message.sender_name || 'Someone'}`, {
-                body: message.content.length > 100 ?
-                    message.content.substring(0, 100) + '...' : message.content,
-                icon: message.sender_avatar || window.defaultAvatar
-            });
-        } else if (Notification.permission !== "denied") {
-            Notification.requestPermission();
+    if (!wrapper || !container) {
+        console.warn('Chat wrapper or container not found');
+        return;
+    }
+
+    // Use requestAnimationFrame for smooth scrolling
+    requestAnimationFrame(() => {
+        // Always scroll to bottom when opening a chat (force = true)
+        if (force) {
+            wrapper.scrollTop = wrapper.scrollHeight;
+        } else {
+            // Only auto-scroll if user is near bottom
+            const isNearBottom = wrapper.scrollHeight - wrapper.scrollTop - wrapper.clientHeight < 200;
+            if (isNearBottom) {
+                wrapper.scrollTop = wrapper.scrollHeight;
+            }
         }
-    }
+    });
+}
 
-    showError(message, containerId) {
-        const container = document.getElementById(containerId);
-        if (container) {
-            container.innerHTML = `
-                <div class="text-center p-6">
-                    <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                        <i class="bi bi-exclamation-triangle text-red-600"></i>
-                    </div>
-                    <p class="text-gray-700 font-medium mb-2">Something went wrong</p>
-                    <p class="text-gray-500 text-sm mb-4">${message}</p>
-                    <button onclick="Messenger.loadFriends()"
-                            class="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors">
-                        Try Again
-                    </button>
-                </div>
-            `;
-        }
+scrollToLatestMessage() {
+    const chatMessages = document.getElementById('chatMessages');
+    if (!chatMessages) return;
 
-        Toast.show(message, 'danger');
-    }
-
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
-    // ==================== PUBLIC METHODS ====================
-
-    startChat(userId) {
-        this.open();
-        setTimeout(() => {
-            this.openChat(userId);
-        }, 300);
+    const messages = chatMessages.querySelectorAll('.message-bubble');
+    if (messages.length > 0) {
+        const lastMessage = messages[messages.length - 1];
+        lastMessage.scrollIntoView({
+            behavior: 'smooth',
+            block: 'end',
+            inline: 'nearest'
+        });
     }
 }
 
-// Initialize messenger globally
-window.Messenger = new EnhancedMessenger();
 
-// Global helper functions
-window.openMessenger = function() {
-    if (window.Messenger) {
-        window.Messenger.open();
+    // Handle message scroll
+    handleMessageScroll() {
+        const wrapper = document.getElementById('chatMessagesWrapper');
+        const scrollBtn = document.getElementById('scrollToBottomBtn');
+
+        if (wrapper && scrollBtn) {
+            // Show scroll to bottom button if scrolled up
+            const isAtBottom = wrapper.scrollHeight - wrapper.scrollTop <= wrapper.clientHeight + 100;
+            scrollBtn.classList.toggle('hidden', isAtBottom);
+
+            // Load more messages when near top
+            if (wrapper.scrollTop < 100 && this.state.activeFriendId) {
+                this.loadMoreMessages();
+            }
+        }
     }
-};
 
-window.closeMessenger = function() {
-    if (window.Messenger) {
-        window.Messenger.close();
+    // Load more messages
+    async loadMoreMessages() {
+        if (!this.state.activeFriendId) return;
+
+        // Prevent multiple simultaneous loads
+        if (this.isLoadingMore) return;
+        this.isLoadingMore = true;
+
+        await this.loadMessages(this.state.activeFriendId, true);
+        this.isLoadingMore = false;
     }
-};
 
-window.backToFriends = function() {
-    if (window.Messenger) {
-        window.Messenger.backToFriends();
-    }
-};
-
-window.sendMessage = function() {
-    if (window.Messenger) {
-        window.Messenger.sendMessage();
-    }
-};
-
-window.handleTyping = function() {
-    if (window.Messenger) {
-        window.Messenger.handleTyping();
-    }
-};
-
-// Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-    // Only initialize if messenger elements exist
-    if (document.getElementById('messengerPopup')) {
+    // Start chat with user (called from profile, etc.)
+    startChat(userId) {
+        this.open();
         setTimeout(() => {
-            window.Messenger.init();
-        }, 1000); // Wait 1 second for page to fully load
+            // Try to find and click the friend in the list
+            const friendElements = document.querySelectorAll('.friend-item');
+            friendElements.forEach(el => {
+                if (el.onclick && el.onclick.toString().includes(`openChat(${userId}`)) {
+                    el.click();
+                }
+            });
+        }, 500);
+    }
+
+    // Voice message functionality
+    setupVoiceRecording() {
+        const recordButton = document.getElementById('recordButton');
+        if (recordButton) {
+            recordButton.addEventListener('mousedown', () => this.startRecording());
+            recordButton.addEventListener('mouseup', () => this.stopRecording());
+            recordButton.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                this.startRecording();
+            });
+            recordButton.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                this.stopRecording();
+            });
+        }
+    }
+
+    startVoiceMessage() {
+        const recorder = document.getElementById('voiceRecorder');
+        if (recorder) {
+            recorder.classList.remove('hidden');
+        }
+    }
+
+    closeVoiceRecorder() {
+        const recorder = document.getElementById('voiceRecorder');
+        if (recorder) {
+            recorder.classList.add('hidden');
+        }
+        this.stopRecording();
+    }
+
+    startRecording() {
+        if (!this.state.activeFriendId) return;
+
+        this.state.voiceRecording = true;
+        this.state.recordingStartTime = Date.now();
+
+        // Update UI
+        const recordButton = document.getElementById('recordButton');
+        const timer = document.getElementById('recordingTimer');
+
+        if (recordButton) {
+            recordButton.textContent = 'Release to send';
+            recordButton.classList.remove('from-red-500', 'to-pink-500');
+            recordButton.classList.add('from-red-600', 'to-pink-600');
+        }
+
+        // Start timer
+        this.state.recordingInterval = setInterval(() => {
+            if (timer) {
+                const elapsed = Date.now() - this.state.recordingStartTime;
+                const seconds = Math.floor(elapsed / 1000);
+                const minutes = Math.floor(seconds / 60);
+                timer.textContent = `${minutes.toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`;
+            }
+        }, 1000);
+    }
+
+    stopRecording() {
+        if (!this.state.voiceRecording) return;
+
+        this.state.voiceRecording = false;
+
+        // Clear interval
+        if (this.state.recordingInterval) {
+            clearInterval(this.state.recordingInterval);
+            this.state.recordingInterval = null;
+        }
+
+        // Send voice message if recording was long enough
+        const duration = Date.now() - this.state.recordingStartTime;
+        if (duration > 1000) { // At least 1 second
+            this.sendVoiceMessage(duration);
+        }
+
+        // Reset UI
+        const recordButton = document.getElementById('recordButton');
+        const timer = document.getElementById('recordingTimer');
+
+        if (recordButton) {
+            recordButton.textContent = 'Hold to Record';
+            recordButton.classList.remove('from-red-600', 'to-pink-600');
+            recordButton.classList.add('from-red-500', 'to-pink-500');
+        }
+
+        if (timer) {
+            timer.textContent = '00:00';
+        }
+
+        this.closeVoiceRecorder();
+    }
+
+    async sendVoiceMessage(duration) {
+        try {
+            // In a real app, you would upload the audio blob here
+            const response = await fetch('/api/messaging/send-voice', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({
+                    friend_id: this.state.activeFriendId,
+                    duration: duration,
+                    audio_url: '' // You would upload and get URL
+                })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                Toast.show('Voice message sent', 'success');
+            }
+        } catch (error) {
+            console.error('Error sending voice message:', error);
+            Toast.show('Failed to send voice message', 'danger');
+        }
+    }
+
+    // Additional features
+    toggleAttachmentMenu(e) {
+        const menu = document.querySelector('.dropdown-menu');
+        if (menu) {
+            menu.classList.toggle('hidden');
+            if (e) e.stopPropagation();
+        }
+    }
+
+    toggleEmojiPicker() {
+        // Implement emoji picker
+        Toast.show('Emoji picker coming soon', 'info');
+    }
+
+    handleQuickAction(action) {
+        switch(action) {
+            case 'quick reply':
+                this.insertQuickReply();
+                break;
+            case 'translate':
+                this.translateMessage();
+                break;
+            case 'schedule':
+                this.scheduleMessage();
+                break;
+        }
+    }
+
+    insertQuickReply() {
+        const input = document.getElementById('chatInput');
+        if (input) {
+            const quickReplies = [
+                "👍",
+                "Sounds good!",
+                "Let me check and get back to you",
+                "😂",
+                "Perfect!",
+                "On my way!"
+            ];
+            const randomReply = quickReplies[Math.floor(Math.random() * quickReplies.length)];
+            input.value = randomReply;
+            this.autoResizeTextarea(input);
+            this.toggleSendVoiceButtons();
+        }
+    }
+
+    translateMessage() {
+        Toast.show('Translation feature coming soon', 'info');
+    }
+
+    scheduleMessage() {
+        Toast.show('Schedule message feature coming soon', 'info');
+    }
+
+    startVoiceCall() {
+        Toast.show('Voice call feature coming soon', 'info');
+    }
+
+    startVideoCall() {
+        Toast.show('Video call feature coming soon', 'info');
+    }
+
+    playNotificationSound() {
+        // Play a subtle notification sound
+        const audio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEAQB8AAEAfAAABAAgAZGF0YQ'); // Empty sound
+        audio.volume = 0.3;
+        audio.play().catch(() => {});
+    }
+
+    // Load online friends
+    async loadOnlineFriends() {
+        // Implement online friends list
+        const container = document.getElementById('onlineFriends');
+        if (container) {
+            container.innerHTML = `
+                <div class="flex flex-col items-center justify-center p-8 text-gray-500">
+                    <i class="bi bi-wifi text-3xl mb-3"></i>
+                    <p class="text-sm font-medium">Loading online friends...</p>
+                </div>
+            `;
+        }
+    }
+
+    // Load chat requests
+    async loadChatRequests() {
+        // Implement chat requests
+        const container = document.getElementById('chatRequests');
+        if (container) {
+            container.innerHTML = `
+                <div class="flex flex-col items-center justify-center p-8 text-gray-500">
+                    <i class="bi bi-envelope text-3xl mb-3"></i>
+                    <p class="text-sm font-medium">No pending requests</p>
+                    <p class="text-xs mt-1 text-gray-400">When someone sends you a message request, it'll appear here</p>
+                </div>
+            `;
+        }
+    }
+}
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    if (document.getElementById('messengerPopup') && !window.messengerInitialized) {
+        window.Messenger = new ModernMessenger();
+        window.messengerInitialized = true;
     }
 });
 
+// Global function wrappers
+window.openMessenger = () => window.Messenger?.open();
+window.closeMessenger = () => window.Messenger?.close();
+window.backToFriends = () => window.Messenger?.backToFriends();
+window.handleTyping = () => window.Messenger?.handleTyping();
+window.sendMessage = () => window.Messenger?.sendMessage();
+window.startVoiceMessage = () => window.Messenger?.startVoiceMessage();
+window.closeVoiceRecorder = () => window.Messenger?.closeVoiceRecorder();
+window.startVoiceCall = () => window.Messenger?.startVoiceCall();
+window.startVideoCall = () => window.Messenger?.startVideoCall();
+window.toggleAttachmentMenu = (e) => window.Messenger?.toggleAttachmentMenu(e);
+window.toggleEmojiPicker = () => window.Messenger?.toggleEmojiPicker();
+window.scrollToBottom = () => window.Messenger?.scrollToBottom();
+
+// For profile buttons
+window.startChat = (userId) => window.Messenger?.startChat(userId);
 
 
 // ==================== REACTION SYSTEM ====================
