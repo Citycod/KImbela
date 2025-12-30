@@ -2413,12 +2413,18 @@ body {
 }
 
 
-
 /* Progress Bar Animations */
+
 @keyframes progressPulse {
-    0% { opacity: 1; }
-    50% { opacity: 0.7; }
-    100% { opacity: 1; }
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+    100% {
+        opacity: 1;
+    }
 }
 
 #uploadProgressBar {
@@ -2429,7 +2435,9 @@ body {
     animation: progressPulse 1.5s infinite;
 }
 
+
 /* File Preview Styles */
+
 .file-preview {
     transition: all 0.3s ease;
 }
@@ -2439,19 +2447,26 @@ body {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
+
 /* Upload Speed Animation */
+
 #uploadSpeedContainer i {
     animation: bounce 1s infinite;
 }
 
 @keyframes bounce {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-2px); }
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-2px);
+    }
 }
 
 
-
 /* Chat Styles */
+
 #chatMessagesWrapper {
     scroll-behavior: smooth;
 }
@@ -2486,7 +2501,9 @@ body {
     background: linear-gradient(90deg, #f0f9ff 0%, #ffffff 100%);
 }
 
+
 /* Smooth animations */
+
 @keyframes messageAppear {
     from {
         opacity: 0;
@@ -2502,9 +2519,12 @@ body {
     animation: messageAppear 0.3s ease-out;
 }
 
+
 /* Typing indicator animation */
+
 @keyframes bounce {
-    0%, 100% {
+    0%,
+    100% {
         transform: translateY(0);
     }
     50% {
