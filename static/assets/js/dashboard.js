@@ -86,6 +86,29 @@ window.closeModal = function(modalId) {
     }
 };
 
+window.handleMessageButtonClick = function(userId) {
+    // Close the profile modal first
+    const profileModal = document.getElementById('profileModal');
+    if (profileModal) {
+        profileModal.classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+
+    // Then open messenger and start chat
+    if (typeof window.Messenger !== 'undefined') {
+        // Open messenger
+        window.Messenger.open();
+
+        // Start chat with the user after a short delay
+        setTimeout(() => {
+            window.Messenger.startChat(userId);
+        }, 500);
+    } else {
+        console.error('Messenger not initialized');
+        Toast.show('Messenger not available', 'danger');
+    }
+};
+
 window.openModal = function(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
@@ -1320,16 +1343,14 @@ const ProfileSystem = {
                 switch(data.status) {
                     case 'friends':
                         actionsHTML = `
-                            <div class="flex flex-wrap gap-2">
-                                <button class="btn btn-primary px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
-                                        onclick="Messenger.startChat(${userId})">
-                                    <i class="bi bi-chat-dots mr-1"></i> Message
-                                </button>
-                                <button class="btn btn-outline-danger px-4 py-2 border border-red-500 text-red-500 rounded-lg font-medium hover:bg-red-50 transition-colors"
-                                        onclick="BlockSystem.block(${userId})">
-                                    <i class="bi bi-slash-circle mr-1"></i> Block
-                                </button>
-                            </div>
+                            <button class="btn btn-primary px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                                    onclick="handleMessageButtonClick(${userId})">
+                                <i class="bi bi-chat-dots mr-1"></i> Message
+                            </button>
+                            <button class="btn btn-outline-danger px-4 py-2 border border-red-500 text-red-500 rounded-lg font-medium hover:bg-red-50 transition-colors"
+                                    onclick="BlockSystem.block(${userId})">
+                                <i class="bi bi-slash-circle mr-1"></i> Block
+                            </button>
                         `;
                         break;
 
@@ -1999,6 +2020,13 @@ const Messenger = {
             return;
         }
 
+        // Close any open profile modal
+        const profileModal = document.getElementById('profileModal');
+        if (profileModal && !profileModal.classList.contains('hidden')) {
+            profileModal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
         popup.classList.remove('hidden');
         await this.loadFriends();
 
@@ -2120,6 +2148,15 @@ const Messenger = {
 
     // Open chat with a friend
     async openChat(friendId, friendName, friendAvatar, friendOnline) {
+
+        // Close any open profile modal
+        const profileModal = document.getElementById('profileModal');
+        if (profileModal && !profileModal.classList.contains('hidden')) {
+        profileModal.classList.add('hidden');
+        document.body.style.overflow = '';
+       }
+
+
         this.state.activeFriendId = friendId;
         this.state.currentFriend = {
             id: friendId,
@@ -2503,6 +2540,14 @@ const Messenger = {
 
     // Start chat with user (called from profile, etc.)
     startChat(userId) {
+
+        const profileModal = document.getElementById('profileModal');
+        if (profileModal && !profileModal.classList.contains('hidden')) {
+            profileModal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+
         this.open();
         setTimeout(() => {
             // Try to find and click the friend in the list
@@ -4710,6 +4755,13 @@ class ModernMessenger {
             return;
         }
 
+        // Close any open profile modal
+        const profileModal = document.getElementById('profileModal');
+        if (profileModal && !profileModal.classList.contains('hidden')) {
+            profileModal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
         // Show with animation
         popup.classList.remove('hidden', 'scale-95', 'opacity-0');
         popup.classList.add('flex', 'scale-100', 'opacity-100');
@@ -5467,6 +5519,13 @@ scrollToLatestMessage() {
 
     // Start chat with user (called from profile, etc.)
     startChat(userId) {
+
+        const profileModal = document.getElementById('profileModal');
+        if (profileModal && !profileModal.classList.contains('hidden')) {
+            profileModal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
         this.open();
         setTimeout(() => {
             // Try to find and click the friend in the list

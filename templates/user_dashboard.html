@@ -1970,10 +1970,9 @@
                 </div>
                 {% elif user.friend_request_status == 'friends' %}
                 <button
-                  class="w-full py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
-                  onclick="event.stopPropagation(); Messenger.startChat({{ user.id }})"
-                >
-                  <i class="bi bi-chat-dots mr-1"></i> Message
+                    class="w-full py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
+                    onclick="event.stopPropagation(); handleMessageButtonClick({{ user.id }})">
+                    <i class="bi bi-chat-dots mr-1"></i> Message
                 </button>
                 {% else %}
                 <button
