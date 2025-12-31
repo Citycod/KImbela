@@ -86,6 +86,23 @@ window.closeModal = function(modalId) {
     }
 };
 
+window.viewFullProfile = function(userId) {
+    // Close the profile modal
+    const profileModal = document.getElementById('profileModal');
+    if (profileModal) {
+        profileModal.classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+
+    // Show loading toast
+    Toast.show('Opening full profile...', 'info');
+
+    // Open in new tab after a short delay
+    setTimeout(() => {
+        window.open(`/profile/${userId}`, '_blank');
+    }, 500);
+};
+
 window.handleMessageButtonClick = function(userId) {
     // Close the profile modal first
     const profileModal = document.getElementById('profileModal');
@@ -1692,6 +1709,86 @@ const NotificationSystem = {
             Toast.show('Post not found', 'warning');
         }
     },
+
+    async updateProfileActions(userId) {
+        const profileActions = document.getElementById('profileActions');
+        if (!profileActions) return;
+
+        try {
+            // Check friend status
+            const response = await fetch(`/check_friend_status/${userId}`);
+            if (response.ok) {
+                const data = await response.json();
+                this.setProfileActionsHTML(userId, data.status, profileActions);
+            } else {
+                // Fallback if status check fails
+                this.setProfileActionsHTML(userId, 'none', profileActions);
+            }
+        } catch (error) {
+            console.error('Error checking friend status:', error);
+            // Fallback to basic buttons
+            this.setProfileActionsHTML(userId, 'none', profileActions);
+        }
+    },
+
+    setProfileActionsHTML(userId, status, container) {
+        let baseHTML = '';
+
+        switch(status) {
+            case 'friends':
+                baseHTML = `
+                    <button class="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors text-sm flex-1"
+                            onclick="handleMessageButtonClick(${userId})">
+                        <i class="bi bi-chat-dots mr-1"></i> Message
+                    </button>
+                `;
+                break;
+            case 'request_sent':
+                baseHTML = `
+                    <button class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors text-sm flex-1"
+                            onclick="FriendSystem.cancelRequest(${userId}, this)">
+                        <i class="bi bi-clock-history mr-1"></i> Cancel Request
+                    </button>
+                `;
+                break;
+            case 'request_received':
+                baseHTML = `
+                    <div class="flex space-x-2 w-full">
+                        <button class="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors text-sm flex-1"
+                                onclick="FriendSystem.acceptFriendRequest(${userId}, this)">
+                            <i class="bi bi-check-lg mr-1"></i> Accept
+                        </button>
+                        <button class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors text-sm flex-1"
+                                onclick="FriendSystem.declineFriendRequest(${userId}, this)">
+                            <i class="bi bi-x-lg mr-1"></i> Decline
+                        </button>
+                    </div>
+                `;
+                break;
+            default:
+                baseHTML = `
+                    <button class="px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg font-medium hover:from-orange-600 hover:to-red-600 transition-colors text-sm flex-1"
+                            onclick="FriendSystem.add(${userId}, this)">
+                        <i class="bi bi-person-plus mr-1"></i> Connect
+                    </button>
+                `;
+        }
+
+        // Always add the View Full Profile button
+        const actionsHTML = `
+            <div class="flex flex-col sm:flex-row gap-2 w-full">
+                ${baseHTML}
+                <button class="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-medium hover:from-purple-700 hover:to-pink-700 transition-colors text-sm flex-1"
+                        onclick="viewFullProfile(${userId})">
+                    <i class="bi bi-eye mr-1"></i> View Full Profile
+                </button>
+            </div>
+        `;
+
+        container.innerHTML = actionsHTML;
+    },
+
+
 
     init() {
         this.load();

@@ -987,6 +987,34 @@
     flex-direction: column;
     flex: 1;
 }
+
+
+        /* Add to your existing styles */
+.btn-view-profile {
+    background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.btn-view-profile:hover {
+    background: linear-gradient(135deg, #7c3aed 0%, #db2777 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.btn-view-profile:active {
+    transform: translateY(0);
+}
 </style>
   </head>
   <body class="font-poppins bg-fb-gray text-fb-text">
@@ -1980,7 +2008,7 @@
                   onclick="event.stopPropagation(); addFriend({{ user.id }}, this)"
                   data-user-id="{{ user.id }}"
                   style="
-                    background: #FF7F50;
+                    background: #F76F69;
                   "
                 >
                   <i class="bi bi-person-plus mr-1"></i> Connect
