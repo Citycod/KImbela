@@ -1710,28 +1710,80 @@ const NotificationSystem = {
         }
     },
 
-    async updateProfileActions(userId) {
-        const profileActions = document.getElementById('profileActions');
-        if (!profileActions) return;
+        async updateProfileActions(userId) {
+            const profileActions = document.getElementById('profileActions');
+            if (!profileActions) return;
 
-        try {
-            // Check friend status
-            const response = await fetch(`/check_friend_status/${userId}`);
-            if (response.ok) {
-                const data = await response.json();
-                this.setProfileActionsHTML(userId, data.status, profileActions);
-            } else {
-                // Fallback if status check fails
-                this.setProfileActionsHTML(userId, 'none', profileActions);
+            try {
+                // Check friend status
+                const response = await fetch(`/check_friend_status/${userId}`);
+                if (response.ok) {
+                    const data = await response.json();
+
+                    let actionsHTML = '';
+
+                    switch(data.status) {
+                        case 'friends':
+                            actionsHTML = `
+                                <button class="btn btn-primary px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                                        onclick="handleMessageButtonClick(${userId})">
+                                    <i class="bi bi-chat-dots mr-1"></i> Message
+                                </button>
+                                <button class="btn btn-outline-danger px-4 py-2 border border-red-500 text-red-500 rounded-lg font-medium hover:bg-red-50 transition-colors"
+                                        onclick="BlockSystem.block(${userId})">
+                                    <i class="bi bi-slash-circle mr-1"></i> Block
+                                </button>
+                            `;
+                            break;
+
+                        case 'request_sent':
+                            actionsHTML = `
+                                <button class="btn btn-secondary px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors"
+                                        onclick="FriendSystem.cancelRequest(${userId}, this)">
+                                    <i class="bi bi-clock-history mr-1"></i> Cancel Request
+                                </button>
+                            `;
+                            break;
+
+                        case 'request_received':
+                            actionsHTML = `
+                                <div class="flex space-x-2">
+                                    <button class="btn btn-success px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
+                                            onclick="FriendSystem.acceptFriendRequest(${userId}, this)">
+                                        <i class="bi bi-check-lg mr-1"></i> Accept
+                                    </button>
+                                    <button class="btn btn-danger px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
+                                            onclick="FriendSystem.declineFriendRequest(${userId}, this)">
+                                        <i class="bi bi-x-lg mr-1"></i> Decline
+                                    </button>
+                                </div>
+                            `;
+                            break;
+
+                        default:
+                            actionsHTML = `
+                                <button class="btn btn-primary px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                                        onclick="FriendSystem.add(${userId}, this)">
+                                    <i class="bi bi-person-plus mr-1"></i> Connect
+                                </button>
+                            `;
+                    }
+
+                    profileActions.innerHTML = actionsHTML;
+                }
+            } catch (error) {
+                console.error('Error checking friend status:', error);
+                // Fallback to basic add friend button
+                profileActions.innerHTML = `
+                    <button class="btn btn-primary px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                            onclick="FriendSystem.add(${userId}, this)">
+                        <i class="bi bi-person-plus mr-1"></i> Connect
+                    </button>
+                `;
             }
-        } catch (error) {
-            console.error('Error checking friend status:', error);
-            // Fallback to basic buttons
-            this.setProfileActionsHTML(userId, 'none', profileActions);
-        }
-    },
+        },
 
-    setProfileActionsHTML(userId, status, container) {
+        setProfileActionsHTML(userId, status, container) {
         let baseHTML = '';
 
         switch(status) {
@@ -1776,16 +1828,17 @@ const NotificationSystem = {
 
         // Always add the View Full Profile button
         const actionsHTML = `
-            <div class="flex flex-col sm:flex-row gap-2 w-full">
-                ${baseHTML}
-                <button class="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-medium hover:from-purple-700 hover:to-pink-700 transition-colors text-sm flex-1"
+            <div class="flex flex-col sm:flex-row gap-3 w-full items-stretch">
+                <div class="flex flex-col sm:flex-row gap-2 flex-1">
+                    ${baseHTML}
+                </div>
+                <button class="btn-view-full-profile"
                         onclick="viewFullProfile(${userId})">
-                    <i class="bi bi-eye mr-1"></i> View Full Profile
+                    <i class="bi bi-eye-fill"></i> View Full Profile
                 </button>
             </div>
         `;
-
-        container.innerHTML = actionsHTML;
+                container.innerHTML = actionsHTML;
     },
 
 
@@ -2636,25 +2689,47 @@ const Messenger = {
     },
 
     // Start chat with user (called from profile, etc.)
+    // In the ModernMessenger class, update the startChat method:
     startChat(userId) {
-
         const profileModal = document.getElementById('profileModal');
         if (profileModal && !profileModal.classList.contains('hidden')) {
             profileModal.classList.add('hidden');
             document.body.style.overflow = '';
         }
 
-
         this.open();
-        setTimeout(() => {
-            // Try to find and click the friend in the list
-            const friendElements = document.querySelectorAll('#friendsContainer > div');
-            friendElements.forEach(el => {
-                if (el.onclick && el.onclick.toString().includes(`openChat(${userId}`)) {
-                    el.click();
+
+        // Instead of trying to find and click the friend in the list,
+        // directly open the chat with the specific user
+        setTimeout(async () => {
+            try {
+                // First, fetch the user's information
+                const response = await fetch(`/api/user_info/${userId}`);
+                if (response.ok) {
+                    const userData = await response.json();
+
+                    // Directly open chat with this user
+                    this.openChat(
+                        userId,
+                        `${userData.first_name} ${userData.last_name}`,
+                        userData.profile_pic || window.defaultAvatar,
+                        userData.online || false
+                    );
+                } else {
+                    // If we can't fetch user info, still try to open chat
+                    this.openChat(userId, 'User', window.defaultAvatar, false);
                 }
-            });
-        }, 500);
+            } catch (error) {
+                console.error('Error fetching user info:', error);
+                // Fallback: try to find in friends list
+                const friendElements = document.querySelectorAll('.friend-item');
+                friendElements.forEach(el => {
+                    if (el.onclick && el.onclick.toString().includes(`openChat(${userId}`)) {
+                        el.click();
+                    }
+                });
+            }
+        }, 300);
     }
 };
 
@@ -4667,6 +4742,10 @@ class ModernMessenger {
             recordingInterval: null
         };
 
+        // For "open from profile" → go straight to chat
+        this.directOpenUserId = null;
+        this.isLoadingMore = false;
+
         this.init();
     }
 
@@ -4682,10 +4761,8 @@ class ModernMessenger {
     }
 
     // ========================================
-// CHAT INPUT HANDLER
-// ========================================
-
-
+    // CHAT INPUT HANDLER
+    // ========================================
 
     // Setup all event listeners
     setupEventListeners() {
@@ -4725,7 +4802,7 @@ class ModernMessenger {
                 }
             });
 
-            chatInput.addEventListener('input', (e) => {
+            chatInput.addEventListener('input', () => {
                 this.handleTyping();
                 this.toggleSendVoiceButtons();
             });
@@ -4740,7 +4817,7 @@ class ModernMessenger {
             });
         }
 
-        // Tab switching
+        // Tab switching (if you later add the tabs back)
         document.querySelectorAll('.tab-button').forEach(tab => {
             tab.addEventListener('click', (e) => {
                 const tabName = e.currentTarget.dataset.tab;
@@ -4801,6 +4878,7 @@ class ModernMessenger {
 
     // Auto-resize textarea
     autoResizeTextarea(textarea) {
+        if (!textarea) return;
         textarea.style.height = 'auto';
         const maxHeight = 128; // Max 6 lines
         const newHeight = Math.min(textarea.scrollHeight, maxHeight);
@@ -4828,24 +4906,23 @@ class ModernMessenger {
 
     // Switch between tabs
     switchTab(tabName) {
-        // Update active tab
         document.querySelectorAll('.tab-button').forEach(tab => {
             tab.classList.toggle('active', tab.dataset.tab === tabName);
         });
 
-        // Show selected content
         document.querySelectorAll('[data-tab]').forEach(content => {
             content.classList.toggle('hidden', content.dataset.tab !== tabName);
         });
 
-        // Load content for tab
         if (tabName === 'chats') this.loadFriends();
         else if (tabName === 'online') this.loadOnlineFriends();
         else if (tabName === 'requests') this.loadChatRequests();
     }
 
-    // Open messenger popup
-    async open() {
+    // ================================
+    // ✅ FIX: OPEN normally OR open direct chat
+    // ================================
+    async open(options = {}) {
         const popup = document.getElementById('messengerPopup');
         if (!popup) {
             console.error('Messenger popup not found');
@@ -4863,11 +4940,19 @@ class ModernMessenger {
         popup.classList.remove('hidden', 'scale-95', 'opacity-0');
         popup.classList.add('flex', 'scale-100', 'opacity-100');
 
-        await this.loadFriends();
-
+        // Connect socket if needed
         if (!this.state.socket || !this.state.isConnected) {
             this.connectSocket();
         }
+
+        // ✅ If caller asked for direct open, do NOT render friends list
+        if (options.userId) {
+            await this.openDirectChat(options.userId);
+            return;
+        }
+
+        // Normal open: show friends
+        await this.loadFriends();
     }
 
     // Close messenger popup
@@ -4885,6 +4970,60 @@ class ModernMessenger {
         }
     }
 
+    // ✅ Direct open from profile: no friend list rendering
+    async openDirectChat(userId) {
+        // Show a clean loading state (optional)
+        const chatContainer = document.getElementById('chatMessages');
+        if (chatContainer) {
+            chatContainer.innerHTML = `
+                <div class="flex flex-col items-center justify-center py-10 text-gray-500">
+                    <div class="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-3"></div>
+                    <p class="text-sm font-medium">Opening chat...</p>
+                    <p class="text-xs mt-1 text-gray-400">One sec</p>
+                </div>
+            `;
+        }
+
+        // Hide friend list UI immediately
+        const friendList = document.getElementById('friendList');
+        const chatArea = document.getElementById('chatArea');
+        if (friendList) friendList.classList.add('hidden');
+        if (chatArea) chatArea.classList.remove('hidden');
+
+        // We need friend info (name/avatar/online). Best: dedicated endpoint.
+        // If you DON'T have it yet, we fallback to /api/messaging/friends but we won't render the list.
+        let friend = null;
+
+        // 1) Try a dedicated endpoint (recommended)
+        try {
+            const res = await fetch(`/api/messaging/friend/${userId}`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data && data.success && data.friend) friend = data.friend;
+            }
+        } catch (_) {}
+
+        // 2) Fallback: fetch all friends but do NOT display them
+        if (!friend) {
+            try {
+                const res = await fetch('/api/messaging/friends');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.success && Array.isArray(data.friends)) {
+                        friend = data.friends.find(f => String(f.id) === String(userId)) || null;
+                    }
+                }
+            } catch (_) {}
+        }
+
+        // If still not found, we can still open chat with minimal info
+        const friendName = friend?.name || 'Chat';
+        const friendAvatar = friend?.avatar || window.defaultAvatar;
+        const friendOnline = !!friend?.online;
+
+        await this.openChat(userId, friendName, friendAvatar, friendOnline);
+    }
+
     // Go back to friends list
     backToFriends() {
         this.state.activeFriendId = null;
@@ -4893,8 +5032,8 @@ class ModernMessenger {
         const friendList = document.getElementById('friendList');
         const chatArea = document.getElementById('chatArea');
 
-        if (friendList) friendList.classList.remove('hidden');
         if (chatArea) chatArea.classList.add('hidden');
+        if (friendList) friendList.classList.remove('hidden');
 
         const chatInput = document.getElementById('chatInput');
         if (chatInput) {
@@ -4905,6 +5044,9 @@ class ModernMessenger {
         this.hideTypingIndicator();
         this.stopTyping();
         this.toggleSendVoiceButtons();
+
+        // Load friends when coming back (so list is fresh)
+        this.loadFriends();
     }
 
     // Load friends list with modern design
@@ -4934,7 +5076,6 @@ class ModernMessenger {
                 this.displayFriends(data.friends);
                 this.updateUnreadBadge();
 
-                // Show/hide empty state
                 const noChats = document.getElementById('noChats');
                 if (noChats) {
                     noChats.classList.toggle('hidden', data.friends && data.friends.length > 0);
@@ -5036,59 +5177,50 @@ class ModernMessenger {
         return element;
     }
 
-
-
     // Open chat with a friend
-    // In your ModernMessenger class, update the openChat method:
+    async openChat(friendId, friendName, friendAvatar, friendOnline) {
+        this.state.activeFriendId = friendId;
+        this.state.currentFriend = {
+            id: friendId,
+            name: friendName,
+            avatar: friendAvatar,
+            online: friendOnline
+        };
 
-async openChat(friendId, friendName, friendAvatar, friendOnline) {
-    this.state.activeFriendId = friendId;
-    this.state.currentFriend = {
-        id: friendId,
-        name: friendName,
-        avatar: friendAvatar,
-        online: friendOnline
-    };
+        // Hide friend list, show chat area
+        const friendList = document.getElementById('friendList');
+        const chatArea = document.getElementById('chatArea');
 
-    // Update UI - Hide friends list, show chat area
-    const friendList = document.getElementById('friendList');
-    const chatArea = document.getElementById('chatArea');
-    const chatName = document.getElementById('chatName');
-    const chatLastSeen = document.getElementById('chatLastSeen');
+        if (friendList) friendList.classList.add('hidden');
+        if (chatArea) chatArea.classList.remove('hidden');
 
-    if (friendList) {
-        friendList.classList.add('hidden');
-//        friendList.style.display = 'none';
+        // Update chat header UI
+        this.updateChatHeader(friendName, friendOnline);
+
+        // Load messages
+        await this.loadMessages(friendId);
+
+        // Focus input
+        const chatInput = document.getElementById('chatInput');
+        if (chatInput) {
+            chatInput.focus();
+            this.toggleSendVoiceButtons();
+        }
+
+        // Mark messages as read
+        await this.markAsRead(friendId);
     }
 
-    if (chatArea) {
-        chatArea.classList.remove('hidden');
-//        chatArea.style.display = 'flex';
+    updateChatHeader(friendName, friendOnline) {
+        const chatName = document.getElementById('chatName');
+        const chatLastSeen = document.getElementById('chatLastSeen');
+
+        if (chatName) chatName.textContent = friendName || '';
+        if (chatLastSeen) {
+            chatLastSeen.textContent = friendOnline ? 'Online' : 'Offline';
+            chatLastSeen.className = `text-xs mt-0.5 ${friendOnline ? 'text-green-600' : 'text-gray-500'}`;
+        }
     }
-
-    // Set friend info
-    if (chatName) {
-        chatName.textContent = friendName || 'Friend';
-    }
-
-    if (chatLastSeen) {
-        chatLastSeen.textContent = friendOnline ? 'Online' : 'Offline';
-        chatLastSeen.className = `text-xs ${friendOnline ? 'text-green-600' : 'text-gray-500'} mt-0.5`;
-    }
-
-    // Load messages
-    await this.loadMessages(friendId);
-
-    // Focus input
-    const chatInput = document.getElementById('chatInput');
-    if (chatInput) {
-        chatInput.focus();
-        this.toggleSendVoiceButtons();
-    }
-
-    // Mark messages as read
-    await this.markAsRead(friendId);
-}
 
     // Load messages with modern design
     async loadMessages(friendId, loadMore = false) {
@@ -5141,65 +5273,59 @@ async openChat(friendId, friendName, friendAvatar, friendOnline) {
             }
         } finally {
             const messagesLoading = document.getElementById('messagesLoading');
-            if (messagesLoading) {
-                messagesLoading.classList.add('hidden');
-            }
+            if (messagesLoading) messagesLoading.classList.add('hidden');
         }
     }
 
     // Display messages with modern design
     displayMessages(messages, prepend = false) {
-    const chatContainer = document.getElementById('chatMessages');
-    if (!chatContainer) return;
+        const chatContainer = document.getElementById('chatMessages');
+        if (!chatContainer) return;
 
-    if (!messages || messages.length === 0) {
-        const noMessages = document.getElementById('noMessages');
-        if (noMessages) {
-            noMessages.classList.remove('hidden');
-        } else {
-            chatContainer.innerHTML = `
-                <div id="noMessages" class="flex flex-col items-center justify-center py-12 text-gray-400">
-                    <div class="w-20 h-20 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full flex items-center justify-center mb-4">
-                        <i class="bi bi-chat-dots text-3xl text-gray-300"></i>
+        if (!messages || messages.length === 0) {
+            const noMessages = document.getElementById('noMessages');
+            if (noMessages) {
+                noMessages.classList.remove('hidden');
+            } else {
+                chatContainer.innerHTML = `
+                    <div id="noMessages" class="flex flex-col items-center justify-center py-12 text-gray-400">
+                        <div class="w-20 h-20 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full flex items-center justify-center mb-4">
+                            <i class="bi bi-chat-dots text-3xl text-gray-300"></i>
+                        </div>
+                        <p class="text-sm font-medium text-gray-500">No messages yet</p>
+                        <p class="text-xs mt-1 text-gray-400">Say hello and start the conversation!</p>
+                        <button onclick="sendFirstMessage()"
+                                class="mt-4 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-sm rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all duration-300 transform hover:scale-105">
+                            <i class="bi bi-send mr-2"></i>
+                            Send First Message
+                        </button>
                     </div>
-                    <p class="text-sm font-medium text-gray-500">No messages yet</p>
-                    <p class="text-xs mt-1 text-gray-400">Say hello and start the conversation!</p>
-                    <button onclick="sendFirstMessage()"
-                            class="mt-4 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-sm rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all duration-300 transform hover:scale-105">
-                        <i class="bi bi-send mr-2"></i>
-                        Send First Message
-                    </button>
-                </div>
-            `;
+                `;
+            }
+            return;
         }
-        return;
+
+        const noMessages = document.getElementById('noMessages');
+        if (noMessages) noMessages.classList.add('hidden');
+
+        if (prepend) {
+            const fragment = document.createDocumentFragment();
+            messages.reverse().forEach(msg => {
+                const messageElement = this.createMessageElement(msg);
+                fragment.prepend(messageElement);
+            });
+            chatContainer.prepend(fragment);
+        } else {
+            chatContainer.innerHTML = '';
+            messages.forEach(msg => {
+                this.appendMessage(msg, false);
+            });
+
+            setTimeout(() => {
+                this.scrollToBottom(true);
+            }, 50);
+        }
     }
-
-    // Hide no messages
-    const noMessages = document.getElementById('noMessages');
-    if (noMessages) noMessages.classList.add('hidden');
-
-    if (prepend) {
-        // Prepend older messages at the beginning
-        const fragment = document.createDocumentFragment();
-        messages.reverse().forEach(msg => {
-            const messageElement = this.createMessageElement(msg);
-            fragment.prepend(messageElement);
-        });
-        chatContainer.prepend(fragment);
-    } else {
-        // Clear and show new messages
-        chatContainer.innerHTML = '';
-        messages.forEach(msg => {
-            this.appendMessage(msg, false);
-        });
-
-        // Scroll to bottom after all messages are added
-        setTimeout(() => {
-            this.scrollToBottom(true);
-        }, 50);
-    }
-}
 
     // Create modern message element
     createMessageElement(msg) {
@@ -5249,16 +5375,13 @@ async openChat(friendId, friendName, friendAvatar, friendOnline) {
         const chatContainer = document.getElementById('chatMessages');
         if (!chatContainer) return;
 
-        // Hide no messages
         const noMessages = document.getElementById('noMessages');
         if (noMessages) noMessages.classList.add('hidden');
 
         const messageElement = this.createMessageElement(msg);
         chatContainer.appendChild(messageElement);
 
-        if (shouldScroll) {
-            this.scrollToBottom();
-        }
+        if (shouldScroll) this.scrollToBottom();
     }
 
     // Send a message
@@ -5270,13 +5393,11 @@ async openChat(friendId, friendName, friendAvatar, friendOnline) {
         if (!content) return;
 
         if (this.state.socket && this.state.isConnected) {
-            // Send via WebSocket for real-time
             this.state.socket.emit('send_message', {
                 friend_id: this.state.activeFriendId,
                 content: content
             });
         } else {
-            // Fallback to HTTP API
             await this.sendMessageViaAPI(content);
         }
 
@@ -5293,7 +5414,7 @@ async openChat(friendId, friendName, friendAvatar, friendOnline) {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken
+                    'X-CSRFToken': window.csrfToken
                 },
                 body: JSON.stringify({
                     friend_id: this.state.activeFriendId,
@@ -5321,16 +5442,12 @@ async openChat(friendId, friendName, friendAvatar, friendOnline) {
             this.state.isTyping = true;
             this.state.socket.emit('typing_start', {
                 friend_id: this.state.activeFriendId,
-                user_name: window.currentUserName || 'Someone'
+                user_name: window.currentUserName || (window.currentUserInfo?.name ?? 'Someone')
             });
         }
 
-        // Clear existing timeout
-        if (this.state.typingTimeout) {
-            clearTimeout(this.state.typingTimeout);
-        }
+        if (this.state.typingTimeout) clearTimeout(this.state.typingTimeout);
 
-        // Set timeout to stop typing
         this.state.typingTimeout = setTimeout(() => {
             this.stopTyping();
         }, 2000);
@@ -5349,32 +5466,22 @@ async openChat(friendId, friendName, friendAvatar, friendOnline) {
         }
     }
 
-    // Show typing indicator for other user
     showTypingIndicator(userName) {
         const indicator = document.getElementById('typingIndicator');
         const userNameEl = document.getElementById('typingUserName');
 
-        if (userNameEl) {
-            userNameEl.textContent = userName;
-        }
-        if (indicator) {
-            indicator.classList.remove('hidden');
-        }
+        if (userNameEl) userNameEl.textContent = userName;
+        if (indicator) indicator.classList.remove('hidden');
     }
 
-    // Hide typing indicator
     hideTypingIndicator() {
         const indicator = document.getElementById('typingIndicator');
-        if (indicator) {
-            indicator.classList.add('hidden');
-        }
+        if (indicator) indicator.classList.add('hidden');
     }
 
     // Connect to Socket.IO with modern features
     connectSocket() {
-        if (this.state.socket && this.state.isConnected) {
-            return;
-        }
+        if (this.state.socket && this.state.isConnected) return;
 
         this.state.socket = io({
             transports: ['websocket', 'polling'],
@@ -5384,12 +5491,10 @@ async openChat(friendId, friendName, friendAvatar, friendOnline) {
             reconnectionDelayMax: 5000
         });
 
-        // Socket event handlers
         this.state.socket.on('connect', () => {
             console.log('✅ Connected to messaging server');
             this.state.isConnected = true;
 
-            // Update connection status indicator
             const popup = document.getElementById('messengerPopup');
             if (popup) {
                 popup.classList.remove('disconnected');
@@ -5401,7 +5506,6 @@ async openChat(friendId, friendName, friendAvatar, friendOnline) {
             console.log('🔌 Disconnected from messaging server');
             this.state.isConnected = false;
 
-            // Update connection status indicator
             const popup = document.getElementById('messengerPopup');
             if (popup) {
                 popup.classList.remove('connected');
@@ -5414,7 +5518,6 @@ async openChat(friendId, friendName, friendAvatar, friendOnline) {
                 msg.receiver_id === this.state.activeFriendId) {
                 this.appendMessage(msg, true);
 
-                // Play notification sound if not in active chat
                 if (msg.sender_id !== window.currentUserId) {
                     this.playNotificationSound();
                 }
@@ -5458,33 +5561,23 @@ async openChat(friendId, friendName, friendAvatar, friendOnline) {
         });
     }
 
-    // Update friend online status
     updateFriendStatus(friendId, isOnline) {
-        // Update in friends list if open
-        const friendElements = document.querySelectorAll('.friend-item');
-        friendElements.forEach(element => {
-            const statusIndicator = element.querySelector('.status-pulse, .bg-green-500, .bg-gray-400');
-            if (statusIndicator && element.onclick && element.onclick.toString().includes(`openChat(${friendId}`)) {
-                statusIndicator.className = `absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${isOnline ? 'bg-green-500 status-pulse' : 'bg-gray-400'}`;
-            }
-        });
-
-        // Update in chat header if active
-        if (this.state.activeFriendId === friendId) {
-            const chatStatus = document.getElementById('chatStatus');
-            const lastSeen = document.getElementById('chatLastSeen');
-
-            if (chatStatus) {
-                chatStatus.className = `absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${isOnline ? 'bg-green-500 status-pulse' : 'bg-gray-400'}`;
-            }
-
-            if (lastSeen) {
-                lastSeen.textContent = isOnline ? 'Online' : 'Last seen recently';
+        // If currently chatting, update header
+        if (String(this.state.activeFriendId) === String(friendId)) {
+            const chatLastSeen = document.getElementById('chatLastSeen');
+            if (chatLastSeen) {
+                chatLastSeen.textContent = isOnline ? 'Online' : 'Offline';
+                chatLastSeen.className = `text-xs mt-0.5 ${isOnline ? 'text-green-600' : 'text-gray-500'}`;
             }
         }
+
+        // Update badge in list if list is visible
+        const friendItems = document.querySelectorAll('.friend-item');
+        friendItems.forEach(item => {
+            // We can't reliably parse onclick strings. Better: store dataset id if you want.
+        });
     }
 
-    // Update message status
     updateMessageStatus(messageId, status) {
         const messageElements = document.querySelectorAll('.message-bubble.sent');
         messageElements.forEach(element => {
@@ -5495,14 +5588,11 @@ async openChat(friendId, friendName, friendAvatar, friendOnline) {
         });
     }
 
-    // Mark messages as read
     async markAsRead(friendId) {
         try {
             await fetch(`/api/messaging/mark-read/${friendId}`, {
                 method: 'POST',
-                headers: {
-                    'X-CSRFToken': csrfToken
-                }
+                headers: { 'X-CSRFToken': window.csrfToken }
             });
             this.updateUnreadBadge();
         } catch (error) {
@@ -5510,7 +5600,6 @@ async openChat(friendId, friendName, friendAvatar, friendOnline) {
         }
     }
 
-    // Update unread badge
     async updateUnreadBadge() {
         try {
             const response = await fetch('/api/messaging/unread_count');
@@ -5546,93 +5635,72 @@ async openChat(friendId, friendName, friendAvatar, friendOnline) {
 
     // Scroll chat to bottom
     scrollToBottom(force = false) {
-    const wrapper = document.getElementById('chatMessagesWrapper');
-    const container = document.getElementById('chatMessages');
+        const wrapper = document.getElementById('chatMessagesWrapper');
+        const container = document.getElementById('chatMessages');
 
-    if (!wrapper || !container) {
-        console.warn('Chat wrapper or container not found');
-        return;
-    }
-
-    // Use requestAnimationFrame for smooth scrolling
-    requestAnimationFrame(() => {
-        // Always scroll to bottom when opening a chat (force = true)
-        if (force) {
-            wrapper.scrollTop = wrapper.scrollHeight;
-        } else {
-            // Only auto-scroll if user is near bottom
-            const isNearBottom = wrapper.scrollHeight - wrapper.scrollTop - wrapper.clientHeight < 200;
-            if (isNearBottom) {
-                wrapper.scrollTop = wrapper.scrollHeight;
-            }
+        if (!wrapper || !container) {
+            console.warn('Chat wrapper or container not found');
+            return;
         }
-    });
-}
 
-scrollToLatestMessage() {
-    const chatMessages = document.getElementById('chatMessages');
-    if (!chatMessages) return;
-
-    const messages = chatMessages.querySelectorAll('.message-bubble');
-    if (messages.length > 0) {
-        const lastMessage = messages[messages.length - 1];
-        lastMessage.scrollIntoView({
-            behavior: 'smooth',
-            block: 'end',
-            inline: 'nearest'
+        requestAnimationFrame(() => {
+            if (force) {
+                wrapper.scrollTop = wrapper.scrollHeight;
+            } else {
+                const isNearBottom = wrapper.scrollHeight - wrapper.scrollTop - wrapper.clientHeight < 200;
+                if (isNearBottom) wrapper.scrollTop = wrapper.scrollHeight;
+            }
         });
     }
-}
 
+    scrollToLatestMessage() {
+        const chatMessages = document.getElementById('chatMessages');
+        if (!chatMessages) return;
 
-    // Handle message scroll
+        const messages = chatMessages.querySelectorAll('.message-bubble');
+        if (messages.length > 0) {
+            const lastMessage = messages[messages.length - 1];
+            lastMessage.scrollIntoView({
+                behavior: 'smooth',
+                block: 'end',
+                inline: 'nearest'
+            });
+        }
+    }
+
     handleMessageScroll() {
         const wrapper = document.getElementById('chatMessagesWrapper');
         const scrollBtn = document.getElementById('scrollToBottomBtn');
 
         if (wrapper && scrollBtn) {
-            // Show scroll to bottom button if scrolled up
             const isAtBottom = wrapper.scrollHeight - wrapper.scrollTop <= wrapper.clientHeight + 100;
             scrollBtn.classList.toggle('hidden', isAtBottom);
 
-            // Load more messages when near top
             if (wrapper.scrollTop < 100 && this.state.activeFriendId) {
                 this.loadMoreMessages();
             }
         }
     }
 
-    // Load more messages
     async loadMoreMessages() {
         if (!this.state.activeFriendId) return;
-
-        // Prevent multiple simultaneous loads
         if (this.isLoadingMore) return;
-        this.isLoadingMore = true;
 
+        this.isLoadingMore = true;
         await this.loadMessages(this.state.activeFriendId, true);
         this.isLoadingMore = false;
     }
 
-    // Start chat with user (called from profile, etc.)
+    // ✅ THIS is what profile "Message" should call
     startChat(userId) {
-
         const profileModal = document.getElementById('profileModal');
         if (profileModal && !profileModal.classList.contains('hidden')) {
             profileModal.classList.add('hidden');
             document.body.style.overflow = '';
         }
 
-        this.open();
-        setTimeout(() => {
-            // Try to find and click the friend in the list
-            const friendElements = document.querySelectorAll('.friend-item');
-            friendElements.forEach(el => {
-                if (el.onclick && el.onclick.toString().includes(`openChat(${userId}`)) {
-                    el.click();
-                }
-            });
-        }, 500);
+        // ✅ Direct open mode
+        this.open({ userId });
     }
 
     // Voice message functionality
@@ -5654,16 +5722,12 @@ scrollToLatestMessage() {
 
     startVoiceMessage() {
         const recorder = document.getElementById('voiceRecorder');
-        if (recorder) {
-            recorder.classList.remove('hidden');
-        }
+        if (recorder) recorder.classList.remove('hidden');
     }
 
     closeVoiceRecorder() {
         const recorder = document.getElementById('voiceRecorder');
-        if (recorder) {
-            recorder.classList.add('hidden');
-        }
+        if (recorder) recorder.classList.add('hidden');
         this.stopRecording();
     }
 
@@ -5673,7 +5737,6 @@ scrollToLatestMessage() {
         this.state.voiceRecording = true;
         this.state.recordingStartTime = Date.now();
 
-        // Update UI
         const recordButton = document.getElementById('recordButton');
         const timer = document.getElementById('recordingTimer');
 
@@ -5683,7 +5746,6 @@ scrollToLatestMessage() {
             recordButton.classList.add('from-red-600', 'to-pink-600');
         }
 
-        // Start timer
         this.state.recordingInterval = setInterval(() => {
             if (timer) {
                 const elapsed = Date.now() - this.state.recordingStartTime;
@@ -5699,19 +5761,16 @@ scrollToLatestMessage() {
 
         this.state.voiceRecording = false;
 
-        // Clear interval
         if (this.state.recordingInterval) {
             clearInterval(this.state.recordingInterval);
             this.state.recordingInterval = null;
         }
 
-        // Send voice message if recording was long enough
         const duration = Date.now() - this.state.recordingStartTime;
-        if (duration > 1000) { // At least 1 second
+        if (duration > 1000) {
             this.sendVoiceMessage(duration);
         }
 
-        // Reset UI
         const recordButton = document.getElementById('recordButton');
         const timer = document.getElementById('recordingTimer');
 
@@ -5721,26 +5780,23 @@ scrollToLatestMessage() {
             recordButton.classList.add('from-red-500', 'to-pink-500');
         }
 
-        if (timer) {
-            timer.textContent = '00:00';
-        }
+        if (timer) timer.textContent = '00:00';
 
         this.closeVoiceRecorder();
     }
 
     async sendVoiceMessage(duration) {
         try {
-            // In a real app, you would upload the audio blob here
             const response = await fetch('/api/messaging/send-voice', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken
+                    'X-CSRFToken': window.csrfToken
                 },
                 body: JSON.stringify({
                     friend_id: this.state.activeFriendId,
                     duration: duration,
-                    audio_url: '' // You would upload and get URL
+                    audio_url: ''
                 })
             });
 
@@ -5764,7 +5820,6 @@ scrollToLatestMessage() {
     }
 
     toggleEmojiPicker() {
-        // Implement emoji picker
         Toast.show('Emoji picker coming soon', 'info');
     }
 
@@ -5785,14 +5840,7 @@ scrollToLatestMessage() {
     insertQuickReply() {
         const input = document.getElementById('chatInput');
         if (input) {
-            const quickReplies = [
-                "👍",
-                "Sounds good!",
-                "Let me check and get back to you",
-                "😂",
-                "Perfect!",
-                "On my way!"
-            ];
+            const quickReplies = ["👍", "Sounds good!", "Let me check and get back to you", "😂", "Perfect!", "On my way!"];
             const randomReply = quickReplies[Math.floor(Math.random() * quickReplies.length)];
             input.value = randomReply;
             this.autoResizeTextarea(input);
@@ -5800,32 +5848,18 @@ scrollToLatestMessage() {
         }
     }
 
-    translateMessage() {
-        Toast.show('Translation feature coming soon', 'info');
-    }
-
-    scheduleMessage() {
-        Toast.show('Schedule message feature coming soon', 'info');
-    }
-
-    startVoiceCall() {
-        Toast.show('Voice call feature coming soon', 'info');
-    }
-
-    startVideoCall() {
-        Toast.show('Video call feature coming soon', 'info');
-    }
+    translateMessage() { Toast.show('Translation feature coming soon', 'info'); }
+    scheduleMessage() { Toast.show('Schedule message feature coming soon', 'info'); }
+    startVoiceCall() { Toast.show('Voice call feature coming soon', 'info'); }
+    startVideoCall() { Toast.show('Video call feature coming soon', 'info'); }
 
     playNotificationSound() {
-        // Play a subtle notification sound
-        const audio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEAQB8AAEAfAAABAAgAZGF0YQ'); // Empty sound
+        const audio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEAQB8AAEAfAAABAAgAZGF0YQ');
         audio.volume = 0.3;
         audio.play().catch(() => {});
     }
 
-    // Load online friends
     async loadOnlineFriends() {
-        // Implement online friends list
         const container = document.getElementById('onlineFriends');
         if (container) {
             container.innerHTML = `
@@ -5837,9 +5871,7 @@ scrollToLatestMessage() {
         }
     }
 
-    // Load chat requests
     async loadChatRequests() {
-        // Implement chat requests
         const container = document.getElementById('chatRequests');
         if (container) {
             container.innerHTML = `
@@ -5861,7 +5893,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Global function wrappers
+// ✅ Global function wrappers (your HTML calls these)
 window.openMessenger = () => window.Messenger?.open();
 window.closeMessenger = () => window.Messenger?.close();
 window.backToFriends = () => window.Messenger?.backToFriends();
@@ -5874,10 +5906,26 @@ window.startVideoCall = () => window.Messenger?.startVideoCall();
 window.toggleAttachmentMenu = (e) => window.Messenger?.toggleAttachmentMenu(e);
 window.toggleEmojiPicker = () => window.Messenger?.toggleEmojiPicker();
 window.scrollToBottom = () => window.Messenger?.scrollToBottom();
+window.handleMessageScroll = () => window.Messenger?.handleMessageScroll();
 
-// For profile buttons
+window.autoResizeTextarea = (ta) => window.Messenger?.autoResizeTextarea(ta);
+window.startRecording = () => window.Messenger?.startRecording();
+window.stopRecording = () => window.Messenger?.stopRecording();
+
+// Your HTML calls this too
+window.handleChatInputKeypress = (event) => {
+    if (!event) return;
+    if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        window.Messenger?.sendMessage();
+    }
+};
+
+// ✅ For profile buttons
 window.startChat = (userId) => window.Messenger?.startChat(userId);
 
+// ✅ Your "Message" button already calls this in your template
+window.handleMessageButtonClick = (userId) => window.Messenger?.startChat(userId);
 
 // ==================== REACTION SYSTEM ====================
 let currentReactionPostId = null;

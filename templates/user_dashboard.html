@@ -1015,6 +1015,33 @@
 .btn-view-profile:active {
     transform: translateY(0);
 }
+
+        /* Style for View Full Profile button */
+.btn-view-full-profile {
+    background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.btn-view-full-profile:hover {
+    background: linear-gradient(135deg, #7c3aed 0%, #db2777 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.btn-view-full-profile:active {
+    transform: translateY(0);
+}
 </style>
   </head>
   <body class="font-poppins bg-fb-gray text-fb-text">
@@ -1039,8 +1066,8 @@
 
   <!-- NAVBAR -->
   <nav
-    class="fixed top-0 left-0 right-0 z-50 bg-white shadow-soft border-b border-fb-border h-16 flex items-center px-4"
-  >
+    class="fixed top-0 left-0 right-0 z-50 bg-white shadow-soft border-b border-fb-border h-20 flex items-center px-4"
+    >
     <!-- Mobile Menu Button -->
     <button
       class="lg:hidden p-2 rounded-full hover:bg-fb-gray transition-colors mr-2"
@@ -1058,7 +1085,7 @@
         src="{{ url_for('static', filename='assets/img/kim.png') }}"
         alt="Kimbela"
         class="h-10 my_logo"
-        style="height: 4rem; width: 7rem"
+        style="height: 6rem; width: 11rem"
       />
     </a>
 
@@ -1152,6 +1179,7 @@
       <!-- User Profile -->
     </div>
   </nav>
+  <br>
 
 
   <!-- Messenger Popup - IMPROVED VERSION -->
@@ -2704,12 +2732,12 @@
       <!-- Content will be loaded here by JavaScript -->
     </div>
 
-    <div
-      class="modal-footer p-3 sm:p-4 border-t border-fb-border flex flex-col sm:flex-row justify-center sm:justify-center space-y-2 sm:space-y-0 sm:space-x-3 flex-shrink-0"
-      id="profileActions"
-    >
-      <!-- Filled by JS -->
-    </div>
+      <div
+    class="modal-footer p-3 sm:p-4 border-t border-fb-border flex flex-col sm:flex-row justify-center sm:justify-center space-y-2 sm:space-y-0 sm:space-x-3 flex-shrink-0"
+    id="profileActions"
+  >
+    <!-- Buttons will be dynamically added here -->
+  </div>
   </div>
 </div>
   </div>

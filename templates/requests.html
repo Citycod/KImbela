@@ -773,29 +773,44 @@
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                             <div class="space-y-4">
                                 <div>
-                                    <label for="partnerAge" class="block text-base font-semibold mb-2 text-primary">Preferred Friend Age *</label>
-                                    <div class="flex items-center space-x-3">
-                                        <select class="select-input" id="minAge" required>
-                                            <option value="">Min Age</option>
-                                            <option value="31">31</option>
-                                            <option value="35">35</option>
-                                            <option value="40">40</option>
-                                            <option value="45">45</option>
-                                            <option value="48">48</option>
-                                        </select>
+                                      <label class="block text-base font-semibold mb-2 text-primary">
+                                        Preferred Friend Age *
+                                      </label>
+
+                                      <div class="flex items-center space-x-3">
+                                        <!-- Min Age -->
+                                        <input
+                                          type="number"
+                                          class="text-input"
+                                          id="minAge"
+                                          name="min_age"
+                                          placeholder="Min age (31+)"
+                                          min="31"
+                                          max="74"
+                                          inputmode="numeric"
+                                          required
+                                        />
+
                                         <span class="text-text-secondary">to</span>
-                                        <select class="select-input" id="maxAge" required>
-                                            <option value="">Max Age</option>
-                                            <option value="55">55</option>
-                                            <option value="58">58</option>
-                                            <option value="60">60</option>
-                                            <option value="65">65</option>
-                                            <option value="70">70</option>
-                                            <option value="75">75+</option>
-                                        </select>
-                                    </div>
+
+                                        <!-- Max Age -->
+                                        <input
+                                          type="number"
+                                          class="text-input"
+                                          id="maxAge"
+                                          name="max_age"
+                                          placeholder="Max age (up to 75)"
+                                          min="32"
+                                          max="75"
+                                          inputmode="numeric"
+                                          required
+                                        />
+                                      </div>
+
+                                      <p class="text-xs text-text-secondary mt-1">
+                                        Minimum age must be 31 or older.
+                                      </p>
                                 </div>
-                                
                                 <div>
                                     <label for="partnerGender" class="block text-base font-semibold mb-2 text-primary">Preferred Gender *</label>
                                     <div class="grid grid-cols-2 gap-2">
@@ -1404,15 +1419,30 @@
         function validateStep(step) {
             switch(step) {
                 case 1:
-                    const minAge = document.getElementById('minAge').value;
-                    const maxAge = document.getElementById('maxAge').value;
+                    const minAgeRaw = document.getElementById('minAge').value;
+                    const maxAgeRaw = document.getElementById('maxAge').value;
                     const gender = document.querySelector('input[name="partnerGender"]:checked');
-                    
-                    if (!minAge || !maxAge || !gender) {
-                        showNotification('Please fill in all required fields (Age range and Gender)', 'error');
+
+                    const minAge = parseInt(minAgeRaw, 10);
+                    const maxAge = parseInt(maxAgeRaw, 10);
+
+                    if (!minAgeRaw || !maxAgeRaw || !gender) {
+                        showNotification('Please enter valid age preferences and select gender.', 'error');
                         return false;
                     }
+
+                    if (isNaN(minAge) || minAge < 31) {
+                        showNotification('Minimum age must be 31 or older.', 'error');
+                        return false;
+                    }
+
+                    if (isNaN(maxAge) || maxAge <= minAge || maxAge > 120) {
+                        showNotification('Maximum age must be higher than minimum age and not above 120.', 'error');
+                        return false;
+                    }
+
                     return true;
+
                 case 2:
                     const aboutYou = document.getElementById('aboutYou').value;
                     const idealPartner = document.getElementById('idealPartner').value;
@@ -1901,6 +1931,40 @@
                     showStep(1);
                     document.getElementById('matchmakingModal').classList.remove('hidden');
                 });
+
+                const minAgeInput = document.getElementById('minAge');
+                    const maxAgeInput = document.getElementById('maxAge');
+
+                    function syncAgeConstraints() {
+                        const minVal = parseInt(minAgeInput.value, 10);
+                        const maxVal = parseInt(maxAgeInput.value, 10);
+
+                        // Enforce minimum min age
+                        if (!isNaN(minVal) && minVal < 31) {
+                            minAgeInput.value = 31;
+                        }
+
+                        // Max age must always be at least min + 1
+                        if (!isNaN(minVal)) {
+                            maxAgeInput.min = String(minVal + 1);
+
+                            // Auto-fix max age if it becomes invalid
+                            if (!isNaN(maxVal) && maxVal <= minVal) {
+                                maxAgeInput.value = minVal + 1;
+                            }
+                        } else {
+                            maxAgeInput.min = "32";
+                        }
+
+                        // Absolute cap
+                        if (!isNaN(maxVal) && maxVal > 120) {
+                            maxAgeInput.value = 120;
+                        }
+                    }
+
+                    minAgeInput.addEventListener('input', syncAgeConstraints);
+                    maxAgeInput.addEventListener('input', syncAgeConstraints);
+
             });
 
             // Step Navigation
