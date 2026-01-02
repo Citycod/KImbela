@@ -1657,6 +1657,7 @@ def get_user_profile(user_id):
         "bio": user.bio,
         "city": user.city,
         "country": user.country,
+        "state": user.state,
         "gender": user.gender,
         "religion": user.religion,  # This should be included even if None
         "dob": user.dob.isoformat() if user.dob else None,
@@ -2222,6 +2223,7 @@ def profile(user_id):
             )
             current_user.city = request.form.get("city", current_user.city)
             current_user.country = request.form.get("country", current_user.country)
+            current_user.state = request.form.get("state", current_user.state)
             current_user.gender = request.form.get("gender", current_user.gender)
             current_user.marital_status = request.form.get(
                 "marital_status", current_user.marital_status

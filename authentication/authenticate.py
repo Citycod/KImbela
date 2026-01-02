@@ -399,6 +399,7 @@ def register():
         marital_status = request.form.get("marital_status")
         city = request.form.get("city", "").strip()
         country = request.form.get("country", "").strip()
+        state = request.form.get("state", "").strip()
         password = request.form.get("password")
         confirm_password = request.form.get("confirm_password")
         terms = request.form.get("terms")
@@ -447,11 +448,14 @@ def register():
         if not marital_status:
             errors["marital_status"] = "Marital status is required."
 
-        if not city:
-            errors["city"] = "City is required."
-
         if not country:
             errors["country"] = "Country is required."
+
+        if not state:
+            errors["state"] = "State / Province is required."
+
+        if not city:
+            errors["city"] = "City is required."
 
         if not password:
             errors["password"] = "Password is required."
@@ -503,6 +507,7 @@ def register():
                 city=city,
                 marital_status=marital_status,
                 country=country,
+                state=state,
                 interests=interests_str,
                 educational_level=educational_level,
                 occupation=occupation,

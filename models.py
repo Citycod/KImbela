@@ -69,6 +69,7 @@ class User(db.Model, UserMixin):
     is_active = db.Column(db.Boolean, default=False)
     city = db.Column(db.String(50), nullable=False)
     country = db.Column(db.String(50), nullable=False)
+    state = db.Column(db.String(50), nullable=True)
     dob = db.Column(db.Date, nullable=False)
     gender = db.Column(db.String(20), nullable=False)
     phone_number = db.Column(db.String(20), nullable=False)

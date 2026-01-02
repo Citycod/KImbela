@@ -797,20 +797,36 @@
                 </div>
                 
                 <!-- Location Information -->
+                <!-- Location Information - Cascading Dropdowns -->
                 <div class="space-y-3">
                     <h4 class="text-sm font-bold text-gray-900 border-b border-gray-200 pb-1">Location</h4>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-1">City</label>
-                            <input type="text" name="city" value="{{ user.city }}"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
-                        </div>
-                        
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <!-- Country -->
                         <div>
                             <label class="block text-xs font-bold text-gray-700 mb-1">Country</label>
-                            <input type="text" name="country" value="{{ user.country }}"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
+                            <select id="profile_country_select" name="country"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
+                                <option value="">Select Country</option>
+                            </select>
+                        </div>
+
+                        <!-- State / Province -->
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">State / Province</label>
+                            <select id="profile_state_select" name="state" disabled
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
+                                <option value="">Select State First</option>
+                            </select>
+                        </div>
+
+                        <!-- City -->
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">City</label>
+                            <select id="profile_city_select" name="city" disabled
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
+                                <option value="">Select State First</option>
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -1238,5 +1254,136 @@
             });
         });
     </script>
+
+
+<script>
+// Profile Page: Dynamic Country → State → City Dropdowns
+document.addEventListener('DOMContentLoaded', function () {
+    const countrySelect = document.getElementById('profile_country_select');
+    const stateSelect = document.getElementById('profile_state_select');
+    const citySelect = document.getElementById('profile_city_select');
+
+    if (!countrySelect) return; // Exit if not on profile edit
+
+    let countries = [];
+    let states = [];
+    let cities = [];
+
+    // Load countries
+    fetch('{{ url_for("static", filename="assets/js/countries.json") }}')
+        .then(response => response.json())
+        .then(data => {
+            countries = data.sort((a, b) => a.name.localeCompare(b.name));
+
+            countries.forEach(country => {
+                const option = document.createElement('option');
+                option.value = country.name;
+                option.setAttribute('data-country-id', country.id);
+                option.textContent = country.name;
+                countrySelect.appendChild(option);
+            });
+
+            // Pre-select user's current country
+            const userCountry = "{{ user.country or '' }}".trim();
+            if (userCountry) {
+                const found = countries.find(c => c.name === userCountry);
+                if (found) {
+                    countrySelect.value = found.name;
+                    loadStates(found.id, "{{ user.state or '' }}".trim(), "{{ user.city or '' }}".trim());
+                }
+            }
+        })
+        .catch(err => console.error('Error loading countries:', err));
+
+    // When country changes
+    countrySelect.addEventListener('change', function () {
+        const selectedOption = this.options[this.selectedIndex];
+        const countryId = selectedOption ? selectedOption.getAttribute('data-country-id') : null;
+
+        stateSelect.innerHTML = '<option value="">Loading states...</option>';
+        citySelect.innerHTML = '<option value="">Select State First</option>';
+        stateSelect.disabled = true;
+        citySelect.disabled = true;
+
+        if (!countryId) {
+            stateSelect.innerHTML = '<option value="">Select Country First</option>';
+            return;
+        }
+
+        loadStates(countryId);
+    });
+
+    function loadStates(countryId, preselectState = '', preselectCity = '') {
+        fetch('{{ url_for("static", filename="assets/js/states.json") }}')
+            .then(response => response.json())
+            .then(data => {
+                states = data.filter(s => s.country_id == countryId);
+                states.sort((a, b) => a.name.localeCompare(b.name));
+
+                stateSelect.innerHTML = '<option value="">Select State / Province</option>';
+                states.forEach(state => {
+                    const option = document.createElement('option');
+                    option.value = state.name;
+                    option.setAttribute('data-state-id', state.id);
+                    option.textContent = state.name;
+                    stateSelect.appendChild(option);
+                });
+
+                stateSelect.disabled = false;
+
+                // Pre-select state if provided
+                if (preselectState && states.some(s => s.name === preselectState)) {
+                    stateSelect.value = preselectState;
+                    const stateObj = states.find(s => s.name === preselectState);
+                    if (stateObj) loadCities(stateObj.id, preselectCity);
+                }
+            });
+    }
+
+    // When state changes
+    stateSelect.addEventListener('change', function () {
+        const selectedOption = this.options[this.selectedIndex];
+        const stateId = selectedOption ? selectedOption.getAttribute('data-state-id') : null;
+
+        citySelect.innerHTML = '<option value="">Loading cities...</option>';
+        citySelect.disabled = true;
+
+        if (!stateId) {
+            citySelect.innerHTML = '<option value="">Select State First</option>';
+            return;
+        }
+
+        loadCities(stateId);
+    });
+
+    function loadCities(stateId, preselectCity = '') {
+        fetch('{{ url_for("static", filename="assets/js/cities.json") }}')
+            .then(response => response.json())
+            .then(data => {
+                cities = data.filter(c => c.state_id == stateId);
+                cities.sort((a, b) => a.name.localeCompare(b.name));
+
+                citySelect.innerHTML = '<option value="">Select City</option>';
+                cities.forEach(city => {
+                    const option = document.createElement('option');
+                    option.value = city.name;
+                    option.textContent = city.name;
+                    citySelect.appendChild(option);
+                });
+
+                citySelect.disabled = false;
+
+                // Pre-select city if provided
+                if (preselectCity && cities.some(c => c.name === preselectCity)) {
+                    citySelect.value = preselectCity;
+                }
+            })
+            .catch(err => {
+                citySelect.innerHTML = '<option value="">Error loading cities</option>';
+                console.error(err);
+            });
+    }
+});
+</script>
 </body>
 </html>

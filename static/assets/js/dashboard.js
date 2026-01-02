@@ -1189,6 +1189,7 @@ const ProfileSystem = {
                 religion: data.religion || '',
                 marital_status: data.marital_status || '',
                 city: data.city || '',
+                state: data.state || '',
                 country: data.country || '',
                 interests: data.interests || ''
             };
@@ -1294,6 +1295,11 @@ const ProfileSystem = {
                                             <span class="detail-label font-medium text-gray-600 min-w-24">City:</span>
                                             <span class="detail-value text-sm">${userData.city}</span>
                                         </div>` : ''}
+                                    ${userData.state ? `
+                                    <div class="detail-row flex items-start">
+                                        <span class="detail-label font-medium text-gray-600 min-w-24">State:</span>
+                                        <span class="detail-value text-sm">${userData.state}</span>
+                                    </div>` : ''}
                                     ${userData.country ? `
                                         <div class="detail-row flex items-start">
                                             <span class="detail-label font-medium text-gray-600 min-w-24">Country:</span>
@@ -1310,6 +1316,10 @@ const ProfileSystem = {
                     </div>
                 </div>
             `;
+
+            console.log('Profile data received:', data);
+            console.log('State value:', data.state);
+            console.log('State type:', typeof data.state);
 
             // Set action buttons based on how the modal was opened
             if (fromFriendRequestNotification) {

@@ -902,17 +902,32 @@
                         </div>
 
                         <div class="form-row">
+                            <!-- Cascading Location Fields -->
                             <div class="form-group">
-                                <label for="city" class="form-label">City</label>
-                                <input type="text" class="form-control {% if errors.city %}is-invalid{% endif %}"
-                                       id="city" name="city" value="{{ request.form.city }}" required>
-                                {% if errors.city %}<div class="invalid-feedback">{{ errors.city }}</div>{% endif %}
-                            </div>
-                            <div class="form-group">
-                                <label for="country" class="form-label">Country</label>
-                                <input type="text" class="form-control {% if errors.country %}is-invalid{% endif %}"
-                                       id="country" name="country" value="{{ request.form.country }}" required>
+                                <label for="country_select" class="form-label">Country <span class="text-danger">*</span></label>
+                                <select class="form-control {% if errors.country %}is-invalid{% endif %}"
+                                        id="country_select" name="country" required>
+                                    <option value="">Select Country</option>
+                                </select>
                                 {% if errors.country %}<div class="invalid-feedback">{{ errors.country }}</div>{% endif %}
+                            </div>
+
+                            <div class="form-group">
+                                <label for="state_select" class="form-label">State / Province <span class="text-danger">*</span></label>
+                                <select class="form-control {% if errors.state %}is-invalid{% endif %}"
+                                        id="state_select" name="state" required disabled>
+                                    <option value="">Select State First</option>
+                                </select>
+                                {% if errors.state %}<div class="invalid-feedback">{{ errors.state }}</div>{% endif %}
+                            </div>
+
+                            <div class="form-group">
+                                <label for="city_select" class="form-label">City <span class="text-danger">*</span></label>
+                                <select class="form-control {% if errors.city %}is-invalid{% endif %}"
+                                        id="city_select" name="city" required disabled>
+                                    <option value="">Select State First</option>
+                                </select>
+                                {% if errors.city %}<div class="invalid-feedback">{{ errors.city }}</div>{% endif %}
                             </div>
                         </div>
 
@@ -1507,5 +1522,166 @@
             }
         });
     </script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const countrySelect = document.getElementById('country_select');
+    const stateSelect = document.getElementById('state_select');
+    const citySelect = document.getElementById('city_select');
+
+    let countries = [];
+    let states = [];
+    let cities = [];
+
+    // Load and populate countries
+    fetch('{{ url_for("static", filename="assets/js/countries.json") }}')
+        .then(response => response.json())
+        .then(data => {
+            countries = data.sort((a, b) => a.name.localeCompare(b.name));
+
+            countries.forEach(country => {
+                const option = document.createElement('option');
+                option.value = country.name;  // Store country NAME as value
+                option.setAttribute('data-country-id', country.id);  // Store ID separately
+                option.textContent = country.name;
+                countrySelect.appendChild(option);
+            });
+
+            // If form has previous value (on error), pre-select
+            const prevCountry = "{{ request.form.country | default('') }}";
+            if (prevCountry) {
+                // Find country by name
+                for (let i = 0; i < countrySelect.options.length; i++) {
+                    if (countrySelect.options[i].value === prevCountry.trim()) {
+                        countrySelect.selectedIndex = i;
+                        const countryId = countrySelect.options[i].getAttribute('data-country-id');
+                        loadStates(countryId);
+                        break;
+                    }
+                }
+            }
+        })
+        .catch(err => console.error('Error loading countries:', err));
+
+    // When country changes
+    countrySelect.addEventListener('change', function () {
+        const selectedOption = this.options[this.selectedIndex];
+        const countryId = selectedOption.getAttribute('data-country-id');
+        const countryName = this.value;  // This is the country name
+
+        console.log('Selected Country:', { id: countryId, name: countryName });
+
+        stateSelect.innerHTML = '<option value="">Loading states...</option>';
+        citySelect.innerHTML = '<option value="">Select State First</option>';
+        stateSelect.disabled = true;
+        citySelect.disabled = true;
+
+        if (!countryId) {
+            stateSelect.innerHTML = '<option value="">Select Country First</option>';
+            return;
+        }
+
+        loadStates(countryId);
+    });
+
+    function loadStates(countryId) {
+        fetch('{{ url_for("static", filename="assets/js/states.json") }}')
+            .then(response => response.json())
+            .then(data => {
+                states = data.filter(s => s.country_id == countryId);
+                states.sort((a, b) => a.name.localeCompare(b.name));
+
+                stateSelect.innerHTML = '<option value="">Select State / Province</option>';
+                states.forEach(state => {
+                    const option = document.createElement('option');
+                    option.value = state.name;  // Store state name
+                    option.setAttribute('data-state-id', state.id);  // Store ID separately
+                    option.textContent = state.name;
+                    stateSelect.appendChild(option);
+                });
+
+                stateSelect.disabled = false;
+
+                // Pre-select state if form was submitted with error
+                const prevState = "{{ request.form.state | default('') }}";
+                if (prevState) {
+                    for (let i = 0; i < stateSelect.options.length; i++) {
+                        if (stateSelect.options[i].value === prevState.trim()) {
+                            stateSelect.selectedIndex = i;
+                            const stateId = stateSelect.options[i].getAttribute('data-state-id');
+                            loadCities(stateId);
+                            break;
+                        }
+                    }
+                }
+            })
+            .catch(err => {
+                stateSelect.innerHTML = '<option value="">Error loading states</option>';
+                console.error(err);
+            });
+    }
+
+    // When state changes
+    stateSelect.addEventListener('change', function () {
+        const selectedOption = this.options[this.selectedIndex];
+        const stateId = selectedOption.getAttribute('data-state-id');
+        const stateName = this.value;
+
+        console.log('Selected State:', { id: stateId, name: stateName });
+
+        if (!stateName) {
+            citySelect.innerHTML = '<option value="">Select State First</option>';
+            citySelect.disabled = true;
+            return;
+        }
+
+        loadCities(stateId);
+    });
+
+    function loadCities(stateId) {
+        citySelect.innerHTML = '<option value="">Loading cities...</option>';
+        citySelect.disabled = true;
+
+        fetch('{{ url_for("static", filename="assets/js/cities.json") }}')
+            .then(response => response.json())
+            .then(data => {
+                cities = data.filter(c => c.state_id == stateId);
+                cities.sort((a, b) => a.name.localeCompare(b.name));
+
+                citySelect.innerHTML = '<option value="">Select City</option>';
+                cities.forEach(city => {
+                    const option = document.createElement('option');
+                    option.value = city.name;  // Store city name
+                    option.textContent = city.name;
+                    citySelect.appendChild(option);
+                });
+
+                citySelect.disabled = false;
+
+                // Pre-select city if previously submitted
+                const prevCity = "{{ request.form.city | default('') }}";
+                if (prevCity) {
+                    for (let i = 0; i < citySelect.options.length; i++) {
+                        if (citySelect.options[i].value === prevCity.trim()) {
+                            citySelect.selectedIndex = i;
+                            break;
+                        }
+                    }
+                }
+            })
+            .catch(err => {
+                citySelect.innerHTML = '<option value="">Error loading cities</option>';
+                console.error(err);
+            });
+    }
+
+    // For debugging - log what gets submitted
+    document.getElementById('registerForm')?.addEventListener('submit', function(e) {
+        console.log('Form submission - Country:', countrySelect.value);
+        console.log('Form submission - State:', stateSelect.value);
+        console.log('Form submission - City:', citySelect.value);
+    });
+});
+</script>
 </body>
 </html>
