@@ -1265,6 +1265,7 @@ emoji-picker::part(search) input::placeholder {
 @media (max-width: 768px) {
     .post-media video {
         max-height: 400px;
+<!--        margin-right: 0.5rem;-->
     }
 
     .video-custom-controls {
@@ -2392,14 +2393,14 @@ emoji-picker::part(search) input::placeholder {
               <!-- CORRECT WAY: Always show image as <img> (handles photos + GIFs) -->
                             <!-- Uploaded Photo or Uploaded GIF -->
               {% if post.image %}
-              <div class="post-media mt-3">
-                <img src="{{ post.image }}" alt="Post image" class="w-full rounded-2xl max-h-96 object-contain bg-gray-100" loading="lazy">
+              <div class="post-media mt-3 -mx-4 sm:-mx-6 md:mx-0">
+                <img src="{{ post.image }}" alt="Post image" class="w-full rounded-2xl max-h-96 object-contain bg-gray-100" loading="lazy" >
               </div>
               {% endif %}
 
               <!-- GIPHY / External GIF -->
               {% if post.gif %}
-              <div class="post-media mt-3">
+              <div class="post-media mt-3 -mx-4 sm:-mx-6 md:mx-0">
                 <img src="{{ post.gif }}" alt="GIF" class="w-full rounded-2xl max-h-96 object-contain bg-gray-100" loading="lazy">
               </div>
               {% endif %}
@@ -2407,7 +2408,7 @@ emoji-picker::part(search) input::placeholder {
               <!-- Video -->
               <!-- In your post template where videos are rendered -->
               {% if post.video %}
-              <div class="post-media mt-3 relative">
+              <div class="post-media mt-3 relative -mx-4 sm:mx-0 flex justify-center">
                   <video
                       controls
                       class="w-full rounded-2xl max-h-96 autoplay-video"
