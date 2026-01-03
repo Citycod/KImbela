@@ -9,6 +9,7 @@ from flask import (
     session,
     current_app,
 )
+from urllib.parse import urlparse
 from sqlalchemy.orm import joinedload
 from sqlalchemy import func
 
@@ -228,65 +229,67 @@ from werkzeug.exceptions import RequestEntityTooLarge
 @user.route("/user_dashboard", methods=["GET", "POST"])
 @login_required
 def user_dashboard():
-    """Main dashboard route with emoji/sticker/GIF support"""
+    """Main dashboard route with full support for images, videos, and GIPHY GIFs"""
 
     # ===== POST REQUEST =====
     if request.method == "POST":
-        # Check if it's an AJAX request for progress tracking
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' and request.headers.get(
-                'X-File-Upload') == 'true':
-            return handle_ajax_post_upload()
+        # Optional: Handle AJAX file upload progress (if you have it)
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' and request.headers.get('X-File-Upload') == 'true':
+            return handle_ajax_post_upload()  # Your existing handler, if any
 
-        # Regular form submission with emoji/sticker/GIF support
         try:
             post_content = request.form.get("post_content", "").strip()
             media_file = request.files.get("media")
-            emoji_data = request.form.get("emoji_data", "{}")  # Get emoji/sticker/GIF data
+            gif_url = request.form.get("gif_url", "").strip()  # From hidden input
 
             image_url = None
             video_url = None
+            gif_url_saved = None
 
-            # Validate content
-            if not post_content and not (media_file and media_file.filename):
-                flash("Please add some content or media to your post.", "warning")
+            # Validation: require at least one of text, media, or GIF
+            has_content = bool(post_content)
+            has_media = bool(media_file and media_file.filename)
+            has_gif = bool(gif_url)
+
+            if not (has_content or has_media or has_gif):
+                flash("Please add text, a photo/video, or a GIF to your post.", "warning")
                 return redirect(url_for("user.user_dashboard"))
 
-            # Upload media if present
-            if media_file and media_file.filename != "" and allowed_file(media_file.filename):
+            # === HANDLE UPLOADED MEDIA (Photo / Video / Uploaded GIF) ===
+            if has_media and allowed_file(media_file.filename):
                 try:
-                    # Check file size (100MB limit)
-                    media_file.seek(0, 2)  # Seek to end
+                    # Check file size
+                    media_file.seek(0, 2)
                     file_size = media_file.tell()
-                    media_file.seek(0)  # Reset to beginning
+                    media_file.seek(0)
 
                     MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB
-
                     if file_size > MAX_FILE_SIZE:
-                        flash(f"File is too large! Maximum size is {MAX_FILE_SIZE // (1024 * 1024)}MB", "danger")
+                        flash("File too large! Maximum size is 100MB.", "danger")
                         return redirect(url_for("user.user_dashboard"))
 
                     # Determine resource type
-                    resource_type = "auto"
-                    if media_file.content_type.startswith("video"):
+                    filename_lower = media_file.filename.lower()
+                    if media_file.content_type.startswith("video/"):
                         resource_type = "video"
-                    elif media_file.filename.lower().endswith('.gif'):
-                        resource_type = "image"  # GIFs are images in Cloudinary
+                    elif filename_lower.endswith(('.gif', '.png', '.jpg', '.jpeg', '.webp')):
+                        resource_type = "image"
+                    else:
+                        resource_type = "auto"
 
-                    # Upload to Cloudinary
                     upload_options = {
                         "folder": "kimbela/posts",
                         "resource_type": resource_type,
                         "transformation": [
-                            {"width": 800, "crop": "limit"},
+                            {"width": 1000, "crop": "limit"},
                             {"quality": "auto", "fetch_format": "auto"},
                         ]
                     }
 
-                    # Special handling for GIFs to preserve animation
-                    if media_file.filename.lower().endswith('.gif'):
+                    # Preserve animation for uploaded GIFs
+                    if filename_lower.endswith('.gif'):
                         upload_options["transformation"] = [
-                            {"width": 800, "crop": "limit"},
-                            {"quality": "auto", "fetch_format": "gif"},
+                            {"quality": "auto", "fetch_format": "gif"}
                         ]
 
                     result = cloudinary.uploader.upload(
@@ -294,221 +297,170 @@ def user_dashboard():
                         **upload_options
                     )
 
-                    # Store URL based on content type
                     if resource_type == "video":
                         video_url = result["secure_url"]
                     else:
                         image_url = result["secure_url"]
 
-                    # If it's a GIF, ensure it's treated as an image
-                    if media_file.filename.lower().endswith('.gif'):
-                        image_url = result["secure_url"]
-
                 except Exception as e:
                     print(f"Media upload error: {e}")
-                    flash("Failed to upload media. The file might be corrupted or too large.", "danger")
+                    flash("Failed to upload media. Please try again.", "danger")
                     return redirect(url_for("user.user_dashboard"))
 
-            # Parse and validate emoji data
-            try:
-                emoji_info = json.loads(emoji_data)
+            # === HANDLE GIPHY GIF (only if no uploaded media was processed) ===
+            elif has_gif:
+                gif_url = gif_url.strip()
 
-                # Security: Validate URLs in stickers and GIFs
-                if 'stickers' in emoji_info:
-                    for sticker in emoji_info['stickers']:
-                        if 'value' in sticker:
-                            # Ensure it's a valid URL
-                            if not sticker['value'].startswith(('http://', 'https://')):
-                                sticker['value'] = ''
+                if not gif_url.startswith("https://"):
+                    flash("GIF URL must use HTTPS.", "danger")
+                    return redirect(url_for("user.user_dashboard"))
 
-                if 'gifs' in emoji_info:
-                    for gif in emoji_info['gifs']:
-                        if 'value' in gif:
-                            if not gif['value'].startswith(('http://', 'https://')):
-                                gif['value'] = ''
+                if ".giphy.com/" not in gif_url:
+                    print(f"Blocked non-GIPHY URL: {gif_url}")
+                    flash("Only GIPHY GIFs are allowed.", "danger")
+                    return redirect(url_for("user.user_dashboard"))
 
-            except json.JSONDecodeError:
-                emoji_info = {}
-                print("Invalid emoji data format")
-            except Exception as e:
-                emoji_info = {}
-                print(f"Error processing emoji data: {e}")
+                # It's a valid GIPHY URL
+                gif_url_saved = gif_url
 
-            # Create new post with emoji data
+            # === CREATE THE POST ===
             new_post = Post(
-                content=post_content,
+                content=post_content or "",  # Allow empty text if media/GIF present
                 image=image_url,
                 video=video_url,
+                gif=gif_url_saved,
                 author_id=current_user.id,
                 created_at=datetime.utcnow(),
-                emoji_data=emoji_info
             )
 
-            try:
-                db.session.add(new_post)
-                db.session.commit()
-                print(f"✅ Post saved with ID: {new_post.id}")
-            except Exception as e:
-                db.session.rollback()
-                print(f"❌ DB error while saving post: {e}")
+            db.session.add(new_post)
+            db.session.commit()
 
-            # Create notification for post followers (optional)
-            # You can add notification logic here
+            print(f"Post created successfully! ID: {new_post.id}")
+            if image_url:
+                print(f"→ Image: {image_url}")
+            if video_url:
+                print(f"→ Video: {video_url}")
+            if gif_url_saved:
+                print(f"→ GIF: {gif_url_saved}")
 
-            # Clear cache
+            # Clear any relevant cache
             try:
                 cache.delete(f"user_dashboard_{current_user.id}")
                 cache.delete(f"posts_feed_{current_user.id}")
-            except Exception as e:
-                print(f"Cache clear error: {e}")
+            except:
+                pass
 
-            flash("Post created successfully!", "success")
+            flash("Your post was created successfully!", "success")
             return redirect(url_for("user.user_dashboard"))
 
         except RequestEntityTooLarge:
-            flash("File is too large! Maximum file size is 100MB.", "danger")
+            flash("File is too large! Maximum size is 100MB.", "danger")
             return redirect(url_for("user.user_dashboard"))
         except Exception as e:
             db.session.rollback()
             print(f"Error creating post: {e}")
-            flash("An error occurred while creating your post. Please try again.", "danger")
+            flash("An error occurred. Please try again.", "danger")
             return redirect(url_for("user.user_dashboard"))
 
     # ===== GET REQUEST =====
     user_id = current_user.id
-
-    # --- Parameters for infinite scroll ---
     cursor = request.args.get("cursor", type=int)
     limit = request.args.get("limit", 10, type=int)
 
-    # --- GET VISIBLE POSTS ---
-    posts, next_cursor, has_more = get_visible_posts_optimized(user_id, cursor=cursor, limit=limit)
+    posts, next_cursor, has_more = get_visible_posts_optimized(
+        user_id, cursor=cursor, limit=limit
+    )
 
-    # --- FRIENDS QUERY ---
-    # Get friend IDs using raw SQL for better performance
+    # Friends
     friend_query = text("""
         SELECT friend_id FROM friendship WHERE user_id = :user_id
         UNION
         SELECT user_id FROM friendship WHERE friend_id = :user_id
     """)
-    friend_ids_result = db.session.execute(friend_query, {'user_id': user_id})
+    friend_ids_result = db.session.execute(friend_query, {"user_id": user_id})
     friend_ids = {row[0] for row in friend_ids_result}
 
-    # Get blocked users IDs
     blocked_query = text("""
         SELECT blocked_id FROM user_blocks WHERE blocker_id = :user_id
         UNION
         SELECT blocker_id FROM user_blocks WHERE blocked_id = :user_id
     """)
-    blocked_ids_result = db.session.execute(blocked_query, {'user_id': user_id})
+    blocked_ids_result = db.session.execute(blocked_query, {"user_id": user_id})
     blocked_ids = {row[0] for row in blocked_ids_result}
 
-    # Get friends (excluding blocked users)
+    friends = []
     if friend_ids:
         friends = User.query.filter(
             User.id.in_(friend_ids),
             ~User.id.in_(blocked_ids)
-        ).order_by(
-            User.last_seen.desc()
-        ).limit(20).all()
-    else:
-        friends = []
+        ).order_by(User.last_seen.desc()).limit(20).all()
 
-    # --- SUGGESTIONS QUERY ---
-    # Get random suggestions (not friends, not blocked, not self)
+    # People you may know (suggestions)
     suggestions_query = User.query.filter(
         User.id != user_id,
         ~User.id.in_(friend_ids),
         ~User.id.in_(blocked_ids),
         User.is_active == True
     )
-
-    # Get count for random selection
     eligible_count = suggestions_query.count()
     random_three = []
-
     if eligible_count > 0:
-        # Use efficient random selection
         offset = random.randint(0, max(eligible_count - 3, 0))
         random_three = suggestions_query.offset(offset).limit(3).all()
+        for user in random_three:
+            user.friend_request_status = current_user.get_friend_request_status(user.id)
 
-        # Add friend request status to each user
-        for user_obj in random_three:
-            user_obj.friend_request_status = current_user.get_friend_request_status(user_obj.id)
-
-    # --- GROUPS QUERY ---
-    # Get user's groups
-    user_groups = Group.query.filter(
-        Group.members.any(id=current_user.id),
-        Group.is_active == True
-    ).limit(5).all()
-
-    # --- SPONSORED ADS ---
-    # Get active sponsored ads
+    # Sponsored ads (example)
     current_time = datetime.utcnow()
     sponsored_ads = AdCampaign.query.filter(
         AdCampaign.status == 'active',
         AdCampaign.start_date <= current_time,
         AdCampaign.end_date >= current_time
-    ).order_by(
-        AdCampaign.budget.desc()  # Show higher budget ads first
-    ).limit(3).all()
+    ).order_by(AdCampaign.budget.desc()).limit(3).all()
 
-    # Process ads data for JavaScript
-    ads_data = []
-    for ad in sponsored_ads:
-        ads_data.append({
+    ads_data = [
+        {
             'id': ad.id,
             'title': ad.title,
             'description': ad.description,
             'image_url': ad.image or 'https://via.placeholder.com/600x300/4F46E5/FFFFFF?text=Sponsored+Ad',
             'target_url': ad.target_url or '#',
             'call_to_action': ad.call_to_action or 'Learn More',
-            'advertiser_name': ad.user.full_name if ad.user else 'Sponsored Partner'
-        })
+            'advertiser_name': ad.user.full_name if ad.user else 'Sponsor'
+        } for ad in sponsored_ads
+    ]
 
-    # --- AJAX RESPONSE ---
+    # AJAX partial posts
     if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-        # Render posts as HTML
         posts_html = render_template(
             "_posts_partial.html",
             posts=posts,
             current_user=current_user,
             default_avatar=url_for("static", filename="assets/img/default-avatar.png")
         )
-
         return jsonify({
             "success": True,
             "posts": posts_html,
             "next_cursor": next_cursor,
             "has_more": has_more,
             "count": len(posts),
-            "sponsored_ads": ads_data[:1]  # Send first ad for AJAX loading
+            "sponsored_ads": ads_data[:1]
         })
 
-    # --- FULL PAGE RENDER ---
-    # Generate CSRF token
-    from flask_wtf.csrf import generate_csrf
-    csrf_token = generate_csrf()
-
-    # Prepare template data
-    template_data = {
-        "initial_posts": posts,
-        "next_cursor": next_cursor,
-        "has_more": has_more,
-        "current_user": current_user,
-        "friends": friends,
-        "random_three": random_three,
-        "user_groups": user_groups,
-        "sponsored_ads": ads_data,
-        "csrf_token": csrf_token,
-        "datetime": datetime,
-        "timeago": timeago_filter,
-        "calculate_age": calculate_age,
-        "default_avatar": url_for("static", filename="assets/img/default-avatar.png")
-    }
-
-    return render_template("user_dashboard.html", **template_data)
+    # Full page render
+    return render_template(
+        "user_dashboard.html",
+        initial_posts=posts,
+        next_cursor=next_cursor,
+        has_more=has_more,
+        current_user=current_user,
+        friends=friends,
+        random_three=random_three,
+        sponsored_ads=ads_data,
+        csrf_token=generate_csrf(),
+        default_avatar=url_for("static", filename="assets/img/default-avatar.png")
+    )
 
 
 def handle_ajax_post_upload():
@@ -611,8 +563,8 @@ def handle_ajax_post_upload():
             author_id=current_user.id,
             created_at=datetime.utcnow(),
             emoji_data=emoji_info,
-            likes_count=0,
-            comments_count=0
+            # likes_count=0,
+            # comments_count=0
         )
 
         db.session.add(new_post)

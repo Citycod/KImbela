@@ -875,10 +875,34 @@
               </div>
               
               <div>
-                <label class="block text-xs font-medium text-text-secondary mb-1">Location</label>
-                <select id="locationFilter" class="form-select">
-                  <option value="">Any Location</option>
-                </select>
+                  <label class="block text-xs font-medium text-text-secondary mb-1">Location Filter</label>
+
+                  <div class="space-y-2">
+                      <!-- Country Filter -->
+                      <div>
+                          <select id="filter_country_select" class="form-select text-xs">
+                              <option value="">Any Country</option>
+                          </select>
+                      </div>
+
+                      <!-- State Filter -->
+                      <div>
+                          <select id="filter_state_select" class="form-select text-xs" disabled>
+                              <option value="">Any State</option>
+                          </select>
+                      </div>
+
+                      <!-- City Filter -->
+                      <div>
+                          <select id="filter_city_select" class="form-select text-xs" disabled>
+                              <option value="">Any City</option>
+                          </select>
+                      </div>
+                  </div>
+
+                  <p class="text-xs text-text-secondary/70 mt-1">
+                      Filter by country, state, or city
+                  </p>
               </div>
               
               <div class="flex gap-2 pt-1">
@@ -1174,23 +1198,37 @@
       }
 
       function applyFilters() {
-        currentFilters.minAge = document.getElementById('minAgeFilter').value;
-        currentFilters.maxAge = document.getElementById('maxAgeFilter').value;
-        currentFilters.gender = document.getElementById('genderFilter').value;
-        currentFilters.location = document.getElementById('locationFilter').value;
-        
-        reloadRequests();
+          currentFilters.minAge = document.getElementById('minAgeFilter').value || '';
+          currentFilters.maxAge = document.getElementById('maxAgeFilter').value || '';
+          currentFilters.gender = document.getElementById('genderFilter').value || '';
+
+          // NEW: Capture individual location filters
+          currentFilters.country = document.getElementById('filter_country_select').value || '';
+          currentFilters.state = document.getElementById('filter_state_select').value || '';
+          currentFilters.city = document.getElementById('filter_city_select').value || '';
+
+          // Remove old location filter
+          delete currentFilters.location;
+
+          reloadRequests();
       }
 
       function clearFilters() {
-        document.getElementById('minAgeFilter').value = '';
-        document.getElementById('maxAgeFilter').value = '';
-        document.getElementById('genderFilter').value = '';
-        document.getElementById('locationFilter').value = '';
-        document.getElementById('searchInput').value = '';
-        
-        currentFilters = {};
-        reloadRequests();
+          document.getElementById('minAgeFilter').value = '';
+          document.getElementById('maxAgeFilter').value = '';
+          document.getElementById('genderFilter').value = '';
+
+          // Reset cascading dropdowns
+          document.getElementById('filter_country_select').value = '';
+          document.getElementById('filter_state_select').innerHTML = '<option value="">Any State</option>';
+          document.getElementById('filter_state_select').disabled = true;
+          document.getElementById('filter_city_select').innerHTML = '<option value="">Any City</option>';
+          document.getElementById('filter_city_select').disabled = true;
+
+          document.getElementById('searchInput').value = '';
+
+          currentFilters = {};
+          reloadRequests();
       }
 
       function clearAllFilters() {
@@ -1206,40 +1244,40 @@
 
       async function loadRequests() {
         if (isLoading) return;
-        
+
         isLoading = true;
         document.getElementById('loadingState').classList.remove('hidden');
         document.getElementById('emptyState').classList.add('hidden');
-        
+
         try {
           const params = new URLSearchParams({
             page: currentPage,
             per_page: 12
           });
-          
+
           if (currentFilters.search) params.append('search', currentFilters.search);
           if (currentFilters.minAge) params.append('min_age', currentFilters.minAge);
           if (currentFilters.maxAge) params.append('max_age', currentFilters.maxAge);
           if (currentFilters.gender) params.append('gender', currentFilters.gender);
           if (currentFilters.location) params.append('location', currentFilters.location);
           if (currentFilters.sort) params.append('sort_by', currentFilters.sort);
-          
+
           const response = await fetch(`/api/requests?${params}`, {
             headers: { 'Content-Type': 'application/json' }
           });
-          
+
           const data = await response.json();
-          
+
           if (data.success) {
             renderRequests(data.requests);
             hasMore = data.has_next;
-            
+
             if (data.requests.length === 0 && currentPage === 1) {
               document.getElementById('emptyState').classList.remove('hidden');
             }
-            
+
             updateResultsCount(data.requests.length, data.total);
-            populateLocationFilter(data.requests);
+<!--            populateLocationFilter(data.requests);-->
           } else {
             console.error('Error loading requests:', data.error);
             showError('Failed to load requests');
@@ -1869,21 +1907,21 @@
         }
       }
 
-      function populateLocationFilter(requests) {
-        const locations = [...new Set(requests.map(req => req.user.location).filter(Boolean))];
-        const select = document.getElementById('locationFilter');
-        
-        while (select.children.length > 1) {
-          select.removeChild(select.lastChild);
-        }
-        
-        locations.forEach(location => {
-          const option = document.createElement('option');
-          option.value = location;
-          option.textContent = location;
-          select.appendChild(option);
-        });
-      }
+<!--      function populateLocationFilter(requests) {-->
+<!--        const locations = [...new Set(requests.map(req => req.user.location).filter(Boolean))];-->
+<!--        const select = document.getElementById('locationFilter');-->
+<!--        -->
+<!--        while (select.children.length > 1) {-->
+<!--          select.removeChild(select.lastChild);-->
+<!--        }-->
+<!--        -->
+<!--        locations.forEach(location => {-->
+<!--          const option = document.createElement('option');-->
+<!--          option.value = location;-->
+<!--          option.textContent = location;-->
+<!--          select.appendChild(option);-->
+<!--        });-->
+<!--      }-->
 
       function showError(message) {
         // Create a beautiful error toast
@@ -1945,5 +1983,105 @@
         });
       });
     </script>
+
+<script>
+// Matchmaking Requests Page: Location Filter Dropdowns (Country → State → City)
+document.addEventListener('DOMContentLoaded', function () {
+    const countrySelect = document.getElementById('filter_country_select');
+    const stateSelect = document.getElementById('filter_state_select');
+    const citySelect = document.getElementById('filter_city_select');
+
+    if (!countrySelect) return; // Not on requests page
+
+    let countries = [];
+    let states = [];
+    let cities = [];
+
+    // Load countries
+    fetch('{{ url_for("static", filename="assets/js/countries.json") }}')
+        .then(response => response.json())
+        .then(data => {
+            countries = data.sort((a, b) => a.name.localeCompare(b.name));
+
+            countries.forEach(country => {
+                const option = document.createElement('option');
+                option.value = country.name;
+                option.setAttribute('data-country-id', country.id);
+                option.textContent = country.name;
+                countrySelect.appendChild(option);
+            });
+        })
+        .catch(err => console.error('Error loading countries for filter:', err));
+
+    // When country changes
+    countrySelect.addEventListener('change', function () {
+        const selectedOption = this.options[this.selectedIndex];
+        const countryId = selectedOption ? selectedOption.getAttribute('data-country-id') : null;
+
+        stateSelect.innerHTML = '<option value="">Any State</option>';
+        citySelect.innerHTML = '<option value="">Any City</option>';
+        stateSelect.disabled = true;
+        citySelect.disabled = true;
+
+        if (!countryId) return;
+
+        loadStatesForFilter(countryId);
+    });
+
+    function loadStatesForFilter(countryId) {
+        fetch('{{ url_for("static", filename="assets/js/states.json") }}')
+            .then(response => response.json())
+            .then(data => {
+                states = data.filter(s => s.country_id == countryId);
+                states.sort((a, b) => a.name.localeCompare(b.name));
+
+                stateSelect.innerHTML = '<option value="">Any State</option>';
+                states.forEach(state => {
+                    const option = document.createElement('option');
+                    option.value = state.name;
+                    option.setAttribute('data-state-id', state.id);
+                    option.textContent = state.name;
+                    stateSelect.appendChild(option);
+                });
+
+                stateSelect.disabled = states.length === 0;
+            })
+            .catch(err => console.error('Error loading states for filter:', err));
+    }
+
+    // When state changes
+    stateSelect.addEventListener('change', function () {
+        const selectedOption = this.options[this.selectedIndex];
+        const stateId = selectedOption ? selectedOption.getAttribute('data-state-id') : null;
+
+        citySelect.innerHTML = '<option value="">Any City</option>';
+        citySelect.disabled = true;
+
+        if (!stateId) return;
+
+        loadCitiesForFilter(stateId);
+    });
+
+    function loadCitiesForFilter(stateId) {
+        fetch('{{ url_for("static", filename="assets/js/cities.json") }}')
+            .then(response => response.json())
+            .then(data => {
+                cities = data.filter(c => c.state_id == stateId);
+                cities.sort((a, b) => a.name.localeCompare(b.name));
+
+                citySelect.innerHTML = '<option value="">Any City</option>';
+                cities.forEach(city => {
+                    const option = document.createElement('option');
+                    option.value = city.name;
+                    option.textContent = city.name;
+                    citySelect.appendChild(option);
+                });
+
+                citySelect.disabled = false;
+            })
+            .catch(err => console.error('Error loading cities for filter:', err));
+    }
+});
+</script>
 </body>
 </html>

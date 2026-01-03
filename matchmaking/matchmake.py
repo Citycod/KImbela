@@ -110,55 +110,79 @@ def get_requests():
         # Get query parameters
         page = request.args.get("page", 1, type=int)
         per_page = request.args.get("per_page", 12, type=int)
-        search = request.args.get("search", "")
+        search = request.args.get("search", "").strip()
         min_age = request.args.get("min_age", type=int)
         max_age = request.args.get("max_age", type=int)
         gender = request.args.get("gender", "")
-        location = request.args.get("location", "")
+        country_filter = request.args.get("country", "").strip()
+        state_filter = request.args.get("state", "").strip()
+        city_filter = request.args.get("city", "").strip()
         sort_by = request.args.get("sort_by", "newest")
 
-        current_app.logger.info(f"Fetching requests for user {current_user.id}")
+        current_app.logger.info(f"Fetching requests for user {current_user.id} with filters: "
+                                f"search='{search}', age={min_age}-{max_age}, gender='{gender}', "
+                                f"location={country_filter}/{state_filter}/{city_filter}, sort='{sort_by}'")
 
-        # Base query - include active, paid requests that haven't expired
+        # Base query: only active, paid, and non-expired requests
         query = MatchmakingRequest.query.filter(
             MatchmakingRequest.status == "active",
-            MatchmakingRequest.end_date > datetime.utcnow(),
             MatchmakingRequest.payment_status == "completed",
+            MatchmakingRequest.end_date > datetime.utcnow(),
         )
 
-        # Apply filters
+        # Join with User table to access user location
+        query = query.join(User, MatchmakingRequest.user_id == User.id)
+
+        # Apply text search
         if search:
             query = query.filter(
                 db.or_(
                     MatchmakingRequest.about_you.ilike(f"%{search}%"),
                     MatchmakingRequest.ideal_partner.ilike(f"%{search}%"),
                     MatchmakingRequest.your_interests.ilike(f"%{search}%"),
+                    MatchmakingRequest.partner_interests.ilike(f"%{search}%"),
                 )
             )
 
-        if min_age:
-            query = query.filter(MatchmakingRequest.min_age >= min_age)
+        # Age range filter (on user's age, not partner preferences)
+        if min_age is not None or max_age is not None:
+            # We need to calculate age from DOB
+            from sqlalchemy import func, extract
+            today = datetime.utcnow().date()
 
-        if max_age:
-            query = query.filter(MatchmakingRequest.max_age <= max_age)
+            # This is simplified - you might need a better age calculation
+            if min_age is not None:
+                min_birth_year = today.year - min_age
+                query = query.filter(
+                    extract('year', User.dob) <= min_birth_year
+                )
+            if max_age is not None:
+                max_birth_year = today.year - max_age - 1
+                query = query.filter(
+                    extract('year', User.dob) >= max_birth_year
+                )
 
-        if gender and gender != "any":
+        # Gender filter - filter by user's gender, not preferences
+        if gender and gender.lower() != "any":
             query = query.filter(
-                db.or_(
-                    MatchmakingRequest.partner_gender == gender,
-                    MatchmakingRequest.partner_gender == "any",
-                )
+                User.gender == gender.lower()
             )
 
-        if location:
-            query = query.join(User).filter(
-                db.or_(
-                    User.city.ilike(f"%{location}%"),
-                    User.country.ilike(f"%{location}%"),
-                )
+        # Location filters - filter by user's actual location
+        if country_filter:
+            query = query.filter(
+                User.country.ilike(f"%{country_filter}%")
+            )
+        if state_filter:
+            query = query.filter(
+                User.state.ilike(f"%{state_filter}%")
+            )
+        if city_filter:
+            query = query.filter(
+                User.city.ilike(f"%{city_filter}%")
             )
 
-        # Apply sorting
+        # Sorting
         if sort_by == "newest":
             query = query.order_by(MatchmakingRequest.created_at.desc())
         elif sort_by == "oldest":
@@ -167,105 +191,94 @@ def get_requests():
             query = query.order_by(MatchmakingRequest.likes.desc())
         elif sort_by == "ending":
             query = query.order_by(MatchmakingRequest.end_date.asc())
+        else:
+            query = query.order_by(MatchmakingRequest.created_at.desc())
 
-        # Paginate results
+        # Pagination
         pagination = query.paginate(page=page, per_page=per_page, error_out=False)
 
         requests_data = []
         for req in pagination.items:
-            # Track view (but not for current user's own requests)
+            # Skip own request for view tracking
             if req.user_id != current_user.id:
                 view = MatchmakingView.query.filter_by(
                     user_id=current_user.id, request_id=req.id
                 ).first()
-
                 if not view:
                     view = MatchmakingView(user_id=current_user.id, request_id=req.id)
                     db.session.add(view)
                     req.views += 1
 
             # Check if current user liked this request
-            is_liked = (
-                MatchmakingLike.query.filter_by(
-                    user_id=current_user.id, request_id=req.id
-                ).first()
-                is not None
-            )
+            is_liked = MatchmakingLike.query.filter_by(
+                user_id=current_user.id, request_id=req.id
+            ).scalar() is not None
 
-            # Calculate age
-            age = calculate_age(req.user.dob) if req.user.dob else 0
+            # Calculate age of the request owner
+            age = calculate_age(req.user.dob) if req.user and req.user.dob else "N/A"
 
-            # Calculate days remaining
-            days_remaining = (req.end_date - datetime.utcnow()).days
-            days_remaining = max(0, days_remaining)
+            # Days remaining
+            days_remaining = max(0, (req.end_date - datetime.utcnow()).days)
 
-            # Get interests
-            interests = []
-            if req.your_interests:
-                try:
-                    interests = json.loads(req.your_interests)
-                except:
-                    interests = []
+            # Parse interests
+            interests = req.get_your_interests()
 
-            # Check if this request belongs to current user
+            # Is this the current user's own request?
             is_own_request = req.user_id == current_user.id
 
-            requests_data.append(
-                {
-                    "id": req.id,
-                    "user": {
-                        "id": req.user.id,
-                        "full_name": req.user.full_name,
-                        "age": age,
-                        "location": f"{req.user.city or ''}, {req.user.country or ''}".strip(
-                            ", "
-                        ),
-                        "profile_pic": req.user.profile_pic
-                        or url_for("static", filename="assets/img/default-avatar.png"),
-                    },
-                    "about_you": req.about_you or "",
-                    "ideal_partner": req.ideal_partner or "",
-                    "partner_preferences": {
-                        "min_age": req.min_age or 18,
-                        "max_age": req.max_age or 99,
-                        "gender": req.partner_gender or "any",
-                        "ethnicity": req.partner_ethnicity or "any",
-                        "religion": req.partner_religion or "any",
-                    },
-                    "interests": interests,
-                    "lifestyles": (
-                        req.get_lifestyles() if hasattr(req, "get_lifestyles") else []
-                    ),
-                    "image": req.image,
-                    "views": req.views or 0,
-                    "likes": req.likes or 0,
-                    "matches": req.matches or 0,
-                    "created_at": (
-                        req.created_at.strftime("%Y-%m-%d") if req.created_at else ""
-                    ),
-                    "expires_in": days_remaining,
-                    "package": req.package.name if req.package else "Basic",
-                    "is_liked": is_liked,
-                    "is_own_request": is_own_request,
-                }
-            )
+            requests_data.append({
+                "id": req.id,
+                "user": {
+                    "id": req.user.id,
+                    "full_name": req.user.full_name,
+                    "age": age,
+                    "location": f"{req.user.city or ''}, {req.user.state or ''}, {req.user.country or ''}".strip(", "),
+                    "profile_pic": req.user.profile_pic or url_for("static", filename="assets/img/default-avatar.png"),
+                    "country": req.user.country,
+                    "state": req.user.state,
+                    "city": req.user.city,
+                    "gender": req.user.gender,
+                },
+                "about_you": req.about_you or "",
+                "ideal_partner": req.ideal_partner or "",
+                "partner_preferences": {
+                    "min_age": req.min_age,
+                    "max_age": req.max_age,
+                    "gender": req.partner_gender or "any",
+                    "ethnicity": req.partner_ethnicity or "",
+                    "religion": req.partner_religion or "",
+                    "partner_country": req.partner_country,
+                    "partner_state": req.partner_state,
+                    "partner_city": req.partner_city,
+                },
+                "interests": interests,
+                "lifestyles": req.get_lifestyles(),
+                "image": req.image,
+                "views": req.views or 0,
+                "likes": req.likes or 0,
+                "matches": req.matches or 0,
+                "created_at": req.created_at.strftime("%Y-%m-%d") if req.created_at else "",
+                "expires_in": days_remaining,
+                "package": req.package.name if req.package else "Basic",
+                "is_liked": is_liked,
+                "is_own_request": is_own_request,
+            })
 
+        # Commit view increments
         db.session.commit()
 
-        return jsonify(
-            {
-                "success": True,
-                "requests": requests_data,
-                "total": pagination.total,
-                "pages": pagination.pages,
-                "has_next": pagination.has_next,
-                "has_prev": pagination.has_prev,
-            }
-        )
+        return jsonify({
+            "success": True,
+            "requests": requests_data,
+            "total": pagination.total,
+            "pages": pagination.pages,
+            "has_next": pagination.has_next,
+            "has_prev": pagination.has_prev,
+        })
 
     except Exception as e:
         db.session.rollback()
-        current_app.logger.error(f"Error fetching matchmaking requests: {str(e)}")
+        current_app.logger.error(f"Error fetching matchmaking requests: {str(e)}", exc_info=True)
         return jsonify({"success": False, "error": "Failed to load requests"}), 500
 
 
@@ -357,31 +370,29 @@ def create_matchmaking_request():
             request_data = data
             package_id = data.get("package_id")
 
-        # Validate required fields
+        # Validate package
         if not package_id:
             return jsonify({"success": False, "error": "Package ID is required"}), 400
 
-        # Get package
         package = MatchmakingPackage.query.get(package_id)
         if not package:
             return jsonify({"success": False, "error": "Invalid package selected"}), 400
 
-        # Check if user already has an active request
+        # Check for existing active request
         existing_request = MatchmakingRequest.query.filter_by(
             user_id=current_user.id, status="active"
         ).first()
 
         if existing_request:
-            # Check if the existing request is expired
-            if (
-                existing_request.end_date
-                and existing_request.end_date <= datetime.utcnow()
-            ):
-                # Mark expired request as inactive
+            if existing_request.end_date and existing_request.end_date <= datetime.utcnow():
                 existing_request.status = "expired"
                 db.session.commit()
             else:
-                # Return proper error with request details
+                days_remaining = (
+                    (existing_request.end_date - datetime.utcnow()).days
+                    if existing_request.end_date
+                    else 0
+                )
                 return (
                     jsonify(
                         {
@@ -390,60 +401,69 @@ def create_matchmaking_request():
                             "existing_request": {
                                 "id": existing_request.id,
                                 "status": existing_request.status,
-                                "end_date": (
-                                    existing_request.end_date.isoformat()
-                                    if existing_request.end_date
-                                    else None
-                                ),
-                                "days_remaining": (
-                                    (existing_request.end_date - datetime.utcnow()).days
-                                    if existing_request.end_date
-                                    else 0
-                                ),
-                                "package": (
-                                    existing_request.package.name
-                                    if existing_request.package
-                                    else "Unknown"
-                                ),
+                                "end_date": existing_request.end_date.isoformat() if existing_request.end_date else None,
+                                "days_remaining": days_remaining,
+                                "package": existing_request.package.name if existing_request.package else "Unknown",
                             },
-                            "options": [
-                                "Wait for your current request to expire",
-                                "Deactivate your current request and create a new one",
-                                "Upgrade your current package",
-                            ],
                         }
                     ),
                     400,
                 )
 
-        # Validate required fields in request_data
-        required_fields = ["about_you", "ideal_partner"]
-        for field in required_fields:
-            if not request_data.get(field):
+        # Validate required text fields
+        required_text_fields = ["about_you", "ideal_partner"]
+        for field in required_text_fields:
+            if not request_data.get(field) or not request_data[field].strip():
                 return (
                     jsonify(
-                        {"success": False, "error": f"Missing required field: {field}"}
+                        {"success": False, "error": f"{field.replace('_', ' ').title()} is required"}
                     ),
                     400,
                 )
 
-        # Create new request with pending status
+        # Extract new location fields
+        partner_country = request_data.get("partner_country", "").strip()
+        partner_state = request_data.get("partner_state", "").strip()
+        partner_city = request_data.get("partner_city", "").strip()
+
+        # Optional: Validate that at least country is selected
+        if not partner_country:
+            return jsonify({"success": False, "error": "Please select a preferred country"}), 400
+
+        # Create new request
         new_request = MatchmakingRequest(
             user_id=current_user.id,
             package_id=package.id,
+
+            # Basic preferences
             min_age=request_data.get("min_age"),
             max_age=request_data.get("max_age"),
             partner_gender=request_data.get("partner_gender", "any"),
-            partner_ethnicity=request_data.get("partner_ethnicity"),
-            partner_religion=request_data.get("partner_religion"),
+            partner_ethnicity=request_data.get("partner_ethnicity", ""),
+            partner_religion=request_data.get("partner_religion", ""),
+
+            # Interests & Lists
             partner_interests=json.dumps(request_data.get("partner_interests", [])),
-            target_countries=json.dumps(request_data.get("countries", [])),
-            about_you=request_data["about_you"],
-            ideal_partner=request_data["ideal_partner"],
             your_interests=json.dumps(request_data.get("your_interests", [])),
             lifestyles=json.dumps(request_data.get("lifestyles", [])),
+
+            # NEW: Precise location preferences
+            partner_country=partner_country,
+            partner_state=partner_state or None,  # Can be empty if not applicable
+            partner_city=partner_city or None,  # Optional
+
+            # Backward compatibility: keep old multi-country field if sent
+            target_countries=json.dumps(request_data.get("countries", [])),
+
+            # Text fields
+            about_you=request_data["about_you"].strip(),
+            ideal_partner=request_data["ideal_partner"].strip(),
+
+            # Image
             image=request_data.get("image"),
-            status="pending",  # Will be activated after payment
+
+            # Status
+            status="pending",
             payment_status="pending",
             payment_gateway="flutterwave",
         )
@@ -451,22 +471,26 @@ def create_matchmaking_request():
         db.session.add(new_request)
         db.session.commit()
 
-        print(f"✅ Matchmaking request created with ID: {new_request.id}")
+        current_app.logger.info(
+            f"Matchmaking request created - User: {current_user.id}, "
+            f"Request ID: {new_request.id}, "
+            f"Location: {partner_city}, {partner_state}, {partner_country}"
+        )
 
         return jsonify(
             {
                 "success": True,
                 "request_id": new_request.id,
-                "message": "Matchmaking request created successfully! Proceed to payment.",
+                "message": "Matchmaking request created successfully! Proceeding to payment...",
             }
         )
 
     except Exception as e:
         db.session.rollback()
-        current_app.logger.error(f"Error creating matchmaking request: {str(e)}")
+        current_app.logger.error(f"Error creating matchmaking request: {str(e)}", exc_info=True)
         return (
             jsonify(
-                {"success": False, "error": "Failed to create matchmaking request"}
+                {"success": False, "error": "Failed to create matchmaking request. Please try again."}
             ),
             500,
         )

@@ -832,10 +832,34 @@
                                 
                                 <div>
                                     <label class="block text-base font-semibold mb-2 text-primary">Preferred Location</label>
-                                    <div class="country-select" id="countrySelect">
-                                        <!-- Countries will be populated by JavaScript -->
+
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                        <!-- Country Dropdown -->
+                                        <div>
+                                            <select id="match_country_select" class="select-input">
+                                                <option value="">Select Country</option>
+                                            </select>
+                                        </div>
+
+
+                                        <!-- State Dropdown -->
+                                        <div>
+                                            <select id="match_state_select" class="select-input" disabled>
+                                                <option value="">Select State First</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- City Dropdown -->
+                                        <div>
+                                            <select id="match_city_select" class="select-input" disabled>
+                                                <option value="">Select State First</option>
+                                            </select>
+                                        </div>
                                     </div>
-                                    <p class="text-xs text-text-secondary mt-1">Select one or more countries</p>
+
+                                    <p class="text-xs text-text-secondary mt-2">
+                                        Select country, state, and city for your ideal match location.
+                                    </p>
                                 </div>
                             </div>
                             
@@ -1473,6 +1497,11 @@
                 partner_religion: document.getElementById('partnerReligion').value,
                 partner_interests: AppState.selectedInterests,
                 countries: AppState.selectedCountries,
+
+                partner_country: document.getElementById('match_country_select').value,
+                partner_state: document.getElementById('match_state_select').value || '',
+                partner_city: document.getElementById('match_city_select').value || '',
+
                 about_you: document.getElementById('aboutYou').value,
                 ideal_partner: document.getElementById('idealPartner').value,
                 your_interests: AppState.selectedYourInterests,
@@ -2137,5 +2166,123 @@
             });
         }
     </script>
+
+<script>
+// Matchmaking Page: Dynamic Country → State → City Dropdowns
+document.addEventListener('DOMContentLoaded', function () {
+    const countrySelect = document.getElementById('match_country_select');
+    const stateSelect = document.getElementById('match_state_select');
+    const citySelect = document.getElementById('match_city_select');
+
+    if (!countrySelect) return; // Not on matchmaking page
+
+    let countries = [];
+    let states = [];
+    let cities = [];
+
+    // Load countries
+    fetch('{{ url_for("static", filename="assets/js/countries.json") }}')
+        .then(response => response.json())
+        .then(data => {
+            countries = data.sort((a, b) => a.name.localeCompare(b.name));
+
+            countries.forEach(country => {
+                const option = document.createElement('option');
+                option.value = country.name;
+                option.setAttribute('data-country-id', country.id);
+                option.textContent = country.name;
+                countrySelect.appendChild(option);
+            });
+        })
+        .catch(err => {
+            console.error('Error loading countries:', err);
+            countrySelect.innerHTML = '<option value="">Error loading countries</option>';
+        });
+
+    // When country changes
+    countrySelect.addEventListener('change', function () {
+        const selectedOption = this.options[this.selectedIndex];
+        const countryId = selectedOption ? selectedOption.getAttribute('data-country-id') : null;
+
+        stateSelect.innerHTML = '<option value="">Loading states...</option>';
+        citySelect.innerHTML = '<option value="">Select State First</option>';
+        stateSelect.disabled = true;
+        citySelect.disabled = true;
+
+        if (!countryId) {
+            stateSelect.innerHTML = '<option value="">Select Country First</option>';
+            return;
+        }
+
+        loadStates(countryId);
+    });
+
+    function loadStates(countryId) {
+        fetch('{{ url_for("static", filename="assets/js/states.json") }}')
+            .then(response => response.json())
+            .then(data => {
+                states = data.filter(s => s.country_id == countryId);
+                states.sort((a, b) => a.name.localeCompare(b.name));
+
+                stateSelect.innerHTML = '<option value="">Select State / Province</option>';
+                states.forEach(state => {
+                    const option = document.createElement('option');
+                    option.value = state.name;
+                    option.setAttribute('data-state-id', state.id);
+                    option.textContent = state.name;
+                    stateSelect.appendChild(option);
+                });
+
+                stateSelect.disabled = states.length === 0;
+                if (states.length === 0) {
+                    stateSelect.innerHTML = '<option value="">No states available</option>';
+                }
+            })
+            .catch(err => {
+                console.error('Error loading states:', err);
+                stateSelect.innerHTML = '<option value="">Error loading states</option>';
+            });
+    }
+
+    // When state changes
+    stateSelect.addEventListener('change', function () {
+        const selectedOption = this.options[this.selectedIndex];
+        const stateId = selectedOption ? selectedOption.getAttribute('data-state-id') : null;
+
+        citySelect.innerHTML = '<option value="">Loading cities...</option>';
+        citySelect.disabled = true;
+
+        if (!stateId) {
+            citySelect.innerHTML = '<option value="">Select State First</option>';
+            return;
+        }
+
+        loadCities(stateId);
+    });
+
+    function loadCities(stateId) {
+        fetch('{{ url_for("static", filename="assets/js/cities.json") }}')
+            .then(response => response.json())
+            .then(data => {
+                cities = data.filter(c => c.state_id == stateId);
+                cities.sort((a, b) => a.name.localeCompare(b.name));
+
+                citySelect.innerHTML = '<option value="">Select City (Optional)</option>';
+                cities.forEach(city => {
+                    const option = document.createElement('option');
+                    option.value = city.name;
+                    option.textContent = city.name;
+                    citySelect.appendChild(option);
+                });
+
+                citySelect.disabled = false;
+            })
+            .catch(err => {
+                console.error('Error loading cities:', err);
+                citySelect.innerHTML = '<option value="">Error loading cities</option>';
+            });
+    }
+});
+</script>
 </body>
 </html>

@@ -753,6 +753,7 @@ class Post(db.Model):
     content = db.Column(db.Text, nullable=False)
     image = db.Column(db.String(255))
     video = db.Column(db.String(255))
+    gif = db.Column(db.String(255), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     author_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     group_id = db.Column(db.Integer, db.ForeignKey("groups.id"), nullable=True)
@@ -1321,21 +1322,30 @@ class MatchmakingRequest(db.Model):
     # Partner Preferences
     min_age = db.Column(db.Integer)
     max_age = db.Column(db.Integer)
-    partner_gender = db.Column(db.String(20))
+    partner_gender = db.Column(db.String(20), default="any")
     partner_ethnicity = db.Column(db.String(50))
     partner_religion = db.Column(db.String(50))
-    partner_interests = db.Column(db.Text)
-    target_countries = db.Column(db.Text)
+
+    # Interests & Lists (stored as JSON strings)
+    partner_interests = db.Column(db.Text)  # List of interests they want in partner
+    your_interests = db.Column(db.Text)  # User's own interests
+    lifestyles = db.Column(db.Text)  # User's lifestyle choices
+
+    # NEW: Precise location preferences for ideal partner
+    partner_country = db.Column(db.String(100))  # e.g., "Nigeria"
+    partner_state = db.Column(db.String(100))  # e.g., "Lagos"
+    partner_city = db.Column(db.String(100))  # e.g., "Ikeja"
+
+    # Backward compatibility: old multi-country selection
+    target_countries = db.Column(db.Text)  # JSON list of countries (kept for legacy)
 
     # About the user
     about_you = db.Column(db.Text, nullable=False)
     ideal_partner = db.Column(db.Text, nullable=False)
-    your_interests = db.Column(db.Text)
-    lifestyles = db.Column(db.Text)
-    image = db.Column(db.Text)
+    image = db.Column(db.Text)  # URL to uploaded photo
 
     # Request details
-    status = db.Column(db.String(20), default="pending")
+    status = db.Column(db.String(20), default="pending")  # pending, active, expired, cancelled
     start_date = db.Column(db.DateTime, default=datetime.utcnow)
     end_date = db.Column(db.DateTime)
 
@@ -1353,7 +1363,7 @@ class MatchmakingRequest(db.Model):
         db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
     )
 
-    # FIXED: Use string references
+    # Relationships
     user = db.relationship("User", foreign_keys=[user_id])
     package = db.relationship(
         "MatchmakingPackage",
@@ -1361,7 +1371,7 @@ class MatchmakingRequest(db.Model):
         back_populates="matchmaking_requests",
     )
 
-    # Add property to get payment transaction
+    # Payment transaction
     @property
     def payment_transaction(self):
         """Get the payment transaction for this matchmaking request"""
@@ -1369,18 +1379,11 @@ class MatchmakingRequest(db.Model):
             matchmaking_request_id=self.id
         ).first()
 
+    # Helper methods for JSON fields
     def get_partner_interests(self):
         if self.partner_interests:
             try:
                 return json.loads(self.partner_interests)
-            except:
-                return []
-        return []
-
-    def get_target_countries(self):
-        if self.target_countries:
-            try:
-                return json.loads(self.target_countries)
             except:
                 return []
         return []
@@ -1401,8 +1404,34 @@ class MatchmakingRequest(db.Model):
                 return []
         return []
 
+    def get_target_countries(self):
+        """Legacy: returns list of countries from old multi-select"""
+        if self.target_countries:
+            try:
+                return json.loads(self.target_countries)
+            except:
+                return []
+        return []
+
     def is_active(self):
-        return self.status == "active" and self.end_date > datetime.utcnow()
+        """Check if the request is currently active"""
+        return (
+                self.status == "active"
+                and self.end_date
+                and self.end_date > datetime.utcnow()
+        )
+
+    def get_location_display(self):
+        """Return a nicely formatted location string for display"""
+        parts = [self.partner_city, self.partner_state, self.partner_country]
+        parts = [p for p in parts if p]  # Remove empty/None
+        return ", ".join(parts) or "Any Location"
+
+    def __repr__(self):
+        return f"<MatchmakingRequest {self.id} - User {self.user_id} - {self.status}>"
+
+
+
 
 
 class MatchmakingLike(db.Model):
