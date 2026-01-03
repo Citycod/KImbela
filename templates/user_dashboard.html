@@ -1196,6 +1196,96 @@ emoji-picker::part(search) input::placeholder {
 .gif-item {
     animation: gifGridFadeIn 0.3s ease-out;
 }
+
+
+
+        /* Video Autoplay Styles */
+.autoplay-video {
+    transition: opacity 0.3s ease;
+    background-color: #000;
+}
+
+.autoplay-video:hover {
+    opacity: 0.95;
+}
+
+/* Video container styling */
+.post-media video {
+    width: 100%;
+    height: auto;
+    max-height: 500px;
+    border-radius: 12px;
+    background-color: #000;
+}
+
+/* Loading state for videos */
+.video-loading {
+    position: relative;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Video error state */
+.video-error {
+    position: relative;
+    background-color: #1a1a1a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+}
+
+/* Custom scrollbar for video container */
+.post-media::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.post-media::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.post-media::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+}
+
+.post-media::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+    .post-media video {
+        max-height: 400px;
+    }
+
+    .video-custom-controls {
+        padding: 8px;
+    }
+
+    .video-unmute-btn {
+        padding: 8px;
+    }
+}
+
+/* Reduce motion preference */
+@media (prefers-reduced-motion: reduce) {
+    .autoplay-video {
+        transition: none;
+    }
+
+    .video-custom-controls {
+        transition: none;
+    }
+}
 </style>
   </head>
   <body class="font-poppins bg-fb-gray text-fb-text">
@@ -2093,7 +2183,11 @@ emoji-picker::part(search) input::placeholder {
     data-bs-toggle="modal"
     data-bs-target="#postModal"
   >
-    <i class="bi bi-camera-video-fill text-red-500 text-base sm:text-lg"></i>
+<!--    <i class="bi bi-camera-video-fill text-red-500 text-base sm:text-lg"></i>-->
+    <img
+                  src="{{ url_for('static', filename='assets/img/video.png') }}"
+                  class="w-10 h-10 rounded-full object-cover mx-auto sm:mb-3 mt-3"
+                />
     <span class="tooltip">Video</span>
   </button>
 
@@ -2102,7 +2196,11 @@ emoji-picker::part(search) input::placeholder {
     class="composer-btn flex items-center justify-center flex-1 py-1.5 sm:py-2 rounded-lg hover:bg-fb-gray transition-colors text-fb-text-light font-medium text-xs sm:text-sm relative"
     onclick="document.getElementById('photoInput').click()"
   >
-    <i class="bi bi-image-fill text-green-500 text-base sm:text-lg"></i>
+<!--    <i class="bi bi-image-fill text-green-500 text-base sm:text-lg"></i>-->
+    <img
+                  src="{{ url_for('static', filename='assets/img/pic.png') }}"
+                  class="w-10 h-10 rounded-full object-cover mx-auto sm:mb-3 mt-3"
+                />
     <span class="tooltip">Photo</span>
     <input
       type="file"
@@ -2118,7 +2216,12 @@ emoji-picker::part(search) input::placeholder {
     class="composer-btn flex items-center justify-center flex-1 py-1.5 sm:py-2 rounded-lg hover:bg-fb-gray transition-colors text-fb-text-light font-medium text-xs sm:text-sm relative"
     onclick="openGifPickerFromComposer()"
   >
-    <i class="bi bi-file-earmark-image text-purple-500 text-base sm:text-lg"></i>
+<!--    <i class="bi bi-file-earmark-play text-purple-500"></i>-->
+<img
+                  src="{{ url_for('static', filename='assets/img/gif.png') }}"
+                  class="w-10 h-10 rounded-full object-cover mx-auto sm:mb-3 mt-3"
+                />
+
     <span class="tooltip">GIF</span>
   </button>
 </div>
@@ -2302,12 +2405,28 @@ emoji-picker::part(search) input::placeholder {
               {% endif %}
 
               <!-- Video -->
+              <!-- In your post template where videos are rendered -->
               {% if post.video %}
-              <div class="post-media mt-3">
-                <video controls class="w-full rounded-2xl max-h-96" preload="metadata">
-                  <source src="{{ post.video }}" type="video/mp4">
-                  Your browser does not support video.
-                </video>
+              <div class="post-media mt-3 relative">
+                  <video
+                      controls
+                      class="w-full rounded-2xl max-h-96 autoplay-video"
+                      preload="metadata"
+                      muted
+                      playsinline
+                      poster="{{ post.video_thumbnail or '' }}"
+                      data-post-id="{{ post.id }}"
+                      onloadedmetadata="this.classList.remove('video-loading')"
+                      onloadstart="this.classList.add('video-loading')">
+                      <source src="{{ post.video }}" type="video/mp4">
+                      Your browser does not support the video tag.
+                  </video>
+                  <div class="video-loading-overlay absolute inset-0 bg-gray-900/50 flex items-center justify-center rounded-2xl hidden">
+                      <div class="text-center">
+                          <div class="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-2"></div>
+                          <p class="text-white text-sm">Loading video...</p>
+                      </div>
+                  </div>
               </div>
               {% endif %}
             </div>
@@ -3644,6 +3763,512 @@ document.getElementById('mediaInput').addEventListener('change', function() {
     if (this.files && this.files.length > 0) {
         clearSelectedGif();
     }
+});
+
+
+
+
+
+    // ========================================
+// VIDEO AUTOPLAY ON SCROLL
+// ========================================
+
+const VideoAutoplay = {
+    // Configuration
+    config: {
+        threshold: 0.7, // 70% of video should be visible
+        rootMargin: '0px 0px -100px 0px', // Adjust when to trigger
+        autoplayMuted: true, // Videos must be muted to autoplay
+        resumeOnVisible: true, // Resume playing when back in view
+        lazyLoad: true // Lazy load videos
+    },
+
+    // State
+    state: {
+        videoElements: [],
+        observer: null,
+        playingVideos: new Set()
+    },
+
+    // Initialize video autoplay system
+    init() {
+        console.log('🎬 Initializing video autoplay system...');
+
+        this.collectVideoElements();
+        this.setupIntersectionObserver();
+        this.setupEventListeners();
+
+        return this;
+    },
+
+    // Collect all video elements on page
+    collectVideoElements() {
+        // Find all video elements in posts
+        const videoElements = document.querySelectorAll('.post-card video');
+        const allVideos = document.querySelectorAll('video');
+
+        this.state.videoElements = Array.from(videoElements).concat(Array.from(allVideos));
+
+        console.log(`📹 Found ${this.state.videoElements.length} video elements`);
+
+        // Prepare videos for autoplay
+        this.state.videoElements.forEach((video, index) => {
+            this.prepareVideoElement(video, index);
+        });
+    },
+
+    // Prepare video element for autoplay
+    prepareVideoElement(video, index) {
+        // Add unique ID if not present
+        if (!video.id) {
+            video.id = `autoplay-video-${index}`;
+        }
+
+        // Add muted attribute (required for autoplay in most browsers)
+        if (!video.hasAttribute('muted') && this.config.autoplayMuted) {
+            video.muted = true;
+            video.setAttribute('muted', '');
+        }
+
+        // Add playsinline for mobile browsers
+        if (!video.hasAttribute('playsinline')) {
+            video.setAttribute('playsinline', '');
+        }
+
+        // Add loading attribute for lazy loading
+        if (this.config.lazyLoad && !video.hasAttribute('loading')) {
+            video.setAttribute('loading', 'lazy');
+        }
+
+        // Add preload metadata to reduce initial load
+        if (!video.hasAttribute('preload')) {
+            video.setAttribute('preload', 'metadata');
+        }
+
+        // Add custom class for styling
+        video.classList.add('autoplay-video');
+
+        // Add error handler
+        video.addEventListener('error', (e) => {
+            console.error('Video load error:', e);
+            this.handleVideoError(video);
+        });
+
+        // Add ended event to reset video
+        video.addEventListener('ended', () => {
+            setTimeout(() => {
+                if (video.currentTime >= video.duration) {
+                    video.currentTime = 0;
+                }
+            }, 1000);
+        });
+    },
+
+    // Setup Intersection Observer for scroll detection
+    setupIntersectionObserver() {
+        const options = {
+            root: null, // Use viewport as root
+            rootMargin: this.config.rootMargin,
+            threshold: this.config.threshold
+        };
+
+        this.state.observer = new IntersectionObserver(
+            (entries) => this.handleIntersection(entries),
+            options
+        );
+
+        // Observe each video element
+        this.state.videoElements.forEach(video => {
+            this.state.observer.observe(video);
+        });
+    },
+
+    // Handle intersection changes (scroll in/out of view)
+    handleIntersection(entries) {
+        entries.forEach(entry => {
+            const video = entry.target;
+
+            if (entry.isIntersecting) {
+                // Video is in view
+                this.playVideo(video);
+            } else {
+                // Video is out of view
+                this.pauseVideo(video);
+            }
+        });
+    },
+
+    // Play video (with error handling)
+    async playVideo(video) {
+        // Skip if already playing
+        if (this.state.playingVideos.has(video.id) || !video.paused) {
+            return;
+        }
+
+        // Check if video is already loaded enough
+        if (video.readyState < 2) { // HAVE_CURRENT_DATA
+            try {
+                // Load video if needed
+                await video.load();
+            } catch (error) {
+                console.error('Failed to load video:', error);
+                return;
+            }
+        }
+
+        try {
+            // Play the video
+            const playPromise = video.play();
+
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    console.log(`▶️ Playing video: ${video.id}`);
+                    this.state.playingVideos.add(video.id);
+                    this.addVideoControls(video);
+                }).catch(error => {
+                    console.log(`❌ Could not autoplay video ${video.id}:`, error);
+                    this.handleAutoplayError(video, error);
+                });
+            }
+        } catch (error) {
+            console.error('Error playing video:', error);
+        }
+    },
+
+    // Pause video
+    pauseVideo(video) {
+        if (!video.paused) {
+            video.pause();
+            console.log(`⏸️ Paused video: ${video.id}`);
+            this.state.playingVideos.delete(video.id);
+        }
+    },
+
+    // Handle autoplay errors (user interaction required)
+    handleAutoplayError(video, error) {
+        console.log(`Autoplay blocked for video ${video.id}:`, error.name);
+
+        // Add overlay with play button for user interaction
+        this.addUserInteractionOverlay(video);
+    },
+
+    // Add user interaction overlay for videos that need manual play
+    addUserInteractionOverlay(video) {
+        // Check if overlay already exists
+        if (video.parentElement.querySelector('.video-interaction-overlay')) {
+            return;
+        }
+
+        // Create overlay
+        const overlay = document.createElement('div');
+        overlay.className = 'video-interaction-overlay absolute inset-0 bg-black/50 flex items-center justify-center cursor-pointer z-10 rounded-xl';
+        overlay.innerHTML = `
+            <div class="text-center p-4">
+                <div class="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center mb-2 mx-auto">
+                    <i class="bi bi-play-fill text-2xl text-black"></i>
+                </div>
+                <p class="text-white text-sm font-medium">Tap to play</p>
+                <p class="text-white/80 text-xs mt-1">Video autoplay is muted</p>
+            </div>
+        `;
+
+        // Style the video container
+        const videoContainer = video.parentElement;
+        if (!videoContainer.classList.contains('relative')) {
+            videoContainer.classList.add('relative');
+        }
+
+        // Add overlay
+        videoContainer.appendChild(overlay);
+
+        // Add click handler
+        overlay.addEventListener('click', async (e) => {
+            e.stopPropagation();
+
+            try {
+                await video.play();
+                overlay.remove();
+                console.log(`✅ User initiated play for video: ${video.id}`);
+            } catch (playError) {
+                console.error('User interaction play failed:', playError);
+            }
+        });
+
+        // Remove overlay when video starts playing
+        const observer = new MutationObserver((mutations) => {
+            if (!video.paused) {
+                overlay.remove();
+                observer.disconnect();
+            }
+        });
+
+        observer.observe(video, { attributes: true, attributeFilter: ['paused'] });
+    },
+
+    // Add custom video controls overlay
+    addVideoControls(video) {
+        // Check if controls already exist
+        if (video.parentElement.querySelector('.video-custom-controls')) {
+            return;
+        }
+
+        // Create custom controls
+        const controls = document.createElement('div');
+        controls.className = 'video-custom-controls absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent opacity-0 transition-opacity duration-300 z-20 rounded-b-xl';
+
+        // Only show mute/unmute button if video is muted
+        if (video.muted) {
+            controls.innerHTML = `
+                <div class="flex justify-end">
+                    <button class="video-unmute-btn p-1.5 bg-black/50 rounded-full text-white hover:bg-black/70 transition-colors">
+                        <i class="bi bi-volume-mute text-sm"></i>
+                    </button>
+                </div>
+            `;
+
+            // Add mute/unmute functionality
+            const unmuteBtn = controls.querySelector('.video-unmute-btn');
+            unmuteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                video.muted = !video.muted;
+                unmuteBtn.innerHTML = video.muted
+                    ? '<i class="bi bi-volume-mute text-sm"></i>'
+                    : '<i class="bi bi-volume-up text-sm"></i>';
+            });
+        }
+
+        // Add controls to video container
+        const videoContainer = video.parentElement;
+        if (!videoContainer.classList.contains('relative')) {
+            videoContainer.classList.add('relative');
+        }
+
+        videoContainer.appendChild(controls);
+
+        // Show/hide controls on hover
+        videoContainer.addEventListener('mouseenter', () => {
+            controls.style.opacity = '1';
+        });
+
+        videoContainer.addEventListener('mouseleave', () => {
+            controls.style.opacity = '0';
+        });
+
+        // Tap to pause on mobile
+        video.addEventListener('click', () => {
+            if (video.paused) {
+                video.play();
+            } else {
+                video.pause();
+            }
+        });
+    },
+
+    // Handle video loading errors
+    handleVideoError(video) {
+        console.error(`Video error for ${video.id}:`, video.error);
+
+        // Show error overlay
+        const errorOverlay = document.createElement('div');
+        errorOverlay.className = 'absolute inset-0 bg-gray-900 flex items-center justify-center rounded-xl';
+        errorOverlay.innerHTML = `
+            <div class="text-center p-4">
+                <i class="bi bi-exclamation-triangle text-3xl text-red-500 mb-2"></i>
+                <p class="text-white text-sm">Video unavailable</p>
+                <p class="text-white/70 text-xs mt-1">Failed to load video</p>
+            </div>
+        `;
+
+        const videoContainer = video.parentElement;
+        if (videoContainer) {
+            videoContainer.appendChild(errorOverlay);
+        }
+    },
+
+    // Setup additional event listeners
+    setupEventListeners() {
+        // Handle page visibility changes
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                // Page is hidden, pause all videos
+                this.pauseAllVideos();
+            } else {
+                // Page is visible again
+                this.resumeVisibleVideos();
+            }
+        });
+
+        // Handle window blur/focus
+        window.addEventListener('blur', () => {
+            this.pauseAllVideos();
+        });
+
+        // Clean up on page unload
+        window.addEventListener('beforeunload', () => {
+            this.pauseAllVideos();
+        });
+
+        // Handle dynamic content loading (for infinite scroll)
+        const postsFeed = document.getElementById('posts-feed');
+        if (postsFeed) {
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    if (mutation.addedNodes.length) {
+                        this.handleNewContent(mutation.addedNodes);
+                    }
+                });
+            });
+
+            observer.observe(postsFeed, { childList: true, subtree: true });
+        }
+    },
+
+    // Handle new content (for infinite scroll)
+    handleNewContent(addedNodes) {
+        addedNodes.forEach(node => {
+            if (node.nodeType === 1) { // Element node
+                const newVideos = node.querySelectorAll ? node.querySelectorAll('video') : [];
+                newVideos.forEach(video => {
+                    // Check if video is already tracked
+                    if (!this.state.videoElements.includes(video)) {
+                        this.state.videoElements.push(video);
+                        this.prepareVideoElement(video, this.state.videoElements.length - 1);
+
+                        // Observe the new video
+                        if (this.state.observer) {
+                            this.state.observer.observe(video);
+                        }
+                    }
+                });
+            }
+        });
+    },
+
+    // Pause all playing videos
+    pauseAllVideos() {
+        this.state.videoElements.forEach(video => {
+            this.pauseVideo(video);
+        });
+    },
+
+    // Resume videos that are in viewport
+    resumeVisibleVideos() {
+        if (this.config.resumeOnVisible) {
+            this.state.videoElements.forEach(video => {
+                // Check if video is in viewport using getBoundingClientRect
+                const rect = video.getBoundingClientRect();
+                const isVisible = (
+                    rect.top < window.innerHeight * this.config.threshold &&
+                    rect.bottom > 0 &&
+                    rect.left < window.innerWidth &&
+                    rect.right > 0
+                );
+
+                if (isVisible && video.paused) {
+                    this.playVideo(video);
+                }
+            });
+        }
+    },
+
+    // Public method to manually play a video
+    playVideoById(videoId) {
+        const video = document.getElementById(videoId);
+        if (video && video.tagName === 'VIDEO') {
+            this.playVideo(video);
+        }
+    },
+
+    // Public method to manually pause a video
+    pauseVideoById(videoId) {
+        const video = document.getElementById(videoId);
+        if (video && video.tagName === 'VIDEO') {
+            this.pauseVideo(video);
+        }
+    },
+
+    // Public method to toggle mute
+    toggleMuteVideo(videoId) {
+        const video = document.getElementById(videoId);
+        if (video && video.tagName === 'VIDEO') {
+            video.muted = !video.muted;
+            return video.muted;
+        }
+        return null;
+    },
+
+    // Clean up (for single page applications)
+    destroy() {
+        if (this.state.observer) {
+            this.state.observer.disconnect();
+        }
+
+        this.pauseAllVideos();
+        this.state.videoElements = [];
+        this.state.playingVideos.clear();
+    }
+};
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    // Check if we have videos on the page
+    const hasVideos = document.querySelectorAll('video').length > 0;
+
+    if (hasVideos) {
+        // Initialize with a small delay to ensure everything is loaded
+        setTimeout(() => {
+            VideoAutoplay.init();
+            console.log('✅ Video autoplay system initialized');
+        }, 1000);
+    }
+});
+
+// Make it globally available
+window.VideoAutoplay = VideoAutoplay;
+
+
+
+    // Performance optimization for scroll handling
+const ScrollThrottler = {
+    ticking: false,
+
+    init() {
+        // Throttle scroll events
+        window.addEventListener('scroll', () => {
+            if (!this.ticking) {
+                window.requestAnimationFrame(() => {
+                    this.handleScroll();
+                    this.ticking = false;
+                });
+                this.ticking = true;
+            }
+        }, { passive: true });
+
+        // Optimize for mobile touch
+        let touchStartY;
+        window.addEventListener('touchstart', (e) => {
+            touchStartY = e.touches[0].clientY;
+        }, { passive: true });
+
+        window.addEventListener('touchend', (e) => {
+            const touchEndY = e.changedTouches[0].clientY;
+            const deltaY = Math.abs(touchEndY - touchStartY);
+
+            // Only trigger video check on significant scroll
+            if (deltaY > 50) {
+                setTimeout(() => VideoAutoplay?.resumeVisibleVideos(), 300);
+            }
+        }, { passive: true });
+    },
+
+    handleScroll() {
+        // Optional: You can add additional scroll optimizations here
+    }
+};
+
+// Initialize throttler
+document.addEventListener('DOMContentLoaded', () => {
+    ScrollThrottler.init();
 });
   </script>
 </body>
