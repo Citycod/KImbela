@@ -82,6 +82,7 @@ window.closeModal = function(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.classList.add('hidden');
+        modal.style.display = 'none'; // Extra safety
         document.body.style.overflow = '';
     }
 };
@@ -1089,59 +1090,53 @@ const ProfileSystem = {
                 </div>
             `;
 
-            // Clear previous actions
             profileActions.innerHTML = '';
 
-            // Open modal first
-            Modal.open('profileModal');
+            // After you successfully fetch and display the profile
+            const profileModal = document.getElementById('profileModal');
+            if (profileModal) {
+                // Remove Tailwind's hidden class
+                profileModal.classList.remove('hidden');
+
+                // FORCE display with inline style + !important override
+                profileModal.style.cssText = `
+                    display: flex !important;
+                    visibility: visible !important;
+                    opacity: 1 !important;
+                    z-index: 50 !important;
+                `;
+
+                document.body.style.overflow = 'hidden';
+
+                console.log('Profile modal FORCE opened with inline styles');
+            } else {
+                console.error('profileModal not found!');
+            }
 
             // Load profile data
             const response = await fetch(`/get_user_profile/${userId}`);
 
-            console.log('Response status:', response.status);
-            console.log('Response headers:', Object.fromEntries([...response.headers.entries()]));
-
-            // Try to get response text first to see what the server is returning
-            const responseText = await response.text();
-            console.log('Raw response text:', responseText.substring(0, 500)); // First 500 chars
-
             if (!response.ok) {
-                // Try to parse as JSON if possible
+                const text = await response.text();
                 let errorMessage = `HTTP ${response.status}: Failed to load profile`;
                 try {
-                    const errorData = JSON.parse(responseText);
+                    const errorData = JSON.parse(text);
                     errorMessage = errorData.error || errorData.message || errorMessage;
-                } catch (e) {
-                    // Not JSON, use raw text or status
-                    if (responseText.includes('<!DOCTYPE html>') || responseText.includes('<html')) {
-                        errorMessage = 'Server returned HTML instead of JSON. Please check server logs.';
-                    } else if (responseText.trim()) {
-                        errorMessage = responseText.substring(0, 200);
-                    }
-                }
+                } catch {}
                 throw new Error(errorMessage);
             }
 
-            // Try to parse as JSON
-            let data;
-            try {
-                data = JSON.parse(responseText);
-            } catch (e) {
-                console.error('Failed to parse JSON:', e);
-                console.error('Response text that failed to parse:', responseText);
-                throw new Error('Server returned invalid JSON. Please check server logs.');
-            }
+            // ← ONLY ONE data declaration
+            const data = await response.json();
 
             if (data.error) {
                 throw new Error(data.error);
             }
 
-            console.log('Profile data loaded successfully:', data);
             this.displayProfileModal(data, userId, fromFriendRequestNotification);
 
         } catch (error) {
             console.error('Error loading profile:', error);
-            console.error('Full error:', error.stack);
 
             const modalBody = document.getElementById('profileModalBody');
             if (modalBody) {
@@ -1151,7 +1146,7 @@ const ProfileSystem = {
                         <p class="text-lg font-medium mb-2">Failed to load profile</p>
                         <p class="text-sm text-gray-600 mb-4">${error.message}</p>
                         <div class="flex space-x-2">
-                            <button onclick="ProfileSystem.openProfileModal(${userId}, false)"
+                            <button onclick="ProfileSystem.openProfileModal(${userId})"
                                     class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                                 Try Again
                             </button>
@@ -6359,6 +6354,16 @@ window.copyPostLink = copyPostLink;
 
 
 
+
+// Expose ProfileSystem.openProfileModal globally for HTML onclick attributes
+window.openProfileModal = function(userId, fromNotification = false) {
+    if (typeof ProfileSystem !== 'undefined' && ProfileSystem.openProfileModal) {
+        ProfileSystem.openProfileModal(userId, fromNotification);
+    } else {
+        console.error('ProfileSystem not initialized');
+        Toast.show('Profile loading not available', 'danger');
+    }
+};
 
 
 // Make functions globally available
