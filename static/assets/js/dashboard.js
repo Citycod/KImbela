@@ -1020,10 +1020,18 @@ async declineFriendRequest(userId, button) {
 
             default: // 'none'
                 buttonHTML = `
-                    <button class="btn btn-primary px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
-                            onclick="FriendSystem.add(${userId}, this)">
-                        <i class="bi bi-person-plus mr-1"></i> Connect
-                    </button>
+                    <button class="relative px-5 py-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-xl font-medium transition-all duration-300 overflow-hidden group shadow-md hover:shadow-lg"
+        onclick="FriendSystem.add(${userId}, this)">
+    <!-- Shimmer overlay -->
+    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+
+    <!-- Content -->
+    <div class="relative flex items-center gap-2">
+        <i class="bi bi-person-plus text-base group-hover:scale-110 transition-transform duration-300"></i>
+        <span class="text-sm group-hover:font-medium transition-all duration-300">Connect</span>
+        <i class="bi bi-arrow-right-short text-sm opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
+    </div>
+</button>
                 `;
                 break;
         }
@@ -1332,11 +1340,26 @@ const ProfileSystem = {
                                 onclick="Modal.close('profileModal')">
                             Cancel
                         </button>
+                       <a href="/profile/${userId}"
+   class="relative px-5 py-2 bg-gray-50 hover:bg-white text-gray-700 rounded-xl font-medium transition-all duration-300 overflow-hidden group border border-gray-100 hover:border-blue-100"
+   onclick="Modal.close('profileModal')">
+    <!-- Subtle background effect -->
+    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-blue-50/0 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+
+    <!-- Content -->
+    <div class="relative flex items-center gap-2">
+        <i class="bi bi-person-square text-base group-hover:text-blue-600 transition-colors duration-300"></i>
+        <span class="text-xs group-hover:text-blue-700 transition-colors duration-300">View Full Profile</span>
+        <i class="bi bi-arrow-right-short text-sm opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
+    </div>
+</a>
                     </div>
                 `;
             } else {
                 this.updateProfileActions(userId);
             }
+
+
 
         } catch (error) {
             console.error('Error displaying profile modal:', error);
@@ -1373,6 +1396,20 @@ const ProfileSystem = {
                                     onclick="BlockSystem.block(${userId})">
                                 <i class="bi bi-slash-circle mr-1"></i> Block
                             </button>
+
+                            <a href="/profile/${userId}"
+   class="relative px-5 py-2 bg-gray-50 hover:bg-white text-gray-700 rounded-xl font-medium transition-all duration-300 overflow-hidden group border border-gray-100 hover:border-blue-100"
+   onclick="Modal.close('profileModal')">
+    <!-- Subtle background effect -->
+    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-blue-50/0 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+
+    <!-- Content -->
+    <div class="relative flex items-center gap-2">
+        <i class="bi bi-person-square text-base group-hover:text-blue-600 transition-colors duration-300"></i>
+        <span class="text-xs group-hover:text-blue-700 transition-colors duration-300">View Full Profile</span>
+        <i class="bi bi-arrow-right-short text-sm opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
+    </div>
+</a>
                         `;
                         break;
 
@@ -1382,6 +1419,20 @@ const ProfileSystem = {
                                     onclick="FriendSystem.cancelRequest(${userId}, this)">
                                 <i class="bi bi-clock-history mr-1"></i> Cancel Request
                             </button>
+
+                           <a href="/profile/${userId}"
+   class="relative px-5 py-2 bg-gray-50 hover:bg-white text-gray-700 rounded-xl font-medium transition-all duration-300 overflow-hidden group border border-gray-100 hover:border-blue-100"
+   onclick="Modal.close('profileModal')">
+    <!-- Subtle background effect -->
+    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-blue-50/0 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+
+    <!-- Content -->
+    <div class="relative flex items-center gap-2">
+        <i class="bi bi-person-square text-base group-hover:text-blue-600 transition-colors duration-300"></i>
+        <span class="text-xs group-hover:text-blue-700 transition-colors duration-300">View Full Profile</span>
+        <i class="bi bi-arrow-right-short text-sm opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
+    </div>
+</a>
                         `;
                         break;
 
@@ -1396,6 +1447,20 @@ const ProfileSystem = {
                                         onclick="FriendSystem.declineFriendRequest(${userId}, this)">
                                     <i class="bi bi-x-lg mr-1"></i> Decline
                                 </button>
+
+                                <a href="/profile/${userId}"
+   class="relative px-5 py-2 bg-gray-50 hover:bg-white text-gray-700 rounded-xl font-medium transition-all duration-300 overflow-hidden group border border-gray-100 hover:border-blue-100"
+   onclick="Modal.close('profileModal')">
+    <!-- Subtle background effect -->
+    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-blue-50/0 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+
+    <!-- Content -->
+    <div class="relative flex items-center gap-2">
+        <i class="bi bi-person-square text-base group-hover:text-blue-600 transition-colors duration-300"></i>
+        <span class="text-xs group-hover:text-blue-700 transition-colors duration-300">View Full Profile</span>
+        <i class="bi bi-arrow-right-short text-sm opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
+    </div>
+</a>
                             </div>
                         `;
                         break;
@@ -1406,7 +1471,23 @@ const ProfileSystem = {
                                     onclick="FriendSystem.add(${userId}, this)">
                                 <i class="bi bi-person-plus mr-1"></i> Connect
                             </button>
+
+                            <a href="/profile/${userId}"
+   class="relative px-5 py-2 bg-gray-50 hover:bg-white text-gray-700 rounded-xl font-medium transition-all duration-300 overflow-hidden group border border-gray-100 hover:border-blue-100"
+   onclick="Modal.close('profileModal')">
+    <!-- Subtle background effect -->
+    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-blue-50/0 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+
+    <!-- Content -->
+    <div class="relative flex items-center gap-2">
+        <i class="bi bi-person-square text-base group-hover:text-blue-600 transition-colors duration-300"></i>
+        <span class="text-xs group-hover:text-blue-700 transition-colors duration-300">View Full Profile</span>
+        <i class="bi bi-arrow-right-short text-sm opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
+    </div>
+</a>
                         `;
+
+
                 }
 
                 profileActions.innerHTML = actionsHTML;
@@ -1415,10 +1496,32 @@ const ProfileSystem = {
             console.error('Error checking friend status:', error);
             // Fallback to basic add friend button
             profileActions.innerHTML = `
-                <button class="btn btn-primary px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-medium hover:from-blue-600 hover:to-purple-700 transition-all"
-                        onclick="FriendSystem.add(${userId}, this)">
-                    <i class="bi bi-person-plus mr-1"></i> Connect
-                </button>
+                <button class="relative px-5 py-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-xl font-medium transition-all duration-300 overflow-hidden group shadow-md hover:shadow-lg"
+        onclick="FriendSystem.add(${userId}, this)">
+    <!-- Shimmer overlay -->
+    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+
+    <!-- Content -->
+    <div class="relative flex items-center gap-2">
+        <i class="bi bi-person-plus text-base group-hover:scale-110 transition-transform duration-300"></i>
+        <span class="text-sm group-hover:font-medium transition-all duration-300">Connect</span>
+        <i class="bi bi-arrow-right-short text-sm opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
+    </div>
+</button>
+
+                <a href="/profile/${userId}"
+   class="relative px-5 py-2 bg-gray-50 hover:bg-white text-gray-700 rounded-xl font-medium transition-all duration-300 overflow-hidden group border border-gray-100 hover:border-blue-100"
+   onclick="Modal.close('profileModal')">
+    <!-- Subtle background effect -->
+    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-blue-50/0 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+
+    <!-- Content -->
+    <div class="relative flex items-center gap-2">
+        <i class="bi bi-person-square text-base group-hover:text-blue-600 transition-colors duration-300"></i>
+        <span class="text-xs group-hover:text-blue-700 transition-colors duration-300">View Full Profile</span>
+        <i class="bi bi-arrow-right-short text-sm opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
+    </div>
+</a>
             `;
         }
     }
@@ -1738,6 +1841,20 @@ const NotificationSystem = {
                                         onclick="BlockSystem.block(${userId})">
                                     <i class="bi bi-slash-circle mr-1"></i> Block
                                 </button>
+
+                                <a href="/profile/${userId}"
+                                   class="relative px-5 py-2 bg-gray-50 hover:bg-white text-gray-700 rounded-xl font-medium transition-all duration-300 overflow-hidden group border border-gray-100 hover:border-blue-100"
+                                   onclick="Modal.close('profileModal')">
+                                    <!-- Subtle background effect -->
+                                    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-blue-50/0 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+
+                                    <!-- Content -->
+                                    <div class="relative flex items-center gap-2">
+                                        <i class="bi bi-person-square text-base group-hover:text-blue-600 transition-colors duration-300"></i>
+                                        <span class="text-xs group-hover:text-blue-700 transition-colors duration-300">View Full Profile</span>
+                                        <i class="bi bi-arrow-right-short text-sm opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
+                                    </div>
+                                </a>
                             `;
                             break;
 
@@ -1747,6 +1864,20 @@ const NotificationSystem = {
                                         onclick="FriendSystem.cancelRequest(${userId}, this)">
                                     <i class="bi bi-clock-history mr-1"></i> Cancel Request
                                 </button>
+
+                                <a href="/profile/${userId}"
+                                   class="relative px-5 py-2 bg-gray-50 hover:bg-white text-gray-700 rounded-xl font-medium transition-all duration-300 overflow-hidden group border border-gray-100 hover:border-blue-100"
+                                   onclick="Modal.close('profileModal')">
+                                    <!-- Subtle background effect -->
+                                    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-blue-50/0 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+
+                                    <!-- Content -->
+                                    <div class="relative flex items-center gap-2">
+                                        <i class="bi bi-person-square text-base group-hover:text-blue-600 transition-colors duration-300"></i>
+                                        <span class="text-xs group-hover:text-blue-700 transition-colors duration-300">View Full Profile</span>
+                                        <i class="bi bi-arrow-right-short text-sm opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
+                                    </div>
+                                </a>
                             `;
                             break;
 
@@ -1761,16 +1892,52 @@ const NotificationSystem = {
                                             onclick="FriendSystem.declineFriendRequest(${userId}, this)">
                                         <i class="bi bi-x-lg mr-1"></i> Decline
                                     </button>
+
+                                    <a href="/profile/${userId}"
+   class="relative px-5 py-2 bg-gray-50 hover:bg-white text-gray-700 rounded-xl font-medium transition-all duration-300 overflow-hidden group border border-gray-100 hover:border-blue-100"
+   onclick="Modal.close('profileModal')">
+    <!-- Subtle background effect -->
+    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-blue-50/0 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+
+    <!-- Content -->
+    <div class="relative flex items-center gap-2">
+        <i class="bi bi-person-square text-base group-hover:text-blue-600 transition-colors duration-300"></i>
+        <span class="text-xs group-hover:text-blue-700 transition-colors duration-300">View Full Profile</span>
+        <i class="bi bi-arrow-right-short text-sm opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
+    </div>
+</a>
                                 </div>
                             `;
                             break;
 
                         default:
                             actionsHTML = `
-                                <button class="btn btn-primary px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
-                                        onclick="FriendSystem.add(${userId}, this)">
-                                    <i class="bi bi-person-plus mr-1"></i> Connect
-                                </button>
+                                <button class="relative px-5 py-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-xl font-medium transition-all duration-300 overflow-hidden group shadow-md hover:shadow-lg"
+        onclick="FriendSystem.add(${userId}, this)">
+    <!-- Shimmer overlay -->
+    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+
+    <!-- Content -->
+    <div class="relative flex items-center gap-2">
+        <i class="bi bi-person-plus text-base group-hover:scale-110 transition-transform duration-300"></i>
+        <span class="text-sm group-hover:font-medium transition-all duration-300">Connect</span>
+        <i class="bi bi-arrow-right-short text-sm opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
+    </div>
+</button>
+
+                                <a href="/profile/${userId}"
+   class="relative px-5 py-2 bg-gray-50 hover:bg-white text-gray-700 rounded-xl font-medium transition-all duration-300 overflow-hidden group border border-gray-100 hover:border-blue-100"
+   onclick="Modal.close('profileModal')">
+    <!-- Subtle background effect -->
+    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-blue-50/0 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+
+    <!-- Content -->
+    <div class="relative flex items-center gap-2">
+        <i class="bi bi-person-square text-base group-hover:text-blue-600 transition-colors duration-300"></i>
+        <span class="text-xs group-hover:text-blue-700 transition-colors duration-300">View Full Profile</span>
+        <i class="bi bi-arrow-right-short text-sm opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
+    </div>
+</a>
                             `;
                     }
 
@@ -1780,10 +1947,32 @@ const NotificationSystem = {
                 console.error('Error checking friend status:', error);
                 // Fallback to basic add friend button
                 profileActions.innerHTML = `
-                    <button class="btn btn-primary px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
-                            onclick="FriendSystem.add(${userId}, this)">
-                        <i class="bi bi-person-plus mr-1"></i> Connect
-                    </button>
+                    <button class="relative px-5 py-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-xl font-medium transition-all duration-300 overflow-hidden group shadow-md hover:shadow-lg"
+        onclick="FriendSystem.add(${userId}, this)">
+    <!-- Shimmer overlay -->
+    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+
+    <!-- Content -->
+    <div class="relative flex items-center gap-2">
+        <i class="bi bi-person-plus text-base group-hover:scale-110 transition-transform duration-300"></i>
+        <span class="text-sm group-hover:font-medium transition-all duration-300">Connect</span>
+        <i class="bi bi-arrow-right-short text-sm opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
+    </div>
+</button>
+
+                    <a href="/profile/${userId}"
+   class="relative px-5 py-2 bg-gray-50 hover:bg-white text-gray-700 rounded-xl font-medium transition-all duration-300 overflow-hidden group border border-gray-100 hover:border-blue-100"
+   onclick="Modal.close('profileModal')">
+    <!-- Subtle background effect -->
+    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-blue-50/0 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+
+    <!-- Content -->
+    <div class="relative flex items-center gap-2">
+        <i class="bi bi-person-square text-base group-hover:text-blue-600 transition-colors duration-300"></i>
+        <span class="text-xs group-hover:text-blue-700 transition-colors duration-300">View Full Profile</span>
+        <i class="bi bi-arrow-right-short text-sm opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
+    </div>
+</a>
                 `;
             }
         },
@@ -1824,10 +2013,18 @@ const NotificationSystem = {
                 break;
             default:
                 baseHTML = `
-                    <button class="px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg font-medium hover:from-orange-600 hover:to-red-600 transition-colors text-sm flex-1"
-                            onclick="FriendSystem.add(${userId}, this)">
-                        <i class="bi bi-person-plus mr-1"></i> Connect
-                    </button>
+                    <button class="relative px-5 py-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-xl font-medium transition-all duration-300 overflow-hidden group shadow-md hover:shadow-lg"
+        onclick="FriendSystem.add(${userId}, this)">
+    <!-- Shimmer overlay -->
+    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+
+    <!-- Content -->
+    <div class="relative flex items-center gap-2">
+        <i class="bi bi-person-plus text-base group-hover:scale-110 transition-transform duration-300"></i>
+        <span class="text-sm group-hover:font-medium transition-all duration-300">Connect</span>
+        <i class="bi bi-arrow-right-short text-sm opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
+    </div>
+</button>
                 `;
         }
 

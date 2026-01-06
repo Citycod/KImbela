@@ -1,0 +1,76 @@
+<!-- templates/_post_card.html -->
+<!-- Renders ONE post with accurate likes & comments count -->
+
+<div class="bg-white rounded-xl shadow-medium p-6 mb-6 hover-lift transition-all duration-300 border border-gray-100 fade-in card-hover">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-3">
+            <img src="{{ profile_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+                 alt="{{ profile_user.first_name }}"
+                 class="w-12 h-12 rounded-xl border-2 border-purple-200 object-cover">
+            <div>
+                <h6 class="font-bold text-gray-900">{{ profile_user.first_name }} {{ profile_user.last_name }}</h6>
+                <p class="text-xs text-gray-500">{{ post.created_at.strftime('%b %d, %Y at %I:%M %p') }}</p>
+            </div>
+        </div>
+        <button class="text-gray-400 hover:text-gray-700 p-2 rounded hover:bg-gray-100">
+            <i class="fas fa-ellipsis-h"></i>
+        </button>
+    </div>
+
+    <!-- Content -->
+    <div class="mb-4">
+        <p class="text-gray-800 leading-relaxed">{{ post.content }}</p>
+
+        {% if post.image %}
+        <div class="mt-4 rounded-xl overflow-hidden border border-gray-200 shadow-medium">
+            <img src="{{ post.image }}"
+                 alt="Post image"
+                 class="w-full h-auto max-h-3xl object-cover rounded-xl transition-transform duration-300 hover:scale-105">
+        </div>
+        {% endif %}
+
+        {% if post.video %}
+        <div class="mt-4 rounded-xl overflow-hidden border border-gray-200 shadow-medium">
+            <video controls class="w-full rounded-xl max-h-80 object-contain bg-black">
+                <source src="{{ post.video }}" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        </div>
+        {% endif %}
+
+        {% if post.gif %}
+        <div class="mt-4 rounded-xl overflow-hidden border border-gray-200 shadow-medium">
+            <img src="{{ post.gif }}"
+                 alt="GIF"
+                 class="w-full h-auto max-h-3xl object-contain rounded-xl">
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Post Stats – EXACTLY LIKE DASHBOARD -->
+    <div class="flex items-center justify-between text-sm text-gray-600 mb-4 pb-3 border-b border-gray-200">
+        <span id="like-count-{{ post.id }}" class="flex items-center gap-1">
+            <i class="fas fa-thumbs-up text-blue-600"></i>
+            {{ post.likes_count }} reactions
+        </span>
+        <span id="comment-count-{{ post.id }}" class="flex items-center gap-1">
+            <i class="fas fa-comment text-green-600"></i>
+            {{ post.comments_count }} comments
+        </span>
+    </div>
+
+    <!-- Action Buttons -->
+<!--    <div class="flex justify-around py-2 border-t border-gray-200">-->
+<!--        <button class="flex items-center gap-2 text-gray-700 hover:text-blue-600 font-medium py-2 px-4 rounded-lg hover:bg-blue-50 transition">-->
+<!--            <i class="fas fa-thumbs-up"></i> Like-->
+<!--        </button>-->
+<!--        <button onclick="focusCommentInput({{ post.id }})"-->
+<!--                class="flex items-center gap-2 text-gray-700 hover:text-green-600 font-medium py-2 px-4 rounded-lg hover:bg-green-50 transition">-->
+<!--            <i class="fas fa-comment"></i> Comment-->
+<!--        </button>-->
+<!--        <button class="flex items-center gap-2 text-gray-700 hover:text-purple-600 font-medium py-2 px-4 rounded-lg hover:bg-purple-50 transition">-->
+<!--            <i class="fas fa-share"></i> Share-->
+<!--        </button>-->
+<!--    </div>-->
+</div>

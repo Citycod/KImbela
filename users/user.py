@@ -3099,3 +3099,48 @@ import time
 start = time.time()
 # result = db.session.query(...).all()
 print(f"Query took {time.time() - start:.2f} seconds")
+
+
+
+@user.route("/profile/<int:user_id>")
+@login_required
+def view_profile(user_id):
+
+    target_user = User.query.get_or_404(user_id)
+
+
+    friend_status = current_user.get_friend_request_status(target_user.id)
+
+
+    # Check if current user has blocked or is blocked by target user
+    is_blocked = current_user.is_blocked_by(target_user) or current_user.is_blocking(target_user)
+
+    if is_blocked:
+        flash("You cannot view this profile.", "danger")
+        return redirect(url_for("user.user_dashboard"))
+
+    # Get the user's recent posts (visible to the viewer)
+    posts = (
+        Post.query.filter_by(author_id=target_user.id)
+        .order_by(Post.created_at.desc())
+        .limit(20)  # Adjust as needed
+        .all()
+    )
+
+    # Get friends count (excluding blocked users)
+    friends_count = target_user.friends.count()
+
+    # Calculate age if DOB is set
+    age = calculate_age(target_user.dob) if target_user.dob else None
+
+    # Pass everything to the template
+    return render_template(
+        "public_profile.html",                # <-- create this template (see below)
+        profile_user=target_user,             # the user being viewed
+        current_user=current_user,
+        friend_status=friend_status,
+        posts=posts,
+        friends_count=friends_count,
+        age=age,
+        is_own_profile=(target_user.id == current_user.id),
+    )
