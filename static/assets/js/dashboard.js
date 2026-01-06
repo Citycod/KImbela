@@ -539,36 +539,36 @@ const PostSystem = {
         }
     },
 
-    async delete(postId, deleteBtn) {
-        if (!confirm('Are you sure you want to delete this post?')) return;
-
-        const originalContent = deleteBtn.innerHTML;
-        deleteBtn.innerHTML = `<span class="inline-flex items-center gap-1"><span class="tiny-loader xs danger"></span>Deleting...</span>`;
-        deleteBtn.disabled = true;
-
-        try {
-            const response = await fetch(`/delete_post/${postId}`, {
-                method: 'POST',
-                headers: { 'X-CSRFToken': csrfToken }
-            });
-
-            if (!response.ok) throw new Error('Network error');
-
-            const postElement = document.querySelector(`[data-post-id="${postId}"]`);
-            if (postElement) {
-                postElement.style.opacity = '0.5';
-                setTimeout(() => {
-                    postElement.remove();
-                    Toast.show('Post deleted successfully', 'success');
-                }, 500);
-            }
-        } catch (error) {
-            console.error('Error deleting post:', error);
-            deleteBtn.innerHTML = originalContent;
-            deleteBtn.disabled = false;
-            Toast.show('Failed to delete post', 'danger');
-        }
-    },
+//    async delete(postId, deleteBtn) {
+//        if (!confirm('Are you sure you want to delete this post?')) return;
+//
+//        const originalContent = deleteBtn.innerHTML;
+//        deleteBtn.innerHTML = `<span class="inline-flex items-center gap-1"><span class="tiny-loader xs danger"></span>Deleting...</span>`;
+//        deleteBtn.disabled = true;
+//
+//        try {
+//            const response = await fetch(`/delete_post/${postId}`, {
+//                method: 'POST',
+//                headers: { 'X-CSRFToken': csrfToken }
+//            });
+//
+//            if (!response.ok) throw new Error('Network error');
+//
+//            const postElement = document.querySelector(`[data-post-id="${postId}"]`);
+//            if (postElement) {
+//                postElement.style.opacity = '0.5';
+//                setTimeout(() => {
+//                    postElement.remove();
+//                    Toast.show('Post deleted successfully', 'success');
+//                }, 500);
+//            }
+//        } catch (error) {
+//            console.error('Error deleting post:', error);
+//            deleteBtn.innerHTML = originalContent;
+//            deleteBtn.disabled = false;
+//            Toast.show('Failed to delete post', 'danger');
+//        }
+//    },
 
     async edit(postId) {
         const post = document.querySelector(`[data-post-id="${postId}"]`);

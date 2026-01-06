@@ -96,6 +96,7 @@ from random import sample
 from datetime import datetime
 from payments.payment_service import PaymentService
 from flask_caching import Cache
+from extensions import csrf
 
 cache = Cache()
 
@@ -1199,6 +1200,7 @@ def like_post(post_id):
 # Delete Post
 @user.route("/delete_post/<int:post_id>", methods=["POST"])
 @login_required
+@csrf.exempt
 def delete_post(post_id):
     post = Post.query.get_or_404(post_id)
     if post.author_id != current_user.id:

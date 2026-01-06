@@ -3500,6 +3500,516 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
+  <script>
+// ========================================
+// EDIT AND DELETE POST FUNCTIONALITY
+// ========================================
+
+// Initialize edit/delete functionality when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Set up event listeners for edit buttons
+    document.addEventListener('click', function(e) {
+        // Handle edit post buttons
+        if (e.target.closest('.edit-post')) {
+            e.preventDefault();
+            const postId = e.target.closest('.edit-post').getAttribute('data-post-id');
+            if (postId) {
+                openEditPostModal(postId);
+            }
+        }
+
+        // Handle delete post buttons
+        if (e.target.closest('.delete-post')) {
+            e.preventDefault();
+            const postId = e.target.closest('.delete-post').getAttribute('data-post-id');
+            if (postId) {
+                deletePost(postId, e.target.closest('.delete-post'));
+            }
+        }
+    });
+});
+
+// Function to open edit post modal
+function openEditPostModal(postId) {
+    // Find the post element
+    const postElement = document.querySelector(`[data-post-id="${postId}"]`);
+    if (!postElement) return;
+
+    // Get post content
+    const postTextElement = postElement.querySelector('.post-text');
+    let postContent = '';
+
+    if (postTextElement) {
+        postContent = postTextElement.textContent.trim();
+    }
+
+    // Populate edit modal textarea
+    const editContent = document.getElementById('editPostContent');
+    if (editContent) {
+        editContent.value = postContent;
+    }
+
+    // Set up form submission
+    const editForm = document.getElementById('editPostForm');
+    if (editForm) {
+        editForm.onsubmit = function(e) {
+            e.preventDefault();
+            submitEditPost(postId, editForm);
+        };
+    }
+
+    // Show edit modal
+    const editModal = document.getElementById('editPostModal');
+    if (editModal) {
+        editModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+// Function to submit edit post
+async function submitEditPost(postId, form) {
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (!submitBtn) return;
+
+    // Show loading
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<span class="inline-flex items-center"><span class="tiny-loader xs white"></span> Saving...</span>';
+    submitBtn.disabled = true;
+
+    try {
+        const formData = new FormData(form);
+        formData.append('post_id', postId);
+
+        const response = await fetch('/edit_post', {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-CSRFToken': window.csrfToken || '' }
+        });
+
+        if (!response.ok) throw new Error('Network error');
+
+        const data = await response.json();
+        if (data.success) {
+            Toast.show('Post updated successfully!', 'success');
+
+            // Close modal
+            const editModal = document.getElementById('editPostModal');
+            if (editModal) {
+                editModal.classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+
+            // Update post on page
+            updatePostOnPage(postId, data.content || formData.get('content'));
+        } else {
+            throw new Error(data.error || 'Failed to update post');
+        }
+    } catch (error) {
+        console.error('Error editing post:', error);
+        Toast.show(error.message || 'Failed to edit post', 'danger');
+    } finally {
+        // Restore button
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    }
+}
+
+// Function to update post content on page
+function updatePostOnPage(postId, newContent) {
+    const postElement = document.querySelector(`[data-post-id="${postId}"]`);
+    if (!postElement) return;
+
+    const postTextElement = postElement.querySelector('.post-text');
+    if (postTextElement) {
+        postTextElement.textContent = newContent;
+
+        // Update truncated state if needed
+        if (newContent.length > 100) {
+            postTextElement.classList.add('truncated');
+
+            // Add or update "See More" button
+            let seeMoreBtn = postTextElement.nextElementSibling;
+            if (!seeMoreBtn || !seeMoreBtn.classList.contains('see-more-btn')) {
+                seeMoreBtn = document.createElement('button');
+                seeMoreBtn.className = 'see-more-btn text-blue-600 font-medium text-sm mt-1';
+                seeMoreBtn.textContent = 'See More';
+                seeMoreBtn.onclick = () => togglePostText(postId);
+                postTextElement.parentNode.insertBefore(seeMoreBtn, postTextElement.nextSibling);
+            }
+        } else {
+            postTextElement.classList.remove('truncated');
+
+            // Remove "See More" button if exists
+            const seeMoreBtn = postTextElement.nextElementSibling;
+            if (seeMoreBtn && seeMoreBtn.classList.contains('see-more-btn')) {
+                seeMoreBtn.remove();
+            }
+        }
+    }
+}
+
+// Function to toggle post text (show more/show less)
+function togglePostText(postId) {
+    const postElement = document.querySelector(`[data-post-id="${postId}"]`);
+    if (!postElement) return;
+
+    const postTextElement = postElement.querySelector('.post-text');
+    const seeMoreBtn = postElement.querySelector('.see-more-btn');
+
+    if (postTextElement && seeMoreBtn) {
+        if (postTextElement.classList.contains('truncated')) {
+            postTextElement.classList.remove('truncated');
+            seeMoreBtn.textContent = 'See Less';
+        } else {
+            postTextElement.classList.add('truncated');
+            seeMoreBtn.textContent = 'See More';
+        }
+    }
+}
+
+
+async function deletePost(postId, deleteBtn) {
+    if (!confirm('Are you sure you want to delete this post?')) return;
+
+    // Show loading state
+    const originalHTML = deleteBtn.innerHTML;
+    deleteBtn.innerHTML = '<span class="inline-flex items-center gap-1"><span class="tiny-loader xs danger"></span> Deleting...</span>';
+    deleteBtn.disabled = true;
+
+    try {
+        // CHANGE THIS LINE: Use relative path instead of full URL
+        const response = await fetch(`/delete_post/${postId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': window.csrfToken || ''
+            }
+        });
+
+        if (!response.ok) {
+            // Try to get error details
+            let errorMsg = `HTTP ${response.status}`;
+            try {
+                const errorData = await response.json();
+                errorMsg = errorData.error || errorMsg;
+            } catch {
+                // If response is not JSON, use status text
+                errorMsg = response.statusText || errorMsg;
+            }
+            throw new Error(errorMsg);
+        }
+
+        const data = await response.json();
+        if (data.success) {
+            const postElement = document.querySelector(`[data-post-id="${postId}"]`);
+            if (postElement) {
+                // Fade out animation
+                postElement.style.opacity = '0.5';
+                postElement.style.transform = 'scale(0.95)';
+
+                setTimeout(() => {
+                    postElement.remove();
+
+                    // Show success message
+                    Toast.show('Post deleted successfully', 'success');
+
+                    // Check if no posts left
+                    const postsFeed = document.getElementById('posts-feed');
+                    const remainingPosts = postsFeed.querySelectorAll('.post-card');
+                    if (remainingPosts.length === 0) {
+                        postsFeed.innerHTML = `
+                            <div class="bg-white rounded-2xl shadow-soft p-8 text-center">
+                                <i class="bi bi-newspaper text-4xl text-gray-400 mb-4"></i>
+                                <h3 class="text-xl font-semibold text-gray-700 mb-2">No posts yet</h3>
+                                <p class="text-gray-500 mb-4">Be the first to share something!</p>
+                                <button
+                                    class="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                                    onclick="openPostModal()"
+                                >
+                                    Create Your First Post
+                                </button>
+                            </div>
+                        `;
+                    }
+                }, 500);
+            }
+        } else {
+            throw new Error(data.error || 'Failed to delete post');
+        }
+    } catch (error) {
+        console.error('Error deleting post:', error);
+
+        // Restore button
+        deleteBtn.innerHTML = originalHTML;
+        deleteBtn.disabled = false;
+
+        // Show error message
+        Toast.show('Failed to delete post: ' + error.message, 'danger');
+    }
+}
+
+// ========================================
+// UPDATE THE selectGif FUNCTION FOR GIF URL
+// ========================================
+
+// Replace the existing selectGif function with this updated version
+function selectGif(gifUrl, title = '') {
+    console.log('Selected GIF:', gifUrl);
+
+    // Set the hidden input value for GIF URL
+    const hiddenInput = document.getElementById('selectedGifUrl');
+    if (hiddenInput) {
+        hiddenInput.value = gifUrl;
+        console.log('GIF URL set in hidden input:', gifUrl);
+    }
+
+    // Also set a backup in a data attribute
+    const form = document.getElementById('createPostForm');
+    if (form) {
+        form.dataset.selectedGif = gifUrl;
+    }
+
+    // Show preview
+    const mediaPreview = document.getElementById('mediaPreview');
+    if (mediaPreview) {
+        mediaPreview.innerHTML = `
+            <div class="mt-4 relative inline-block">
+                <img
+                    src="${gifUrl}"
+                    alt="Selected GIF: ${title}"
+                    class="max-w-full max-h-96 rounded-xl object-contain border border-gray-200 shadow-md"
+                    loading="lazy"
+                >
+                <button
+                    type="button"
+                    onclick="clearSelectedGif()"
+                    class="absolute top-2 right-2 bg-black/70 hover:bg-black/90 text-white rounded-full p-2 transition"
+                    title="Remove GIF"
+                >
+                    <i class="bi bi-x-lg text-sm"></i>
+                </button>
+                <div class="text-center mt-2 text-sm text-gray-600">
+                    GIF ${title ? '• ' + title.substring(0, 30) + (title.length > 30 ? '...' : '') : ''}
+                </div>
+            </div>
+        `;
+    }
+
+    // Clear file input so GIF takes priority
+    const fileInput = document.getElementById('mediaInput');
+    if (fileInput) {
+        fileInput.value = '';
+    }
+
+    // Close GIF modal
+    const gifModal = document.getElementById('gifModal');
+    if (gifModal) {
+        gifModal.classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+}
+
+// Update clearSelectedGif function
+function clearSelectedGif() {
+    const hiddenInput = document.getElementById('selectedGifUrl');
+    if (hiddenInput) {
+        hiddenInput.value = '';
+        console.log('GIF URL cleared');
+    }
+
+    const form = document.getElementById('createPostForm');
+    if (form) {
+        delete form.dataset.selectedGif;
+    }
+
+    const mediaPreview = document.getElementById('mediaPreview');
+    if (mediaPreview) {
+        mediaPreview.innerHTML = '';
+    }
+}
+
+// ========================================
+// ADD FORM SUBMISSION DEBUGGING
+// ========================================
+
+// Add this to debug form submissions
+document.addEventListener('DOMContentLoaded', function() {
+    const createPostForm = document.getElementById('createPostForm');
+    if (createPostForm) {
+        createPostForm.addEventListener('submit', function(e) {
+            console.log('Form submission data:');
+            const formData = new FormData(this);
+            for (let [key, value] of formData.entries()) {
+                console.log(`  ${key}:`, value);
+            }
+
+            // Check if GIF URL is included
+            const gifUrlInput = document.getElementById('selectedGifUrl');
+            if (gifUrlInput && gifUrlInput.value) {
+                console.log('GIF URL included in submission:', gifUrlInput.value);
+            }
+        });
+    }
+});
+
+// ========================================
+// CSS FOR POST TEXT TRUNCATION
+// ========================================
+
+// Add CSS for truncated text
+const style = document.createElement('style');
+style.textContent = `
+    /* Post text truncation */
+    .post-text.truncated {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-height: 4.5em;
+        line-height: 1.5em;
+    }
+
+    .see-more-btn {
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+    .see-more-btn:hover {
+        text-decoration: underline;
+    }
+
+    /* Edit modal styles */
+    #editPostModal .modal-dialog {
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+
+    #editPostContent {
+        min-height: 120px;
+        max-height: 300px;
+        resize: vertical;
+    }
+
+    /* Post deletion animation */
+    .post-card {
+        transition: all 0.3s ease;
+    }
+
+    /* Ensure dropdown menus work properly */
+    .dropdown:hover .dropdown-menu {
+        display: block;
+    }
+`;
+document.head.appendChild(style);
+
+// ========================================
+// SIMPLE TOAST FUNCTION (if not defined)
+// ========================================
+
+// Add this simple Toast function if it doesn't exist
+if (typeof Toast === 'undefined') {
+    window.Toast = {
+        show: function(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-strong text-white animate-fade-in ${
+                type === 'success' ? 'bg-green-500' :
+                type === 'danger' ? 'bg-red-500' :
+                type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500'
+            }`;
+            toast.textContent = message;
+            toast.setAttribute('role', 'alert');
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(-10px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    };
+}
+
+// ========================================
+// LOADER FUNCTION (if not defined)
+// ========================================
+
+// Add this simple Loader function if it doesn't exist
+if (typeof Loader === 'undefined') {
+    window.Loader = {
+        quick: function(button, action = 'show') {
+            if (action === 'show') {
+                const originalText = button.innerHTML;
+                button.dataset.originalText = originalText;
+                button.innerHTML = `<span class="inline-flex items-center gap-1"><span class="tiny-loader xs white"></span>${button.textContent.trim()}</span>`;
+                button.disabled = true;
+            } else {
+                if (button.dataset.originalText) {
+                    button.innerHTML = button.dataset.originalText;
+                    delete button.dataset.originalText;
+                }
+                button.disabled = false;
+            }
+        }
+    };
+}
+
+// ========================================
+// MOBILE MENU FIXES
+// ========================================
+
+// Ensure mobile menu functions exist
+if (typeof window.toggleMobileMenu === 'undefined') {
+    window.toggleMobileMenu = function() {
+        const overlay = document.getElementById('mobileSidebarOverlay');
+        const sidebar = document.getElementById('mobileSidebar');
+
+        if (!overlay || !sidebar) {
+            console.error('Mobile menu elements not found!');
+            return;
+        }
+
+        // Toggle display
+        if (overlay.style.display === 'block' || overlay.classList.contains('block')) {
+            overlay.style.display = 'none';
+            overlay.classList.remove('block');
+            sidebar.classList.remove('translate-x-0');
+            sidebar.classList.add('-translate-x-full');
+        } else {
+            overlay.style.display = 'block';
+            overlay.classList.add('block');
+            sidebar.classList.remove('-translate-x-full');
+            sidebar.classList.add('translate-x-0');
+        }
+    };
+
+    // Add ESC key to close mobile menu
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const overlay = document.getElementById('mobileSidebarOverlay');
+            if (overlay && (overlay.style.display === 'block' || overlay.classList.contains('block'))) {
+                window.toggleMobileMenu();
+            }
+        }
+    });
+
+    // Close mobile menu when clicking outside
+    document.getElementById('mobileSidebarOverlay')?.addEventListener('click', (e) => {
+        if (e.target.id === 'mobileSidebarOverlay') {
+            window.toggleMobileMenu();
+        }
+    });
+}
+
+console.log('Edit/Delete and GIF functionality loaded successfully');
+</script>
+
+
+
+
+
+
+
 
   <style>
 
@@ -3744,5 +4254,36 @@ emoji-picker::part(search) input::placeholder {
     }
 }
   </style>
+
+
+  <style>
+/* Add this to ensure dropdown menus work */
+.dropdown:hover .dropdown-menu,
+.dropdown:focus-within .dropdown-menu {
+    display: block !important;
+}
+
+/* Make sure dropdown items are clickable */
+.dropdown-item {
+    cursor: pointer;
+}
+
+/* Post actions dropdown position fix */
+.post-card .dropdown {
+    position: relative;
+}
+
+.post-card .dropdown-menu {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    z-index: 1000;
+}
+
+/* Modal z-index fix */
+.modal {
+    z-index: 10000;
+}
+</style>
 </body>
 </html>
