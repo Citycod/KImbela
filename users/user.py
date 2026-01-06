@@ -2258,6 +2258,8 @@ def profile(user_id):
         .all()
     )
 
+
+
     # Get friends (excluding blocked users)
     friends = [f for f in current_user.friends if not current_user.is_blocking(f)]
 

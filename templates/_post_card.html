@@ -1,16 +1,20 @@
 <!-- templates/_post_card.html -->
-<!-- Renders ONE post with accurate likes & comments count -->
+<!-- Universal Post Card with Scrollable Comments Section -->
 
 <div class="bg-white rounded-xl shadow-medium p-6 mb-6 hover-lift transition-all duration-300 border border-gray-100 fade-in card-hover">
     <!-- Header -->
     <div class="flex items-center justify-between mb-4">
         <div class="flex items-center gap-3">
-            <img src="{{ profile_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-                 alt="{{ profile_user.first_name }}"
+            <img src="{{ post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+                 alt="{{ post.author.first_name }}"
                  class="w-12 h-12 rounded-xl border-2 border-purple-200 object-cover">
             <div>
-                <h6 class="font-bold text-gray-900">{{ profile_user.first_name }} {{ profile_user.last_name }}</h6>
-                <p class="text-xs text-gray-500">{{ post.created_at.strftime('%b %d, %Y at %I:%M %p') }}</p>
+                <h6 class="font-bold text-gray-900 text-sm">
+                    {{ post.author.first_name }} {{ post.author.last_name }}
+                </h6>
+                <p class="text-xs text-gray-500">
+                    {{ post.created_at.strftime('%b %d, %Y at %I:%M %p') }}
+                </p>
             </div>
         </div>
         <button class="text-gray-400 hover:text-gray-700 p-2 rounded hover:bg-gray-100">
@@ -20,7 +24,7 @@
 
     <!-- Content -->
     <div class="mb-4">
-        <p class="text-gray-800 leading-relaxed">{{ post.content }}</p>
+        <p class="text-gray-800 leading-relaxed text-sm">{{ post.content }}</p>
 
         {% if post.image %}
         <div class="mt-4 rounded-xl overflow-hidden border border-gray-200 shadow-medium">
@@ -48,11 +52,11 @@
         {% endif %}
     </div>
 
-    <!-- Post Stats – EXACTLY LIKE DASHBOARD -->
+    <!-- Post Stats -->
     <div class="flex items-center justify-between text-sm text-gray-600 mb-4 pb-3 border-b border-gray-200">
-        <span id="like-count-{{ post.id }}" class="flex items-center gap-1">
+        <span id="reaction-count-{{ post.id }}" class="flex items-center gap-1">
             <i class="fas fa-thumbs-up text-blue-600"></i>
-            {{ post.likes_count }} reactions
+            {{ post.reactions_count }} reactions
         </span>
         <span id="comment-count-{{ post.id }}" class="flex items-center gap-1">
             <i class="fas fa-comment text-green-600"></i>
@@ -60,17 +64,59 @@
         </span>
     </div>
 
-    <!-- Action Buttons -->
-<!--    <div class="flex justify-around py-2 border-t border-gray-200">-->
-<!--        <button class="flex items-center gap-2 text-gray-700 hover:text-blue-600 font-medium py-2 px-4 rounded-lg hover:bg-blue-50 transition">-->
-<!--            <i class="fas fa-thumbs-up"></i> Like-->
-<!--        </button>-->
-<!--        <button onclick="focusCommentInput({{ post.id }})"-->
-<!--                class="flex items-center gap-2 text-gray-700 hover:text-green-600 font-medium py-2 px-4 rounded-lg hover:bg-green-50 transition">-->
-<!--            <i class="fas fa-comment"></i> Comment-->
-<!--        </button>-->
-<!--        <button class="flex items-center gap-2 text-gray-700 hover:text-purple-600 font-medium py-2 px-4 rounded-lg hover:bg-purple-50 transition">-->
-<!--            <i class="fas fa-share"></i> Share-->
-<!--        </button>-->
-<!--    </div>-->
+    <!-- Comments Section - Scrollable with Dates -->
+    <div class="comments-section -mx-6 px-6 py-4 bg-gray-50 border-t border-gray-100">
+        <!-- Comment Input (optional - you can add functionality later) -->
+        <!--
+        <div class="flex items-center space-x-3 mb-4">
+            <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+                 class="w-8 h-8 rounded-full object-cover">
+            <input type="text" placeholder="Write a comment..."
+                   class="flex-1 px-4 py-2 bg-white rounded-full text-sm border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        -->
+
+        <!-- Comments List -->
+        <div class="space-y-4">
+            {% if post.comments_count > 0 %}
+                {% for comment in post.comments|reverse %}
+                <div class="flex space-x-3 comment-item">
+                    <img src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+                         alt="{{ comment.author.first_name }}"
+                         class="w-9 h-9 rounded-full object-cover flex-shrink-0">
+                    <div class="flex-1">
+                        <div class="bg-white rounded-2xl px-4 py-3 shadow-sm">
+                            <div class="flex justify-between items-start">
+                                <h6 class="font-semibold text-sm">
+                                    {{ comment.author.first_name }} {{ comment.author.last_name }}
+                                </h6>
+                                <span class="text-xs text-gray-500">
+                                    {{ comment.created_at.strftime('%b %d at %I:%M %p') }}
+                                </span>
+                            </div>
+                            <p class="text-gray-800 text-sm mt-2">{{ comment.content }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-center text-gray-500 text-sm py-4">No comments</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Action Buttons (uncomment when ready) -->
+    <!--
+    <div class="flex justify-around py-3 border-t border-gray-200 mt-4">
+        <button class="flex items-center gap-2 text-gray-700 hover:text-blue-600 font-medium text-sm">
+            <i class="fas fa-thumbs-up"></i> Like
+        </button>
+        <button class="flex items-center gap-2 text-gray-700 hover:text-green-600 font-medium text-sm">
+            <i class="fas fa-comment"></i> Comment
+        </button>
+        <button class="flex items-center gap-2 text-gray-700 hover:text-purple-600 font-medium text-sm">
+            <i class="fas fa-share"></i> Share
+        </button>
+    </div>
+    -->
 </div>

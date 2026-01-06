@@ -6,7 +6,7 @@
     <title>{{ user.first_name }} {{ user.last_name }} - Kimbela</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="{{ url_for('static', filename='assets/img/fav.png') }}" rel="icon" />
     <link href="{{ url_for('static', filename='assets/img/fav.png') }}" rel="apple-touch-icon" />
 
@@ -27,296 +27,117 @@
                         'warning': '#d97706',
                         'premium': '#7c3aed',
                     },
-                    fontFamily: {
-                        inter: ["Inter", "sans-serif"],
-                    },
+                    fontFamily: { inter: ["Inter", "sans-serif"] },
                     fontSize: {
-                        'xs': ['0.75rem', { lineHeight: '1rem' }],
-                        'sm': ['0.875rem', { lineHeight: '1.25rem' }],
-                        'base': ['0.875rem', { lineHeight: '1.25rem' }],
-                        'lg': ['1rem', { lineHeight: '1.5rem' }],
-                        'xl': ['1.125rem', { lineHeight: '1.75rem' }],
-                        '2xl': ['1.25rem', { lineHeight: '1.75rem' }],
-                        '3xl': ['1.5rem', { lineHeight: '2rem' }],
-                        '4xl': ['1.75rem', { lineHeight: '2.25rem' }],
+                        'xs': '0.6875rem',   // ~11px
+                        'sm': '0.75rem',     // ~12px
+                        'base': '0.8125rem', // ~13px
+                        'lg': '0.9375rem',   // ~15px
+                        'xl': '1.0625rem',   // ~17px
+                        '2xl': '1.1875rem',  // ~19px
+                        '3xl': '1.375rem',   // ~22px
                     },
-                    spacing: {
-                        '0.5': '0.125rem',
-                        '1.5': '0.375rem',
-                        '2.5': '0.625rem',
-                        '3.5': '0.875rem',
-                    }
                 },
             },
         };
     </script>
 
     <style>
-        * {
-            font-family: 'Inter', sans-serif;
-        }
-        .gradient-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        .gradient-secondary {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        }
-        .gradient-success {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        }
-        .shadow-soft {
-            box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.06);
-        }
-        .shadow-medium {
-            box-shadow: 0 4px 6px -3px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-        }
-        .shadow-strong {
-            box-shadow: 0 8px 10px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -3px rgba(0, 0, 0, 0.05);
-        }
-        .hover-lift:hover {
-            transform: translateY(-2px);
-            transition: all 0.2s ease;
-        }
-        .profile-cover {
-            height: 200px;
-        }
-        .glass-effect {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        .text-gradient {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .fade-in {
-            animation: fadeIn 0.3s ease-in;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .stagger-animation > * {
-            opacity: 0;
-            animation: fadeIn 0.3s ease-in forwards;
-        }
-        .stagger-animation > *:nth-child(1) { animation-delay: 0.1s; }
-        .stagger-animation > *:nth-child(2) { animation-delay: 0.2s; }
-        .stagger-animation > *:nth-child(3) { animation-delay: 0.3s; }
-        .stagger-animation > *:nth-child(4) { animation-delay: 0.4s; }
-        
+        * { font-family: 'Inter', sans-serif; }
+        .gradient-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .gradient-secondary { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .gradient-success { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .shadow-soft { box-shadow: 0 2px 4px -1px rgba(0,0,0,0.1), 0 1px 2px -1px rgba(0,0,0,0.06); }
+        .shadow-medium { box-shadow: 0 4px 6px -3px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.05); }
+        .shadow-strong { box-shadow: 0 8px 10px -5px rgba(0,0,0,0.1), 0 4px 6px -3px rgba(0,0,0,0.05); }
+        .hover-lift:hover { transform: translateY(-4px); transition: all 0.3s ease; }
+        .profile-cover { height: 220px; }
+        .glass-effect { background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); }
+        .fade-in { animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
         @media (max-width: 768px) {
-            .profile-cover {
-                height: 160px;
-            }
-            .posts {
-                display: none;
-            }
-            .friends {
-                display: none;
-            }
-            .blocked {
-                display: none;
-            }
-            .edit {
-                display: none;
-            }
+            .profile-cover { height: 180px; }
+            .quick-actions { display: none; }
         }
-        
-        .modal {
-            backdrop-filter: blur(4px);
-        }
-        
-        .btn {
-            padding: 8px 16px;
-            font-size: 0.875rem;
-            border-radius: 6px;
-            transition: all 0.2s ease;
-            font-weight: 500;
-        }
-        
-        .btn:hover {
-            transform: translateY(-1px);
-        }
-        
-        .select-input {
-            border: 1px solid #e5e7eb;
-            border-radius: 6px;
-            padding: 6px 10px;
-            font-size: 0.875rem;
-            width: 100%;
-            transition: all 0.2s;
-        }
-        
-        .select-input:focus {
-            border-color: #667eea;
-            outline: none;
-            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
-        }
-        
-        .text-input {
-            border: 1px solid #e5e7eb;
-            border-radius: 6px;
-            padding: 6px 10px;
-            font-size: 0.875rem;
-            width: 100%;
-            transition: all 0.2s;
-        }
-        
-        .text-input:focus {
-            border-color: #667eea;
-            outline: none;
-            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
-        }
-        
-        .textarea-input {
-            border: 1px solid #e5e7eb;
-            border-radius: 6px;
-            padding: 6px 10px;
-            font-size: 0.875rem;
-            width: 100%;
-            resize: vertical;
-            min-height: 60px;
-            transition: all 0.2s;
-        }
-        
-        .textarea-input:focus {
-            border-color: #667eea;
-            outline: none;
-            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
-        }
-        
-        .info-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 6px 0;
-            border-bottom: 1px solid #f5f5f5;
-            font-size: 0.875rem;
-        }
-        
-        .info-item:last-child {
-            border-bottom: none;
-        }
-        
-        .card-hover {
-            transition: all 0.2s ease;
-        }
-        
+
         .card-hover:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
         }
-        
-        .loader-spinner {
-            width: 24px;
-            height: 24px;
-            border: 2px solid #e5e7eb;
-            border-top: 2px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
+
+        /* Scrollable comments section */
+        .comments-section {
+            max-height: 250px;
+            overflow-y: auto;
+            padding-right: 4px;
         }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .comments-section::-webkit-scrollbar {
+            width: 6px;
         }
-        
-        .radio-label {
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            font-size: 0.875rem;
+        .comments-section::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
         }
-        
-        .radio-label input[type="radio"] {
-            margin-right: 6px;
+        .comments-section::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 10px;
+        }
+        .comments-section::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
         }
     </style>
 </head>
 <body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
-    <!-- Header Navigation -->
-    <nav class="bg-white/80 backdrop-blur-md shadow-soft sticky top-0 z-50 border-b border-gray-200" style="height: 5rem;">
-        <div class="w-full px-3 sm:px-4 lg:px-6" style="margin-top: 0.5rem;">
-          <div class="flex justify-between items-center h-12">
-            
-            <!-- Logo Section -->
-            <div class="flex items-center">
-              <a
-                href="{{ url_for('user.user_dashboard') }}"
-                class="flex items-center"
-              >
-                <img
-                  src="{{ url_for('static', filename='assets/img/kim.png') }}"
-                  alt="Kimbela"
-                  class="h-8"
-                  style="width: 11rem; height: 6rem; object-fit: contain; margin-top: 1rem;"
-                />
-              </a>
-            </div>
-      
-            <!-- Right-side controls -->
-            <div class="flex items-center space-x-3" style="margin-top: 1rem;">
-              <a href="{{ url_for('user.user_dashboard') }}" 
-                 class="hidden md:flex gradient-primary text-white px-4 py-1.5 rounded-lg font-bold hover-lift shadow-medium transition-all duration-300 items-center space-x-1.5 text-sm">
-                <i class="fas fa-home text-xs"></i>
-                <span>Dashboard</span>
-              </a>
-              <div class="relative group">
-                <img src="{{ user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
-                     alt="Profile" 
-                     class="w-8 h-8 rounded-lg border border-purple-500 cursor-pointer hover:border-purple-600 transition-all duration-300 shadow-medium">
-                <div class="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border border-white"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </nav>
-    <br>
-
-    <!-- Main Profile Content -->
-    <div class="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4 fade-in">
-        <!-- Cover Photo Section -->
-        <div class="relative rounded-xl overflow-hidden shadow-strong mb-4 profile-cover">
-            <div class="absolute inset-0 gradient-primary">
-                <img src="{{ user.cover_pic or url_for('static', filename='assets/img/default-cover.jpg') }}" 
-                     alt="Cover" 
-                     class="w-full h-full object-cover">
-                <div class="absolute inset-0 bg-black/40"></div>
-            </div>
-            
-            <!-- Profile Info Overlay -->
-            <div class="absolute bottom-0 left-0 right-0 p-4 text-white">
-                <div class="flex flex-col lg:flex-row items-center lg:items-end space-y-3 lg:space-y-0">
-                    <!-- Profile Picture -->
-                    <div class="relative group">
-                        <div class="relative">
-                            <img src="{{ user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
-                                 alt="{{ user.first_name }}" 
-                                 class="w-20 h-20 lg:w-24 lg:h-24 rounded-lg border-3 border-white/80 shadow-strong object-cover transition-all duration-300">
-
-                        </div>
-                        <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white shadow"></div>
+    <!-- Navigation -->
+    <nav class="bg-white/90 backdrop-blur-md shadow-soft sticky top-0 z-50 border-b border-gray-200" style="height: 5rem;">
+        <div class="w-full px-4 lg:px-8" style="margin-top: 0.5rem;">
+            <div class="flex justify-between items-center h-12">
+                <a href="{{ url_for('user.user_dashboard') }}" class="flex items-center">
+                    <img src="{{ url_for('static', filename='assets/img/kim.png') }}"
+                         alt="Kimbela" class="h-10" style="width: 11rem; height: 6rem; object-fit: contain;">
+                </a>
+                <div class="flex items-center space-x-4">
+                    <a href="{{ url_for('user.user_dashboard') }}"
+                       class="hidden md:flex gradient-primary text-white px-5 py-2 rounded-lg font-bold hover-lift shadow-medium items-center space-x-2 text-xs">
+                        <i class="fas fa-home"></i> <span>Dashboard</span>
+                    </a>
+                    <div class="relative">
+                        <img src="{{ user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+                             alt="You" class="w-10 h-10 rounded-xl border-2 border-purple-500 shadow-medium object-cover">
+                        <div class="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
                     </div>
-                    
-                    <!-- User Info -->
-                    <div class="flex-1 lg:ml-4 text-center lg:text-left mt-2 lg:mt-0">
-                        <h4 class="text-xl lg:text-2xl font-bold mb-1" style="font-size: 1.25rem;">{{ user.first_name }} {{ user.last_name }}</h4>
-                        <p class="text-sm opacity-90 mb-2 max-w-2xl" style="font-size: 0.875rem;">{{ user.bio or 'Welcome to my profile! Let’s connect and share amazing moments together.' }}</p>
-                        
-                        <!-- Stats -->
-                        <div class="hidden lg:flex flex-wrap gap-2 justify-center lg:justify-start stagger-animation posts">
-                            <div class="glass-effect px-3 py-1.5 rounded-lg font-bold flex items-center space-x-1.5 text-sm posts">
-                                <i class="fas fa-newspaper posts text-xs"></i>
-                                <span class="posts">{{ posts|length }} Posts</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 lg:px-8 py-8 fade-in">
+        <!-- Cover & Header -->
+        <div class="relative rounded-2xl overflow-hidden shadow-strong mb-8 profile-cover">
+            <img src="{{ user.cover_pic or url_for('static', filename='assets/img/default-cover.jpg') }}"
+                 alt="Cover" class="w-full h-full object-cover">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
+
+            <div class="absolute bottom-0 left-0 right-0 p-6 text-white">
+                <div class="flex flex-col lg:flex-row items-start lg:items-end gap-6">
+                    <img src="{{ user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+                         alt="{{ user.first_name }}"
+                         class="w-32 h-32 rounded-2xl border-4 border-white shadow-2xl object-cover">
+                    <div class="flex-1">
+                        <h1 class="text-2xl lg:text-3xl font-bold mb-1">{{ user.first_name }} {{ user.last_name }}</h1>
+                        <p class="text-sm opacity-90 mb-4 max-w-3xl">{{ user.bio or 'Welcome to my profile! Let’s connect and share amazing moments together.' }}</p>
+                        <div class="flex flex-wrap gap-3 text-xs">
+                            <div class="glass-effect px-3 py-1.5 rounded-xl flex items-center gap-2">
+                                <i class="fas fa-newspaper"></i> {{ posts|length }} Posts
                             </div>
-                            <div class="glass-effect px-3 py-1.5 rounded-lg font-bold flex items-center space-x-1.5 text-sm friends">
-                                <i class="fas fa-users text-xs"></i>
-                                <span>{{ friends|length }} Friends</span>
+                            <div class="glass-effect px-3 py-1.5 rounded-xl flex items-center gap-2">
+                                <i class="fas fa-users"></i> {{ friends|length }} Friends
                             </div>
-                            <div class="glass-effect px-3 py-1.5 rounded-lg font-bold flex items-center space-x-1.5 text-sm blocked">
-                                <i class="fas fa-user-slash text-xs"></i>
-                                <span>{{ user.get_blocked_users()|length }} Blocked</span>
+                            <div class="glass-effect px-3 py-1.5 rounded-xl flex items-center gap-2">
+                                <i class="fas fa-user-slash"></i> {{ user.get_blocked_users()|length }} Blocked
                             </div>
                         </div>
                     </div>
@@ -324,293 +145,162 @@
             </div>
         </div>
 
-        <!-- Main Content Grid -->
-        <div class="grid grid-cols-1 xl:grid-cols-4 gap-4">
+        <!-- Grid Layout -->
+        <div class="grid grid-cols-1 xl:grid-cols-4 gap-8">
             <!-- Left Sidebar -->
-            <div class="xl:col-span-1 space-y-4 stagger-animation">
-                <!-- About Card -->
-                <div class="bg-white rounded-lg shadow-medium p-4 hover-lift transition-all duration-300 border border-gray-100">
-                    <h5 class="text-base font-bold text-gray-900 mb-3 flex items-center" style="font-size: 0.875rem;">
-                        <div class="w-4 h-4 gradient-primary rounded flex items-center justify-center mr-2">
-                            <i class="fas fa-info-circle text-white text-xs"></i>
+            <div class="space-y-6">
+                <!-- About Me -->
+                <div class="bg-white rounded-2xl shadow-medium p-6 border border-gray-100 hover-lift">
+                    <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+                        <div class="w-9 h-9 gradient-primary rounded-xl flex items-center justify-center">
+                            <i class="fas fa-info-circle text-white"></i>
                         </div>
                         About Me
-                    </h5>
-                    
-                    <div class="space-y-3">
-                        <div class="flex items-center space-x-3 p-2 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors duration-300">
-                            <div class="w-8 h-8 bg-purple-100 rounded flex items-center justify-center">
-                                <i class="fas fa-map-marker-alt text-purple-600 text-sm"></i>
-                            </div>
+                    </h3>
+                    <div class="space-y-3 text-xs">
+                        {% if user.city and user.country %}
+                        <div class="flex items-center gap-3 p-3 bg-purple-50 rounded-xl">
+                            <i class="fas fa-map-marker-alt text-purple-600 text-base"></i>
                             <div>
-                                <p class="text-xs text-gray-600 font-medium">Location</p>
-                                <p class="font-bold text-gray-900 text-sm">{{ user.city }}, {{ user.country }}</p>
+                                <p class="text-gray-600">Location</p>
+                                <p class="font-semibold text-gray-900">{{ user.city }}, {{ user.country }}</p>
                             </div>
                         </div>
-                        
-                        <div class="flex items-center space-x-3 p-2 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors duration-300">
-                            <div class="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
-                                <i class="fas fa-venus-mars text-blue-600 text-sm"></i>
-                            </div>
+                        {% endif %}
+
+                        {% if user.gender %}
+                        <div class="flex items-center gap-3 p-3 bg-blue-50 rounded-xl">
+                            <i class="fas fa-venus-mars text-blue-600 text-base"></i>
                             <div>
-                                <p class="text-xs text-gray-600 font-medium">Gender</p>
-                                <p class="font-bold text-gray-900 text-sm">{{ user.gender or 'Not set' }}</p>
+                                <p class="text-gray-600">Gender</p>
+                                <p class="font-semibold text-gray-900">{{ user.gender }}</p>
                             </div>
                         </div>
-                        
-                        <div class="flex items-center space-x-3 p-2 bg-green-50 rounded-lg hover:bg-green-100 transition-colors duration-300">
-                            <div class="w-8 h-8 bg-green-100 rounded flex items-center justify-center">
-                                <i class="fas fa-heart text-green-600 text-sm"></i>
-                            </div>
+                        {% endif %}
+
+                        {% if user.marital_status %}
+                        <div class="flex items-center gap-3 p-3 bg-green-50 rounded-xl">
+                            <i class="fas fa-heart text-green-600 text-base"></i>
                             <div>
-                                <p class="text-xs text-gray-600 font-medium">Status</p>
-                                <p class="font-bold text-gray-900 text-sm">{{ user.marital_status or 'Not set' }}</p>
+                                <p class="text-gray-600">Status</p>
+                                <p class="font-semibold text-gray-900">{{ user.marital_status }}</p>
                             </div>
                         </div>
-                        
-                        <div class="flex items-center space-x-3 p-2 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors duration-300">
-                            <div class="w-8 h-8 bg-yellow-100 rounded flex items-center justify-center">
-                                <i class="fas fa-birthday-cake text-yellow-600 text-sm"></i>
-                            </div>
+                        {% endif %}
+
+                        {% if user.dob %}
+                        <div class="flex items-center gap-3 p-3 bg-yellow-50 rounded-xl">
+                            <i class="fas fa-birthday-cake text-yellow-600 text-base"></i>
                             <div>
-                                <p class="text-xs text-gray-600 font-medium">Age</p>
-                                <p class="font-bold text-gray-900 text-sm">
-                                    {% if user.dob %}
-                                        {{ ((current_date or datetime.utcnow().date()) - user.dob).days // 365 }} years old
-                                    {% else %}
-                                        Not set
-                                    {% endif %}
-                                </p>
+                                <p class="text-gray-600">Age</p>
+                                <p class="font-semibold text-gray-900">{{ ((datetime.utcnow().date() - user.dob).days // 365) }} years old</p>
                             </div>
                         </div>
+                        {% endif %}
                     </div>
                 </div>
 
-                <!-- Friends Card -->
-                <div class="bg-white rounded-lg shadow-medium p-4 hover-lift transition-all duration-300 border border-gray-100">
-                    <div class="flex justify-between items-center mb-3">
-                        <h3 class="text-base font-bold text-gray-900 flex items-center" style="font-size: 0.875rem;">
-                            <div class="w-8 h-8 gradient-success rounded flex items-center justify-center mr-2">
-                                <i class="fas fa-users text-white text-sm"></i>
+                <!-- Friends Preview -->
+                <div class="bg-white rounded-2xl shadow-medium p-6 border border-gray-100 hover-lift">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-lg flex items-center gap-2">
+                            <div class="w-9 h-9 gradient-success rounded-xl flex items-center justify-center">
+                                <i class="fas fa-users text-white"></i>
                             </div>
                             Friends
                         </h3>
-                        <span class="bg-green-100 text-green-800 px-2 py-0.5 rounded-lg text-xs font-bold">
-                            {{ friends|length }}
-                        </span>
+                        <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-bold">{{ friends|length }}</span>
                     </div>
-                    
-                    <div class="grid grid-cols-3 gap-2">
+                    <div class="grid grid-cols-3 gap-3">
                         {% for friend in friends[:6] %}
-                        <div class="text-center group cursor-pointer transform hover:scale-105 transition-all duration-300">
-                            <div class="relative mx-auto mb-1">
-                                <img src="{{ friend.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
-                                     alt="{{ friend.first_name }}" 
-                                     class="w-12 h-12 rounded-lg border border-transparent group-hover:border-green-500 transition-all duration-300 object-cover">
-                                <div class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border border-white"></div>
+                        <div class="text-center group cursor-pointer">
+                            <div class="relative mx-auto mb-1.5">
+                                <img src="{{ friend.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+                                     alt="{{ friend.first_name }}"
+                                     class="w-14 h-14 rounded-xl object-cover border-2 border-transparent group-hover:border-green-500 transition-all">
+                                <div class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white"></div>
                             </div>
-                            <p class="text-xs font-bold text-gray-700 truncate">{{ friend.first_name }}</p>
+                            <p class="text-xs font-medium text-gray-800 truncate">{{ friend.first_name }}</p>
                         </div>
                         {% endfor %}
                     </div>
-                    
                     {% if friends|length > 6 %}
-                    <button class="w-full mt-3 bg-gray-100 text-gray-700 py-2 rounded-lg font-bold hover:bg-gray-200 transition-all duration-300 flex items-center justify-center space-x-1.5 text-sm">
-                        <span>View All Friends</span>
-                        <i class="fas fa-arrow-right text-xs"></i>
+                    <button class="w-full mt-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl text-xs font-semibold hover:bg-gray-200 transition">
+                        View All Friends
                     </button>
                     {% endif %}
                 </div>
             </div>
 
-            <!-- Main Content -->
-            <div class="xl:col-span-2 space-y-4 stagger-animation">
-                <!-- Posts Feed -->
-                <div id="posts-feed">
+            <!-- Posts Feed -->
+            <div class="xl:col-span-2 space-y-6">
+                {% if posts %}
                     {% for post in posts %}
-                    <div class="bg-white rounded-lg shadow-medium p-4 mb-4 hover-lift transition-all duration-300 border border-gray-100 fade-in">
-                        <!-- Post Header -->
-                        <div class="flex items-center justify-between mb-3">
-                            <div class="flex items-center space-x-3">
-                                <img src="{{ user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
-                                     alt="{{ user.first_name }}" 
-                                     class="w-10 h-10 rounded-lg border border-purple-200">
-                                <div>
-                                    <h6 class="font-bold text-gray-900 text-sm">{{ user.first_name }} {{ user.last_name }}</h6>
-                                    <p class="text-xs text-gray-500">{{ post.created_at.strftime('%b %d, %Y at %I:%M %p') }}</p>
-                                </div>
-                            </div>
-                            <button class="text-gray-400 hover:text-gray-600 transition-colors duration-300 p-1.5 rounded hover:bg-gray-100">
-                                <i class="fas fa-ellipsis-h text-sm"></i>
-                            </button>
-                        </div>
-                        
-                        <!-- Post Content -->
-                        <div class="mb-3">
-                            <p class="text-gray-700 leading-relaxed text-sm">{{ post.content }}</p>
-                            
-                            {% if post.image %}
-                            <div class="mt-3 rounded-lg overflow-hidden border border-gray-200">
-                                <img src="{{ post.image }}" 
-                                     alt="Post image" 
-                                     class="w-full h-auto max-h-64 object-cover">
-                            </div>
-                            {% endif %}
-                            
-                            {% if post.video %}
-                            <div class="mt-3 rounded-lg overflow-hidden border border-gray-200">
-                                <video controls class="w-full rounded-lg">
-                                    <source src="{{ post.video }}" type="video/mp4">
-                                    Your browser does not support the video tag.
-                                </video>
-                            </div>
-                            {% endif %}
-                        </div>
-                        
-                        <!-- Post Stats -->
-                        <div class="flex items-center justify-between text-xs text-gray-500 mb-3">
-                            <div class="flex items-center space-x-3">
-                                <span class="flex items-center space-x-1">
-                                    <i class="fas fa-thumbs-up text-blue-500 text-sm"></i>
-                                    <span>{{ post.likes_list|length }} likes</span>
-                                </span>
-                                <span class="flex items-center space-x-1">
-                                    <i class="fas fa-comment text-green-500 text-sm"></i>
-                                    <span>{{ post.comments_list|length }} comments</span>
-                                </span>
-                            </div>
-                        </div>
-                        
-                        <!-- Post Actions -->
-                        <div class="flex items-center justify-between border-t border-b border-gray-200 py-2 mb-3">
-                            <button class="flex items-center space-x-1.5 text-gray-600 hover:text-blue-500 transition-all duration-300 transform hover:scale-105 font-medium py-1.5 px-3 rounded-lg hover:bg-blue-50 text-sm">
-                                <i class="fas fa-thumbs-up text-sm"></i>
-                                <span>Like</span>
-                            </button>
-                            <button class="flex items-center space-x-1.5 text-gray-600 hover:text-green-500 transition-all duration-300 transform hover:scale-105 font-medium py-1.5 px-3 rounded-lg hover:bg-green-50 text-sm">
-                                <i class="fas fa-comment text-sm"></i>
-                                <span>Comment</span>
-                            </button>
-                            <button class="flex items-center space-x-1.5 text-gray-600 hover:text-purple-500 transition-all duration-300 transform hover:scale-105 font-medium py-1.5 px-3 rounded-lg hover:bg-purple-50 text-sm">
-                                <i class="fas fa-share text-sm"></i>
-                                <span>Share</span>
-                            </button>
-                        </div>
-                        
-                        <!-- Comments Preview -->
-                        <div class="space-y-3">
-                            {% for comment in post.comments[:2] %}
-                            <div class="flex items-start space-x-2">
-                                <img src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
-                                     alt="{{ comment.author.first_name }}" 
-                                     class="w-6 h-6 rounded-lg">
-                                <div class="flex-1 bg-gray-100 rounded-lg px-3 py-2">
-                                    <p class="font-bold text-xs text-gray-900">{{ comment.author.first_name }}</p>
-                                    <p class="text-gray-700 text-xs mt-0.5">{{ comment.content }}</p>
-                                </div>
-                            </div>
-                            {% endfor %}
-                            
-                            {% if post.comments_list|length > 2 %}
-                            <button class="text-purple-600 font-bold text-xs hover:text-purple-700 transition-colors duration-300 flex items-center space-x-0.5">
-                                <span>View all {{ post.comments_list|length }} comments</span>
-                                <i class="fas fa-chevron-down text-xs"></i>
-                            </button>
-                            {% endif %}
-                            
-                            <!-- Add Comment -->
-                            <div class="flex items-center space-x-2 mt-2">
-                                <img src="{{ user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
-                                     alt="{{ user.first_name }}" 
-                                     class="w-6 h-6 rounded-lg">
-                                <div class="flex-1 bg-gray-100 rounded-lg px-3 py-1.5">
-                                    <input type="text" 
-                                           placeholder="Write a comment..." 
-                                           class="w-full bg-transparent border-0 focus:outline-none focus:ring-0 text-xs">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    {% else %}
-                    <!-- Empty State -->
-                    <div class="bg-white rounded-lg shadow-medium p-6 text-center hover-lift transition-all duration-300 border border-gray-100">
-                        <div class="w-16 h-16 gradient-primary rounded-lg flex items-center justify-center mx-auto mb-4 shadow-medium">
-                            <i class="fas fa-newspaper text-white text-xl"></i>
-                        </div>
-                        <h3 class="text-lg font-bold text-gray-900 mb-1">No Posts Yet</h3>
-                        <p class="text-gray-600 text-sm">Start sharing your thoughts with friends!</p>
-                    </div>
+                        {% include "_post_card.html" %}
                     {% endfor %}
-                </div>
+                {% else %}
+                    <div class="bg-white rounded-2xl shadow-medium p-16 text-center border border-gray-100">
+                        <i class="fas fa-newspaper text-5xl text-gray-300 mb-5"></i>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">No posts yet</h3>
+                        <p class="text-sm text-gray-600">Start sharing your thoughts with friends!</p>
+                    </div>
+                {% endif %}
             </div>
 
             <!-- Right Sidebar -->
-            <div class="xl:col-span-1 space-y-4 stagger-animation">
-                <!-- Profile Completion -->
-                <div class="bg-white rounded-lg shadow-medium p-4 hover-lift transition-all duration-300 border border-gray-100">
-                    <h3 class="text-base font-bold text-gray-900 mb-3 flex items-center" style="font-size: 0.875rem;">
-                        <div class="w-8 h-8 gradient-secondary rounded flex items-center justify-center mr-2">
-                            <i class="fas fa-trophy text-white text-sm"></i>
+            <div class="space-y-6">
+                <!-- Profile Strength -->
+                <div class="bg-white rounded-2xl shadow-medium p-6 border border-gray-100 hover-lift">
+                    <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+                        <div class="w-9 h-9 gradient-secondary rounded-xl flex items-center justify-center">
+                            <i class="fas fa-trophy text-white"></i>
                         </div>
                         Profile Strength
                     </h3>
-                    
                     {% set completion = 40 %}
                     {% if user.bio %}{% set completion = completion + 10 %}{% endif %}
                     {% if user.occupation %}{% set completion = completion + 10 %}{% endif %}
-                    {% if user.education %}{% set completion = completion + 10 %}{% endif %}
+                    {% if user.educational_level %}{% set completion = completion + 10 %}{% endif %}
                     {% if user.marital_status %}{% set completion = completion + 10 %}{% endif %}
                     {% if user.interests %}{% set completion = completion + 10 %}{% endif %}
-                    {% if user.profile_pic and user.profile_pic != 'default' %}{% set completion = completion + 10 %}{% endif %}
-                    
-                    <div class="mb-3">
-                        <div class="flex justify-between text-xs mb-2">
-                            <span class="font-bold text-gray-700">Completion</span>
+                    {% if user.profile_pic %}{% set completion = completion + 10 %}{% endif %}
+
+                    <div class="mb-4">
+                        <div class="flex justify-between text-xs mb-1.5">
+                            <span class="font-medium text-gray-700">Completion</span>
                             <span class="font-bold text-purple-600">{{ completion }}%</span>
                         </div>
-                        <div class="w-full bg-gray-200 rounded-full h-1.5">
-                            <div class="gradient-primary h-1.5 rounded-full transition-all duration-1000 ease-out" 
-                                 style="width: {{ completion }}%"></div>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                            <div class="gradient-primary h-2.5 rounded-full transition-all duration-1000" style="width: {{ completion }}%"></div>
                         </div>
                     </div>
-                    
-                    <p class="text-xs text-gray-600 text-center font-medium">
-                        Add more info to strengthen your profile
-                    </p>
+                    <p class="text-xs text-gray-600 text-center">Add more info to strengthen your profile</p>
                 </div>
 
                 <!-- Quick Actions -->
-                <div class="bg-white rounded-lg shadow-medium p-4 hover-lift transition-all duration-300 border border-gray-100">
-                    <h3 class="text-base font-bold text-gray-900 mb-3 flex items-center" style="font-size: 0.875rem;">
-                        <div class="w-8 h-8 gradient-primary rounded flex items-center justify-center mr-2">
-                            <i class="fas fa-bolt text-white text-sm"></i>
+                <div class="bg-white rounded-2xl shadow-medium p-6 border border-gray-100 hover-lift">
+                    <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+                        <div class="w-9 h-9 gradient-primary rounded-xl flex items-center justify-center">
+                            <i class="fas fa-bolt text-white"></i>
                         </div>
                         Quick Actions
                     </h3>
-                    
-                    <div class="space-y-2">
-                        <button class="w-full gradient-primary text-white py-2 rounded-lg font-bold hover-lift shadow-medium transition-all duration-300 flex items-center justify-center space-x-1.5 text-sm"
-                                onclick="openModal('editProfileModal')">
-                            <i class="fas fa-edit text-xs"></i>
-                            <span>Edit Profile</span>
+                    <div class="space-y-3">
+                        <button onclick="openModal('editProfileModal')"
+                                class="w-full py-3.5 gradient-primary text-white rounded-xl font-semibold hover-lift shadow-medium flex items-center justify-center gap-2 text-xs">
+                            <i class="fas fa-edit"></i> Edit Profile
                         </button>
-                        
-                        <button class="w-full gradient-secondary text-white py-2 rounded-lg font-bold hover-lift shadow-medium transition-all duration-300 flex items-center justify-center space-x-1.5 text-sm"
-                                onclick="openModal('blockedUsersModal')">
-                            <i class="fas fa-user-slash text-xs"></i>
-                            <span>Manage Blocks</span>
+                        <button onclick="openModal('blockedUsersModal')"
+                                class="w-full py-3.5 gradient-secondary text-white rounded-xl font-semibold hover-lift shadow-medium flex items-center justify-center gap-2 text-xs">
+                            <i class="fas fa-user-slash"></i> Manage Blocks
                         </button>
-
-                        <a href="{{ url_for('payments.ad_packages') }}" 
-                        class="w-full bg-gradient-to-r from-orange-500 to-yellow-500 text-white py-2 rounded-lg font-bold hover-lift shadow-medium transition-all duration-300 flex items-center justify-center space-x-1.5 text-sm">
-                            <i class="fas fa-megaphone text-xs"></i>
-                            <span>Create Sponsored Ad</span>
+                        <a href="{{ url_for('payments.ad_packages') }}"
+                           class="w-full block py-3.5 bg-gradient-to-r from-orange-500 to-yellow-500 text-white rounded-xl font-semibold hover-lift shadow-medium text-center flex items-center justify-center gap-2 text-xs">
+                            <i class="fas fa-megaphone"></i> Create Ad
                         </a>
-                                        
-                        <a href="{{ url_for('user.user_dashboard') }}" 
-                           class="w-full gradient-success text-white py-2 rounded-lg font-bold hover-lift shadow-medium transition-all duration-300 flex items-center justify-center space-x-1.5 text-sm">
-                            <i class="fas fa-home text-xs"></i>
-                            <span>Go to Dashboard</span>
+                        <a href="{{ url_for('user.user_dashboard') }}"
+                           class="w-full block py-3.5 gradient-success text-white rounded-xl font-semibold hover-lift shadow-medium text-center flex items-center justify-center gap-2 text-xs">
+                            <i class="fas fa-home"></i> Dashboard
                         </a>
                     </div>
                 </div>
@@ -618,772 +308,16 @@
         </div>
     </div>
 
-    <!-- Edit Profile Modal -->
-    <div id="editProfileModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 z-50 hidden transition-opacity duration-300">
-        <div class="bg-white rounded-lg shadow-strong max-w-lg w-full max-h-[90vh] overflow-y-auto transform transition-all duration-300 scale-95 opacity-0">
-            <div class="p-4 border-b border-gray-200">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-bold text-gray-900 flex items-center">
-                        <div class="w-8 h-8 gradient-primary rounded flex items-center justify-center mr-2">
-                            <i class="fas fa-user-edit text-white text-sm"></i>
-                        </div>
-                        Edit Profile
-                    </h3>
-                    <button onclick="closeModal('editProfileModal')" 
-                            class="text-gray-400 hover:text-gray-600 transition-colors duration-300 p-1.5 rounded hover:bg-gray-100">
-                        <i class="fas fa-times text-sm"></i>
-                    </button>
-                </div>
-            </div>
-            
-            <form method="POST" enctype="multipart/form-data" action="{{ url_for('user.profile', user_id=user.id) }}" class="p-4 space-y-4" id="profileForm">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                
-                <!-- Profile and Cover Photos -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Profile Picture -->
-                    <div class="text-center">
-                        <label class="block text-xs font-bold text-gray-700 mb-2">Profile Picture</label>
-                        <div class="relative inline-block">
-                            <img id="profilePreview" 
-                                 src="{{ user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-                                 class="w-24 h-24 rounded-lg border-2 border-purple-200 shadow object-cover">
-                            <label class="absolute bottom-0 right-0 bg-purple-500 text-white p-2 rounded cursor-pointer hover:bg-purple-600 transition-colors duration-300 shadow-medium">
-                                <i class="fas fa-camera text-xs"></i>
-                                <input type="file" name="profile_pic" accept="image/*" hidden 
-                                       onchange="previewImage(this, 'profilePreview')">
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <!-- Cover Photo -->
-                    <div class="text-center">
-                        <label class="block text-xs font-bold text-gray-700 mb-2">Cover Photo</label>
-                        <div class="relative">
-                            <img id="coverPreview" 
-                                 src="{{ user.cover_pic or url_for('static', filename='assets/img/default-cover.jpg') }}"
-                                 class="w-full h-24 rounded-lg object-cover shadow">
-                            <label class="absolute bottom-1 right-1 bg-purple-500 text-white px-2 py-1 rounded text-xs cursor-pointer hover:bg-purple-600 transition-colors duration-300 shadow-medium">
-                                <i class="fas fa-image mr-1 text-xs"></i>Change
-                                <input type="file" name="cover_pic" accept="image/*" hidden 
-                                       onchange="previewImage(this, 'coverPreview')">
-                            </label>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Personal Information -->
-                <div class="space-y-3">
-                    <h4 class="text-sm font-bold text-gray-900 border-b border-gray-200 pb-1">Personal Information</h4>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-1">First Name</label>
-                            <input type="text" name="first_name" value="{{ user.first_name }}"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
-                        </div>
-                        
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-1">Last Name</label>
-                            <input type="text" name="last_name" value="{{ user.last_name }}"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-1">Email</label>
-                            <input type="email" name="email" value="{{ user.email }}"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
-                        </div>
-
-                        <!-- Religion Dropdown -->
-<div>
-    <label class="block text-xs font-bold text-gray-700 mb-1">Religion</label>
-    <select name="religion" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
-        <option value="">Select Religion</option>
-        <option value="Islam" {% if user.religion == 'Islam' %}selected{% endif %}>Islam</option>
-        <option value="Roman Catholic" {% if user.religion == 'Roman Catholic' %}selected{% endif %}>Roman Catholic</option>
-        <option value="No religion / Atheist / Agnostic" {% if user.religion == 'No religion / Atheist / Agnostic' %}selected{% endif %}>No religion / Atheist / Agnostic</option>
-        <option value="Hinduism" {% if user.religion == 'Hinduism' %}selected{% endif %}>Hinduism</option>
-        <option value="Buddhism" {% if user.religion == 'Buddhism' %}selected{% endif %}>Buddhism</option>
-        <option value="Pentecostal" {% if user.religion == 'Pentecostal' %}selected{% endif %}>Pentecostal</option>
-        <option value="Traditional / Indigenous beliefs" {% if user.religion == 'Traditional / Indigenous beliefs' %}selected{% endif %}>Traditional / Indigenous beliefs</option>
-        <option value="Orthodox Christian" {% if user.religion == 'Orthodox Christian' %}selected{% endif %}>Orthodox Christian</option>
-        <option value="Charismatic" {% if user.religion == 'Charismatic' %}selected{% endif %}>Charismatic</option>
-        <option value="Non-denominational churches" {% if user.religion == 'Non-denominational churches' %}selected{% endif %}>Non-denominational churches</option>
-        <option value="Anglican" {% if user.religion == 'Anglican' %}selected{% endif %}>Anglican</option>
-        <option value="Baptist" {% if user.religion == 'Baptist' %}selected{% endif %}>Baptist</option>
-        <option value="Methodist" {% if user.religion == 'Methodist' %}selected{% endif %}>Methodist</option>
-        <option value="Seventh-day Adventist" {% if user.religion == 'Seventh-day Adventist' %}selected{% endif %}>Seventh-day Adventist</option>
-        <option value="Jehovah's Witness" {% if user.religion == "Jehovah's Witness" %}selected{% endif %}>Jehovah's Witness</option>
-        <option value="Latter-day Saints (Mormons)" {% if user.religion == 'Latter-day Saints (Mormons)' %}selected{% endif %}>Latter-day Saints (Mormons)</option>
-        <option value="Sikhism" {% if user.religion == 'Sikhism' %}selected{% endif %}>Sikhism</option>
-        <option value="Judaism" {% if user.religion == 'Judaism' %}selected{% endif %}>Judaism</option>
-        <option value="Bahá'í Faith" {% if user.religion == "Bahá'í Faith" %}selected{% endif %}>Bahá'í Faith</option>
-        <option value="Jainism" {% if user.religion == 'Jainism' %}selected{% endif %}>Jainism</option>
-        <option value="White Garment Churches" {% if user.religion == 'White Garment Churches' %}selected{% endif %}>White Garment Churches</option>
-        <option value="Other" {% if user.religion == 'Other' %}selected{% endif %}>Other</option>
-    </select>
-</div>
-
-                        <!-- Ethnicity Dropdown -->
-<div>
-    <label class="block text-xs font-bold text-gray-700 mb-1">Ethnicity</label>
-    <select name="ethnicity" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
-        <option value="">Select Ethnicity</option>
-        <option value="African" {% if user.ethnicity == 'African' %}selected{% endif %}>African</option>
-        <option value="African American" {% if user.ethnicity == 'African American' %}selected{% endif %}>African American</option>
-        <option value="Asian" {% if user.ethnicity == 'Asian' %}selected{% endif %}>Asian</option>
-        <option value="Caucasian" {% if user.ethnicity == 'Caucasian' %}selected{% endif %}>Caucasian</option>
-        <option value="Hispanic/Latino" {% if user.ethnicity == 'Hispanic/Latino' %}selected{% endif %}>Hispanic/Latino</option>
-        <option value="Native American" {% if user.ethnicity == 'Native American' %}selected{% endif %}>Native American</option>
-        <option value="Pacific Islander" {% if user.ethnicity == 'Pacific Islander' %}selected{% endif %}>Pacific Islander</option>
-        <option value="Middle Eastern" {% if user.ethnicity == 'Middle Eastern' %}selected{% endif %}>Middle Eastern</option>
-        <option value="Mixed Race" {% if user.ethnicity == 'Mixed Race' %}selected{% endif %}>Mixed Race</option>
-        <option value="Caribbean" {% if user.ethnicity == 'Caribbean' %}selected{% endif %}>Caribbean</option>
-        <option value="European" {% if user.ethnicity == 'European' %}selected{% endif %}>European</option>
-        <option value="South Asian" {% if user.ethnicity == 'South Asian' %}selected{% endif %}>South Asian</option>
-        <option value="East Asian" {% if user.ethnicity == 'East Asian' %}selected{% endif %}>East Asian</option>
-        <option value="Southeast Asian" {% if user.ethnicity == 'Southeast Asian' %}selected{% endif %}>Southeast Asian</option>
-        <option value="Indigenous Australian" {% if user.ethnicity == 'Indigenous Australian' %}selected{% endif %}>Indigenous Australian</option>
-        <option value="Maori" {% if user.ethnicity == 'Maori' %}selected{% endif %}>Maori</option>
-        <option value="Other" {% if user.ethnicity == 'Other' %}selected{% endif %}>Other</option>
-    </select>
-</div>
-
-                        <!-- Educational Level Dropdown -->
-<div>
-    <label class="block text-xs font-bold text-gray-700 mb-1">Educational Level</label>
-    <select name="educational_level" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
-        <option value="">Select Educational Level</option>
-        <option value="Primary or Elementary School" {% if user.educational_level == 'Primary or Elementary School' %}selected{% endif %}>Primary or Elementary School</option>
-        <option value="Middle School or Junior High School" {% if user.educational_level == 'Middle School or Junior High School' %}selected{% endif %}>Middle School or Junior High School</option>
-        <option value="High School" {% if user.educational_level == 'High School' %}selected{% endif %}>High School</option>
-        <option value="Vocational College" {% if user.educational_level == 'Vocational College' %}selected{% endif %}>Vocational College</option>
-        <option value="Associate Degree" {% if user.educational_level == 'Associate Degree' %}selected{% endif %}>Associate Degree</option>
-        <option value="Bachelor's Degree" {% if user.educational_level == "Bachelor's Degree" %}selected{% endif %}>Bachelor's Degree</option>
-        <option value="Master's Degree" {% if user.educational_level == 'Master\'s Degree' %}selected{% endif %}>Master's Degree</option>
-        <option value="PhD or Doctorate" {% if user.educational_level == 'PhD or Doctorate' %}selected{% endif %}>PhD or Doctorate</option>
-        <option value="No Formal Education" {% if user.educational_level == 'No Formal Education' %}selected{% endif %}>No Formal Education</option>
-        <option value="Other" {% if user.educational_level == 'Other' %}selected{% endif %}>Other</option>
-    </select>
-</div>
-                        
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-1">Phone Number</label>
-                            <input type="tel" name="phone_number" value="{{ user.phone_number }}"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-1">Date of Birth</label>
-                            <input type="date" name="dob" value="{{ user.dob.strftime('%Y-%m-%d') if user.dob else '' }}"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
-                        </div>
-                        
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-1">Gender</label>
-                            <select name="gender" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
-                                <option value="">Select Gender</option>
-                                <option value="Male" {{ 'selected' if user.gender == 'Male' }}>Male</option>
-                                <option value="Female" {{ 'selected' if user.gender == 'Female' }}>Female</option>
-                                <option value="Other" {{ 'selected' if user.gender == 'Other' }}>Other</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Location Information -->
-                <!-- Location Information - Cascading Dropdowns -->
-                <div class="space-y-3">
-                    <h4 class="text-sm font-bold text-gray-900 border-b border-gray-200 pb-1">Location</h4>
-
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <!-- Country -->
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-1">Country</label>
-                            <select id="profile_country_select" name="country"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
-                                <option value="">Select Country</option>
-                            </select>
-                        </div>
-
-                        <!-- State / Province -->
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-1">State / Province</label>
-                            <select id="profile_state_select" name="state" disabled
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
-                                <option value="">Select State First</option>
-                            </select>
-                        </div>
-
-                        <!-- City -->
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-1">City</label>
-                            <select id="profile_city_select" name="city" disabled
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
-                                <option value="">Select State First</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Additional Information -->
-                <div class="space-y-3">
-                    <h4 class="text-sm font-bold text-gray-900 border-b border-gray-200 pb-1">Additional Information</h4>
-                    
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 mb-1">Status</label>
-                        <select name="marital_status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
-                            <option value="">Select Status</option>
-                            <option value="Single" {{ 'selected' if user.marital_status == 'Single' }}>Single</option>
-                            <option value="Divorced" {{ 'selected' if user.marital_status == 'Divorced' }}>Divorced</option>
-                            <option value="Widowed" {{ 'selected' if user.marital_status == 'Widowed' }}>Widowed</option>
-                            <option value="Alumni" {{ 'selected' if user.marital_status == 'Alumni' }}>Alumni (Now Married)</option>
-                            <option value="In a relationship" {{ 'selected' if user.marital_status == 'In a relationship' }}>In a relationship</option>
-                        </select>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 mb-1">Bio</label>
-                        <textarea name="bio" rows="2" placeholder="Tell us about yourself..."
-                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white resize-none text-sm">{{ user.bio or '' }}</textarea>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 mb-1">Interests & Hobbies</label>
-                        <textarea name="interests" rows="2" placeholder="Your interests, hobbies, passions..."
-                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white resize-none text-sm">{{ user.interests or '' }}</textarea>
-                    </div>
-                </div>
-                
-                <!-- Form Actions -->
-                <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-                    <button type="button" 
-                            onclick="closeModal('editProfileModal')"
-                            class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-bold hover:bg-gray-50 transition-all duration-300 text-sm">
-                        Cancel
-                    </button>
-                    <button type="submit" 
-                            class="px-4 py-2 gradient-primary text-white rounded-lg font-bold hover-lift shadow-medium transition-all duration-300 flex items-center space-x-1.5 text-sm">
-                        <i class="fas fa-save text-xs"></i>
-                        <span>Save Changes</span>
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Blocked Users Modal -->
-    <div id="blockedUsersModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 z-50 hidden transition-opacity duration-300">
-        <div class="bg-white rounded-lg shadow-strong max-w-sm w-full max-h-[80vh] overflow-y-auto transform transition-all duration-300 scale-95 opacity-0">
-            <div class="p-4 border-b border-gray-200">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-bold text-gray-900 flex items-center">
-                        <div class="w-8 h-8 gradient-secondary rounded flex items-center justify-center mr-2">
-                            <i class="fas fa-user-slash text-white text-sm"></i>
-                        </div>
-                        Blocked Users
-                    </h3>
-                    <button onclick="closeModal('blockedUsersModal')" 
-                            class="text-gray-400 hover:text-gray-600 transition-colors duration-300 p-1.5 rounded hover:bg-gray-100">
-                        <i class="fas fa-times text-sm"></i>
-                    </button>
-                </div>
-            </div>
-            
-            <div class="p-4" id="blockedUsersList">
-                <div class="text-center py-4">
-                    <div class="loader-spinner mx-auto mb-2"></div>
-                    <p class="text-sm text-gray-600">Loading blocked users...</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Create Post Modal -->
-    <div id="createPostModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 z-50 hidden transition-opacity duration-300">
-        <div class="bg-white rounded-lg shadow-strong max-w-lg w-full max-h-[90vh] overflow-y-auto transform transition-all duration-300 scale-95 opacity-0">
-            <div class="p-4 border-b border-gray-200">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-bold text-gray-900 flex items-center">
-                        <div class="w-8 h-8 gradient-primary rounded flex items-center justify-center mr-2">
-                            <i class="fas fa-edit text-white text-sm"></i>
-                        </div>
-                        Create Post
-                    </h3>
-                    <button onclick="closeModal('createPostModal')" 
-                            class="text-gray-400 hover:text-gray-600 transition-colors duration-300 p-1.5 rounded hover:bg-gray-100">
-                        <i class="fas fa-times text-sm"></i>
-                    </button>
-                </div>
-            </div>
-            
-            <form method="POST" enctype="multipart/form-data" action="{{ url_for('user.profile', user_id=user.id) }}" class="p-4 space-y-4" id="createPostForm">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                
-                <div class="flex items-center space-x-3 mb-3">
-                    <img src="{{ user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
-                         alt="{{ user.first_name }}" 
-                         class="w-10 h-10 rounded-lg border border-purple-200">
-                    <div>
-                        <h4 class="font-bold text-gray-900 text-sm">{{ user.first_name }} {{ user.last_name }}</h4>
-                        <p class="text-xs text-gray-500">Posting to your profile</p>
-                    </div>
-                </div>
-                
-                <div>
-                    <textarea name="post_content" rows="3" placeholder="What's on your mind, {{ user.first_name }}?"
-                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white resize-none text-sm"></textarea>
-                </div>
-                
-                <div id="mediaPreview" class="rounded-lg overflow-hidden hidden">
-                    <!-- Media preview will be inserted here -->
-                </div>
-                
-                <div class="flex items-center justify-between border-t border-gray-200 pt-3">
-                    <div class="flex items-center space-x-3">
-                        <label class="flex items-center space-x-1.5 text-gray-600 hover:text-green-500 transition-all duration-300 cursor-pointer p-1.5 rounded hover:bg-green-50 text-sm">
-                            <i class="fas fa-image text-sm"></i>
-                            <span>Photo/Video</span>
-                            <input type="file" name="media" accept="image/*,video/*" hidden 
-                                   onchange="previewPostMedia(this)">
-                        </label>
-                    </div>
-                    
-                    <button type="submit" 
-                            class="px-4 py-2 gradient-primary text-white rounded-lg font-bold hover-lift shadow-medium transition-all duration-300 flex items-center space-x-1.5 text-sm">
-                        <i class="fas fa-paper-plane text-xs"></i>
-                        <span>Post</span>
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
+    <!-- Modals (Edit Profile, Blocked Users, Create Post) -->
+    <!-- Keep your existing modal code here – unchanged -->
 
     <script>
-        // Modal Functions
-        function openModal(modalId) {
-            const modal = document.getElementById(modalId);
-            modal.classList.remove('hidden');
-            setTimeout(() => {
-                modal.querySelector('.transform').classList.remove('scale-95', 'opacity-0');
-            }, 10);
-            
-            if (modalId === 'blockedUsersModal') {
-                loadBlockedUsers();
-            }
-        }
-
-        function closeModal(modalId) {
-            const modal = document.getElementById(modalId);
-            modal.querySelector('.transform').classList.add('scale-95', 'opacity-0');
-            setTimeout(() => {
-                modal.classList.add('hidden');
-            }, 200);
-        }
-
-        // Image Preview Function
-        function previewImage(input, previewId) {
-            const preview = document.getElementById(previewId);
-            const file = input.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = e => {
-                    preview.src = e.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        // Post Media Preview
-        function previewPostMedia(input) {
-            const preview = document.getElementById('mediaPreview');
-            const file = input.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = e => {
-                    preview.innerHTML = '';
-                    if (file.type.startsWith('image/')) {
-                        const img = document.createElement('img');
-                        img.src = e.target.result;
-                        img.className = 'w-full h-auto max-h-64 object-cover';
-                        preview.appendChild(img);
-                    } else if (file.type.startsWith('video/')) {
-                        const video = document.createElement('video');
-                        video.src = e.target.result;
-                        video.controls = true;
-                        video.className = 'w-full h-auto max-h-64';
-                        preview.appendChild(video);
-                    }
-                    preview.classList.remove('hidden');
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        // Load Blocked Users
-        function loadBlockedUsers() {
-            const list = document.getElementById('blockedUsersList');
-            list.innerHTML = `
-                <div class="text-center py-4">
-                    <div class="loader-spinner mx-auto mb-2"></div>
-                    <p class="text-sm text-gray-600">Loading blocked users...</p>
-                </div>
-            `;
-
-            fetch('/get_blocked_users')
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(users => {
-                    if (users.length === 0) {
-                        list.innerHTML = `
-                            <div class="text-center py-4">
-                                <div class="w-12 h-12 gradient-success rounded-lg flex items-center justify-center mx-auto mb-3 shadow-medium">
-                                    <i class="fas fa-user-check text-white text-sm"></i>
-                                </div>
-                                <h4 class="text-sm font-bold text-gray-900 mb-1">No Blocked Users</h4>
-                                <p class="text-gray-600 text-xs">You haven't blocked anyone yet.</p>
-                            </div>
-                        `;
-                        return;
-                    }
-
-                    list.innerHTML = users.map(u => `
-                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-all duration-300 border border-gray-200 mb-2 blocked-user-card">
-                            <div class="flex items-center space-x-3">
-                                <img src="${u.profile_pic || '{{ url_for("static", filename="assets/img/default-avatar.png") }}'}" 
-                                     alt="${u.first_name}" 
-                                     class="w-10 h-10 rounded-lg border border-red-200">
-                                <div>
-                                    <h4 class="font-bold text-gray-900 text-sm">${u.first_name} ${u.last_name}</h4>
-                                    <p class="text-xs text-gray-500">Blocked</p>
-                                </div>
-                            </div>
-                            <button class="bg-green-500 text-white px-3 py-1.5 rounded-lg font-bold hover:bg-green-600 transition-all duration-300 hover-lift flex items-center space-x-1.5 text-xs unblock-btn"
-                                    data-user-id="${u.id}" data-user-name="${u.first_name}">
-                                <i class="fas fa-user-check text-xs"></i>
-                                <span>Unblock</span>
-                            </button>
-                        </div>
-                    `).join('');
-
-                    attachUnblockListeners();
-                })
-                .catch(error => {
-                    console.error('Error loading blocked users:', error);
-                    list.innerHTML = `
-                        <div class="text-center py-4">
-                            <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                                <i class="fas fa-exclamation-triangle text-red-500 text-sm"></i>
-                            </div>
-                            <h4 class="text-sm font-bold text-gray-900 mb-1">Failed to Load</h4>
-                            <p class="text-gray-600 text-xs">Unable to load blocked users. Please try again.</p>
-                        </div>
-                    `;
-                });
-        }
-
-        // Attach Unblock Listeners
-        function attachUnblockListeners() {
-            document.querySelectorAll('.unblock-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const userId = this.dataset.userId;
-                    const userName = this.dataset.userName;
-                    
-                    if (confirm(`Are you sure you want to unblock ${userName}?`)) {
-                        fetch(`/unblock_user/${userId}`, {
-                            method: 'POST',
-                            headers: {
-                                'X-CSRFToken': '{{ csrf_token }}',
-                                'Content-Type': 'application/json'
-                            }
-                        })
-                        .then(response => {
-                            if (!response.ok) {
-                                throw new Error('Network response was not ok');
-                            }
-                            return response.json();
-                        })
-                        .then(data => {
-                            if (data.success) {
-                                showNotification(`${userName} has been unblocked successfully!`, 'success');
-                                this.closest('.blocked-user-card').remove();
-                                
-                                if (document.querySelectorAll('.blocked-user-card').length === 0) {
-                                    loadBlockedUsers();
-                                }
-                            } else {
-                                showNotification('Error unblocking user: ' + data.error, 'error');
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                            showNotification('Error unblocking user. Please try again.', 'error');
-                        });
-                    }
-                });
-            });
-        }
-
-        // Form Submission Handling
-        document.addEventListener('DOMContentLoaded', function() {
-            // Profile Form
-            document.getElementById('profileForm')?.addEventListener('submit', function(e) {
-                e.preventDefault();
-                const formData = new FormData(this);
-                const submitBtn = this.querySelector('button[type="submit"]');
-                const originalText = submitBtn.innerHTML;
-                
-                submitBtn.innerHTML = `
-                    <div class="loader-spinner mx-auto" style="width: 16px; height: 16px;"></div>
-                    <span class="ml-1.5">Saving...</span>
-                `;
-                submitBtn.disabled = true;
-                
-                fetch(this.action, {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => {
-                    if (response.ok) {
-                        showNotification('Profile updated successfully!', 'success');
-                        setTimeout(() => {
-                            location.reload();
-                        }, 1500);
-                    } else {
-                        showNotification('Error updating profile. Please try again.', 'error');
-                        submitBtn.innerHTML = originalText;
-                        submitBtn.disabled = false;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showNotification('Error updating profile. Please try again.', 'error');
-                    submitBtn.innerHTML = originalText;
-                    submitBtn.disabled = false;
-                });
-            });
-
-            // Create Post Form
-            document.getElementById('createPostForm')?.addEventListener('submit', function(e) {
-                e.preventDefault();
-                const formData = new FormData(this);
-                const submitBtn = this.querySelector('button[type="submit"]');
-                const originalText = submitBtn.innerHTML;
-                
-                submitBtn.innerHTML = `
-                    <div class="loader-spinner mx-auto" style="width: 16px; height: 16px;"></div>
-                    <span class="ml-1.5">Posting...</span>
-                `;
-                submitBtn.disabled = true;
-                
-                fetch(this.action, {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => {
-                    if (response.ok) {
-                        showNotification('Post created successfully!', 'success');
-                        setTimeout(() => {
-                            location.reload();
-                        }, 1500);
-                    } else {
-                        showNotification('Error creating post. Please try again.', 'error');
-                        submitBtn.innerHTML = originalText;
-                        submitBtn.disabled = false;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showNotification('Error creating post. Please try again.', 'error');
-                    submitBtn.innerHTML = originalText;
-                    submitBtn.disabled = false;
-                });
-            });
-
-            // Close modals on outside click
-            document.addEventListener('click', function(e) {
-                if (e.target.classList.contains('fixed')) {
-                    const modals = document.querySelectorAll('.fixed.hidden');
-                    modals.forEach(modal => {
-                        if (!modal.classList.contains('hidden')) {
-                            const modalId = modal.id;
-                            closeModal(modalId);
-                        }
-                    });
-                }
-            });
-        });
-
-        // Notification Function
-        function showNotification(message, type = 'info') {
-            const notification = document.createElement('div');
-            notification.className = `fixed top-3 right-3 z-50 px-4 py-2 rounded-lg font-bold shadow-strong transform transition-all duration-300 text-sm ${
-                type === 'success' ? 'bg-green-500 text-white' : 
-                type === 'error' ? 'bg-red-500 text-white' : 
-                'bg-blue-500 text-white'
-            }`;
-            notification.textContent = message;
-            document.body.appendChild(notification);
-
-            setTimeout(() => {
-                notification.style.transform = 'translateX(100%)';
-                setTimeout(() => notification.remove(), 200);
-            }, 3000);
-        }
-
-        // Initialize animations
-        document.addEventListener('DOMContentLoaded', function() {
-            // Add hover effects to all cards
-            const cards = document.querySelectorAll('.bg-white');
-            cards.forEach(card => {
-                card.addEventListener('mouseenter', function() {
-                    this.classList.add('hover-lift');
-                });
-                card.addEventListener('mouseleave', function() {
-                    this.classList.remove('hover-lift');
-                });
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.bg-white').forEach(card => {
+                card.addEventListener('mouseenter', () => card.classList.add('hover-lift'));
+                card.addEventListener('mouseleave', () => card.classList.remove('hover-lift'));
             });
         });
     </script>
-
-
-<script>
-// Profile Page: Dynamic Country → State → City Dropdowns
-document.addEventListener('DOMContentLoaded', function () {
-    const countrySelect = document.getElementById('profile_country_select');
-    const stateSelect = document.getElementById('profile_state_select');
-    const citySelect = document.getElementById('profile_city_select');
-
-    if (!countrySelect) return; // Exit if not on profile edit
-
-    let countries = [];
-    let states = [];
-    let cities = [];
-
-    // Load countries
-    fetch('{{ url_for("static", filename="assets/js/countries.json") }}')
-        .then(response => response.json())
-        .then(data => {
-            countries = data.sort((a, b) => a.name.localeCompare(b.name));
-
-            countries.forEach(country => {
-                const option = document.createElement('option');
-                option.value = country.name;
-                option.setAttribute('data-country-id', country.id);
-                option.textContent = country.name;
-                countrySelect.appendChild(option);
-            });
-
-            // Pre-select user's current country
-            const userCountry = "{{ user.country or '' }}".trim();
-            if (userCountry) {
-                const found = countries.find(c => c.name === userCountry);
-                if (found) {
-                    countrySelect.value = found.name;
-                    loadStates(found.id, "{{ user.state or '' }}".trim(), "{{ user.city or '' }}".trim());
-                }
-            }
-        })
-        .catch(err => console.error('Error loading countries:', err));
-
-    // When country changes
-    countrySelect.addEventListener('change', function () {
-        const selectedOption = this.options[this.selectedIndex];
-        const countryId = selectedOption ? selectedOption.getAttribute('data-country-id') : null;
-
-        stateSelect.innerHTML = '<option value="">Loading states...</option>';
-        citySelect.innerHTML = '<option value="">Select State First</option>';
-        stateSelect.disabled = true;
-        citySelect.disabled = true;
-
-        if (!countryId) {
-            stateSelect.innerHTML = '<option value="">Select Country First</option>';
-            return;
-        }
-
-        loadStates(countryId);
-    });
-
-    function loadStates(countryId, preselectState = '', preselectCity = '') {
-        fetch('{{ url_for("static", filename="assets/js/states.json") }}')
-            .then(response => response.json())
-            .then(data => {
-                states = data.filter(s => s.country_id == countryId);
-                states.sort((a, b) => a.name.localeCompare(b.name));
-
-                stateSelect.innerHTML = '<option value="">Select State / Province</option>';
-                states.forEach(state => {
-                    const option = document.createElement('option');
-                    option.value = state.name;
-                    option.setAttribute('data-state-id', state.id);
-                    option.textContent = state.name;
-                    stateSelect.appendChild(option);
-                });
-
-                stateSelect.disabled = false;
-
-                // Pre-select state if provided
-                if (preselectState && states.some(s => s.name === preselectState)) {
-                    stateSelect.value = preselectState;
-                    const stateObj = states.find(s => s.name === preselectState);
-                    if (stateObj) loadCities(stateObj.id, preselectCity);
-                }
-            });
-    }
-
-    // When state changes
-    stateSelect.addEventListener('change', function () {
-        const selectedOption = this.options[this.selectedIndex];
-        const stateId = selectedOption ? selectedOption.getAttribute('data-state-id') : null;
-
-        citySelect.innerHTML = '<option value="">Loading cities...</option>';
-        citySelect.disabled = true;
-
-        if (!stateId) {
-            citySelect.innerHTML = '<option value="">Select State First</option>';
-            return;
-        }
-
-        loadCities(stateId);
-    });
-
-    function loadCities(stateId, preselectCity = '') {
-        fetch('{{ url_for("static", filename="assets/js/cities.json") }}')
-            .then(response => response.json())
-            .then(data => {
-                cities = data.filter(c => c.state_id == stateId);
-                cities.sort((a, b) => a.name.localeCompare(b.name));
-
-                citySelect.innerHTML = '<option value="">Select City</option>';
-                cities.forEach(city => {
-                    const option = document.createElement('option');
-                    option.value = city.name;
-                    option.textContent = city.name;
-                    citySelect.appendChild(option);
-                });
-
-                citySelect.disabled = false;
-
-                // Pre-select city if provided
-                if (preselectCity && cities.some(c => c.name === preselectCity)) {
-                    citySelect.value = preselectCity;
-                }
-            })
-            .catch(err => {
-                citySelect.innerHTML = '<option value="">Error loading cities</option>';
-                console.error(err);
-            });
-    }
-});
-</script>
 </body>
 </html>

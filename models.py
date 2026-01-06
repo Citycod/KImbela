@@ -782,6 +782,11 @@ class Post(db.Model):
         return len(self.comments) if self.comments else 0
 
     @property
+    def reactions_count(self):
+        """Get total number of reactions (likes, love, etc.) on this post"""
+        return self.get_reaction_count()  # Uses your existing efficient query
+
+    @property
     def comments_list(self):
         """Return ordered list of comments for template compatibility"""
         return self.comments.order_by(Comment.created_at.asc()).all()

@@ -1625,19 +1625,17 @@
               {% endif %}
             </div>
 
-            <!-- Post Stats -->
-            <div class="post-stats">
-              <div class="flex justify-between">
-                <span id="like-count-{{ post.id }}"
-                  >{{ post.likes_count }} reactions</span
-                >
-                <span
-                  id="comment-count-{{ post.id }}"
-                  data-total-comments="{{ post.comments_count }}"
-                >
-                  {{ post.comments_count }} comments
-                </span>
-              </div>
+            
+            <!-- Post Stats – With Icons & Real Reactions Count -->
+            <div class="flex items-center justify-between text-sm text-gray-600 mb-4 pb-3 border-b border-gray-200">
+              <span id="reaction-count-{{ post.id }}" class="flex items-center gap-1.5 font-medium">
+                <i class="bi bi-hand-thumbs-up-fill text-blue-600 text-base"></i>
+                <span>{{ post.reactions_count }} {{ 'reaction' if post.reactions_count == 1 else 'reactions' }}</span>
+              </span>
+              <span id="comment-count-{{ post.id }}" class="flex items-center gap-1.5 font-medium">
+                <i class="bi bi-chat-dots-fill text-green-600 text-base"></i>
+                <span>{{ post.comments_count }} {{ 'comment' if post.comments_count == 1 else 'comments' }}</span>
+              </span>
             </div>
 
             <!-- Post Actions -->
@@ -1741,110 +1739,60 @@
             </div>
 
             <!-- Comments Section -->
-            <div
-              class="comments-section px-4 md:px-6 py-3 md:py-4 border-t border-gray-100 bg-gray-50"
-            >
-              <!-- Comment Input -->
-              <div
-                class="flex items-center space-x-2 md:space-x-3 mb-3 md:mb-4"
-              >
-                <img
-                  src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-                  alt="{{ current_user.full_name }}"
-                  class="w-7 h-7 md:w-8 md:h-8 rounded-full object-cover comment-input-avatar"
-                />
-                <div class="flex-1 relative">
-                  <input
-                    type="text"
-                    id="commentInput-{{ post.id }}"
-                    placeholder="Write a comment..."
-                    class="w-full bg-white rounded-full px-3 py-1.5 md:px-4 md:py-2 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 comment-input"
-                    onkeypress="handleCommentKeypress(event, {{ post.id }})"
-                  />
-                </div>
-              </div>
+            <!-- Comments Section - Scrollable with Dates & Avatars -->
+<div class="comments-section -mx-4 px-4 py-4 bg-gray-50 border-t border-gray-100">
+  <!-- Comment Input -->
+  <div class="flex items-center space-x-3 mb-4">
+    <img
+      src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+      alt="{{ current_user.full_name }}"
+      class="w-8 h-8 rounded-full object-cover flex-shrink-0"
+    />
+    <div class="flex-1 relative">
+      <input
+        type="text"
+        id="commentInput-{{ post.id }}"
+        placeholder="Write a comment..."
+        class="w-full bg-white rounded-full px-4 py-2.5 text-sm border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+        onkeypress="handleCommentKeypress(event, {{ post.id }})"
+      />
+    </div>
+  </div>
 
-              <!-- Comments List -->
-              <div id="comments-{{ post.id }}">
-                {% for comment in post.comments[:20]|reverse %}
-                <div
-                  class="flex space-x-2 md:space-x-3 mb-3 md:mb-4 comment-item comment-fade-in"
-                  id="comment-{{ comment.id }}"
-                >
-                  <img
-                    src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-                    alt="{{ comment.author.full_name }}"
-                    class="w-6 h-6 md:w-8 md:h-8 rounded-full object-cover flex-shrink-0 comment-avatar"
-                  />
-                  <div class="flex-1">
-                    <div
-                      class="bg-white rounded-xl md:rounded-2xl px-3 py-2 md:px-4 md:py-3"
-                    >
-                      <div class="flex justify-between items-start mb-1">
-                        <h5
-                          class="font-semibold text-xs md:text-sm comment-author"
-                        >
-                          {{ comment.author.full_name }}
-                        </h5>
-                        <div class="dropdown relative">
-                          <button
-                            class="p-0.5 md:p-1 rounded-full hover:bg-gray-100 transition-colors duration-300"
-                          >
-                            <i
-                              class="bi bi-three-dots text-gray-400 text-xs md:text-xs"
-                            ></i>
-                          </button>
-                          <div
-                            class="dropdown-menu absolute right-0 mt-1 w-28 md:w-32 bg-white rounded-lg md:rounded-xl shadow-2xl border border-gray-200 hidden z-10"
-                          >
-                            {% if comment.author.id == current_user.id %}
-                            <button
-                              onclick="deleteComment({{ comment.id }})"
-                              class="w-full text-left px-2 py-1.5 md:px-3 md:py-2 hover:bg-gray-50 rounded-t-lg md:rounded-t-xl text-red-600 text-xs md:text-sm"
-                            >
-                              <i class="bi bi-trash mr-1 text-xs md:text-sm"></i
-                              >Delete
-                            </button>
-                            {% endif %}
-                            <button
-                              onclick="reportContent('comment', {{ comment.id }})"
-                              class="w-full text-left px-2 py-1.5 md:px-3 md:py-2 hover:bg-gray-50 rounded-b-lg md:rounded-b-xl text-orange-600 text-xs md:text-sm"
-                            >
-                              <i class="bi bi-flag mr-1 text-xs md:text-sm"></i
-                              >Report
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                      <p
-                        class="text-gray-800 text-xs md:text-sm comment-content"
-                      >
-                        {{ comment.content }}
-                      </p>
-                      <div
-                        class="flex items-center space-x-2 md:space-x-3 mt-1 md:mt-2"
-                      >
-                        <span class="text-xs text-gray-400 comment-time"
-                          >{{ comment.created_at.strftime('%I:%M %p') }}</span
-                        >
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                {% endfor %}
-              </div>
-
-              <!-- Use len() as a temporary fix -->
-              {% set comments_count = post.comments|length if post.comments else 0 %}
-              {% if comments_count > 3 %}
-             <!-- <button
-                onclick="loadAllComments({{ post.id }})"
-                class="text-blue-600 hover:text-blue-700 text-xs md:text-sm font-semibold"
-              >
-                View all {{ comments_count }} comments
-              </button> -->
-              {% endif %}
+  <!-- Comments List -->
+  <div class="space-y-4">
+    {% if post.comments_count > 0 %}
+      {% for comment in post.comments[:20]|reverse %}
+      <div class="flex space-x-3 comment-item comment-fade-in" id="comment-{{ comment.id }}">
+        <img
+          src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+          alt="{{ comment.author.full_name }}"
+          class="w-9 h-9 rounded-full object-cover flex-shrink-0"
+        />
+        <div class="flex-1">
+          <div class="bg-white rounded-2xl px-4 py-3 shadow-sm">
+            <div class="flex justify-between items-start">
+              <h6 class="font-semibold text-sm">
+                {{ comment.author.full_name }}
+              </h6>
+              <span class="text-xs text-gray-500">
+                {{ comment.created_at.strftime('%b %d at %I:%M %p') }}
+              </span>
             </div>
+            <p class="text-gray-800 text-sm mt-2 leading-relaxed">
+              {{ comment.content }}
+            </p>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <p class="text-center text-gray-500 text-sm py-6">
+        No comments yet. Be the first to comment!
+      </p>
+    {% endif %}
+  </div>
+</div>
           </div>
           {% endfor %}
         {% else %}

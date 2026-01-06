@@ -6156,7 +6156,7 @@ async function reactToPost(postId, reactionType) {
     const likeBtn = document.getElementById(`like-btn-${postId}`);
     const likeIcon = document.getElementById(`like-icon-${postId}`);
     const likeText = document.getElementById(`like-text-${postId}`);
-    const likeCount = document.getElementById(`like-count-${postId}`);
+    const reactionCount = document.getElementById(`reaction-count-${postId}`);
     const tooltip = document.getElementById(`reactions-${postId}`);
 
     if (!likeBtn || !likeIcon || !likeText) return;
@@ -6182,7 +6182,7 @@ async function reactToPost(postId, reactionType) {
 
         if (data.success) {
             updateReactionUI(postId, data.user_reaction || null, true, likeBtn, likeIcon, likeText);
-            likeCount.textContent = `${data.total_reactions} ${data.total_reactions === 1 ? 'reaction' : 'reactions'}`;
+            reactionCount.textContent = `${data.total_reactions} ${data.total_reactions === 1 ? 'reaction' : 'reactions'}`;
             Toast.show(getReactionMessage(data.user_reaction, data.reacted), 'success');
         } else {
             updateReactionUI(postId, null, false, likeBtn, likeIcon, likeText);
