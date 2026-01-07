@@ -997,6 +997,10 @@ class Message(db.Model):
     content = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     status = db.Column(db.String(20), default="sent")
+    message_type = db.Column(db.String(20), default='text')
+    message_data = db.Column(db.JSON, nullable=True)
+    is_deleted = db.Column(db.Boolean, default=False)
+    edited_at = db.Column(db.DateTime)
 
     sender = db.relationship("User", foreign_keys=[sender_id], backref="sent_messages")
     receiver = db.relationship(
@@ -1011,6 +1015,10 @@ class Message(db.Model):
             "content": self.content,
             "timestamp": self.timestamp.isoformat(),
             "status": self.status,
+            'message_type': self.message_type,
+            "message_data": self.message_data if self.message_data else {},
+            'is_deleted': self.is_deleted,
+            'edited_at': self.edited_at.isoformat() if self.edited_at else None,
             "sender_name": self.sender.full_name,
             "sender_avatar": self.sender.profile_pic
             or url_for("static", filename="assets/img/default-avatar.png"),

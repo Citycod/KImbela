@@ -1,5 +1,10 @@
 // ========================================
-// MOBILE MENU FUNCTION (MISSING)
+// DASHBOARD.JS - UPDATED VERSION
+// No Messenger conflicts - Uses messenger.js exclusively
+// ========================================
+
+// ========================================
+// MOBILE MENU FUNCTION
 // ========================================
 
 window.toggleMobileMenu = function() {
@@ -42,12 +47,6 @@ document.getElementById('mobileSidebarOverlay')?.addEventListener('click', (e) =
     }
 });
 
-
-
-
-
-
-
 // ========================================
 // GLOBAL UTILITIES & INITIALIZATION
 // ========================================
@@ -61,9 +60,6 @@ const currentUserId = parseInt(window.currentUserId) || null;
 const appState = {
     activeFriendId: null,
     typingTimer: null,
-//    isTyping: false,
-    activeAds: [],
-    adShownThisHour: false,
     userAdPreferences: JSON.parse(localStorage.getItem('adPreferences') || '{}'),
     notificationCheckInterval: null,
     searchTimeout: null,
@@ -77,7 +73,6 @@ const appState = {
 // GLOBAL FUNCTIONS FOR HTML ONCLICK ATTRIBUTES
 // ========================================
 
-// These must be global to work with HTML onclick attributes
 window.closeModal = function(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
@@ -104,28 +99,7 @@ window.viewFullProfile = function(userId) {
     }, 500);
 };
 
-window.handleMessageButtonClick = function(userId) {
-    // Close the profile modal first
-    const profileModal = document.getElementById('profileModal');
-    if (profileModal) {
-        profileModal.classList.add('hidden');
-        document.body.style.overflow = '';
-    }
 
-    // Then open messenger and start chat
-    if (typeof window.Messenger !== 'undefined') {
-        // Open messenger
-        window.Messenger.open();
-
-        // Start chat with the user after a short delay
-        setTimeout(() => {
-            window.Messenger.startChat(userId);
-        }, 500);
-    } else {
-        console.error('Messenger not initialized');
-        Toast.show('Messenger not available', 'danger');
-    }
-};
 
 window.openModal = function(modalId) {
     const modal = document.getElementById(modalId);
@@ -136,58 +110,7 @@ window.openModal = function(modalId) {
 };
 
 
-function handleChatInputKeypress(event) {
-    if (event.key === 'Enter' && !event.shiftKey) {
-        event.preventDefault();
-        // Check if messenger is initialized
-        if (typeof window.Messenger !== 'undefined') {
-            window.Messenger.sendMessage();
-        } else {
-            console.error('Messenger not initialized');
-        }
-    }
-}
 
-// Make it globally available
-window.handleChatInputKeypress = handleChatInputKeypress;
-
-
-window.handleMessageScroll = function() {
-    // Check if messenger is initialized
-    if (typeof window.Messenger !== 'undefined' &&
-        typeof window.Messenger.handleMessageScroll === 'function') {
-        window.Messenger.handleMessageScroll();
-    }
-};
-
-window.toggleMobileMenu = function() {
-    const overlay = document.getElementById('mobileSidebarOverlay');
-    const sidebar = document.getElementById('mobileSidebar');
-
-    if (!overlay || !sidebar) return;
-
-    if (overlay.style.display === 'block') {
-        overlay.style.display = 'none';
-        sidebar.classList.remove('translate-x-0');
-        sidebar.classList.add('-translate-x-full');
-    } else {
-        overlay.style.display = 'block';
-        sidebar.classList.remove('-translate-x-full');
-        sidebar.classList.add('translate-x-0');
-    }
-};
-
-window.openMessenger = function() {
-    Messenger.open();
-};
-
-window.closeMessenger = function() {
-    Messenger.close();
-};
-
-window.backToFriends = function() {
-    Messenger.backToFriends();
-};
 
 window.previewMedia = function(input) {
     MediaPreview.preview(input);
@@ -209,18 +132,24 @@ window.leaveGroup = function(groupId) {
     Groups.leave(groupId);
 };
 
-window.openProfileModal = function(userId) {
-    ProfileSystem.openProfileModal(userId);
+window.openProfileModal = function(userId, fromNotification = false) {
+    ProfileSystem.openProfileModal(userId, fromNotification);
 };
 
-window.addFriend = function(userId) {
-    const button = event.target;
+window.addFriend = function(userId, button) {
     FriendSystem.add(userId, button);
 };
 
-window.cancelFriendRequest = function(userId) {
-    const button = event.target;
+window.cancelFriendRequest = function(userId, button) {
     FriendSystem.cancelRequest(userId, button);
+};
+
+window.acceptFriendRequest = function(userId, button) {
+    FriendSystem.acceptFriendRequest(userId, button);
+};
+
+window.declineFriendRequest = function(userId, button) {
+    FriendSystem.declineFriendRequest(userId, button);
 };
 
 // ========================================
@@ -533,42 +462,10 @@ const PostSystem = {
             console.error('Error liking post:', error);
             if (likeCount) likeCount.textContent = originalCount;
             if (icon) icon.className = originalIcon;
-//            Toast.show('Failed to like post', 'danger');
         } finally {
             likeBtn.disabled = false;
         }
     },
-
-//    async delete(postId, deleteBtn) {
-//        if (!confirm('Are you sure you want to delete this post?')) return;
-//
-//        const originalContent = deleteBtn.innerHTML;
-//        deleteBtn.innerHTML = `<span class="inline-flex items-center gap-1"><span class="tiny-loader xs danger"></span>Deleting...</span>`;
-//        deleteBtn.disabled = true;
-//
-//        try {
-//            const response = await fetch(`/delete_post/${postId}`, {
-//                method: 'POST',
-//                headers: { 'X-CSRFToken': csrfToken }
-//            });
-//
-//            if (!response.ok) throw new Error('Network error');
-//
-//            const postElement = document.querySelector(`[data-post-id="${postId}"]`);
-//            if (postElement) {
-//                postElement.style.opacity = '0.5';
-//                setTimeout(() => {
-//                    postElement.remove();
-//                    Toast.show('Post deleted successfully', 'success');
-//                }, 500);
-//            }
-//        } catch (error) {
-//            console.error('Error deleting post:', error);
-//            deleteBtn.innerHTML = originalContent;
-//            deleteBtn.disabled = false;
-//            Toast.show('Failed to delete post', 'danger');
-//        }
-//    },
 
     async edit(postId) {
         const post = document.querySelector(`[data-post-id="${postId}"]`);
@@ -612,8 +509,6 @@ const PostSystem = {
         Modal.open('editPostModal');
     },
 
-
-
     async viewComments(postId) {
         const modalBody = document.getElementById('commentModalBody');
         if (modalBody) {
@@ -643,37 +538,37 @@ const PostSystem = {
 
     displayCommentsModal(comments) {
         const body = document.getElementById('commentModalBody');
-    if (!body) return;
+        if (!body) return;
 
-    body.innerHTML = '';
+        body.innerHTML = '';
 
-    if (!comments || comments.length === 0) {
-        body.innerHTML = '<div class="text-center py-8 text-gray-500">No comments yet</div>';
-        return;
-    }
+        if (!comments || comments.length === 0) {
+            body.innerHTML = '<div class="text-center py-8 text-gray-500">No comments yet</div>';
+            return;
+        }
 
-    comments.forEach(comment => {
-        const isLong = comment.content?.length > 150;
-        body.innerHTML += `
-            <div class="comment mb-5 border-b pb-4">
-                <div class="flex space-x-3">
-                    <img src="${comment.avatar || defaultAvatar}" class="w-10 h-10 rounded-full object-cover flex-shrink-0">
-                    <div class="flex-1">
-                        <div class="bg-gray-50 rounded-2xl px-4 py-3">
-                            <div class="font-semibold">${comment.name || 'User'}</div>
-                            <div class="text-sm ${isLong ? 'truncated' : ''}">
-                                ${comment.content || ''}
+        comments.forEach(comment => {
+            const isLong = comment.content?.length > 150;
+            body.innerHTML += `
+                <div class="comment mb-5 border-b pb-4">
+                    <div class="flex space-x-3">
+                        <img src="${comment.avatar || window.defaultAvatar}" class="w-10 h-10 rounded-full object-cover flex-shrink-0">
+                        <div class="flex-1">
+                            <div class="bg-gray-50 rounded-2xl px-4 py-3">
+                                <div class="font-semibold">${comment.name || 'User'}</div>
+                                <div class="text-sm ${isLong ? 'truncated' : ''}">
+                                    ${comment.content || ''}
+                                </div>
+                                ${isLong ? `
+                                <button class="text-blue-600 text-xs font-medium mt-2" onclick="this.previousElementSibling.classList.toggle('truncated'); this.textContent = this.previousElementSibling.classList.contains('truncated') ? 'See More' : 'See Less'">
+                                    See More
+                                </button>` : ''}
                             </div>
-                            ${isLong ? `
-                            <button class="text-blue-600 text-xs font-medium mt-2" onclick="this.previousElementSibling.classList.toggle('truncated'); this.textContent = this.previousElementSibling.classList.contains('truncated') ? 'See More' : 'See Less'">
-                                See More
-                            </button>` : ''}
                         </div>
                     </div>
                 </div>
-            </div>
-        `;
-    });
+            `;
+        });
     },
 
     initInteractions() {
@@ -690,7 +585,7 @@ const PostSystem = {
             if (deleteBtn) {
                 e.preventDefault();
                 const postId = deleteBtn.dataset.postId;
-                this.delete(postId, deleteBtn);
+                this.deletePost(postId, deleteBtn);
             }
 
             // Edit posts
@@ -724,15 +619,81 @@ const PostSystem = {
                 this.addComment(postId, content, e.target);
             }
         });
+    },
+
+    async deletePost(postId, deleteBtn) {
+        if (!confirm('Are you sure you want to delete this post?')) return;
+
+        const originalContent = deleteBtn.innerHTML;
+        deleteBtn.innerHTML = `<span class="inline-flex items-center gap-1"><span class="tiny-loader xs danger"></span>Deleting...</span>`;
+        deleteBtn.disabled = true;
+
+        try {
+            const response = await fetch(`/delete_post/${postId}`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrfToken }
+            });
+
+            if (!response.ok) throw new Error('Network error');
+
+            const postElement = document.querySelector(`[data-post-id="${postId}"]`);
+            if (postElement) {
+                postElement.style.opacity = '0.5';
+                setTimeout(() => {
+                    postElement.remove();
+                    Toast.show('Post deleted successfully', 'success');
+                }, 500);
+            }
+        } catch (error) {
+            console.error('Error deleting post:', error);
+            deleteBtn.innerHTML = originalContent;
+            deleteBtn.disabled = false;
+            Toast.show('Failed to delete post', 'danger');
+        }
+    },
+
+    async addComment(postId, content, inputElement) {
+        if (!content.trim()) return;
+
+        inputElement.disabled = true;
+        const originalPlaceholder = inputElement.placeholder;
+        inputElement.placeholder = 'Posting...';
+
+        try {
+            const response = await fetch(`/add_comment/${postId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({ content: content })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                inputElement.value = '';
+                Toast.show('Comment added!', 'success');
+
+                // Reload comments if modal is open
+                const modal = document.getElementById('commentModal');
+                if (modal && !modal.classList.contains('hidden')) {
+                    this.viewComments(postId);
+                }
+            } else {
+                Toast.show(data.error || 'Failed to add comment', 'danger');
+            }
+        } catch (error) {
+            console.error('Error adding comment:', error);
+            Toast.show('Failed to add comment', 'danger');
+        } finally {
+            inputElement.disabled = false;
+            inputElement.placeholder = originalPlaceholder;
+        }
     }
 };
 
 // ========================================
 // FRIEND SYSTEM
-// ========================================
-
-// ========================================
-// FRIEND SYSTEM - COMPLETE VERSION
 // ========================================
 
 const FriendSystem = {
@@ -840,139 +801,136 @@ const FriendSystem = {
     },
 
     async acceptFriendRequest(userId, button) {
-    if (!button) return;
+        if (!button) return;
 
-    const container = button.closest('.suggestion-card') || button.closest('.profile-actions') || document.getElementById('profileActions');
+        const container = button.closest('.suggestion-card') || button.closest('.profile-actions') || document.getElementById('profileActions');
 
-    Loader.quick(button, 'show');
+        Loader.quick(button, 'show');
 
-    try {
-        // Get notification ID if it exists (from notification dropdown)
-        const notificationId = button.closest('.notification-item')?.dataset?.notificationId ||
-                               button.dataset.notificationId || null;
+        try {
+            // Get notification ID if it exists (from notification dropdown)
+            const notificationId = button.closest('.notification-item')?.dataset?.notificationId ||
+                                   button.dataset.notificationId || null;
 
-        const response = await fetch(`/accept_friend_request/${userId}`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': csrfToken || '',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                notification_id: notificationId || null
-            })
-        });
+            const response = await fetch(`/accept_friend_request/${userId}`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken || '',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    notification_id: notificationId || null
+                })
+            });
 
-        // Check content type safely
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            const text = await response.text();
-            console.error('Non-JSON response:', text);
-            throw new Error('Server error (possible login issue or bad request)');
+            // Check content type safely
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const text = await response.text();
+                console.error('Non-JSON response:', text);
+                throw new Error('Server error (possible login issue or bad request)');
+            }
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Update suggestion card or profile actions
+                if (container) {
+                    container.innerHTML = `
+                        <button class="w-full py-2.5 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+                                onclick="event.stopPropagation(); Messenger.startChat(${userId})">
+                            <i class="bi bi-chat-dots"></i> Message
+                        </button>
+                    `;
+                }
+
+                Toast.show('Friend request accepted!', 'success');
+
+                // Refresh profile modal buttons if open
+                if (typeof ProfileSystem !== 'undefined') {
+                    ProfileSystem.updateProfileActions(userId);
+                }
+
+                // Update notification badge
+                if (typeof NotificationSystem !== 'undefined') {
+                    NotificationSystem.updateBadge();
+                }
+            } else {
+                Toast.show(data.error || 'Failed to accept request', 'danger');
+            }
+        } catch (error) {
+            console.error('Error accepting friend request:', error);
+            Toast.show('Failed to accept. Please try again.', 'danger');
+        } finally {
+            Loader.quick(button, 'hide');
         }
+    },
 
-        const data = await response.json();
+    async declineFriendRequest(userId, button) {
+        if (!button) return;
 
-        if (data.success) {
-            // Update suggestion card or profile actions
-            if (container) {
-                container.innerHTML = `
-                    <button class="w-full py-2.5 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
-                            onclick="event.stopPropagation(); Messenger.startChat(${userId})">
-                        <i class="bi bi-chat-dots"></i> Message
-                    </button>
-                `;
+        const container = button.closest('.suggestion-card') || button.closest('.profile-actions');
+
+        Loader.quick(button, 'show');
+
+        try {
+            // Get notification ID if it exists
+            const notificationId = button.closest('.notification-item')?.dataset?.notificationId ||
+                                   button.dataset.notificationId || null;
+
+            const response = await fetch(`/decline_friend_request/${userId}`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken || '',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    notification_id: notificationId || null
+                })
+            });
+
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const text = await response.text();
+                console.error('Server returned non-JSON:', text.substring(0, 500));
+                throw new Error('Server error - please check login status');
             }
 
-            Toast.show('Friend request accepted!', 'success');
+            const data = await response.json();
 
-            // Refresh profile modal buttons if open
-            if (typeof ProfileSystem !== 'undefined') {
-                ProfileSystem.updateProfileActions(userId);
-            }
+            if (data.success) {
+                if (container) {
+                    container.innerHTML = `
+                        <button
+                            class="btn-add-friend w-full py-2 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                            onclick="event.stopPropagation(); FriendSystem.add(${userId}, this)"
+                            style="background: linear-gradient(135deg, #5a4500, #b88900);"
+                        >
+                            <i class="bi bi-person-plus mr-1"></i> Connect
+                        </button>
+                    `;
+                }
 
-            // Update notification badge
-            if (typeof NotificationSystem !== 'undefined') {
-                NotificationSystem.updateBadge();
+                Toast.show('Friend request declined', 'info');
+
+                if (typeof ProfileSystem !== 'undefined') {
+                    ProfileSystem.updateProfileActions(userId);
+                }
+
+                // Update notification badge
+                if (typeof NotificationSystem !== 'undefined') {
+                    NotificationSystem.updateBadge();
+                }
+            } else {
+                Toast.show(data.error || 'Failed to decline request', 'danger');
             }
-        } else {
-            Toast.show(data.error || 'Failed to accept request', 'danger');
+        } catch (error) {
+            console.error('Error declining friend request:', error);
+            Toast.show('Failed to decline request. Check login status.', 'danger');
+        } finally {
+            Loader.quick(button, 'hide');
         }
-    } catch (error) {
-        console.error('Error accepting friend request:', error);
-        Toast.show('Failed to accept. Please try again.', 'danger');
-    } finally {
-        Loader.quick(button, 'hide');
-    }
-},
-
-
-async declineFriendRequest(userId, button) {
-    if (!button) return;
-
-    const container = button.closest('.suggestion-card') || button.closest('.profile-actions');
-
-    Loader.quick(button, 'show');
-
-    try {
-        // Get notification ID if it exists
-        const notificationId = button.closest('.notification-item')?.dataset?.notificationId ||
-                               button.dataset.notificationId || null;
-
-        const response = await fetch(`/decline_friend_request/${userId}`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': csrfToken || '',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                notification_id: notificationId || null
-            })
-        });
-
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            const text = await response.text();
-            console.error('Server returned non-JSON:', text.substring(0, 500));
-            throw new Error('Server error - please check login status');
-        }
-
-        const data = await response.json();
-
-        if (data.success) {
-            if (container) {
-                container.innerHTML = `
-                    <button
-                        class="btn-add-friend w-full py-2 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
-                        onclick="event.stopPropagation(); FriendSystem.add(${userId}, this)"
-                        style="background: linear-gradient(135deg, #5a4500, #b88900);"
-                    >
-                        <i class="bi bi-person-plus mr-1"></i> Connect
-                    </button>
-                `;
-            }
-
-            Toast.show('Friend request declined', 'info');
-
-            if (typeof ProfileSystem !== 'undefined') {
-                ProfileSystem.updateProfileActions(userId);
-            }
-
-            // Update notification badge
-            if (typeof NotificationSystem !== 'undefined') {
-                NotificationSystem.updateBadge();
-            }
-        } else {
-            Toast.show(data.error || 'Failed to decline request', 'danger');
-        }
-    } catch (error) {
-        console.error('Error declining friend request:', error);
-        Toast.show('Failed to decline request. Check login status.', 'danger');
-    } finally {
-        Loader.quick(button, 'hide');
-    }
-},
-
-
+    },
 
     updateProfileModalButton(userId, status) {
         const profileActions = document.getElementById('profileActions');
@@ -1008,7 +966,7 @@ async declineFriendRequest(userId, button) {
             case 'friends':
                 buttonHTML = `
                     <button class="btn btn-primary px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
-                            onclick="Messenger.startChat(${userId})">
+                            onclick="Messenger.startChat(${userId})"">
                         <i class="bi bi-chat-dots mr-1"></i> Message
                     </button>
                     <button class="btn btn-outline-danger px-4 py-2 border border-red-500 text-red-500 rounded-lg font-medium hover:bg-red-50 transition-colors"
@@ -1053,30 +1011,8 @@ async declineFriendRequest(userId, button) {
     }
 };
 
-// Make the functions available globally
-window.addFriend = function(userId, button) {
-    FriendSystem.add(userId, button);
-};
-
-window.cancelFriendRequest = function(userId, button) {
-    FriendSystem.cancelRequest(userId, button);
-};
-
-window.acceptFriendRequest = function(userId, button) {
-    FriendSystem.acceptFriendRequest(userId, button);
-};
-
-window.declineFriendRequest = function(userId, button) {
-    FriendSystem.declineFriendRequest(userId, button);
-};
-
-
 // ========================================
 // PROFILE SYSTEM
-// ========================================
-
-// ========================================
-// PROFILE SYSTEM - UPDATED VERSION
 // ========================================
 
 const ProfileSystem = {
@@ -1134,7 +1070,6 @@ const ProfileSystem = {
                 throw new Error(errorMessage);
             }
 
-            // ← ONLY ONE data declaration
             const data = await response.json();
 
             if (data.error) {
@@ -1320,46 +1255,71 @@ const ProfileSystem = {
                 </div>
             `;
 
-            console.log('Profile data received:', data);
-            console.log('State value:', data.state);
-            console.log('State type:', typeof data.state);
-
             // Set action buttons based on how the modal was opened
             if (fromFriendRequestNotification) {
                 profileActions.innerHTML = `
-                    <div class="flex flex-wrap gap-4 justify-center py-6">
-                        <button class="px-8 py-3.5 bg-green-600 text-white text-lg font-medium rounded-xl hover:bg-green-700 transition-all shadow-lg flex items-center gap-2"
+                    <div class="flex flex-wrap gap-3 justify-center py-6">
+                        <!-- Accept Button -->
+                        <button class="relative px-5 py-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl font-medium transition-all duration-300 overflow-hidden group shadow-sm hover:shadow-md"
                                 onclick="FriendSystem.acceptFriendRequest(${userId}, this)">
-                            <i class="bi bi-check-lg text-xl"></i> Accept
-                        </button>
-                        <button class="px-8 py-3.5 bg-red-600 text-white text-lg font-medium rounded-xl hover:bg-red-700 transition-all shadow-lg flex items-center gap-2"
-                                onclick="FriendSystem.declineFriendRequest(${userId}, this)">
-                            <i class="bi bi-x-lg text-xl"></i> Decline
-                        </button>
-                        <button class="px-8 py-3.5 bg-gray-300 text-gray-800 text-lg font-medium rounded-xl hover:bg-gray-400 transition-all"
-                                onclick="Modal.close('profileModal')">
-                            Cancel
-                        </button>
-                       <a href="/profile/${userId}"
-   class="relative px-5 py-2 bg-gray-50 hover:bg-white text-gray-700 rounded-xl font-medium transition-all duration-300 overflow-hidden group border border-gray-100 hover:border-blue-100"
-   onclick="Modal.close('profileModal')">
-    <!-- Subtle background effect -->
-    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-blue-50/0 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+                            <!-- Shimmer effect -->
+                            <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
 
-    <!-- Content -->
-    <div class="relative flex items-center gap-2">
-        <i class="bi bi-person-square text-base group-hover:text-blue-600 transition-colors duration-300"></i>
-        <span class="text-xs group-hover:text-blue-700 transition-colors duration-300">View Full Profile</span>
-        <i class="bi bi-arrow-right-short text-sm opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
-    </div>
-</a>
+                            <!-- Content -->
+                            <div class="relative flex items-center gap-2">
+                                <i class="bi bi-check-lg text-sm group-hover:scale-110 transition-transform duration-300"></i>
+                                <span class="text-xs group-hover:font-medium transition-all duration-300">Accept</span>
+                                <i class="bi bi-arrow-right-short text-xs opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
+                            </div>
+                        </button>
+
+                        <!-- Decline Button -->
+                        <button class="relative px-5 py-2 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white rounded-xl font-medium transition-all duration-300 overflow-hidden group shadow-sm hover:shadow-md"
+                                onclick="FriendSystem.declineFriendRequest(${userId}, this)">
+                            <!-- Shimmer effect -->
+                            <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+
+                            <!-- Content -->
+                            <div class="relative flex items-center gap-2">
+                                <i class="bi bi-x-lg text-sm group-hover:scale-110 transition-transform duration-300"></i>
+                                <span class="text-xs group-hover:font-medium transition-all duration-300">Decline</span>
+                                <i class="bi bi-arrow-right-short text-xs opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
+                            </div>
+                        </button>
+
+                        <!-- Cancel Button -->
+                        <button class="relative px-5 py-2 bg-gradient-to-r from-gray-400 to-gray-600 hover:from-gray-500 hover:to-gray-700 text-white rounded-xl font-medium transition-all duration-300 overflow-hidden group shadow-sm hover:shadow-md"
+                                onclick="Modal.close('profileModal')">
+                            <!-- Shimmer effect -->
+                            <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+
+                            <!-- Content -->
+                            <div class="relative flex items-center gap-2">
+                                <i class="bi bi-x-circle text-sm group-hover:scale-110 transition-transform duration-300"></i>
+                                <span class="text-xs group-hover:font-medium transition-all duration-300">Cancel</span>
+                                <i class="bi bi-arrow-right-short text-xs opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
+                            </div>
+                        </button>
+
+                        <!-- View Full Profile Button -->
+                        <a href="/profile/${userId}"
+                           class="relative px-5 py-2 bg-gray-50 hover:bg-white text-gray-700 rounded-xl font-medium transition-all duration-300 overflow-hidden group border border-gray-100 hover:border-blue-100"
+                           onclick="Modal.close('profileModal')">
+                            <!-- Subtle background effect -->
+                            <div class="absolute inset-0 bg-gradient-to-r from-transparent via-blue-50/0 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+
+                            <!-- Content -->
+                            <div class="relative flex items-center gap-2">
+                                <i class="bi bi-person-square text-sm group-hover:text-blue-600 transition-colors duration-300"></i>
+                                <span class="text-xs group-hover:text-blue-700 transition-colors duration-300">View Full Profile</span>
+                                <i class="bi bi-arrow-right-short text-xs opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
+                            </div>
+                        </a>
                     </div>
                 `;
             } else {
                 this.updateProfileActions(userId);
             }
-
-
 
         } catch (error) {
             console.error('Error displaying profile modal:', error);
@@ -1388,140 +1348,208 @@ const ProfileSystem = {
                 switch(data.status) {
                     case 'friends':
                         actionsHTML = `
-                            <button class="btn btn-primary px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
-                                    onclick="handleMessageButtonClick(${userId})">
-                                <i class="bi bi-chat-dots mr-1"></i> Message
-                            </button>
-                            <button class="btn btn-outline-danger px-4 py-2 border border-red-500 text-red-500 rounded-lg font-medium hover:bg-red-50 transition-colors"
-                                    onclick="BlockSystem.block(${userId})">
-                                <i class="bi bi-slash-circle mr-1"></i> Block
-                            </button>
+                            <div class="flex flex-wrap gap-3 justify-center py-6">
+                                <!-- Message Button -->
+                                <button class="relative px-5 py-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-xl font-medium transition-all duration-300 overflow-hidden group shadow-sm hover:shadow-md"
+                                        onclick="window.handleMessageButtonClick(${userId})">
+                                    <!-- Shimmer effect -->
+                                    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
 
-                            <a href="/profile/${userId}"
-   class="relative px-5 py-2 bg-gray-50 hover:bg-white text-gray-700 rounded-xl font-medium transition-all duration-300 overflow-hidden group border border-gray-100 hover:border-blue-100"
-   onclick="Modal.close('profileModal')">
-    <!-- Subtle background effect -->
-    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-blue-50/0 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+                                    <!-- Content -->
+                                    <div class="relative flex items-center gap-2">
+                                        <i class="bi bi-chat-dots text-sm group-hover:scale-110 transition-transform duration-300"></i>
+                                        <span class="text-xs group-hover:font-medium transition-all duration-300">Message</span>
+                                        <i class="bi bi-arrow-right-short text-xs opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
+                                    </div>
+                                </button>
 
-    <!-- Content -->
-    <div class="relative flex items-center gap-2">
-        <i class="bi bi-person-square text-base group-hover:text-blue-600 transition-colors duration-300"></i>
-        <span class="text-xs group-hover:text-blue-700 transition-colors duration-300">View Full Profile</span>
-        <i class="bi bi-arrow-right-short text-sm opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
-    </div>
-</a>
+                                <!-- Block Button -->
+                                <button class="relative px-5 py-2 bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white rounded-xl font-medium transition-all duration-300 overflow-hidden group shadow-sm hover:shadow-md"
+                                        onclick="BlockSystem.block(${userId})">
+                                    <!-- Shimmer effect -->
+                                    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+
+                                    <!-- Content -->
+                                    <div class="relative flex items-center gap-2">
+                                        <i class="bi bi-slash-circle text-sm group-hover:scale-110 transition-transform duration-300"></i>
+                                        <span class="text-xs group-hover:font-medium transition-all duration-300">Block</span>
+                                        <i class="bi bi-arrow-right-short text-xs opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
+                                    </div>
+                                </button>
+
+                                <!-- View Full Profile Button -->
+                                <a href="/profile/${userId}"
+                                   class="relative px-5 py-2 bg-gray-50 hover:bg-white text-gray-700 rounded-xl font-medium transition-all duration-300 overflow-hidden group border border-gray-100 hover:border-blue-100"
+                                   onclick="Modal.close('profileModal')">
+                                    <!-- Subtle background effect -->
+                                    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-blue-50/0 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+
+                                    <!-- Content -->
+                                    <div class="relative flex items-center gap-2">
+                                        <i class="bi bi-person-square text-sm group-hover:text-blue-600 transition-colors duration-300"></i>
+                                        <span class="text-xs group-hover:text-blue-700 transition-colors duration-300">View Full Profile</span>
+                                        <i class="bi bi-arrow-right-short text-xs opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
+                                    </div>
+                                </a>
+                            </div>
                         `;
                         break;
 
                     case 'request_sent':
                         actionsHTML = `
-                            <button class="btn btn-secondary px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors"
-                                    onclick="FriendSystem.cancelRequest(${userId}, this)">
-                                <i class="bi bi-clock-history mr-1"></i> Cancel Request
-                            </button>
+                            <div class="flex flex-wrap gap-3 justify-center py-6">
+                                <!-- Cancel Request Button -->
+                                <button class="relative px-5 py-2 bg-gradient-to-r from-gray-400 to-gray-600 hover:from-gray-500 hover:to-gray-700 text-white rounded-xl font-medium transition-all duration-300 overflow-hidden group shadow-sm hover:shadow-md"
+                                        onclick="FriendSystem.cancelRequest(${userId}, this)">
+                                    <!-- Shimmer effect -->
+                                    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
 
-                           <a href="/profile/${userId}"
-   class="relative px-5 py-2 bg-gray-50 hover:bg-white text-gray-700 rounded-xl font-medium transition-all duration-300 overflow-hidden group border border-gray-100 hover:border-blue-100"
-   onclick="Modal.close('profileModal')">
-    <!-- Subtle background effect -->
-    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-blue-50/0 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+                                    <!-- Content -->
+                                    <div class="relative flex items-center gap-2">
+                                        <i class="bi bi-clock-history text-sm group-hover:scale-110 transition-transform duration-300"></i>
+                                        <span class="text-xs group-hover:font-medium transition-all duration-300">Cancel Request</span>
+                                        <i class="bi bi-arrow-right-short text-xs opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
+                                    </div>
+                                </button>
 
-    <!-- Content -->
-    <div class="relative flex items-center gap-2">
-        <i class="bi bi-person-square text-base group-hover:text-blue-600 transition-colors duration-300"></i>
-        <span class="text-xs group-hover:text-blue-700 transition-colors duration-300">View Full Profile</span>
-        <i class="bi bi-arrow-right-short text-sm opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
-    </div>
-</a>
+                                <!-- View Full Profile Button -->
+                                <a href="/profile/${userId}"
+                                   class="relative px-5 py-2 bg-gray-50 hover:bg-white text-gray-700 rounded-xl font-medium transition-all duration-300 overflow-hidden group border border-gray-100 hover:border-blue-100"
+                                   onclick="Modal.close('profileModal')">
+                                    <!-- Subtle background effect -->
+                                    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-blue-50/0 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+
+                                    <!-- Content -->
+                                    <div class="relative flex items-center gap-2">
+                                        <i class="bi bi-person-square text-sm group-hover:text-blue-600 transition-colors duration-300"></i>
+                                        <span class="text-xs group-hover:text-blue-700 transition-colors duration-300">View Full Profile</span>
+                                        <i class="bi bi-arrow-right-short text-xs opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
+                                    </div>
+                                </a>
+                            </div>
                         `;
                         break;
 
                     case 'request_received':
                         actionsHTML = `
-                            <div class="flex space-x-2">
-                                <button class="btn btn-success px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
+                            <div class="flex flex-wrap gap-3 justify-center py-6">
+                                <!-- Accept Button -->
+                                <button class="relative px-5 py-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl font-medium transition-all duration-300 overflow-hidden group shadow-sm hover:shadow-md"
                                         onclick="FriendSystem.acceptFriendRequest(${userId}, this)">
-                                    <i class="bi bi-check-lg mr-1"></i> Accept
+                                    <!-- Shimmer effect -->
+                                    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+
+                                    <!-- Content -->
+                                    <div class="relative flex items-center gap-2">
+                                        <i class="bi bi-check-lg text-sm group-hover:scale-110 transition-transform duration-300"></i>
+                                        <span class="text-xs group-hover:font-medium transition-all duration-300">Accept</span>
+                                        <i class="bi bi-arrow-right-short text-xs opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
+                                    </div>
                                 </button>
-                                <button class="btn btn-danger px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
+
+                                <!-- Decline Button -->
+                                <button class="relative px-5 py-2 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white rounded-xl font-medium transition-all duration-300 overflow-hidden group shadow-sm hover:shadow-md"
                                         onclick="FriendSystem.declineFriendRequest(${userId}, this)">
-                                    <i class="bi bi-x-lg mr-1"></i> Decline
+                                    <!-- Shimmer effect -->
+                                    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+
+                                    <!-- Content -->
+                                    <div class="relative flex items-center gap-2">
+                                        <i class="bi bi-x-lg text-sm group-hover:scale-110 transition-transform duration-300"></i>
+                                        <span class="text-xs group-hover:font-medium transition-all duration-300">Decline</span>
+                                        <i class="bi bi-arrow-right-short text-xs opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
+                                    </div>
                                 </button>
 
+                                <!-- View Full Profile Button -->
                                 <a href="/profile/${userId}"
-   class="relative px-5 py-2 bg-gray-50 hover:bg-white text-gray-700 rounded-xl font-medium transition-all duration-300 overflow-hidden group border border-gray-100 hover:border-blue-100"
-   onclick="Modal.close('profileModal')">
-    <!-- Subtle background effect -->
-    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-blue-50/0 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+                                   class="relative px-5 py-2 bg-gray-50 hover:bg-white text-gray-700 rounded-xl font-medium transition-all duration-300 overflow-hidden group border border-gray-100 hover:border-blue-100"
+                                   onclick="Modal.close('profileModal')">
+                                    <!-- Subtle background effect -->
+                                    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-blue-50/0 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
 
-    <!-- Content -->
-    <div class="relative flex items-center gap-2">
-        <i class="bi bi-person-square text-base group-hover:text-blue-600 transition-colors duration-300"></i>
-        <span class="text-xs group-hover:text-blue-700 transition-colors duration-300">View Full Profile</span>
-        <i class="bi bi-arrow-right-short text-sm opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
-    </div>
-</a>
+                                    <!-- Content -->
+                                    <div class="relative flex items-center gap-2">
+                                        <i class="bi bi-person-square text-sm group-hover:text-blue-600 transition-colors duration-300"></i>
+                                        <span class="text-xs group-hover:text-blue-700 transition-colors duration-300">View Full Profile</span>
+                                        <i class="bi bi-arrow-right-short text-xs opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
+                                    </div>
+                                </a>
                             </div>
                         `;
                         break;
 
                     default:
                         actionsHTML = `
-                            <button class="btn btn-primary px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-medium hover:from-blue-600 hover:to-purple-700 transition-all"
-                                    onclick="FriendSystem.add(${userId}, this)">
-                                <i class="bi bi-person-plus mr-1"></i> Connect
-                            </button>
+                            <div class="flex flex-wrap gap-3 justify-center py-6">
+                                <!-- Connect Button -->
+                                <button class="relative px-5 py-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-xl font-medium transition-all duration-300 overflow-hidden group shadow-sm hover:shadow-md"
+                                        onclick="FriendSystem.add(${userId}, this)">
+                                    <!-- Shimmer effect -->
+                                    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
 
-                            <a href="/profile/${userId}"
-   class="relative px-5 py-2 bg-gray-50 hover:bg-white text-gray-700 rounded-xl font-medium transition-all duration-300 overflow-hidden group border border-gray-100 hover:border-blue-100"
-   onclick="Modal.close('profileModal')">
-    <!-- Subtle background effect -->
-    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-blue-50/0 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+                                    <!-- Content -->
+                                    <div class="relative flex items-center gap-2">
+                                        <i class="bi bi-person-plus text-sm group-hover:scale-110 transition-transform duration-300"></i>
+                                        <span class="text-xs group-hover:font-medium transition-all duration-300">Connect</span>
+                                        <i class="bi bi-arrow-right-short text-xs opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
+                                    </div>
+                                </button>
 
-    <!-- Content -->
-    <div class="relative flex items-center gap-2">
-        <i class="bi bi-person-square text-base group-hover:text-blue-600 transition-colors duration-300"></i>
-        <span class="text-xs group-hover:text-blue-700 transition-colors duration-300">View Full Profile</span>
-        <i class="bi bi-arrow-right-short text-sm opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
-    </div>
-</a>
+                                <!-- View Full Profile Button -->
+                                <a href="/profile/${userId}"
+                                   class="relative px-5 py-2 bg-gray-50 hover:bg-white text-gray-700 rounded-xl font-medium transition-all duration-300 overflow-hidden group border border-gray-100 hover:border-blue-100"
+                                   onclick="Modal.close('profileModal')">
+                                    <!-- Subtle background effect -->
+                                    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-blue-50/0 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+
+                                    <!-- Content -->
+                                    <div class="relative flex items-center gap-2">
+                                        <i class="bi bi-person-square text-sm group-hover:text-blue-600 transition-colors duration-300"></i>
+                                        <span class="text-xs group-hover:text-blue-700 transition-colors duration-300">View Full Profile</span>
+                                        <i class="bi bi-arrow-right-short text-xs opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
+                                    </div>
+                                </a>
+                            </div>
                         `;
-
-
                 }
 
                 profileActions.innerHTML = actionsHTML;
             }
         } catch (error) {
             console.error('Error checking friend status:', error);
-            // Fallback to basic add friend button
+            // Fallback with beautiful buttons
             profileActions.innerHTML = `
-                <button class="relative px-5 py-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-xl font-medium transition-all duration-300 overflow-hidden group shadow-md hover:shadow-lg"
-        onclick="FriendSystem.add(${userId}, this)">
-    <!-- Shimmer overlay -->
-    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+                <div class="flex flex-wrap gap-3 justify-center py-6">
+                    <!-- Connect Button -->
+                    <button class="relative px-5 py-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-xl font-medium transition-all duration-300 overflow-hidden group shadow-sm hover:shadow-md"
+                            onclick="FriendSystem.add(${userId}, this)">
+                        <!-- Shimmer effect -->
+                        <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
 
-    <!-- Content -->
-    <div class="relative flex items-center gap-2">
-        <i class="bi bi-person-plus text-base group-hover:scale-110 transition-transform duration-300"></i>
-        <span class="text-sm group-hover:font-medium transition-all duration-300">Connect</span>
-        <i class="bi bi-arrow-right-short text-sm opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
-    </div>
-</button>
+                        <!-- Content -->
+                        <div class="relative flex items-center gap-2">
+                            <i class="bi bi-person-plus text-sm group-hover:scale-110 transition-transform duration-300"></i>
+                            <span class="text-xs group-hover:font-medium transition-all duration-300">Connect</span>
+                            <i class="bi bi-arrow-right-short text-xs opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
+                        </div>
+                    </button>
 
-                <a href="/profile/${userId}"
-   class="relative px-5 py-2 bg-gray-50 hover:bg-white text-gray-700 rounded-xl font-medium transition-all duration-300 overflow-hidden group border border-gray-100 hover:border-blue-100"
-   onclick="Modal.close('profileModal')">
-    <!-- Subtle background effect -->
-    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-blue-50/0 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+                    <!-- View Full Profile Button -->
+                    <a href="/profile/${userId}"
+                       class="relative px-5 py-2 bg-gray-50 hover:bg-white text-gray-700 rounded-xl font-medium transition-all duration-300 overflow-hidden group border border-gray-100 hover:border-blue-100"
+                       onclick="Modal.close('profileModal')">
+                        <!-- Subtle background effect -->
+                        <div class="absolute inset-0 bg-gradient-to-r from-transparent via-blue-50/0 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
 
-    <!-- Content -->
-    <div class="relative flex items-center gap-2">
-        <i class="bi bi-person-square text-base group-hover:text-blue-600 transition-colors duration-300"></i>
-        <span class="text-xs group-hover:text-blue-700 transition-colors duration-300">View Full Profile</span>
-        <i class="bi bi-arrow-right-short text-sm opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
-    </div>
-</a>
+                        <!-- Content -->
+                        <div class="relative flex items-center gap-2">
+                            <i class="bi bi-person-square text-sm group-hover:text-blue-600 transition-colors duration-300"></i>
+                            <span class="text-xs group-hover:text-blue-700 transition-colors duration-300">View Full Profile</span>
+                            <i class="bi bi-arrow-right-short text-xs opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
+                        </div>
+                    </a>
+                </div>
             `;
         }
     }
@@ -1698,31 +1726,30 @@ const NotificationSystem = {
     },
 
     async handleNotificationClick(event, id, type, actorId) {
-    // Prevent action if clicked on Accept/Decline buttons in notification
-    if (event.target.closest('.notification-action-btn')) {
-        return;
-    }
+        // Prevent action if clicked on Accept/Decline buttons in notification
+        if (event.target.closest('.notification-action-btn')) {
+            return;
+        }
 
-    // Mark as read
-    await this.markAsRead(id);
+        // Mark as read
+        await this.markAsRead(id);
 
-    let openFromFriendRequest = false;
+        let openFromFriendRequest = false;
 
-    // Special case: if it's a friend request notification, remember that
-    if (type === 'friend_request' && actorId) {
-        openFromFriendRequest = true;
-    }
+        // Special case: if it's a friend request notification, remember that
+        if (type === 'friend_request' && actorId) {
+            openFromFriendRequest = true;
+        }
 
-    // Open profile modal with extra context
-    ProfileSystem.openProfileModal(actorId, openFromFriendRequest);
+        // Open profile modal with extra context
+        ProfileSystem.openProfileModal(actorId, openFromFriendRequest);
 
-    // Close dropdown
-    const dropdownElement = document.getElementById('notificationDropdown');
-    const bsDropdown = bootstrap.Dropdown.getInstance(dropdownElement);
-    if (bsDropdown) {
-        bsDropdown.hide();
-    }
-
+        // Close dropdown
+        const dropdownElement = document.getElementById('notificationDropdown');
+        const bsDropdown = bootstrap.Dropdown.getInstance(dropdownElement);
+        if (bsDropdown) {
+            bsDropdown.hide();
+        }
     },
 
     async markAsRead(id) {
@@ -1817,233 +1844,6 @@ const NotificationSystem = {
             Toast.show('Post not found', 'warning');
         }
     },
-
-        async updateProfileActions(userId) {
-            const profileActions = document.getElementById('profileActions');
-            if (!profileActions) return;
-
-            try {
-                // Check friend status
-                const response = await fetch(`/check_friend_status/${userId}`);
-                if (response.ok) {
-                    const data = await response.json();
-
-                    let actionsHTML = '';
-
-                    switch(data.status) {
-                        case 'friends':
-                            actionsHTML = `
-                                <button class="btn btn-primary px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
-                                        onclick="handleMessageButtonClick(${userId})">
-                                    <i class="bi bi-chat-dots mr-1"></i> Message
-                                </button>
-                                <button class="btn btn-outline-danger px-4 py-2 border border-red-500 text-red-500 rounded-lg font-medium hover:bg-red-50 transition-colors"
-                                        onclick="BlockSystem.block(${userId})">
-                                    <i class="bi bi-slash-circle mr-1"></i> Block
-                                </button>
-
-                                <a href="/profile/${userId}"
-                                   class="relative px-5 py-2 bg-gray-50 hover:bg-white text-gray-700 rounded-xl font-medium transition-all duration-300 overflow-hidden group border border-gray-100 hover:border-blue-100"
-                                   onclick="Modal.close('profileModal')">
-                                    <!-- Subtle background effect -->
-                                    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-blue-50/0 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-
-                                    <!-- Content -->
-                                    <div class="relative flex items-center gap-2">
-                                        <i class="bi bi-person-square text-base group-hover:text-blue-600 transition-colors duration-300"></i>
-                                        <span class="text-xs group-hover:text-blue-700 transition-colors duration-300">View Full Profile</span>
-                                        <i class="bi bi-arrow-right-short text-sm opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
-                                    </div>
-                                </a>
-                            `;
-                            break;
-
-                        case 'request_sent':
-                            actionsHTML = `
-                                <button class="btn btn-secondary px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors"
-                                        onclick="FriendSystem.cancelRequest(${userId}, this)">
-                                    <i class="bi bi-clock-history mr-1"></i> Cancel Request
-                                </button>
-
-                                <a href="/profile/${userId}"
-                                   class="relative px-5 py-2 bg-gray-50 hover:bg-white text-gray-700 rounded-xl font-medium transition-all duration-300 overflow-hidden group border border-gray-100 hover:border-blue-100"
-                                   onclick="Modal.close('profileModal')">
-                                    <!-- Subtle background effect -->
-                                    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-blue-50/0 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-
-                                    <!-- Content -->
-                                    <div class="relative flex items-center gap-2">
-                                        <i class="bi bi-person-square text-base group-hover:text-blue-600 transition-colors duration-300"></i>
-                                        <span class="text-xs group-hover:text-blue-700 transition-colors duration-300">View Full Profile</span>
-                                        <i class="bi bi-arrow-right-short text-sm opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
-                                    </div>
-                                </a>
-                            `;
-                            break;
-
-                        case 'request_received':
-                            actionsHTML = `
-                                <div class="flex space-x-2">
-                                    <button class="btn btn-success px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
-                                            onclick="FriendSystem.acceptFriendRequest(${userId}, this)">
-                                        <i class="bi bi-check-lg mr-1"></i> Accept
-                                    </button>
-                                    <button class="btn btn-danger px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
-                                            onclick="FriendSystem.declineFriendRequest(${userId}, this)">
-                                        <i class="bi bi-x-lg mr-1"></i> Decline
-                                    </button>
-
-                                    <a href="/profile/${userId}"
-   class="relative px-5 py-2 bg-gray-50 hover:bg-white text-gray-700 rounded-xl font-medium transition-all duration-300 overflow-hidden group border border-gray-100 hover:border-blue-100"
-   onclick="Modal.close('profileModal')">
-    <!-- Subtle background effect -->
-    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-blue-50/0 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-
-    <!-- Content -->
-    <div class="relative flex items-center gap-2">
-        <i class="bi bi-person-square text-base group-hover:text-blue-600 transition-colors duration-300"></i>
-        <span class="text-xs group-hover:text-blue-700 transition-colors duration-300">View Full Profile</span>
-        <i class="bi bi-arrow-right-short text-sm opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
-    </div>
-</a>
-                                </div>
-                            `;
-                            break;
-
-                        default:
-                            actionsHTML = `
-                                <button class="relative px-5 py-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-xl font-medium transition-all duration-300 overflow-hidden group shadow-md hover:shadow-lg"
-        onclick="FriendSystem.add(${userId}, this)">
-    <!-- Shimmer overlay -->
-    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-
-    <!-- Content -->
-    <div class="relative flex items-center gap-2">
-        <i class="bi bi-person-plus text-base group-hover:scale-110 transition-transform duration-300"></i>
-        <span class="text-sm group-hover:font-medium transition-all duration-300">Connect</span>
-        <i class="bi bi-arrow-right-short text-sm opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
-    </div>
-</button>
-
-                                <a href="/profile/${userId}"
-   class="relative px-5 py-2 bg-gray-50 hover:bg-white text-gray-700 rounded-xl font-medium transition-all duration-300 overflow-hidden group border border-gray-100 hover:border-blue-100"
-   onclick="Modal.close('profileModal')">
-    <!-- Subtle background effect -->
-    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-blue-50/0 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-
-    <!-- Content -->
-    <div class="relative flex items-center gap-2">
-        <i class="bi bi-person-square text-base group-hover:text-blue-600 transition-colors duration-300"></i>
-        <span class="text-xs group-hover:text-blue-700 transition-colors duration-300">View Full Profile</span>
-        <i class="bi bi-arrow-right-short text-sm opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
-    </div>
-</a>
-                            `;
-                    }
-
-                    profileActions.innerHTML = actionsHTML;
-                }
-            } catch (error) {
-                console.error('Error checking friend status:', error);
-                // Fallback to basic add friend button
-                profileActions.innerHTML = `
-                    <button class="relative px-5 py-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-xl font-medium transition-all duration-300 overflow-hidden group shadow-md hover:shadow-lg"
-        onclick="FriendSystem.add(${userId}, this)">
-    <!-- Shimmer overlay -->
-    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-
-    <!-- Content -->
-    <div class="relative flex items-center gap-2">
-        <i class="bi bi-person-plus text-base group-hover:scale-110 transition-transform duration-300"></i>
-        <span class="text-sm group-hover:font-medium transition-all duration-300">Connect</span>
-        <i class="bi bi-arrow-right-short text-sm opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
-    </div>
-</button>
-
-                    <a href="/profile/${userId}"
-   class="relative px-5 py-2 bg-gray-50 hover:bg-white text-gray-700 rounded-xl font-medium transition-all duration-300 overflow-hidden group border border-gray-100 hover:border-blue-100"
-   onclick="Modal.close('profileModal')">
-    <!-- Subtle background effect -->
-    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-blue-50/0 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-
-    <!-- Content -->
-    <div class="relative flex items-center gap-2">
-        <i class="bi bi-person-square text-base group-hover:text-blue-600 transition-colors duration-300"></i>
-        <span class="text-xs group-hover:text-blue-700 transition-colors duration-300">View Full Profile</span>
-        <i class="bi bi-arrow-right-short text-sm opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
-    </div>
-</a>
-                `;
-            }
-        },
-
-        setProfileActionsHTML(userId, status, container) {
-        let baseHTML = '';
-
-        switch(status) {
-            case 'friends':
-                baseHTML = `
-                    <button class="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors text-sm flex-1"
-                            onclick="handleMessageButtonClick(${userId})">
-                        <i class="bi bi-chat-dots mr-1"></i> Message
-                    </button>
-                `;
-                break;
-            case 'request_sent':
-                baseHTML = `
-                    <button class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors text-sm flex-1"
-                            onclick="FriendSystem.cancelRequest(${userId}, this)">
-                        <i class="bi bi-clock-history mr-1"></i> Cancel Request
-                    </button>
-                `;
-                break;
-            case 'request_received':
-                baseHTML = `
-                    <div class="flex space-x-2 w-full">
-                        <button class="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors text-sm flex-1"
-                                onclick="FriendSystem.acceptFriendRequest(${userId}, this)">
-                            <i class="bi bi-check-lg mr-1"></i> Accept
-                        </button>
-                        <button class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors text-sm flex-1"
-                                onclick="FriendSystem.declineFriendRequest(${userId}, this)">
-                            <i class="bi bi-x-lg mr-1"></i> Decline
-                        </button>
-                    </div>
-                `;
-                break;
-            default:
-                baseHTML = `
-                    <button class="relative px-5 py-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-xl font-medium transition-all duration-300 overflow-hidden group shadow-md hover:shadow-lg"
-        onclick="FriendSystem.add(${userId}, this)">
-    <!-- Shimmer overlay -->
-    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-
-    <!-- Content -->
-    <div class="relative flex items-center gap-2">
-        <i class="bi bi-person-plus text-base group-hover:scale-110 transition-transform duration-300"></i>
-        <span class="text-sm group-hover:font-medium transition-all duration-300">Connect</span>
-        <i class="bi bi-arrow-right-short text-sm opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
-    </div>
-</button>
-                `;
-        }
-
-        // Always add the View Full Profile button
-        const actionsHTML = `
-            <div class="flex flex-col sm:flex-row gap-3 w-full items-stretch">
-                <div class="flex flex-col sm:flex-row gap-2 flex-1">
-                    ${baseHTML}
-                </div>
-                <button class="btn-view-full-profile"
-                        onclick="viewFullProfile(${userId})">
-                    <i class="bi bi-eye-fill"></i> View Full Profile
-                </button>
-            </div>
-        `;
-                container.innerHTML = actionsHTML;
-    },
-
-
 
     init() {
         this.load();
@@ -2289,790 +2089,9 @@ const SearchSystem = {
 };
 
 // ========================================
-// MESSENGER SYSTEM
+// SPONSORED ADS SYSTEM
 // ========================================
 
-// ========================================
-// MESSENGER SYSTEM - SINGLE VERSION
-// ========================================
-
-const Messenger = {
-    state: {
-        socket: null,
-        activeFriendId: null,
-        isTyping: false,
-        typingTimeout: null,
-        unreadCounts: {},
-        currentFriend: null
-    },
-
-    // Initialize messenger
-    init() {
-        this.connectSocket();
-        this.setupEventListeners();
-        this.updateUnreadBadge();
-
-        // Check for Messenger popup elements
-        if (document.getElementById('messengerPopup')) {
-            console.log('✅ Messenger initialized');
-        }
-
-        return this;
-    },
-
-    // Setup all event listeners
-    setupEventListeners() {
-        // Open/close messenger
-        const openBtn = document.getElementById('openMessaging');
-        const closeBtn = document.querySelector('[onclick="closeMessenger()"]');
-        const backBtn = document.querySelector('[onclick="backToFriends()"]');
-        const sendBtn = document.getElementById('sendChatBtn');
-        const chatInput = document.getElementById('chatInput');
-
-        if (openBtn) {
-            openBtn.addEventListener('click', () => this.open());
-        }
-
-        if (closeBtn) {
-            closeBtn.addEventListener('click', () => this.close());
-        }
-
-        if (backBtn) {
-            backBtn.addEventListener('click', () => this.backToFriends());
-        }
-
-        if (sendBtn) {
-            sendBtn.addEventListener('click', () => this.sendMessage());
-        }
-
-        if (chatInput) {
-            chatInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    this.sendMessage();
-                }
-            });
-
-            chatInput.addEventListener('input', (e) => {
-                this.handleTyping();
-            });
-
-            // Stop typing when input is cleared
-            chatInput.addEventListener('blur', () => {
-                this.stopTyping();
-            });
-        }
-    },
-
-    // Open messenger popup
-    async open() {
-        const popup = document.getElementById('messengerPopup');
-        if (!popup) {
-            console.error('Messenger popup not found');
-            return;
-        }
-
-        // Close any open profile modal
-        const profileModal = document.getElementById('profileModal');
-        if (profileModal && !profileModal.classList.contains('hidden')) {
-            profileModal.classList.add('hidden');
-            document.body.style.overflow = '';
-        }
-
-        popup.classList.remove('hidden');
-        await this.loadFriends();
-
-        if (!this.state.socket || !this.state.socket.connected) {
-            this.connectSocket();
-        }
-    },
-
-    // Close messenger popup
-    close() {
-        const popup = document.getElementById('messengerPopup');
-        if (popup) {
-            popup.classList.add('hidden');
-            this.backToFriends();
-            this.stopTyping();
-        }
-    },
-
-    // Go back to friends list
-    backToFriends() {
-        this.state.activeFriendId = null;
-        this.state.currentFriend = null;
-
-        const friendList = document.getElementById('friendList');
-        const chatArea = document.getElementById('chatArea');
-
-        if (friendList) friendList.classList.remove('hidden');
-        if (chatArea) chatArea.classList.add('hidden');
-
-        const chatInput = document.getElementById('chatInput');
-        if (chatInput) chatInput.value = '';
-
-        this.hideTypingIndicator();
-        this.stopTyping();
-    },
-
-    // Load friends list
-    async loadFriends() {
-        try {
-            const friendsContainer = document.getElementById('friendsContainer');
-            if (friendsContainer) {
-                friendsContainer.innerHTML = `
-                    <div class="flex justify-center items-center p-8">
-                        <span class="tiny-loader md"></span>
-                        <span class="ml-3 text-gray-500">Loading friends...</span>
-                    </div>
-                `;
-            }
-
-            const response = await fetch('/api/messaging/friends');
-            if (!response.ok) throw new Error('Network error');
-
-            const data = await response.json();
-            if (data.success) {
-                this.displayFriends(data.friends);
-                this.updateUnreadBadge();
-            }
-        } catch (error) {
-            console.error('Error loading friends:', error);
-            const friendsContainer = document.getElementById('friendsContainer');
-            if (friendsContainer) {
-                friendsContainer.innerHTML = `
-                    <div class="text-center p-6 text-gray-500">
-                        <i class="bi bi-people text-3xl mb-2"></i>
-                        <p class="text-sm">No friends available</p>
-                    </div>
-                `;
-            }
-        }
-    },
-
-    // Display friends in the list
-    displayFriends(friends) {
-        const container = document.getElementById('friendsContainer');
-        if (!container) return;
-
-        container.innerHTML = '';
-
-        if (!friends || friends.length === 0) {
-            container.innerHTML = `
-                <div class="text-center p-6 text-gray-500">
-                    <i class="bi bi-people text-3xl mb-2"></i>
-                    <p class="text-sm">No friends yet</p>
-                </div>
-            `;
-            return;
-        }
-
-        friends.forEach(friend => {
-            const friendElement = document.createElement('div');
-            friendElement.className = 'flex items-center p-3 hover:bg-gray-50 cursor-pointer rounded-lg transition-colors mb-1';
-            friendElement.onclick = () => this.openChat(friend.id, friend.name, friend.avatar, friend.online);
-
-            friendElement.innerHTML = `
-                <div class="relative">
-                    <img src="${friend.avatar || window.defaultAvatar}"
-                         alt="${friend.name}"
-                         class="w-12 h-12 rounded-full object-cover">
-                    ${friend.online ? `
-                        <span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></span>
-                    ` : ''}
-                    ${friend.unread_count > 0 ? `
-                        <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                            ${friend.unread_count > 9 ? '9+' : friend.unread_count}
-                        </span>
-                    ` : ''}
-                </div>
-                <div class="ml-3 flex-1">
-                    <p class="font-medium text-sm">${friend.name}</p>
-                    <p class="text-xs ${friend.online ? 'text-green-600' : 'text-gray-500'}">
-                        ${friend.online ? 'Online' : 'Offline'}
-                    </p>
-                </div>
-            `;
-
-            container.appendChild(friendElement);
-        });
-    },
-
-    // Open chat with a friend
-    async openChat(friendId, friendName, friendAvatar, friendOnline) {
-
-        // Close any open profile modal
-        const profileModal = document.getElementById('profileModal');
-        if (profileModal && !profileModal.classList.contains('hidden')) {
-        profileModal.classList.add('hidden');
-        document.body.style.overflow = '';
-       }
-
-
-        this.state.activeFriendId = friendId;
-        this.state.currentFriend = {
-            id: friendId,
-            name: friendName,
-            avatar: friendAvatar,
-            online: friendOnline
-        };
-
-        // Update UI
-        const friendList = document.getElementById('friendList');
-        const chatArea = document.getElementById('chatArea');
-        const chatName = document.getElementById('chatName');
-        const chatLastSeen = document.getElementById('chatLastSeen');
-
-        if (friendList) {
-            friendList.classList.add('hidden');
-        }
-
-        if (chatArea) {
-            chatArea.classList.remove('hidden');
-        }
-
-        if (chatName) {
-            chatName.textContent = friendName || 'Friend';
-        }
-
-        if (chatLastSeen) {
-            chatLastSeen.textContent = friendOnline ? 'Online' : 'Offline';
-            chatLastSeen.className = `text-xs ${friendOnline ? 'text-green-600' : 'text-gray-500'} mt-0.5`;
-        }
-
-        // Load messages - IMPORTANT: Wait for messages to load before scrolling
-        await this.loadMessages(friendId);
-
-        // Scroll to bottom after messages are loaded
-        setTimeout(() => {
-            this.scrollToBottom(true); // Force scroll to bottom
-        }, 100);
-
-        // Focus input
-        const chatInput = document.getElementById('chatInput');
-        if (chatInput) {
-            chatInput.focus();
-            this.toggleSendVoiceButtons();
-        }
-
-        // Mark messages as read
-        await this.markAsRead(friendId);
-    },
-
-    // Load messages for a chat
-    async loadMessages(friendId) {
-        try {
-            const chatContainer = document.getElementById('chatMessages');
-            if (chatContainer) {
-                chatContainer.innerHTML = `
-                    <div class="flex justify-center items-center py-8">
-                        <span class="tiny-loader md"></span>
-                        <span class="ml-2 text-gray-500 text-sm">Loading messages...</span>
-                    </div>
-                `;
-            }
-
-            const response = await fetch(`/api/messaging/messages/${friendId}`);
-            if (!response.ok) throw new Error('Network error');
-
-            const data = await response.json();
-            if (data.success) {
-                this.displayMessages(data.messages);
-            }
-        } catch (error) {
-            console.error('Error loading messages:', error);
-            const chatContainer = document.getElementById('chatMessages');
-            if (chatContainer) {
-                chatContainer.innerHTML = `
-                    <div class="text-center p-6 text-gray-500">
-                        <i class="bi bi-chat-dots text-2xl mb-2"></i>
-                        <p class="text-sm">Failed to load messages</p>
-                    </div>
-                `;
-            }
-        }
-    },
-
-    // Display messages in chat
-    displayMessages(messages) {
-        const chatContainer = document.getElementById('chatMessages');
-        if (!chatContainer) return;
-
-        chatContainer.innerHTML = '';
-
-        if (!messages || messages.length === 0) {
-            chatContainer.innerHTML = `
-                <div class="text-center p-6 text-gray-500">
-                    <i class="bi bi-chat-dots text-2xl mb-2"></i>
-                    <p class="text-sm">No messages yet. Start a conversation!</p>
-                </div>
-            `;
-            return;
-        }
-
-        messages.forEach(msg => {
-            this.appendMessage(msg, false);
-        });
-
-        this.scrollToBottom();
-    },
-
-    // Append a single message
-    appendMessage(msg, shouldScroll = true) {
-        const chatContainer = document.getElementById('chatMessages');
-        if (!chatContainer) return;
-
-        const isOwnMessage = msg.sender_id === currentUserId;
-        const time = new Date(msg.timestamp).toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-
-        const messageElement = document.createElement('div');
-        messageElement.className = `flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-3`;
-        messageElement.innerHTML = `
-            <div class="max-w-xs lg:max-w-md">
-                <div class="${isOwnMessage ? 'bg-blue-100' : 'bg-gray-100'} rounded-2xl px-4 py-2">
-                    ${!isOwnMessage ? `
-                        <div class="flex items-center mb-1">
-                            <img src="${msg.sender_avatar || window.defaultAvatar}"
-                                 class="w-4 h-4 rounded-full mr-1">
-                            <span class="text-xs font-medium">${msg.sender_name || 'User'}</span>
-                        </div>
-                    ` : ''}
-                    <div class="text-sm">${msg.content || ''}</div>
-                    <div class="flex justify-end items-center mt-1">
-                        <span class="text-[10px] text-gray-500">${time}</span>
-                        ${isOwnMessage ? `
-                            <i class="bi ${msg.status === 'read' ? 'bi-check2-all text-blue-500' : 'bi-check2 text-gray-400'} ml-1 text-xs"></i>
-                        ` : ''}
-                    </div>
-                </div>
-            </div>
-        `;
-
-        chatContainer.appendChild(messageElement);
-
-        if (shouldScroll) {
-            this.scrollToBottom();
-        }
-    },
-
-    // Send a message
-    async sendMessage() {
-        const input = document.getElementById('chatInput');
-        if (!input || !this.state.activeFriendId) return;
-
-        const content = input.value.trim();
-        if (!content) return;
-
-        if (this.state.socket && this.state.socket.connected) {
-            // Send via WebSocket for real-time
-            this.state.socket.emit('send_message', {
-                friend_id: this.state.activeFriendId,
-                content: content
-            });
-        } else {
-            // Fallback to HTTP API
-            await this.sendMessageViaAPI(content);
-        }
-
-        input.value = '';
-        this.stopTyping();
-    },
-
-    // Send message via HTTP API (fallback)
-    async sendMessageViaAPI(content) {
-        try {
-            const response = await fetch('/api/messaging/send', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken
-                },
-                body: JSON.stringify({
-                    friend_id: this.state.activeFriendId,
-                    content: content
-                })
-            });
-
-            const data = await response.json();
-            if (data.success && data.message) {
-                this.appendMessage(data.message, true);
-            } else if (data.error) {
-                Toast.show(data.error, 'danger');
-            }
-        } catch (error) {
-            console.error('Error sending message:', error);
-            Toast.show('Failed to send message', 'danger');
-        }
-    },
-
-    // Handle typing indicator
-    handleTyping() {
-        if (!this.state.activeFriendId || !this.state.socket) return;
-
-        if (!this.state.isTyping) {
-            this.state.isTyping = true;
-            this.state.socket.emit('typing_start', { friend_id: this.state.activeFriendId });
-        }
-
-        // Clear existing timeout
-        if (this.state.typingTimeout) {
-            clearTimeout(this.state.typingTimeout);
-        }
-
-        // Set timeout to stop typing
-        this.state.typingTimeout = setTimeout(() => {
-            this.stopTyping();
-        }, 2000);
-    },
-
-    // Stop typing indicator
-    stopTyping() {
-        if (this.state.isTyping && this.state.activeFriendId && this.state.socket) {
-            this.state.isTyping = false;
-            this.state.socket.emit('typing_stop', { friend_id: this.state.activeFriendId });
-        }
-
-        if (this.state.typingTimeout) {
-            clearTimeout(this.state.typingTimeout);
-            this.state.typingTimeout = null;
-        }
-    },
-
-    // Show typing indicator for other user
-    showTypingIndicator(userName) {
-        const indicator = document.getElementById('typingIndicator');
-        const userNameEl = document.getElementById('typingUserName');
-
-        if (userNameEl) {
-            userNameEl.textContent = `${userName} is typing...`;
-        }
-        if (indicator) {
-            indicator.classList.remove('hidden');
-        }
-    },
-
-    // Hide typing indicator
-    hideTypingIndicator() {
-        const indicator = document.getElementById('typingIndicator');
-        if (indicator) {
-            indicator.classList.add('hidden');
-        }
-    },
-
-    // Connect to Socket.IO
-    connectSocket() {
-        if (this.state.socket && this.state.socket.connected) {
-            return;
-        }
-
-        this.state.socket = io({
-            transports: ['websocket', 'polling'],
-            reconnection: true,
-            reconnectionAttempts: 5
-        });
-
-        // Socket event handlers
-        this.state.socket.on('connect', () => {
-            console.log('✅ Connected to messaging server');
-        });
-
-        this.state.socket.on('new_message', (msg) => {
-            if (msg.sender_id === this.state.activeFriendId ||
-                msg.receiver_id === this.state.activeFriendId) {
-                this.appendMessage(msg, true);
-            }
-            this.updateUnreadBadge();
-        });
-
-        this.state.socket.on('user_typing', (data) => {
-            if (data.user_id === this.state.activeFriendId) {
-                this.showTypingIndicator(data.user_name);
-            }
-        });
-
-        this.state.socket.on('user_stopped_typing', (data) => {
-            if (data.user_id === this.state.activeFriendId) {
-                this.hideTypingIndicator();
-            }
-        });
-
-        this.state.socket.on('friend_online', (data) => {
-            console.log(`Friend ${data.user_id} is online`);
-            this.updateFriendStatus(data.user_id, true);
-        });
-
-        this.state.socket.on('friend_offline', (data) => {
-            console.log(`Friend ${data.user_id} is offline`);
-            this.updateFriendStatus(data.user_id, false);
-        });
-
-        this.state.socket.on('error', (error) => {
-            console.error('Socket error:', error);
-        });
-    },
-
-    // Update friend online status
-    updateFriendStatus(friendId, isOnline) {
-        // Update in friends list if open
-        const friendElement = document.querySelector(`[onclick*="openChat(${friendId}"]`);
-        if (friendElement) {
-            const statusIndicator = friendElement.querySelector('.status-indicator');
-            const statusText = friendElement.querySelector('.status-text');
-
-            if (statusIndicator) {
-                statusIndicator.className = `absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${isOnline ? 'bg-green-500' : 'bg-gray-400'}`;
-            }
-
-            if (statusText) {
-                statusText.textContent = isOnline ? 'Online' : 'Offline';
-                statusText.className = `text-xs ${isOnline ? 'text-green-600' : 'text-gray-500'}`;
-            }
-        }
-
-        // Update in chat header if active
-        if (this.state.activeFriendId === friendId) {
-            const chatStatus = document.getElementById('chatStatus');
-            if (chatStatus) {
-                chatStatus.textContent = isOnline ? 'Online' : 'Offline';
-                chatStatus.className = `text-xs ${isOnline ? 'text-green-600' : 'text-gray-500'}`;
-            }
-        }
-    },
-
-    // Mark messages as read
-    async markAsRead(friendId) {
-        try {
-            await fetch(`/api/messaging/mark-read/${friendId}`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': csrfToken
-                }
-            });
-            this.updateUnreadBadge();
-        } catch (error) {
-            console.error('Error marking as read:', error);
-        }
-    },
-
-    // Update unread badge
-    async updateUnreadBadge() {
-        try {
-            const response = await fetch('/api/messaging/unread_count');
-            if (!response.ok) return;
-
-            const data = await response.json();
-            if (data.success) {
-                const badge = document.getElementById('unreadMessagesBadge');
-                if (badge) {
-                    if (data.unread_count > 0) {
-                        badge.textContent = data.unread_count > 99 ? '99+' : data.unread_count;
-                        badge.classList.remove('hidden');
-                    } else {
-                        badge.classList.add('hidden');
-                    }
-                }
-            }
-        } catch (error) {
-            console.error('Error updating unread count:', error);
-        }
-    },
-
-    // Scroll chat to bottom
-    scrollToBottom() {
-        const messagesWrapper = document.getElementById('chatMessagesWrapper');
-        if (messagesWrapper) {
-            setTimeout(() => {
-                messagesWrapper.scrollTop = messagesWrapper.scrollHeight;
-            }, 50);
-        }
-    },
-
-    // Start chat with user (called from profile, etc.)
-    // In the ModernMessenger class, update the startChat method:
-    startChat(userId) {
-        const profileModal = document.getElementById('profileModal');
-        if (profileModal && !profileModal.classList.contains('hidden')) {
-            profileModal.classList.add('hidden');
-            document.body.style.overflow = '';
-        }
-
-        this.open();
-
-        // Instead of trying to find and click the friend in the list,
-        // directly open the chat with the specific user
-        setTimeout(async () => {
-            try {
-                // First, fetch the user's information
-                const response = await fetch(`/api/user_info/${userId}`);
-                if (response.ok) {
-                    const userData = await response.json();
-
-                    // Directly open chat with this user
-                    this.openChat(
-                        userId,
-                        `${userData.first_name} ${userData.last_name}`,
-                        userData.profile_pic || window.defaultAvatar,
-                        userData.online || false
-                    );
-                } else {
-                    // If we can't fetch user info, still try to open chat
-                    this.openChat(userId, 'User', window.defaultAvatar, false);
-                }
-            } catch (error) {
-                console.error('Error fetching user info:', error);
-                // Fallback: try to find in friends list
-                const friendElements = document.querySelectorAll('.friend-item');
-                friendElements.forEach(el => {
-                    if (el.onclick && el.onclick.toString().includes(`openChat(${userId}`)) {
-                        el.click();
-                    }
-                });
-            }
-        }, 300);
-    }
-};
-
-// Make sure to update the global function references
-// Replace the openMessenger function:
-window.openMessenger = function() {
-    const popup = document.getElementById('messengerPopup');
-    if (popup) {
-        // Ensure friends list is shown, chat area is hidden
-        const friendList = document.getElementById('friendList');
-        const chatArea = document.getElementById('chatArea');
-
-        if (friendList) {
-            friendList.classList.remove('hidden');
-            friendList.style.display = 'flex';
-        }
-
-        if (chatArea) {
-            chatArea.classList.add('hidden');
-            chatArea.style.display = 'none';
-        }
-
-        // Show popup with animation
-        popup.classList.remove('hidden', 'scale-95', 'opacity-0');
-        popup.classList.add('flex', 'scale-100', 'opacity-100');
-
-        // Load friends
-        if (window.Messenger) {
-            window.Messenger.loadFriends();
-        }
-    }
-};
-
-// Replace the closeMessenger function:
-window.closeMessenger = function() {
-    const popup = document.getElementById('messengerPopup');
-    if (popup) {
-        // Hide with animation
-        popup.classList.remove('scale-100', 'opacity-100');
-        popup.classList.add('scale-95', 'opacity-0');
-
-        setTimeout(() => {
-            popup.classList.add('hidden');
-            popup.classList.remove('flex');
-
-            // Reset to friends list
-            window.backToFriends();
-
-            // Clear any active state
-            if (window.Messenger) {
-                window.Messenger.state.activeFriendId = null;
-                window.Messenger.state.currentFriend = null;
-            }
-        }, 300);
-    }
-};
-
-// Replace the existing backToFriends function with this:
-
-window.backToFriends = function() {
-    // Check if messenger exists and has the method
-    if (window.Messenger && typeof window.Messenger.backToFriends === 'function') {
-        window.Messenger.backToFriends();
-    } else {
-        // Fallback implementation
-        const friendList = document.getElementById('friendList');
-        const chatArea = document.getElementById('chatArea');
-
-        if (friendList && chatArea) {
-            // Show friends list
-            friendList.classList.remove('hidden');
-            friendList.style.display = 'flex';
-
-            // Hide chat area
-            chatArea.classList.add('hidden');
-            chatArea.style.display = 'none';
-        }
-
-        // Clear chat input
-        const chatInput = document.getElementById('chatInput');
-        if (chatInput) {
-            chatInput.value = '';
-            chatInput.style.height = 'auto';
-        }
-
-        // Clear any active chat state
-        if (window.Messenger) {
-            window.Messenger.state.activeFriendId = null;
-            window.Messenger.state.currentFriend = null;
-        }
-    }
-};
-
-window.handleTyping = function() {
-    if (window.Messenger) {
-        window.Messenger.handleTyping();
-    }
-};
-
-window.sendMessage = function() {
-    if (window.Messenger) {
-        window.Messenger.sendMessage();
-    }
-};
-
-// Initialize messenger when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    // Only initialize if messenger elements exist and not already initialized
-    if (document.getElementById('messengerPopup') && !window.messengerInitialized) {
-        window.Messenger = new EnhancedMessenger();
-        window.Messenger.init();
-        window.messengerInitialized = true;
-
-        // Add scroll event listener for the chat area
-        const chatArea = document.getElementById('chatMessagesWrapper');
-        if (chatArea) {
-            chatArea.addEventListener('DOMNodeInserted', () => {
-                // When new messages are added, scroll to bottom if at bottom
-                if (window.Messenger) {
-                    const isNearBottom = chatArea.scrollHeight - chatArea.scrollTop - chatArea.clientHeight < 100;
-                    if (isNearBottom) {
-                        setTimeout(() => {
-                            window.Messenger.scrollToBottom(true);
-                        }, 50);
-                    }
-                }
-            });
-        }
-
-    }
-});
-
-
-
-
-
-
-
-// ========================================
-// SPONSORED ADS SYSTEM - UPDATED WITH SMART INTERVALS
-// ========================================
 const AdSystem = {
     // Configuration - Updated timing
     config: {
@@ -3700,60 +2719,8 @@ const AdSystem = {
     }
 };
 
-// Initialize when DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => AdSystem.init());
-} else {
-    AdSystem.init();
-}
-
-// Make available globally
-window.AdSystem = AdSystem;
-
-
-
-function updateFriendButtons(userId, status) {
-    // Update suggestion cards
-    const suggestionCard = document.querySelector(`.suggestion-card[onclick*="${userId}"]`);
-    if (suggestionCard) {
-        const button = suggestionCard.querySelector('button');
-        if (button) {
-            switch(status) {
-                case 'none':
-                    button.innerHTML = '<i class="bi bi-person-plus mr-1"></i> Connect';
-                    button.className = 'w-full py-2 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors';
-                    button.style.background = 'linear-gradient(135deg, #5a4500, #b88900)';
-                    button.onclick = (e) => {
-                        e.stopPropagation();
-                        FriendSystem.add(userId, button);
-                    };
-                    break;
-                case 'friends':
-                    button.innerHTML = '<i class="bi bi-chat-dots mr-1"></i> Message';
-                    button.className = 'w-full py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors';
-                    button.onclick = (e) => {
-                        e.stopPropagation();
-                        Messenger.startChat(userId);
-                    };
-                    break;
-            }
-        }
-    }
-
-    // Update profile modal if open
-    if (document.getElementById('profileModal') &&
-        !document.getElementById('profileModal').classList.contains('hidden')) {
-        FriendSystem.updateProfileModalButton(userId, status);
-    }
-}
-
-
 // ========================================
 // GROUPS SYSTEM
-// ========================================
-
-// ========================================
-// GROUPS SYSTEM - COMPLETELY REWRITTEN
 // ========================================
 
 const Groups = {
@@ -4216,23 +3183,6 @@ const Groups = {
     }
 };
 
-// Initialize groups system when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-    // Check if groups dropdown exists on page
-    if (document.getElementById('groupsList') || document.getElementById('groupsListMobile')) {
-        Groups.init();
-    }
-
-    // Initialize Ad System
-    if (document.getElementById('nativeAd') || document.getElementById('floatingAd')) {
-        setTimeout(() => {
-            AdSystem.init();
-        }, 2000); // Wait 2 seconds after page load
-    }
-});
-
-// Make Groups globally available
-window.Groups = Groups;
 // ========================================
 // INFINITE SCROLL
 // ========================================
@@ -4313,6 +3263,7 @@ const InfiniteScroll = {
 // ========================================
 // MEDIA UPLOAD
 // ========================================
+
 function validateAndOpenFilePicker() {
     const fileInput = document.getElementById('mediaInput');
     if (fileInput) {
@@ -4416,7 +3367,7 @@ function showFilePreview(file, previewContainer) {
             </div>
         `;
 
-        // Simulate video upload progress (in a real app, this would be from actual upload)
+        // Simulate video upload progress
         simulateVideoUploadProgress();
     } else {
         previewContainer.innerHTML = `
@@ -4526,6 +3477,7 @@ window.removeFilePreview = function(button) {
 // ========================================
 // MEDIA PREVIEW
 // ========================================
+
 const MediaPreview = {
     preview(input) {
         const preview = document.getElementById('mediaPreview') || document.getElementById('editMediaPreview');
@@ -4567,157 +3519,6 @@ const MediaPreview = {
         }, 300);
     }
 };
-
-// ========================================
-// INITIALIZATION
-// ========================================
-
-document.addEventListener('DOMContentLoaded', () => {
-    // Hide loader
-    setTimeout(() => {
-        const loader = document.getElementById('loader');
-        if (loader) {
-            loader.style.opacity = '0';
-            setTimeout(() => loader.style.display = 'none', 300);
-        }
-    }, 500);
-
-    // Initialize Ad System FIRST
-    setTimeout(() => {
-        if (document.getElementById('nativeAd') || document.getElementById('floatingAd')) {
-            AdSystem.init();
-        }
-    }, 1000);
-
-    // Initialize all systems
-    Dropdown.init();
-    PostSystem.initInteractions();
-    NotificationSystem.init();
-    SearchSystem.init();
-    Messenger.init();
-    TimeUtils.initializeTimeAgo();
-    setInterval(() => TimeUtils.initializeTimeAgo(), 60000);
-    InfiniteScroll.init();
-
-    // Initialize groups dropdown
-    const groupsToggle = document.getElementById('groups-dropdown-toggle');
-    const groupsDropdown = document.getElementById('groupsDropdownMenu');
-
-    if (groupsToggle && groupsDropdown) {
-        groupsToggle.addEventListener('click', (e) => {
-            e.stopPropagation();
-            groupsDropdown.classList.toggle('hidden');
-
-            if (!groupsDropdown.classList.contains('hidden')) {
-                Groups.load();
-            }
-        });
-
-        // Close dropdown when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!groupsDropdown.contains(e.target) && e.target !== groupsToggle) {
-                groupsDropdown.classList.add('hidden');
-            }
-        });
-    }
-
-    // Initialize groups
-    Groups.load();
-
-    // Initialize modals
-    document.querySelectorAll('[data-bs-toggle="modal"]').forEach(trigger => {
-        trigger.addEventListener('click', function() {
-            const target = this.getAttribute('data-bs-target');
-            if (target) {
-                window.openModal(target.replace('#', ''));
-            }
-        });
-    });
-
-    // Close modals on outside click
-    document.querySelectorAll('.modal').forEach(modal => {
-        modal.addEventListener('click', function(e) {
-            if (e.target === this) {
-                window.closeModal(this.id);
-            }
-        });
-    });
-
-    // Initialize post creation
-    // Initialize post creation with AJAX
-const createPostForm = document.getElementById('createPostForm');
-if (createPostForm) {
-    createPostForm.addEventListener('submit', async function(e) {
-        e.preventDefault();
-
-        const submitBtn = this.querySelector('button[type="submit"]');
-        Loader.quick(submitBtn, 'show');
-
-        try {
-            // Check if we should use AJAX (for progress tracking)
-            const mediaFile = document.getElementById('mediaInput').files[0];
-
-            if (mediaFile && mediaFile.size > 10 * 1024 * 1024) { // 10MB threshold
-                // Use AJAX for large files
-                await PostUploader.uploadWithProgress(this, submitBtn);
-            } else {
-                // Use regular form submit for small files
-                const response = await fetch(this.action, {
-                    method: 'POST',
-                    body: new FormData(this)
-                });
-
-                if (response.ok) {
-                    Toast.show('Post created successfully!', 'success');
-                    setTimeout(() => location.reload(), 1000);
-                } else {
-                    throw new Error('Failed to create post');
-                }
-            }
-        } catch (error) {
-            console.error('Error creating post:', error);
-            Toast.show('Failed to create post', 'danger');
-        } finally {
-            Loader.quick(submitBtn, 'hide');
-        }
-    });
-}
-
-    console.log('Dashboard initialized successfully');
-});
-
-
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize groups dropdown toggle
-    const groupsToggle = document.getElementById('groups-dropdown-toggle');
-    const groupsDropdown = document.getElementById('groups-dropdown');
-
-    if (groupsToggle && groupsDropdown) {
-        groupsToggle.addEventListener('click', function(e) {
-            e.stopPropagation();
-            groupsDropdown.classList.toggle('hidden');
-
-            // Load groups when dropdown is opened
-            if (!groupsDropdown.classList.contains('hidden')) {
-                Groups.load();
-            }
-        });
-    }
-
-    // Close dropdown when clicking outside
-    document.addEventListener('click', function() {
-        if (groupsDropdown && !groupsDropdown.classList.contains('hidden')) {
-            groupsDropdown.classList.add('hidden');
-        }
-    });
-
-    // Load groups on page load
-    if (typeof Groups !== 'undefined') {
-        Groups.load();
-    }
-});
-
-
 
 // ========================================
 // AJAX POST UPLOAD
@@ -4908,7 +3709,6 @@ const PostUploader = {
 
 // Cancel upload function
 window.cancelUpload = function() {
-    // In a real implementation, you would abort the XHR request
     const progressContainer = document.getElementById('uploadProgressContainer');
     const preview = document.getElementById('mediaPreview');
     const fileInput = document.getElementById('mediaInput');
@@ -4920,1216 +3720,10 @@ window.cancelUpload = function() {
     Toast.show('Upload cancelled', 'info');
 };
 
-
-
-
-
 // ========================================
-// ENHANCED MESSENGER - COMPLETE REWRITTEN VERSION
+// REACTION SYSTEM
 // ========================================
 
-// Modern Enhanced Messenger
-class ModernMessenger {
-    constructor() {
-        this.state = {
-            socket: null,
-            activeFriendId: null,
-            isTyping: false,
-            typingTimeout: null,
-            unreadCounts: {},
-            currentFriend: null,
-            isConnected: false,
-            voiceRecording: false,
-            recordingStartTime: null,
-            recordingInterval: null
-        };
-
-        // For "open from profile" → go straight to chat
-        this.directOpenUserId = null;
-        this.isLoadingMore = false;
-
-        this.init();
-    }
-
-    // Initialize messenger
-    init() {
-        this.connectSocket();
-        this.setupEventListeners();
-        this.updateUnreadBadge();
-        this.setupVoiceRecording();
-
-        console.log('🎯 Modern Messenger initialized');
-        return this;
-    }
-
-    // ========================================
-    // CHAT INPUT HANDLER
-    // ========================================
-
-    // Setup all event listeners
-    setupEventListeners() {
-        // Open/close messenger
-        const openBtn = document.getElementById('openMessaging');
-        const closeBtn = document.querySelector('[onclick="closeMessenger()"]');
-        const backBtn = document.querySelector('[onclick="backToFriends()"]');
-        const sendBtn = document.getElementById('sendChatBtn');
-        const chatInput = document.getElementById('chatInput');
-        const voiceBtn = document.getElementById('voiceMessageBtn');
-
-        if (openBtn) {
-            openBtn.addEventListener('click', () => this.open());
-        }
-
-        if (closeBtn) {
-            closeBtn.addEventListener('click', () => this.close());
-        }
-
-        if (backBtn) {
-            backBtn.addEventListener('click', () => this.backToFriends());
-        }
-
-        if (sendBtn) {
-            sendBtn.addEventListener('click', () => this.sendMessage());
-        }
-
-        if (voiceBtn) {
-            voiceBtn.addEventListener('click', () => this.startVoiceMessage());
-        }
-
-        if (chatInput) {
-            chatInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    this.sendMessage();
-                }
-            });
-
-            chatInput.addEventListener('input', () => {
-                this.handleTyping();
-                this.toggleSendVoiceButtons();
-            });
-
-            chatInput.addEventListener('blur', () => {
-                this.stopTyping();
-            });
-
-            // Auto-resize textarea
-            chatInput.addEventListener('input', (e) => {
-                this.autoResizeTextarea(e.target);
-            });
-        }
-
-        // Tab switching (if you later add the tabs back)
-        document.querySelectorAll('.tab-button').forEach(tab => {
-            tab.addEventListener('click', (e) => {
-                const tabName = e.currentTarget.dataset.tab;
-                this.switchTab(tabName);
-            });
-        });
-
-        // Chat actions
-        this.setupChatActions();
-    }
-
-    // Setup chat action listeners
-    setupChatActions() {
-        // Call buttons
-        const voiceCallBtn = document.querySelector('[onclick="startVoiceCall()"]');
-        const videoCallBtn = document.querySelector('[onclick="startVideoCall()"]');
-
-        if (voiceCallBtn) {
-            voiceCallBtn.addEventListener('click', () => this.startVoiceCall());
-        }
-
-        if (videoCallBtn) {
-            videoCallBtn.addEventListener('click', () => this.startVideoCall());
-        }
-
-        // Attachment menu
-        const attachBtn = document.querySelector('[onclick="toggleAttachmentMenu()"]');
-        if (attachBtn) {
-            attachBtn.addEventListener('click', (e) => this.toggleAttachmentMenu(e));
-        }
-
-        // Emoji picker
-        const emojiBtn = document.querySelector('[onclick="toggleEmojiPicker()"]');
-        if (emojiBtn) {
-            emojiBtn.addEventListener('click', () => this.toggleEmojiPicker());
-        }
-
-        // Quick actions
-        document.querySelectorAll('#quickActions button').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const action = e.currentTarget.textContent.toLowerCase();
-                this.handleQuickAction(action);
-            });
-        });
-
-        // Scroll to bottom button
-        const scrollBtn = document.getElementById('scrollToBottomBtn');
-        if (scrollBtn) {
-            scrollBtn.addEventListener('click', () => this.scrollToBottom());
-        }
-
-        // Handle message scroll
-        const messagesWrapper = document.getElementById('chatMessagesWrapper');
-        if (messagesWrapper) {
-            messagesWrapper.addEventListener('scroll', () => this.handleMessageScroll());
-        }
-    }
-
-    // Auto-resize textarea
-    autoResizeTextarea(textarea) {
-        if (!textarea) return;
-        textarea.style.height = 'auto';
-        const maxHeight = 128; // Max 6 lines
-        const newHeight = Math.min(textarea.scrollHeight, maxHeight);
-        textarea.style.height = newHeight + 'px';
-    }
-
-    // Toggle between send and voice buttons
-    toggleSendVoiceButtons() {
-        const chatInput = document.getElementById('chatInput');
-        const voiceBtn = document.getElementById('voiceMessageBtn');
-        const sendBtn = document.getElementById('sendChatBtn');
-
-        if (!chatInput || !voiceBtn || !sendBtn) return;
-
-        if (chatInput.value.trim() === '') {
-            voiceBtn.classList.remove('hidden');
-            sendBtn.classList.add('hidden');
-            sendBtn.disabled = true;
-        } else {
-            voiceBtn.classList.add('hidden');
-            sendBtn.classList.remove('hidden');
-            sendBtn.disabled = false;
-        }
-    }
-
-    // Switch between tabs
-    switchTab(tabName) {
-        document.querySelectorAll('.tab-button').forEach(tab => {
-            tab.classList.toggle('active', tab.dataset.tab === tabName);
-        });
-
-        document.querySelectorAll('[data-tab]').forEach(content => {
-            content.classList.toggle('hidden', content.dataset.tab !== tabName);
-        });
-
-        if (tabName === 'chats') this.loadFriends();
-        else if (tabName === 'online') this.loadOnlineFriends();
-        else if (tabName === 'requests') this.loadChatRequests();
-    }
-
-    // ================================
-    // ✅ FIX: OPEN normally OR open direct chat
-    // ================================
-    async open(options = {}) {
-        const popup = document.getElementById('messengerPopup');
-        if (!popup) {
-            console.error('Messenger popup not found');
-            return;
-        }
-
-        // Close any open profile modal
-        const profileModal = document.getElementById('profileModal');
-        if (profileModal && !profileModal.classList.contains('hidden')) {
-            profileModal.classList.add('hidden');
-            document.body.style.overflow = '';
-        }
-
-        // Show with animation
-        popup.classList.remove('hidden', 'scale-95', 'opacity-0');
-        popup.classList.add('flex', 'scale-100', 'opacity-100');
-
-        // Connect socket if needed
-        if (!this.state.socket || !this.state.isConnected) {
-            this.connectSocket();
-        }
-
-        // ✅ If caller asked for direct open, do NOT render friends list
-        if (options.userId) {
-            await this.openDirectChat(options.userId);
-            return;
-        }
-
-        // Normal open: show friends
-        await this.loadFriends();
-    }
-
-    // Close messenger popup
-    close() {
-        const popup = document.getElementById('messengerPopup');
-        if (popup) {
-            popup.classList.remove('scale-100', 'opacity-100');
-            popup.classList.add('scale-95', 'opacity-0');
-            setTimeout(() => {
-                popup.classList.add('hidden');
-                popup.classList.remove('flex');
-                this.backToFriends();
-                this.stopTyping();
-            }, 300);
-        }
-    }
-
-    // ✅ Direct open from profile: no friend list rendering
-    async openDirectChat(userId) {
-        // Show a clean loading state (optional)
-        const chatContainer = document.getElementById('chatMessages');
-        if (chatContainer) {
-            chatContainer.innerHTML = `
-                <div class="flex flex-col items-center justify-center py-10 text-gray-500">
-                    <div class="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-3"></div>
-                    <p class="text-sm font-medium">Opening chat...</p>
-                    <p class="text-xs mt-1 text-gray-400">One sec</p>
-                </div>
-            `;
-        }
-
-        // Hide friend list UI immediately
-        const friendList = document.getElementById('friendList');
-        const chatArea = document.getElementById('chatArea');
-        if (friendList) friendList.classList.add('hidden');
-        if (chatArea) chatArea.classList.remove('hidden');
-
-        // We need friend info (name/avatar/online). Best: dedicated endpoint.
-        // If you DON'T have it yet, we fallback to /api/messaging/friends but we won't render the list.
-        let friend = null;
-
-        // 1) Try a dedicated endpoint (recommended)
-        try {
-            const res = await fetch(`/api/messaging/friend/${userId}`);
-            if (res.ok) {
-                const data = await res.json();
-                if (data && data.success && data.friend) friend = data.friend;
-            }
-        } catch (_) {}
-
-        // 2) Fallback: fetch all friends but do NOT display them
-        if (!friend) {
-            try {
-                const res = await fetch('/api/messaging/friends');
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.success && Array.isArray(data.friends)) {
-                        friend = data.friends.find(f => String(f.id) === String(userId)) || null;
-                    }
-                }
-            } catch (_) {}
-        }
-
-        // If still not found, we can still open chat with minimal info
-        const friendName = friend?.name || 'Chat';
-        const friendAvatar = friend?.avatar || window.defaultAvatar;
-        const friendOnline = !!friend?.online;
-
-        await this.openChat(userId, friendName, friendAvatar, friendOnline);
-    }
-
-    // Go back to friends list
-    backToFriends() {
-        this.state.activeFriendId = null;
-        this.state.currentFriend = null;
-
-        const friendList = document.getElementById('friendList');
-        const chatArea = document.getElementById('chatArea');
-
-        if (chatArea) chatArea.classList.add('hidden');
-        if (friendList) friendList.classList.remove('hidden');
-
-        const chatInput = document.getElementById('chatInput');
-        if (chatInput) {
-            chatInput.value = '';
-            this.autoResizeTextarea(chatInput);
-        }
-
-        this.hideTypingIndicator();
-        this.stopTyping();
-        this.toggleSendVoiceButtons();
-
-        // Load friends when coming back (so list is fresh)
-        this.loadFriends();
-    }
-
-    // Load friends list with modern design
-    async loadFriends() {
-        try {
-            const friendsContainer = document.getElementById('friendsContainer');
-            if (friendsContainer) {
-                friendsContainer.innerHTML = `
-                    <div class="flex flex-col items-center justify-center p-8 text-gray-500">
-                        <div class="relative mb-4">
-                            <div class="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-                            <div class="absolute inset-0 flex items-center justify-center">
-                                <i class="bi bi-people text-blue-600 text-xl"></i>
-                            </div>
-                        </div>
-                        <p class="text-sm font-medium text-gray-600">Loading conversations...</p>
-                        <p class="text-xs mt-1 text-gray-400">Getting your messages ready</p>
-                    </div>
-                `;
-            }
-
-            const response = await fetch('/api/messaging/friends');
-            if (!response.ok) throw new Error('Network error');
-
-            const data = await response.json();
-            if (data.success) {
-                this.displayFriends(data.friends);
-                this.updateUnreadBadge();
-
-                const noChats = document.getElementById('noChats');
-                if (noChats) {
-                    noChats.classList.toggle('hidden', data.friends && data.friends.length > 0);
-                }
-            }
-        } catch (error) {
-            console.error('Error loading friends:', error);
-            const friendsContainer = document.getElementById('friendsContainer');
-            if (friendsContainer) {
-                friendsContainer.innerHTML = `
-                    <div id="noChats" class="flex flex-col items-center justify-center p-8 text-gray-400">
-                        <div class="w-16 h-16 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full flex items-center justify-center mb-4">
-                            <i class="bi bi-chat-dots text-2xl text-gray-300"></i>
-                        </div>
-                        <p class="text-sm font-medium text-gray-500">No conversations yet</p>
-                        <p class="text-xs mt-1">Start a conversation with friends!</p>
-                        <button onclick="suggestFriends()"
-                                class="mt-4 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-sm rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all duration-300 transform hover:scale-105">
-                            <i class="bi bi-plus-circle mr-2"></i>
-                            Find Friends
-                        </button>
-                    </div>
-                `;
-            }
-        }
-    }
-
-    // Display friends in modern design
-    displayFriends(friends) {
-        const container = document.getElementById('friendsContainer');
-        if (!container) return;
-
-        container.innerHTML = '';
-
-        if (!friends || friends.length === 0) {
-            container.innerHTML = `
-                <div id="noChats" class="flex flex-col items-center justify-center p-8 text-gray-400">
-                    <div class="w-16 h-16 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full flex items-center justify-center mb-4">
-                        <i class="bi bi-chat-dots text-2xl text-gray-300"></i>
-                    </div>
-                    <p class="text-sm font-medium text-gray-500">No conversations yet</p>
-                    <p class="text-xs mt-1">Start a conversation with friends!</p>
-                    <button onclick="suggestFriends()"
-                            class="mt-4 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-sm rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all duration-300 transform hover:scale-105">
-                        <i class="bi bi-plus-circle mr-2"></i>
-                        Find Friends
-                    </button>
-                </div>
-            `;
-            return;
-        }
-
-        friends.forEach(friend => {
-            const friendElement = this.createFriendElement(friend);
-            container.appendChild(friendElement);
-        });
-    }
-
-    // Create modern friend element
-    createFriendElement(friend) {
-        const element = document.createElement('div');
-        element.className = 'friend-item flex items-center p-3 rounded-xl hover:bg-gray-50/80 transition-all duration-300 cursor-pointer hover-lift';
-        element.onclick = () => this.openChat(friend.id, friend.name, friend.avatar, friend.online);
-
-        element.innerHTML = `
-            <div class="relative">
-                <img src="${friend.avatar || window.defaultAvatar}"
-                     alt="${friend.name}"
-                     class="w-12 h-12 rounded-2xl object-cover border-2 border-white shadow">
-                ${friend.online ? `
-                    <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white status-pulse"></div>
-                ` : ''}
-                ${friend.unread_count > 0 ? `
-                    <span class="absolute -top-1 -right-1 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xs px-1.5 py-0.5 rounded-full shadow">
-                        ${friend.unread_count > 9 ? '9+' : friend.unread_count}
-                    </span>
-                ` : ''}
-            </div>
-            <div class="flex-1 ml-3 min-w-0">
-                <div class="flex items-center space-x-2">
-                    <h4 class="font-semibold text-gray-900 truncate">${friend.name}</h4>
-                    ${friend.is_verified ? `
-                        <i class="bi bi-patch-check-fill text-blue-500 text-sm"></i>
-                    ` : ''}
-                </div>
-                <div class="flex items-center justify-between mt-1">
-                    <p class="text-xs text-gray-500 truncate">
-                        ${friend.last_message ? friend.last_message.content || 'Sent a message' : 'No messages yet'}
-                    </p>
-                    ${friend.last_message ? `
-                        <span class="text-xs text-gray-400 ml-2">
-                            ${new Date(friend.last_message.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                        </span>
-                    ` : ''}
-                </div>
-            </div>
-        `;
-
-        return element;
-    }
-
-    // Open chat with a friend
-    async openChat(friendId, friendName, friendAvatar, friendOnline) {
-        this.state.activeFriendId = friendId;
-        this.state.currentFriend = {
-            id: friendId,
-            name: friendName,
-            avatar: friendAvatar,
-            online: friendOnline
-        };
-
-        // Hide friend list, show chat area
-        const friendList = document.getElementById('friendList');
-        const chatArea = document.getElementById('chatArea');
-
-        if (friendList) friendList.classList.add('hidden');
-        if (chatArea) chatArea.classList.remove('hidden');
-
-        // Update chat header UI
-        this.updateChatHeader(friendName, friendOnline);
-
-        // Load messages
-        await this.loadMessages(friendId);
-
-        // Focus input
-        const chatInput = document.getElementById('chatInput');
-        if (chatInput) {
-            chatInput.focus();
-            this.toggleSendVoiceButtons();
-        }
-
-        // Mark messages as read
-        await this.markAsRead(friendId);
-    }
-
-    updateChatHeader(friendName, friendOnline) {
-        const chatName = document.getElementById('chatName');
-        const chatLastSeen = document.getElementById('chatLastSeen');
-
-        if (chatName) chatName.textContent = friendName || '';
-        if (chatLastSeen) {
-            chatLastSeen.textContent = friendOnline ? 'Online' : 'Offline';
-            chatLastSeen.className = `text-xs mt-0.5 ${friendOnline ? 'text-green-600' : 'text-gray-500'}`;
-        }
-    }
-
-    // Load messages with modern design
-    async loadMessages(friendId, loadMore = false) {
-        try {
-            const chatContainer = document.getElementById('chatMessages');
-            const messagesLoading = document.getElementById('messagesLoading');
-
-            if (!loadMore) {
-                if (chatContainer) {
-                    chatContainer.innerHTML = `
-                        <div class="flex flex-col items-center justify-center py-8">
-                            <div class="flex space-x-1 mb-2">
-                                <div class="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
-                                <div class="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
-                                <div class="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
-                            </div>
-                            <p class="text-xs text-gray-500">Loading messages...</p>
-                        </div>
-                    `;
-                }
-            } else if (messagesLoading) {
-                messagesLoading.classList.remove('hidden');
-            }
-
-            const response = await fetch(`/api/messaging/messages/${friendId}${loadMore ? '?older=true' : ''}`);
-            if (!response.ok) throw new Error('Network error');
-
-            const data = await response.json();
-            if (data.success) {
-                this.displayMessages(data.messages, loadMore);
-            }
-        } catch (error) {
-            console.error('Error loading messages:', error);
-            const chatContainer = document.getElementById('chatMessages');
-            if (chatContainer) {
-                chatContainer.innerHTML = `
-                    <div id="noMessages" class="flex flex-col items-center justify-center py-12 text-gray-400">
-                        <div class="w-20 h-20 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full flex items-center justify-center mb-4">
-                            <i class="bi bi-chat-dots text-3xl text-gray-300"></i>
-                        </div>
-                        <p class="text-sm font-medium text-gray-500">No messages yet</p>
-                        <p class="text-xs mt-1 text-gray-400">Say hello and start the conversation!</p>
-                        <button onclick="sendFirstMessage()"
-                                class="mt-4 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-sm rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all duration-300 transform hover:scale-105">
-                            <i class="bi bi-send mr-2"></i>
-                            Send First Message
-                        </button>
-                    </div>
-                `;
-            }
-        } finally {
-            const messagesLoading = document.getElementById('messagesLoading');
-            if (messagesLoading) messagesLoading.classList.add('hidden');
-        }
-    }
-
-    // Display messages with modern design
-    displayMessages(messages, prepend = false) {
-        const chatContainer = document.getElementById('chatMessages');
-        if (!chatContainer) return;
-
-        if (!messages || messages.length === 0) {
-            const noMessages = document.getElementById('noMessages');
-            if (noMessages) {
-                noMessages.classList.remove('hidden');
-            } else {
-                chatContainer.innerHTML = `
-                    <div id="noMessages" class="flex flex-col items-center justify-center py-12 text-gray-400">
-                        <div class="w-20 h-20 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full flex items-center justify-center mb-4">
-                            <i class="bi bi-chat-dots text-3xl text-gray-300"></i>
-                        </div>
-                        <p class="text-sm font-medium text-gray-500">No messages yet</p>
-                        <p class="text-xs mt-1 text-gray-400">Say hello and start the conversation!</p>
-                        <button onclick="sendFirstMessage()"
-                                class="mt-4 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-sm rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all duration-300 transform hover:scale-105">
-                            <i class="bi bi-send mr-2"></i>
-                            Send First Message
-                        </button>
-                    </div>
-                `;
-            }
-            return;
-        }
-
-        const noMessages = document.getElementById('noMessages');
-        if (noMessages) noMessages.classList.add('hidden');
-
-        if (prepend) {
-            const fragment = document.createDocumentFragment();
-            messages.reverse().forEach(msg => {
-                const messageElement = this.createMessageElement(msg);
-                fragment.prepend(messageElement);
-            });
-            chatContainer.prepend(fragment);
-        } else {
-            chatContainer.innerHTML = '';
-            messages.forEach(msg => {
-                this.appendMessage(msg, false);
-            });
-
-            setTimeout(() => {
-                this.scrollToBottom(true);
-            }, 50);
-        }
-    }
-
-    // Create modern message element
-    createMessageElement(msg) {
-        const isOwnMessage = msg.sender_id === window.currentUserId;
-        const time = new Date(msg.timestamp).toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-
-        const element = document.createElement('div');
-        element.className = `flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-3 message-bubble ${isOwnMessage ? 'sent' : 'received'}`;
-
-        element.innerHTML = `
-            <div class="max-w-xs lg:max-w-md">
-                <div class="p-3">
-                    ${!isOwnMessage ? `
-                        <div class="flex items-center mb-1">
-                            <img src="${msg.sender_avatar || window.defaultAvatar}"
-                                 class="w-4 h-4 rounded-full mr-1 object-cover">
-                            <span class="text-xs font-medium">${msg.sender_name || 'User'}</span>
-                        </div>
-                    ` : ''}
-                    <div class="text-sm">${msg.content || ''}</div>
-                    <div class="flex justify-end items-center mt-1 space-x-2">
-                        <span class="message-time text-xs opacity-70">${time}</span>
-                        ${isOwnMessage ? `
-                            <span class="message-status ${msg.status} text-xs">
-                                <i class="bi ${msg.status === 'read' ? 'bi-check2-all text-blue-500' : 'bi-check2 text-gray-400'}"></i>
-                            </span>
-                        ` : ''}
-                    </div>
-                </div>
-                ${msg.reaction ? `
-                    <div class="message-reaction">
-                        <span class="text-lg">${msg.reaction}</span>
-                        <span class="text-xs">${msg.reactionCount || 1}</span>
-                    </div>
-                ` : ''}
-            </div>
-        `;
-
-        return element;
-    }
-
-    // Append a single message
-    appendMessage(msg, shouldScroll = true) {
-        const chatContainer = document.getElementById('chatMessages');
-        if (!chatContainer) return;
-
-        const noMessages = document.getElementById('noMessages');
-        if (noMessages) noMessages.classList.add('hidden');
-
-        const messageElement = this.createMessageElement(msg);
-        chatContainer.appendChild(messageElement);
-
-        if (shouldScroll) this.scrollToBottom();
-    }
-
-    // Send a message
-    async sendMessage() {
-        const input = document.getElementById('chatInput');
-        if (!input || !this.state.activeFriendId) return;
-
-        const content = input.value.trim();
-        if (!content) return;
-
-        if (this.state.socket && this.state.isConnected) {
-            this.state.socket.emit('send_message', {
-                friend_id: this.state.activeFriendId,
-                content: content
-            });
-        } else {
-            await this.sendMessageViaAPI(content);
-        }
-
-        input.value = '';
-        this.autoResizeTextarea(input);
-        this.stopTyping();
-        this.toggleSendVoiceButtons();
-    }
-
-    // Send message via HTTP API (fallback)
-    async sendMessageViaAPI(content) {
-        try {
-            const response = await fetch('/api/messaging/send', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': window.csrfToken
-                },
-                body: JSON.stringify({
-                    friend_id: this.state.activeFriendId,
-                    content: content
-                })
-            });
-
-            const data = await response.json();
-            if (data.success && data.message) {
-                this.appendMessage(data.message, true);
-            } else if (data.error) {
-                Toast.show(data.error, 'danger');
-            }
-        } catch (error) {
-            console.error('Error sending message:', error);
-            Toast.show('Failed to send message', 'danger');
-        }
-    }
-
-    // Handle typing indicator
-    handleTyping() {
-        if (!this.state.activeFriendId || !this.state.socket) return;
-
-        if (!this.state.isTyping) {
-            this.state.isTyping = true;
-            this.state.socket.emit('typing_start', {
-                friend_id: this.state.activeFriendId,
-                user_name: window.currentUserName || (window.currentUserInfo?.name ?? 'Someone')
-            });
-        }
-
-        if (this.state.typingTimeout) clearTimeout(this.state.typingTimeout);
-
-        this.state.typingTimeout = setTimeout(() => {
-            this.stopTyping();
-        }, 2000);
-    }
-
-    // Stop typing indicator
-    stopTyping() {
-        if (this.state.isTyping && this.state.activeFriendId && this.state.socket) {
-            this.state.isTyping = false;
-            this.state.socket.emit('typing_stop', { friend_id: this.state.activeFriendId });
-        }
-
-        if (this.state.typingTimeout) {
-            clearTimeout(this.state.typingTimeout);
-            this.state.typingTimeout = null;
-        }
-    }
-
-    showTypingIndicator(userName) {
-        const indicator = document.getElementById('typingIndicator');
-        const userNameEl = document.getElementById('typingUserName');
-
-        if (userNameEl) userNameEl.textContent = userName;
-        if (indicator) indicator.classList.remove('hidden');
-    }
-
-    hideTypingIndicator() {
-        const indicator = document.getElementById('typingIndicator');
-        if (indicator) indicator.classList.add('hidden');
-    }
-
-    // Connect to Socket.IO with modern features
-    connectSocket() {
-        if (this.state.socket && this.state.isConnected) return;
-
-        this.state.socket = io({
-            transports: ['websocket', 'polling'],
-            reconnection: true,
-            reconnectionAttempts: 5,
-            reconnectionDelay: 1000,
-            reconnectionDelayMax: 5000
-        });
-
-        this.state.socket.on('connect', () => {
-            console.log('✅ Connected to messaging server');
-            this.state.isConnected = true;
-
-            const popup = document.getElementById('messengerPopup');
-            if (popup) {
-                popup.classList.remove('disconnected');
-                popup.classList.add('connected');
-            }
-        });
-
-        this.state.socket.on('disconnect', () => {
-            console.log('🔌 Disconnected from messaging server');
-            this.state.isConnected = false;
-
-            const popup = document.getElementById('messengerPopup');
-            if (popup) {
-                popup.classList.remove('connected');
-                popup.classList.add('disconnected');
-            }
-        });
-
-        this.state.socket.on('new_message', (msg) => {
-            if (msg.sender_id === this.state.activeFriendId ||
-                msg.receiver_id === this.state.activeFriendId) {
-                this.appendMessage(msg, true);
-
-                if (msg.sender_id !== window.currentUserId) {
-                    this.playNotificationSound();
-                }
-            }
-            this.updateUnreadBadge();
-        });
-
-        this.state.socket.on('user_typing', (data) => {
-            if (data.user_id === this.state.activeFriendId) {
-                this.showTypingIndicator(data.user_name);
-            }
-        });
-
-        this.state.socket.on('user_stopped_typing', (data) => {
-            if (data.user_id === this.state.activeFriendId) {
-                this.hideTypingIndicator();
-            }
-        });
-
-        this.state.socket.on('friend_online', (data) => {
-            console.log(`Friend ${data.user_id} is online`);
-            this.updateFriendStatus(data.user_id, true);
-        });
-
-        this.state.socket.on('friend_offline', (data) => {
-            console.log(`Friend ${data.user_id} is offline`);
-            this.updateFriendStatus(data.user_id, false);
-        });
-
-        this.state.socket.on('message_delivered', (data) => {
-            this.updateMessageStatus(data.message_id, 'delivered');
-        });
-
-        this.state.socket.on('message_read', (data) => {
-            this.updateMessageStatus(data.message_id, 'read');
-        });
-
-        this.state.socket.on('error', (error) => {
-            console.error('Socket error:', error);
-            Toast.show('Connection error', 'danger');
-        });
-    }
-
-    updateFriendStatus(friendId, isOnline) {
-        // If currently chatting, update header
-        if (String(this.state.activeFriendId) === String(friendId)) {
-            const chatLastSeen = document.getElementById('chatLastSeen');
-            if (chatLastSeen) {
-                chatLastSeen.textContent = isOnline ? 'Online' : 'Offline';
-                chatLastSeen.className = `text-xs mt-0.5 ${isOnline ? 'text-green-600' : 'text-gray-500'}`;
-            }
-        }
-
-        // Update badge in list if list is visible
-        const friendItems = document.querySelectorAll('.friend-item');
-        friendItems.forEach(item => {
-            // We can't reliably parse onclick strings. Better: store dataset id if you want.
-        });
-    }
-
-    updateMessageStatus(messageId, status) {
-        const messageElements = document.querySelectorAll('.message-bubble.sent');
-        messageElements.forEach(element => {
-            const statusIcon = element.querySelector('.message-status i');
-            if (statusIcon) {
-                statusIcon.className = `bi ${status === 'read' ? 'bi-check2-all text-blue-500' : 'bi-check2 text-gray-400'}`;
-            }
-        });
-    }
-
-    async markAsRead(friendId) {
-        try {
-            await fetch(`/api/messaging/mark-read/${friendId}`, {
-                method: 'POST',
-                headers: { 'X-CSRFToken': window.csrfToken }
-            });
-            this.updateUnreadBadge();
-        } catch (error) {
-            console.error('Error marking as read:', error);
-        }
-    }
-
-    async updateUnreadBadge() {
-        try {
-            const response = await fetch('/api/messaging/unread_count');
-            if (!response.ok) return;
-
-            const data = await response.json();
-            if (data.success) {
-                const badge = document.getElementById('unreadMessagesBadge');
-                const chatBadge = document.getElementById('unreadChatsBadge');
-
-                if (badge) {
-                    if (data.unread_count > 0) {
-                        badge.textContent = data.unread_count > 99 ? '99+' : data.unread_count;
-                        badge.classList.remove('hidden');
-                    } else {
-                        badge.classList.add('hidden');
-                    }
-                }
-
-                if (chatBadge) {
-                    if (data.unread_count > 0) {
-                        chatBadge.textContent = data.unread_count > 9 ? '9+' : data.unread_count;
-                        chatBadge.classList.remove('hidden');
-                    } else {
-                        chatBadge.classList.add('hidden');
-                    }
-                }
-            }
-        } catch (error) {
-            console.error('Error updating unread count:', error);
-        }
-    }
-
-    // Scroll chat to bottom
-    scrollToBottom(force = false) {
-        const wrapper = document.getElementById('chatMessagesWrapper');
-        const container = document.getElementById('chatMessages');
-
-        if (!wrapper || !container) {
-            console.warn('Chat wrapper or container not found');
-            return;
-        }
-
-        requestAnimationFrame(() => {
-            if (force) {
-                wrapper.scrollTop = wrapper.scrollHeight;
-            } else {
-                const isNearBottom = wrapper.scrollHeight - wrapper.scrollTop - wrapper.clientHeight < 200;
-                if (isNearBottom) wrapper.scrollTop = wrapper.scrollHeight;
-            }
-        });
-    }
-
-    scrollToLatestMessage() {
-        const chatMessages = document.getElementById('chatMessages');
-        if (!chatMessages) return;
-
-        const messages = chatMessages.querySelectorAll('.message-bubble');
-        if (messages.length > 0) {
-            const lastMessage = messages[messages.length - 1];
-            lastMessage.scrollIntoView({
-                behavior: 'smooth',
-                block: 'end',
-                inline: 'nearest'
-            });
-        }
-    }
-
-    handleMessageScroll() {
-        const wrapper = document.getElementById('chatMessagesWrapper');
-        const scrollBtn = document.getElementById('scrollToBottomBtn');
-
-        if (wrapper && scrollBtn) {
-            const isAtBottom = wrapper.scrollHeight - wrapper.scrollTop <= wrapper.clientHeight + 100;
-            scrollBtn.classList.toggle('hidden', isAtBottom);
-
-            if (wrapper.scrollTop < 100 && this.state.activeFriendId) {
-                this.loadMoreMessages();
-            }
-        }
-    }
-
-    async loadMoreMessages() {
-        if (!this.state.activeFriendId) return;
-        if (this.isLoadingMore) return;
-
-        this.isLoadingMore = true;
-        await this.loadMessages(this.state.activeFriendId, true);
-        this.isLoadingMore = false;
-    }
-
-    // ✅ THIS is what profile "Message" should call
-    startChat(userId) {
-        const profileModal = document.getElementById('profileModal');
-        if (profileModal && !profileModal.classList.contains('hidden')) {
-            profileModal.classList.add('hidden');
-            document.body.style.overflow = '';
-        }
-
-        // ✅ Direct open mode
-        this.open({ userId });
-    }
-
-    // Voice message functionality
-    setupVoiceRecording() {
-        const recordButton = document.getElementById('recordButton');
-        if (recordButton) {
-            recordButton.addEventListener('mousedown', () => this.startRecording());
-            recordButton.addEventListener('mouseup', () => this.stopRecording());
-            recordButton.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                this.startRecording();
-            });
-            recordButton.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                this.stopRecording();
-            });
-        }
-    }
-
-    startVoiceMessage() {
-        const recorder = document.getElementById('voiceRecorder');
-        if (recorder) recorder.classList.remove('hidden');
-    }
-
-    closeVoiceRecorder() {
-        const recorder = document.getElementById('voiceRecorder');
-        if (recorder) recorder.classList.add('hidden');
-        this.stopRecording();
-    }
-
-    startRecording() {
-        if (!this.state.activeFriendId) return;
-
-        this.state.voiceRecording = true;
-        this.state.recordingStartTime = Date.now();
-
-        const recordButton = document.getElementById('recordButton');
-        const timer = document.getElementById('recordingTimer');
-
-        if (recordButton) {
-            recordButton.textContent = 'Release to send';
-            recordButton.classList.remove('from-red-500', 'to-pink-500');
-            recordButton.classList.add('from-red-600', 'to-pink-600');
-        }
-
-        this.state.recordingInterval = setInterval(() => {
-            if (timer) {
-                const elapsed = Date.now() - this.state.recordingStartTime;
-                const seconds = Math.floor(elapsed / 1000);
-                const minutes = Math.floor(seconds / 60);
-                timer.textContent = `${minutes.toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`;
-            }
-        }, 1000);
-    }
-
-    stopRecording() {
-        if (!this.state.voiceRecording) return;
-
-        this.state.voiceRecording = false;
-
-        if (this.state.recordingInterval) {
-            clearInterval(this.state.recordingInterval);
-            this.state.recordingInterval = null;
-        }
-
-        const duration = Date.now() - this.state.recordingStartTime;
-        if (duration > 1000) {
-            this.sendVoiceMessage(duration);
-        }
-
-        const recordButton = document.getElementById('recordButton');
-        const timer = document.getElementById('recordingTimer');
-
-        if (recordButton) {
-            recordButton.textContent = 'Hold to Record';
-            recordButton.classList.remove('from-red-600', 'to-pink-600');
-            recordButton.classList.add('from-red-500', 'to-pink-500');
-        }
-
-        if (timer) timer.textContent = '00:00';
-
-        this.closeVoiceRecorder();
-    }
-
-    async sendVoiceMessage(duration) {
-        try {
-            const response = await fetch('/api/messaging/send-voice', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': window.csrfToken
-                },
-                body: JSON.stringify({
-                    friend_id: this.state.activeFriendId,
-                    duration: duration,
-                    audio_url: ''
-                })
-            });
-
-            const data = await response.json();
-            if (data.success) {
-                Toast.show('Voice message sent', 'success');
-            }
-        } catch (error) {
-            console.error('Error sending voice message:', error);
-            Toast.show('Failed to send voice message', 'danger');
-        }
-    }
-
-    // Additional features
-    toggleAttachmentMenu(e) {
-        const menu = document.querySelector('.dropdown-menu');
-        if (menu) {
-            menu.classList.toggle('hidden');
-            if (e) e.stopPropagation();
-        }
-    }
-
-    toggleEmojiPicker() {
-        Toast.show('Emoji picker coming soon', 'info');
-    }
-
-    handleQuickAction(action) {
-        switch(action) {
-            case 'quick reply':
-                this.insertQuickReply();
-                break;
-            case 'translate':
-                this.translateMessage();
-                break;
-            case 'schedule':
-                this.scheduleMessage();
-                break;
-        }
-    }
-
-    insertQuickReply() {
-        const input = document.getElementById('chatInput');
-        if (input) {
-            const quickReplies = ["👍", "Sounds good!", "Let me check and get back to you", "😂", "Perfect!", "On my way!"];
-            const randomReply = quickReplies[Math.floor(Math.random() * quickReplies.length)];
-            input.value = randomReply;
-            this.autoResizeTextarea(input);
-            this.toggleSendVoiceButtons();
-        }
-    }
-
-    translateMessage() { Toast.show('Translation feature coming soon', 'info'); }
-    scheduleMessage() { Toast.show('Schedule message feature coming soon', 'info'); }
-    startVoiceCall() { Toast.show('Voice call feature coming soon', 'info'); }
-    startVideoCall() { Toast.show('Video call feature coming soon', 'info'); }
-
-    playNotificationSound() {
-        const audio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEAQB8AAEAfAAABAAgAZGF0YQ');
-        audio.volume = 0.3;
-        audio.play().catch(() => {});
-    }
-
-    async loadOnlineFriends() {
-        const container = document.getElementById('onlineFriends');
-        if (container) {
-            container.innerHTML = `
-                <div class="flex flex-col items-center justify-center p-8 text-gray-500">
-                    <i class="bi bi-wifi text-3xl mb-3"></i>
-                    <p class="text-sm font-medium">Loading online friends...</p>
-                </div>
-            `;
-        }
-    }
-
-    async loadChatRequests() {
-        const container = document.getElementById('chatRequests');
-        if (container) {
-            container.innerHTML = `
-                <div class="flex flex-col items-center justify-center p-8 text-gray-500">
-                    <i class="bi bi-envelope text-3xl mb-3"></i>
-                    <p class="text-sm font-medium">No pending requests</p>
-                    <p class="text-xs mt-1 text-gray-400">When someone sends you a message request, it'll appear here</p>
-                </div>
-            `;
-        }
-    }
-}
-
-// Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    if (document.getElementById('messengerPopup') && !window.messengerInitialized) {
-        window.Messenger = new ModernMessenger();
-        window.messengerInitialized = true;
-    }
-});
-
-// ✅ Global function wrappers (your HTML calls these)
-window.openMessenger = () => window.Messenger?.open();
-window.closeMessenger = () => window.Messenger?.close();
-window.backToFriends = () => window.Messenger?.backToFriends();
-window.handleTyping = () => window.Messenger?.handleTyping();
-window.sendMessage = () => window.Messenger?.sendMessage();
-window.startVoiceMessage = () => window.Messenger?.startVoiceMessage();
-window.closeVoiceRecorder = () => window.Messenger?.closeVoiceRecorder();
-window.startVoiceCall = () => window.Messenger?.startVoiceCall();
-window.startVideoCall = () => window.Messenger?.startVideoCall();
-window.toggleAttachmentMenu = (e) => window.Messenger?.toggleAttachmentMenu(e);
-window.toggleEmojiPicker = () => window.Messenger?.toggleEmojiPicker();
-window.scrollToBottom = () => window.Messenger?.scrollToBottom();
-window.handleMessageScroll = () => window.Messenger?.handleMessageScroll();
-
-window.autoResizeTextarea = (ta) => window.Messenger?.autoResizeTextarea(ta);
-window.startRecording = () => window.Messenger?.startRecording();
-window.stopRecording = () => window.Messenger?.stopRecording();
-
-// Your HTML calls this too
-window.handleChatInputKeypress = (event) => {
-    if (!event) return;
-    if (event.key === 'Enter' && !event.shiftKey) {
-        event.preventDefault();
-        window.Messenger?.sendMessage();
-    }
-};
-
-// ✅ For profile buttons
-window.startChat = (userId) => window.Messenger?.startChat(userId);
-
-// ✅ Your "Message" button already calls this in your template
-window.handleMessageButtonClick = (userId) => window.Messenger?.startChat(userId);
-
-// ==================== REACTION SYSTEM ====================
 let currentReactionPostId = null;
 let reactionTimeout = null;
 
@@ -6249,10 +3843,10 @@ document.addEventListener('mouseout', e => {
     }
 });
 
+// ========================================
+// COMMENT SYSTEM
+// ========================================
 
-
-
-// ==================== COMMENT SYSTEM ====================
 function handleCommentKeypress(event, postId) {
     if (event.key === 'Enter' && !event.shiftKey && event.target.value.trim()) {
         event.preventDefault();
@@ -6420,31 +4014,6 @@ async function deleteComment(commentId, postId = null) {
     }
 }
 
-async function deleteComment(commentId) {
-    if (!confirm('Delete this comment?')) return;
-
-    try {
-        const response = await fetch(`/delete_comment/${commentId}`, {
-            method: 'POST',
-            headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' }
-        });
-        const data = await response.json();
-
-        if (data.success) {
-            const el = document.getElementById(`comment-${commentId}`);
-            el.style.opacity = '0';
-            el.style.transform = 'translateX(-50%)';
-            setTimeout(() => el.remove(), 300);
-            Toast.show('Comment deleted', 'info');
-        } else {
-            Toast.show(data.error || 'Failed', 'danger');
-        }
-    } catch (error) {
-        console.error(error);
-        Toast.show('Network error', 'danger');
-    }
-}
-
 function focusCommentInput(postId) {
     document.getElementById(`commentInput-${postId}`)?.focus();
 }
@@ -6496,13 +4065,15 @@ async function loadAllComments(postId) {
     }
 }
 
-// ==================== SHARE MODAL ====================
+// ========================================
+// SHARE MODAL
+// ========================================
+
 let currentSharePostId = null;
 
 function openShareModal(postId) {
     currentSharePostId = postId;
-    // You can implement a share modal here similar to the group page
-    // For now, let's just copy the link
+    // For now, just copy the link
     copyPostLink();
 }
 
@@ -6521,8 +4092,119 @@ function copyPostLink() {
     });
 }
 
-// ==================== EVENT LISTENERS ====================
+// ========================================
+// INITIALIZATION
+// ========================================
+
 document.addEventListener('DOMContentLoaded', () => {
+    // Hide loader
+    setTimeout(() => {
+        const loader = document.getElementById('loader');
+        if (loader) {
+            loader.style.opacity = '0';
+            setTimeout(() => loader.style.display = 'none', 300);
+        }
+    }, 500);
+
+    // Initialize Ad System FIRST
+    setTimeout(() => {
+        if (document.getElementById('nativeAd') || document.getElementById('floatingAd')) {
+            AdSystem.init();
+        }
+    }, 1000);
+
+    // Initialize all systems
+    Dropdown.init();
+    PostSystem.initInteractions();
+    NotificationSystem.init();
+    SearchSystem.init();
+    TimeUtils.initializeTimeAgo();
+    setInterval(() => TimeUtils.initializeTimeAgo(), 60000);
+    InfiniteScroll.init();
+
+    // Initialize groups dropdown
+    const groupsToggle = document.getElementById('groups-dropdown-toggle');
+    const groupsDropdown = document.getElementById('groupsDropdownMenu');
+
+    if (groupsToggle && groupsDropdown) {
+        groupsToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            groupsDropdown.classList.toggle('hidden');
+
+            if (!groupsDropdown.classList.contains('hidden')) {
+                Groups.load();
+            }
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!groupsDropdown.contains(e.target) && e.target !== groupsToggle) {
+                groupsDropdown.classList.add('hidden');
+            }
+        });
+    }
+
+    // Initialize groups
+    Groups.load();
+
+    // Initialize modals
+    document.querySelectorAll('[data-bs-toggle="modal"]').forEach(trigger => {
+        trigger.addEventListener('click', function() {
+            const target = this.getAttribute('data-bs-target');
+            if (target) {
+                window.openModal(target.replace('#', ''));
+            }
+        });
+    });
+
+    // Close modals on outside click
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                window.closeModal(this.id);
+            }
+        });
+    });
+
+    // Initialize post creation
+    const createPostForm = document.getElementById('createPostForm');
+    if (createPostForm) {
+        createPostForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const submitBtn = this.querySelector('button[type="submit"]');
+            Loader.quick(submitBtn, 'show');
+
+            try {
+                // Check if we should use AJAX (for progress tracking)
+                const mediaFile = document.getElementById('mediaInput').files[0];
+
+                if (mediaFile && mediaFile.size > 10 * 1024 * 1024) { // 10MB threshold
+                    // Use AJAX for large files
+                    await PostUploader.uploadWithProgress(this, submitBtn);
+                } else {
+                    // Use regular form submit for small files
+                    const response = await fetch(this.action, {
+                        method: 'POST',
+                        body: new FormData(this)
+                    });
+
+                    if (response.ok) {
+                        Toast.show('Post created successfully!', 'success');
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        throw new Error('Failed to create post');
+                    }
+                }
+            } catch (error) {
+                console.error('Error creating post:', error);
+                Toast.show('Failed to create post', 'danger');
+            } finally {
+                Loader.quick(submitBtn, 'hide');
+            }
+        });
+    }
+
     // Close dropdowns
     document.addEventListener('click', e => {
         if (!e.target.closest('.dropdown')) {
@@ -6533,9 +4215,11 @@ document.addEventListener('DOMContentLoaded', () => {
             menu.classList.toggle('hidden');
         }
     });
+
+    console.log('Dashboard initialized successfully');
 });
 
-// Expose functions to HTML
+// Make functions globally available
 window.showReactions = showReactions;
 window.hideReactions = hideReactions;
 window.reactToPost = reactToPost;
@@ -6548,21 +4232,6 @@ window.loadAllComments = loadAllComments;
 window.openShareModal = openShareModal;
 window.copyPostLink = copyPostLink;
 
-
-
-
-
-// Expose ProfileSystem.openProfileModal globally for HTML onclick attributes
-window.openProfileModal = function(userId, fromNotification = false) {
-    if (typeof ProfileSystem !== 'undefined' && ProfileSystem.openProfileModal) {
-        ProfileSystem.openProfileModal(userId, fromNotification);
-    } else {
-        console.error('ProfileSystem not initialized');
-        Toast.show('Profile loading not available', 'danger');
-    }
-};
-
-
 // Make functions globally available
 window.toggleFloatingAd = function() {
     AdSystem.toggleFloatingAd();
@@ -6570,12 +4239,4 @@ window.toggleFloatingAd = function() {
 
 window.refreshAds = function() {
     AdSystem.refresh();
-};
-
-window.cycleNextAd = function() {
-    AdSystem.cycleNextAd();
-};
-
-window.cyclePreviousAd = function() {
-    AdSystem.cyclePreviousAd();
 };
