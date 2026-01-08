@@ -1156,17 +1156,54 @@ window.handleChatInputKeypress = function(event) {
     </div>
 
     <!-- GIF Modal -->
+    <!-- GIF Modal for Post Creation -->
     <div id="gifModal" class="hidden">
-        <div class="gif-modal-content">
-            <div class="gif-modal-header">
-                <h3>Choose a GIF</h3>
-                <button class="header-btn" id="closeGifModal">
-                    <i class="bi bi-x-lg"></i>
+        <div class="modal-dialog">
+            <div class="modal-header p-4 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-lg font-semibold">Choose a GIF</h3>
+                <button type="button" class="p-2 rounded-full hover:bg-gray-100 transition" onclick="closeGifModal()">
+                    <i class="bi bi-x-lg text-xl"></i>
                 </button>
             </div>
-            <input type="text" id="gifSearch" placeholder="Search GIFs..." class="gif-search">
-            <div class="gif-grid" id="gifGrid">
-                <!-- GIFs loaded dynamically -->
+
+            <div class="modal-body flex flex-col flex-1 overflow-hidden">
+                <!-- Search Bar -->
+                <div class="p-4 border-b border-gray-200">
+                    <div class="relative">
+                        <i class="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input
+                            type="text"
+                            id="gifSearchInput"
+                            placeholder="Search for GIFs..."
+                            class="w-full pl-12 pr-4 py-3 bg-gray-100 border-0 rounded-full focus:ring-2 focus:ring-blue-500 focus:bg-white focus:outline-none transition-all"
+                            autocomplete="off"
+                        />
+                    </div>
+                </div>
+
+                <!-- Results Title -->
+                <div class="px-4 py-2">
+                    <h4 id="gifResultsTitle" class="text-sm font-semibold text-gray-700">Trending GIFs</h4>
+                </div>
+
+                <!-- GIF Grid -->
+                <div class="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                    <div id="gifGrid" class="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                        <!-- GIFs loaded here -->
+                    </div>
+
+                    <!-- Load More Button -->
+                    <button
+                        id="gifLoadMore"
+                        class="w-full mt-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition hidden"
+                    >
+                        Load More GIFs
+                    </button>
+                </div>
+            </div>
+
+            <div class="p-3 text-center text-xs text-gray-500 border-t border-gray-200">
+                Powered by GIPHY
             </div>
         </div>
     </div>
@@ -1985,59 +2022,60 @@ window.handleChatInputKeypress = function(event) {
 
             <!-- Comments Section -->
             <!-- Comments Section - Scrollable with Dates & Avatars -->
-<div class="comments-section -mx-4 px-4 py-4 bg-gray-50 border-t border-gray-100">
-  <!-- Comment Input -->
-  <div class="flex items-center space-x-3 mb-4">
-    <img
-      src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-      alt="{{ current_user.full_name }}"
-      class="w-8 h-8 rounded-full object-cover flex-shrink-0"
-    />
-    <div class="flex-1 relative">
-      <input
-        type="text"
-        id="commentInput-{{ post.id }}"
-        placeholder="Write a comment..."
-        class="w-full bg-white rounded-full px-4 py-2.5 text-sm border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-        onkeypress="handleCommentKeypress(event, {{ post.id }})"
-      />
-    </div>
-  </div>
+            <!-- Comments Section -->
+            <div class="comments-section -mx-4 px-4 py-4 bg-gray-50 border-t border-gray-100">
+              <!-- Comment Input -->
+              <div class="flex items-center space-x-3 mb-4">
+                <img
+                  src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+                  alt="{{ current_user.full_name }}"
+                  class="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                />
+                <div class="flex-1 relative">
+                  <input
+                    type="text"
+                    id="commentInput-{{ post.id }}"
+                    placeholder="Write a comment..."
+                    class="w-full bg-white rounded-full px-4 py-2.5 text-sm border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                    onkeypress="handleCommentKeypress(event, {{ post.id }})"
+                  />
+                </div>
+              </div>
 
-  <!-- Comments List -->
-  <div class="space-y-4">
-    {% if post.comments_count > 0 %}
-      {% for comment in post.comments[:20]|reverse %}
-      <div class="flex space-x-3 comment-item comment-fade-in" id="comment-{{ comment.id }}">
-        <img
-          src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-          alt="{{ comment.author.full_name }}"
-          class="w-9 h-9 rounded-full object-cover flex-shrink-0"
-        />
-        <div class="flex-1">
-          <div class="bg-white rounded-2xl px-4 py-3 shadow-sm">
-            <div class="flex justify-between items-start">
-              <h6 class="font-semibold text-sm">
-                {{ comment.author.full_name }}
-              </h6>
-              <span class="text-xs text-gray-500">
-                {{ comment.created_at.strftime('%b %d at %I:%M %p') }}
-              </span>
+              <!-- Comments List Container -->
+              <div id="commentsList-{{ post.id }}" class="comments-list space-y-4">
+                {% if post.comments_count > 0 %}
+                  {% for comment in post.comments[:20]|reverse %}
+                  <div class="flex space-x-3 comment-item" id="comment-{{ comment.id }}">
+                    <img
+                      src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+                      alt="{{ comment.author.full_name }}"
+                      class="w-9 h-9 rounded-full object-cover flex-shrink-0"
+                    />
+                    <div class="flex-1">
+                      <div class="bg-white rounded-2xl px-4 py-3 shadow-sm">
+                        <div class="flex justify-between items-start">
+                          <h6 class="font-semibold text-sm">
+                            {{ comment.author.full_name }}
+                          </h6>
+                          <span class="text-xs text-gray-500">
+                            {{ comment.created_at.strftime('%b %d at %I:%M %p') }}
+                          </span>
+                        </div>
+                        <p class="text-gray-800 text-sm mt-2 leading-relaxed">
+                          {{ comment.content }}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  {% endfor %}
+                {% else %}
+                  <p class="text-center text-gray-500 text-sm py-6 no-comments-message">
+                    No comments yet. Be the first to comment!
+                  </p>
+                {% endif %}
+              </div>
             </div>
-            <p class="text-gray-800 text-sm mt-2 leading-relaxed">
-              {{ comment.content }}
-            </p>
-          </div>
-        </div>
-      </div>
-      {% endfor %}
-    {% else %}
-      <p class="text-center text-gray-500 text-sm py-6">
-        No comments yet. Be the first to comment!
-      </p>
-    {% endif %}
-  </div>
-</div>
           </div>
           {% endfor %}
         {% else %}
@@ -3003,15 +3041,42 @@ async function loadMoreTrendingGifs() {
 }
 
 // Select a GIF
-// Select a GIF - NEW WORKING VERSION
+// === FIXED GIF SELECTION FOR POST CREATION ===
 function selectGif(gifUrl, title = '') {
-    // Set hidden input
+    console.log('GIF selected:', gifUrl);
+
+    // Set hidden input for backend
     const hiddenInput = document.getElementById('selectedGifUrl');
     if (hiddenInput) {
         hiddenInput.value = gifUrl;
     }
 
-    // Show preview
+    // Find the active textarea (post creation or edit modal)
+    const textarea = document.querySelector('#postModal textarea[name="post_content"]') ||
+                     document.querySelector('#editPostModal textarea[name="content"]');
+
+    if (textarea) {
+        // Insert a nice markdown-style image link so the user sees the GIF in the text
+        const gifMarkdown = `\n![GIF: ${title || 'Selected GIF'}](${gifUrl})\n`;
+
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const value = textarea.value;
+
+        textarea.value = value.substring(0, start) + gifMarkdown + value.substring(end);
+
+        // Move cursor to end of inserted GIF
+        const newPos = start + gifMarkdown.length;
+        textarea.selectionStart = textarea.selectionEnd = newPos;
+
+        // Trigger input event (for auto-resize if you have it)
+        textarea.dispatchEvent(new Event('input', { bubbles: true }));
+
+        // Refocus textarea
+        textarea.focus();
+    }
+
+    // Show preview in media area
     const mediaPreview = document.getElementById('mediaPreview');
     if (mediaPreview) {
         mediaPreview.innerHTML = `
@@ -3031,23 +3096,33 @@ function selectGif(gifUrl, title = '') {
                     <i class="bi bi-x-lg text-sm"></i>
                 </button>
                 <div class="text-center mt-2 text-sm text-gray-600">
-                    GIF ${title ? '• ' + title.substring(0, 30) + (title.length > 30 ? '...' : '') : ''}
+                    GIF ${title ? '• ' + title.substring(0, 40) + (title.length > 40 ? '...' : '') : ''}
                 </div>
             </div>
         `;
     }
 
-    // DO NOT clear file input — user might switch back
-    // Let backend handle priority
+    // Clear any selected photo/video so GIF takes priority
+    const fileInput = document.getElementById('mediaInput');
+    if (fileInput) fileInput.value = '';
 
+    // Close GIF modal
     closeGifModal();
 }
 
-function clearSelectedGif() {
-    document.getElementById('selectedGifUrl').value = '';
-    document.getElementById('mediaPreview').innerHTML = '';
-    // Do NOT clear file input here either
-}
+// Ensure textarea is ready when modal opens (in case of race condition)
+document.addEventListener('DOMContentLoaded', () => {
+    const postModal = document.getElementById('postModal');
+    if (postModal) {
+        const observer = new MutationObserver(() => {
+            if (!postModal.classList.contains('hidden')) {
+                // Textarea will be focused when user clicks GIF button anyway
+                console.log('Post modal opened – GIF insertion ready');
+            }
+        });
+        observer.observe(postModal, { attributes: true, attributeFilter: ['class'] });
+    }
+});
 
 // Process before submission
 function processGifsBeforeSubmit(textarea) {
@@ -5895,6 +5970,80 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 
+
+
+  <script>
+function openGifPicker() {
+    const gifModal = document.getElementById('gifModal');
+    if (gifModal) {
+        gifModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+
+        // Reset to trending when opening
+        gifCurrentOffset = 0;
+        document.getElementById('gifGrid').innerHTML = '';
+        document.getElementById('gifSearchInput').value = '';
+        loadTrendingGifs();
+
+        setTimeout(() => {
+            document.getElementById('gifSearchInput').focus();
+        }, 100);
+    }
+}
+
+function closeGifModal() {
+    const gifModal = document.getElementById('gifModal');
+    if (gifModal) {
+        gifModal.classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+}
+</script>
+
+<style>
+/* === GIF MODAL Z-INDEX & VISIBILITY FIX === */
+#gifModal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    z-index: 10050 !important; /* Higher than postModal (z-50 = 10000) */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+#gifModal:not(.hidden) {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Ensure the content inside is visible and scrollable */
+#gifModal .modal-dialog {
+    background: white;
+    border-radius: 1.25rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    width: 100%;
+    max-width: 560px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Mobile full-screen feel */
+@media (max-width: 640px) {
+    #gifModal .modal-dialog {
+        max-width: 100%;
+        max-height: 90vh;
+        border-radius: 1.25rem 1.25rem 0 0;
+    }
+}
+</style>
 
 
 </body>

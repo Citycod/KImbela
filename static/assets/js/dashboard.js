@@ -3939,12 +3939,14 @@ function handleCommentKeypress(event, postId) {
 
 async function addComment(postId, content) {
     const input = document.getElementById(`commentInput-${postId}`);
-    const container = document.getElementById(`comments-${postId}`);
-    const countElement = document.getElementById(`comment-count-${postId}`);
+    if (!input) {
+        console.error('Comment input not found for post:', postId);
+        return;
+    }
 
     // Store original state
     input.disabled = true;
-    const placeholder = input.placeholder;
+    const originalPlaceholder = input.placeholder;
     input.placeholder = 'Posting...';
 
     try {
@@ -3957,57 +3959,85 @@ async function addComment(postId, content) {
             body: JSON.stringify({ content })
         });
 
-        // Check if response is JSON
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
+        if (!response.ok) {
             const text = await response.text();
-            if (text.includes('login') || response.status === 401) {
-                throw new Error('Please log in to comment');
-            }
-            throw new Error('Server error');
+            throw new Error(`HTTP ${response.status}: ${text.substring(0, 100)}`);
         }
 
         const data = await response.json();
 
         if (data.success || data.id) {
-            const comment = data.comment || data;
-
             // Use global user info
             const userAvatar = window.currentUserInfo?.avatar || window.defaultAvatar;
             const userName = window.currentUserInfo?.name || 'You';
 
             // Create the comment element
             const div = document.createElement('div');
-            div.className = 'flex space-x-2 md:space-x-3 mb-3 md:mb-4 comment-item comment-fade-in';
-            div.id = `comment-${comment.id || data.id}`;
+            div.className = 'flex space-x-3 comment-item comment-fade-in';
+            div.id = `comment-${data.id || Date.now()}`;
             div.innerHTML = `
-                <img src="${userAvatar}" class="w-6 h-6 md:w-8 md:h-8 rounded-full object-cover">
+                <img src="${userAvatar}" class="w-9 h-9 rounded-full object-cover flex-shrink-0">
                 <div class="flex-1">
-                    <div class="bg-white rounded-xl md:rounded-2xl px-3 py-2 md:px-4 md:py-3">
-                        <div class="flex justify-between items-start mb-1">
-                            <h5 class="font-semibold text-xs md:text-sm">${userName}</h5>
-                            <div class="dropdown relative">
-                                <button class="p-0.5 md:p-1 rounded-full hover:bg-gray-100"><i class="bi bi-three-dots text-gray-400 text-xs"></i></button>
-                                <div class="dropdown-menu absolute right-0 mt-1 w-28 md:w-32 bg-white rounded-lg md:rounded-xl shadow-2xl border border-gray-200 hidden z-10">
-                                    <button onclick="deleteComment(${comment.id || data.id}, ${postId})" class="w-full text-left px-2 py-1.5 md:px-3 md:py-2 hover:bg-gray-50 text-red-600 text-xs md:text-sm">
-                                        <i class="bi bi-trash mr-1 text-xs md:text-sm"></i>Delete
-                                    </button>
-                                </div>
-                            </div>
+                    <div class="bg-white rounded-2xl px-4 py-3 shadow-sm">
+                        <div class="flex justify-between items-start">
+                            <h6 class="font-semibold text-sm">
+                                ${userName}
+                            </h6>
+                            <span class="text-xs text-gray-500">
+                                Just now
+                            </span>
                         </div>
-                        <p class="text-gray-800 text-xs md:text-sm">${content}</p>
-                        <div class="flex items-center space-x-2 md:space-x-3 mt-1 md:mt-2">
-                            <span class="text-xs text-gray-400">Just now</span>
-                        </div>
+                        <p class="text-gray-800 text-sm mt-2 leading-relaxed">
+                            ${content}
+                        </p>
                     </div>
                 </div>
             `;
 
-            // Add to container (prepend to show newest first)
-            if (container.children.length > 0) {
-                container.insertBefore(div, container.firstChild);
+            // Find the comments container
+            const commentsSection = input.closest('.comments-section');
+            if (!commentsSection) {
+                // Fallback: try to find the post by its ID
+                const postElement = document.querySelector(`[data-post-id="${postId}"]`);
+                if (postElement) {
+                    const commentsContainers = postElement.querySelectorAll('[class*="comment"], .space-y-4');
+                    if (commentsContainers.length > 0) {
+                        // ⭐⭐ PREPEND to the comments container (newest first) ⭐⭐
+                        commentsContainers[0].prepend(div);
+                    } else {
+                        // Create a new comments container
+                        const newContainer = document.createElement('div');
+                        newContainer.className = 'space-y-4 mt-4';
+                        newContainer.appendChild(div);
+                        postElement.querySelector('.border-t').after(newContainer);
+                    }
+                }
             } else {
-                container.appendChild(div);
+                // Find or create the comments list container
+                let commentsList = commentsSection.querySelector('.space-y-4');
+
+                if (!commentsList) {
+                    // Create a new comments list container
+                    commentsList = document.createElement('div');
+                    commentsList.className = 'space-y-4 mt-4';
+
+                    // Insert it after the input section
+                    const inputSection = commentsSection.querySelector('.flex.items-center.space-x-3');
+                    if (inputSection) {
+                        inputSection.after(commentsList);
+                    } else {
+                        commentsSection.appendChild(commentsList);
+                    }
+                }
+
+                // Remove "no comments" message if it exists
+                const noCommentsMsg = commentsList.querySelector('.text-center');
+                if (noCommentsMsg) {
+                    noCommentsMsg.remove();
+                }
+
+                // ⭐⭐ PREPEND the new comment to the comments list (newest first) ⭐⭐
+                commentsList.prepend(div);
             }
 
             // Clear input
@@ -4019,7 +4049,7 @@ async function addComment(postId, content) {
             // Show success message
             Toast.show('Comment added!', 'success');
 
-            // Scroll to the new comment
+            // Scroll to the top to show the new comment
             setTimeout(() => {
                 div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }, 100);
@@ -4029,7 +4059,7 @@ async function addComment(postId, content) {
     } catch (error) {
         console.error('Comment error:', error);
 
-        if (error.message.includes('log in')) {
+        if (error.message.includes('401') || error.message.includes('login')) {
             Toast.show('Please log in again to comment', 'warning');
             setTimeout(() => {
                 window.location.href = '/login';
@@ -4040,7 +4070,7 @@ async function addComment(postId, content) {
     } finally {
         // Restore input state
         input.disabled = false;
-        input.placeholder = placeholder;
+        input.placeholder = originalPlaceholder;
         input.focus();
     }
 }
@@ -4063,6 +4093,12 @@ function updateCommentCount(postId, change, operation = 'add') {
     // Update both the text and the data attribute
     countElement.textContent = `${currentCount} ${currentCount === 1 ? 'comment' : 'comments'}`;
     countElement.setAttribute('data-total-comments', currentCount);
+
+    // Also update the count animation
+    countElement.classList.add('comment-count-update');
+    setTimeout(() => {
+        countElement.classList.remove('comment-count-update');
+    }, 500);
 }
 
 // Update deleteComment function to accept postId
