@@ -41,13 +41,15 @@
 
 
 <!-- Emoji Picker -->
-<script src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/style.css">
+<!--<script src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>-->
+<!--<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/style.css">-->
 
-<!-- Twemoji for emoji rendering -->
+<!--&lt;!&ndash; Twemoji for emoji rendering &ndash;&gt;-->
 
-<!-- Replace the Twemoji script with: -->
-<script src="https://unpkg.com/twemoji@latest/dist/twemoji.min.js" crossorigin="anonymous"></script>
+<!--&lt;!&ndash; Replace the Twemoji script with: &ndash;&gt;-->
+<!--<script src="https://unpkg.com/twemoji@latest/dist/twemoji.min.js" crossorigin="anonymous"></script>-->
+
+      <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1.21.0/index.js"></script>
 
     <!-- Add this to your HTML template -->
     <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
@@ -666,6 +668,11 @@ window.handleChatInputKeypress = function(event) {
     </style>
 
       <style>
+          emoji-picker {
+  --emoji-font-family: "Twemoji Mozilla", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
+}
+
+
   /* Tiny Comment Loader */
   .comment-loader {
     display: inline-block;
@@ -2660,20 +2667,43 @@ window.handleChatInputKeypress = function(event) {
 
 let currentTextarea = null;
 
+let emojiPickerInitialized = false;
+
 function openEmojiPicker() {
     const emojiModal = document.getElementById('emojiModal');
-    if (emojiModal) {
-        emojiModal.classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
+    if (!emojiModal) return;
 
-        // Get the post content textarea
-        currentTextarea = document.querySelector('#postModal textarea[name="post_content"]') ||
-                         document.querySelector('#editPostModal textarea[name="content"]');
+    emojiModal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
 
-        // Initialize emoji picker if not already done
-        initializeEmojiPicker();
+    // Always target the post creation textarea (or edit if open)
+    currentTextarea = document.querySelector('#postModal textarea[name="post_content"]') ||
+                     document.querySelector('#editPostModal textarea[name="content"]');
+
+    const picker = document.getElementById('emojiPicker');
+
+    if (picker && !emojiPickerInitialized) {
+        picker.addEventListener('emoji-click', event => {
+            if (currentTextarea) {
+                // Updated: Use event.detail.emoji.unicode for newer versions
+                const emoji = event.detail.emoji?.unicode || event.detail.unicode;
+                if (emoji) {
+                    insertAtCursor(currentTextarea, emoji);
+                    currentTextarea.focus(); // Refocus after insert
+                }
+            }
+            closeEmojiModal(); // Optional: close modal after selection
+        });
+
+        emojiPickerInitialized = true;
+    }
+
+    // Ensure textarea is focused
+    if (currentTextarea) {
+        currentTextarea.focus();
     }
 }
+
 
 function closeEmojiModal() {
     const emojiModal = document.getElementById('emojiModal');
@@ -3173,7 +3203,29 @@ document.getElementById('mediaInput').addEventListener('change', function() {
   </script>
 
 
+<script>
+// Ensure Twemoji parses emojis in the picker whenever it's opened or emojis are added
 
+
+// Call it when opening the emoji modal
+function openEmojiPicker() {
+    const emojiModal = document.getElementById('emojiModal');
+    if (emojiModal) {
+        emojiModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        currentTextarea = document.querySelector('#postModal textarea[name="post_content"]') ||
+                         document.querySelector('#editPostModal textarea[name="content"]');
+
+        initializeEmojiPicker();
+
+        // Parse emojis after a short delay (gives time for picker to render)
+        // setTimeout(parseEmojisInPicker, 300);
+    }
+}
+
+// Also re-parse on emoji-click in case new ones are added
+
+</script>
 
 
 
@@ -5776,5 +5828,74 @@ setTimeout(function() {
     }
 });
 </script>
+
+
+  <script>
+// === FIXED EMOJI PICKER FOR POST CREATION ===
+document.addEventListener('DOMContentLoaded', function() {
+    // Function to attach emoji-click listener to the picker
+    function attachEmojiListener() {
+        const picker = document.querySelector('emoji-picker');
+        if (!picker) return;
+
+        // Remove any existing listener to avoid duplicates
+        picker.removeEventListener('emoji-click', handleEmojiClick);
+
+        // Add the correct listener for current emoji-picker-element version
+        picker.addEventListener('emoji-click', handleEmojiClick);
+    }
+
+    // Handler: Insert selected emoji at cursor position in the active textarea
+    function handleEmojiClick(event) {
+        // Find the active textarea (post creation or edit)
+        const textarea = document.querySelector('#postModal textarea[name="post_content"]') ||
+                         document.querySelector('#editPostModal textarea[name="content"]');
+
+        if (!textarea || !event.detail?.emoji?.unicode) return;
+
+        const emoji = event.detail.emoji.unicode;
+
+        // Insert emoji at cursor
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const value = textarea.value;
+
+        textarea.value = value.substring(0, start) + emoji + value.substring(end);
+
+        // Move cursor after the inserted emoji
+        const newPos = start + emoji.length;
+        textarea.selectionStart = textarea.selectionEnd = newPos;
+
+        // Focus and trigger input for auto-resize/validation
+        textarea.focus();
+        textarea.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    // Open post modal → attach listener when modal is shown
+    const postModal = document.getElementById('postModal');
+    if (postModal) {
+        // Use event delegation or direct listener for modal show
+        postModal.addEventListener('shown.bs.modal', attachEmojiListener); // If using Bootstrap
+        // Fallback: observe class changes (in case modal uses .hidden class)
+        const observer = new MutationObserver(() => {
+            if (!postModal.classList.contains('hidden')) {
+                attachEmojiListener();
+            }
+        });
+        observer.observe(postModal, { attributes: true, attributeFilter: ['class'] });
+    }
+
+    // Also attach if emoji button is clicked directly
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.composer-btn') && e.target.closest('.composer-btn').querySelector('.bi-emoji-smile-fill')) {
+            setTimeout(attachEmojiListener, 300); // Small delay to ensure picker is rendered
+        }
+    });
+});
+</script>
+
+
+
+
 </body>
 </html>

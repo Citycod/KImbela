@@ -77,8 +77,8 @@ window.closeModal = function(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.classList.add('hidden');
-        modal.style.display = 'none'; // Extra safety
-        document.body.style.overflow = '';
+        modal.style.display = 'none';  // Keep this for safety
+        document.body.style.overflow = 'auto';  // Explicitly restore scrolling (use 'visible' if 'auto' doesn't work)
     }
 };
 
@@ -105,6 +105,7 @@ window.openModal = function(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.classList.remove('hidden');
+        modal.style.display = 'flex';  // Explicitly set display (assuming flex for centering; use 'block' if not)
         document.body.style.overflow = 'hidden';
     }
 };
