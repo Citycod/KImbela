@@ -73,6 +73,12 @@ const appState = {
 // GLOBAL FUNCTIONS FOR HTML ONCLICK ATTRIBUTES
 // ========================================
 
+
+
+
+
+
+
 window.closeModal = function(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
