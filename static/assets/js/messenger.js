@@ -35,6 +35,9 @@
 
         socket.on('connect_error', (error) => {
             console.error('❌ Socket connection error:', error);
+
+            loadFriendsList();
+            updateUnreadBadge();
         });
 
         socket.on('disconnect', (reason) => {
@@ -562,6 +565,10 @@
             if (isInitialized) return;
 
             console.log('🚀 Initializing Messenger...');
+
+            loadFriendsList();
+            updateUnreadBadge();
+
             initSocket();
             setupEventListeners();
             isInitialized = true;
