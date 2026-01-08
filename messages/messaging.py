@@ -14,6 +14,7 @@ import requests
 import os
 from dotenv import load_dotenv
 
+
 messaging = Blueprint("messaging", __name__)
 
 # Configuration

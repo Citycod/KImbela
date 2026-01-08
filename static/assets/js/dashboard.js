@@ -111,6 +111,80 @@ window.openModal = function(modalId) {
 
 
 
+// Add this to your dashboard.js, near the top of the "GLOBAL FUNCTIONS" section:
+
+window.handleMessageButtonClick = function(userId) {
+    // Close the profile modal
+    Modal.close('profileModal');
+
+    // Show loading toast
+    Toast.show('Opening chat...', 'info');
+
+    // Wait a bit for modal to close
+    setTimeout(() => {
+        // Open the messenger popup
+        const messengerPopup = document.getElementById('messengerPopup');
+        if (messengerPopup) {
+            // Remove hidden class and show it
+            messengerPopup.classList.remove('hidden');
+            messengerPopup.style.display = 'flex';
+
+            // Ensure Messenger is initialized
+            if (typeof Messenger !== 'undefined') {
+                // Initialize if not already
+                Messenger.init();
+
+                // Load the user's friends list (if not loaded)
+                Messenger.loadFriendsList();
+
+                // Small delay to ensure friends list is loaded
+                setTimeout(() => {
+                    // Try to open chat with the user
+                    openChatForUser(userId);
+                }, 300);
+            } else {
+                Toast.show('Messenger not available', 'danger');
+            }
+        } else {
+            Toast.show('Messenger not found', 'danger');
+        }
+    }, 300);
+};
+
+// Helper function to open chat for a specific user
+async function openChatForUser(userId) {
+    try {
+        // First get user info
+        const response = await fetch(`/get_user_profile/${userId}`);
+        const data = await response.json();
+
+        if (!data.error) {
+            // Find the user in friends list or create chat
+            if (typeof Messenger !== 'undefined' && Messenger.openChat) {
+                Messenger.openChat(
+                    userId,
+                    `${data.first_name} ${data.last_name}`,
+                    data.profile_pic || window.defaultAvatar
+                );
+            } else {
+                // Fallback: show error and refresh
+                Toast.show('Opening chat...', 'info');
+                setTimeout(() => {
+                    // If Messenger isn't available, reload the page with chat open
+                    window.location.href = `/dashboard?open_chat=${userId}`;
+                }, 500);
+            }
+        } else {
+            Toast.show('Failed to load user info', 'danger');
+        }
+    } catch (error) {
+        console.error('Error opening chat:', error);
+        Toast.show('Error opening chat', 'danger');
+    }
+}
+
+
+
 
 window.previewMedia = function(input) {
     MediaPreview.preview(input);
@@ -965,9 +1039,17 @@ const FriendSystem = {
 
             case 'friends':
                 buttonHTML = `
-                    <button class="btn btn-primary px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
-                            onclick="Messenger.startChat(${userId})"">
-                        <i class="bi bi-chat-dots mr-1"></i> Message
+                    <button class="relative px-5 py-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-xl font-medium transition-all duration-300 overflow-hidden group shadow-sm hover:shadow-md"
+                            onclick="window.handleMessageButtonClick(${userId})">
+                        <!-- Shimmer effect -->
+                        <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+
+                        <!-- Content -->
+                        <div class="relative flex items-center gap-2">
+                            <i class="bi bi-chat-dots text-sm group-hover:scale-110 transition-transform duration-300"></i>
+                            <span class="text-xs group-hover:font-medium transition-all duration-300">Message</span>
+                            <i class="bi bi-arrow-right-short text-xs opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
+                        </div>
                     </button>
                     <button class="btn btn-outline-danger px-4 py-2 border border-red-500 text-red-500 rounded-lg font-medium hover:bg-red-50 transition-colors"
                             onclick="BlockSystem.block(${userId})">
