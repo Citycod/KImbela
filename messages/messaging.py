@@ -13,6 +13,8 @@ import io
 import requests
 import os
 from dotenv import load_dotenv
+from flask import send_from_directory
+
 
 
 messaging = Blueprint("messaging", __name__)
@@ -83,7 +85,7 @@ def save_file(file, file_type='image'):
         process_image(file_path)
 
     # Return URL
-    return url_for('static', filename=f'uploads/{file_type}/{unique_filename}', _external=True)
+    return url_for('messaging.uploaded_file', file_type=file_type, filename=unique_filename, _external=True)
 
 
 def process_image(file_path):
@@ -381,55 +383,61 @@ def send_message():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+
+
+
+@messaging.route('/uploads/<file_type>/<filename>')
+@login_required
+def uploaded_file(file_type, filename):
+    try:
+        upload_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], file_type)
+        return send_from_directory(upload_dir, filename)
+    except NotFound:
+        abort(404)
+    except Exception as e:
+        print(f"Error serving uploaded file: {e}")
+        abort(404)
+
+
+
+
+
 @messaging.route("/api/messaging/upload", methods=["POST"])
 @login_required
 def upload_file():
-    """Upload a file (image, video, audio, document)"""
+    """Upload a file and return clean URL"""
     try:
-        if 'file' not in request.files and 'audio' not in request.files:
+        if 'file' not in request.files:
             return jsonify({"success": False, "error": "No file provided"}), 400
 
-        # Determine file type
-        file = request.files.get('file') or request.files.get('audio')
-        file_type = request.form.get('type', 'image')
+        file = request.files['file']
         to_id = request.form.get('to_id', type=int)
+        file_type = request.form.get('type', 'document')  # image, video, audio, document
 
         if not to_id:
             return jsonify({"success": False, "error": "No recipient specified"}), 400
 
-        # Validate file type
-        if file_type not in ALLOWED_EXTENSIONS:
-            return jsonify({"success": False, "error": "Invalid file type"}), 400
+        if not file or file.filename == '':
+            return jsonify({"success": False, "error": "No file selected"}), 400
 
-        # Check if file is allowed
-        if not allowed_file(file.filename, file_type):
-            return jsonify({"success": False, "error": f"File type not allowed for {file_type}"}), 400
-
-        # Save file
+        # Save file and get URL
         file_url = save_file(file, file_type)
         if not file_url:
             return jsonify({"success": False, "error": "Failed to save file"}), 500
 
-        # For audio files, calculate duration (you'll need to implement this)
-        duration = None
-        if file_type == 'audio':
-            # You can use a library like mutagen to get audio duration
-            # duration = get_audio_duration(file)
-            pass
-
         return jsonify({
             "success": True,
             "url": file_url,
-            "type": file_type,
             "filename": file.filename,
-            "duration": duration
+            "type": file_type
         })
 
-    except ValueError as e:
-        return jsonify({"success": False, "error": str(e)}), 400
     except Exception as e:
         print(f"❌ Error uploading file: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
+
+
+
 
 
 @messaging.route("/api/messaging/unread_count")

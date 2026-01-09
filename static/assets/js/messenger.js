@@ -1,4 +1,4 @@
-// messenger.js - FIXED VERSION
+// messenger.js - COMPLETE FIXED VERSION WITH ALL ISSUES RESOLVED
 (function() {
     // Private state
     let socket = null;
@@ -8,9 +8,12 @@
     let typingTimeout = null;
     let isTyping = false;
     let isInitialized = false;
+    let uploadInProgress = false;
+    let sentMessageIds = new Set(); // Track sent messages to prevent duplicates
+    let messageLoader = null; // Small loader element
 
     // ========================================
-    // SOCKET.IO SETUP (Simple Version)
+    // SOCKET.IO SETUP
     // ========================================
     function initSocket() {
         if (socket?.connected) return;
@@ -35,13 +38,12 @@
 
         socket.on('connect_error', (error) => {
             console.error('❌ Socket connection error:', error);
-
             loadFriendsList();
             updateUnreadBadge();
         });
 
         socket.on('disconnect', (reason) => {
-            console.log('⚠️ Socket disconnected:', reason);
+            console.log('🔌 Socket disconnected:', reason);
         });
 
         // Message events
@@ -53,137 +55,64 @@
     }
 
     // ========================================
-    // MESSAGE HANDLING
+    // MESSAGE HANDLING - FIXED FOR DUPLICATES
     // ========================================
-    // messenger.js - Fix field names throughout
-
     function handleNewMessage(data) {
-      console.log('New message received:', data);
+        console.log('📩 New message received:', data);
 
-      updateUnreadBadge();
+        updateUnreadBadge();
 
-      const senderId = parseInt(data.sender_id);
-      const receiverId = parseInt(data.receiver_id);
-      const isMine = senderId === window.currentUserId;
+        const senderId = parseInt(data.sender_id);
+        const receiverId = parseInt(data.receiver_id);
+        const isMine = senderId === window.currentUserId;
 
-      const isCurrentChat = currentChatUserId && (
-        senderId === currentChatUserId || receiverId === currentChatUserId
-      );
+        const isCurrentChat = currentChatUserId && (
+            senderId === currentChatUserId || receiverId === currentChatUserId
+        );
 
-      // ✅ 1) If this is my message and it has temp_id, REPLACE the temp bubble
-      if (isMine && data.temp_id) {
-        const tempEl = document.querySelector(`[data-message-id="${data.temp_id}"]`);
-        if (tempEl) {
-          tempEl.setAttribute('data-message-id', data.id);
+        // 1) If this is my message and it has temp_id, REPLACE the temp bubble
+        if (isMine && data.temp_id) {
+            const tempEl = document.querySelector(`[data-message-id="${data.temp_id}"]`);
+            if (tempEl) {
+                // Update with real message ID
+                tempEl.setAttribute('data-message-id', data.id);
 
-          // update status icon (optional)
-          const statusEl = tempEl.querySelector('.message-status');
-          if (statusEl) statusEl.innerHTML = `<i class="bi bi-check-all"></i>`;
+                // Remove temp loader if present
+                const loader = tempEl.querySelector('.message-loader');
+                if (loader) loader.remove();
 
-          return; // ✅ stop here so we don’t append a duplicate
-        }
-      }
+                // Update status icon
+                const statusEl = tempEl.querySelector('.message-status');
+                if (statusEl) statusEl.innerHTML = `<i class="bi bi-check-all text-xs"></i>`;
 
-      // ✅ 2) Hard dedupe: if message already exists by real id, do nothing
-      const existing = document.querySelector(`[data-message-id="${data.id}"]`);
-      if (existing) return;
-
-      if (isCurrentChat) {
-        const type = isMine ? 'sent' : 'received';
-        appendMessage(data, type);
-        scrollToBottom();
-
-        // mark as read if it's received
-        if (!isMine && data.status === 'sent') {
-          markMessageAsRead(data.id);
-        }
-      } else {
-        updateFriendsListUnreadCount(senderId);
-      }
-    }
-
-
-
-    function loadChatHistory(userId) {
-        const container = document.getElementById('chatMessages');
-        if (!container) return;
-
-        try {
-            container.innerHTML = '<div class="text-center py-12 text-gray-400">Loading messages...</div>';
-
-            fetch(`/api/messaging/messages/${userId}?limit=50`)
-                .then(response => response.json())
-                .then(result => {
-                    container.innerHTML = '';
-
-                    if (result.success && result.messages?.length) {
-                        result.messages.forEach(msg => {
-                            const type = parseInt(msg.sender_id) === window.currentUserId ? 'sent' : 'received';
-                            appendMessage(msg, type);
-                        });
-
-                        // Mark all as read since we're viewing them
-                        markConversationAsRead(userId);
-                    } else {
-                        container.innerHTML = `
-                            <div class="text-center py-12 text-gray-400">
-                                <i class="bi bi-chat-left-dots text-4xl mb-4"></i>
-                                <p>No messages yet</p>
-                                <p class="text-sm">Say hello to start the conversation!</p>
-                            </div>
-                        `;
-                    }
-
-                    scrollToBottom();
-                })
-                .catch(error => {
-                    console.error('Error loading chat history:', error);
-                    container.innerHTML = `
-                        <div class="text-center py-12 text-red-500">
-                            Failed to load messages
-                        </div>
-                    `;
-                });
-
-        } catch (error) {
-            console.error('Error loading chat history:', error);
-            container.innerHTML = `
-                <div class="text-center py-12 text-red-500">
-                    Failed to load messages
-                </div>
-            `;
-        }
-    }
-
-    // Add this function to mark entire conversation as read
-    function markConversationAsRead(userId) {
-        fetch(`/api/messaging/mark-conversation-read/${userId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': window.csrfToken || ''
+                // Add to sent messages set to prevent duplicates
+                sentMessageIds.add(data.id);
+                return; // Stop here so we don't append a duplicate
             }
-        }).catch(error => console.error('Error marking conversation as read:', error));
-    }
-
-    function handleTyping(data) {
-        if (currentChatUserId && parseInt(data.user_id) === currentChatUserId) {
-            showTypingIndicator(data.user_name || 'Someone');
         }
-    }
 
-    function handleStopTyping(data) {
-        if (currentChatUserId && parseInt(data.user_id) === currentChatUserId) {
-            hideTypingIndicator();
+        // 2) Hard dedupe: if message already exists by real id, do nothing
+        const existing = document.querySelector(`[data-message-id="${data.id}"]`);
+        if (existing) {
+            console.log('🔄 Duplicate message detected, skipping:', data.id);
+            return;
         }
-    }
 
-    function handleUserOnline(data) {
-        updateFriendOnlineStatus(data.user_id, true);
-    }
+        // 3) Add to sent messages set
+        sentMessageIds.add(data.id);
 
-    function handleUserOffline(data) {
-        updateFriendOnlineStatus(data.user_id, false);
+        if (isCurrentChat) {
+            const type = isMine ? 'sent' : 'received';
+            appendMessage(data, type);
+            scrollToBottom();
+
+            // Mark as read if it's received
+            if (!isMine && data.status === 'sent') {
+                markMessageAsRead(data.id);
+            }
+        } else {
+            updateFriendsListUnreadCount(senderId);
+        }
     }
 
     // ========================================
@@ -290,11 +219,20 @@
             container.innerHTML = '';
 
             if (result.messages?.length) {
+                // Clear sent messages set for this chat
+                sentMessageIds.clear();
+
                 result.messages.reverse();
                 result.messages.forEach(msg => {
+                    // Add to sent messages set
+                    sentMessageIds.add(msg.id);
+
                     const type = parseInt(msg.sender_id) === window.currentUserId ? 'sent' : 'received';
                     appendMessage(msg, type);
                 });
+
+                // Mark all as read since we're viewing them
+                markConversationAsRead(userId);
             } else {
                 container.innerHTML = `
                     <div class="text-center py-12 text-gray-400">
@@ -317,6 +255,9 @@
         }
     }
 
+    // ========================================
+    // APPEND MESSAGE - COMPLETELY FIXED VERSION
+    // ========================================
     function appendMessage(msg, type) {
         const container = document.getElementById('chatMessages');
         if (!container) return;
@@ -332,61 +273,124 @@
         const msgKey = msg.id || msg.temp_id || ('temp-' + Date.now());
         div.setAttribute('data-message-id', msgKey);
 
-
         let content = msg.content || '';
+        let mediaHtml = '';
 
-        // Parse GIFs
-        content = content.replace(/\[GIF:(.*?)\](https?:\/\/[^\s]+)/g,
-            (match, title, url) => `
-            <div class="message-gif mt-2">
-                <img src="${url}" alt="${title}" class="rounded-lg max-w-xs">
-                ${title ? `<div class="text-xs text-gray-500 mt-1">${title}</div>` : ''}
-            </div>`);
+        // Check if content is a URL (image, video, file)
+        const urlRegex = /(https?:\/\/[^\s]+(?:\.(jpg|jpeg|png|gif|webp|bmp|mp4|webm|mov|avi|ogg|pdf|doc|docx|txt|xls|xlsx|ppt|pptx))[^ \n]*)/gi;
 
-        const time = new Date(msg.timestamp || Date.now()).toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit'
+        // Replace all URLs with proper media elements
+        content = content.replace(urlRegex, (url) => {
+            const lowerUrl = url.toLowerCase();
+
+            // Extract clean filename (remove query parameters and get original filename)
+            let filename = '';
+            try {
+                // Decode URL-encoded characters
+                const decodedUrl = decodeURIComponent(url);
+                // Get the filename part
+                const pathParts = decodedUrl.split('/');
+                filename = pathParts[pathParts.length - 1];
+                // Remove query parameters if any
+                filename = filename.split('?')[0];
+            } catch (e) {
+                filename = 'file';
+            }
+
+            // Image handling - NO BACKGROUND, NO CAPTION
+            if (lowerUrl.match(/\.(jpg|jpeg|png|gif|webp|bmp)$/)) {
+                return `
+                    <div class="message-media ">
+                        <img src="${url}" alt="${filename}" loading="lazy"
+                             class="rounded-lg max-w-sm max-h-96 object-contain cursor-pointer hover:shadow-lg transition-shadow"
+                             onclick="window.open('${url}', '_blank')">
+                    </div>`;
+            }
+            // Video handling - NO BACKGROUND, NO CAPTION
+            else if (lowerUrl.match(/\.(mp4|webm|mov|avi|ogg)$/)) {
+                return `
+                    <div class="message-media ">
+                        <video controls class="rounded-lg max-w-sm max-h-96">
+                            <source src="${url}" type="video/mp4">
+                            Your browser does not support video.
+                        </video>
+                    </div>`;
+            }
+            // File handling - NO BACKGROUND, SHOW ORIGINAL FILENAME
+            else if (lowerUrl.match(/\.(pdf|doc|docx|txt|xls|xlsx|ppt|pptx)$/)) {
+                return `
+                    <div class="message-file ">
+                        <a href="${url}" target="_blank" class="flex items-center text-blue-600 hover:underline p-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+                            <i class="bi bi-file-earmark-text mr-2 text-lg"></i>
+                            <span class="truncate max-w-xs font-medium">${filename}</span>
+                        </a>
+                    </div>`;
+            }
+            // GIF handling - NO BACKGROUND, NO CAPTION
+            else if (lowerUrl.includes('giphy.com') || lowerUrl.endsWith('.gif')) {
+                return `
+                    <div class="message-media ">
+                        <img src="${url}" alt="GIF" loading="lazy"
+                             class="rounded-lg max-w-xs cursor-pointer hover:shadow-lg transition-shadow"
+                             onclick="window.open('${url}', '_blank')">
+                    </div>`;
+            }
+            // Regular link (not media)
+            return `<a href="${url}" target="_blank" class="text-blue-600 underline break-all">${url}</a>`;
         });
 
-        const date = new Date(msg.timestamp || Date.now()).toLocaleDateString();
+        // Calculate time and date
+        const msgTimestamp = msg.timestamp ? new Date(msg.timestamp) : new Date();
+        const time = msgTimestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + 1;
+        const date = msgTimestamp.toLocaleDateString();
 
         // Check if we need to add a date separator
         const lastMessage = container.lastElementChild;
         let addDateSeparator = false;
 
-        if (lastMessage) {
-            const lastDate = lastMessage.dataset.date;
-            if (lastDate !== date) {
+        if (lastMessage && lastMessage.dataset && lastMessage.dataset.date) {
+            if (lastMessage.dataset.date !== date) {
                 addDateSeparator = true;
             }
-        } else {
+        } else if (!lastMessage) {
             addDateSeparator = true;
         }
 
         if (addDateSeparator) {
             const dateSeparator = document.createElement('div');
-            dateSeparator.className = 'date-separator text-center my-4';
+            dateSeparator.className = 'date-separator text-center my-4 text-gray-500 font-medium';
             dateSeparator.textContent = date;
             container.appendChild(dateSeparator);
         }
 
         div.dataset.date = date;
+
+        // Build message bubble - FIXED FOR BOTH SENDER AND RECEIVER
         div.innerHTML = `
-            <div class="message-bubble ${type}">
-                <div class="message-content whitespace-pre-wrap">${content}</div>
-                <div class="message-footer flex justify-between items-center mt-1">
-                    <span class="message-time text-xs opacity-70">${time}</span>
-                    ${type === 'sent' ?
-                        '<span class="message-status text-xs opacity-70"><i class="bi bi-check-all"></i></span>' :
-                        ''}
-                </div>
+        <div class="message-bubble ${type} px-3 py-2">  <!-- Added px-3 py-2 -->
+            ${content ? `<div class="message-content whitespace-pre-wrap">${content}</div>` : ''}
+            <div class="message-footer flex justify-between items-center mt-1">  <!-- mt-2 → mt-1 -->
+                <span class="message-time text-xs opacity-70">${time}</span>
+                ${type === 'sent' ?
+                    `<span class="message-status text-xs opacity-70">
+                        ${msg.temp_id ?
+                            '<div class="tiny-upload-loader inline-block ml-1"></div>' :
+                            '<i class="bi bi-check-all"></i>'
+                        }
+                    </span>` :
+                    ''
+                }
             </div>
-        `;
+        </div>
+    `;
 
         container.appendChild(div);
         scrollToBottom();
     }
 
+    // ========================================
+    // SEND MESSAGE - WITH SMALL UPLOAD LOADER
+    // ========================================
     function sendMessage() {
         const input = document.getElementById('chatInput');
         if (!input || !currentChatUserId) return;
@@ -398,7 +402,8 @@
         appendMessage({
             id: tempId,
             content,
-            sender_id: window.currentUserId
+            sender_id: window.currentUserId,
+            temp_id: tempId
         }, 'sent');
 
         if (socket) {
@@ -412,6 +417,126 @@
         input.value = '';
         autoResizeTextarea(input);
         scrollToBottom();
+    }
+
+    // ========================================
+    // FILE UPLOAD - WITH VISUAL LOADER
+    // ========================================
+    async function uploadFiles(files) {
+        if (!currentChatUserId) {
+            alert('No chat open');
+            return;
+        }
+
+        if (uploadInProgress) {
+            alert('Please wait for current upload to complete');
+            return;
+        }
+
+        // Create and show tiny upload loader
+        showUploadLoader();
+
+        uploadInProgress = true;
+
+        // Upload each file one by one
+        for (let file of files) {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('to_id', currentChatUserId);
+
+            // Determine file type
+            const ext = file.name.split('.').pop().toLowerCase();
+            let fileType = 'document';
+            if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(ext)) fileType = 'image';
+            else if (['mp4', 'webm', 'mov', 'avi'].includes(ext)) fileType = 'video';
+            else if (['mp3', 'wav', 'm4a', 'ogg'].includes(ext)) fileType = 'audio';
+
+            formData.append('type', fileType);
+
+            try {
+                const response = await fetch('/api/messaging/upload', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': window.csrfToken || ''
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.success && socket) {
+                    // Send ONLY the clean URL
+                    const content = result.url;
+                    const tempId = 'temp-' + Date.now();
+
+                    // Create temp message with loader
+                    appendMessage({
+                        id: tempId,
+                        content: content,
+                        sender_id: window.currentUserId,
+                        timestamp: new Date().toISOString(),
+                        temp_id: tempId
+                    }, 'sent');
+
+                    // Send via socket
+                    socket.emit('send_message', {
+                        receiver_id: currentChatUserId,
+                        content: content,
+                        temp_id: tempId
+                    });
+
+                } else {
+                    console.error('Upload failed:', result.error);
+                    alert(`Failed to upload ${file.name}: ${result.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                console.error('Error uploading file:', error);
+                alert(`Failed to upload ${file.name}`);
+            }
+        }
+
+        uploadInProgress = false;
+        hideUploadLoader();
+    }
+
+    // ========================================
+    // TINY UPLOAD LOADER FUNCTIONS
+    // ========================================
+    function showUploadLoader() {
+        // Create or show tiny loader in message input area
+        const inputContainer = document.querySelector('.message-input-area');
+        if (!inputContainer) return;
+
+        // Remove existing loader
+        hideUploadLoader();
+
+        // Create tiny loader
+        messageLoader = document.createElement('div');
+        messageLoader.className = 'tiny-upload-loader active';
+        messageLoader.innerHTML = `
+            <div class="loader-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <span class="loader-text text-xs text-gray-500">Sending...</span>
+        `;
+
+        // Position loader near send button
+        const sendBtn = document.getElementById('sendMessageBtn');
+        if (sendBtn) {
+            const inputContainer = sendBtn.closest('.input-container');
+            if (inputContainer) {
+                inputContainer.appendChild(messageLoader);
+            }
+        }
+    }
+
+    function hideUploadLoader() {
+        if (messageLoader) {
+            messageLoader.remove();
+            messageLoader = null;
+        }
     }
 
     // ========================================
@@ -430,6 +555,18 @@
             socket.emit('stop_typing', { receiver_id: currentChatUserId });
             isTyping = false;
         }, 1000);
+    }
+
+    function handleTyping(data) {
+        if (currentChatUserId && parseInt(data.user_id) === currentChatUserId) {
+            showTypingIndicator(data.user_name || 'Someone');
+        }
+    }
+
+    function handleStopTyping(data) {
+        if (currentChatUserId && parseInt(data.user_id) === currentChatUserId) {
+            hideTypingIndicator();
+        }
     }
 
     function showTypingIndicator(name) {
@@ -483,33 +620,34 @@
         }
     }
 
-    // ========================================
-    // GIF PICKER
-    // ========================================
-    function openGifPicker() {
-        const modal = document.getElementById('gifModal');
-        if (modal) {
-            modal.classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-        }
+    function handleUserOnline(data) {
+        updateFriendOnlineStatus(data.user_id, true);
     }
 
-    function closeGifPicker() {
-        const modal = document.getElementById('gifModal');
-        if (modal) {
-            modal.classList.add('hidden');
-            document.body.style.overflow = '';
-        }
+    function handleUserOffline(data) {
+        updateFriendOnlineStatus(data.user_id, false);
     }
 
-    function selectGif(url, title = '') {
-        const input = document.getElementById('chatInput');
-        if (input) {
-            input.value += ` [GIF:${title}]${url} `;
-            input.focus();
-            input.dispatchEvent(new Event('input'));
-        }
-        closeGifPicker();
+    function markConversationAsRead(userId) {
+        fetch(`/api/messaging/mark-conversation-read/${userId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': window.csrfToken || ''
+            }
+        }).catch(error => console.error('Error marking conversation as read:', error));
+    }
+
+    function markMessageAsRead(messageId) {
+        if (!messageId) return;
+
+        fetch(`/api/messaging/mark-read/${messageId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': window.csrfToken || ''
+            }
+        }).catch(error => console.error('Error marking message as read:', error));
     }
 
     function updateUnreadBadge() {
@@ -517,7 +655,7 @@
             .then(response => response.json())
             .then(data => {
                 const badge = document.getElementById('unreadMessagesBadge');
-                const openBtnBadge = document.getElementById('openMessaging').querySelector('.notification-badge');
+                const openBtnBadge = document.getElementById('openMessaging')?.querySelector('.notification-badge');
 
                 if (data.unread_count > 0) {
                     if (badge) {
@@ -536,7 +674,6 @@
             .catch(error => console.error('Error updating unread count:', error));
     }
 
-
     function updateFriendsListUnreadCount(fromUserId) {
         const friendItem = document.querySelector(`.friend-item[data-user-id="${fromUserId}"]`);
         if (friendItem) {
@@ -546,7 +683,6 @@
                 unreadBadge.textContent = currentCount + 1 > 99 ? '99+' : currentCount + 1;
                 friendItem.classList.add('bg-blue-50');
             } else {
-                // Create unread badge if it doesn't exist
                 const badge = document.createElement('span');
                 badge.className = 'bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center';
                 badge.textContent = '1';
@@ -557,33 +693,6 @@
     }
 
     // ========================================
-    // PUBLIC API
-    // ========================================
-    window.Messenger = {
-        // Initialization
-        init: function() {
-            if (isInitialized) return;
-
-            console.log('🚀 Initializing Messenger...');
-
-            loadFriendsList();
-            updateUnreadBadge();
-
-            initSocket();
-            setupEventListeners();
-            isInitialized = true;
-        },
-
-        // Public methods
-        openChat: openChat,
-        sendMessage: sendMessage,
-        loadFriendsList: loadFriendsList,
-        openGifPicker: openGifPicker,
-        closeGifPicker: closeGifPicker,
-        selectGif: selectGif
-    };
-
-    // ========================================
     // EVENT LISTENERS SETUP
     // ========================================
     function setupEventListeners() {
@@ -591,7 +700,7 @@
         const chatInput = document.getElementById('chatInput');
         if (chatInput) {
             chatInput.addEventListener('input', function(e) {
-                window.autoResizeTextarea(this);
+                autoResizeTextarea(this);
                 handleTypingEvent();
             });
 
@@ -609,35 +718,13 @@
             sendBtn.addEventListener('click', sendMessage);
         }
 
-        // GIF button
-        const gifBtn = document.getElementById('gifPickerButton');
-        if (gifBtn) {
-            gifBtn.addEventListener('click', openGifPicker);
-        }
-
-        // Emoji button
-        const emojiBtn = document.getElementById('emojiPickerButton');
-        if (emojiBtn) {
-            emojiBtn.addEventListener('click', function() {
-                // Initialize emoji picker
-                if (!window.emojiPickerInitialized) {
-                    initEmojiPicker();
-                }
-
-                const picker = document.querySelector('emoji-picker');
-                if (picker) {
-                    picker.style.display = picker.style.display === 'none' ? 'block' : 'none';
-                }
-            });
-        }
-
         // File/Image attachment button
         const fileBtn = document.querySelector('.input-btn .bi-paperclip')?.closest('.input-btn');
         if (fileBtn) {
             fileBtn.addEventListener('click', function() {
                 const input = document.createElement('input');
                 input.type = 'file';
-                input.accept = 'image/*,.pdf,.doc,.docx,.txt';
+                input.accept = 'image/*,.pdf,.doc,.docx,.txt,audio/*,video/*';
                 input.multiple = true;
                 input.onchange = function(e) {
                     if (e.target.files.length > 0) {
@@ -648,10 +735,24 @@
             });
         }
 
-        // Close GIF modal
-        const closeGifBtn = document.querySelector('#gifModal .header-btn');
-        if (closeGifBtn) {
-            closeGifBtn.addEventListener('click', closeGifPicker);
+        // GIF button
+        const gifBtn = document.getElementById('gifPickerButton');
+        if (gifBtn) {
+            gifBtn.addEventListener('click', openGifPicker);
+        }
+
+        // Emoji button
+        const emojiBtn = document.getElementById('emojiPickerButton');
+        if (emojiBtn) {
+            emojiBtn.addEventListener('click', function() {
+                if (!window.emojiPickerInitialized) {
+                    initEmojiPicker();
+                }
+                const picker = document.querySelector('emoji-picker');
+                if (picker) {
+                    picker.style.display = picker.style.display === 'none' ? 'block' : 'none';
+                }
+            });
         }
 
         // Back to friends button
@@ -661,14 +762,20 @@
                 document.getElementById('chatArea').classList.add('hidden');
                 document.getElementById('friendList').classList.remove('hidden');
                 currentChatUserId = null;
-
-                // Refresh friends list to update unread counts
                 loadFriendsList();
             });
         }
+
+        // Close GIF modal
+        const closeGifBtn = document.querySelector('#gifModal .header-btn');
+        if (closeGifBtn) {
+            closeGifBtn.addEventListener('click', closeGifPicker);
+        }
     }
 
-
+    // ========================================
+    // EMOJI PICKER
+    // ========================================
     function initEmojiPicker() {
         if (window.emojiPickerInitialized) return;
 
@@ -702,51 +809,60 @@
         window.emojiPickerInitialized = true;
     }
 
-    async function uploadFiles(files) {
-        const formData = new FormData();
-
-        for (let file of files) {
-            formData.append('files[]', file);
-        }
-        formData.append('receiver_id', currentChatUserId);
-
-        try {
-            const response = await fetch('/api/messaging/upload', {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-CSRFToken': window.csrfToken || ''
-                }
-            });
-
-            const result = await response.json();
-
-            if (result.success && socket) {
-                result.files.forEach(file => {
-                    socket.emit('send_message', {
-                        receiver_id: currentChatUserId,
-                        content: `[FILE:${file.name}]${file.url}`,
-                        file_type: file.type
-                    });
-                });
-            }
-        } catch (error) {
-            console.error('Error uploading files:', error);
-            alert('Failed to upload files');
+    // ========================================
+    // GIF PICKER FUNCTIONS
+    // ========================================
+    function openGifPicker() {
+        const modal = document.getElementById('gifModal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
         }
     }
 
-    function markMessageAsRead(messageId) {
-        if (!messageId) return;
-
-        fetch(`/api/messaging/mark-read/${messageId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': window.csrfToken || ''
-            }
-        }).catch(error => console.error('Error marking message as read:', error));
+    function closeGifPicker() {
+        const modal = document.getElementById('gifModal');
+        if (modal) {
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
     }
+
+    function selectGif(url, title = '') {
+        const input = document.getElementById('chatInput');
+        if (input) {
+            input.value += ` ${url} `;
+            input.focus();
+            input.dispatchEvent(new Event('input'));
+        }
+        closeGifPicker();
+    }
+
+    // ========================================
+    // PUBLIC API
+    // ========================================
+    window.Messenger = {
+        // Initialization
+        init: function() {
+            if (isInitialized) return;
+
+            console.log('🚀 Initializing Messenger...');
+
+            loadFriendsList();
+            updateUnreadBadge();
+            initSocket();
+            setupEventListeners();
+            isInitialized = true;
+        },
+
+        // Public methods
+        openChat: openChat,
+        sendMessage: sendMessage,
+        loadFriendsList: loadFriendsList,
+        openGifPicker: openGifPicker,
+        closeGifPicker: closeGifPicker,
+        selectGif: selectGif
+    };
 
     // ========================================
     // INITIALIZATION
