@@ -2540,3 +2540,50 @@ body {
 .animate-bounce {
     animation: bounce 1s infinite;
 }
+
+
+/* QUICK FIX: Remove all backgrounds from media */
+.message-bubble.sent .message-media,
+.message-bubble.sent .message-file,
+.message-bubble.sent .message-audio,
+.message-media img,
+.message-media video,
+.message-media iframe,
+.message-file a {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: transparent !important;
+}
+
+/* Keep text bubbles colored, but media transparent */
+.message-bubble.sent .message-content {
+    /* Your existing blue gradient for text */
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: white;
+}
+
+/* But make media inside completely transparent */
+.message-bubble.sent .message-media,
+.message-bubble.sent .message-file {
+    background: none !important;
+    margin-top: 1px;
+
+}
+
+
+.message-content + .message-media,
+.message-content + .message-file {
+    margin-top: 0 !important;
+}
+
+.message-bubble {
+    padding: 4px 10px !important;
+}
+
+.message-footer {
+    margin-top: 2px !important;
+}
+
+.message-wrapper {
+    margin-bottom: 3px !important;   /* very dense chat */
+}
