@@ -277,11 +277,20 @@
         let mediaHtml = '';
 
         // Check if content is a URL (image, video, file)
-        const urlRegex = /(https?:\/\/[^\s]+(?:\.(jpg|jpeg|png|gif|webp|bmp|mp4|webm|mov|avi|ogg|pdf|doc|docx|txt|xls|xlsx|ppt|pptx))[^ \n]*)/gi;
+        const urlRegex =  /((?:https?:\/\/[^\s]+|\/uploads\/[^\s]+)\.(?:jpg|jpeg|png|gif|webp|bmp|mp4|webm|mov|avi|ogg|pdf|doc|docx|txt|xls|xlsx|ppt|pptx))(?:\?[^\s]*)?/gi;
+
+        const toAbsolute = (u) => {
+            if (!u) return u;
+            if (u.startsWith('/')) return window.location.origin + u;
+            return u;
+        };
+
 
         // Replace all URLs with proper media elements
         content = content.replace(urlRegex, (url) => {
             const lowerUrl = url.toLowerCase();
+            const finalUrl = toAbsolute(url);
+
 
             // Extract clean filename (remove query parameters and get original filename)
             let filename = '';
@@ -300,32 +309,36 @@
             // Image handling - NO BACKGROUND, NO CAPTION
             if (lowerUrl.match(/\.(jpg|jpeg|png|gif|webp|bmp)$/)) {
                 return `
-                    <div class="message-media ">
-                        <img src="${url}" alt="${filename}" loading="lazy"
-                             class="rounded-lg max-w-sm max-h-96 object-contain cursor-pointer hover:shadow-lg transition-shadow"
-                             onclick="window.open('${url}', '_blank')">
-                    </div>`;
+                  <div class="message-media">
+                    <img src="${finalUrl}" alt="${filename}" loading="lazy"
+                      class="rounded-lg max-w-sm max-h-96 object-contain cursor-pointer hover:shadow-lg transition-shadow"
+                      onclick="window.open('${finalUrl}', '_blank')">
+                  </div>`;
             }
+
             // Video handling - NO BACKGROUND, NO CAPTION
             else if (lowerUrl.match(/\.(mp4|webm|mov|avi|ogg)$/)) {
                 return `
-                    <div class="message-media ">
-                        <video controls class="rounded-lg max-w-sm max-h-96">
-                            <source src="${url}" type="video/mp4">
-                            Your browser does not support video.
-                        </video>
-                    </div>`;
+                  <div class="message-media">
+                    <video controls class="rounded-lg max-w-sm max-h-96">
+                      <source src="${finalUrl}" type="video/mp4">
+                      Your browser does not support video.
+                    </video>
+                  </div>`;
             }
+
             // File handling - NO BACKGROUND, SHOW ORIGINAL FILENAME
             else if (lowerUrl.match(/\.(pdf|doc|docx|txt|xls|xlsx|ppt|pptx)$/)) {
                 return `
-                    <div class="message-file ">
-                        <a href="${url}" target="_blank" class="flex items-center text-blue-600 hover:underline p-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
-                            <i class="bi bi-file-earmark-text mr-2 text-lg"></i>
-                            <span class="truncate max-w-xs font-medium">${filename}</span>
-                        </a>
-                    </div>`;
+                  <div class="message-file">
+                    <a href="${finalUrl}" target="_blank"
+                      class="flex items-center text-blue-600 hover:underline p-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+                      <i class="bi bi-file-earmark-text mr-2 text-lg"></i>
+                      <span class="truncate max-w-xs font-medium">${filename}</span>
+                    </a>
+                  </div>`;
             }
+
             // GIF handling - NO BACKGROUND, NO CAPTION
             else if (lowerUrl.includes('giphy.com') || lowerUrl.endsWith('.gif')) {
                 return `
@@ -341,7 +354,7 @@
 
         // Calculate time and date
         const msgTimestamp = msg.timestamp ? new Date(msg.timestamp) : new Date();
-        const time = msgTimestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + 1;
+        const time = msgTimestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const date = msgTimestamp.toLocaleDateString();
 
         // Check if we need to add a date separator
@@ -442,6 +455,12 @@
         formData.append('file', file);
         formData.append('to_id', currentChatUserId);
 
+        let type = 'document';
+        if (file.type.startsWith('image/')) type = 'image';
+        else if (file.type.startsWith('video/')) type = 'video';
+        else if (file.type.startsWith('audio/')) type = 'audio';
+        formData.append('type', type);
+
         // Get the correct CSRF token
         let csrfToken = '';
 
@@ -463,6 +482,7 @@
                 body: formData,
                 // DO NOT set Content-Type header - let browser set it for FormData
                 headers: {
+                    'X-CSRFToken': csrfToken,
                     'X-CSRF-Token': csrfToken
                 },
                 credentials: 'include' // Important for cookies

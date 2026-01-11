@@ -9,7 +9,7 @@ from flask import jsonify
 from werkzeug.exceptions import RequestEntityTooLarge
 import time
 from scheduler import init_birthday_scheduler
-
+from flask import send_from_directory, abort
 
 # Import extensions (make sure socketio is initialized with threading)
 from extensions import db, bcrypt, login_manager, mail, csrf, cache, socketio
@@ -23,6 +23,10 @@ init_birthday_scheduler()
 def create_app():
     app = Flask(__name__)
 
+    from werkzeug.middleware.proxy_fix import ProxyFix
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+    app.config["PREFERRED_URL_SCHEME"] = "https"
+
     @app.errorhandler(RequestEntityTooLarge)
     def handle_file_too_large(error):
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -34,9 +38,21 @@ def create_app():
             flash("File is too large! Maximum file size is 100MB.", "danger")
             return redirect(url_for("user.user_dashboard"))
 
+    @app.route("/uploads/<path:filename>")
+    def serve_uploads(filename):
+        upload_folder = app.config["UPLOAD_FOLDER"]
+        file_path = os.path.join(upload_folder, filename)
+
+        if not os.path.exists(file_path):
+            abort(404)
+
+        return send_from_directory(upload_folder, filename)
+
     # ========== BASIC APP CONFIG ==========
     app.config["MAX_CONTENT_LENGTH"] = 400 * 1024 * 1024  # 100MB
-    app.config["UPLOAD_FOLDER"] = "uploads"
+    BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+
+    app.config["UPLOAD_FOLDER"] = os.path.join(BASE_DIR, "uploads")
     app.config["ALLOWED_EXTENSIONS"] = {"jpg", "jpeg", "png", "gif", "mp4", "mov"}
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 

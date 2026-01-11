@@ -1134,20 +1134,20 @@ window.handleChatInputKeypress = function(event) {
 </div>
 
 <!-- GIF Modal -->
-<div id="gifModal" class="hidden">
-    <div class="modal-overlay" onclick="Messenger.closeGifPicker()"></div>
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3>Choose a GIF</h3>
-            <button class="close-btn" onclick="Messenger.closeGifPicker()">
-                <i class="bi bi-x"></i>
-            </button>
-        </div>
-        <div class="modal-body">
-            <!-- GIF search and results will go here -->
-        </div>
-    </div>
-</div>
+<!--<div id="gifModal" class="hidden">-->
+<!--    <div class="modal-overlay" onclick="Messenger.closeGifPicker()"></div>-->
+<!--    <div class="modal-content">-->
+<!--        <div class="modal-header">-->
+<!--            <h3>Choose a GIF</h3>-->
+<!--            <button class="close-btn" onclick="Messenger.closeGifPicker()">-->
+<!--                <i class="bi bi-x"></i>-->
+<!--            </button>-->
+<!--        </div>-->
+<!--        <div class="modal-body">-->
+<!--            &lt;!&ndash; GIF search and results will go here &ndash;&gt;-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
 
     <!-- GIF Modal -->
     <!-- GIF Modal for Post Creation -->
@@ -2168,27 +2168,7 @@ window.handleChatInputKeypress = function(event) {
         {% endif %}
       </div>
 
-      <!-- Birthday Section -->
-      <div class="mt-8 pt-6 border-t border-fb-border">
-        <h3 class="text-sm font-semibold text-fb-text-light mb-3">
-          Birthdays
-        </h3>
-        <div
-          class="flex items-center space-x-3 p-2 rounded-lg hover:bg-fb-gray transition-colors cursor-pointer"
-        >
-          <div
-            class="w-10 h-10 bg-gradient-success rounded-full flex items-center justify-center"
-          >
-            <i class="bi bi-gift-fill text-white"></i>
-          </div>
-          <div>
-            <p class="text-sm">
-              <span class="font-medium">John Doe</span> and
-              <span class="font-medium">2 others</span> have birthdays today.
-            </p>
-          </div>
-        </div>
-      </div>
+
 
       <!-- Events Section -->
     </div>
@@ -7506,5 +7486,462 @@ function closeGifModal() {
 </style>
 
 
+  <style>
+/* Add this to your CSS section */
+#gifModal {
+    z-index: 10050 !important; /* Higher than post modal */
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    display: flex !important;
+}
+
+#gifModal.hidden {
+    display: none !important;
+}
+
+#gifModal:not(.hidden) {
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Make sure the post modal has a lower z-index */
+#postModal, #editPostModal {
+    z-index: 10000 !important;
+}
+
+/* When GIF modal is open, hide the post modal */
+body.gif-modal-open #postModal,
+body.gif-modal-open #editPostModal {
+    visibility: hidden !important;
+}
+</style>
+
+
+
+
+
+<!--  <style>-->
+<!--/* ========================================-->
+<!--   SPONSORED ADS - SMALLER ACTION BUTTONS-->
+<!--   ======================================== */-->
+<!--#floatingAdContent a,-->
+<!--#adModal .cta-buttons a,-->
+<!--#adModal .cta-buttons button {-->
+<!--    padding: 6px 12px !important;-->
+<!--    font-size: 11px !important;-->
+<!--    border-radius: 8px !important;-->
+<!--}-->
+
+<!--#floatingAdTitle {-->
+<!--    font-size: 10px !important;-->
+<!--}-->
+
+<!--#floatingAdDesc {-->
+<!--    font-size: 9px !important;-->
+<!--    margin-top: 2px !important;-->
+<!--}-->
+
+<!--/* Make the main floating button slightly smaller */-->
+<!--#floatingAd button {-->
+<!--    width: 36px !important;-->
+<!--    height: 36px !important;-->
+<!--}-->
+
+<!--/* Ad modal content smaller */-->
+<!--#adModalTitle {-->
+<!--    font-size: 1.1rem !important;-->
+<!--    line-height: 1.3 !important;-->
+<!--    margin-bottom: 0.5rem !important;-->
+<!--}-->
+
+<!--#adModalDescription {-->
+<!--    font-size: 0.8rem !important;-->
+<!--    line-height: 1.3 !important;-->
+<!--    margin-bottom: 1rem !important;-->
+<!--}-->
+
+<!--#adModalCTA {-->
+<!--    font-size: 0.8rem !important;-->
+<!--}-->
+
+<!--/* ========================================-->
+<!--   BIRTHDAY MODAL - ULTRA COMPACT & ELEGANT-->
+<!--   ======================================== */-->
+<!--/* Make the entire birthday modal much smaller */-->
+<!--.birthday-modal-content {-->
+<!--    max-width: 320px !important;-->
+<!--    padding: 1rem !important;-->
+<!--    border-radius: 1rem !important;-->
+<!--}-->
+
+<!--/* Smaller header */-->
+<!--.birthday-content .text-center.mb-6 {-->
+<!--    margin-bottom: 1rem !important;-->
+<!--}-->
+
+<!--.birthday-modal-content h2 {-->
+<!--    font-size: 1.2rem !important;-->
+<!--    margin-bottom: 0.25rem !important;-->
+<!--}-->
+
+<!--.birthday-modal-content p {-->
+<!--    font-size: 0.75rem !important;-->
+<!--    margin-bottom: 0.5rem !important;-->
+<!--}-->
+
+<!--/* Smaller friend avatar */-->
+<!--#birthdayFriendAvatar {-->
+<!--    width: 60px !important;-->
+<!--    height: 60px !important;-->
+<!--    margin-bottom: 0.5rem !important;-->
+<!--}-->
+
+<!--#birthdayFriendName {-->
+<!--    font-size: 1rem !important;-->
+<!--    margin-bottom: 0.25rem !important;-->
+<!--}-->
+
+<!--#birthdayFriendAge {-->
+<!--    font-size: 0.75rem !important;-->
+<!--}-->
+
+<!--/* Smaller wish form */-->
+<!--.birthday-content .bg-gradient-to-br {-->
+<!--    padding: 0.75rem !important;-->
+<!--    border-radius: 0.75rem !important;-->
+<!--    margin-bottom: 0.75rem !important;-->
+<!--}-->
+
+<!--.birthday-content h4 {-->
+<!--    font-size: 0.9rem !important;-->
+<!--    margin-bottom: 0.5rem !important;-->
+<!--}-->
+
+<!--#birthdayWishMessage {-->
+<!--    padding: 0.5rem !important;-->
+<!--    font-size: 0.8rem !important;-->
+<!--    border-radius: 0.5rem !important;-->
+<!--    min-height: 60px !important;-->
+<!--    margin-bottom: 0.5rem !important;-->
+<!--}-->
+
+<!--/* Smaller quick wish buttons */-->
+<!--.birthday-content .flex-wrap button {-->
+<!--    padding: 4px 8px !important;-->
+<!--    font-size: 0.7rem !important;-->
+<!--    border-radius: 6px !important;-->
+<!--    margin: 2px !important;-->
+<!--}-->
+
+<!--/* Ultra compact action buttons */-->
+<!--.birthday-content .flex-col.sm\:flex-row button {-->
+<!--    padding: 8px 12px !important;-->
+<!--    font-size: 0.8rem !important;-->
+<!--    border-radius: 8px !important;-->
+<!--    margin: 2px !important;-->
+<!--}-->
+
+<!--#sendBirthdayWishBtn {-->
+<!--    font-size: 0.8rem !important;-->
+<!--    padding: 8px 16px !important;-->
+<!--}-->
+
+<!--.birthday-content .flex-col.sm\:flex-row button:last-child {-->
+<!--    padding: 8px 16px !important;-->
+<!--    font-size: 0.8rem !important;-->
+<!--}-->
+
+<!--/* Smaller celebration effects */-->
+<!--.birthday-content .mt-6 {-->
+<!--    margin-top: 0.75rem !important;-->
+<!--}-->
+
+<!--.birthday-content .text-sm {-->
+<!--    font-size: 0.7rem !important;-->
+<!--    margin-top: 0.25rem !important;-->
+<!--}-->
+
+<!--/* Reduce gift icon size in modal */-->
+<!--.birthday-modal-content .w-20.h-20 {-->
+<!--    width: 48px !important;-->
+<!--    height: 48px !important;-->
+<!--}-->
+
+<!--.birthday-modal-content .bi-gift-fill {-->
+<!--    font-size: 1.5rem !important;-->
+<!--}-->
+
+<!--/* Smaller birthday badge */-->
+<!--#birthdayNotificationBadge button {-->
+<!--    padding: 8px !important;-->
+<!--}-->
+
+<!--#birthdayNotificationBadge .bi-gift-fill {-->
+<!--    font-size: 1.2rem !important;-->
+<!--}-->
+
+<!--#birthdayCount {-->
+<!--    width: 18px !important;-->
+<!--    height: 18px !important;-->
+<!--    font-size: 0.65rem !important;-->
+<!--}-->
+
+<!--/* Reduce animation sizes */-->
+<!--#birthdayFriendInfo .absolute.-bottom-2.-right-2 {-->
+<!--    bottom: -6px !important;-->
+<!--    right: -6px !important;-->
+<!--    padding: 2px 6px !important;-->
+<!--    font-size: 0.6rem !important;-->
+<!--}-->
+
+<!--/* Make fireworks/confetti smaller */-->
+<!--.firework,-->
+<!--.firework-particle,-->
+<!--.confetti {-->
+<!--    transform: scale(0.7) !important;-->
+<!--}-->
+
+<!--/* ========================================-->
+<!--   BIRTHDAY NOTIFICATION POPUP - COMPACT-->
+<!--   ======================================== */-->
+<!--#birthdayNotificationPopup {-->
+<!--    width: 280px !important;-->
+<!--}-->
+
+<!--#birthdayNotificationPopup .p-4 {-->
+<!--    padding: 0.75rem !important;-->
+<!--}-->
+
+<!--#birthdayNotificationPopup h3 {-->
+<!--    font-size: 0.9rem !important;-->
+<!--}-->
+
+<!--#birthdayNotificationPopup button {-->
+<!--    padding: 2px 8px !important;-->
+<!--    font-size: 0.7rem !important;-->
+<!--}-->
+
+<!--#birthdayNotificationList {-->
+<!--    max-height: 200px !important;-->
+<!--}-->
+
+<!--.birthday-notification-item {-->
+<!--    padding: 0.5rem !important;-->
+<!--}-->
+
+<!--.birthday-notification-item img {-->
+<!--    width: 36px !important;-->
+<!--    height: 36px !important;-->
+<!--}-->
+
+<!--.birthday-notification-item h4 {-->
+<!--    font-size: 0.8rem !important;-->
+<!--}-->
+
+<!--.birthday-notification-item p {-->
+<!--    font-size: 0.7rem !important;-->
+<!--}-->
+
+<!--/* ========================================-->
+<!--   BIRTHDAY CALENDAR MODAL - COMPACT-->
+<!--   ======================================== */-->
+<!--#birthdayCalendarModal .modal-content {-->
+<!--    max-width: 500px !important;-->
+<!--}-->
+
+<!--.birthday-card {-->
+<!--    padding: 0.75rem !important;-->
+<!--    border-radius: 0.75rem !important;-->
+<!--    margin-bottom: 0.5rem !important;-->
+<!--}-->
+
+<!--.birthday-card img {-->
+<!--    width: 40px !important;-->
+<!--    height: 40px !important;-->
+<!--}-->
+
+<!--.birthday-card h4 {-->
+<!--    font-size: 0.85rem !important;-->
+<!--    margin-bottom: 0.25rem !important;-->
+<!--}-->
+
+<!--.birthday-card span {-->
+<!--    font-size: 0.7rem !important;-->
+<!--    padding: 2px 6px !important;-->
+<!--}-->
+
+<!--.birthday-card p {-->
+<!--    font-size: 0.7rem !important;-->
+<!--    margin-top: 0.25rem !important;-->
+<!--}-->
+
+<!--.birthday-card button {-->
+<!--    padding: 4px 10px !important;-->
+<!--    font-size: 0.7rem !important;-->
+<!--    border-radius: 6px !important;-->
+<!--}-->
+
+<!--/* ========================================-->
+<!--   RESPONSIVE ADJUSTMENTS-->
+<!--   ======================================== */-->
+<!--@media (max-width: 640px) {-->
+<!--    /* Even smaller on mobile */-->
+<!--    .birthday-modal-content {-->
+<!--        max-width: 280px !important;-->
+<!--        padding: 0.75rem !important;-->
+<!--    }-->
+
+<!--    #birthdayFriendAvatar {-->
+<!--        width: 50px !important;-->
+<!--        height: 50px !important;-->
+<!--    }-->
+
+<!--    #birthdayWishMessage {-->
+<!--        min-height: 50px !important;-->
+<!--    }-->
+
+<!--    /* Sponsored ads even smaller on mobile */-->
+<!--    #floatingAdContent {-->
+<!--        width: 180px !important;-->
+<!--        padding: 0.5rem !important;-->
+<!--    }-->
+<!--}-->
+
+<!--/* ========================================-->
+<!--   AD MODAL - COMPACT VERSION-->
+<!--   ======================================== */-->
+<!--.ad-modal-content {-->
+<!--    max-width: 400px !important;-->
+<!--}-->
+
+<!--.ad-body {-->
+<!--    padding: 1rem !important;-->
+<!--}-->
+
+<!--#adModalImage {-->
+<!--    border-radius: 0.5rem !important;-->
+<!--}-->
+
+<!--#adModalTitle {-->
+<!--    font-size: 1rem !important;-->
+<!--    margin-bottom: 0.5rem !important;-->
+<!--}-->
+
+<!--#adModalDescription {-->
+<!--    font-size: 0.8rem !important;-->
+<!--    margin-bottom: 0.75rem !important;-->
+<!--}-->
+
+<!--#adModalLink,-->
+<!--#adModal .modal-footer button {-->
+<!--    padding: 6px 12px !important;-->
+<!--    font-size: 0.8rem !important;-->
+<!--    border-radius: 6px !important;-->
+<!--}-->
+
+<!--#adModal .modal-footer {-->
+<!--    padding-top: 0.5rem !important;-->
+<!--    margin-top: 0.5rem !important;-->
+<!--}-->
+
+<!--#adModal .modal-footer p {-->
+<!--    font-size: 0.6rem !important;-->
+<!--}-->
+
+<!--/* Floating ad content smaller */-->
+<!--#floatingAdContent {-->
+<!--    width: 200px !important;-->
+<!--    padding: 0.75rem !important;-->
+<!--    border-radius: 0.5rem !important;-->
+<!--}-->
+
+<!--/* ========================================-->
+<!--   MINIMAL ANIMATIONS-->
+<!--   ======================================== */-->
+<!--@keyframes subtle-pulse {-->
+<!--    0%, 100% {-->
+<!--        transform: scale(1);-->
+<!--        opacity: 0.9;-->
+<!--    }-->
+<!--    50% {-->
+<!--        transform: scale(1.03);-->
+<!--        opacity: 1;-->
+<!--    }-->
+<!--}-->
+
+<!--#birthdayNotificationBadge button {-->
+<!--    animation: subtle-pulse 2s infinite;-->
+<!--}-->
+
+<!--/* Reduce animation intensity */-->
+<!--.animate-pulse {-->
+<!--    animation: pulse 3s infinite !important;-->
+<!--    opacity: 0.8 !important;-->
+<!--}-->
+
+<!--.animate-bounce {-->
+<!--    animation: bounce 3s infinite !important;-->
+<!--}-->
+
+<!--.animate-spin-slow {-->
+<!--    animation: spin 4s linear infinite !important;-->
+<!--}-->
+
+<!--/* ========================================-->
+<!--   ELEGANT SHADOWS & BORDERS-->
+<!--   ======================================== */-->
+<!--.birthday-modal-content {-->
+<!--    box-shadow: 0 10px 25px rgba(236, 72, 153, 0.2) !important;-->
+<!--    border-width: 2px !important;-->
+<!--}-->
+
+<!--#birthdayNotificationPopup {-->
+<!--    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15) !important;-->
+<!--}-->
+
+<!--.birthday-card {-->
+<!--    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;-->
+<!--    border-width: 1px !important;-->
+<!--}-->
+
+<!--/* ========================================-->
+<!--   CONSISTENT SPACING-->
+<!--   ======================================== */-->
+<!--.birthday-modal-content > * + * {-->
+<!--    margin-top: 0.5rem !important;-->
+<!--}-->
+
+<!--.birthday-content > * + * {-->
+<!--    margin-top: 0.5rem !important;-->
+<!--}-->
+
+<!--/* ========================================-->
+<!--   CLEANER TYPOGRAPHY-->
+<!--   ======================================== */-->
+<!--.birthday-modal-content h2,-->
+<!--.birthday-modal-content h3,-->
+<!--.birthday-modal-content h4 {-->
+<!--    font-weight: 600 !important;-->
+<!--    letter-spacing: -0.01em !important;-->
+<!--}-->
+
+<!--.birthday-modal-content p {-->
+<!--    color: #666 !important;-->
+<!--    line-height: 1.4 !important;-->
+<!--}-->
+
+<!--/* ========================================-->
+<!--   SUBTLE BACKGROUNDS-->
+<!--   ======================================== */-->
+<!--.birthday-content .bg-gradient-to-br {-->
+<!--    background: linear-gradient(135deg, #fdf2f8 0%, #fefce8 100%) !important;-->
+<!--    border: 1px solid #fbcfe8 !important;-->
+<!--}-->
+
+<!--#birthdayWishMessage {-->
+<!--    background: rgba(255, 255, 255, 0.7) !important;-->
+<!--    border: 1px solid #f9a8d4 !important;-->
+<!--}-->
+<!--</style>-->
 </body>
 </html>

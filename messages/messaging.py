@@ -14,7 +14,8 @@ import requests
 import os
 from dotenv import load_dotenv
 from flask import send_from_directory
-
+import os
+from PIL import Image
 
 
 messaging = Blueprint("messaging", __name__)
@@ -85,27 +86,41 @@ def save_file(file, file_type='image'):
         process_image(file_path)
 
     # Return URL
-    return url_for('messaging.uploaded_file', file_type=file_type, filename=unique_filename, _external=True)
+    # return url_for('messaging.uploaded_file', file_type=file_type, filename=unique_filename, _external=True)
+    return f"/uploads/{file_type}/{unique_filename}"
+
 
 
 def process_image(file_path):
-    """Process image for web optimization"""
+    """Process image for web optimization (keeps correct format)"""
     try:
-        with Image.open(file_path) as img:
-            # Convert to RGB if necessary
-            if img.mode in ('RGBA', 'LA', 'P'):
-                img = img.convert('RGB')
+        ext = os.path.splitext(file_path)[1].lower()  # .jpg, .jpeg, .png, .webp, etc.
 
+        with Image.open(file_path) as img:
             # Resize if too large
             max_size = (1920, 1080)
             if img.width > max_size[0] or img.height > max_size[1]:
                 img.thumbnail(max_size, Image.Resampling.LANCZOS)
 
-            # Save optimized image
-            img.save(file_path, 'JPEG' if file_path.lower().endswith('.jpg') else 'PNG',
-                     quality=85, optimize=True)
+            # Decide output format based on extension
+            if ext in ('.jpg', '.jpeg'):
+                if img.mode in ('RGBA', 'LA', 'P'):
+                    img = img.convert('RGB')
+                img.save(file_path, format='JPEG', quality=85, optimize=True)
+
+            elif ext == '.png':
+                img.save(file_path, format='PNG', optimize=True)
+
+            elif ext == '.webp':
+                img.save(file_path, format='WEBP', quality=85, method=6)
+
+            else:
+                # Unknown ext: don't rewrite the file
+                pass
+
     except Exception as e:
         print(f"Error processing image: {e}")
+
 
 
 # ========== API ROUTES ==========
@@ -386,17 +401,17 @@ def send_message():
 
 
 
-@messaging.route('/uploads/<file_type>/<filename>')
-@login_required
-def uploaded_file(file_type, filename):
-    try:
-        upload_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], file_type)
-        return send_from_directory(upload_dir, filename)
-    except NotFound:
-        abort(404)
-    except Exception as e:
-        print(f"Error serving uploaded file: {e}")
-        abort(404)
+# @messaging.route('/uploads/<file_type>/<filename>')
+# @login_required
+# def uploaded_file(file_type, filename):
+#     try:
+#         upload_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], file_type)
+#         return send_from_directory(upload_dir, filename)
+#     except NotFound:
+#         abort(404)
+#     except Exception as e:
+#         print(f"Error serving uploaded file: {e}")
+#         abort(404)
 
 
 

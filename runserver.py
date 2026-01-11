@@ -148,7 +148,7 @@ if __name__ == '__main__':
         app,
         host='0.0.0.0',
         port=5001,
-        debug=True,
+        debug=False,
         allow_unsafe_werkzeug=True,
         use_reloader=False  # Keep this False to avoid issues
     )
