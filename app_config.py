@@ -8,11 +8,16 @@ from datetime import datetime, timedelta
 from flask import jsonify
 from werkzeug.exceptions import RequestEntityTooLarge
 import time
+from scheduler import init_birthday_scheduler
+
 
 # Import extensions (make sure socketio is initialized with threading)
 from extensions import db, bcrypt, login_manager, mail, csrf, cache, socketio
 
 load_dotenv()
+
+# Initialize birthday scheduler
+init_birthday_scheduler()
 
 
 def create_app():

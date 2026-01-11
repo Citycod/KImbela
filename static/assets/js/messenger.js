@@ -423,81 +423,94 @@
     // FILE UPLOAD - WITH VISUAL LOADER
     // ========================================
     async function uploadFiles(files) {
-        if (!currentChatUserId) {
-            alert('No chat open');
-            return;
-        }
-
-        if (uploadInProgress) {
-            alert('Please wait for current upload to complete');
-            return;
-        }
-
-        // Create and show tiny upload loader
-        showUploadLoader();
-
-        uploadInProgress = true;
-
-        // Upload each file one by one
-        for (let file of files) {
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('to_id', currentChatUserId);
-
-            // Determine file type
-            const ext = file.name.split('.').pop().toLowerCase();
-            let fileType = 'document';
-            if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(ext)) fileType = 'image';
-            else if (['mp4', 'webm', 'mov', 'avi'].includes(ext)) fileType = 'video';
-            else if (['mp3', 'wav', 'm4a', 'ogg'].includes(ext)) fileType = 'audio';
-
-            formData.append('type', fileType);
-
-            try {
-                const response = await fetch('/api/messaging/upload', {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-CSRFToken': window.csrfToken || ''
-                    }
-                });
-
-                const result = await response.json();
-
-                if (result.success && socket) {
-                    // Send ONLY the clean URL
-                    const content = result.url;
-                    const tempId = 'temp-' + Date.now();
-
-                    // Create temp message with loader
-                    appendMessage({
-                        id: tempId,
-                        content: content,
-                        sender_id: window.currentUserId,
-                        timestamp: new Date().toISOString(),
-                        temp_id: tempId
-                    }, 'sent');
-
-                    // Send via socket
-                    socket.emit('send_message', {
-                        receiver_id: currentChatUserId,
-                        content: content,
-                        temp_id: tempId
-                    });
-
-                } else {
-                    console.error('Upload failed:', result.error);
-                    alert(`Failed to upload ${file.name}: ${result.error || 'Unknown error'}`);
-                }
-            } catch (error) {
-                console.error('Error uploading file:', error);
-                alert(`Failed to upload ${file.name}`);
-            }
-        }
-
-        uploadInProgress = false;
-        hideUploadLoader();
+    if (!currentChatUserId) {
+        alert('No chat open');
+        return;
     }
+
+    if (uploadInProgress) {
+        alert('Please wait for current upload to complete');
+        return;
+    }
+
+    uploadInProgress = true;
+    showUploadLoader();
+
+    // Upload each file one by one
+    for (let file of files) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('to_id', currentChatUserId);
+
+        // Get the correct CSRF token
+        let csrfToken = '';
+
+        // Try multiple ways to get CSRF token
+        const metaTag = document.querySelector('meta[name="csrf-token"]');
+        if (metaTag) {
+            csrfToken = metaTag.getAttribute('content');
+        } else if (window.csrfToken) {
+            csrfToken = window.csrfToken;
+        } else {
+            // Try to get from cookie
+            const cookieMatch = document.cookie.match(/csrftoken=([^;]+)/);
+            if (cookieMatch) csrfToken = cookieMatch[1];
+        }
+
+        try {
+            const response = await fetch('/api/messaging/upload', {
+                method: 'POST',
+                body: formData,
+                // DO NOT set Content-Type header - let browser set it for FormData
+                headers: {
+                    'X-CSRF-Token': csrfToken
+                },
+                credentials: 'include' // Important for cookies
+            });
+
+            const contentType = response.headers.get("content-type");
+            let result;
+
+            if (contentType && contentType.includes("application/json")) {
+                result = await response.json();
+            } else {
+                const text = await response.text();
+                throw new Error(`Server returned non-JSON: ${text}`);
+            }
+
+            if (!response.ok) {
+                throw new Error(result.error || `Upload failed with status: ${response.status}`);
+            }
+
+            if (result.success && socket) {
+                const content = result.url;
+                const tempId = 'temp-' + Date.now();
+
+                appendMessage({
+                    id: tempId,
+                    content: content,
+                    sender_id: window.currentUserId,
+                    timestamp: new Date().toISOString(),
+                    temp_id: tempId
+                }, 'sent');
+
+                socket.emit('send_message', {
+                    receiver_id: currentChatUserId,
+                    content: content,
+                    temp_id: tempId
+                });
+            } else {
+                throw new Error(result.error || 'Unknown error');
+            }
+        } catch (error) {
+            console.error('Error uploading file:', error);
+            alert(`Failed to upload ${file.name}: ${error.message}`);
+        }
+    }
+
+    uploadInProgress = false;
+    hideUploadLoader();
+}
 
     // ========================================
     // TINY UPLOAD LOADER FUNCTIONS

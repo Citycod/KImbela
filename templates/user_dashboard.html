@@ -2169,7 +2169,7 @@ window.handleChatInputKeypress = function(event) {
       </div>
 
       <!-- Birthday Section -->
-      <!-- <div class="mt-8 pt-6 border-t border-fb-border">
+      <div class="mt-8 pt-6 border-t border-fb-border">
         <h3 class="text-sm font-semibold text-fb-text-light mb-3">
           Birthdays
         </h3>
@@ -2188,7 +2188,7 @@ window.handleChatInputKeypress = function(event) {
             </p>
           </div>
         </div>
-      </div> -->
+      </div>
 
       <!-- Events Section -->
     </div>
@@ -2675,6 +2675,907 @@ window.handleChatInputKeypress = function(event) {
         </div>
     </div>
 </div>
+
+
+  <!-- Birthday Celebration Modal -->
+<div id="birthdayModal" class="hidden">
+    <div class="birthday-modal-overlay" onclick="closeBirthdayModal()"></div>
+    <div class="birthday-modal-content">
+        <!-- Fireworks Container -->
+        <div id="fireworks"></div>
+
+        <!-- Birthday Content -->
+        <div class="birthday-content relative z-10">
+            <!-- Close Button -->
+            <button onclick="closeBirthdayModal()" class="absolute top-4 right-4 z-20 bg-white/20 hover:bg-white/40 backdrop-blur-sm rounded-full w-10 h-10 flex items-center justify-center text-white transition-all duration-300">
+                <i class="bi bi-x-lg text-xl"></i>
+            </button>
+
+            <!-- Birthday Header -->
+            <div class="text-center mb-6">
+                <div class="relative inline-block">
+                    <div class="w-20 h-20 rounded-full border-4 border-yellow-400 border-dashed animate-spin-slow mx-auto mb-4 flex items-center justify-center">
+                        <i class="bi bi-gift-fill text-3xl text-pink-500"></i>
+                    </div>
+                    <div class="absolute -top-2 -right-2 w-10 h-10 bg-red-500 rounded-full flex items-center justify-center animate-bounce">
+                        <i class="bi bi-heart-fill text-white"></i>
+                    </div>
+                </div>
+                <h2 class="text-3xl md:text-4xl font-bold bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 bg-clip-text text-transparent animate-gradient">
+                    🎉 Happy Birthday! 🎉
+                </h2>
+                <p class="text-gray-600 mt-2">It's someone's special day!</p>
+            </div>
+
+            <!-- Birthday Friend Info -->
+            <div class="text-center mb-6" id="birthdayFriendInfo">
+                <div class="relative inline-block">
+                    <img id="birthdayFriendAvatar" src="" alt="" class="w-32 h-32 rounded-full border-4 border-white shadow-2xl mx-auto mb-4 object-cover ring-4 ring-yellow-300">
+                    <div class="absolute -bottom-2 -right-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-1 rounded-full text-sm font-bold animate-pulse">
+                        🎂 BIRTHDAY 🎂
+                    </div>
+                </div>
+                <h3 id="birthdayFriendName" class="text-2xl font-bold text-gray-800"></h3>
+                <p id="birthdayFriendAge" class="text-gray-600"></p>
+            </div>
+
+            <!-- Wish Form -->
+            <div class="bg-gradient-to-br from-pink-50 to-yellow-50 p-6 rounded-2xl border-2 border-pink-200 mb-6">
+                <h4 class="text-lg font-semibold text-gray-800 mb-3">Send Birthday Wishes</h4>
+                <textarea
+                    id="birthdayWishMessage"
+                    class="w-full p-4 rounded-xl border-2 border-pink-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 resize-none"
+                    rows="3"
+                    placeholder="Write a heartfelt birthday message... 🎂✨"
+                >Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
+
+                <!-- Quick Wish Buttons -->
+                <div class="flex flex-wrap gap-2 mt-3">
+                    <button onclick="setBirthdayWish('Happy Birthday! Wishing you a day filled with joy! 🎂✨')" class="px-3 py-2 bg-pink-100 hover:bg-pink-200 text-pink-700 rounded-lg text-sm transition-colors">
+                        🎂 Joyful Wishes
+                    </button>
+                    <button onclick="setBirthdayWish('May all your dreams come true! Have an amazing year ahead! 🌟🎁')" class="px-3 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg text-sm transition-colors">
+                        🌟 Dream Big
+                    </button>
+                    <button onclick="setBirthdayWish('Sending you lots of love and blessings! 💖✨')" class="px-3 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-sm transition-colors">
+                        💖 Love & Blessings
+                    </button>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row gap-3">
+                <button
+                    onclick="sendBirthdayWish()"
+                    class="flex-1 py-4 bg-gradient-to-r from-pink-500 to-red-500 text-white rounded-xl font-bold text-lg hover:from-pink-600 hover:to-red-600 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-2xl flex items-center justify-center gap-2"
+                    id="sendBirthdayWishBtn"
+                >
+                    <i class="bi bi-send"></i>
+                    Send Birthday Wish
+                </button>
+                <button
+                    onclick="closeBirthdayModal()"
+                    class="px-6 py-4 bg-white border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
+                >
+                    Close
+                </button>
+            </div>
+
+            <!-- Celebration Effects -->
+            <div class="mt-6 text-center">
+                <div class="inline-flex gap-2">
+                    <span class="w-3 h-3 bg-yellow-400 rounded-full animate-pulse"></span>
+                    <span class="w-3 h-3 bg-pink-400 rounded-full animate-pulse" style="animation-delay: 0.2s"></span>
+                    <span class="w-3 h-3 bg-blue-400 rounded-full animate-pulse" style="animation-delay: 0.4s"></span>
+                    <span class="w-3 h-3 bg-green-400 rounded-full animate-pulse" style="animation-delay: 0.6s"></span>
+                    <span class="w-3 h-3 bg-purple-400 rounded-full animate-pulse" style="animation-delay: 0.8s"></span>
+                </div>
+                <p class="text-gray-500 text-sm mt-2">🎈 Make their day special! 🎈</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Birthday Notification Badge -->
+<div id="birthdayNotificationBadge" class="fixed top-20 right-4 z-40 hidden">
+    <div class="relative group">
+        <button onclick="showBirthdayNotifications()" class="bg-gradient-to-r from-pink-500 to-red-500 text-white p-3 rounded-full shadow-lg hover:shadow-2xl transform hover:scale-110 transition-all duration-300 animate-bounce">
+            <i class="bi bi-gift-fill text-2xl"></i>
+            <span id="birthdayCount" class="absolute -top-1 -right-1 bg-yellow-400 text-black text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">0</span>
+        </button>
+
+        <!-- Birthday Notification Popup -->
+        <div id="birthdayNotificationPopup" class="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-2xl overflow-hidden hidden transform origin-top-right scale-95 opacity-0 transition-all duration-300">
+            <div class="bg-gradient-to-r from-pink-500 to-purple-500 p-4 text-white">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-bold text-lg">🎂 Birthdays Today</h3>
+                    <button onclick="markBirthdaysSeen()" class="text-sm bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full transition-colors">
+                        Mark Seen
+                    </button>
+                </div>
+            </div>
+            <div id="birthdayNotificationList" class="max-h-60 overflow-y-auto p-2">
+                <!-- Birthday notifications will be loaded here -->
+            </div>
+            <div class="p-3 border-t border-gray-100">
+                <button onclick="openBirthdayCalendar()" class="w-full py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-sm">
+                    View All Upcoming Birthdays
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Birthday Calendar Modal -->
+<div id="birthdayCalendarModal" class="hidden">
+    <div class="modal-overlay" onclick="closeBirthdayCalendar()"></div>
+    <div class="modal-content max-w-4xl">
+        <div class="modal-header bg-gradient-to-r from-pink-500 to-purple-500 text-white">
+            <h3 class="text-xl font-bold">🎂 Upcoming Birthdays</h3>
+            <button onclick="closeBirthdayCalendar()" class="p-2 hover:bg-white/20 rounded-full">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <div class="modal-body p-6">
+            <div id="birthdayCalendar" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Upcoming birthdays will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Birthday Modal Styles */
+#birthdayModal {
+    position: fixed;
+    inset: 0;
+    z-index: 10050;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.birthday-modal-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+}
+
+.birthday-modal-content {
+    position: relative;
+    background: linear-gradient(135deg, #ffffff 0%, #fff9f9 100%);
+    border-radius: 2rem;
+    width: 95%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow: auto;
+    padding: 2rem;
+    animation: modalAppear 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    box-shadow: 0 25px 50px -12px rgba(236, 72, 153, 0.5);
+    border: 3px solid;
+    border-image: linear-gradient(45deg, #ec4899, #fbbf24, #3b82f6) 1;
+}
+
+@keyframes modalAppear {
+    0% {
+        opacity: 0;
+        transform: scale(0.8) rotate(-5deg);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+    }
+}
+
+@keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.animate-spin-slow {
+    animation: spin-slow 8s linear infinite;
+}
+
+@keyframes gradient {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+.animate-gradient {
+    background-size: 200% auto;
+    animation: gradient 3s ease infinite;
+}
+
+/* Fireworks Styles */
+#fireworks {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.firework {
+    position: absolute;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.firework-particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    animation: particle-explode 1s ease-out forwards;
+}
+
+@keyframes particle-explode {
+    0% {
+        transform: translate(0, 0) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(var(--tx), var(--ty)) scale(0);
+        opacity: 0;
+    }
+}
+
+/* Birthday Badge Animation */
+@keyframes pulse-glow {
+    0%, 100% {
+        box-shadow: 0 0 20px rgba(236, 72, 153, 0.5);
+    }
+    50% {
+        box-shadow: 0 0 40px rgba(236, 72, 153, 0.8);
+    }
+}
+
+#birthdayNotificationBadge button {
+    animation: pulse-glow 2s infinite;
+}
+
+/* Birthday Card Styles */
+.birthday-card {
+    background: linear-gradient(135deg, #fdf2ff 0%, #fff9f0 100%);
+    border-radius: 1.5rem;
+    padding: 1.5rem;
+    border: 2px solid;
+    border-image: linear-gradient(45deg, #fbbf24, #ec4899) 1;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.birthday-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(236, 72, 153, 0.2);
+}
+
+.birthday-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transform: rotate(45deg);
+    animation: shine 3s infinite;
+}
+
+@keyframes shine {
+    0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+    100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+}
+
+/* Celebration Confetti */
+.confetti {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    opacity: 0;
+    animation: confetti-fall 3s linear forwards;
+}
+
+@keyframes confetti-fall {
+    0% {
+        transform: translateY(-100vh) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(100vh) rotate(720deg);
+        opacity: 0;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+    .birthday-modal-content {
+        padding: 1.5rem;
+        margin: 1rem;
+        width: calc(100% - 2rem);
+    }
+
+    .birthday-modal-content h2 {
+        font-size: 1.75rem;
+    }
+}
+</style>
+
+<script>
+// Birthday Celebration System
+class BirthdayCelebration {
+    constructor() {
+        this.currentFriend = null;
+        this.fireworksInterval = null;
+        this.confettiInterval = null;
+    }
+
+    // Initialize birthday system
+    init() {
+        this.checkBirthdays();
+        this.setupEventListeners();
+    }
+
+    // Check for birthdays and show notifications
+    async checkBirthdays() {
+        try {
+            const response = await fetch('/api/birthdays/today');
+            const data = await response.json();
+
+            if (data.success && data.birthdays.length > 0) {
+                this.showBirthdayNotification(data.birthdays);
+            }
+
+            // Check for unseen birthday notifications
+            this.updateBirthdayBadge();
+        } catch (error) {
+            console.error('Error checking birthdays:', error);
+        }
+    }
+
+    // Show birthday notification badge
+    showBirthdayNotification(birthdays) {
+        const badge = document.getElementById('birthdayNotificationBadge');
+        const count = document.getElementById('birthdayCount');
+        const notificationList = document.getElementById('birthdayNotificationList');
+
+        if (badge && birthdays.length > 0) {
+            badge.classList.remove('hidden');
+            count.textContent = birthdays.length;
+
+            // Populate notification list
+            notificationList.innerHTML = birthdays.map(friend => `
+                <div class="birthday-notification-item p-3 hover:bg-pink-50 rounded-xl cursor-pointer transition-colors" onclick="openBirthdayForFriend(${friend.id})">
+                    <div class="flex items-center space-x-3">
+                        <img src="${friend.avatar}" alt="${friend.name}" class="w-12 h-12 rounded-full object-cover border-2 border-yellow-300">
+                        <div class="flex-1">
+                            <h4 class="font-semibold text-gray-800">${friend.name}</h4>
+                            <p class="text-sm text-gray-600">🎂 Birthday Today!</p>
+                            <p class="text-xs text-gray-500">Click to send wishes</p>
+                        </div>
+                        <i class="bi bi-arrow-right text-gray-400"></i>
+                    </div>
+                </div>
+            `).join('');
+        }
+    }
+
+    // Update birthday badge count
+    async updateBirthdayBadge() {
+        try {
+            const response = await fetch('/api/birthdays/today');
+            const data = await response.json();
+
+            const count = document.getElementById('birthdayCount');
+            const badge = document.getElementById('birthdayNotificationBadge');
+
+            if (data.success) {
+                if (data.count > 0) {
+                    count.textContent = data.count;
+                    badge?.classList.remove('hidden');
+                } else {
+                    badge?.classList.add('hidden');
+                }
+            }
+        } catch (error) {
+            console.error('Error updating birthday badge:', error);
+        }
+    }
+
+    // Open birthday modal for specific friend
+    openBirthdayForFriend(friendId) {
+        this.closeBirthdayPopup();
+
+        // Find friend data
+        fetch('/api/birthdays/today')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const friend = data.birthdays.find(f => f.id == friendId);
+                    if (friend) {
+                        this.showBirthdayModal(friend);
+                    }
+                }
+            });
+    }
+
+    // Show birthday modal with fireworks
+    showBirthdayModal(friend) {
+        this.currentFriend = friend;
+
+        const modal = document.getElementById('birthdayModal');
+        const nameEl = document.getElementById('birthdayFriendName');
+        const avatarEl = document.getElementById('birthdayFriendAvatar');
+        const ageEl = document.getElementById('birthdayFriendAge');
+
+        if (modal && nameEl && avatarEl && ageEl) {
+            // Set friend info
+            nameEl.textContent = friend.name;
+            avatarEl.src = friend.avatar;
+            ageEl.textContent = friend.age ? `Turning ${friend.age} today! 🎉` : 'Celebrating Birthday! 🎂';
+
+            // Show modal
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+
+            // Start celebration effects
+            this.startFireworks();
+            this.startConfetti();
+            this.playBirthdaySound();
+        }
+    }
+
+    // Start fireworks animation
+    startFireworks() {
+        const container = document.getElementById('fireworks');
+        if (!container) return;
+
+        this.clearEffects();
+
+        this.fireworksInterval = setInterval(() => {
+            this.createFirework();
+        }, 300);
+    }
+
+    // Create a single firework
+    createFirework() {
+        const container = document.getElementById('fireworks');
+        if (!container) return;
+
+        const firework = document.createElement('div');
+        firework.className = 'firework';
+        firework.style.left = `${Math.random() * 100}%`;
+        firework.style.top = `${Math.random() * 100}%`;
+
+        // Random color
+        const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3'];
+        firework.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+
+        container.appendChild(firework);
+
+        // Create explosion particles
+        setTimeout(() => {
+            this.createExplosion(firework);
+            firework.remove();
+        }, 500);
+    }
+
+    // Create explosion particles
+    createExplosion(firework) {
+        const container = document.getElementById('fireworks');
+        const rect = firework.getBoundingClientRect();
+
+        for (let i = 0; i < 20; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'firework-particle';
+
+            // Random color from firework
+            particle.style.backgroundColor = firework.style.backgroundColor;
+
+            // Random direction
+            const angle = Math.random() * Math.PI * 2;
+            const distance = 50 + Math.random() * 100;
+            const tx = Math.cos(angle) * distance;
+            const ty = Math.sin(angle) * distance;
+
+            particle.style.setProperty('--tx', `${tx}px`);
+            particle.style.setProperty('--ty', `${ty}px`);
+            particle.style.left = `${rect.left}px`;
+            particle.style.top = `${rect.top}px`;
+
+            container.appendChild(particle);
+
+            // Remove particle after animation
+            setTimeout(() => particle.remove(), 1000);
+        }
+    }
+
+    // Start confetti
+    startConfetti() {
+        const modal = document.querySelector('.birthday-modal-content');
+        if (!modal) return;
+
+        this.confettiInterval = setInterval(() => {
+            this.createConfetti();
+        }, 100);
+
+        // Stop after 5 seconds
+        setTimeout(() => {
+            clearInterval(this.confettiInterval);
+        }, 5000);
+    }
+
+    // Create single confetti
+    createConfetti() {
+        const modal = document.querySelector('.birthday-modal-content');
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+
+        // Random properties
+        const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3', '#ff9f43'];
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.left = `${Math.random() * 100}%`;
+        confetti.style.width = `${Math.random() * 10 + 5}px`;
+        confetti.style.height = confetti.style.width;
+        confetti.style.animationDelay = `${Math.random() * 2}s`;
+
+        modal.appendChild(confetti);
+
+        // Remove after animation
+        setTimeout(() => confetti.remove(), 3000);
+    }
+
+    // Play birthday sound
+    playBirthdaySound() {
+        // Create audio context for simple beeps
+        try {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            this.playBirthdayMelody(audioContext);
+        } catch (e) {
+            console.log('Audio not supported:', e);
+        }
+    }
+
+    // Play happy birthday melody
+    playBirthdayMelody(audioContext) {
+        const notes = [
+            {freq: 392, duration: 0.5}, // G
+            {freq: 392, duration: 0.5}, // G
+            {freq: 440, duration: 1},   // A
+            {freq: 392, duration: 1},   // G
+            {freq: 523, duration: 1},   // C
+            {freq: 494, duration: 2},   // B
+        ];
+
+        let time = audioContext.currentTime;
+
+        notes.forEach((note, i) => {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.value = note.freq;
+            oscillator.type = 'sine';
+
+            // Envelope
+            gainNode.gain.setValueAtTime(0, time);
+            gainNode.gain.linearRampToValueAtTime(0.1, time + 0.01);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, time + note.duration);
+
+            oscillator.start(time);
+            oscillator.stop(time + note.duration);
+
+            time += note.duration;
+        });
+    }
+
+    // Send birthday wish
+    async sendBirthdayWish() {
+        if (!this.currentFriend) return;
+
+        const messageInput = document.getElementById('birthdayWishMessage');
+        const button = document.getElementById('sendBirthdayWishBtn');
+
+        if (!messageInput || !button) return;
+
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="bi bi-hourglass-split animate-spin"></i> Sending...';
+        button.disabled = true;
+
+        try {
+            const response = await fetch('/api/birthday/wish', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': window.csrfToken || ''
+                },
+                body: JSON.stringify({
+                    friend_id: this.currentFriend.id,
+                    message: messageInput.value
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Show success animation
+                this.showSuccessAnimation();
+
+                // Close modal after delay
+                setTimeout(() => {
+                    this.closeBirthdayModal();
+                    this.updateBirthdayBadge();
+                }, 2000);
+            } else {
+                alert(data.error || 'Failed to send wish');
+            }
+        } catch (error) {
+            console.error('Error sending birthday wish:', error);
+            alert('Failed to send birthday wish');
+        } finally {
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }
+    }
+
+    // Show success animation
+    showSuccessAnimation() {
+        const button = document.getElementById('sendBirthdayWishBtn');
+        if (!button) return;
+
+        button.innerHTML = '<i class="bi bi-check-circle"></i> Wish Sent! 🎉';
+        button.classList.remove('from-pink-500', 'to-red-500');
+        button.classList.add('from-green-500', 'to-green-600');
+
+        // Add celebration effect
+        this.createSuccessConfetti();
+    }
+
+    // Create success confetti
+    createSuccessConfetti() {
+        const button = document.getElementById('sendBirthdayWishBtn');
+        if (!button) return;
+
+        const rect = button.getBoundingClientRect();
+
+        for (let i = 0; i < 30; i++) {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            confetti.style.backgroundColor = i % 2 === 0 ? '#10b981' : '#fbbf24';
+            confetti.style.left = `${rect.left + rect.width / 2}px`;
+            confetti.style.top = `${rect.top}px`;
+            confetti.style.width = '8px';
+            confetti.style.height = '8px';
+            confetti.style.animationDelay = `${i * 0.1}s`;
+
+            document.body.appendChild(confetti);
+
+            setTimeout(() => confetti.remove(), 3000);
+        }
+    }
+
+    // Set quick wish message
+    setBirthdayWish(message) {
+        const textarea = document.getElementById('birthdayWishMessage');
+        if (textarea) {
+            textarea.value = message;
+            textarea.focus();
+
+            // Add animation
+            textarea.classList.add('ring-2', 'ring-yellow-400');
+            setTimeout(() => {
+                textarea.classList.remove('ring-2', 'ring-yellow-400');
+            }, 1000);
+        }
+    }
+
+    // Close birthday modal
+    closeBirthdayModal() {
+        const modal = document.getElementById('birthdayModal');
+        if (modal) {
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+            this.clearEffects();
+            this.currentFriend = null;
+        }
+    }
+
+    // Clear all effects
+    clearEffects() {
+        if (this.fireworksInterval) {
+            clearInterval(this.fireworksInterval);
+            this.fireworksInterval = null;
+        }
+
+        if (this.confettiInterval) {
+            clearInterval(this.confettiInterval);
+            this.confettiInterval = null;
+        }
+
+        const fireworks = document.getElementById('fireworks');
+        if (fireworks) {
+            fireworks.innerHTML = '';
+        }
+    }
+
+    // Show birthday notification popup
+    showBirthdayNotifications() {
+        const popup = document.getElementById('birthdayNotificationPopup');
+        if (popup) {
+            popup.classList.toggle('hidden');
+            popup.classList.toggle('scale-95');
+            popup.classList.toggle('opacity-0');
+
+            if (!popup.classList.contains('hidden')) {
+                popup.classList.remove('scale-95', 'opacity-0');
+                popup.classList.add('scale-100', 'opacity-100');
+            }
+        }
+    }
+
+    // Close birthday popup
+    closeBirthdayPopup() {
+        const popup = document.getElementById('birthdayNotificationPopup');
+        if (popup) {
+            popup.classList.add('hidden', 'scale-95', 'opacity-0');
+            popup.classList.remove('scale-100', 'opacity-100');
+        }
+    }
+
+    // Mark all birthdays as seen
+    async markBirthdaysSeen() {
+        try {
+            await fetch('/api/birthday/notifications/mark_seen', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': window.csrfToken || ''
+                }
+            });
+
+            this.closeBirthdayPopup();
+            this.updateBirthdayBadge();
+        } catch (error) {
+            console.error('Error marking birthdays seen:', error);
+        }
+    }
+
+    // Open birthday calendar
+    async openBirthdayCalendar() {
+        this.closeBirthdayPopup();
+
+        try {
+            const response = await fetch('/api/birthdays/upcoming');
+            const data = await response.json();
+
+            if (data.success) {
+                this.showBirthdayCalendar(data.birthdays);
+            }
+        } catch (error) {
+            console.error('Error loading birthday calendar:', error);
+        }
+    }
+
+    // Show birthday calendar modal
+    showBirthdayCalendar(birthdays) {
+        const modal = document.getElementById('birthdayCalendarModal');
+        const calendar = document.getElementById('birthdayCalendar');
+
+        if (modal && calendar) {
+            calendar.innerHTML = birthdays.map(birthday => `
+                <div class="birthday-card">
+                    <div class="flex items-center space-x-4">
+                        <img src="${birthday.avatar}" alt="${birthday.name}" class="w-16 h-16 rounded-full object-cover border-2 border-yellow-300">
+                        <div class="flex-1">
+                            <h4 class="font-bold text-gray-800">${birthday.name}</h4>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="px-2 py-1 bg-pink-100 text-pink-700 rounded-full text-xs font-semibold">
+                                    ${birthday.days_until === 0 ? '🎂 TODAY!' : `In ${birthday.days_until} days`}
+                                </span>
+                                <span class="text-sm text-gray-600">
+                                    ${new Date(birthday.birthday_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}
+                                </span>
+                            </div>
+                            ${birthday.age ? `<p class="text-sm text-gray-500 mt-1">Turning ${birthday.age + 1}</p>` : ''}
+                        </div>
+                        ${birthday.days_until === 0 ? `
+                            <button onclick="birthdaySystem.openBirthdayForFriend(${birthday.id})" class="px-4 py-2 bg-gradient-to-r from-pink-500 to-red-500 text-white rounded-lg hover:from-pink-600 hover:to-red-600 transition-colors">
+                                Wish Now
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    // Close birthday calendar
+    closeBirthdayCalendar() {
+        const modal = document.getElementById('birthdayCalendarModal');
+        if (modal) {
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+    }
+
+    // Setup event listeners
+    setupEventListeners() {
+        // Close popup when clicking outside
+        document.addEventListener('click', (e) => {
+            const badge = document.getElementById('birthdayNotificationBadge');
+            const popup = document.getElementById('birthdayNotificationPopup');
+
+            if (badge && popup && !badge.contains(e.target) && !popup.contains(e.target)) {
+                this.closeBirthdayPopup();
+            }
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                this.closeBirthdayModal();
+                this.closeBirthdayCalendar();
+                this.closeBirthdayPopup();
+            }
+        });
+    }
+}
+
+// Initialize birthday system
+const birthdaySystem = new BirthdayCelebration();
+document.addEventListener('DOMContentLoaded', () => {
+    birthdaySystem.init();
+});
+
+// Global functions for HTML onclick
+function openBirthdayForFriend(friendId) {
+    birthdaySystem.openBirthdayForFriend(friendId);
+}
+
+function closeBirthdayModal() {
+    birthdaySystem.closeBirthdayModal();
+}
+
+function showBirthdayNotifications() {
+    birthdaySystem.showBirthdayNotifications();
+}
+
+function markBirthdaysSeen() {
+    birthdaySystem.markBirthdaysSeen();
+}
+
+function openBirthdayCalendar() {
+    birthdaySystem.openBirthdayCalendar();
+}
+
+function closeBirthdayCalendar() {
+    birthdaySystem.closeBirthdayCalendar();
+}
+
+function setBirthdayWish(message) {
+    birthdaySystem.setBirthdayWish(message);
+}
+
+function sendBirthdayWish() {
+    birthdaySystem.sendBirthdayWish();
+}
+
+// Auto-check birthdays every hour
+setInterval(() => {
+    birthdaySystem.checkBirthdays();
+}, 3600000); // 1 hour
+</script>
 
 
 

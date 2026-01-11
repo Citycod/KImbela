@@ -7,6 +7,10 @@ import logging
 import time
 from flask import current_app
 from extensions import db
+from datetime import datetime, date
+from models import User, BirthdayNotification, db
+from apscheduler.schedulers.background import BackgroundScheduler
+
 
 logger = logging.getLogger(__name__)
 scheduler = None
@@ -499,3 +503,58 @@ def resume_scheduler():
         logger.info("Scheduler resumed")
         return True
     return False
+
+
+def check_and_create_birthday_notifications():
+    """
+    Run daily to check for upcoming birthdays
+    """
+    print("🎂 Checking for birthdays...")
+    today = date.today()
+
+    # Get all users who have friends
+    users = User.query.all()
+
+    for user in users:
+        friends = user.friends.all()
+
+        for friend in friends:
+            if friend.dob:
+                # Check if friend's birthday is today
+                if friend.dob.month == today.month and friend.dob.day == today.day:
+                    # Check if notification already exists
+                    existing = BirthdayNotification.query.filter_by(
+                        user_id=user.id,
+                        birthday_user_id=friend.id,
+                        birthday_date=today
+                    ).first()
+
+                    if not existing:
+                        # Create birthday notification
+                        notification = BirthdayNotification(
+                            user_id=user.id,
+                            birthday_user_id=friend.id,
+                            birthday_date=today,
+                            is_seen=False,
+                            is_wished=False
+                        )
+                        db.session.add(notification)
+
+        db.session.commit()
+
+    print(f"✅ Birthday check completed at {datetime.now()}")
+
+
+def init_birthday_scheduler():
+    """Initialize the birthday scheduler"""
+    scheduler = BackgroundScheduler()
+
+    # Run daily at 9 AM
+    scheduler.add_job(
+        check_and_create_birthday_notifications,
+        'cron',
+        hour=9,
+        minute=0
+    )
+
+    scheduler.start()

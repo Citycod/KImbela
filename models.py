@@ -2176,3 +2176,19 @@ class MarketplaceSubscriptionPlan(db.Model):
         return []
 
 
+class BirthdayNotification(db.Model):
+    __tablename__ = "birthday_notifications"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    birthday_user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    birthday_date = db.Column(db.Date, nullable=False)
+    is_seen = db.Column(db.Boolean, default=False)
+    is_wished = db.Column(db.Boolean, default=False)
+    wish_message = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    wished_at = db.Column(db.DateTime)
+
+    # Relationships
+    user = db.relationship("User", foreign_keys=[user_id], backref="birthday_notifications")
+    birthday_user = db.relationship("User", foreign_keys=[birthday_user_id])

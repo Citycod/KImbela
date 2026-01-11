@@ -1,0 +1,1 @@
+2026-01-10 19:39:23,502 WARNING: [cdad294406f7c295] Slow request: GET /notifications/count took 4.29 seconds [in /Users/user/Desktop/kimbela 2/Kimbela/app_config.py:267]

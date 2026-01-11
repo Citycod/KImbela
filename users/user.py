@@ -9,6 +9,7 @@ from flask import (
     session,
     current_app,
 )
+from datetime import date
 from urllib.parse import urlparse
 from sqlalchemy.orm import joinedload
 from sqlalchemy import func
@@ -19,9 +20,10 @@ from models import (
     MatchmakingLike,
     MatchmakingView,
     User,
-    Message,
+    Message as ChatMessage,
     SponsoredAd,
-    AdCampaign
+    AdCampaign,
+    BirthdayNotification
 )
 
 from datetime import datetime
@@ -225,6 +227,288 @@ from flask_caching import Cache
 from werkzeug.exceptions import RequestEntityTooLarge
 
 from werkzeug.exceptions import RequestEntityTooLarge
+
+
+@user.route("/api/birthdays/today")
+@login_required
+def get_today_birthdays():
+    """Get friends with birthdays today"""
+    today = date.today()
+
+    birthday_friends = []
+    for friend in current_user.friends:
+        if friend.dob and friend.dob.month == today.month and friend.dob.day == today.day:
+            birthday_friends.append({
+                'id': friend.id,
+                'name': friend.full_name,
+                'avatar': friend.profile_pic or url_for('static', filename='assets/img/default-avatar.png'),
+                'age': today.year - friend.dob.year
+            })
+
+    return jsonify({
+        'success': True,
+        'birthdays': birthday_friends,
+        'count': len(birthday_friends)
+    })
+
+
+@user.route("/api/birthdays/upcoming")
+@login_required
+def get_upcoming_birthdays_api():
+    """Get upcoming birthdays (next 7 days)"""
+    upcoming = get_upcoming_birthdays(current_user.id, days_ahead=7)
+
+    birthdays_data = []
+    for item in upcoming:
+        birthdays_data.append({
+            'id': item['friend'].id,
+            'name': item['friend'].full_name,
+            'avatar': item['friend'].profile_pic or url_for('static', filename='assets/img/default-avatar.png'),
+            'days_until': item['days_until'],
+            'birthday_date': item['birthday_date'].isoformat(),
+            'age': item['age']
+        })
+
+    return jsonify({
+        'success': True,
+        'birthdays': birthdays_data
+    })
+
+
+@user.route("/api/birthday/wish", methods=["POST"])
+@login_required
+def send_birthday_wish():
+    """Send a birthday wish with comprehensive error logging"""
+    import traceback
+    import sys
+
+    # Log start of request
+    print(f"\n🎂 [BIRTHDAY WISH] Request received from user {current_user.id} ({current_user.full_name})")
+    print(f"📦 Request method: {request.method}")
+
+    try:
+        # Get and validate JSON data
+        if not request.is_json:
+            print("❌ [ERROR] Request is not JSON")
+            return jsonify({'success': False, 'error': 'Content-Type must be application/json'}), 400
+
+        data = request.get_json()
+        print(f"📦 Raw request data: {data}")
+
+        if not data:
+            print("❌ [ERROR] No data provided in request")
+            return jsonify({'success': False, 'error': 'No data provided'}), 400
+
+        # Extract and validate parameters
+        friend_id = data.get('friend_id')
+        message = data.get('message', 'Happy Birthday! 🎉').strip()
+
+        print(f"🎯 Processing birthday wish:")
+        print(f"   → Friend ID: {friend_id}")
+        print(f"   → Message: '{message}'")
+        print(f"   → Current user ID: {current_user.id}")
+
+        if not friend_id:
+            print("❌ [ERROR] Friend ID is required")
+            return jsonify({'success': False, 'error': 'Friend ID is required'}), 400
+
+        try:
+            friend_id = int(friend_id)
+        except (ValueError, TypeError):
+            print(f"❌ [ERROR] Invalid friend ID type: {type(friend_id)}")
+            return jsonify({'success': False, 'error': 'Invalid friend ID format'}), 400
+
+        # Find friend
+        print(f"🔍 Looking up friend with ID: {friend_id}")
+        friend = User.query.get(friend_id)
+
+        if not friend:
+            print(f"❌ [ERROR] Friend not found with ID: {friend_id}")
+            return jsonify({'success': False, 'error': 'Friend not found'}), 404
+
+        print(f"✅ Friend found: {friend.full_name} (ID: {friend.id})")
+
+        # Check friendship status
+        print(f"🤝 Checking friendship between {current_user.id} and {friend.id}")
+        are_friends = current_user.is_friend_with(friend)
+        print(f"   → Are friends: {are_friends}")
+
+        if not are_friends:
+            print(f"❌ [ERROR] Users are not friends")
+            return jsonify({'success': False, 'error': 'Not friends'}), 403
+
+        # Check if friend has birthday today
+        today = date.today()
+        print(f"📅 Today's date: {today}")
+
+        if friend.dob:
+            friend_birthday = friend.dob.replace(year=today.year)
+            is_birthday = friend.dob.month == today.month and friend.dob.day == today.day
+            print(f"🎁 Friend's DOB: {friend.dob}")
+            print(f"🎁 Birthday this year: {friend_birthday}")
+            print(f"🎁 Is birthday today: {is_birthday}")
+
+            if not is_birthday:
+                print("⚠️ [WARNING] Friend's birthday is not today")
+                # We'll still allow sending the wish, but log it
+        else:
+            print("⚠️ [WARNING] Friend does not have DOB set")
+
+        # Start database transaction
+        print(f"💾 Starting database transaction...")
+
+        # Create or update birthday notification
+        notification = BirthdayNotification.query.filter_by(
+            user_id=current_user.id,
+            birthday_user_id=friend.id,
+            birthday_date=today
+        ).first()
+
+        if notification:
+            print(f"📝 Updating existing birthday notification ID: {notification.id}")
+            notification.is_wished = True
+            notification.wish_message = message
+            notification.wished_at = datetime.utcnow()
+            print(f"   → Updated wish status to: {notification.is_wished}")
+            print(f"   → Wish message: {notification.wish_message[:50]}...")
+        else:
+            print(f"📝 Creating new birthday notification")
+            notification = BirthdayNotification(
+                user_id=current_user.id,
+                birthday_user_id=friend.id,
+                birthday_date=today,
+                is_wished=True,
+                wish_message=message,
+                wished_at=datetime.utcnow()
+            )
+            db.session.add(notification)
+            print(f"   → Created notification with wished_at: {notification.wished_at}")
+
+        # Mark notification as seen
+        notification.is_seen = True
+        print(f"   → Marked notification as seen: {notification.is_seen}")
+
+        # Create birthday message - FIXED: Use sender and receiver objects, not IDs
+
+        birthday_message = ChatMessage()
+
+        birthday_message.sender_id = current_user.id
+        birthday_message.receiver_id = friend.id
+        birthday_message.content = f"🎂 {message}"
+        birthday_message.timestamp = datetime.utcnow()
+        birthday_message.status = "sent"
+        birthday_message.message_type = "birthday_wish"
+        birthday_message.message_data = {
+            "is_birthday_wish": True,
+            "original_message": message,
+            "wish_sent_at": datetime.utcnow().isoformat(),
+            "friend_name": friend.full_name,
+            "wisher_name": current_user.full_name,
+        }
+
+        db.session.add(birthday_message)
+        db.session.flush() # ensures birthday_message.id exists
+        print(f"✅ ChatMessage created with ID: {birthday_message.id}")
+        # so birthday_message.id exists BEFORE commit
+        print(f"✅ ChatMessage created with ID: {birthday_message.id}")
+
+        print(f"✅ ChatMessage created with ID: {birthday_message.id}")
+        print(f"   → Sender: {current_user.full_name} (ID: {current_user.id})")
+        print(f"   → Receiver: {friend.full_name} (ID: {friend.id})")
+        print(f"   → Content preview: {birthday_message.content[:50]}...")
+
+        # Debug: Print all ChatMessage object attributes
+        print(f"🔍 ChatMessage object attributes:")
+        for attr in ['sender_id', 'receiver_id', 'sender', 'receiver']:
+            if hasattr(birthday_message, attr):
+                value = getattr(birthday_message, attr)
+                print(f"   → {attr}: {value} (type: {type(value).__name__})")
+            else:
+                print(f"   → {attr}: Not found")
+
+        # Commit all changes
+        print(f"💾 Committing database changes...")
+        db.session.commit()
+        print(f"✅ Database commit successful!")
+
+        # Verify the message was saved correctly
+        saved_message = ChatMessage.query.get(birthday_message.id)
+        if saved_message:
+            print(f"✅ Message saved successfully in database")
+            print(f"   → Saved sender_id: {saved_message.sender_id}")
+            print(f"   → Saved receiver_id: {saved_message.receiver_id}")
+            print(f"   → Saved content: {saved_message.content[:50]}...")
+        else:
+            print(f"⚠️ Could not retrieve saved message from database")
+
+        # Log success
+        print(f"🎉 Birthday wish sent successfully!")
+        print(f"   → Message ID: {birthday_message.id}")
+        print(f"   → Notification ID: {notification.id}")
+        print(f"   → Sent at: {datetime.utcnow().isoformat()}")
+
+        return jsonify({
+            'success': True,
+            'message': 'Birthday wish sent! 🎉',
+            'message_id': birthday_message.id,
+            'notification_id': notification.id,
+            'timestamp': datetime.utcnow().isoformat(),
+            'friend_name': friend.full_name
+        })
+
+    except Exception as e:
+        # Rollback on error
+        print(f"\n❌ [ERROR] Exception occurred:")
+        print(f"   → Error type: {type(e).__name__}")
+        print(f"   → Error message: {str(e)}")
+        print(f"\n🔍 Stack trace:")
+        traceback.print_exc(file=sys.stdout)
+
+        # Attempt to get more context about the error
+        print(f"\n📊 Error context:")
+        print(f"   → Current user: {current_user.id if current_user else 'None'}")
+        print(f"   → Request method: {request.method}")
+        print(f"   → Request path: {request.path}")
+
+        # Database rollback
+        try:
+            db.session.rollback()
+            print(f"   → Database rollback completed")
+        except Exception as rollback_error:
+            print(f"   → Failed to rollback: {rollback_error}")
+
+        # Check for specific common errors
+        error_msg = str(e)
+        if "sender" in error_msg.lower() or "receiver" in error_msg.lower():
+            print(f"   → Detected sender/receiver related error")
+            print(f"   → Message model expects sender and receiver objects")
+
+        return jsonify({
+            'success': False,
+            'error': 'Failed to send birthday wish',
+            'details': str(e),
+            'error_type': type(e).__name__
+        }), 500
+
+
+@user.route("/api/birthday/notifications/mark_seen", methods=["POST"])
+@login_required
+def mark_birthday_notifications_seen():
+    """Mark birthday notifications as seen"""
+    try:
+        BirthdayNotification.query.filter_by(
+            user_id=current_user.id,
+            is_seen=False
+        ).update({'is_seen': True})
+
+        db.session.commit()
+        return jsonify({'success': True})
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 
 
 @user.route("/user_dashboard", methods=["GET", "POST"])
@@ -449,11 +733,30 @@ def user_dashboard():
             "sponsored_ads": ads_data[:1]
         })
 
+    # Add birthday notifications to the context
+    today = date.today()
+    birthday_notifications = BirthdayNotification.query.filter(
+        BirthdayNotification.user_id == current_user.id,
+        BirthdayNotification.is_seen == False
+    ).all()
+
+    # Get friends with birthdays today
+    birthday_friends_today = []
+    for friend in friends:
+        if friend.dob and friend.dob.month == today.month and friend.dob.day == today.day:
+            birthday_friends_today.append(friend)
+
+    # Get upcoming birthdays (next 7 days)
+    upcoming_birthdays = get_upcoming_birthdays(current_user.id, days_ahead=7)
+
     # Full page render
     return render_template(
         "user_dashboard.html",
         initial_posts=posts,
         next_cursor=next_cursor,
+        birthday_notifications=birthday_notifications,
+        birthday_friends_today=birthday_friends_today,
+        upcoming_birthdays=upcoming_birthdays,
         has_more=has_more,
         current_user=current_user,
         friends=friends,
@@ -3146,3 +3449,38 @@ def view_profile(user_id):
         age=age,
         is_own_profile=(target_user.id == current_user.id),
     )
+
+
+def get_upcoming_birthdays(user_id, days_ahead=7):
+    """
+    Get friends with upcoming birthdays
+    """
+    today = date.today()
+
+    # Get user's friends
+    user = User.query.get(user_id)
+    friends = user.friends.all()
+
+    upcoming_birthdays = []
+
+    for friend in friends:
+        if friend.dob:
+            # Get this year's birthday
+            birthday_this_year = date(
+                today.year,
+                friend.dob.month,
+                friend.dob.day
+            )
+
+            # Check if birthday is today or in next 7 days
+            days_until = (birthday_this_year - today).days
+
+            if 0 <= days_until <= days_ahead:
+                upcoming_birthdays.append({
+                    'friend': friend,
+                    'days_until': days_until,
+                    'birthday_date': birthday_this_year,
+                    'age': today.year - friend.dob.year
+                })
+
+    return upcoming_birthdays
