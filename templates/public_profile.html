@@ -11,27 +11,36 @@
     <link href="{{ url_for('static', filename='assets/img/fav.png') }}" rel="apple-touch-icon" />
 
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#1f2937',
-                        secondary: '#374151',
-                        accent: '#059669',
-                        'dark-bg': '#111827',
-                        'light-bg': '#f8fafc',
-                        'border-color': '#e5e7eb',
-                        'text-primary': '#1f2937',
-                        'text-secondary': '#6b7280',
-                        'success': '#059669',
-                        'warning': '#d97706',
-                        'premium': '#7c3aed',
-                    },
-                    fontFamily: { inter: ["Inter", "sans-serif"] },
+    tailwind.config = {
+        theme: {
+            extend: {
+                colors: {
+                    primary: '#1f2937',
+                    secondary: '#374151',
+                    accent: '#059669',
+                    'dark-bg': '#111827',
+                    'light-bg': '#f8fafc',
+                    'border-color': '#e5e7eb',
+                    'text-primary': '#1f2937',
+                    'text-secondary': '#6b7280',
+                    'success': '#059669',
+                    'warning': '#d97706',
+                    'premium': '#7c3aed',
+                },
+                fontFamily: { inter: ["Inter", "sans-serif"] },
+                fontSize: {
+                    'xs': '0.75rem',      // ~12px
+                    'sm': '0.8125rem',    // ~13px
+                    'base': '0.875rem',   // ~14px
+                    'lg': '0.9375rem',    // ~15px
+                    'xl': '1.0625rem',    // ~17px
+                    '2xl': '1.1875rem',   // ~19px
+                    '3xl': '1.375rem',    // ~22px
                 },
             },
-        };
-    </script>
+        },
+    };
+</script>
 
     <style>
         * { font-family: 'Inter', sans-serif; }
@@ -278,5 +287,40 @@
             });
         });
     </script>
+
+<style>
+    /* Scrollable comments styling */
+    .comments-section .max-h-\[100px\] {
+        max-height: 100px;
+        overflow-y: auto;
+    }
+
+    /* Custom scrollbar for comments */
+    .comments-section .max-h-\[250px\]::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    .comments-section .max-h-\[250px\]::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+
+    .comments-section .max-h-\[250px\]::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 10px;
+    }
+
+    .comments-section .max-h-\[250px\]::-webkit-scrollbar-thumb:hover {
+        background: #a8a8a8;
+    }
+
+    /* Hover effect for comment items */
+    .comment-item:hover {
+        background-color: rgba(249, 250, 251, 0.5);
+        border-radius: 0.5rem;
+        padding: 2px;
+        margin: -2px;
+    }
+</style>
 </body>
 </html>

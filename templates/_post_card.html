@@ -64,59 +64,64 @@
         </span>
     </div>
 
-    <!-- Comments Section - Scrollable with Dates -->
+    <!-- Comments Section - Scrollable with Smaller Fonts -->
     <div class="comments-section -mx-6 px-6 py-4 bg-gray-50 border-t border-gray-100">
-        <!-- Comment Input (optional - you can add functionality later) -->
-        <!--
-        <div class="flex items-center space-x-3 mb-4">
-            <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-                 class="w-8 h-8 rounded-full object-cover">
-            <input type="text" placeholder="Write a comment..."
-                   class="flex-1 px-4 py-2 bg-white rounded-full text-sm border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
-        </div>
-        -->
-
         <!-- Comments List -->
-        <div class="space-y-4">
+        <div class="space-y-3 max-h-[250px] overflow-y-auto pr-2">
             {% if post.comments_count > 0 %}
                 {% for comment in post.comments|reverse %}
-                <div class="flex space-x-3 comment-item">
+                <div class="flex gap-2 comment-item">
                     <img src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
                          alt="{{ comment.author.first_name }}"
-                         class="w-9 h-9 rounded-full object-cover flex-shrink-0">
-                    <div class="flex-1">
-                        <div class="bg-white rounded-2xl px-4 py-3 shadow-sm">
-                            <div class="flex justify-between items-start">
-                                <h6 class="font-semibold text-sm">
+                         class="w-6 h-6 rounded-full object-cover flex-shrink-0 mt-1">
+                    <div class="flex-1 min-w-0">
+                        <div class="bg-white rounded-xl px-3 py-2 shadow-sm border border-gray-100">
+                            <div class="flex items-start justify-between mb-0.5">
+                                <span class="font-semibold text-xs text-gray-800 truncate">
                                     {{ comment.author.first_name }} {{ comment.author.last_name }}
-                                </h6>
-                                <span class="text-xs text-gray-500">
-                                    {{ comment.created_at.strftime('%b %d at %I:%M %p') }}
+                                </span>
+                                <span class="text-[10px] text-gray-400 whitespace-nowrap ml-2">
+                                    {{ comment.created_at.strftime('%b %d') }}
                                 </span>
                             </div>
-                            <p class="text-gray-800 text-sm mt-2">{{ comment.content }}</p>
+                            <p class="text-gray-700 text-xs leading-tight break-words mt-0.5">
+                                {{ comment.content }}
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-2 mt-1 ml-1">
+                            <button class="text-[10px] text-gray-400 hover:text-blue-500">
+                                Like
+                            </button>
+                            <span class="text-[10px] text-gray-300">•</span>
+                            <button class="text-[10px] text-gray-400 hover:text-green-500">
+                                Reply
+                            </button>
                         </div>
                     </div>
                 </div>
                 {% endfor %}
             {% else %}
-                <p class="text-center text-gray-500 text-sm py-4">No comments</p>
+                <p class="text-center text-gray-400 text-xs py-3">No comments yet. Be the first to comment!</p>
             {% endif %}
         </div>
-    </div>
 
-    <!-- Action Buttons (uncomment when ready) -->
-    <!--
-    <div class="flex justify-around py-3 border-t border-gray-200 mt-4">
-        <button class="flex items-center gap-2 text-gray-700 hover:text-blue-600 font-medium text-sm">
-            <i class="fas fa-thumbs-up"></i> Like
-        </button>
-        <button class="flex items-center gap-2 text-gray-700 hover:text-green-600 font-medium text-sm">
-            <i class="fas fa-comment"></i> Comment
-        </button>
-        <button class="flex items-center gap-2 text-gray-700 hover:text-purple-600 font-medium text-sm">
-            <i class="fas fa-share"></i> Share
-        </button>
+        <!-- Comment Input -->
+<!--        <div class="flex items-center gap-2 mt-4 pt-3 border-t border-gray-200">-->
+<!--            <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"-->
+<!--                 alt="You"-->
+<!--                 class="w-6 h-6 rounded-full object-cover">-->
+<!--            <div class="flex-1 relative">-->
+<!--                <input type="text"-->
+<!--                       placeholder="Write a comment..."-->
+<!--                       class="w-full text-xs px-3 py-2 bg-white rounded-full border border-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"-->
+<!--                       onkeypress="if(event.key === 'Enter') addComment({{ post.id }}, this)">-->
+<!--                <button onclick="addComment({{ post.id }}, this.previousElementSibling)"-->
+<!--                        class="absolute right-2 top-1/2 transform -translate-y-1/2 text-blue-500 hover:text-blue-700">-->
+<!--                    <i class="fas fa-paper-plane text-xs"></i>-->
+<!--                </button>-->
+<!--            </div>-->
+<!--        </div>-->
     </div>
-    -->
 </div>
+
+<!-- Add this CSS to your main template or style section -->
