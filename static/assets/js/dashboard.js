@@ -4272,6 +4272,53 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize groups
     Groups.load();
 
+    // Navbar glass dropdowns (Groups / Match)
+    const navDropdowns = document.querySelectorAll('.nav-item.nav-dropdown');
+    if (navDropdowns.length) {
+        const closeAllNavDropdowns = (except) => {
+            navDropdowns.forEach((dropdown) => {
+                if (dropdown !== except) {
+                    dropdown.classList.remove('dropdown-open');
+                    const trigger = dropdown.querySelector('.nav-dropdown-trigger');
+                    if (trigger) {
+                        trigger.setAttribute('aria-expanded', 'false');
+                    }
+                }
+            });
+        };
+
+        navDropdowns.forEach((dropdown) => {
+            const trigger = dropdown.querySelector('.nav-dropdown-trigger');
+            if (!trigger) return;
+
+            trigger.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const willOpen = !dropdown.classList.contains('dropdown-open');
+                closeAllNavDropdowns(dropdown);
+                dropdown.classList.toggle('dropdown-open', willOpen);
+                trigger.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+            });
+
+            const menu = dropdown.querySelector('.groups-dropdown-glass, .match-dropdown-glass');
+            if (menu) {
+                menu.addEventListener('click', (e) => e.stopPropagation());
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.nav-item.nav-dropdown')) {
+                closeAllNavDropdowns();
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeAllNavDropdowns();
+            }
+        });
+    }
+
     // Initialize modals
     document.querySelectorAll('[data-bs-toggle="modal"]').forEach(trigger => {
         trigger.addEventListener('click', function() {
