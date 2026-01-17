@@ -2018,30 +2018,6 @@
       }
 
       // ========================================
-      // ADD FORM SUBMISSION DEBUGGING
-      // ========================================
-
-      // Add this to debug form submissions
-      document.addEventListener("DOMContentLoaded", function () {
-        const createPostForm = document.getElementById("createPostForm");
-        if (createPostForm) {
-          createPostForm.addEventListener("submit", function (e) {
-            console.log("Form submission data:");
-            const formData = new FormData(this);
-            for (let [key, value] of formData.entries()) {
-              console.log(`  ${key}:`, value);
-            }
-
-            // Check if GIF URL is included
-            const gifUrlInput = document.getElementById("selectedGifUrl");
-            if (gifUrlInput && gifUrlInput.value) {
-              console.log("GIF URL included in submission:", gifUrlInput.value);
-            }
-          });
-        }
-      });
-
-      // ========================================
       // CSS FOR POST TEXT TRUNCATION
       // ========================================
 
