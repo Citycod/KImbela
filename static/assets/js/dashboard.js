@@ -1392,15 +1392,15 @@ const ProfileSystem = {
 
                         <!-- View Full Profile Button -->
                         <a href="/profile/${userId}"
-                           class="relative px-5 py-2 bg-gray-50 hover:bg-white text-gray-700 rounded-xl font-medium transition-all duration-300 overflow-hidden group border border-gray-100 hover:border-blue-100"
+                           class="relative px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all duration-300 overflow-hidden group shadow-sm hover:shadow-md border border-blue-600"
                            onclick="Modal.close('profileModal')">
                             <!-- Subtle background effect -->
                             <div class="absolute inset-0 bg-gradient-to-r from-transparent via-blue-50/0 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
 
                             <!-- Content -->
                             <div class="relative flex items-center gap-2">
-                                <i class="bi bi-person-square text-sm group-hover:text-blue-600 transition-colors duration-300"></i>
-                                <span class="text-xs group-hover:text-blue-700 transition-colors duration-300">View Full Profile</span>
+                                <i class="bi bi-person-square text-sm text-white group-hover:text-white transition-colors duration-300"></i>
+                                <span class="text-sm font-semibold text-white group-hover:text-white transition-colors duration-300">View Full Profile</span>
                                 <i class="bi bi-arrow-right-short text-xs opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
                             </div>
                         </a>
@@ -1468,15 +1468,15 @@ const ProfileSystem = {
 
                                 <!-- View Full Profile Button -->
                                 <a href="/profile/${userId}"
-                                   class="relative px-5 py-2 bg-gray-50 hover:bg-white text-gray-700 rounded-xl font-medium transition-all duration-300 overflow-hidden group border border-gray-100 hover:border-blue-100"
+                                   class="relative px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all duration-300 overflow-hidden group shadow-sm hover:shadow-md border border-blue-600"
                                    onclick="Modal.close('profileModal')">
                                     <!-- Subtle background effect -->
                                     <div class="absolute inset-0 bg-gradient-to-r from-transparent via-blue-50/0 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
 
                                     <!-- Content -->
                                     <div class="relative flex items-center gap-2">
-                                        <i class="bi bi-person-square text-sm group-hover:text-blue-600 transition-colors duration-300"></i>
-                                        <span class="text-xs group-hover:text-blue-700 transition-colors duration-300">View Full Profile</span>
+                                        <i class="bi bi-person-square text-sm text-white group-hover:text-white transition-colors duration-300"></i>
+                                        <span class="text-sm font-semibold text-white group-hover:text-white transition-colors duration-300">View Full Profile</span>
                                         <i class="bi bi-arrow-right-short text-xs opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
                                     </div>
                                 </a>
@@ -1503,15 +1503,15 @@ const ProfileSystem = {
 
                                 <!-- View Full Profile Button -->
                                 <a href="/profile/${userId}"
-                                   class="relative px-5 py-2 bg-gray-50 hover:bg-white text-gray-700 rounded-xl font-medium transition-all duration-300 overflow-hidden group border border-gray-100 hover:border-blue-100"
+                                   class="relative px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all duration-300 overflow-hidden group shadow-sm hover:shadow-md border border-blue-600"
                                    onclick="Modal.close('profileModal')">
                                     <!-- Subtle background effect -->
                                     <div class="absolute inset-0 bg-gradient-to-r from-transparent via-blue-50/0 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
 
                                     <!-- Content -->
                                     <div class="relative flex items-center gap-2">
-                                        <i class="bi bi-person-square text-sm group-hover:text-blue-600 transition-colors duration-300"></i>
-                                        <span class="text-xs group-hover:text-blue-700 transition-colors duration-300">View Full Profile</span>
+                                        <i class="bi bi-person-square text-sm text-white group-hover:text-white transition-colors duration-300"></i>
+                                        <span class="text-sm font-semibold text-white group-hover:text-white transition-colors duration-300">View Full Profile</span>
                                         <i class="bi bi-arrow-right-short text-xs opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
                                     </div>
                                 </a>
@@ -1552,15 +1552,15 @@ const ProfileSystem = {
 
                                 <!-- View Full Profile Button -->
                                 <a href="/profile/${userId}"
-                                   class="relative px-5 py-2 bg-gray-50 hover:bg-white text-gray-700 rounded-xl font-medium transition-all duration-300 overflow-hidden group border border-gray-100 hover:border-blue-100"
+                                   class="relative px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all duration-300 overflow-hidden group shadow-sm hover:shadow-md border border-blue-600"
                                    onclick="Modal.close('profileModal')">
                                     <!-- Subtle background effect -->
                                     <div class="absolute inset-0 bg-gradient-to-r from-transparent via-blue-50/0 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
 
                                     <!-- Content -->
                                     <div class="relative flex items-center gap-2">
-                                        <i class="bi bi-person-square text-sm group-hover:text-blue-600 transition-colors duration-300"></i>
-                                        <span class="text-xs group-hover:text-blue-700 transition-colors duration-300">View Full Profile</span>
+                                        <i class="bi bi-person-square text-sm text-white group-hover:text-white transition-colors duration-300"></i>
+                                        <span class="text-sm font-semibold text-white group-hover:text-white transition-colors duration-300">View Full Profile</span>
                                         <i class="bi bi-arrow-right-short text-xs opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
                                     </div>
                                 </a>
@@ -1587,15 +1587,15 @@ const ProfileSystem = {
 
                                 <!-- View Full Profile Button -->
                                 <a href="/profile/${userId}"
-                                   class="relative px-5 py-2 bg-gray-50 hover:bg-white text-gray-700 rounded-xl font-medium transition-all duration-300 overflow-hidden group border border-gray-100 hover:border-blue-100"
+                                   class="relative px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all duration-300 overflow-hidden group shadow-sm hover:shadow-md border border-blue-600"
                                    onclick="Modal.close('profileModal')">
                                     <!-- Subtle background effect -->
                                     <div class="absolute inset-0 bg-gradient-to-r from-transparent via-blue-50/0 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
 
                                     <!-- Content -->
                                     <div class="relative flex items-center gap-2">
-                                        <i class="bi bi-person-square text-sm group-hover:text-blue-600 transition-colors duration-300"></i>
-                                        <span class="text-xs group-hover:text-blue-700 transition-colors duration-300">View Full Profile</span>
+                                        <i class="bi bi-person-square text-sm text-white group-hover:text-white transition-colors duration-300"></i>
+                                        <span class="text-sm font-semibold text-white group-hover:text-white transition-colors duration-300">View Full Profile</span>
                                         <i class="bi bi-arrow-right-short text-xs opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
                                     </div>
                                 </a>
@@ -1626,15 +1626,15 @@ const ProfileSystem = {
 
                     <!-- View Full Profile Button -->
                     <a href="/profile/${userId}"
-                       class="relative px-5 py-2 bg-gray-50 hover:bg-white text-gray-700 rounded-xl font-medium transition-all duration-300 overflow-hidden group border border-gray-100 hover:border-blue-100"
+                       class="relative px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all duration-300 overflow-hidden group shadow-sm hover:shadow-md border border-blue-600"
                        onclick="Modal.close('profileModal')">
                         <!-- Subtle background effect -->
                         <div class="absolute inset-0 bg-gradient-to-r from-transparent via-blue-50/0 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
 
                         <!-- Content -->
                         <div class="relative flex items-center gap-2">
-                            <i class="bi bi-person-square text-sm group-hover:text-blue-600 transition-colors duration-300"></i>
-                            <span class="text-xs group-hover:text-blue-700 transition-colors duration-300">View Full Profile</span>
+                            <i class="bi bi-person-square text-sm text-white group-hover:text-white transition-colors duration-300"></i>
+                            <span class="text-sm font-semibold text-white group-hover:text-white transition-colors duration-300">View Full Profile</span>
                             <i class="bi bi-arrow-right-short text-xs opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 ml-1"></i>
                         </div>
                     </a>
@@ -2831,7 +2831,7 @@ const Groups = {
         this.setupDropdownListeners();
 
         // Load groups when page loads
-        if (document.querySelector('#groupsList, #groupsListMobile')) {
+        if (document.querySelector('#groupsList, #groupsListMobile, #groupsListDesktop')) {
             this.load();
         }
 
@@ -2895,7 +2895,7 @@ const Groups = {
         }
 
         // Show loading state in both lists
-        this.showLoading(['groupsList', 'groupsListMobile']);
+        this.showLoading(['groupsList', 'groupsListMobile', 'groupsListDesktop']);
 
         try {
             const response = await fetch('/get_user_groups', {
@@ -2927,7 +2927,7 @@ const Groups = {
 
         } catch (error) {
             console.error('❌ Error loading groups:', error);
-            this.showError(['groupsList', 'groupsListMobile'], error.message);
+            this.showError(['groupsList', 'groupsListMobile', 'groupsListDesktop'], error.message);
 
             // Clear cache on error
             this.cache.groups = null;
@@ -2937,7 +2937,7 @@ const Groups = {
 
     // Display groups in dropdowns
     displayGroups(groups) {
-        const lists = ['groupsList', 'groupsListMobile'];
+        const lists = ['groupsList', 'groupsListMobile', 'groupsListDesktop'];
 
         lists.forEach(listId => {
             const list = document.getElementById(listId);
@@ -3065,7 +3065,7 @@ const Groups = {
 
             try {
                 // Show loading state
-                this.showLoading(['groupsList', 'groupsListMobile']);
+                this.showLoading(['groupsList', 'groupsListMobile', 'groupsListDesktop']);
 
                 const response = await fetch(`/search_groups?q=${encodeURIComponent(query)}`);
                 const results = await response.json();
@@ -3077,7 +3077,7 @@ const Groups = {
                 }
             } catch (error) {
                 console.error('Search error:', error);
-                this.showError(['groupsList', 'groupsListMobile'], 'Search failed');
+                this.showError(['groupsList', 'groupsListMobile', 'groupsListDesktop'], 'Search failed');
             }
         }, 300); // Debounce for 300ms
     },

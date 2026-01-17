@@ -213,15 +213,14 @@
                     </div>
                     <div class="grid grid-cols-3 gap-3">
                         {% for friend in friends[:6] %}
-                        <div class="text-center group cursor-pointer">
+                        <a href="{{ url_for('user.view_profile', user_id=friend.id) }}" class="text-center group block">
                             <div class="relative mx-auto mb-1.5">
                                 <img src="{{ friend.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
                                      alt="{{ friend.first_name }}"
                                      class="w-14 h-14 rounded-xl object-cover border-2 border-transparent group-hover:border-green-500 transition-all">
-                                <div class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white"></div>
                             </div>
                             <p class="text-xs font-medium text-gray-800 truncate">{{ friend.first_name }}</p>
-                        </div>
+                        </a>
                         {% endfor %}
                     </div>
                     {% if friends|length > 6 %}

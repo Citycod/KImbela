@@ -669,11 +669,15 @@
       /* Make sure ads don't get hidden by other elements */
       .nativeAd {
         position: relative;
-        z-index: 10;
+        z-index: 200;
       }
 
       #floatingAd {
-        z-index: 100;
+        z-index: 300;
+      }
+
+      #adModal {
+        z-index: 400;
       }
     </style>
 
@@ -963,6 +967,7 @@
     width: 100%;
     height: 30rem;
     position: relative;
+    z-index: 1;
 
     display: flex;
     flex-direction: column;
@@ -998,6 +1003,200 @@
         text-align: center;
         margin-bottom: 1.5rem;
       }
+
+@media (max-width: 768px) {
+    .hero-header {
+        font-size: 2.25rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .hero-header {
+        font-size: 1.75rem;
+    }
+}
+
+
+
+
+
+      /* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+    /* Adjust navbar padding and spacing */
+    nav {
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+    }
+
+    .nav-icon-bar {
+        display: none !important;
+    }
+    
+    /* Hide the desktop nav items container */
+    .hidden.md\:flex {
+        display: none !important;
+    }
+    
+    /* Show message/notification icons */
+    .border-l.border-gray-200 {
+        border-left: none !important;
+        margin-left: 0 !important;
+        padding-left: 0.5rem !important;
+    }
+    
+    /* Adjust search bar width on mobile */
+    .searching {
+        width: auto !important;
+        flex: 1 !important;
+        margin-left: 0.5rem !important;
+        margin-right: 0.5rem !important;
+    }
+    
+    .search_input {
+        font-size: 0.875rem !important;
+        padding: 0.5rem 0.5rem 0.5rem 2.5rem !important;
+    }
+    
+    /* Adjust logo size on mobile */
+    .my_logo {
+        height: 3rem !important;
+    }
+    
+    /* Make main content narrower on mobile */
+    .max-w-4xl {
+        max-width: 100% !important;
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+    }
+    
+    /* Adjust post cards padding on mobile */
+    .post-card {
+        margin-bottom: 1rem !important;
+        border-radius: 1rem !important;
+    }
+    
+    /* Reduce hero section height on mobile */
+    .hero-section {
+        height: 20rem !important;
+        padding-top: 6.5rem !important;
+    }
+    
+    .hero-header {
+        font-size: 2.25rem !important;
+        padding: 0 1rem !important;
+    }
+    
+    /* Adjust composer card on mobile */
+    .card-hover {
+        padding: 1rem !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    /* Make suggestions section scrollable */
+    .suggestions-track {
+        overflow-x: auto !important;
+        scrollbar-width: thin;
+        padding-bottom: 0.5rem !important;
+    }
+    
+    .suggestion-card {
+        min-width: 160px !important;
+        padding: 1rem !important;
+    }
+}
+
+/* Extra small screens */
+@media (max-width: 640px) {
+    /* Further reduce padding */
+    .p-4, .p-6 {
+        padding: 1rem !important;
+    }
+
+    .hero-header {
+        font-size: 1.75rem !important;
+    }
+    
+    /* Make text smaller */
+    .text-lg, .text-xl {
+        font-size: 1rem !important;
+    }
+    
+    /* Adjust post text */
+    .post-text {
+        font-size: 0.9375rem !important;
+        line-height: 1.4 !important;
+    }
+    
+    /* Adjust comment input */
+    #commentInput {
+        font-size: 0.875rem !important;
+        padding: 0.5rem !important;
+    }
+    
+    /* Adjust avatar sizes */
+    .w-10.h-10 {
+        width: 2rem !important;
+        height: 2rem !important;
+    }
+    
+    /* Reduce spacing in post actions */
+    .space-x-2 > * + * {
+        margin-left: 0.25rem !important;
+    }
+}
+
+/* Tablet screens */
+@media (min-width: 769px) and (max-width: 1024px) {
+    /* Keep nav items visible on tablets */
+    .hidden.md\:flex {
+        display: flex !important;
+    }
+    
+    /* Adjust spacing for tablet */
+    .nav-item {
+        min-width: 60px !important;
+        padding: 0.25rem 0.5rem !important;
+    }
+    
+    .nav-item i {
+        font-size: 1.1rem !important;
+    }
+    
+    .nav-item span {
+        font-size: 0.6rem !important;
+    }
+}
+
+/* Ensure messenger and notification icons are always visible */
+@media (max-width: 768px) {
+    /* Make sure message/notification icons have enough space */
+    .flex.items-center.space-x-1.lg\:space-x-2.ml-2.lg\:ml-4 {
+        margin-left: auto !important;
+        margin-right: 0 !important;
+    }
+    
+    /* Adjust the icons size */
+    .p-2.rounded-full.hover\:bg-fb-gray {
+        padding: 0.5rem !important;
+    }
+    
+    .h-6.mr-2 {
+        height: 1.25rem !important;
+        margin-right: 0 !important;
+    }
+}
+
+/* Prevent content from being too wide on any screen */
+.container {
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+}
+
+/* Ensure no horizontal scroll on mobile */
+body {
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
+}
     </style>
   </head>
   <body class="font-poppins bg-fb-gray text-fb-text">
@@ -1076,9 +1275,7 @@
 
       <!-- Right side: Nav icons (same as sidebar) -->
       <div
-        class="flex items-center space-x-1 lg:space-x-2"
-        style="margin-right: 13rem"
-      >
+        class="nav-icon-bar flex items-center space-x-1 lg:space-x-2" style="margin-right: 13rem">
         <!-- Home -->
         <a
           href="{{ url_for('user.user_dashboard') }}"
@@ -1397,83 +1594,51 @@
       </div>
     </nav>
 
-    <div class="hero-section">
-      <h1 class="hero-header">
-        MEET. CONNECT. <span style="color: coral"> BELONG</span>
-      </h1>
+    <!-- Hero Section - Responsive -->
+<div class="hero-section">
+    <h1 class="hero-header">
+        MEET. CONNECT. <span style="color: coral;">BELONG</span>
+    </h1>
 
-      <div
-        class="w-full max-w-5xl bg-white/85 backdrop-blur-sm border border-white/40 rounded-xl shadow-soft p-3 sm:p-4 mb-6 card-hover"
-      >
-          <div class="flex items-center mb-3">
-            <a href="{{ url_for('user.profile', user_id=current_user.id) }}">
-              <img
-                src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-                alt=""
-                class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover"
-              />
-            </a>
-            <div class="flex-1 ml-2 sm:ml-3">
-              <div
-                class="composer-input bg-white/70 backdrop-blur-[2px] border border-white/50 rounded-lg px-3 sm:px-4 py-2 sm:py-3 cursor-pointer hover:bg-white/80 transition-colors text-xs sm:text-sm"
-                data-bs-toggle="modal"
-                data-bs-target="#postModal"
-              >
-                What's on your mind, {{ current_user.first_name }}?
-              </div>
+    <!-- Post Composer - Responsive -->
+    <div class="w-full px-4 md:px-0 md:max-w-2xl lg:max-w-3xl xl:max-w-4xl mx-auto">
+        <div class="composer-container bg-white/85 backdrop-blur-sm border border-white/40 rounded-xl shadow-soft p-3 sm:p-4 mb-4 md:mb-6 card-hover">
+            <div class="flex items-center mb-3">
+                <a href="{{ url_for('user.profile', user_id=current_user.id) }}">
+                    <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" alt="" class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover" />
+                </a>
+                <div class="flex-1 ml-2 sm:ml-3">
+                    <div class="composer-input bg-white/70 backdrop-blur-[2px] border border-white/50 rounded-lg px-3 sm:px-4 py-2 sm:py-3 cursor-pointer hover:bg-white/80 transition-colors text-xs sm:text-sm" data-bs-toggle="modal" data-bs-target="#postModal">
+                        What's on your mind, {{ current_user.first_name }}?
+                    </div>
+                </div>
             </div>
-          </div>
-          <div class="flex justify-between pt-2 border-t border-fb-border">
-            <!-- Live Video -->
-            <button
-              class="composer-btn flex items-center justify-center flex-1 py-1.5 sm:py-2 rounded-lg hover:bg-fb-gray transition-colors text-fb-text-light font-medium text-xs sm:text-sm relative"
-              data-bs-toggle="modal"
-              data-bs-target="#postModal"
-            >
-              <!--    <i class="bi bi-camera-video-fill text-red-500 text-base sm:text-lg"></i>-->
-              <img
-                src="{{ url_for('static', filename='assets/img/video.png') }}"
-                class="w-10 h-10 rounded-full object-cover mx-auto sm:mb-3 mt-3"
-              />
-              <span class="tooltip">Video</span>
-            </button>
+            <div class="flex justify-between pt-2 border-t border-fb-border">
+                <!-- Live Video -->
+                <button class="composer-btn flex flex-col items-center flex-1 py-1.5 sm:py-2 rounded-lg hover:bg-fb-gray transition-colors text-fb-text-light font-medium text-xs sm:text-sm relative" data-bs-toggle="modal" data-bs-target="#postModal">
+                    <img src="{{ url_for('static', filename='assets/img/video.png') }}" class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover mx-auto mb-1 sm:mb-2 mt-1 sm:mt-2" />
+                    <span class="hidden sm:inline">Video</span>
+                    <span class="tooltip">Video</span>
+                </button>
 
-            <!-- Photo/Video -->
-            <button
-              class="composer-btn flex items-center justify-center flex-1 py-1.5 sm:py-2 rounded-lg hover:bg-fb-gray transition-colors text-fb-text-light font-medium text-xs sm:text-sm relative"
-              onclick="document.getElementById('photoInput').click()"
-            >
-              <!--    <i class="bi bi-image-fill text-green-500 text-base sm:text-lg"></i>-->
-              <img
-                src="{{ url_for('static', filename='assets/img/pic.png') }}"
-                class="w-10 h-10 rounded-full object-cover mx-auto sm:mb-3 mt-3"
-              />
-              <span class="tooltip">Photo</span>
-              <input
-                type="file"
-                id="photoInput"
-                accept="image/*,video/*"
-                hidden
-                onchange="previewMedia(this)"
-              />
-            </button>
+                <!-- Photo/Video -->
+                <button class="composer-btn flex flex-col items-center flex-1 py-1.5 sm:py-2 rounded-lg hover:bg-fb-gray transition-colors text-fb-text-light font-medium text-xs sm:text-sm relative" onclick="document.getElementById('photoInput').click()">
+                    <img src="{{ url_for('static', filename='assets/img/pic.png') }}" class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover mx-auto mb-1 sm:mb-2 mt-1 sm:mt-2" />
+                    <span class="hidden sm:inline">Photo</span>
+                    <span class="tooltip">Photo</span>
+                    <input type="file" id="photoInput" accept="image/*,video/*" hidden onchange="previewMedia(this)" />
+                </button>
 
-            <!-- GIF Button -->
-            <button
-              class="composer-btn flex items-center justify-center flex-1 py-1.5 sm:py-2 rounded-lg hover:bg-fb-gray transition-colors text-fb-text-light font-medium text-xs sm:text-sm relative"
-              onclick="openGifPickerFromComposer()"
-            >
-              <!--    <i class="bi bi-file-earmark-play text-purple-500"></i>-->
-              <img
-                src="{{ url_for('static', filename='assets/img/gif.png') }}"
-                class="w-10 h-10 rounded-full object-cover mx-auto sm:mb-3 mt-3"
-              />
-
-              <span class="tooltip">GIF</span>
-            </button>
-          </div>
+                <!-- GIF Button -->
+                <button class="composer-btn flex flex-col items-center flex-1 py-1.5 sm:py-2 rounded-lg hover:bg-fb-gray transition-colors text-fb-text-light font-medium text-xs sm:text-sm relative" onclick="openGifPickerFromComposer()">
+                    <img src="{{ url_for('static', filename='assets/img/gif.png') }}" class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover mx-auto mb-1 sm:mb-2 mt-1 sm:mt-2" />
+                    <span class="hidden sm:inline">GIF</span>
+                    <span class="tooltip">GIF</span>
+                </button>
+            </div>
         </div>
     </div>
+</div>
 
     <!-- Messenger Popup - IMPROVED VERSION -->
     <!-- Replace your existing messenger popup with this enhanced version -->
@@ -1725,7 +1890,7 @@
           <!-- In MOBILE SIDEBAR section, replace the Groups item with: -->
           <!-- Mobile Groups Dropdown -->
 
-          <div class="dropdown relative">
+            <div class="dropdown relative">
             <div
               class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-300 mb-2 cursor-pointer group"
               data-bs-toggle="groups-dropdown-mobile"
@@ -1874,7 +2039,7 @@
     <div class="pt-16 flex">
       <!-- LEFT SIDEBAR -->
       <div
-        class="hidden lg:block w-96 h-screen sticky top-16 overflow-y-auto custom-scrollbar bg-white border-r border-fb-border p-4"
+        class="hidden lg:block w-85 h-screen sticky top-16 overflow-y-auto custom-scrollbar bg-white border-r border-fb-border p-4"
       >
         <div
           class="sidebar-item flex items-center p-3 rounded-lg bg-blue-50 text-blue-600 font-medium mb-2"
@@ -2055,7 +2220,7 @@
       </div>
 
       <!-- MAIN CONTENT -->
-      <div class="flex-1 max-w-2xl mx-auto p-4">
+    <div class="w-full max-w-4xl mx-auto"> 
         <!-- POST COMPOSER -->
         
 
@@ -2843,6 +3008,8 @@
 
     <!-- Floating Corner Widget -->
     <!-- Floating Corner Widget - Compact Version -->
+    <br>
+    <br>
     <div
       id="floatingAd"
       class="fixed bottom-4 right-4 z-50 transition-all duration-500"
@@ -2901,10 +3068,12 @@
 
     <!-- Native Content Ad -->
 
+    <br>
+    <br>
     <div
       id="adModal"
       class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/60 backdrop-blur-sm"
-      style="margin-top: 5rem"
+      style="margin-top: 6rem"
     >
       <div
         class="ad-modal-content relative mx-2 sm:mx-4 w-full max-w-lg sm:max-w-xl md:max-w-2xl rounded-3xl bg-gradient-to-br from-white to-gray-50 shadow-2xl transform transition-all duration-500 scale-95 opacity-0"
@@ -5315,16 +5484,6 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
             }
           }
 
-          // Handle delete post buttons
-          if (e.target.closest(".delete-post")) {
-            e.preventDefault();
-            const postId = e.target
-              .closest(".delete-post")
-              .getAttribute("data-post-id");
-            if (postId) {
-              deletePost(postId, e.target.closest(".delete-post"));
-            }
-          }
         });
       });
 
@@ -5474,89 +5633,6 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
             postTextElement.classList.add("truncated");
             seeMoreBtn.textContent = "See More";
           }
-        }
-      }
-
-      async function deletePost(postId, deleteBtn) {
-        if (!confirm("Are you sure you want to delete this post?")) return;
-
-        // Show loading state
-        const originalHTML = deleteBtn.innerHTML;
-        deleteBtn.innerHTML =
-          '<span class="inline-flex items-center gap-1"><span class="tiny-loader xs danger"></span> Deleting...</span>';
-        deleteBtn.disabled = true;
-
-        try {
-          // CHANGE THIS LINE: Use relative path instead of full URL
-          const response = await fetch(`/delete_post/${postId}`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-CSRFToken": window.csrfToken || "",
-            },
-          });
-
-          if (!response.ok) {
-            // Try to get error details
-            let errorMsg = `HTTP ${response.status}`;
-            try {
-              const errorData = await response.json();
-              errorMsg = errorData.error || errorMsg;
-            } catch {
-              // If response is not JSON, use status text
-              errorMsg = response.statusText || errorMsg;
-            }
-            throw new Error(errorMsg);
-          }
-
-          const data = await response.json();
-          if (data.success) {
-            const postElement = document.querySelector(
-              `[data-post-id="${postId}"]`,
-            );
-            if (postElement) {
-              // Fade out animation
-              postElement.style.opacity = "0.5";
-              postElement.style.transform = "scale(0.95)";
-
-              setTimeout(() => {
-                postElement.remove();
-
-                // Show success message
-                Toast.show("Post deleted successfully", "success");
-
-                // Check if no posts left
-                const postsFeed = document.getElementById("posts-feed");
-                const remainingPosts = postsFeed.querySelectorAll(".post-card");
-                if (remainingPosts.length === 0) {
-                  postsFeed.innerHTML = `
-                            <div class="bg-white rounded-2xl shadow-soft p-8 text-center">
-                                <i class="bi bi-newspaper text-4xl text-gray-400 mb-4"></i>
-                                <h3 class="text-xl font-semibold text-gray-700 mb-2">No posts yet</h3>
-                                <p class="text-gray-500 mb-4">Be the first to share something!</p>
-                                <button
-                                    class="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
-                                    onclick="openPostModal()"
-                                >
-                                    Create Your First Post
-                                </button>
-                            </div>
-                        `;
-                }
-              }, 500);
-            }
-          } else {
-            throw new Error(data.error || "Failed to delete post");
-          }
-        } catch (error) {
-          console.error("Error deleting post:", error);
-
-          // Restore button
-          deleteBtn.innerHTML = originalHTML;
-          deleteBtn.disabled = false;
-
-          // Show error message
-          Toast.show("Failed to delete post: " + error.message, "danger");
         }
       }
 

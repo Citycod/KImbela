@@ -69,8 +69,8 @@ class PostSystem {
 
         const likeCount = likeBtn.querySelector('.like-count');
         const icon = likeBtn.querySelector('i');
-        const originalCount = likeCount?.textContent || '0';
-        const originalIcon = icon?.className || 'bi bi-hand-thumbs-up';
+        const originalCount = likeCount ? .textContent || '0';
+        const originalIcon = icon ? .className || 'bi bi-hand-thumbs-up';
 
         // Show loading state
         if (icon) icon.className = 'bi bi-hourglass';
@@ -154,7 +154,7 @@ class PostSystem {
         document.getElementById('editPostContent').value = postText.textContent;
 
         const form = document.getElementById('editPostForm');
-        form.onsubmit = async (e) => {
+        form.onsubmit = async(e) => {
             e.preventDefault();
 
             const submitBtn = form.querySelector('button[type="submit"]');
@@ -214,19 +214,19 @@ class PostSystem {
     }
 
     displayCommentsModal(comments) {
-        const body = document.getElementById('commentModalBody');
-        if (!body) return;
+            const body = document.getElementById('commentModalBody');
+            if (!body) return;
 
-        body.innerHTML = '';
+            body.innerHTML = '';
 
-        if (!comments || comments.length === 0) {
-            body.innerHTML = '<div class="text-center py-8 text-gray-500">No comments yet</div>';
-            return;
-        }
+            if (!comments || comments.length === 0) {
+                body.innerHTML = '<div class="text-center py-8 text-gray-500">No comments yet</div>';
+                return;
+            }
 
-        comments.forEach(comment => {
-            const isLong = comment.content?.length > 150;
-            body.innerHTML += `
+            comments.forEach(comment => {
+                        const isLong = comment.content ? .length > 150;
+                        body.innerHTML += `
                 <div class="comment mb-5 border-b pb-4">
                     <div class="flex space-x-3">
                         <img src="${comment.avatar || this.defaultAvatar}" class="w-10 h-10 rounded-full object-cover flex-shrink-0">
