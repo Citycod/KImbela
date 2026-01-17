@@ -12,7 +12,7 @@ FLASK_ENV=development
 FLASK_DEBUG=1
 """
 
-with open('.env.local', 'w') as f:
+with open(".env.local", "w") as f:
     f.write(env_content)
 
 print("✅ Created .env.local with memory storage for rate limiting")

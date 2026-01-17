@@ -23,7 +23,7 @@ from models import (
     Message as ChatMessage,
     SponsoredAd,
     AdCampaign,
-    BirthdayNotification
+    BirthdayNotification,
 )
 
 from datetime import datetime
@@ -46,6 +46,7 @@ from werkzeug.utils import secure_filename
 
 import cloudinary.uploader
 import cloudinary.utils
+
 # from scheduler import (
 #     manual_trigger_matchmaking_expiry_check,
 #     manual_trigger_expired_matchmaking_check,
@@ -237,19 +238,24 @@ def get_today_birthdays():
 
     birthday_friends = []
     for friend in current_user.friends:
-        if friend.dob and friend.dob.month == today.month and friend.dob.day == today.day:
-            birthday_friends.append({
-                'id': friend.id,
-                'name': friend.full_name,
-                'avatar': friend.profile_pic or url_for('static', filename='assets/img/default-avatar.png'),
-                'age': today.year - friend.dob.year
-            })
+        if (
+            friend.dob
+            and friend.dob.month == today.month
+            and friend.dob.day == today.day
+        ):
+            birthday_friends.append(
+                {
+                    "id": friend.id,
+                    "name": friend.full_name,
+                    "avatar": friend.profile_pic
+                    or url_for("static", filename="assets/img/default-avatar.png"),
+                    "age": today.year - friend.dob.year,
+                }
+            )
 
-    return jsonify({
-        'success': True,
-        'birthdays': birthday_friends,
-        'count': len(birthday_friends)
-    })
+    return jsonify(
+        {"success": True, "birthdays": birthday_friends, "count": len(birthday_friends)}
+    )
 
 
 @user.route("/api/birthdays/upcoming")
@@ -260,19 +266,19 @@ def get_upcoming_birthdays_api():
 
     birthdays_data = []
     for item in upcoming:
-        birthdays_data.append({
-            'id': item['friend'].id,
-            'name': item['friend'].full_name,
-            'avatar': item['friend'].profile_pic or url_for('static', filename='assets/img/default-avatar.png'),
-            'days_until': item['days_until'],
-            'birthday_date': item['birthday_date'].isoformat(),
-            'age': item['age']
-        })
+        birthdays_data.append(
+            {
+                "id": item["friend"].id,
+                "name": item["friend"].full_name,
+                "avatar": item["friend"].profile_pic
+                or url_for("static", filename="assets/img/default-avatar.png"),
+                "days_until": item["days_until"],
+                "birthday_date": item["birthday_date"].isoformat(),
+                "age": item["age"],
+            }
+        )
 
-    return jsonify({
-        'success': True,
-        'birthdays': birthdays_data
-    })
+    return jsonify({"success": True, "birthdays": birthdays_data})
 
 
 @user.route("/api/birthday/wish", methods=["POST"])
@@ -283,25 +289,32 @@ def send_birthday_wish():
     import sys
 
     # Log start of request
-    print(f"\n🎂 [BIRTHDAY WISH] Request received from user {current_user.id} ({current_user.full_name})")
+    print(
+        f"\n🎂 [BIRTHDAY WISH] Request received from user {current_user.id} ({current_user.full_name})"
+    )
     print(f"📦 Request method: {request.method}")
 
     try:
         # Get and validate JSON data
         if not request.is_json:
             print("❌ [ERROR] Request is not JSON")
-            return jsonify({'success': False, 'error': 'Content-Type must be application/json'}), 400
+            return (
+                jsonify(
+                    {"success": False, "error": "Content-Type must be application/json"}
+                ),
+                400,
+            )
 
         data = request.get_json()
         print(f"📦 Raw request data: {data}")
 
         if not data:
             print("❌ [ERROR] No data provided in request")
-            return jsonify({'success': False, 'error': 'No data provided'}), 400
+            return jsonify({"success": False, "error": "No data provided"}), 400
 
         # Extract and validate parameters
-        friend_id = data.get('friend_id')
-        message = data.get('message', 'Happy Birthday! 🎉').strip()
+        friend_id = data.get("friend_id")
+        message = data.get("message", "Happy Birthday! 🎉").strip()
 
         print(f"🎯 Processing birthday wish:")
         print(f"   → Friend ID: {friend_id}")
@@ -310,13 +323,13 @@ def send_birthday_wish():
 
         if not friend_id:
             print("❌ [ERROR] Friend ID is required")
-            return jsonify({'success': False, 'error': 'Friend ID is required'}), 400
+            return jsonify({"success": False, "error": "Friend ID is required"}), 400
 
         try:
             friend_id = int(friend_id)
         except (ValueError, TypeError):
             print(f"❌ [ERROR] Invalid friend ID type: {type(friend_id)}")
-            return jsonify({'success': False, 'error': 'Invalid friend ID format'}), 400
+            return jsonify({"success": False, "error": "Invalid friend ID format"}), 400
 
         # Find friend
         print(f"🔍 Looking up friend with ID: {friend_id}")
@@ -324,7 +337,7 @@ def send_birthday_wish():
 
         if not friend:
             print(f"❌ [ERROR] Friend not found with ID: {friend_id}")
-            return jsonify({'success': False, 'error': 'Friend not found'}), 404
+            return jsonify({"success": False, "error": "Friend not found"}), 404
 
         print(f"✅ Friend found: {friend.full_name} (ID: {friend.id})")
 
@@ -335,7 +348,7 @@ def send_birthday_wish():
 
         if not are_friends:
             print(f"❌ [ERROR] Users are not friends")
-            return jsonify({'success': False, 'error': 'Not friends'}), 403
+            return jsonify({"success": False, "error": "Not friends"}), 403
 
         # Check if friend has birthday today
         today = date.today()
@@ -343,7 +356,9 @@ def send_birthday_wish():
 
         if friend.dob:
             friend_birthday = friend.dob.replace(year=today.year)
-            is_birthday = friend.dob.month == today.month and friend.dob.day == today.day
+            is_birthday = (
+                friend.dob.month == today.month and friend.dob.day == today.day
+            )
             print(f"🎁 Friend's DOB: {friend.dob}")
             print(f"🎁 Birthday this year: {friend_birthday}")
             print(f"🎁 Is birthday today: {is_birthday}")
@@ -359,9 +374,7 @@ def send_birthday_wish():
 
         # Create or update birthday notification
         notification = BirthdayNotification.query.filter_by(
-            user_id=current_user.id,
-            birthday_user_id=friend.id,
-            birthday_date=today
+            user_id=current_user.id, birthday_user_id=friend.id, birthday_date=today
         ).first()
 
         if notification:
@@ -379,7 +392,7 @@ def send_birthday_wish():
                 birthday_date=today,
                 is_wished=True,
                 wish_message=message,
-                wished_at=datetime.utcnow()
+                wished_at=datetime.utcnow(),
             )
             db.session.add(notification)
             print(f"   → Created notification with wished_at: {notification.wished_at}")
@@ -407,7 +420,7 @@ def send_birthday_wish():
         }
 
         db.session.add(birthday_message)
-        db.session.flush() # ensures birthday_message.id exists
+        db.session.flush()  # ensures birthday_message.id exists
         print(f"✅ ChatMessage created with ID: {birthday_message.id}")
         # so birthday_message.id exists BEFORE commit
         print(f"✅ ChatMessage created with ID: {birthday_message.id}")
@@ -419,7 +432,7 @@ def send_birthday_wish():
 
         # Debug: Print all ChatMessage object attributes
         print(f"🔍 ChatMessage object attributes:")
-        for attr in ['sender_id', 'receiver_id', 'sender', 'receiver']:
+        for attr in ["sender_id", "receiver_id", "sender", "receiver"]:
             if hasattr(birthday_message, attr):
                 value = getattr(birthday_message, attr)
                 print(f"   → {attr}: {value} (type: {type(value).__name__})")
@@ -447,14 +460,16 @@ def send_birthday_wish():
         print(f"   → Notification ID: {notification.id}")
         print(f"   → Sent at: {datetime.utcnow().isoformat()}")
 
-        return jsonify({
-            'success': True,
-            'message': 'Birthday wish sent! 🎉',
-            'message_id': birthday_message.id,
-            'notification_id': notification.id,
-            'timestamp': datetime.utcnow().isoformat(),
-            'friend_name': friend.full_name
-        })
+        return jsonify(
+            {
+                "success": True,
+                "message": "Birthday wish sent! 🎉",
+                "message_id": birthday_message.id,
+                "notification_id": notification.id,
+                "timestamp": datetime.utcnow().isoformat(),
+                "friend_name": friend.full_name,
+            }
+        )
 
     except Exception as e:
         # Rollback on error
@@ -483,12 +498,17 @@ def send_birthday_wish():
             print(f"   → Detected sender/receiver related error")
             print(f"   → Message model expects sender and receiver objects")
 
-        return jsonify({
-            'success': False,
-            'error': 'Failed to send birthday wish',
-            'details': str(e),
-            'error_type': type(e).__name__
-        }), 500
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": "Failed to send birthday wish",
+                    "details": str(e),
+                    "error_type": type(e).__name__,
+                }
+            ),
+            500,
+        )
 
 
 @user.route("/api/birthday/notifications/mark_seen", methods=["POST"])
@@ -497,18 +517,15 @@ def mark_birthday_notifications_seen():
     """Mark birthday notifications as seen"""
     try:
         BirthdayNotification.query.filter_by(
-            user_id=current_user.id,
-            is_seen=False
-        ).update({'is_seen': True})
+            user_id=current_user.id, is_seen=False
+        ).update({"is_seen": True})
 
         db.session.commit()
-        return jsonify({'success': True})
+        return jsonify({"success": True})
 
     except Exception as e:
         db.session.rollback()
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @user.route("/user_dashboard", methods=["GET", "POST"])
@@ -519,7 +536,10 @@ def user_dashboard():
     # ===== POST REQUEST =====
     if request.method == "POST":
         # Optional: Handle AJAX file upload progress (if you have it)
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' and request.headers.get('X-File-Upload') == 'true':
+        if (
+            request.headers.get("X-Requested-With") == "XMLHttpRequest"
+            and request.headers.get("X-File-Upload") == "true"
+        ):
             return handle_ajax_post_upload()  # Your existing handler, if any
 
         try:
@@ -537,7 +557,9 @@ def user_dashboard():
             has_gif = bool(gif_url)
 
             if not (has_content or has_media or has_gif):
-                flash("Please add text, a photo/video, or a GIF to your post.", "warning")
+                flash(
+                    "Please add text, a photo/video, or a GIF to your post.", "warning"
+                )
                 return redirect(url_for("user.user_dashboard"))
 
             # === HANDLE UPLOADED MEDIA (Photo / Video / Uploaded GIF) ===
@@ -557,7 +579,9 @@ def user_dashboard():
                     filename_lower = media_file.filename.lower()
                     if media_file.content_type.startswith("video/"):
                         resource_type = "video"
-                    elif filename_lower.endswith(('.gif', '.png', '.jpg', '.jpeg', '.webp')):
+                    elif filename_lower.endswith(
+                        (".gif", ".png", ".jpg", ".jpeg", ".webp")
+                    ):
                         resource_type = "image"
                     else:
                         resource_type = "auto"
@@ -568,19 +592,16 @@ def user_dashboard():
                         "transformation": [
                             {"width": 1000, "crop": "limit"},
                             {"quality": "auto", "fetch_format": "auto"},
-                        ]
+                        ],
                     }
 
                     # Preserve animation for uploaded GIFs
-                    if filename_lower.endswith('.gif'):
+                    if filename_lower.endswith(".gif"):
                         upload_options["transformation"] = [
                             {"quality": "auto", "fetch_format": "gif"}
                         ]
 
-                    result = cloudinary.uploader.upload(
-                        media_file,
-                        **upload_options
-                    )
+                    result = cloudinary.uploader.upload(media_file, **upload_options)
 
                     if resource_type == "video":
                         video_url = result["secure_url"]
@@ -658,35 +679,41 @@ def user_dashboard():
     )
 
     # Friends
-    friend_query = text("""
+    friend_query = text(
+        """
         SELECT friend_id FROM friendship WHERE user_id = :user_id
         UNION
         SELECT user_id FROM friendship WHERE friend_id = :user_id
-    """)
+    """
+    )
     friend_ids_result = db.session.execute(friend_query, {"user_id": user_id})
     friend_ids = {row[0] for row in friend_ids_result}
 
-    blocked_query = text("""
+    blocked_query = text(
+        """
         SELECT blocked_id FROM user_blocks WHERE blocker_id = :user_id
         UNION
         SELECT blocker_id FROM user_blocks WHERE blocked_id = :user_id
-    """)
+    """
+    )
     blocked_ids_result = db.session.execute(blocked_query, {"user_id": user_id})
     blocked_ids = {row[0] for row in blocked_ids_result}
 
     friends = []
     if friend_ids:
-        friends = User.query.filter(
-            User.id.in_(friend_ids),
-            ~User.id.in_(blocked_ids)
-        ).order_by(User.last_seen.desc()).limit(20).all()
+        friends = (
+            User.query.filter(User.id.in_(friend_ids), ~User.id.in_(blocked_ids))
+            .order_by(User.last_seen.desc())
+            .limit(20)
+            .all()
+        )
 
     # People you may know (suggestions)
     suggestions_query = User.query.filter(
         User.id != user_id,
         ~User.id.in_(friend_ids),
         ~User.id.in_(blocked_ids),
-        User.is_active == True
+        User.is_active == True,
     )
     eligible_count = suggestions_query.count()
     random_three = []
@@ -698,22 +725,29 @@ def user_dashboard():
 
     # Sponsored ads (example)
     current_time = datetime.utcnow()
-    sponsored_ads = AdCampaign.query.filter(
-        AdCampaign.status == 'active',
-        AdCampaign.start_date <= current_time,
-        AdCampaign.end_date >= current_time
-    ).order_by(AdCampaign.budget.desc()).limit(3).all()
+    sponsored_ads = (
+        AdCampaign.query.filter(
+            AdCampaign.status == "active",
+            AdCampaign.start_date <= current_time,
+            AdCampaign.end_date >= current_time,
+        )
+        .order_by(AdCampaign.budget.desc())
+        .limit(3)
+        .all()
+    )
 
     ads_data = [
         {
-            'id': ad.id,
-            'title': ad.title,
-            'description': ad.description,
-            'image_url': ad.image or 'https://via.placeholder.com/600x300/4F46E5/FFFFFF?text=Sponsored+Ad',
-            'target_url': ad.target_url or '#',
-            'call_to_action': ad.call_to_action or 'Learn More',
-            'advertiser_name': ad.user.full_name if ad.user else 'Sponsor'
-        } for ad in sponsored_ads
+            "id": ad.id,
+            "title": ad.title,
+            "description": ad.description,
+            "image_url": ad.image
+            or "https://via.placeholder.com/600x300/4F46E5/FFFFFF?text=Sponsored+Ad",
+            "target_url": ad.target_url or "#",
+            "call_to_action": ad.call_to_action or "Learn More",
+            "advertiser_name": ad.user.full_name if ad.user else "Sponsor",
+        }
+        for ad in sponsored_ads
     ]
 
     # AJAX partial posts
@@ -722,28 +756,34 @@ def user_dashboard():
             "_posts_partial.html",
             posts=posts,
             current_user=current_user,
-            default_avatar=url_for("static", filename="assets/img/default-avatar.png")
+            default_avatar=url_for("static", filename="assets/img/default-avatar.png"),
         )
-        return jsonify({
-            "success": True,
-            "posts": posts_html,
-            "next_cursor": next_cursor,
-            "has_more": has_more,
-            "count": len(posts),
-            "sponsored_ads": ads_data[:1]
-        })
+        return jsonify(
+            {
+                "success": True,
+                "posts": posts_html,
+                "next_cursor": next_cursor,
+                "has_more": has_more,
+                "count": len(posts),
+                "sponsored_ads": ads_data[:1],
+            }
+        )
 
     # Add birthday notifications to the context
     today = date.today()
     birthday_notifications = BirthdayNotification.query.filter(
         BirthdayNotification.user_id == current_user.id,
-        BirthdayNotification.is_seen == False
+        BirthdayNotification.is_seen == False,
     ).all()
 
     # Get friends with birthdays today
     birthday_friends_today = []
     for friend in friends:
-        if friend.dob and friend.dob.month == today.month and friend.dob.day == today.day:
+        if (
+            friend.dob
+            and friend.dob.month == today.month
+            and friend.dob.day == today.day
+        ):
             birthday_friends_today.append(friend)
 
     # Get upcoming birthdays (next 7 days)
@@ -763,7 +803,7 @@ def user_dashboard():
         random_three=random_three,
         sponsored_ads=ads_data,
         csrf_token=generate_csrf(),
-        default_avatar=url_for("static", filename="assets/img/default-avatar.png")
+        default_avatar=url_for("static", filename="assets/img/default-avatar.png"),
     )
 
 
@@ -776,17 +816,23 @@ def handle_ajax_post_upload():
 
         # Validate content
         if not post_content and not (media_file and media_file.filename):
-            return jsonify({
-                "success": False,
-                "error": "Please add some content or media to your post."
-            })
+            return jsonify(
+                {
+                    "success": False,
+                    "error": "Please add some content or media to your post.",
+                }
+            )
 
         image_url = None
         video_url = None
         gif_url = None
 
         # Upload media if present
-        if media_file and media_file.filename != "" and allowed_file(media_file.filename):
+        if (
+            media_file
+            and media_file.filename != ""
+            and allowed_file(media_file.filename)
+        ):
             # Check file size
             media_file.seek(0, 2)
             file_size = media_file.tell()
@@ -795,10 +841,12 @@ def handle_ajax_post_upload():
             MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB
 
             if file_size > MAX_FILE_SIZE:
-                return jsonify({
-                    "success": False,
-                    "error": f"File too large! Maximum size is {MAX_FILE_SIZE // (1024 * 1024)}MB"
-                })
+                return jsonify(
+                    {
+                        "success": False,
+                        "error": f"File too large! Maximum size is {MAX_FILE_SIZE // (1024 * 1024)}MB",
+                    }
+                )
 
             try:
                 # Determine resource type
@@ -806,14 +854,17 @@ def handle_ajax_post_upload():
                 content_type = media_file.content_type.lower()
                 filename = media_file.filename.lower()
 
-                if content_type.startswith("video") or filename.endswith(('.mp4', '.mov', '.avi', '.mkv', '.webm')):
+                if content_type.startswith("video") or filename.endswith(
+                    (".mp4", ".mov", ".avi", ".mkv", ".webm")
+                ):
                     resource_type = "video"
                 elif content_type.startswith("image") or filename.endswith(
-                        ('.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp')):
+                    (".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp")
+                ):
                     resource_type = "image"
 
                 # Special handling for GIFs
-                is_gif = filename.endswith('.gif')
+                is_gif = filename.endswith(".gif")
 
                 upload_options = {
                     "folder": "kimbela/posts",
@@ -821,7 +872,7 @@ def handle_ajax_post_upload():
                     "transformation": [
                         {"width": 800, "crop": "limit"},
                         {"quality": "auto", "fetch_format": "auto"},
-                    ]
+                    ],
                 }
 
                 if is_gif:
@@ -831,10 +882,7 @@ def handle_ajax_post_upload():
                     ]
 
                 # Upload to Cloudinary
-                result = cloudinary.uploader.upload(
-                    media_file,
-                    **upload_options
-                )
+                result = cloudinary.uploader.upload(media_file, **upload_options)
 
                 # Store URL
                 if resource_type == "video":
@@ -848,10 +896,12 @@ def handle_ajax_post_upload():
 
             except Exception as e:
                 print(f"Media upload error: {e}")
-                return jsonify({
-                    "success": False,
-                    "error": "Failed to upload media. The file might be corrupted."
-                })
+                return jsonify(
+                    {
+                        "success": False,
+                        "error": "Failed to upload media. The file might be corrupted.",
+                    }
+                )
 
         # Parse emoji data
         try:
@@ -893,9 +943,10 @@ def handle_ajax_post_upload():
             "image_url": image_url,
             "video_url": video_url,
             "author_name": current_user.full_name,
-            "author_avatar": current_user.profile_pic or url_for("static", filename="assets/img/default-avatar.png"),
+            "author_avatar": current_user.profile_pic
+            or url_for("static", filename="assets/img/default-avatar.png"),
             "created_at": new_post.created_at.isoformat(),
-            "created_at_formatted": new_post.created_at.strftime("%b %d at %I:%M %p")
+            "created_at_formatted": new_post.created_at.strftime("%b %d at %I:%M %p"),
         }
 
         return jsonify(response_data)
@@ -906,16 +957,15 @@ def handle_ajax_post_upload():
 
         # Check if it's a request entity too large error
         import werkzeug
-        if isinstance(e, werkzeug.exceptions.RequestEntityTooLarge):
-            return jsonify({
-                "success": False,
-                "error": "File is too large! Maximum size is 100MB."
-            })
 
-        return jsonify({
-            "success": False,
-            "error": "An error occurred while creating the post."
-        })
+        if isinstance(e, werkzeug.exceptions.RequestEntityTooLarge):
+            return jsonify(
+                {"success": False, "error": "File is too large! Maximum size is 100MB."}
+            )
+
+        return jsonify(
+            {"success": False, "error": "An error occurred while creating the post."}
+        )
 
 
 def process_emoji_content(content, emoji_data):
@@ -929,31 +979,31 @@ def process_emoji_content(content, emoji_data):
         emoji_info = json.loads(emoji_data)
 
         # Process stickers
-        stickers = emoji_info.get('stickers', [])
+        stickers = emoji_info.get("stickers", [])
         for sticker in stickers:
             placeholder = f"[sticker:{sticker.get('name', 'sticker')}]"
             replacement = f'<img src="{sticker.get("value", "")}" alt="{sticker.get("name", "sticker")}" class="inline-sticker h-6 w-6 align-middle" data-sticker-name="{sticker.get("name", "sticker")}">'
             content = content.replace(placeholder, replacement)
 
         # Process GIFs
-        gifs = emoji_info.get('gifs', [])
+        gifs = emoji_info.get("gifs", [])
         for gif in gifs:
             placeholder = f"[gif:{gif.get('name', 'gif')}]"
             replacement = f'<img src="{gif.get("value", "")}" alt="{gif.get("name", "gif")}" class="inline-gif max-h-60 rounded-lg my-2 mx-auto" data-gif-name="{gif.get("name", "gif")}">'
             content = content.replace(placeholder, replacement)
 
         # Process emojis (they're already in the text as Unicode)
-        emojis = emoji_info.get('emojis', [])
+        emojis = emoji_info.get("emojis", [])
         for emoji in emojis:
             # Emojis are already inserted as Unicode characters
             # We can add a data attribute for tracking
-            emoji_char = emoji.get('value', '')
-            emoji_name = emoji.get('name', 'emoji')
+            emoji_char = emoji.get("value", "")
+            emoji_name = emoji.get("name", "emoji")
             if emoji_char in content:
                 # Wrap emoji with span for styling if needed
                 content = content.replace(
                     emoji_char,
-                    f'<span class="inline-emoji" data-emoji-name="{emoji_name}" title="{emoji_name}">{emoji_char}</span>'
+                    f'<span class="inline-emoji" data-emoji-name="{emoji_name}" title="{emoji_name}">{emoji_char}</span>',
                 )
 
     except Exception as e:
@@ -1002,31 +1052,31 @@ def get_stickers():
             "id": 1,
             "name": "Happy Face",
             "url": "https://cdn.jsdelivr.net/npm/twemoji@14.0.2/assets/svg/1f600.svg",
-            "category": "smileys"
+            "category": "smileys",
         },
         {
             "id": 2,
             "name": "Heart Eyes",
             "url": "https://cdn.jsdelivr.net/npm/twemoji@14.0.2/assets/svg/1f60d.svg",
-            "category": "smileys"
+            "category": "smileys",
         },
         {
             "id": 3,
             "name": "Thumbs Up",
             "url": "https://cdn.jsdelivr.net/npm/twemoji@14.0.2/assets/svg/1f44d.svg",
-            "category": "gestures"
+            "category": "gestures",
         },
         {
             "id": 4,
             "name": "Red Heart",
             "url": "https://cdn.jsdelivr.net/npm/twemoji@14.0.2/assets/svg/2764.svg",
-            "category": "hearts"
+            "category": "hearts",
         },
         {
             "id": 5,
             "name": "Fire",
             "url": "https://cdn.jsdelivr.net/npm/twemoji@14.0.2/assets/svg/1f525.svg",
-            "category": "objects"
+            "category": "objects",
         },
     ]
 
@@ -1039,15 +1089,13 @@ def get_trending_gifs():
     """Get trending GIFs (using GIPHY proxy)"""
     try:
         # Use GIPHY API (you need to add your API key to .env)
-        giphy_api_key = os.getenv("GIPHY_API_KEY", "dc6zaTOxFJmzC")  # Default public beta key
+        giphy_api_key = os.getenv(
+            "GIPHY_API_KEY", "dc6zaTOxFJmzC"
+        )  # Default public beta key
 
         response = requests.get(
             f"https://api.giphy.com/v1/gifs/trending",
-            params={
-                "api_key": giphy_api_key,
-                "limit": 20,
-                "rating": "g"
-            }
+            params={"api_key": giphy_api_key, "limit": 20, "rating": "g"},
         )
 
         if response.status_code == 200:
@@ -1055,14 +1103,22 @@ def get_trending_gifs():
             gifs = []
 
             for gif in data.get("data", []):
-                gifs.append({
-                    "id": gif.get("id"),
-                    "title": gif.get("title", "GIF"),
-                    "url": gif.get("images", {}).get("fixed_height", {}).get("url"),
-                    "preview_url": gif.get("images", {}).get("fixed_height_small", {}).get("url"),
-                    "width": gif.get("images", {}).get("fixed_height", {}).get("width"),
-                    "height": gif.get("images", {}).get("fixed_height", {}).get("height")
-                })
+                gifs.append(
+                    {
+                        "id": gif.get("id"),
+                        "title": gif.get("title", "GIF"),
+                        "url": gif.get("images", {}).get("fixed_height", {}).get("url"),
+                        "preview_url": gif.get("images", {})
+                        .get("fixed_height_small", {})
+                        .get("url"),
+                        "width": gif.get("images", {})
+                        .get("fixed_height", {})
+                        .get("width"),
+                        "height": gif.get("images", {})
+                        .get("fixed_height", {})
+                        .get("height"),
+                    }
+                )
 
             return jsonify({"success": True, "gifs": gifs})
         else:
@@ -1086,12 +1142,7 @@ def search_gifs():
 
         response = requests.get(
             f"https://api.giphy.com/v1/gifs/search",
-            params={
-                "api_key": giphy_api_key,
-                "q": query,
-                "limit": 20,
-                "rating": "g"
-            }
+            params={"api_key": giphy_api_key, "q": query, "limit": 20, "rating": "g"},
         )
 
         if response.status_code == 200:
@@ -1099,12 +1150,16 @@ def search_gifs():
             gifs = []
 
             for gif in data.get("data", []):
-                gifs.append({
-                    "id": gif.get("id"),
-                    "title": gif.get("title", query),
-                    "url": gif.get("images", {}).get("fixed_height", {}).get("url"),
-                    "preview_url": gif.get("images", {}).get("fixed_height_small", {}).get("url")
-                })
+                gifs.append(
+                    {
+                        "id": gif.get("id"),
+                        "title": gif.get("title", query),
+                        "url": gif.get("images", {}).get("fixed_height", {}).get("url"),
+                        "preview_url": gif.get("images", {})
+                        .get("fixed_height_small", {})
+                        .get("url"),
+                    }
+                )
 
             return jsonify({"success": True, "gifs": gifs})
         else:
@@ -1121,7 +1176,8 @@ def get_visible_posts_optimized(user_id, cursor=None, limit=10):
 
     # Simple query to get post IDs with pagination
     # Get limit+1 to check if there are more posts
-    query = text("""
+    query = text(
+        """
         SELECT p.id 
         FROM posts p
         WHERE p.author_id NOT IN (
@@ -1138,11 +1194,14 @@ def get_visible_posts_optimized(user_id, cursor=None, limit=10):
         {cursor_clause}
         ORDER BY p.created_at DESC
         LIMIT :limit + 1  -- Get one extra to check if there are more
-    """.format(cursor_clause="AND p.id < :cursor" if cursor else ""))
+    """.format(
+            cursor_clause="AND p.id < :cursor" if cursor else ""
+        )
+    )
 
-    params = {'user_id': user_id, 'limit': limit}
+    params = {"user_id": user_id, "limit": limit}
     if cursor:
-        params['cursor'] = cursor
+        params["cursor"] = cursor
 
     result = db.session.execute(query, params)
     rows = result.fetchall()
@@ -1159,11 +1218,16 @@ def get_visible_posts_optimized(user_id, cursor=None, limit=10):
     # Fetch posts with relationships
     posts = []
     if post_ids:
-        posts = Post.query.options(
-            joinedload(Post.author),
-            joinedload(Post.comments).joinedload(Comment.author),
-            joinedload(Post.likes)
-        ).filter(Post.id.in_(post_ids)).order_by(Post.created_at.desc()).all()
+        posts = (
+            Post.query.options(
+                joinedload(Post.author),
+                joinedload(Post.comments).joinedload(Comment.author),
+                joinedload(Post.likes),
+            )
+            .filter(Post.id.in_(post_ids))
+            .order_by(Post.created_at.desc())
+            .all()
+        )
 
     return posts, next_cursor, has_more
 
@@ -1172,22 +1236,25 @@ def get_visible_posts_optimized(user_id, cursor=None, limit=10):
 
 # ===== OPTIMIZED HELPER FUNCTIONS =====
 
+
 def get_posts_with_pagination(user_id, cursor=None, limit=10):
     """
     Optimized function to get posts with pagination
     """
     # Get blocked users in a separate query
-    user = User.query.options(joinedload(User.blocked_users),
-                              joinedload(User.blocked_by)).get(user_id)
+    user = User.query.options(
+        joinedload(User.blocked_users), joinedload(User.blocked_by)
+    ).get(user_id)
 
     blocked_ids = {u.id for u in user.blocked_users}
     blocked_ids.update(u.id for u in user.blocked_by)
 
     # Build posts query
     query = Post.query.options(
-        joinedload(Post.author),
-        joinedload(Post.comments).joinedload(Comment.author)
-    ).filter(~Post.author_id.in_(list(blocked_ids)))  # Convert to list for IN clause
+        joinedload(Post.author), joinedload(Post.comments).joinedload(Comment.author)
+    ).filter(
+        ~Post.author_id.in_(list(blocked_ids))
+    )  # Convert to list for IN clause
 
     if cursor:
         query = query.filter(Post.id < cursor)
@@ -1201,11 +1268,16 @@ def get_posts_with_pagination(user_id, cursor=None, limit=10):
 
         # Single query to get all likes counts
         from sqlalchemy import select, func
-        likes_query = select(Like.post_id, func.count(Like.id).label('likes_count')) \
-            .where(Like.post_id.in_(post_ids)) \
-            .group_by(Like.post_id)
 
-        likes_counts = {row[0]: row[1] for row in db.session.execute(likes_query).fetchall()}
+        likes_query = (
+            select(Like.post_id, func.count(Like.id).label("likes_count"))
+            .where(Like.post_id.in_(post_ids))
+            .group_by(Like.post_id)
+        )
+
+        likes_counts = {
+            row[0]: row[1] for row in db.session.execute(likes_query).fetchall()
+        }
 
         # Attach likes count to each post
         for post in posts:
@@ -1232,20 +1304,23 @@ def get_user_friends(user_id):
     from sqlalchemy import select
 
     # Create explicit subqueries instead of using .subquery() directly
-    friends_as_user = select(friendship.c.friend_id) \
-        .where(friendship.c.user_id == user_id)
+    friends_as_user = select(friendship.c.friend_id).where(
+        friendship.c.user_id == user_id
+    )
 
-    friends_as_friend = select(friendship.c.user_id) \
-        .where(friendship.c.friend_id == user_id)
+    friends_as_friend = select(friendship.c.user_id).where(
+        friendship.c.friend_id == user_id
+    )
 
     # Combine using union_all with scalar_subquery
     friend_ids_query = friends_as_user.union_all(friends_as_friend).scalar_subquery()
 
     # Main query
-    friends = User.query \
-        .filter(User.id.in_(friend_ids_query)) \
-        .filter(~User.id.in_(list(blocked_ids))) \
+    friends = (
+        User.query.filter(User.id.in_(friend_ids_query))
+        .filter(~User.id.in_(list(blocked_ids)))
         .all()
+    )
 
     return friends
 
@@ -1262,19 +1337,22 @@ def get_friend_suggestions(user_id):
     # Get friend IDs using explicit select
     from sqlalchemy import select
 
-    friends_as_user = select(friendship.c.friend_id) \
-        .where(friendship.c.user_id == user_id)
+    friends_as_user = select(friendship.c.friend_id).where(
+        friendship.c.user_id == user_id
+    )
 
-    friends_as_friend = select(friendship.c.user_id) \
-        .where(friendship.c.friend_id == user_id)
+    friends_as_friend = select(friendship.c.user_id).where(
+        friendship.c.friend_id == user_id
+    )
 
     friend_ids_query = friends_as_user.union_all(friends_as_friend).scalar_subquery()
 
     # Get suggestions (not friends, not blocked, not self)
-    eligible_users = User.query \
-        .filter(User.id != user_id) \
-        .filter(~User.id.in_(friend_ids_query)) \
+    eligible_users = (
+        User.query.filter(User.id != user_id)
+        .filter(~User.id.in_(friend_ids_query))
         .filter(~User.id.in_(list(blocked_ids)))
+    )
 
     # Get count and random suggestions efficiently
     count = eligible_users.count()
@@ -1288,6 +1366,7 @@ def get_friend_suggestions(user_id):
 
 
 # ===== CACHE CLEARING ON POST CREATION =====
+
 
 @user.route("/clear_dashboard_cache", methods=["POST"])
 @login_required
@@ -1556,48 +1635,57 @@ def add_comment(post_id):
             "id": comment.id,
             "name": f"{current_user.first_name} {current_user.last_name}",
             "avatar": current_user.profile_pic
-                      or url_for("static", filename="assets/img/default-avatar.png"),
+            or url_for("static", filename="assets/img/default-avatar.png"),
             "content": content,
             "created_at": comment.created_at.isoformat(),
-            "created_at_formatted": comment.created_at.strftime('%b %d, %Y at %I:%M %p'),
-            "created_at_short": comment.created_at.strftime('%b %d, %H:%M'),
-        }
+            "created_at_formatted": comment.created_at.strftime(
+                "%b %d, %Y at %I:%M %p"
+            ),
+            "created_at_short": comment.created_at.strftime("%b %d, %H:%M"),
+        },
     )
 
 
-@user.route('/get_comments/<int:post_id>')
+@user.route("/get_comments/<int:post_id>")
 @login_required
 def get_comments(post_id):
     try:
-        limit = request.args.get('limit', 20, type=int)
+        limit = request.args.get("limit", 20, type=int)
 
         # Get all comments or limit based on request
         if limit == 0:  # 0 means get all
-            comments = Comment.query.filter_by(post_id=post_id) \
-                .order_by(Comment.created_at.desc()) \
+            comments = (
+                Comment.query.filter_by(post_id=post_id)
+                .order_by(Comment.created_at.desc())
                 .all()
+            )
         else:
-            comments = Comment.query.filter_by(post_id=post_id) \
-                .order_by(Comment.created_at.desc()) \
-                .limit(limit) \
+            comments = (
+                Comment.query.filter_by(post_id=post_id)
+                .order_by(Comment.created_at.desc())
+                .limit(limit)
                 .all()
+            )
 
         comments_data = []
         for comment in comments:
             author = comment.author
-            comments_data.append({
-                'id': comment.id,
-                'content': comment.content,
-                'created_at': comment.created_at.strftime('%I:%M %p'),
-                'author_id': author.id,
-                'author_name': author.full_name,
-                'avatar': author.profile_pic or url_for('static', filename='assets/img/default-avatar.png')
-            })
+            comments_data.append(
+                {
+                    "id": comment.id,
+                    "content": comment.content,
+                    "created_at": comment.created_at.strftime("%I:%M %p"),
+                    "author_id": author.id,
+                    "author_name": author.full_name,
+                    "avatar": author.profile_pic
+                    or url_for("static", filename="assets/img/default-avatar.png"),
+                }
+            )
 
-        return jsonify({'comments': comments_data})
+        return jsonify({"comments": comments_data})
 
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": str(e)}), 500
 
 
 @user.route("/debug/notification_status")
@@ -1652,6 +1740,7 @@ def create_notification(user_id, actor_id, type_, message, entity_id=None):
 # In your add_friend route
 # In your user.py, update the add_friend route:
 
+
 @user.route("/add_friend/<int:user_id>", methods=["POST"])
 @login_required
 def add_friend(user_id):
@@ -1663,16 +1752,22 @@ def add_friend(user_id):
             return jsonify({"success": False, "error": "User not found"}), 404
 
         if target_user.id == current_user.id:
-            return jsonify({"success": False, "error": "You cannot add yourself as a friend"})
+            return jsonify(
+                {"success": False, "error": "You cannot add yourself as a friend"}
+            )
 
         if current_user.is_friend_with(target_user):
             return jsonify({"success": False, "error": "Already friends"})
 
         existing_request = FriendRequest.query.filter(
-            ((FriendRequest.sender_id == current_user.id) &
-             (FriendRequest.receiver_id == target_user.id)) |
-            ((FriendRequest.sender_id == target_user.id) &
-             (FriendRequest.receiver_id == current_user.id))
+            (
+                (FriendRequest.sender_id == current_user.id)
+                & (FriendRequest.receiver_id == target_user.id)
+            )
+            | (
+                (FriendRequest.sender_id == target_user.id)
+                & (FriendRequest.receiver_id == current_user.id)
+            )
         ).first()
 
         if existing_request:
@@ -1682,8 +1777,8 @@ def add_friend(user_id):
         friend_request = FriendRequest(
             sender_id=current_user.id,
             receiver_id=target_user.id,
-            status='pending',
-            created_at=datetime.utcnow()
+            status="pending",
+            created_at=datetime.utcnow(),
         )
 
         db.session.add(friend_request)
@@ -1699,21 +1794,19 @@ def add_friend(user_id):
             message=f"{current_user.full_name} sent you a friend request",
             entity_id=friend_request.id,  # Now this has a value
             created_at=datetime.utcnow(),
-            is_read=False
+            is_read=False,
         )
 
         db.session.add(notification)
         db.session.commit()
 
-        return jsonify({
-            "success": True,
-            "message": "Friend request sent successfully"
-        })
+        return jsonify({"success": True, "message": "Friend request sent successfully"})
 
     except Exception as e:
         db.session.rollback()
         print(f"Error adding friend: {e}")
         import traceback
+
         traceback.print_exc()
         return jsonify({"success": False, "error": str(e)}), 500
 
@@ -1730,13 +1823,15 @@ def cancel_friend_request(user_id):
 
         # Find the pending friend request
         friend_request = FriendRequest.query.filter(
-            (FriendRequest.sender_id == current_user.id) &
-            (FriendRequest.receiver_id == target_user.id) &
-            (FriendRequest.status == 'pending')
+            (FriendRequest.sender_id == current_user.id)
+            & (FriendRequest.receiver_id == target_user.id)
+            & (FriendRequest.status == "pending")
         ).first()
 
         if not friend_request:
-            return jsonify({"success": False, "error": "No pending friend request found"})
+            return jsonify(
+                {"success": False, "error": "No pending friend request found"}
+            )
 
         # Delete the friend request
         db.session.delete(friend_request)
@@ -1745,8 +1840,8 @@ def cancel_friend_request(user_id):
         notification = Notification.query.filter(
             Notification.actor_id == current_user.id,
             Notification.user_id == target_user.id,
-            Notification.type == 'friend_request',
-            Notification.entity_id == friend_request.id
+            Notification.type == "friend_request",
+            Notification.entity_id == friend_request.id,
         ).first()
 
         if notification:
@@ -1754,15 +1849,13 @@ def cancel_friend_request(user_id):
 
         db.session.commit()
 
-        return jsonify({
-            "success": True,
-            "message": "Friend request cancelled"
-        })
+        return jsonify({"success": True, "message": "Friend request cancelled"})
 
     except Exception as e:
         db.session.rollback()
         print(f"Error cancelling friend request: {e}")
         import traceback
+
         traceback.print_exc()
         return jsonify({"success": False, "error": str(e)}), 500
 
@@ -1771,15 +1864,16 @@ def cancel_friend_request(user_id):
 def get_sponsored_ads():
     try:
         from datetime import datetime
+
         current_time = datetime.utcnow()
 
         print(f"🔍 [DEBUG] Loading sponsored ads at: {current_time}")
 
         # Query for active ads within date range
         active_ads = AdCampaign.query.filter(
-            AdCampaign.status == 'active',
+            AdCampaign.status == "active",
             AdCampaign.start_date <= current_time,
-            AdCampaign.end_date >= current_time
+            AdCampaign.end_date >= current_time,
         ).all()
 
         print(f"🔍 [DEBUG] Found {len(active_ads)} active ads")
@@ -1795,62 +1889,72 @@ def get_sponsored_ads():
         ads_data = []
         for ad in active_ads:
             # Get advertiser name from user relationship
-            advertiser_name = 'Sponsored Partner'
+            advertiser_name = "Sponsored Partner"
 
             # Try to get user info
-            if hasattr(ad, 'user'):
+            if hasattr(ad, "user"):
                 user = ad.user
                 if user:
-                    if hasattr(user, 'business_name') and user.business_name:
+                    if hasattr(user, "business_name") and user.business_name:
                         advertiser_name = user.business_name
-                    elif hasattr(user, 'full_name') and user.full_name:
+                    elif hasattr(user, "full_name") and user.full_name:
                         advertiser_name = user.full_name
-                    elif hasattr(user, 'username'):
+                    elif hasattr(user, "username"):
                         advertiser_name = user.username
 
             # Get image URL - your field is called 'image', not 'image_url'
-            image_url = ad.image if hasattr(ad,
-                                            'image') and ad.image else 'https://via.placeholder.com/600x300/4F46E5/FFFFFF?text=Sponsored+Ad'
+            image_url = (
+                ad.image
+                if hasattr(ad, "image") and ad.image
+                else "https://via.placeholder.com/600x300/4F46E5/FFFFFF?text=Sponsored+Ad"
+            )
 
             # Get CTA URL - your field is called 'target_url'
-            cta_url = ad.target_url if hasattr(ad, 'target_url') and ad.target_url else '#'
+            cta_url = (
+                ad.target_url if hasattr(ad, "target_url") and ad.target_url else "#"
+            )
 
             # Get CTA text - your field is called 'call_to_action'
-            cta_text = ad.call_to_action if hasattr(ad, 'call_to_action') and ad.call_to_action else 'Learn More'
+            cta_text = (
+                ad.call_to_action
+                if hasattr(ad, "call_to_action") and ad.call_to_action
+                else "Learn More"
+            )
 
-            ads_data.append({
-                'id': ad.id,
-                'title': ad.title or 'Special Offer',
-                'description': ad.description or 'Discover amazing opportunities!',
-                'image_url': image_url,
-                'advertiser_name': advertiser_name,
-                'cta_url': cta_url,
-                'cta_text': cta_text,
-                'budget': float(ad.budget or 0),
-                'clicks': ad.clicks or 0,
-                'impressions': ad.impressions or 0,
-                'start_date': ad.start_date.isoformat() if ad.start_date else None,
-                'end_date': ad.end_date.isoformat() if ad.end_date else None
-            })
+            ads_data.append(
+                {
+                    "id": ad.id,
+                    "title": ad.title or "Special Offer",
+                    "description": ad.description or "Discover amazing opportunities!",
+                    "image_url": image_url,
+                    "advertiser_name": advertiser_name,
+                    "cta_url": cta_url,
+                    "cta_text": cta_text,
+                    "budget": float(ad.budget or 0),
+                    "clicks": ad.clicks or 0,
+                    "impressions": ad.impressions or 0,
+                    "start_date": ad.start_date.isoformat() if ad.start_date else None,
+                    "end_date": ad.end_date.isoformat() if ad.end_date else None,
+                }
+            )
 
         print(f"✅ [DEBUG] Returning {len(ads_data)} ads")
 
-        return jsonify({
-            'success': True,
-            'ads': ads_data,
-            'count': len(ads_data),
-            'timestamp': current_time.isoformat()
-        })
+        return jsonify(
+            {
+                "success": True,
+                "ads": ads_data,
+                "count": len(ads_data),
+                "timestamp": current_time.isoformat(),
+            }
+        )
 
     except Exception as e:
         print(f"❌ [ERROR] in get_sponsored_ads: {str(e)}")
         import traceback
+
         traceback.print_exc()
-        return jsonify({
-            'success': False,
-            'error': str(e),
-            'ads': []
-        }), 500
+        return jsonify({"success": False, "error": str(e), "ads": []}), 500
 
 
 @user.route("/api/ads/<int:ad_id>/impression", methods=["POST"])
@@ -1864,11 +1968,11 @@ def track_ad_impression(ad_id):
             ad.impressions += 1
             db.session.commit()
             print(f"📊 Tracked impression for ad {ad_id}. Total: {ad.impressions}")
-            return jsonify({'success': True})
-        return jsonify({'success': False, 'error': 'Ad not found'}), 404
+            return jsonify({"success": True})
+        return jsonify({"success": False, "error": "Ad not found"}), 404
     except Exception as e:
         print(f"❌ Error tracking impression: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @user.route("/api/ads/<int:ad_id>/click", methods=["POST"])
@@ -1882,11 +1986,11 @@ def track_ad_click(ad_id):
             ad.clicks += 1
             db.session.commit()
             print(f"📊 Tracked click for ad {ad_id}. Total: {ad.clicks}")
-            return jsonify({'success': True})
-        return jsonify({'success': False, 'error': 'Ad not found'}), 404
+            return jsonify({"success": True})
+        return jsonify({"success": False, "error": "Ad not found"}), 404
     except Exception as e:
         print(f"❌ Error tracking click: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @user.route("/get_user_profile/<int:user_id>")
@@ -1902,14 +2006,17 @@ def get_user_profile(user_id):
     print(f"Religion == '': {user.religion == ''}")
 
     # FIXED: Use the User model's existing method
-    friend_status = current_user.get_friend_request_status(user_id)  # 'none', 'sent', 'received', or 'friends'
+    friend_status = current_user.get_friend_request_status(
+        user_id
+    )  # 'none', 'sent', 'received', or 'friends'
 
     # Create the response dictionary
     response_data = {
         "first_name": user.first_name,
         "last_name": user.last_name,
         # "email": user.email,
-        "profile_pic": user.profile_pic or url_for("static", filename="assets/img/default-avatar.png"),
+        "profile_pic": user.profile_pic
+        or url_for("static", filename="assets/img/default-avatar.png"),
         "cover_pic": user.cover_pic,
         "bio": user.bio,
         "city": user.city,
@@ -1926,7 +2033,7 @@ def get_user_profile(user_id):
         "interests": user.interests,
         "profile_url": url_for("user.profile", user_id=user.id),
         "friends_count": user.friends.count(),
-        'friend_status': friend_status  # 'none', 'sent', 'received', or 'friends'
+        "friend_status": friend_status,  # 'none', 'sent', 'received', or 'friends'
     }
 
     # DEBUG: Print the response data
@@ -1957,7 +2064,7 @@ def get_notifications():
             "is_read": n.is_read,
             "created_at": n.created_at.isoformat(),
             "entity_id": n.entity_id,
-            "actor_id": n.actor_id  # Add actor_id (the sender's ID)
+            "actor_id": n.actor_id,  # Add actor_id (the sender's ID)
         }
 
         # Add actor information if it exists
@@ -1967,14 +2074,13 @@ def get_notifications():
                 notification_data["actor"] = {
                     "id": actor.id,
                     "name": f"{actor.first_name} {actor.last_name}",
-                    "avatar": actor.profile_pic or url_for('static', filename='assets/img/default-avatar.png')
+                    "avatar": actor.profile_pic
+                    or url_for("static", filename="assets/img/default-avatar.png"),
                 }
 
         result.append(notification_data)
 
     return jsonify(result)
-
-
 
 
 @user.route("/check_friend_status/<int:user_id>")
@@ -1983,8 +2089,6 @@ def check_friend_status(user_id):
     """Check the friend request status between current user and target user"""
     friend_status = current_user.get_friend_request_status(user_id)
     return jsonify({"status": friend_status})
-
-
 
 
 @user.route("/notifications/read", methods=["POST"])
@@ -2025,22 +2129,24 @@ def get_unread_count():
         # Use raw SQL for maximum performance
         from sqlalchemy import text
 
-        query = text("""
+        query = text(
+            """
             SELECT COUNT(*) as count 
             FROM notifications 
             WHERE user_id = :user_id 
             AND is_read = FALSE
             AND created_at > NOW() - INTERVAL '30 days'
-        """)
+        """
+        )
 
-        result = db.session.execute(query, {'user_id': current_user.id})
+        result = db.session.execute(query, {"user_id": current_user.id})
         count = result.fetchone()[0] or 0
 
-        return jsonify({'count': count})
+        return jsonify({"count": count})
 
     except Exception as e:
         print(f"Error in get_unread_count: {e}")
-        return jsonify({'count': 0})
+        return jsonify({"count": 0})
 
 
 @user.route("/debug/notifications")
@@ -2052,39 +2158,50 @@ def debug_notifications():
     user_id = current_user.id
 
     # Check database structure
-    query = text("""
+    query = text(
+        """
         SELECT column_name, data_type 
         FROM information_schema.columns 
         WHERE table_name = 'notifications'
-    """)
+    """
+    )
 
     columns = db.session.execute(query).fetchall()
 
     # Check actual notifications
-    notifications = Notification.query.filter_by(user_id=user_id).order_by(Notification.created_at.desc()).limit(
-        10).all()
+    notifications = (
+        Notification.query.filter_by(user_id=user_id)
+        .order_by(Notification.created_at.desc())
+        .limit(10)
+        .all()
+    )
 
     # Check if any are unread
     unread = Notification.query.filter_by(user_id=user_id, is_read=False).count()
 
-    return jsonify({
-        'user_id': user_id,
-        'notification_columns': [dict(c) for c in columns],
-        'total_notifications': Notification.query.filter_by(user_id=user_id).count(),
-        'unread_notifications': unread,
-        'recent_notifications': [
-            {
-                'id': n.id,
-                'type': n.type,
-                'message': n.message,
-                'is_read': n.is_read,
-                'created_at': n.created_at.isoformat(),
-                'actor_id': n.actor_id
-            } for n in notifications
-        ],
-        'has_is_read_column': any(c[0] == 'is_read' for c in columns),
-        'has_read_column': any(c[0] == 'read' for c in columns)
-    })
+    return jsonify(
+        {
+            "user_id": user_id,
+            "notification_columns": [dict(c) for c in columns],
+            "total_notifications": Notification.query.filter_by(
+                user_id=user_id
+            ).count(),
+            "unread_notifications": unread,
+            "recent_notifications": [
+                {
+                    "id": n.id,
+                    "type": n.type,
+                    "message": n.message,
+                    "is_read": n.is_read,
+                    "created_at": n.created_at.isoformat(),
+                    "actor_id": n.actor_id,
+                }
+                for n in notifications
+            ],
+            "has_is_read_column": any(c[0] == "is_read" for c in columns),
+            "has_read_column": any(c[0] == "read" for c in columns),
+        }
+    )
 
 
 @user.route("/debug/posts")
@@ -2095,12 +2212,14 @@ def debug_posts():
     # Check your Post model structure
     from sqlalchemy import text
 
-    query = text("""
+    query = text(
+        """
         SELECT column_name, data_type 
         FROM information_schema.columns 
         WHERE table_name = 'posts'
         ORDER BY ordinal_position
-    """)
+    """
+    )
 
     columns = db.session.execute(query).fetchall()
 
@@ -2108,38 +2227,55 @@ def debug_posts():
     recent_posts = Post.query.order_by(Post.created_at.desc()).limit(5).all()
 
     # Check YOUR recent posts
-    my_posts = Post.query.filter_by(author_id=current_user.id).order_by(Post.created_at.desc()).limit(5).all()
+    my_posts = (
+        Post.query.filter_by(author_id=current_user.id)
+        .order_by(Post.created_at.desc())
+        .limit(5)
+        .all()
+    )
 
     # Check blocked users
     blocked_ids = [u.id for u in current_user.blocked_users]
     blocker_ids = [u.id for u in current_user.blocked_by]
 
-    return jsonify({
-        'post_columns': [dict(c) for c in columns],
-        'my_recent_posts': [
-            {
-                'id': p.id,
-                'content': p.content[:50] + '...' if p.content and len(p.content) > 50 else p.content,
-                'author_id': p.author_id,
-                'created_at': p.created_at.isoformat(),
-                'has_image': bool(p.image),
-                'has_video': bool(p.video)
-            } for p in my_posts
-        ],
-        'recent_global_posts': [
-            {
-                'id': p.id,
-                'content': p.content[:50] + '...' if p.content and len(p.content) > 50 else p.content,
-                'author_id': p.author_id,
-                'author_name': p.author.full_name if p.author else 'Unknown',
-                'created_at': p.created_at.isoformat()
-            } for p in recent_posts
-        ],
-        'blocked_users': blocked_ids,
-        'blocked_by': blocker_ids,
-        'post_count': Post.query.count(),
-        'my_post_count': Post.query.filter_by(author_id=current_user.id).count()
-    })
+    return jsonify(
+        {
+            "post_columns": [dict(c) for c in columns],
+            "my_recent_posts": [
+                {
+                    "id": p.id,
+                    "content": (
+                        p.content[:50] + "..."
+                        if p.content and len(p.content) > 50
+                        else p.content
+                    ),
+                    "author_id": p.author_id,
+                    "created_at": p.created_at.isoformat(),
+                    "has_image": bool(p.image),
+                    "has_video": bool(p.video),
+                }
+                for p in my_posts
+            ],
+            "recent_global_posts": [
+                {
+                    "id": p.id,
+                    "content": (
+                        p.content[:50] + "..."
+                        if p.content and len(p.content) > 50
+                        else p.content
+                    ),
+                    "author_id": p.author_id,
+                    "author_name": p.author.full_name if p.author else "Unknown",
+                    "created_at": p.created_at.isoformat(),
+                }
+                for p in recent_posts
+            ],
+            "blocked_users": blocked_ids,
+            "blocked_by": blocker_ids,
+            "post_count": Post.query.count(),
+            "my_post_count": Post.query.filter_by(author_id=current_user.id).count(),
+        }
+    )
 
 
 def compute_notification_count(user_id):
@@ -2149,14 +2285,16 @@ def compute_notification_count(user_id):
     from models import Notification  # Import here to avoid circular imports
 
     # Use direct SQL count for maximum performance
-    count = db.session.query(db.func.count(Notification.id)) \
+    count = (
+        db.session.query(db.func.count(Notification.id))
         .filter(
-        Notification.user_id == user_id,
-        Notification.is_read == False,
-        # Add time filter if you want to limit to recent notifications
-        # Notification.created_at >= datetime.utcnow() - timedelta(days=30)
-    ) \
+            Notification.user_id == user_id,
+            Notification.is_read == False,
+            # Add time filter if you want to limit to recent notifications
+            # Notification.created_at >= datetime.utcnow() - timedelta(days=30)
+        )
         .scalar()
+    )
 
     return count or 0
 
@@ -2171,17 +2309,19 @@ def notifications():
     page = request.args.get("page", 1, type=int)
     per_page = request.args.get("per_page", 20, type=int)
 
-    notifications = Notification.query \
-        .filter_by(user_id=current_user.id) \
-        .order_by(Notification.created_at.desc()) \
+    notifications = (
+        Notification.query.filter_by(user_id=current_user.id)
+        .order_by(Notification.created_at.desc())
         .paginate(page=page, per_page=per_page, error_out=False)
+    )
 
     # Mark as read when viewed (optional)
     if page == 1:  # Only mark as read when viewing first page
         unread_ids = [n.id for n in notifications.items if not n.read]
         if unread_ids:
-            Notification.query.filter(Notification.id.in_(unread_ids)) \
-                .update({"read": True}, synchronize_session=False)
+            Notification.query.filter(Notification.id.in_(unread_ids)).update(
+                {"read": True}, synchronize_session=False
+            )
             db.session.commit()
 
             # Clear the cached count
@@ -2189,12 +2329,14 @@ def notifications():
 
     # Return HTML or JSON based on request
     if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-        return jsonify({
-            "notifications": [n.to_dict() for n in notifications.items],
-            "total": notifications.total,
-            "pages": notifications.pages,
-            "current_page": page
-        })
+        return jsonify(
+            {
+                "notifications": [n.to_dict() for n in notifications.items],
+                "total": notifications.total,
+                "pages": notifications.pages,
+                "current_page": page,
+            }
+        )
 
     return render_template("notifications.html", notifications=notifications)
 
@@ -2230,13 +2372,16 @@ def invalidate_notification_cache(user_id):
     cache.delete(cache_key)
 
     # Also emit real-time update via Socket.IO
-    socketio.emit("notification_count_update",
-                  {"count": compute_notification_count(user_id)},
-                  room=f"user_{user_id}")
+    socketio.emit(
+        "notification_count_update",
+        {"count": compute_notification_count(user_id)},
+        room=f"user_{user_id}",
+    )
 
 
 # ===== EXAMPLE: TRIGGER CACHE INVALIDATION =====
 # Add these to places where notifications change:
+
 
 # 1. When creating a new notification:
 def create_notification(user_id, message, type="info"):
@@ -2247,7 +2392,7 @@ def create_notification(user_id, message, type="info"):
         message=message,
         type=type,
         read=False,
-        created_at=datetime.utcnow()
+        created_at=datetime.utcnow(),
     )
     db.session.add(notification)
     db.session.commit()
@@ -2262,9 +2407,9 @@ def create_notification(user_id, message, type="info"):
 @user.route("/notifications/mark_all_read", methods=["POST"])
 @login_required
 def mark_all_read():
-    updated = Notification.query \
-        .filter_by(user_id=current_user.id, read=False) \
-        .update({"read": True}, synchronize_session=False)
+    updated = Notification.query.filter_by(user_id=current_user.id, read=False).update(
+        {"read": True}, synchronize_session=False
+    )
 
     if updated:
         db.session.commit()
@@ -2378,7 +2523,7 @@ def get_post(post_id):
             "author_first_name": post.author.first_name,
             "author_last_name": post.author.last_name,
             "author_profile_pic": post.author.profile_pic
-                                  or url_for("static", filename="assets/img/default-avatar.png"),
+            or url_for("static", filename="assets/img/default-avatar.png"),
             "created_at": post.created_at.isoformat(),
         }
     )
@@ -2391,8 +2536,8 @@ def update_last_seen():
         current_user.last_seen = datetime.utcnow()
         # Consider user online if seen < 5 min ago
         current_user.is_online = (
-                                         datetime.utcnow() - current_user.last_seen
-                                 ) < timedelta(minutes=5)
+            datetime.utcnow() - current_user.last_seen
+        ) < timedelta(minutes=5)
         db.session.commit()
 
 
@@ -2421,28 +2566,28 @@ def profile(user_id):
     ]
 
     RELIGIONS = [
-        'Islam',
-        'Roman Catholic',
-        'No religion / Atheist / Agnostic',
-        'Hinduism',
-        'Buddhism',
-        'Pentecostal',
-        'Traditional / Indigenous beliefs',
-        'Orthodox Christian',
-        'Charismatic',
-        'Non-denominational churches',
-        'Anglican',
-        'Baptist',
-        'Methodist',
-        'Seventh-day Adventist',
-        'Jehovah\'s Witness',
-        'Latter-day Saints (Mormons)',
-        'Sikhism',
-        'Judaism',
+        "Islam",
+        "Roman Catholic",
+        "No religion / Atheist / Agnostic",
+        "Hinduism",
+        "Buddhism",
+        "Pentecostal",
+        "Traditional / Indigenous beliefs",
+        "Orthodox Christian",
+        "Charismatic",
+        "Non-denominational churches",
+        "Anglican",
+        "Baptist",
+        "Methodist",
+        "Seventh-day Adventist",
+        "Jehovah's Witness",
+        "Latter-day Saints (Mormons)",
+        "Sikhism",
+        "Judaism",
         "Bahá'í Faith",
-        'Jainism',
-        'White Garment Churches',
-        'Other'
+        "Jainism",
+        "White Garment Churches",
+        "Other",
     ]
 
     ETHNICITIES = [
@@ -2490,8 +2635,12 @@ def profile(user_id):
             )
             current_user.bio = request.form.get("bio", current_user.bio)
             current_user.religion = request.form.get("religion", current_user.religion)
-            current_user.educational_level = request.form.get("educational_level", current_user.educational_level)
-            current_user.ethnicity = request.form.get("ethnicity", current_user.ethnicity)
+            current_user.educational_level = request.form.get(
+                "educational_level", current_user.educational_level
+            )
+            current_user.ethnicity = request.form.get(
+                "ethnicity", current_user.ethnicity
+            )
 
             # Handle date of birth
             dob_str = request.form.get("dob")
@@ -2561,8 +2710,6 @@ def profile(user_id):
         .all()
     )
 
-
-
     # Get friends (excluding blocked users)
     friends = [f for f in current_user.friends if not current_user.is_blocking(f)]
 
@@ -2627,7 +2774,9 @@ def get_user_groups():
         print(f"🔍 Fetching groups for user: {current_user.id}")
 
         # Get all active groups
-        all_groups = Group.query.filter_by(is_active=True).order_by(Group.name.asc()).all()
+        all_groups = (
+            Group.query.filter_by(is_active=True).order_by(Group.name.asc()).all()
+        )
         print(f"🔍 Found {len(all_groups)} active groups")
 
         groups_data = []
@@ -2636,14 +2785,17 @@ def get_user_groups():
             member_count = group.members.count()
             is_member = group.members.filter_by(id=current_user.id).first() is not None
 
-            groups_data.append({
-                "id": group.id,
-                "name": group.name,
-                "cover_pic": group.image or "https://via.placeholder.com/100x100/3B82F6/FFFFFF?text=Group",
-                "member_count": member_count,
-                "is_member": is_member,
-                "unread_count": 0
-            })
+            groups_data.append(
+                {
+                    "id": group.id,
+                    "name": group.name,
+                    "cover_pic": group.image
+                    or "https://via.placeholder.com/100x100/3B82F6/FFFFFF?text=Group",
+                    "member_count": member_count,
+                    "is_member": is_member,
+                    "unread_count": 0,
+                }
+            )
 
         print(f"🔍 Returning {len(groups_data)} groups")
         return jsonify(groups_data)
@@ -2651,11 +2803,13 @@ def get_user_groups():
     except Exception as e:
         print(f"❌ ERROR in get_user_groups: {str(e)}")
         import traceback
+
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
 
 # ===== MESSAGING ROUTES =====
+
 
 @user.route("/api/friends")
 @login_required
@@ -2665,13 +2819,16 @@ def get_friends_api():
         friends = []
         for friend in current_user.friends:
             if current_user.can_interact_with(friend):
-                friends.append({
-                    "id": friend.id,
-                    "name": friend.full_name,
-                    "avatar": friend.profile_pic or url_for("static", filename="assets/img/default-avatar.png"),
-                    "online": friend.is_online,
-                    "unread_count": 0  # You can implement this later
-                })
+                friends.append(
+                    {
+                        "id": friend.id,
+                        "name": friend.full_name,
+                        "avatar": friend.profile_pic
+                        or url_for("static", filename="assets/img/default-avatar.png"),
+                        "online": friend.is_online,
+                        "unread_count": 0,  # You can implement this later
+                    }
+                )
 
         return jsonify(friends)
     except Exception as e:
@@ -2691,24 +2848,37 @@ def get_messages_api(friend_id):
             return jsonify({"error": "You must be friends to message"}), 403
 
         # Get messages
-        messages = Message.query.filter(
-            ((Message.sender_id == current_user.id) & (Message.receiver_id == friend_id)) |
-            ((Message.sender_id == friend_id) & (Message.receiver_id == current_user.id))
-        ).order_by(Message.timestamp.asc()).all()
+        messages = (
+            Message.query.filter(
+                (
+                    (Message.sender_id == current_user.id)
+                    & (Message.receiver_id == friend_id)
+                )
+                | (
+                    (Message.sender_id == friend_id)
+                    & (Message.receiver_id == current_user.id)
+                )
+            )
+            .order_by(Message.timestamp.asc())
+            .all()
+        )
 
         # Prepare response
         messages_data = []
         for msg in messages:
-            messages_data.append({
-                "id": msg.id,
-                "sender_id": msg.sender_id,
-                "receiver_id": msg.receiver_id,
-                "content": msg.content,
-                "timestamp": msg.timestamp.isoformat(),
-                "status": msg.status,
-                "sender_name": msg.sender.full_name,
-                "sender_avatar": msg.sender.profile_pic or url_for("static", filename="assets/img/default-avatar.png")
-            })
+            messages_data.append(
+                {
+                    "id": msg.id,
+                    "sender_id": msg.sender_id,
+                    "receiver_id": msg.receiver_id,
+                    "content": msg.content,
+                    "timestamp": msg.timestamp.isoformat(),
+                    "status": msg.status,
+                    "sender_name": msg.sender.full_name,
+                    "sender_avatar": msg.sender.profile_pic
+                    or url_for("static", filename="assets/img/default-avatar.png"),
+                }
+            )
 
         return jsonify(messages_data)
 
@@ -2732,7 +2902,7 @@ def user_groups():
                     "id": group.id,
                     "name": group.name,
                     "image": group.image
-                             or "https://images.unsplash.com/photo-1611262588024-d12430b98920?w=100&h=100&fit=crop",
+                    or "https://images.unsplash.com/photo-1611262588024-d12430b98920?w=100&h=100&fit=crop",
                     "member_count": group.member_count,
                     "is_member": True,
                 }
@@ -2777,7 +2947,7 @@ def all_groups():
                 "member_count": group.member_count,
                 "created_at": group.created_at.isoformat(),
                 "is_member": group.members.filter_by(id=current_user.id).first()
-                             is not None,  # Proper membership check
+                is not None,  # Proper membership check
             }
             for group in groups
         ]
@@ -3057,7 +3227,7 @@ def get_group_posts(group_id):
                     "id": post.author.id,
                     "name": post.author.full_name,
                     "avatar": post.author.profile_pic
-                              or url_for("static", filename="assets/img/default-avatar.png"),
+                    or url_for("static", filename="assets/img/default-avatar.png"),
                 },
                 "likes_count": post.likes.count(),
                 "comments_count": post.comments.count(),
@@ -3183,7 +3353,7 @@ def get_group_members(group_id):
                 "id": member.id,
                 "name": member.full_name,
                 "avatar": member.profile_pic
-                          or url_for("static", filename="assets/img/default-avatar.png"),
+                or url_for("static", filename="assets/img/default-avatar.png"),
                 "is_online": member.is_online,
                 "last_seen": member.last_seen.isoformat() if member.last_seen else None,
             }
@@ -3275,7 +3445,7 @@ def get_group_comments(post_id):
                     "author_name": comment.author.full_name,
                     "author_id": comment.author_id,
                     "avatar": comment.author.profile_pic
-                              or url_for("static", filename="assets/img/default-avatar.png"),
+                    or url_for("static", filename="assets/img/default-avatar.png"),
                     "created_at": comment.created_at.strftime("%I:%M %p"),
                 }
             )
@@ -3325,7 +3495,7 @@ def add_group_comment(post_id):
                     "content": comment.content,
                     "author_name": current_user.full_name,
                     "author_avatar": current_user.profile_pic
-                                     or url_for("static", filename="assets/img/default-avatar.png"),
+                    or url_for("static", filename="assets/img/default-avatar.png"),
                     "created_at": "Just now",
                 },
             }
@@ -3406,19 +3576,18 @@ start = time.time()
 print(f"Query took {time.time() - start:.2f} seconds")
 
 
-
 @user.route("/profile/<int:user_id>")
 @login_required
 def view_profile(user_id):
 
     target_user = User.query.get_or_404(user_id)
 
-
     friend_status = current_user.get_friend_request_status(target_user.id)
 
-
     # Check if current user has blocked or is blocked by target user
-    is_blocked = current_user.is_blocked_by(target_user) or current_user.is_blocking(target_user)
+    is_blocked = current_user.is_blocked_by(target_user) or current_user.is_blocking(
+        target_user
+    )
 
     if is_blocked:
         flash("You cannot view this profile.", "danger")
@@ -3440,8 +3609,8 @@ def view_profile(user_id):
 
     # Pass everything to the template
     return render_template(
-        "public_profile.html",                # <-- create this template (see below)
-        profile_user=target_user,             # the user being viewed
+        "public_profile.html",  # <-- create this template (see below)
+        profile_user=target_user,  # the user being viewed
         current_user=current_user,
         friend_status=friend_status,
         posts=posts,
@@ -3466,21 +3635,19 @@ def get_upcoming_birthdays(user_id, days_ahead=7):
     for friend in friends:
         if friend.dob:
             # Get this year's birthday
-            birthday_this_year = date(
-                today.year,
-                friend.dob.month,
-                friend.dob.day
-            )
+            birthday_this_year = date(today.year, friend.dob.month, friend.dob.day)
 
             # Check if birthday is today or in next 7 days
             days_until = (birthday_this_year - today).days
 
             if 0 <= days_until <= days_ahead:
-                upcoming_birthdays.append({
-                    'friend': friend,
-                    'days_until': days_until,
-                    'birthday_date': birthday_this_year,
-                    'age': today.year - friend.dob.year
-                })
+                upcoming_birthdays.append(
+                    {
+                        "friend": friend,
+                        "days_until": days_until,
+                        "birthday_date": birthday_this_year,
+                        "age": today.year - friend.dob.year,
+                    }
+                )
 
     return upcoming_birthdays

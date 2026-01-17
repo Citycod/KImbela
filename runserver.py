@@ -80,8 +80,8 @@
 #     socketio.run(app, host="0.0.0.0", port=5000, debug=True)
 
 
-
 import eventlet
+
 eventlet.monkey_patch()
 ## runserver.py - SIMPLIFIED
 from app_config import app, socketio
@@ -98,19 +98,20 @@ import eventlet
 print(">>> MIGRATE REGISTERING <<<")
 Migrate(app, db)
 
+
 def init_background_tasks():
     """Initialize background tasks after server starts"""
     time.sleep(5)  # Wait for server to fully initialize
-    
+
     with app.app_context():
         try:
             # Import inside function to avoid circular imports
             from models import MatchmakingPackage
             from extensions import db
-            
+
             # Check if package exists
             existing = MatchmakingPackage.query.filter_by(name="Matchmaking").first()
-            
+
             if not existing:
                 # Create only one package
                 package = MatchmakingPackage(
@@ -132,23 +133,24 @@ def init_background_tasks():
                     print("✓ Updated package to $10/month")
                 else:
                     print("✓ Package already exists")
-                    
+
         except Exception as e:
             print(f"✗ Error initializing background tasks: {e}")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     print("=" * 50)
     print("🚀 Starting Kimbela Server")
     print("📡 Web: http://localhost:5001")
     print("🔌 Socket.IO: Ready")
     print("=" * 50)
-    
+
     # Run with the SAME parameters as the working test
     socketio.run(
         app,
-        host='0.0.0.0',
+        host="0.0.0.0",
         port=5001,
         debug=False,
         allow_unsafe_werkzeug=True,
-        use_reloader=False  # Keep this False to avoid issues
+        use_reloader=False,  # Keep this False to avoid issues
     )

@@ -8,24 +8,25 @@ from extensions import db, socketio
 # Initialize socketio in this module too
 from extensions import socketio
 
+
 @socketio.on("connect")
 def handle_connect():
     """Handle user connection"""
     try:
         print(f"🔗 Socket.IO connect attempt")
-        
+
         if current_user.is_authenticated:
             user_id = current_user.id
-            
+
             # Join user's personal room
             join_room(f"user_{user_id}")
             print(f"✅ User {user_id} joined room user_{user_id}")
-            
+
             # Mark user as online
             current_user.is_online = True
             current_user.last_seen = datetime.utcnow()
             db.session.commit()
-            
+
             emit("connected", {"user_id": user_id, "message": "Connected to messaging"})
             print(f"✅ User {user_id} connected to messaging")
             return True
@@ -35,6 +36,7 @@ def handle_connect():
     except Exception as e:
         print(f"❌ Error in handle_connect: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -45,12 +47,12 @@ def handle_disconnect():
     try:
         if current_user.is_authenticated:
             user_id = current_user.id
-            
+
             # Mark user as offline
             current_user.is_online = False
             current_user.last_seen = datetime.utcnow()
             db.session.commit()
-            
+
             print(f"👋 User {user_id} disconnected")
     except Exception as e:
         print(f"❌ Error in handle_disconnect: {e}")

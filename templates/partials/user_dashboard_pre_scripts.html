@@ -1,0 +1,13 @@
+<script type="application/json" id="app-config">
+      {
+          "csrfToken": "{{ csrf_token }}",
+          "currentUserId": {{ current_user.id|tojson|safe }}
+      }
+    </script>
+
+<script>
+      // Parse the JSON and make it available globally
+      window.APP_CONFIG = JSON.parse(
+        document.getElementById("app-config").textContent,
+      );
+    </script>

@@ -17,13 +17,13 @@ cache = Cache()
 
 # FIXED: Use eventlet for true WebSocket support
 socketio = SocketIO(
-    async_mode='eventlet',
+    async_mode="eventlet",
     cors_allowed_origins="*",
     logger=True,
     engineio_logger=True,
     ping_timeout=60,
     ping_interval=25,
-    message_queue='redis://redis:6379/0',
+    message_queue="redis://redis:6379/0",
     max_http_buffer_size=1e8,
     allow_upgrades=True,
     http_compression=True,

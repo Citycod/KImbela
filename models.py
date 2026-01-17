@@ -169,11 +169,10 @@ class User(db.Model, UserMixin):
         backref=db.backref("friend_of", lazy="dynamic"),
         lazy="dynamic",
     )
-    
-    comments = db.relationship('Comment', 
-                               back_populates='author', 
-                               cascade='all, delete-orphan',
-                               lazy='dynamic')
+
+    comments = db.relationship(
+        "Comment", back_populates="author", cascade="all, delete-orphan", lazy="dynamic"
+    )
 
     def get_unsubscribe_token(self):
         """Generate unsubscribe token"""
@@ -189,22 +188,21 @@ class User(db.Model, UserMixin):
     @property
     def avg_rating(self):
         """Get average rating for seller"""
-        if hasattr(self, 'seller_rating') and self.seller_rating:
+        if hasattr(self, "seller_rating") and self.seller_rating:
             return self.seller_rating.average_rating
         return 0.0
 
     @property
     def review_count(self):
         """Get total review count for seller"""
-        if hasattr(self, 'seller_rating') and self.seller_rating:
+        if hasattr(self, "seller_rating") and self.seller_rating:
             return self.seller_rating.total_reviews
         return 0
 
     def get_reviews(self, limit=None, service_id=None):
         """Get seller reviews"""
         query = MarketplaceReview.query.filter_by(
-            seller_id=self.id,
-            status='approved'
+            seller_id=self.id, status="approved"
         ).order_by(MarketplaceReview.created_at.desc())
 
         if service_id:
@@ -228,9 +226,7 @@ class User(db.Model, UserMixin):
 
         # Check if already reviewed recently
         existing_review = MarketplaceReview.query.filter_by(
-            buyer_id=self.id,
-            seller_id=seller_id,
-            review_type='seller'
+            buyer_id=self.id, seller_id=seller_id, review_type="seller"
         ).first()
 
         return existing_review is None
@@ -246,8 +242,7 @@ class User(db.Model, UserMixin):
 
         # Check if already reviewed
         existing_review = MarketplaceReview.query.filter_by(
-            buyer_id=self.id,
-            service_id=service_id
+            buyer_id=self.id, service_id=service_id
         ).first()
 
         return existing_review is None
@@ -559,28 +554,27 @@ class User(db.Model, UserMixin):
         sent_request = FriendRequest.query.filter(
             FriendRequest.sender_id == self.id,
             FriendRequest.receiver_id == other_user_id,
-            FriendRequest.status == 'pending'
+            FriendRequest.status == "pending",
         ).first()
 
         if sent_request:
-            return 'sent'
+            return "sent"
 
         # Check if we received a request
         received_request = FriendRequest.query.filter(
             FriendRequest.sender_id == other_user_id,
             FriendRequest.receiver_id == self.id,
-            FriendRequest.status == 'pending'
+            FriendRequest.status == "pending",
         ).first()
 
         if received_request:
-            return 'received'
+            return "received"
 
         # Check if already friends
         if self.is_friend_with(User.query.get(other_user_id)):
-            return 'friends'
+            return "friends"
 
-        return 'none'
-
+        return "none"
 
     def decline_friend_request(self, user):
         req = FriendRequest.query.filter_by(
@@ -663,10 +657,7 @@ class User(db.Model, UserMixin):
         """Count only unread notifications - OPTIMIZED"""
         try:
             # Use direct SQL count for speed
-            count = Notification.query.filter_by(
-                user_id=self.id, 
-                is_read=False
-            ).count()
+            count = Notification.query.filter_by(user_id=self.id, is_read=False).count()
             return count
         except Exception as e:
             current_app.logger.error(f"Error in unread_notifications_count: {e}")
@@ -677,12 +668,13 @@ class User(db.Model, UserMixin):
         """Get recent notifications - OPTIMIZED"""
         try:
             # Only load essential fields and limit to 20
-            notifications = Notification.query.filter_by(
-                user_id=self.id
-            ).order_by(
-                Notification.created_at.desc()
-            ).limit(20).all()
-            
+            notifications = (
+                Notification.query.filter_by(user_id=self.id)
+                .order_by(Notification.created_at.desc())
+                .limit(20)
+                .all()
+            )
+
             return notifications
         except Exception as e:
             current_app.logger.error(f"Error in recent_notifications: {e}")
@@ -742,9 +734,9 @@ class Post(db.Model):
         # Composite indexes
         db.Index("idx_posts_author_created", "author_id", "created_at"),
         db.Index("idx_posts_group_created", "group_id", "created_at"),
-        db.Index('idx_post_author_created', 'author_id', 'created_at'),
-        db.Index('idx_post_created', 'created_at'),
-        db.Index('idx_post_author', 'author_id'),
+        db.Index("idx_post_author_created", "author_id", "created_at"),
+        db.Index("idx_post_created", "created_at"),
+        db.Index("idx_post_author", "author_id"),
         # Text search optimization (for LIKE queries)
         # db.Index('idx_posts_content_trgm', 'content', postgresql_using='gin', postgresql_ops={'content': 'gin_trgm_ops'}),
     )
@@ -765,8 +757,8 @@ class Post(db.Model):
     likes = db.relationship(
         "Like",
         backref="post",
-        lazy="select",           # or "joined" – both work
-        cascade="all, delete-orphan"
+        lazy="select",  # or "joined" – both work
+        cascade="all, delete-orphan",
     )
 
     emoji_data = db.Column(db.JSON, nullable=True)
@@ -885,17 +877,19 @@ class Comment(db.Model):
     parent_id = db.Column(db.Integer, db.ForeignKey("comments.id"), nullable=True)
 
     # Relationships - FIXED
-    author = db.relationship("User", back_populates="comments")  # This references User.comments
-    
+    author = db.relationship(
+        "User", back_populates="comments"
+    )  # This references User.comments
+
     # Self-referential relationship
     parent = db.relationship(
-        "Comment", 
-        remote_side=[id], 
+        "Comment",
+        remote_side=[id],
         backref="replies",  # Using backref is simpler here
-        foreign_keys=[parent_id]
+        foreign_keys=[parent_id],
     )
-    
-    
+
+
 # Like model
 class Like(db.Model):
 
@@ -906,7 +900,7 @@ class Like(db.Model):
         db.Index("idx_likes_post_id", "post_id"),
         db.Index("idx_likes_user_post", "user_id", "post_id"),
         db.Index("idx_likes_created_at", "created_at"),
-        db.Index('ix_like_post', 'post_id'),
+        db.Index("ix_like_post", "post_id"),
     )
 
     id = db.Column(db.Integer, primary_key=True)
@@ -942,8 +936,8 @@ class Notification(db.Model):
         db.Index("idx_notifications_type", "type"),
         db.Index("idx_notifications_user_unread", "user_id", "is_read", "created_at"),
         # db.Index('ix_notification_user_read', 'user_id', 'read'),
-        db.Index('ix_notification_created', 'created_at'),
-        db.Index('ix_notification_user_created', 'user_id', 'created_at'),
+        db.Index("ix_notification_created", "created_at"),
+        db.Index("ix_notification_user_created", "user_id", "created_at"),
     )
 
     id = db.Column(db.Integer, primary_key=True)
@@ -997,7 +991,7 @@ class Message(db.Model):
     content = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     status = db.Column(db.String(20), default="sent")
-    message_type = db.Column(db.String(20), default='text')
+    message_type = db.Column(db.String(20), default="text")
     message_data = db.Column(db.JSON, nullable=True)
     is_deleted = db.Column(db.Boolean, default=False)
     edited_at = db.Column(db.DateTime)
@@ -1015,10 +1009,10 @@ class Message(db.Model):
             "content": self.content,
             "timestamp": self.timestamp.isoformat(),
             "status": self.status,
-            'message_type': self.message_type,
+            "message_type": self.message_type,
             "message_data": self.message_data if self.message_data else {},
-            'is_deleted': self.is_deleted,
-            'edited_at': self.edited_at.isoformat() if self.edited_at else None,
+            "is_deleted": self.is_deleted,
+            "edited_at": self.edited_at.isoformat() if self.edited_at else None,
             "sender_name": self.sender.full_name,
             "sender_avatar": self.sender.profile_pic
             or url_for("static", filename="assets/img/default-avatar.png"),
@@ -1358,7 +1352,9 @@ class MatchmakingRequest(db.Model):
     image = db.Column(db.Text)  # URL to uploaded photo
 
     # Request details
-    status = db.Column(db.String(20), default="pending")  # pending, active, expired, cancelled
+    status = db.Column(
+        db.String(20), default="pending"
+    )  # pending, active, expired, cancelled
     start_date = db.Column(db.DateTime, default=datetime.utcnow)
     end_date = db.Column(db.DateTime)
 
@@ -1429,9 +1425,9 @@ class MatchmakingRequest(db.Model):
     def is_active(self):
         """Check if the request is currently active"""
         return (
-                self.status == "active"
-                and self.end_date
-                and self.end_date > datetime.utcnow()
+            self.status == "active"
+            and self.end_date
+            and self.end_date > datetime.utcnow()
         )
 
     def get_location_display(self):
@@ -1442,9 +1438,6 @@ class MatchmakingRequest(db.Model):
 
     def __repr__(self):
         return f"<MatchmakingRequest {self.id} - User {self.user_id} - {self.status}>"
-
-
-
 
 
 class MatchmakingLike(db.Model):
@@ -1772,8 +1765,7 @@ class MarketplaceService(db.Model):
     def update_review_stats(self):
         """Update service review statistics"""
         reviews = MarketplaceReview.query.filter_by(
-            service_id=self.id,
-            status='approved'
+            service_id=self.id, status="approved"
         ).all()
 
         if reviews:
@@ -1786,18 +1778,15 @@ class MarketplaceService(db.Model):
 
         db.session.commit()
 
-    def get_reviews(self, limit=None, sort='newest'):
+    def get_reviews(self, limit=None, sort="newest"):
         """Get service reviews with sorting"""
-        query = MarketplaceReview.query.filter_by(
-            service_id=self.id,
-            status='approved'
-        )
+        query = MarketplaceReview.query.filter_by(service_id=self.id, status="approved")
 
-        if sort == 'helpful':
+        if sort == "helpful":
             query = query.order_by(MarketplaceReview.helpful_count.desc())
-        elif sort == 'highest':
+        elif sort == "highest":
             query = query.order_by(MarketplaceReview.rating.desc())
-        elif sort == 'lowest':
+        elif sort == "lowest":
             query = query.order_by(MarketplaceReview.rating.asc())
         else:  # newest
             query = query.order_by(MarketplaceReview.created_at.desc())
@@ -1865,7 +1854,9 @@ class MarketplaceReview(db.Model):
         db.Integer, db.ForeignKey("marketplace_services.id"), nullable=False
     )
     buyer_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    seller_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    seller_id = db.Column(
+        db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
 
     # Review details
     rating = db.Column(db.Integer, nullable=False)  # 1-5
@@ -1873,7 +1864,7 @@ class MarketplaceReview(db.Model):
     comment = db.Column(db.Text, nullable=False)
 
     # Type of review (service or seller) - ADD THIS
-    review_type = db.Column(db.String(20), default='service')  # 'service' or 'seller'
+    review_type = db.Column(db.String(20), default="service")  # 'service' or 'seller'
 
     # Response
     seller_response = db.Column(db.Text)
@@ -1913,9 +1904,7 @@ class MarketplaceReview(db.Model):
         from models import ReviewHelpfulVote  # Import here to avoid circular imports
 
         vote = ReviewHelpfulVote.query.filter_by(
-            review_id=self.id,
-            user_id=user_id,
-            is_helpful=is_helpful
+            review_id=self.id, user_id=user_id, is_helpful=is_helpful
         ).first()
 
         return vote is not None
@@ -1926,12 +1915,11 @@ class MarketplaceReview(db.Model):
         from models import ReviewHelpfulVote
 
         vote = ReviewHelpfulVote.query.filter_by(
-            review_id=self.id,
-            user_id=user_id
+            review_id=self.id, user_id=user_id
         ).first()
 
         if vote:
-            return 'helpful' if vote.is_helpful else 'not_helpful'
+            return "helpful" if vote.is_helpful else "not_helpful"
         return None
 
     def __repr__(self):
@@ -1943,19 +1931,25 @@ class MarketplaceReview(db.Model):
         if self.review_images:
             try:
                 import json
+
                 return json.loads(self.review_images)
             except:
                 return []
         return []
 
 
-
 class SellerRating(db.Model):
     """Aggregate seller ratings (updated when new reviews are added)"""
+
     __tablename__ = "seller_ratings"
 
     id = db.Column(db.Integer, primary_key=True)
-    seller_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False, unique=True)
+    seller_id = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+    )
 
     # Aggregate stats
     average_rating = db.Column(db.Float, default=0.0)
@@ -1970,15 +1964,16 @@ class SellerRating(db.Model):
     communication_rating = db.Column(db.Float, default=0.0)
 
     # Last updated
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
 
     def update_stats(self):
         """Update aggregate stats from reviews"""
         from models import MarketplaceReview  # Import here to avoid circular import
 
         reviews = MarketplaceReview.query.filter_by(
-            seller_id=self.seller_id,
-            status='approved'
+            seller_id=self.seller_id, status="approved"
         ).all()
 
         self.total_reviews = len(reviews)
@@ -2013,7 +2008,7 @@ class SellerRating(db.Model):
         """Get percentage for specific star rating"""
         if self.total_reviews == 0:
             return 0
-        count = getattr(self, f'rating_{star}', 0)
+        count = getattr(self, f"rating_{star}", 0)
         return round((count / self.total_reviews) * 100, 1)
 
 
@@ -2190,5 +2185,7 @@ class BirthdayNotification(db.Model):
     wished_at = db.Column(db.DateTime)
 
     # Relationships
-    user = db.relationship("User", foreign_keys=[user_id], backref="birthday_notifications")
+    user = db.relationship(
+        "User", foreign_keys=[user_id], backref="birthday_notifications"
+    )
     birthday_user = db.relationship("User", foreign_keys=[birthday_user_id])

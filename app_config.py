@@ -24,16 +24,22 @@ def create_app():
     app = Flask(__name__)
 
     from werkzeug.middleware.proxy_fix import ProxyFix
+
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
     app.config["PREFERRED_URL_SCHEME"] = "https"
 
     @app.errorhandler(RequestEntityTooLarge)
     def handle_file_too_large(error):
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return jsonify({
-                "success": False,
-                "error": "File is too large! Maximum size is 100MB."
-            }), 413
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "File is too large! Maximum size is 100MB.",
+                    }
+                ),
+                413,
+            )
         else:
             flash("File is too large! Maximum file size is 100MB.", "danger")
             return redirect(url_for("user.user_dashboard"))
@@ -76,6 +82,7 @@ def create_app():
     }
 
     import resend
+
     # ========== EMAIL CONFIG ==========
     # app.config["MAIL_SERVER"] = os.getenv("MAIL_SERVER", "smtp.gmail.com")
     # app.config["MAIL_PORT"] = int(os.getenv("MAIL_PORT", 587))
@@ -88,10 +95,12 @@ def create_app():
     # Configure Resend
     resend.api_key = os.getenv("RESEND_API_KEY", "")
     app.config["RESEND_API_KEY"] = os.getenv("RESEND_API_KEY", "")
-    app.config["MAIL_DEFAULT_SENDER"] = os.getenv("MAIL_DEFAULT_SENDER", "noreply@resend.dev")
+    app.config["MAIL_DEFAULT_SENDER"] = os.getenv(
+        "MAIL_DEFAULT_SENDER", "noreply@resend.dev"
+    )
 
     # ========== SOCKET.IO CONFIG ==========
-    app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY", "dev-secret-key-12345")
+    app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-key-12345")
 
     # ========== INITIALIZE EXTENSIONS ==========
     csrf.init_app(app)
@@ -132,6 +141,7 @@ def create_app():
     # Use the simplified version
     try:
         import socketio_events
+
         print("✅ Socket.IO event handlers imported successfully")
     except Exception as e:
         print(f"⚠️ Could not import Socket.IO handlers: {e}")
@@ -187,7 +197,7 @@ def create_app():
 
     @app.after_request
     def after_request(response):
-        if hasattr(g, 'start_time'):
+        if hasattr(g, "start_time"):
             diff = time.time() - g.start_time
             if diff > 1.0:
                 app.logger.warning(
@@ -200,9 +210,12 @@ def create_app():
     @app.before_request
     def update_last_seen():
         from flask_login import current_user
+
         if current_user.is_authenticated:
-            if not current_user.last_seen or \
-                    (datetime.utcnow() - current_user.last_seen).seconds > 300:
+            if (
+                not current_user.last_seen
+                or (datetime.utcnow() - current_user.last_seen).seconds > 300
+            ):
                 current_user.last_seen = datetime.utcnow()
                 try:
                     db.session.commit()
@@ -210,9 +223,9 @@ def create_app():
                     db.session.rollback()
 
     # ========== SIMPLE TEST ROUTE ==========
-    @app.route('/socket-test')
+    @app.route("/socket-test")
     def socket_test():
-        return '''
+        return """
         <!DOCTYPE html>
         <html>
         <head>
@@ -250,7 +263,7 @@ def create_app():
             </script>
         </body>
         </html>
-        '''
+        """
 
     return app
 
@@ -260,13 +273,13 @@ app = create_app()
 print("✅ App created successfully")
 
 
-@app.route('/test-messaging')
+@app.route("/test-messaging")
 def test_messaging():
     """Test messaging functionality"""
     if not current_user.is_authenticated:
-        return redirect(url_for('auth.login'))
+        return redirect(url_for("auth.login"))
 
-    return f'''
+    return f"""
     <!DOCTYPE html>
     <html>
     <head>
@@ -398,10 +411,10 @@ def test_messaging():
         </script>
     </body>
     </html>
-    '''
+    """
 
 
-@app.route('/api/messaging/friends')
+@app.route("/api/messaging/friends")
 @login_required
 def get_messaging_friends():
     """Get friends with last message info for messaging"""
@@ -409,44 +422,57 @@ def get_messaging_friends():
         friends = []
         for friend in current_user.friends:
             # Get last message
-            last_message = Message.query.filter(
-                ((Message.sender_id == current_user.id) & (Message.receiver_id == friend.id)) |
-                ((Message.sender_id == friend.id) & (Message.receiver_id == current_user.id))
-            ).order_by(Message.timestamp.desc()).first()
+            last_message = (
+                Message.query.filter(
+                    (
+                        (Message.sender_id == current_user.id)
+                        & (Message.receiver_id == friend.id)
+                    )
+                    | (
+                        (Message.sender_id == friend.id)
+                        & (Message.receiver_id == current_user.id)
+                    )
+                )
+                .order_by(Message.timestamp.desc())
+                .first()
+            )
 
             # Count unread messages
             unread_count = Message.query.filter_by(
-                sender_id=friend.id,
-                receiver_id=current_user.id,
-                status="delivered"
+                sender_id=friend.id, receiver_id=current_user.id, status="delivered"
             ).count()
 
-            friends.append({
-                'id': friend.id,
-                'name': friend.full_name,
-                'avatar': friend.profile_pic or url_for('static', filename='assets/img/default-avatar.png'),
-                'is_online': friend.is_online,
-                'last_message': last_message.content if last_message else None,
-                'last_message_time': last_message.timestamp.isoformat() if last_message else None,
-                'unread_count': unread_count
-            })
+            friends.append(
+                {
+                    "id": friend.id,
+                    "name": friend.full_name,
+                    "avatar": friend.profile_pic
+                    or url_for("static", filename="assets/img/default-avatar.png"),
+                    "is_online": friend.is_online,
+                    "last_message": last_message.content if last_message else None,
+                    "last_message_time": (
+                        last_message.timestamp.isoformat() if last_message else None
+                    ),
+                    "unread_count": unread_count,
+                }
+            )
 
-        return jsonify({'success': True, 'friends': friends})
+        return jsonify({"success": True, "friends": friends})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
-@app.route('/api/messaging/send', methods=['POST'])
+@app.route("/api/messaging/send", methods=["POST"])
 @login_required
 def send_message_api():
     """Send a message via HTTP (fallback)"""
     try:
         data = request.get_json()
-        receiver_id = data.get('receiver_id')
-        content = data.get('content')
+        receiver_id = data.get("receiver_id")
+        content = data.get("content")
 
         if not receiver_id or not content:
-            return jsonify({'success': False, 'error': 'Missing data'}), 400
+            return jsonify({"success": False, "error": "Missing data"}), 400
 
         receiver = User.query.get_or_404(receiver_id)
 
@@ -455,43 +481,42 @@ def send_message_api():
             sender_id=current_user.id,
             receiver_id=receiver_id,
             content=content,
-            status='delivered'
+            status="delivered",
         )
         db.session.add(message)
         db.session.commit()
 
         # Prepare response
         message_data = {
-            'id': message.id,
-            'sender_id': message.sender_id,
-            'receiver_id': message.receiver_id,
-            'content': message.content,
-            'timestamp': message.timestamp.isoformat(),
-            'status': message.status,
-            'is_mine': True,
-            'sender_name': current_user.full_name,
-            'sender_avatar': current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png')
+            "id": message.id,
+            "sender_id": message.sender_id,
+            "receiver_id": message.receiver_id,
+            "content": message.content,
+            "timestamp": message.timestamp.isoformat(),
+            "status": message.status,
+            "is_mine": True,
+            "sender_name": current_user.full_name,
+            "sender_avatar": current_user.profile_pic
+            or url_for("static", filename="assets/img/default-avatar.png"),
         }
 
-        return jsonify({'success': True, 'message': message_data})
+        return jsonify({"success": True, "message": message_data})
     except Exception as e:
         db.session.rollback()
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
-@app.route('/api/messaging/mark-read/<int:friend_id>', methods=['POST'])
+@app.route("/api/messaging/mark-read/<int:friend_id>", methods=["POST"])
 @login_required
 def mark_messages_read(friend_id):
     """Mark all messages from friend as read"""
     try:
         Message.query.filter_by(
-            sender_id=friend_id,
-            receiver_id=current_user.id,
-            status="delivered"
+            sender_id=friend_id, receiver_id=current_user.id, status="delivered"
         ).update({"status": "read"})
         db.session.commit()
 
-        return jsonify({'success': True})
+        return jsonify({"success": True})
     except Exception as e:
         db.session.rollback()
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500

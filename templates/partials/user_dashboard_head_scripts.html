@@ -1,0 +1,375 @@
+<script>
+      // Set global variables that messenger.js needs
+      window.currentUserId = {{ current_user.id }};
+      window.defaultAvatar = '{{ url_for("static", filename="assets/img/default-avatar.png") }}';
+      window.csrfToken = '{{ csrf_token }}';
+
+      // Current user info for messaging
+      window.currentUserInfo = {
+          id: {{ current_user.id }},
+          name: '{{ current_user.full_name|replace("'", "\\'")|safe }}',
+          avatar: '{{ current_user.profile_pic or url_for("static", filename="assets/img/default-avatar.png") }}'
+      };
+    </script>
+
+<script>
+      // Set global variables for current user
+      window.currentUserInfo = {
+          id: {{ current_user.id }},
+          name: '{{ current_user.full_name|replace("'", "\\'") }}',
+          avatar: '{{ current_user.profile_pic or url_for("static", filename="assets/img/default-avatar.png") }}',
+          firstName: '{{ current_user.first_name|replace("'", "\\'") }}',
+          lastName: '{{ current_user.last_name|replace("'", "\\'") }}'
+      };
+      window.defaultAvatar = '{{ url_for("static", filename="assets/img/default-avatar.png") }}';
+    </script>
+
+<script>
+      // Set global variables
+      window.currentUserId = {{ current_user.id }};
+      window.currentUserName = '{{ current_user.full_name|safe }}';
+      window.currentUserAvatar = '{{ current_user.profile_pic or url_for("static", filename="assets/img/default-avatar.png") }}';
+      window.defaultAvatar = '{{ url_for("static", filename="assets/img/default-avatar.png") }}';
+      window.csrfToken = '{{ csrf_token }}';
+
+      // Fallback functions in case Messenger doesn't load
+      window.openMessenger = function(friendId = null) {
+          const popup = document.getElementById('messengerPopup');
+          if (popup) {
+              popup.classList.remove('hidden');
+              document.body.style.overflow = 'hidden';
+          }
+      };
+
+      window.closeMessenger = function() {
+          const popup = document.getElementById('messengerPopup');
+          if (popup) {
+              popup.classList.add('hidden');
+              document.body.style.overflow = '';
+          }
+      };
+
+      window.backToFriends = function() {
+          document.getElementById('chatArea').classList.add('hidden');
+          document.getElementById('friendList').classList.remove('hidden');
+      };
+
+      // Initialize when page loads
+      document.addEventListener('DOMContentLoaded', function() {
+          console.log('DOM loaded, checking for Messenger...');
+
+          // Check if Messenger exists
+          if (typeof Messenger === 'undefined') {
+              console.warn('Messenger not defined, loading script...');
+
+              // Create a promise to wait for script load
+              const loadMessenger = new Promise((resolve, reject) => {
+                  const script = document.createElement('script');
+                  script.src = '{{ url_for("static", filename="assets/js/messenger.js") }}';
+                  script.onload = () => {
+                      console.log('✅ messenger.js loaded');
+                      resolve();
+                  };
+                  script.onerror = () => {
+                      console.error('❌ Failed to load messenger.js');
+                      reject();
+                  };
+                  document.head.appendChild(script);
+              });
+
+              // Initialize after script loads
+              loadMessenger.then(() => {
+                  setTimeout(() => {
+                      if (typeof Messenger !== 'undefined' && Messenger.init) {
+                          Messenger.init();
+                          console.log('✅ Messenger initialized successfully');
+                      } else {
+                          console.error('❌ Messenger still not defined after loading');
+                      }
+                  }, 500);
+              }).catch(() => {
+                  console.error('❌ Failed to initialize Messenger');
+              });
+          } else {
+              // Messenger already exists (inline)
+              setTimeout(() => {
+                  if (Messenger.init) {
+                      Messenger.init();
+                      console.log('✅ Messenger initialized from existing');
+                  }
+              }, 500);
+          }
+      });
+    </script>
+
+<script>
+      // Check if Tailwind loads properly
+      function checkTailwind() {
+        setTimeout(() => {
+          const bodyStyles = window.getComputedStyle(document.body);
+          const hasTailwind =
+            bodyStyles.margin === "0px" && bodyStyles.fontFamily;
+
+          if (!hasTailwind) {
+            console.log("🔄 Tailwind not detected, loading fallback...");
+            loadFallbackTailwind();
+          } else {
+            console.log("✅ Tailwind CSS loaded successfully");
+          }
+        }, 500);
+      }
+
+      function loadFallbackTailwind() {
+        // Load from alternative CDN
+        const link = document.createElement("link");
+        link.rel = "stylesheet";
+        link.href =
+          "https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css";
+        link.onload = () => console.log("✅ Fallback Tailwind loaded");
+        link.onerror = () => {
+          console.log("❌ All CDNs failed, using inline styles");
+          loadEmergencyStyles();
+        };
+        document.head.appendChild(link);
+      }
+
+      function loadEmergencyStyles() {
+        const emergencyCSS = `
+                /* EMERGENCY STYLES - Basic Tailwind equivalents */
+                * { box-sizing: border-box; margin: 0; padding: 0; }
+                body {
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                    background-color: #f3f4f6;
+                    line-height: 1.5;
+                }
+                .bg-white { background-color: white; }
+                .bg-gray-50 { background-color: #f9fafb; }
+                .bg-gray-100 { background-color: #f3f4f6; }
+                .bg-blue-600 { background-color: #2563eb; }
+                .bg-red-500 { background-color: #ef4444; }
+                .bg-green-500 { background-color: #10b981; }
+                .text-white { color: white; }
+                .text-gray-700 { color: #374151; }
+                .text-gray-500 { color: #6b7280; }
+                .text-blue-600 { color: #2563eb; }
+                .font-semibold { font-weight: 600; }
+                .font-bold { font-weight: 700; }
+                .rounded-lg { border-radius: 0.5rem; }
+                .rounded-xl { border-radius: 0.75rem; }
+                .rounded-2xl { border-radius: 1rem; }
+                .rounded-full { border-radius: 9999px; }
+                .shadow { box-shadow: 0 1px 3px 0 rgba(0,0,0,0.1); }
+                .shadow-md { box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+                .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+                .p-2 { padding: 0.5rem; }
+                .p-3 { padding: 0.75rem; }
+                .p-4 { padding: 1rem; }
+                .p-6 { padding: 1.5rem; }
+                .m-2 { margin: 0.5rem; }
+                .m-4 { margin: 1rem; }
+                .mb-2 { margin-bottom: 0.5rem; }
+                .mb-4 { margin-bottom: 1rem; }
+                .mb-6 { margin-bottom: 1.5rem; }
+                .mt-4 { margin-top: 1rem; }
+                .flex { display: flex; }
+                .hidden { display: none; }
+                .items-center { align-items: center; }
+                .justify-center { justify-content: center; }
+                .justify-between { justify-content: space-between; }
+                .w-full { width: 100%; }
+                .h-screen { height: 100vh; }
+                .h-10 { height: 2.5rem; }
+                .h-16 { height: 4rem; }
+                .w-10 { width: 2.5rem; }
+                .w-16 { width: 4rem; }
+                .fixed { position: fixed; }
+                .relative { position: relative; }
+                .absolute { position: absolute; }
+                .inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
+                .top-0 { top: 0; }
+                .left-0 { left: 0; }
+                .right-0 { right: 0; }
+                .z-50 { z-index: 50; }
+                .border { border-width: 1px; }
+                .border-b { border-bottom-width: 1px; }
+                .border-gray-200 { border-color: #e5e7eb; }
+                .border-gray-300 { border-color: #d1d5db; }
+                .cursor-pointer { cursor: pointer; }
+                .transition-colors { transition: color 0.15s ease; }
+                .hover\\:bg-gray-100:hover { background-color: #f3f4f6; }
+                .hover\\:bg-blue-700:hover { background-color: #1d4ed8; }
+                .space-x-2 > * + * { margin-left: 0.5rem; }
+                .space-x-3 > * + * { margin-left: 0.75rem; }
+                .space-y-2 > * + * { margin-top: 0.5rem; }
+                .space-y-3 > * + * { margin-top: 0.75rem; }
+                .grid { display: grid; }
+                .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+                .max-w-2xl { max-width: 42rem; }
+                .max-w-md { max-width: 28rem; }
+                .mx-auto { margin-left: auto; margin-right: auto; }
+                .object-cover { object-fit: cover; }
+                .text-center { text-align: center; }
+                .text-sm { font-size: 0.875rem; }
+                .text-lg { font-size: 1.125rem; }
+                .text-xl { font-size: 1.25rem; }
+                .text-2xl { font-size: 1.5rem; }
+                .text-3xl { font-size: 1.875rem; }
+                .leading-tight { line-height: 1.25; }
+                .overflow-hidden { overflow: hidden; }
+                .overflow-y-auto { overflow-y: auto; }
+
+                /* Custom scrollbar */
+                .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+                .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 10px; }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+            `;
+
+        const style = document.createElement("style");
+        style.textContent = emergencyCSS;
+        document.head.appendChild(style);
+      }
+
+      // Initialize check when DOM loads
+      document.addEventListener("DOMContentLoaded", checkTailwind);
+    </script>
+
+<script>
+      // ========================================
+      // BASIC MESSENGER FUNCTIONS - MUST BE DEFINED EARLY
+      // ========================================
+
+      // Define these functions BEFORE any inline onclick handlers try to use them
+      window.openMessenger = function (friendId = null) {
+        console.log("Opening messenger, friendId:", friendId);
+
+        const messengerPopup = document.getElementById("messengerPopup");
+        if (!messengerPopup) {
+          console.error("Messenger popup not found");
+          return;
+        }
+
+        // Show messenger popup
+        messengerPopup.classList.remove("hidden");
+
+        // If a specific friend is provided, open chat with them
+        if (friendId) {
+          console.log("Opening chat with user:", friendId);
+
+          // Try to show chat area if possible
+          const chatArea = document.getElementById("chatArea");
+          const friendList = document.getElementById("friendList");
+          if (chatArea && friendList) {
+            friendList.classList.add("hidden");
+            chatArea.classList.remove("hidden");
+
+            // Set basic chat info
+            document.getElementById("chatName").textContent = "Loading...";
+          }
+        } else {
+          // Just show friends list
+          console.log("Opening messenger to friends list");
+          document.getElementById("friendList").classList.remove("hidden");
+          document.getElementById("chatArea").classList.add("hidden");
+        }
+
+        // Prevent body scrolling when messenger is open
+        document.body.style.overflow = "hidden";
+      };
+
+      window.closeMessenger = function () {
+        console.log("Closing messenger");
+        const messengerPopup = document.getElementById("messengerPopup");
+        if (messengerPopup) {
+          messengerPopup.classList.add("hidden");
+        }
+        // Restore body scrolling
+        document.body.style.overflow = "";
+      };
+
+      window.backToFriends = function () {
+        document.getElementById("chatArea").classList.add("hidden");
+        document.getElementById("friendList").classList.remove("hidden");
+      };
+
+      // Basic send message function
+      window.sendMessage = function () {
+        const input = document.getElementById("chatInput");
+        const messagesContainer = document.getElementById("chatMessages");
+
+        if (!input || !messagesContainer) return;
+
+        const content = input.value.trim();
+        if (content === "") return;
+
+        // Create message element
+        const messageDiv = document.createElement("div");
+        messageDiv.className = "message-container mb-4 sent";
+
+        const time = new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+
+        messageDiv.innerHTML = `
+        <div class="message-bubble sent max-w-xs lg:max-w-md">
+            <div class="message-content break-words whitespace-pre-wrap">${content}</div>
+            <div class="flex items-center justify-between mt-1">
+                <span class="text-xs opacity-70">${time}</span>
+                <span class="text-xs opacity-70 ml-2"><i class="bi bi-check text-xs"></i></span>
+            </div>
+        </div>
+    `;
+
+        // Add message to container
+        if (
+          messagesContainer.children.length === 1 &&
+          messagesContainer.children[0].classList.contains("text-center")
+        ) {
+          messagesContainer.innerHTML = "";
+        }
+
+        messagesContainer.appendChild(messageDiv);
+
+        // Clear input
+        input.value = "";
+        input.style.height = "auto";
+
+        // Scroll to bottom
+        const wrapper = document.getElementById("chatMessagesWrapper");
+        if (wrapper) {
+          wrapper.scrollTop = wrapper.scrollHeight;
+        }
+      };
+
+      // Auto-resize textarea
+      window.autoResizeTextarea = function (textarea) {
+        textarea.style.height = "auto";
+        const newHeight = Math.min(textarea.scrollHeight, 120);
+        textarea.style.height = newHeight + "px";
+      };
+
+      // Basic typing handler
+      window.handleTyping = function () {
+        console.log("User is typing...");
+        // Placeholder - would use socket.io in full version
+      };
+
+      // Handle chat input keypress
+      window.handleChatInputKeypress = function (event) {
+        if (event.key === "Enter" && !event.shiftKey) {
+          event.preventDefault();
+          window.sendMessage();
+        }
+      };
+    </script>
+
+<script>
+      window.csrfToken = '{{ csrf_token }}';
+      window.currentUserId = {{ current_user.id|tojson }};
+      window.hasMorePosts = {{ has_more|tojson|default(false) }};
+      window.nextCursor = {{ next_cursor|tojson|default(None) }};
+      window.friendIds = {{ current_user.friend_ids|tojson }};
+      window.blockedUserIds = {{ current_user.blocks|map(attribute='id')|list|tojson }};
+      window.defaultAvatar = '{{ url_for('static', filename='assets/img/default-avatar.png') }}';
+    </script>

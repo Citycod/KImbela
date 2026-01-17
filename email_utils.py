@@ -24,7 +24,9 @@ class EmailService:
                 logger.warning("Resend API key not configured. Email not sent.")
                 return False
 
-            from_address = from_email or os.getenv("MAIL_DEFAULT_SENDER", "noreply@resend.dev")
+            from_address = from_email or os.getenv(
+                "MAIL_DEFAULT_SENDER", "noreply@resend.dev"
+            )
 
             # Ensure from_email has proper format
             if "@" not in from_address:
@@ -48,7 +50,9 @@ class EmailService:
                 params["text"] = text_content
 
             response = resend.Emails.send(params)
-            logger.info(f"Email sent successfully to {to_email}: {response.get('id', 'No ID')}")
+            logger.info(
+                f"Email sent successfully to {to_email}: {response.get('id', 'No ID')}"
+            )
             return True
 
         except Exception as e:
@@ -60,7 +64,8 @@ class EmailService:
         """Send welcome/verification email"""
         if otp:
             subject = "Welcome to Kimbela - Verify Your Email"
-            html = render_template_string("""
+            html = render_template_string(
+                """
             <!DOCTYPE html>
             <html>
             <head>
@@ -127,7 +132,10 @@ class EmailService:
                 </div>
             </body>
             </html>
-            """, user=user, otp=otp)
+            """,
+                user=user,
+                otp=otp,
+            )
 
             text_content = f"""
             Welcome to Kimbela, {user.first_name}!
@@ -145,7 +153,8 @@ class EmailService:
             """
         else:
             subject = "Welcome to Kimbela!"
-            html = render_template_string("""
+            html = render_template_string(
+                """
             <!DOCTYPE html>
             <html>
             <head>
@@ -193,7 +202,9 @@ class EmailService:
                 </div>
             </body>
             </html>
-            """, user=user)
+            """,
+                user=user,
+            )
 
             text_content = f"""
             Welcome to Kimbela, {user.first_name}!
@@ -216,14 +227,15 @@ class EmailService:
             to_email=user.email,
             subject=subject,
             html_content=html,
-            text_content=text_content
+            text_content=text_content,
         )
 
     @staticmethod
     def send_password_reset_email(user, reset_token, reset_url):
         """Send password reset email"""
         subject = "Reset Your Kimbela Password"
-        html = render_template_string("""
+        html = render_template_string(
+            """
         <!DOCTYPE html>
         <html>
         <head>
@@ -276,7 +288,10 @@ class EmailService:
             </div>
         </body>
         </html>
-        """, user=user, reset_url=reset_url)
+        """,
+            user=user,
+            reset_url=reset_url,
+        )
 
         text_content = f"""
         Password Reset Request
@@ -299,14 +314,15 @@ class EmailService:
             to_email=user.email,
             subject=subject,
             html_content=html,
-            text_content=text_content
+            text_content=text_content,
         )
 
     @staticmethod
     def send_password_reset_success_email(user):
         """Send password reset confirmation email"""
         subject = "Your Kimbela Password Has Been Reset"
-        html = render_template_string("""
+        html = render_template_string(
+            """
         <!DOCTYPE html>
         <html>
         <head>
@@ -354,7 +370,9 @@ class EmailService:
             </div>
         </body>
         </html>
-        """, user=user)
+        """,
+            user=user,
+        )
 
         text_content = f"""
         Password Reset Successful
@@ -380,7 +398,7 @@ class EmailService:
             to_email=user.email,
             subject=subject,
             html_content=html,
-            text_content=text_content
+            text_content=text_content,
         )
 
     @staticmethod
@@ -439,5 +457,5 @@ class EmailService:
             to_email=test_email,
             subject=subject,
             html_content=html,
-            text_content=text_content
+            text_content=text_content,
         )

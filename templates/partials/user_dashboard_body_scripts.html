@@ -1,0 +1,2393 @@
+<script>
+      // Birthday Celebration System
+      class BirthdayCelebration {
+        constructor() {
+          this.currentFriend = null;
+          this.fireworksInterval = null;
+          this.confettiInterval = null;
+        }
+
+        // Initialize birthday system
+        init() {
+          this.checkBirthdays();
+          this.setupEventListeners();
+        }
+
+        // Check for birthdays and show notifications
+        async checkBirthdays() {
+          try {
+            const response = await fetch("/api/birthdays/today");
+            const data = await response.json();
+
+            if (data.success && data.birthdays.length > 0) {
+              this.showBirthdayNotification(data.birthdays);
+            }
+
+            // Check for unseen birthday notifications
+            this.updateBirthdayBadge();
+          } catch (error) {
+            console.error("Error checking birthdays:", error);
+          }
+        }
+
+        // Show birthday notification badge
+        showBirthdayNotification(birthdays) {
+          const badge = document.getElementById("birthdayNotificationBadge");
+          const count = document.getElementById("birthdayCount");
+          const notificationList = document.getElementById(
+            "birthdayNotificationList",
+          );
+
+          if (badge && birthdays.length > 0) {
+            badge.classList.remove("hidden");
+            count.textContent = birthdays.length;
+
+            // Populate notification list
+            notificationList.innerHTML = birthdays
+              .map(
+                (friend) => `
+                <div class="birthday-notification-item p-3 hover:bg-pink-50 rounded-xl cursor-pointer transition-colors" onclick="openBirthdayForFriend(${friend.id})">
+                    <div class="flex items-center space-x-3">
+                        <img src="${friend.avatar}" alt="${friend.name}" class="w-12 h-12 rounded-full object-cover border-2 border-yellow-300">
+                        <div class="flex-1">
+                            <h4 class="font-semibold text-gray-800">${friend.name}</h4>
+                            <p class="text-sm text-gray-600">🎂 Birthday Today!</p>
+                            <p class="text-xs text-gray-500">Click to send wishes</p>
+                        </div>
+                        <i class="bi bi-arrow-right text-gray-400"></i>
+                    </div>
+                </div>
+            `,
+              )
+              .join("");
+          }
+        }
+
+        // Update birthday badge count
+        async updateBirthdayBadge() {
+          try {
+            const response = await fetch("/api/birthdays/today");
+            const data = await response.json();
+
+            const count = document.getElementById("birthdayCount");
+            const badge = document.getElementById("birthdayNotificationBadge");
+
+            if (data.success) {
+              if (data.count > 0) {
+                count.textContent = data.count;
+                badge?.classList.remove("hidden");
+              } else {
+                badge?.classList.add("hidden");
+              }
+            }
+          } catch (error) {
+            console.error("Error updating birthday badge:", error);
+          }
+        }
+
+        // Open birthday modal for specific friend
+        openBirthdayForFriend(friendId) {
+          this.closeBirthdayPopup();
+
+          // Find friend data
+          fetch("/api/birthdays/today")
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.success) {
+                const friend = data.birthdays.find((f) => f.id == friendId);
+                if (friend) {
+                  this.showBirthdayModal(friend);
+                }
+              }
+            });
+        }
+
+        // Show birthday modal with fireworks
+        showBirthdayModal(friend) {
+          this.currentFriend = friend;
+
+          const modal = document.getElementById("birthdayModal");
+          const nameEl = document.getElementById("birthdayFriendName");
+          const avatarEl = document.getElementById("birthdayFriendAvatar");
+          const ageEl = document.getElementById("birthdayFriendAge");
+
+          if (modal && nameEl && avatarEl && ageEl) {
+            // Set friend info
+            nameEl.textContent = friend.name;
+            avatarEl.src = friend.avatar;
+            ageEl.textContent = friend.age
+              ? `Turning ${friend.age} today! 🎉`
+              : "Celebrating Birthday! 🎂";
+
+            // Show modal
+            modal.classList.remove("hidden");
+            document.body.style.overflow = "hidden";
+
+            // Start celebration effects
+            this.startFireworks();
+            this.startConfetti();
+            this.playBirthdaySound();
+          }
+        }
+
+        // Start fireworks animation
+        startFireworks() {
+          const container = document.getElementById("fireworks");
+          if (!container) return;
+
+          this.clearEffects();
+
+          this.fireworksInterval = setInterval(() => {
+            this.createFirework();
+          }, 300);
+        }
+
+        // Create a single firework
+        createFirework() {
+          const container = document.getElementById("fireworks");
+          if (!container) return;
+
+          const firework = document.createElement("div");
+          firework.className = "firework";
+          firework.style.left = `${Math.random() * 100}%`;
+          firework.style.top = `${Math.random() * 100}%`;
+
+          // Random color
+          const colors = [
+            "#ff6b6b",
+            "#4ecdc4",
+            "#45b7d1",
+            "#96ceb4",
+            "#feca57",
+            "#ff9ff3",
+          ];
+          firework.style.backgroundColor =
+            colors[Math.floor(Math.random() * colors.length)];
+
+          container.appendChild(firework);
+
+          // Create explosion particles
+          setTimeout(() => {
+            this.createExplosion(firework);
+            firework.remove();
+          }, 500);
+        }
+
+        // Create explosion particles
+        createExplosion(firework) {
+          const container = document.getElementById("fireworks");
+          const rect = firework.getBoundingClientRect();
+
+          for (let i = 0; i < 20; i++) {
+            const particle = document.createElement("div");
+            particle.className = "firework-particle";
+
+            // Random color from firework
+            particle.style.backgroundColor = firework.style.backgroundColor;
+
+            // Random direction
+            const angle = Math.random() * Math.PI * 2;
+            const distance = 50 + Math.random() * 100;
+            const tx = Math.cos(angle) * distance;
+            const ty = Math.sin(angle) * distance;
+
+            particle.style.setProperty("--tx", `${tx}px`);
+            particle.style.setProperty("--ty", `${ty}px`);
+            particle.style.left = `${rect.left}px`;
+            particle.style.top = `${rect.top}px`;
+
+            container.appendChild(particle);
+
+            // Remove particle after animation
+            setTimeout(() => particle.remove(), 1000);
+          }
+        }
+
+        // Start confetti
+        startConfetti() {
+          const modal = document.querySelector(".birthday-modal-content");
+          if (!modal) return;
+
+          this.confettiInterval = setInterval(() => {
+            this.createConfetti();
+          }, 100);
+
+          // Stop after 5 seconds
+          setTimeout(() => {
+            clearInterval(this.confettiInterval);
+          }, 5000);
+        }
+
+        // Create single confetti
+        createConfetti() {
+          const modal = document.querySelector(".birthday-modal-content");
+          const confetti = document.createElement("div");
+          confetti.className = "confetti";
+
+          // Random properties
+          const colors = [
+            "#ff6b6b",
+            "#4ecdc4",
+            "#45b7d1",
+            "#96ceb4",
+            "#feca57",
+            "#ff9ff3",
+            "#ff9f43",
+          ];
+          confetti.style.backgroundColor =
+            colors[Math.floor(Math.random() * colors.length)];
+          confetti.style.left = `${Math.random() * 100}%`;
+          confetti.style.width = `${Math.random() * 10 + 5}px`;
+          confetti.style.height = confetti.style.width;
+          confetti.style.animationDelay = `${Math.random() * 2}s`;
+
+          modal.appendChild(confetti);
+
+          // Remove after animation
+          setTimeout(() => confetti.remove(), 3000);
+        }
+
+        // Play birthday sound
+        playBirthdaySound() {
+          // Create audio context for simple beeps
+          try {
+            const audioContext = new (window.AudioContext ||
+              window.webkitAudioContext)();
+            this.playBirthdayMelody(audioContext);
+          } catch (e) {
+            console.log("Audio not supported:", e);
+          }
+        }
+
+        // Play happy birthday melody
+        playBirthdayMelody(audioContext) {
+          const notes = [
+            { freq: 392, duration: 0.5 }, // G
+            { freq: 392, duration: 0.5 }, // G
+            { freq: 440, duration: 1 }, // A
+            { freq: 392, duration: 1 }, // G
+            { freq: 523, duration: 1 }, // C
+            { freq: 494, duration: 2 }, // B
+          ];
+
+          let time = audioContext.currentTime;
+
+          notes.forEach((note, i) => {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.value = note.freq;
+            oscillator.type = "sine";
+
+            // Envelope
+            gainNode.gain.setValueAtTime(0, time);
+            gainNode.gain.linearRampToValueAtTime(0.1, time + 0.01);
+            gainNode.gain.exponentialRampToValueAtTime(
+              0.01,
+              time + note.duration,
+            );
+
+            oscillator.start(time);
+            oscillator.stop(time + note.duration);
+
+            time += note.duration;
+          });
+        }
+
+        // Send birthday wish
+        async sendBirthdayWish() {
+          if (!this.currentFriend) return;
+
+          const messageInput = document.getElementById("birthdayWishMessage");
+          const button = document.getElementById("sendBirthdayWishBtn");
+
+          if (!messageInput || !button) return;
+
+          const originalText = button.innerHTML;
+          button.innerHTML =
+            '<i class="bi bi-hourglass-split animate-spin"></i> Sending...';
+          button.disabled = true;
+
+          try {
+            const response = await fetch("/api/birthday/wish", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": window.csrfToken || "",
+              },
+              body: JSON.stringify({
+                friend_id: this.currentFriend.id,
+                message: messageInput.value,
+              }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+              // Show success animation
+              this.showSuccessAnimation();
+
+              // Close modal after delay
+              setTimeout(() => {
+                this.closeBirthdayModal();
+                this.updateBirthdayBadge();
+              }, 2000);
+            } else {
+              alert(data.error || "Failed to send wish");
+            }
+          } catch (error) {
+            console.error("Error sending birthday wish:", error);
+            alert("Failed to send birthday wish");
+          } finally {
+            button.innerHTML = originalText;
+            button.disabled = false;
+          }
+        }
+
+        // Show success animation
+        showSuccessAnimation() {
+          const button = document.getElementById("sendBirthdayWishBtn");
+          if (!button) return;
+
+          button.innerHTML = '<i class="bi bi-check-circle"></i> Wish Sent! 🎉';
+          button.classList.remove("from-pink-500", "to-red-500");
+          button.classList.add("from-green-500", "to-green-600");
+
+          // Add celebration effect
+          this.createSuccessConfetti();
+        }
+
+        // Create success confetti
+        createSuccessConfetti() {
+          const button = document.getElementById("sendBirthdayWishBtn");
+          if (!button) return;
+
+          const rect = button.getBoundingClientRect();
+
+          for (let i = 0; i < 30; i++) {
+            const confetti = document.createElement("div");
+            confetti.className = "confetti";
+            confetti.style.backgroundColor =
+              i % 2 === 0 ? "#10b981" : "#fbbf24";
+            confetti.style.left = `${rect.left + rect.width / 2}px`;
+            confetti.style.top = `${rect.top}px`;
+            confetti.style.width = "8px";
+            confetti.style.height = "8px";
+            confetti.style.animationDelay = `${i * 0.1}s`;
+
+            document.body.appendChild(confetti);
+
+            setTimeout(() => confetti.remove(), 3000);
+          }
+        }
+
+        // Set quick wish message
+        setBirthdayWish(message) {
+          const textarea = document.getElementById("birthdayWishMessage");
+          if (textarea) {
+            textarea.value = message;
+            textarea.focus();
+
+            // Add animation
+            textarea.classList.add("ring-2", "ring-yellow-400");
+            setTimeout(() => {
+              textarea.classList.remove("ring-2", "ring-yellow-400");
+            }, 1000);
+          }
+        }
+
+        // Close birthday modal
+        closeBirthdayModal() {
+          const modal = document.getElementById("birthdayModal");
+          if (modal) {
+            modal.classList.add("hidden");
+            document.body.style.overflow = "";
+            this.clearEffects();
+            this.currentFriend = null;
+          }
+        }
+
+        // Clear all effects
+        clearEffects() {
+          if (this.fireworksInterval) {
+            clearInterval(this.fireworksInterval);
+            this.fireworksInterval = null;
+          }
+
+          if (this.confettiInterval) {
+            clearInterval(this.confettiInterval);
+            this.confettiInterval = null;
+          }
+
+          const fireworks = document.getElementById("fireworks");
+          if (fireworks) {
+            fireworks.innerHTML = "";
+          }
+        }
+
+        // Show birthday notification popup
+        showBirthdayNotifications() {
+          const popup = document.getElementById("birthdayNotificationPopup");
+          if (popup) {
+            popup.classList.toggle("hidden");
+            popup.classList.toggle("scale-95");
+            popup.classList.toggle("opacity-0");
+
+            if (!popup.classList.contains("hidden")) {
+              popup.classList.remove("scale-95", "opacity-0");
+              popup.classList.add("scale-100", "opacity-100");
+            }
+          }
+        }
+
+        // Close birthday popup
+        closeBirthdayPopup() {
+          const popup = document.getElementById("birthdayNotificationPopup");
+          if (popup) {
+            popup.classList.add("hidden", "scale-95", "opacity-0");
+            popup.classList.remove("scale-100", "opacity-100");
+          }
+        }
+
+        // Mark all birthdays as seen
+        async markBirthdaysSeen() {
+          try {
+            await fetch("/api/birthday/notifications/mark_seen", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": window.csrfToken || "",
+              },
+            });
+
+            this.closeBirthdayPopup();
+            this.updateBirthdayBadge();
+          } catch (error) {
+            console.error("Error marking birthdays seen:", error);
+          }
+        }
+
+        // Open birthday calendar
+        async openBirthdayCalendar() {
+          this.closeBirthdayPopup();
+
+          try {
+            const response = await fetch("/api/birthdays/upcoming");
+            const data = await response.json();
+
+            if (data.success) {
+              this.showBirthdayCalendar(data.birthdays);
+            }
+          } catch (error) {
+            console.error("Error loading birthday calendar:", error);
+          }
+        }
+
+        // Show birthday calendar modal
+        showBirthdayCalendar(birthdays) {
+          const modal = document.getElementById("birthdayCalendarModal");
+          const calendar = document.getElementById("birthdayCalendar");
+
+          if (modal && calendar) {
+            calendar.innerHTML = birthdays
+              .map(
+                (birthday) => `
+                <div class="birthday-card">
+                    <div class="flex items-center space-x-4">
+                        <img src="${birthday.avatar}" alt="${birthday.name}" class="w-16 h-16 rounded-full object-cover border-2 border-yellow-300">
+                        <div class="flex-1">
+                            <h4 class="font-bold text-gray-800">${birthday.name}</h4>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="px-2 py-1 bg-pink-100 text-pink-700 rounded-full text-xs font-semibold">
+                                    ${birthday.days_until === 0 ? "🎂 TODAY!" : `In ${birthday.days_until} days`}
+                                </span>
+                                <span class="text-sm text-gray-600">
+                                    ${new Date(birthday.birthday_date).toLocaleDateString("en-US", { month: "long", day: "numeric" })}
+                                </span>
+                            </div>
+                            ${birthday.age ? `<p class="text-sm text-gray-500 mt-1">Turning ${birthday.age + 1}</p>` : ""}
+                        </div>
+                        ${
+                          birthday.days_until === 0
+                            ? `
+                            <button onclick="birthdaySystem.openBirthdayForFriend(${birthday.id})" class="px-4 py-2 bg-gradient-to-r from-pink-500 to-red-500 text-white rounded-lg hover:from-pink-600 hover:to-red-600 transition-colors">
+                                Wish Now
+                            </button>
+                        `
+                            : ""
+                        }
+                    </div>
+                </div>
+            `,
+              )
+              .join("");
+
+            modal.classList.remove("hidden");
+            document.body.style.overflow = "hidden";
+          }
+        }
+
+        // Close birthday calendar
+        closeBirthdayCalendar() {
+          const modal = document.getElementById("birthdayCalendarModal");
+          if (modal) {
+            modal.classList.add("hidden");
+            document.body.style.overflow = "";
+          }
+        }
+
+        // Setup event listeners
+        setupEventListeners() {
+          // Close popup when clicking outside
+          document.addEventListener("click", (e) => {
+            const badge = document.getElementById("birthdayNotificationBadge");
+            const popup = document.getElementById("birthdayNotificationPopup");
+
+            if (
+              badge &&
+              popup &&
+              !badge.contains(e.target) &&
+              !popup.contains(e.target)
+            ) {
+              this.closeBirthdayPopup();
+            }
+          });
+
+          // Keyboard shortcuts
+          document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") {
+              this.closeBirthdayModal();
+              this.closeBirthdayCalendar();
+              this.closeBirthdayPopup();
+            }
+          });
+        }
+      }
+
+      // Initialize birthday system
+      const birthdaySystem = new BirthdayCelebration();
+      document.addEventListener("DOMContentLoaded", () => {
+        birthdaySystem.init();
+      });
+
+      // Global functions for HTML onclick
+      function openBirthdayForFriend(friendId) {
+        birthdaySystem.openBirthdayForFriend(friendId);
+      }
+
+      function closeBirthdayModal() {
+        birthdaySystem.closeBirthdayModal();
+      }
+
+      function showBirthdayNotifications() {
+        birthdaySystem.showBirthdayNotifications();
+      }
+
+      function markBirthdaysSeen() {
+        birthdaySystem.markBirthdaysSeen();
+      }
+
+      function openBirthdayCalendar() {
+        birthdaySystem.openBirthdayCalendar();
+      }
+
+      function closeBirthdayCalendar() {
+        birthdaySystem.closeBirthdayCalendar();
+      }
+
+      function setBirthdayWish(message) {
+        birthdaySystem.setBirthdayWish(message);
+      }
+
+      function sendBirthdayWish() {
+        birthdaySystem.sendBirthdayWish();
+      }
+
+      // Auto-check birthdays every hour
+      setInterval(() => {
+        birthdaySystem.checkBirthdays();
+      }, 3600000); // 1 hour
+    </script>
+
+<script>
+          // Make current user info globally available
+          window.currentUserAvatar = '{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}';
+          window.currentUserName = '{{ current_user.full_name }}';
+          window.currentUserId = {{ current_user.id }};
+          window.defaultAvatar = '{{ url_for('static', filename='assets/img/default-avatar.png') }}';
+
+
+
+
+
+
+
+
+
+           // ========================================
+      // EMOJI PICKER FUNCTIONS
+      // ========================================
+
+      let currentTextarea = null;
+
+      let emojiPickerInitialized = false;
+
+      function openEmojiPicker() {
+          const emojiModal = document.getElementById('emojiModal');
+          if (!emojiModal) return;
+
+          emojiModal.classList.remove('hidden');
+          document.body.style.overflow = 'hidden';
+
+          // Always target the post creation textarea (or edit if open)
+          currentTextarea = document.querySelector('#postModal textarea[name="post_content"]') ||
+                           document.querySelector('#editPostModal textarea[name="content"]');
+
+          const picker = document.getElementById('emojiPicker');
+
+          if (picker && !emojiPickerInitialized) {
+              picker.addEventListener('emoji-click', event => {
+                  if (currentTextarea) {
+                      // Updated: Use event.detail.emoji.unicode for newer versions
+                      const emoji = event.detail.emoji?.unicode || event.detail.unicode;
+                      if (emoji) {
+                          insertAtCursor(currentTextarea, emoji);
+                          currentTextarea.focus(); // Refocus after insert
+                      }
+                  }
+                  closeEmojiModal(); // Optional: close modal after selection
+              });
+
+              emojiPickerInitialized = true;
+          }
+
+          // Ensure textarea is focused
+          if (currentTextarea) {
+              currentTextarea.focus();
+          }
+      }
+
+
+      function closeEmojiModal() {
+          const emojiModal = document.getElementById('emojiModal');
+          if (emojiModal) {
+              emojiModal.classList.add('hidden');
+              document.body.style.overflow = '';
+              currentTextarea = null;
+          }
+      }
+
+      function initializeEmojiPicker() {
+          const picker = document.getElementById('emojiPicker');
+
+          if (picker && !picker.hasAttribute('data-initialized')) {
+              // Set up emoji picker
+              picker.addEventListener('emoji-click', event => {
+                  if (currentTextarea) {
+                      const emoji = event.detail.unicode;
+                      insertAtCursor(currentTextarea, emoji);
+                  }
+                  closeEmojiModal();
+              });
+
+              // Mark as initialized
+              picker.setAttribute('data-initialized', 'true');
+          }
+      }
+
+      function insertAtCursor(textarea, text) {
+          if (!textarea) return;
+
+          const start = textarea.selectionStart;
+          const end = textarea.selectionEnd;
+          const value = textarea.value;
+
+          // Insert emoji at cursor position
+          textarea.value = value.substring(0, start) + text + value.substring(end);
+
+          // Move cursor after the inserted emoji
+          textarea.selectionStart = textarea.selectionEnd = start + text.length;
+
+          // Trigger input event for auto-resize and validation
+          textarea.dispatchEvent(new Event('input', { bubbles: true }));
+
+          // Focus back on textarea
+          textarea.focus();
+      }
+
+      // Load emoji picker library dynamically if not already loaded
+      function loadEmojiPicker() {
+          if (!document.querySelector('script[src*="emoji-picker-element"]')) {
+              const script = document.createElement('script');
+              script.src = 'https://cdn.jsdelivr.net/npm/emoji-picker-element@1.13.0/index.js';
+              script.type = 'module';
+              script.onload = initializeEmojiPicker;
+              document.head.appendChild(script);
+          }
+      }
+
+      // Also update the composer button to open emoji modal
+      document.addEventListener('DOMContentLoaded', () => {
+          // Load emoji picker library
+          loadEmojiPicker();
+
+          // Update the composer emoji button
+          const composerEmojiBtn = document.querySelector('.composer-btn .bi-emoji-smile-fill');
+          if (composerEmojiBtn) {
+              const parentBtn = composerEmojiBtn.closest('.composer-btn');
+              if (parentBtn) {
+                  parentBtn.onclick = (e) => {
+                      e.preventDefault();
+                      // Open post modal first, then emoji picker
+                      const postModal = document.getElementById('postModal');
+                      if (postModal) {
+                          postModal.classList.remove('hidden');
+                          document.body.style.overflow = 'hidden';
+
+                          // Focus on textarea and open emoji picker after a short delay
+                          setTimeout(() => {
+                              const textarea = postModal.querySelector('textarea[name="post_content"]');
+                              if (textarea) {
+                                  textarea.focus();
+                                  openEmojiPicker();
+                              }
+                          }, 300);
+                      }
+                  };
+              }
+          }
+      });
+
+
+          // ========================================
+      // GIF PICKER FUNCTIONS
+      // ========================================
+
+      let gifCurrentTextarea = null;
+      let gifSearchTimeout = null;
+      let gifCurrentOffset = 0;
+      let gifIsLoading = false;
+
+      // GIPHY API configuration
+      const GIPHY_API_KEY = 'CjXsPjBjQcsNMkDrHC1RsaMGuLtNgdtN'; // You need to get this from https://developers.giphy.com/
+      const GIPHY_API_URL = 'https://api.giphy.com/v1/gifs';
+
+      // Function to open GIF modal
+      function openGifPicker() {
+          const gifModal = document.getElementById('gifModal');
+          if (gifModal) {
+              gifModal.classList.remove('hidden');
+              document.body.style.overflow = 'hidden';
+
+              // Get the post content textarea
+              gifCurrentTextarea = document.querySelector('#postModal textarea[name="post_content"]') ||
+                                  document.querySelector('#editPostModal textarea[name="content"]');
+
+              // Load trending GIFs
+              loadTrendingGifs();
+
+              // Focus on search input
+              setTimeout(() => {
+                  const searchInput = document.getElementById('gifSearchInput');
+                  if (searchInput) searchInput.focus();
+              }, 100);
+          }
+      }
+
+      function closeGifModal() {
+          const gifModal = document.getElementById('gifModal');
+          if (gifModal) {
+              gifModal.classList.add('hidden');
+              document.body.style.overflow = '';
+              gifCurrentTextarea = null;
+              gifCurrentOffset = 0;
+          }
+      }
+
+      // Load trending GIFs
+      async function loadTrendingGifs() {
+          try {
+              showGifLoading();
+
+              const response = await fetch(`${GIPHY_API_URL}/trending?api_key=${GIPHY_API_KEY}&limit=20&rating=g`);
+              const data = await response.json();
+
+              if (data.data && data.data.length > 0) {
+                  displayGifs(data.data, 'trending');
+              } else {
+                  showNoGifsMessage('No trending GIFs found');
+              }
+          } catch (error) {
+              console.error('Error loading trending GIFs:', error);
+              showNoGifsMessage('Failed to load GIFs. Please try again.');
+          }
+      }
+
+      // Search GIFs
+      async function searchGifs(query, reset = true) {
+          if (!query || query.trim().length < 2) {
+              loadTrendingGifs();
+              return;
+          }
+
+          if (reset) {
+              gifCurrentOffset = 0;
+              document.getElementById('gifGrid').innerHTML = '';
+          }
+
+          try {
+              if (reset) showGifLoading();
+
+              const response = await fetch(
+                  `${GIPHY_API_URL}/search?api_key=${GIPHY_API_KEY}&q=${encodeURIComponent(query)}&limit=20&offset=${gifCurrentOffset}&rating=g&lang=en`
+              );
+              const data = await response.json();
+
+              if (data.data && data.data.length > 0) {
+                  displayGifs(data.data, 'search');
+              } else {
+                  if (reset) showNoGifsMessage('No GIFs found for "' + query + '"');
+              }
+          } catch (error) {
+              console.error('Error searching GIFs:', error);
+              if (reset) showNoGifsMessage('Search failed. Please try again.');
+          }
+      }
+
+      // Display GIFs in the grid
+      function displayGifs(gifs, type) {
+          const gifGrid = document.getElementById('gifGrid');
+          const gifResultsTitle = document.getElementById('gifResultsTitle');
+
+          if (!gifGrid) return;
+
+          // Hide loading/error states
+          hideGifLoading();
+
+          if (type === 'trending') {
+              if (gifResultsTitle) gifResultsTitle.textContent = 'Trending GIFs';
+          } else if (type === 'search') {
+              if (gifResultsTitle) {
+                  const searchInput = document.getElementById('gifSearchInput');
+                  gifResultsTitle.textContent = searchInput.value ? `Results for "${searchInput.value}"` : 'Search Results';
+              }
+          }
+
+          gifGrid.innerHTML = '';
+
+          gifs.forEach(gif => {
+              const gifElement = document.createElement('div');
+              gifElement.className = 'gif-item group relative cursor-pointer rounded-lg overflow-hidden bg-gray-100';
+              gifElement.innerHTML = `
+                  <div class="aspect-square w-full overflow-hidden">
+                      <img
+                          src="${gif.images.fixed_height_small.url}"
+                          alt="${gif.title || 'GIF'}"
+                          class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                          data-original="${gif.images.original.url}"
+                          data-title="${gif.title || ''}"
+                          loading="lazy"
+                      />
+                      <div class="absolute inset-0 bg-black opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
+                  </div>
+                  <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <p class="text-white text-xs truncate">${gif.title || 'GIF'}</p>
+                  </div>
+              `;
+
+              gifElement.onclick = () => selectGif(gif.images.original.url, gif.title);
+              gifGrid.appendChild(gifElement);
+          });
+
+          // Show load more button if there are more GIFs
+          if (gifs.length >= 20) {
+              const loadMoreBtn = document.getElementById('gifLoadMore');
+              if (loadMoreBtn) {
+                  loadMoreBtn.classList.remove('hidden');
+                  loadMoreBtn.onclick = () => {
+                      if (!gifIsLoading) {
+                          gifCurrentOffset += 20;
+                          const searchInput = document.getElementById('gifSearchInput');
+                          if (searchInput && searchInput.value) {
+                              searchGifs(searchInput.value, false);
+                          } else {
+                              loadMoreTrendingGifs();
+                          }
+                      }
+                  };
+              }
+          }
+      }
+
+      // Load more trending GIFs
+      async function loadMoreTrendingGifs() {
+          try {
+              gifIsLoading = true;
+              const loadMoreBtn = document.getElementById('gifLoadMore');
+              if (loadMoreBtn) loadMoreBtn.innerHTML = '<span class="tiny-loader xs white"></span> Loading...';
+
+              const response = await fetch(`${GIPHY_API_URL}/trending?api_key=${GIPHY_API_KEY}&limit=20&offset=${gifCurrentOffset}&rating=g`);
+              const data = await response.json();
+
+              if (data.data && data.data.length > 0) {
+                  // Append to existing GIFs
+                  const gifGrid = document.getElementById('gifGrid');
+                  data.data.forEach(gif => {
+                      const gifElement = document.createElement('div');
+                      gifElement.className = 'gif-item group relative cursor-pointer rounded-lg overflow-hidden bg-gray-100';
+                      gifElement.innerHTML = `
+                          <div class="aspect-square w-full overflow-hidden">
+                              <img
+                                  src="${gif.images.fixed_height_small.url}"
+                                  alt="${gif.title || 'GIF'}"
+                                  class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                  data-original="${gif.images.original.url}"
+                                  data-title="${gif.title || ''}"
+                                  loading="lazy"
+                              />
+                              <div class="absolute inset-0 bg-black opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
+                          </div>
+                          <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                              <p class="text-white text-xs truncate">${gif.title || 'GIF'}</p>
+                          </div>
+                      `;
+
+                      gifElement.onclick = () => selectGif(gif.images.original.url, gif.title);
+                      gifGrid.appendChild(gifElement);
+                  });
+              }
+          } catch (error) {
+              console.error('Error loading more GIFs:', error);
+          } finally {
+              gifIsLoading = false;
+              const loadMoreBtn = document.getElementById('gifLoadMore');
+              if (loadMoreBtn) loadMoreBtn.innerHTML = 'Load More GIFs';
+          }
+      }
+
+      // Select a GIF
+      // === FIXED GIF SELECTION FOR POST CREATION ===
+      function selectGif(gifUrl, title = '') {
+          console.log('GIF selected:', gifUrl);
+
+          // Set hidden input for backend
+          const hiddenInput = document.getElementById('selectedGifUrl');
+          if (hiddenInput) {
+              hiddenInput.value = gifUrl;
+          }
+
+          // Find the active textarea (post creation or edit modal)
+          const textarea = document.querySelector('#postModal textarea[name="post_content"]') ||
+                           document.querySelector('#editPostModal textarea[name="content"]');
+
+          if (textarea) {
+              // Insert a nice markdown-style image link so the user sees the GIF in the text
+              const gifMarkdown = `\n![GIF: ${title || 'Selected GIF'}](${gifUrl})\n`;
+
+              const start = textarea.selectionStart;
+              const end = textarea.selectionEnd;
+              const value = textarea.value;
+
+              textarea.value = value.substring(0, start) + gifMarkdown + value.substring(end);
+
+              // Move cursor to end of inserted GIF
+              const newPos = start + gifMarkdown.length;
+              textarea.selectionStart = textarea.selectionEnd = newPos;
+
+              // Trigger input event (for auto-resize if you have it)
+              textarea.dispatchEvent(new Event('input', { bubbles: true }));
+
+              // Refocus textarea
+              textarea.focus();
+          }
+
+          // Show preview in media area
+          const mediaPreview = document.getElementById('mediaPreview');
+          if (mediaPreview) {
+              mediaPreview.innerHTML = `
+                  <div class="mt-4 relative inline-block">
+                      <img
+                          src="${gifUrl}"
+                          alt="Selected GIF: ${title}"
+                          class="max-w-full max-h-96 rounded-xl object-contain border border-gray-200 shadow-md"
+                          loading="lazy"
+                      >
+                      <button
+                          type="button"
+                          onclick="clearSelectedGif()"
+                          class="absolute top-2 right-2 bg-black/70 hover:bg-black/90 text-white rounded-full p-2 transition"
+                          title="Remove GIF"
+                      >
+                          <i class="bi bi-x-lg text-sm"></i>
+                      </button>
+                      <div class="text-center mt-2 text-sm text-gray-600">
+                          GIF ${title ? '• ' + title.substring(0, 40) + (title.length > 40 ? '...' : '') : ''}
+                      </div>
+                  </div>
+              `;
+          }
+
+          // Clear any selected photo/video so GIF takes priority
+          const fileInput = document.getElementById('mediaInput');
+          if (fileInput) fileInput.value = '';
+
+          // Close GIF modal
+          closeGifModal();
+      }
+
+      // Ensure textarea is ready when modal opens (in case of race condition)
+      document.addEventListener('DOMContentLoaded', () => {
+          const postModal = document.getElementById('postModal');
+          if (postModal) {
+              const observer = new MutationObserver(() => {
+                  if (!postModal.classList.contains('hidden')) {
+                      // Textarea will be focused when user clicks GIF button anyway
+                      console.log('Post modal opened – GIF insertion ready');
+                  }
+              });
+              observer.observe(postModal, { attributes: true, attributeFilter: ['class'] });
+          }
+      });
+
+      // Process before submission
+      function processGifsBeforeSubmit(textarea) {
+          if (!window.gifQueue || Object.keys(window.gifQueue).length === 0) {
+              return textarea.value;
+          }
+
+          let content = textarea.value;
+
+          Object.values(window.gifQueue).forEach(gif => {
+              const html = `<img src="${gif.url}" alt="${gif.alt}" class="post-gif">`;
+              content = content.replace(gif.placeholder, html);
+          });
+
+          // Clear queue
+          window.gifQueue = {};
+
+          return content;
+      }
+
+
+
+      // Show loading state
+      function showGifLoading() {
+          const gifGrid = document.getElementById('gifGrid');
+          const gifResultsTitle = document.getElementById('gifResultsTitle');
+
+          if (gifGrid) {
+              gifGrid.innerHTML = `
+                  <div class="col-span-full flex flex-col items-center justify-center py-12">
+                      <div class="relative mb-4">
+                          <div class="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+                          <div class="absolute inset-0 flex items-center justify-center">
+                              <i class="bi bi-image text-blue-600 text-xl"></i>
+                          </div>
+                      </div>
+                      <p class="text-gray-600 text-sm font-medium">Loading GIFs...</p>
+                      <p class="text-xs text-gray-400 mt-1">This may take a moment</p>
+                  </div>
+              `;
+          }
+
+          if (gifResultsTitle) {
+              gifResultsTitle.textContent = 'Loading...';
+          }
+
+          const loadMoreBtn = document.getElementById('gifLoadMore');
+          if (loadMoreBtn) loadMoreBtn.classList.add('hidden');
+      }
+
+      // Hide loading state
+      function hideGifLoading() {
+          // Loading state is cleared when GIFs are displayed
+      }
+
+      // Show no GIFs message
+      function showNoGifsMessage(message) {
+          const gifGrid = document.getElementById('gifGrid');
+          if (gifGrid) {
+              gifGrid.innerHTML = `
+                  <div class="col-span-full flex flex-col items-center justify-center py-12 text-gray-500">
+                      <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                          <i class="bi bi-image text-2xl text-gray-400"></i>
+                      </div>
+                      <p class="text-sm font-medium">${message}</p>
+                      <p class="text-xs mt-1 text-gray-400">Try searching for something else</p>
+                  </div>
+              `;
+          }
+
+          const loadMoreBtn = document.getElementById('gifLoadMore');
+          if (loadMoreBtn) loadMoreBtn.classList.add('hidden');
+      }
+
+      // Debounced search
+      function debounceGifSearch() {
+          const searchInput = document.getElementById('gifSearchInput');
+          if (!searchInput) return;
+
+          clearTimeout(gifSearchTimeout);
+
+          gifSearchTimeout = setTimeout(() => {
+              searchGifs(searchInput.value.trim());
+          }, 500);
+      }
+
+      // Event listeners for GIF search
+      document.addEventListener('DOMContentLoaded', () => {
+          const gifSearchInput = document.getElementById('gifSearchInput');
+          if (gifSearchInput) {
+              gifSearchInput.addEventListener('input', debounceGifSearch);
+              gifSearchInput.addEventListener('keypress', (e) => {
+                  if (e.key === 'Enter') {
+                      e.preventDefault();
+                      searchGifs(gifSearchInput.value.trim());
+                  }
+              });
+          }
+
+          // Add GIF button to composer
+          const composerGifBtn = document.querySelector('.composer-btn .bi-file-earmark-image');
+          if (composerGifBtn) {
+              const parentBtn = composerGifBtn.closest('.composer-btn');
+              if (parentBtn) {
+                  parentBtn.onclick = (e) => {
+                      e.preventDefault();
+                      // Open post modal first, then GIF picker
+                      const postModal = document.getElementById('postModal');
+                      if (postModal) {
+                          postModal.classList.remove('hidden');
+                          document.body.style.overflow = 'hidden';
+
+                          // Focus on textarea and open GIF picker after a short delay
+                          setTimeout(() => {
+                              const textarea = postModal.querySelector('textarea[name="post_content"]');
+                              if (textarea) {
+                                  textarea.focus();
+                                  openGifPicker();
+                              }
+                          }, 300);
+                      }
+                  };
+              }
+          }
+      });
+
+
+          // Helper function for composer GIF button
+      function openGifPickerFromComposer() {
+          // Open post modal first
+          const postModal = document.getElementById('postModal');
+          if (postModal) {
+              postModal.classList.remove('hidden');
+              document.body.style.overflow = 'hidden';
+
+              // Focus on textarea and open GIF picker after a short delay
+              setTimeout(() => {
+                  const textarea = postModal.querySelector('textarea[name="post_content"]');
+                  if (textarea) {
+                      textarea.focus();
+                      openGifPicker();
+                  }
+              }, 300);
+          }
+      }
+
+          // When user selects a photo/video, remove any selected GIF
+      document.getElementById('mediaInput').addEventListener('change', function() {
+          if (this.files && this.files.length > 0) {
+              clearSelectedGif();
+          }
+      });
+    </script>
+
+<script>
+      // Ensure Twemoji parses emojis in the picker whenever it's opened or emojis are added
+
+      // Call it when opening the emoji modal
+      function openEmojiPicker() {
+        const emojiModal = document.getElementById("emojiModal");
+        if (emojiModal) {
+          emojiModal.classList.remove("hidden");
+          document.body.style.overflow = "hidden";
+          currentTextarea =
+            document.querySelector(
+              '#postModal textarea[name="post_content"]',
+            ) ||
+            document.querySelector('#editPostModal textarea[name="content"]');
+
+          initializeEmojiPicker();
+
+          // Parse emojis after a short delay (gives time for picker to render)
+          // setTimeout(parseEmojisInPicker, 300);
+        }
+      }
+
+      // Also re-parse on emoji-click in case new ones are added
+    </script>
+
+<script>
+      // ========================================
+      // VIDEO AUTOPLAY ON SCROLL
+      // ========================================
+
+      const VideoAutoplay = {
+        // Configuration
+        config: {
+          threshold: 0.7, // 70% of video should be visible
+          rootMargin: "0px 0px -100px 0px", // Adjust when to trigger
+          autoplayMuted: false, // Videos must be muted to autoplay
+          resumeOnVisible: true, // Resume playing when back in view
+          lazyLoad: true, // Lazy load videos
+        },
+
+        // State
+        state: {
+          videoElements: [],
+          observer: null,
+          playingVideos: new Set(),
+        },
+
+        // Initialize video autoplay system
+        init() {
+          console.log("🎬 Initializing video autoplay system...");
+
+          this.collectVideoElements();
+          this.setupIntersectionObserver();
+          this.setupEventListeners();
+
+          return this;
+        },
+
+        // Collect all video elements on page
+        collectVideoElements() {
+          // Find all video elements in posts
+          const videoElements = document.querySelectorAll(".post-card video");
+          const allVideos = document.querySelectorAll("video");
+
+          this.state.videoElements = Array.from(videoElements).concat(
+            Array.from(allVideos),
+          );
+
+          console.log(
+            `📹 Found ${this.state.videoElements.length} video elements`,
+          );
+
+          // Prepare videos for autoplay
+          this.state.videoElements.forEach((video, index) => {
+            this.prepareVideoElement(video, index);
+          });
+        },
+
+        // Prepare video element for autoplay
+        prepareVideoElement(video, index) {
+          // Add unique ID if not present
+          if (!video.id) {
+            video.id = `autoplay-video-${index}`;
+          }
+
+          // Add muted attribute (required for autoplay in most browsers)
+          if (!video.hasAttribute("muted") && this.config.autoplayMuted) {
+            video.muted = true;
+            video.setAttribute("muted", "");
+          }
+
+          // Add playsinline for mobile browsers
+          if (!video.hasAttribute("playsinline")) {
+            video.setAttribute("playsinline", "");
+          }
+
+          // Add loading attribute for lazy loading
+          if (this.config.lazyLoad && !video.hasAttribute("loading")) {
+            video.setAttribute("loading", "lazy");
+          }
+
+          // Add preload metadata to reduce initial load
+          if (!video.hasAttribute("preload")) {
+            video.setAttribute("preload", "metadata");
+          }
+
+          // Add custom class for styling
+          video.classList.add("autoplay-video");
+
+          // Add error handler
+          video.addEventListener("error", (e) => {
+            console.error("Video load error:", e);
+            this.handleVideoError(video);
+          });
+
+          // Add ended event to reset video
+          video.addEventListener("ended", () => {
+            setTimeout(() => {
+              if (video.currentTime >= video.duration) {
+                video.currentTime = 0;
+              }
+            }, 1000);
+          });
+        },
+
+        // Setup Intersection Observer for scroll detection
+        setupIntersectionObserver() {
+          const options = {
+            root: null, // Use viewport as root
+            rootMargin: this.config.rootMargin,
+            threshold: this.config.threshold,
+          };
+
+          this.state.observer = new IntersectionObserver(
+            (entries) => this.handleIntersection(entries),
+            options,
+          );
+
+          // Observe each video element
+          this.state.videoElements.forEach((video) => {
+            this.state.observer.observe(video);
+          });
+        },
+
+        // Handle intersection changes (scroll in/out of view)
+        handleIntersection(entries) {
+          entries.forEach((entry) => {
+            const video = entry.target;
+
+            if (entry.isIntersecting) {
+              // Video is in view
+              this.playVideo(video);
+            } else {
+              // Video is out of view
+              this.pauseVideo(video);
+            }
+          });
+        },
+
+        // Play video (with error handling)
+        async playVideo(video) {
+          // Skip if already playing
+          if (this.state.playingVideos.has(video.id) || !video.paused) {
+            return;
+          }
+
+          // Check if video is already loaded enough
+          if (video.readyState < 2) {
+            // HAVE_CURRENT_DATA
+            try {
+              // Load video if needed
+              await video.load();
+            } catch (error) {
+              console.error("Failed to load video:", error);
+              return;
+            }
+          }
+
+          try {
+            // Play the video
+            const playPromise = video.play();
+
+            if (playPromise !== undefined) {
+              playPromise
+                .then(() => {
+                  console.log(`▶️ Playing video: ${video.id}`);
+                  this.state.playingVideos.add(video.id);
+                  this.addVideoControls(video);
+                })
+                .catch((error) => {
+                  console.log(
+                    `❌ Could not autoplay video ${video.id}:`,
+                    error,
+                  );
+                  this.handleAutoplayError(video, error);
+                });
+            }
+          } catch (error) {
+            console.error("Error playing video:", error);
+          }
+        },
+
+        // Pause video
+        pauseVideo(video) {
+          if (!video.paused) {
+            video.pause();
+            console.log(`⏸️ Paused video: ${video.id}`);
+            this.state.playingVideos.delete(video.id);
+          }
+        },
+
+        // Handle autoplay errors (user interaction required)
+        handleAutoplayError(video, error) {
+          console.log(`Autoplay blocked for video ${video.id}:`, error.name);
+
+          // Add overlay with play button for user interaction
+          this.addUserInteractionOverlay(video);
+        },
+
+        // Add user interaction overlay for videos that need manual play
+        addUserInteractionOverlay(video) {
+          // Check if overlay already exists
+          if (video.parentElement.querySelector(".video-interaction-overlay")) {
+            return;
+          }
+
+          // Create overlay
+          const overlay = document.createElement("div");
+          overlay.className =
+            "video-interaction-overlay absolute inset-0 bg-black/50 flex items-center justify-center cursor-pointer z-10 rounded-xl";
+          overlay.innerHTML = `
+            <div class="text-center p-4">
+                <div class="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center mb-2 mx-auto">
+                    <i class="bi bi-play-fill text-2xl text-black"></i>
+                </div>
+                <p class="text-white text-sm font-medium">Tap to play</p>
+                <p class="text-white/80 text-xs mt-1">Video autoplay is muted</p>
+            </div>
+        `;
+
+          // Style the video container
+          const videoContainer = video.parentElement;
+          if (!videoContainer.classList.contains("relative")) {
+            videoContainer.classList.add("relative");
+          }
+
+          // Add overlay
+          videoContainer.appendChild(overlay);
+
+          // Add click handler
+          overlay.addEventListener("click", async (e) => {
+            e.stopPropagation();
+
+            try {
+              await video.play();
+              overlay.remove();
+              console.log(`✅ User initiated play for video: ${video.id}`);
+            } catch (playError) {
+              console.error("User interaction play failed:", playError);
+            }
+          });
+
+          // Remove overlay when video starts playing
+          const observer = new MutationObserver((mutations) => {
+            if (!video.paused) {
+              overlay.remove();
+              observer.disconnect();
+            }
+          });
+
+          observer.observe(video, {
+            attributes: true,
+            attributeFilter: ["paused"],
+          });
+        },
+
+        // Add custom video controls overlay
+        addVideoControls(video) {
+          // Check if controls already exist
+          if (video.parentElement.querySelector(".video-custom-controls")) {
+            return;
+          }
+
+          // Create custom controls
+          const controls = document.createElement("div");
+          controls.className =
+            "video-custom-controls absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent opacity-0 transition-opacity duration-300 z-20 rounded-b-xl";
+
+          // Only show mute/unmute button if video is muted
+          if (video.muted) {
+            controls.innerHTML = `
+                <div class="flex justify-end">
+                    <button class="video-unmute-btn p-1.5 bg-black/50 rounded-full text-white hover:bg-black/70 transition-colors">
+                        <i class="bi bi-volume-mute text-sm"></i>
+                    </button>
+                </div>
+            `;
+
+            // Add mute/unmute functionality
+            const unmuteBtn = controls.querySelector(".video-unmute-btn");
+            unmuteBtn.addEventListener("click", (e) => {
+              e.stopPropagation();
+              video.muted = !video.muted;
+              unmuteBtn.innerHTML = video.muted
+                ? '<i class="bi bi-volume-mute text-sm"></i>'
+                : '<i class="bi bi-volume-up text-sm"></i>';
+            });
+          }
+
+          // Add controls to video container
+          const videoContainer = video.parentElement;
+          if (!videoContainer.classList.contains("relative")) {
+            videoContainer.classList.add("relative");
+          }
+
+          videoContainer.appendChild(controls);
+
+          // Show/hide controls on hover
+          videoContainer.addEventListener("mouseenter", () => {
+            controls.style.opacity = "1";
+          });
+
+          videoContainer.addEventListener("mouseleave", () => {
+            controls.style.opacity = "0";
+          });
+
+          // Tap to pause on mobile
+          video.addEventListener("click", () => {
+            if (video.paused) {
+              video.play();
+            } else {
+              video.pause();
+            }
+          });
+        },
+
+        // Handle video loading errors
+        handleVideoError(video) {
+          console.error(`Video error for ${video.id}:`, video.error);
+
+          // Show error overlay
+          const errorOverlay = document.createElement("div");
+          errorOverlay.className =
+            "absolute inset-0 bg-gray-900 flex items-center justify-center rounded-xl";
+          errorOverlay.innerHTML = `
+            <div class="text-center p-4">
+                <i class="bi bi-exclamation-triangle text-3xl text-red-500 mb-2"></i>
+                <p class="text-white text-sm">Video unavailable</p>
+                <p class="text-white/70 text-xs mt-1">Failed to load video</p>
+            </div>
+        `;
+
+          const videoContainer = video.parentElement;
+          if (videoContainer) {
+            videoContainer.appendChild(errorOverlay);
+          }
+        },
+
+        // Setup additional event listeners
+        setupEventListeners() {
+          // Handle page visibility changes
+          document.addEventListener("visibilitychange", () => {
+            if (document.hidden) {
+              // Page is hidden, pause all videos
+              this.pauseAllVideos();
+            } else {
+              // Page is visible again
+              this.resumeVisibleVideos();
+            }
+          });
+
+          // Handle window blur/focus
+          window.addEventListener("blur", () => {
+            this.pauseAllVideos();
+          });
+
+          // Clean up on page unload
+          window.addEventListener("beforeunload", () => {
+            this.pauseAllVideos();
+          });
+
+          // Handle dynamic content loading (for infinite scroll)
+          const postsFeed = document.getElementById("posts-feed");
+          if (postsFeed) {
+            const observer = new MutationObserver((mutations) => {
+              mutations.forEach((mutation) => {
+                if (mutation.addedNodes.length) {
+                  this.handleNewContent(mutation.addedNodes);
+                }
+              });
+            });
+
+            observer.observe(postsFeed, { childList: true, subtree: true });
+          }
+        },
+
+        // Handle new content (for infinite scroll)
+        handleNewContent(addedNodes) {
+          addedNodes.forEach((node) => {
+            if (node.nodeType === 1) {
+              // Element node
+              const newVideos = node.querySelectorAll
+                ? node.querySelectorAll("video")
+                : [];
+              newVideos.forEach((video) => {
+                // Check if video is already tracked
+                if (!this.state.videoElements.includes(video)) {
+                  this.state.videoElements.push(video);
+                  this.prepareVideoElement(
+                    video,
+                    this.state.videoElements.length - 1,
+                  );
+
+                  // Observe the new video
+                  if (this.state.observer) {
+                    this.state.observer.observe(video);
+                  }
+                }
+              });
+            }
+          });
+        },
+
+        // Pause all playing videos
+        pauseAllVideos() {
+          this.state.videoElements.forEach((video) => {
+            this.pauseVideo(video);
+          });
+        },
+
+        // Resume videos that are in viewport
+        resumeVisibleVideos() {
+          if (this.config.resumeOnVisible) {
+            this.state.videoElements.forEach((video) => {
+              // Check if video is in viewport using getBoundingClientRect
+              const rect = video.getBoundingClientRect();
+              const isVisible =
+                rect.top < window.innerHeight * this.config.threshold &&
+                rect.bottom > 0 &&
+                rect.left < window.innerWidth &&
+                rect.right > 0;
+
+              if (isVisible && video.paused) {
+                this.playVideo(video);
+              }
+            });
+          }
+        },
+
+        // Public method to manually play a video
+        playVideoById(videoId) {
+          const video = document.getElementById(videoId);
+          if (video && video.tagName === "VIDEO") {
+            this.playVideo(video);
+          }
+        },
+
+        // Public method to manually pause a video
+        pauseVideoById(videoId) {
+          const video = document.getElementById(videoId);
+          if (video && video.tagName === "VIDEO") {
+            this.pauseVideo(video);
+          }
+        },
+
+        // Public method to toggle mute
+        toggleMuteVideo(videoId) {
+          const video = document.getElementById(videoId);
+          if (video && video.tagName === "VIDEO") {
+            video.muted = !video.muted;
+            return video.muted;
+          }
+          return null;
+        },
+
+        // Clean up (for single page applications)
+        destroy() {
+          if (this.state.observer) {
+            this.state.observer.disconnect();
+          }
+
+          this.pauseAllVideos();
+          this.state.videoElements = [];
+          this.state.playingVideos.clear();
+        },
+      };
+
+      // Initialize when DOM is loaded
+      document.addEventListener("DOMContentLoaded", () => {
+        // Check if we have videos on the page
+        const hasVideos = document.querySelectorAll("video").length > 0;
+
+        if (hasVideos) {
+          // Initialize with a small delay to ensure everything is loaded
+          setTimeout(() => {
+            VideoAutoplay.init();
+            console.log("✅ Video autoplay system initialized");
+          }, 1000);
+        }
+      });
+
+      // Make it globally available
+      window.VideoAutoplay = VideoAutoplay;
+
+      // Performance optimization for scroll handling
+      const ScrollThrottler = {
+        ticking: false,
+
+        init() {
+          // Throttle scroll events
+          window.addEventListener(
+            "scroll",
+            () => {
+              if (!this.ticking) {
+                window.requestAnimationFrame(() => {
+                  this.handleScroll();
+                  this.ticking = false;
+                });
+                this.ticking = true;
+              }
+            },
+            { passive: true },
+          );
+
+          // Optimize for mobile touch
+          let touchStartY;
+          window.addEventListener(
+            "touchstart",
+            (e) => {
+              touchStartY = e.touches[0].clientY;
+            },
+            { passive: true },
+          );
+
+          window.addEventListener(
+            "touchend",
+            (e) => {
+              const touchEndY = e.changedTouches[0].clientY;
+              const deltaY = Math.abs(touchEndY - touchStartY);
+
+              // Only trigger video check on significant scroll
+              if (deltaY > 50) {
+                setTimeout(() => VideoAutoplay?.resumeVisibleVideos(), 300);
+              }
+            },
+            { passive: true },
+          );
+        },
+
+        handleScroll() {
+          // Optional: You can add additional scroll optimizations here
+        },
+      };
+
+      // Initialize throttler
+      document.addEventListener("DOMContentLoaded", () => {
+        ScrollThrottler.init();
+      });
+    </script>
+
+<script>
+      // ========================================
+      // EDIT AND DELETE POST FUNCTIONALITY
+      // ========================================
+
+      // Initialize edit/delete functionality when page loads
+      document.addEventListener("DOMContentLoaded", function () {
+        // Set up event listeners for edit buttons
+        document.addEventListener("click", function (e) {
+          // Handle edit post buttons
+          if (e.target.closest(".edit-post")) {
+            e.preventDefault();
+            const postId = e.target
+              .closest(".edit-post")
+              .getAttribute("data-post-id");
+            if (postId) {
+              openEditPostModal(postId);
+            }
+          }
+
+        });
+      });
+
+      // Function to open edit post modal
+      function openEditPostModal(postId) {
+        // Find the post element
+        const postElement = document.querySelector(
+          `[data-post-id="${postId}"]`,
+        );
+        if (!postElement) return;
+
+        // Get post content
+        const postTextElement = postElement.querySelector(".post-text");
+        let postContent = "";
+
+        if (postTextElement) {
+          postContent = postTextElement.textContent.trim();
+        }
+
+        // Populate edit modal textarea
+        const editContent = document.getElementById("editPostContent");
+        if (editContent) {
+          editContent.value = postContent;
+        }
+
+        // Set up form submission
+        const editForm = document.getElementById("editPostForm");
+        if (editForm) {
+          editForm.onsubmit = function (e) {
+            e.preventDefault();
+            submitEditPost(postId, editForm);
+          };
+        }
+
+        // Show edit modal
+        const editModal = document.getElementById("editPostModal");
+        if (editModal) {
+          editModal.classList.remove("hidden");
+          document.body.style.overflow = "hidden";
+        }
+      }
+
+      // Function to submit edit post
+      async function submitEditPost(postId, form) {
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (!submitBtn) return;
+
+        // Show loading
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML =
+          '<span class="inline-flex items-center"><span class="tiny-loader xs white"></span> Saving...</span>';
+        submitBtn.disabled = true;
+
+        try {
+          const formData = new FormData(form);
+          formData.append("post_id", postId);
+
+          const response = await fetch("/edit_post", {
+            method: "POST",
+            body: formData,
+            headers: { "X-CSRFToken": window.csrfToken || "" },
+          });
+
+          if (!response.ok) throw new Error("Network error");
+
+          const data = await response.json();
+          if (data.success) {
+            Toast.show("Post updated successfully!", "success");
+
+            // Close modal
+            const editModal = document.getElementById("editPostModal");
+            if (editModal) {
+              editModal.classList.add("hidden");
+              document.body.style.overflow = "";
+            }
+
+            // Update post on page
+            updatePostOnPage(postId, data.content || formData.get("content"));
+          } else {
+            throw new Error(data.error || "Failed to update post");
+          }
+        } catch (error) {
+          console.error("Error editing post:", error);
+          Toast.show(error.message || "Failed to edit post", "danger");
+        } finally {
+          // Restore button
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalText;
+        }
+      }
+
+      // Function to update post content on page
+      function updatePostOnPage(postId, newContent) {
+        const postElement = document.querySelector(
+          `[data-post-id="${postId}"]`,
+        );
+        if (!postElement) return;
+
+        const postTextElement = postElement.querySelector(".post-text");
+        if (postTextElement) {
+          postTextElement.textContent = newContent;
+
+          // Update truncated state if needed
+          if (newContent.length > 100) {
+            postTextElement.classList.add("truncated");
+
+            // Add or update "See More" button
+            let seeMoreBtn = postTextElement.nextElementSibling;
+            if (!seeMoreBtn || !seeMoreBtn.classList.contains("see-more-btn")) {
+              seeMoreBtn = document.createElement("button");
+              seeMoreBtn.className =
+                "see-more-btn text-blue-600 font-medium text-sm mt-1";
+              seeMoreBtn.textContent = "See More";
+              seeMoreBtn.onclick = () => togglePostText(postId);
+              postTextElement.parentNode.insertBefore(
+                seeMoreBtn,
+                postTextElement.nextSibling,
+              );
+            }
+          } else {
+            postTextElement.classList.remove("truncated");
+
+            // Remove "See More" button if exists
+            const seeMoreBtn = postTextElement.nextElementSibling;
+            if (seeMoreBtn && seeMoreBtn.classList.contains("see-more-btn")) {
+              seeMoreBtn.remove();
+            }
+          }
+        }
+      }
+
+      // Function to toggle post text (show more/show less)
+      function togglePostText(postId) {
+        const postElement = document.querySelector(
+          `[data-post-id="${postId}"]`,
+        );
+        if (!postElement) return;
+
+        const postTextElement = postElement.querySelector(".post-text");
+        const seeMoreBtn = postElement.querySelector(".see-more-btn");
+
+        if (postTextElement && seeMoreBtn) {
+          if (postTextElement.classList.contains("truncated")) {
+            postTextElement.classList.remove("truncated");
+            seeMoreBtn.textContent = "See Less";
+          } else {
+            postTextElement.classList.add("truncated");
+            seeMoreBtn.textContent = "See More";
+          }
+        }
+      }
+
+      // ========================================
+      // UPDATE THE selectGif FUNCTION FOR GIF URL
+      // ========================================
+
+      // Replace the existing selectGif function with this updated version
+      function selectGif(gifUrl, title = "") {
+        console.log("Selected GIF:", gifUrl);
+
+        // Set the hidden input value for GIF URL
+        const hiddenInput = document.getElementById("selectedGifUrl");
+        if (hiddenInput) {
+          hiddenInput.value = gifUrl;
+          console.log("GIF URL set in hidden input:", gifUrl);
+        }
+
+        // Also set a backup in a data attribute
+        const form = document.getElementById("createPostForm");
+        if (form) {
+          form.dataset.selectedGif = gifUrl;
+        }
+
+        // Show preview
+        const mediaPreview = document.getElementById("mediaPreview");
+        if (mediaPreview) {
+          mediaPreview.innerHTML = `
+            <div class="mt-4 relative inline-block">
+                <img
+                    src="${gifUrl}"
+                    alt="Selected GIF: ${title}"
+                    class="max-w-full max-h-96 rounded-xl object-contain border border-gray-200 shadow-md"
+                    loading="lazy"
+                >
+                <button
+                    type="button"
+                    onclick="clearSelectedGif()"
+                    class="absolute top-2 right-2 bg-black/70 hover:bg-black/90 text-white rounded-full p-2 transition"
+                    title="Remove GIF"
+                >
+                    <i class="bi bi-x-lg text-sm"></i>
+                </button>
+                <div class="text-center mt-2 text-sm text-gray-600">
+                    GIF ${title ? "• " + title.substring(0, 30) + (title.length > 30 ? "..." : "") : ""}
+                </div>
+            </div>
+        `;
+        }
+
+        // Clear file input so GIF takes priority
+        const fileInput = document.getElementById("mediaInput");
+        if (fileInput) {
+          fileInput.value = "";
+        }
+
+        // Close GIF modal
+        const gifModal = document.getElementById("gifModal");
+        if (gifModal) {
+          gifModal.classList.add("hidden");
+          document.body.style.overflow = "";
+        }
+      }
+
+      // Update clearSelectedGif function
+      function clearSelectedGif() {
+        const hiddenInput = document.getElementById("selectedGifUrl");
+        if (hiddenInput) {
+          hiddenInput.value = "";
+          console.log("GIF URL cleared");
+        }
+
+        const form = document.getElementById("createPostForm");
+        if (form) {
+          delete form.dataset.selectedGif;
+        }
+
+        const mediaPreview = document.getElementById("mediaPreview");
+        if (mediaPreview) {
+          mediaPreview.innerHTML = "";
+        }
+      }
+
+      // ========================================
+      // ADD FORM SUBMISSION DEBUGGING
+      // ========================================
+
+      // Add this to debug form submissions
+      document.addEventListener("DOMContentLoaded", function () {
+        const createPostForm = document.getElementById("createPostForm");
+        if (createPostForm) {
+          createPostForm.addEventListener("submit", function (e) {
+            console.log("Form submission data:");
+            const formData = new FormData(this);
+            for (let [key, value] of formData.entries()) {
+              console.log(`  ${key}:`, value);
+            }
+
+            // Check if GIF URL is included
+            const gifUrlInput = document.getElementById("selectedGifUrl");
+            if (gifUrlInput && gifUrlInput.value) {
+              console.log("GIF URL included in submission:", gifUrlInput.value);
+            }
+          });
+        }
+      });
+
+      // ========================================
+      // CSS FOR POST TEXT TRUNCATION
+      // ========================================
+
+      // Add CSS for truncated text
+      const style = document.createElement("style");
+      style.textContent = `
+    /* Post text truncation */
+    .post-text.truncated {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-height: 4.5em;
+        line-height: 1.5em;
+    }
+
+    .see-more-btn {
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+    .see-more-btn:hover {
+        text-decoration: underline;
+    }
+
+    /* Edit modal styles */
+    #editPostModal .modal-dialog {
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+
+    #editPostContent {
+        min-height: 120px;
+        max-height: 300px;
+        resize: vertical;
+    }
+
+    /* Post deletion animation */
+    .post-card {
+        transition: all 0.3s ease;
+    }
+
+    /* Ensure dropdown menus work properly */
+    .dropdown:hover .dropdown-menu {
+        display: block;
+    }
+`;
+      document.head.appendChild(style);
+
+      // ========================================
+      // SIMPLE TOAST FUNCTION (if not defined)
+      // ========================================
+
+      // Add this simple Toast function if it doesn't exist
+      if (typeof Toast === "undefined") {
+        window.Toast = {
+          show: function (message, type = "info") {
+            const toast = document.createElement("div");
+            toast.className = `fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-strong text-white animate-fade-in ${
+              type === "success"
+                ? "bg-green-500"
+                : type === "danger"
+                  ? "bg-red-500"
+                  : type === "warning"
+                    ? "bg-yellow-500"
+                    : "bg-blue-500"
+            }`;
+            toast.textContent = message;
+            toast.setAttribute("role", "alert");
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+              toast.style.opacity = "0";
+              toast.style.transform = "translateY(-10px)";
+              setTimeout(() => toast.remove(), 300);
+            }, 3000);
+          },
+        };
+      }
+
+      // ========================================
+      // LOADER FUNCTION (if not defined)
+      // ========================================
+
+      // Add this simple Loader function if it doesn't exist
+      if (typeof Loader === "undefined") {
+        window.Loader = {
+          quick: function (button, action = "show") {
+            if (action === "show") {
+              const originalText = button.innerHTML;
+              button.dataset.originalText = originalText;
+              button.innerHTML = `<span class="inline-flex items-center gap-1"><span class="tiny-loader xs white"></span>${button.textContent.trim()}</span>`;
+              button.disabled = true;
+            } else {
+              if (button.dataset.originalText) {
+                button.innerHTML = button.dataset.originalText;
+                delete button.dataset.originalText;
+              }
+              button.disabled = false;
+            }
+          },
+        };
+      }
+
+      // ========================================
+      // MOBILE MENU FIXES
+      // ========================================
+
+      // Ensure mobile menu functions exist
+      if (typeof window.toggleMobileMenu === "undefined") {
+        window.toggleMobileMenu = function () {
+          const overlay = document.getElementById("mobileSidebarOverlay");
+          const sidebar = document.getElementById("mobileSidebar");
+
+          if (!overlay || !sidebar) {
+            console.error("Mobile menu elements not found!");
+            return;
+          }
+
+          // Toggle display
+          if (
+            overlay.style.display === "block" ||
+            overlay.classList.contains("block")
+          ) {
+            overlay.style.display = "none";
+            overlay.classList.remove("block");
+            sidebar.classList.remove("translate-x-0");
+            sidebar.classList.add("-translate-x-full");
+          } else {
+            overlay.style.display = "block";
+            overlay.classList.add("block");
+            sidebar.classList.remove("-translate-x-full");
+            sidebar.classList.add("translate-x-0");
+          }
+        };
+
+        // Add ESC key to close mobile menu
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape") {
+            const overlay = document.getElementById("mobileSidebarOverlay");
+            if (
+              overlay &&
+              (overlay.style.display === "block" ||
+                overlay.classList.contains("block"))
+            ) {
+              window.toggleMobileMenu();
+            }
+          }
+        });
+
+        // Close mobile menu when clicking outside
+        document
+          .getElementById("mobileSidebarOverlay")
+          ?.addEventListener("click", (e) => {
+            if (e.target.id === "mobileSidebarOverlay") {
+              window.toggleMobileMenu();
+            }
+          });
+      }
+
+      console.log("Edit/Delete and GIF functionality loaded successfully");
+    </script>
+
+<script>
+      // Initialize the full Messenger system after everything loads
+      window.addEventListener("load", function () {
+        console.log("Page fully loaded, initializing advanced Messenger...");
+
+        // Load the messenger.js script dynamically
+        if (typeof Messenger === "undefined") {
+          const script = document.createElement("script");
+          script.src =
+            '{{ url_for("static", filename="assets/js/messenger.js") }}';
+          script.onload = function () {
+            console.log("Messenger.js loaded, initializing...");
+            // Initialize with delay to ensure everything is ready
+            setTimeout(() => {
+              if (
+                typeof Messenger !== "undefined" &&
+                typeof Messenger.init === "function"
+              ) {
+                Messenger.init();
+                console.log("✅ Messenger system fully initialized");
+              }
+            }, 500);
+          };
+          script.onerror = function () {
+            console.error(
+              "Failed to load messenger.js, using basic functionality",
+            );
+          };
+          document.head.appendChild(script);
+        } else {
+          // Messenger already loaded (might be inlined)
+          setTimeout(() => {
+            if (typeof Messenger.init === "function") {
+              Messenger.init();
+              console.log("✅ Messenger system initialized from existing");
+            }
+          }, 500);
+        }
+      });
+
+      // Fallback in case Messenger doesn't load
+      setTimeout(function () {
+        if (typeof Messenger === "undefined") {
+          console.warn(
+            "Messenger not loaded after 3 seconds, using basic functions only",
+          );
+
+          // Make sure basic functions are available
+          if (typeof window.openMessenger === "undefined") {
+            window.openMessenger = function (friendId = null) {
+              const popup = document.getElementById("messengerPopup");
+              if (popup) popup.classList.remove("hidden");
+            };
+          }
+
+          if (typeof window.closeMessenger === "undefined") {
+            window.closeMessenger = function () {
+              const popup = document.getElementById("messengerPopup");
+              if (popup) popup.classList.add("hidden");
+            };
+          }
+        }
+      }, 3000);
+
+      document.addEventListener("DOMContentLoaded", function () {
+        const closeGifBtn = document.getElementById("closeGifModal");
+        if (closeGifBtn) {
+          closeGifBtn.addEventListener("click", function () {
+            if (typeof Messenger !== "undefined" && Messenger.closeGifPicker) {
+              Messenger.closeGifPicker();
+            } else {
+              const gifModal = document.getElementById("gifModal");
+              if (gifModal) {
+                gifModal.classList.add("hidden");
+                document.body.style.overflow = "";
+              }
+            }
+          });
+        }
+      });
+    </script>
+
+<script>
+      // === FIXED EMOJI PICKER FOR POST CREATION ===
+      document.addEventListener("DOMContentLoaded", function () {
+        // Function to attach emoji-click listener to the picker
+        function attachEmojiListener() {
+          const picker = document.querySelector("emoji-picker");
+          if (!picker) return;
+
+          // Remove any existing listener to avoid duplicates
+          picker.removeEventListener("emoji-click", handleEmojiClick);
+
+          // Add the correct listener for current emoji-picker-element version
+          picker.addEventListener("emoji-click", handleEmojiClick);
+        }
+
+        // Handler: Insert selected emoji at cursor position in the active textarea
+        function handleEmojiClick(event) {
+          // Find the active textarea (post creation or edit)
+          const textarea =
+            document.querySelector(
+              '#postModal textarea[name="post_content"]',
+            ) ||
+            document.querySelector('#editPostModal textarea[name="content"]');
+
+          if (!textarea || !event.detail?.emoji?.unicode) return;
+
+          const emoji = event.detail.emoji.unicode;
+
+          // Insert emoji at cursor
+          const start = textarea.selectionStart;
+          const end = textarea.selectionEnd;
+          const value = textarea.value;
+
+          textarea.value =
+            value.substring(0, start) + emoji + value.substring(end);
+
+          // Move cursor after the inserted emoji
+          const newPos = start + emoji.length;
+          textarea.selectionStart = textarea.selectionEnd = newPos;
+
+          // Focus and trigger input for auto-resize/validation
+          textarea.focus();
+          textarea.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+
+        // Open post modal → attach listener when modal is shown
+        const postModal = document.getElementById("postModal");
+        if (postModal) {
+          // Use event delegation or direct listener for modal show
+          postModal.addEventListener("shown.bs.modal", attachEmojiListener); // If using Bootstrap
+          // Fallback: observe class changes (in case modal uses .hidden class)
+          const observer = new MutationObserver(() => {
+            if (!postModal.classList.contains("hidden")) {
+              attachEmojiListener();
+            }
+          });
+          observer.observe(postModal, {
+            attributes: true,
+            attributeFilter: ["class"],
+          });
+        }
+
+        // Also attach if emoji button is clicked directly
+        document.addEventListener("click", function (e) {
+          if (
+            e.target.closest(".composer-btn") &&
+            e.target
+              .closest(".composer-btn")
+              .querySelector(".bi-emoji-smile-fill")
+          ) {
+            setTimeout(attachEmojiListener, 300); // Small delay to ensure picker is rendered
+          }
+        });
+      });
+    </script>
+
+<script>
+      function openGifPicker() {
+        const gifModal = document.getElementById("gifModal");
+        if (gifModal) {
+          gifModal.classList.remove("hidden");
+          document.body.style.overflow = "hidden";
+
+          // Reset to trending when opening
+          gifCurrentOffset = 0;
+          document.getElementById("gifGrid").innerHTML = "";
+          document.getElementById("gifSearchInput").value = "";
+          loadTrendingGifs();
+
+          setTimeout(() => {
+            document.getElementById("gifSearchInput").focus();
+          }, 100);
+        }
+      }
+
+      function closeGifModal() {
+        const gifModal = document.getElementById("gifModal");
+        if (gifModal) {
+          gifModal.classList.add("hidden");
+          document.body.style.overflow = "";
+        }
+      }
+    </script>

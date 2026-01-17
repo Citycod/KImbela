@@ -22,43 +22,41 @@ messaging = Blueprint("messaging", __name__)
 
 # Configuration
 ALLOWED_EXTENSIONS = {
-    'image': {'jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'},
-    'video': {'mp4', 'webm', 'ogg', 'mov', 'avi'},
-    'audio': {'mp3', 'wav', 'ogg', 'm4a', 'webm'},
-    'document': {'pdf', 'doc', 'docx', 'txt', 'xls', 'xlsx', 'ppt', 'pptx'}
+    "image": {"jpg", "jpeg", "png", "gif", "webp", "bmp"},
+    "video": {"mp4", "webm", "ogg", "mov", "avi"},
+    "audio": {"mp3", "wav", "ogg", "m4a", "webm"},
+    "document": {"pdf", "doc", "docx", "txt", "xls", "xlsx", "ppt", "pptx"},
 }
 
 MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB
 MESSAGES_PER_PAGE = 50
 
 
-
 load_dotenv()
 
 # GIPHY API Configuration
-GIPHY_API_KEY = os.getenv('GIPHY_API_KEY')
-
+GIPHY_API_KEY = os.getenv("GIPHY_API_KEY")
 
 
 # ========== HELPER FUNCTIONS ==========
-def allowed_file(filename, file_type='image'):
+def allowed_file(filename, file_type="image"):
     """Check if file extension is allowed"""
-    if '.' not in filename:
+    if "." not in filename:
         return False
-    ext = filename.rsplit('.', 1)[1].lower()
+    ext = filename.rsplit(".", 1)[1].lower()
     return ext in ALLOWED_EXTENSIONS.get(file_type, set())
 
 
 def generate_unique_filename(filename):
     """Generate a unique filename to prevent collisions"""
-    ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
+    ext = filename.rsplit(".", 1)[1].lower() if "." in filename else ""
     unique_id = uuid.uuid4().hex
     return f"{unique_id}.{ext}" if ext else unique_id
 
 
-def save_file(file, file_type='image'):
+def save_file(file, file_type="image"):
     """Save uploaded file and return URL"""
-    if not file or file.filename == '':
+    if not file or file.filename == "":
         return None
 
     # Validate file size
@@ -67,14 +65,16 @@ def save_file(file, file_type='image'):
     file.seek(0)
 
     if file_size > MAX_FILE_SIZE:
-        raise ValueError(f"File too large. Maximum size is {MAX_FILE_SIZE // (1024 * 1024)}MB")
+        raise ValueError(
+            f"File too large. Maximum size is {MAX_FILE_SIZE // (1024 * 1024)}MB"
+        )
 
     # Generate secure filename
     original_filename = secure_filename(file.filename)
     unique_filename = generate_unique_filename(original_filename)
 
     # Create directory if it doesn't exist
-    upload_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], file_type)
+    upload_dir = os.path.join(current_app.config["UPLOAD_FOLDER"], file_type)
     os.makedirs(upload_dir, exist_ok=True)
 
     # Save file
@@ -82,13 +82,12 @@ def save_file(file, file_type='image'):
     file.save(file_path)
 
     # Process image if needed (resize, compress)
-    if file_type == 'image':
+    if file_type == "image":
         process_image(file_path)
 
     # Return URL
     # return url_for('messaging.uploaded_file', file_type=file_type, filename=unique_filename, _external=True)
     return f"/uploads/{file_type}/{unique_filename}"
-
 
 
 def process_image(file_path):
@@ -103,16 +102,16 @@ def process_image(file_path):
                 img.thumbnail(max_size, Image.Resampling.LANCZOS)
 
             # Decide output format based on extension
-            if ext in ('.jpg', '.jpeg'):
-                if img.mode in ('RGBA', 'LA', 'P'):
-                    img = img.convert('RGB')
-                img.save(file_path, format='JPEG', quality=85, optimize=True)
+            if ext in (".jpg", ".jpeg"):
+                if img.mode in ("RGBA", "LA", "P"):
+                    img = img.convert("RGB")
+                img.save(file_path, format="JPEG", quality=85, optimize=True)
 
-            elif ext == '.png':
-                img.save(file_path, format='PNG', optimize=True)
+            elif ext == ".png":
+                img.save(file_path, format="PNG", optimize=True)
 
-            elif ext == '.webp':
-                img.save(file_path, format='WEBP', quality=85, method=6)
+            elif ext == ".webp":
+                img.save(file_path, format="WEBP", quality=85, method=6)
 
             else:
                 # Unknown ext: don't rewrite the file
@@ -120,7 +119,6 @@ def process_image(file_path):
 
     except Exception as e:
         print(f"Error processing image: {e}")
-
 
 
 # ========== API ROUTES ==========
@@ -135,18 +133,28 @@ def get_friends_for_messaging():
                 continue
 
             # Get last message
-            last_message = Message.query.filter(
-                or_(
-                    and_(Message.sender_id == current_user.id, Message.receiver_id == friend.id),
-                    and_(Message.sender_id == friend.id, Message.receiver_id == current_user.id)
+            last_message = (
+                Message.query.filter(
+                    or_(
+                        and_(
+                            Message.sender_id == current_user.id,
+                            Message.receiver_id == friend.id,
+                        ),
+                        and_(
+                            Message.sender_id == friend.id,
+                            Message.receiver_id == current_user.id,
+                        ),
+                    )
                 )
-            ).order_by(Message.timestamp.desc()).first()
+                .order_by(Message.timestamp.desc())
+                .first()
+            )
 
             # Get unread message count
             unread_count = Message.query.filter(
                 Message.sender_id == friend.id,
                 Message.receiver_id == current_user.id,
-                Message.status == 'delivered'
+                Message.status == "delivered",
             ).count()
 
             # Get friend's online status
@@ -156,23 +164,31 @@ def get_friends_for_messaging():
             last_seen = friend.last_seen.isoformat() if friend.last_seen else None
 
             # Get last message time
-            last_message_time = last_message.timestamp.isoformat() if last_message else None
-            last_message_text = last_message.content[:50] + '...' if last_message and len(
-                last_message.content) > 50 else last_message.content if last_message else None
+            last_message_time = (
+                last_message.timestamp.isoformat() if last_message else None
+            )
+            last_message_text = (
+                last_message.content[:50] + "..."
+                if last_message and len(last_message.content) > 50
+                else last_message.content if last_message else None
+            )
 
-            friends.append({
-                "id": friend.id,
-                "name": friend.full_name,
-                "avatar": friend.profile_pic or url_for("static", filename="assets/img/default-avatar.png"),
-                "online": is_online,
-                "last_seen": last_seen,
-                "last_message": last_message_text,
-                "last_message_time": last_message_time,
-                "unread_count": unread_count
-            })
+            friends.append(
+                {
+                    "id": friend.id,
+                    "name": friend.full_name,
+                    "avatar": friend.profile_pic
+                    or url_for("static", filename="assets/img/default-avatar.png"),
+                    "online": is_online,
+                    "last_seen": last_seen,
+                    "last_message": last_message_text,
+                    "last_message_time": last_message_time,
+                    "unread_count": unread_count,
+                }
+            )
 
         # Sort by last message time (most recent first)
-        friends.sort(key=lambda x: x['last_message_time'] or '', reverse=True)
+        friends.sort(key=lambda x: x["last_message_time"] or "", reverse=True)
 
         return jsonify({"success": True, "friends": friends})
     except Exception as e:
@@ -192,18 +208,27 @@ def get_messages_with_friend(friend_id):
             return jsonify({"success": False, "error": "Cannot message this user"}), 403
 
         if not current_user.is_friend_with(friend):
-            return jsonify({"success": False, "error": "You must be friends to message"}), 403
+            return (
+                jsonify({"success": False, "error": "You must be friends to message"}),
+                403,
+            )
 
         # Get pagination parameters
-        page = request.args.get('page', 1, type=int)
-        limit = request.args.get('limit', MESSAGES_PER_PAGE, type=int)
-        before = request.args.get('before', None)
+        page = request.args.get("page", 1, type=int)
+        limit = request.args.get("limit", MESSAGES_PER_PAGE, type=int)
+        before = request.args.get("before", None)
 
         # Build query
         query = Message.query.filter(
             or_(
-                and_(Message.sender_id == current_user.id, Message.receiver_id == friend_id),
-                and_(Message.sender_id == friend_id, Message.receiver_id == current_user.id)
+                and_(
+                    Message.sender_id == current_user.id,
+                    Message.receiver_id == friend_id,
+                ),
+                and_(
+                    Message.sender_id == friend_id,
+                    Message.receiver_id == current_user.id,
+                ),
             )
         )
 
@@ -213,18 +238,14 @@ def get_messages_with_friend(friend_id):
 
         # Order and paginate
         messages = query.order_by(Message.timestamp.desc()).paginate(
-            page=page,
-            per_page=limit,
-            error_out=False
+            page=page, per_page=limit, error_out=False
         )
 
         # Mark unread messages as read
         if page == 1:  # Only mark as read when viewing latest messages
             Message.query.filter_by(
-                sender_id=friend_id,
-                receiver_id=current_user.id,
-                status='delivered'
-            ).update({'status': 'read'})
+                sender_id=friend_id, receiver_id=current_user.id, status="delivered"
+            ).update({"status": "read"})
             db.session.commit()
 
         # Prepare response - FIXED: Handle metadata properly
@@ -239,16 +260,19 @@ def get_messages_with_friend(friend_id):
                 "timestamp": msg.timestamp.isoformat() if msg.timestamp else None,
                 "status": msg.status,
                 "sender_name": msg.sender.full_name if msg.sender else None,
-                "sender_avatar": msg.sender.profile_pic or url_for("static",
-                                                                   filename="assets/img/default-avatar.png") if msg.sender else url_for(
-                    "static", filename="assets/img/default-avatar.png")
+                "sender_avatar": (
+                    msg.sender.profile_pic
+                    or url_for("static", filename="assets/img/default-avatar.png")
+                    if msg.sender
+                    else url_for("static", filename="assets/img/default-avatar.png")
+                ),
             }
 
             # Handle metadata carefully
             if msg.message_data:  # CHANGED FROM msg.metadata
                 if isinstance(msg.message_data, dict):
                     message_data["metadata"] = msg.message_data
-                elif hasattr(msg.message_data, 'copy'):
+                elif hasattr(msg.message_data, "copy"):
                     message_data["metadata"] = msg.message_data.copy()
                 else:
                     try:
@@ -263,13 +287,15 @@ def get_messages_with_friend(friend_id):
 
             messages_data.append(message_data)
 
-        return jsonify({
-            "success": True,
-            "messages": messages_data,
-            "has_more": messages.has_next,
-            "next_page": messages.next_num if messages.has_next else None,
-            "total": messages.total
-        })
+        return jsonify(
+            {
+                "success": True,
+                "messages": messages_data,
+                "has_more": messages.has_next,
+                "next_page": messages.next_num if messages.has_next else None,
+                "total": messages.total,
+            }
+        )
 
     except Exception as e:
         print(f"❌ Error getting messages: {e}")
@@ -282,23 +308,22 @@ def mark_messages_as_read(friend_id):
     """Mark all messages from friend as read"""
     try:
         updated = Message.query.filter_by(
-            sender_id=friend_id,
-            receiver_id=current_user.id,
-            status='delivered'
-        ).update({'status': 'read'})
+            sender_id=friend_id, receiver_id=current_user.id, status="delivered"
+        ).update({"status": "read"})
 
         db.session.commit()
 
         # Emit read receipt
-        socketio.emit('messages_read', {
-            'friend_id': current_user.id,
-            'message_ids': []  # You can pass specific message IDs if needed
-        }, room=f'user_{friend_id}')
+        socketio.emit(
+            "messages_read",
+            {
+                "friend_id": current_user.id,
+                "message_ids": [],  # You can pass specific message IDs if needed
+            },
+            room=f"user_{friend_id}",
+        )
 
-        return jsonify({
-            "success": True,
-            "marked_read": updated
-        })
+        return jsonify({"success": True, "marked_read": updated})
     except Exception as e:
         print(f"❌ Error marking messages as read: {e}")
         db.session.rollback()
@@ -313,20 +338,25 @@ def send_message():
         data = request.get_json()
 
         if not data:
-                return jsonify({"success": False, "error": "No data provided"}), 400
-
+            return jsonify({"success": False, "error": "No data provided"}), 400
 
         try:
-            friend_id = data.get('friend_id') or data.get('receiver_id')
-            content = data.get('content', '').strip()
-            message_type = data.get('type', 'text')
-            metadata = data.get('metadata', {})
+            friend_id = data.get("friend_id") or data.get("receiver_id")
+            content = data.get("content", "").strip()
+            message_type = data.get("type", "text")
+            metadata = data.get("metadata", {})
 
             if not friend_id:
-                return jsonify({"success": False, "error": "No recipient specified"}), 400
+                return (
+                    jsonify({"success": False, "error": "No recipient specified"}),
+                    400,
+                )
 
-            if not content and message_type == 'text':
-                return jsonify({"success": False, "error": "Message content is required"}), 400
+            if not content and message_type == "text":
+                return (
+                    jsonify({"success": False, "error": "Message content is required"}),
+                    400,
+                )
 
             friend = User.query.get(friend_id)
             if not friend:
@@ -334,10 +364,18 @@ def send_message():
 
             # Check permissions
             if not current_user.can_interact_with(friend):
-                return jsonify({"success": False, "error": "Cannot message this user"}), 403
+                return (
+                    jsonify({"success": False, "error": "Cannot message this user"}),
+                    403,
+                )
 
             if not current_user.is_friend_with(friend):
-                return jsonify({"success": False, "error": "You must be friends to message"}), 403
+                return (
+                    jsonify(
+                        {"success": False, "error": "You must be friends to message"}
+                    ),
+                    403,
+                )
 
             # Create message - FIXED: Store metadata as dict (JSON column handles it)
             message = Message(
@@ -345,19 +383,18 @@ def send_message():
                 receiver_id=friend_id,
                 content=content,
                 message_type=message_type,
-                message_data=metadata if metadata else None,   # Store as dict directly
-                status='sent'
+                message_data=metadata if metadata else None,  # Store as dict directly
+                status="sent",
             )
 
             db.session.add(message)
             db.session.commit()
         except Exception as e:
-            print(f'❌ Error saving messageeeeeeeeeeeeeeeee to db: {e}')
-
+            print(f"❌ Error saving messageeeeeeeeeeeeeeeee to db: {e}")
 
             # Update status based on friend's online status
             if friend.is_online:
-                message.status = 'delivered'
+                message.status = "delivered"
                 db.session.commit()
 
             # Prepare response
@@ -367,10 +404,13 @@ def send_message():
                 "receiver_id": message.receiver_id,
                 "content": message.content,
                 "type": message.message_type,
-                "timestamp": message.timestamp.isoformat() if message.timestamp else None,
+                "timestamp": (
+                    message.timestamp.isoformat() if message.timestamp else None
+                ),
                 "status": message.status,
                 "sender_name": current_user.full_name,
-                "sender_avatar": current_user.profile_pic or url_for("static", filename="assets/img/default-avatar.png")
+                "sender_avatar": current_user.profile_pic
+                or url_for("static", filename="assets/img/default-avatar.png"),
             }
 
             # Handle metadata for response
@@ -387,8 +427,10 @@ def send_message():
 
             # Emit via Socket.IO
             if socketio:
-                socketio.emit('new_message', message_data, room=f'user_{friend_id}')
-                socketio.emit('new_message', message_data, room=f'user_{current_user.id}')
+                socketio.emit("new_message", message_data, room=f"user_{friend_id}")
+                socketio.emit(
+                    "new_message", message_data, room=f"user_{current_user.id}"
+                )
 
             return jsonify({"success": True, "message": message_data})
 
@@ -396,9 +438,6 @@ def send_message():
         print(f"❌ Error sending message: {e}")
         db.session.rollback()
         return jsonify({"success": False, "error": str(e)}), 500
-
-
-
 
 
 # @messaging.route('/uploads/<file_type>/<filename>')
@@ -414,25 +453,24 @@ def send_message():
 #         abort(404)
 
 
-
-
-
 @messaging.route("/api/messaging/upload", methods=["POST"])
 @login_required
 def upload_file():
     """Upload a file and return clean URL"""
     try:
-        if 'file' not in request.files:
+        if "file" not in request.files:
             return jsonify({"success": False, "error": "No file provided"}), 400
 
-        file = request.files['file']
-        to_id = request.form.get('to_id', type=int)
-        file_type = request.form.get('type', 'document')  # image, video, audio, document
+        file = request.files["file"]
+        to_id = request.form.get("to_id", type=int)
+        file_type = request.form.get(
+            "type", "document"
+        )  # image, video, audio, document
 
         if not to_id:
             return jsonify({"success": False, "error": "No recipient specified"}), 400
 
-        if not file or file.filename == '':
+        if not file or file.filename == "":
             return jsonify({"success": False, "error": "No file selected"}), 400
 
         # Save file and get URL
@@ -440,19 +478,18 @@ def upload_file():
         if not file_url:
             return jsonify({"success": False, "error": "Failed to save file"}), 500
 
-        return jsonify({
-            "success": True,
-            "url": file_url,
-            "filename": file.filename,
-            "type": file_type
-        })
+        return jsonify(
+            {
+                "success": True,
+                "url": file_url,
+                "filename": file.filename,
+                "type": file_type,
+            }
+        )
 
     except Exception as e:
         print(f"❌ Error uploading file: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
-
-
-
 
 
 @messaging.route("/api/messaging/unread_count")
@@ -461,8 +498,7 @@ def get_unread_message_count():
     """Get total unread message count"""
     try:
         unread_count = Message.query.filter_by(
-            receiver_id=current_user.id,
-            status='delivered'
+            receiver_id=current_user.id, status="delivered"
         ).count()
 
         return jsonify({"success": True, "unread_count": unread_count})
@@ -538,9 +574,6 @@ def get_unread_message_count():
 #         return jsonify({"success": False, "error": str(e)}), 500
 
 
-
-
-
 # ========== HELPER FUNCTIONS ==========
 def notify_friends_online(user_id):
     """Notify user's friends that they're online"""
@@ -551,14 +584,18 @@ def notify_friends_online(user_id):
 
         for friend in user.friends:
             if user.can_interact_with(friend):
-                socketio.emit('friend_online', {
-                    'user_id': user_id,
-                    'user_name': user.full_name,
-                    'timestamp': datetime.utcnow().isoformat()
-                }, room=f'user_{friend.id}')
+                socketio.emit(
+                    "friend_online",
+                    {
+                        "user_id": user_id,
+                        "user_name": user.full_name,
+                        "timestamp": datetime.utcnow().isoformat(),
+                    },
+                    room=f"user_{friend.id}",
+                )
 
     except Exception as e:
-        print(f'❌ Error notifying friends online: {e}')
+        print(f"❌ Error notifying friends online: {e}")
 
 
 def notify_friends_offline(user_id):
@@ -570,82 +607,94 @@ def notify_friends_offline(user_id):
 
         for friend in user.friends:
             if user.can_interact_with(friend):
-                socketio.emit('friend_offline', {
-                    'user_id': user_id,
-                    'user_name': user.full_name,
-                    'timestamp': datetime.utcnow().isoformat()
-                }, room=f'user_{friend.id}')
+                socketio.emit(
+                    "friend_offline",
+                    {
+                        "user_id": user_id,
+                        "user_name": user.full_name,
+                        "timestamp": datetime.utcnow().isoformat(),
+                    },
+                    room=f"user_{friend.id}",
+                )
 
     except Exception as e:
-        print(f'❌ Error notifying friends offline: {e}')
+        print(f"❌ Error notifying friends offline: {e}")
 
 
-@messaging.route('/api/gifs')
+@messaging.route("/api/gifs")
 @login_required
 def get_gifs():
     """Get GIFs from GIPHY API"""
     try:
-        query = request.args.get('q', 'trending')
-        limit = request.args.get('limit', 20)
-        offset = request.args.get('offset', 0)
+        query = request.args.get("q", "trending")
+        limit = request.args.get("limit", 20)
+        offset = request.args.get("offset", 0)
 
-        if query == 'trending':
-            url = f'https://api.giphy.com/v1/gifs/trending'
+        if query == "trending":
+            url = f"https://api.giphy.com/v1/gifs/trending"
         else:
-            url = f'https://api.giphy.com/v1/gifs/search'
+            url = f"https://api.giphy.com/v1/gifs/search"
 
         params = {
-            'api_key': GIPHY_API_KEY,
-            'limit': limit,
-            'offset': offset,
-            'rating': 'g',
-            'lang': 'en'
+            "api_key": GIPHY_API_KEY,
+            "limit": limit,
+            "offset": offset,
+            "rating": "g",
+            "lang": "en",
         }
 
-        if query != 'trending':
-            params['q'] = query
+        if query != "trending":
+            params["q"] = query
 
         response = requests.get(url, params=params, timeout=10)
         data = response.json()
 
         gifs = []
-        for gif in data.get('data', []):
-            gifs.append({
-                'id': gif.get('id'),
-                'title': gif.get('title'),
-                'url': gif.get('images', {}).get('original', {}).get('url'),
-                'preview_url': gif.get('images', {}).get('fixed_height_small', {}).get('url'),
-                'width': gif.get('images', {}).get('original', {}).get('width'),
-                'height': gif.get('images', {}).get('original', {}).get('height')
-            })
+        for gif in data.get("data", []):
+            gifs.append(
+                {
+                    "id": gif.get("id"),
+                    "title": gif.get("title"),
+                    "url": gif.get("images", {}).get("original", {}).get("url"),
+                    "preview_url": gif.get("images", {})
+                    .get("fixed_height_small", {})
+                    .get("url"),
+                    "width": gif.get("images", {}).get("original", {}).get("width"),
+                    "height": gif.get("images", {}).get("original", {}).get("height"),
+                }
+            )
 
-        return jsonify({
-            'success': True,
-            'gifs': gifs,
-            'pagination': data.get('pagination', {})
-        })
+        return jsonify(
+            {"success": True, "gifs": gifs, "pagination": data.get("pagination", {})}
+        )
 
     except Exception as e:
         print(f"❌ Error fetching GIFs: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
-@messaging.route('/api/messaging/search')
+@messaging.route("/api/messaging/search")
 @login_required
 def search_messages():
     """Search messages"""
     try:
-        query = request.args.get('q', '').strip()
-        friend_id = request.args.get('friend_id')
+        query = request.args.get("q", "").strip()
+        friend_id = request.args.get("friend_id")
 
         if not query or len(query) < 2:
-            return jsonify({'success': False, 'error': 'Query too short'}), 400
+            return jsonify({"success": False, "error": "Query too short"}), 400
 
         # Build query
         search_query = Message.query.filter(
-            ((Message.sender_id == current_user.id) & (Message.receiver_id == friend_id)) |
-            ((Message.sender_id == friend_id) & (Message.receiver_id == current_user.id))
-        ).filter(Message.content.ilike(f'%{query}%'))
+            (
+                (Message.sender_id == current_user.id)
+                & (Message.receiver_id == friend_id)
+            )
+            | (
+                (Message.sender_id == friend_id)
+                & (Message.receiver_id == current_user.id)
+            )
+        ).filter(Message.content.ilike(f"%{query}%"))
 
         if friend_id:
             search_query = search_query.filter(
@@ -656,23 +705,25 @@ def search_messages():
 
         results = []
         for msg in messages:
-            results.append({
-                'id': msg.id,
-                'content': msg.content,
-                'timestamp': msg.timestamp.isoformat(),
-                'sender_id': msg.sender_id,
-                'receiver_id': msg.receiver_id,
-                'is_mine': msg.sender_id == current_user.id
-            })
+            results.append(
+                {
+                    "id": msg.id,
+                    "content": msg.content,
+                    "timestamp": msg.timestamp.isoformat(),
+                    "sender_id": msg.sender_id,
+                    "receiver_id": msg.receiver_id,
+                    "is_mine": msg.sender_id == current_user.id,
+                }
+            )
 
-        return jsonify({'success': True, 'results': results})
+        return jsonify({"success": True, "results": results})
 
     except Exception as e:
         print(f"❌ Error searching messages: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
-@messaging.route('/api/messaging/delete/<int:message_id>', methods=['DELETE'])
+@messaging.route("/api/messaging/delete/<int:message_id>", methods=["DELETE"])
 @login_required
 def delete_message(message_id):
     """Delete a message"""
@@ -681,45 +732,45 @@ def delete_message(message_id):
 
         # Check permission
         if message.sender_id != current_user.id:
-            return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+            return jsonify({"success": False, "error": "Unauthorized"}), 403
 
         # Soft delete (update content)
-        message.content = '[Message deleted]'
+        message.content = "[Message deleted]"
         message.is_deleted = True
         db.session.commit()
 
         # Notify recipient via socket
-        socketio.emit('message_deleted', {
-            'message_id': message_id,
-            'timestamp': datetime.utcnow().isoformat()
-        }, room=f'user_{message.receiver_id}')
+        socketio.emit(
+            "message_deleted",
+            {"message_id": message_id, "timestamp": datetime.utcnow().isoformat()},
+            room=f"user_{message.receiver_id}",
+        )
 
-        return jsonify({'success': True})
+        return jsonify({"success": True})
 
     except Exception as e:
         print(f"❌ Error deleting message: {e}")
         db.session.rollback()
-        return jsonify({'success': False, 'error': str(e)}), 500
-
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 # Add to your Flask app
-@messaging.route('/api/messaging/unread-count')
+@messaging.route("/api/messaging/unread-count")
 @login_required
 def get_unread_count():
     try:
         # Use receiver_id and status != 'read'
         unread_count = Message.query.filter_by(
             receiver_id=current_user.id,
-            status='sent'  # or whatever status indicates "unread"
+            status="sent",  # or whatever status indicates "unread"
         ).count()
-        return jsonify({'unread_count': unread_count})
+        return jsonify({"unread_count": unread_count})
     except Exception as e:
         print(f"Error in get_unread_count: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": str(e)}), 500
 
 
-@messaging.route('/api/messaging/mark-read/<int:message_id>', methods=['POST'])
+@messaging.route("/api/messaging/mark-read/<int:message_id>", methods=["POST"])
 @login_required
 def mark_message_read(message_id):
     try:
@@ -727,17 +778,19 @@ def mark_message_read(message_id):
 
         # Check if current user is the receiver
         if message.receiver_id == current_user.id:
-            message.status = 'read'  # or 'delivered' depending on your logic
+            message.status = "read"  # or 'delivered' depending on your logic
             db.session.commit()
-            return jsonify({'success': True})
-        return jsonify({'error': 'Unauthorized'}), 403
+            return jsonify({"success": True})
+        return jsonify({"error": "Unauthorized"}), 403
 
     except Exception as e:
         print(f"Error in mark_message_read: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": str(e)}), 500
 
 
-@messaging.route('/api/messaging/mark-conversation-read/<int:sender_id>', methods=['POST'])
+@messaging.route(
+    "/api/messaging/mark-conversation-read/<int:sender_id>", methods=["POST"]
+)
 @login_required
 def mark_conversation_read(sender_id):
     try:
@@ -745,14 +798,14 @@ def mark_conversation_read(sender_id):
         messages = Message.query.filter_by(
             sender_id=sender_id,
             receiver_id=current_user.id,
-            status='sent'  # assuming 'sent' means unread
+            status="sent",  # assuming 'sent' means unread
         ).all()
 
         for message in messages:
-            message.status = 'read'
+            message.status = "read"
 
         db.session.commit()
-        return jsonify({'success': True, 'marked': len(messages)})
+        return jsonify({"success": True, "marked": len(messages)})
     except Exception as e:
         print(f"Error marking conversation as read: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": str(e)}), 500
