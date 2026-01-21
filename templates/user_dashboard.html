@@ -261,8 +261,7 @@
         <!-- Market Place -->
         <a
           href="{{ url_for('market.main_market') }}"
-          class="nav-item flex flex-col items-center px-2 lg:px-3 py-1 rounded-lg hover:bg-gradient-to-b hover:from-orange-50 hover:to-yellow-50 transition-all group"
-        >
+          class="nav-item flex flex-col items-center px-2 lg:px-3 py-1 rounded-lg hover:bg-gradient-to-b hover:from-orange-50 hover:to-yellow-50 transition-all group">
           <i
             class="bi bi-shop text-xl lg:text-2xl text-orange-500 group-hover:scale-110 group-hover:rotate-12 transition-all"
             style="font-size: 1rem"
@@ -508,6 +507,20 @@
     </div>
 </div>
 
+<!-- Second ad banner -->
+      <div class="second-ad-banner">
+        <div class="container">
+          <p class="ad-text">
+            <span class="banner-megaphone" aria-hidden="true">
+              <i class="bi bi-megaphone-fill banner-icon"></i>
+            </span>
+            Put your products in front of Kimbela users now
+          </p>
+          <p class="ad-subtext">Tap this banner to promote your brand, launch offers, and get featured placements.</p>
+          <p class="ad-cta">Click to advertise • Kimbela brands welcome</p>
+        </div>
+      </div>
+
     <!-- Messenger Popup - IMPROVED VERSION -->
     <!-- Replace your existing messenger popup with this enhanced version -->
     <!-- Messenger Popup - FIXED VERSION -->
@@ -526,6 +539,7 @@
           </button>
         </div>
       </div>
+
 
       <!-- Friends List -->
       <div id="friendList">
@@ -1099,84 +1113,7 @@
           data-next-cursor="{{ next_cursor }}"
         >
           <!-- PEOPLE YOU MAY KNOW -->
-          {% if random_three %}
-          <div
-            class="suggestions-section bg-white rounded-2xl shadow-soft p-4 mb-6"
-          >
-            <div class="flex justify-between items-center mb-3 sm:mb-4">
-              <h3 class="font-semibold text-lg">Say Hi to Someone New</h3>
-            </div>
-            <div class="relative">
-              <div
-                class="suggestions-track overflow-x-auto flex space-x-3 sm:space-x-4 pb-3 sm:pb-4 custom-scrollbar"
-                id="suggestionsTrack"
-              >
-                {% for user in random_three %}
-                <div
-                  class="suggestion-card bg-gray-50 rounded-2xl p-4 text-center flex-shrink-0 w-48 cursor-pointer card-hover"
-                  onclick="openProfileModal({{ user.id }})"
-                >
-                  <img
-                    src="{{ user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-                    alt="{{ user.first_name }}"
-                    class="w-20 h-20 rounded-full object-cover mx-auto mb-2 sm:mb-3"
-                  />
-                  <div class="suggestion-name font-semibold">
-                    {{ user.first_name }} {{ user.last_name }}
-                  </div>
-                  <div
-                    class="suggestion-mutual text-sm text-fb-text-light mb-3"
-                  >
-                    New to Kimbela
-                  </div>
-
-                  <!-- Dynamic Button based on status -->
-                  {% if user.friend_request_status == 'sent' %}
-                  <button
-                    class="btn-cancel-request w-full py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors"
-                    onclick="event.stopPropagation(); cancelFriendRequest({{ user.id }}, this)"
-                    data-user-id="{{ user.id }}"
-                  >
-                    <i class="bi bi-clock-history mr-1"></i> Cancel Request
-                  </button>
-                  {% elif user.friend_request_status == 'received' %}
-                  <div class="space-y-2">
-                    <button
-                      class="w-full py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
-                      onclick="event.stopPropagation(); acceptFriendRequest({{ user.id }}, this)"
-                    >
-                      <i class="bi bi-check-lg mr-1"></i> Accept
-                    </button>
-                    <button
-                      class="w-full py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors"
-                      onclick="event.stopPropagation(); declineFriendRequest({{ user.id }}, this)"
-                    >
-                      <i class="bi bi-x-lg mr-1"></i> Decline
-                    </button>
-                  </div>
-                  {% elif user.friend_request_status == 'friends' %}
-                  <button
-                    class="w-full py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
-                    onclick="event.stopPropagation(); window.openMessenger({{ user.id }})"
-                  >
-                    <i class="bi bi-chat-dots mr-1"></i> Message
-                  </button>
-                  {% else %}
-                  <button
-                    class="btn-add-friend w-full py-2 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
-                    onclick="event.stopPropagation(); addFriend({{ user.id }}, this)"
-                    data-user-id="{{ user.id }}"
-                    style="background: #ff7f50"
-                  >
-                    <i class="bi bi-person-plus mr-1"></i> Connect
-                  </button>
-                  {% endif %}
-                </div>
-                {% endfor %}
-              </div>
-            </div>
-          </div>
-          {% endif %}
+          
 
           <!-- INITIAL POSTS (Loaded server-side) -->
           {% if initial_posts %} {% for post in initial_posts %}
@@ -1420,7 +1357,7 @@
                   class="flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-1 md:py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 text-gray-600"
                 >
                   <i class="bi bi-chat text-sm md:text-base"></i>
-                  <span class="text-xs md:text-sm">Comment</span>
+                  <span class="text-xs md:text-sm">Chime</span>
                 </button>
               </div>
             </div>
@@ -1545,9 +1482,8 @@
 
       <!-- RIGHT SIDEBAR -->
       <div
-        class="hidden lg:block w-96 h-screen sticky top-16 overflow-y-auto custom-scrollbar bg-white border-l border-fb-border p-4"
-      >
-        <div class="flex justify-between items-center mb-3 sm:mb-4">
+        class="hidden lg:block w-96 h-screen sticky top-16 overflow-y-auto custom-scrollbar bg-white border-l border-fb-border p-4">
+        <!-- <div class="flex justify-between items-center mb-3 sm:mb-4">
           <h3 class="font-semibold">Friends</h3>
         </div>
         <div class="space-y-3">
@@ -1585,9 +1521,87 @@
             <p>No friends yet</p>
           </div>
           {% endif %}
-        </div>
+        </div> -->
 
-        <!-- Events Section -->
+        <!-- PEOPLE YOU MAY KNOW -->
+        
+        <h1 class="font-semibold text-lg">Say Hi to Someone New</h1>
+        {% if random_one %}
+          <div
+          class="suggestions-section bg-white rounded-2xl shadow-soft p-4 mb-6">
+          <div class="flex justify-between items-center mb-3 sm:mb-4">
+        </div>
+            <div class="relative">
+              <div
+                class="suggestions-track flex flex-col items-center space-y-4"
+                id="suggestionsTrack"
+              >
+                {% for user in random_one %}
+                <div
+                  class="suggestion-card bg-gray-50 rounded-2xl p-4 text-center w-full max-w-xs cursor-pointer card-hover"
+                  onclick="openProfileModal({{ user.id }})"
+                >
+                  <img
+                    src="{{ user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+                    alt="{{ user.first_name }}"
+                    class="w-20 h-20 rounded-full object-cover mx-auto mb-2 sm:mb-3"
+                  />
+                  <div class="suggestion-name font-semibold">
+                    {{ user.first_name }} {{ user.last_name }}
+                  </div>
+                  <div
+                    class="suggestion-mutual text-sm text-fb-text-light mb-3"
+                  >
+                    New to Kimbela
+                  </div>
+
+                  <!-- Dynamic Button based on status -->
+                  {% if user.friend_request_status == 'sent' %}
+                  <button
+                    class="btn-cancel-request w-full py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors"
+                    onclick="event.stopPropagation(); cancelFriendRequest({{ user.id }}, this)"
+                    data-user-id="{{ user.id }}"
+                  >
+                    <i class="bi bi-clock-history mr-1"></i> Cancel Request
+                  </button>
+                  {% elif user.friend_request_status == 'received' %}
+                  <div class="space-y-2">
+                    <button
+                      class="w-full py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                      onclick="event.stopPropagation(); acceptFriendRequest({{ user.id }}, this)"
+                    >
+                      <i class="bi bi-check-lg mr-1"></i> Accept
+                    </button>
+                    <button
+                      class="w-full py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors"
+                      onclick="event.stopPropagation(); declineFriendRequest({{ user.id }}, this)"
+                    >
+                      <i class="bi bi-x-lg mr-1"></i> Decline
+                    </button>
+                  </div>
+                  {% elif user.friend_request_status == 'friends' %}
+                  <button
+                    class="w-full py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
+                    onclick="event.stopPropagation(); window.openMessenger({{ user.id }})"
+                  >
+                    <i class="bi bi-chat-dots mr-1"></i> Message
+                  </button>
+                  {% else %}
+                  <button
+                    class="btn-add-friend w-full py-2 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                    onclick="event.stopPropagation(); addFriend({{ user.id }}, this)"
+                    data-user-id="{{ user.id }}"
+                    style="background: #ff7f50"
+                  >
+                    <i class="bi bi-person-plus mr-1"></i> Connect
+                  </button>
+                  {% endif %}
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+          {% endif %}
       </div>
     </div>
 
@@ -2804,5 +2818,97 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
     <!--}-->
     <!--</style>-->
     {% include 'partials/user_dashboard_body_scripts.html' %}
+
+
+    <style>
+      .second-ad-banner {
+      background: linear-gradient(90deg, #0ea5e9, #14b8a6, #f59e0b, #ef4444);
+      background-size: 400% 400%;
+      animation: gradientFlow 12s ease infinite;
+      color: white;
+      padding: 56px 0;
+      min-height: 180px;
+      text-align: center;
+      font-size: 1.6rem;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-shadow: 0 3px 12px rgba(0,0,0,0.5);
+      margin: 0;
+      border-radius: 0px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      position: relative;
+      overflow: hidden;
+    }
+    .second-ad-banner::after {
+      content: '★  KIMBELA ADVERTISING  ★';
+      position: absolute;
+      top: 16px;
+      right: 24px;
+      font-size: 1rem;
+      opacity: 0.7;
+      background: rgba(0,0,0,0.4);
+      padding: 6px 14px;
+      border-radius: 30px;
+    }
+    @keyframes gradientFlow {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    .ad-text {
+      font-size: 1.8rem;
+      margin: 0;
+      line-height: 1.4;
+      font-weight: 900;
+    }
+    .ad-subtext {
+      font-size: 1.1rem;
+      margin-top: 8px;
+      opacity: 0.95;
+      font-weight: 800;
+    }
+    .ad-cta {
+      margin-top: 14px;
+      font-size: 1.1rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+    .second-ad-banner + * {
+      margin-top: 0;
+    }
+    .banner-megaphone {
+      position: relative;
+      display: inline-block;
+      margin-right: 14px;
+      vertical-align: middle;
+    }
+    .banner-icon {
+      display: inline-block;
+      position: relative;
+      font-size: 3.2rem;
+      transform: rotate(-12deg);
+    }
+    .banner-megaphone::before,
+    .banner-megaphone::after {
+      content: "";
+      position: absolute;
+      right: -12px;
+      top: 2px;
+      width: 14px;
+      height: 14px;
+      border: 3px solid rgba(255, 255, 255, 0.95);
+      border-color: rgba(255, 255, 255, 0.95) rgba(255, 255, 255, 0.95) transparent transparent;
+      border-radius: 50%;
+      transform: rotate(20deg);
+      opacity: 0.85;
+    }
+    .banner-megaphone::after {
+      right: -26px;
+      top: -4px;
+      width: 18px;
+      height: 18px;
+      opacity: 0.7;
+    }
+    </style>
   </body>
 </html>

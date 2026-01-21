@@ -716,11 +716,11 @@ def user_dashboard():
         User.is_active == True,
     )
     eligible_count = suggestions_query.count()
-    random_three = []
+    random_one = []
     if eligible_count > 0:
-        offset = random.randint(0, max(eligible_count - 3, 0))
-        random_three = suggestions_query.offset(offset).limit(3).all()
-        for user in random_three:
+        offset = random.randint(0, max(eligible_count - 1, 0))
+        random_one = suggestions_query.offset(offset).limit(1).all()
+        for user in random_one:
             user.friend_request_status = current_user.get_friend_request_status(user.id)
 
     # Sponsored ads (example)
@@ -800,7 +800,7 @@ def user_dashboard():
         has_more=has_more,
         current_user=current_user,
         friends=friends,
-        random_three=random_three,
+        random_one=random_one,
         sponsored_ads=ads_data,
         csrf_token=generate_csrf(),
         default_avatar=url_for("static", filename="assets/img/default-avatar.png"),
@@ -1516,7 +1516,7 @@ def clear_dashboard_cache():
 #     )
 
 #     # Get only 3 random suggestions
-#     random_three = non_friend_query.order_by(db.func.random()).limit(3).all()
+#     random_one = non_friend_query.order_by(db.func.random()).limit(3).all()
 
 #     # If this is an AJAX request for infinite scroll, return JSON
 #     if request.headers.get("X-Requested-With") == "XMLHttpRequest":
@@ -1543,7 +1543,7 @@ def clear_dashboard_cache():
 #         has_more=has_more,
 #         current_user=current_user,
 #         friends=friends,
-#         random_three=random_three,
+#         random_one=random_one,
 #         csrf_token=generate_csrf(),
 #     )
 
