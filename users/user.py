@@ -12,7 +12,7 @@ from flask import (
 from datetime import date
 from urllib.parse import urlparse
 from sqlalchemy.orm import joinedload
-from sqlalchemy import func
+from sqlalchemy import func, or_
 
 from models import (
     MatchmakingPackage,
@@ -526,6 +526,8 @@ def mark_birthday_notifications_seen():
     except Exception as e:
         db.session.rollback()
         return jsonify({"success": False, "error": str(e)}), 500
+    
+    
 
 
 @user.route("/user_dashboard", methods=["GET", "POST"])
@@ -716,11 +718,11 @@ def user_dashboard():
         User.is_active == True,
     )
     eligible_count = suggestions_query.count()
-    random_one = []
+    random_five = []
     if eligible_count > 0:
-        offset = random.randint(0, max(eligible_count - 1, 0))
-        random_one = suggestions_query.offset(offset).limit(1).all()
-        for user in random_one:
+        offset = random.randint(0, max(eligible_count - 5, 0))
+        random_five = suggestions_query.offset(offset).limit(5).all()
+        for user in random_five:
             user.friend_request_status = current_user.get_friend_request_status(user.id)
 
     # Sponsored ads (example)
@@ -731,10 +733,38 @@ def user_dashboard():
             AdCampaign.start_date <= current_time,
             AdCampaign.end_date >= current_time,
         )
+        .filter(or_(AdCampaign.placement == None, AdCampaign.placement == "sponsored"))
         .order_by(AdCampaign.budget.desc())
         .limit(3)
         .all()
     )
+
+    placement_map = {
+        "top_banner": "dashboard-top",
+        "sidebar_banner": "dashboard-sidebar",
+        "vertical_banner": "dashboard-vertical",
+        "spotlight_banner": "dashboard-spotlight",
+    }
+    dashboard_ads = {}
+    for key, placement in placement_map.items():
+        banner_ad = (
+            AdCampaign.query.filter(
+                AdCampaign.status == "active",
+                AdCampaign.start_date <= current_time,
+                AdCampaign.end_date >= current_time,
+                AdCampaign.placement == placement,
+            )
+            .order_by(AdCampaign.budget.desc())
+            .first()
+        )
+        if banner_ad:
+            dashboard_ads[key] = {
+                "id": banner_ad.id,
+                "title": banner_ad.title or "Featured Offer",
+                "image_url": banner_ad.image
+                or "https://via.placeholder.com/1200x600/0f172a/ffffff?text=Kimbela+Ad",
+                "target_url": banner_ad.target_url or "#",
+            }
 
     ads_data = [
         {
@@ -800,8 +830,9 @@ def user_dashboard():
         has_more=has_more,
         current_user=current_user,
         friends=friends,
-        random_one=random_one,
+        random_five=random_five,
         sponsored_ads=ads_data,
+        dashboard_ads=dashboard_ads,
         csrf_token=generate_csrf(),
         default_avatar=url_for("static", filename="assets/img/default-avatar.png"),
     )
@@ -1516,7 +1547,7 @@ def clear_dashboard_cache():
 #     )
 
 #     # Get only 3 random suggestions
-#     random_one = non_friend_query.order_by(db.func.random()).limit(3).all()
+#     random_five = non_friend_query.order_by(db.func.random()).limit(3).all()
 
 #     # If this is an AJAX request for infinite scroll, return JSON
 #     if request.headers.get("X-Requested-With") == "XMLHttpRequest":
@@ -1543,7 +1574,7 @@ def clear_dashboard_cache():
 #         has_more=has_more,
 #         current_user=current_user,
 #         friends=friends,
-#         random_one=random_one,
+#         random_five=random_five,
 #         csrf_token=generate_csrf(),
 #     )
 
@@ -1870,11 +1901,20 @@ def get_sponsored_ads():
         print(f"🔍 [DEBUG] Loading sponsored ads at: {current_time}")
 
         # Query for active ads within date range
-        active_ads = AdCampaign.query.filter(
-            AdCampaign.status == "active",
-            AdCampaign.start_date <= current_time,
-            AdCampaign.end_date >= current_time,
-        ).all()
+        active_ads = (
+            AdCampaign.query.filter(
+                AdCampaign.status == "active",
+                AdCampaign.start_date <= current_time,
+                AdCampaign.end_date >= current_time,
+            )
+            .filter(
+                or_(
+                    AdCampaign.placement == None,
+                    AdCampaign.placement == "sponsored",
+                )
+            )
+            .all()
+        )
 
         print(f"🔍 [DEBUG] Found {len(active_ads)} active ads")
 

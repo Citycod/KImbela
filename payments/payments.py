@@ -8,6 +8,7 @@ from flask import (
     current_app,
     flash,
 )
+from sqlalchemy import or_
 from flask_login import login_required, current_user
 from extensions import db
 from models import User, AdCampaign, AdPackage, PaymentTransaction, MatchmakingPayments
@@ -22,6 +23,37 @@ import time
 
 payments = Blueprint("payments", __name__)
 
+DASHBOARD_AD_PLACEMENTS = {
+    "dashboard-top": {
+        "title": "Top Banner Spotlight",
+        "subtitle": "Stretch across the feed with a bold, horizontal banner.",
+        "image_width": 1600,
+        "image_height": 400,
+        "recommended_size": "1600 x 400 px",
+    },
+    "dashboard-sidebar": {
+        "title": "Sidebar Boost",
+        "subtitle": "Stay visible while people explore menus and features.",
+        "image_width": 1200,
+        "image_height": 900,
+        "recommended_size": "1200 x 900 px",
+    },
+    "dashboard-vertical": {
+        "title": "Vertical Feature",
+        "subtitle": "A tall format for storytelling visuals and offers.",
+        "image_width": 900,
+        "image_height": 1200,
+        "recommended_size": "900 x 1200 px",
+    },
+    "dashboard-spotlight": {
+        "title": "Spotlight Card",
+        "subtitle": "Catch attention in the premium side placement.",
+        "image_width": 1400,
+        "image_height": 900,
+        "recommended_size": "1400 x 900 px",
+    },
+}
+
 
 @payments.route("/ad-packages")
 @login_required
@@ -29,6 +61,64 @@ def ad_packages():
     """Display available ad packages"""
     packages = AdPackage.query.filter_by(is_active=True).all()
     return render_template("packages.html", packages=packages)
+
+
+@payments.route("/dashboard-ads/<placement>")
+@login_required
+def dashboard_ad_package(placement):
+    """Display dashboard banner ad package page"""
+    placement_config = DASHBOARD_AD_PLACEMENTS.get(placement)
+    if not placement_config:
+        flash("Unknown ad placement", "error")
+        return redirect(url_for("payments.ad_packages"))
+
+    return render_template(
+        "dashboard_ad_package.html",
+        placement=placement,
+        placement_config=placement_config,
+    )
+
+
+@payments.route("/dashboard-ads/<placement>/upload", methods=["POST"])
+@login_required
+def upload_dashboard_ad_image(placement):
+    """Upload dashboard banner ad image to Cloudinary"""
+    placement_config = DASHBOARD_AD_PLACEMENTS.get(placement)
+    if not placement_config:
+        return jsonify({"success": False, "error": "Unknown ad placement"}), 400
+
+    try:
+        if "image" not in request.files:
+            return jsonify({"success": False, "error": "No image provided"})
+
+        image_file = request.files["image"]
+        if image_file.filename == "":
+            return jsonify({"success": False, "error": "No image selected"})
+
+        upload_result = cloudinary.uploader.upload(
+            image_file,
+            folder="kimbela/dashboard-ads",
+            width=placement_config["image_width"],
+            height=placement_config["image_height"],
+            crop="fill",
+            quality="auto",
+        )
+
+        current_app.logger.info(
+            f"✅ Dashboard ad image uploaded for user {current_user.id}"
+        )
+
+        return jsonify(
+            {
+                "success": True,
+                "image_url": upload_result["secure_url"],
+                "public_id": upload_result["public_id"],
+            }
+        )
+
+    except Exception as e:
+        current_app.logger.error(f"❌ Dashboard ad image upload failed: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @payments.route("/upload-image", methods=["POST"])
@@ -527,6 +617,9 @@ def get_active_ads():
                 AdCampaign.start_date <= datetime.utcnow(),
                 AdCampaign.end_date >= datetime.utcnow(),
             )
+            .filter(
+                or_(AdCampaign.placement == None, AdCampaign.placement == "sponsored")
+            )
             .all()
         )
 
@@ -598,6 +691,7 @@ def create_campaign():
         call_to_action = data.get("call_to_action", "Learn More")
         image = data.get("image", "")
         currency = data.get("currency", "USD")
+        placement = data.get("placement", "sponsored")
 
         # ✅ Extract targeting data
         targeting = data.get("targeting", {})
@@ -628,6 +722,10 @@ def create_campaign():
             validation_errors.append("Daily budget is required")
         if not duration_days:
             validation_errors.append("Duration days is required")
+        if placement in DASHBOARD_AD_PLACEMENTS and not image:
+            validation_errors.append("Please upload a banner image for this placement")
+        if placement != "sponsored" and placement not in DASHBOARD_AD_PLACEMENTS:
+            validation_errors.append("Invalid ad placement selected")
 
         if validation_errors:
             print(f"🔴 [CREATE CAMPAIGN] Validation errors: {validation_errors}")
@@ -686,6 +784,7 @@ def create_campaign():
             daily_budget=daily_budget,
             duration_days=duration_days,
             currency=currency,  # ✅ Save currency
+            placement=placement,
             status="pending",
             payment_status="pending",
             # ✅ Save all targeting data

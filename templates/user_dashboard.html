@@ -508,18 +508,24 @@
 </div>
 
 <!-- Second ad banner -->
-      <div class="second-ad-banner">
-        <div class="container">
-          <p class="ad-text">
-            <span class="banner-megaphone" aria-hidden="true">
-              <i class="bi bi-megaphone-fill banner-icon"></i>
-            </span>
-            Put your products in front of Kimbela users now
-          </p>
-          <p class="ad-subtext">Tap this banner to promote your brand, launch offers, and get featured placements.</p>
-          <p class="ad-cta">Click to advertise • Kimbela brands welcome</p>
-        </div>
+      {% set top_banner = dashboard_ads.get('top_banner') if dashboard_ads else None %}
+      {% if top_banner %}
+      <div class="second-ad-banner has-dashboard-ad">
+        <a
+          class="dashboard-ad-link"
+          href="{{ top_banner.target_url }}"
+          target="_blank"
+          rel="noopener"
+        >
+          <img
+            src="{{ top_banner.image_url }}"
+            alt="{{ top_banner.title }}"
+            class="dashboard-ad-image"
+            loading="lazy"
+          />
+        </a>
       </div>
+      {% endif %}
 
     <!-- Messenger Popup - IMPROVED VERSION -->
     <!-- Replace your existing messenger popup with this enhanced version -->
@@ -921,7 +927,7 @@
     <div class="pt-16 flex">
       <!-- LEFT SIDEBAR -->
       <div
-        class="hidden lg:block w-85 h-screen sticky top-16 overflow-y-auto custom-scrollbar bg-white border-r border-fb-border p-4"
+        class="left-sidebar hidden lg:block w-85 h-screen sticky top-16 overflow-y-auto custom-scrollbar bg-white border-r border-fb-border p-4"
       >
         <div
           class="sidebar-item flex items-center p-3 rounded-lg bg-blue-50 text-blue-600 font-medium mb-2"
@@ -1041,6 +1047,35 @@
           <span class="font-medium">Create Sponsored Ad</span>
         </a>
 
+        {% set sidebar_banner = dashboard_ads.get('sidebar_banner') if dashboard_ads else None %}
+        <div class="sidebar-ad-banner {% if sidebar_banner %}has-dashboard-ad{% endif %}">
+          {% if sidebar_banner %}
+          <a
+            class="dashboard-ad-link"
+            href="{{ sidebar_banner.target_url }}"
+            target="_blank"
+            rel="noopener"
+          >
+            <img
+              src="{{ sidebar_banner.image_url }}"
+              alt="{{ sidebar_banner.title }}"
+              class="dashboard-ad-image"
+              loading="lazy"
+            />
+          </a>
+          {% else %}
+          <div class="sidebar-ad-badge">Promote</div>
+          <div class="sidebar-ad-icon" aria-hidden="true">
+            <i class="bi bi-megaphone-fill"></i>
+          </div>
+          <h3>Boost your product today</h3>
+          <p>Get your brand seen by active Kimbela shoppers and creators.</p>
+          <a class="sidebar-ad-cta" href="{{ url_for('payments.dashboard_ad_package', placement='dashboard-sidebar') }}">Start advertising</a>
+          {% endif %}
+        </div>
+
+        
+
         <!-- Match Making Request Form -->
         <a
           href="{{ url_for('match.requests') }}"
@@ -1068,6 +1103,22 @@
         >
           <i class="bi bi-box-arrow-right mr-2"></i> Logout
         </a>
+
+        <div class="marketplace-banner">
+          <div class="marketplace-sparkle"></div>
+          <div class="marketplace-badge">Marketplace</div>
+          <div class="marketplace-icon" aria-hidden="true">
+            <i class="bi bi-shop"></i>
+          </div>
+          <h3>Shop the Kimbela market</h3>
+          <p>Trending items, verified sellers, and deals made for you.</p>
+          <a class="marketplace-cta" href="{{ url_for('market.main_market') }}">Explore the market</a>
+        </div>
+
+        <br>
+          <br>
+          <br>
+          <br>
 
         <!-- Sponsored Section -->
         <!--<div class="mt-8 pt-6 border-t border-fb-border">
@@ -1526,17 +1577,24 @@
         <!-- PEOPLE YOU MAY KNOW -->
         
         <h1 class="font-semibold text-lg">Say Hi to Someone New</h1>
-        {% if random_one %}
+        
+        {% if random_five %}
           <div
           class="suggestions-section bg-white rounded-2xl shadow-soft p-4 mb-6">
           <div class="flex justify-between items-center mb-3 sm:mb-4">
         </div>
-            <div class="relative">
+            <div class="relative suggestions-carousel">
+              <button class="suggestions-nav suggestions-prev" id="suggestionsPrev" type="button" aria-label="Previous profile">
+                <i class="bi bi-chevron-left"></i>
+              </button>
+              <button class="suggestions-nav suggestions-next" id="suggestionsNext" type="button" aria-label="Next profile">
+                <i class="bi bi-chevron-right"></i>
+              </button>
               <div
-                class="suggestions-track flex flex-col items-center space-y-4"
+                class="suggestions-track flex items-center space-x-4"
                 id="suggestionsTrack"
               >
-                {% for user in random_one %}
+                {% for user in random_five %}
                 <div
                   class="suggestion-card bg-gray-50 rounded-2xl p-4 text-center w-full max-w-xs cursor-pointer card-hover"
                   onclick="openProfileModal({{ user.id }})"
@@ -1602,6 +1660,91 @@
             </div>
           </div>
           {% endif %}
+
+          
+
+          <div class="matchmaking-banner">
+          <div class="matchmaking-glow"></div>
+          <div class="matchmaking-badge">Matchmaking</div>
+          <div class="matchmaking-title">
+            <span>Find your</span>
+            <span class="matchmaking-highlight">perfect</span>
+            <span>match on Kimbela</span>
+          </div>
+          <p class="matchmaking-copy">
+            Smart matches, real vibes, and meaningful connections.
+          </p>
+          <div class="matchmaking-actions">
+            <a class="matchmaking-cta primary" href="{{ url_for('match.requests') }}">Start Matching</a>
+            <a class="matchmaking-cta ghost" href="{{ url_for('match.view_requests') }}">Explore Matches</a>
+          </div>
+          <div class="matchmaking-orbits" aria-hidden="true">
+            <span class="orbit orbit-1"></span>
+            <span class="orbit orbit-2"></span>
+            <span class="orbit orbit-3"></span>
+          </div>
+
+        </div>
+
+          {% set vertical_banner = dashboard_ads.get('vertical_banner') if dashboard_ads else None %}
+          <div class="vertical-ad-banner {% if vertical_banner %}has-dashboard-ad{% endif %}">
+            {% if vertical_banner %}
+            <a
+              class="dashboard-ad-link"
+              href="{{ vertical_banner.target_url }}"
+              target="_blank"
+              rel="noopener"
+            >
+              <img
+                src="{{ vertical_banner.image_url }}"
+                alt="{{ vertical_banner.title }}"
+                class="dashboard-ad-image"
+                loading="lazy"
+              />
+            </a>
+            {% else %}
+            <div class="vertical-ad-badge">Kimbela Ads</div>
+            <div class="vertical-ad-content">
+              <h2>Put your brand in the spotlight</h2>
+              <p>Fresh ads, bold offers, and real shoppers waiting to click.</p>
+              <a class="vertical-ad-cta" href="{{ url_for('payments.dashboard_ad_package', placement='dashboard-vertical') }}">Start your promo</a>
+            </div>
+            {% endif %}
+          </div>
+
+          {% set spotlight_banner = dashboard_ads.get('spotlight_banner') if dashboard_ads else None %}
+          <div class="right-ad-banner-2 {% if spotlight_banner %}has-dashboard-ad{% endif %}">
+            {% if spotlight_banner %}
+            <a
+              class="dashboard-ad-link"
+              href="{{ spotlight_banner.target_url }}"
+              target="_blank"
+              rel="noopener"
+            >
+              <img
+                src="{{ spotlight_banner.image_url }}"
+                alt="{{ spotlight_banner.title }}"
+                class="dashboard-ad-image"
+                loading="lazy"
+              />
+            </a>
+            {% else %}
+            <div class="right-ad-2-badge">Spotlight</div>
+            <h2>Turn views into sales</h2>
+            <p>Premium placements that put your products first.</p>
+            <a class="right-ad-2-cta" href="{{ url_for('payments.dashboard_ad_package', placement='dashboard-spotlight') }}">Get featured</a>
+            <div class="right-ad-2-sparkles" aria-hidden="true">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+            {% endif %}
+          </div>
+
+          <br>
+          <br>
+          <br>
+          <br>
       </div>
     </div>
 
@@ -2819,95 +2962,722 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
     <!--</style>-->
     {% include 'partials/user_dashboard_body_scripts.html' %}
 
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const track = document.getElementById("suggestionsTrack");
+        const prev = document.getElementById("suggestionsPrev");
+        const next = document.getElementById("suggestionsNext");
+        if (!track || !prev || !next) return;
+
+        const getStep = () => {
+          const card = track.querySelector(".suggestion-card");
+          if (!card) return 200;
+          const styles = window.getComputedStyle(card);
+          const marginRight = parseFloat(styles.marginRight) || 0;
+          return card.getBoundingClientRect().width + marginRight;
+        };
+
+        prev.addEventListener("click", (event) => {
+          event.preventDefault();
+          track.scrollBy({ left: -getStep(), behavior: "smooth" });
+        });
+
+        next.addEventListener("click", (event) => {
+          event.preventDefault();
+          track.scrollBy({ left: getStep(), behavior: "smooth" });
+        });
+      });
+    </script>
+
 
     <style>
-      .second-ad-banner {
-      background: linear-gradient(90deg, #0ea5e9, #14b8a6, #f59e0b, #ef4444);
-      background-size: 400% 400%;
-      animation: gradientFlow 12s ease infinite;
-      color: white;
-      padding: 56px 0;
-      min-height: 180px;
-      text-align: center;
-      font-size: 1.6rem;
-      font-weight: 800;
-      letter-spacing: 1.5px;
-      text-shadow: 0 3px 12px rgba(0,0,0,0.5);
-      margin: 0;
-      border-radius: 0px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-      position: relative;
+    .dashboard-ad-link {
+      display: block;
+      color: inherit;
+      text-decoration: none;
+      width: 100%;
+      height: 100%;
+    }
+    .dashboard-ad-image {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      border-radius: inherit;
+      min-height: inherit;
+      background: transparent;
+    }
+    .has-dashboard-ad {
+      padding: 0;
       overflow: hidden;
     }
-    .second-ad-banner::after {
-      content: '★  KIMBELA ADVERTISING  ★';
-      position: absolute;
-      top: 16px;
-      right: 24px;
-      font-size: 1rem;
-      opacity: 0.7;
-      background: rgba(0,0,0,0.4);
-      padding: 6px 14px;
-      border-radius: 30px;
+    .has-dashboard-ad .dashboard-ad-link {
+      display: flex;
+      min-height: inherit;
+      width: 100%;
+      height: 100%;
     }
-    @keyframes gradientFlow {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
+    .second-ad-banner.has-dashboard-ad {
+      min-height: clamp(180px, 20vw, 320px);
+      height: clamp(180px, 20vw, 320px);
+      aspect-ratio: 4 / 1;
+      width: 100%;
+      background: transparent;
+      border: 0;
+      box-shadow: none;
     }
-    .ad-text {
-      font-size: 1.8rem;
+    @media (max-width: 640px) {
+      .second-ad-banner.has-dashboard-ad {
+        min-height: clamp(140px, 55vw, 220px);
+        height: clamp(140px, 55vw, 220px);
+      }
+    }
+    @media (min-width: 1024px) {
+      .second-ad-banner.has-dashboard-ad {
+        width: 100%;
+        max-width: 100%;
+      }
+    }
+    .has-dashboard-ad::before,
+    .has-dashboard-ad::after {
+      display: none;
+    }
+    .second-ad-banner {
       margin: 0;
-      line-height: 1.4;
-      font-weight: 900;
-    }
-    .ad-subtext {
-      font-size: 1.1rem;
-      margin-top: 8px;
-      opacity: 0.95;
-      font-weight: 800;
-    }
-    .ad-cta {
-      margin-top: 14px;
-      font-size: 1.1rem;
-      font-weight: 800;
-      letter-spacing: 0.5px;
-    }
-    .second-ad-banner + * {
-      margin-top: 0;
-    }
-    .banner-megaphone {
+      border-radius: 0px;
       position: relative;
-      display: inline-block;
-      margin-right: 14px;
-      vertical-align: middle;
+      overflow: hidden;
+      width: 100%;
     }
-    .banner-icon {
-      display: inline-block;
+    .vertical-ad-banner {
       position: relative;
-      font-size: 3.2rem;
-      transform: rotate(-12deg);
+      margin: 12px 0 18px;
+      padding: 22px;
+      min-height: 380px;
+      border-radius: 26px;
+      background: linear-gradient(160deg, #7c3aed 0%, #2563eb 40%, #22d3ee 100%);
+      color: #ffffff;
+      overflow: hidden;
+      box-shadow: 0 20px 45px rgba(59, 7, 100, 0.25), 0 10px 20px rgba(0, 0, 0, 0.12);
+      display: flex;
+      align-items: flex-end;
     }
-    .banner-megaphone::before,
-    .banner-megaphone::after {
+    .vertical-ad-banner.has-dashboard-ad {
+      background: transparent;
+      border: 0;
+      box-shadow: none;
+    }
+    .vertical-ad-banner.has-dashboard-ad::before,
+    .vertical-ad-banner.has-dashboard-ad::after {
+      display: none;
+    }
+    .vertical-ad-banner::before,
+    .vertical-ad-banner::after {
       content: "";
       position: absolute;
-      right: -12px;
-      top: 2px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.18);
+      filter: blur(2px);
+    }
+    .vertical-ad-banner::before {
+      width: 220px;
+      height: 220px;
+      top: -60px;
+      right: -80px;
+    }
+    .vertical-ad-banner::after {
+      width: 160px;
+      height: 160px;
+      bottom: -50px;
+      left: -60px;
+    }
+    .vertical-ad-badge {
+      position: absolute;
+      top: 18px;
+      left: 18px;
+      background: rgba(0, 0, 0, 0.35);
+      color: #ffffff;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      backdrop-filter: blur(6px);
+    }
+    .vertical-ad-content {
+      position: relative;
+      z-index: 1;
+    }
+    .vertical-ad-content h2 {
+      margin: 0 0 10px;
+      font-size: 1.9rem;
+      font-weight: 900;
+      line-height: 1.1;
+      text-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+    }
+    .vertical-ad-content p {
+      margin: 0 0 16px;
+      font-size: 1rem;
+      font-weight: 700;
+      opacity: 0.95;
+    }
+    .vertical-ad-cta {
+      border: none;
+      background: #0f172a;
+      color: #ffffff;
+      padding: 12px 18px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 0.95rem;
+      cursor: pointer;
+      box-shadow: 0 12px 22px rgba(15, 23, 42, 0.3);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .vertical-ad-cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 16px 28px rgba(0, 0, 0, 0.22);
+    }
+    .right-ad-banner-2 {
+      position: relative;
+      margin: 16px 0 20px;
+      padding: 22px 18px 24px;
+      border-radius: 24px;
+      color: #0f172a;
+      background: linear-gradient(135deg, #fde68a 0%, #fca5a5 45%, #93c5fd 100%);
+      box-shadow: 0 18px 38px rgba(248, 113, 113, 0.3);
+      overflow: hidden;
+      animation: rightAd2Float 6s ease-in-out infinite;
+    }
+    .right-ad-banner-2.has-dashboard-ad {
+      background: transparent;
+      border: 0;
+      box-shadow: none;
+      animation: none;
+    }
+    .right-ad-banner-2.has-dashboard-ad::before {
+      display: none;
+    }
+    .right-ad-banner-2::before {
+      content: "";
+      position: absolute;
+      inset: -30%;
+      background: radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.7), transparent 45%);
+      opacity: 0.8;
+      animation: rightAd2Glow 4.5s ease-in-out infinite;
+    }
+    .right-ad-2-badge {
+      position: relative;
+      z-index: 1;
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.12);
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .right-ad-banner-2 h2 {
+      position: relative;
+      z-index: 1;
+      margin: 14px 0 8px;
+      font-size: 1.3rem;
+      font-weight: 900;
+      text-shadow: 0 3px 10px rgba(255, 255, 255, 0.6);
+    }
+    .right-ad-banner-2 p {
+      position: relative;
+      z-index: 1;
+      margin: 0 0 16px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      opacity: 0.92;
+    }
+    .right-ad-2-cta {
+      position: relative;
+      z-index: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 16px;
+      border-radius: 999px;
+      background: #0f172a;
+      color: #ffffff;
+      font-weight: 800;
+      font-size: 0.85rem;
+      text-decoration: none;
+      box-shadow: 0 14px 24px rgba(15, 23, 42, 0.3);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .right-ad-2-cta:hover {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 18px 30px rgba(15, 23, 42, 0.35);
+    }
+    .right-ad-2-sparkles {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    .right-ad-2-sparkles span {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.8);
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.6);
+      animation: rightAd2Sparkle 5s ease-in-out infinite;
+    }
+    .right-ad-2-sparkles span:nth-child(1) {
+      top: 18px;
+      right: 24px;
+      animation-delay: 0s;
+    }
+    .right-ad-2-sparkles span:nth-child(2) {
+      bottom: 30px;
+      left: 20px;
+      width: 10px;
+      height: 10px;
+      animation-delay: 1.4s;
+    }
+    .right-ad-2-sparkles span:nth-child(3) {
+      top: 50%;
+      right: -6px;
       width: 14px;
       height: 14px;
-      border: 3px solid rgba(255, 255, 255, 0.95);
+      animation-delay: 2.6s;
+    }
+    @keyframes rightAd2Float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+    @keyframes rightAd2Glow {
+      0%, 100% { opacity: 0.6; }
+      50% { opacity: 1; }
+    }
+    @keyframes rightAd2Sparkle {
+      0%, 100% { transform: scale(0.9); opacity: 0.6; }
+      50% { transform: scale(1.2); opacity: 1; }
+    }
+    .suggestions-carousel {
+      padding: 6px 22px;
+    }
+    .suggestions-track {
+      max-width: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-behavior: smooth;
+      scroll-snap-type: x mandatory;
+      padding-bottom: 6px;
+    }
+    .suggestion-card {
+      scroll-snap-align: start;
+      min-width: 240px;
+      flex: 0 0 auto;
+    }
+    .suggestions-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      border: 1px solid rgba(15, 23, 42, 0.15);
+      background: rgba(255, 255, 255, 0.85);
+      color: #0f172a;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      cursor: pointer;
+      box-shadow: 0 6px 14px rgba(15, 23, 42, 0.15);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      z-index: 2;
+    }
+    .suggestions-nav:hover {
+      transform: translateY(-50%) scale(1.05);
+      box-shadow: 0 10px 18px rgba(15, 23, 42, 0.2);
+    }
+    .suggestions-prev {
+      left: -4px;
+    }
+    .suggestions-next {
+      right: -4px;
+    }
+    .left-sidebar {
+      width: 22rem;
+      min-width: 22rem;
+    }
+    .sidebar-ad-banner {
+      position: relative;
+      margin: 14px 0 18px;
+      padding: 18px;
+      min-height: 260px;
+      border-radius: 22px;
+      background: linear-gradient(145deg, #10b981 0%, #22d3ee 45%, #f97316 100%);
+      color: #ffffff;
+      box-shadow: 0 16px 32px rgba(6, 95, 70, 0.25);
+      overflow: hidden;
+    }
+    .sidebar-ad-banner.has-dashboard-ad {
+      background: transparent;
+      border: 0;
+      box-shadow: none;
+    }
+    .sidebar-ad-banner.has-dashboard-ad::before,
+    .sidebar-ad-banner.has-dashboard-ad::after {
+      display: none;
+    }
+    .sidebar-ad-banner::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.22), transparent 40%);
+      pointer-events: none;
+    }
+    .sidebar-ad-badge {
+      display: inline-block;
+      background: rgba(15, 23, 42, 0.35);
+      color: #ffffff;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .sidebar-ad-icon {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 52px;
+      height: 52px;
+      margin-bottom: 12px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(8px);
+    }
+    .sidebar-ad-icon i {
+      font-size: 1.8rem;
+      transform: rotate(-15deg);
+    }
+    .sidebar-ad-icon::before,
+    .sidebar-ad-icon::after {
+      content: "";
+      position: absolute;
+      right: -10px;
+      top: 10px;
+      width: 12px;
+      height: 12px;
+      border: 2px solid rgba(255, 255, 255, 0.95);
       border-color: rgba(255, 255, 255, 0.95) rgba(255, 255, 255, 0.95) transparent transparent;
       border-radius: 50%;
       transform: rotate(20deg);
-      opacity: 0.85;
+      opacity: 0.9;
     }
-    .banner-megaphone::after {
-      right: -26px;
-      top: -4px;
-      width: 18px;
-      height: 18px;
+    .sidebar-ad-icon::after {
+      right: -22px;
+      top: 4px;
+      width: 16px;
+      height: 16px;
       opacity: 0.7;
+    }
+    .sidebar-ad-banner h3 {
+      margin: 0 0 8px;
+      font-size: 1.2rem;
+      font-weight: 900;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+    }
+    .sidebar-ad-banner p {
+      margin: 0 0 14px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      opacity: 0.95;
+    }
+    .sidebar-ad-cta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #0f172a;
+      color: #ffffff;
+      padding: 10px 16px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 0.85rem;
+      text-decoration: none;
+      box-shadow: 0 10px 18px rgba(15, 23, 42, 0.3);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .sidebar-ad-cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 16px 28px rgba(15, 23, 42, 0.35);
+    }
+    .matchmaking-banner {
+      position: relative;
+      margin: 18px 0 20px;
+      padding: 20px 18px 22px;
+      border-radius: 24px;
+      color: #ffffff;
+      background: linear-gradient(135deg, #1d4ed8 0%, #9333ea 45%, #f43f5e 100%);
+      box-shadow: 0 18px 40px rgba(76, 29, 149, 0.35);
+      overflow: hidden;
+      animation: matchmakingFloat 6s ease-in-out infinite;
+    }
+    .matchmaking-banner::before {
+      content: "";
+      position: absolute;
+      inset: -40%;
+      background: conic-gradient(from 120deg, rgba(255, 255, 255, 0.25), transparent 35%, rgba(255, 255, 255, 0.18), transparent 70%, rgba(255, 255, 255, 0.22));
+      animation: matchmakingSpin 14s linear infinite;
+      opacity: 0.7;
+    }
+    .matchmaking-glow {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 20% 15%, rgba(255, 255, 255, 0.3), transparent 40%);
+      opacity: 0.8;
+      pointer-events: none;
+      animation: glowPulse 4s ease-in-out infinite;
+    }
+    .matchmaking-badge {
+      position: relative;
+      z-index: 1;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.35);
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .matchmaking-badge::before {
+      content: "❤";
+      font-size: 0.85rem;
+    }
+    .matchmaking-title {
+      position: relative;
+      z-index: 1;
+      margin: 14px 0 10px;
+      font-size: 1.3rem;
+      font-weight: 900;
+      line-height: 1.1;
+      text-shadow: 0 4px 18px rgba(15, 23, 42, 0.45);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .matchmaking-highlight {
+      font-size: 1.6rem;
+      background: linear-gradient(90deg, #fef3c7, #fbcfe8, #e0e7ff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: shimmer 3s linear infinite;
+    }
+    .matchmaking-copy {
+      position: relative;
+      z-index: 1;
+      margin: 0 0 16px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      opacity: 0.95;
+    }
+    .matchmaking-actions {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .matchmaking-cta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 0.85rem;
+      text-decoration: none;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .matchmaking-cta.primary {
+      background: #ffffff;
+      color: #1e1b4b;
+      box-shadow: 0 12px 22px rgba(15, 23, 42, 0.35);
+    }
+    .matchmaking-cta.ghost {
+      background: rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.45);
+    }
+    .matchmaking-cta:hover {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 16px 28px rgba(15, 23, 42, 0.35);
+    }
+    .matchmaking-orbits {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    .matchmaking-orbits .orbit {
+      position: absolute;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      animation: orbitPulse 6s ease-in-out infinite;
+    }
+    .matchmaking-orbits .orbit-1 {
+      width: 160px;
+      height: 160px;
+      top: -40px;
+      right: -40px;
+      animation-delay: 0s;
+    }
+    .matchmaking-orbits .orbit-2 {
+      width: 120px;
+      height: 120px;
+      bottom: -30px;
+      left: -20px;
+      animation-delay: 1.2s;
+    }
+    .matchmaking-orbits .orbit-3 {
+      width: 200px;
+      height: 200px;
+      top: 40px;
+      left: -80px;
+      animation-delay: 2.4s;
+    }
+    @keyframes matchmakingFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+    @keyframes matchmakingSpin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    @keyframes glowPulse {
+      0%, 100% { opacity: 0.6; }
+      50% { opacity: 1; }
+    }
+    @keyframes shimmer {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 100% 50%; }
+    }
+    @keyframes orbitPulse {
+      0%, 100% { transform: scale(1); opacity: 0.35; }
+      50% { transform: scale(1.06); opacity: 0.7; }
+    }
+    .marketplace-banner {
+      position: relative;
+      margin: 18px 0 26px;
+      padding: 20px 18px 22px;
+      border-radius: 24px;
+      color: #0f172a;
+      background: linear-gradient(135deg, #facc15 0%, #fb7185 45%, #38bdf8 100%);
+      box-shadow: 0 18px 40px rgba(251, 113, 133, 0.35);
+      overflow: hidden;
+      animation: marketplaceFloat 5.5s ease-in-out infinite;
+    }
+    .marketplace-banner::before {
+      content: "";
+      position: absolute;
+      inset: -30%;
+      background: radial-gradient(circle at 80% 10%, rgba(255, 255, 255, 0.6), transparent 45%);
+      opacity: 0.9;
+    }
+    .marketplace-sparkle {
+      position: absolute;
+      inset: 0;
+      background: conic-gradient(from 180deg, rgba(255, 255, 255, 0.5), transparent 40%, rgba(255, 255, 255, 0.3), transparent 70%);
+      animation: marketplaceSpin 12s linear infinite;
+      opacity: 0.6;
+    }
+    .marketplace-badge {
+      position: relative;
+      z-index: 1;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.15);
+      color: #0f172a;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      backdrop-filter: blur(6px);
+    }
+    .marketplace-icon {
+      position: relative;
+      z-index: 1;
+      margin: 14px 0 10px;
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.6);
+      box-shadow: 0 12px 22px rgba(15, 23, 42, 0.2);
+      animation: marketplacePop 2.8s ease-in-out infinite;
+    }
+    .marketplace-icon i {
+      font-size: 2rem;
+      color: #0f172a;
+      transform: rotate(-8deg);
+    }
+    .marketplace-banner h3 {
+      position: relative;
+      z-index: 1;
+      margin: 0 0 8px;
+      font-size: 1.25rem;
+      font-weight: 900;
+      text-shadow: 0 3px 12px rgba(255, 255, 255, 0.5);
+    }
+    .marketplace-banner p {
+      position: relative;
+      z-index: 1;
+      margin: 0 0 14px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      opacity: 0.9;
+    }
+    .marketplace-cta {
+      position: relative;
+      z-index: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 16px;
+      border-radius: 999px;
+      background: #0f172a;
+      color: #ffffff;
+      text-decoration: none;
+      font-weight: 800;
+      font-size: 0.85rem;
+      box-shadow: 0 14px 24px rgba(15, 23, 42, 0.35);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .marketplace-cta:hover {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 18px 30px rgba(15, 23, 42, 0.4);
+    }
+    @keyframes marketplaceFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+    @keyframes marketplaceSpin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    @keyframes marketplacePop {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
     }
     </style>
   </body>

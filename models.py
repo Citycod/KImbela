@@ -1159,6 +1159,7 @@ class AdCampaign(db.Model):
     budget = db.Column(db.Float, nullable=False)  # Total budget
     daily_budget = db.Column(db.Float, nullable=False)  # Daily budget
     duration_days = db.Column(db.Integer, nullable=False)
+    placement = db.Column(db.String(50), default="sponsored")
 
     # Tracking
     impressions = db.Column(db.Integer, default=0)
