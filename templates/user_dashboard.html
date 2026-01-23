@@ -929,97 +929,12 @@
       <div
         class="left-sidebar hidden lg:block w-85 h-screen sticky top-16 overflow-y-auto custom-scrollbar bg-white border-r border-fb-border p-4"
       >
-        <div
-          class="sidebar-item flex items-center p-3 rounded-lg bg-blue-50 text-blue-600 font-medium mb-2"
-        >
-          <i class="bi bi-house-door mr-3 text-lg"></i> Home
-        </div>
-        <a
-          href="{{ url_for('user.profile', user_id=current_user.id) }}"
-          class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-fb-gray transition-colors mb-2"
-        >
-          <i class="bi bi-person mr-3 text-lg"></i> Profile
-        </a>
+        
+        
 
         <!-- In your LEFT SIDEBAR section, replace the current Groups item with: -->
         <!-- Desktop Groups Dropdown -->
-        <div class="dropdown relative">
-          <div
-            class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-300 mb-2 cursor-pointer group border border-transparent hover:border-blue-200 shadow-sm hover:shadow-md"
-            data-bs-toggle="groups-dropdown"
-          >
-            <div class="relative">
-              <i
-                class="bi bi-people-fill mr-3 text-lg text-blue-600 group-hover:text-purple-600 transition-colors duration-300"
-              ></i>
-              <div
-                class="absolute -top-1 -right-1 w-2 h-2 bg-green-400 rounded-full animate-pulse"
-              ></div>
-            </div>
-            <span
-              class="font-medium group-hover:text-blue-700 transition-colors duration-300"
-              >Groups</span
-            >
-            <i
-              class="bi bi-chevron-down ml-auto text-sm text-gray-400 group-hover:text-blue-500 transform group-hover:rotate-180 transition-all duration-300"
-            ></i>
-          </div>
-
-          <div
-            class="dropdown-menu absolute left-0 mt-2 w-94 bg-white rounded-2xl shadow-2xl overflow-hidden z-10 hidden border border-gray-100 transform origin-top transition-all duration-300 scale-95 group-hover:scale-100"
-            id="groupsDropdownMenu"
-            style="
-              background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);
-            "
-          >
-            <!-- Header with gradient -->
-            <div
-              class="p-4 border-b border-gray-100 bg-gradient-to-r from-blue-600 to-purple-600 text-white"
-            >
-              <div class="flex items-center justify-between">
-                <div>
-                  <h4 class="font-bold text-lg">Discover Groups</h4>
-                  <p class="text-blue-100 text-sm mt-1">
-                    Connect with amazing communities
-                  </p>
-                </div>
-                <div
-                  class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center"
-                >
-                  <i class="bi bi-people-fill text-lg"></i>
-                </div>
-              </div>
-            </div>
-
-            <!-- Groups List -->
-            <div
-              class="max-h-80 overflow-y-auto custom-scrollbar bg-gradient-to-b from-white to-blue-50/30"
-              id="groupsList"
-            >
-              <!-- Loading State -->
-              <div
-                class="flex flex-col items-center justify-center p-8 text-gray-500"
-              >
-                <div class="relative mb-4">
-                  <div
-                    class="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"
-                  ></div>
-                  <div
-                    class="absolute inset-0 flex items-center justify-center"
-                  >
-                    <i class="bi bi-people text-blue-600"></i>
-                  </div>
-                </div>
-                <p class="text-sm font-medium">Loading amazing groups...</p>
-                <p class="text-xs mt-1 text-gray-400">
-                  Finding the best communities for you
-                </p>
-              </div>
-            </div>
-
-            <!-- Footer with Create Button -->
-          </div>
-        </div>
+        
 
         <a
           href="{{ url_for('market.main_market') }}"
@@ -1226,6 +1141,113 @@
             </div>
 
             <div class="px-4 pb-3">
+              {% if post.share_type in ['share', 'repost'] %}
+              <div class="shared-meta text-xs text-gray-500 flex items-center gap-2 mb-2">
+                <i class="bi bi-arrow-repeat"></i>
+                <span>{{ 'Reposted' if post.share_type == 'repost' else 'Shared' }}</span>
+              </div>
+              {% endif %}
+
+              {% if post.share_type in ['share', 'repost'] %}
+                {% if post.content %}
+                <p
+                  class="post-text {% if post.content|length > 100 %}truncated{% endif %}"
+                  id="post-text-{{ post.id }}"
+                >
+                  {{ post.content }}
+                </p>
+                {% if post.content|length > 100 %}
+                <button
+                  class="see-more-btn text-blue-600 font-medium text-sm mt-1"
+                  onclick="togglePostText({{ post.id }})"
+                >
+                  See More
+                </button>
+                {% endif %}
+                {% endif %}
+
+                <div class="shared-post-card mt-3">
+                  {% if post.shared_post %}
+                  <div class="shared-post-header flex items-start gap-3">
+                    <img
+                      src="{{ post.shared_post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+                      alt="{{ post.shared_post.author.full_name }}"
+                      class="w-9 h-9 rounded-full object-cover flex-shrink-0"
+                    />
+                    <div>
+                      <div class="font-semibold text-sm">
+                        {{ post.shared_post.author.first_name }} {{ post.shared_post.author.last_name }}
+                      </div>
+                      <div class="text-xs text-gray-500">
+                        {{ post.shared_post.created_at.strftime('%b %d at %I:%M %p') }}
+                      </div>
+                    </div>
+                  </div>
+
+                  {% if post.shared_post.content %}
+                  <p class="shared-post-text mt-2 text-sm text-gray-800">
+                    {{ post.shared_post.content }}
+                  </p>
+                  {% endif %}
+
+                  {% if post.shared_post.image %}
+                  <div class="post-media mt-3 -mx-4 sm:-mx-6 md:mx-0">
+                    <img
+                      src="{{ post.shared_post.image }}"
+                      alt="Shared post image"
+                      class="w-full rounded-2xl max-h-96 object-contain bg-gray-100"
+                      loading="lazy"
+                    />
+                  </div>
+                  {% endif %}
+
+                  {% if post.shared_post.gif %}
+                  <div class="post-media mt-3 -mx-4 sm:-mx-6 md:mx-0">
+                    <img
+                      src="{{ post.shared_post.gif }}"
+                      alt="Shared GIF"
+                      class="w-full rounded-2xl max-h-96 object-contain bg-gray-100"
+                      loading="lazy"
+                    />
+                  </div>
+                  {% endif %}
+
+                  {% if post.shared_post.video %}
+                  <div
+                    class="post-media mt-3 relative -mx-4 sm:mx-0 flex justify-center"
+                  >
+                    <video
+                      controls
+                      class="w-full rounded-2xl max-h-96 autoplay-video"
+                      preload="metadata"
+                      playsinline
+                      poster="{{ post.shared_post.video_thumbnail or '' }}"
+                      data-post-id="{{ post.shared_post.id }}"
+                      onloadedmetadata="this.classList.remove('video-loading')"
+                      onloadstart="this.classList.add('video-loading')"
+                    >
+                      <source src="{{ post.shared_post.video }}" type="video/mp4" />
+                      Your browser does not support the video tag.
+                    </video>
+                    <div
+                      class="video-loading-overlay absolute inset-0 bg-gray-900/50 flex items-center justify-center rounded-2xl hidden"
+                    >
+                      <div class="text-center">
+                        <div
+                          class="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-2"
+                        ></div>
+                        <p class="text-white text-sm">Loading video...</p>
+                      </div>
+                    </div>
+                  </div>
+                  {% endif %}
+                  {% else %}
+                  <div class="shared-post-missing text-sm text-gray-500">
+                    Original post is no longer available.
+                  </div>
+                  {% endif %}
+                </div>
+              {% else %}
               <p
                 class="post-text {% if post.content|length > 100 %}truncated{% endif %}"
                 id="post-text-{{ post.id }}"
@@ -1289,6 +1311,7 @@
                 </div>
               </div>
               {% endif %}
+              {% endif %}
             </div>
 
             <!-- Post Stats – With Icons & Real Reactions Count -->
@@ -1311,7 +1334,11 @@
                 id="comment-count-{{ post.id }}"
                 class="flex items-center gap-1.5 font-medium"
               >
-                <i class="bi bi-mic-fill text-green-600 text-base"></i>
+                <img
+                  src="{{ url_for('static', filename='assets/img/microphone.png') }}"
+                  alt="Chimes"
+                  class="w-4 h-4"
+                />
                 <span
                   >{{ post.comments_count }} {{ 'chime' if post.comments_count
                   == 1 else 'chimes' }}</span
@@ -1321,7 +1348,7 @@
 
             <!-- Post Actions -->
             <div class="px-4 md:px-6 py-2 md:py-3 border-t border-gray-100">
-              <div class="flex justify-around">
+              <div class="flex flex-wrap justify-around gap-1">
                 <!-- Like Button with Reactions -->
                 <div class="reactions-container">
                   {% set user_reaction = current_user.get_user_reaction(post.id)
@@ -1408,8 +1435,28 @@
                   onclick="focusCommentInput({{ post.id }})"
                   class="flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-1 md:py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 text-gray-600"
                 >
-                  <i class="bi bi-mic-fill text-sm md:text-base"></i>
+                  <img
+                    src="{{ url_for('static', filename='assets/img/microphone.png') }}"
+                    alt="Chime"
+                    class="w-4 h-4"
+                  />
                   <span class="text-xs md:text-sm">Chime</span>
+                </button>
+
+                <button
+                  class="flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-1 md:py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 text-gray-600 repost-btn"
+                  data-post-id="{{ post.id }}"
+                >
+                  <i class="bi bi-arrow-repeat"></i>
+                  <span class="text-xs md:text-sm">Repost</span>
+                </button>
+
+                <button
+                  class="flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-1 md:py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 text-gray-600 share-btn"
+                  data-post-id="{{ post.id }}"
+                >
+                  <i class="bi bi-share"></i>
+                  <span class="text-xs md:text-sm">Share</span>
                 </button>
               </div>
             </div>
@@ -1431,7 +1478,7 @@
                   <input
                     type="text"
                     id="commentInput-{{ post.id }}"
-                    placeholder="Write a comment..."
+                    placeholder="Drop a chime..."
                     class="w-full bg-white rounded-full px-4 py-2.5 text-sm border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                     onkeypress="handleCommentKeypress(event, {{ post.id }})"
                   />
@@ -1967,6 +2014,68 @@
           class="modal-body p-4 overflow-y-auto max-h-[70vh] custom-scrollbar"
           id="commentModalBody"
         ></div>
+      </div>
+    </div>
+
+    <!-- Share Modal -->
+    <div
+      class="modal fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden"
+      id="shareModal"
+    >
+      <div
+        class="modal-dialog bg-white rounded-2xl shadow-strong w-full max-w-lg sm:max-w-md md:max-w-lg mx-4"
+      >
+        <div
+          class="modal-header p-3 sm:p-4 border-b border-fb-border flex justify-between items-center"
+        >
+          <h3 class="text-lg sm:text-xl font-semibold">Share Post</h3>
+          <button
+            type="button"
+            class="p-1.5 sm:p-2 rounded-full hover:bg-fb-gray transition-colors"
+            onclick="closeShareModal()"
+          >
+            <i class="bi bi-x-lg text-sm sm:text-base"></i>
+          </button>
+        </div>
+
+        <div class="modal-body p-3 sm:p-4">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Say something about this post (optional)
+          </label>
+          <textarea
+            id="sharePostMessage"
+            rows="3"
+            class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Add a short note to your share..."
+          ></textarea>
+
+          <div class="mt-4 space-y-2">
+            <button
+              type="button"
+              class="w-full py-2.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors text-sm"
+              onclick="shareToFeed()"
+            >
+              Share to your feed
+            </button>
+            <button
+              type="button"
+              class="w-full py-2.5 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-colors text-sm"
+              onclick="copyPostLink()"
+            >
+              Copy link
+            </button>
+          </div>
+        </div>
+
+        <div class="modal-footer p-3 sm:p-4 border-t border-fb-border">
+          <button
+            type="button"
+            class="w-full py-2.5 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-colors text-sm"
+            onclick="closeShareModal()"
+          >
+            Cancel
+          </button>
+        </div>
       </div>
     </div>
 

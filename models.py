@@ -627,6 +627,7 @@ class User(db.Model, UserMixin):
             NotificationType.FRIEND_REQUEST: f"{actor.full_name} sent you a friend request",
             NotificationType.FRIEND_ACCEPTED: f"{actor.full_name} accepted your friend request",
             NotificationType.POST_LIKE: f"{actor.full_name} liked your post",
+            NotificationType.POST_SHARE: f"{actor.full_name} shared your post",
             NotificationType.COMMENT_LIKE: f"{actor.full_name} liked your comment",
             NotificationType.NEW_COMMENT: f"{actor.full_name} commented on your post",
             NotificationType.PROFILE_UPDATE: f"{actor.full_name} updated their profile",
@@ -749,8 +750,13 @@ class Post(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     author_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     group_id = db.Column(db.Integer, db.ForeignKey("groups.id"), nullable=True)
+    shared_post_id = db.Column(db.Integer, db.ForeignKey("posts.id"), nullable=True)
+    share_type = db.Column(db.String(20), default="original")
 
     author = db.relationship("User", backref="posts")
+    shared_post = db.relationship(
+        "Post", remote_side=[id], backref="shared_posts", foreign_keys=[shared_post_id]
+    )
     comments = db.relationship(
         "Comment", backref="post", lazy="select", cascade="all, delete-orphan"
     )
@@ -916,6 +922,7 @@ class NotificationType:
     FRIEND_REQUEST = "friend_request"
     FRIEND_ACCEPTED = "friend_accepted"
     POST_LIKE = "post_like"
+    POST_SHARE = "post_share"
     COMMENT_LIKE = "comment_like"
     NEW_COMMENT = "new_comment"
     PROFILE_UPDATE = "profile_update"

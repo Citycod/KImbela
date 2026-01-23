@@ -53,6 +53,91 @@
         </div>
     </div>
     <div class="px-4 pb-3">
+        {% if post.share_type in ['share', 'repost'] %}
+        <div class="shared-meta text-xs text-gray-500 flex items-center gap-2 mb-2">
+            <i class="bi bi-arrow-repeat"></i>
+            <span>{{ 'Reposted' if post.share_type == 'repost' else 'Shared' }}</span>
+        </div>
+        {% endif %}
+
+        {% if post.share_type in ['share', 'repost'] %}
+            {% if post.content %}
+            <p
+                class="post-text {% if post.content|length > 100 %}truncated{% endif %}"
+                id="post-text-{{ post.id }}"
+            >
+                {{ post.content }}
+            </p>
+            {% if post.content|length > 100 %}
+            <button
+                class="see-more-btn text-blue-600 font-medium text-sm mt-1"
+                onclick="togglePostText({{ post.id }})"
+            >
+                See More
+            </button>
+            {% endif %}
+            {% endif %}
+
+            <div class="shared-post-card mt-3">
+                {% if post.shared_post %}
+                <div class="shared-post-header flex items-start gap-3">
+                    <img
+                        src="{{ post.shared_post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+                        alt="{{ post.shared_post.author.full_name }}"
+                        class="w-9 h-9 rounded-full object-cover flex-shrink-0"
+                    />
+                    <div>
+                        <div class="font-semibold text-sm">
+                            {{ post.shared_post.author.first_name }} {{ post.shared_post.author.last_name }}
+                        </div>
+                        <div class="text-xs text-gray-500">
+                            {{ post.shared_post.created_at.strftime('%b %d at %I:%M %p') }}
+                        </div>
+                    </div>
+                </div>
+
+                {% if post.shared_post.content %}
+                <p class="shared-post-text mt-2 text-sm text-gray-800">
+                    {{ post.shared_post.content }}
+                </p>
+                {% endif %}
+
+                {% if post.shared_post.image %}
+                <div class="post-media mt-3">
+                    <img
+                        src="{{ post.shared_post.image }}"
+                        alt="Shared post"
+                        class="w-full rounded-2xl max-h-96 object-cover"
+                        loading="lazy"
+                    />
+                </div>
+                {% endif %}
+
+                {% if post.shared_post.gif %}
+                <div class="post-media mt-3">
+                    <img
+                        src="{{ post.shared_post.gif }}"
+                        alt="Shared GIF"
+                        class="w-full rounded-2xl max-h-96 object-cover"
+                        loading="lazy"
+                    />
+                </div>
+                {% endif %}
+
+                {% if post.shared_post.video %}
+                <div class="post-media mt-3">
+                    <video controls class="w-full rounded-2xl max-h-96" preload="metadata">
+                        <source src="{{ post.shared_post.video }}" />
+                    </video>
+                </div>
+                {% endif %}
+                {% else %}
+                <div class="shared-post-missing text-sm text-gray-500">
+                    Original post is no longer available.
+                </div>
+                {% endif %}
+            </div>
+        {% else %}
         <p
             class="post-text {% if post.content|length > 100 %}truncated{% endif %}"
             id="post-text-{{ post.id }}"
@@ -78,6 +163,17 @@
             />
         </div>
         {% endif %}
+
+        {% if post.gif %}
+        <div class="post-media mt-3">
+            <img
+                src="{{ post.gif }}"
+                alt="Post GIF"
+                class="w-full rounded-2xl max-h-96 object-cover"
+                loading="lazy"
+            />
+        </div>
+        {% endif %}
         
         {% if post.video %}
         <div class="post-media mt-3">
@@ -85,6 +181,7 @@
                 <source src="{{ post.video }}" />
             </video>
         </div>
+        {% endif %}
         {% endif %}
     </div>
     
@@ -109,8 +206,15 @@
             <span>Comment</span>
         </button>
         <button
+            class="action-btn repost-btn flex items-center space-x-1 px-2 py-1 rounded-lg hover:bg-fb-gray transition-colors"
+            data-post-id="{{ post.id }}"
+        >
+            <i class="bi bi-arrow-repeat"></i>
+            <span>Repost</span>
+        </button>
+        <button
             class="action-btn share-btn flex items-center space-x-1 px-2 py-1 rounded-lg hover:bg-fb-gray transition-colors"
-            data-url="{{ url_for('user.user_dashboard', _anchor='post-' ~ post.id) }}"
+            data-post-id="{{ post.id }}"
         >
             <i class="bi bi-share"></i>
             <span>Share</span>

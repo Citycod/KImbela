@@ -103,6 +103,20 @@ from extensions import csrf
 
 cache = Cache()
 
+
+def safe_cache_delete(cache_key):
+    try:
+        from extensions import cache as app_cache
+
+        app_cache.delete(cache_key)
+    except Exception as exc:
+        try:
+            current_app.logger.warning(
+                "Cache delete skipped for %s: %s", cache_key, exc
+            )
+        except Exception:
+            pass
+
 load_dotenv()
 
 env_path = os.path.join(os.path.dirname(__file__), ".env")
@@ -654,8 +668,8 @@ def user_dashboard():
 
             # Clear any relevant cache
             try:
-                cache.delete(f"user_dashboard_{current_user.id}")
-                cache.delete(f"posts_feed_{current_user.id}")
+                safe_cache_delete(f"user_dashboard_{current_user.id}")
+                safe_cache_delete(f"posts_feed_{current_user.id}")
             except:
                 pass
 
@@ -957,8 +971,8 @@ def handle_ajax_post_upload():
 
         # Clear cache
         try:
-            cache.delete(f"user_dashboard_{current_user.id}")
-            cache.delete(f"posts_feed_{current_user.id}")
+            safe_cache_delete(f"user_dashboard_{current_user.id}")
+            safe_cache_delete(f"posts_feed_{current_user.id}")
         except:
             pass
 
@@ -1254,6 +1268,7 @@ def get_visible_posts_optimized(user_id, cursor=None, limit=10):
                 joinedload(Post.author),
                 joinedload(Post.comments).joinedload(Comment.author),
                 joinedload(Post.likes),
+                joinedload(Post.shared_post).joinedload(Post.author),
             )
             .filter(Post.id.in_(post_ids))
             .order_by(Post.created_at.desc())
@@ -1282,7 +1297,9 @@ def get_posts_with_pagination(user_id, cursor=None, limit=10):
 
     # Build posts query
     query = Post.query.options(
-        joinedload(Post.author), joinedload(Post.comments).joinedload(Comment.author)
+        joinedload(Post.author),
+        joinedload(Post.comments).joinedload(Comment.author),
+        joinedload(Post.shared_post).joinedload(Post.author),
     ).filter(
         ~Post.author_id.in_(list(blocked_ids))
     )  # Convert to list for IN clause
@@ -1403,7 +1420,7 @@ def get_friend_suggestions(user_id):
 @login_required
 def clear_dashboard_cache():
     """Clear dashboard cache when user creates a new post"""
-    cache.delete(f"user_dashboard_{current_user.id}")
+    safe_cache_delete(f"user_dashboard_{current_user.id}")
     return jsonify({"success": True})
 
 
@@ -1608,6 +1625,74 @@ def like_post(post_id):
     db.session.commit()
     like_count = Like.query.filter_by(post_id=post_id).count()
     return jsonify(likes=like_count, liked=liked)
+
+
+@user.route("/repost/<int:post_id>", methods=["POST"])
+@login_required
+def repost_post(post_id):
+    original_post = Post.query.get_or_404(post_id)
+
+    existing_repost = Post.query.filter_by(
+        author_id=current_user.id, shared_post_id=post_id, share_type="repost"
+    ).first()
+    if existing_repost:
+        return jsonify(success=False, error="You already reposted this post."), 400
+
+    new_post = Post(
+        content="",
+        author_id=current_user.id,
+        shared_post_id=original_post.id,
+        share_type="repost",
+    )
+    db.session.add(new_post)
+
+    if original_post.author_id != current_user.id:
+        original_post.author.create_notification(
+            actor=current_user,
+            notification_type=NotificationType.POST_SHARE,
+            entity_id=original_post.id,
+            entity_type="post",
+        )
+
+    db.session.commit()
+    safe_cache_delete(f"user_dashboard_{current_user.id}")
+    safe_cache_delete(f"posts_feed_{current_user.id}")
+    return jsonify(success=True, post_id=new_post.id)
+
+
+@user.route("/share_post/<int:post_id>", methods=["POST"])
+@login_required
+def share_post(post_id):
+    original_post = Post.query.get_or_404(post_id)
+    payload = request.get_json(silent=True) or request.form
+    content = (payload.get("content") or "").strip()
+
+    existing_share = Post.query.filter_by(
+        author_id=current_user.id, shared_post_id=post_id, share_type="share"
+    ).first()
+    if existing_share:
+        return jsonify(success=False, error="You already shared this post."), 400
+
+    new_post = Post(
+        content=content,
+        author_id=current_user.id,
+        shared_post_id=original_post.id,
+        share_type="share",
+    )
+    db.session.add(new_post)
+
+    if original_post.author_id != current_user.id:
+        original_post.author.create_notification(
+            actor=current_user,
+            notification_type=NotificationType.POST_SHARE,
+            entity_id=original_post.id,
+            entity_type="post",
+        )
+
+    db.session.commit()
+    safe_cache_delete(f"user_dashboard_{current_user.id}")
+    safe_cache_delete(f"posts_feed_{current_user.id}")
+    return jsonify(success=True, post_id=new_post.id)
 
 
 # Delete Post
@@ -2365,7 +2450,7 @@ def notifications():
             db.session.commit()
 
             # Clear the cached count
-            cache.delete(f"notification_count_{current_user.id}")
+            safe_cache_delete(f"notification_count_{current_user.id}")
 
     # Return HTML or JSON based on request
     if request.headers.get("X-Requested-With") == "XMLHttpRequest":
@@ -2409,7 +2494,7 @@ def invalidate_notification_cache(user_id):
     Call this whenever a new notification is created or marked read
     """
     cache_key = f"notification_count_{user_id}"
-    cache.delete(cache_key)
+    safe_cache_delete(cache_key)
 
     # Also emit real-time update via Socket.IO
     socketio.emit(

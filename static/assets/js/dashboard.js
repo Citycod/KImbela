@@ -687,8 +687,15 @@ const PostSystem = {
             // Share buttons
             const shareBtn = e.target.closest('.share-btn');
             if (shareBtn) {
-                navigator.clipboard.writeText(shareBtn.dataset.url);
-                Toast.show('Post link copied!', 'success');
+                const postId = shareBtn.dataset.postId;
+                openShareModal(postId);
+            }
+
+            // Repost buttons
+            const repostBtn = e.target.closest('.repost-btn');
+            if (repostBtn) {
+                const postId = repostBtn.dataset.postId;
+                this.repost(postId, repostBtn);
             }
         });
 
@@ -730,6 +737,34 @@ const PostSystem = {
             deleteBtn.innerHTML = originalContent;
             deleteBtn.disabled = false;
             Toast.show('Failed to delete post', 'danger');
+        }
+    },
+
+    async repost(postId, repostBtn) {
+        if (!postId) return;
+
+        const originalContent = repostBtn.innerHTML;
+        repostBtn.innerHTML = `<span class="inline-flex items-center gap-1"><span class="tiny-loader xs"></span>Reposting...</span>`;
+        repostBtn.disabled = true;
+
+        try {
+            const response = await fetch(`/repost/${postId}`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrfToken }
+            });
+
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                throw new Error(data.error || 'Failed to repost');
+            }
+
+            Toast.show('Reposted to your feed!', 'success');
+            setTimeout(() => location.reload(), 800);
+        } catch (error) {
+            console.error('Error reposting:', error);
+            repostBtn.innerHTML = originalContent;
+            repostBtn.disabled = false;
+            Toast.show(error.message || 'Failed to repost', 'danger');
         }
     },
 
@@ -4198,11 +4233,53 @@ let currentSharePostId = null;
 
 function openShareModal(postId) {
     currentSharePostId = postId;
-    // For now, just copy the link
-    copyPostLink();
+    const messageInput = document.getElementById('sharePostMessage');
+    if (messageInput) {
+        messageInput.value = '';
+    }
+    Modal.open('shareModal');
+}
+
+function closeShareModal() {
+    Modal.close('shareModal');
+    currentSharePostId = null;
+}
+
+async function shareToFeed() {
+    if (!currentSharePostId) return;
+
+    const messageInput = document.getElementById('sharePostMessage');
+    const content = messageInput ? messageInput.value.trim() : '';
+
+    try {
+        const response = await fetch(`/share_post/${currentSharePostId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ content })
+        });
+
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || 'Failed to share post');
+        }
+
+        Toast.show('Shared to your feed!', 'success');
+        closeShareModal();
+        setTimeout(() => location.reload(), 800);
+    } catch (error) {
+        console.error('Error sharing:', error);
+        Toast.show(error.message || 'Failed to share post', 'danger');
+    }
 }
 
 function copyPostLink() {
+    if (!currentSharePostId) {
+        Toast.show('Select a post to share first.', 'warning');
+        return;
+    }
     const url = `${window.location.origin}/post/${currentSharePostId}`;
     navigator.clipboard.writeText(url).then(() => {
         Toast.show('Link copied!', 'success');
@@ -4402,6 +4479,8 @@ window.deleteComment = deleteComment;
 window.focusCommentInput = focusCommentInput;
 window.loadAllComments = loadAllComments;
 window.openShareModal = openShareModal;
+window.closeShareModal = closeShareModal;
+window.shareToFeed = shareToFeed;
 window.copyPostLink = copyPostLink;
 
 // Make functions globally available

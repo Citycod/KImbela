@@ -52,8 +52,22 @@ class PostSystem {
             // Share buttons
             const shareBtn = e.target.closest('.share-btn');
             if (shareBtn) {
-                navigator.clipboard.writeText(shareBtn.dataset.url);
-                Toast.show('Post link copied!', 'success');
+                const postId = shareBtn.dataset.postId;
+                const shareUrl = shareBtn.dataset.url || `${window.location.origin}/post/${postId}`;
+
+                if (postId && typeof window.openShareModal === 'function') {
+                    window.openShareModal(postId);
+                } else {
+                    navigator.clipboard.writeText(shareUrl);
+                    Toast.show('Post link copied!', 'success');
+                }
+            }
+
+            // Repost buttons
+            const repostBtn = e.target.closest('.repost-btn');
+            if (repostBtn) {
+                const postId = repostBtn.dataset.postId;
+                this.repost(postId, repostBtn);
             }
         });
 
@@ -62,6 +76,34 @@ class PostSystem {
 
         // Initialize reaction system
         ReactionSystem.init();
+    }
+
+    async repost(postId, repostBtn) {
+        if (!postId) return;
+
+        const originalContent = repostBtn.innerHTML;
+        repostBtn.innerHTML = `<span class="inline-flex items-center gap-1"><span class="tiny-loader xs"></span>Reposting...</span>`;
+        repostBtn.disabled = true;
+
+        try {
+            const response = await fetch(`/repost/${postId}`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': this.csrfToken }
+            });
+
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                throw new Error(data.error || 'Failed to repost');
+            }
+
+            Toast.show('Reposted to your feed!', 'success');
+            setTimeout(() => location.reload(), 800);
+        } catch (error) {
+            console.error('Error reposting post:', error);
+            repostBtn.innerHTML = originalContent;
+            repostBtn.disabled = false;
+            Toast.show(error.message || 'Failed to repost', 'danger');
+        }
     }
 
     async like(postId, likeBtn) {
