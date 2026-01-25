@@ -490,59 +490,18 @@
             <!-- Location Targeting -->
             <div class="targeting-section">
               <label class="block text-primary font-medium mb-1 text-sm">Location</label>
-              <select class="select-input" id="locationTargeting" multiple size="4">
-                <option value="nigeria">🇳🇬 Nigeria</option>
-                <option value="ghana">🇬🇭 Ghana</option>
-                <option value="kenya">🇰🇪 Kenya</option>
-                <option value="south-africa">🇿🇦 South Africa</option>
-                <option value="egypt">🇪🇬 Egypt</option>
-                <option value="morocco">🇲🇦 Morocco</option>
-                <option value="tanzania">🇹🇿 Tanzania</option>
-                <option value="ethiopia">🇪🇹 Ethiopia</option>
-                <option value="algeria">🇩🇿 Algeria</option>
-                <option value="uganda">🇺🇬 Uganda</option>
-                <option value="cameroon">🇨🇲 Cameroon</option>
-                <option value="senegal">🇸🇳 Senegal</option>
-                <option value="ivory-coast">🇨🇮 Ivory Coast</option>
-                <option value="rwanda">🇷🇼 Rwanda</option>
-                <option value="tunisia">🇹🇳 Tunisia</option>
-                <option value="zimbabwe">🇿🇼 Zimbabwe</option>
-                <option value="mozambique">🇲🇿 Mozambique</option>
-                <option value="zambia">🇿🇲 Zambia</option>
-                <option value="botswana">🇧🇼 Botswana</option>
-                <option value="namibia">🇳🇦 Namibia</option>
-                <option value="mali">🇲🇱 Mali</option>
-                <option value="libya">🇱🇾 Libya</option>
-                <option value="sudan">🇸🇩 Sudan</option>
-                <option value="gabon">🇬🇦 Gabon</option>
-                <option value="malawi">🇲🇼 Malawi</option>
-                <option value="united-states">🇺🇸 United States</option>
-                <option value="canada">🇨🇦 Canada</option>
-                <option value="mexico">🇲🇽 Mexico</option>
-                <option value="brazil">🇧🇷 Brazil</option>
-                <option value="argentina">🇦🇷 Argentina</option>
-                <option value="uk">🇬🇧 United Kingdom</option>
-                <option value="france">🇫🇷 France</option>
-                <option value="germany">🇩🇪 Germany</option>
-                <option value="italy">🇮🇹 Italy</option>
-                <option value="spain">🇪🇸 Spain</option>
-                <option value="portugal">🇵🇹 Portugal</option>
-                <option value="netherlands">🇳🇱 Netherlands</option>
-                <option value="sweden">🇸🇪 Sweden</option>
-                <option value="australia">🇦🇺 Australia</option>
-                <option value="japan">🇯🇵 Japan</option>
-                <option value="china">🇨🇳 China</option>
-                <option value="india">🇮🇳 India</option>
-                <option value="south-korea">🇰🇷 South Korea</option>
-                <option value="indonesia">🇮🇩 Indonesia</option>
-                <option value="saudi-arabia">🇸🇦 Saudi Arabia</option>
-                <option value="uae">🇦🇪 United Arab Emirates</option>
-                <option value="turkey">🇹🇷 Turkey</option>
-                <option value="qatar">🇶🇦 Qatar</option>
-                <option value="singapore">🇸🇬 Singapore</option>
-                <option value="thailand">🇹🇭 Thailand</option>
-              </select>
-              <p class="text-xs text-text-secondary mt-1">Hold Ctrl/Cmd to select multiple locations or leave blank to select all locations</p>
+              <div class="grid grid-cols-1 gap-2 md:grid-cols-3">
+                <select class="select-input" id="ad_country_select">
+                  <option value="">Select Country</option>
+                </select>
+                <select class="select-input" id="ad_state_select" disabled>
+                  <option value="">Select State/Province</option>
+                </select>
+                <select class="select-input" id="ad_city_select" disabled>
+                  <option value="">Select City</option>
+                </select>
+              </div>
+              <p class="text-xs text-text-secondary mt-1">Choose a country, then narrow to state or city if needed.</p>
             </div>
             
             <!-- Interests Targeting -->
@@ -908,7 +867,9 @@
         const ageRangeSlider = document.getElementById('ageRangeSlider');
         const minAge = document.getElementById('minAge');
         const maxAge = document.getElementById('maxAge');
-        const locationTargeting = document.getElementById('locationTargeting');
+        const adCountrySelect = document.getElementById('ad_country_select');
+        const adStateSelect = document.getElementById('ad_state_select');
+        const adCitySelect = document.getElementById('ad_city_select');
         const interestsTargeting = document.getElementById('interestsTargeting');
         const educationTargeting = document.getElementById('educationTargeting');
         const occupationTargeting = document.getElementById('occupationTargeting');
@@ -1029,7 +990,7 @@
           }
           
           // Location targeting
-          if (targetingFactors.locations && targetingFactors.locations.length > 0) {
+          if (targetingFactors.location) {
             targetingMultiplier *= 0.6; // Narrower audience
           }
           
@@ -1082,10 +1043,9 @@
           summaryAge.textContent = `${ageRangeMin}-${ageRangeMax}`;
           
           // Locations
-          const selectedLocations = Array.from(locationTargeting.selectedOptions).map(option => option.value);
-          summaryLocations.textContent = selectedLocations.length === 0 ? 'Global' : 
-                                        selectedLocations.length > 2 ? `${selectedLocations.length} locations` : 
-                                        selectedLocations.join(', ');
+          const locationParts = [adCitySelect.value, adStateSelect.value, adCountrySelect.value]
+            .filter(Boolean);
+          summaryLocations.textContent = locationParts.length === 0 ? 'Global' : locationParts.join(', ');
           
           // Interests
           const selectedInterests = Array.from(interestsTargeting.selectedOptions).map(option => option.value);
@@ -1171,7 +1131,8 @@
             }
           }
           
-          const selectedLocations = Array.from(locationTargeting.selectedOptions).map(option => option.value);
+          const selectedLocationValues = [adCountrySelect.value, adStateSelect.value, adCitySelect.value]
+            .filter(Boolean);
           const selectedInterests = Array.from(interestsTargeting.selectedOptions).map(option => option.value);
           const selectedEducation = Array.from(educationTargeting.selectedOptions).map(option => option.value);
           const selectedOccupation = Array.from(occupationTargeting.selectedOptions).map(option => option.value);
@@ -1180,7 +1141,7 @@
           const targetingFactors = {
             gender: selectedGender,
             ageRange: [ageRangeMin, ageRangeMax],
-            locations: selectedLocations,
+            location: selectedLocationValues.length > 0,
             interests: selectedInterests,
             education: selectedEducation,
             occupation: selectedOccupation,
@@ -1191,6 +1152,100 @@
           audienceSize.textContent = results.audience;
           linkClicks.textContent = results.clicks;
           targetedUsers.textContent = results.targeted.toLocaleString();
+        }
+
+        function initLocationDropdowns() {
+          if (!adCountrySelect || !adStateSelect || !adCitySelect) return;
+
+          let states = [];
+
+          fetch('{{ url_for("static", filename="assets/js/countries.json") }}')
+            .then((response) => response.json())
+            .then((data) => {
+              data.sort((a, b) => a.name.localeCompare(b.name));
+              data.forEach((country) => {
+                const option = document.createElement('option');
+                option.value = country.name;
+                option.setAttribute('data-country-id', country.id);
+                option.textContent = country.name;
+                adCountrySelect.appendChild(option);
+              });
+            })
+            .catch(() => {
+              adCountrySelect.innerHTML = '<option value="">Error loading countries</option>';
+            });
+
+          adCountrySelect.addEventListener('change', function () {
+            const selectedOption = this.options[this.selectedIndex];
+            const countryId = selectedOption
+              ? selectedOption.getAttribute('data-country-id')
+              : null;
+
+            adStateSelect.innerHTML = '<option value="">Loading states...</option>';
+            adCitySelect.innerHTML = '<option value="">Select State First</option>';
+            adStateSelect.disabled = true;
+            adCitySelect.disabled = true;
+
+            if (!countryId) {
+              adStateSelect.innerHTML = '<option value="">Select Country First</option>';
+              return;
+            }
+
+            fetch('{{ url_for("static", filename="assets/js/states.json") }}')
+              .then((response) => response.json())
+              .then((data) => {
+                states = data.filter((state) => state.country_id == countryId);
+                states.sort((a, b) => a.name.localeCompare(b.name));
+                adStateSelect.innerHTML = '<option value="">Select State / Province</option>';
+                states.forEach((state) => {
+                  const option = document.createElement('option');
+                  option.value = state.name;
+                  option.setAttribute('data-state-id', state.id);
+                  option.textContent = state.name;
+                  adStateSelect.appendChild(option);
+                });
+                adStateSelect.disabled = states.length === 0;
+                if (states.length === 0) {
+                  adStateSelect.innerHTML = '<option value="">No states available</option>';
+                }
+              })
+              .catch(() => {
+                adStateSelect.innerHTML = '<option value="">Error loading states</option>';
+              });
+          });
+
+          adStateSelect.addEventListener('change', function () {
+            const selectedOption = this.options[this.selectedIndex];
+            const stateId = selectedOption
+              ? selectedOption.getAttribute('data-state-id')
+              : null;
+
+            adCitySelect.innerHTML = '<option value="">Loading cities...</option>';
+            adCitySelect.disabled = true;
+
+            if (!stateId) {
+              adCitySelect.innerHTML = '<option value="">Select State First</option>';
+              return;
+            }
+
+            fetch('{{ url_for("static", filename="assets/js/cities.json") }}')
+              .then((response) => response.json())
+              .then((data) => {
+                const cities = data.filter((city) => city.state_id == stateId);
+                cities.sort((a, b) => a.name.localeCompare(b.name));
+                adCitySelect.innerHTML = '<option value="">Select City (Optional)</option>';
+                cities.forEach((city) => {
+                  const option = document.createElement('option');
+                  option.value = city.name;
+                  option.textContent = city.name;
+                  adCitySelect.appendChild(option);
+                });
+                adCitySelect.disabled = false;
+              })
+              .catch(() => {
+                adCitySelect.innerHTML = '<option value="">Error loading cities</option>';
+              });
+          });
         }
         
         // Handle image upload
@@ -1340,7 +1395,9 @@
             }
           }
           
-          const selectedLocations = Array.from(locationTargeting.selectedOptions).map(option => option.value);
+          const selectedCountry = adCountrySelect.value || '';
+          const selectedState = adStateSelect.value || '';
+          const selectedCity = adCitySelect.value || '';
           const selectedInterests = Array.from(interestsTargeting.selectedOptions).map(option => option.value);
           const selectedEducation = Array.from(educationTargeting.selectedOptions).map(option => option.value);
           const selectedOccupation = Array.from(occupationTargeting.selectedOptions).map(option => option.value);
@@ -1381,7 +1438,9 @@
               gender: selectedGender,
               age_min: ageRangeMin,
               age_max: ageRangeMax,
-              locations: selectedLocations,
+              country: selectedCountry,
+              state: selectedState,
+              city: selectedCity,
               interests: selectedInterests,
               education: selectedEducation,
               occupation: selectedOccupation,
@@ -1514,9 +1573,12 @@
           });
         });
         
-        locationTargeting.addEventListener('change', () => {
-          updateTargetingSummary();
-          updateEstimatedResults();
+        [adCountrySelect, adStateSelect, adCitySelect].forEach((select) => {
+          if (!select) return;
+          select.addEventListener('change', () => {
+            updateTargetingSummary();
+            updateEstimatedResults();
+          });
         });
         
         interestsTargeting.addEventListener('change', () => {
@@ -1584,6 +1646,7 @@
         
         // Initialize values
         initAgeRangeSlider();
+        initLocationDropdowns();
         updateCurrencyDisplay();
         updateValues();
         updateTargetingSummary();

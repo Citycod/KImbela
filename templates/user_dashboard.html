@@ -67,7 +67,8 @@
 
     {% include 'partials/user_dashboard_head_scripts.html' %}
   </head>
-  <body class="font-poppins bg-fb-gray text-fb-text">
+  {% set bottom_banner = dashboard_ads.get('bottom_banner') if dashboard_ads else None %}
+  <body class="font-poppins bg-fb-gray text-fb-text has-bottom-ad">
     <div class="simple-loader" id="loader">
       <div class="loader-logo">
         <img
@@ -3167,6 +3168,77 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
       });
     </script>
 
+    <div id="bottomAdBanner" class="bottom-ad-banner has-dashboard-ad" data-ad-id="{{ bottom_banner.id }}">
+      <div class="bottom-ad-inner">
+        {% if bottom_banner %}
+        <button class="bottom-ad-close" type="button" aria-label="Close ad">
+          <i class="bi bi-x-lg"></i>
+        </button>
+        <a
+          class="bottom-ad-clickarea"
+          href="{{ bottom_banner.target_url }}"
+          target="_blank"
+          rel="noopener"
+        >
+          <div class="bottom-ad-label">Sponsored</div>
+          {% if bottom_banner.media_type == 'video' %}
+          <video class="bottom-ad-media" autoplay muted loop playsinline>
+            <source src="{{ bottom_banner.image_url }}" {% if bottom_banner.video_mime %}type="{{ bottom_banner.video_mime }}"{% endif %} />
+          </video>
+          {% else %}
+          <img
+            src="{{ bottom_banner.image_url }}"
+            alt="{{ bottom_banner.title }}"
+            class="bottom-ad-media"
+            loading="lazy"
+          />
+          {% endif %}
+        </a>
+        {% else %}
+        <a class="bottom-ad-clickarea" href="{{ url_for('payments.dashboard_ad_package', placement='dashboard-bottom') }}">
+          <div class="bottom-ad-label">Ad space</div>
+          <div class="bottom-ad-empty">
+            <div class="bottom-ad-megaphone">
+              <span class="megaphone-cone"></span>
+              <span class="megaphone-handle"></span>
+              <span class="megaphone-sound"></span>
+            </div>
+            <div class="bottom-ad-empty-copy">
+              <span class="bottom-ad-empty-pill">Get noticed</span>
+              <h3>Give your brand the loudest spot on the feed</h3>
+              <p>Stay visible while people scroll. Premium sticky banner with full-width impact.</p>
+            </div>
+            <span class="bottom-ad-cta">Claim this banner</span>
+          </div>
+        </a>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if bottom_banner %}
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const bottomBanner = document.getElementById("bottomAdBanner");
+        if (!bottomBanner) return;
+        const bannerKey = `kimbela_bottom_ad_closed_${bottomBanner.dataset.adId}`;
+        if (localStorage.getItem(bannerKey) === "1") {
+          bottomBanner.classList.add("hidden");
+          document.body.classList.remove("has-bottom-ad");
+          return;
+        }
+        const closeBtn = bottomBanner.querySelector(".bottom-ad-close");
+        if (closeBtn) {
+          closeBtn.addEventListener("click", (event) => {
+            event.preventDefault();
+            bottomBanner.classList.add("hidden");
+            document.body.classList.remove("has-bottom-ad");
+            localStorage.setItem(bannerKey, "1");
+          });
+        }
+      });
+    </script>
+    {% endif %}
+
 
     <style>
     .dashboard-ad-link {
@@ -3960,6 +4032,250 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
   background: transparent;
 }
 
+/* Sticky bottom banner */
+body.has-bottom-ad {
+  padding-bottom: 0;
+}
+
+.bottom-ad-banner {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 60;
+  pointer-events: none;
+}
+
+.bottom-ad-banner.has-dashboard-ad .bottom-ad-inner {
+  pointer-events: auto;
+  margin: 0;
+  max-width: none;
+  width: 100%;
+  background: linear-gradient(120deg, rgba(255, 237, 213, 0.98), rgba(255, 220, 210, 0.98), rgba(254, 215, 170, 0.98));
+  border-top: 1px solid rgba(251, 146, 60, 0.28);
+  box-shadow: 0 -10px 40px rgba(249, 115, 22, 0.18), 0 22px 45px rgba(15, 23, 42, 0.08);
+  border-radius: 0;
+  padding: 12px 18px 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+.bottom-ad-banner.has-dashboard-ad .bottom-ad-inner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 15% 10%, rgba(255, 255, 255, 0.7), transparent 50%),
+    radial-gradient(circle at 85% 30%, rgba(255, 255, 255, 0.4), transparent 55%);
+  pointer-events: none;
+}
+
+.bottom-ad-banner.has-dashboard-ad .bottom-ad-inner::after {
+  content: "";
+  position: absolute;
+  left: -10%;
+  top: -120%;
+  width: 40%;
+  height: 300%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  transform: rotate(18deg);
+  animation: banner-sheen 6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.bottom-ad-label {
+  position: absolute;
+  top: 12px;
+  left: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9a3412;
+  background: rgba(255, 247, 237, 0.92);
+  border: 1px solid rgba(251, 146, 60, 0.28);
+  padding: 4px 8px;
+  border-radius: 999px;
+  z-index: 2;
+}
+
+.bottom-ad-close {
+  position: absolute;
+  top: 10px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid rgba(251, 146, 60, 0.28);
+  background: rgba(255, 255, 255, 0.9);
+  color: #9a3412;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  z-index: 2;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.bottom-ad-close:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 18px rgba(249, 115, 22, 0.2);
+}
+
+.bottom-ad-clickarea {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.bottom-ad-link {
+  display: block;
+  margin-top: 18px;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.bottom-ad-empty {
+  margin-top: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.88), rgba(255, 237, 213, 0.7));
+  border: 1px solid rgba(251, 146, 60, 0.28);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+}
+
+.bottom-ad-megaphone {
+  position: relative;
+  width: 84px;
+  height: 60px;
+  transform: rotate(-12deg);
+  flex: 0 0 auto;
+  filter: drop-shadow(0 10px 14px rgba(249, 115, 22, 0.25));
+}
+
+.megaphone-cone {
+  position: absolute;
+  left: 12px;
+  top: 10px;
+  width: 48px;
+  height: 28px;
+  background: linear-gradient(140deg, #fb7185, #f97316);
+  border-radius: 8px 20px 20px 8px;
+  box-shadow: 0 10px 18px rgba(249, 115, 22, 0.25);
+}
+
+.megaphone-cone::after {
+  content: "";
+  position: absolute;
+  right: -18px;
+  top: 4px;
+  width: 22px;
+  height: 20px;
+  background: linear-gradient(160deg, #fed7aa, #fdba74);
+  border-radius: 0 16px 16px 0;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.7);
+}
+
+.megaphone-handle {
+  position: absolute;
+  left: 6px;
+  bottom: 2px;
+  width: 18px;
+  height: 22px;
+  background: #f97316;
+  border-radius: 10px;
+  transform: rotate(12deg);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.6);
+}
+
+.megaphone-sound {
+  position: absolute;
+  right: -6px;
+  top: 6px;
+  width: 28px;
+  height: 28px;
+  border: 2px solid rgba(249, 115, 22, 0.45);
+  border-left-color: transparent;
+  border-bottom-color: transparent;
+  border-radius: 50%;
+  transform: rotate(20deg);
+}
+
+.megaphone-sound::after {
+  content: "";
+  position: absolute;
+  right: -8px;
+  top: -2px;
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(251, 146, 60, 0.4);
+  border-left-color: transparent;
+  border-bottom-color: transparent;
+  border-radius: 50%;
+}
+
+.bottom-ad-empty-copy h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #9a3412;
+  margin-bottom: 4px;
+}
+
+.bottom-ad-empty-copy p {
+  font-size: 13px;
+  color: #7c2d12;
+  opacity: 0.86;
+}
+
+.bottom-ad-empty-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid rgba(251, 146, 60, 0.3);
+  color: #c2410c;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.bottom-ad-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: linear-gradient(120deg, #f97316, #fb7185, #f59e0b);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 12px 26px rgba(249, 115, 22, 0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.bottom-ad-cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 32px rgba(249, 115, 22, 0.35);
+}
+
+.bottom-ad-media {
+  display: block;
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 16px;
+}
+
 /* Horizontal ad banner - FULL WIDTH & RESPONSIVE */
 .second-ad-banner.has-dashboard-ad {
   width: 100% !important;
@@ -4082,6 +4398,58 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
   .second-ad-banner .dashboard-ad-image {
     min-height: 120px !important;
     border-radius: 0 !important;
+  }
+
+  body.has-bottom-ad {
+    padding-bottom: 120px;
+  }
+
+  .bottom-ad-banner {
+    bottom: 10px;
+  }
+
+  .bottom-ad-banner.has-dashboard-ad .bottom-ad-inner {
+    width: calc(100% - 20px);
+    padding: 10px 12px 12px;
+  }
+
+  .bottom-ad-media {
+    height: 110px;
+  }
+
+  .bottom-ad-empty {
+    padding: 14px;
+  }
+
+  .bottom-ad-empty-copy h3 {
+    font-size: 16px;
+  }
+
+  .bottom-ad-megaphone {
+    width: 64px;
+    height: 48px;
+  }
+
+  .bottom-ad-label {
+    top: 10px;
+    left: 14px;
+  }
+}
+
+@keyframes banner-sheen {
+  0% {
+    transform: translateX(-20%) rotate(18deg);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.7;
+  }
+  60% {
+    opacity: 0.2;
+  }
+  100% {
+    transform: translateX(120%) rotate(18deg);
+    opacity: 0;
   }
 }
 

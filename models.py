@@ -1183,6 +1183,9 @@ class AdCampaign(db.Model):
     target_gender = db.Column(db.Text)  # JSON string of genders
     target_age_min = db.Column(db.Integer, default=18)
     target_age_max = db.Column(db.Integer, default=65)
+    target_country = db.Column(db.String(100))
+    target_state = db.Column(db.String(100))
+    target_city = db.Column(db.String(100))
     target_countries = db.Column(db.Text)  # JSON string of countries
     target_interests = db.Column(db.Text)  # JSON string of interests
     target_education = db.Column(db.Text)  # JSON string of education levels
@@ -1212,6 +1215,9 @@ class AdCampaign(db.Model):
             "gender": json.loads(self.target_gender) if self.target_gender else [],
             "age_min": self.target_age_min,
             "age_max": self.target_age_max,
+            "country": self.target_country,
+            "state": self.target_state,
+            "city": self.target_city,
             "countries": (
                 json.loads(self.target_countries) if self.target_countries else []
             ),

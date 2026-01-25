@@ -52,6 +52,13 @@ DASHBOARD_AD_PLACEMENTS = {
         "image_height": 900,
         "recommended_size": "1400 x 900 px",
     },
+    "dashboard-bottom": {
+        "title": "Sticky Bottom Banner",
+        "subtitle": "Stay visible while people scroll the feed.",
+        "image_width": 1600,
+        "image_height": 240,
+        "recommended_size": "1600 x 240 px",
+    },
 }
 
 
@@ -727,11 +734,13 @@ def track_ad_click(ad_id):
 def create_campaign():
     """Create ad campaign with user-selected budget and targeting data"""
     try:
-        data = request.get_json()
+        data = request.get_json(silent=True)
         print(f"🔵 [CREATE CAMPAIGN] Received data: {data}")
 
         if not data:
-            return jsonify({"success": False, "error": "No data provided"}), 400
+            data = request.form.to_dict()
+            if not data:
+                return jsonify({"success": False, "error": "No data provided"}), 400
 
         # Extract and validate data with correct field names
         daily_budget = data.get("daily_budget")
@@ -745,7 +754,7 @@ def create_campaign():
         placement = data.get("placement", "sponsored")
 
         # ✅ Extract targeting data
-        targeting = data.get("targeting", {})
+        targeting = data.get("targeting", {}) or {}
         target_gender = targeting.get("gender", "all")
         target_age_min = targeting.get("age_min", 31)
         target_age_max = targeting.get("age_max", 65)
@@ -755,6 +764,16 @@ def create_campaign():
         target_relationship = targeting.get("relationship", "all")
         target_education = targeting.get("education", "all")
         target_occupation = targeting.get("occupation", "all")
+        target_country = data.get("target_country") or targeting.get("country")
+        target_state = data.get("target_state") or targeting.get("state")
+        target_city = data.get("target_city") or targeting.get("city")
+        if not target_locations:
+            raw_locations = data.get("target_countries")
+            if raw_locations:
+                try:
+                    target_locations = json.loads(raw_locations)
+                except (TypeError, ValueError):
+                    target_locations = []
 
         print(
             f"🔵 [CREATE CAMPAIGN] Parsed: daily_budget={daily_budget}, duration_days={duration_days}, title={title}"
@@ -844,6 +863,9 @@ def create_campaign():
             ),
             target_age_min=target_age_min,
             target_age_max=target_age_max,
+            target_country=target_country,
+            target_state=target_state,
+            target_city=target_city,
             target_countries=json.dumps(target_locations) if target_locations else None,
             target_interests=json.dumps(target_interests) if target_interests else None,
             target_language=target_language if target_language != "all" else None,

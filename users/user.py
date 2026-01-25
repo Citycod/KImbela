@@ -772,6 +772,7 @@ def user_dashboard():
         "sidebar_banner": "dashboard-sidebar",
         "vertical_banner": "dashboard-vertical",
         "spotlight_banner": "dashboard-spotlight",
+        "bottom_banner": "dashboard-bottom",
     }
     dashboard_ads = {}
     for key, placement in placement_map.items():

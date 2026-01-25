@@ -71,6 +71,14 @@ def calculate_age(dob):
     return today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
 
 
+def subtract_years(date_value, years):
+    """Subtract years from a date while handling leap-day edge cases."""
+    try:
+        return date_value.replace(year=date_value.year - years)
+    except ValueError:
+        return date_value.replace(month=2, day=28, year=date_value.year - years)
+
+
 def allowed_file(filename, allowed_extensions=None):
     """Check if file extension is allowed"""
     if allowed_extensions is None:
@@ -133,7 +141,7 @@ def get_requests():
             MatchmakingRequest.end_date > datetime.utcnow(),
         )
 
-        # Join with User table to access user location
+        # Join with User table to access profile details (age/gender)
         query = query.join(User, MatchmakingRequest.user_id == User.id)
 
         # Apply text search
@@ -149,30 +157,29 @@ def get_requests():
 
         # Age range filter (on user's age, not partner preferences)
         if min_age is not None or max_age is not None:
-            # We need to calculate age from DOB
-            from sqlalchemy import func, extract
-
             today = datetime.utcnow().date()
-
-            # This is simplified - you might need a better age calculation
             if min_age is not None:
-                min_birth_year = today.year - min_age
-                query = query.filter(extract("year", User.dob) <= min_birth_year)
+                max_dob = subtract_years(today, min_age)
+                query = query.filter(User.dob <= max_dob)
             if max_age is not None:
-                max_birth_year = today.year - max_age - 1
-                query = query.filter(extract("year", User.dob) >= max_birth_year)
+                min_dob = subtract_years(today, max_age + 1) + timedelta(days=1)
+                query = query.filter(User.dob >= min_dob)
 
         # Gender filter - filter by user's gender, not preferences
         if gender and gender.lower() != "any":
             query = query.filter(User.gender == gender.lower())
 
-        # Location filters - filter by user's actual location
+        # Location filters - filter by request's preferred partner location
         if country_filter:
-            query = query.filter(User.country.ilike(f"%{country_filter}%"))
+            query = query.filter(
+                MatchmakingRequest.partner_country.ilike(f"%{country_filter}%")
+            )
         if state_filter:
-            query = query.filter(User.state.ilike(f"%{state_filter}%"))
+            query = query.filter(
+                MatchmakingRequest.partner_state.ilike(f"%{state_filter}%")
+            )
         if city_filter:
-            query = query.filter(User.city.ilike(f"%{city_filter}%"))
+            query = query.filter(MatchmakingRequest.partner_city.ilike(f"%{city_filter}%"))
 
         # Sorting
         if sort_by == "newest":
