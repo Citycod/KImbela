@@ -1,307 +1,421 @@
-<!-- templates/admin_reports.html -->
-<div class="mb-8">
-  <h2 class="text-3xl font-bold text-gray-800 mb-2">Reported Content</h2>
-  <p class="text-gray-600">Review and take action on reported content.</p>
-</div>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reports - Kimbela Admin</title>
+    <link
+      href="{{ url_for('static', filename='assets/img/fav.png') }}"
+      rel="icon"
+    />
+    <meta name="csrf-token" content="{{ csrf_token }}" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="bg-slate-50 font-['Poppins'] text-slate-900">
+    <script>
+      window.csrfToken = "{{ csrf_token }}";
+    </script>
+    <div
+      class="min-h-screen bg-gradient-to-br from-slate-50 via-sky-50 to-emerald-50"
+    >
+      <div class="flex">
+        <aside
+          class="hidden w-72 flex-shrink-0 border-r border-slate-200/70 bg-white/80 px-6 py-8 shadow-sm backdrop-blur lg:block"
+        >
+          <div class="flex items-center gap-3">
+            <span
+              class="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700"
+            >
+              <i data-lucide="shield" class="h-5 w-5"></i>
+            </span>
+            <div>
+              <p class="text-xs uppercase tracking-[0.2em] text-slate-400">
+                Admin
+              </p>
+              <p class="text-base font-semibold">Kimbela Console</p>
+            </div>
+          </div>
 
-<!-- Filters -->
-<div class="card p-6 mb-6">
-  <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-      <div class="flex gap-3">
-          <select id="statusFilter" class="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent">
-              <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Status</option>
-              <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
-              <option value="resolved" {% if status_filter == 'resolved' %}selected{% endif %}>Resolved</option>
-              <option value="dismissed" {% if status_filter == 'dismissed' %}selected{% endif %}>Dismissed</option>
-          </select>
-          
-          <select id="typeFilter" class="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent">
-              <option value="all" {% if type_filter == 'all' %}selected{% endif %}>All Types</option>
-              <option value="post" {% if type_filter == 'post' %}selected{% endif %}>Posts</option>
-              <option value="comment" {% if type_filter == 'comment' %}selected{% endif %}>Comments</option>
-              <option value="user" {% if type_filter == 'user' %}selected{% endif %}>Users</option>
-          </select>
-      </div>
-      
-      <div class="text-sm text-gray-600">
-          <span class="font-semibold">{{ reports.total }}</span> reports found
-      </div>
-  </div>
-</div>
+          <nav class="mt-10 space-y-2 text-sm">
+            <a
+              href="{{ url_for('admin.admin_dashboard') }}"
+              class="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-600 hover:bg-slate-100"
+            >
+              <i data-lucide="layout-dashboard" class="h-4 w-4"></i>
+              Overview
+            </a>
+            <a
+              href="{{ url_for('admin.admin_ads') }}"
+              class="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-600 hover:bg-slate-100"
+            >
+              <i data-lucide="megaphone" class="h-4 w-4"></i>
+              Ads
+            </a>
+            <a
+              href="{{ url_for('admin.admin_reports') }}"
+              class="flex items-center gap-3 rounded-xl bg-slate-900 px-4 py-3 text-white"
+            >
+              <i data-lucide="alert-triangle" class="h-4 w-4"></i>
+              Reports
+            </a>
+            <a
+              href="{{ url_for('admin.admin_users') }}"
+              class="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-600 hover:bg-slate-100"
+            >
+              <i data-lucide="users" class="h-4 w-4"></i>
+              Users
+            </a>
+            <a
+              href="{{ url_for('admin.admin_groups') }}"
+              class="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-600 hover:bg-slate-100"
+            >
+              <i data-lucide="layers" class="h-4 w-4"></i>
+              Groups
+            </a>
+          </nav>
 
-<!-- Reports List -->
-<div class="space-y-4">
-  {% for report in reports.items %}
-  <div class="card p-6">
-      <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-          <div class="flex-1">
-              <div class="flex items-start justify-between mb-4">
-                  <div class="flex items-center space-x-3">
-                      <div class="w-10 h-10 rounded-full bg-gradient-to-r from-red-500 to-pink-500 flex items-center justify-center">
-                          <i class="bi bi-flag text-white"></i>
+          <div class="mt-10 border-t border-slate-200/70 pt-6">
+            <a
+              href="{{ url_for('user.index') }}"
+              class="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-600 hover:bg-slate-100"
+            >
+              <i data-lucide="home" class="h-4 w-4"></i>
+              Back to site
+            </a>
+            <a
+              href="{{ url_for('user.logout') }}"
+              class="mt-2 flex items-center gap-3 rounded-xl px-4 py-3 text-rose-600 hover:bg-rose-50"
+            >
+              <i data-lucide="log-out" class="h-4 w-4"></i>
+              Logout
+            </a>
+          </div>
+        </aside>
+
+        <main class="flex-1 px-6 py-8 lg:px-10">
+          <div class="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p class="text-xs uppercase tracking-[0.25em] text-slate-400">
+                Safety queue
+              </p>
+              <h1 class="text-2xl font-semibold text-slate-900">
+                Reported content
+              </h1>
+            </div>
+          </div>
+
+          <div
+            class="mt-6 rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-sm"
+          >
+            <div class="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <h2 class="text-sm font-semibold text-slate-900">
+                  Filter reports
+                </h2>
+                <p class="text-xs text-slate-500">
+                  Review posts, comments, and users.
+                </p>
+              </div>
+              <div class="flex flex-wrap items-center gap-3">
+                <label class="text-xs text-slate-500" for="statusFilter"
+                  >Status</label
+                >
+                <select
+                  id="statusFilter"
+                  class="rounded-xl border border-slate-200/70 bg-white px-3 py-2 text-xs text-slate-700 focus:border-emerald-400 focus:outline-none"
+                >
+                  <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                  <option value="resolved" {% if status_filter == 'resolved' %}selected{% endif %}>Resolved</option>
+                  <option value="dismissed" {% if status_filter == 'dismissed' %}selected{% endif %}>Dismissed</option>
+                  <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All</option>
+                </select>
+                <label class="text-xs text-slate-500" for="typeFilter"
+                  >Type</label
+                >
+                <select
+                  id="typeFilter"
+                  class="rounded-xl border border-slate-200/70 bg-white px-3 py-2 text-xs text-slate-700 focus:border-emerald-400 focus:outline-none"
+                >
+                  <option value="all" {% if type_filter == 'all' %}selected{% endif %}>All</option>
+                  <option value="post" {% if type_filter == 'post' %}selected{% endif %}>Post</option>
+                  <option value="comment" {% if type_filter == 'comment' %}selected{% endif %}>Comment</option>
+                  <option value="user" {% if type_filter == 'user' %}selected{% endif %}>User</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="mt-6 rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-sm"
+          >
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead>
+                  <tr class="border-b border-slate-200 text-slate-500">
+                    <th class="py-3 font-medium">Reported item</th>
+                    <th class="py-3 font-medium">Content</th>
+                    <th class="py-3 font-medium">Reason</th>
+                    <th class="py-3 font-medium">Reporter</th>
+                    <th class="py-3 font-medium">Reported user</th>
+                    <th class="py-3 font-medium">Status</th>
+                    <th class="py-3 font-medium">Date</th>
+                    <th class="py-3 font-medium">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for report in reports.items %}
+                  <tr
+                    class="border-b border-slate-100"
+                    data-report-row="{{ report.id }}"
+                  >
+                    <td class="py-4">
+                      <p class="text-sm font-semibold text-slate-900">
+                        {{ report.content_type|default('content')|capitalize }}
+                        #{{ report.content_id }}
+                      </p>
+                      <p class="text-xs text-slate-500">
+                        Report ID {{ report.id }}
+                      </p>
+                    </td>
+                    <td class="py-4">
+                      {% if report.content_type == 'post' %} {% set post =
+                      post_map.get(report.content_id) %}
+                      <p class="text-xs text-slate-600">
+                        {{ post.content|truncate(120, True, '...') if post else
+                        'Post unavailable' }}
+                      </p>
+                      {% elif report.content_type == 'comment' %} {% set comment
+                      = comment_map.get(report.content_id) %}
+                      <p class="text-xs text-slate-600">
+                        {{ comment.content|truncate(120, True, '...') if comment
+                        else 'Comment unavailable' }}
+                      </p>
+                      {% else %}
+                      <p class="text-xs text-slate-500">
+                        No preview available.
+                      </p>
+                      {% endif %}
+                    </td>
+                    <td class="py-4">
+                      <p class="text-xs text-slate-700">{{ report.reason }}</p>
+                    </td>
+                    <td class="py-4">
+                      <p class="text-sm text-slate-800">
+                        {{ report.reporter.first_name }} {{
+                        report.reporter.last_name }}
+                      </p>
+                      <p class="text-xs text-slate-500">
+                        ID: {{ report.reporter.id }}
+                      </p>
+                    </td>
+                    <td class="py-4">
+                      {% if report.reported_user %}
+                      <p class="text-sm text-slate-800">
+                        {{ report.reported_user.first_name }} {{
+                        report.reported_user.last_name }}
+                      </p>
+                      <p class="text-xs text-slate-500">
+                        ID: {{ report.reported_user.id }}
+                      </p>
+                      {% else %}
+                      <p class="text-xs text-slate-500">Not available</p>
+                      {% endif %}
+                    </td>
+                    <td class="py-4">
+                      {% set badge_class = 'bg-amber-100 text-amber-700' if
+                      report.status == 'pending' else ('bg-emerald-100
+                      text-emerald-700' if report.status == 'resolved' else
+                      'bg-slate-100 text-slate-600') %}
+                      <span
+                        class="inline-flex rounded-full px-3 py-1 text-[10px] font-semibold uppercase {{ badge_class }}"
+                        data-report-status="{{ report.id }}"
+                        >{{ report.status }}</span
+                      >
+                    </td>
+                    <td class="py-4">
+                      <p class="text-xs text-slate-500">
+                        {{ report.created_at.strftime('%b %d, %Y') }}
+                      </p>
+                    </td>
+                    <td class="py-4">
+                      <div class="flex flex-col gap-2">
+                        <button
+                          class="rounded-lg border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-medium text-rose-600 hover:bg-rose-100"
+                          onclick="resolveReport({{ report.id }}, 'delete_content')"
+                        >
+                          Delete
+                        </button>
+                        {% if report.reported_user %}
+                        <button
+                          class="rounded-lg border border-slate-200/70 bg-white px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                          onclick="resolveReport({{ report.id }}, 'suspend_user')"
+                        >
+                          Suspend user
+                        </button>
+                        {% endif %}
+                        <button
+                          class="rounded-lg border border-slate-200/70 bg-white px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                          onclick="dismissReport({{ report.id }})"
+                        >
+                          Ignore
+                        </button>
                       </div>
-                      <div>
-                          <h3 class="font-semibold text-gray-800 capitalize">{{ report.content_type }} Report</h3>
-                          <p class="text-sm text-gray-500">Reported by User #{{ report.reporter_id }}</p>
-                      </div>
-                  </div>
-                  <div class="flex items-center space-x-2">
-                      <span class="badge {{ 'badge-warning' if report.status == 'pending' else 'badge-success' if report.status == 'resolved' else 'badge-danger' }}">
-                          {{ report.status|title }}
-                      </span>
-                      <span class="badge badge-info capitalize">{{ report.content_type }}</span>
-                  </div>
+                    </td>
+                  </tr>
+                  {% else %}
+                  <tr>
+                    <td
+                      colspan="8"
+                      class="py-6 text-center text-xs text-slate-500"
+                    >
+                      No reports found.
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+
+            {% if reports.pages > 1 %}
+            <div
+              class="mt-6 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500"
+            >
+              <div>
+                Showing {{ reports.items|length }} of {{ reports.total }}
+                reports
               </div>
-              
-              <div class="mb-4">
-                  <h4 class="font-medium text-gray-800 mb-2">Reason</h4>
-                  <p class="text-gray-600 bg-gray-50 p-3 rounded-lg">{{ report.reason }}</p>
+              <div class="flex flex-wrap gap-2">
+                {% if reports.has_prev %}
+                <a
+                  class="rounded-lg border border-slate-200/70 bg-white px-3 py-1 hover:bg-slate-50"
+                  href="{{ url_for('admin.admin_reports', page=reports.prev_num, status=status_filter, type=type_filter) }}"
+                  >Previous</a
+                >
+                {% endif %} {% for page_num in reports.iter_pages() %} {% if
+                page_num %} {% if page_num == reports.page %}
+                <span class="rounded-lg bg-slate-900 px-3 py-1 text-white"
+                  >{{ page_num }}</span
+                >
+                {% else %}
+                <a
+                  class="rounded-lg border border-slate-200/70 bg-white px-3 py-1 hover:bg-slate-50"
+                  href="{{ url_for('admin.admin_reports', page=page_num, status=status_filter, type=type_filter) }}"
+                  >{{ page_num }}</a
+                >
+                {% endif %} {% else %}
+                <span class="px-2">...</span>
+                {% endif %} {% endfor %} {% if reports.has_next %}
+                <a
+                  class="rounded-lg border border-slate-200/70 bg-white px-3 py-1 hover:bg-slate-50"
+                  href="{{ url_for('admin.admin_reports', page=reports.next_num, status=status_filter, type=type_filter) }}"
+                  >Next</a
+                >
+                {% endif %}
               </div>
-              
-              {% if report.additional_info %}
-              <div class="mb-4">
-                  <h4 class="font-medium text-gray-800 mb-2">Additional Information</h4>
-                  <p class="text-gray-600 bg-gray-50 p-3 rounded-lg">{{ report.additional_info }}</p>
-              </div>
-              {% endif %}
-              
-              <div class="text-sm text-gray-500">
-                  Reported {{ report.created_at.strftime('%B %d, %Y at %H:%M') }}
-              </div>
+            </div>
+            {% endif %}
           </div>
-          
-          {% if report.status == 'pending' %}
-          <div class="lg:w-48 flex lg:flex-col gap-2">
-              <button onclick="resolveReport({{ report.id }})" 
-                      class="flex-1 bg-green-100 text-green-600 hover:bg-green-200 py-2 px-4 rounded-lg transition-colors flex items-center justify-center">
-                  <i class="bi bi-check-circle mr-2"></i>
-                  Resolve
-              </button>
-              <button onclick="dismissReport({{ report.id }})" 
-                      class="flex-1 bg-gray-100 text-gray-600 hover:bg-gray-200 py-2 px-4 rounded-lg transition-colors flex items-center justify-center">
-                  <i class="bi bi-x-circle mr-2"></i>
-                  Dismiss
-              </button>
-          </div>
-          {% endif %}
+        </main>
       </div>
-      
-      {% if report.status != 'pending' and report.admin_notes %}
-      <div class="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-          <h4 class="font-medium text-blue-800 mb-2">Admin Notes</h4>
-          <p class="text-blue-700">{{ report.admin_notes }}</p>
-          <p class="text-xs text-blue-600 mt-2">
-              Resolved by Admin on {{ report.resolved_at.strftime('%B %d, %Y') }}
-          </p>
-      </div>
-      {% endif %}
-  </div>
-  {% else %}
-  <div class="card p-12 text-center">
-      <i class="bi bi-flag text-4xl text-gray-400 mb-4"></i>
-      <h3 class="text-xl font-semibold text-gray-600 mb-2">No reports found</h3>
-      <p class="text-gray-500">All clear! No pending reports to review.</p>
-  </div>
-  {% endfor %}
-</div>
+    </div>
 
-<!-- Pagination -->
-{% if reports.pages > 1 %}
-<div class="flex items-center justify-between mt-8 pt-6 border-t border-gray-200">
-  <div>
-      <p class="text-sm text-gray-600">
-          Showing {{ reports.items|length }} of {{ reports.total }} reports
-      </p>
-  </div>
-  <div class="flex space-x-2">
-      {% if reports.has_prev %}
-      <button onclick="loadReportsPage({{ reports.prev_num }})" 
-              class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-          Previous
-      </button>
-      {% endif %}
-      
-      {% for page_num in reports.iter_pages() %}
-          {% if page_num %}
-              {% if page_num != reports.page %}
-              <button onclick="loadReportsPage({{ page_num }})" 
-                      class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                  {{ page_num }}
-              </button>
-              {% else %}
-              <span class="px-4 py-2 bg-primary text-white rounded-lg">
-                  {{ page_num }}
-              </span>
-              {% endif %}
-          {% else %}
-              <span class="px-4 py-2">...</span>
-          {% endif %}
-      {% endfor %}
-      
-      {% if reports.has_next %}
-      <button onclick="loadReportsPage({{ reports.next_num }})" 
-              class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-          Next
-      </button>
-      {% endif %}
-  </div>
-</div>
-{% endif %}
+    <script>
+      lucide.createIcons();
 
-<!-- Action Modal -->
-<div id="actionModal" class="modal-overlay fixed inset-0 z-50 hidden">
-  <div class="modal-content max-w-md w-full mx-4">
-      <div class="p-6 border-b border-gray-200">
-          <h3 class="text-xl font-semibold text-gray-800" id="actionModalTitle">Take Action</h3>
-      </div>
-      
-      <form id="actionForm" class="p-6 space-y-4">
-          <input type="hidden" id="reportId">
-          <input type="hidden" id="actionType">
-          
-          <div id="actionOptions" class="space-y-3">
-              <label class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-                  <input type="radio" name="action" value="delete_content" class="text-primary">
-                  <span class="flex-1">
-                      <span class="font-medium text-gray-800">Delete Content</span>
-                      <span class="text-sm text-gray-600 block">Remove the reported content</span>
-                  </span>
-              </label>
-              
-              <label class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-                  <input type="radio" name="action" value="warn_user" class="text-primary">
-                  <span class="flex-1">
-                      <span class="font-medium text-gray-800">Warn User</span>
-                      <span class="text-sm text-gray-600 block">Send a warning to the user</span>
-                  </span>
-              </label>
-              
-              <label class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-                  <input type="radio" name="action" value="suspend_user" class="text-primary">
-                  <span class="flex-1">
-                      <span class="font-medium text-gray-800">Suspend User</span>
-                      <span class="text-sm text-gray-600 block">Temporarily suspend the user account</span>
-                  </span>
-              </label>
-          </div>
-          
-          <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Admin Notes</label>
-              <textarea id="adminNotes" rows="3" placeholder="Add any notes about this action..."
-                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"></textarea>
-          </div>
-      </form>
-      
-      <div class="p-6 border-t border-gray-200 flex justify-end space-x-3">
-          <button onclick="closeActionModal()" 
-                  class="px-6 py-3 border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors">
-              Cancel
-          </button>
-          <button onclick="submitAction()" 
-                  class="btn-primary px-6 py-3 flex items-center">
-              <i class="bi bi-check-circle mr-2"></i>
-              Confirm Action
-          </button>
-      </div>
-  </div>
-</div>
+      const statusFilter = document.getElementById("statusFilter");
+      const typeFilter = document.getElementById("typeFilter");
 
-<script>
-  // Filter functionality
-  document.getElementById('statusFilter').addEventListener('change', loadReportsWithFilters);
-  document.getElementById('typeFilter').addEventListener('change', loadReportsWithFilters);
-
-  function loadReportsWithFilters() {
-      const status = document.getElementById('statusFilter').value;
-      const type = document.getElementById('typeFilter').value;
-      const url = `/admin/reports?partial=1&status=${status}&type=${type}`;
-      loadSectionContent('reports', url);
-  }
-
-  function loadReportsPage(page) {
-      const status = document.getElementById('statusFilter').value;
-      const type = document.getElementById('typeFilter').value;
-      const url = `/admin/reports?partial=1&page=${page}&status=${status}&type=${type}`;
-      loadSectionContent('reports', url);
-  }
-
-  // Report Actions
-  function resolveReport(reportId) {
-      document.getElementById('reportId').value = reportId;
-      document.getElementById('actionType').value = 'resolve';
-      document.getElementById('actionModalTitle').textContent = 'Resolve Report';
-      document.getElementById('actionModal').classList.remove('hidden');
-  }
-
-  function dismissReport(reportId) {
-      if (confirm('Are you sure you want to dismiss this report?')) {
-          submitDismissAction(reportId);
+      function updateFilters() {
+        const status = statusFilter?.value || "pending";
+        const type = typeFilter?.value || "all";
+        window.location.href = `{{ url_for('admin.admin_reports') }}?status=${status}&type=${type}`;
       }
-  }
 
-  async function submitDismissAction(reportId) {
-      try {
-          const response = await apiCall(`/admin/reports/${reportId}/dismiss`, {
-              method: 'POST',
-              headers: {
-                  'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                  notes: 'Report dismissed without action'
-              })
-          });
-          
-          if (response.success) {
-              showToast('Report dismissed successfully', 'success');
-              loadReportsWithFilters();
-          }
-      } catch (error) {
-          console.error('Error dismissing report:', error);
+      if (statusFilter) {
+        statusFilter.addEventListener("change", updateFilters);
       }
-  }
+      if (typeFilter) {
+        typeFilter.addEventListener("change", updateFilters);
+      }
 
-  function closeActionModal() {
-      document.getElementById('actionModal').classList.add('hidden');
-      document.getElementById('actionForm').reset();
-  }
-
-  async function submitAction() {
-      const reportId = document.getElementById('reportId').value;
-      const actionType = document.getElementById('actionType').value;
-      const action = document.querySelector('input[name="action"]:checked');
-      const notes = document.getElementById('adminNotes').value;
-
-      if (!action) {
-          showToast('Please select an action', 'warning');
+      async function resolveReport(reportId, action) {
+        if (!confirm("Resolve this report with action: " + action + "?")) {
           return;
+        }
+        const response = await fetch(`/admin/reports/${reportId}/resolve`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": window.csrfToken || "",
+          },
+          body: JSON.stringify({ action }),
+        });
+        const text = await response.text();
+        let data = null;
+        try {
+          data = JSON.parse(text);
+        } catch (error) {
+          alert("Request failed. Please refresh and try again.");
+          return;
+        }
+        if (!data.success) {
+          alert(data.error || "Unable to resolve report");
+          return;
+        }
+        updateReportStatus(reportId, "resolved");
       }
 
-      try {
-          const response = await apiCall(`/admin/reports/${reportId}/resolve`, {
-              method: 'POST',
-              headers: {
-                  'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                  action: action.value,
-                  notes: notes
-              })
-          });
-          
-          if (response.success) {
-              showToast('Report resolved successfully', 'success');
-              closeActionModal();
-              loadReportsWithFilters();
-          }
-      } catch (error) {
-          console.error('Error resolving report:', error);
+      async function dismissReport(reportId) {
+        if (!confirm("Ignore this report?")) {
+          return;
+        }
+        const response = await fetch(`/admin/reports/${reportId}/dismiss`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": window.csrfToken || "",
+          },
+          body: JSON.stringify({ notes: "Dismissed by admin" }),
+        });
+        const text = await response.text();
+        let data = null;
+        try {
+          data = JSON.parse(text);
+        } catch (error) {
+          alert("Request failed. Please refresh and try again.");
+          return;
+        }
+        if (!data.success) {
+          alert(data.error || "Unable to dismiss report");
+          return;
+        }
+        updateReportStatus(reportId, "dismissed");
       }
-  }
 
-  // Close modal when clicking outside
-  document.getElementById('actionModal').addEventListener('click', function(e) {
-      if (e.target === this) {
-          closeActionModal();
+      function updateReportStatus(reportId, status) {
+        const badge = document.querySelector(
+          `[data-report-status='${reportId}']`,
+        );
+        if (badge) {
+          badge.textContent = status;
+          badge.className = `inline-flex rounded-full px-3 py-1 text-[10px] font-semibold uppercase ${
+            status === "resolved"
+              ? "bg-emerald-100 text-emerald-700"
+              : status === "dismissed"
+                ? "bg-slate-100 text-slate-600"
+                : "bg-amber-100 text-amber-700"
+          }`;
+        }
+        const row = document.querySelector(`[data-report-row='${reportId}']`);
+        if (row && status !== "pending") {
+          row.classList.add("opacity-70");
+        }
       }
-  });
-</script>
+    </script>
+  </body>
+</html>

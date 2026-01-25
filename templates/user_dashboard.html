@@ -971,13 +971,25 @@
             target="_blank"
             rel="noopener"
           >
+            {% if sidebar_banner.media_type == 'video' %}
+            <video
+              class="dashboard-ad-video"
+              autoplay
+              muted
+              loop
+              playsinline
+              preload="metadata"
+            >
+              <source src="{{ sidebar_banner.image_url }}" {% if sidebar_banner.video_mime %}type="{{ sidebar_banner.video_mime }}"{% endif %} />
+            </video>
+            {% else %}
             <img
               src="{{ sidebar_banner.image_url }}"
               alt="{{ sidebar_banner.title }}"
               class="dashboard-ad-image"
               loading="lazy"
-              
             />
+            {% endif %}
           </a>
           {% else %}
           <div class="sidebar-ad-badge">Promote</div>
@@ -1736,21 +1748,34 @@
 
           {% set vertical_banner = dashboard_ads.get('vertical_banner') if dashboard_ads else None %}
           <div class="vertical-ad-banner {% if vertical_banner %}has-dashboard-ad{% endif %}">
-            {% if vertical_banner %}
-            <a
-              class="dashboard-ad-link"
-              href="{{ vertical_banner.target_url }}"
-              target="_blank"
-              rel="noopener"
+          {% if vertical_banner %}
+          <a
+            class="dashboard-ad-link"
+            href="{{ vertical_banner.target_url }}"
+            target="_blank"
+            rel="noopener"
+          >
+            {% if vertical_banner.media_type == 'video' %}
+            <video
+              class="dashboard-ad-video"
+              autoplay
+              muted
+              loop
+              playsinline
+              preload="metadata"
             >
-              <img
-                src="{{ vertical_banner.image_url }}"
-                alt="{{ vertical_banner.title }}"
-                class="dashboard-ad-image"
-                loading="lazy"
-              />
-            </a>
+              <source src="{{ vertical_banner.image_url }}" {% if vertical_banner.video_mime %}type="{{ vertical_banner.video_mime }}"{% endif %} />
+            </video>
             {% else %}
+            <img
+              src="{{ vertical_banner.image_url }}"
+              alt="{{ vertical_banner.title }}"
+              class="dashboard-ad-image"
+              loading="lazy"
+            />
+            {% endif %}
+          </a>
+          {% else %}
             <div class="vertical-ad-badge">Kimbela Ads</div>
             <div class="vertical-ad-content">
               <h2>Put your brand in the spotlight</h2>
@@ -1762,21 +1787,34 @@
 
           {% set spotlight_banner = dashboard_ads.get('spotlight_banner') if dashboard_ads else None %}
           <div class="right-ad-banner-2 {% if spotlight_banner %}has-dashboard-ad{% endif %}">
-            {% if spotlight_banner %}
-            <a
-              class="dashboard-ad-link"
-              href="{{ spotlight_banner.target_url }}"
-              target="_blank"
-              rel="noopener"
+          {% if spotlight_banner %}
+          <a
+            class="dashboard-ad-link"
+            href="{{ spotlight_banner.target_url }}"
+            target="_blank"
+            rel="noopener"
+          >
+            {% if spotlight_banner.media_type == 'video' %}
+            <video
+              class="dashboard-ad-video"
+              autoplay
+              muted
+              loop
+              playsinline
+              preload="metadata"
             >
-              <img
-                src="{{ spotlight_banner.image_url }}"
-                alt="{{ spotlight_banner.title }}"
-                class="dashboard-ad-image"
-                loading="lazy"
-              />
-            </a>
+              <source src="{{ spotlight_banner.image_url }}" {% if spotlight_banner.video_mime %}type="{{ spotlight_banner.video_mime }}"{% endif %} />
+            </video>
             {% else %}
+            <img
+              src="{{ spotlight_banner.image_url }}"
+              alt="{{ spotlight_banner.title }}"
+              class="dashboard-ad-image"
+              loading="lazy"
+            />
+            {% endif %}
+          </a>
+          {% else %}
             <div class="right-ad-2-badge">Spotlight</div>
             <h2>Turn views into sales</h2>
             <p>Premium placements that put your products first.</p>
@@ -2059,10 +2097,40 @@
             </button>
             <button
               type="button"
+              class="w-full py-2.5 bg-slate-900 text-white rounded-lg font-semibold hover:bg-slate-800 transition-colors text-sm"
+              onclick="shareNativeShare()"
+            >
+              Share to social apps
+            </button>
+            <button
+              type="button"
               class="w-full py-2.5 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-colors text-sm"
               onclick="copyPostLink()"
             >
               Copy link
+            </button>
+          </div>
+
+          <div class="mt-4 grid grid-cols-2 gap-2">
+            <button type="button" class="share-social-btn bg-blue-50 text-blue-700" onclick="shareExternally('facebook')">
+              <i class="bi bi-facebook"></i>
+              Facebook
+            </button>
+            <button type="button" class="share-social-btn bg-sky-50 text-sky-700" onclick="shareExternally('x')">
+              <i class="bi bi-twitter-x"></i>
+              X (Twitter)
+            </button>
+            <button type="button" class="share-social-btn bg-green-50 text-green-700" onclick="shareExternally('whatsapp')">
+              <i class="bi bi-whatsapp"></i>
+              WhatsApp
+            </button>
+            <button type="button" class="share-social-btn bg-blue-100 text-blue-800" onclick="shareExternally('linkedin')">
+              <i class="bi bi-linkedin"></i>
+              LinkedIn
+            </button>
+            <button type="button" class="share-social-btn bg-pink-50 text-pink-700" onclick="shareExternally('instagram')">
+              <i class="bi bi-instagram"></i>
+              Instagram
             </button>
           </div>
         </div>
@@ -3121,6 +3189,31 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
   min-width: unset !important;
   min-height: unset !important;
   background: transparent;
+}
+
+.dashboard-ad-video {
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+  border-radius: 24px;
+  object-fit: cover;
+  display: block;
+}
+
+.share-social-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.share-social-btn:hover {
+  filter: brightness(0.96);
 }
 
 .second-ad-banner .dashboard-ad-image {

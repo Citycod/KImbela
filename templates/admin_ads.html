@@ -1,326 +1,497 @@
-<!-- templates/admin_ads.html -->
-<div class="mb-8">
-  <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-      <div>
-          <h2 class="text-3xl font-bold text-gray-800 mb-2">Sponsored Ads</h2>
-          <p class="text-gray-600">Manage advertising campaigns and sponsored content.</p>
-      </div>
-      <button onclick="openCreateAdModal()" 
-              class="btn-primary px-6 py-3 flex items-center mt-4 lg:mt-0">
-          <i class="bi bi-plus-circle mr-2"></i>
-          Create Ad
-      </button>
-  </div>
-</div>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ads Manager - Kimbela Admin</title>
+    <link
+      href="{{ url_for('static', filename='assets/img/fav.png') }}"
+      rel="icon"
+    />
+    <meta name="csrf-token" content="{{ csrf_token }}" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="bg-slate-50 font-['Poppins'] text-slate-900">
+    <script>
+      window.csrfToken = "{{ csrf_token }}";
+    </script>
+    <div
+      class="min-h-screen bg-gradient-to-br from-slate-50 via-sky-50 to-emerald-50"
+    >
+      <div class="flex">
+        <aside
+          class="hidden w-72 flex-shrink-0 border-r border-slate-200/70 bg-white/80 px-6 py-8 shadow-sm backdrop-blur lg:block"
+        >
+          <div class="flex items-center gap-3">
+            <span
+              class="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700"
+            >
+              <i data-lucide="shield" class="h-5 w-5"></i>
+            </span>
+            <div>
+              <p class="text-xs uppercase tracking-[0.2em] text-slate-400">
+                Admin
+              </p>
+              <p class="text-base font-semibold">Kimbela Console</p>
+            </div>
+          </div>
 
-<!-- Filters -->
-<div class="card p-6 mb-6">
-  <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-      <div class="flex gap-3">
-          <select id="statusFilter" class="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent">
-              <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Status</option>
-              <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
-              <option value="paused" {% if status_filter == 'paused' %}selected{% endif %}>Paused</option>
-              <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed</option>
-          </select>
-      </div>
-      
-      <div class="text-sm text-gray-600">
-          <span class="font-semibold">{{ ads.total }}</span> ads found
-      </div>
-  </div>
-</div>
+          <nav class="mt-10 space-y-2 text-sm">
+            <a
+              href="{{ url_for('admin.admin_dashboard') }}"
+              class="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-600 hover:bg-slate-100"
+            >
+              <i data-lucide="layout-dashboard" class="h-4 w-4"></i>
+              Overview
+            </a>
+            <a
+              href="{{ url_for('admin.admin_ads') }}"
+              class="flex items-center gap-3 rounded-xl bg-slate-900 px-4 py-3 text-white"
+            >
+              <i data-lucide="megaphone" class="h-4 w-4"></i>
+              Ads
+            </a>
+            <a
+              href="{{ url_for('admin.admin_reports') }}"
+              class="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-600 hover:bg-slate-100"
+            >
+              <i data-lucide="alert-triangle" class="h-4 w-4"></i>
+              Reports
+            </a>
+            <a
+              href="{{ url_for('admin.admin_users') }}"
+              class="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-600 hover:bg-slate-100"
+            >
+              <i data-lucide="users" class="h-4 w-4"></i>
+              Users
+            </a>
+            <a
+              href="{{ url_for('admin.admin_groups') }}"
+              class="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-600 hover:bg-slate-100"
+            >
+              <i data-lucide="layers" class="h-4 w-4"></i>
+              Groups
+            </a>
+          </nav>
 
-<!-- Ads Grid -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-  {% for ad in ads.items %}
-  <div class="card p-6 group hover:shadow-xl transition-all duration-300">
-      <div class="relative mb-4">
-          <img src="{{ ad.image or url_for('static', filename='assets/img/default-ad.png') }}" 
-               alt="{{ ad.title }}" 
-               class="w-full h-48 object-cover rounded-xl">
-          <div class="absolute top-3 right-3">
-              <span class="badge {{ 'badge-success' if ad.status == 'active' else 'badge-warning' if ad.status == 'paused' else 'badge-danger' }}">
-                  {{ ad.status|title }}
-              </span>
+          <div class="mt-10 border-t border-slate-200/70 pt-6">
+            <a
+              href="{{ url_for('user.index') }}"
+              class="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-600 hover:bg-slate-100"
+            >
+              <i data-lucide="home" class="h-4 w-4"></i>
+              Back to site
+            </a>
+            <a
+              href="{{ url_for('user.logout') }}"
+              class="mt-2 flex items-center gap-3 rounded-xl px-4 py-3 text-rose-600 hover:bg-rose-50"
+            >
+              <i data-lucide="log-out" class="h-4 w-4"></i>
+              Logout
+            </a>
           </div>
-      </div>
-      
-      <h3 class="text-xl font-semibold text-gray-800 mb-2">{{ ad.title }}</h3>
-      <p class="text-gray-600 mb-4 line-clamp-2">{{ ad.description or 'No description' }}</p>
-      
-      <div class="space-y-2 mb-4">
-          <div class="flex justify-between text-sm">
-              <span class="text-gray-500">Target:</span>
-              <span class="font-medium text-gray-800 capitalize">{{ ad.target_audience }}</span>
-          </div>
-          <div class="flex justify-between text-sm">
-              <span class="text-gray-500">Budget:</span>
-              <span class="font-medium text-gray-800">${{ "%.2f"|format(ad.budget) }}</span>
-          </div>
-          <div class="flex justify-between text-sm">
-              <span class="text-gray-500">Duration:</span>
-              <span class="font-medium text-gray-800">{{ ad.start_date.strftime('%b %d') }} - {{ ad.end_date.strftime('%b %d, %Y') }}</span>
-          </div>
-      </div>
-      
-      <div class="flex items-center space-x-2">
-          <button onclick="toggleAdStatus({{ ad.id }})" 
-                  class="flex-1 {{ 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200' if ad.status == 'active' else 'bg-green-100 text-green-600 hover:bg-green-200' }} py-2 px-4 rounded-lg transition-colors flex items-center justify-center">
-              <i class="bi {{ 'bi-pause' if ad.status == 'active' else 'bi-play' }} mr-2"></i>
-              {{ 'Pause' if ad.status == 'active' else 'Activate' }}
-          </button>
-          <button onclick="openEditAdModal({{ ad.id }})" 
-                  class="bg-blue-100 text-blue-600 hover:bg-blue-200 p-2 rounded-lg transition-colors">
-              <i class="bi bi-pencil"></i>
-          </button>
-          <button onclick="deleteAd({{ ad.id }})" 
-                  class="bg-red-100 text-red-600 hover:bg-red-200 p-2 rounded-lg transition-colors">
-              <i class="bi bi-trash"></i>
-          </button>
-      </div>
-  </div>
-  {% else %}
-  <div class="col-span-3 text-center py-12">
-      <i class="bi bi-megaphone text-4xl text-gray-400 mb-4"></i>
-      <h3 class="text-xl font-semibold text-gray-600 mb-2">No ads found</h3>
-      <p class="text-gray-500">Create your first ad campaign to get started.</p>
-  </div>
-  {% endfor %}
-</div>
+        </aside>
 
-<!-- Pagination -->
-{% if ads.pages > 1 %}
-<div class="flex items-center justify-between mt-8 pt-6 border-t border-gray-200">
-  <div>
-      <p class="text-sm text-gray-600">
-          Showing {{ ads.items|length }} of {{ ads.total }} ads
-      </p>
-  </div>
-  <div class="flex space-x-2">
-      {% if ads.has_prev %}
-      <button onclick="loadAdsPage({{ ads.prev_num }})" 
-              class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-          Previous
-      </button>
-      {% endif %}
-      
-      {% for page_num in ads.iter_pages() %}
-          {% if page_num %}
-              {% if page_num != ads.page %}
-              <button onclick="loadAdsPage({{ page_num }})" 
-                      class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                  {{ page_num }}
-              </button>
-              {% else %}
-              <span class="px-4 py-2 bg-primary text-white rounded-lg">
-                  {{ page_num }}
-              </span>
-              {% endif %}
-          {% else %}
-              <span class="px-4 py-2">...</span>
-          {% endif %}
-      {% endfor %}
-      
-      {% if ads.has_next %}
-      <button onclick="loadAdsPage({{ ads.next_num }})" 
-              class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-          Next
-      </button>
-      {% endif %}
-  </div>
-</div>
-{% endif %}
-
-<!-- Create/Edit Ad Modal -->
-<div id="adModal" class="modal-overlay fixed inset-0 z-50 hidden">
-  <div class="modal-content max-w-2xl w-full mx-4">
-      <div class="p-6 border-b border-gray-200">
-          <h3 class="text-xl font-semibold text-gray-800" id="adModalTitle">Create Ad Campaign</h3>
-      </div>
-      
-      <form id="adForm" class="p-6 space-y-4">
-          <input type="hidden" id="adId">
-          
-          <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Ad Title</label>
-              <input type="text" id="adTitle" required 
-                     class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent">
-          </div>
-          
-          <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
-              <textarea id="adDescription" rows="3"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"></textarea>
-          </div>
-          
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-2">Target Audience</label>
-                  <select id="adTarget" 
-                          class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent">
-                      <option value="all">All Users</option>
-                      <option value="male">Male</option>
-                      <option value="female">Female</option>
-                      <option value="young_adults">Young Adults (31-45)</option>
-                      <option value="middle_aged">Middle Aged (46-60)</option>
-                      <option value="seniors">Seniors (61+)</option>
-                  </select>
+        <main class="flex-1 px-6 py-8 lg:px-10">
+          <div class="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p class="text-xs uppercase tracking-[0.25em] text-slate-400">
+                Ads dashboard
+              </p>
+              <h1 class="text-2xl font-semibold text-slate-900">
+                Sponsored ads
+              </h1>
+            </div>
+            <div class="flex flex-wrap items-center gap-3">
+              <div
+                class="rounded-full border border-slate-200/70 bg-white/80 px-4 py-2 text-xs text-slate-500"
+              >
+                Total ads:
+                <span class="font-semibold text-slate-800"
+                  >{{ ads.total }}</span
+                >
               </div>
-              
-              <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-2">Budget ($)</label>
-                  <input type="number" id="adBudget" step="0.01" min="0" 
-                         class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent">
+              <div
+                class="rounded-full border border-slate-200/70 bg-white/80 px-4 py-2 text-xs text-slate-500"
+              >
+                Page {{ ads.page }} of {{ ads.pages }}
               </div>
+            </div>
           </div>
-          
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+          <div
+            class="mt-6 rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-sm"
+          >
+            <div class="flex flex-wrap items-center justify-between gap-4">
               <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
-                  <input type="date" id="adStartDate" required 
-                         class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent">
+                <h2 class="text-sm font-semibold text-slate-900">Filter ads</h2>
+                <p class="text-xs text-slate-500">
+                  View by status or timeline.
+                </p>
               </div>
-              
-              <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-2">End Date</label>
-                  <input type="date" id="adEndDate" required 
-                         class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent">
+              <div class="flex items-center gap-3">
+                <label class="text-xs text-slate-500" for="statusFilter"
+                  >Status</label
+                >
+                <select
+                  id="statusFilter"
+                  class="rounded-xl border border-slate-200/70 bg-white px-3 py-2 text-xs text-slate-700 focus:border-emerald-400 focus:outline-none"
+                >
+                  <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                  <option value="paused" {% if status_filter == 'paused' %}selected{% endif %}>Paused</option>
+                  <option value="expired" {% if status_filter == 'expired' %}selected{% endif %}>Expired</option>
+                  <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All</option>
+                </select>
               </div>
+            </div>
           </div>
-          
-          <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Ad Image</label>
-              <input type="file" id="adImage" accept="image/*" 
-                     class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent">
+
+          <div
+            class="mt-6 rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-sm"
+          >
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead>
+                  <tr class="border-b border-slate-200 text-slate-500">
+                    <th class="py-3 font-medium">Ad</th>
+                    <th class="py-3 font-medium">Advertiser</th>
+                    <th class="py-3 font-medium">Paid</th>
+                    <th class="py-3 font-medium">Start</th>
+                    <th class="py-3 font-medium">Expiry</th>
+                    <th class="py-3 font-medium">Performance</th>
+                    <th class="py-3 font-medium">Status</th>
+                    <th class="py-3 font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for ad in ads.items %}
+                  <tr
+                    class="border-b border-slate-100"
+                    data-ad-row="{{ ad.id }}"
+                  >
+                    <td class="py-4">
+                      <div class="flex items-center gap-3">
+                        {% if ad.image %}
+                        <img
+                          src="{{ ad.image }}"
+                          alt="{{ ad.title }}"
+                          class="h-12 w-16 rounded-xl object-cover"
+                        />
+                        {% else %}
+                        <div
+                          class="flex h-12 w-16 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700"
+                        >
+                          <span class="text-sm font-semibold"
+                            >{{ ad.title[:1] if ad.title else 'A' }}</span
+                          >
+                        </div>
+                        {% endif %}
+                        <div>
+                          <p class="text-sm font-semibold text-slate-900">
+                            {{ ad.title }}
+                          </p>
+                          <p class="text-xs text-slate-500">
+                            {{ ad.description|default('No description
+                            provided')|truncate(60, True, '...') }}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="py-4">
+                      <p class="text-sm text-slate-800">
+                        {{ ad.creator.first_name if ad.creator else 'Unknown' }}
+                        {{ ad.creator.last_name if ad.creator else '' }}
+                      </p>
+                      <p class="text-xs text-slate-500">
+                        ID: {{ ad.created_by }}
+                      </p>
+                    </td>
+                    <td class="py-4">
+                      <p class="text-sm font-semibold text-slate-900">
+                        ${{ "{:,.2f}".format(ad.budget or 0) }}
+                      </p>
+                      <p class="text-xs text-slate-500">
+                        Target: {{ ad.target_audience }}
+                      </p>
+                    </td>
+                    <td class="py-4">
+                      <p class="text-sm text-slate-800">
+                        {{ ad.start_date.strftime('%b %d, %Y') }}
+                      </p>
+                      <p class="text-xs text-slate-500">
+                        Created {{ ad.created_at.strftime('%b %d, %Y') }}
+                      </p>
+                    </td>
+                    <td class="py-4">
+                      <p class="text-sm text-slate-800">
+                        {{ ad.end_date.strftime('%b %d, %Y') }}
+                      </p>
+                      <p class="text-xs text-slate-500">
+                        {{ 'Active' if ad.status == 'active' else 'Not active'
+                        }}
+                      </p>
+                    </td>
+                    <td class="py-4">
+                      <p class="text-xs text-slate-500">
+                        Impressions:
+                        <span class="font-medium text-slate-700"
+                          >{{ ad.impressions }}</span
+                        >
+                      </p>
+                      <p class="text-xs text-slate-500">
+                        Clicks:
+                        <span class="font-medium text-slate-700"
+                          >{{ ad.clicks }}</span
+                        >
+                      </p>
+                      {% set ctr = (ad.clicks / ad.impressions * 100) if
+                      ad.impressions else 0 %}
+                      <p class="text-xs text-slate-500">
+                        CTR:
+                        <span class="font-medium text-slate-700"
+                          >{{ "{:.1f}".format(ctr) }}%</span
+                        >
+                      </p>
+                    </td>
+                    <td class="py-4">
+                      {% set badge_class = 'bg-emerald-100 text-emerald-700' if
+                      ad.status == 'active' else 'bg-slate-100 text-slate-600'
+                      %}
+                      <span
+                        class="inline-flex rounded-full px-3 py-1 text-[10px] font-semibold uppercase {{ badge_class }}"
+                        data-status-badge="{{ ad.id }}"
+                        >{{ ad.status }}</span
+                      >
+                    </td>
+                    <td class="py-4">
+                      <div class="flex flex-col gap-2">
+                        <button
+                          class="rounded-lg border border-slate-200/70 bg-white px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                          data-toggle-button="{{ ad.id }}"
+                          onclick="toggleAdStatus({{ ad.id }})"
+                        >
+                          {{ 'Pause' if ad.status == 'active' else 'Activate' }}
+                        </button>
+                        <button
+                          class="rounded-lg border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-medium text-rose-600 hover:bg-rose-100"
+                          onclick="deleteAd({{ ad.id }})"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  {% else %}
+                  <tr>
+                    <td
+                      colspan="8"
+                      class="py-6 text-center text-xs text-slate-500"
+                    >
+                      No ads found for this filter.
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+
+            {% if ads.pages > 1 %}
+            <div
+              class="mt-6 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500"
+            >
+              <div>Showing {{ ads.items|length }} of {{ ads.total }} ads</div>
+              <div class="flex flex-wrap gap-2">
+                {% if ads.has_prev %}
+                <a
+                  class="rounded-lg border border-slate-200/70 bg-white px-3 py-1 hover:bg-slate-50"
+                  href="{{ url_for('admin.admin_ads', page=ads.prev_num, status=status_filter) }}"
+                  >Previous</a
+                >
+                {% endif %} {% for page_num in ads.iter_pages() %} {% if
+                page_num %} {% if page_num == ads.page %}
+                <span class="rounded-lg bg-slate-900 px-3 py-1 text-white"
+                  >{{ page_num }}</span
+                >
+                {% else %}
+                <a
+                  class="rounded-lg border border-slate-200/70 bg-white px-3 py-1 hover:bg-slate-50"
+                  href="{{ url_for('admin.admin_ads', page=page_num, status=status_filter) }}"
+                  >{{ page_num }}</a
+                >
+                {% endif %} {% else %}
+                <span class="px-2">...</span>
+                {% endif %} {% endfor %} {% if ads.has_next %}
+                <a
+                  class="rounded-lg border border-slate-200/70 bg-white px-3 py-1 hover:bg-slate-50"
+                  href="{{ url_for('admin.admin_ads', page=ads.next_num, status=status_filter) }}"
+                  >Next</a
+                >
+                {% endif %}
+              </div>
+            </div>
+            {% endif %}
           </div>
-      </form>
-      
-      <div class="p-6 border-t border-gray-200 flex justify-end space-x-3">
-          <button onclick="closeAdModal()" 
-                  class="px-6 py-3 border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors">
-              Cancel
-          </button>
-          <button onclick="saveAd()" 
-                  class="btn-primary px-6 py-3 flex items-center">
-              <i class="bi bi-check-circle mr-2"></i>
-              Save Ad
-          </button>
+
+          <div
+            class="mt-8 rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-sm"
+          >
+            <div class="flex items-center justify-between">
+              <h2 class="text-sm font-semibold text-slate-900">
+                Ad campaigns (banner, sponsored, sidebar)
+              </h2>
+              <span class="text-xs text-slate-500">Recent 30 campaigns</span>
+            </div>
+            <div class="mt-4 overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead>
+                  <tr class="border-b border-slate-200 text-slate-500">
+                    <th class="py-3 font-medium">Campaign</th>
+                    <th class="py-3 font-medium">Advertiser</th>
+                    <th class="py-3 font-medium">Placement</th>
+                    <th class="py-3 font-medium">Budget</th>
+                    <th class="py-3 font-medium">Dates</th>
+                    <th class="py-3 font-medium">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for campaign in campaigns %}
+                  <tr class="border-b border-slate-100">
+                    <td class="py-4">
+                      <p class="text-sm font-semibold text-slate-900">
+                        {{ campaign.title }}
+                      </p>
+                      <p class="text-xs text-slate-500">
+                        ID: {{ campaign.id }}
+                      </p>
+                    </td>
+                    <td class="py-4">
+                      <p class="text-sm text-slate-800">
+                        {{ campaign.user.first_name if campaign.user else
+                        'Unknown' }} {{ campaign.user.last_name if campaign.user
+                        else '' }}
+                      </p>
+                      <p class="text-xs text-slate-500">
+                        User {{ campaign.user_id }}
+                      </p>
+                    </td>
+                    <td class="py-4 text-slate-600">
+                      {{ campaign.placement|capitalize }}
+                    </td>
+                    <td class="py-4 text-slate-700">
+                      ${{ "{:,.2f}".format(campaign.budget or 0) }}
+                    </td>
+                    <td class="py-4 text-slate-500">
+                      <p>
+                        {{ campaign.start_date.strftime('%b %d, %Y') if
+                        campaign.start_date else 'N/A' }}
+                      </p>
+                      <p>
+                        {{ campaign.end_date.strftime('%b %d, %Y') if
+                        campaign.end_date else 'No expiry' }}
+                      </p>
+                    </td>
+                    <td class="py-4">
+                      {% set campaign_badge = 'bg-emerald-100 text-emerald-700'
+                      if campaign.status == 'active' else 'bg-slate-100
+                      text-slate-600' %}
+                      <span
+                        class="inline-flex rounded-full px-3 py-1 text-[10px] font-semibold uppercase {{ campaign_badge }}"
+                        >{{ campaign.status }}</span
+                      >
+                    </td>
+                  </tr>
+                  {% else %}
+                  <tr>
+                    <td
+                      colspan="6"
+                      class="py-6 text-center text-xs text-slate-500"
+                    >
+                      No campaigns found for this filter.
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </main>
       </div>
-  </div>
-</div>
+    </div>
 
-<script>
-  // Filter functionality
-  document.getElementById('statusFilter').addEventListener('change', loadAdsWithFilters);
+    <script>
+      lucide.createIcons();
 
-  function loadAdsWithFilters() {
-      const status = document.getElementById('statusFilter').value;
-      const url = `/admin/ads?partial=1&status=${status}`;
-      loadSectionContent('ads', url);
-  }
-
-  function loadAdsPage(page) {
-      const status = document.getElementById('statusFilter').value;
-      const url = `/admin/ads?partial=1&page=${page}&status=${status}`;
-      loadSectionContent('ads', url);
-  }
-
-  // Ad Modal Functions
-  function openCreateAdModal() {
-      document.getElementById('adModalTitle').textContent = 'Create Ad Campaign';
-      document.getElementById('adForm').reset();
-      document.getElementById('adId').value = '';
-      
-      // Set default dates
-      const today = new Date().toISOString().split('T')[0];
-      const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      document.getElementById('adStartDate').value = today;
-      document.getElementById('adEndDate').value = nextWeek;
-      
-      document.getElementById('adModal').classList.remove('hidden');
-  }
-
-  function openEditAdModal(adId) {
-      // In a real app, you'd fetch the ad data first
-      document.getElementById('adModalTitle').textContent = 'Edit Ad Campaign';
-      document.getElementById('adId').value = adId;
-      document.getElementById('adModal').classList.remove('hidden');
-  }
-
-  function closeAdModal() {
-      document.getElementById('adModal').classList.add('hidden');
-  }
-
-  async function saveAd() {
-      const formData = new FormData();
-      const adId = document.getElementById('adId').value;
-      
-      formData.append('title', document.getElementById('adTitle').value);
-      formData.append('description', document.getElementById('adDescription').value);
-      formData.append('target_audience', document.getElementById('adTarget').value);
-      formData.append('budget', document.getElementById('adBudget').value);
-      formData.append('start_date', document.getElementById('adStartDate').value);
-      formData.append('end_date', document.getElementById('adEndDate').value);
-      
-      const imageFile = document.getElementById('adImage').files[0];
-      if (imageFile) {
-          formData.append('image', imageFile);
+      const statusFilter = document.getElementById("statusFilter");
+      if (statusFilter) {
+        statusFilter.addEventListener("change", () => {
+          const status = statusFilter.value;
+          window.location.href =
+            "{{ url_for('admin.admin_ads') }}?status=" + status;
+        });
       }
 
-      try {
-          const url = adId ? `/admin/ads/${adId}/update` : '/admin/ads/create';
-          const response = await apiCall(url, {
-              method: 'POST',
-              body: formData
-          });
-
-          if (response.success) {
-              showToast(`Ad ${adId ? 'updated' : 'created'} successfully`, 'success');
-              closeAdModal();
-              loadAdsWithFilters();
-          }
-      } catch (error) {
-          console.error('Error saving ad:', error);
+      async function toggleAdStatus(adId) {
+        const response = await fetch(`/admin/ads/${adId}/toggle_status`, {
+          method: "POST",
+          headers: { "X-CSRFToken": window.csrfToken || "" },
+        });
+        const text = await response.text();
+        let data = null;
+        try {
+          data = JSON.parse(text);
+        } catch (error) {
+          alert("Request failed. Please refresh and try again.");
+          return;
+        }
+        if (!data.success) {
+          alert(data.error || "Unable to update status");
+          return;
+        }
+        const badge = document.querySelector(`[data-status-badge='${adId}']`);
+        const button = document.querySelector(`[data-toggle-button='${adId}']`);
+        if (badge) {
+          badge.textContent = data.status;
+          badge.className = `inline-flex rounded-full px-3 py-1 text-[10px] font-semibold uppercase ${
+            data.status === "active"
+              ? "bg-emerald-100 text-emerald-700"
+              : "bg-slate-100 text-slate-600"
+          }`;
+        }
+        if (button) {
+          button.textContent = data.status === "active" ? "Pause" : "Activate";
+        }
       }
-  }
 
-  async function toggleAdStatus(adId) {
-      try {
-          const response = await apiCall(`/admin/ads/${adId}/toggle_status`, {
-              method: 'POST'
-          });
-          
-          if (response.success) {
-              showToast(`Ad ${response.status} successfully`, 'success');
-              loadAdsWithFilters();
-          }
-      } catch (error) {
-          console.error('Error toggling ad status:', error);
+      async function deleteAd(adId) {
+        if (!confirm("Delete this ad permanently?")) {
+          return;
+        }
+        const response = await fetch(`/admin/ads/${adId}/delete`, {
+          method: "POST",
+          headers: { "X-CSRFToken": window.csrfToken || "" },
+        });
+        const text = await response.text();
+        let data = null;
+        try {
+          data = JSON.parse(text);
+        } catch (error) {
+          alert("Request failed. Please refresh and try again.");
+          return;
+        }
+        if (!data.success) {
+          alert(data.error || "Unable to delete ad");
+          return;
+        }
+        const row = document.querySelector(`[data-ad-row='${adId}']`);
+        if (row) {
+          row.remove();
+        }
       }
-  }
-
-  async function deleteAd(adId) {
-      if (!confirm('Are you sure you want to delete this ad? This action cannot be undone.')) return;
-      
-      try {
-          const response = await apiCall(`/admin/ads/${adId}/delete`, {
-              method: 'POST'
-          });
-          
-          if (response.success) {
-              showToast('Ad deleted successfully', 'success');
-              loadAdsWithFilters();
-          }
-      } catch (error) {
-          console.error('Error deleting ad:', error);
-      }
-  }
-
-  // Close modal when clicking outside
-  document.getElementById('adModal').addEventListener('click', function(e) {
-      if (e.target === this) {
-          closeAdModal();
-      }
-  });
-</script>
+    </script>
+  </body>
+</html>

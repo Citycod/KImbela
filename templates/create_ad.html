@@ -1,52 +1,66 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Create Sponsored Ad - Kimbela</title>
-    <link href="{{ url_for('static', filename='assets/img/fav.png') }}" rel="icon" />
-    <link href="{{ url_for('static', filename='assets/img/fav.png') }}" rel="apple-touch-icon" />
-    
+    <link
+      href="{{ url_for('static', filename='assets/img/fav.png') }}"
+      rel="icon"
+    />
+    <link
+      href="{{ url_for('static', filename='assets/img/fav.png') }}"
+      rel="apple-touch-icon"
+    />
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css"
+    />
+
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
 
     <script>
-        // Check if Tailwind loads properly
-        function checkTailwind() {
-            setTimeout(() => {
-                const bodyStyles = window.getComputedStyle(document.body);
-                const hasTailwind = bodyStyles.margin === '0px' && bodyStyles.fontFamily;
-                
-                if (!hasTailwind) {
-                    console.log('🔄 Tailwind not detected, loading fallback...');
-                    loadFallbackTailwind();
-                } else {
-                    console.log('✅ Tailwind CSS loaded successfully');
-                }
-            }, 500);
-        }
+      // Check if Tailwind loads properly
+      function checkTailwind() {
+        setTimeout(() => {
+          const bodyStyles = window.getComputedStyle(document.body);
+          const hasTailwind =
+            bodyStyles.margin === "0px" && bodyStyles.fontFamily;
 
-        function loadFallbackTailwind() {
-            // Load from alternative CDN
-            const link = document.createElement('link');
-            link.rel = 'stylesheet';
-            link.href = 'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css';
-            link.onload = () => console.log('✅ Fallback Tailwind loaded');
-            link.onerror = () => {
-                console.log('❌ All CDNs failed, using inline styles');
-                loadEmergencyStyles();
-            };
-            document.head.appendChild(link);
-        }
+          if (!hasTailwind) {
+            console.log("🔄 Tailwind not detected, loading fallback...");
+            loadFallbackTailwind();
+          } else {
+            console.log("✅ Tailwind CSS loaded successfully");
+          }
+        }, 500);
+      }
 
-        function loadEmergencyStyles() {
-            const emergencyCSS = `
+      function loadFallbackTailwind() {
+        // Load from alternative CDN
+        const link = document.createElement("link");
+        link.rel = "stylesheet";
+        link.href =
+          "https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css";
+        link.onload = () => console.log("✅ Fallback Tailwind loaded");
+        link.onerror = () => {
+          console.log("❌ All CDNs failed, using inline styles");
+          loadEmergencyStyles();
+        };
+        document.head.appendChild(link);
+      }
+
+      function loadEmergencyStyles() {
+        const emergencyCSS = `
                 /* EMERGENCY STYLES - Basic Tailwind equivalents */
                 * { box-sizing: border-box; margin: 0; padding: 0; }
                 body { 
@@ -136,387 +150,474 @@
                 .custom-scrollbar::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 10px; }
                 .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
             `;
-            
-            const style = document.createElement('style');
-            style.textContent = emergencyCSS;
-            document.head.appendChild(style);
-        }
 
-        // Initialize check when DOM loads
-        document.addEventListener('DOMContentLoaded', checkTailwind);
+        const style = document.createElement("style");
+        style.textContent = emergencyCSS;
+        document.head.appendChild(style);
+      }
+
+      // Initialize check when DOM loads
+      document.addEventListener("DOMContentLoaded", checkTailwind);
     </script>
 
     <!-- Primary Tailwind CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+
     <style>
-        .glass-effect {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .gradient-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        
-        .gradient-success {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        }
-        
-        .gradient-premium {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        }
-        
-        .card-hover {
-            transition: all 0.3s ease;
-        }
-        
-        .card-hover:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-        }
-        
-        .package-selected {
-            border: 2px solid #667eea;
-            background: linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%);
-        }
-        
-        .step-completed {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            color: white;
-        }
-        
-        .step-current {
-            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-            color: white;
-        }
+      .glass-effect {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      }
+
+      .gradient-success {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      }
+
+      .gradient-premium {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      }
+
+      .card-hover {
+        transition: all 0.3s ease;
+      }
+
+      .card-hover:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+      }
+
+      .package-selected {
+        border: 2px solid #667eea;
+        background: linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%);
+      }
+
+      .step-completed {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+      }
+
+      .step-current {
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        color: white;
+      }
     </style>
-</head>
-<body class="font-poppins bg-gray-50 min-h-screen">
+  </head>
+  <body class="font-poppins bg-gray-50 min-h-screen">
     <!-- Navigation -->
     <nav class="bg-white shadow-sm border-b">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
-                <div class="flex items-center">
-                    <a href="{{ url_for('user.user_dashboard') }}" class="flex items-center">
-                        <img src="{{ url_for('static', filename='assets/img/kim.png') }}" alt="Kimbela" class="h-8">
-                        <span class="ml-2 text-xl font-bold text-gray-900">Kimbela</span>
-                    </a>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <a href="{{ url_for('user.user_dashboard') }}" class="text-gray-600 hover:text-gray-900">
-                        <i class="bi bi-arrow-left mr-1"></i> Back to Dashboard
-                    </a>
-                </div>
-            </div>
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          <div class="flex items-center">
+            <a
+              href="{{ url_for('user.user_dashboard') }}"
+              class="flex items-center"
+            >
+              <img
+                src="{{ url_for('static', filename='assets/img/kim.png') }}"
+                alt="Kimbela"
+                class="h-8"
+              />
+              <span class="ml-2 text-xl font-bold text-gray-900">Kimbela</span>
+            </a>
+          </div>
+          <div class="flex items-center space-x-4">
+            <a
+              href="{{ url_for('user.user_dashboard') }}"
+              class="text-gray-600 hover:text-gray-900"
+            >
+              <i class="bi bi-arrow-left mr-1"></i> Back to Dashboard
+            </a>
+          </div>
         </div>
+      </div>
     </nav>
 
     <!-- Main Content -->
     <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <!-- Header -->
-        <div class="text-center mb-12">
-            <h1 class="text-4xl font-bold text-gray-900 mb-4">Create Sponsored Ad</h1>
-            <p class="text-xl text-gray-600 max-w-3xl mx-auto">
-                Reach thousands of potential customers with our targeted advertising platform. 
-                Choose your package, create your ad, and start growing your business today.
-            </p>
+      <!-- Header -->
+      <div class="text-center mb-12">
+        <h1 class="text-4xl font-bold text-gray-900 mb-4">
+          Create Sponsored Ad
+        </h1>
+        <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+          Reach thousands of potential customers with our targeted advertising
+          platform. Choose your package, create your ad, and start growing your
+          business today.
+        </p>
+      </div>
+
+      <!-- Progress Steps -->
+      <div class="max-w-4xl mx-auto mb-12">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center">
+            <div
+              class="step-indicator step-completed w-10 h-10 rounded-full flex items-center justify-center font-semibold"
+            >
+              <i class="bi bi-check-lg"></i>
+            </div>
+            <div class="ml-3">
+              <div class="font-semibold text-gray-900">Choose Package</div>
+              <div class="text-sm text-gray-600">
+                Select your advertising plan
+              </div>
+            </div>
+          </div>
+
+          <div class="flex-1 h-1 bg-green-500 mx-4"></div>
+
+          <div class="flex items-center">
+            <div
+              class="step-indicator step-current w-10 h-10 rounded-full flex items-center justify-center font-semibold"
+            >
+              2
+            </div>
+            <div class="ml-3">
+              <div class="font-semibold text-gray-900">Create Ad</div>
+              <div class="text-sm text-gray-600">Design your advertisement</div>
+            </div>
+          </div>
+
+          <div class="flex-1 h-1 bg-gray-300 mx-4"></div>
+
+          <div class="flex items-center">
+            <div
+              class="step-indicator w-10 h-10 rounded-full flex items-center justify-center font-semibold border-2 border-gray-300 text-gray-400"
+            >
+              3
+            </div>
+            <div class="ml-3">
+              <div class="font-semibold text-gray-400">Payment</div>
+              <div class="text-sm text-gray-500">Complete your purchase</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
+        <!-- Ad Creation Form -->
+        <div class="lg:col-span-2">
+          <div class="glass-effect rounded-2xl shadow-lg p-8 card-hover">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">
+              Create Your Advertisement
+            </h2>
+
+            <form id="adCreationForm" class="space-y-6">
+              <!-- Ad Title -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Ad Title <span class="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="adTitle"
+                  name="title"
+                  maxlength="60"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder="Enter a compelling title for your ad"
+                  required
+                />
+                <div class="text-xs text-gray-500 mt-1 text-right">
+                  <span id="titleCounter">0</span>/60 characters
+                </div>
+              </div>
+
+              <!-- Ad Description -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Ad Description <span class="text-red-500">*</span>
+                </label>
+                <textarea
+                  id="adDescription"
+                  name="description"
+                  rows="4"
+                  maxlength="200"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
+                  placeholder="Describe what makes your offer special..."
+                  required
+                ></textarea>
+                <div class="text-xs text-gray-500 mt-1 text-right">
+                  <span id="descriptionCounter">0</span>/200 characters
+                </div>
+              </div>
+
+              <!-- Ad Image -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Ad Image <span class="text-red-500">*</span>
+                </label>
+                <div
+                  class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-blue-500 transition-colors cursor-pointer"
+                  id="imageUploadArea"
+                >
+                  <input
+                    type="file"
+                    id="adImage"
+                    name="image"
+                    accept="image/*"
+                    class="hidden"
+                    required
+                  />
+                  <i
+                    class="bi bi-cloud-arrow-up text-4xl text-gray-400 mb-3"
+                  ></i>
+                  <p class="text-gray-600 mb-2">
+                    Click to upload your ad image
+                  </p>
+                  <p class="text-sm text-gray-500">
+                    Recommended: 1200x630px, JPG or PNG, max 5MB
+                  </p>
+                </div>
+                <div id="imagePreview" class="mt-4 hidden">
+                  <img
+                    id="previewImage"
+                    class="w-full h-64 object-cover rounded-xl shadow-md"
+                  />
+                  <button
+                    type="button"
+                    id="removeImage"
+                    class="mt-2 text-red-600 hover:text-red-700 text-sm font-medium"
+                  >
+                    <i class="bi bi-trash mr-1"></i> Remove Image
+                  </button>
+                </div>
+              </div>
+
+              <!-- Target URL -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Target URL <span class="text-red-500">*</span>
+                </label>
+                <input
+                  type="url"
+                  id="targetUrl"
+                  name="target_url"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder="https://example.com/your-offer"
+                  required
+                />
+              </div>
+
+              <!-- Call to Action -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Call to Action
+                </label>
+                <select
+                  id="callToAction"
+                  name="call_to_action"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                >
+                  <option value="Learn More">Learn More</option>
+                  <option value="Shop Now">Shop Now</option>
+                  <option value="Sign Up">Sign Up</option>
+                  <option value="Download">Download</option>
+                  <option value="Get Started">Get Started</option>
+                  <option value="Contact Us">Contact Us</option>
+                </select>
+              </div>
+
+              <!-- Targeting Options -->
+              <div class="bg-gray-50 rounded-xl p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                  Targeting Options
+                </h3>
+
+                <!-- Target Audience -->
+                <div class="mb-4">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Target Audience
+                  </label>
+                  <select
+                    id="targetAudience"
+                    name="target_audience"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  >
+                    <option value="all">All Users</option>
+                    <option value="students">Students</option>
+                    <option value="professionals">Professionals</option>
+                    <option value="entrepreneurs">Entrepreneurs</option>
+                    <option value="creatives">Creatives</option>
+                  </select>
+                </div>
+
+                <!-- Target Countries -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Target Countries (Optional)
+                  </label>
+                  <select
+                    id="targetCountries"
+                    name="target_countries"
+                    multiple
+                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  >
+                    <option value="NG">Nigeria</option>
+                    <option value="GH">Ghana</option>
+                    <option value="KE">Kenya</option>
+                    <option value="ZA">South Africa</option>
+                    <option value="US">United States</option>
+                    <option value="UK">United Kingdom</option>
+                    <option value="CA">Canada</option>
+                  </select>
+                  <div class="text-xs text-gray-500 mt-1">
+                    Hold Ctrl/Cmd to select multiple countries
+                  </div>
+                </div>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="flex justify-between pt-6">
+                <button
+                  type="button"
+                  onclick="window.history.back()"
+                  class="px-8 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium"
+                >
+                  <i class="bi bi-arrow-left mr-2"></i> Back
+                </button>
+
+                <button
+                  type="submit"
+                  id="createAdBtn"
+                  class="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all font-medium flex items-center"
+                >
+                  Continue to Payment
+                  <i class="bi bi-arrow-right ml-2"></i>
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
 
-        <!-- Progress Steps -->
-        <div class="max-w-4xl mx-auto mb-12">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center">
-                    <div class="step-indicator step-completed w-10 h-10 rounded-full flex items-center justify-center font-semibold">
-                        <i class="bi bi-check-lg"></i>
-                    </div>
-                    <div class="ml-3">
-                        <div class="font-semibold text-gray-900">Choose Package</div>
-                        <div class="text-sm text-gray-600">Select your advertising plan</div>
-                    </div>
-                </div>
-                
-                <div class="flex-1 h-1 bg-green-500 mx-4"></div>
-                
-                <div class="flex items-center">
-                    <div class="step-indicator step-current w-10 h-10 rounded-full flex items-center justify-center font-semibold">
-                        2
-                    </div>
-                    <div class="ml-3">
-                        <div class="font-semibold text-gray-900">Create Ad</div>
-                        <div class="text-sm text-gray-600">Design your advertisement</div>
-                    </div>
-                </div>
-                
-                <div class="flex-1 h-1 bg-gray-300 mx-4"></div>
-                
-                <div class="flex items-center">
-                    <div class="step-indicator w-10 h-10 rounded-full flex items-center justify-center font-semibold border-2 border-gray-300 text-gray-400">
-                        3
-                    </div>
-                    <div class="ml-3">
-                        <div class="font-semibold text-gray-400">Payment</div>
-                        <div class="text-sm text-gray-500">Complete your purchase</div>
-                    </div>
-                </div>
+        <!-- Selected Package & Preview -->
+        <div class="space-y-6">
+          <!-- Selected Package -->
+          <div class="glass-effect rounded-2xl shadow-lg p-6 card-hover">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+              Selected Package
+            </h3>
+            <div
+              id="selectedPackage"
+              class="text-center p-4 rounded-xl bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200"
+            >
+              <!-- Package details will be loaded here -->
             </div>
+          </div>
+
+          <!-- Ad Preview -->
+          <div class="glass-effect rounded-2xl shadow-lg p-6 card-hover">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Ad Preview</h3>
+            <div class="bg-white border border-gray-200 rounded-xl p-4">
+              <div id="adPreview" class="space-y-3">
+                <div
+                  class="aspect-video bg-gray-200 rounded-lg flex items-center justify-center"
+                >
+                  <span class="text-gray-500">Image Preview</span>
+                </div>
+                <div>
+                  <h4 class="font-semibold text-gray-900" id="previewTitle">
+                    Your Ad Title
+                  </h4>
+                  <p class="text-sm text-gray-600 mt-1" id="previewDescription">
+                    Your ad description will appear here
+                  </p>
+                  <div class="flex justify-between items-center mt-2">
+                    <span class="text-xs text-gray-500">Sponsored</span>
+                    <button
+                      class="text-xs bg-gray-100 text-gray-700 px-3 py-1 rounded-full"
+                    >
+                      Learn More
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Help Section -->
+          <div class="glass-effect rounded-2xl shadow-lg p-6 card-hover">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Need Help?</h3>
+            <div class="space-y-3">
+              <div class="flex items-start space-x-3">
+                <i class="bi bi-lightbulb text-yellow-500 mt-1"></i>
+                <div>
+                  <p class="text-sm font-medium text-gray-900">
+                    Best Practices
+                  </p>
+                  <p class="text-xs text-gray-600">
+                    Use high-quality images and clear calls-to-action
+                  </p>
+                </div>
+              </div>
+              <div class="flex items-start space-x-3">
+                <i class="bi bi-shield-check text-green-500 mt-1"></i>
+                <div>
+                  <p class="text-sm font-medium text-gray-900">
+                    Secure Payment
+                  </p>
+                  <p class="text-xs text-gray-600">
+                    All payments are processed securely via Paystack
+                  </p>
+                </div>
+              </div>
+              <div class="flex items-start space-x-3">
+                <i class="bi bi-headset text-blue-500 mt-1"></i>
+                <div>
+                  <p class="text-sm font-medium text-gray-900">Support</p>
+                  <p class="text-xs text-gray-600">
+                    Contact us if you need assistance
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
-            <!-- Ad Creation Form -->
-            <div class="lg:col-span-2">
-                <div class="glass-effect rounded-2xl shadow-lg p-8 card-hover">
-                    <h2 class="text-2xl font-bold text-gray-900 mb-6">Create Your Advertisement</h2>
-                    
-                    <form id="adCreationForm" class="space-y-6">
-                        <!-- Ad Title -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Ad Title <span class="text-red-500">*</span>
-                            </label>
-                            <input 
-                                type="text" 
-                                id="adTitle" 
-                                name="title"
-                                maxlength="60"
-                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                                placeholder="Enter a compelling title for your ad"
-                                required
-                            >
-                            <div class="text-xs text-gray-500 mt-1 text-right">
-                                <span id="titleCounter">0</span>/60 characters
-                            </div>
-                        </div>
-
-                        <!-- Ad Description -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Ad Description <span class="text-red-500">*</span>
-                            </label>
-                            <textarea 
-                                id="adDescription" 
-                                name="description"
-                                rows="4"
-                                maxlength="200"
-                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
-                                placeholder="Describe what makes your offer special..."
-                                required
-                            ></textarea>
-                            <div class="text-xs text-gray-500 mt-1 text-right">
-                                <span id="descriptionCounter">0</span>/200 characters
-                            </div>
-                        </div>
-
-                        <!-- Ad Image -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Ad Image <span class="text-red-500">*</span>
-                            </label>
-                            <div class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-blue-500 transition-colors cursor-pointer" id="imageUploadArea">
-                                <input type="file" id="adImage" name="image" accept="image/*" class="hidden" required>
-                                <i class="bi bi-cloud-arrow-up text-4xl text-gray-400 mb-3"></i>
-                                <p class="text-gray-600 mb-2">Click to upload your ad image</p>
-                                <p class="text-sm text-gray-500">Recommended: 1200x630px, JPG or PNG, max 5MB</p>
-                            </div>
-                            <div id="imagePreview" class="mt-4 hidden">
-                                <img id="previewImage" class="w-full h-64 object-cover rounded-xl shadow-md">
-                                <button type="button" id="removeImage" class="mt-2 text-red-600 hover:text-red-700 text-sm font-medium">
-                                    <i class="bi bi-trash mr-1"></i> Remove Image
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Target URL -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Target URL <span class="text-red-500">*</span>
-                            </label>
-                            <input 
-                                type="url" 
-                                id="targetUrl" 
-                                name="target_url"
-                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                                placeholder="https://example.com/your-offer"
-                                required
-                            >
-                        </div>
-
-                        <!-- Call to Action -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Call to Action
-                            </label>
-                            <select 
-                                id="callToAction" 
-                                name="call_to_action"
-                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                            >
-                                <option value="Learn More">Learn More</option>
-                                <option value="Shop Now">Shop Now</option>
-                                <option value="Sign Up">Sign Up</option>
-                                <option value="Download">Download</option>
-                                <option value="Get Started">Get Started</option>
-                                <option value="Contact Us">Contact Us</option>
-                            </select>
-                        </div>
-
-                        <!-- Targeting Options -->
-                        <div class="bg-gray-50 rounded-xl p-6">
-                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Targeting Options</h3>
-                            
-                            <!-- Target Audience -->
-                            <div class="mb-4">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">
-                                    Target Audience
-                                </label>
-                                <select 
-                                    id="targetAudience" 
-                                    name="target_audience"
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                                >
-                                    <option value="all">All Users</option>
-                                    <option value="students">Students</option>
-                                    <option value="professionals">Professionals</option>
-                                    <option value="entrepreneurs">Entrepreneurs</option>
-                                    <option value="creatives">Creatives</option>
-                                </select>
-                            </div>
-
-                            <!-- Target Countries -->
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">
-                                    Target Countries (Optional)
-                                </label>
-                                <select 
-                                    id="targetCountries" 
-                                    name="target_countries"
-                                    multiple
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                                >
-                                    <option value="NG">Nigeria</option>
-                                    <option value="GH">Ghana</option>
-                                    <option value="KE">Kenya</option>
-                                    <option value="ZA">South Africa</option>
-                                    <option value="US">United States</option>
-                                    <option value="UK">United Kingdom</option>
-                                    <option value="CA">Canada</option>
-                                </select>
-                                <div class="text-xs text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple countries</div>
-                            </div>
-                        </div>
-
-                        <!-- Action Buttons -->
-                        <div class="flex justify-between pt-6">
-                            <button 
-                                type="button" 
-                                onclick="window.history.back()"
-                                class="px-8 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium"
-                            >
-                                <i class="bi bi-arrow-left mr-2"></i> Back
-                            </button>
-                            
-                            <button 
-                                type="submit" 
-                                id="createAdBtn"
-                                class="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all font-medium flex items-center"
-                            >
-                                Continue to Payment
-                                <i class="bi bi-arrow-right ml-2"></i>
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Selected Package & Preview -->
-            <div class="space-y-6">
-                <!-- Selected Package -->
-                <div class="glass-effect rounded-2xl shadow-lg p-6 card-hover">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Selected Package</h3>
-                    <div id="selectedPackage" class="text-center p-4 rounded-xl bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200">
-                        <!-- Package details will be loaded here -->
-                    </div>
-                </div>
-
-                <!-- Ad Preview -->
-                <div class="glass-effect rounded-2xl shadow-lg p-6 card-hover">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Ad Preview</h3>
-                    <div class="bg-white border border-gray-200 rounded-xl p-4">
-                        <div id="adPreview" class="space-y-3">
-                            <div class="aspect-video bg-gray-200 rounded-lg flex items-center justify-center">
-                                <span class="text-gray-500">Image Preview</span>
-                            </div>
-                            <div>
-                                <h4 class="font-semibold text-gray-900" id="previewTitle">Your Ad Title</h4>
-                                <p class="text-sm text-gray-600 mt-1" id="previewDescription">Your ad description will appear here</p>
-                                <div class="flex justify-between items-center mt-2">
-                                    <span class="text-xs text-gray-500">Sponsored</span>
-                                    <button class="text-xs bg-gray-100 text-gray-700 px-3 py-1 rounded-full">
-                                        Learn More
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Help Section -->
-                <div class="glass-effect rounded-2xl shadow-lg p-6 card-hover">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Need Help?</h3>
-                    <div class="space-y-3">
-                        <div class="flex items-start space-x-3">
-                            <i class="bi bi-lightbulb text-yellow-500 mt-1"></i>
-                            <div>
-                                <p class="text-sm font-medium text-gray-900">Best Practices</p>
-                                <p class="text-xs text-gray-600">Use high-quality images and clear calls-to-action</p>
-                            </div>
-                        </div>
-                        <div class="flex items-start space-x-3">
-                            <i class="bi bi-shield-check text-green-500 mt-1"></i>
-                            <div>
-                                <p class="text-sm font-medium text-gray-900">Secure Payment</p>
-                                <p class="text-xs text-gray-600">All payments are processed securely via Paystack</p>
-                            </div>
-                        </div>
-                        <div class="flex items-start space-x-3">
-                            <i class="bi bi-headset text-blue-500 mt-1"></i>
-                            <div>
-                                <p class="text-sm font-medium text-gray-900">Support</p>
-                                <p class="text-xs text-gray-600">Contact us if you need assistance</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+      </div>
     </div>
 
     <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-        <div class="bg-white rounded-2xl p-8 text-center max-w-sm mx-4">
-            <div class="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
-            <h3 class="text-lg font-semibold text-gray-900 mb-2">Creating Your Ad</h3>
-            <p class="text-gray-600">Please wait while we set up your campaign...</p>
-        </div>
+    <div
+      id="loadingOverlay"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden"
+    >
+      <div class="bg-white rounded-2xl p-8 text-center max-w-sm mx-4">
+        <div
+          class="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"
+        ></div>
+        <h3 class="text-lg font-semibold text-gray-900 mb-2">
+          Creating Your Ad
+        </h3>
+        <p class="text-gray-600">
+          Please wait while we set up your campaign...
+        </p>
+      </div>
     </div>
 
     <script>
-        // Get package ID from URL or localStorage
-        const urlParams = new URLSearchParams(window.location.search);
-        const packageId = urlParams.get('package_id') || localStorage.getItem('selectedPackageId');
+      // Get package ID from URL or localStorage
+      const urlParams = new URLSearchParams(window.location.search);
+      const packageId =
+        urlParams.get("package_id") ||
+        localStorage.getItem("selectedPackageId");
 
-        if (!packageId) {
-            window.location.href = "{{ url_for('payments.ad_packages') }}";
-        }
+      if (!packageId) {
+        window.location.href = "{{ url_for('payments.ad_packages') }}";
+      }
 
-        // Load selected package details
-        async function loadSelectedPackage() {
-            try {
-                const response = await fetch(`/payment/get-package/${packageId}`);
-                const package = await response.json();
-                
-                document.getElementById('selectedPackage').innerHTML = `
+      // Load selected package details
+      async function loadSelectedPackage() {
+        try {
+          const response = await fetch(`/payment/get-package/${packageId}`);
+          const package = await response.json();
+
+          document.getElementById("selectedPackage").innerHTML = `
                     <div class="text-center">
                         <h4 class="text-xl font-bold text-gray-900">${package.name}</h4>
                         <div class="text-3xl font-bold text-blue-600 my-2">₦${package.price.toLocaleString()}</div>
@@ -526,191 +627,236 @@
                         </div>
                     </div>
                 `;
-                
-                // Store package details for later use
-                window.selectedPackage = package;
-                
-            } catch (error) {
-                console.error('Error loading package:', error);
-                showNotification('Error loading package details', 'error');
-            }
+
+          // Store package details for later use
+          window.selectedPackage = package;
+        } catch (error) {
+          console.error("Error loading package:", error);
+          showNotification("Error loading package details", "error");
         }
+      }
 
-        // Character counters
-        document.getElementById('adTitle').addEventListener('input', function() {
-            document.getElementById('titleCounter').textContent = this.value.length;
-            updatePreview();
+      // Character counters
+      document.getElementById("adTitle").addEventListener("input", function () {
+        document.getElementById("titleCounter").textContent = this.value.length;
+        updatePreview();
+      });
+
+      document
+        .getElementById("adDescription")
+        .addEventListener("input", function () {
+          document.getElementById("descriptionCounter").textContent =
+            this.value.length;
+          updatePreview();
         });
 
-        document.getElementById('adDescription').addEventListener('input', function() {
-            document.getElementById('descriptionCounter').textContent = this.value.length;
-            updatePreview();
+      // Image upload handling
+      document
+        .getElementById("imageUploadArea")
+        .addEventListener("click", function () {
+          document.getElementById("adImage").click();
         });
 
-        // Image upload handling
-        document.getElementById('imageUploadArea').addEventListener('click', function() {
-            document.getElementById('adImage').click();
-        });
+      document
+        .getElementById("adImage")
+        .addEventListener("change", function (e) {
+          if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
 
-        document.getElementById('adImage').addEventListener('change', function(e) {
-            if (e.target.files && e.target.files[0]) {
-                const file = e.target.files[0];
-                
-                // Validate file size (5MB max)
-                if (file.size > 5 * 1024 * 1024) {
-                    showNotification('Image must be less than 5MB', 'error');
-                    return;
-                }
-                
-                // Validate file type
-                if (!file.type.startsWith('image/')) {
-                    showNotification('Please select an image file', 'error');
-                    return;
-                }
-                
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    document.getElementById('previewImage').src = e.target.result;
-                    document.getElementById('imagePreview').classList.remove('hidden');
-                    document.getElementById('imageUploadArea').classList.add('hidden');
-                    updatePreview();
-                };
-                reader.readAsDataURL(file);
+            // Validate file size (5MB max)
+            if (file.size > 5 * 1024 * 1024) {
+              showNotification("Image must be less than 5MB", "error");
+              return;
             }
-        });
 
-        document.getElementById('removeImage').addEventListener('click', function() {
-            document.getElementById('adImage').value = '';
-            document.getElementById('imagePreview').classList.add('hidden');
-            document.getElementById('imageUploadArea').classList.remove('hidden');
-            updatePreview();
-        });
-
-        // Update preview in real-time
-        function updatePreview() {
-            const title = document.getElementById('adTitle').value || 'Your Ad Title';
-            const description = document.getElementById('adDescription').value || 'Your ad description will appear here';
-            const cta = document.getElementById('callToAction').value;
-            
-            document.getElementById('previewTitle').textContent = title;
-            document.getElementById('previewDescription').textContent = description;
-            document.querySelector('#adPreview button').textContent = cta;
-        }
-
-        // Form submission
-        document.getElementById('adCreationForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const submitBtn = document.getElementById('createAdBtn');
-            const originalText = submitBtn.innerHTML;
-            
-            // Show loading state
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="bi bi-arrow-repeat animate-spin mr-2"></i> Creating...';
-            document.getElementById('loadingOverlay').classList.remove('hidden');
-            
-            try {
-                // Prepare form data
-                const formData = new FormData();
-                formData.append('package_id', packageId);
-                formData.append('title', document.getElementById('adTitle').value);
-                formData.append('description', document.getElementById('adDescription').value);
-                formData.append('target_url', document.getElementById('targetUrl').value);
-                formData.append('call_to_action', document.getElementById('callToAction').value);
-                formData.append('target_audience', document.getElementById('targetAudience').value);
-                
-                // Handle multiple countries selection
-                const countries = Array.from(document.getElementById('targetCountries').selectedOptions)
-                    .map(option => option.value);
-                formData.append('target_countries', JSON.stringify(countries));
-                
-                // Add image if exists
-                const imageFile = document.getElementById('adImage').files[0];
-                if (imageFile) {
-                    formData.append('image', imageFile);
-                }
-                
-                // Create campaign
-                const response = await fetch("{{ url_for('payments.create_campaign') }}", {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-CSRFToken': '{{ csrf_token() }}'
-                    }
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    // Store campaign ID and proceed to payment
-                    localStorage.setItem('currentCampaignId', result.campaign_id);
-                    
-                    // Initiate payment
-                    const paymentResponse = await fetch("{{ url_for('payments.initiate_payment') }}", {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': '{{ csrf_token() }}'
-                        },
-                        body: JSON.stringify({
-                            campaign_id: result.campaign_id,
-                            currency: 'NGN'
-                        })
-                    });
-                    
-                    const paymentResult = await paymentResponse.json();
-                    
-                    if (paymentResult.success) {
-                        // Redirect to Paystack
-                        window.location.href = paymentResult.authorization_url;
-                    } else {
-                        throw new Error(paymentResult.error || 'Payment initiation failed');
-                    }
-                    
-                } else {
-                    throw new Error(result.error || 'Campaign creation failed');
-                }
-                
-            } catch (error) {
-                console.error('Error:', error);
-                showNotification(error.message || 'An error occurred. Please try again.', 'error');
-                
-                // Reset button state
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalText;
-                document.getElementById('loadingOverlay').classList.add('hidden');
+            // Validate file type
+            if (!file.type.startsWith("image/")) {
+              showNotification("Please select an image file", "error");
+              return;
             }
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+              document.getElementById("previewImage").src = e.target.result;
+              document
+                .getElementById("imagePreview")
+                .classList.remove("hidden");
+              document
+                .getElementById("imageUploadArea")
+                .classList.add("hidden");
+              updatePreview();
+            };
+            reader.readAsDataURL(file);
+          }
         });
 
-        // Notification function
-        function showNotification(message, type = 'info') {
-            const notification = document.createElement('div');
-            notification.className = `fixed top-4 right-4 z-50 px-6 py-4 rounded-xl shadow-lg text-white ${
-                type === 'error' ? 'bg-red-500' : 
-                type === 'success' ? 'bg-green-500' : 'bg-blue-500'
-            }`;
-            notification.innerHTML = `
+      document
+        .getElementById("removeImage")
+        .addEventListener("click", function () {
+          document.getElementById("adImage").value = "";
+          document.getElementById("imagePreview").classList.add("hidden");
+          document.getElementById("imageUploadArea").classList.remove("hidden");
+          updatePreview();
+        });
+
+      // Update preview in real-time
+      function updatePreview() {
+        const title =
+          document.getElementById("adTitle").value || "Your Ad Title";
+        const description =
+          document.getElementById("adDescription").value ||
+          "Your ad description will appear here";
+        const cta = document.getElementById("callToAction").value;
+
+        document.getElementById("previewTitle").textContent = title;
+        document.getElementById("previewDescription").textContent = description;
+        document.querySelector("#adPreview button").textContent = cta;
+      }
+
+      // Form submission
+      document
+        .getElementById("adCreationForm")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+
+          const submitBtn = document.getElementById("createAdBtn");
+          const originalText = submitBtn.innerHTML;
+
+          // Show loading state
+          submitBtn.disabled = true;
+          submitBtn.innerHTML =
+            '<i class="bi bi-arrow-repeat animate-spin mr-2"></i> Creating...';
+          document.getElementById("loadingOverlay").classList.remove("hidden");
+
+          try {
+            // Prepare form data
+            const formData = new FormData();
+            formData.append("package_id", packageId);
+            formData.append("title", document.getElementById("adTitle").value);
+            formData.append(
+              "description",
+              document.getElementById("adDescription").value,
+            );
+            formData.append(
+              "target_url",
+              document.getElementById("targetUrl").value,
+            );
+            formData.append(
+              "call_to_action",
+              document.getElementById("callToAction").value,
+            );
+            formData.append(
+              "target_audience",
+              document.getElementById("targetAudience").value,
+            );
+
+            // Handle multiple countries selection
+            const countries = Array.from(
+              document.getElementById("targetCountries").selectedOptions,
+            ).map((option) => option.value);
+            formData.append("target_countries", JSON.stringify(countries));
+
+            // Add image if exists
+            const imageFile = document.getElementById("adImage").files[0];
+            if (imageFile) {
+              formData.append("image", imageFile);
+            }
+
+            // Create campaign
+            const response = await fetch(
+              "{{ url_for('payments.create_campaign') }}",
+              {
+                method: "POST",
+                body: formData,
+                headers: {
+                  "X-CSRFToken": "{{ csrf_token }}",
+                },
+              },
+            );
+
+            const result = await response.json();
+
+            if (result.success) {
+              // Store campaign ID and proceed to payment
+              localStorage.setItem("currentCampaignId", result.campaign_id);
+
+              // Initiate payment
+              const paymentResponse = await fetch(
+                "{{ url_for('payments.initiate_payment') }}",
+                {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": "{{ csrf_token }}",
+                  },
+                  body: JSON.stringify({
+                    campaign_id: result.campaign_id,
+                    currency: "NGN",
+                  }),
+                },
+              );
+
+              const paymentResult = await paymentResponse.json();
+
+              if (paymentResult.success) {
+                // Redirect to Paystack
+                window.location.href = paymentResult.authorization_url;
+              } else {
+                throw new Error(
+                  paymentResult.error || "Payment initiation failed",
+                );
+              }
+            } else {
+              throw new Error(result.error || "Campaign creation failed");
+            }
+          } catch (error) {
+            console.error("Error:", error);
+            showNotification(
+              error.message || "An error occurred. Please try again.",
+              "error",
+            );
+
+            // Reset button state
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+            document.getElementById("loadingOverlay").classList.add("hidden");
+          }
+        });
+
+      // Notification function
+      function showNotification(message, type = "info") {
+        const notification = document.createElement("div");
+        notification.className = `fixed top-4 right-4 z-50 px-6 py-4 rounded-xl shadow-lg text-white ${
+          type === "error"
+            ? "bg-red-500"
+            : type === "success"
+              ? "bg-green-500"
+              : "bg-blue-500"
+        }`;
+        notification.innerHTML = `
                 <div class="flex items-center">
-                    <i class="bi bi-${type === 'error' ? 'exclamation-triangle' : type === 'success' ? 'check-circle' : 'info-circle'} mr-2"></i>
+                    <i class="bi bi-${type === "error" ? "exclamation-triangle" : type === "success" ? "check-circle" : "info-circle"} mr-2"></i>
                     <span>${message}</span>
                 </div>
             `;
-            
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.remove();
-            }, 5000);
-        }
 
-        // Initialize page
-        document.addEventListener('DOMContentLoaded', function() {
-            loadSelectedPackage();
-            updatePreview();
-            
-            // Set up real-time preview updates
-            document.getElementById('callToAction').addEventListener('change', updatePreview);
-        });
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+          notification.remove();
+        }, 5000);
+      }
+
+      // Initialize page
+      document.addEventListener("DOMContentLoaded", function () {
+        loadSelectedPackage();
+        updatePreview();
+
+        // Set up real-time preview updates
+        document
+          .getElementById("callToAction")
+          .addEventListener("change", updatePreview);
+      });
     </script>
-</body>
+  </body>
 </html>

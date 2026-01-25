@@ -506,13 +506,18 @@ def main_market():
     # =========== CRITICAL CHANGE: Only show services from subscribed sellers ===========
     # Start with base query for active services from subscribed sellers only
     services_query = MarketplaceService.query.filter_by(status="active")
+    now = datetime.utcnow()
 
     # Join with users and ONLY include sellers with active subscriptions
     services_query = services_query.join(
         User,
         and_(
             MarketplaceService.seller_id == User.id,
-            User.marketplace_subscription_status == "active",  # ONLY subscribed sellers
+            User.marketplace_subscription_status == "active",
+            or_(
+                User.marketplace_subscription_expires == None,
+                User.marketplace_subscription_expires >= now,
+            ),
         ),
     )
 
@@ -1679,6 +1684,18 @@ def api_services():
 
         # Build query
         query = MarketplaceService.query.filter_by(status="active")
+        now = datetime.utcnow()
+        query = query.join(
+            User,
+            and_(
+                MarketplaceService.seller_id == User.id,
+                User.marketplace_subscription_status == "active",
+                or_(
+                    User.marketplace_subscription_expires == None,
+                    User.marketplace_subscription_expires >= now,
+                ),
+            ),
+        )
 
         # Apply filters
         category_id = request.args.get("category_id")

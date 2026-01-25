@@ -1,144 +1,539 @@
-<!-- templates/admin_dashboard_content.html -->
-<div class="mb-8">
-    <h2 class="text-3xl font-bold text-gray-800 mb-2">Welcome back, {{ current_user.first_name }}!</h2>
-    <p class="text-gray-600">Here's what's happening with your platform today.</p>
-</div>
+<section class="space-y-6">
+  <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <div class="rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-sm">
+      <p class="text-xs uppercase tracking-widest text-slate-400">Daily earnings</p>
+      <p class="mt-2 text-2xl font-semibold text-slate-900">${{ "{:,.2f}".format(daily_earnings or 0) }}</p>
+      <p class="mt-1 text-xs text-slate-500">Completed payments today</p>
+    </div>
+    <div class="rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-sm">
+      <p class="text-xs uppercase tracking-widest text-slate-400">Monthly earnings</p>
+      <p class="mt-2 text-2xl font-semibold text-slate-900">${{ "{:,.2f}".format(monthly_earnings or 0) }}</p>
+      <p class="mt-1 text-xs text-slate-500">Running month totals</p>
+    </div>
+    <div class="rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-sm">
+      <p class="text-xs uppercase tracking-widest text-slate-400">Yearly earnings</p>
+      <p class="mt-2 text-2xl font-semibold text-slate-900">${{ "{:,.2f}".format(yearly_earnings or 0) }}</p>
+      <p class="mt-1 text-xs text-slate-500">Year to date</p>
+    </div>
+    <div class="rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-sm">
+      <p class="text-xs uppercase tracking-widest text-slate-400">Total earnings</p>
+      <p class="mt-2 text-2xl font-semibold text-slate-900">${{ "{:,.2f}".format(total_earnings or 0) }}</p>
+      <p class="mt-1 text-xs text-slate-500">All time revenue</p>
+    </div>
+  </div>
 
-<!-- Statistics Cards -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-    <div class="stat-card glass-card card p-6">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-blue-500 text-sm font-medium">Total Users</p>
-                <h3 class="text-2xl font-bold text-black">{{ total_users }}</h3>
-                <p class="text-blue-500 text-xs mt-1">{{ active_users }} active</p>
-            </div>
-            <div class="w-12 h-12 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
-                <i class="bi bi-people text-xl text-white"></i>
-            </div>
-        </div>
-    </div>
-    
-    <div class="stat-card glass-card card p-6">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-green-500 text-sm font-medium">Groups</p>
-                <h3 class="text-2xl font-bold text-black">{{ total_groups }}</h3>
-                <p class="text-green-500 text-xs mt-1">{{ active_groups }} active</p>
-            </div>
-            <div class="w-12 h-12 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
-                <i class="bi bi-collection text-xl text-white"></i>
-            </div>
-        </div>
-    </div>
-    
-    <div class="stat-card glass-card card p-6">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-yellow-500 text-sm font-medium">Pending Reports</p>
-                <h3 class="text-2xl font-bold text-black">{{ pending_reports }}</h3>
-                <p class="text-yellow-500 text-xs mt-1">Need attention</p>
-            </div>
-            <div class="w-12 h-12 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
-                <i class="bi bi-flag text-xl text-white"></i>
-            </div>
-        </div>
-    </div>
-    
-    <div class="stat-card glass-card card p-6">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-red-500 text-sm font-medium">Active Ads</p>
-                <h3 class="text-2xl font-bold text-black">{{ active_ads }}</h3>
-                <p class="text-red-500 text-xs mt-1">Running campaigns</p>
-            </div>
-            <div class="w-12 h-12 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
-                <i class="bi bi-megaphone text-xl text-white"></i>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Recent Activity -->
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-    <!-- Recent Users -->
-    <div class="activity-glass card p-6">
-        <div class="flex items-center justify-between mb-6">
-            <h3 class="text-xl font-semibold text-gray-800">Recent Users</h3>
-            <a href="#" onclick="showSection('users')" class="text-primary hover:text-primary-dark text-sm font-medium">View all</a>
-        </div>
-        <div class="space-y-4">
-            {% for user in recent_users %}
-            <div class="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition-colors">
-                <div class="flex items-center space-x-3">
-                    <img src="{{ user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
-                         alt="{{ user.first_name }}" class="w-10 h-10 rounded-full object-cover">
-                    <div>
-                        <p class="font-medium text-gray-800">{{ user.first_name }} {{ user.last_name }}</p>
-                        <p class="text-sm text-gray-500">{{ user.email }}</p>
-                    </div>
-                </div>
-                <span class="text-xs px-2 py-1 rounded-full {{ 'bg-green-100 text-green-800' if user.is_active else 'bg-yellow-100 text-yellow-800' }}">
-                    {{ 'Active' if user.is_active else 'Pending' }}
-                </span>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-
-    <!-- Recent Reports -->
-    <div class="activity-glass card p-6">
-        <div class="flex items-center justify-between mb-6">
-            <h3 class="text-xl font-semibold text-gray-800">Recent Reports</h3>
-            <a href="#" onclick="showSection('reports')" class="text-primary hover:text-primary-dark text-sm font-medium">View all</a>
-        </div>
-        <div class="space-y-4">
-            {% for report in recent_reports %}
-            <div class="p-3 border-l-4 border-red-500 bg-red-50 rounded-lg">
-                <div class="flex justify-between items-start mb-2">
-                    <p class="font-medium text-gray-800">{{ report.content_type|title }} Report</p>
-                    <span class="text-xs px-2 py-1 bg-red-100 text-red-800 rounded-full">Pending</span>
-                </div>
-                <p class="text-sm text-gray-600 mb-2">{{ report.reason }}</p>
-                <p class="text-xs text-gray-500">Reported {{ report.created_at.strftime('%b %d, %Y') }}</p>
-            </div>
+  <div class="grid gap-6 lg:grid-cols-2">
+    <div class="rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-sm">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-semibold text-slate-900">Active matchmaking requests</h3>
+        <span class="text-xs text-slate-500">Expires soon</span>
+      </div>
+      <div class="mt-4 overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead>
+            <tr class="border-b border-slate-200 text-slate-500">
+              <th class="pb-2 font-medium">User</th>
+              <th class="pb-2 font-medium">Package</th>
+              <th class="pb-2 font-medium">Matches</th>
+              <th class="pb-2 font-medium">Expiry</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for request in matchmaking_active_requests %}
+            <tr class="border-b border-slate-100">
+              <td class="py-2 text-slate-700">{{ request.user.first_name }} {{ request.user.last_name }}</td>
+              <td class="py-2 text-slate-500">{{ request.package.name if request.package else 'Package' }}</td>
+              <td class="py-2 text-slate-700">{{ request.matches }}</td>
+              <td class="py-2 text-slate-500">{{ request.end_date.strftime('%b %d, %Y') if request.end_date else 'Unknown' }}</td>
+            </tr>
             {% else %}
-            <div class="text-center py-8 text-gray-500">
-                <i class="bi bi-flag text-2xl mb-2"></i>
-                <p>No pending reports</p>
-            </div>
+            <tr>
+              <td colspan="4" class="py-4 text-center text-slate-500">No active matchmaking requests.</td>
+            </tr>
             {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-sm">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-semibold text-slate-900">Recent matchmaking payments</h3>
+        <span class="text-xs text-slate-500">Completed</span>
+      </div>
+      <div class="mt-4 overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead>
+            <tr class="border-b border-slate-200 text-slate-500">
+              <th class="pb-2 font-medium">User</th>
+              <th class="pb-2 font-medium">Package</th>
+              <th class="pb-2 font-medium">Amount</th>
+              <th class="pb-2 font-medium">Paid</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for payment in matchmaking_recent_payments %}
+            <tr class="border-b border-slate-100">
+              <td class="py-2 text-slate-700">{{ payment.user.first_name }} {{ payment.user.last_name }}</td>
+              <td class="py-2 text-slate-500">{{ payment.package.name if payment.package else 'Package' }}</td>
+              <td class="py-2 text-slate-700">${{ "{:,.2f}".format(payment.amount or 0) }}</td>
+              <td class="py-2 text-slate-500">{{ payment.paid_at.strftime('%b %d, %Y') if payment.paid_at else 'Pending' }}</td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="4" class="py-4 text-center text-slate-500">No completed payments yet.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid gap-6 lg:grid-cols-2">
+    <div class="rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-sm">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-base font-semibold text-slate-900">Earnings analytics</h2>
+          <p class="text-xs text-slate-500">Last 7 days</p>
         </div>
+        <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">Live</span>
+      </div>
+      <div class="mt-6 h-64">
+        <canvas id="earningsChart" class="h-full w-full"></canvas>
+      </div>
     </div>
-</div>
 
-<!-- Quick Actions -->
-<div class="card p-6 mt-8">
-    <h3 class="text-xl font-semibold text-gray-800 mb-6">Quick Actions</h3>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <button onclick="showSection('users')" class="p-4 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors text-left group">
-            <i class="bi bi-people text-2xl text-blue-600 mb-2"></i>
-            <h4 class="font-semibold text-gray-800">Manage Users</h4>
-            <p class="text-sm text-gray-600 mt-1">View and manage all users</p>
-        </button>
-        
-        <button onclick="showSection('groups')" class="p-4 bg-green-50 hover:bg-green-100 rounded-xl transition-colors text-left group">
-            <i class="bi bi-collection text-2xl text-green-600 mb-2"></i>
-            <h4 class="font-semibold text-gray-800">Manage Groups</h4>
-            <p class="text-sm text-gray-600 mt-1">Create and moderate groups</p>
-        </button>
-        
-        <button onclick="showSection('reports')" class="p-4 bg-red-50 hover:bg-red-100 rounded-xl transition-colors text-left group">
-            <i class="bi bi-flag text-2xl text-red-600 mb-2"></i>
-            <h4 class="font-semibold text-gray-800">Handle Reports</h4>
-            <p class="text-sm text-gray-600 mt-1">Review reported content</p>
-        </button>
-        
-        <button onclick="showSection('ads')" class="p-4 bg-purple-50 hover:bg-purple-100 rounded-xl transition-colors text-left group">
-            <i class="bi bi-megaphone text-2xl text-purple-600 mb-2"></i>
-            <h4 class="font-semibold text-gray-800">Ad Campaigns</h4>
-            <p class="text-sm text-gray-600 mt-1">Manage sponsored ads</p>
-        </button>
+    <div class="rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-sm">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-base font-semibold text-slate-900">User growth</h2>
+          <p class="text-xs text-slate-500">New users by week</p>
+        </div>
+        <span class="rounded-full bg-sky-50 px-3 py-1 text-xs font-medium text-sky-700">Updated</span>
+      </div>
+      <div class="mt-6 h-64">
+        <canvas id="usersChart" class="h-full w-full"></canvas>
+      </div>
     </div>
-</div>
+  </div>
 
+  <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <div class="rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-sm">
+      <p class="text-xs uppercase tracking-widest text-slate-400">Total users</p>
+      <p class="mt-2 text-xl font-semibold text-slate-900">{{ total_users }}</p>
+      <p class="text-xs text-slate-500">Active: {{ active_users }} | Pending: {{ pending_users }}</p>
+    </div>
+    <div class="rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-sm">
+      <p class="text-xs uppercase tracking-widest text-slate-400">Groups</p>
+      <p class="mt-2 text-xl font-semibold text-slate-900">{{ total_groups }}</p>
+      <p class="text-xs text-slate-500">Active: {{ active_groups }}</p>
+    </div>
+    <div class="rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-sm">
+      <p class="text-xs uppercase tracking-widest text-slate-400">Content</p>
+      <p class="mt-2 text-xl font-semibold text-slate-900">{{ total_posts }} posts</p>
+      <p class="text-xs text-slate-500">{{ total_comments }} comments</p>
+    </div>
+    <div class="rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-sm">
+      <p class="text-xs uppercase tracking-widest text-slate-400">Reports</p>
+      <p class="mt-2 text-xl font-semibold text-slate-900">{{ pending_reports }} pending</p>
+      <p class="text-xs text-slate-500">{{ total_reports }} total</p>
+    </div>
+  </div>
+
+  <div class="grid gap-6 lg:grid-cols-2">
+    <div class="rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-sm">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-semibold text-slate-900">Revenue breakdown</h3>
+        <span class="text-xs text-slate-500">Marketplace + Ads</span>
+      </div>
+      <div class="mt-4 space-y-3 text-xs">
+        <div class="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 px-4 py-3">
+          <div>
+            <p class="text-xs uppercase tracking-widest text-slate-400">Marketplace revenue</p>
+            <p class="text-base font-semibold text-slate-900">${{ "{:,.2f}".format(marketplace_total_revenue or 0) }}</p>
+          </div>
+          <div class="text-right text-xs text-slate-500">
+            <p>This month</p>
+            <p class="font-semibold text-slate-700">${{ "{:,.2f}".format(marketplace_monthly_revenue or 0) }}</p>
+          </div>
+        </div>
+        <div class="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 px-4 py-3">
+          <div>
+            <p class="text-xs uppercase tracking-widest text-slate-400">Ad campaign revenue</p>
+            <p class="text-base font-semibold text-slate-900">${{ "{:,.2f}".format(ad_campaign_total_revenue or 0) }}</p>
+          </div>
+          <div class="text-right text-xs text-slate-500">
+            <p>This month</p>
+            <p class="font-semibold text-slate-700">${{ "{:,.2f}".format(ad_campaign_monthly_revenue or 0) }}</p>
+          </div>
+        </div>
+        <div class="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 px-4 py-3">
+          <div>
+            <p class="text-xs uppercase tracking-widest text-slate-400">Matchmaking revenue</p>
+            <p class="text-base font-semibold text-slate-900">${{ "{:,.2f}".format(matchmaking_total_revenue or 0) }}</p>
+          </div>
+          <div class="text-right text-xs text-slate-500">
+            <p>This month</p>
+            <p class="font-semibold text-slate-700">${{ "{:,.2f}".format(matchmaking_monthly_revenue or 0) }}</p>
+            <p class="mt-1 text-[10px] text-slate-400">{{ matchmaking_active_requests|length }} active requests</p>
+          </div>
+        </div>
+        <div class="flex items-center justify-between rounded-xl border border-emerald-100 bg-emerald-50/60 px-4 py-3">
+          <div>
+            <p class="text-xs uppercase tracking-widest text-emerald-500">Active ad budgets</p>
+            <p class="text-base font-semibold text-emerald-700">${{ "{:,.2f}".format(ad_campaign_active_budget or 0) }}</p>
+          </div>
+          <div class="text-right text-xs text-emerald-600">
+            <p>Sponsored</p>
+            <p class="font-semibold text-emerald-700">${{ "{:,.2f}".format(sponsored_active_budget or 0) }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-sm">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-semibold text-slate-900">Active ads</h3>
+        <a href="{{ url_for('admin.admin_ads') }}" class="text-xs font-medium text-slate-500 hover:text-slate-900">Manage ads</a>
+      </div>
+      <div class="mt-4 overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead>
+            <tr class="border-b border-slate-200 text-slate-500">
+              <th class="pb-2 font-medium">Type</th>
+              <th class="pb-2 font-medium">Owner</th>
+              <th class="pb-2 font-medium">Placement</th>
+              <th class="pb-2 font-medium">Budget</th>
+              <th class="pb-2 font-medium">Expiry</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for ad in active_sponsored_ads %}
+            <tr class="border-b border-slate-100">
+              <td class="py-2 text-slate-700">Sponsored</td>
+              <td class="py-2 text-slate-700">{{ ad.creator.first_name if ad.creator else 'Unknown' }}</td>
+              <td class="py-2 text-slate-500">Dashboard</td>
+              <td class="py-2 text-slate-700">${{ "{:,.2f}".format(ad.budget or 0) }}</td>
+              <td class="py-2 text-slate-500">{{ ad.end_date.strftime('%b %d, %Y') }}</td>
+            </tr>
+            {% endfor %}
+            {% for campaign in active_ad_campaigns %}
+            <tr class="border-b border-slate-100">
+              <td class="py-2 text-slate-700">Campaign</td>
+              <td class="py-2 text-slate-700">{{ campaign.user.first_name if campaign.user else 'Unknown' }}</td>
+              <td class="py-2 text-slate-500">{{ campaign.placement|capitalize }}</td>
+              <td class="py-2 text-slate-700">${{ "{:,.2f}".format(campaign.budget or 0) }}</td>
+              <td class="py-2 text-slate-500">{{ campaign.end_date.strftime('%b %d, %Y') if campaign.end_date else 'No expiry' }}</td>
+            </tr>
+            {% endfor %}
+            {% if not active_sponsored_ads and not active_ad_campaigns %}
+            <tr>
+              <td colspan="5" class="py-4 text-center text-slate-500">No active ads right now.</td>
+            </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid gap-6 lg:grid-cols-2">
+    <div class="rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-sm">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-semibold text-slate-900">Marketplace subscriptions</h3>
+        <span class="text-xs text-slate-500">Active payments</span>
+      </div>
+      <div class="mt-4 overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead>
+            <tr class="border-b border-slate-200 text-slate-500">
+              <th class="pb-2 font-medium">User</th>
+              <th class="pb-2 font-medium">Plan</th>
+              <th class="pb-2 font-medium">Amount</th>
+              <th class="pb-2 font-medium">Expiry</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for payment in marketplace_active_payments %}
+            <tr class="border-b border-slate-100">
+              <td class="py-2 text-slate-700">{{ payment.user.first_name }} {{ payment.user.last_name }}</td>
+              <td class="py-2 text-slate-500">{{ payment.subscription.name if payment.subscription else 'Subscription' }}</td>
+              <td class="py-2 text-slate-700">${{ "{:,.2f}".format(payment.amount or 0) }}</td>
+              <td class="py-2 text-slate-500">{{ payment.end_date.strftime('%b %d, %Y') if payment.end_date else 'No expiry' }}</td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="4" class="py-4 text-center text-slate-500">No active subscriptions found.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-sm">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-semibold text-slate-900">Marketplace users</h3>
+        <span class="text-xs text-slate-500">Active subscriptions</span>
+      </div>
+      <div class="mt-4 space-y-3">
+        {% for user in marketplace_active_users %}
+        <div class="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 px-3 py-2">
+          <div class="flex items-center gap-3">
+            <img src="{{ user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" alt="{{ user.first_name }}" class="h-8 w-8 rounded-full object-cover" />
+            <div>
+              <p class="text-sm font-medium text-slate-900">{{ user.first_name }} {{ user.last_name }}</p>
+              <p class="text-xs text-slate-500">Expires {{ user.marketplace_subscription_expires.strftime('%b %d, %Y') if user.marketplace_subscription_expires else 'Unknown' }}</p>
+            </div>
+          </div>
+          <span class="text-xs text-slate-500">{{ (user.marketplace_subscription_expires - now).days if user.marketplace_subscription_expires else 0 }} days</span>
+        </div>
+        {% else %}
+        <p class="text-xs text-slate-500">No active marketplace users.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="grid gap-6 lg:grid-cols-2">
+    <div class="rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-sm">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-semibold text-slate-900">Recent users</h3>
+        <a href="{{ url_for('admin.admin_users') }}" class="text-xs font-medium text-slate-500 hover:text-slate-900">View all</a>
+      </div>
+      <div class="mt-4 space-y-3">
+        {% for user in recent_users %}
+        <div class="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50/60 px-3 py-2">
+          <img src="{{ user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" alt="{{ user.first_name }}" class="h-9 w-9 rounded-full object-cover" />
+          <div>
+            <p class="text-sm font-medium text-slate-900">{{ user.first_name }} {{ user.last_name }}</p>
+            <p class="text-xs text-slate-500">Joined {{ user.created_at.strftime('%b %d, %Y') }}</p>
+          </div>
+        </div>
+        {% else %}
+        <p class="text-xs text-slate-500">No recent users.</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-sm">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-semibold text-slate-900">Groups overview</h3>
+        <a href="{{ url_for('admin.admin_groups') }}" class="text-xs font-medium text-slate-500 hover:text-slate-900">Manage groups</a>
+      </div>
+      <div class="mt-4 space-y-3">
+        {% for group in recent_groups %}
+        <div class="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 px-3 py-2">
+          <div>
+            <p class="text-sm font-medium text-slate-900">{{ group.name }}</p>
+            <p class="text-xs text-slate-500">{{ group.member_count }} members · {{ 'Active' if group.is_active else 'Inactive' }}</p>
+          </div>
+          <span class="text-xs text-slate-500">{{ group.created_at.strftime('%b %d, %Y') }}</span>
+        </div>
+        {% else %}
+        <p class="text-xs text-slate-500">No groups created yet.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-sm">
+    <div class="flex items-center justify-between">
+      <h3 class="text-sm font-semibold text-slate-900">Pending reports</h3>
+      <a href="{{ url_for('admin.admin_reports') }}" class="text-xs font-medium text-slate-500 hover:text-slate-900">View all reports</a>
+    </div>
+    <div class="mt-4 overflow-x-auto">
+      <table class="w-full text-left text-xs">
+        <thead>
+          <tr class="border-b border-slate-200 text-slate-500">
+            <th class="pb-2 font-medium">Type</th>
+            <th class="pb-2 font-medium">Content</th>
+            <th class="pb-2 font-medium">Reason</th>
+            <th class="pb-2 font-medium">Reporter</th>
+            <th class="pb-2 font-medium">Reported user</th>
+            <th class="pb-2 font-medium">Date</th>
+            <th class="pb-2 font-medium">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for report in pending_reports_list %}
+          <tr class="border-b border-slate-100" data-report-row="{{ report.id }}">
+            <td class="py-2 text-slate-700">{{ report.content_type|capitalize }} #{{ report.content_id }}</td>
+            <td class="py-2 text-slate-500">
+              {% if report.content_type == 'post' %}
+                {% set post = pending_post_map.get(report.content_id) %}
+                {{ post.content|truncate(80, True, '...') if post else 'Post unavailable' }}
+              {% elif report.content_type == 'comment' %}
+                {% set comment = pending_comment_map.get(report.content_id) %}
+                {{ comment.content|truncate(80, True, '...') if comment else 'Comment unavailable' }}
+              {% else %}
+                No preview
+              {% endif %}
+            </td>
+            <td class="py-2 text-slate-500">{{ report.reason }}</td>
+            <td class="py-2 text-slate-700">{{ report.reporter.first_name }} {{ report.reporter.last_name }}</td>
+            <td class="py-2 text-slate-500">{{ report.reported_user.first_name if report.reported_user else 'N/A' }}</td>
+            <td class="py-2 text-slate-500">{{ report.created_at.strftime('%b %d, %Y') }}</td>
+            <td class="py-2">
+              <div class="flex flex-col gap-2">
+                <button class="rounded-lg border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-medium text-rose-600 hover:bg-rose-100" onclick="resolveReport({{ report.id }}, 'delete_content')">Delete</button>
+                <button class="rounded-lg border border-slate-200/70 bg-white px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50" onclick="dismissReport({{ report.id }})">Ignore</button>
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="7" class="py-4 text-center text-slate-500">No pending reports.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<script>
+  (function () {
+    if (typeof Chart === "undefined") {
+      return;
+    }
+
+    const earningsLabels = {{ earnings_labels|tojson }};
+    const earningsSeries = {{ earnings_series|tojson }};
+    const userSeries = {{ user_series|tojson }};
+
+    const earningsCanvas = document.getElementById("earningsChart");
+    if (earningsCanvas) {
+      new Chart(earningsCanvas, {
+        type: "line",
+        data: {
+          labels: earningsLabels,
+          datasets: [
+            {
+              label: "Earnings",
+              data: earningsSeries,
+              borderColor: "#10b981",
+              backgroundColor: "rgba(16, 185, 129, 0.15)",
+              fill: true,
+              tension: 0.4,
+              borderWidth: 2,
+              pointRadius: 0,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function (context) {
+                  const value = context.raw || 0;
+                  return "$" + value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                },
+              },
+            },
+          },
+          scales: {
+            x: { grid: { display: false }, ticks: { color: "#94a3b8", font: { size: 10 } } },
+            y: { grid: { color: "#e2e8f0" }, ticks: { color: "#94a3b8", font: { size: 10 } } },
+          },
+        },
+      });
+    }
+
+    const usersCanvas = document.getElementById("usersChart");
+    if (usersCanvas) {
+      new Chart(usersCanvas, {
+        type: "bar",
+        data: {
+          labels: earningsLabels,
+          datasets: [
+            {
+              label: "New users",
+              data: userSeries,
+              backgroundColor: "rgba(56, 189, 248, 0.45)",
+              borderColor: "#38bdf8",
+              borderWidth: 1,
+              borderRadius: 8,
+              maxBarThickness: 20,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { display: false }, ticks: { color: "#94a3b8", font: { size: 10 } } },
+            y: { grid: { color: "#e2e8f0" }, ticks: { color: "#94a3b8", font: { size: 10 } } },
+          },
+        },
+      });
+    }
+  })();
+</script>
+<script>
+  async function resolveReport(reportId, action) {
+    if (!confirm("Resolve this report with action: " + action + "?")) {
+      return;
+    }
+    const response = await fetch(`/admin/reports/${reportId}/resolve`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": window.csrfToken || "",
+      },
+      body: JSON.stringify({ action }),
+    });
+    const text = await response.text();
+    let data = null;
+    try {
+      data = JSON.parse(text);
+    } catch (error) {
+      alert("Request failed. Please refresh and try again.");
+      return;
+    }
+    if (!data.success) {
+      alert(data.error || "Unable to resolve report");
+      return;
+    }
+    markReportHandled(reportId);
+  }
+
+  async function dismissReport(reportId) {
+    if (!confirm("Ignore this report?")) {
+      return;
+    }
+    const response = await fetch(`/admin/reports/${reportId}/dismiss`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": window.csrfToken || "",
+      },
+      body: JSON.stringify({ notes: "Dismissed by admin" }),
+    });
+    const text = await response.text();
+    let data = null;
+    try {
+      data = JSON.parse(text);
+    } catch (error) {
+      alert("Request failed. Please refresh and try again.");
+      return;
+    }
+    if (!data.success) {
+      alert(data.error || "Unable to dismiss report");
+      return;
+    }
+    markReportHandled(reportId);
+  }
+
+  function markReportHandled(reportId) {
+    const row = document.querySelector(`[data-report-row='${reportId}']`);
+    if (row) {
+      row.classList.add("opacity-60");
+    }
+  }
+</script>

@@ -22,6 +22,10 @@ from models import (
     SponsoredAd,
     AdCampaign,
     AdPackage,
+    PaymentTransaction,
+    MarketplacePayment,
+    MatchmakingRequest,
+    MatchmakingPayments,
 )
 
 # from sendgrid import SendGridAPIClient
@@ -29,6 +33,8 @@ from models import (
 from datetime import datetime, timedelta
 
 from sqlalchemy.orm import joinedload
+from sqlalchemy import func
+from decimal import Decimal
 
 
 import bleach, os
@@ -158,12 +164,480 @@ def admin_dashboard():
     active_groups = Group.query.filter_by(is_active=True).count()
     pending_reports = ReportedContent.query.filter_by(status="pending").count()
     active_ads = SponsoredAd.query.filter_by(status="active").count()
+    total_posts = Post.query.count()
+    total_comments = Comment.query.count()
+    total_reports = ReportedContent.query.count()
+
+    now = datetime.utcnow()
+    day_start = datetime(now.year, now.month, now.day)
+    month_start = datetime(now.year, now.month, 1)
+    year_start = datetime(now.year, 1, 1)
+
+    def sum_completed_payment_transactions(start_date):
+        total = (
+            db.session.query(func.coalesce(func.sum(PaymentTransaction.amount), 0))
+            .filter(
+                PaymentTransaction.status == "completed",
+                PaymentTransaction.created_at >= start_date,
+            )
+            .scalar()
+        )
+        return total if isinstance(total, Decimal) else Decimal(str(total or 0))
+
+    def sum_completed_marketplace_payments(start_date):
+        paid_at = func.coalesce(
+            MarketplacePayment.paid_at, MarketplacePayment.created_at
+        )
+        total = (
+            db.session.query(func.coalesce(func.sum(MarketplacePayment.amount), 0))
+            .filter(MarketplacePayment.status == "completed", paid_at >= start_date)
+            .scalar()
+        )
+        return total if isinstance(total, Decimal) else Decimal(str(total or 0))
+
+    def sum_completed_payment_transactions_range(start_date, end_date):
+        total = (
+            db.session.query(func.coalesce(func.sum(PaymentTransaction.amount), 0))
+            .filter(
+                PaymentTransaction.status == "completed",
+                PaymentTransaction.created_at >= start_date,
+                PaymentTransaction.created_at < end_date,
+            )
+            .scalar()
+        )
+        return total if isinstance(total, Decimal) else Decimal(str(total or 0))
+
+    def sum_completed_marketplace_payments_range(start_date, end_date):
+        paid_at = func.coalesce(
+            MarketplacePayment.paid_at, MarketplacePayment.created_at
+        )
+        total = (
+            db.session.query(func.coalesce(func.sum(MarketplacePayment.amount), 0))
+            .filter(
+                MarketplacePayment.status == "completed",
+                paid_at >= start_date,
+                paid_at < end_date,
+            )
+            .scalar()
+        )
+        return total if isinstance(total, Decimal) else Decimal(str(total or 0))
+
+    def sum_completed_ad_campaign_payments(start_date, end_date=None):
+        query = db.session.query(func.coalesce(func.sum(PaymentTransaction.amount), 0))
+        query = query.filter(
+            PaymentTransaction.status == "completed",
+            PaymentTransaction.transaction_type == "ad_campaign",
+            PaymentTransaction.created_at >= start_date,
+        )
+        if end_date:
+            query = query.filter(PaymentTransaction.created_at < end_date)
+        total = query.scalar()
+        return total if isinstance(total, Decimal) else Decimal(str(total or 0))
+
+    def sum_completed_matchmaking_payments(start_date, end_date=None):
+        query = db.session.query(func.coalesce(func.sum(MatchmakingPayments.amount), 0))
+        query = query.filter(
+            MatchmakingPayments.status == "completed",
+            MatchmakingPayments.created_at >= start_date,
+        )
+        if end_date:
+            query = query.filter(MatchmakingPayments.created_at < end_date)
+        total = query.scalar()
+        return total if isinstance(total, Decimal) else Decimal(str(total or 0))
+
+    def sum_completed_payment_transactions_range(start_date, end_date):
+        total = (
+            db.session.query(func.coalesce(func.sum(PaymentTransaction.amount), 0))
+            .filter(
+                PaymentTransaction.status == "completed",
+                PaymentTransaction.created_at >= start_date,
+                PaymentTransaction.created_at < end_date,
+            )
+            .scalar()
+        )
+        return total if isinstance(total, Decimal) else Decimal(str(total or 0))
+
+    def sum_completed_marketplace_payments_range(start_date, end_date):
+        paid_at = func.coalesce(
+            MarketplacePayment.paid_at, MarketplacePayment.created_at
+        )
+        total = (
+            db.session.query(func.coalesce(func.sum(MarketplacePayment.amount), 0))
+            .filter(
+                MarketplacePayment.status == "completed",
+                paid_at >= start_date,
+                paid_at < end_date,
+            )
+            .scalar()
+        )
+        return total if isinstance(total, Decimal) else Decimal(str(total or 0))
+
+    def sum_completed_ad_campaign_payments(start_date, end_date=None):
+        query = db.session.query(func.coalesce(func.sum(PaymentTransaction.amount), 0))
+        query = query.filter(
+            PaymentTransaction.status == "completed",
+            PaymentTransaction.transaction_type == "ad_campaign",
+            PaymentTransaction.created_at >= start_date,
+        )
+        if end_date:
+            query = query.filter(PaymentTransaction.created_at < end_date)
+        total = query.scalar()
+        return total if isinstance(total, Decimal) else Decimal(str(total or 0))
+
+    def sum_completed_matchmaking_payments(start_date, end_date=None):
+        query = db.session.query(func.coalesce(func.sum(MatchmakingPayments.amount), 0))
+        query = query.filter(
+            MatchmakingPayments.status == "completed",
+            MatchmakingPayments.created_at >= start_date,
+        )
+        if end_date:
+            query = query.filter(MatchmakingPayments.created_at < end_date)
+        total = query.scalar()
+        return total if isinstance(total, Decimal) else Decimal(str(total or 0))
+
+    def sum_completed_payment_transactions_range(start_date, end_date):
+        total = (
+            db.session.query(func.coalesce(func.sum(PaymentTransaction.amount), 0))
+            .filter(
+                PaymentTransaction.status == "completed",
+                PaymentTransaction.created_at >= start_date,
+                PaymentTransaction.created_at < end_date,
+            )
+            .scalar()
+        )
+        return total if isinstance(total, Decimal) else Decimal(str(total or 0))
+
+    def sum_completed_marketplace_payments_range(start_date, end_date):
+        paid_at = func.coalesce(
+            MarketplacePayment.paid_at, MarketplacePayment.created_at
+        )
+        total = (
+            db.session.query(func.coalesce(func.sum(MarketplacePayment.amount), 0))
+            .filter(
+                MarketplacePayment.status == "completed",
+                paid_at >= start_date,
+                paid_at < end_date,
+            )
+            .scalar()
+        )
+        return total if isinstance(total, Decimal) else Decimal(str(total or 0))
+
+    def sum_completed_ad_campaign_payments(start_date, end_date=None):
+        query = db.session.query(func.coalesce(func.sum(PaymentTransaction.amount), 0))
+        query = query.filter(
+            PaymentTransaction.status == "completed",
+            PaymentTransaction.transaction_type == "ad_campaign",
+            PaymentTransaction.created_at >= start_date,
+        )
+        if end_date:
+            query = query.filter(PaymentTransaction.created_at < end_date)
+        total = query.scalar()
+        return total if isinstance(total, Decimal) else Decimal(str(total or 0))
+
+    def sum_completed_payment_transactions_range(start_date, end_date):
+        total = (
+            db.session.query(func.coalesce(func.sum(PaymentTransaction.amount), 0))
+            .filter(
+                PaymentTransaction.status == "completed",
+                PaymentTransaction.created_at >= start_date,
+                PaymentTransaction.created_at < end_date,
+            )
+            .scalar()
+        )
+        return total if isinstance(total, Decimal) else Decimal(str(total or 0))
+
+    def sum_completed_marketplace_payments_range(start_date, end_date):
+        paid_at = func.coalesce(
+            MarketplacePayment.paid_at, MarketplacePayment.created_at
+        )
+        total = (
+            db.session.query(func.coalesce(func.sum(MarketplacePayment.amount), 0))
+            .filter(
+                MarketplacePayment.status == "completed",
+                paid_at >= start_date,
+                paid_at < end_date,
+            )
+            .scalar()
+        )
+        return total if isinstance(total, Decimal) else Decimal(str(total or 0))
+
+    daily_earnings = float(
+        sum_completed_payment_transactions(day_start)
+        + sum_completed_marketplace_payments(day_start)
+    )
+    monthly_earnings = float(
+        sum_completed_payment_transactions(month_start)
+        + sum_completed_marketplace_payments(month_start)
+    )
+    yearly_earnings = float(
+        sum_completed_payment_transactions(year_start)
+        + sum_completed_marketplace_payments(year_start)
+    )
+    epoch_start = datetime(1970, 1, 1)
+    total_earnings = float(
+        sum_completed_payment_transactions(epoch_start)
+        + sum_completed_marketplace_payments(epoch_start)
+    )
+    marketplace_monthly_revenue = float(sum_completed_marketplace_payments(month_start))
+    marketplace_total_revenue = float(sum_completed_marketplace_payments(epoch_start))
+    ad_campaign_monthly_revenue = float(sum_completed_ad_campaign_payments(month_start))
+    ad_campaign_total_revenue = float(sum_completed_ad_campaign_payments(epoch_start))
+    matchmaking_monthly_revenue = float(
+        sum_completed_matchmaking_payments(month_start)
+    )
+    matchmaking_total_revenue = float(sum_completed_matchmaking_payments(epoch_start))
+
+    earnings_labels = []
+    earnings_series = []
+    user_series = []
+    for offset in range(6, -1, -1):
+        bucket_start = day_start - timedelta(days=offset)
+        bucket_end = bucket_start + timedelta(days=1)
+        earnings = (
+            sum_completed_payment_transactions_range(bucket_start, bucket_end)
+            + sum_completed_marketplace_payments_range(bucket_start, bucket_end)
+        )
+        earnings_labels.append(bucket_start.strftime("%b %d"))
+        earnings_series.append(float(earnings))
+        user_series.append(
+            User.query.filter(
+                User.created_at >= bucket_start, User.created_at < bucket_end
+            ).count()
+        )
+    marketplace_monthly_revenue = float(sum_completed_marketplace_payments(month_start))
+    marketplace_total_revenue = float(sum_completed_marketplace_payments(epoch_start))
+    ad_campaign_monthly_revenue = float(sum_completed_ad_campaign_payments(month_start))
+    ad_campaign_total_revenue = float(sum_completed_ad_campaign_payments(epoch_start))
+    matchmaking_monthly_revenue = float(
+        sum_completed_matchmaking_payments(month_start)
+    )
+    matchmaking_total_revenue = float(sum_completed_matchmaking_payments(epoch_start))
+
+    earnings_labels = []
+    earnings_series = []
+    user_series = []
+    for offset in range(6, -1, -1):
+        bucket_start = day_start - timedelta(days=offset)
+        bucket_end = bucket_start + timedelta(days=1)
+        earnings = (
+            sum_completed_payment_transactions_range(bucket_start, bucket_end)
+            + sum_completed_marketplace_payments_range(bucket_start, bucket_end)
+        )
+        earnings_labels.append(bucket_start.strftime("%b %d"))
+        earnings_series.append(float(earnings))
+        user_series.append(
+            User.query.filter(
+                User.created_at >= bucket_start, User.created_at < bucket_end
+            ).count()
+        )
+    marketplace_monthly_revenue = float(sum_completed_marketplace_payments(month_start))
+    marketplace_total_revenue = float(sum_completed_marketplace_payments(epoch_start))
+    ad_campaign_monthly_revenue = float(sum_completed_ad_campaign_payments(month_start))
+    ad_campaign_total_revenue = float(sum_completed_ad_campaign_payments(epoch_start))
+    matchmaking_monthly_revenue = float(
+        sum_completed_matchmaking_payments(month_start)
+    )
+    matchmaking_total_revenue = float(sum_completed_matchmaking_payments(epoch_start))
+
+    earnings_labels = []
+    earnings_series = []
+    user_series = []
+    for offset in range(6, -1, -1):
+        bucket_start = day_start - timedelta(days=offset)
+        bucket_end = bucket_start + timedelta(days=1)
+        earnings = (
+            sum_completed_payment_transactions_range(bucket_start, bucket_end)
+            + sum_completed_marketplace_payments_range(bucket_start, bucket_end)
+        )
+        earnings_labels.append(bucket_start.strftime("%b %d"))
+        earnings_series.append(float(earnings))
+        user_series.append(
+            User.query.filter(
+                User.created_at >= bucket_start, User.created_at < bucket_end
+            ).count()
+        )
+
+    earnings_labels = []
+    earnings_series = []
+    user_series = []
+    for offset in range(6, -1, -1):
+        bucket_start = day_start - timedelta(days=offset)
+        bucket_end = bucket_start + timedelta(days=1)
+        earnings = (
+            sum_completed_payment_transactions_range(bucket_start, bucket_end)
+            + sum_completed_marketplace_payments_range(bucket_start, bucket_end)
+        )
+        earnings_labels.append(bucket_start.strftime("%b %d"))
+        earnings_series.append(float(earnings))
+        user_series.append(
+            User.query.filter(
+                User.created_at >= bucket_start, User.created_at < bucket_end
+            ).count()
+        )
 
     # Recent activity
     recent_users = User.query.order_by(User.created_at.desc()).limit(5).all()
     recent_reports = (
         ReportedContent.query.order_by(ReportedContent.created_at.desc()).limit(5).all()
     )
+
+    reported_comment_reports = (
+        ReportedContent.query.filter_by(content_type="comment", status="pending")
+        .order_by(ReportedContent.created_at.desc())
+        .limit(6)
+        .all()
+    )
+    reported_comment_ids = [
+        report.content_id for report in reported_comment_reports if report.content_id
+    ]
+    reported_comments = (
+        Comment.query.filter(Comment.id.in_(reported_comment_ids)).all()
+        if reported_comment_ids
+        else []
+    )
+    reported_comments_map = {comment.id: comment for comment in reported_comments}
+    reported_comments_data = [
+        {"report": report, "comment": reported_comments_map.get(report.content_id)}
+        for report in reported_comment_reports
+    ]
+
+    active_sponsored_ads = (
+        SponsoredAd.query.filter_by(status="active")
+        .order_by(SponsoredAd.end_date.asc())
+        .limit(6)
+        .all()
+    )
+    active_ad_campaigns = (
+        AdCampaign.query.filter(
+            AdCampaign.status == "active",
+            db.or_(AdCampaign.end_date == None, AdCampaign.end_date >= now),
+        )
+        .order_by(AdCampaign.end_date.asc())
+        .limit(6)
+        .all()
+    )
+    sponsored_active_budget = (
+        db.session.query(func.coalesce(func.sum(SponsoredAd.budget), 0))
+        .filter(SponsoredAd.status == "active")
+        .scalar()
+        or 0
+    )
+    ad_campaign_active_budget = (
+        db.session.query(func.coalesce(func.sum(AdCampaign.budget), 0))
+        .filter(AdCampaign.status == "active")
+        .scalar()
+        or 0
+    )
+    matchmaking_active_requests = (
+        MatchmakingRequest.query.filter(
+            MatchmakingRequest.status == "active",
+            MatchmakingRequest.end_date != None,
+            MatchmakingRequest.end_date >= now,
+        )
+        .order_by(MatchmakingRequest.end_date.asc())
+        .limit(6)
+        .all()
+    )
+    matchmaking_recent_payments = (
+        MatchmakingPayments.query.filter(MatchmakingPayments.status == "completed")
+        .order_by(MatchmakingPayments.paid_at.desc())
+        .limit(6)
+        .all()
+    )
+    sponsored_active_budget = (
+        db.session.query(func.coalesce(func.sum(SponsoredAd.budget), 0))
+        .filter(SponsoredAd.status == "active")
+        .scalar()
+        or 0
+    )
+    ad_campaign_active_budget = (
+        db.session.query(func.coalesce(func.sum(AdCampaign.budget), 0))
+        .filter(AdCampaign.status == "active")
+        .scalar()
+        or 0
+    )
+    sponsored_active_budget = (
+        db.session.query(func.coalesce(func.sum(SponsoredAd.budget), 0))
+        .filter(SponsoredAd.status == "active")
+        .scalar()
+        or 0
+    )
+    ad_campaign_active_budget = (
+        db.session.query(func.coalesce(func.sum(AdCampaign.budget), 0))
+        .filter(AdCampaign.status == "active")
+        .scalar()
+        or 0
+    )
+    marketplace_active_payments = (
+        MarketplacePayment.query.filter(
+            MarketplacePayment.status == "completed",
+            MarketplacePayment.end_date != None,
+            MarketplacePayment.end_date >= now,
+        )
+        .order_by(MarketplacePayment.end_date.asc())
+        .limit(6)
+        .all()
+    )
+    marketplace_active_users = (
+        User.query.filter(
+            User.marketplace_subscription_expires != None,
+            User.marketplace_subscription_expires >= now,
+        )
+        .order_by(User.marketplace_subscription_expires.asc())
+        .limit(6)
+        .all()
+    )
+    recent_groups = Group.query.order_by(Group.created_at.desc()).limit(6).all()
+    pending_reports_list = (
+        ReportedContent.query.filter_by(status="pending")
+        .order_by(ReportedContent.created_at.desc())
+        .limit(8)
+        .all()
+    )
+    pending_post_ids = [
+        report.content_id
+        for report in pending_reports_list
+        if report.content_type == "post" and report.content_id
+    ]
+    pending_comment_ids = [
+        report.content_id
+        for report in pending_reports_list
+        if report.content_type == "comment" and report.content_id
+    ]
+    pending_posts = (
+        Post.query.filter(Post.id.in_(pending_post_ids)).all()
+        if pending_post_ids
+        else []
+    )
+    pending_comments = (
+        Comment.query.filter(Comment.id.in_(pending_comment_ids)).all()
+        if pending_comment_ids
+        else []
+    )
+    pending_post_map = {post.id: post for post in pending_posts}
+    pending_comment_map = {comment.id: comment for comment in pending_comments}
+    pending_post_ids = [
+        report.content_id
+        for report in pending_reports_list
+        if report.content_type == "post" and report.content_id
+    ]
+    pending_comment_ids = [
+        report.content_id
+        for report in pending_reports_list
+        if report.content_type == "comment" and report.content_id
+    ]
+    pending_posts = (
+        Post.query.filter(Post.id.in_(pending_post_ids)).all()
+        if pending_post_ids
+        else []
+    )
+    pending_comments = (
+        Comment.query.filter(Comment.id.in_(pending_comment_ids)).all()
+        if pending_comment_ids
+        else []
+    )
+    pending_post_map = {post.id: post for post in pending_posts}
+    pending_comment_map = {comment.id: comment for comment in pending_comments}
 
     return render_template(
         "admin_dashboard.html",
@@ -174,8 +648,38 @@ def admin_dashboard():
         active_groups=active_groups,
         pending_reports=pending_reports,
         active_ads=active_ads,
+        total_posts=total_posts,
+        total_comments=total_comments,
+        total_reports=total_reports,
+        daily_earnings=daily_earnings,
+        monthly_earnings=monthly_earnings,
+        yearly_earnings=yearly_earnings,
+        total_earnings=total_earnings,
+        marketplace_monthly_revenue=marketplace_monthly_revenue,
+        marketplace_total_revenue=marketplace_total_revenue,
+        ad_campaign_monthly_revenue=ad_campaign_monthly_revenue,
+        ad_campaign_total_revenue=ad_campaign_total_revenue,
+        matchmaking_monthly_revenue=matchmaking_monthly_revenue,
+        matchmaking_total_revenue=matchmaking_total_revenue,
+        earnings_labels=earnings_labels,
+        earnings_series=earnings_series,
+        user_series=user_series,
         recent_users=recent_users,
         recent_reports=recent_reports,
+        reported_comments_data=reported_comments_data,
+        active_sponsored_ads=active_sponsored_ads,
+        active_ad_campaigns=active_ad_campaigns,
+        marketplace_active_payments=marketplace_active_payments,
+        marketplace_active_users=marketplace_active_users,
+        recent_groups=recent_groups,
+        pending_reports_list=pending_reports_list,
+        pending_post_map=pending_post_map,
+        pending_comment_map=pending_comment_map,
+        matchmaking_active_requests=matchmaking_active_requests,
+        matchmaking_recent_payments=matchmaking_recent_payments,
+        sponsored_active_budget=float(sponsored_active_budget),
+        ad_campaign_active_budget=float(ad_campaign_active_budget),
+        now=now,
     )
 
 
@@ -438,11 +942,28 @@ def admin_reports():
         page=page, per_page=10, error_out=False
     )
 
+    post_ids = [
+        report.content_id
+        for report in reports.items
+        if report.content_type == "post" and report.content_id
+    ]
+    comment_ids = [
+        report.content_id
+        for report in reports.items
+        if report.content_type == "comment" and report.content_id
+    ]
+    posts = Post.query.filter(Post.id.in_(post_ids)).all() if post_ids else []
+    comments = Comment.query.filter(Comment.id.in_(comment_ids)).all() if comment_ids else []
+    post_map = {post.id: post for post in posts}
+    comment_map = {comment.id: comment for comment in comments}
+
     return render_template(
         "admin_reports.html",
         reports=reports,
         status_filter=status_filter,
         type_filter=type_filter,
+        post_map=post_map,
+        comment_map=comment_map,
     )
 
 
@@ -504,7 +1025,7 @@ def admin_ads():
         return jsonify({"error": "Access denied"}), 403
 
     page = request.args.get("page", 1, type=int)
-    status_filter = request.args.get("status", "active")
+    status_filter = request.args.get("status", "all")
 
     query = SponsoredAd.query
 
@@ -515,7 +1036,17 @@ def admin_ads():
         page=page, per_page=12, error_out=False
     )
 
-    return render_template("admin_ads.html", ads=ads, status_filter=status_filter)
+    campaign_query = AdCampaign.query
+    if status_filter != "all":
+        campaign_query = campaign_query.filter_by(status=status_filter)
+    campaigns = campaign_query.order_by(AdCampaign.created_at.desc()).limit(30).all()
+
+    return render_template(
+        "admin_ads.html",
+        ads=ads,
+        campaigns=campaigns,
+        status_filter=status_filter,
+    )
 
 
 @admin.route("/admin/ads/create", methods=["POST"])
@@ -720,27 +1251,141 @@ def admin_dashboard_content():
     total_users = User.query.count()
     active_users = User.query.filter_by(is_active=True).count()
     pending_users = User.query.filter_by(is_active=False).count()
-    total_groups = Group.query.count() if "Group" in globals() else 0
-    active_groups = (
-        Group.query.filter_by(is_active=True).count() if "Group" in globals() else 0
+    total_groups = Group.query.count()
+    active_groups = Group.query.filter_by(is_active=True).count()
+    pending_reports = ReportedContent.query.filter_by(status="pending").count()
+    active_ads = SponsoredAd.query.filter_by(status="active").count()
+    total_posts = Post.query.count()
+    total_comments = Comment.query.count()
+    total_reports = ReportedContent.query.count()
+
+    now = datetime.utcnow()
+    day_start = datetime(now.year, now.month, now.day)
+    month_start = datetime(now.year, now.month, 1)
+    year_start = datetime(now.year, 1, 1)
+
+    def sum_completed_payment_transactions(start_date):
+        total = (
+            db.session.query(func.coalesce(func.sum(PaymentTransaction.amount), 0))
+            .filter(
+                PaymentTransaction.status == "completed",
+                PaymentTransaction.created_at >= start_date,
+            )
+            .scalar()
+        )
+        return total if isinstance(total, Decimal) else Decimal(str(total or 0))
+
+    def sum_completed_marketplace_payments(start_date):
+        paid_at = func.coalesce(
+            MarketplacePayment.paid_at, MarketplacePayment.created_at
+        )
+        total = (
+            db.session.query(func.coalesce(func.sum(MarketplacePayment.amount), 0))
+            .filter(MarketplacePayment.status == "completed", paid_at >= start_date)
+            .scalar()
+        )
+        return total if isinstance(total, Decimal) else Decimal(str(total or 0))
+
+    daily_earnings = float(
+        sum_completed_payment_transactions(day_start)
+        + sum_completed_marketplace_payments(day_start)
     )
-    pending_reports = (
-        ReportedContent.query.filter_by(status="pending").count()
-        if "ReportedContent" in globals()
-        else 0
+    monthly_earnings = float(
+        sum_completed_payment_transactions(month_start)
+        + sum_completed_marketplace_payments(month_start)
     )
-    active_ads = (
-        SponsoredAd.query.filter_by(status="active").count()
-        if "SponsoredAd" in globals()
-        else 0
+    yearly_earnings = float(
+        sum_completed_payment_transactions(year_start)
+        + sum_completed_marketplace_payments(year_start)
+    )
+    epoch_start = datetime(1970, 1, 1)
+    total_earnings = float(
+        sum_completed_payment_transactions(epoch_start)
+        + sum_completed_marketplace_payments(epoch_start)
     )
 
     # Recent activity
     recent_users = User.query.order_by(User.created_at.desc()).limit(5).all()
     recent_reports = (
         ReportedContent.query.order_by(ReportedContent.created_at.desc()).limit(5).all()
-        if "ReportedContent" in globals()
+    )
+
+    reported_comment_reports = (
+        ReportedContent.query.filter_by(content_type="comment", status="pending")
+        .order_by(ReportedContent.created_at.desc())
+        .limit(6)
+        .all()
+    )
+    reported_comment_ids = [
+        report.content_id for report in reported_comment_reports if report.content_id
+    ]
+    reported_comments = (
+        Comment.query.filter(Comment.id.in_(reported_comment_ids)).all()
+        if reported_comment_ids
         else []
+    )
+    reported_comments_map = {comment.id: comment for comment in reported_comments}
+    reported_comments_data = [
+        {"report": report, "comment": reported_comments_map.get(report.content_id)}
+        for report in reported_comment_reports
+    ]
+
+    active_sponsored_ads = (
+        SponsoredAd.query.filter_by(status="active")
+        .order_by(SponsoredAd.end_date.asc())
+        .limit(6)
+        .all()
+    )
+    active_ad_campaigns = (
+        AdCampaign.query.filter(
+            AdCampaign.status == "active",
+            db.or_(AdCampaign.end_date == None, AdCampaign.end_date >= now),
+        )
+        .order_by(AdCampaign.end_date.asc())
+        .limit(6)
+        .all()
+    )
+    matchmaking_active_requests = (
+        MatchmakingRequest.query.filter(
+            MatchmakingRequest.status == "active",
+            MatchmakingRequest.end_date != None,
+            MatchmakingRequest.end_date >= now,
+        )
+        .order_by(MatchmakingRequest.end_date.asc())
+        .limit(6)
+        .all()
+    )
+    matchmaking_recent_payments = (
+        MatchmakingPayments.query.filter(MatchmakingPayments.status == "completed")
+        .order_by(MatchmakingPayments.paid_at.desc())
+        .limit(6)
+        .all()
+    )
+    marketplace_active_payments = (
+        MarketplacePayment.query.filter(
+            MarketplacePayment.status == "completed",
+            MarketplacePayment.end_date != None,
+            MarketplacePayment.end_date >= now,
+        )
+        .order_by(MarketplacePayment.end_date.asc())
+        .limit(6)
+        .all()
+    )
+    marketplace_active_users = (
+        User.query.filter(
+            User.marketplace_subscription_expires != None,
+            User.marketplace_subscription_expires >= now,
+        )
+        .order_by(User.marketplace_subscription_expires.asc())
+        .limit(6)
+        .all()
+    )
+    recent_groups = Group.query.order_by(Group.created_at.desc()).limit(6).all()
+    pending_reports_list = (
+        ReportedContent.query.filter_by(status="pending")
+        .order_by(ReportedContent.created_at.desc())
+        .limit(8)
+        .all()
     )
 
     return render_template(
@@ -752,8 +1397,38 @@ def admin_dashboard_content():
         active_groups=active_groups,
         pending_reports=pending_reports,
         active_ads=active_ads,
+        total_posts=total_posts,
+        total_comments=total_comments,
+        total_reports=total_reports,
+        daily_earnings=daily_earnings,
+        monthly_earnings=monthly_earnings,
+        yearly_earnings=yearly_earnings,
+        total_earnings=total_earnings,
+        marketplace_monthly_revenue=marketplace_monthly_revenue,
+        marketplace_total_revenue=marketplace_total_revenue,
+        ad_campaign_monthly_revenue=ad_campaign_monthly_revenue,
+        ad_campaign_total_revenue=ad_campaign_total_revenue,
+        matchmaking_monthly_revenue=matchmaking_monthly_revenue,
+        matchmaking_total_revenue=matchmaking_total_revenue,
+        earnings_labels=earnings_labels,
+        earnings_series=earnings_series,
+        user_series=user_series,
         recent_users=recent_users,
         recent_reports=recent_reports,
+        reported_comments_data=reported_comments_data,
+        active_sponsored_ads=active_sponsored_ads,
+        active_ad_campaigns=active_ad_campaigns,
+        marketplace_active_payments=marketplace_active_payments,
+        marketplace_active_users=marketplace_active_users,
+        recent_groups=recent_groups,
+        pending_reports_list=pending_reports_list,
+        pending_post_map=pending_post_map,
+        pending_comment_map=pending_comment_map,
+        matchmaking_active_requests=matchmaking_active_requests,
+        matchmaking_recent_payments=matchmaking_recent_payments,
+        sponsored_active_budget=float(sponsored_active_budget),
+        ad_campaign_active_budget=float(ad_campaign_active_budget),
+        now=now,
     )
 
 
@@ -802,6 +1477,4 @@ def admin_users():
             current_user=current_user,
         )
 
-    return render_template(
-        "admin_dashboard.html", users=users, search=search, status_filter=status_filter
-    )
+    return redirect(url_for("admin.admin_dashboard"))

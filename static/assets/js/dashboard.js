@@ -4294,6 +4294,53 @@ function copyPostLink() {
     });
 }
 
+function getSharePayload() {
+    const messageInput = document.getElementById('sharePostMessage');
+    const message = messageInput ? messageInput.value.trim() : '';
+    const url = currentSharePostId ? `${window.location.origin}/post/${currentSharePostId}` : '';
+    const text = message || 'Check this out on Kimbela';
+    return { url, text };
+}
+
+function shareNativeShare() {
+    if (!currentSharePostId) {
+        Toast.show('Select a post to share first.', 'warning');
+        return;
+    }
+    const { url, text } = getSharePayload();
+    if (navigator.share) {
+        navigator.share({ title: 'Kimbela Post', text, url }).catch(() => {});
+    } else {
+        copyPostLink();
+    }
+}
+
+function shareExternally(platform) {
+    if (!currentSharePostId) {
+        Toast.show('Select a post to share first.', 'warning');
+        return;
+    }
+    const { url, text } = getSharePayload();
+    const encodedUrl = encodeURIComponent(url);
+    const encodedText = encodeURIComponent(text);
+    const shareUrls = {
+        facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
+        x: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedText}`,
+        whatsapp: `https://wa.me/?text=${encodedText}%20${encodedUrl}`,
+        linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
+        instagram: `https://www.instagram.com/`
+    };
+    const shareUrl = shareUrls[platform];
+    if (shareUrl) {
+        if (platform === 'instagram') {
+            navigator.clipboard.writeText(url).then(() => {
+                Toast.show('Link copied for Instagram!', 'success');
+            }).catch(() => {});
+        }
+        window.open(shareUrl, '_blank', 'noopener,noreferrer');
+    }
+}
+
 // ========================================
 // INITIALIZATION
 // ========================================
@@ -4482,6 +4529,8 @@ window.openShareModal = openShareModal;
 window.closeShareModal = closeShareModal;
 window.shareToFeed = shareToFeed;
 window.copyPostLink = copyPostLink;
+window.shareNativeShare = shareNativeShare;
+window.shareExternally = shareExternally;
 
 // Make functions globally available
 window.toggleFloatingAd = function() {

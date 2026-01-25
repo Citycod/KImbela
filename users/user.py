@@ -753,6 +753,20 @@ def user_dashboard():
         .all()
     )
 
+    def get_video_mime(url):
+        if not url:
+            return ""
+        lower = url.split("?")[0].lower()
+        if lower.endswith(".webm"):
+            return "video/webm"
+        if lower.endswith(".mov"):
+            return "video/quicktime"
+        if lower.endswith(".m4v"):
+            return "video/mp4"
+        if lower.endswith(".mp4"):
+            return "video/mp4"
+        return ""
+
     placement_map = {
         "top_banner": "dashboard-top",
         "sidebar_banner": "dashboard-sidebar",
@@ -772,11 +786,19 @@ def user_dashboard():
             .first()
         )
         if banner_ad:
+            media_url = banner_ad.image or "https://via.placeholder.com/1200x600/0f172a/ffffff?text=Kimbela+Ad"
+            video_mime = get_video_mime(media_url)
+            media_type = (
+                "video"
+                if placement in ["dashboard-sidebar", "dashboard-vertical", "dashboard-spotlight"] and video_mime
+                else "image"
+            )
             dashboard_ads[key] = {
                 "id": banner_ad.id,
                 "title": banner_ad.title or "Featured Offer",
-                "image_url": banner_ad.image
-                or "https://via.placeholder.com/1200x600/0f172a/ffffff?text=Kimbela+Ad",
+                "image_url": media_url,
+                "media_type": media_type,
+                "video_mime": video_mime,
                 "target_url": banner_ad.target_url or "#",
             }
 

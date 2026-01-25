@@ -121,6 +121,57 @@ def upload_dashboard_ad_image(placement):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@payments.route("/dashboard-ads/<placement>/upload-video", methods=["POST"])
+@login_required
+def upload_dashboard_ad_video(placement):
+    """Upload dashboard banner video to Cloudinary (sidebar placement only)"""
+    allowed_placements = {"dashboard-sidebar", "dashboard-vertical", "dashboard-spotlight"}
+    if placement not in allowed_placements:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": "Video ads are only for left/right sidebar placements",
+                }
+            ),
+            400,
+        )
+
+    try:
+        if "video" not in request.files:
+            return jsonify({"success": False, "error": "No video provided"})
+
+        video_file = request.files["video"]
+        if video_file.filename == "":
+            return jsonify({"success": False, "error": "No video selected"})
+
+        if not video_file.mimetype.startswith("video/"):
+            return jsonify({"success": False, "error": "Invalid video type"}), 400
+
+        upload_result = cloudinary.uploader.upload(
+            video_file,
+            folder="kimbela/dashboard-ads",
+            resource_type="video",
+            quality="auto",
+        )
+
+        current_app.logger.info(
+            f"✅ Dashboard ad video uploaded for user {current_user.id}"
+        )
+
+        return jsonify(
+            {
+                "success": True,
+                "video_url": upload_result["secure_url"],
+                "public_id": upload_result["public_id"],
+            }
+        )
+
+    except Exception as e:
+        current_app.logger.error(f"❌ Dashboard ad video upload failed: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 @payments.route("/upload-image", methods=["POST"])
 @login_required
 def upload_image():
