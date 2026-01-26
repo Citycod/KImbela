@@ -1583,9 +1583,10 @@
                                                     }
                                                     
                                                     .message-bubble.sent {
-                                                        background: whitesmoke;
-                                                        color: white;
+                                                        background: white;
+                                                        color: #1e293b;
                                                         border-bottom-right-radius: 4px;
+                                                        border: 1px solid #d1d5db;
                                                     }
                                                     
                                                     .message-bubble.received {
@@ -2183,8 +2184,9 @@
                                                     /* Clear message bubble styles */
                                                     
                                                     .message-bubble.sent {
-                                                        background: linear-gradient( 135deg, #007aff 0%, #0056cc 100%) !important;
-                                                        color: white !important;
+                                                        background: white !important;
+                                                        color: #1e2937 !important;
+                                                        border: 1px solid #d1d5db !important;
                                                         margin-left: auto !important;
                                                         margin-right: 0 !important;
                                                     }
@@ -2335,8 +2337,9 @@
                                                     }
                                                     
                                                     .message-bubble.sent {
-                                                        background: linear-gradient( 135deg, #3b82f6 0%, #1d4ed8 100%) !important;
-                                                        color: white !important;
+                                                        background: white !important;
+                                                        color: #1e2937 !important;
+                                                        border: 1px solid #d1d5db !important;
                                                     }
                                                     
                                                     .message-bubble.received {
@@ -2566,8 +2569,9 @@
                                                     }
                                                     
                                                     .message-bubble.sent {
-                                                        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-                                                        color: white;
+                                                        background: white;
+                                                        color: #1e2937;
+                                                        border: 1px solid #d1d5db;
                                                         margin-left: auto;
                                                         margin-right: 0;
                                                     }
@@ -2713,16 +2717,18 @@
                                                     .message-wrapper {
                                                         margin-bottom: 12px;
                                                         display: flex;
+                                                        flex-direction: column;
+                                                        align-items: flex-start;
                                                         animation: messageAppear 0.3s ease-out;
                                                     }
                                                     
                                                     .message-wrapper.sent {
-                                                        justify-content: flex-end !important;
+                                                        align-items: flex-end !important;
                                                         margin-left: auto !important;
                                                     }
                                                     
                                                     .message-wrapper.received {
-                                                        justify-content: flex-start !important;
+                                                        align-items: flex-start !important;
                                                         margin-right: auto !important;
                                                     }
                                                     /* Message bubble styles - CLEAN VERSION */
@@ -2737,6 +2743,31 @@
                                                         line-height: 1.5;
                                                     }
                                                     
+                                                    .message-attachments {
+                                                        margin-bottom: 6px;
+                                                        display: flex;
+                                                        flex-direction: column;
+                                                        gap: 8px;
+                                                        width: 100%;
+                                                    }
+
+                                                    .message-wrapper.sent .message-attachments,
+                                                    .message-attachments.sent {
+                                                        align-items: flex-end;
+                                                        max-width: 280px;
+                                                    }
+                                                    
+                                                    .message-wrapper.received .message-attachments,
+                                                    .message-attachments.received {
+                                                        align-items: flex-start;
+                                                        max-width: 280px;
+                                                    }
+                                                    
+                                                    .message-attachments .message-media,
+                                                    .message-attachments .message-file {
+                                                        width: 100%;
+                                                    }
+                                                    
                                                     .message-content+.message-media {
                                                         margin-top: 4px;
                                                         /* Reduced space between text and media */
@@ -2744,9 +2775,10 @@
                                                     /* Sent message (blue gradient) */
                                                     
                                                     .message-bubble.sent {
-                                                        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-                                                        color: white;
+                                                        background: white;
+                                                        color: #1e293b;
                                                         border-bottom-right-radius: 4px;
+                                                        border: 1px solid #d1d5db;
                                                     }
                                                     /* Received message (white with subtle shadow) */
                                                     

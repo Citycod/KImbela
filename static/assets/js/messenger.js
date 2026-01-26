@@ -268,11 +268,6 @@
             emptyState.remove();
         }
 
-        const div = document.createElement('div');
-        div.className = `message-wrapper ${type}`;
-        const msgKey = msg.id || msg.temp_id || ('temp-' + Date.now());
-        div.setAttribute('data-message-id', msgKey);
-
         let content = msg.content || '';
         let mediaHtml = '';
 
@@ -352,6 +347,12 @@
             return `<a href="${url}" target="_blank" class="text-blue-600 underline break-all">${url}</a>`;
         });
 
+        // Extract attachments so sent media/files can sit outside the gradient bubble
+        const attachmentRegex = /<div class="(?:message-media|message-file)[\s\S]*?<\/div>/g;
+        const attachmentBlocks = content.match(attachmentRegex) || [];
+        const attachmentsHtml = attachmentBlocks.join('');
+        content = content.replace(attachmentRegex, '').trim();
+
         // Calculate time and date
         const msgTimestamp = msg.timestamp ? new Date(msg.timestamp) : new Date();
         const time = msgTimestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -376,13 +377,18 @@
             container.appendChild(dateSeparator);
         }
 
+        const div = document.createElement('div');
+        div.className = `message-wrapper ${type}`;
+        const msgKey = msg.id || msg.temp_id || ('temp-' + Date.now());
+        div.setAttribute('data-message-id', msgKey);
         div.dataset.date = date;
 
         // Build message bubble - FIXED FOR BOTH SENDER AND RECEIVER
         div.innerHTML = `
-        <div class="message-bubble ${type} px-3 py-2">  <!-- Added px-3 py-2 -->
+        ${attachmentsHtml ? `<div class="message-attachments ${type} px-3 mb-1">${attachmentsHtml}</div>` : ''}
+        <div class="message-bubble ${type} px-3 py-2">
             ${content ? `<div class="message-content whitespace-pre-wrap">${content}</div>` : ''}
-            <div class="message-footer flex justify-between items-center mt-1">  <!-- mt-2 → mt-1 -->
+            <div class="message-footer flex justify-between items-center mt-1">
                 <span class="message-time text-xs opacity-70">${time}</span>
                 ${type === 'sent' ?
                     `<span class="message-status text-xs opacity-70">

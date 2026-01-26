@@ -2561,9 +2561,8 @@ body {
 
 /* Keep text bubbles colored, but media transparent */
 .message-bubble.sent .message-content {
-    /* Your existing blue gradient for text */
-    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-    color: white;
+    background: transparent;
+    color: inherit;
 }
 
 /* But make media inside completely transparent */
