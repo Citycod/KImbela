@@ -1114,6 +1114,13 @@
                   </div>
                   <div class="text-sm text-fb-text-light">
                     {{ post.created_at.strftime('%b %d at %I:%M %p') }}
+                    {% if post.location %}
+                    <span class="mx-1">•</span>
+                    <span class="inline-flex items-center gap-1 text-blue-600">
+                      <i class="bi bi-geo-alt-fill"></i>
+                      Posting from {{ post.location }}
+                    </span>
+                    {% endif %}
                   </div>
                 </div>
               </div>
@@ -1193,6 +1200,13 @@
                       </div>
                       <div class="text-xs text-gray-500">
                         {{ post.shared_post.created_at.strftime('%b %d at %I:%M %p') }}
+                        {% if post.shared_post.location %}
+                        <span class="mx-1">•</span>
+                        <span class="inline-flex items-center gap-1 text-blue-600">
+                          <i class="bi bi-geo-alt-fill"></i>
+                          Posting from {{ post.shared_post.location }}
+                        </span>
+                        {% endif %}
                       </div>
                     </div>
                   </div>
@@ -1348,7 +1362,7 @@
                 class="flex items-center gap-1.5 font-medium"
               >
                 <img
-                  src="{{ url_for('static', filename='assets/img/microphone.png') }}"
+                  src="{{ url_for('static', filename='assets/img/microphone2.png') }}"
                   alt="Chimes"
                   class="w-4 h-4"
                 />
@@ -1449,7 +1463,7 @@
                   class="flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-1 md:py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 text-gray-600"
                 >
                   <img
-                    src="{{ url_for('static', filename='assets/img/microphone.png') }}"
+                    src="{{ url_for('static', filename='assets/img/microphone2.png') }}"
                     alt="Chime"
                     class="w-4 h-4"
                   />
@@ -1866,6 +1880,7 @@
         >
           <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
           <input type="hidden" name="gif_url" id="selectedGifUrl" value="" />
+          <input type="hidden" name="post_location" id="postLocationInput" value="" />
 
           <div class="modal-body p-3 sm:p-4">
             <!-- Author info -->
@@ -1890,6 +1905,17 @@
               placeholder="What's on your mind?"
               required
             ></textarea>
+
+            <!-- Location Preview -->
+            <div id="postLocationPreview" class="hidden mt-2">
+              <div class="inline-flex items-center gap-2 px-3 py-2 rounded-full bg-blue-50 text-blue-700 text-xs sm:text-sm font-semibold">
+                <i class="bi bi-geo-alt-fill"></i>
+                <span id="postLocationText">Posting from</span>
+                <button type="button" class="ml-1 text-blue-700 hover:text-blue-900" onclick="clearPostLocation()" aria-label="Remove location">
+                  <i class="bi bi-x-circle"></i>
+                </button>
+              </div>
+            </div>
 
             <!-- Media Preview -->
             <div id="mediaPreview" class="mt-2"></div>
@@ -1945,6 +1971,8 @@
                 <button
                   type="button"
                   class="p-1.5 sm:p-2 rounded-full hover:bg-white transition-colors bg-white shadow-sm"
+                  id="postLocationButton"
+                  title="Add Location"
                 >
                   <i class="bi bi-geo-alt-fill text-red-500 text-lg"></i>
                 </button>
@@ -2098,10 +2126,40 @@
             </button>
             <button
               type="button"
+              class="w-full py-2.5 bg-slate-900 text-white rounded-lg font-semibold hover:bg-slate-800 transition-colors text-sm"
+              onclick="shareNativeShare()"
+            >
+              Share to social apps
+            </button>
+            <button
+              type="button"
               class="w-full py-2.5 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-colors text-sm"
               onclick="copyPostLink()"
             >
               Copy link
+            </button>
+          </div>
+
+          <div class="mt-4 grid grid-cols-2 gap-2">
+            <button type="button" class="share-social-btn bg-blue-50 text-blue-700" onclick="shareExternally('facebook')">
+              <i class="bi bi-facebook"></i>
+              Facebook
+            </button>
+            <button type="button" class="share-social-btn bg-sky-50 text-sky-700" onclick="shareExternally('x')">
+              <i class="bi bi-twitter-x"></i>
+              X (Twitter)
+            </button>
+            <button type="button" class="share-social-btn bg-green-50 text-green-700" onclick="shareExternally('whatsapp')">
+              <i class="bi bi-whatsapp"></i>
+              WhatsApp
+            </button>
+            <button type="button" class="share-social-btn bg-blue-100 text-blue-800" onclick="shareExternally('linkedin')">
+              <i class="bi bi-linkedin"></i>
+              LinkedIn
+            </button>
+            <button type="button" class="share-social-btn bg-pink-50 text-pink-700" onclick="shareExternally('instagram')">
+              <i class="bi bi-instagram"></i>
+              Instagram
             </button>
           </div>
         </div>
@@ -3138,12 +3196,12 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
       });
     </script>
 
-    <div id="bottomAdBanner" class="bottom-ad-banner has-dashboard-ad" data-ad-id="{{ bottom_banner.id }}">
+    <div id="bottomAdBanner" class="bottom-ad-banner has-dashboard-ad hidden" data-ad-id="{{ bottom_banner.id }}">
       <div class="bottom-ad-inner">
-        {% if bottom_banner %}
         <button class="bottom-ad-close" type="button" aria-label="Close ad">
           <i class="bi bi-x-lg"></i>
         </button>
+        {% if bottom_banner %}
         <a
           class="bottom-ad-clickarea"
           href="{{ bottom_banner.target_url }}"
@@ -3185,17 +3243,20 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
       </div>
     </div>
 
-    {% if bottom_banner %}
     <script>
       document.addEventListener("DOMContentLoaded", () => {
         const bottomBanner = document.getElementById("bottomAdBanner");
         if (!bottomBanner) return;
-        const bannerKey = `kimbela_bottom_ad_closed_${bottomBanner.dataset.adId}`;
+        const bannerKey = bottomBanner.dataset.adId
+          ? `kimbela_bottom_ad_closed_${bottomBanner.dataset.adId}`
+          : "kimbela_bottom_ad_closed_default";
         if (localStorage.getItem(bannerKey) === "1") {
           bottomBanner.classList.add("hidden");
           document.body.classList.remove("has-bottom-ad");
           return;
         }
+        bottomBanner.classList.add("hidden");
+        document.body.classList.remove("has-bottom-ad");
         const closeBtn = bottomBanner.querySelector(".bottom-ad-close");
         if (closeBtn) {
           closeBtn.addEventListener("click", (event) => {
@@ -3205,9 +3266,13 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
             localStorage.setItem(bannerKey, "1");
           });
         }
+        setTimeout(() => {
+          if (localStorage.getItem(bannerKey) === "1") return;
+          bottomBanner.classList.remove("hidden");
+          document.body.classList.add("has-bottom-ad");
+        }, 10 * 60 * 1000);
       });
     </script>
-    {% endif %}
 
 
     <style>

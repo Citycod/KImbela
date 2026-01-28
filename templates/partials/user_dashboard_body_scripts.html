@@ -2032,6 +2032,88 @@
       }
 
       // ========================================
+      // POST LOCATION PICKER
+      // ========================================
+      function formatLocation(address) {
+        if (!address) return "";
+        const city =
+          address.city ||
+          address.town ||
+          address.village ||
+          address.hamlet ||
+          address.county;
+        const state = address.state || address.region;
+        const country = address.country;
+        return [city, state, country].filter(Boolean).join(", ");
+      }
+
+      function setPostLocation(text) {
+        const input = document.getElementById("postLocationInput");
+        const preview = document.getElementById("postLocationPreview");
+        const label = document.getElementById("postLocationText");
+        if (input) input.value = text || "";
+        if (label) label.textContent = text ? `Posting from ${text}` : "";
+        if (preview) {
+          preview.classList.toggle("hidden", !text);
+        }
+      }
+
+      function clearPostLocation() {
+        setPostLocation("");
+      }
+
+      async function reverseGeocode(lat, lon) {
+        const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`;
+        const response = await fetch(url, {
+          headers: { "Accept-Language": "en" }
+        });
+        if (!response.ok) throw new Error("Reverse geocode failed");
+        return response.json();
+      }
+
+      async function handleAddLocationClick() {
+        const button = document.getElementById("postLocationButton");
+        if (!button) return;
+        button.disabled = true;
+        button.classList.add("opacity-60");
+
+        if (!navigator.geolocation) {
+          button.disabled = false;
+          button.classList.remove("opacity-60");
+          return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            try {
+              const { latitude, longitude } = position.coords;
+              const data = await reverseGeocode(latitude, longitude);
+              const pretty = formatLocation(data.address) || data.display_name || "";
+              if (pretty) setPostLocation(pretty);
+            } catch (error) {
+              console.error("Location lookup failed:", error);
+            } finally {
+              button.disabled = false;
+              button.classList.remove("opacity-60");
+            }
+          },
+          () => {
+            button.disabled = false;
+            button.classList.remove("opacity-60");
+          },
+          { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 }
+        );
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const locationButton = document.getElementById("postLocationButton");
+        if (locationButton) {
+          locationButton.addEventListener("click", handleAddLocationClick);
+        }
+        window.clearPostLocation = clearPostLocation;
+      });
+
+      // ========================================
       // CSS FOR POST TEXT TRUNCATION
       // ========================================
 

@@ -562,6 +562,7 @@ def user_dashboard():
             post_content = request.form.get("post_content", "").strip()
             media_file = request.files.get("media")
             gif_url = request.form.get("gif_url", "").strip()  # From hidden input
+            post_location = request.form.get("post_location", "").strip()
 
             image_url = None
             video_url = None
@@ -651,6 +652,7 @@ def user_dashboard():
                 image=image_url,
                 video=video_url,
                 gif=gif_url_saved,
+                location=post_location or None,
                 author_id=current_user.id,
                 created_at=datetime.utcnow(),
             )
@@ -2668,6 +2670,7 @@ def get_post(post_id):
             "content": post.content,
             "image": post.image,
             "video": post.video,
+            "location": post.location,
             "author_first_name": post.author.first_name,
             "author_last_name": post.author.last_name,
             "author_profile_pic": post.author.profile_pic

@@ -2168,7 +2168,10 @@ const SearchSystem = {
                         <img src="${post.author_profile_pic || window.defaultAvatar}" class="w-10 h-10 rounded-full object-cover">
                         <div>
                             <div class="font-semibold">${post.author_first_name || ''} ${post.author_last_name || ''}</div>
-                            <div class="text-sm text-gray-500">${new Date(post.created_at).toLocaleString()}</div>
+                            <div class="text-sm text-gray-500">
+                                ${new Date(post.created_at).toLocaleString()}
+                                ${post.location ? `<span class="mx-1">•</span><span class="inline-flex items-center gap-1 text-blue-600"><i class="bi bi-geo-alt-fill"></i>Posting from ${post.location}</span>` : ''}
+                            </div>
                         </div>
                     </div>
                 </div>

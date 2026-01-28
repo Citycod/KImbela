@@ -524,10 +524,15 @@
 
                         <!-- Social Links -->
                         <div class="mb-4">
-                            <h6 class="section-title">Social Links</h6>
+                            <h6 class="section-title">
+                                <i class="bi bi-link me-2"></i> Social Links
+                            </h6>
                             <div class="row g-3">
                                 <div class="col-12">
                                     <div class="input-group">
+                                        <span class="input-group-text social-icon linkedin-bg">
+                                            <i class="bi bi-linkedin"></i>
+                                        </span>
                                         <input type="url" class="form-control" name="linkedin_url" 
                                                value="{{ current_user.linkedin_url or '' }}" 
                                                placeholder="LinkedIn URL">
@@ -536,6 +541,9 @@
                                 
                                 <div class="col-12">
                                     <div class="input-group">
+                                        <span class="input-group-text social-icon twitter-bg">
+                                            <i class="bi bi-twitter"></i>
+                                        </span>
                                         <input type="url" class="form-control" name="twitter_url" 
                                                value="{{ current_user.twitter_url or '' }}" 
                                                placeholder="Twitter URL">
@@ -544,6 +552,9 @@
                                 
                                 <div class="col-12">
                                     <div class="input-group">
+                                        <span class="input-group-text social-icon instagram-bg">
+                                            <i class="bi bi-instagram"></i>
+                                        </span>
                                         <input type="url" class="form-control" name="instagram_url" 
                                                value="{{ current_user.instagram_url or '' }}" 
                                                placeholder="Instagram URL">
@@ -670,6 +681,43 @@
                                 {% endfor %}
                             {% else %}
                                 <span class="text-xs text-muted">No skills added</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div>
+                        <h6 class="fw-bold text-sm mb-2">Connect</h6>
+                        <div class="d-flex gap-2">
+                            {% if current_user.linkedin_url %}
+                            <a href="{{ current_user.linkedin_url }}" target="_blank" 
+                               class="text-decoration-none">
+                                <i class="bi bi-linkedin text-primary"></i>
+                            </a>
+                            {% endif %}
+                            
+                            {% if current_user.twitter_url %}
+                            <a href="{{ current_user.twitter_url }}" target="_blank" 
+                               class="text-decoration-none">
+                                <i class="bi bi-twitter text-info"></i>
+                            </a>
+                            {% endif %}
+                            
+                            {% if current_user.instagram_url %}
+                            <a href="{{ current_user.instagram_url }}" target="_blank" 
+                               class="text-decoration-none">
+                                <i class="bi bi-instagram text-danger"></i>
+                            </a>
+                            {% endif %}
+                            
+                            {% if current_user.website %}
+                            <a href="{{ current_user.website }}" target="_blank" 
+                               class="text-decoration-none">
+                                <i class="bi bi-globe text-dark"></i>
+                            </a>
+                            {% endif %}
+                            
+                            {% if not current_user.linkedin_url and not current_user.twitter_url and not current_user.instagram_url and not current_user.website %}
+                            <span class="text-xs text-muted">No links added</span>
                             {% endif %}
                         </div>
                     </div>

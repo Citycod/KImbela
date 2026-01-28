@@ -747,6 +747,7 @@ class Post(db.Model):
     image = db.Column(db.String(255))
     video = db.Column(db.String(255))
     gif = db.Column(db.String(255), nullable=True)
+    location = db.Column(db.String(255), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     author_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     group_id = db.Column(db.Integer, db.ForeignKey("groups.id"), nullable=True)
