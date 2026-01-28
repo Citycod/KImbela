@@ -771,9 +771,20 @@
       let gifCurrentOffset = 0;
       let gifIsLoading = false;
 
-      // GIPHY API configuration
-      const GIPHY_API_KEY = 'CjXsPjBjQcsNMkDrHC1RsaMGuLtNgdtN'; // You need to get this from https://developers.giphy.com/
-      const GIPHY_API_URL = 'https://api.giphy.com/v1/gifs';
+      const GIF_PROXY_URL = '/api/gifs';
+
+      function normalizeGifResults(data) {
+          const rawGifs = (data && (data.gifs || data.data)) ? (data.gifs || data.data) : [];
+          return rawGifs.map(gif => {
+              const previewUrl = gif.preview_url || gif.images?.fixed_height_small?.url || gif.images?.fixed_width_small?.url || gif.url;
+              const originalUrl = gif.url || gif.images?.original?.url || gif.images?.fixed_height?.url || previewUrl;
+              return {
+                  title: gif.title || gif.slug || 'GIF',
+                  preview_url: previewUrl,
+                  url: originalUrl
+              };
+          }).filter(gif => gif.preview_url || gif.url);
+      }
 
       // Function to open GIF modal
       function openGifPicker() {
@@ -812,11 +823,12 @@
           try {
               showGifLoading();
 
-              const response = await fetch(`${GIPHY_API_URL}/trending?api_key=${GIPHY_API_KEY}&limit=20&rating=g`);
+              const response = await fetch(`${GIF_PROXY_URL}?q=trending&limit=20&offset=0`);
               const data = await response.json();
+              const gifs = normalizeGifResults(data);
 
-              if (data.data && data.data.length > 0) {
-                  displayGifs(data.data, 'trending');
+              if (gifs.length > 0) {
+                  displayGifs(gifs, 'trending');
               } else {
                   showNoGifsMessage('No trending GIFs found');
               }
@@ -842,12 +854,13 @@
               if (reset) showGifLoading();
 
               const response = await fetch(
-                  `${GIPHY_API_URL}/search?api_key=${GIPHY_API_KEY}&q=${encodeURIComponent(query)}&limit=20&offset=${gifCurrentOffset}&rating=g&lang=en`
+                  `${GIF_PROXY_URL}?q=${encodeURIComponent(query)}&limit=20&offset=${gifCurrentOffset}`
               );
               const data = await response.json();
+              const gifs = normalizeGifResults(data);
 
-              if (data.data && data.data.length > 0) {
-                  displayGifs(data.data, 'search');
+              if (gifs.length > 0) {
+                  displayGifs(gifs, 'search');
               } else {
                   if (reset) showNoGifsMessage('No GIFs found for "' + query + '"');
               }
@@ -884,10 +897,10 @@
               gifElement.innerHTML = `
                   <div class="aspect-square w-full overflow-hidden">
                       <img
-                          src="${gif.images.fixed_height_small.url}"
+                          src="${gif.preview_url || gif.url}"
                           alt="${gif.title || 'GIF'}"
                           class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                          data-original="${gif.images.original.url}"
+                          data-original="${gif.url || gif.preview_url}"
                           data-title="${gif.title || ''}"
                           loading="lazy"
                       />
@@ -898,7 +911,7 @@
                   </div>
               `;
 
-              gifElement.onclick = () => selectGif(gif.images.original.url, gif.title);
+              gifElement.onclick = () => selectGif(gif.url || gif.preview_url, gif.title);
               gifGrid.appendChild(gifElement);
           });
 
@@ -929,22 +942,23 @@
               const loadMoreBtn = document.getElementById('gifLoadMore');
               if (loadMoreBtn) loadMoreBtn.innerHTML = '<span class="tiny-loader xs white"></span> Loading...';
 
-              const response = await fetch(`${GIPHY_API_URL}/trending?api_key=${GIPHY_API_KEY}&limit=20&offset=${gifCurrentOffset}&rating=g`);
+              const response = await fetch(`${GIF_PROXY_URL}?q=trending&limit=20&offset=${gifCurrentOffset}`);
               const data = await response.json();
+              const gifs = normalizeGifResults(data);
 
-              if (data.data && data.data.length > 0) {
+              if (gifs.length > 0) {
                   // Append to existing GIFs
                   const gifGrid = document.getElementById('gifGrid');
-                  data.data.forEach(gif => {
+                  gifs.forEach(gif => {
                       const gifElement = document.createElement('div');
                       gifElement.className = 'gif-item group relative cursor-pointer rounded-lg overflow-hidden bg-gray-100';
                       gifElement.innerHTML = `
                           <div class="aspect-square w-full overflow-hidden">
                               <img
-                                  src="${gif.images.fixed_height_small.url}"
+                                  src="${gif.preview_url || gif.url}"
                                   alt="${gif.title || 'GIF'}"
                                   class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                                  data-original="${gif.images.original.url}"
+                                  data-original="${gif.url || gif.preview_url}"
                                   data-title="${gif.title || ''}"
                                   loading="lazy"
                               />
@@ -955,7 +969,7 @@
                           </div>
                       `;
 
-                      gifElement.onclick = () => selectGif(gif.images.original.url, gif.title);
+                      gifElement.onclick = () => selectGif(gif.url || gif.preview_url, gif.title);
                       gifGrid.appendChild(gifElement);
                   });
               }

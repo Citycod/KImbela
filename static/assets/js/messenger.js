@@ -1,156 +1,161 @@
 // messenger.js - COMPLETE FIXED VERSION WITH ALL ISSUES RESOLVED
 (function() {
-    // Private state
-    let socket = null;
-    let currentChatUserId = null;
-    let currentChatUserName = null;
-    let currentChatAvatar = null;
-    let typingTimeout = null;
-    let isTyping = false;
-    let isInitialized = false;
-    let uploadInProgress = false;
-    let sentMessageIds = new Set(); // Track sent messages to prevent duplicates
-    let messageLoader = null; // Small loader element
+        // Private state
+        let socket = null;
+        let currentChatUserId = null;
+        let currentChatUserName = null;
+        let currentChatAvatar = null;
+        let typingTimeout = null;
+        let isTyping = false;
+        let isInitialized = false;
+        let uploadInProgress = false;
+        let sentMessageIds = new Set(); // Track sent messages to prevent duplicates
+        let messageLoader = null; // Small loader element
+        const GIF_PROXY_URL = '/api/gifs';
+        let gifCurrentOffset = 0;
+        let gifSearchQuery = '';
+        let gifIsLoading = false;
+        let gifSearchTimeout = null;
 
-    // ========================================
-    // SOCKET.IO SETUP
-    // ========================================
-    function initSocket() {
-        if (socket?.connected) return;
+        // ========================================
+        // SOCKET.IO SETUP
+        // ========================================
+        function initSocket() {
+            if (socket && socket.connected) return;
 
-        console.log('Initializing Socket.IO...');
+            console.log('Initializing Socket.IO...');
 
-        socket = io({
-            transports: ['websocket', 'polling'],
-            reconnection: true,
-            reconnectionAttempts: 5,
-            reconnectionDelay: 1000
-        });
+            socket = io({
+                transports: ['websocket', 'polling'],
+                reconnection: true,
+                reconnectionAttempts: 5,
+                reconnectionDelay: 1000
+            });
 
-        socket.on('connect', () => {
-            console.log('✅ Socket.IO connected');
-            if (window.currentUserId) {
-                socket.emit('user_connected', { user_id: window.currentUserId });
-            }
-            loadFriendsList();
+            socket.on('connect', () => {
+                console.log('✅ Socket.IO connected');
+                if (window.currentUserId) {
+                    socket.emit('user_connected', { user_id: window.currentUserId });
+                }
+                loadFriendsList();
+                updateUnreadBadge();
+            });
+
+            socket.on('connect_error', (error) => {
+                console.error('❌ Socket connection error:', error);
+                loadFriendsList();
+                updateUnreadBadge();
+            });
+
+            socket.on('disconnect', (reason) => {
+                console.log('🔌 Socket disconnected:', reason);
+            });
+
+            // Message events
+            socket.on('new_message', handleNewMessage);
+            socket.on('typing', handleTyping);
+            socket.on('stop_typing', handleStopTyping);
+            socket.on('user_online', handleUserOnline);
+            socket.on('user_offline', handleUserOffline);
+        }
+
+        // ========================================
+        // MESSAGE HANDLING - FIXED FOR DUPLICATES
+        // ========================================
+        function handleNewMessage(data) {
+            console.log('📩 New message received:', data);
+
             updateUnreadBadge();
-        });
 
-        socket.on('connect_error', (error) => {
-            console.error('❌ Socket connection error:', error);
-            loadFriendsList();
-            updateUnreadBadge();
-        });
+            const senderId = parseInt(data.sender_id);
+            const receiverId = parseInt(data.receiver_id);
+            const isMine = senderId === window.currentUserId;
 
-        socket.on('disconnect', (reason) => {
-            console.log('🔌 Socket disconnected:', reason);
-        });
+            const isCurrentChat = currentChatUserId && (
+                senderId === currentChatUserId || receiverId === currentChatUserId
+            );
 
-        // Message events
-        socket.on('new_message', handleNewMessage);
-        socket.on('typing', handleTyping);
-        socket.on('stop_typing', handleStopTyping);
-        socket.on('user_online', handleUserOnline);
-        socket.on('user_offline', handleUserOffline);
-    }
+            // 1) If this is my message and it has temp_id, REPLACE the temp bubble
+            if (isMine && data.temp_id) {
+                const tempEl = document.querySelector(`[data-message-id="${data.temp_id}"]`);
+                if (tempEl) {
+                    // Update with real message ID
+                    tempEl.setAttribute('data-message-id', data.id);
 
-    // ========================================
-    // MESSAGE HANDLING - FIXED FOR DUPLICATES
-    // ========================================
-    function handleNewMessage(data) {
-        console.log('📩 New message received:', data);
+                    // Remove temp loader if present
+                    const loader = tempEl.querySelector('.message-loader');
+                    if (loader) loader.remove();
 
-        updateUnreadBadge();
+                    // Update status icon
+                    const statusEl = tempEl.querySelector('.message-status');
+                    if (statusEl) statusEl.innerHTML = `<i class="bi bi-check-all text-xs"></i>`;
 
-        const senderId = parseInt(data.sender_id);
-        const receiverId = parseInt(data.receiver_id);
-        const isMine = senderId === window.currentUserId;
+                    // Add to sent messages set to prevent duplicates
+                    sentMessageIds.add(data.id);
+                    return; // Stop here so we don't append a duplicate
+                }
+            }
 
-        const isCurrentChat = currentChatUserId && (
-            senderId === currentChatUserId || receiverId === currentChatUserId
-        );
+            // 2) Hard dedupe: if message already exists by real id, do nothing
+            const existing = document.querySelector(`[data-message-id="${data.id}"]`);
+            if (existing) {
+                console.log('🔄 Duplicate message detected, skipping:', data.id);
+                return;
+            }
 
-        // 1) If this is my message and it has temp_id, REPLACE the temp bubble
-        if (isMine && data.temp_id) {
-            const tempEl = document.querySelector(`[data-message-id="${data.temp_id}"]`);
-            if (tempEl) {
-                // Update with real message ID
-                tempEl.setAttribute('data-message-id', data.id);
+            // 3) Add to sent messages set
+            sentMessageIds.add(data.id);
 
-                // Remove temp loader if present
-                const loader = tempEl.querySelector('.message-loader');
-                if (loader) loader.remove();
+            if (isCurrentChat) {
+                const type = isMine ? 'sent' : 'received';
+                appendMessage(data, type);
+                scrollToBottom();
 
-                // Update status icon
-                const statusEl = tempEl.querySelector('.message-status');
-                if (statusEl) statusEl.innerHTML = `<i class="bi bi-check-all text-xs"></i>`;
-
-                // Add to sent messages set to prevent duplicates
-                sentMessageIds.add(data.id);
-                return; // Stop here so we don't append a duplicate
+                // Mark as read if it's received
+                if (!isMine && data.status === 'sent') {
+                    markMessageAsRead(data.id);
+                }
+            } else {
+                updateFriendsListUnreadCount(senderId);
             }
         }
 
-        // 2) Hard dedupe: if message already exists by real id, do nothing
-        const existing = document.querySelector(`[data-message-id="${data.id}"]`);
-        if (existing) {
-            console.log('🔄 Duplicate message detected, skipping:', data.id);
-            return;
-        }
+        // ========================================
+        // FRIENDS LIST
+        // ========================================
+        async function loadFriendsList() {
+            const container = document.getElementById('friendsContainer');
+            if (!container) return;
 
-        // 3) Add to sent messages set
-        sentMessageIds.add(data.id);
-
-        if (isCurrentChat) {
-            const type = isMine ? 'sent' : 'received';
-            appendMessage(data, type);
-            scrollToBottom();
-
-            // Mark as read if it's received
-            if (!isMine && data.status === 'sent') {
-                markMessageAsRead(data.id);
-            }
-        } else {
-            updateFriendsListUnreadCount(senderId);
-        }
-    }
-
-    // ========================================
-    // FRIENDS LIST
-    // ========================================
-    async function loadFriendsList() {
-        const container = document.getElementById('friendsContainer');
-        if (!container) return;
-
-        try {
-            container.innerHTML = `
+            try {
+                container.innerHTML = `
                 <div class="text-center py-12">
                     <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3"></div>
                     <p class="text-gray-600 text-sm">Loading conversations...</p>
                 </div>
             `;
 
-            const response = await fetch('/api/messaging/friends');
-            const result = await response.json();
+                const response = await fetch('/api/messaging/friends');
+                const result = await response.json();
 
-            if (!result.success || result.friends.length === 0) {
-                container.innerHTML = `
+                if (!result.success || result.friends.length === 0) {
+                    container.innerHTML = `
                     <div class="text-center py-12 text-gray-500">
                         <i class="bi bi-chat-dots text-4xl mb-4"></i>
                         <p>No conversations yet</p>
                         <p class="text-sm mt-2">Connect with friends to start chatting!</p>
                     </div>
                 `;
-                return;
-            }
+                    return;
+                }
 
-            container.innerHTML = '';
-            result.friends.forEach(friend => {
-                const friendEl = document.createElement('div');
-                friendEl.className = `friend-item flex items-center space-x-3 p-4 rounded-xl cursor-pointer hover:bg-gray-100 transition-all ${friend.unread_count > 0 ? 'bg-blue-50' : ''}`;
-                friendEl.dataset.userId = friend.id;
+                container.innerHTML = '';
+                result.friends.forEach(friend => {
+                            const friendEl = document.createElement('div');
+                            friendEl.className = `friend-item flex items-center space-x-3 p-4 rounded-xl cursor-pointer hover:bg-gray-100 transition-all ${friend.unread_count > 0 ? 'bg-blue-50' : ''}`;
+                            friendEl.dataset.userId = friend.id;
 
-                friendEl.innerHTML = `
+                            friendEl.innerHTML = `
                     <div class="relative flex-shrink-0">
                         <img src="${friend.avatar || window.defaultAvatar}"
                              class="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm"
@@ -218,7 +223,7 @@
 
             container.innerHTML = '';
 
-            if (result.messages?.length) {
+            if (result.messages && result.messages.length) {
                 // Clear sent messages set for this chat
                 sentMessageIds.clear();
 
@@ -269,10 +274,9 @@
         }
 
         let content = msg.content || '';
-        let mediaHtml = '';
 
-        // Check if content is a URL (image, video, file)
-        const urlRegex =  /((?:https?:\/\/[^\s]+|\/uploads\/[^\s]+)\.(?:jpg|jpeg|png|gif|webp|bmp|mp4|webm|mov|avi|ogg|pdf|doc|docx|txt|xls|xlsx|ppt|pptx))(?:\?[^\s]*)?/gi;
+        // Check if content contains a URL (image, video, file, or link)
+        const urlRegex = /((?:https?:\/\/[^\s]+|\/uploads\/[^\s]+))/gi;
 
         const toAbsolute = (u) => {
             if (!u) return u;
@@ -301,8 +305,32 @@
                 filename = 'file';
             }
 
+            const imageMatch = lowerUrl.match(/\.(jpg|jpeg|png|gif|webp|bmp)(?:\?|$)/);
+            const videoMatch = lowerUrl.match(/\.(mp4|webm|mov|avi|ogg)(?:\?|$)/);
+            const fileMatch = lowerUrl.match(/\.(pdf|doc|docx|txt|xls|xlsx|ppt|pptx)(?:\?|$)/);
+            const isGiphy = lowerUrl.includes('giphy.com');
+            const isGif = isGiphy || (imageMatch && lowerUrl.includes('.gif'));
+
+            // GIF handling - NO BACKGROUND, SMALL PREVIEW
+            if (isGif) {
+                let gifUrl = finalUrl;
+                if (isGiphy && !lowerUrl.endsWith('.gif')) {
+                    const idMatch = lowerUrl.match(/giphy\.com\/gifs\/[^/]*-([a-z0-9]+)$/i) || lowerUrl.match(/giphy\.com\/gifs\/([a-z0-9]+)$/i);
+                    if (idMatch && idMatch[1]) {
+                        gifUrl = `https://media.giphy.com/media/${idMatch[1]}/giphy.gif`;
+                    }
+                }
+                return `
+                    <div class="message-media">
+                        <img src="${gifUrl}" alt="GIF" loading="lazy"
+                             class="rounded-lg cursor-pointer hover:shadow-lg transition-shadow"
+                             style="max-width: 100px; max-height: 100px;"
+                             onclick="window.open('${gifUrl}', '_blank')">
+                    </div>`;
+            }
+
             // Image handling - NO BACKGROUND, NO CAPTION
-            if (lowerUrl.match(/\.(jpg|jpeg|png|gif|webp|bmp)$/)) {
+            if (imageMatch) {
                 return `
                   <div class="message-media">
                     <img src="${finalUrl}" alt="${filename}" loading="lazy"
@@ -312,7 +340,7 @@
             }
 
             // Video handling - NO BACKGROUND, NO CAPTION
-            else if (lowerUrl.match(/\.(mp4|webm|mov|avi|ogg)$/)) {
+            else if (videoMatch) {
                 return `
                   <div class="message-media">
                     <video controls class="rounded-lg max-w-sm max-h-96">
@@ -323,7 +351,7 @@
             }
 
             // File handling - NO BACKGROUND, SHOW ORIGINAL FILENAME
-            else if (lowerUrl.match(/\.(pdf|doc|docx|txt|xls|xlsx|ppt|pptx)$/)) {
+            else if (fileMatch) {
                 return `
                   <div class="message-file">
                     <a href="${finalUrl}" target="_blank"
@@ -334,15 +362,6 @@
                   </div>`;
             }
 
-            // GIF handling - NO BACKGROUND, NO CAPTION
-            else if (lowerUrl.includes('giphy.com') || lowerUrl.endsWith('.gif')) {
-                return `
-                    <div class="message-media ">
-                        <img src="${url}" alt="GIF" loading="lazy"
-                             class="rounded-lg max-w-xs cursor-pointer hover:shadow-lg transition-shadow"
-                             onclick="window.open('${url}', '_blank')">
-                    </div>`;
-            }
             // Regular link (not media)
             return `<a href="${url}" target="_blank" class="text-blue-600 underline break-all">${url}</a>`;
         });
@@ -410,17 +429,15 @@
     // ========================================
     // SEND MESSAGE - WITH SMALL UPLOAD LOADER
     // ========================================
-    function sendMessage() {
-        const input = document.getElementById('chatInput');
-        if (!input || !currentChatUserId) return;
-
-        const content = input.value.trim();
-        if (!content) return;
+    function sendMessageWithContent(content) {
+        if (!currentChatUserId) return;
+        const trimmed = (content || '').trim();
+        if (!trimmed) return;
 
         const tempId = 'temp-' + Date.now();
         appendMessage({
             id: tempId,
-            content,
+            content: trimmed,
             sender_id: window.currentUserId,
             temp_id: tempId
         }, 'sent');
@@ -428,10 +445,20 @@
         if (socket) {
             socket.emit('send_message', {
                 receiver_id: currentChatUserId,
-                content: content,
+                content: trimmed,
                 temp_id: tempId
             });
         }
+    }
+
+    function sendMessage() {
+        const input = document.getElementById('chatInput');
+        if (!input || !currentChatUserId) return;
+
+        const content = input.value.trim();
+        if (!content) return;
+
+        sendMessageWithContent(content);
 
         input.value = '';
         autoResizeTextarea(input);
@@ -674,7 +701,8 @@
                 'Content-Type': 'application/json',
                 'X-CSRFToken': window.csrfToken || ''
             }
-        }).catch(error => console.error('Error marking conversation as read:', error));
+        }).catch(error => console.error('Error marking conversation as read:', error))
+          .finally(() => updateUnreadBadge());
     }
 
     function markMessageAsRead(messageId) {
@@ -689,12 +717,26 @@
         }).catch(error => console.error('Error marking message as read:', error));
     }
 
+    function ensureNavbarBadge() {
+        const openBtn = document.getElementById('openMessaging');
+        if (!openBtn) return null;
+        let badge = openBtn.querySelector('#unreadMessagesBadge');
+        if (!badge) {
+            badge = document.createElement('span');
+            badge.id = 'unreadMessagesBadge';
+            badge.className = 'notification-badge absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden';
+            badge.textContent = '0';
+            openBtn.appendChild(badge);
+        }
+        return badge;
+    }
+
     function updateUnreadBadge() {
         fetch('/api/messaging/unread-count')
             .then(response => response.json())
             .then(data => {
-                const badge = document.getElementById('unreadMessagesBadge');
-                const openBtnBadge = document.getElementById('openMessaging')?.querySelector('.notification-badge');
+                const badge = ensureNavbarBadge();
+                const openBtnBadge = badge;
 
                 if (data.unread_count > 0) {
                     if (badge) {
@@ -758,7 +800,8 @@
         }
 
         // File/Image attachment button
-        const fileBtn = document.querySelector('.input-btn .bi-paperclip')?.closest('.input-btn');
+        const paperclipIcon = document.querySelector('.input-btn .bi-paperclip');
+        const fileBtn = paperclipIcon ? paperclipIcon.closest('.input-btn') : null;
         if (fileBtn) {
             fileBtn.addEventListener('click', function() {
                 const input = document.createElement('input');
@@ -780,6 +823,35 @@
             gifBtn.addEventListener('click', openGifPicker);
         }
 
+        const gifSearchInput = document.getElementById('messengerGifSearchInput');
+        if (gifSearchInput) {
+            gifSearchInput.addEventListener('input', function(e) {
+                clearTimeout(gifSearchTimeout);
+                const query = e.target.value.trim();
+                gifSearchTimeout = setTimeout(() => {
+                    gifSearchQuery = query;
+                    if (query === '') {
+                        loadTrendingGifs(true);
+                    } else {
+                        searchGifs(query, true);
+                    }
+                }, 350);
+            });
+            gifSearchInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const query = gifSearchInput.value.trim();
+                    gifSearchTimeout && clearTimeout(gifSearchTimeout);
+                    gifSearchQuery = query;
+                    if (query === '') {
+                        loadTrendingGifs(true);
+                    } else {
+                        searchGifs(query, true);
+                    }
+                }
+            });
+        }
+
         // Emoji button
         const emojiBtn = document.getElementById('emojiPickerButton');
         if (emojiBtn) {
@@ -788,8 +860,11 @@
                     initEmojiPicker();
                 }
                 const picker = document.querySelector('emoji-picker');
+                const container = document.getElementById('messengerEmojiPickerContainer');
+                if (container) container.classList.remove('hidden');
                 if (picker) {
-                    picker.style.display = picker.style.display === 'none' ? 'block' : 'none';
+                    const shouldShow = picker.style.display === 'none' || picker.style.display === '';
+                    picker.style.display = shouldShow ? 'block' : 'none';
                 }
             });
         }
@@ -806,9 +881,14 @@
         }
 
         // Close GIF modal
-        const closeGifBtn = document.querySelector('#gifModal .header-btn');
+        const closeGifBtn = document.querySelector('#messengerGifModal .header-btn');
         if (closeGifBtn) {
             closeGifBtn.addEventListener('click', closeGifPicker);
+        }
+
+        const gifLoadMoreBtn = document.getElementById('messengerGifLoadMore');
+        if (gifLoadMoreBtn) {
+            gifLoadMoreBtn.addEventListener('click', handleGifLoadMore);
         }
     }
 
@@ -818,8 +898,9 @@
     function initEmojiPicker() {
         if (window.emojiPickerInitialized) return;
 
-        const emojiContainer = document.getElementById('emojiPicker');
+        const emojiContainer = document.getElementById('messengerEmojiPickerContainer');
         if (!emojiContainer) return;
+        emojiContainer.classList.remove('hidden');
 
         const picker = document.createElement('emoji-picker');
         picker.style.position = 'absolute';
@@ -851,29 +932,209 @@
     // ========================================
     // GIF PICKER FUNCTIONS
     // ========================================
+    function normalizeGifResults(data) {
+        const rawGifs = (data && (data.gifs || data.data)) ? (data.gifs || data.data) : [];
+        return rawGifs.map(gif => {
+            const previewUrl = gif.preview_url || gif.images?.fixed_height_small?.url || gif.images?.fixed_width_small?.url || gif.url;
+            const originalUrl = gif.url || gif.images?.original?.url || gif.images?.fixed_height?.url || previewUrl;
+            return {
+                title: gif.title || gif.slug || 'GIF',
+                preview_url: previewUrl,
+                url: originalUrl
+            };
+        }).filter(gif => gif.preview_url || gif.url);
+    }
+
     function openGifPicker() {
-        const modal = document.getElementById('gifModal');
-        if (modal) {
-            modal.classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
+        const modal = document.getElementById('messengerGifModal');
+        if (!modal) return;
+
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        gifCurrentOffset = 0;
+        gifSearchQuery = '';
+        const searchInput = document.getElementById('messengerGifSearchInput');
+        if (searchInput) {
+            searchInput.value = '';
+            searchInput.focus();
         }
+
+        loadTrendingGifs(true);
     }
 
     function closeGifPicker() {
-        const modal = document.getElementById('gifModal');
-        if (modal) {
-            modal.classList.add('hidden');
-            document.body.style.overflow = '';
+        const modal = document.getElementById('messengerGifModal');
+        if (!modal) return;
+
+        modal.classList.add('hidden');
+        document.body.style.overflow = '';
+        gifCurrentOffset = 0;
+        gifSearchQuery = '';
+        gifIsLoading = false;
+        const gifGrid = document.getElementById('messengerGifGrid');
+        if (gifGrid) gifGrid.innerHTML = '';
+        const loadMoreBtn = document.getElementById('messengerGifLoadMore');
+        if (loadMoreBtn) loadMoreBtn.classList.add('hidden');
+        if (gifSearchTimeout) {
+            clearTimeout(gifSearchTimeout);
+            gifSearchTimeout = null;
         }
     }
 
-    function selectGif(url, title = '') {
-        const input = document.getElementById('chatInput');
-        if (input) {
-            input.value += ` ${url} `;
-            input.focus();
-            input.dispatchEvent(new Event('input'));
+    async function loadTrendingGifs(reset = true) {
+        if (gifIsLoading) return;
+        gifIsLoading = true;
+        if (reset) gifCurrentOffset = 0;
+        showGifLoading(reset);
+
+        try {
+            const response = await fetch(`${GIF_PROXY_URL}?q=trending&limit=20&offset=${gifCurrentOffset}`);
+            const data = await response.json();
+            const gifs = normalizeGifResults(data);
+            if (gifs.length > 0) {
+                displayGifs(gifs, 'trending', reset);
+            } else {
+                showNoGifsMessage('No trending GIFs found');
+            }
+        } catch (error) {
+            console.error('Error loading trending GIFs:', error);
+            showNoGifsMessage('Failed to load GIFs. Please try again.');
+        } finally {
+            gifIsLoading = false;
         }
+    }
+
+    async function searchGifs(query, reset = true) {
+        if (gifIsLoading) return;
+        if (!query) {
+            loadTrendingGifs(true);
+            return;
+        }
+
+        gifIsLoading = true;
+        gifSearchQuery = query;
+        if (reset) gifCurrentOffset = 0;
+        showGifLoading(reset);
+
+        try {
+            const response = await fetch(`${GIF_PROXY_URL}?q=${encodeURIComponent(query)}&limit=20&offset=${gifCurrentOffset}`);
+            const data = await response.json();
+            const gifs = normalizeGifResults(data);
+            if (gifs.length > 0) {
+                displayGifs(gifs, 'search', reset);
+            } else if (reset) {
+                showNoGifsMessage(`No GIFs found for "${query}"`);
+            }
+        } catch (error) {
+            console.error('Error searching GIFs:', error);
+            if (reset) showNoGifsMessage('Search failed. Please try again.');
+        } finally {
+            gifIsLoading = false;
+        }
+    }
+
+    function handleGifLoadMore() {
+        if (gifIsLoading) return;
+        gifCurrentOffset += 20;
+        if (gifSearchQuery) {
+            searchGifs(gifSearchQuery, false);
+        } else {
+            loadTrendingGifs(false);
+        }
+    }
+
+    function displayGifs(gifs, type, reset = true) {
+        const gifGrid = document.getElementById('messengerGifGrid');
+        const loadMoreBtn = document.getElementById('messengerGifLoadMore');
+        const resultsTitle = document.getElementById('messengerGifResultsTitle');
+        if (!gifGrid) return;
+
+        if (reset) gifGrid.innerHTML = '';
+        hideGifLoading();
+
+        if (resultsTitle) {
+            if (type === 'trending') {
+                resultsTitle.textContent = 'Trending GIFs';
+            } else {
+                const searchInput = document.getElementById('messengerGifSearchInput');
+                const query = searchInput?.value.trim();
+                resultsTitle.textContent = query ? `Results for "${query}"` : 'Search Results';
+            }
+        }
+
+        gifs.forEach(gif => {
+            const gifElement = document.createElement('div');
+            gifElement.className = 'gif-item group relative cursor-pointer rounded-lg overflow-hidden bg-gray-100';
+            gifElement.innerHTML = `
+                <div class="aspect-square w-full overflow-hidden">
+                    <img
+                        src="${gif.preview_url || gif.url}"
+                        alt="${gif.title || 'GIF'}"
+                        class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        data-original="${gif.url || gif.preview_url}"
+                        data-title="${gif.title || ''}"
+                        loading="lazy"
+                    />
+                    <div class="absolute inset-0 bg-black opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
+                </div>
+                <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <p class="text-white text-xs truncate">${gif.title || 'GIF'}</p>
+                </div>
+            `;
+            const img = gifElement.querySelector('img');
+            const gifUrl = img ? img.dataset.original : gif.url;
+            const title = img ? img.dataset.title : gif.title;
+            gifElement.onclick = () => selectGif(gifUrl, title);
+            gifGrid.appendChild(gifElement);
+        });
+
+        if (loadMoreBtn) {
+            if (gifs.length >= 20) {
+                loadMoreBtn.classList.remove('hidden');
+            } else {
+                loadMoreBtn.classList.add('hidden');
+            }
+        }
+    }
+
+    function showGifLoading(reset = true) {
+        const gifGrid = document.getElementById('messengerGifGrid');
+        if (!gifGrid) return;
+        if (reset) {
+            gifGrid.innerHTML = `
+                <div class="gif-loading col-span-3 flex flex-col items-center justify-center gap-2 text-sm text-gray-500">
+                    <div class="animate-spin rounded-full h-6 w-6 border-2 border-t-blue-600 border-gray-300"></div>
+                    Loading GIFs…
+                </div>
+            `;
+        }
+        const loadMoreBtn = document.getElementById('messengerGifLoadMore');
+        if (loadMoreBtn) loadMoreBtn.classList.add('hidden');
+    }
+
+    function hideGifLoading() {
+        const gifGrid = document.getElementById('messengerGifGrid');
+        if (!gifGrid) return;
+        const loadingEl = gifGrid.querySelector('.gif-loading');
+        if (loadingEl) loadingEl.remove();
+    }
+
+    function showNoGifsMessage(message) {
+        const gifGrid = document.getElementById('messengerGifGrid');
+        const loadMoreBtn = document.getElementById('messengerGifLoadMore');
+        if (gifGrid) {
+            gifGrid.innerHTML = `
+                <div class="col-span-3 flex flex-col items-center justify-center gap-2 text-sm text-gray-500">
+                    <i class="bi bi-emoji-frown text-xl"></i>
+                    <p>${message}</p>
+                </div>
+            `;
+        }
+        if (loadMoreBtn) loadMoreBtn.classList.add('hidden');
+    }
+
+    function selectGif(url, title = '') {
+        sendMessageWithContent(url);
         closeGifPicker();
     }
 
@@ -916,4 +1177,49 @@
             }, 1000);
         }
     });
+
+    // ========================================
+    // GLOBAL HELPERS FOR TEMPLATE HOOKS
+    // ========================================
+    window.openMessenger = function(userId) {
+        const popup = document.getElementById('messengerPopup');
+        if (!popup) return;
+        popup.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+
+        if (!isInitialized && typeof window.Messenger !== 'undefined' && window.Messenger.init) {
+            window.Messenger.init();
+        }
+
+        const friendList = document.getElementById('friendList');
+        const chatArea = document.getElementById('chatArea');
+        if (friendList) friendList.classList.remove('hidden');
+        if (chatArea) chatArea.classList.add('hidden');
+
+        if (userId) {
+            const item = document.querySelector(`.friend-item[data-user-id="${userId}"]`);
+            const name = item?.querySelector('.font-semibold')?.textContent?.trim() || '';
+            const avatar = item?.querySelector('img')?.getAttribute('src') || window.defaultAvatar;
+            openChat(parseInt(userId), name, avatar);
+        }
+    };
+
+    window.closeMessenger = function() {
+        const popup = document.getElementById('messengerPopup');
+        if (!popup) return;
+        popup.classList.add('hidden');
+        document.body.style.overflow = '';
+    };
+
+    window.backToFriends = function() {
+        const friendList = document.getElementById('friendList');
+        const chatArea = document.getElementById('chatArea');
+        if (friendList) friendList.classList.remove('hidden');
+        if (chatArea) chatArea.classList.add('hidden');
+        currentChatUserId = null;
+        loadFriendsList();
+    };
+
+    window.closeGifPicker = function() { closeGifPicker(); };
+    window.openGifPicker = function() { openGifPicker(); };
 })();

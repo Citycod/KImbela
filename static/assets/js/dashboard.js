@@ -1759,6 +1759,8 @@ const NotificationSystem = {
         try {
             const response = await fetch('/notifications/count');
             if (!response.ok) return;
+            const contentType = response.headers.get('content-type') || '';
+            if (!contentType.includes('application/json')) return;
 
             const data = await response.json();
             const badge = document.getElementById('notificationBadge');
@@ -1796,7 +1798,10 @@ const NotificationSystem = {
         try {
             const response = await fetch('/notifications');
             if (!response.ok) throw new Error('Network error');
-
+            const contentType = response.headers.get('content-type') || '';
+            if (!contentType.includes('application/json')) {
+                throw new Error('Invalid notifications response');
+            }
             const notifications = await response.json();
             this.display(notifications, list);
         } catch (error) {
@@ -4482,6 +4487,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Use regular form submit for small files
                     const response = await fetch(this.action, {
                         method: 'POST',
+                        headers: {
+                            'X-CSRFToken': csrfToken
+                        },
                         body: new FormData(this)
                     });
 
@@ -4489,6 +4497,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         Toast.show('Post created successfully!', 'success');
                         setTimeout(() => location.reload(), 1000);
                     } else {
+                        const errorText = await response.text();
+                        console.error('Create post failed:', response.status, errorText);
                         throw new Error('Failed to create post');
                     }
                 }
