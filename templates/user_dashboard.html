@@ -536,15 +536,26 @@
     <!-- Messenger Popup - FIXED VERSION -->
     <!-- Add this to your base template where messenger should appear -->
     <!-- Messenger Popup - Fixed Version -->
-    <div id="messengerPopup" class="hidden">
+    <div
+      id="messengerPopup"
+      class="hidden bg-white bg-opacity-95 backdrop-filter backdrop-blur-lg border border-gray-200 shadow-2xl rounded-2xl overflow-hidden ring-1 ring-black ring-opacity-5"
+    >
       <!-- Header -->
-      <div class="messenger-header">
-        <h3>
-          <i class="bi bi-chat-dots-fill"></i>
+      <div
+        class="messenger-header flex items-center justify-between px-4 py-3 bg-gradient-to-r from-blue-700 via-sky-600 to-emerald-500 text-white"
+      >
+        <h3 class="flex items-center gap-2 text-base font-semibold tracking-tight">
+          <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white bg-opacity-15">
+            <i class="bi bi-chat-dots-fill"></i>
+          </span>
           Messages
         </h3>
-        <div class="header-actions">
-          <button class="header-btn" onclick="closeMessenger()" title="Close">
+        <div class="header-actions flex items-center gap-2">
+          <button
+            class="header-btn w-9 h-9 inline-flex items-center justify-center rounded-full bg-white bg-opacity-10 hover:bg-opacity-20 transition"
+            onclick="closeMessenger()"
+            title="Close"
+          >
             <i class="bi bi-x-lg"></i>
           </button>
         </div>
@@ -552,37 +563,42 @@
 
 
       <!-- Friends List -->
-      <div id="friendList">
-        <div id="friendsContainer">
+      <div id="friendList" class="bg-white">
+        <div id="friendsContainer" class="px-2 py-2 space-y-2">
           <!-- Friends loaded dynamically -->
         </div>
       </div>
 
       <!-- Chat Area -->
-      <div id="chatArea" class="hidden">
+      <div id="chatArea" class="hidden bg-white">
         <!-- Chat Header -->
-        <div class="chat-header">
-          <button class="back-btn" onclick="backToFriends()">
+        <div
+          class="chat-header flex items-center gap-3 px-4 py-3 border-b border-gray-200 bg-gradient-to-b from-white to-gray-50"
+        >
+          <button
+            class="back-btn w-9 h-9 inline-flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition"
+            onclick="backToFriends()"
+          >
             <i class="bi bi-arrow-left"></i>
           </button>
-          <div class="chat-user">
-            <div class="chat-user-avatar">
+          <div class="chat-user flex items-center gap-3">
+            <div class="chat-user-avatar relative">
               <img id="chatAvatar" src="" alt="" />
               <span
                 id="chatStatusIndicator"
                 class="status-indicator offline"
               ></span>
             </div>
-            <div class="chat-user-info">
-              <h4 id="chatName"></h4>
+            <div class="chat-user-info leading-tight">
+              <h4 id="chatName" class="text-sm font-semibold text-gray-900"></h4>
               <p id="chatStatus" class="text-sm text-gray-500">Offline</p>
             </div>
           </div>
         </div>
 
         <!-- Messages Container -->
-        <div id="chatMessagesWrapper" class="flex-1 overflow-y-auto">
-          <div id="chatMessages">
+        <div id="chatMessagesWrapper" class="flex-1 overflow-y-auto bg-gray-50">
+          <div id="chatMessages" class="px-4 py-3 space-y-3">
             <!-- Messages loaded dynamically -->
           </div>
         </div>
@@ -590,16 +606,29 @@
         <!-- Tiny Upload Loader (will be injected here) -->
 
         <!-- Message Input -->
-        <div class="message-input-area">
-          <div class="input-container">
-            <div class="input-actions">
-              <button class="input-btn" id="emojiPickerButton" title="Emoji">
+        <div class="message-input-area border-t border-gray-200 bg-white">
+          <div
+            class="input-container mx-3 my-3 flex items-end gap-2 rounded-2xl bg-gray-100 border border-gray-200 px-3 py-2 focus-within:ring-2 focus-within:ring-blue-500 transition"
+          >
+            <div class="input-actions flex items-center gap-1">
+              <button
+                class="input-btn w-9 h-9 inline-flex items-center justify-center rounded-full hover:bg-white transition"
+                id="emojiPickerButton"
+                title="Emoji"
+              >
                 <i class="bi bi-emoji-smile"></i>
               </button>
-              <button class="input-btn" id="gifPickerButton" title="GIF">
+              <button
+                class="input-btn w-9 h-9 inline-flex items-center justify-center rounded-full hover:bg-white transition"
+                id="gifPickerButton"
+                title="GIF"
+              >
                 <i class="bi bi-file-image"></i>
               </button>
-              <button class="input-btn" title="Attachment">
+              <button
+                class="input-btn w-9 h-9 inline-flex items-center justify-center rounded-full hover:bg-white transition"
+                title="Attachment"
+              >
                 <i class="bi bi-paperclip"></i>
               </button>
             </div>
@@ -607,16 +636,22 @@
               id="chatInput"
               placeholder="Type a message..."
               rows="1"
-              class="w-full px-3 py-2 bg-transparent focus:outline-none resize-none"
+              class="w-full px-3 py-2 bg-transparent focus:outline-none resize-none text-sm text-gray-800 placeholder-gray-400"
             ></textarea>
-            <button class="send-btn" id="sendMessageBtn">
+            <button
+              class="send-btn w-10 h-10 inline-flex items-center justify-center rounded-full bg-blue-600 text-white hover:bg-blue-700 transition shadow-md"
+              id="sendMessageBtn"
+            >
               <i class="bi bi-send"></i>
             </button>
           </div>
         </div>
 
         <!-- Emoji Picker Container -->
-        <div id="messengerEmojiPickerContainer" class="hidden"></div>
+        <div
+          id="messengerEmojiPickerContainer"
+          class="hidden border-t border-gray-200 bg-white"
+        ></div>
       </div>
     </div>
 
@@ -735,6 +770,81 @@
         Block User
       </div>
     </div>
+
+    <!-- Blocked Users Modal -->
+    <div
+      id="blockedUsersModalDashboard"
+      class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+      aria-hidden="true"
+    >
+      <div
+        class="relative w-full max-w-xl overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10 transform transition-all scale-95 opacity-0"
+      >
+        <div class="bg-gradient-to-r from-rose-600 via-pink-600 to-orange-500 px-6 py-5 text-white">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center">
+                <i class="bi bi-shield-lock-fill text-xl"></i>
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold">Blocked Users</h3>
+                <p class="text-sm text-white/80">Manage who can see your content.</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              class="w-9 h-9 inline-flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition"
+              onclick="closeBlockedUsersModal()"
+              aria-label="Close"
+            >
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+          <div class="mt-4 flex items-center gap-2 text-xs bg-white/10 rounded-full px-3 py-1 w-fit">
+            <i class="bi bi-people-fill"></i>
+            <span id="blockedUsersModalCount">0</span>
+            <span>blocked</span>
+          </div>
+        </div>
+
+        <div class="px-6 py-5 bg-gray-50 border-b border-gray-200">
+          <div class="relative">
+            <i class="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+            <input
+              type="text"
+              id="blockedUsersSearch"
+              placeholder="Search blocked users..."
+              class="w-full pl-11 pr-4 py-2.5 rounded-full bg-white border border-gray-200 focus:ring-2 focus:ring-rose-500 focus:border-transparent outline-none text-sm"
+              oninput="filterBlockedUsers()"
+            />
+          </div>
+        </div>
+
+        <div class="max-h-[60vh] overflow-y-auto bg-white px-6 py-5">
+          <div id="blockedUsersDashboardList" class="space-y-3">
+            <div class="text-center py-8">
+              <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-rose-100 text-rose-600 mb-3">
+                <i class="bi bi-hourglass-split text-lg"></i>
+              </div>
+              <p class="text-sm text-gray-600">Loading blocked users...</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="px-6 py-4 bg-white border-t border-gray-200 flex items-center justify-between">
+          <p class="text-xs text-gray-500">
+            Blocking hides your profile and posts from these users.
+          </p>
+          <button
+            type="button"
+            class="px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-sm font-semibold hover:bg-gray-200 transition"
+            onclick="closeBlockedUsersModal()"
+          >
+            Done
+          </button>
+        </div>
+      </div>
+    </div>
     <!-- MOBILE SIDEBAR -->
     <div
       class="fixed inset-0 z-40 lg:hidden"
@@ -775,6 +885,20 @@
           >
             <i class="bi bi-person mr-3 text-lg"></i> Profile
           </a>
+          <button
+            type="button"
+            onclick="openBlockedUsersModal()"
+            class="sidebar-item w-full flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-red-50 hover:to-rose-50 transition-all duration-300 mb-2 group"
+          >
+            <i class="bi bi-shield-lock-fill mr-3 text-lg text-rose-600"></i>
+            <span class="font-medium">Blocked Users</span>
+            <span
+              id="blockedUsersCountBadgeMobile"
+              class="ml-auto inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-700"
+            >
+              {{ current_user.get_blocked_users_count() }}
+            </span>
+          </button>
 
           <!-- In MOBILE SIDEBAR section, replace the Groups item with: -->
           <!-- Mobile Groups Dropdown -->
@@ -930,8 +1054,30 @@
       <div
         class="left-sidebar hidden lg:block w-85 h-screen sticky top-16 overflow-y-auto custom-scrollbar bg-white border-r border-fb-border p-4"
       >
-        
-        
+        <button
+          type="button"
+          onclick="openBlockedUsersModal()"
+          class="sidebar-item w-full flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-red-50 hover:to-rose-50 transition-all duration-300 mb-2 group border border-transparent hover:border-rose-200 shadow-sm hover:shadow-md"
+        >
+          <div class="relative mr-3">
+            <i
+              class="bi bi-shield-lock-fill text-lg text-rose-600 group-hover:scale-110 transition-transform duration-300"
+            ></i>
+            <span
+              class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-rose-500 rounded-full ring-2 ring-white"
+            ></span>
+          </div>
+          <span class="font-medium group-hover:text-rose-700 transition-colors duration-300"
+            >Blocked Users</span
+          >
+          <span
+            id="blockedUsersCountBadge"
+            class="ml-auto inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-700"
+          >
+            {{ current_user.get_blocked_users_count() }}
+          </span>
+        </button>
+
 
         <!-- In your LEFT SIDEBAR section, replace the current Groups item with: -->
         <!-- Desktop Groups Dropdown -->
@@ -3195,10 +3341,173 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
         });
       });
     </script>
+    <script>
+      const blockedUsersState = { list: [] };
 
+      function setBlockedUsersCount(count) {
+        const badge = document.getElementById("blockedUsersCountBadge");
+        const badgeMobile = document.getElementById("blockedUsersCountBadgeMobile");
+        const modalCount = document.getElementById("blockedUsersModalCount");
+        if (badge) badge.textContent = count;
+        if (badgeMobile) badgeMobile.textContent = count;
+        if (modalCount) modalCount.textContent = count;
+      }
+
+      function openBlockedUsersModal() {
+        const modal = document.getElementById("blockedUsersModalDashboard");
+        if (!modal) return;
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+        requestAnimationFrame(() => {
+          const panel = modal.querySelector(".transform");
+          if (panel) panel.classList.remove("scale-95", "opacity-0");
+        });
+        loadBlockedUsersDashboard();
+      }
+
+      function closeBlockedUsersModal() {
+        const modal = document.getElementById("blockedUsersModalDashboard");
+        if (!modal) return;
+        const panel = modal.querySelector(".transform");
+        if (panel) panel.classList.add("scale-95", "opacity-0");
+        setTimeout(() => {
+          modal.classList.add("hidden");
+          modal.classList.remove("flex");
+        }, 180);
+      }
+
+      function renderBlockedUsers(users, updateCount = true) {
+        const list = document.getElementById("blockedUsersDashboardList");
+        if (!list) return;
+
+        if (!users.length) {
+          list.innerHTML = `
+            <div class="text-center py-10">
+              <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-emerald-100 text-emerald-600 mb-4">
+                <i class="bi bi-shield-check text-2xl"></i>
+              </div>
+              <h4 class="text-base font-semibold text-gray-900">No blocked users</h4>
+              <p class="text-sm text-gray-500 mt-1">Your space is open and welcoming.</p>
+            </div>
+          `;
+          if (updateCount) {
+            setBlockedUsersCount(0);
+          }
+          return;
+        }
+
+        if (updateCount) {
+          setBlockedUsersCount(users.length);
+        }
+
+        list.innerHTML = users
+          .map(
+            (user) => `
+            <div class="flex items-center justify-between rounded-2xl border border-gray-200 bg-white p-3 shadow-sm hover:shadow-md transition">
+              <div class="flex items-center gap-3 min-w-0">
+                <div class="relative">
+                  <img
+                    src="${user.profile_pic || ""}"
+                    alt="${user.first_name}"
+                    class="w-12 h-12 rounded-2xl object-cover ring-2 ring-rose-100"
+                    onerror="this.src='{{ url_for('static', filename='assets/img/default-avatar.png') }}'"
+                  />
+                  <span class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-rose-500 ring-2 ring-white"></span>
+                </div>
+                <div class="min-w-0">
+                  <p class="text-sm font-semibold text-gray-900 truncate">${user.first_name} ${user.last_name}</p>
+                  <p class="text-xs text-gray-500 truncate">Blocked</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                class="inline-flex items-center gap-2 px-3 py-2 rounded-full bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-600 transition shadow-sm"
+                onclick="unblockUserFromList(${user.id}, '${user.first_name.replace(/'/g, "\\'")}')"
+              >
+                <i class="bi bi-unlock-fill"></i>
+                Unblock
+              </button>
+            </div>
+          `
+          )
+          .join("");
+      }
+
+      async function loadBlockedUsersDashboard() {
+        const list = document.getElementById("blockedUsersDashboardList");
+        if (!list) return;
+        list.innerHTML = `
+          <div class="text-center py-8">
+            <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-rose-100 text-rose-600 mb-3 animate-pulse">
+              <i class="bi bi-hourglass-split text-lg"></i>
+            </div>
+            <p class="text-sm text-gray-600">Loading blocked users...</p>
+          </div>
+        `;
+
+        try {
+          const response = await fetch("/get_blocked_users");
+          if (!response.ok) throw new Error("Failed to load blocked users");
+          const users = await response.json();
+          blockedUsersState.list = Array.isArray(users) ? users : [];
+          renderBlockedUsers(blockedUsersState.list);
+        } catch (error) {
+          console.error("Error loading blocked users:", error);
+          list.innerHTML = `
+            <div class="text-center py-10">
+              <div class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-red-100 text-red-500 mb-3">
+                <i class="bi bi-exclamation-triangle text-lg"></i>
+              </div>
+              <h4 class="text-sm font-semibold text-gray-900">Could not load list</h4>
+              <p class="text-xs text-gray-500 mt-1">Please try again in a moment.</p>
+            </div>
+          `;
+        }
+      }
+
+      function filterBlockedUsers() {
+        const input = document.getElementById("blockedUsersSearch");
+        if (!input) return;
+        const query = input.value.toLowerCase();
+        const filtered = blockedUsersState.list.filter((user) =>
+          `${user.first_name} ${user.last_name}`.toLowerCase().includes(query)
+        );
+        renderBlockedUsers(filtered, false);
+        setBlockedUsersCount(blockedUsersState.list.length);
+      }
+
+      async function unblockUserFromList(userId, userName) {
+        if (!confirm(`Unblock ${userName}?`)) return;
+        try {
+          const response = await fetch(`/unblock_user/${userId}`, {
+            method: "POST",
+            headers: {
+              "X-CSRFToken": window.csrfToken || "",
+              "Content-Type": "application/json",
+            },
+          });
+          const data = await response.json();
+          if (!response.ok || !data.success) {
+            throw new Error(data.error || "Failed to unblock");
+          }
+          blockedUsersState.list = blockedUsersState.list.filter(
+            (user) => user.id !== userId
+          );
+          filterBlockedUsers();
+        } catch (error) {
+          console.error("Error unblocking user:", error);
+          if (window.Toast?.show) {
+            window.Toast.show("Unable to unblock user right now.", "danger");
+          } else {
+            alert("Unable to unblock user right now. Please try again.");
+          }
+        }
+      }
+    </script>
+<!---
     <div id="bottomAdBanner" class="bottom-ad-banner has-dashboard-ad hidden" data-ad-id="{{ bottom_banner.id }}">
       <div class="bottom-ad-inner">
-        <button class="bottom-ad-close" type="button" aria-label="Close ad">
+        <button class="bottom-ad-close" type="button" aria-label="Close ad" onclick="closeBottomAdBanner(event)">
           <i class="bi bi-x-lg"></i>
         </button>
         {% if bottom_banner %}
@@ -3242,14 +3551,39 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
         {% endif %}
       </div>
     </div>
+    -->
 
     <script>
+      window.closeBottomAdBanner = function(event) {
+        if (event) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+        const bottomBanner = document.getElementById("bottomAdBanner");
+        if (!bottomBanner) return;
+        const bannerKey = bottomBanner.dataset.adId
+          ? `kimbela_bottom_ad_closed_${bottomBanner.dataset.adId}`
+          : "kimbela_bottom_ad_closed_default";
+        const activeEl = document.activeElement;
+        if (activeEl && typeof activeEl.blur === "function") {
+          activeEl.blur();
+        }
+        bottomBanner.classList.add("hidden");
+        bottomBanner.style.display = "none";
+        bottomBanner.setAttribute("inert", "");
+        document.body.classList.remove("has-bottom-ad");
+        localStorage.setItem(bannerKey, "1");
+      };
+
       document.addEventListener("DOMContentLoaded", () => {
         const bottomBanner = document.getElementById("bottomAdBanner");
         if (!bottomBanner) return;
         const bannerKey = bottomBanner.dataset.adId
           ? `kimbela_bottom_ad_closed_${bottomBanner.dataset.adId}`
           : "kimbela_bottom_ad_closed_default";
+        const bannerTimerKey = bottomBanner.dataset.adId
+          ? `kimbela_bottom_ad_timer_${bottomBanner.dataset.adId}`
+          : "kimbela_bottom_ad_timer_default";
         if (localStorage.getItem(bannerKey) === "1") {
           bottomBanner.classList.add("hidden");
           document.body.classList.remove("has-bottom-ad");
@@ -3257,20 +3591,34 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
         }
         bottomBanner.classList.add("hidden");
         document.body.classList.remove("has-bottom-ad");
+        const closeBanner = window.closeBottomAdBanner;
         const closeBtn = bottomBanner.querySelector(".bottom-ad-close");
         if (closeBtn) {
-          closeBtn.addEventListener("click", (event) => {
-            event.preventDefault();
-            bottomBanner.classList.add("hidden");
-            document.body.classList.remove("has-bottom-ad");
-            localStorage.setItem(bannerKey, "1");
-          });
+          closeBtn.addEventListener("click", closeBanner, { capture: true });
         }
+        bottomBanner.addEventListener(
+          "click",
+          (event) => {
+            if (event.target.closest(".bottom-ad-close")) {
+              closeBanner(event);
+            }
+          },
+          { capture: true }
+        );
+        const now = Date.now();
+        const firstSeen = parseInt(localStorage.getItem(bannerTimerKey), 10);
+        const startTime = Number.isFinite(firstSeen) ? firstSeen : now;
+        if (!Number.isFinite(firstSeen)) {
+          localStorage.setItem(bannerTimerKey, String(startTime));
+        }
+        const delay = Math.max(0, 10 * 60 * 1000 - (now - startTime));
         setTimeout(() => {
           if (localStorage.getItem(bannerKey) === "1") return;
           bottomBanner.classList.remove("hidden");
+          bottomBanner.style.display = "";
+          bottomBanner.removeAttribute("inert");
           document.body.classList.add("has-bottom-ad");
-        }, 10 * 60 * 1000);
+        }, delay);
       });
     </script>
 
@@ -4078,6 +4426,9 @@ body.has-bottom-ad {
   right: 0;
   bottom: 0;
   z-index: 60;
+  pointer-events: auto;
+}
+.bottom-ad-banner.hidden {
   pointer-events: none;
 }
 
@@ -4138,16 +4489,6 @@ body.has-bottom-ad {
   position: absolute;
   top: 10px;
   right: 16px;
-
-@media (max-width: 1024px) {
-  .bottom-ad-banner.has-dashboard-ad {
-    display: none;
-  }
-
-  body.has-bottom-ad {
-    padding-bottom: 0;
-  }
-}
   width: 32px;
   height: 32px;
   border-radius: 999px;
@@ -4158,7 +4499,8 @@ body.has-bottom-ad {
   align-items: center;
   justify-content: center;
   font-size: 14px;
-  z-index: 2;
+  z-index: 3;
+  pointer-events: auto;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -4171,6 +4513,18 @@ body.has-bottom-ad {
   display: block;
   text-decoration: none;
   color: inherit;
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 1024px) {
+  .bottom-ad-banner.has-dashboard-ad {
+    display: none;
+  }
+
+  body.has-bottom-ad {
+    padding-bottom: 0;
+  }
 }
 
 .bottom-ad-link {

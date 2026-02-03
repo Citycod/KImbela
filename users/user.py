@@ -2428,6 +2428,57 @@ def debug_posts():
     )
 
 
+@user.route("/get_blocked_users")
+@login_required
+def get_blocked_users():
+    """Return blocked users with display details"""
+    try:
+        return jsonify(current_user.get_blocked_users_with_details())
+    except Exception as e:
+        print(f"Error fetching blocked users: {e}")
+        return jsonify([]), 500
+
+
+@user.route("/block_user/<int:user_id>", methods=["POST"])
+@login_required
+def block_user(user_id):
+    """Block a user from interacting/seeing content"""
+    if user_id == current_user.id:
+        return jsonify({"success": False, "error": "You cannot block yourself"}), 400
+
+    target_user = User.query.get_or_404(user_id)
+
+    try:
+        current_user.block(target_user)
+        safe_cache_delete(f"user_dashboard_{current_user.id}")
+        safe_cache_delete(f"user_dashboard_{target_user.id}")
+        return jsonify({"success": True})
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error blocking user {user_id}: {e}")
+        return jsonify({"success": False, "error": "Failed to block user"}), 500
+
+
+@user.route("/unblock_user/<int:user_id>", methods=["POST"])
+@login_required
+def unblock_user(user_id):
+    """Unblock a previously blocked user"""
+    if user_id == current_user.id:
+        return jsonify({"success": False, "error": "Invalid user"}), 400
+
+    target_user = User.query.get_or_404(user_id)
+
+    try:
+        current_user.unblock(target_user)
+        safe_cache_delete(f"user_dashboard_{current_user.id}")
+        safe_cache_delete(f"user_dashboard_{target_user.id}")
+        return jsonify({"success": True})
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error unblocking user {user_id}: {e}")
+        return jsonify({"success": False, "error": "Failed to unblock user"}), 500
+
+
 def compute_notification_count(user_id):
     """
     Efficiently compute unread notification count
@@ -2609,16 +2660,21 @@ def decline_friend_request_route(user_id):
 
 # Add this to your Flask routes
 @user.route("/search")
+@login_required
 def search():
     query = request.args.get("q", "").strip()
     if not query or len(query) < 2:
         return jsonify({"users": [], "posts": []})
+
+    blocked_ids = {u.id for u in current_user.blocked_users}
+    blocked_ids.update(u.id for u in current_user.blocked_by)
 
     # Search users (exclude current user)
     users = (
         User.query.filter(
             db.and_(
                 User.id != current_user.id,  # Exclude current user
+                ~User.id.in_(list(blocked_ids)),
                 db.or_(
                     User.first_name.ilike(f"%{query}%"),
                     User.last_name.ilike(f"%{query}%"),
@@ -2632,7 +2688,13 @@ def search():
 
     # Search posts (you can also exclude current user's posts if desired)
     posts = (
-        Post.query.filter(Post.content.ilike(f"%{query}%")).join(User).limit(10).all()
+        Post.query.filter(
+            Post.content.ilike(f"%{query}%"),
+            ~Post.author_id.in_(list(blocked_ids)),
+        )
+        .join(User)
+        .limit(10)
+        .all()
     )
 
     users_data = [

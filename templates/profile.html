@@ -570,28 +570,54 @@
     </div>
 
     <!-- Blocked Users Modal -->
-    <div id="blockedUsersModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 z-50 hidden transition-opacity duration-300">
-        <div class="bg-white rounded-lg shadow-strong max-w-sm w-full max-h-[80vh] overflow-y-auto transform transition-all duration-300 scale-95 opacity-0">
-            <div class="p-4 border-b border-gray-200">
+    <div id="blockedUsersModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden transition-opacity duration-300">
+        <div class="bg-white rounded-2xl shadow-strong max-w-lg w-full max-h-[85vh] overflow-hidden transform transition-all duration-300 scale-95 opacity-0 ring-1 ring-black/10">
+            <div class="bg-gradient-to-r from-rose-600 via-pink-600 to-orange-500 px-6 py-5 text-white">
                 <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-bold text-gray-900 flex items-center">
-                        <div class="w-8 h-8 gradient-secondary rounded flex items-center justify-center mr-2">
-                            <i class="fas fa-user-slash text-white text-sm"></i>
+                    <div class="flex items-center gap-3">
+                        <div class="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center">
+                            <i class="fas fa-user-slash text-lg"></i>
                         </div>
-                        Blocked Users
-                    </h3>
+                        <div>
+                            <h3 class="text-lg font-bold">Blocked Users</h3>
+                            <p class="text-xs text-white/80">Control who can view your profile.</p>
+                        </div>
+                    </div>
                     <button onclick="closeModal('blockedUsersModal')"
-                            class="text-gray-400 hover:text-gray-600 transition-colors duration-300 p-1.5 rounded hover:bg-gray-100">
+                            class="w-9 h-9 inline-flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition">
                         <i class="fas fa-times text-sm"></i>
                     </button>
                 </div>
+                <div class="mt-4 inline-flex items-center gap-2 text-xs bg-white/10 rounded-full px-3 py-1">
+                    <i class="fas fa-users"></i>
+                    <span id="blockedUsersCount">0</span>
+                    <span>blocked</span>
+                </div>
             </div>
 
-            <div class="p-4" id="blockedUsersList">
-                <div class="text-center py-4">
+            <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                <div class="relative">
+                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                    <input type="text" id="blockedUsersSearch"
+                           placeholder="Search blocked users..."
+                           class="w-full pl-10 pr-4 py-2.5 rounded-full bg-white border border-gray-200 focus:ring-1 focus:ring-purple-500 focus:border-transparent outline-none text-xs"
+                           oninput="filterBlockedUsersList()">
+                </div>
+            </div>
+
+            <div class="p-5 max-h-[60vh] overflow-y-auto" id="blockedUsersList">
+                <div class="text-center py-6">
                     <div class="loader-spinner mx-auto mb-2"></div>
                     <p class="text-sm text-gray-600">Loading blocked users...</p>
                 </div>
+            </div>
+
+            <div class="px-6 py-4 bg-white border-t border-gray-200 flex items-center justify-between">
+                <p class="text-xs text-gray-500">Unblock anytime to restore visibility.</p>
+                <button onclick="closeModal('blockedUsersModal')"
+                        class="px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-xs font-semibold hover:bg-gray-200 transition">
+                    Done
+                </button>
             </div>
         </div>
     </div>
@@ -717,6 +743,69 @@
             }
         }
 
+        const blockedUsersState = { list: [] };
+
+        function setBlockedUsersCount(count) {
+            const badge = document.getElementById('blockedUsersCount');
+            if (badge) badge.textContent = count;
+        }
+
+        function filterBlockedUsersList() {
+            const input = document.getElementById('blockedUsersSearch');
+            if (!input) return;
+            const query = input.value.toLowerCase();
+            const filtered = blockedUsersState.list.filter(u =>
+                `${u.first_name} ${u.last_name}`.toLowerCase().includes(query)
+            );
+            renderBlockedUsersList(filtered, false);
+            setBlockedUsersCount(blockedUsersState.list.length);
+        }
+
+        function renderBlockedUsersList(users, updateCount = true) {
+            const list = document.getElementById('blockedUsersList');
+            if (!list) return;
+
+            if (!users.length) {
+                list.innerHTML = `
+                    <div class="text-center py-8">
+                        <div class="w-14 h-14 gradient-success rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-medium">
+                            <i class="fas fa-user-check text-white text-lg"></i>
+                        </div>
+                        <h4 class="text-sm font-bold text-gray-900 mb-1">No Blocked Users</h4>
+                        <p class="text-gray-600 text-xs">Your list is empty for now.</p>
+                    </div>
+                `;
+                if (updateCount) setBlockedUsersCount(0);
+                return;
+            }
+
+            if (updateCount) setBlockedUsersCount(users.length);
+
+            list.innerHTML = users.map(u => `
+                <div class="flex items-center justify-between p-3 bg-white rounded-2xl hover:shadow-md transition-all duration-300 border border-gray-200 mb-3 blocked-user-card">
+                    <div class="flex items-center space-x-3 min-w-0">
+                        <div class="relative">
+                            <img src="${u.profile_pic || '{{ url_for("static", filename="assets/img/default-avatar.png") }}'}"
+                                 alt="${u.first_name}"
+                                 class="w-12 h-12 rounded-2xl object-cover ring-2 ring-rose-100">
+                            <span class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-rose-500 ring-2 ring-white"></span>
+                        </div>
+                        <div class="min-w-0">
+                            <h4 class="font-bold text-gray-900 text-sm truncate">${u.first_name} ${u.last_name}</h4>
+                            <p class="text-xs text-gray-500">Blocked</p>
+                        </div>
+                    </div>
+                    <button class="bg-emerald-500 text-white px-3 py-2 rounded-full font-bold hover:bg-emerald-600 transition-all duration-300 hover-lift flex items-center space-x-1.5 text-xs unblock-btn shadow-sm"
+                            data-user-id="${u.id}" data-user-name="${u.first_name}">
+                        <i class="fas fa-unlock text-xs"></i>
+                        <span>Unblock</span>
+                    </button>
+                </div>
+            `).join('');
+
+            attachUnblockListeners();
+        }
+
         // Load Blocked Users
         function loadBlockedUsers() {
             const list = document.getElementById('blockedUsersList');
@@ -735,39 +824,8 @@
                     return response.json();
                 })
                 .then(users => {
-                    if (users.length === 0) {
-                        list.innerHTML = `
-                            <div class="text-center py-4">
-                                <div class="w-12 h-12 gradient-success rounded-lg flex items-center justify-center mx-auto mb-3 shadow-medium">
-                                    <i class="fas fa-user-check text-white text-sm"></i>
-                                </div>
-                                <h4 class="text-sm font-bold text-gray-900 mb-1">No Blocked Users</h4>
-                                <p class="text-gray-600 text-xs">You haven't blocked anyone yet.</p>
-                            </div>
-                        `;
-                        return;
-                    }
-
-                    list.innerHTML = users.map(u => `
-                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-all duration-300 border border-gray-200 mb-2 blocked-user-card">
-                            <div class="flex items-center space-x-3">
-                                <img src="${u.profile_pic || '{{ url_for("static", filename="assets/img/default-avatar.png") }}'}"
-                                     alt="${u.first_name}"
-                                     class="w-10 h-10 rounded-lg border border-red-200">
-                                <div>
-                                    <h4 class="font-bold text-gray-900 text-sm">${u.first_name} ${u.last_name}</h4>
-                                    <p class="text-xs text-gray-500">Blocked</p>
-                                </div>
-                            </div>
-                            <button class="bg-green-500 text-white px-3 py-1.5 rounded-lg font-bold hover:bg-green-600 transition-all duration-300 hover-lift flex items-center space-x-1.5 text-xs unblock-btn"
-                                    data-user-id="${u.id}" data-user-name="${u.first_name}">
-                                <i class="fas fa-user-check text-xs"></i>
-                                <span>Unblock</span>
-                            </button>
-                        </div>
-                    `).join('');
-
-                    attachUnblockListeners();
+                    blockedUsersState.list = Array.isArray(users) ? users : [];
+                    renderBlockedUsersList(blockedUsersState.list);
                 })
                 .catch(error => {
                     console.error('Error loading blocked users:', error);
@@ -807,11 +865,8 @@
                         .then(data => {
                             if (data.success) {
                                 showNotification(`${userName} has been unblocked successfully!`, 'success');
-                                this.closest('.blocked-user-card').remove();
-
-                                if (document.querySelectorAll('.blocked-user-card').length === 0) {
-                                    loadBlockedUsers();
-                                }
+                                blockedUsersState.list = blockedUsersState.list.filter(u => `${u.id}` !== `${userId}`);
+                                filterBlockedUsersList();
                             } else {
                                 showNotification('Error unblocking user: ' + data.error, 'error');
                             }

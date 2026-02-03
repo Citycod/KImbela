@@ -152,22 +152,22 @@
                 container.innerHTML = '';
                 result.friends.forEach(friend => {
                             const friendEl = document.createElement('div');
-                            friendEl.className = `friend-item flex items-center space-x-3 p-4 rounded-xl cursor-pointer hover:bg-gray-100 transition-all ${friend.unread_count > 0 ? 'bg-blue-50' : ''}`;
+                            friendEl.className = `friend-item group flex items-center gap-3 p-3.5 rounded-2xl cursor-pointer border border-gray-100 bg-white/80 shadow-sm hover:shadow-md hover:border-blue-200 hover:bg-white transition-all ${friend.unread_count > 0 ? 'bg-blue-50 border-blue-100 shadow-md' : ''}`;
                             friendEl.dataset.userId = friend.id;
 
                             friendEl.innerHTML = `
                     <div class="relative flex-shrink-0">
                         <img src="${friend.avatar || window.defaultAvatar}"
-                             class="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm"
+                             class="w-12 h-12 rounded-full object-cover ring-2 ring-white shadow-md"
                              onerror="this.src='${window.defaultAvatar}'">
-                        <span class="absolute bottom-0 right-0 w-3.5 h-3.5 ${friend.is_online ? 'bg-green-500' : 'bg-gray-400'} rounded-full border-2 border-white"></span>
+                        <span class="absolute bottom-0 right-0 w-3.5 h-3.5 ${friend.is_online ? 'bg-emerald-500' : 'bg-gray-400'} rounded-full border-2 border-white shadow-sm"></span>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <div class="font-semibold text-gray-900 truncate">${friend.name}</div>
+                        <div class="text-sm font-semibold text-gray-900 truncate group-hover:text-blue-700 transition-colors">${friend.name}</div>
                         <div class="text-xs text-gray-500 truncate">${friend.last_message || 'Start chatting!'}</div>
                     </div>
                     ${friend.unread_count > 0 ? `
-                        <span class="bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
+                        <span class="bg-gradient-to-br from-rose-500 to-pink-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shadow-sm">
                             ${friend.unread_count > 99 ? '99+' : friend.unread_count}
                         </span>
                     ` : ''}
@@ -397,15 +397,24 @@
         }
 
         const div = document.createElement('div');
-        div.className = `message-wrapper ${type}`;
+        const wrapperClass = type === 'sent'
+            ? 'message-wrapper sent flex justify-end'
+            : 'message-wrapper received flex justify-start';
+        const bubbleClass = type === 'sent'
+            ? 'message-bubble sent px-3 py-2 rounded-2xl rounded-br-md bg-gradient-to-br from-blue-600 via-sky-600 to-emerald-500 text-white shadow-md'
+            : 'message-bubble received px-3 py-2 rounded-2xl rounded-bl-md bg-white border border-gray-200 text-gray-900 shadow-sm';
+        const attachmentsClass = type === 'sent'
+            ? 'message-attachments sent px-3 mb-1 flex justify-end'
+            : 'message-attachments received px-3 mb-1 flex justify-start';
+        div.className = wrapperClass;
         const msgKey = msg.id || msg.temp_id || ('temp-' + Date.now());
         div.setAttribute('data-message-id', msgKey);
         div.dataset.date = date;
 
         // Build message bubble - FIXED FOR BOTH SENDER AND RECEIVER
         div.innerHTML = `
-        ${attachmentsHtml ? `<div class="message-attachments ${type} px-3 mb-1">${attachmentsHtml}</div>` : ''}
-        <div class="message-bubble ${type} px-3 py-2">
+        ${attachmentsHtml ? `<div class="${attachmentsClass}">${attachmentsHtml}</div>` : ''}
+        <div class="${bubbleClass}">
             ${content ? `<div class="message-content whitespace-pre-wrap">${content}</div>` : ''}
             <div class="message-footer flex justify-between items-center mt-1">
                 <span class="message-time text-xs opacity-70">${time}</span>
