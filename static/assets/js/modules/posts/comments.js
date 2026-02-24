@@ -126,7 +126,6 @@ class CommentSystem {
                 Toast.show(data.error || 'Failed to add comment', 'danger');
             }
         } catch (error) {
-            console.error('Comment error:', error);
 
             if (error.message.includes('log in')) {
                 Toast.show('Please log in again to comment', 'warning');
@@ -175,7 +174,6 @@ class CommentSystem {
                 Toast.show(data.error || 'Failed', 'danger');
             }
         } catch (error) {
-            console.error(error);
             Toast.show('Network error', 'danger');
         }
     }

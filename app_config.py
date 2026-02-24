@@ -1,15 +1,17 @@
+from time_utils import utcnow
 # app_config.py - UPDATED (fix eventlet issues)
 from flask import Flask, g, request, flash, redirect, url_for, render_template
 from flask_login import login_required, current_user
 from flask_wtf.csrf import generate_csrf
 from dotenv import load_dotenv
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from flask import jsonify
 from werkzeug.exceptions import RequestEntityTooLarge
 import time
 from scheduler import init_birthday_scheduler
 from flask import send_from_directory, abort
+from werkzeug.utils import safe_join
 
 # Import extensions (make sure socketio is initialized with threading)
 from extensions import db, bcrypt, login_manager, mail, csrf, cache, socketio
@@ -27,6 +29,7 @@ def create_app():
 
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
     app.config["PREFERRED_URL_SCHEME"] = "https"
+    app.config["ENABLE_DEBUG_ROUTES"] = os.getenv("ENABLE_DEBUG_ROUTES") == "1"
 
     @app.errorhandler(RequestEntityTooLarge)
     def handle_file_too_large(error):
@@ -45,17 +48,17 @@ def create_app():
             return redirect(url_for("user.user_dashboard"))
 
     @app.route("/uploads/<path:filename>")
+    @login_required
     def serve_uploads(filename):
         upload_folder = app.config["UPLOAD_FOLDER"]
-        file_path = os.path.join(upload_folder, filename)
-
-        if not os.path.exists(file_path):
+        file_path = safe_join(upload_folder, filename)
+        if not file_path or not os.path.isfile(file_path):
             abort(404)
 
         return send_from_directory(upload_folder, filename)
 
     # ========== BASIC APP CONFIG ==========
-    app.config["MAX_CONTENT_LENGTH"] = 400 * 1024 * 1024  # 100MB
+    app.config["MAX_CONTENT_LENGTH"] = 100 * 1024 * 1024  # 100MB
     BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
     app.config["UPLOAD_FOLDER"] = os.path.join(BASE_DIR, "uploads")
@@ -63,7 +66,13 @@ def create_app():
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
     # ========== SECURITY & SESSION ==========
-    app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key-12345")
+    secret_key = os.environ.get("SECRET_KEY")
+    if not secret_key:
+        if os.getenv("FLASK_ENV") == "development":
+            secret_key = "dev-secret-key-12345"
+        else:
+            raise RuntimeError("SECRET_KEY is not set for non-development environment")
+    app.secret_key = secret_key
     app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=12)
 
     # ========== CACHE CONFIG ==========
@@ -73,13 +82,17 @@ def create_app():
     # ========== DATABASE CONFIG ==========
     app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("SQLALCHEMY_DATABASE_URI")
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
-        "pool_pre_ping": True,
-        "pool_recycle": 1800,
-        "pool_size": 20,
-        "max_overflow": 40,
-        "pool_timeout": 30,
-    }
+    db_uri = app.config["SQLALCHEMY_DATABASE_URI"] or ""
+    if db_uri.startswith("sqlite"):
+        app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {}
+    else:
+        app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+            "pool_pre_ping": True,
+            "pool_recycle": 1800,
+            "pool_size": 20,
+            "max_overflow": 40,
+            "pool_timeout": 30,
+        }
 
     import resend
 
@@ -100,7 +113,7 @@ def create_app():
     )
 
     # ========== SOCKET.IO CONFIG ==========
-    app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-key-12345")
+    app.config["SECRET_KEY"] = secret_key
 
     # ========== INITIALIZE EXTENSIONS ==========
     csrf.init_app(app)
@@ -153,7 +166,7 @@ def create_app():
 
     @app.context_processor
     def inject_now():
-        return {"now": datetime.utcnow()}
+        return {"now": datetime.now(timezone.utc)}
 
     # ========== TEMPLATE FILTERS ==========
     @app.template_filter("time_ago")
@@ -166,7 +179,7 @@ def create_app():
         if cached:
             return cached
 
-        now = datetime.utcnow()
+        now = utcnow()
         diff = now - timestamp
 
         if diff.days > 365:
@@ -214,9 +227,9 @@ def create_app():
         if current_user.is_authenticated:
             if (
                 not current_user.last_seen
-                or (datetime.utcnow() - current_user.last_seen).seconds > 300
+                or (utcnow() - current_user.last_seen).seconds > 300
             ):
-                current_user.last_seen = datetime.utcnow()
+                current_user.last_seen = utcnow()
                 try:
                     db.session.commit()
                 except Exception:

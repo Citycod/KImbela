@@ -52,7 +52,6 @@ class InfiniteScroll {
                 }
             }
         } catch (error) {
-            console.error('Error loading more posts:', error);
             Toast.show('Failed to load more posts', 'danger');
             if (loadMoreBtn) loadMoreBtn.classList.remove('hidden');
         } finally {

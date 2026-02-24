@@ -27,6 +27,7 @@ from models import (
 from .email_service import MarketplaceEmailService
 
 
+from time_utils import utcnow
 logger = logging.getLogger(__name__)
 
 
@@ -312,8 +313,8 @@ class MatchmakingPaymentService(BasePaymentService):
             )
             matchmaking_payment.gateway_payment_id = flutterwave_data.get("id")
             matchmaking_payment.gateway_metadata = json.dumps(flutterwave_data)
-            matchmaking_payment.paid_at = datetime.utcnow()
-            matchmaking_payment.updated_at = datetime.utcnow()
+            matchmaking_payment.paid_at = utcnow()
+            matchmaking_payment.updated_at = utcnow()
 
             print(
                 f"🟡 [PAYMENT SUCCESS] Updated payment record: {matchmaking_payment.to_dict()}"
@@ -339,14 +340,14 @@ class MatchmakingPaymentService(BasePaymentService):
             # Calculate end date based on package duration
             if matchmaking_request.package:
                 duration_days = matchmaking_request.package.duration_days
-                matchmaking_request.end_date = datetime.utcnow() + timedelta(
+                matchmaking_request.end_date = utcnow() + timedelta(
                     days=duration_days
                 )
                 print(
                     f"🟡 [PAYMENT SUCCESS] Set end date to: {matchmaking_request.end_date}"
                 )
 
-            matchmaking_request.updated_at = datetime.utcnow()
+            matchmaking_request.updated_at = utcnow()
 
             db.session.commit()
             print(f"✅ [PAYMENT SUCCESS] Database committed successfully")
@@ -378,14 +379,14 @@ class MatchmakingPaymentService(BasePaymentService):
                 "status", "failed"
             )
             matchmaking_payment.gateway_metadata = json.dumps(flutterwave_data)
-            matchmaking_payment.updated_at = datetime.utcnow()
+            matchmaking_payment.updated_at = utcnow()
 
             # Update matchmaking request
             matchmaking_request = matchmaking_payment.matchmaking_request
             if matchmaking_request:
                 matchmaking_request.payment_status = "failed"
                 matchmaking_request.status = "pending"
-                matchmaking_request.updated_at = datetime.utcnow()
+                matchmaking_request.updated_at = utcnow()
 
             db.session.commit()
 
@@ -654,7 +655,7 @@ class MatchmakingPaymentService(BasePaymentService):
                     matchmaking_payment.gateway_status = "retry_initiated"
                     matchmaking_payment.status = "pending"
                     matchmaking_payment.payment_status = "pending"
-                    matchmaking_payment.updated_at = datetime.utcnow()
+                    matchmaking_payment.updated_at = utcnow()
 
                     db.session.commit()
 
@@ -882,8 +883,8 @@ class MarketplacePaymentService(BasePaymentService):
                             status="pending",
                             payment_method="card",
                             description=f"Marketplace Subscription: {plan.name}",
-                            start_date=datetime.utcnow(),
-                            end_date=datetime.utcnow()
+                            start_date=utcnow(),
+                            end_date=utcnow()
                             + timedelta(days=getattr(plan, "duration_days", 30)),
                         )
 
@@ -953,8 +954,8 @@ class MarketplacePaymentService(BasePaymentService):
             )
             marketplace_payment.gateway_payment_id = flutterwave_data.get("id")
             marketplace_payment.gateway_metadata = json.dumps(flutterwave_data)
-            marketplace_payment.paid_at = datetime.utcnow()
-            marketplace_payment.updated_at = datetime.utcnow()
+            marketplace_payment.paid_at = utcnow()
+            marketplace_payment.updated_at = utcnow()
 
             print(
                 f"🟡 [PAYMENT SUCCESS] Updated payment record: {marketplace_payment.id}"
@@ -965,7 +966,7 @@ class MarketplacePaymentService(BasePaymentService):
             if user:
                 user.marketplace_subscription_id = marketplace_payment.subscription_id
                 user.marketplace_subscription_status = "active"
-                user.marketplace_subscription_expires = datetime.utcnow() + timedelta(
+                user.marketplace_subscription_expires = utcnow() + timedelta(
                     days=30
                 )  # Adjust as needed
 
@@ -1034,7 +1035,7 @@ class MarketplacePaymentService(BasePaymentService):
                             <p><strong>Plan:</strong> {plan_name}</p>
                             <p><strong>Amount Paid:</strong> {transaction.amount:.2f} {transaction.currency}</p>
                             <p><strong>Transaction ID:</strong> {transaction.gateway_reference}</p>
-                            <p><strong>Activation Date:</strong> {datetime.utcnow().strftime('%B %d, %Y %I:%M %p')}</p>
+                            <p><strong>Activation Date:</strong> {utcnow().strftime('%B %d, %Y %I:%M %p')}</p>
                             <p><strong>Status:</strong> <span style="color: #10B981; font-weight: bold;">Active ✅</span></p>
                         </div>
                         
@@ -1060,7 +1061,7 @@ class MarketplacePaymentService(BasePaymentService):
                         <p>Happy selling!<br>The Kimbela Marketplace Team</p>
                     </div>
                     <div class="footer">
-                        <p>© {datetime.utcnow().year} Kimbela Marketplace. Empowering African creators and professionals.</p>
+                        <p>© {utcnow().year} Kimbela Marketplace. Empowering African creators and professionals.</p>
                     </div>
                 </div>
             </body>
@@ -1167,8 +1168,8 @@ class MarketplacePaymentService(BasePaymentService):
                         status="pending",
                         payment_method="card",
                         description=f"Marketplace Subscription: {plan.name}",
-                        start_date=datetime.utcnow(),
-                        end_date=datetime.utcnow()
+                        start_date=utcnow(),
+                        end_date=utcnow()
                         + timedelta(days=getattr(plan, "duration_days", 30)),
                     )
 
@@ -1228,8 +1229,8 @@ class MarketplacePaymentService(BasePaymentService):
             )
             marketplace_payment.gateway_payment_id = flutterwave_data.get("id")
             marketplace_payment.gateway_metadata = json.dumps(flutterwave_data)
-            marketplace_payment.paid_at = datetime.utcnow()
-            marketplace_payment.updated_at = datetime.utcnow()
+            marketplace_payment.paid_at = utcnow()
+            marketplace_payment.updated_at = utcnow()
 
             # Update user subscription
             user = marketplace_payment.user
@@ -1238,7 +1239,7 @@ class MarketplacePaymentService(BasePaymentService):
                 user.marketplace_subscription_id = marketplace_payment.subscription_id
                 user.marketplace_subscription_expires = (
                     marketplace_payment.end_date
-                    or datetime.utcnow() + timedelta(days=30)
+                    or utcnow() + timedelta(days=30)
                 )
 
                 # Set subscription tier
@@ -1281,7 +1282,7 @@ class MarketplacePaymentService(BasePaymentService):
                 "status", "failed"
             )
             marketplace_payment.gateway_metadata = json.dumps(flutterwave_data)
-            marketplace_payment.updated_at = datetime.utcnow()
+            marketplace_payment.updated_at = utcnow()
 
             db.session.commit()
 
@@ -1376,7 +1377,7 @@ class MarketplacePaymentService(BasePaymentService):
 
             # Update user subscription status
             user.marketplace_subscription_status = "inactive"
-            user.marketplace_subscription_expires = datetime.utcnow()
+            user.marketplace_subscription_expires = utcnow()
             user.marketplace_featured_until = None
 
             db.session.commit()
@@ -1400,7 +1401,7 @@ class MarketplacePaymentService(BasePaymentService):
                     days=days
                 )
             else:
-                new_expiry = datetime.utcnow() + timedelta(days=days)
+                new_expiry = utcnow() + timedelta(days=days)
 
             user.marketplace_subscription_expires = new_expiry
 
@@ -1431,7 +1432,7 @@ class MarketplacePaymentService(BasePaymentService):
             is_featured = False
 
             if user.marketplace_featured_until:
-                is_featured = user.marketplace_featured_until > datetime.utcnow()
+                is_featured = user.marketplace_featured_until > utcnow()
 
             # Get active payment
             active_payment = (

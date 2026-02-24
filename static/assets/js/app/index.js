@@ -31,11 +31,9 @@ class DashboardApp {
 
     async init() {
         if (this.isInitialized) {
-            console.warn('DashboardApp already initialized');
             return;
         }
 
-        console.log('🚀 Initializing Dashboard Application...');
 
         try {
             // Initialize core utilities first
@@ -54,17 +52,14 @@ class DashboardApp {
             this.initLegacyGlobals();
 
             this.isInitialized = true;
-            console.log('✅ Dashboard Application initialized successfully');
 
         } catch (error) {
-            console.error('❌ Failed to initialize DashboardApp:', error);
             Toast.show('Application initialization failed', 'danger');
         }
     }
 
     initCoreUtilities() {
         // These are static utilities, no need to store instances
-        console.log('🔧 Initializing core utilities...');
 
         // Initialize time ago displays
         TimeUtils.initializeTimeAgo();
@@ -78,7 +73,6 @@ class DashboardApp {
     }
 
     initUIComponents() {
-        console.log('🎨 Initializing UI components...');
 
         // Initialize mobile menu
         MobileMenu.init();
@@ -103,7 +97,6 @@ class DashboardApp {
     }
 
     async initFeatureModules() {
-        console.log('⚙️ Initializing feature modules...');
 
         // Initialize modules based on page requirements
         const modulePromises = [];
@@ -185,18 +178,14 @@ class DashboardApp {
 
     async initModule(name, initFunction) {
         try {
-            console.log(`🔄 Initializing ${name} module...`);
             const result = await initFunction();
-            console.log(`✅ ${name} module initialized`);
             return result;
         } catch (error) {
-            console.error(`❌ Failed to initialize ${name} module:`, error);
             return false;
         }
     }
 
     setupGlobalListeners() {
-        console.log('🔗 Setting up global listeners...');
 
         // Initialize modals
         document.querySelectorAll('[data-bs-toggle="modal"]').forEach(trigger => {
@@ -247,7 +236,6 @@ class DashboardApp {
                         }
                     }
                 } catch (error) {
-                    console.error('Error creating post:', error);
                     Toast.show('Failed to create post', 'danger');
                 } finally {
                     Loader.quick(submitBtn, 'hide');
@@ -257,7 +245,6 @@ class DashboardApp {
     }
 
     initLegacyGlobals() {
-        console.log('🌉 Initializing legacy global functions...');
 
         // These functions are called from HTML onclick attributes
         // We need to keep them globally available
@@ -318,7 +305,6 @@ class DashboardApp {
                     this.modules.messenger.startChat(userId);
                 }, 500);
             } else {
-                console.error('Messenger not initialized');
                 Toast.show('Messenger not available', 'danger');
             }
         };
@@ -356,7 +342,6 @@ class DashboardApp {
 
     // Refresh all modules (for debugging)
     async refreshAll() {
-        console.log('🔄 Refreshing all modules...');
         this.isInitialized = false;
         this.modules = {};
         await this.init();

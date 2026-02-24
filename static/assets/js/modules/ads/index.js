@@ -48,7 +48,6 @@ class AdSystem {
 
     // Initialize ad system
     async init() {
-        console.log('🤑 Initializing Ad System with smart intervals...');
 
         try {
             // Cache DOM elements
@@ -66,11 +65,9 @@ class AdSystem {
             }, this.config.initialDelay);
 
             this.state.initialized = true;
-            console.log('✅ Ad System initialized successfully');
             return this;
 
         } catch (error) {
-            console.error('❌ Failed to initialize Ad System:', error);
             this.showErrorState('Initialization failed');
             throw error;
         }
@@ -79,12 +76,10 @@ class AdSystem {
     // Start the ad display cycle
     startAdCycle() {
         if (this.state.activeAds.length === 0) {
-            console.log('📭 No ads to display');
             this.showNoAdsMessage();
             return;
         }
 
-        console.log(`🔄 Starting ad cycle with ${this.state.activeAds.length} ads`);
 
         // Clear any existing timers
         this.clearAllTimers();
@@ -109,7 +104,6 @@ class AdSystem {
             interval = Math.max(60000, Math.min(90000, interval)); // Keep between 60-90s
         }
 
-        console.log(`⏰ Next ad in ${Math.round(interval/1000)} seconds`);
 
         // Set timer for next ad
         this.state.intervalTimer = setTimeout(() => {
@@ -137,7 +131,6 @@ class AdSystem {
             return;
         }
 
-        console.log(`📢 Displaying ad: ${ad.title} (Index: ${this.state.currentAdIndex})`);
 
         // Update all ad displays
         this.updateNativeAd(ad);
@@ -161,7 +154,6 @@ class AdSystem {
 
         // Reset if all ads have been shown
         if (this.state.displayedIndices.length >= this.state.activeAds.length) {
-            console.log('🔄 Resetting ad display tracking');
             this.state.displayedIndices = [];
         }
 
@@ -250,13 +242,11 @@ class AdSystem {
     // Load ads from server with retry logic
     async loadAds() {
         if (this.state.retryCount >= this.config.maxRetries) {
-            console.error('❌ Max retries reached');
             this.showErrorState('Failed to load ads after multiple attempts');
             return;
         }
 
         try {
-            console.log('📡 Loading sponsored ads...');
 
             const response = await fetch('/api/ads/sponsored', {
                 method: 'GET',
@@ -279,15 +269,12 @@ class AdSystem {
                 this.state.displayedIndices = [];
                 this.state.retryCount = 0;
 
-                console.log(`✅ Loaded ${data.ads.length} sponsored ads`);
 
             } else {
-                console.log('📭 No sponsored ads available');
                 this.showNoAdsMessage();
             }
 
         } catch (error) {
-            console.error('❌ Error loading ads:', error);
             this.state.retryCount++;
 
             // Retry with exponential backoff
@@ -436,7 +423,6 @@ class AdSystem {
     async adNotInterested() {
         const currentAd = this.state.activeAds[this.state.currentAdIndex];
         if (currentAd) {
-            console.log(`User not interested in ad ${currentAd.id}`);
 
             try {
                 await fetch(`/api/ads/${currentAd.id}/not_interested`, {
@@ -447,7 +433,6 @@ class AdSystem {
                     }
                 });
             } catch (error) {
-                console.error('Failed to track not interested:', error);
             }
         }
 
@@ -478,7 +463,6 @@ class AdSystem {
 
     // Track ad click
     async trackAdClick(adId) {
-        console.log(`📊 Tracking click for ad ${adId}`);
 
         // Analytics
         if (typeof gtag === 'function') {
@@ -499,13 +483,11 @@ class AdSystem {
                 }
             });
         } catch (error) {
-            console.error('Failed to track click:', error);
         }
     }
 
     // Track ad impression
     async trackAdImpression(adId) {
-        console.log(`📊 Tracking impression for ad ${adId}`);
 
         // Analytics
         if (typeof gtag === 'function') {
@@ -526,7 +508,6 @@ class AdSystem {
                 }
             });
         } catch (error) {
-            console.error('Failed to track impression:', error);
         }
     }
 
@@ -581,7 +562,6 @@ class AdSystem {
 
     // Refresh system
     refresh() {
-        console.log('🔄 Refreshing Ad System...');
 
         this.clearAllTimers();
         this.state.isShowingAd = false;
@@ -597,7 +577,6 @@ class AdSystem {
 
     // Destroy/cleanup
     destroy() {
-        console.log('🧹 Cleaning up Ad System...');
 
         this.clearAllTimers();
         this.closeAdModal();

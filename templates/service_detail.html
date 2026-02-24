@@ -527,7 +527,6 @@ async function elegantDownload(serviceId, url) {
         }, 2000);
         
     } catch (error) {
-        console.error('Download error:', error);
         
         // Fallback: Open in new tab
         window.open(url, '_blank');
@@ -1253,8 +1252,6 @@ button:not(:disabled):hover {
 
     <!-- Add this at the bottom of your template for debugging -->
 <script>
-console.log("Service ID from template: {{ service.id }}");
-console.log("Number of contact links:", document.querySelectorAll('a[data-service-id]').length);
 </script>
 
 
@@ -1269,7 +1266,7 @@ function logFileDownload(serviceId) {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({ type: 'download' })
-    }).catch(console.error);
+    }).catch(() => {});
 }
 
 // For direct links with download attribute
@@ -1336,7 +1333,6 @@ function copyToClipboard(text) {
     navigator.clipboard.writeText(text).then(() => {
         alert('URL copied to clipboard');
     }).catch(err => {
-        console.error('Failed to copy: ', err);
     });
 }
 
@@ -1430,7 +1426,6 @@ async function downloadFile(serviceId) {
         document.body.removeChild(a);
         
     } catch (error) {
-        console.error('Download error:', error);
         alert('Failed to download file');
     }
 }
@@ -1463,7 +1458,6 @@ document.querySelectorAll('a[data-service-id]').forEach(link => {
         
         if (!serviceId || !clickType) return;
         
-        console.log(`Contact click logged - Service: ${serviceId}, Type: ${clickType}`);
         
         // SIMPLE GET REQUEST - No CSRF issues
         // This uses an image beacon technique - very reliable
@@ -1474,13 +1468,10 @@ document.querySelectorAll('a[data-service-id]').forEach(link => {
         fetch(`/api/log-click/${serviceId}?type=${encodeURIComponent(clickType)}`)
             .then(response => {
                 if (response.ok) {
-                    console.log('✅ Click logged successfully');
                 } else {
-                    console.warn('⚠️ Click logging failed (non-critical)');
                 }
             })
             .catch(error => {
-                console.warn('⚠️ Could not reach server (non-critical)');
             });
     });
 });
@@ -1499,10 +1490,8 @@ document.querySelectorAll('a[data-service-id]').forEach(link => {
         })
     }).then(response => {
         if (!response.ok) {
-            console.error('Failed to log download');
         }
     }).catch(error => {
-        console.error('Error logging download:', error);
     });
     
     // Open the download

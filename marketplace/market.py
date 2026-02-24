@@ -1,3 +1,4 @@
+from time_utils import utcnow
 # routes/market.py
 from flask import (
     Blueprint,
@@ -9,6 +10,7 @@ from flask import (
     current_app,
     flash,
     session,
+    abort,
 )
 from flask_login import login_required, current_user
 from extensions import db
@@ -66,6 +68,16 @@ env_path = os.path.join(os.path.dirname(__file__), ".env")
 load_dotenv(dotenv_path=env_path)
 
 market = Blueprint("market", __name__)
+
+
+def _require_debug_access():
+    """Restrict debug endpoints to admins when explicitly enabled."""
+    if not current_user.is_authenticated:
+        abort(404)
+    if not current_user.is_admin:
+        abort(404)
+    if not current_app.config.get("ENABLE_DEBUG_ROUTES"):
+        abort(404)
 
 # Initialize payment service
 payment_service = PaymentService()
@@ -334,6 +346,7 @@ def make_files_public_fixed():
 @login_required
 def debug_cloudinary():
     """Debug Cloudinary file issues"""
+    _require_debug_access()
     if not current_user.is_admin:
         return "Admin access required", 403
 
@@ -506,7 +519,7 @@ def main_market():
     # =========== CRITICAL CHANGE: Only show services from subscribed sellers ===========
     # Start with base query for active services from subscribed sellers only
     services_query = MarketplaceService.query.filter_by(status="active")
-    now = datetime.utcnow()
+    now = utcnow()
 
     # Join with users and ONLY include sellers with active subscriptions
     services_query = services_query.join(
@@ -723,7 +736,7 @@ def main_market():
     featured_sellers = (
         User.query.filter(
             User.marketplace_subscription_status == "active",
-            User.marketplace_featured_until > datetime.utcnow(),
+            User.marketplace_featured_until > utcnow(),
         )
         .order_by(func.random())
         .limit(6)
@@ -793,7 +806,7 @@ def main_market():
         service_type=service_type,
         featured_only=featured_only,
         format_price=format_price,
-        now=datetime.utcnow(),
+        now=utcnow(),
         total_subscribed_services=total_subscribed_services,  # Total before limiting
         total_sellers_displayed=total_sellers_displayed,  # How many sellers are showing
     )
@@ -945,7 +958,7 @@ def service_detail(slug):
         gallery_images=gallery_images,
         features=features,
         currency_symbols=currency_symbols,
-        now=datetime.utcnow(),
+        now=utcnow(),
         whatsapp_url=whatsapp_url,  # Pass the generated URL to template
     )
 
@@ -1102,7 +1115,7 @@ def seller_dashboard():
         currency_symbols=currency_symbols,
         format_price=format_price_with_currency,
         service_stats=service_stats,
-        now=datetime.utcnow(),
+        now=utcnow(),
     )
 
 
@@ -1197,7 +1210,7 @@ def create_service():
             subscription_id=subscription_id,
             subscription_status="pending" if subscription else "active",
             subscription_expires=(
-                datetime.utcnow() + timedelta(days=30) if subscription else None
+                utcnow() + timedelta(days=30) if subscription else None
             ),
             status="pending" if subscription else "active",
         )
@@ -1630,12 +1643,12 @@ def payment_callback():
             payment.gateway_payment_id = transaction_id
             payment.gateway_status = "successful"
             payment.status = "completed"
-            payment.paid_at = datetime.utcnow()
+            payment.paid_at = utcnow()
 
             # Update service subscription
             service = payment.service
             service.subscription_status = "active"
-            service.subscription_expires = datetime.utcnow() + timedelta(days=30)
+            service.subscription_expires = utcnow() + timedelta(days=30)
             service.status = "pending"  # Will be reviewed by admin
 
             # Create payment transaction record
@@ -1684,7 +1697,7 @@ def api_services():
 
         # Build query
         query = MarketplaceService.query.filter_by(status="active")
-        now = datetime.utcnow()
+        now = utcnow()
         query = query.join(
             User,
             and_(
@@ -1969,6 +1982,7 @@ def log_contact_click_fallback(service_id):
 @market.route("/debug-log-click/<int:service_id>", methods=["GET", "POST"])
 def debug_log_click(service_id):
     """Debug the log click endpoint"""
+    _require_debug_access()
     print(f"🔍 DEBUG - Request to log-click for service {service_id}")
     print(f"Method: {request.method}")
     print(f"Headers: {dict(request.headers)}")
@@ -2037,7 +2051,7 @@ def seller_stats(seller_id):
         )
 
         # Get monthly stats
-        now = datetime.utcnow()
+        now = utcnow()
         month_start = datetime(now.year, now.month, 1)
 
         monthly_views = (
@@ -2123,7 +2137,7 @@ def admin_services():
 
 #     try:
 #         service.status = 'active'
-#         service.published_at = datetime.utcnow()
+#         service.published_at = utcnow()
 #         db.session.commit()
 
 #         # TODO: Send email notification to seller
@@ -2664,7 +2678,7 @@ def seller_settings():
             api_keys=api_keys,
             login_history=login_history,
             active_sessions=active_sessions,
-            now=datetime.utcnow(),
+            now=utcnow(),
         )
 
     # POST: Handle settings updates
@@ -2780,7 +2794,7 @@ def edit_seller_profile():
         flash("Profile updated successfully!", "success")
         return redirect(url_for("market.seller_profile", seller_id=current_user.id))
 
-    return render_template("edit_seller_profile.html", now=datetime.utcnow())
+    return render_template("edit_seller_profile.html", now=utcnow())
 
 
 @market.route("/seller/<int:seller_id>", methods=["GET"])
@@ -2863,7 +2877,7 @@ def seller_profile(seller_id):
         total_views=total_views,
         reviews=reviews,
         currency_symbols=currency_symbols,
-        now=datetime.utcnow(),
+        now=utcnow(),
     )
 
 
@@ -2892,7 +2906,7 @@ def get_dashboard_stats():
         time_filter = request.args.get("time_filter", "all")  # week, month, year, all
 
         # Calculate time range
-        now = datetime.utcnow()
+        now = utcnow()
         if time_filter == "week":
             start_date = now - timedelta(days=7)
         elif time_filter == "month":
@@ -3386,7 +3400,7 @@ def check_subscription():
                 show_modal = False
         elif (
             current_user.marketplace_subscription_expires
-            and current_user.marketplace_subscription_expires - datetime.utcnow()
+            and current_user.marketplace_subscription_expires - utcnow()
             < timedelta(days=7)
         ):
             show_modal = True
@@ -3473,7 +3487,7 @@ def subscribe():
             plans=plans,
             current_plan=current_plan,
             current_user=current_user,
-            now=datetime.utcnow(),
+            now=utcnow(),
         )
 
     # POST: Process subscription
@@ -3496,7 +3510,7 @@ def subscribe():
             return redirect(url_for("market.seller_dashboard"))
 
         # Calculate expiration date
-        expires_at = datetime.utcnow() + timedelta(days=plan.duration_days)
+        expires_at = utcnow() + timedelta(days=plan.duration_days)
 
         # Store subscription info in session for payment processing
         session["subscription_data"] = {
@@ -3704,6 +3718,7 @@ def init_subscription_plans():
 @login_required
 def debug_payment():
     """Debug payment service initialization"""
+    _require_debug_access()
     try:
         result = {}
 
@@ -4119,8 +4134,8 @@ def test_marketplace_payment_db():
             gateway_status="test",
             status="completed",
             description="Test payment",
-            start_date=datetime.utcnow(),
-            end_date=datetime.utcnow() + timedelta(days=30),
+            start_date=utcnow(),
+            end_date=utcnow() + timedelta(days=30),
         )
 
         db.session.add(test_payment)
@@ -4143,6 +4158,7 @@ def test_marketplace_payment_db():
 @login_required
 def debug_subscription_status():
     """Debug subscription status for current user"""
+    _require_debug_access()
     try:
         user = current_user
 
@@ -4163,7 +4179,7 @@ def debug_subscription_status():
                 else None
             ),
             "marketplace_subscription_tier": user.marketplace_subscription_tier,
-            "now": datetime.utcnow().isoformat(),
+            "now": utcnow().isoformat(),
         }
 
         # Check if subscription is active
@@ -4171,7 +4187,7 @@ def debug_subscription_status():
         is_expired = False
 
         if user.marketplace_subscription_expires:
-            is_expired = datetime.utcnow() > user.marketplace_subscription_expires
+            is_expired = utcnow() > user.marketplace_subscription_expires
 
         subscription_info["is_active_bool"] = is_active
         subscription_info["is_expired"] = is_expired
@@ -4327,7 +4343,7 @@ def service_reviews(slug):
         rating_stats=rating_stats,
         total_reviews=total_reviews,
         average_rating=service.average_rating,
-        now=datetime.utcnow(),
+        now=utcnow(),
     )
 
 
@@ -4389,7 +4405,7 @@ def seller_reviews(seller_id):
         rating_stats=rating_stats,
         total_reviews=seller_rating.total_reviews,
         average_rating=seller_rating.average_rating,
-        now=datetime.utcnow(),
+        now=utcnow(),
     )
 
 
@@ -4634,7 +4650,7 @@ def review_helpful():
                     review.not_helpful_count += 1
 
                 existing_vote.is_helpful = is_helpful
-                existing_vote.created_at = datetime.utcnow()
+                existing_vote.created_at = utcnow()
         else:
             # Create new vote
             vote = ReviewHelpfulVote(
@@ -4698,7 +4714,7 @@ def review_reply():
             )
 
         review.seller_response = reply_text
-        review.seller_response_at = datetime.utcnow()
+        review.seller_response_at = utcnow()
 
         # Notify the buyer
         buyer = User.query.get(review.buyer_id)

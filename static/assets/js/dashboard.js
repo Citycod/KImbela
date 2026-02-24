@@ -12,7 +12,6 @@ window.toggleMobileMenu = function() {
     const sidebar = document.getElementById('mobileSidebar');
 
     if (!overlay || !sidebar) {
-        console.error('Mobile menu elements not found!');
         return;
     }
 
@@ -185,7 +184,6 @@ async function openChatForUser(userId) {
             Toast.show('Failed to load user info', 'danger');
         }
     } catch (error) {
-        console.error('Error opening chat:', error);
         Toast.show('Error opening chat', 'danger');
     }
 }
@@ -540,7 +538,6 @@ const PostSystem = {
             }
 
         } catch (error) {
-            console.error('Error liking post:', error);
             if (likeCount) likeCount.textContent = originalCount;
             if (icon) icon.className = originalIcon;
         } finally {
@@ -580,7 +577,6 @@ const PostSystem = {
                 Toast.show('Post updated successfully', 'success');
                 setTimeout(() => location.reload(), 1000);
             } catch (error) {
-                console.error('Error editing post:', error);
                 Toast.show('Failed to edit post', 'danger');
             } finally {
                 Loader.quick(submitBtn, 'hide');
@@ -610,7 +606,6 @@ const PostSystem = {
             const comments = await response.json();
             this.displayCommentsModal(comments);
         } catch (error) {
-            console.error('Error loading comments:', error);
             if (modalBody) {
                 modalBody.innerHTML = '<div class="text-center py-8 text-red-500">Failed to load comments</div>';
             }
@@ -733,7 +728,6 @@ const PostSystem = {
                 }, 500);
             }
         } catch (error) {
-            console.error('Error deleting post:', error);
             deleteBtn.innerHTML = originalContent;
             deleteBtn.disabled = false;
             Toast.show('Failed to delete post', 'danger');
@@ -761,7 +755,6 @@ const PostSystem = {
             Toast.show('Reposted to your feed!', 'success');
             setTimeout(() => location.reload(), 800);
         } catch (error) {
-            console.error('Error reposting:', error);
             repostBtn.innerHTML = originalContent;
             repostBtn.disabled = false;
             Toast.show(error.message || 'Failed to repost', 'danger');
@@ -799,7 +792,6 @@ const PostSystem = {
                 Toast.show(data.error || 'Failed to add comment', 'danger');
             }
         } catch (error) {
-            console.error('Error adding comment:', error);
             Toast.show('Failed to add comment', 'danger');
         } finally {
             inputElement.disabled = false;
@@ -856,7 +848,6 @@ const FriendSystem = {
                 Toast.show(data.error || 'Failed to send request', 'danger');
             }
         } catch (error) {
-            console.error('Error adding friend:', error);
             button.innerHTML = originalHTML;
             button.className = originalClass;
             button.disabled = false;
@@ -908,7 +899,6 @@ const FriendSystem = {
                 Toast.show(data.error || 'Failed to cancel request', 'danger');
             }
         } catch (error) {
-            console.error('Error cancelling friend request:', error);
             button.innerHTML = originalHTML;
             button.className = originalClass;
             button.disabled = false;
@@ -943,7 +933,6 @@ const FriendSystem = {
             const contentType = response.headers.get('content-type');
             if (!contentType || !contentType.includes('application/json')) {
                 const text = await response.text();
-                console.error('Non-JSON response:', text);
                 throw new Error('Server error (possible login issue or bad request)');
             }
 
@@ -975,7 +964,6 @@ const FriendSystem = {
                 Toast.show(data.error || 'Failed to accept request', 'danger');
             }
         } catch (error) {
-            console.error('Error accepting friend request:', error);
             Toast.show('Failed to accept. Please try again.', 'danger');
         } finally {
             Loader.quick(button, 'hide');
@@ -1008,7 +996,6 @@ const FriendSystem = {
             const contentType = response.headers.get('content-type');
             if (!contentType || !contentType.includes('application/json')) {
                 const text = await response.text();
-                console.error('Server returned non-JSON:', text.substring(0, 500));
                 throw new Error('Server error - please check login status');
             }
 
@@ -1041,7 +1028,6 @@ const FriendSystem = {
                 Toast.show(data.error || 'Failed to decline request', 'danger');
             }
         } catch (error) {
-            console.error('Error declining friend request:', error);
             Toast.show('Failed to decline request. Check login status.', 'danger');
         } finally {
             Loader.quick(button, 'hide');
@@ -1129,7 +1115,6 @@ const FriendSystem = {
                 return data.status;
             }
         } catch (error) {
-            console.error('Error checking friend status:', error);
         }
         return 'none';
     }
@@ -1146,7 +1131,6 @@ const ProfileSystem = {
             const profileActions = document.getElementById('profileActions');
 
             if (!modalBody || !profileActions) {
-                console.error('Profile modal elements not found');
                 return;
             }
 
@@ -1176,9 +1160,7 @@ const ProfileSystem = {
 
                 document.body.style.overflow = 'hidden';
 
-                console.log('Profile modal FORCE opened with inline styles');
             } else {
-                console.error('profileModal not found!');
             }
 
             // Load profile data
@@ -1203,7 +1185,6 @@ const ProfileSystem = {
             this.displayProfileModal(data, userId, fromFriendRequestNotification);
 
         } catch (error) {
-            console.error('Error loading profile:', error);
 
             const modalBody = document.getElementById('profileModalBody');
             if (modalBody) {
@@ -1446,7 +1427,6 @@ const ProfileSystem = {
             }
 
         } catch (error) {
-            console.error('Error displaying profile modal:', error);
             modalBody.innerHTML = `
                 <div class="text-center p-8 text-red-500 min-h-[400px] flex flex-col items-center justify-center">
                     <i class="bi bi-exclamation-triangle text-5xl mb-4"></i>
@@ -1641,7 +1621,6 @@ const ProfileSystem = {
                 profileActions.innerHTML = actionsHTML;
             }
         } catch (error) {
-            console.error('Error checking friend status:', error);
             // Fallback with beautiful buttons
             profileActions.innerHTML = `
                 <div class="flex flex-wrap gap-3 justify-center py-6">
@@ -1710,7 +1689,6 @@ const BlockSystem = {
                 Toast.show(data.error || 'Error blocking user', 'danger');
             }
         } catch (error) {
-            console.error('Error blocking user:', error);
             Toast.show('Error blocking user. Please try again.', 'danger');
         } finally {
             if (button) Loader.quick(button, 'hide');
@@ -1742,7 +1720,6 @@ const BlockSystem = {
                 Toast.show(data.error || 'Failed to unblock', 'danger');
             }
         } catch (error) {
-            console.error('Error unblocking user:', error);
             Toast.show('Error unblocking user', 'danger');
         } finally {
             if (button) Loader.quick(button, 'hide');
@@ -1773,7 +1750,6 @@ const NotificationSystem = {
                 badge.classList.add('hidden');
             }
         } catch (error) {
-            console.error('Error updating notification badge:', error);
         }
     },
 
@@ -1805,7 +1781,6 @@ const NotificationSystem = {
             const notifications = await response.json();
             this.display(notifications, list);
         } catch (error) {
-            console.error('Error loading notifications:', error);
             list.innerHTML = '<div class="text-center p-4 text-red-500"><i class="bi bi-exclamation-triangle"></i><p>Error loading notifications</p></div>';
         }
     },
@@ -1893,7 +1868,6 @@ const NotificationSystem = {
             this.updateBadge();
             this.load();
         } catch (error) {
-            console.error('Error marking notification as read:', error);
         }
     },
 
@@ -1925,7 +1899,6 @@ const NotificationSystem = {
                 throw new Error(data.error || 'Failed to accept request');
             }
         } catch (error) {
-            console.error('Error accepting friend request:', error);
             Toast.show('Failed to accept friend request', 'danger');
         }
     },
@@ -1958,7 +1931,6 @@ const NotificationSystem = {
                 throw new Error(data.error || 'Failed to decline request');
             }
         } catch (error) {
-            console.error('Error declining friend request:', error);
             Toast.show('Failed to decline friend request', 'danger');
         }
     },
@@ -2025,7 +1997,6 @@ const SearchSystem = {
             const data = await response.json();
             this.displayResults(data, query);
         } catch (error) {
-            console.error('Error performing search:', error);
             this.showError();
         }
     },
@@ -2151,7 +2122,6 @@ const SearchSystem = {
 
                 this.displayPostModal(post);
             } catch (error) {
-                console.error('Error viewing post:', error);
                 Toast.show('Post not found', 'danger');
             }
         }
@@ -2265,7 +2235,6 @@ const AdSystem = {
 
     // Initialize ad system
     async init() {
-        console.log('🤑 Initializing Ad System with smart intervals...');
 
         try {
             // Cache DOM elements
@@ -2286,11 +2255,9 @@ const AdSystem = {
             }, this.config.initialDelay);
 
             this.state.initialized = true;
-            console.log('✅ Ad System initialized successfully');
             return this;
 
         } catch (error) {
-            console.error('❌ Failed to initialize Ad System:', error);
             this.showErrorState('Initialization failed');
             throw error;
         }
@@ -2299,12 +2266,10 @@ const AdSystem = {
     // Start the ad display cycle
     startAdCycle() {
         if (this.state.activeAds.length === 0) {
-            console.log('📭 No ads to display');
             this.showNoAdsMessage();
             return;
         }
 
-        console.log(`🔄 Starting ad cycle with ${this.state.activeAds.length} ads`);
 
         // Clear any existing timers
         this.clearAllTimers();
@@ -2329,7 +2294,6 @@ const AdSystem = {
             interval = Math.max(60000, Math.min(90000, interval)); // Keep between 60-90s
         }
 
-        console.log(`⏰ Next ad in ${Math.round(interval/1000)} seconds`);
 
         // Set timer for next ad
         this.state.intervalTimer = setTimeout(() => {
@@ -2357,7 +2321,6 @@ const AdSystem = {
             return;
         }
 
-        console.log(`📢 Displaying ad: ${ad.title} (Index: ${this.state.currentAdIndex})`);
 
         // Update all ad displays
         this.updateNativeAd(ad);
@@ -2381,7 +2344,6 @@ const AdSystem = {
 
         // Reset if all ads have been shown
         if (this.state.displayedIndices.length >= this.state.activeAds.length) {
-            console.log('🔄 Resetting ad display tracking');
             this.state.displayedIndices = [];
         }
 
@@ -2481,13 +2443,11 @@ const AdSystem = {
     // Load ads from server with retry logic
     async loadAds() {
         if (this.state.retryCount >= this.config.maxRetries) {
-            console.error('❌ Max retries reached');
             this.showErrorState('Failed to load ads after multiple attempts');
             return;
         }
 
         try {
-            console.log('📡 Loading sponsored ads...');
 
             const response = await fetch('/api/ads/sponsored', {
                 method: 'GET',
@@ -2510,15 +2470,12 @@ const AdSystem = {
                 this.state.displayedIndices = [];
                 this.state.retryCount = 0;
 
-                console.log(`✅ Loaded ${data.ads.length} sponsored ads`);
 
             } else {
-                console.log('📭 No sponsored ads available');
                 this.showNoAdsMessage();
             }
 
         } catch (error) {
-            console.error('❌ Error loading ads:', error);
             this.state.retryCount++;
 
             // Retry with exponential backoff
@@ -2667,7 +2624,6 @@ const AdSystem = {
     async adNotInterested() {
         const currentAd = this.state.activeAds[this.state.currentAdIndex];
         if (currentAd) {
-            console.log(`User not interested in ad ${currentAd.id}`);
 
             try {
                 await fetch(`/api/ads/${currentAd.id}/not_interested`, {
@@ -2678,7 +2634,6 @@ const AdSystem = {
                     }
                 });
             } catch (error) {
-                console.error('Failed to track not interested:', error);
             }
         }
 
@@ -2709,7 +2664,6 @@ const AdSystem = {
 
     // Track ad click
     async trackAdClick(adId) {
-        console.log(`📊 Tracking click for ad ${adId}`);
 
         // Analytics
         if (typeof gtag === 'function') {
@@ -2730,13 +2684,11 @@ const AdSystem = {
                 }
             });
         } catch (error) {
-            console.error('Failed to track click:', error);
         }
     },
 
     // Track ad impression
     async trackAdImpression(adId) {
-        console.log(`📊 Tracking impression for ad ${adId}`);
 
         // Analytics
         if (typeof gtag === 'function') {
@@ -2757,7 +2709,6 @@ const AdSystem = {
                 }
             });
         } catch (error) {
-            console.error('Failed to track impression:', error);
         }
     },
 
@@ -2812,7 +2763,6 @@ const AdSystem = {
 
     // Refresh system
     refresh() {
-        console.log('🔄 Refreshing Ad System...');
 
         this.clearAllTimers();
         this.state.isShowingAd = false;
@@ -2828,7 +2778,6 @@ const AdSystem = {
 
     // Destroy/cleanup
     destroy() {
-        console.log('🧹 Cleaning up Ad System...');
 
         this.clearAllTimers();
         this.closeAdModal();
@@ -2868,7 +2817,6 @@ const Groups = {
 
     // Initialize groups system
     init() {
-        console.log('🔧 Groups system initialized');
 
         // Set up event listeners for dropdowns
         this.setupDropdownListeners();
@@ -2926,13 +2874,11 @@ const Groups = {
 
     // Main load function
     async load() {
-        console.log('📥 Loading groups...');
 
         // Check cache first
         const now = Date.now();
         if (this.cache.groups && this.cache.lastFetch &&
             (now - this.cache.lastFetch) < this.cache.expiry) {
-            console.log('📦 Using cached groups');
             this.displayGroups(this.cache.groups);
             return;
         }
@@ -2959,7 +2905,6 @@ const Groups = {
                 throw new Error('Invalid response format: Expected array');
             }
 
-            console.log(`✅ Loaded ${groups.length} groups`);
 
             // Cache the results
             this.cache.groups = groups;
@@ -2969,7 +2914,6 @@ const Groups = {
             this.displayGroups(groups);
 
         } catch (error) {
-            console.error('❌ Error loading groups:', error);
             this.showError(['groupsList', 'groupsListMobile', 'groupsListDesktop'], error.message);
 
             // Clear cache on error
@@ -3119,7 +3063,6 @@ const Groups = {
                     throw new Error('Invalid search results');
                 }
             } catch (error) {
-                console.error('Search error:', error);
                 this.showError(['groupsList', 'groupsListMobile', 'groupsListDesktop'], 'Search failed');
             }
         }, 300); // Debounce for 300ms
@@ -3175,7 +3118,6 @@ const Groups = {
                 throw new Error(data.error || 'Failed to join group');
             }
         } catch (error) {
-            console.error('Error joining group:', error);
             button.innerHTML = originalText;
             button.className = originalClass;
             button.disabled = false;
@@ -3233,7 +3175,6 @@ const Groups = {
                 throw new Error(data.error || 'Failed to leave group');
             }
         } catch (error) {
-            console.error('Error leaving group:', error);
             button.innerHTML = originalText;
             button.className = originalClass;
             button.disabled = false;
@@ -3305,7 +3246,6 @@ const Groups = {
     clearCache() {
         this.cache.groups = null;
         this.cache.lastFetch = null;
-        console.log('🧹 Groups cache cleared');
     },
 
     // Refresh groups (force reload)
@@ -3366,7 +3306,6 @@ const InfiniteScroll = {
                 }
             }
         } catch (error) {
-            console.error('Error loading more posts:', error);
             Toast.show('Failed to load more posts', 'danger');
             if (loadMoreBtn) loadMoreBtn.classList.remove('hidden');
         } finally {
@@ -3915,7 +3854,6 @@ async function reactToPost(postId, reactionType) {
             Toast.show(data.error || 'Failed to react', 'danger');
         }
     } catch (error) {
-        console.error('Reaction error:', error);
         updateReactionUI(postId, null, false, likeBtn, likeIcon, likeText);
         Toast.show('Network error', 'danger');
     }
@@ -3989,7 +3927,6 @@ function handleCommentKeypress(event, postId) {
 async function addComment(postId, content) {
     const input = document.getElementById(`commentInput-${postId}`);
     if (!input) {
-        console.error('Comment input not found for post:', postId);
         return;
     }
 
@@ -4106,7 +4043,6 @@ async function addComment(postId, content) {
             Toast.show(data.error || 'Failed to add comment', 'danger');
         }
     } catch (error) {
-        console.error('Comment error:', error);
 
         if (error.message.includes('401') || error.message.includes('login')) {
             Toast.show('Please log in again to comment', 'warning');
@@ -4177,7 +4113,6 @@ async function deleteComment(commentId, postId = null) {
             Toast.show(data.error || 'Failed', 'danger');
         }
     } catch (error) {
-        console.error(error);
         Toast.show('Network error', 'danger');
     }
 }
@@ -4278,7 +4213,6 @@ async function shareToFeed() {
         closeShareModal();
         setTimeout(() => location.reload(), 800);
     } catch (error) {
-        console.error('Error sharing:', error);
         Toast.show(error.message || 'Failed to share post', 'danger');
     }
 }
@@ -4501,12 +4435,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         setTimeout(() => location.reload(), 1000);
                     } else {
                         const errorText = await response.text();
-                        console.error('Create post failed:', response.status, errorText);
                         throw new Error('Failed to create post');
                     }
                 }
             } catch (error) {
-                console.error('Error creating post:', error);
                 Toast.show('Failed to create post', 'danger');
             } finally {
                 Loader.quick(submitBtn, 'hide');
@@ -4525,7 +4457,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    console.log('Dashboard initialized successfully');
 });
 
 // Make functions globally available

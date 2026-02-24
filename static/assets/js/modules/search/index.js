@@ -46,7 +46,6 @@ class SearchSystem {
             const data = await response.json();
             this.displayResults(data, query);
         } catch (error) {
-            console.error('Error performing search:', error);
             this.showError();
         }
     }
@@ -172,7 +171,6 @@ class SearchSystem {
 
                 this.displayPostModal(post);
             } catch (error) {
-                console.error('Error viewing post:', error);
                 Toast.show('Post not found', 'danger');
             }
         }

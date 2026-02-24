@@ -236,11 +236,9 @@ window.loadSectionContent = function(section, url) {
             if (container) {
                 container.innerHTML = html;
             } else {
-                console.error('admin-content element not found');
             }
         })
         .catch(error => {
-            console.error('Error loading content:', error);
             showToast('Failed to load content', 'error');
         });
 };
@@ -263,7 +261,6 @@ window.apiCall = async function(url, options = {}) {
 // Toast notification (simple fallback)
 // =====================
 window.showToast = function(message, type = 'info') {
-    console.log(`${type.toUpperCase()}: ${message}`);
     alert(`${type.toUpperCase()}: ${message}`); // Replace with your toast UI if available
 };
 
@@ -281,7 +278,6 @@ window.toggleUserStatus = async function(userId) {
             showToast('Failed to update user status', 'error');
         }
     } catch (error) {
-        console.error('Error toggling user status:', error);
         showToast('Error updating user status', 'error');
     }
 };
@@ -302,7 +298,6 @@ window.makeAdmin = async function(userId) {
             showToast('Failed to promote user', 'error');
         }
     } catch (error) {
-        console.error('Error making user admin:', error);
         showToast('Error promoting user to admin', 'error');
     }
 };
@@ -323,7 +318,6 @@ window.removeAdmin = async function(userId) {
             showToast('Failed to remove admin privileges', 'error');
         }
     } catch (error) {
-        console.error('Error removing admin privileges:', error);
         showToast('Error removing admin privileges', 'error');
     }
 };
@@ -401,7 +395,6 @@ window.viewUserProfile = async function(userId) {
 
       openModal('adminProfileModal');
   } catch (err) {
-      console.error(err);
       showToast('Failed to load user profile', 'error');
   }
 };

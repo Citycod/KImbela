@@ -32,7 +32,6 @@ class MobileMenu {
         const sidebar = document.getElementById('mobileSidebar');
 
         if (!overlay || !sidebar) {
-            console.error('Mobile menu elements not found!');
             return;
         }
 

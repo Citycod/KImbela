@@ -997,7 +997,6 @@
                     document.getElementById('reviews-count').textContent = stats.total_reviews;
                 }
             } catch (error) {
-                console.error('Error updating stats:', error);
             }
         }
         
@@ -1019,7 +1018,6 @@
                     updateServicesTable(data.services, data.pagination);
                 }
             } catch (error) {
-                console.error('Error loading services:', error);
                 showError('services-tbody', 'Failed to load services. Please try again.');
             }
         }
@@ -1257,7 +1255,6 @@
                     }, 100);
                 }
             } catch (error) {
-                console.error('Error loading analytics:', error);
                 container.innerHTML = `
                     <div class="text-red-600">
                         <i class="bi bi-exclamation-triangle text-2xl mb-2"></i>
@@ -1332,7 +1329,6 @@
                     `;
                 }
             } catch (error) {
-                console.error('Error loading reviews:', error);
                 container.innerHTML = `
                     <div class="text-red-600">
                         <i class="bi bi-exclamation-triangle text-2xl mb-2"></i>
@@ -1389,7 +1385,6 @@
                     container.innerHTML = html;
                 }
             } catch (error) {
-                console.error('Error loading earnings:', error);
                 container.innerHTML = `
                     <div class="text-red-600">
                         <i class="bi bi-exclamation-triangle text-2xl mb-2"></i>
@@ -1460,13 +1455,11 @@
             credentials: 'same-origin'  // Important for cookies
         });
         
-        console.log('Response status:', response.status, response.statusText);
         
         // Check if response is JSON
         const contentType = response.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
             const text = await response.text();
-            console.error('Received non-JSON response:', text.substring(0, 500));
             
             if (response.status === 400 && text.includes('CSRF token')) {
                 throw new Error('CSRF token missing or invalid. Please refresh the page.');
@@ -1513,7 +1506,6 @@
             throw new Error(data.error || 'Failed to delete service');
         }
     } catch (error) {
-        console.error('Error deleting service:', error);
         showNotification(`Error: ${error.message}`, 'error');
     } finally {
         deleteBtn.innerHTML = originalContent;
@@ -1544,7 +1536,6 @@ function getCSRFToken() {
         }
     }
     
-    console.warn('CSRF token not found');
     return null;
 }
 
@@ -1593,7 +1584,6 @@ function showNotification(message, type = 'info') {
         // Simple chart initialization
         function initializeAnalyticsChart(chartData) {
             if (typeof Chart === 'undefined') {
-                console.warn('Chart.js is not loaded');
                 return;
             }
             
@@ -1687,7 +1677,6 @@ async function checkSubscriptionStatus() {
             showSubscriptionModal(data.reason);
         }
     } catch (error) {
-        console.error('Error checking subscription:', error);
     }
 }
 
@@ -1810,7 +1799,6 @@ async function checkSubscriptionStatus() {
             showSubscriptionModal(data.reason);
         }
     } catch (error) {
-        console.error('Error checking subscription:', error);
     }
 }
 

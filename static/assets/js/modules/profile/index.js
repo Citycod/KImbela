@@ -38,7 +38,7 @@
 //        const profileModal = document.getElementById('profileModal');
 //
 //        if (!modalBody || !profileActions || !profileModal) {
-//            console.error('Profile modal elements not found');
+//            
 //            this.resetState();
 //            return;
 //        }
@@ -89,7 +89,7 @@
 //
 //            this.displayProfileModal(data, userId, fromFriendRequestNotification);
 //        } catch (error) {
-//            console.error('Error loading profile:', error);
+//            
 //            modalBody.innerHTML = `
 //                <div class="text-center p-8 text-red-500 min-h-[400px] flex flex-col items-center justify-center">
 //                    <i class="bi bi-exclamation-triangle text-4xl mb-4"></i>
@@ -283,7 +283,7 @@
 //                    </div>
 //                `;
 //            } catch (err) {
-//                console.error('Failed to load friend status buttons:', err);
+//                
 //                // Fallback: just show base buttons
 //                profileActions.innerHTML = `
 //                    <div class="flex flex-wrap gap-3 justify-center items-center">
@@ -293,7 +293,7 @@
 //            }
 //
 //        } catch (error) {
-//            console.error('Error displaying profile modal:', error);
+//            
 //            modalBody.innerHTML = `
 //                <div class="text-center p-8 text-red-500 min-h-[400px] flex flex-col items-center justify-center">
 //                    <i class="bi bi-exclamation-triangle text-5xl mb-4"></i>
@@ -359,7 +359,7 @@
 //                    `;
 //            }
 //        } catch (error) {
-//            console.error('Error checking friend status:', error);
+//            
 //            return null;
 //        }
 //    }

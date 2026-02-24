@@ -1561,7 +1561,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
         })
-        .catch(err => console.error('Error loading countries:', err));
+        .catch(() => {});
 
     // When country changes
     countrySelect.addEventListener('change', function () {
@@ -1569,7 +1569,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const countryId = selectedOption.getAttribute('data-country-id');
         const countryName = this.value;  // This is the country name
 
-        console.log('Selected Country:', { id: countryId, name: countryName });
 
         stateSelect.innerHTML = '<option value="">Loading states...</option>';
         citySelect.innerHTML = '<option value="">Select State First</option>';
@@ -1617,7 +1616,6 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             .catch(err => {
                 stateSelect.innerHTML = '<option value="">Error loading states</option>';
-                console.error(err);
             });
     }
 
@@ -1627,7 +1625,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const stateId = selectedOption.getAttribute('data-state-id');
         const stateName = this.value;
 
-        console.log('Selected State:', { id: stateId, name: stateName });
 
         if (!stateName) {
             citySelect.innerHTML = '<option value="">Select State First</option>';
@@ -1671,15 +1668,11 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             .catch(err => {
                 citySelect.innerHTML = '<option value="">Error loading cities</option>';
-                console.error(err);
             });
     }
 
     // For debugging - log what gets submitted
     document.getElementById('registerForm')?.addEventListener('submit', function(e) {
-        console.log('Form submission - Country:', countrySelect.value);
-        console.log('Form submission - State:', stateSelect.value);
-        console.log('Form submission - City:', citySelect.value);
     });
 });
 </script>

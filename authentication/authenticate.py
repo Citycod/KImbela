@@ -77,6 +77,7 @@ from flask_limiter.util import get_remote_address
 from flask_limiter import Limiter
 
 
+from time_utils import utcnow
 limiter = Limiter(key_func=get_remote_address)
 
 
@@ -122,7 +123,7 @@ def timeago_filter(dt):
         except:
             return "Unknown"
 
-    now = datetime.utcnow()
+    now = utcnow()
     return humanize.naturaltime(now - dt)
 
 
@@ -141,7 +142,7 @@ def is_strong_password(password):
 
 
 def calculate_age(birth_date):
-    today = datetime.utcnow().date()
+    today = utcnow().date()
     age = today.year - birth_date.year
     if (today.month, today.day) < (birth_date.month, birth_date.day):
         age -= 1
@@ -172,7 +173,7 @@ This is a test email from your Kimbela application.
 ✅ If you can see this in your terminal, your email setup is working!
 ✅ The local SMTP server is correctly intercepting and displaying emails.
 
-Timestamp: {datetime.utcnow()}
+Timestamp: {utcnow()}
 
 This email was not actually sent over the internet, but your Flask application
 successfully processed it through the local debug SMTP server.
@@ -206,7 +207,7 @@ Kimbela Team
                 <div class="info">
                     <p><strong>Local Debug Mode Active</strong></p>
                     <p>This email was intercepted by your local SMTP debug server.</p>
-                    <p>Timestamp: {datetime.utcnow()}</p>
+                    <p>Timestamp: {utcnow()}</p>
                 </div>
                 
                 <p>Your email functionality is working correctly for development!</p>
@@ -478,7 +479,7 @@ def register():
         if errors:
             for field, error in errors.items():
                 flash(error, "danger")
-            max_dob = (datetime.utcnow().date() - timedelta(days=31 * 365)).strftime(
+            max_dob = (utcnow().date() - timedelta(days=31 * 365)).strftime(
                 "%Y-%m-%d"
             )
             return render_template(
@@ -550,7 +551,7 @@ def register():
             db.session.rollback()
             flash("An error occurred during registration. Please try again.", "danger")
             print(f"Registration error: {e}")
-            max_dob = (datetime.utcnow().date() - timedelta(days=31 * 365)).strftime(
+            max_dob = (utcnow().date() - timedelta(days=31 * 365)).strftime(
                 "%Y-%m-%d"
             )
             return render_template(
@@ -565,7 +566,7 @@ def register():
             )
 
     # === GET request ===
-    max_dob = (datetime.utcnow().date() - timedelta(days=31 * 365)).strftime("%Y-%m-%d")
+    max_dob = (utcnow().date() - timedelta(days=31 * 365)).strftime("%Y-%m-%d")
     return render_template(
         "register.html",
         max_dob=max_dob,
@@ -597,7 +598,7 @@ def verify_page():
             return render_template("verify.html", email=email, user=user)
 
         # Token is correct → activate
-        if user.otp_expires < datetime.utcnow():
+        if user.otp_expires < utcnow():
             flash("Token expired. Please register again.", "danger")
             return redirect(url_for("auth.register"))
 

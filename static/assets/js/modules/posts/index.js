@@ -99,7 +99,6 @@ class PostSystem {
             Toast.show('Reposted to your feed!', 'success');
             setTimeout(() => location.reload(), 800);
         } catch (error) {
-            console.error('Error reposting post:', error);
             repostBtn.innerHTML = originalContent;
             repostBtn.disabled = false;
             Toast.show(error.message || 'Failed to repost', 'danger');
@@ -147,7 +146,6 @@ class PostSystem {
             }
 
         } catch (error) {
-            console.error('Error liking post:', error);
             if (likeCount) likeCount.textContent = originalCount;
             if (icon) icon.className = originalIcon;
         } finally {
@@ -179,7 +177,6 @@ class PostSystem {
                 }, 500);
             }
         } catch (error) {
-            console.error('Error deleting post:', error);
             deleteBtn.innerHTML = originalContent;
             deleteBtn.disabled = false;
             Toast.show('Failed to delete post', 'danger');
@@ -218,7 +215,6 @@ class PostSystem {
                 Toast.show('Post updated successfully', 'success');
                 setTimeout(() => location.reload(), 1000);
             } catch (error) {
-                console.error('Error editing post:', error);
                 Toast.show('Failed to edit post', 'danger');
             } finally {
                 Loader.quick(submitBtn, 'hide');
@@ -248,7 +244,6 @@ class PostSystem {
             const comments = await response.json();
             this.displayCommentsModal(comments);
         } catch (error) {
-            console.error('Error loading comments:', error);
             if (modalBody) {
                 modalBody.innerHTML = '<div class="text-center py-8 text-red-500">Failed to load comments</div>';
             }

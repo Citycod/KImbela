@@ -1168,7 +1168,6 @@
             }
           }
         } catch (error) {
-          console.error('Error checking active subscription:', error);
         }
       }
 
@@ -1319,11 +1318,9 @@
             updateResultsCount(data.requests.length, data.total);
 <!--            populateLocationFilter(data.requests);-->
           } else {
-            console.error('Error loading requests:', data.error);
             showError('Failed to load requests');
           }
         } catch (error) {
-          console.error('Error loading requests:', error);
           showError('Failed to load requests');
         } finally {
           document.getElementById('loadingState').classList.add('hidden');
@@ -1504,7 +1501,6 @@
                 document.body.style.overflow = '';
             }
         } catch (error) {
-            console.error('Error loading request details:', error);
             showError('Failed to load request details');
             document.getElementById('modalLoader').classList.add('hidden');
             document.getElementById('requestModal').classList.add('hidden');
@@ -1822,7 +1818,6 @@
             }
           }
         } catch (error) {
-          console.error('Error liking request:', error);
           showError('Failed to send heart signal');
         }
       }
@@ -1869,7 +1864,6 @@
             reloadRequests();
           }
         } catch (error) {
-          console.error('Error sending like:', error);
           showError('Failed to send heart signal');
         }
       }
@@ -1896,7 +1890,6 @@
             reloadRequests();
           }
         } catch (error) {
-          console.error('Error sending message:', error);
           showError('Failed to send message');
         }
       }
@@ -1919,7 +1912,6 @@
             showError('Failed to save profile');
           }
         } catch (error) {
-          console.error('Error saving request:', error);
           showError('Failed to save profile');
         }
       }
@@ -1935,7 +1927,6 @@
             document.getElementById('newThisWeek').textContent = data.stats.new_this_week;
           }
         } catch (error) {
-          console.error('Error fetching stats:', error);
         }
       }
 
@@ -2055,7 +2046,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 countrySelect.appendChild(option);
             });
         })
-        .catch(err => console.error('Error loading countries for filter:', err));
+        .catch(() => {});
 
     // When country changes
     countrySelect.addEventListener('change', function () {
@@ -2090,7 +2081,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 stateSelect.disabled = states.length === 0;
             })
-            .catch(err => console.error('Error loading states for filter:', err));
+            .catch(() => {});
     }
 
     // When state changes
@@ -2123,7 +2114,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 citySelect.disabled = false;
             })
-            .catch(err => console.error('Error loading cities for filter:', err));
+            .catch(() => {});
     }
 });
 </script>

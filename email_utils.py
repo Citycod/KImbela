@@ -1,3 +1,4 @@
+from time_utils import utcnow
 # email_utils.py
 import os
 from flask import render_template_string, url_for
@@ -424,7 +425,7 @@ class EmailService:
             <div class="info">
                 <p><strong>Resend Email Service Active</strong></p>
                 <p>This email was sent via Resend's email delivery API.</p>
-                <p>Timestamp: {datetime.utcnow()}</p>
+                <p>Timestamp: {utcnow()}</p>
                 <p>Recipient: {test_email}</p>
             </div>
 
@@ -445,7 +446,7 @@ class EmailService:
 
         Resend Email Service Active
         This email was sent via Resend's email delivery API.
-        Timestamp: {datetime.utcnow()}
+        Timestamp: {utcnow()}
         Recipient: {test_email}
 
         Your email functionality with Resend is working correctly!

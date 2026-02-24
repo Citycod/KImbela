@@ -7,6 +7,7 @@ from flask import (
     url_for,
     current_app,
     flash,
+    abort,
 )
 from sqlalchemy import or_
 from flask_login import login_required, current_user
@@ -21,7 +22,18 @@ import time
 import time
 
 
+from time_utils import utcnow
 payments = Blueprint("payments", __name__)
+
+
+def _require_debug_access():
+    """Restrict debug endpoints to admins when explicitly enabled."""
+    if not current_user.is_authenticated:
+        abort(404)
+    if not current_user.is_admin:
+        abort(404)
+    if not current_app.config.get("ENABLE_DEBUG_ROUTES"):
+        abort(404)
 
 DASHBOARD_AD_PLACEMENTS = {
     "dashboard-top": {
@@ -132,7 +144,11 @@ def upload_dashboard_ad_image(placement):
 @login_required
 def upload_dashboard_ad_video(placement):
     """Upload dashboard banner video to Cloudinary (sidebar placement only)"""
-    allowed_placements = {"dashboard-sidebar", "dashboard-vertical", "dashboard-spotlight"}
+    allowed_placements = {
+        "dashboard-sidebar",
+        "dashboard-vertical",
+        "dashboard-spotlight",
+    }
     if placement not in allowed_placements:
         return (
             jsonify(
@@ -672,8 +688,8 @@ def get_active_ads():
             AdCampaign.query.filter_by(status="active")
             .filter(AdCampaign.budget > 0)
             .filter(
-                AdCampaign.start_date <= datetime.utcnow(),
-                AdCampaign.end_date >= datetime.utcnow(),
+                AdCampaign.start_date <= utcnow(),
+                AdCampaign.end_date >= utcnow(),
             )
             .filter(
                 or_(AdCampaign.placement == None, AdCampaign.placement == "sponsored")
@@ -1011,6 +1027,7 @@ def debug_payment_service():
     from .payment_service import PaymentService
 
     """Debug PaymentService configuration"""
+    _require_debug_access()
     payment_service = PaymentService()
 
     # Test with a recent campaign
@@ -1048,6 +1065,7 @@ def test_payment_flow(campaign_id):
     from .payment_service import PaymentService
 
     """Test payment flow for a specific campaign"""
+    _require_debug_access()
     try:
         campaign = AdCampaign.query.get(campaign_id)
         if not campaign or campaign.user_id != current_user.id:
@@ -1095,6 +1113,7 @@ def test_flutterwave_direct():
     from .payment_service import PaymentService
 
     """Test Flutterwave API directly"""
+    _require_debug_access()
     try:
         payment_service = PaymentService()
 
@@ -1243,6 +1262,7 @@ def get_supported_currencies():
 @login_required
 def debug_transaction(tx_ref):
     """Debug transaction status"""
+    _require_debug_access()
     try:
         transaction = PaymentTransaction.query.filter_by(
             gateway_payment_id=tx_ref
@@ -1328,11 +1348,11 @@ def fix_campaign_status(campaign_id):
             campaign.status = "active"
             campaign.payment_gateway = transaction.gateway
             campaign.payment_id = transaction.gateway_payment_id
-            campaign.start_date = datetime.utcnow()
-            campaign.end_date = datetime.utcnow() + timedelta(
+            campaign.start_date = utcnow()
+            campaign.end_date = utcnow() + timedelta(
                 days=campaign.duration_days
             )
-            campaign.updated_at = datetime.utcnow()
+            campaign.updated_at = utcnow()
 
             db.session.commit()
 

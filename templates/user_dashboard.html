@@ -3452,7 +3452,6 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
           blockedUsersState.list = Array.isArray(users) ? users : [];
           renderBlockedUsers(blockedUsersState.list);
         } catch (error) {
-          console.error("Error loading blocked users:", error);
           list.innerHTML = `
             <div class="text-center py-10">
               <div class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-red-100 text-red-500 mb-3">
@@ -3495,7 +3494,6 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
           );
           filterBlockedUsers();
         } catch (error) {
-          console.error("Error unblocking user:", error);
           if (window.Toast?.show) {
             window.Toast.show("Unable to unblock user right now.", "danger");
           } else {

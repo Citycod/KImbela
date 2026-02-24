@@ -1,3 +1,4 @@
+from time_utils import utcnow
 # payment_service_ad.py
 import json
 from flask import url_for
@@ -34,7 +35,7 @@ class AdCampaignPaymentService:
         try:
             print(f"🟡 [AD PAYMENT] Starting payment for campaign: {campaign.id}")
             print(
-                f"🟡 [AD PAYMENT] Using Secret Key: {self.FLW_SECRET_KEY[:20]}..."
+                "🟡 [AD PAYMENT] Secret key present"
                 if self.FLW_SECRET_KEY
                 else "🔴 [AD PAYMENT] No secret key!"
             )
@@ -153,19 +154,19 @@ class AdCampaignPaymentService:
             transaction.gateway_status = "successful"
             if payment_data:
                 transaction.gateway_metadata = json.dumps(payment_data)
-            transaction.updated_at = datetime.utcnow()
+            transaction.updated_at = utcnow()
 
             # Update campaign
             campaign.payment_status = "paid"
             campaign.status = "active"
             campaign.payment_gateway = "flutterwave"
             campaign.payment_id = transaction.gateway_payment_id
-            campaign.start_date = datetime.utcnow()
+            campaign.start_date = utcnow()
 
             # Calculate end date
             duration_days = getattr(campaign, "duration_days", 30)
-            campaign.end_date = datetime.utcnow() + timedelta(days=duration_days)
-            campaign.updated_at = datetime.utcnow()
+            campaign.end_date = utcnow() + timedelta(days=duration_days)
+            campaign.updated_at = utcnow()
 
             db.session.commit()
 
@@ -198,13 +199,13 @@ class AdCampaignPaymentService:
                 if payment_data
                 else transaction.gateway_metadata
             )
-            transaction.updated_at = datetime.utcnow()
+            transaction.updated_at = utcnow()
 
             campaign = AdCampaign.query.get(transaction.campaign_id)
             if campaign:
                 campaign.payment_status = "failed"
                 campaign.status = "pending"
-                campaign.updated_at = datetime.utcnow()
+                campaign.updated_at = utcnow()
                 self.send_ad_payment_failed_email(
                     transaction.user_id, campaign, transaction
                 )

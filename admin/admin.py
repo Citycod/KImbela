@@ -28,6 +28,7 @@ from models import (
     MatchmakingPayments,
 )
 
+from time_utils import utcnow
 # from sendgrid import SendGridAPIClient
 # from sendgrid.helpers.mail import Mail, Content
 from datetime import datetime, timedelta
@@ -123,7 +124,7 @@ def timeago_filter(dt):
         except:
             return "Unknown"
 
-    now = datetime.utcnow()
+    now = utcnow()
     return humanize.naturaltime(now - dt)
 
 
@@ -142,7 +143,7 @@ def is_strong_password(password):
 
 
 def calculate_age(birth_date):
-    today = datetime.utcnow().date()
+    today = utcnow().date()
     age = today.year - birth_date.year
     if (today.month, today.day) < (birth_date.month, birth_date.day):
         age -= 1
@@ -168,7 +169,7 @@ def admin_dashboard():
     total_comments = Comment.query.count()
     total_reports = ReportedContent.query.count()
 
-    now = datetime.utcnow()
+    now = utcnow()
     day_start = datetime(now.year, now.month, now.day)
     month_start = datetime(now.year, now.month, 1)
     year_start = datetime(now.year, 1, 1)
@@ -382,9 +383,7 @@ def admin_dashboard():
     marketplace_total_revenue = float(sum_completed_marketplace_payments(epoch_start))
     ad_campaign_monthly_revenue = float(sum_completed_ad_campaign_payments(month_start))
     ad_campaign_total_revenue = float(sum_completed_ad_campaign_payments(epoch_start))
-    matchmaking_monthly_revenue = float(
-        sum_completed_matchmaking_payments(month_start)
-    )
+    matchmaking_monthly_revenue = float(sum_completed_matchmaking_payments(month_start))
     matchmaking_total_revenue = float(sum_completed_matchmaking_payments(epoch_start))
 
     earnings_labels = []
@@ -393,10 +392,9 @@ def admin_dashboard():
     for offset in range(6, -1, -1):
         bucket_start = day_start - timedelta(days=offset)
         bucket_end = bucket_start + timedelta(days=1)
-        earnings = (
-            sum_completed_payment_transactions_range(bucket_start, bucket_end)
-            + sum_completed_marketplace_payments_range(bucket_start, bucket_end)
-        )
+        earnings = sum_completed_payment_transactions_range(
+            bucket_start, bucket_end
+        ) + sum_completed_marketplace_payments_range(bucket_start, bucket_end)
         earnings_labels.append(bucket_start.strftime("%b %d"))
         earnings_series.append(float(earnings))
         user_series.append(
@@ -408,9 +406,7 @@ def admin_dashboard():
     marketplace_total_revenue = float(sum_completed_marketplace_payments(epoch_start))
     ad_campaign_monthly_revenue = float(sum_completed_ad_campaign_payments(month_start))
     ad_campaign_total_revenue = float(sum_completed_ad_campaign_payments(epoch_start))
-    matchmaking_monthly_revenue = float(
-        sum_completed_matchmaking_payments(month_start)
-    )
+    matchmaking_monthly_revenue = float(sum_completed_matchmaking_payments(month_start))
     matchmaking_total_revenue = float(sum_completed_matchmaking_payments(epoch_start))
 
     earnings_labels = []
@@ -419,10 +415,9 @@ def admin_dashboard():
     for offset in range(6, -1, -1):
         bucket_start = day_start - timedelta(days=offset)
         bucket_end = bucket_start + timedelta(days=1)
-        earnings = (
-            sum_completed_payment_transactions_range(bucket_start, bucket_end)
-            + sum_completed_marketplace_payments_range(bucket_start, bucket_end)
-        )
+        earnings = sum_completed_payment_transactions_range(
+            bucket_start, bucket_end
+        ) + sum_completed_marketplace_payments_range(bucket_start, bucket_end)
         earnings_labels.append(bucket_start.strftime("%b %d"))
         earnings_series.append(float(earnings))
         user_series.append(
@@ -434,9 +429,7 @@ def admin_dashboard():
     marketplace_total_revenue = float(sum_completed_marketplace_payments(epoch_start))
     ad_campaign_monthly_revenue = float(sum_completed_ad_campaign_payments(month_start))
     ad_campaign_total_revenue = float(sum_completed_ad_campaign_payments(epoch_start))
-    matchmaking_monthly_revenue = float(
-        sum_completed_matchmaking_payments(month_start)
-    )
+    matchmaking_monthly_revenue = float(sum_completed_matchmaking_payments(month_start))
     matchmaking_total_revenue = float(sum_completed_matchmaking_payments(epoch_start))
 
     earnings_labels = []
@@ -445,10 +438,9 @@ def admin_dashboard():
     for offset in range(6, -1, -1):
         bucket_start = day_start - timedelta(days=offset)
         bucket_end = bucket_start + timedelta(days=1)
-        earnings = (
-            sum_completed_payment_transactions_range(bucket_start, bucket_end)
-            + sum_completed_marketplace_payments_range(bucket_start, bucket_end)
-        )
+        earnings = sum_completed_payment_transactions_range(
+            bucket_start, bucket_end
+        ) + sum_completed_marketplace_payments_range(bucket_start, bucket_end)
         earnings_labels.append(bucket_start.strftime("%b %d"))
         earnings_series.append(float(earnings))
         user_series.append(
@@ -463,10 +455,9 @@ def admin_dashboard():
     for offset in range(6, -1, -1):
         bucket_start = day_start - timedelta(days=offset)
         bucket_end = bucket_start + timedelta(days=1)
-        earnings = (
-            sum_completed_payment_transactions_range(bucket_start, bucket_end)
-            + sum_completed_marketplace_payments_range(bucket_start, bucket_end)
-        )
+        earnings = sum_completed_payment_transactions_range(
+            bucket_start, bucket_end
+        ) + sum_completed_marketplace_payments_range(bucket_start, bucket_end)
         earnings_labels.append(bucket_start.strftime("%b %d"))
         earnings_series.append(float(earnings))
         user_series.append(
@@ -953,7 +944,9 @@ def admin_reports():
         if report.content_type == "comment" and report.content_id
     ]
     posts = Post.query.filter(Post.id.in_(post_ids)).all() if post_ids else []
-    comments = Comment.query.filter(Comment.id.in_(comment_ids)).all() if comment_ids else []
+    comments = (
+        Comment.query.filter(Comment.id.in_(comment_ids)).all() if comment_ids else []
+    )
     post_map = {post.id: post for post in posts}
     comment_map = {comment.id: comment for comment in comments}
 
@@ -993,7 +986,7 @@ def admin_resolve_report(report_id):
 
     report.status = "resolved"
     report.resolved_by = current_user.id
-    report.resolved_at = datetime.utcnow()
+    report.resolved_at = utcnow()
     report.admin_notes = request.json.get("notes", "")
 
     db.session.commit()
@@ -1010,7 +1003,7 @@ def admin_dismiss_report(report_id):
     report = ReportedContent.query.get_or_404(report_id)
     report.status = "dismissed"
     report.resolved_by = current_user.id
-    report.resolved_at = datetime.utcnow()
+    report.resolved_at = utcnow()
     report.admin_notes = request.json.get("notes", "")
 
     db.session.commit()
@@ -1185,11 +1178,11 @@ def admin_stats():
         return jsonify({"error": "Access denied"}), 403
 
     # User growth (last 30 days)
-    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+    thirty_days_ago = utcnow() - timedelta(days=30)
     user_growth = User.query.filter(User.created_at >= thirty_days_ago).count()
 
     # Active users (last 7 days)
-    seven_days_ago = datetime.utcnow() - timedelta(days=7)
+    seven_days_ago = utcnow() - timedelta(days=7)
     active_users = User.query.filter(User.last_seen >= seven_days_ago).count()
 
     # Group statistics
@@ -1259,7 +1252,7 @@ def admin_dashboard_content():
     total_comments = Comment.query.count()
     total_reports = ReportedContent.query.count()
 
-    now = datetime.utcnow()
+    now = utcnow()
     day_start = datetime(now.year, now.month, now.day)
     month_start = datetime(now.year, now.month, 1)
     year_start = datetime(now.year, 1, 1)

@@ -1,3 +1,4 @@
+from time_utils import utcnow
 # email_service.py
 from flask_mail import Message
 from flask import render_template, current_app
@@ -58,7 +59,7 @@ class EmailService:
                 transaction=transaction,
                 error_message=error_message,
                 campaign=campaign,
-                attempt_date=datetime.utcnow(),
+                attempt_date=utcnow(),
             )
 
             mail.send(msg)
@@ -150,7 +151,7 @@ class EmailService:
                     transaction=transaction,
                     error_message=error_message,
                     matchmaking_request=matchmaking_request,
-                    attempt_date=datetime.utcnow(),
+                    attempt_date=utcnow(),
                 )
             except:
                 # Fallback to direct HTML if template doesn't exist
@@ -174,7 +175,7 @@ class EmailService:
     def send_matchmaking_expiry_reminder(user, matchmaking_request):
         """Send expiry reminder email for matchmaking requests"""
         try:
-            days_remaining = (matchmaking_request.end_date - datetime.utcnow()).days
+            days_remaining = (matchmaking_request.end_date - utcnow()).days
             package_name = (
                 matchmaking_request.package.name
                 if matchmaking_request.package
@@ -210,7 +211,7 @@ class EmailService:
             from models import MatchmakingRequest
 
             # Get requests expiring in 1, 3, and 7 days
-            today = datetime.utcnow().date()
+            today = utcnow().date()
             reminder_days = [1, 3, 7]
             total_sent = 0
 

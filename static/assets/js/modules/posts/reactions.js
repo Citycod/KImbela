@@ -87,7 +87,6 @@ class ReactionSystem {
                 Toast.show(data.error || 'Failed to react', 'danger');
             }
         } catch (error) {
-            console.error('Reaction error:', error);
             this.updateReactionUI(postId, null, false, likeBtn, likeIcon, likeText);
             Toast.show('Network error', 'danger');
         }

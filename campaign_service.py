@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import logging
 from sqlalchemy import and_
 
+from time_utils import utcnow
 logger = logging.getLogger(__name__)
 
 
@@ -13,7 +14,7 @@ class CampaignService:
     def check_campaign_expiry(self):
         """Check and expire campaigns that have reached their end date"""
         try:
-            now = datetime.utcnow()
+            now = utcnow()
             expired_campaigns = AdCampaign.query.filter(
                 and_(AdCampaign.end_date <= now, AdCampaign.status == "active")
             ).all()
@@ -32,7 +33,7 @@ class CampaignService:
         try:
             # Update campaign status
             campaign.status = "expired"
-            campaign.updated_at = datetime.utcnow()
+            campaign.updated_at = utcnow()
 
             # Send expiry notification
             self.send_campaign_expired_email(campaign)
@@ -134,11 +135,11 @@ class CampaignService:
 
     def get_expiring_soon_campaigns(self, days=3):
         """Get campaigns expiring in the next few days"""
-        target_date = datetime.utcnow() + timedelta(days=days)
+        target_date = utcnow() + timedelta(days=days)
         return AdCampaign.query.filter(
             and_(
                 AdCampaign.end_date <= target_date,
-                AdCampaign.end_date > datetime.utcnow(),
+                AdCampaign.end_date > utcnow(),
                 AdCampaign.status == "active",
             )
         ).all()
@@ -147,7 +148,7 @@ class CampaignService:
         """Send reminder email before campaign expires"""
         try:
             user = User.query.get(campaign.user_id)
-            days_remaining = (campaign.end_date - datetime.utcnow()).days
+            days_remaining = (campaign.end_date - utcnow()).days
 
             subject = f"⏰ Your Ad Campaign Expires in {days_remaining} Days"
 

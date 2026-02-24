@@ -56,22 +56,18 @@
 
       // Initialize when page loads
       document.addEventListener('DOMContentLoaded', function() {
-          console.log('DOM loaded, checking for Messenger...');
 
           // Check if Messenger exists
           if (typeof Messenger === 'undefined') {
-              console.warn('Messenger not defined, loading script...');
 
               // Create a promise to wait for script load
               const loadMessenger = new Promise((resolve, reject) => {
                   const script = document.createElement('script');
                   script.src = '{{ url_for("static", filename="assets/js/messenger.js") }}';
                   script.onload = () => {
-                      console.log('✅ messenger.js loaded');
                       resolve();
                   };
                   script.onerror = () => {
-                      console.error('❌ Failed to load messenger.js');
                       reject();
                   };
                   document.head.appendChild(script);
@@ -82,20 +78,16 @@
                   setTimeout(() => {
                       if (typeof Messenger !== 'undefined' && Messenger.init) {
                           Messenger.init();
-                          console.log('✅ Messenger initialized successfully');
                       } else {
-                          console.error('❌ Messenger still not defined after loading');
                       }
                   }, 500);
               }).catch(() => {
-                  console.error('❌ Failed to initialize Messenger');
               });
           } else {
               // Messenger already exists (inline)
               setTimeout(() => {
                   if (Messenger.init) {
                       Messenger.init();
-                      console.log('✅ Messenger initialized from existing');
                   }
               }, 500);
           }
@@ -111,10 +103,8 @@
             bodyStyles.margin === "0px" && bodyStyles.fontFamily;
 
           if (!hasTailwind) {
-            console.log("🔄 Tailwind not detected, loading fallback...");
             loadFallbackTailwind();
           } else {
-            console.log("✅ Tailwind CSS loaded successfully");
           }
         }, 500);
       }
@@ -125,9 +115,8 @@
         link.rel = "stylesheet";
         link.href =
           "https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css";
-        link.onload = () => console.log("✅ Fallback Tailwind loaded");
+        link.onload = () => 
         link.onerror = () => {
-          console.log("❌ All CDNs failed, using inline styles");
           loadEmergencyStyles();
         };
         document.head.appendChild(link);
@@ -241,11 +230,9 @@
 
       // Define these functions BEFORE any inline onclick handlers try to use them
       window.openMessenger = function (friendId = null) {
-        console.log("Opening messenger, friendId:", friendId);
 
         const messengerPopup = document.getElementById("messengerPopup");
         if (!messengerPopup) {
-          console.error("Messenger popup not found");
           return;
         }
 
@@ -254,7 +241,6 @@
 
         // If a specific friend is provided, open chat with them
         if (friendId) {
-          console.log("Opening chat with user:", friendId);
 
           // Try to show chat area if possible
           const chatArea = document.getElementById("chatArea");
@@ -268,7 +254,6 @@
           }
         } else {
           // Just show friends list
-          console.log("Opening messenger to friends list");
           document.getElementById("friendList").classList.remove("hidden");
           document.getElementById("chatArea").classList.add("hidden");
         }
@@ -278,7 +263,6 @@
       };
 
       window.closeMessenger = function () {
-        console.log("Closing messenger");
         const messengerPopup = document.getElementById("messengerPopup");
         if (messengerPopup) {
           messengerPopup.classList.add("hidden");
@@ -351,7 +335,6 @@
 
       // Basic typing handler
       window.handleTyping = function () {
-        console.log("User is typing...");
         // Placeholder - would use socket.io in full version
       };
 

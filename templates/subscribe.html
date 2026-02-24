@@ -606,7 +606,6 @@
         
         // DOM Ready
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Become a Seller page loaded');
             
             // Initialize FAQ
             setupFAQ();
@@ -625,7 +624,6 @@
         
         // Plan Selection Function
         function selectPlan(planId, planName, price, tokens) {
-            console.log('Selecting plan:', planName, 'ID:', planId, 'Price:', price);
             
             // Store selection
             selectedPlanId = planId;
@@ -679,7 +677,6 @@
         }
         
         function goBackToPlans() {
-            console.log('Going back to plans');
             
             // Reset selection
             selectedPlanId = null;
@@ -726,7 +723,6 @@
         
         // Payment Method Selection
         function selectPaymentMethod(method) {
-            console.log('Selecting payment method:', method);
             
             selectedPaymentMethod = method;
             
@@ -757,7 +753,6 @@
         
         // Flutterwave Payment Processing
         async function processFlutterwavePayment() {
-            console.log('🟡 [PAYMENT] Starting Flutterwave payment for plan:', selectedPlanId);
             
             // Check if user agreed to terms
             const agreeTerms = document.getElementById('agreeTerms');
@@ -778,7 +773,6 @@
             try {
                 // Get CSRF token
                 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-                console.log('🟡 [PAYMENT] CSRF Token found:', !!csrfToken);
                 
                 if (!csrfToken) {
                     throw new Error('CSRF token not found. Please refresh the page.');
@@ -792,7 +786,6 @@
                     currency: 'USD'
                 };
                 
-                console.log('🟡 [PAYMENT] Sending request data:', requestData);
                 
                 // Send payment request
                 const response = await fetch('/become-seller', {
@@ -807,7 +800,6 @@
                     credentials: 'include'
                 });
                 
-                console.log('🟡 [PAYMENT] Response status:', response.status);
                 
                 // Get the full response text
                 const responseText = await response.text();
@@ -817,7 +809,6 @@
                     responseText.includes('<!DOCTYPE html>') ||
                     responseText.includes('<html')) {
                     
-                    console.error('❌ [PAYMENT] Server returned HTML error page instead of JSON');
                     
                     // Try to extract error message from HTML
                     const errorTitleMatch = responseText.match(/<title[^>]*>([^<]+)<\/title>/i);
@@ -838,9 +829,7 @@
                 let result;
                 try {
                     result = JSON.parse(responseText);
-                    console.log('✅ [PAYMENT] Successfully parsed JSON:', result);
                 } catch (parseError) {
-                    console.error('❌ [PAYMENT] JSON parse error:', parseError);
                     
                     hideModal('paymentModal');
                     showError('Server Response Error', 
@@ -849,20 +838,16 @@
                 }
                 
                 if (response.ok && result.success) {
-                    console.log('✅ [PAYMENT] Payment initiated successfully');
-                    console.log('✅ [PAYMENT] Redirecting to:', result.payment_url);
                     
                     // Redirect to Flutterwave payment page
                     window.location.href = result.payment_url;
                 } else {
                     hideModal('paymentModal');
                     const errorMsg = result.error || result.message || 'Payment processing failed.';
-                    console.error('❌ [PAYMENT] Payment failed:', errorMsg);
                     showError('Payment Failed', errorMsg);
                 }
                 
             } catch (error) {
-                console.error('❌ [PAYMENT] Network/JS error:', error);
                 hideModal('paymentModal');
                 showError('Payment Error', error.message || 'Network error occurred.');
             }

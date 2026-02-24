@@ -1569,7 +1569,6 @@
                 }
             })
             .catch(error => {
-                console.error('Upload error:', error);
                 showNotification('Error uploading image: ' + error.message, 'error');
             })
             .finally(() => {
@@ -1597,7 +1596,6 @@
                 }
             })
             .catch(error => {
-                console.error('Error checking active requests:', error);
             });
         }
 
@@ -1692,7 +1690,6 @@
                 }
             })
             .catch(error => {
-                console.error('Error deactivating request:', error);
                 showNotification('Failed to deactivate request: ' + error.message, 'error');
                 closeExistingRequestModal();
             });
@@ -1707,9 +1704,7 @@
 
         // Payment Processing - Updated for fixed $10 price
         function createRequestAndProcessPayment(requestData) {
-            console.log('Starting payment process with data:', requestData);
             // Add this debug line at the beginning of your function
-            console.log('AppState.selectedPackageId:', AppState.selectedPackageId);
             
             const createBtn = document.getElementById('createRequestBtn');
             const originalText = createBtn.innerHTML;
@@ -1733,10 +1728,8 @@
                 })
             })
             .then(response => {
-                console.log('Create request response status:', response.status);
                 if (!response.ok) {
                     return response.json().then(errorData => {
-                        console.error('Create request error:', errorData);
                         throw new Error(JSON.stringify({
                             type: 'API_ERROR',
                             data: errorData,
@@ -1752,10 +1745,8 @@
                 return response.json();
             })
             .then(data => {
-                console.log('Create request result:', data);
                 
                 if (data.success) {
-                    console.log('Request created with ID:', data.request_id);
                     
                     const paymentPayload = {
                         request_id: data.request_id,
@@ -1766,7 +1757,6 @@
                         campaign_description: 'Premium matchmaking service - $10/month'
                     };
 
-                    console.log('Initiating payment with data:', paymentPayload);
                     
                     return fetch('/initiate-matchmaking-payment', {
                         method: 'POST',
@@ -1791,11 +1781,9 @@
                 }
             })
             .then(response => {
-                console.log('Payment initiation response status:', response.status);
                 
                 if (!response.ok) {
                     return response.text().then(text => {
-                        console.error('Payment initiation error response text:', text);
                         let errorData;
                         try {
                             errorData = JSON.parse(text);
@@ -1812,7 +1800,6 @@
                 return response.json();
             })
             .then(paymentData => {
-                console.log('Payment initiation result:', paymentData);
                 
                 if (paymentData.success) {
                     if (paymentData.payment_url) {
@@ -1824,7 +1811,6 @@
                         }
                         
                         document.getElementById('paymentModal').classList.add('hidden');
-                        console.log('Redirecting to payment URL:', paymentData.payment_url);
                         
                         setTimeout(() => {
                             window.location.href = paymentData.payment_url;
@@ -1843,7 +1829,6 @@
                 }
             })
             .catch(error => {
-                console.error('Error in request/payment process:', error);
                 
                 createBtn.innerHTML = originalText;
                 createBtn.disabled = false;
@@ -1873,7 +1858,6 @@
                             showNotification('An unexpected error occurred. Please try again.', 'error');
                     }
                 } catch (parseError) {
-                    console.error('Error parsing error message:', parseError);
                     showNotification('An error occurred while processing your request. Please try again.', 'error');
                 }
                 
@@ -2137,7 +2121,6 @@
                 })
                 .catch(error => {
                     document.getElementById('paymentModal').classList.add('hidden');
-                    console.error('Payment verification error:', error);
                     showNotification('Error verifying payment', 'error');
                 });
             }
@@ -2158,11 +2141,9 @@
             .then(response => response.json())
             .then(data => {
                 if (!data.success) {
-                    console.error('Failed to update payment status:', data.error);
                 }
             })
             .catch(error => {
-                console.error('Error updating payment status:', error);
             });
         }
     </script>
@@ -2195,7 +2176,6 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         })
         .catch(err => {
-            console.error('Error loading countries:', err);
             countrySelect.innerHTML = '<option value="">Error loading countries</option>';
         });
 
@@ -2239,7 +2219,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             })
             .catch(err => {
-                console.error('Error loading states:', err);
                 stateSelect.innerHTML = '<option value="">Error loading states</option>';
             });
     }
@@ -2278,7 +2257,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 citySelect.disabled = false;
             })
             .catch(err => {
-                console.error('Error loading cities:', err);
                 citySelect.innerHTML = '<option value="">Error loading cities</option>';
             });
     }

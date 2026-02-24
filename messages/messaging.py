@@ -18,6 +18,7 @@ import os
 from PIL import Image
 
 
+from time_utils import utcnow
 messaging = Blueprint("messaging", __name__)
 
 # Configuration
@@ -59,6 +60,9 @@ def save_file(file, file_type="image"):
     if not file or file.filename == "":
         return None
 
+    if file_type not in ALLOWED_EXTENSIONS:
+        raise ValueError("Invalid file type")
+
     # Validate file size
     file.seek(0, os.SEEK_END)
     file_size = file.tell()
@@ -69,8 +73,10 @@ def save_file(file, file_type="image"):
             f"File too large. Maximum size is {MAX_FILE_SIZE // (1024 * 1024)}MB"
         )
 
-    # Generate secure filename
+    # Generate secure filename and validate extension
     original_filename = secure_filename(file.filename)
+    if not allowed_file(original_filename, file_type):
+        raise ValueError("Invalid file extension")
     unique_filename = generate_unique_filename(original_filename)
 
     # Create directory if it doesn't exist
@@ -487,9 +493,11 @@ def upload_file():
             }
         )
 
+    except ValueError as e:
+        return jsonify({"success": False, "error": str(e)}), 400
     except Exception as e:
         print(f"❌ Error uploading file: {e}")
-        return jsonify({"success": False, "error": str(e)}), 500
+        return jsonify({"success": False, "error": "Upload failed"}), 500
 
 
 @messaging.route("/api/messaging/unread_count")
@@ -589,7 +597,7 @@ def notify_friends_online(user_id):
                     {
                         "user_id": user_id,
                         "user_name": user.full_name,
-                        "timestamp": datetime.utcnow().isoformat(),
+                        "timestamp": utcnow().isoformat(),
                     },
                     room=f"user_{friend.id}",
                 )
@@ -612,7 +620,7 @@ def notify_friends_offline(user_id):
                     {
                         "user_id": user_id,
                         "user_name": user.full_name,
-                        "timestamp": datetime.utcnow().isoformat(),
+                        "timestamp": utcnow().isoformat(),
                     },
                     room=f"user_{friend.id}",
                 )
@@ -742,7 +750,7 @@ def delete_message(message_id):
         # Notify recipient via socket
         socketio.emit(
             "message_deleted",
-            {"message_id": message_id, "timestamp": datetime.utcnow().isoformat()},
+            {"message_id": message_id, "timestamp": utcnow().isoformat()},
             room=f"user_{message.receiver_id}",
         )
 

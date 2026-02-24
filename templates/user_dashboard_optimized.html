@@ -224,7 +224,6 @@
                     }
                 }
             } catch (error) {
-                console.error('Error loading posts:', error);
             } finally {
                 isLoading = false;
                 document.getElementById('loading-spinner').classList.add('hidden');
@@ -263,7 +262,6 @@
                     button.classList.remove('text-blue-600');
                 }
             } catch (error) {
-                console.error('Error liking post:', error);
             }
         }
     </script>

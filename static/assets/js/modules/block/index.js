@@ -38,7 +38,6 @@ class BlockSystem {
                 Toast.show(data.error || 'Error blocking user', 'danger');
             }
         } catch (error) {
-            console.error('Error blocking user:', error);
             Toast.show('Error blocking user. Please try again.', 'danger');
         } finally {
             if (button) Loader.quick(button, 'hide');
@@ -70,7 +69,6 @@ class BlockSystem {
                 Toast.show(data.error || 'Failed to unblock', 'danger');
             }
         } catch (error) {
-            console.error('Error unblocking user:', error);
             Toast.show('Error unblocking user', 'danger');
         } finally {
             if (button) Loader.quick(button, 'hide');

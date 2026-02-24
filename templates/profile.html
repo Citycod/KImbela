@@ -828,7 +828,6 @@
                     renderBlockedUsersList(blockedUsersState.list);
                 })
                 .catch(error => {
-                    console.error('Error loading blocked users:', error);
                     list.innerHTML = `
                         <div class="text-center py-4">
                             <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mx-auto mb-3">
@@ -872,7 +871,6 @@
                             }
                         })
                         .catch(error => {
-                            console.error('Error:', error);
                             showNotification('Error unblocking user. Please try again.', 'error');
                         });
                     }
@@ -912,7 +910,6 @@
                     }
                 })
                 .catch(error => {
-                    console.error('Error:', error);
                     showNotification('Error updating profile. Please try again.', 'error');
                     submitBtn.innerHTML = originalText;
                     submitBtn.disabled = false;
@@ -949,7 +946,6 @@
                     }
                 })
                 .catch(error => {
-                    console.error('Error:', error);
                     showNotification('Error creating post. Please try again.', 'error');
                     submitBtn.innerHTML = originalText;
                     submitBtn.disabled = false;
@@ -1040,7 +1036,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
         })
-        .catch(err => console.error('Error loading countries:', err));
+        .catch(() => {});
 
     // When country changes
     countrySelect.addEventListener('change', function () {
@@ -1127,7 +1123,6 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             .catch(err => {
                 citySelect.innerHTML = '<option value="">Error loading cities</option>';
-                console.error(err);
             });
     }
 });

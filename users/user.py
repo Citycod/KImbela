@@ -8,6 +8,7 @@ from flask import (
     Blueprint,
     session,
     current_app,
+    abort,
 )
 from datetime import date
 from urllib.parse import urlparse
@@ -47,6 +48,7 @@ from werkzeug.utils import secure_filename
 import cloudinary.uploader
 import cloudinary.utils
 
+from time_utils import utcnow
 # from scheduler import (
 #     manual_trigger_matchmaking_expiry_check,
 #     manual_trigger_expired_matchmaking_check,
@@ -117,6 +119,7 @@ def safe_cache_delete(cache_key):
         except Exception:
             pass
 
+
 load_dotenv()
 
 env_path = os.path.join(os.path.dirname(__file__), ".env")
@@ -134,6 +137,16 @@ cloudinary.config(
 
 user = Blueprint("user", __name__)
 
+
+def _require_debug_access():
+    """Restrict debug endpoints to admins when explicitly enabled."""
+    if not current_user.is_authenticated:
+        abort(404)
+    if not current_user.is_admin:
+        abort(404)
+    if not current_app.config.get("ENABLE_DEBUG_ROUTES"):
+        abort(404)
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
@@ -150,7 +163,7 @@ def timeago_filter(dt):
         except:
             return "Unknown"
 
-    now = datetime.utcnow()
+    now = utcnow()
     return humanize.naturaltime(now - dt)
 
 
@@ -169,7 +182,7 @@ def is_strong_password(password):
 
 
 def calculate_age(birth_date):
-    today = datetime.utcnow().date()
+    today = utcnow().date()
     age = today.year - birth_date.year
     if (today.month, today.day) < (birth_date.month, birth_date.day):
         age -= 1
@@ -183,7 +196,7 @@ def index():
 
 
 def timeago(dt):
-    now = datetime.utcnow()
+    now = utcnow()
     diff = now - dt
     if diff.days > 0:
         return f"{diff.days}d ago"
@@ -395,7 +408,7 @@ def send_birthday_wish():
             print(f"📝 Updating existing birthday notification ID: {notification.id}")
             notification.is_wished = True
             notification.wish_message = message
-            notification.wished_at = datetime.utcnow()
+            notification.wished_at = utcnow()
             print(f"   → Updated wish status to: {notification.is_wished}")
             print(f"   → Wish message: {notification.wish_message[:50]}...")
         else:
@@ -406,7 +419,7 @@ def send_birthday_wish():
                 birthday_date=today,
                 is_wished=True,
                 wish_message=message,
-                wished_at=datetime.utcnow(),
+                wished_at=utcnow(),
             )
             db.session.add(notification)
             print(f"   → Created notification with wished_at: {notification.wished_at}")
@@ -422,13 +435,13 @@ def send_birthday_wish():
         birthday_message.sender_id = current_user.id
         birthday_message.receiver_id = friend.id
         birthday_message.content = f"🎂 {message}"
-        birthday_message.timestamp = datetime.utcnow()
+        birthday_message.timestamp = utcnow()
         birthday_message.status = "sent"
         birthday_message.message_type = "birthday_wish"
         birthday_message.message_data = {
             "is_birthday_wish": True,
             "original_message": message,
-            "wish_sent_at": datetime.utcnow().isoformat(),
+            "wish_sent_at": utcnow().isoformat(),
             "friend_name": friend.full_name,
             "wisher_name": current_user.full_name,
         }
@@ -472,7 +485,7 @@ def send_birthday_wish():
         print(f"🎉 Birthday wish sent successfully!")
         print(f"   → Message ID: {birthday_message.id}")
         print(f"   → Notification ID: {notification.id}")
-        print(f"   → Sent at: {datetime.utcnow().isoformat()}")
+        print(f"   → Sent at: {utcnow().isoformat()}")
 
         return jsonify(
             {
@@ -480,7 +493,7 @@ def send_birthday_wish():
                 "message": "Birthday wish sent! 🎉",
                 "message_id": birthday_message.id,
                 "notification_id": notification.id,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": utcnow().isoformat(),
                 "friend_name": friend.full_name,
             }
         )
@@ -540,8 +553,6 @@ def mark_birthday_notifications_seen():
     except Exception as e:
         db.session.rollback()
         return jsonify({"success": False, "error": str(e)}), 500
-    
-    
 
 
 @user.route("/user_dashboard", methods=["GET", "POST"])
@@ -654,7 +665,7 @@ def user_dashboard():
                 gif=gif_url_saved,
                 location=post_location or None,
                 author_id=current_user.id,
-                created_at=datetime.utcnow(),
+                created_at=utcnow(),
             )
 
             db.session.add(new_post)
@@ -742,7 +753,7 @@ def user_dashboard():
             user.friend_request_status = current_user.get_friend_request_status(user.id)
 
     # Sponsored ads (example)
-    current_time = datetime.utcnow()
+    current_time = utcnow()
     sponsored_ads = (
         AdCampaign.query.filter(
             AdCampaign.status == "active",
@@ -789,11 +800,16 @@ def user_dashboard():
             .first()
         )
         if banner_ad:
-            media_url = banner_ad.image or "https://via.placeholder.com/1200x600/0f172a/ffffff?text=Kimbela+Ad"
+            media_url = (
+                banner_ad.image
+                or "https://via.placeholder.com/1200x600/0f172a/ffffff?text=Kimbela+Ad"
+            )
             video_mime = get_video_mime(media_url)
             media_type = (
                 "video"
-                if placement in ["dashboard-sidebar", "dashboard-vertical", "dashboard-spotlight"] and video_mime
+                if placement
+                in ["dashboard-sidebar", "dashboard-vertical", "dashboard-spotlight"]
+                and video_mime
                 else "image"
             )
             dashboard_ads[key] = {
@@ -985,7 +1001,7 @@ def handle_ajax_post_upload():
             image=image_url,
             video=video_url,
             author_id=current_user.id,
-            created_at=datetime.utcnow(),
+            created_at=utcnow(),
             emoji_data=emoji_info,
             # likes_count=0,
             # comments_count=0
@@ -1496,7 +1512,7 @@ def clear_dashboard_cache():
 #                 image=image_url,
 #                 video=video_url,
 #                 author_id=current_user.id,
-#                 created_at=datetime.utcnow(),
+#                 created_at=utcnow(),
 #             )
 #             db.session.add(new_post)
 #             db.session.commit()
@@ -1833,6 +1849,7 @@ def get_comments(post_id):
 @login_required
 def debug_notification_status():
     """Check read status of notifications"""
+    _require_debug_access()
     notifications = (
         Notification.query.filter_by(user_id=current_user.id)
         .order_by(Notification.created_at.desc())
@@ -1919,7 +1936,7 @@ def add_friend(user_id):
             sender_id=current_user.id,
             receiver_id=target_user.id,
             status="pending",
-            created_at=datetime.utcnow(),
+            created_at=utcnow(),
         )
 
         db.session.add(friend_request)
@@ -1934,7 +1951,7 @@ def add_friend(user_id):
             type="friend_request",
             message=f"{current_user.full_name} sent you a friend request",
             entity_id=friend_request.id,  # Now this has a value
-            created_at=datetime.utcnow(),
+            created_at=utcnow(),
             is_read=False,
         )
 
@@ -2006,7 +2023,7 @@ def get_sponsored_ads():
     try:
         from datetime import datetime
 
-        current_time = datetime.utcnow()
+        current_time = utcnow()
 
         print(f"🔍 [DEBUG] Loading sponsored ads at: {current_time}")
 
@@ -2303,6 +2320,7 @@ def get_unread_count():
 @login_required
 def debug_notifications():
     """Debug notifications to see what's wrong"""
+    _require_debug_access()
     from sqlalchemy import text
 
     user_id = current_user.id
@@ -2358,6 +2376,7 @@ def debug_notifications():
 @login_required
 def debug_posts():
     """Debug posts to see why they're not appearing"""
+    _require_debug_access()
 
     # Check your Post model structure
     from sqlalchemy import text
@@ -2492,7 +2511,7 @@ def compute_notification_count(user_id):
             Notification.user_id == user_id,
             Notification.is_read == False,
             # Add time filter if you want to limit to recent notifications
-            # Notification.created_at >= datetime.utcnow() - timedelta(days=30)
+            # Notification.created_at >= utcnow() - timedelta(days=30)
         )
         .scalar()
     )
@@ -2593,7 +2612,7 @@ def create_notification(user_id, message, type="info"):
         message=message,
         type=type,
         read=False,
-        created_at=datetime.utcnow(),
+        created_at=utcnow(),
     )
     db.session.add(notification)
     db.session.commit()
@@ -2746,10 +2765,10 @@ def get_post(post_id):
 @user.before_request
 def update_last_seen():
     if current_user.is_authenticated:
-        current_user.last_seen = datetime.utcnow()
+        current_user.last_seen = utcnow()
         # Consider user online if seen < 5 min ago
         current_user.is_online = (
-            datetime.utcnow() - current_user.last_seen
+            utcnow() - current_user.last_seen
         ) < timedelta(minutes=5)
         db.session.commit()
 
@@ -3394,7 +3413,7 @@ def create_group_post(group_id):
             video=video_url,
             author_id=current_user.id,
             group_id=group_id,  # Now this will work!
-            created_at=datetime.utcnow(),
+            created_at=utcnow(),
         )
 
         db.session.add(post)

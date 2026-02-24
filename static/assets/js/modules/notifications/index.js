@@ -30,7 +30,6 @@ class NotificationSystem {
                 badge.classList.add('hidden');
             }
         } catch (error) {
-            console.error('Error updating notification badge:', error);
         }
     }
 
@@ -59,7 +58,6 @@ class NotificationSystem {
             const notifications = await response.json();
             this.display(notifications, list);
         } catch (error) {
-            console.error('Error loading notifications:', error);
             list.innerHTML = '<div class="text-center p-4 text-red-500"><i class="bi bi-exclamation-triangle"></i><p>Error loading notifications</p></div>';
         }
     }
@@ -147,7 +145,6 @@ class NotificationSystem {
             this.updateBadge();
             this.load();
         } catch (error) {
-            console.error('Error marking notification as read:', error);
         }
     }
 
@@ -179,7 +176,6 @@ class NotificationSystem {
                 throw new Error(data.error || 'Failed to accept request');
             }
         } catch (error) {
-            console.error('Error accepting friend request:', error);
             Toast.show('Failed to accept friend request', 'danger');
         }
     }
@@ -212,7 +208,6 @@ class NotificationSystem {
                 throw new Error(data.error || 'Failed to decline request');
             }
         } catch (error) {
-            console.error('Error declining friend request:', error);
             Toast.show('Failed to decline friend request', 'danger');
         }
     }

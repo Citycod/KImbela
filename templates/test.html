@@ -64,10 +64,8 @@
             bodyStyles.margin === "0px" && bodyStyles.fontFamily;
 
           if (!hasTailwind) {
-            console.log("🔄 Tailwind not detected, loading fallback...");
             loadFallbackTailwind();
           } else {
-            console.log("✅ Tailwind CSS loaded successfully");
           }
         }, 500);
       }
@@ -78,9 +76,8 @@
         link.rel = "stylesheet";
         link.href =
           "https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css";
-        link.onload = () => console.log("✅ Fallback Tailwind loaded");
+        link.onload = () => 
         link.onerror = () => {
-          console.log("❌ All CDNs failed, using inline styles");
           loadEmergencyStyles();
         };
         document.head.appendChild(link);

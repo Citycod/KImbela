@@ -56,7 +56,6 @@ class FriendSystem {
                 Toast.show(data.error || 'Failed to send request', 'danger');
             }
         } catch (error) {
-            console.error('Error adding friend:', error);
             button.innerHTML = originalHTML;
             button.className = originalClass;
             button.disabled = false;
@@ -108,7 +107,6 @@ class FriendSystem {
                 Toast.show(data.error || 'Failed to cancel request', 'danger');
             }
         } catch (error) {
-            console.error('Error cancelling friend request:', error);
             button.innerHTML = originalHTML;
             button.className = originalClass;
             button.disabled = false;
@@ -143,7 +141,6 @@ class FriendSystem {
             const contentType = response.headers.get('content-type');
             if (!contentType || !contentType.includes('application/json')) {
                 const text = await response.text();
-                console.error('Non-JSON response:', text);
                 throw new Error('Server error (possible login issue or bad request)');
             }
 
@@ -177,7 +174,6 @@ class FriendSystem {
                 Toast.show(data.error || 'Failed to accept request', 'danger');
             }
         } catch (error) {
-            console.error('Error accepting friend request:', error);
             Toast.show('Failed to accept. Please try again.', 'danger');
         } finally {
             Loader.quick(button, 'hide');
@@ -210,7 +206,6 @@ class FriendSystem {
             const contentType = response.headers.get('content-type');
             if (!contentType || !contentType.includes('application/json')) {
                 const text = await response.text();
-                console.error('Server returned non-JSON:', text.substring(0, 500));
                 throw new Error('Server error - please check login status');
             }
 
@@ -245,7 +240,6 @@ class FriendSystem {
                 Toast.show(data.error || 'Failed to decline request', 'danger');
             }
         } catch (error) {
-            console.error('Error declining friend request:', error);
             Toast.show('Failed to decline request. Check login status.', 'danger');
         } finally {
             Loader.quick(button, 'hide');
@@ -317,7 +311,6 @@ class FriendSystem {
                 return data.status;
             }
         } catch (error) {
-            console.error('Error checking friend status:', error);
         }
         return 'none';
     }

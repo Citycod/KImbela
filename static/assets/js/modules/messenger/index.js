@@ -24,7 +24,6 @@ class Messenger {
     }
 
     async init() {
-        console.log('🔧 Initializing Messenger...');
 
         this.connectSocket();
         this.setupEventListeners();
@@ -78,7 +77,6 @@ class Messenger {
     async open() {
         const popup = document.getElementById('messengerPopup');
         if (!popup) {
-            console.error('Messenger popup not found');
             return;
         }
 
@@ -144,7 +142,6 @@ class Messenger {
                 this.updateUnreadBadge();
             }
         } catch (error) {
-            console.error('Error loading friends:', error);
             const friendsContainer = document.getElementById('friendsContainer');
             if (friendsContainer) {
                 friendsContainer.innerHTML = `
@@ -281,7 +278,6 @@ class Messenger {
                 this.displayMessages(data.messages);
             }
         } catch (error) {
-            console.error('Error loading messages:', error);
             const chatContainer = document.getElementById('chatMessages');
             if (chatContainer) {
                 chatContainer.innerHTML = `
@@ -400,7 +396,6 @@ class Messenger {
                 Toast.show(data.error, 'danger');
             }
         } catch (error) {
-            console.error('Error sending message:', error);
             Toast.show('Failed to send message', 'danger');
         }
     }
@@ -468,7 +463,6 @@ class Messenger {
 
         // Socket event handlers
         this.state.socket.on('connect', () => {
-            console.log('✅ Connected to messaging server');
             this.state.isConnected = true;
         });
 
@@ -493,17 +487,14 @@ class Messenger {
         });
 
         this.state.socket.on('friend_online', (data) => {
-            console.log(`Friend ${data.user_id} is online`);
             this.updateFriendStatus(data.user_id, true);
         });
 
         this.state.socket.on('friend_offline', (data) => {
-            console.log(`Friend ${data.user_id} is offline`);
             this.updateFriendStatus(data.user_id, false);
         });
 
         this.state.socket.on('error', (error) => {
-            console.error('Socket error:', error);
         });
     }
 
@@ -544,7 +535,6 @@ class Messenger {
             });
             this.updateUnreadBadge();
         } catch (error) {
-            console.error('Error marking as read:', error);
         }
     }
 
@@ -566,7 +556,6 @@ class Messenger {
                 }
             }
         } catch (error) {
-            console.error('Error updating unread count:', error);
         }
     }
 
@@ -604,7 +593,6 @@ class Messenger {
                     this.openChat(userId, 'User', this.defaultAvatar, false);
                 }
             } catch (error) {
-                console.error('Error fetching user info:', error);
                 const friendElements = document.querySelectorAll('.friend-item');
                 friendElements.forEach(el => {
                     if (el.onclick && el.onclick.toString().includes(`openChat(${userId}`)) {

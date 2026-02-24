@@ -1,3 +1,4 @@
+from time_utils import utcnow
 # payments/email_service.py
 from flask import current_app
 from flask_mail import Message
@@ -61,7 +62,7 @@ class MarketplaceEmailService:
             subject = f"🎉 Your Kimbela Marketplace Subscription is Active! - Order #{marketplace_payment.gateway_reference}"
 
             # Calculate expiration
-            expires_at = marketplace_payment.end_date or datetime.utcnow() + timedelta(
+            expires_at = marketplace_payment.end_date or utcnow() + timedelta(
                 days=30
             )
 
@@ -407,7 +408,7 @@ class MarketplaceEmailService:
                                 </div>
                                 <div class="detail-item">
                                     <span class="detail-label">Payment Date</span>
-                                    <span class="detail-value">{datetime.utcnow().strftime('%B %d, %Y')}</span>
+                                    <span class="detail-value">{utcnow().strftime('%B %d, %Y')}</span>
                                 </div>
                                 <div class="detail-item">
                                     <span class="detail-label">Expires On</span>
@@ -503,7 +504,7 @@ class MarketplaceEmailService:
                             <a href="{self.base_url}/unsubscribe">Unsubscribe</a>
                         </div>
                         <div class="copyright">
-                            © {datetime.utcnow().year} Kimbela Marketplace. Connecting African professionals worldwide.
+                            © {utcnow().year} Kimbela Marketplace. Connecting African professionals worldwide.
                             <br>This is an automated message. Please do not reply to this email.
                         </div>
                     </div>
@@ -525,7 +526,7 @@ class MarketplaceEmailService:
             Plan: {plan.name}
             Amount Paid: ${marketplace_payment.amount:.2f} {marketplace_payment.currency}
             Order ID: {marketplace_payment.gateway_reference}
-            Payment Date: {datetime.utcnow().strftime('%B %d, %Y')}
+            Payment Date: {utcnow().strftime('%B %d, %Y')}
             Expires On: {expires_at.strftime('%B %d, %Y')}
             Status: ACTIVE
             
@@ -545,7 +546,7 @@ class MarketplaceEmailService:
             Visit our Seller Help Center: {self.base_url}/help/marketplace
             Email support: support@kimbela.com
             
-            © {datetime.utcnow().year} Kimbela Marketplace
+            © {utcnow().year} Kimbela Marketplace
             This is an automated message. Please do not reply to this email.
             """
 
@@ -757,7 +758,7 @@ class MarketplaceEmailService:
                             <a href="{self.base_url}/contact" style="color: #d1d5db; text-decoration: none; margin: 0 10px;">Contact</a>
                         </div>
                         <div style="opacity: 0.7;">
-                            © {datetime.utcnow().year} Kimbela Marketplace
+                            © {utcnow().year} Kimbela Marketplace
                             <br>This is an automated message. Please do not reply.
                         </div>
                     </div>
@@ -799,7 +800,7 @@ class MarketplaceEmailService:
             
             We're here to help you succeed on Kimbela Marketplace!
             
-            © {datetime.utcnow().year} Kimbela Marketplace
+            © {utcnow().year} Kimbela Marketplace
             This is an automated message.
             """
 

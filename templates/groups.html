@@ -18,10 +18,8 @@
                 const hasTailwind = bodyStyles.margin === '0px' && bodyStyles.fontFamily;
                 
                 if (!hasTailwind) {
-                    console.log('🔄 Tailwind not detected, loading fallback...');
                     loadFallbackTailwind();
                 } else {
-                    console.log('✅ Tailwind CSS loaded successfully');
                 }
             }, 500);
         }
@@ -31,9 +29,8 @@
             const link = document.createElement('link');
             link.rel = 'stylesheet';
             link.href = 'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css';
-            link.onload = () => console.log('✅ Fallback Tailwind loaded');
+            link.onload = () => 
             link.onerror = () => {
-                console.log('❌ All CDNs failed, using inline styles');
                 loadEmergencyStyles();
             };
             document.head.appendChild(link);
@@ -309,7 +306,6 @@
                     }
                 })
                 .catch(error => {
-                    console.error('Error loading groups:', error);
                     document.getElementById('groupsContainer').innerHTML = `
                         <div class="col-span-full text-center py-12 text-red-600">
                             <i class="bi bi-exclamation-triangle text-4xl mb-4"></i>
@@ -343,7 +339,6 @@
                     showToast(data.error || 'Failed to join group', 'danger');
                 }
             } catch (error) {
-                console.error('Error joining group:', error);
                 showToast('Error joining group', 'danger');
             }
         }
@@ -369,7 +364,6 @@
                     showToast(data.error || 'Failed to leave group', 'danger');
                 }
             } catch (error) {
-                console.error('Error leaving group:', error);
                 showToast('Error leaving group', 'danger');
             }
         }

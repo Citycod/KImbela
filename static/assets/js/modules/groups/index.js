@@ -23,7 +23,6 @@ class Groups {
 
     // Initialize groups system
     init() {
-        console.log('🔧 Groups system initialized');
 
         // Set up event listeners for dropdowns
         this.setupDropdownListeners();
@@ -81,13 +80,11 @@ class Groups {
 
     // Main load function
     async load() {
-        console.log('📥 Loading groups...');
 
         // Check cache first
         const now = Date.now();
         if (this.cache.groups && this.cache.lastFetch &&
             (now - this.cache.lastFetch) < this.cache.expiry) {
-            console.log('📦 Using cached groups');
             this.displayGroups(this.cache.groups);
             return;
         }
@@ -114,7 +111,6 @@ class Groups {
                 throw new Error('Invalid response format: Expected array');
             }
 
-            console.log(`✅ Loaded ${groups.length} groups`);
 
             // Cache the results
             this.cache.groups = groups;
@@ -124,7 +120,6 @@ class Groups {
             this.displayGroups(groups);
 
         } catch (error) {
-            console.error('❌ Error loading groups:', error);
             this.showError(['groupsList', 'groupsListMobile'], error.message);
 
             // Clear cache on error
@@ -274,7 +269,6 @@ class Groups {
                     throw new Error('Invalid search results');
                 }
             } catch (error) {
-                console.error('Search error:', error);
                 this.showError(['groupsList', 'groupsListMobile'], 'Search failed');
             }
         }, 300); // Debounce for 300ms
@@ -330,7 +324,6 @@ class Groups {
                 throw new Error(data.error || 'Failed to join group');
             }
         } catch (error) {
-            console.error('Error joining group:', error);
             button.innerHTML = originalText;
             button.className = originalClass;
             button.disabled = false;
@@ -388,7 +381,6 @@ class Groups {
                 throw new Error(data.error || 'Failed to leave group');
             }
         } catch (error) {
-            console.error('Error leaving group:', error);
             button.innerHTML = originalText;
             button.className = originalClass;
             button.disabled = false;
@@ -460,7 +452,6 @@ class Groups {
     clearCache() {
         this.cache.groups = null;
         this.cache.lastFetch = null;
-        console.log('🧹 Groups cache cleared');
     }
 
     // Refresh groups (force reload)

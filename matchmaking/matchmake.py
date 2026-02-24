@@ -9,6 +9,7 @@ from flask import (
     session,
     current_app,
     jsonify,
+    abort,
 )
 
 from models import (
@@ -33,6 +34,7 @@ from werkzeug.utils import secure_filename
 import cloudinary.uploader
 import cloudinary.utils
 
+from time_utils import utcnow
 # from scheduler import (
 #     manual_trigger_matchmaking_expiry_check,
 #     manual_trigger_expired_matchmaking_check,
@@ -58,6 +60,16 @@ cloudinary.config(
 )
 
 match = Blueprint("match", __name__)
+
+
+def _require_debug_access():
+    """Restrict debug endpoints to admins when explicitly enabled."""
+    if not current_user.is_authenticated:
+        abort(404)
+    if not current_user.is_admin:
+        abort(404)
+    if not current_app.config.get("ENABLE_DEBUG_ROUTES"):
+        abort(404)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
@@ -67,7 +79,7 @@ def calculate_age(dob):
     """Calculate age from date of birth"""
     if not dob:
         return 0
-    today = datetime.utcnow().date()
+    today = utcnow().date()
     return today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
 
 
@@ -138,7 +150,7 @@ def get_requests():
         query = MatchmakingRequest.query.filter(
             MatchmakingRequest.status == "active",
             MatchmakingRequest.payment_status == "completed",
-            MatchmakingRequest.end_date > datetime.utcnow(),
+            MatchmakingRequest.end_date > utcnow(),
         )
 
         # Join with User table to access profile details (age/gender)
@@ -157,7 +169,7 @@ def get_requests():
 
         # Age range filter (on user's age, not partner preferences)
         if min_age is not None or max_age is not None:
-            today = datetime.utcnow().date()
+            today = utcnow().date()
             if min_age is not None:
                 max_dob = subtract_years(today, min_age)
                 query = query.filter(User.dob <= max_dob)
@@ -179,7 +191,9 @@ def get_requests():
                 MatchmakingRequest.partner_state.ilike(f"%{state_filter}%")
             )
         if city_filter:
-            query = query.filter(MatchmakingRequest.partner_city.ilike(f"%{city_filter}%"))
+            query = query.filter(
+                MatchmakingRequest.partner_city.ilike(f"%{city_filter}%")
+            )
 
         # Sorting
         if sort_by == "newest":
@@ -220,7 +234,7 @@ def get_requests():
             age = calculate_age(req.user.dob) if req.user and req.user.dob else "N/A"
 
             # Days remaining
-            days_remaining = max(0, (req.end_date - datetime.utcnow()).days)
+            days_remaining = max(0, (req.end_date - utcnow()).days)
 
             # Parse interests
             interests = req.get_your_interests()
@@ -351,7 +365,7 @@ def get_request_detail(request_id):
             "likes": req.likes,
             "matches": req.matches,
             "created_at": req.created_at.strftime("%B %d, %Y"),
-            "expires_in": (req.end_date - datetime.utcnow()).days,
+            "expires_in": (req.end_date - utcnow()).days,
             "package": req.package.name,
             "is_liked": is_liked,
         }
@@ -399,13 +413,13 @@ def create_matchmaking_request():
         if existing_request:
             if (
                 existing_request.end_date
-                and existing_request.end_date <= datetime.utcnow()
+                and existing_request.end_date <= utcnow()
             ):
                 existing_request.status = "expired"
                 db.session.commit()
             else:
                 days_remaining = (
-                    (existing_request.end_date - datetime.utcnow()).days
+                    (existing_request.end_date - utcnow()).days
                     if existing_request.end_date
                     else 0
                 )
@@ -860,7 +874,7 @@ def my_requests():
                     "end_date": req.end_date.strftime("%B %d, %Y"),
                     "package": req.package.name,
                     "is_active": req.status == "active"
-                    and req.end_date > datetime.utcnow(),
+                    and req.end_date > utcnow(),
                 }
             )
 
@@ -884,7 +898,7 @@ def get_my_active_request():
             return jsonify({"success": True, "has_active_request": False})
 
         # Calculate days remaining
-        days_remaining = (active_request.end_date - datetime.utcnow()).days
+        days_remaining = (active_request.end_date - utcnow()).days
         days_remaining = max(0, days_remaining)
 
         return jsonify(
@@ -1059,7 +1073,7 @@ def get_stats():
             db.session.query(db.func.sum(MatchmakingRequest.matches)).scalar() or 0
         )
         new_this_week = MatchmakingRequest.query.filter(
-            MatchmakingRequest.created_at >= datetime.utcnow() - timedelta(days=7)
+            MatchmakingRequest.created_at >= utcnow() - timedelta(days=7)
         ).count()
 
         user_requests = MatchmakingRequest.query.filter_by(
@@ -1129,6 +1143,7 @@ def get_payment_details(payment_id):
 @match.route("/debug/requests")
 def debug_requests():
     """Debug endpoint to check requests in database"""
+    _require_debug_access()
     requests = MatchmakingRequest.query.all()
     result = []
     for req in requests:
@@ -1141,7 +1156,7 @@ def debug_requests():
                 "created_at": req.created_at.isoformat() if req.created_at else None,
                 "end_date": req.end_date.isoformat() if req.end_date else None,
                 "is_active": req.status == "active"
-                and (req.end_date is None or req.end_date > datetime.utcnow()),
+                and (req.end_date is None or req.end_date > utcnow()),
             }
         )
     return jsonify(result)
@@ -1151,8 +1166,9 @@ def debug_requests():
 @login_required
 def debug_all_requests():
     """Debug endpoint to see ALL matchmaking requests"""
+    _require_debug_access()
     all_requests = MatchmakingRequest.query.all()
-    current_time = datetime.utcnow()
+    current_time = utcnow()
 
     result = {
         "current_time": current_time.isoformat(),
@@ -1194,6 +1210,7 @@ def debug_all_requests():
 @match.route("/debug/flutterwave-keys")
 def debug_flutterwave_keys():
     """Debug endpoint to check Flutterwave configuration"""
+    _require_debug_access()
     import os
 
     keys_info = {
@@ -1215,6 +1232,7 @@ def debug_flutterwave_keys():
 @login_required
 def test_payment_with_keys():
     """Test payment service with actual keys"""
+    _require_debug_access()
     try:
         print("🟡 [TEST PAYMENT] Starting test payment route...")
 
@@ -1279,6 +1297,7 @@ def test_payment_with_keys():
 @login_required
 def test_payment_service():
     """Test if payment service is working"""
+    _require_debug_access()
     try:
         service = MatchmakingPaymentService()
 

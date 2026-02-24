@@ -23,7 +23,6 @@
         function initSocket() {
             if (socket && socket.connected) return;
 
-            console.log('Initializing Socket.IO...');
 
             socket = io({
                 transports: ['websocket', 'polling'],
@@ -33,7 +32,6 @@
             });
 
             socket.on('connect', () => {
-                console.log('✅ Socket.IO connected');
                 if (window.currentUserId) {
                     socket.emit('user_connected', { user_id: window.currentUserId });
                 }
@@ -42,13 +40,11 @@
             });
 
             socket.on('connect_error', (error) => {
-                console.error('❌ Socket connection error:', error);
                 loadFriendsList();
                 updateUnreadBadge();
             });
 
             socket.on('disconnect', (reason) => {
-                console.log('🔌 Socket disconnected:', reason);
             });
 
             // Message events
@@ -63,7 +59,6 @@
         // MESSAGE HANDLING - FIXED FOR DUPLICATES
         // ========================================
         function handleNewMessage(data) {
-            console.log('📩 New message received:', data);
 
             updateUnreadBadge();
 
@@ -99,7 +94,6 @@
             // 2) Hard dedupe: if message already exists by real id, do nothing
             const existing = document.querySelector(`[data-message-id="${data.id}"]`);
             if (existing) {
-                console.log('🔄 Duplicate message detected, skipping:', data.id);
                 return;
             }
 
@@ -178,7 +172,6 @@
             });
 
         } catch (error) {
-            console.error('Error loading friends:', error);
             container.innerHTML = `
                 <div class="text-center py-12 text-red-500">
                     <i class="bi bi-exclamation-triangle text-2xl mb-2"></i>
@@ -251,7 +244,6 @@
             scrollToBottom();
 
         } catch (error) {
-            console.error('Error loading chat history:', error);
             container.innerHTML = `
                 <div class="text-center py-12 text-red-500">
                     Failed to load messages
@@ -565,7 +557,6 @@
                 throw new Error(result.error || 'Unknown error');
             }
         } catch (error) {
-            console.error('Error uploading file:', error);
             alert(`Failed to upload ${file.name}: ${error.message}`);
         }
     }
@@ -710,7 +701,7 @@
                 'Content-Type': 'application/json',
                 'X-CSRFToken': window.csrfToken || ''
             }
-        }).catch(error => console.error('Error marking conversation as read:', error))
+        }).catch(() => {})
           .finally(() => updateUnreadBadge());
     }
 
@@ -723,7 +714,7 @@
                 'Content-Type': 'application/json',
                 'X-CSRFToken': window.csrfToken || ''
             }
-        }).catch(error => console.error('Error marking message as read:', error));
+        }).catch(() => {});
     }
 
     function ensureNavbarBadge() {
@@ -761,7 +752,7 @@
                     if (openBtnBadge) openBtnBadge.classList.add('hidden');
                 }
             })
-            .catch(error => console.error('Error updating unread count:', error));
+            .catch(() => {});
     }
 
     function updateFriendsListUnreadCount(fromUserId) {
@@ -1006,7 +997,6 @@
                 showNoGifsMessage('No trending GIFs found');
             }
         } catch (error) {
-            console.error('Error loading trending GIFs:', error);
             showNoGifsMessage('Failed to load GIFs. Please try again.');
         } finally {
             gifIsLoading = false;
@@ -1035,7 +1025,6 @@
                 showNoGifsMessage(`No GIFs found for "${query}"`);
             }
         } catch (error) {
-            console.error('Error searching GIFs:', error);
             if (reset) showNoGifsMessage('Search failed. Please try again.');
         } finally {
             gifIsLoading = false;
@@ -1155,7 +1144,6 @@
         init: function() {
             if (isInitialized) return;
 
-            console.log('🚀 Initializing Messenger...');
 
             loadFriendsList();
             updateUnreadBadge();
@@ -1181,7 +1169,6 @@
             setTimeout(() => {
                 if (typeof window.Messenger !== 'undefined' && window.Messenger.init) {
                     window.Messenger.init();
-                    console.log('✅ Messenger initialized');
                 }
             }, 1000);
         }

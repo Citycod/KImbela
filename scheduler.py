@@ -1,3 +1,4 @@
+from time_utils import utcnow
 # scheduler.py - OPTIMIZED VERSION
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
@@ -81,7 +82,7 @@ def init_scheduler(app):
                 from models import AdCampaign
 
                 # Limit to campaigns with activity in last 7 days
-                seven_days_ago = datetime.utcnow() - timedelta(days=7)
+                seven_days_ago = utcnow() - timedelta(days=7)
                 campaigns = (
                     AdCampaign.query.filter(
                         AdCampaign.impressions > 0,
@@ -194,8 +195,8 @@ def init_scheduler(app):
 def check_expiring_subscriptions_optimized():
     """Optimized version - batch processing"""
     try:
-        three_days_from_now = datetime.utcnow() + timedelta(days=3)
-        now = datetime.utcnow()
+        three_days_from_now = utcnow() + timedelta(days=3)
+        now = utcnow()
 
         # Use direct SQL for efficiency
         from sqlalchemy import text
@@ -251,7 +252,7 @@ def check_expiring_subscriptions_optimized():
 def check_expired_subscriptions_optimized():
     """Optimized version with batch update"""
     try:
-        now = datetime.utcnow()
+        now = utcnow()
 
         # Update expired subscriptions in bulk
         from models import MarketplaceService
@@ -286,7 +287,7 @@ def check_expired_matchmaking_batch():
     try:
         from models import MatchmakingRequest
 
-        now = datetime.utcnow()
+        now = utcnow()
 
         # Update in bulk
         expired_count = (
@@ -326,7 +327,7 @@ def check_inactive_sellers_optimized():
             .filter(
                 MarketplaceService.status == "active",
                 MarketplaceService.subscription_status == "active",
-                MarketplaceService.subscription_expires > datetime.utcnow(),
+                MarketplaceService.subscription_expires > utcnow(),
             )
             .distinct()
             .subquery()
@@ -388,7 +389,7 @@ def generate_marketplace_report_optimized():
     try:
         from sqlalchemy import func
 
-        week_ago = datetime.utcnow() - timedelta(days=7)
+        week_ago = utcnow() - timedelta(days=7)
 
         # Single query for all stats
         stats = (

@@ -9,11 +9,14 @@ from flask import url_for
 from sqlalchemy import event, func
 import requests
 
+from time_utils import utcnow
+
+
 friendship = db.Table(
     "friendship",
     db.Column("user_id", db.Integer, db.ForeignKey("users.id"), primary_key=True),
     db.Column("friend_id", db.Integer, db.ForeignKey("users.id"), primary_key=True),
-    db.Column("accepted_at", db.DateTime, default=datetime.utcnow),
+    db.Column("accepted_at", db.DateTime, default=utcnow),
 )
 
 blocked_users = db.Table(
@@ -74,9 +77,9 @@ class User(db.Model, UserMixin):
     gender = db.Column(db.String(20), nullable=False)
     phone_number = db.Column(db.String(20), nullable=False)
     interests = db.Column(db.Text, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)
     updated_at = db.Column(
-        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+        db.DateTime, default=utcnow, onupdate=utcnow
     )
 
     educational_level = db.Column(db.String(50), nullable=True)
@@ -109,7 +112,7 @@ class User(db.Model, UserMixin):
     otp = db.Column(db.String(255), nullable=True)
     otp_expires = db.Column(db.DateTime, nullable=True)
     is_online = db.Column(db.Boolean, default=False)
-    last_seen = db.Column(db.DateTime, default=datetime.utcnow)
+    last_seen = db.Column(db.DateTime, default=utcnow)
     about_me = db.Column(db.Text, nullable=True)
     admin_role = db.Column(db.String(50), default="moderator")
     admin_permissions = db.Column(db.Text)
@@ -146,7 +149,7 @@ class User(db.Model, UserMixin):
         db.Column(
             "blocked_id", db.Integer, db.ForeignKey("users.id"), primary_key=True
         ),
-        db.Column("created_at", db.DateTime, default=datetime.utcnow),
+        db.Column("created_at", db.DateTime, default=utcnow),
         db.UniqueConstraint("blocker_id", "blocked_id", name="uq_user_block"),
     )
 
@@ -181,7 +184,7 @@ class User(db.Model, UserMixin):
         payload = {
             "user_id": self.id,
             "type": "email_unsubscribe",
-            "exp": datetime.utcnow() + timedelta(days=365),
+            "exp": utcnow() + timedelta(days=365),
         }
         return jwt.encode(payload, current_app.config["SECRET_KEY"], algorithm="HS256")
 
@@ -257,7 +260,7 @@ class User(db.Model, UserMixin):
         if self.marketplace_subscription_status != "active":
             return False
 
-        if datetime.utcnow() > self.marketplace_subscription_expires:
+        if utcnow() > self.marketplace_subscription_expires:
             return False
 
         # SECONDARY CHECK: Do they have at least one completed payment?
@@ -303,13 +306,13 @@ class User(db.Model, UserMixin):
         """Check if seller is currently featured"""
         if not self.marketplace_featured_until:
             return False
-        return self.marketplace_featured_until > datetime.utcnow()
+        return self.marketplace_featured_until > utcnow()
 
     # All other User methods remain the same...
     def generate_password_reset_token(self):
         """Generate a password reset token that expires in 1 hour"""
         self.password_reset_token = secrets.token_urlsafe(32)
-        self.password_reset_expires = datetime.utcnow() + timedelta(hours=1)
+        self.password_reset_expires = utcnow() + timedelta(hours=1)
         return self.password_reset_token
 
     @staticmethod
@@ -319,7 +322,7 @@ class User(db.Model, UserMixin):
             return None
         return User.query.filter(
             User.password_reset_token == token,
-            User.password_reset_expires > datetime.utcnow(),
+            User.password_reset_expires > utcnow(),
         ).first()
 
     def get_user_reaction(self, post_id):
@@ -349,7 +352,7 @@ class User(db.Model, UserMixin):
     def generate_otp(self):
         """Generate a 6-digit numeric OTP"""
         self.otp = f"{random.randint(0, 999999):06d}"
-        self.otp_expires = datetime.utcnow() + timedelta(minutes=10)
+        self.otp_expires = utcnow() + timedelta(minutes=10)
         db.session.commit()
 
     def get_blocked_users(self):
@@ -412,7 +415,7 @@ class User(db.Model, UserMixin):
         """Block a user"""
         if not self.is_blocking(user):
             stmt = self._blocked_users.insert().values(
-                blocker_id=self.id, blocked_id=user.id, created_at=datetime.utcnow()
+                blocker_id=self.id, blocked_id=user.id, created_at=utcnow()
             )
             db.session.execute(stmt)
 
@@ -710,7 +713,7 @@ class FriendRequest(db.Model):
     sender_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     receiver_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     status = db.Column(db.String(20), default="pending")
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)
 
     sender = db.relationship("User", foreign_keys=[sender_id], backref="sent_requests")
     receiver = db.relationship(
@@ -748,7 +751,7 @@ class Post(db.Model):
     video = db.Column(db.String(255))
     gif = db.Column(db.String(255), nullable=True)
     location = db.Column(db.String(255), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)
     author_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     group_id = db.Column(db.Integer, db.ForeignKey("groups.id"), nullable=True)
     shared_post_id = db.Column(db.Integer, db.ForeignKey("posts.id"), nullable=True)
@@ -878,7 +881,7 @@ class Comment(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.Text, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)
     author_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     post_id = db.Column(db.Integer, db.ForeignKey("posts.id"), nullable=False)
     parent_id = db.Column(db.Integer, db.ForeignKey("comments.id"), nullable=True)
@@ -913,7 +916,7 @@ class Like(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     post_id = db.Column(db.Integer, db.ForeignKey("posts.id"), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)
 
     __table_args__ = (db.UniqueConstraint("user_id", "post_id", name="unique_like"),)
 
@@ -956,7 +959,7 @@ class Notification(db.Model):
     entity_type = db.Column(db.String(50))
     message = db.Column(db.Text, nullable=False)
     is_read = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)
 
     user = db.relationship("User", foreign_keys=[user_id], backref="notifications")
     actor = db.relationship("User", foreign_keys=[actor_id])
@@ -997,7 +1000,7 @@ class Message(db.Model):
     sender_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     receiver_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     content = db.Column(db.Text, nullable=False)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    timestamp = db.Column(db.DateTime, default=utcnow, index=True)
     status = db.Column(db.String(20), default="sent")
     message_type = db.Column(db.String(20), default="text")
     message_data = db.Column(db.JSON, nullable=True)
@@ -1044,7 +1047,7 @@ class Group(db.Model):
     created_by = db.Column(
         db.Integer, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)
     member_count = db.Column(db.Integer, default=0)
 
     creator = db.relationship(
@@ -1086,7 +1089,7 @@ class SponsoredAd(db.Model):
     budget = db.Column(db.Float, default=0.0)
     status = db.Column(db.String(20), default="active")
     created_by = db.Column(db.Integer, db.ForeignKey("users.id"))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)
     clicks = db.Column(db.Integer, default=0)
     impressions = db.Column(db.Integer, default=0)
 
@@ -1105,7 +1108,7 @@ class ReportedContent(db.Model):
     admin_notes = db.Column(db.Text)
     resolved_by = db.Column(db.Integer, db.ForeignKey("users.id"))
     resolved_at = db.Column(db.DateTime)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)
 
     reporter = db.relationship("User", foreign_keys=[reporter_id])
     reported_user = db.relationship("User", foreign_keys=[reported_user_id])
@@ -1131,7 +1134,7 @@ class Reaction(db.Model):
         db.Integer, db.ForeignKey("posts.id", ondelete="CASCADE"), nullable=False
     )
     reaction_type = db.Column(db.String(20), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)
 
     # Fixed relationships with proper cascade
     user = db.relationship(
@@ -1202,9 +1205,9 @@ class AdCampaign(db.Model):
     expiry_notification_sent = db.Column(db.Boolean, default=False)
     auto_renew = db.Column(db.Boolean, default=False)
 
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)
     updated_at = db.Column(
-        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+        db.DateTime, default=utcnow, onupdate=utcnow
     )
 
     # FIXED: Relationship without conflicts
@@ -1272,9 +1275,9 @@ class PaymentTransaction(db.Model):
     )  # 'pending', 'completed', 'failed'
     description = db.Column(db.Text)
 
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)
     updated_at = db.Column(
-        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+        db.DateTime, default=utcnow, onupdate=utcnow
     )
 
     # FIXED: Use string references
@@ -1306,7 +1309,7 @@ class AdPackage(db.Model):
     impressions = db.Column(db.Integer)
     features = db.Column(db.Text)
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)
 
     # campaigns = db.relationship("AdCampaign", backref="ad_package", lazy=True)
 
@@ -1324,7 +1327,7 @@ class MatchmakingPackage(db.Model):
     duration_days = db.Column(db.Integer, nullable=False)
     features = db.Column(db.Text)
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)
 
     # FIXED: Use string reference for forward declaration
     matchmaking_requests = db.relationship(
@@ -1370,7 +1373,7 @@ class MatchmakingRequest(db.Model):
     status = db.Column(
         db.String(20), default="pending"
     )  # pending, active, expired, cancelled
-    start_date = db.Column(db.DateTime, default=datetime.utcnow)
+    start_date = db.Column(db.DateTime, default=utcnow)
     end_date = db.Column(db.DateTime)
 
     # Payment
@@ -1382,9 +1385,9 @@ class MatchmakingRequest(db.Model):
     likes = db.Column(db.Integer, default=0)
     matches = db.Column(db.Integer, default=0)
 
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)
     updated_at = db.Column(
-        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+        db.DateTime, default=utcnow, onupdate=utcnow
     )
 
     # Relationships
@@ -1442,7 +1445,7 @@ class MatchmakingRequest(db.Model):
         return (
             self.status == "active"
             and self.end_date
-            and self.end_date > datetime.utcnow()
+            and self.end_date > utcnow()
         )
 
     def get_location_display(self):
@@ -1463,7 +1466,7 @@ class MatchmakingLike(db.Model):
     request_id = db.Column(
         db.Integer, db.ForeignKey("matchmaking_requests.id"), nullable=False
     )
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)
 
     user = db.relationship("User", foreign_keys=[user_id])
     request = db.relationship("MatchmakingRequest", foreign_keys=[request_id])
@@ -1481,7 +1484,7 @@ class MatchmakingView(db.Model):
     request_id = db.Column(
         db.Integer, db.ForeignKey("matchmaking_requests.id"), nullable=False
     )
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)
 
     user = db.relationship("User", foreign_keys=[user_id])
     request = db.relationship("MatchmakingRequest", foreign_keys=[request_id])
@@ -1522,9 +1525,9 @@ class MatchmakingPayments(db.Model):
     description = db.Column(db.Text)
 
     # Timestamps
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)
     updated_at = db.Column(
-        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+        db.DateTime, default=utcnow, onupdate=utcnow
     )
     paid_at = db.Column(db.DateTime)  # When payment was completed
 
@@ -1581,7 +1584,7 @@ class MarketplaceCategory(db.Model):
         db.Integer, db.ForeignKey("marketplace_categories.id"), nullable=True
     )
     sort_order = db.Column(db.Integer, default=0)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)
 
     # Relationships
     parent = db.relationship(
@@ -1709,9 +1712,9 @@ class MarketplaceService(db.Model):
     keywords = db.Column(db.Text)
 
     # Dates
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)
     updated_at = db.Column(
-        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+        db.DateTime, default=utcnow, onupdate=utcnow
     )
     published_at = db.Column(db.DateTime)
 
@@ -1773,7 +1776,7 @@ class MarketplaceService(db.Model):
             and self.subscription_status == "active"
             and (
                 self.subscription_expires is None
-                or self.subscription_expires > datetime.utcnow()
+                or self.subscription_expires > utcnow()
             )
         )
 
@@ -1848,7 +1851,7 @@ class MarketplaceSubscription(db.Model):
 
     # Order
     sort_order = db.Column(db.Integer, default=0)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)
 
     # Relationships
     services = db.relationship(
@@ -1905,9 +1908,9 @@ class MarketplaceReview(db.Model):
     review_images = db.Column(db.Text)  # JSON encoded list of image URLs
 
     # Dates
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)
     updated_at = db.Column(
-        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+        db.DateTime, default=utcnow, onupdate=utcnow
     )
 
     # Relationships
@@ -1980,7 +1983,7 @@ class SellerRating(db.Model):
 
     # Last updated
     updated_at = db.Column(
-        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+        db.DateTime, default=utcnow, onupdate=utcnow
     )
 
     def update_stats(self):
@@ -2060,16 +2063,16 @@ class MarketplacePayment(db.Model):
     payment_method = db.Column(db.String(50))  # card, bank, mobile_money, etc.
 
     # Period
-    start_date = db.Column(db.DateTime, default=datetime.utcnow)
+    start_date = db.Column(db.DateTime, default=utcnow)
     end_date = db.Column(db.DateTime)
 
     # Metadata
     description = db.Column(db.Text)
 
     # Dates
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)
     updated_at = db.Column(
-        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+        db.DateTime, default=utcnow, onupdate=utcnow
     )
     paid_at = db.Column(db.DateTime)
 
@@ -2101,7 +2104,7 @@ class MarketplaceClick(db.Model):
     user_agent = db.Column(db.Text)
 
     # Date
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)
 
     # Relationships
     service = db.relationship("MarketplaceService", foreign_keys=[service_id])
@@ -2119,7 +2122,7 @@ class ApiKey(db.Model):
     name = db.Column(db.String(100))
     key = db.Column(db.String(100), unique=True)
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)
     last_used = db.Column(db.DateTime, nullable=True)
 
     user = db.relationship("User", backref=db.backref("api_keys", lazy=True))
@@ -2135,7 +2138,7 @@ class LoginHistory(db.Model):
     device = db.Column(db.String(200))
     location = db.Column(db.String(200))
     success = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)
 
     user = db.relationship("User", backref=db.backref("login_history", lazy=True))
 
@@ -2150,8 +2153,8 @@ class UserSession(db.Model):
     user_agent = db.Column(db.Text)
     device = db.Column(db.String(200))
     location = db.Column(db.String(200))
-    last_active = db.Column(db.DateTime, default=datetime.utcnow)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    last_active = db.Column(db.DateTime, default=utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)
 
     user = db.relationship("User", backref=db.backref("active_sessions", lazy=True))
 
@@ -2173,7 +2176,7 @@ class MarketplaceSubscriptionPlan(db.Model):
     priority_visibility = db.Column(db.Boolean, default=False)
     sort_order = db.Column(db.Integer, default=0)
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)
 
     # Method to get features as list
     @property
@@ -2196,7 +2199,7 @@ class BirthdayNotification(db.Model):
     is_seen = db.Column(db.Boolean, default=False)
     is_wished = db.Column(db.Boolean, default=False)
     wish_message = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)
     wished_at = db.Column(db.DateTime)
 
     # Relationships

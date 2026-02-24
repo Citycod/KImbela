@@ -26,7 +26,6 @@
             // Check for unseen birthday notifications
             this.updateBirthdayBadge();
           } catch (error) {
-            console.error("Error checking birthdays:", error);
           }
         }
 
@@ -81,7 +80,6 @@
               }
             }
           } catch (error) {
-            console.error("Error updating birthday badge:", error);
           }
         }
 
@@ -255,7 +253,6 @@
               window.webkitAudioContext)();
             this.playBirthdayMelody(audioContext);
           } catch (e) {
-            console.log("Audio not supported:", e);
           }
         }
 
@@ -339,7 +336,6 @@
               alert(data.error || "Failed to send wish");
             }
           } catch (error) {
-            console.error("Error sending birthday wish:", error);
             alert("Failed to send birthday wish");
           } finally {
             button.innerHTML = originalText;
@@ -466,7 +462,6 @@
             this.closeBirthdayPopup();
             this.updateBirthdayBadge();
           } catch (error) {
-            console.error("Error marking birthdays seen:", error);
           }
         }
 
@@ -482,7 +477,6 @@
               this.showBirthdayCalendar(data.birthdays);
             }
           } catch (error) {
-            console.error("Error loading birthday calendar:", error);
           }
         }
 
@@ -833,7 +827,6 @@
                   showNoGifsMessage('No trending GIFs found');
               }
           } catch (error) {
-              console.error('Error loading trending GIFs:', error);
               showNoGifsMessage('Failed to load GIFs. Please try again.');
           }
       }
@@ -865,7 +858,6 @@
                   if (reset) showNoGifsMessage('No GIFs found for "' + query + '"');
               }
           } catch (error) {
-              console.error('Error searching GIFs:', error);
               if (reset) showNoGifsMessage('Search failed. Please try again.');
           }
       }
@@ -974,7 +966,6 @@
                   });
               }
           } catch (error) {
-              console.error('Error loading more GIFs:', error);
           } finally {
               gifIsLoading = false;
               const loadMoreBtn = document.getElementById('gifLoadMore');
@@ -985,7 +976,6 @@
       // Select a GIF
       // === FIXED GIF SELECTION FOR POST CREATION ===
       function selectGif(gifUrl, title = '') {
-          console.log('GIF selected:', gifUrl);
 
           // Set hidden input for backend
           const hiddenInput = document.getElementById('selectedGifUrl');
@@ -1059,7 +1049,6 @@
               const observer = new MutationObserver(() => {
                   if (!postModal.classList.contains('hidden')) {
                       // Textarea will be focused when user clicks GIF button anyway
-                      console.log('Post modal opened – GIF insertion ready');
                   }
               });
               observer.observe(postModal, { attributes: true, attributeFilter: ['class'] });
@@ -1268,7 +1257,6 @@
 
         // Initialize video autoplay system
         init() {
-          console.log("🎬 Initializing video autoplay system...");
 
           this.collectVideoElements();
           this.setupIntersectionObserver();
@@ -1285,10 +1273,6 @@
 
           this.state.videoElements = Array.from(videoElements).concat(
             Array.from(allVideos),
-          );
-
-          console.log(
-            `📹 Found ${this.state.videoElements.length} video elements`,
           );
 
           // Prepare videos for autoplay
@@ -1330,7 +1314,6 @@
 
           // Add error handler
           video.addEventListener("error", (e) => {
-            console.error("Video load error:", e);
             this.handleVideoError(video);
           });
 
@@ -1392,7 +1375,6 @@
               // Load video if needed
               await video.load();
             } catch (error) {
-              console.error("Failed to load video:", error);
               return;
             }
           }
@@ -1404,20 +1386,14 @@
             if (playPromise !== undefined) {
               playPromise
                 .then(() => {
-                  console.log(`▶️ Playing video: ${video.id}`);
                   this.state.playingVideos.add(video.id);
                   this.addVideoControls(video);
                 })
                 .catch((error) => {
-                  console.log(
-                    `❌ Could not autoplay video ${video.id}:`,
-                    error,
-                  );
                   this.handleAutoplayError(video, error);
                 });
             }
           } catch (error) {
-            console.error("Error playing video:", error);
           }
         },
 
@@ -1425,14 +1401,12 @@
         pauseVideo(video) {
           if (!video.paused) {
             video.pause();
-            console.log(`⏸️ Paused video: ${video.id}`);
             this.state.playingVideos.delete(video.id);
           }
         },
 
         // Handle autoplay errors (user interaction required)
         handleAutoplayError(video, error) {
-          console.log(`Autoplay blocked for video ${video.id}:`, error.name);
 
           // Add overlay with play button for user interaction
           this.addUserInteractionOverlay(video);
@@ -1475,9 +1449,7 @@
             try {
               await video.play();
               overlay.remove();
-              console.log(`✅ User initiated play for video: ${video.id}`);
             } catch (playError) {
-              console.error("User interaction play failed:", playError);
             }
           });
 
@@ -1557,7 +1529,6 @@
 
         // Handle video loading errors
         handleVideoError(video) {
-          console.error(`Video error for ${video.id}:`, video.error);
 
           // Show error overlay
           const errorOverlay = document.createElement("div");
@@ -1715,7 +1686,6 @@
           // Initialize with a small delay to ensure everything is loaded
           setTimeout(() => {
             VideoAutoplay.init();
-            console.log("✅ Video autoplay system initialized");
           }, 1000);
         }
       });
@@ -1881,7 +1851,6 @@
             throw new Error(data.error || "Failed to update post");
           }
         } catch (error) {
-          console.error("Error editing post:", error);
           Toast.show(error.message || "Failed to edit post", "danger");
         } finally {
           // Restore button
@@ -1957,13 +1926,11 @@
 
       // Replace the existing selectGif function with this updated version
       function selectGif(gifUrl, title = "") {
-        console.log("Selected GIF:", gifUrl);
 
         // Set the hidden input value for GIF URL
         const hiddenInput = document.getElementById("selectedGifUrl");
         if (hiddenInput) {
           hiddenInput.value = gifUrl;
-          console.log("GIF URL set in hidden input:", gifUrl);
         }
 
         // Also set a backup in a data attribute
@@ -2017,7 +1984,6 @@
         const hiddenInput = document.getElementById("selectedGifUrl");
         if (hiddenInput) {
           hiddenInput.value = "";
-          console.log("GIF URL cleared");
         }
 
         const form = document.getElementById("createPostForm");
@@ -2091,7 +2057,6 @@
               const pretty = formatLocation(data.address) || data.display_name || "";
               if (pretty) setPostLocation(pretty);
             } catch (error) {
-              console.error("Location lookup failed:", error);
             } finally {
               button.disabled = false;
               button.classList.remove("opacity-60");
@@ -2230,7 +2195,6 @@
           const sidebar = document.getElementById("mobileSidebar");
 
           if (!overlay || !sidebar) {
-            console.error("Mobile menu elements not found!");
             return;
           }
 
@@ -2275,13 +2239,11 @@
           });
       }
 
-      console.log("Edit/Delete and GIF functionality loaded successfully");
     </script>
 
 <script>
       // Initialize the full Messenger system after everything loads
       window.addEventListener("load", function () {
-        console.log("Page fully loaded, initializing advanced Messenger...");
 
         // Load the messenger.js script dynamically
         if (typeof Messenger === "undefined") {
@@ -2289,7 +2251,6 @@
           script.src =
             '{{ url_for("static", filename="assets/js/messenger.js") }}';
           script.onload = function () {
-            console.log("Messenger.js loaded, initializing...");
             // Initialize with delay to ensure everything is ready
             setTimeout(() => {
               if (
@@ -2297,22 +2258,16 @@
                 typeof Messenger.init === "function"
               ) {
                 Messenger.init();
-                console.log("✅ Messenger system fully initialized");
               }
             }, 500);
           };
-          script.onerror = function () {
-            console.error(
-              "Failed to load messenger.js, using basic functionality",
-            );
-          };
+          script.onerror = function () {};
           document.head.appendChild(script);
         } else {
           // Messenger already loaded (might be inlined)
           setTimeout(() => {
             if (typeof Messenger.init === "function") {
               Messenger.init();
-              console.log("✅ Messenger system initialized from existing");
             }
           }, 500);
         }
@@ -2321,9 +2276,6 @@
       // Fallback in case Messenger doesn't load
       setTimeout(function () {
         if (typeof Messenger === "undefined") {
-          console.warn(
-            "Messenger not loaded after 3 seconds, using basic functions only",
-          );
 
           // Make sure basic functions are available
           if (typeof window.openMessenger === "undefined") {

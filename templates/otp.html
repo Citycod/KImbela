@@ -1316,7 +1316,6 @@
           }
         })
         .catch(error => {
-          console.error('Upload error:', error);
           showNotification('Error uploading image: ' + error.message, 'error');
         })
         .finally(() => {
@@ -1485,7 +1484,6 @@
           }
         })
         .catch(error => {
-          console.error('Error in campaign/payment process:', error);
           showNotification('Error: ' + error.message, 'error');
           closeAllModals();
         });
@@ -1556,7 +1554,6 @@
         // This would integrate with Stripe.js
         // For now, we'll show a message
         showNotification('Stripe payment integration would be implemented here with Stripe.js', 'info');
-        console.log('Stripe payment details:', { clientSecret, paymentIntentId, transactionId });
 
         // In a real implementation, you would:
         // 1. Load Stripe.js
@@ -1599,7 +1596,6 @@
             }
           })
           .catch(error => {
-            console.error('Payment verification error:', error);
             showNotification('Error verifying payment', 'error');
           });
         }
@@ -1621,11 +1617,9 @@
         .then(response => response.json())
         .then(data => {
           if (!data.success) {
-            console.error('Failed to update payment status:', data.error);
           }
         })
         .catch(error => {
-          console.error('Error updating payment status:', error);
         });
       }
 

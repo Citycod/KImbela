@@ -1,3 +1,4 @@
+from time_utils import utcnow
 # socketio_handlers.py - Separate file for Socket.IO handlers
 from flask_socketio import emit, join_room, leave_room
 from flask_login import current_user
@@ -24,7 +25,7 @@ def handle_connect():
 
             # Mark user as online
             current_user.is_online = True
-            current_user.last_seen = datetime.utcnow()
+            current_user.last_seen = utcnow()
             db.session.commit()
 
             emit("connected", {"user_id": user_id, "message": "Connected to messaging"})
@@ -50,7 +51,7 @@ def handle_disconnect():
 
             # Mark user as offline
             current_user.is_online = False
-            current_user.last_seen = datetime.utcnow()
+            current_user.last_seen = utcnow()
             db.session.commit()
 
             print(f"👋 User {user_id} disconnected")
@@ -77,6 +78,6 @@ def on_join_chat(data):
 def handle_ping():
     """Simple ping handler"""
     try:
-        emit("pong", {"message": "pong", "timestamp": datetime.utcnow().isoformat()})
+        emit("pong", {"message": "pong", "timestamp": utcnow().isoformat()})
     except Exception as e:
         print(f"❌ Error in handle_ping: {e}")

@@ -536,7 +536,6 @@
                 showToast('Error: ' + result.error, 'error');
             }
         } catch (error) {
-            console.error('Error voting:', error);
             showToast('Error recording vote', 'error');
         }
     }
@@ -701,7 +700,6 @@
             if (!contentType || !contentType.includes('application/json')) {
                 const text = await response.text();
                 hideLoader();
-                console.error('Expected JSON but got:', text.substring(0, 200));
                 showToast('Server returned an unexpected response', 'error');
                 return;
             }
@@ -722,7 +720,6 @@
             }
         } catch (error) {
             hideLoader();
-            console.error('Error deleting review:', error);
             showToast(`Error deleting review: ${error.message}`, 'error');
         }
     }
@@ -772,12 +769,10 @@
                 }
             } catch (jsonError) {
                 hideLoader();
-                console.error("Failed to parse JSON:", jsonError);
                 showToast('Server returned an unexpected response', 'error');
             }
         } catch (error) {
             hideLoader();
-            console.error('Network error:', error);
             showToast('Network error. Please try again.', 'error');
         }
     });

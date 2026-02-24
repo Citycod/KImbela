@@ -1,3 +1,4 @@
+from time_utils import utcnow
 # socketio_events.py - IMPROVED with better error handling
 from flask_socketio import emit, join_room, leave_room
 from flask_login import current_user
@@ -27,7 +28,7 @@ def handle_connect():
 
         # Update online status
         current_user.is_online = True
-        current_user.last_seen = datetime.utcnow()
+        current_user.last_seen = utcnow()
         db.session.commit()
 
         # Notify friends
@@ -38,7 +39,7 @@ def handle_connect():
             {
                 "status": "authenticated",
                 "user_id": user_id,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": utcnow().isoformat(),
             },
         )
 
@@ -56,7 +57,7 @@ def handle_disconnect():
 
             # Update online status
             current_user.is_online = False
-            current_user.last_seen = datetime.utcnow()
+            current_user.last_seen = utcnow()
             db.session.commit()
 
             # Notify friends
@@ -82,7 +83,7 @@ def notify_friends_online(user_id):
                     {
                         "user_id": user_id,
                         "user_name": user.full_name,
-                        "timestamp": datetime.utcnow().isoformat(),
+                        "timestamp": utcnow().isoformat(),
                     },
                     room=f"user_{friend.id}",
                 )
@@ -105,7 +106,7 @@ def notify_friends_offline(user_id):
                     {
                         "user_id": user_id,
                         "user_name": user.full_name,
-                        "timestamp": datetime.utcnow().isoformat(),
+                        "timestamp": utcnow().isoformat(),
                     },
                     room=f"user_{friend.id}",
                 )
@@ -122,7 +123,7 @@ def handle_ping(data=None):
     return {
         "status": "ok",
         "message": "pong",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": utcnow().isoformat(),
         "user_id": current_user.id if current_user.is_authenticated else None,
         "socket_id": request.sid,
     }
@@ -245,7 +246,7 @@ def handle_typing_start(data):
             {
                 "user_id": current_user.id,
                 "user_name": current_user.full_name,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": utcnow().isoformat(),
             },
             room=f"user_{receiver_id}",
         )
@@ -264,7 +265,7 @@ def handle_typing_stop(data):
 
         emit(
             "typing_stop",
-            {"user_id": current_user.id, "timestamp": datetime.utcnow().isoformat()},
+            {"user_id": current_user.id, "timestamp": utcnow().isoformat()},
             room=f"user_{receiver_id}",
         )
 
@@ -291,7 +292,7 @@ def handle_message_read(data):
             # Notify sender
             emit(
                 "message_read",
-                {"message_id": message_id, "timestamp": datetime.utcnow().isoformat()},
+                {"message_id": message_id, "timestamp": utcnow().isoformat()},
                 room=f"user_{sender_id}",
             )
 
@@ -310,7 +311,7 @@ def handle_user_online(data):
 
         # Update user status
         current_user.is_online = True
-        current_user.last_seen = datetime.utcnow()
+        current_user.last_seen = utcnow()
         db.session.commit()
 
         # Notify friends
@@ -321,7 +322,7 @@ def handle_user_online(data):
                     {
                         "user_id": current_user.id,
                         "user_name": current_user.full_name,
-                        "timestamp": datetime.utcnow().isoformat(),
+                        "timestamp": utcnow().isoformat(),
                     },
                     room=f"user_{friend.id}",
                 )
@@ -341,7 +342,7 @@ def handle_user_offline(data):
 
         # Update user status
         current_user.is_online = False
-        current_user.last_seen = datetime.utcnow()
+        current_user.last_seen = utcnow()
         db.session.commit()
 
         # Notify friends
@@ -352,7 +353,7 @@ def handle_user_offline(data):
                     {
                         "user_id": current_user.id,
                         "user_name": current_user.full_name,
-                        "timestamp": datetime.utcnow().isoformat(),
+                        "timestamp": utcnow().isoformat(),
                     },
                     room=f"user_{friend.id}",
                 )
@@ -520,7 +521,7 @@ def handle_friend_request_accepted(data):
 
                 # Update online status
                 current_user.is_online = False
-                current_user.last_seen = datetime.utcnow()
+                current_user.last_seen = utcnow()
                 db.session.commit()
 
                 # Notify friends
