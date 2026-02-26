@@ -12,6 +12,8 @@ from flask import (
 )
 from datetime import date
 from urllib.parse import urlparse
+from functools import lru_cache
+from pathlib import Path
 from sqlalchemy.orm import joinedload
 from sqlalchemy import func, or_
 
@@ -136,6 +138,81 @@ cloudinary.config(
 )
 
 user = Blueprint("user", __name__)
+
+
+def _locations_path(filename):
+    return Path(current_app.static_folder) / "assets" / "js" / filename
+
+
+@lru_cache(maxsize=1)
+def _countries_compact():
+    try:
+        with _locations_path("countries.json").open() as f:
+            data = json.load(f)
+        return sorted(
+            [{"id": c["id"], "name": c["name"]} for c in data],
+            key=lambda x: x["name"],
+        )
+    except Exception as exc:
+        current_app.logger.error("Failed to load countries: %s", exc)
+        return []
+
+
+@lru_cache(maxsize=1)
+def _states_by_country():
+    try:
+        with _locations_path("states.json").open() as f:
+            data = json.load(f)
+        by_country = {}
+        for state in data:
+            by_country.setdefault(state["country_id"], []).append(
+                {"id": state["id"], "name": state["name"]}
+            )
+        for states in by_country.values():
+            states.sort(key=lambda x: x["name"])
+        return by_country
+    except Exception as exc:
+        current_app.logger.error("Failed to load states: %s", exc)
+        return {}
+
+
+@lru_cache(maxsize=1)
+def _cities_by_state():
+    try:
+        with _locations_path("cities.json").open() as f:
+            data = json.load(f)
+        by_state = {}
+        for city in data:
+            by_state.setdefault(city["state_id"], []).append(
+                {"id": city["id"], "name": city["name"]}
+            )
+        for cities in by_state.values():
+            cities.sort(key=lambda x: x["name"])
+        return by_state
+    except Exception as exc:
+        current_app.logger.error("Failed to load cities: %s", exc)
+        return {}
+
+
+@user.get("/api/locations/countries")
+def get_countries():
+    return jsonify(_countries_compact())
+
+
+@user.get("/api/locations/states")
+def get_states():
+    country_id = request.args.get("country_id", type=int)
+    if not country_id:
+        return jsonify([])
+    return jsonify(_states_by_country().get(country_id, []))
+
+
+@user.get("/api/locations/cities")
+def get_cities():
+    state_id = request.args.get("state_id", type=int)
+    if not state_id:
+        return jsonify([])
+    return jsonify(_cities_by_state().get(state_id, []))
 
 
 def _require_debug_access():
@@ -586,9 +663,21 @@ def user_dashboard():
 
             if not (has_content or has_media or has_gif):
                 flash(
-                    "Please add text, a photo/video, or a GIF to your post.", "warning"
+                    "Please add text, a photo, or a GIF to your post.", "warning"
                 )
                 return redirect(url_for("user.user_dashboard"))
+
+            if has_media:
+                filename_lower = media_file.filename.lower()
+                if media_file.content_type.startswith("video/") or filename_lower.endswith(
+                    (".mp4", ".mov", ".avi", ".mkv", ".webm")
+                ):
+                    flash("Video uploads are not allowed.", "danger")
+                    return redirect(url_for("user.user_dashboard"))
+
+                if not allowed_file(media_file.filename):
+                    flash("Unsupported file type. Please upload an image or GIF.", "danger")
+                    return redirect(url_for("user.user_dashboard"))
 
             # === HANDLE UPLOADED MEDIA (Photo / Video / Uploaded GIF) ===
             if has_media and allowed_file(media_file.filename):
@@ -603,13 +692,9 @@ def user_dashboard():
                         flash("File too large! Maximum size is 100MB.", "danger")
                         return redirect(url_for("user.user_dashboard"))
 
-                    # Determine resource type
+                    # Determine resource type (images only)
                     filename_lower = media_file.filename.lower()
-                    if media_file.content_type.startswith("video/"):
-                        resource_type = "video"
-                    elif filename_lower.endswith(
-                        (".gif", ".png", ".jpg", ".jpeg", ".webp")
-                    ):
+                    if filename_lower.endswith((".gif", ".png", ".jpg", ".jpeg", ".webp", ".bmp")):
                         resource_type = "image"
                     else:
                         resource_type = "auto"
@@ -631,10 +716,7 @@ def user_dashboard():
 
                     result = cloudinary.uploader.upload(media_file, **upload_options)
 
-                    if resource_type == "video":
-                        video_url = result["secure_url"]
-                    else:
-                        image_url = result["secure_url"]
+                    image_url = result["secure_url"]
 
                 except Exception as e:
                     print(f"Media upload error: {e}")
@@ -913,6 +995,22 @@ def handle_ajax_post_upload():
         video_url = None
         gif_url = None
 
+        if media_file and media_file.filename:
+            filename = media_file.filename.lower()
+            if media_file.content_type.lower().startswith("video") or filename.endswith(
+                (".mp4", ".mov", ".avi", ".mkv", ".webm")
+            ):
+                return jsonify(
+                    {"success": False, "error": "Video uploads are not allowed."}
+                )
+            if not allowed_file(media_file.filename):
+                return jsonify(
+                    {
+                        "success": False,
+                        "error": "Unsupported file type. Please upload an image or GIF.",
+                    }
+                )
+
         # Upload media if present
         if (
             media_file
@@ -935,16 +1033,12 @@ def handle_ajax_post_upload():
                 )
 
             try:
-                # Determine resource type
+                # Determine resource type (images only)
                 resource_type = "auto"
                 content_type = media_file.content_type.lower()
                 filename = media_file.filename.lower()
 
-                if content_type.startswith("video") or filename.endswith(
-                    (".mp4", ".mov", ".avi", ".mkv", ".webm")
-                ):
-                    resource_type = "video"
-                elif content_type.startswith("image") or filename.endswith(
+                if content_type.startswith("image") or filename.endswith(
                     (".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp")
                 ):
                     resource_type = "image"
@@ -971,10 +1065,7 @@ def handle_ajax_post_upload():
                 result = cloudinary.uploader.upload(media_file, **upload_options)
 
                 # Store URL
-                if resource_type == "video":
-                    video_url = result["secure_url"]
-                else:
-                    image_url = result["secure_url"]
+                image_url = result["secure_url"]
 
                 if is_gif:
                     gif_url = result["secure_url"]
@@ -1878,7 +1969,7 @@ def debug_notification_status():
 
 def allowed_file(filename):
     """Check if file extension is allowed"""
-    allowed_extensions = {"png", "jpg", "jpeg", "gif", "mp4", "mov", "avi"}
+    allowed_extensions = {"png", "jpg", "jpeg", "gif", "webp", "bmp"}
     return "." in filename and filename.rsplit(".", 1)[1].lower() in allowed_extensions
 
 
@@ -3383,14 +3474,28 @@ def create_group_post(group_id):
     if not post_content and not (media_file and media_file.filename):
         return jsonify({"success": False, "error": "Post content or media is required"})
 
+    if media_file and media_file.filename and not allowed_file(media_file.filename):
+        return jsonify(
+            {
+                "success": False,
+                "error": "Unsupported file type. Please upload an image or GIF.",
+            }
+        )
+
     try:
         image_url = None
         video_url = None
 
         if media_file and media_file.filename and allowed_file(media_file.filename):
-            resource_type = "auto"
-            if media_file.content_type.startswith("video"):
-                resource_type = "video"
+            filename = media_file.filename.lower()
+            if media_file.content_type.startswith("video") or filename.endswith(
+                (".mp4", ".mov", ".avi", ".mkv", ".webm")
+            ):
+                return jsonify(
+                    {"success": False, "error": "Video uploads are not allowed."}
+                )
+
+            resource_type = "image"
 
             result = cloudinary.uploader.upload(
                 media_file,
@@ -3402,10 +3507,7 @@ def create_group_post(group_id):
                 ],
             )
 
-            if media_file.content_type.startswith("video"):
-                video_url = result["secure_url"]
-            else:
-                image_url = result["secure_url"]
+            image_url = result["secure_url"]
 
         post = Post(
             content=post_content,

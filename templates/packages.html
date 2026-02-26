@@ -1158,10 +1158,9 @@
 
           let states = [];
 
-          fetch('{{ url_for("static", filename="assets/js/countries.json") }}')
+          fetch('{{ url_for("user.get_countries") }}')
             .then((response) => response.json())
             .then((data) => {
-              data.sort((a, b) => a.name.localeCompare(b.name));
               data.forEach((country) => {
                 const option = document.createElement('option');
                 option.value = country.name;
@@ -1190,11 +1189,10 @@
               return;
             }
 
-            fetch('{{ url_for("static", filename="assets/js/states.json") }}')
+            fetch(`{{ url_for("user.get_states") }}?country_id=${countryId}`)
               .then((response) => response.json())
               .then((data) => {
-                states = data.filter((state) => state.country_id == countryId);
-                states.sort((a, b) => a.name.localeCompare(b.name));
+                states = data;
                 adStateSelect.innerHTML = '<option value="">Select State / Province</option>';
                 states.forEach((state) => {
                   const option = document.createElement('option');
@@ -1227,11 +1225,10 @@
               return;
             }
 
-            fetch('{{ url_for("static", filename="assets/js/cities.json") }}')
+            fetch(`{{ url_for("user.get_cities") }}?state_id=${stateId}`)
               .then((response) => response.json())
               .then((data) => {
-                const cities = data.filter((city) => city.state_id == stateId);
-                cities.sort((a, b) => a.name.localeCompare(b.name));
+                const cities = data;
                 adCitySelect.innerHTML = '<option value="">Select City (Optional)</option>';
                 cities.forEach((city) => {
                   const option = document.createElement('option');

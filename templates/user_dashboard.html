@@ -485,19 +485,12 @@
                 </div>
             </div>
             <div class="flex justify-between pt-2 border-t border-fb-border">
-                <!-- Live Video -->
-                <button class="composer-btn flex flex-col items-center flex-1 py-1.5 sm:py-2 rounded-lg hover:bg-fb-gray transition-colors text-fb-text-light font-medium text-xs sm:text-sm relative" data-bs-toggle="modal" data-bs-target="#postModal">
-                    <img src="{{ url_for('static', filename='assets/img/video.png') }}" class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover mx-auto mb-1 sm:mb-2 mt-1 sm:mt-2" />
-                    <span class="hidden sm:inline">Video</span>
-                    <span class="tooltip">Video</span>
-                </button>
-
-                <!-- Photo/Video -->
+                <!-- Photo -->
                 <button class="composer-btn flex flex-col items-center flex-1 py-1.5 sm:py-2 rounded-lg hover:bg-fb-gray transition-colors text-fb-text-light font-medium text-xs sm:text-sm relative" onclick="document.getElementById('photoInput').click()">
                     <img src="{{ url_for('static', filename='assets/img/pic.png') }}" class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover mx-auto mb-1 sm:mb-2 mt-1 sm:mt-2" />
                     <span class="hidden sm:inline">Photo</span>
                     <span class="tooltip">Photo</span>
-                    <input type="file" id="photoInput" accept="image/*,video/*" hidden onchange="previewMedia(this)" />
+                    <input type="file" id="photoInput" accept="image/*" hidden onchange="previewMedia(this)" />
                 </button>
 
                 <!-- GIF Button -->
@@ -2089,7 +2082,7 @@
                   type="file"
                   name="media"
                   id="mediaInput"
-                  accept="image/*,video/*"
+                  accept="image/*"
                   hidden
                   onchange="handleFileSelection(this)"
                 />
@@ -2131,7 +2124,6 @@
             >
               <i class="bi bi-info-circle mr-1 text-blue-500"></i>
               Maximum file size: 100MB. Supported: Images (JPG, PNG, GIF, WebP)
-              and Videos (MP4, WebM, OGG, MOV)
             </div>
           </div>
 

@@ -666,8 +666,8 @@
                     <div class="flex items-center space-x-3">
                         <label class="flex items-center space-x-1.5 text-gray-600 hover:text-green-500 transition-all duration-300 cursor-pointer p-1.5 rounded hover:bg-green-50 text-sm">
                             <i class="fas fa-image text-sm"></i>
-                            <span>Photo/Video</span>
-                            <input type="file" name="media" accept="image/*,video/*" hidden
+                            <span>Photo</span>
+                            <input type="file" name="media" accept="image/*" hidden
                                    onchange="previewPostMedia(this)">
                         </label>
                     </div>
@@ -1013,10 +1013,10 @@ document.addEventListener('DOMContentLoaded', function () {
     let cities = [];
 
     // Load countries
-    fetch('{{ url_for("static", filename="assets/js/countries.json") }}')
+    fetch('{{ url_for("user.get_countries") }}')
         .then(response => response.json())
         .then(data => {
-            countries = data.sort((a, b) => a.name.localeCompare(b.name));
+            countries = data;
 
             countries.forEach(country => {
                 const option = document.createElement('option');
@@ -1057,11 +1057,10 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     function loadStates(countryId, preselectState = '', preselectCity = '') {
-        fetch('{{ url_for("static", filename="assets/js/states.json") }}')
+        fetch(`{{ url_for("user.get_states") }}?country_id=${countryId}`)
             .then(response => response.json())
             .then(data => {
-                states = data.filter(s => s.country_id == countryId);
-                states.sort((a, b) => a.name.localeCompare(b.name));
+                states = data;
 
                 stateSelect.innerHTML = '<option value="">Select State / Province</option>';
                 states.forEach(state => {
@@ -1100,11 +1099,10 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     function loadCities(stateId, preselectCity = '') {
-        fetch('{{ url_for("static", filename="assets/js/cities.json") }}')
+        fetch(`{{ url_for("user.get_cities") }}?state_id=${stateId}`)
             .then(response => response.json())
             .then(data => {
-                cities = data.filter(c => c.state_id == stateId);
-                cities.sort((a, b) => a.name.localeCompare(b.name));
+                cities = data;
 
                 citySelect.innerHTML = '<option value="">Select City</option>';
                 cities.forEach(city => {

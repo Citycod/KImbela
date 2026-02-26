@@ -2033,10 +2033,10 @@ document.addEventListener('DOMContentLoaded', function () {
     let cities = [];
 
     // Load countries
-    fetch('{{ url_for("static", filename="assets/js/countries.json") }}')
+    fetch('{{ url_for("user.get_countries") }}')
         .then(response => response.json())
         .then(data => {
-            countries = data.sort((a, b) => a.name.localeCompare(b.name));
+            countries = data;
 
             countries.forEach(country => {
                 const option = document.createElement('option');
@@ -2064,11 +2064,10 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     function loadStatesForFilter(countryId) {
-        fetch('{{ url_for("static", filename="assets/js/states.json") }}')
+        fetch(`{{ url_for("user.get_states") }}?country_id=${countryId}`)
             .then(response => response.json())
             .then(data => {
-                states = data.filter(s => s.country_id == countryId);
-                states.sort((a, b) => a.name.localeCompare(b.name));
+                states = data;
 
                 stateSelect.innerHTML = '<option value="">Any State</option>';
                 states.forEach(state => {
@@ -2098,11 +2097,10 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     function loadCitiesForFilter(stateId) {
-        fetch('{{ url_for("static", filename="assets/js/cities.json") }}')
+        fetch(`{{ url_for("user.get_cities") }}?state_id=${stateId}`)
             .then(response => response.json())
             .then(data => {
-                cities = data.filter(c => c.state_id == stateId);
-                cities.sort((a, b) => a.name.localeCompare(b.name));
+                cities = data;
 
                 citySelect.innerHTML = '<option value="">Any City</option>';
                 cities.forEach(city => {
