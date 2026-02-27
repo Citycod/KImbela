@@ -2207,3 +2207,39 @@ class BirthdayNotification(db.Model):
         "User", foreign_keys=[user_id], backref="birthday_notifications"
     )
     birthday_user = db.relationship("User", foreign_keys=[birthday_user_id])
+
+
+class Country(db.Model):
+    __tablename__ = "countries"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(128), nullable=False, unique=True, index=True)
+    iso2 = db.Column(db.String(2), nullable=True, index=True)
+    iso3 = db.Column(db.String(3), nullable=True, index=True)
+
+
+class State(db.Model):
+    __tablename__ = "states"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(128), nullable=False, index=True)
+    country_id = db.Column(
+        db.Integer, db.ForeignKey("countries.id", ondelete="CASCADE"), nullable=False
+    )
+    country = db.relationship("Country", backref=db.backref("states", lazy="dynamic"))
+
+    __table_args__ = (db.Index("ix_states_country_name", "country_id", "name"),)
+
+
+class City(db.Model):
+    __tablename__ = "cities"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(128), nullable=False, index=True)
+    state_id = db.Column(
+        db.Integer, db.ForeignKey("states.id", ondelete="CASCADE"), nullable=False
+    )
+    country_id = db.Column(
+        db.Integer, db.ForeignKey("countries.id", ondelete="CASCADE"), nullable=False
+    )
+    state = db.relationship("State", backref=db.backref("cities", lazy="dynamic"))
+    country = db.relationship("Country", backref=db.backref("cities", lazy="dynamic"))
+
+    __table_args__ = (db.Index("ix_cities_state_name", "state_id", "name"),)

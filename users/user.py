@@ -12,8 +12,6 @@ from flask import (
 )
 from datetime import date
 from urllib.parse import urlparse
-from functools import lru_cache
-from pathlib import Path
 from sqlalchemy.orm import joinedload
 from sqlalchemy import func, or_
 
@@ -82,6 +80,9 @@ from models import (
     ReportedContent,
     group_members,
     ReportedContent,
+    Country,
+    State,
+    City,
     # ReportedPost,
 )
 
@@ -140,63 +141,12 @@ cloudinary.config(
 user = Blueprint("user", __name__)
 
 
-def _locations_path(filename):
-    return Path(current_app.static_folder) / "assets" / "js" / filename
-
-
-@lru_cache(maxsize=1)
-def _countries_compact():
-    try:
-        with _locations_path("countries.json").open() as f:
-            data = json.load(f)
-        return sorted(
-            [{"id": c["id"], "name": c["name"]} for c in data],
-            key=lambda x: x["name"],
-        )
-    except Exception as exc:
-        current_app.logger.error("Failed to load countries: %s", exc)
-        return []
-
-
-@lru_cache(maxsize=1)
-def _states_by_country():
-    try:
-        with _locations_path("states.json").open() as f:
-            data = json.load(f)
-        by_country = {}
-        for state in data:
-            by_country.setdefault(state["country_id"], []).append(
-                {"id": state["id"], "name": state["name"]}
-            )
-        for states in by_country.values():
-            states.sort(key=lambda x: x["name"])
-        return by_country
-    except Exception as exc:
-        current_app.logger.error("Failed to load states: %s", exc)
-        return {}
-
-
-@lru_cache(maxsize=1)
-def _cities_by_state():
-    try:
-        with _locations_path("cities.json").open() as f:
-            data = json.load(f)
-        by_state = {}
-        for city in data:
-            by_state.setdefault(city["state_id"], []).append(
-                {"id": city["id"], "name": city["name"]}
-            )
-        for cities in by_state.values():
-            cities.sort(key=lambda x: x["name"])
-        return by_state
-    except Exception as exc:
-        current_app.logger.error("Failed to load cities: %s", exc)
-        return {}
-
-
 @user.get("/api/locations/countries")
 def get_countries():
-    return jsonify(_countries_compact())
+    rows = Country.query.with_entities(Country.id, Country.name).order_by(
+        Country.name
+    )
+    return jsonify([{"id": r.id, "name": r.name} for r in rows])
 
 
 @user.get("/api/locations/states")
@@ -204,7 +154,12 @@ def get_states():
     country_id = request.args.get("country_id", type=int)
     if not country_id:
         return jsonify([])
-    return jsonify(_states_by_country().get(country_id, []))
+    rows = (
+        State.query.with_entities(State.id, State.name)
+        .filter_by(country_id=country_id)
+        .order_by(State.name)
+    )
+    return jsonify([{"id": r.id, "name": r.name} for r in rows])
 
 
 @user.get("/api/locations/cities")
@@ -212,7 +167,12 @@ def get_cities():
     state_id = request.args.get("state_id", type=int)
     if not state_id:
         return jsonify([])
-    return jsonify(_cities_by_state().get(state_id, []))
+    rows = (
+        City.query.with_entities(City.id, City.name)
+        .filter_by(state_id=state_id)
+        .order_by(City.name)
+    )
+    return jsonify([{"id": r.id, "name": r.name} for r in rows])
 
 
 def _require_debug_access():
