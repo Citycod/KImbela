@@ -42,6 +42,7 @@
           </div>
 
           <nav class="mt-10 space-y-2 text-sm">
+            {% if current_user.is_super_admin %}
             <a
               href="{{ url_for('admin.admin_dashboard') }}"
               class="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-600 hover:bg-slate-100"
@@ -57,18 +58,19 @@
               Ads
             </a>
             <a
-              href="{{ url_for('admin.admin_reports') }}"
-              class="flex items-center gap-3 rounded-xl bg-slate-900 px-4 py-3 text-white"
-            >
-              <i data-lucide="alert-triangle" class="h-4 w-4"></i>
-              Reports
-            </a>
-            <a
               href="{{ url_for('admin.admin_users') }}"
               class="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-600 hover:bg-slate-100"
             >
               <i data-lucide="users" class="h-4 w-4"></i>
               Users
+            </a>
+            {% endif %}
+            <a
+              href="{{ url_for('admin.admin_reports') }}"
+              class="flex items-center gap-3 rounded-xl bg-slate-900 px-4 py-3 text-white"
+            >
+              <i data-lucide="alert-triangle" class="h-4 w-4"></i>
+              Reports
             </a>
             <a
               href="{{ url_for('admin.admin_groups') }}"

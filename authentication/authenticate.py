@@ -702,8 +702,10 @@ def login():
         if next_page and next_page.startswith("/"):
             return redirect(next_page)
 
-        if user.is_admin:
+        if user.is_super_admin:
             return redirect(url_for("admin.admin_dashboard"))
+        if user.is_admin:
+            return redirect(url_for("admin.admin_reports"))
 
         return redirect(url_for("user.user_dashboard"))
 

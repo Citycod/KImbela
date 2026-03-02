@@ -67,38 +67,72 @@
                       </span>
                   </td>
                   <td class="py-4">
-                      <span class="badge {{ 'badge-info' if user.is_admin or user.is_super_admin else 'badge-primary' }}">
-                          {{ 'Admin' if user.is_admin or user.is_super_admin else 'User' }}
-                      </span>
+                      {% if user.is_super_admin %}
+                      <span class="badge badge-info">Super Admin</span>
+                      {% elif user.is_admin %}
+                      <span class="badge badge-info">Sub Admin</span>
+                      {% else %}
+                      <span class="badge badge-primary">User</span>
+                      {% endif %}
                   </td>
                   <td class="py-4">
                       <p class="text-sm text-gray-600">{{ user.created_at.strftime('%b %d, %Y') }}</p>
                   </td>
                   <td class="py-4">
-                      <div class="flex items-center space-x-2">
-                          <button onclick="toggleUserStatus({{ user.id }})" 
-                                  class="p-2 rounded-lg {{ 'bg-green-100 text-green-600 hover:bg-green-200' if not user.is_active else 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200' }} transition-colors">
+                      <div class="flex flex-wrap items-center gap-2">
+                          {% if user.is_admin and not user.is_super_admin %}
+                          <button
+                                  onclick="toggleUserStatus({{ user.id }})"
+                                  class="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold {{ 'bg-green-100 text-green-700 hover:bg-green-200' if not user.is_active else 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200' }} transition-colors"
+                                  title="{{ 'Activate sub admin' if not user.is_active else 'Suspend sub admin' }}"
+                                  aria-label="{{ 'Activate sub admin' if not user.is_active else 'Suspend sub admin' }}"
+                          >
                               <i class="bi {{ 'bi-check-circle' if not user.is_active else 'bi-pause-circle' }}"></i>
+                              {{ 'Activate' if not user.is_active else 'Suspend' }}
                           </button>
+                          {% endif %}
                           
                           {% if current_user.is_super_admin %}
                               {% if not user.is_admin and not user.is_super_admin %}
-                              <button onclick="makeAdmin({{ user.id }})" 
-                                      class="p-2 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors">
+                              <button
+                                      onclick="makeAdmin({{ user.id }})"
+                                      class="flex items-center gap-2 rounded-lg bg-blue-100 px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-200 transition-colors"
+                                      title="Make sub admin"
+                                      aria-label="Make sub admin"
+                              >
                                   <i class="bi bi-person-plus"></i>
+                                  Make Sub Admin
                               </button>
                               {% elif user.is_admin and not user.is_super_admin %}
-                              <button onclick="removeAdmin({{ user.id }})" 
-                                      class="p-2 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors">
+                              <button
+                                      onclick="removeAdmin({{ user.id }})"
+                                      class="flex items-center gap-2 rounded-lg bg-red-100 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-200 transition-colors"
+                                      title="Remove sub admin"
+                                      aria-label="Remove sub admin"
+                              >
                                   <i class="bi bi-person-dash"></i>
+                                  Remove Admin
+                              </button>
+                              <button
+                                      onclick="deleteAdmin({{ user.id }})"
+                                      class="flex items-center gap-2 rounded-lg bg-rose-100 px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-200 transition-colors"
+                                      title="Delete sub admin"
+                                      aria-label="Delete sub admin"
+                              >
+                                  <i class="bi bi-trash"></i>
+                                  Delete
                               </button>
                               {% endif %}
                           {% endif %}
                           
-                          <button onclick="viewUserProfile({{ user.id }})" 
-                                  class="p-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
-                                  title="View Profile">
+                          <button
+                                  onclick="viewUserProfile({{ user.id }})"
+                                  class="flex items-center gap-2 rounded-lg bg-gray-100 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-200 transition-colors"
+                                  title="View profile"
+                                  aria-label="View profile"
+                          >
                               <i class="bi bi-eye"></i>
+                              View Profile
                           </button>
                       </div>
                   </td>
@@ -250,6 +284,7 @@ window.apiCall = async function(url, options = {}) {
     const response = await fetch(url, {
         headers: {
             'Content-Type': 'application/json',
+            'X-CSRFToken': window.csrfToken || "",
             ...options.headers
         },
         ...options
@@ -319,6 +354,26 @@ window.removeAdmin = async function(userId) {
         }
     } catch (error) {
         showToast('Error removing admin privileges', 'error');
+    }
+};
+
+// =====================
+// Delete sub admin
+// =====================
+window.deleteAdmin = async function(userId) {
+    if (!confirm('Are you sure you want to delete this sub admin? This cannot be undone.')) return;
+
+    try {
+        const response = await apiCall(`/admin/users/${userId}/delete`, { method: 'POST' });
+
+        if (response.success) {
+            showToast('Sub admin deleted successfully', 'success');
+            loadUsersWithFilters();
+        } else {
+            showToast(response.error || 'Failed to delete sub admin', 'error');
+        }
+    } catch (error) {
+        showToast('Error deleting sub admin', 'error');
     }
 };
 

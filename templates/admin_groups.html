@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Groups - Kimbela Admin</title>
+    <link
+      href="{{ url_for('static', filename='assets/img/fav.png') }}"
+      rel="icon"
+    />
+    <meta name="csrf-token" content="{{ csrf_token }}" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="bg-slate-50 font-['Poppins'] text-slate-900">
+    <script>
+      window.csrfToken = "{{ csrf_token }}";
+    </script>
+    <div
+      class="min-h-screen bg-gradient-to-br from-slate-50 via-sky-50 to-emerald-50"
+    >
+      <div class="flex">
+        <aside
+          class="hidden w-72 flex-shrink-0 border-r border-slate-200/70 bg-white/80 px-6 py-8 shadow-sm backdrop-blur lg:block"
+        >
+          <div class="flex items-center gap-3">
+            <span
+              class="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700"
+            >
+              <i data-lucide="shield" class="h-5 w-5"></i>
+            </span>
+            <div>
+              <p class="text-xs uppercase tracking-[0.2em] text-slate-400">
+                Admin
+              </p>
+              <p class="text-base font-semibold">Kimbela Console</p>
+            </div>
+          </div>
+
+          <nav class="mt-10 space-y-2 text-sm">
+            {% if current_user.is_super_admin %}
+            <a
+              href="{{ url_for('admin.admin_dashboard') }}"
+              class="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-600 hover:bg-slate-100"
+            >
+              <i data-lucide="layout-dashboard" class="h-4 w-4"></i>
+              Overview
+            </a>
+            <a
+              href="{{ url_for('admin.admin_ads') }}"
+              class="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-600 hover:bg-slate-100"
+            >
+              <i data-lucide="megaphone" class="h-4 w-4"></i>
+              Ads
+            </a>
+            <a
+              href="{{ url_for('admin.admin_users') }}"
+              class="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-600 hover:bg-slate-100"
+            >
+              <i data-lucide="users" class="h-4 w-4"></i>
+              Users
+            </a>
+            {% endif %}
+            <a
+              href="{{ url_for('admin.admin_reports') }}"
+              class="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-600 hover:bg-slate-100"
+            >
+              <i data-lucide="alert-triangle" class="h-4 w-4"></i>
+              Reports
+            </a>
+            <a
+              href="{{ url_for('admin.admin_groups') }}"
+              class="flex items-center gap-3 rounded-xl bg-slate-900 px-4 py-3 text-white"
+            >
+              <i data-lucide="layers" class="h-4 w-4"></i>
+              Groups
+            </a>
+          </nav>
+
+          <div class="mt-10 border-t border-slate-200/70 pt-6">
+            <a
+              href="{{ url_for('user.index') }}"
+              class="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-600 hover:bg-slate-100"
+            >
+              <i data-lucide="home" class="h-4 w-4"></i>
+              Back to site
+            </a>
+            <a
+              href="{{ url_for('user.logout') }}"
+              class="mt-2 flex items-center gap-3 rounded-xl px-4 py-3 text-rose-600 hover:bg-rose-50"
+            >
+              <i data-lucide="log-out" class="h-4 w-4"></i>
+              Logout
+            </a>
+          </div>
+        </aside>
+
+        <main class="flex-1 px-6 py-8 lg:px-10">
+          <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">Group Management</h2>
+            <p class="text-gray-600">Create, update, and manage community groups.</p>
+          </div>
+
+          <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <div class="card rounded-2xl bg-white/80 p-6 shadow-sm backdrop-blur">
+              <h3 class="text-lg font-semibold text-slate-800 mb-4">Create Group</h3>
+              <form id="createGroupForm" class="space-y-4">
+                <div>
+                  <label class="text-sm text-slate-600">Name</label>
+                  <input
+                    type="text"
+                    name="name"
+                    class="mt-1 w-full rounded-xl border border-slate-200 px-4 py-2"
+                    required
+                  />
+                </div>
+                <div>
+                  <label class="text-sm text-slate-600">Description</label>
+                  <textarea
+                    name="description"
+                    rows="3"
+                    class="mt-1 w-full rounded-xl border border-slate-200 px-4 py-2"
+                  ></textarea>
+                </div>
+                <div>
+                  <label class="text-sm text-slate-600">Category</label>
+                  <input
+                    type="text"
+                    name="category"
+                    value="social"
+                    class="mt-1 w-full rounded-xl border border-slate-200 px-4 py-2"
+                  />
+                </div>
+                <div class="flex items-center gap-2">
+                  <input type="checkbox" id="isPrivate" name="is_private" />
+                  <label for="isPrivate" class="text-sm text-slate-600"
+                    >Private group</label
+                  >
+                </div>
+                <div>
+                  <label class="text-sm text-slate-600">Image</label>
+                  <input
+                    type="file"
+                    name="image"
+                    accept="image/*"
+                    class="mt-1 block w-full text-sm text-slate-600"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  class="w-full rounded-xl bg-slate-900 px-4 py-2 text-white"
+                >
+                  Create Group
+                </button>
+              </form>
+            </div>
+
+            <div class="lg:col-span-2 card rounded-2xl bg-white/80 p-6 shadow-sm backdrop-blur">
+              <div class="mb-4 flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-slate-800">Groups</h3>
+                <div>
+                  <input
+                    id="groupSearch"
+                    type="text"
+                    placeholder="Search groups..."
+                    class="w-64 rounded-xl border border-slate-200 px-4 py-2 text-sm"
+                  />
+                </div>
+              </div>
+
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr class="border-b border-slate-200 text-left text-slate-500">
+                      <th class="py-2">Group</th>
+                      <th class="py-2">Category</th>
+                      <th class="py-2">Private</th>
+                      <th class="py-2">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="groupsTableBody">
+                    {% for group in groups.items %}
+                    <tr class="border-b border-slate-100">
+                      <td class="py-3">
+                        <div class="flex items-center gap-3">
+                          <img
+                            src="{{ group.image or url_for('static', filename='assets/img/default-avatar.png') }}"
+                            class="h-10 w-10 rounded-lg object-cover"
+                            alt="{{ group.name }}"
+                          />
+                          <div>
+                            <p class="font-medium text-slate-800">{{ group.name }}</p>
+                            <p class="text-xs text-slate-500 truncate">
+                              {{ group.description or "No description" }}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                      <td class="py-3 text-slate-600">{{ group.category }}</td>
+                      <td class="py-3 text-slate-600">{{ "Yes" if group.is_private else "No" }}</td>
+                      <td class="py-3">
+                        <div class="flex items-center gap-2">
+                          <button
+                            class="rounded-lg bg-slate-100 px-3 py-1 text-xs text-slate-700"
+                            onclick="openEditGroup({{ group.id }})"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            class="rounded-lg bg-rose-100 px-3 py-1 text-xs text-rose-700"
+                            onclick="deleteGroup({{ group.id }})"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+
+              {% if groups.pages > 1 %}
+              <div class="mt-4 flex gap-2">
+                {% if groups.has_prev %}
+                <a
+                  class="rounded-lg border border-slate-200 px-3 py-1 text-sm"
+                  href="{{ url_for('admin.admin_groups', page=groups.prev_num, search=search) }}"
+                  >Previous</a
+                >
+                {% endif %}
+                {% if groups.has_next %}
+                <a
+                  class="rounded-lg border border-slate-200 px-3 py-1 text-sm"
+                  href="{{ url_for('admin.admin_groups', page=groups.next_num, search=search) }}"
+                  >Next</a
+                >
+                {% endif %}
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <div
+      id="editGroupModal"
+      class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50"
+    >
+      <div class="w-full max-w-lg rounded-2xl bg-white p-6">
+        <div class="mb-4 flex items-center justify-between">
+          <h3 class="text-lg font-semibold">Edit Group</h3>
+          <button onclick="closeEditModal()">✕</button>
+        </div>
+        <form id="editGroupForm" class="space-y-4">
+          <input type="hidden" name="group_id" id="editGroupId" />
+          <div>
+            <label class="text-sm text-slate-600">Name</label>
+            <input
+              type="text"
+              name="name"
+              id="editGroupName"
+              class="mt-1 w-full rounded-xl border border-slate-200 px-4 py-2"
+              required
+            />
+          </div>
+          <div>
+            <label class="text-sm text-slate-600">Description</label>
+            <textarea
+              name="description"
+              id="editGroupDescription"
+              rows="3"
+              class="mt-1 w-full rounded-xl border border-slate-200 px-4 py-2"
+            ></textarea>
+          </div>
+          <div>
+            <label class="text-sm text-slate-600">Category</label>
+            <input
+              type="text"
+              name="category"
+              id="editGroupCategory"
+              class="mt-1 w-full rounded-xl border border-slate-200 px-4 py-2"
+            />
+          </div>
+          <div class="flex items-center gap-2">
+            <input type="checkbox" id="editGroupPrivate" name="is_private" />
+            <label for="editGroupPrivate" class="text-sm text-slate-600"
+              >Private group</label
+            >
+          </div>
+          <div>
+            <label class="text-sm text-slate-600">Image</label>
+            <input
+              type="file"
+              name="image"
+              accept="image/*"
+              class="mt-1 block w-full text-sm text-slate-600"
+            />
+          </div>
+          <div class="flex justify-end gap-2">
+            <button
+              type="button"
+              class="rounded-xl border border-slate-200 px-4 py-2"
+              onclick="closeEditModal()"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="rounded-xl bg-slate-900 px-4 py-2 text-white"
+            >
+              Save
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      if (window.lucide) {
+        window.lucide.createIcons();
+      }
+
+      const csrfToken = window.csrfToken || "";
+
+      document.getElementById("createGroupForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const form = e.target;
+        const data = new FormData(form);
+        data.set("is_private", form.is_private.checked ? "true" : "false");
+
+        const res = await fetch("/admin/groups/create", {
+          method: "POST",
+          headers: { "X-CSRFToken": csrfToken },
+          body: data,
+        });
+        const json = await res.json();
+        if (json.success) {
+          window.location.reload();
+        } else {
+          alert(json.error || "Failed to create group");
+        }
+      });
+
+      async function openEditGroup(groupId) {
+        const res = await fetch(`/admin/groups/${groupId}/edit`);
+        const json = await res.json();
+        if (!json.success) {
+          alert(json.error || "Failed to load group");
+          return;
+        }
+        document.getElementById("editGroupId").value = json.group.id;
+        document.getElementById("editGroupName").value = json.group.name || "";
+        document.getElementById("editGroupDescription").value = json.group.description || "";
+        document.getElementById("editGroupCategory").value = json.group.category || "";
+        document.getElementById("editGroupPrivate").checked = !!json.group.is_private;
+        document.getElementById("editGroupModal").classList.remove("hidden");
+        document.getElementById("editGroupModal").classList.add("flex");
+      }
+
+      function closeEditModal() {
+        const modal = document.getElementById("editGroupModal");
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+      }
+
+      document.getElementById("editGroupForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const form = e.target;
+        const groupId = document.getElementById("editGroupId").value;
+        const data = new FormData(form);
+        data.set("is_private", form.is_private.checked ? "true" : "false");
+
+        const res = await fetch(`/admin/groups/${groupId}/update`, {
+          method: "POST",
+          headers: { "X-CSRFToken": csrfToken },
+          body: data,
+        });
+        const json = await res.json();
+        if (json.success) {
+          window.location.reload();
+        } else {
+          alert(json.error || "Failed to update group");
+        }
+      });
+
+      async function deleteGroup(groupId) {
+        if (!confirm("Delete this group?")) return;
+        const res = await fetch(`/admin/groups/${groupId}/delete`, {
+          method: "POST",
+          headers: { "X-CSRFToken": csrfToken },
+        });
+        const json = await res.json();
+        if (json.success) {
+          window.location.reload();
+        } else {
+          alert(json.error || "Failed to delete group");
+        }
+      }
+
+      const groupSearch = document.getElementById("groupSearch");
+      if (groupSearch) {
+        groupSearch.addEventListener("keyup", (e) => {
+          if (e.key === "Enter") {
+            const query = encodeURIComponent(groupSearch.value.trim());
+            window.location.href = `/admin/groups?search=${query}`;
+          }
+        });
+      }
+    </script>
+  </body>
+</html>

@@ -74,7 +74,7 @@ def _require_debug_access():
     """Restrict debug endpoints to admins when explicitly enabled."""
     if not current_user.is_authenticated:
         abort(404)
-    if not current_user.is_admin:
+    if not current_user.is_super_admin:
         abort(404)
     if not current_app.config.get("ENABLE_DEBUG_ROUTES"):
         abort(404)
@@ -228,7 +228,7 @@ def upload_to_cloudinary(file, folder="marketplace"):
 @login_required
 def test_new_upload():
     """Test the fixed upload function"""
-    if not current_user.is_admin:
+    if not current_user.is_super_admin:
         return "Admin access required", 403
 
     # Create a simple test file
@@ -268,7 +268,7 @@ def test_new_upload():
 @login_required
 def make_files_public_fixed():
     """Make all Cloudinary files publicly accessible - FIXED VERSION"""
-    if not current_user.is_admin:
+    if not current_user.is_super_admin:
         return "Admin access required", 403
 
     try:
@@ -347,7 +347,7 @@ def make_files_public_fixed():
 def debug_cloudinary():
     """Debug Cloudinary file issues"""
     _require_debug_access()
-    if not current_user.is_admin:
+    if not current_user.is_super_admin:
         return "Admin access required", 403
 
     try:
@@ -820,7 +820,7 @@ def service_detail(slug):
     # Check if service is active or user is seller/admin
     if service.status != "active" and (
         not current_user.is_authenticated
-        or (current_user.id != service.seller_id and not current_user.is_admin)
+        or (current_user.id != service.seller_id and not current_user.is_super_admin)
     ):
         flash("This service is not available", "warning")
         return redirect(url_for("market.main_market"))
@@ -2101,7 +2101,7 @@ def seller_stats(seller_id):
 @login_required
 def admin_services():
     """Admin view of all services"""
-    if not current_user.is_admin:
+    if not current_user.is_super_admin:
         flash("Admin access required", "danger")
         return redirect(url_for("market.main_market"))
 
@@ -2130,7 +2130,7 @@ def admin_services():
 # @login_required
 # def admin_approve_service(service_id):
 #     """Approve a service"""
-#     if not current_user.is_admin:
+#     if not current_user.is_super_admin:
 #         return jsonify({'success': False, 'error': 'Admin access required'}), 403
 
 #     service = MarketplaceService.query.get_or_404(service_id)
@@ -2154,7 +2154,7 @@ def admin_services():
 # @login_required
 # def admin_reject_service(service_id):
 #     """Reject a service"""
-#     if not current_user.is_admin:
+#     if not current_user.is_super_admin:
 #         return jsonify({'success': False, 'error': 'Admin access required'}), 403
 
 #     service = MarketplaceService.query.get_or_404(service_id)
@@ -2179,7 +2179,7 @@ def admin_services():
 @login_required
 def manage_featured():
     """Manage featured services"""
-    if not current_user.is_admin:
+    if not current_user.is_super_admin:
         flash("Admin access required", "danger")
         return redirect(url_for("market.main_market"))
 
@@ -3615,7 +3615,7 @@ def init_subscription_plans():
     """Initialize marketplace subscription plans"""
     try:
         # Check if user is admin
-        if not current_user.is_authenticated or not current_user.is_admin:
+        if not current_user.is_authenticated or not current_user.is_super_admin:
             return "Admin access required", 403
 
         # Check if plans already exist
@@ -4702,7 +4702,7 @@ def review_reply():
         review = MarketplaceReview.query.get_or_404(review_id)
 
         # Check if user is the seller
-        if current_user.id != review.seller_id and not current_user.is_admin:
+        if current_user.id != review.seller_id and not current_user.is_super_admin:
             return jsonify(
                 {"success": False, "error": "Only the seller can reply to reviews"}
             )
@@ -4825,7 +4825,7 @@ def delete_review(review_id):
         review = MarketplaceReview.query.get_or_404(review_id)
 
         # Check permissions
-        if review.buyer_id != current_user.id and not current_user.is_admin:
+        if review.buyer_id != current_user.id and not current_user.is_super_admin:
             return jsonify({"success": False, "error": "Permission denied"}), 403
 
         # Store info before deletion

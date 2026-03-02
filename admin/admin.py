@@ -12,6 +12,7 @@ from flask import (
 )
 from flask_wtf.csrf import generate_csrf
 import uuid
+import json
 from io import BytesIO
 from models import (
     User,
@@ -150,11 +151,26 @@ def calculate_age(birth_date):
     return age
 
 
+def _admin_has_permission(permission):
+    if current_user.is_super_admin:
+        return True
+    if not current_user.is_admin:
+        return False
+    return current_user.has_admin_permission(permission)
+
+
+def _require_admin_permission(permission):
+    if not _admin_has_permission(permission):
+        flash("Access denied. Insufficient permissions.", "danger")
+        return False
+    return True
+
+
 @admin.route("/admin_dashboard")
 @login_required
 def admin_dashboard():
-    if not current_user.is_admin and not current_user.is_super_admin:
-        flash("Access denied. Admin privileges required.", "danger")
+    if not current_user.is_super_admin:
+        flash("Access denied. Super admin privileges required.", "danger")
         return redirect(url_for("auth.user_dashboard"))
 
     # Get statistics for dashboard
@@ -712,10 +728,14 @@ def admin_dashboard():
 @admin.route("/admin/users/<int:user_id>/toggle_status", methods=["POST"])
 @login_required
 def admin_toggle_user_status(user_id):
-    if not current_user.is_admin and not current_user.is_super_admin:
-        return jsonify({"success": False, "error": "Access denied"}), 403
+    if not current_user.is_super_admin:
+        return jsonify({"success": False, "error": "Super admin required"}), 403
 
     user = User.query.get_or_404(user_id)
+    if user.is_super_admin:
+        return jsonify({"success": False, "error": "Cannot suspend super admin"}), 403
+    if not user.is_admin:
+        return jsonify({"success": False, "error": "Only sub admins can be suspended here"}), 403
     user.is_active = not user.is_active
     db.session.commit()
 
@@ -730,6 +750,8 @@ def admin_make_admin(user_id):
 
     user = User.query.get_or_404(user_id)
     user.is_admin = True
+    user.admin_role = "sub_admin"
+    user.admin_permissions = json.dumps(["groups_manage", "reported_comments_delete"])
     db.session.commit()
 
     return jsonify({"success": True})
@@ -742,16 +764,72 @@ def admin_remove_admin(user_id):
         return jsonify({"success": False, "error": "Super admin required"}), 403
 
     user = User.query.get_or_404(user_id)
+    if user.is_super_admin:
+        return jsonify({"success": False, "error": "Cannot remove super admin"}), 403
     user.is_admin = False
+    user.admin_role = "moderator"
+    user.admin_permissions = None
     db.session.commit()
 
     return jsonify({"success": True})
 
 
+@admin.route("/admin/users/<int:user_id>/delete", methods=["POST"])
+@login_required
+def admin_delete_user(user_id):
+    if not current_user.is_super_admin:
+        return jsonify({"success": False, "error": "Super admin required"}), 403
+
+    user = User.query.get_or_404(user_id)
+    if user.is_super_admin:
+        return jsonify({"success": False, "error": "Cannot delete super admin"}), 403
+    if not user.is_admin:
+        return jsonify({"success": False, "error": "Only sub admins can be deleted here"}), 403
+    if user.id == current_user.id:
+        return jsonify({"success": False, "error": "Cannot delete yourself"}), 403
+
+    db.session.delete(user)
+    db.session.commit()
+
+    return jsonify({"success": True})
+
+
+@admin.route("/admin/change_password", methods=["POST"])
+@login_required
+def admin_change_password():
+    if not current_user.is_super_admin:
+        flash("Access denied. Super admin privileges required.", "danger")
+        return redirect(url_for("admin.admin_users"))
+
+    current_password = request.form.get("current_password", "")
+    new_password = request.form.get("new_password", "")
+    confirm_password = request.form.get("confirm_password", "")
+
+    if not current_user.check_password(current_password):
+        flash("Current password is incorrect.", "danger")
+        return redirect(url_for("admin.admin_users"))
+
+    if new_password != confirm_password:
+        flash("New passwords do not match.", "danger")
+        return redirect(url_for("admin.admin_users"))
+
+    if not is_strong_password(new_password):
+        flash(
+            "Password must be at least 8 characters and include upper, lower, number, and symbol.",
+            "danger",
+        )
+        return redirect(url_for("admin.admin_users"))
+
+    current_user.set_password(new_password)
+    db.session.commit()
+    flash("Password updated successfully.", "success")
+    return redirect(url_for("admin.admin_users"))
+
+
 @admin.route("/admin/groups")
 @login_required
 def admin_groups():
-    if not current_user.is_admin and not current_user.is_super_admin:
+    if not _require_admin_permission("groups_manage"):
         return jsonify({"error": "Access denied"}), 403
 
     page = request.args.get("page", 1, type=int)
@@ -776,7 +854,7 @@ def admin_groups():
 @admin.route("/admin/groups/create", methods=["POST"])
 @login_required
 def admin_create_group():
-    if not (current_user.is_admin or current_user.is_super_admin):
+    if not _require_admin_permission("groups_manage"):
         return jsonify({"success": False, "error": "Access denied"}), 403
 
     # Force parsing of form data even when files are present
@@ -823,7 +901,7 @@ def admin_create_group():
 @admin.route("/admin/groups/<int:group_id>/edit")
 @login_required
 def admin_get_group_for_edit(group_id):
-    if not current_user.is_admin and not current_user.is_super_admin:
+    if not _require_admin_permission("groups_manage"):
         return jsonify({"success": False, "error": "Access denied"}), 403
 
     group = Group.query.get_or_404(group_id)
@@ -845,7 +923,7 @@ def admin_get_group_for_edit(group_id):
 @admin.route("/admin/groups/<int:group_id>/update", methods=["POST"])
 @login_required
 def admin_update_group(group_id):
-    if not current_user.is_admin and not current_user.is_super_admin:
+    if not _require_admin_permission("groups_manage"):
         return jsonify({"success": False, "error": "Access denied"}), 403
 
     group = Group.query.get_or_404(group_id)
@@ -880,7 +958,7 @@ def admin_update_group(group_id):
 @admin.route("/admin/groups/<int:group_id>/delete", methods=["POST"])
 @login_required
 def admin_delete_group(group_id):
-    if not (current_user.is_admin or current_user.is_super_admin):
+    if not (current_user.is_super_admin or _admin_has_permission("groups_delete")):
         return jsonify({"success": False, "error": "Access denied"}), 403
 
     group = Group.query.get(group_id)
@@ -914,7 +992,7 @@ def admin_delete_group(group_id):
 @admin.route("/admin/reports")
 @login_required
 def admin_reports():
-    if not current_user.is_admin and not current_user.is_super_admin:
+    if not _require_admin_permission("reported_comments_delete"):
         return jsonify({"error": "Access denied"}), 403
 
     page = request.args.get("page", 1, type=int)
@@ -963,13 +1041,17 @@ def admin_reports():
 @admin.route("/admin/reports/<int:report_id>/resolve", methods=["POST"])
 @login_required
 def admin_resolve_report(report_id):
-    if not current_user.is_admin and not current_user.is_super_admin:
+    if not (current_user.is_super_admin or _admin_has_permission("reported_comments_delete")):
         return jsonify({"success": False, "error": "Access denied"}), 403
 
     report = ReportedContent.query.get_or_404(report_id)
     action = request.json.get(
         "action"
     )  # delete_content, warn_user, suspend_user, dismiss
+
+    if not current_user.is_super_admin:
+        if action != "delete_content" or report.content_type != "comment":
+            return jsonify({"success": False, "error": "Access denied"}), 403
 
     if action == "delete_content":
         # Delete the reported content based on type
@@ -997,8 +1079,8 @@ def admin_resolve_report(report_id):
 @admin.route("/admin/reports/<int:report_id>/dismiss", methods=["POST"])
 @login_required
 def admin_dismiss_report(report_id):
-    if not current_user.is_admin and not current_user.is_super_admin:
-        return jsonify({"success": False, "error": "Access denied"}), 403
+    if not current_user.is_super_admin:
+        return jsonify({"success": False, "error": "Super admin required"}), 403
 
     report = ReportedContent.query.get_or_404(report_id)
     report.status = "dismissed"
@@ -1014,7 +1096,7 @@ def admin_dismiss_report(report_id):
 @admin.route("/admin/ads")
 @login_required
 def admin_ads():
-    if not current_user.is_admin and not current_user.is_super_admin:
+    if not current_user.is_super_admin:
         return jsonify({"error": "Access denied"}), 403
 
     page = request.args.get("page", 1, type=int)
@@ -1045,7 +1127,7 @@ def admin_ads():
 @admin.route("/admin/ads/create", methods=["POST"])
 @login_required
 def admin_create_ad():
-    if not current_user.is_admin and not current_user.is_super_admin:
+    if not current_user.is_super_admin:
         return jsonify({"success": False, "error": "Access denied"}), 403
 
     title = request.form.get("title")
@@ -1100,7 +1182,7 @@ def admin_create_ad():
 @admin.route("/admin/ads/<int:ad_id>/update", methods=["POST"])
 @login_required
 def admin_update_ad(ad_id):
-    if not current_user.is_admin and not current_user.is_super_admin:
+    if not current_user.is_super_admin:
         return jsonify({"success": False, "error": "Access denied"}), 403
 
     ad = SponsoredAd.query.get_or_404(ad_id)
@@ -1143,7 +1225,7 @@ def admin_update_ad(ad_id):
 @admin.route("/admin/ads/<int:ad_id>/toggle_status", methods=["POST"])
 @login_required
 def admin_toggle_ad_status(ad_id):
-    if not current_user.is_admin and not current_user.is_super_admin:
+    if not current_user.is_super_admin:
         return jsonify({"success": False, "error": "Access denied"}), 403
 
     ad = SponsoredAd.query.get_or_404(ad_id)
@@ -1161,7 +1243,7 @@ def admin_toggle_ad_status(ad_id):
 @admin.route("/admin/ads/<int:ad_id>/delete", methods=["POST"])
 @login_required
 def admin_delete_ad(ad_id):
-    if not current_user.is_admin and not current_user.is_super_admin:
+    if not current_user.is_super_admin:
         return jsonify({"success": False, "error": "Access denied"}), 403
 
     ad = SponsoredAd.query.get_or_404(ad_id)
@@ -1174,7 +1256,7 @@ def admin_delete_ad(ad_id):
 @admin.route("/admin/stats")
 @login_required
 def admin_stats():
-    if not current_user.is_admin and not current_user.is_super_admin:
+    if not current_user.is_super_admin:
         return jsonify({"error": "Access denied"}), 403
 
     # User growth (last 30 days)
@@ -1217,7 +1299,7 @@ def admin_stats():
 @admin.route("/admin/comments/<int:comment_id>/delete", methods=["POST"])
 @login_required
 def admin_delete_comment(comment_id):
-    if not current_user.is_admin and not current_user.is_super_admin:
+    if not (current_user.is_super_admin or _admin_has_permission("reported_comments_delete")):
         return jsonify({"success": False, "error": "Access denied"}), 403
 
     comment = Comment.query.get_or_404(comment_id)
@@ -1237,7 +1319,7 @@ from random import sample
 @admin.route("/admin/dashboard_content")
 @login_required
 def admin_dashboard_content():
-    if not current_user.is_admin and not current_user.is_super_admin:
+    if not current_user.is_super_admin:
         return jsonify({"error": "Access denied"}), 403
 
     # Get statistics for dashboard
@@ -1428,7 +1510,7 @@ def admin_dashboard_content():
 @admin.route("/admin/users")
 @login_required
 def admin_users():
-    if not current_user.is_admin and not current_user.is_super_admin:
+    if not current_user.is_super_admin:
         return jsonify({"error": "Access denied"}), 403
 
     page = request.args.get("page", 1, type=int)
@@ -1470,4 +1552,10 @@ def admin_users():
             current_user=current_user,
         )
 
-    return redirect(url_for("admin.admin_dashboard"))
+    return render_template(
+        "admin_users_page.html",
+        users=users,
+        search=search,
+        status_filter=status_filter,
+        current_user=current_user,
+    )

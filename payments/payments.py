@@ -30,7 +30,7 @@ def _require_debug_access():
     """Restrict debug endpoints to admins when explicitly enabled."""
     if not current_user.is_authenticated:
         abort(404)
-    if not current_user.is_admin:
+    if not current_user.is_super_admin:
         abort(404)
     if not current_app.config.get("ENABLE_DEBUG_ROUTES"):
         abort(404)
@@ -637,7 +637,7 @@ def update_payment_status():
     try:
         from .payment_service import PaymentService
 
-        if not current_user.is_admin:
+        if not current_user.is_super_admin:
             return jsonify({"success": False, "error": "Access denied"})
         data = request.get_json()
         transaction_id = data.get("transaction_id")

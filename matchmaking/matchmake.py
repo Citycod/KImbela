@@ -66,7 +66,7 @@ def _require_debug_access():
     """Restrict debug endpoints to admins when explicitly enabled."""
     if not current_user.is_authenticated:
         abort(404)
-    if not current_user.is_admin:
+    if not current_user.is_super_admin:
         abort(404)
     if not current_app.config.get("ENABLE_DEBUG_ROUTES"):
         abort(404)
