@@ -3041,7 +3041,7 @@ def contact():
 
 @user.route("/terms", methods=["GET", "POST"])
 def terms():
-    return render_template("terms.html")
+    return render_template("terms-of-service.html")
 
 
 @user.route("/privacy", methods=["GET", "POST"])

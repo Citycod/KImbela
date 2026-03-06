@@ -1,11 +1,3 @@
-/**
- * Template Name: College
- * Template URL: https://bootstrapmade.com/college-bootstrap-education-template/
- * Updated: Jun 19 2025 with Bootstrap v5.3.6
- * Author: BootstrapMade.com
- * License: https://bootstrapmade.com/license/
- */
-
 (function() {
     "use strict";
 

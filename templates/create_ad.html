@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Create Sponsored Ad - Kimbela</title>
     <link
-      href="{{ url_for('static', filename='assets/img/fav.png') }}"
+      href="{{ url_for('static', filename='assets/img/favy.png') }}"
       rel="icon"
     />
     <link
-      href="{{ url_for('static', filename='assets/img/fav.png') }}"
+      href="{{ url_for('static', filename='assets/img/kim.png') }}"
       rel="apple-touch-icon"
     />
 
@@ -49,10 +49,10 @@
         link.rel = "stylesheet";
         link.href =
           "https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css";
-        link.onload = () => 
-        link.onerror = () => {
-          loadEmergencyStyles();
-        };
+        link.onload = () =>
+          (link.onerror = () => {
+            loadEmergencyStyles();
+          });
         document.head.appendChild(link);
       }
 
@@ -887,7 +887,8 @@
             });
           })
           .catch(() => {
-            countrySelect.innerHTML = '<option value="">Error loading countries</option>';
+            countrySelect.innerHTML =
+              '<option value="">Error loading countries</option>';
           });
 
         countrySelect.addEventListener("change", function () {
@@ -902,7 +903,8 @@
           citySelect.disabled = true;
 
           if (!countryId) {
-            stateSelect.innerHTML = '<option value="">Select Country First</option>';
+            stateSelect.innerHTML =
+              '<option value="">Select Country First</option>';
             return;
           }
 
@@ -910,7 +912,8 @@
             .then((response) => response.json())
             .then((data) => {
               states = data;
-              stateSelect.innerHTML = '<option value="">Select State / Province</option>';
+              stateSelect.innerHTML =
+                '<option value="">Select State / Province</option>';
               states.forEach((state) => {
                 const option = document.createElement("option");
                 option.value = state.name;
@@ -920,11 +923,13 @@
               });
               stateSelect.disabled = states.length === 0;
               if (states.length === 0) {
-                stateSelect.innerHTML = '<option value="">No states available</option>';
+                stateSelect.innerHTML =
+                  '<option value="">No states available</option>';
               }
             })
             .catch(() => {
-              stateSelect.innerHTML = '<option value="">Error loading states</option>';
+              stateSelect.innerHTML =
+                '<option value="">Error loading states</option>';
             });
         });
 
@@ -938,7 +943,8 @@
           citySelect.disabled = true;
 
           if (!stateId) {
-            citySelect.innerHTML = '<option value="">Select State First</option>';
+            citySelect.innerHTML =
+              '<option value="">Select State First</option>';
             return;
           }
 
@@ -946,7 +952,8 @@
             .then((response) => response.json())
             .then((data) => {
               const cities = data;
-              citySelect.innerHTML = '<option value="">Select City (Optional)</option>';
+              citySelect.innerHTML =
+                '<option value="">Select City (Optional)</option>';
               cities.forEach((city) => {
                 const option = document.createElement("option");
                 option.value = city.name;
@@ -956,7 +963,8 @@
               citySelect.disabled = false;
             })
             .catch(() => {
-              citySelect.innerHTML = '<option value="">Error loading cities</option>';
+              citySelect.innerHTML =
+                '<option value="">Error loading cities</option>';
             });
         });
       });

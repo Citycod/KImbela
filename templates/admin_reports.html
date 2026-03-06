@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Reports - Kimbela Admin</title>
     <link
-      href="{{ url_for('static', filename='assets/img/fav.png') }}"
+      href="{{ url_for('static', filename='assets/img/favy.png') }}"
       rel="icon"
     />
     <meta name="csrf-token" content="{{ csrf_token }}" />
@@ -131,10 +131,54 @@
                   id="statusFilter"
                   class="rounded-xl border border-slate-200/70 bg-white px-3 py-2 text-xs text-slate-700 focus:border-emerald-400 focus:outline-none"
                 >
-                  <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
-                  <option value="resolved" {% if status_filter == 'resolved' %}selected{% endif %}>Resolved</option>
-                  <option value="dismissed" {% if status_filter == 'dismissed' %}selected{% endif %}>Dismissed</option>
-                  <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All</option>
+                  <option
+                    value="pending"
+                    {%
+                    if
+                    status_filter=""
+                    ="pending"
+                    %}selected{%
+                    endif
+                    %}
+                  >
+                    Pending
+                  </option>
+                  <option
+                    value="resolved"
+                    {%
+                    if
+                    status_filter=""
+                    ="resolved"
+                    %}selected{%
+                    endif
+                    %}
+                  >
+                    Resolved
+                  </option>
+                  <option
+                    value="dismissed"
+                    {%
+                    if
+                    status_filter=""
+                    ="dismissed"
+                    %}selected{%
+                    endif
+                    %}
+                  >
+                    Dismissed
+                  </option>
+                  <option
+                    value="all"
+                    {%
+                    if
+                    status_filter=""
+                    ="all"
+                    %}selected{%
+                    endif
+                    %}
+                  >
+                    All
+                  </option>
                 </select>
                 <label class="text-xs text-slate-500" for="typeFilter"
                   >Type</label
@@ -143,10 +187,54 @@
                   id="typeFilter"
                   class="rounded-xl border border-slate-200/70 bg-white px-3 py-2 text-xs text-slate-700 focus:border-emerald-400 focus:outline-none"
                 >
-                  <option value="all" {% if type_filter == 'all' %}selected{% endif %}>All</option>
-                  <option value="post" {% if type_filter == 'post' %}selected{% endif %}>Post</option>
-                  <option value="comment" {% if type_filter == 'comment' %}selected{% endif %}>Comment</option>
-                  <option value="user" {% if type_filter == 'user' %}selected{% endif %}>User</option>
+                  <option
+                    value="all"
+                    {%
+                    if
+                    type_filter=""
+                    ="all"
+                    %}selected{%
+                    endif
+                    %}
+                  >
+                    All
+                  </option>
+                  <option
+                    value="post"
+                    {%
+                    if
+                    type_filter=""
+                    ="post"
+                    %}selected{%
+                    endif
+                    %}
+                  >
+                    Post
+                  </option>
+                  <option
+                    value="comment"
+                    {%
+                    if
+                    type_filter=""
+                    ="comment"
+                    %}selected{%
+                    endif
+                    %}
+                  >
+                    Comment
+                  </option>
+                  <option
+                    value="user"
+                    {%
+                    if
+                    type_filter=""
+                    ="user"
+                    %}selected{%
+                    endif
+                    %}
+                  >
+                    User
+                  </option>
                 </select>
               </div>
             </div>

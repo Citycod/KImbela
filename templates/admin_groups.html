@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Groups - Kimbela Admin</title>
     <link
-      href="{{ url_for('static', filename='assets/img/fav.png') }}"
+      href="{{ url_for('static', filename='assets/img/favy.png') }}"
       rel="icon"
     />
     <meta name="csrf-token" content="{{ csrf_token }}" />
@@ -101,13 +101,21 @@
 
         <main class="flex-1 px-6 py-8 lg:px-10">
           <div class="mb-8">
-            <h2 class="text-3xl font-bold text-gray-800 mb-2">Group Management</h2>
-            <p class="text-gray-600">Create, update, and manage community groups.</p>
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">
+              Group Management
+            </h2>
+            <p class="text-gray-600">
+              Create, update, and manage community groups.
+            </p>
           </div>
 
           <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-            <div class="card rounded-2xl bg-white/80 p-6 shadow-sm backdrop-blur">
-              <h3 class="text-lg font-semibold text-slate-800 mb-4">Create Group</h3>
+            <div
+              class="card rounded-2xl bg-white/80 p-6 shadow-sm backdrop-blur"
+            >
+              <h3 class="text-lg font-semibold text-slate-800 mb-4">
+                Create Group
+              </h3>
               <form id="createGroupForm" class="space-y-4">
                 <div>
                   <label class="text-sm text-slate-600">Name</label>
@@ -159,7 +167,9 @@
               </form>
             </div>
 
-            <div class="lg:col-span-2 card rounded-2xl bg-white/80 p-6 shadow-sm backdrop-blur">
+            <div
+              class="lg:col-span-2 card rounded-2xl bg-white/80 p-6 shadow-sm backdrop-blur"
+            >
               <div class="mb-4 flex items-center justify-between">
                 <h3 class="text-lg font-semibold text-slate-800">Groups</h3>
                 <div>
@@ -175,7 +185,9 @@
               <div class="overflow-x-auto">
                 <table class="w-full text-sm">
                   <thead>
-                    <tr class="border-b border-slate-200 text-left text-slate-500">
+                    <tr
+                      class="border-b border-slate-200 text-left text-slate-500"
+                    >
                       <th class="py-2">Group</th>
                       <th class="py-2">Category</th>
                       <th class="py-2">Private</th>
@@ -193,7 +205,9 @@
                             alt="{{ group.name }}"
                           />
                           <div>
-                            <p class="font-medium text-slate-800">{{ group.name }}</p>
+                            <p class="font-medium text-slate-800">
+                              {{ group.name }}
+                            </p>
                             <p class="text-xs text-slate-500 truncate">
                               {{ group.description or "No description" }}
                             </p>
@@ -201,7 +215,9 @@
                         </div>
                       </td>
                       <td class="py-3 text-slate-600">{{ group.category }}</td>
-                      <td class="py-3 text-slate-600">{{ "Yes" if group.is_private else "No" }}</td>
+                      <td class="py-3 text-slate-600">
+                        {{ "Yes" if group.is_private else "No" }}
+                      </td>
                       <td class="py-3">
                         <div class="flex items-center gap-2">
                           <button
@@ -232,8 +248,7 @@
                   href="{{ url_for('admin.admin_groups', page=groups.prev_num, search=search) }}"
                   >Previous</a
                 >
-                {% endif %}
-                {% if groups.has_next %}
+                {% endif %} {% if groups.has_next %}
                 <a
                   class="rounded-lg border border-slate-200 px-3 py-1 text-sm"
                   href="{{ url_for('admin.admin_groups', page=groups.next_num, search=search) }}"
@@ -328,24 +343,26 @@
 
       const csrfToken = window.csrfToken || "";
 
-      document.getElementById("createGroupForm").addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const form = e.target;
-        const data = new FormData(form);
-        data.set("is_private", form.is_private.checked ? "true" : "false");
+      document
+        .getElementById("createGroupForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const form = e.target;
+          const data = new FormData(form);
+          data.set("is_private", form.is_private.checked ? "true" : "false");
 
-        const res = await fetch("/admin/groups/create", {
-          method: "POST",
-          headers: { "X-CSRFToken": csrfToken },
-          body: data,
+          const res = await fetch("/admin/groups/create", {
+            method: "POST",
+            headers: { "X-CSRFToken": csrfToken },
+            body: data,
+          });
+          const json = await res.json();
+          if (json.success) {
+            window.location.reload();
+          } else {
+            alert(json.error || "Failed to create group");
+          }
         });
-        const json = await res.json();
-        if (json.success) {
-          window.location.reload();
-        } else {
-          alert(json.error || "Failed to create group");
-        }
-      });
 
       async function openEditGroup(groupId) {
         const res = await fetch(`/admin/groups/${groupId}/edit`);
@@ -356,9 +373,12 @@
         }
         document.getElementById("editGroupId").value = json.group.id;
         document.getElementById("editGroupName").value = json.group.name || "";
-        document.getElementById("editGroupDescription").value = json.group.description || "";
-        document.getElementById("editGroupCategory").value = json.group.category || "";
-        document.getElementById("editGroupPrivate").checked = !!json.group.is_private;
+        document.getElementById("editGroupDescription").value =
+          json.group.description || "";
+        document.getElementById("editGroupCategory").value =
+          json.group.category || "";
+        document.getElementById("editGroupPrivate").checked =
+          !!json.group.is_private;
         document.getElementById("editGroupModal").classList.remove("hidden");
         document.getElementById("editGroupModal").classList.add("flex");
       }
@@ -369,25 +389,27 @@
         modal.classList.remove("flex");
       }
 
-      document.getElementById("editGroupForm").addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const form = e.target;
-        const groupId = document.getElementById("editGroupId").value;
-        const data = new FormData(form);
-        data.set("is_private", form.is_private.checked ? "true" : "false");
+      document
+        .getElementById("editGroupForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const form = e.target;
+          const groupId = document.getElementById("editGroupId").value;
+          const data = new FormData(form);
+          data.set("is_private", form.is_private.checked ? "true" : "false");
 
-        const res = await fetch(`/admin/groups/${groupId}/update`, {
-          method: "POST",
-          headers: { "X-CSRFToken": csrfToken },
-          body: data,
+          const res = await fetch(`/admin/groups/${groupId}/update`, {
+            method: "POST",
+            headers: { "X-CSRFToken": csrfToken },
+            body: data,
+          });
+          const json = await res.json();
+          if (json.success) {
+            window.location.reload();
+          } else {
+            alert(json.error || "Failed to update group");
+          }
         });
-        const json = await res.json();
-        if (json.success) {
-          window.location.reload();
-        } else {
-          alert(json.error || "Failed to update group");
-        }
-      });
 
       async function deleteGroup(groupId) {
         if (!confirm("Delete this group?")) return;
