@@ -7,11 +7,11 @@
 
     <!-- Favicon -->
     <link
-      href="{{ url_for('static', filename='assets/img/fav.png') }}"
+      href="{{ url_for('static', filename='assets/img/favy.png') }}"
       rel="icon"
     />
     <link
-      href="{{ url_for('static', filename='assets/img/fav.png') }}"
+      href="{{ url_for('static', filename='assets/img/kim.png') }}"
       rel="apple-touch-icon"
     />
 
@@ -66,6 +66,46 @@
     <script src="{{ url_for('static', filename='assets/js/messenger.js') }}"></script>
 
     {% include 'partials/user_dashboard_head_scripts.html' %}
+
+    
+    <style>
+
+    body.has-bottom-ad {
+      padding-bottom: 0;
+      margin-bottom: 0;
+    }
+
+    .bottom-ad-banner {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  transform: none;
+  z-index: 60;
+  pointer-events: auto;
+  margin: 0;
+  padding: 0;
+}
+
+
+.bottom-ad-banner.has-dashboard-ad .bottom-ad-inner {
+  pointer-events: auto;
+  margin: 0;
+  max-width: none;
+  width: 100%;
+  background: linear-gradient(135deg, #0b1120 0%, #1b1b3a 45%, #2d1b69 100%);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-bottom: none;
+  position: relative;
+  overflow: hidden;
+  height: 90px; /* Reduced to half of previous size (was ~140px) */
+  min-height: 90px;
+  max-height: 90px;
+  margin-bottom: -5px;
+}
+    </style>
+
+
+
   </head>
   {% set bottom_banner = dashboard_ads.get('bottom_banner') if dashboard_ads else None %}
   <body class="font-poppins bg-fb-gray text-fb-text has-bottom-ad">
@@ -465,15 +505,20 @@
       </div>
     </nav>
 
+
+
+
+<br>
+<br>
     <!-- Hero Section - Responsive -->
 <div class="hero-section">
-    <h1 class="hero-header">
-        MEET. CONNECT. <span style="color: coral;">BELONG</span>
+    <h1 class="hero-header" style="margin-top: 1rem;">
+        MEET. CONNECT. <span style="color: coral;">{{ current_user.first_name|upper }}</span>
     </h1>
 
-    <!-- Post Composer - Responsive -->
-    <div class="w-full px-4 md:px-0 md:max-w-2xl lg:max-w-3xl xl:max-w-4xl mx-auto">
-        <div class="composer-container bg-white/85 backdrop-blur-sm border border-white/40 rounded-xl shadow-soft p-3 sm:p-4 mb-4 md:mb-6 card-hover">
+    <!-- Post Composer - DIRECTLY UNDER HERO TEXT (removed extra spacing) -->
+    <div class="w-full px-4 md:px-0 md:max-w-2xl lg:max-w-3xl xl:max-w-4xl mx-auto" >
+        <div class="composer-container bg-white/85 backdrop-blur-sm border border-white/40 rounded-xl shadow-soft p-3 sm:p-4 mb-2 md:mb-4 card-hover">
             <div class="flex items-center mb-3">
                 <a href="{{ url_for('user.profile', user_id=current_user.id) }}">
                     <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" alt="" class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover" />
@@ -504,25 +549,47 @@
     </div>
 </div>
 
-<!-- Second ad banner -->
-      {% set top_banner = dashboard_ads.get('top_banner') if dashboard_ads else None %}
-      {% if top_banner %}
-      <div class="second-ad-banner has-dashboard-ad">
-        <a
-          class="dashboard-ad-link"
-          href="{{ top_banner.target_url }}"
-          target="_blank"
-          rel="noopener"
-        >
+    <!-- Enchanting ad banner (immediately after hero section) -->
+    {% set top_banner = dashboard_ads.get('top_banner') if dashboard_ads else None %}
+    {% set top_banner_url = top_banner.target_url if top_banner else url_for('payments.dashboard_ad_package', placement='dashboard-top') %}
+    {% set top_banner_image = top_banner.image_url if top_banner else None %}
+    {% set top_banner_title = top_banner.title if top_banner else "Ad space" %}
+    <section class="hero-ad-wrap">
+      <div class="hero-ad-shell {% if top_banner %}has-dashboard-ad{% endif %}">
+        <a class="hero-ad-link" href="{{ top_banner_url }}" {% if top_banner %}target="_blank" rel="noopener"{% endif %}>
+          {% if top_banner_image %}
           <img
-            src="{{ top_banner.image_url }}"
-            alt="{{ top_banner.title }}"
-            class="dashboard-ad-image"
+            src="{{ top_banner_image }}"
+            alt="{{ top_banner_title }}"
+            class="hero-ad-media"
             loading="lazy"
           />
+          {% else %}
+          <div class="hero-ad-backdrop" aria-hidden="true">
+            <span class="hero-ad-orb orb-a"></span>
+            <span class="hero-ad-orb orb-b"></span>
+            <span class="hero-ad-orb orb-c"></span>
+            <span class="hero-ad-grid"></span>
+          </div>
+          <div class="hero-ad-content">
+            <div class="hero-ad-pill">Top Banner · Ad Space</div>
+            <h2>Enchant the feed with your next campaign</h2>
+            <p>Own the first impression with a luminous, full‑width banner and premium placement.</p>
+            <div class="hero-ad-actions">
+              <span class="hero-ad-cta js-ad-cta" data-cta-href="{{ top_banner_url }}" role="link" tabindex="0">Create an ad</span>
+              <span class="hero-ad-secondary">Reach thousands in minutes</span>
+            </div>
+          </div>
+          {% endif %}
         </a>
+        <div class="hero-ad-sheen" aria-hidden="true"></div>
+        <div class="hero-ad-sparkles" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
       </div>
-      {% endif %}
+    </section>
 
     <!-- Messenger Popup - IMPROVED VERSION -->
     <!-- Replace your existing messenger popup with this enhanced version -->
@@ -1188,36 +1255,7 @@
           <br>
           <br>
 
-        <!-- Sponsored Section -->
-        <!--<div class="mt-8 pt-6 border-t border-fb-border">
-        <h3 class="text-sm font-semibold text-fb-text-light mb-3">
-          Sponsored
-        </h3>
-        <div class="space-y-4">
-          <div
-            class="flex items-start space-x-3 p-2 rounded-lg hover:bg-fb-gray transition-colors cursor-pointer"
-          >
-            <div
-              class="w-16 h-16 bg-gradient-primary rounded-lg flex-shrink-0"
-            ></div>
-            <div>
-              <h4 class="font-medium text-sm">Amazing Product</h4>
-              <p class="text-xs text-fb-text-light">amazingproduct.com</p>
-            </div>
-          </div>
-          <div
-            class="flex items-start space-x-3 p-2 rounded-lg hover:bg-fb-gray transition-colors cursor-pointer"
-          >
-            <div
-              class="w-16 h-16 bg-gradient-secondary rounded-lg flex-shrink-0"
-            ></div>
-            <div>
-              <h4 class="font-medium text-sm">Creative Solutions</h4>
-              <p class="text-xs text-fb-text-light">creativesolutions.co</p>
-            </div>
-          </div>
-        </div>
-      </div>-->
+        
       </div>
 
       <!-- MAIN CONTENT -->
@@ -3494,54 +3532,56 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
         }
       }
     </script>
-<!---
+
+
+
     <div id="bottomAdBanner" class="bottom-ad-banner has-dashboard-ad hidden" data-ad-id="{{ bottom_banner.id }}">
-      <div class="bottom-ad-inner">
-        <button class="bottom-ad-close" type="button" aria-label="Close ad" onclick="closeBottomAdBanner(event)">
-          <i class="bi bi-x-lg"></i>
-        </button>
-        {% if bottom_banner %}
-        <a
-          class="bottom-ad-clickarea"
-          href="{{ bottom_banner.target_url }}"
-          target="_blank"
-          rel="noopener"
-        >
-          <div class="bottom-ad-label">Sponsored</div>
-          {% if bottom_banner.media_type == 'video' %}
-          <video class="bottom-ad-media" autoplay muted loop playsinline>
-            <source src="{{ bottom_banner.image_url }}" {% if bottom_banner.video_mime %}type="{{ bottom_banner.video_mime }}"{% endif %} />
-          </video>
-          {% else %}
-          <img
-            src="{{ bottom_banner.image_url }}"
-            alt="{{ bottom_banner.title }}"
-            class="bottom-ad-media"
-            loading="lazy"
-          />
-          {% endif %}
-        </a>
-        {% else %}
-        <a class="bottom-ad-clickarea" href="{{ url_for('payments.dashboard_ad_package', placement='dashboard-bottom') }}">
-          <div class="bottom-ad-label">Ad space</div>
-          <div class="bottom-ad-empty">
-            <div class="bottom-ad-megaphone">
-              <span class="megaphone-cone"></span>
-              <span class="megaphone-handle"></span>
-              <span class="megaphone-sound"></span>
-            </div>
-            <div class="bottom-ad-empty-copy">
-              <span class="bottom-ad-empty-pill">Get noticed</span>
-              <h3>Give your brand the loudest spot on the feed</h3>
-              <p>Stay visible while people scroll. Premium sticky banner with full-width impact.</p>
-            </div>
-            <span class="bottom-ad-cta">Claim this banner</span>
-          </div>
-        </a>
-        {% endif %}
+  <div class="bottom-ad-inner hero-ad-shell bottom-ad-shell">
+    
+    {% if bottom_banner %}
+    <a
+      class="bottom-ad-clickarea hero-ad-link bottom-ad-link"
+      href="{{ bottom_banner.target_url }}"
+      target="_blank"
+      rel="noopener"
+    >
+      <div class="bottom-ad-label">Sponsored</div>
+      {% if bottom_banner.media_type == 'video' %}
+      <video class="hero-ad-media bottom-ad-media" autoplay muted loop playsinline>
+        <source src="{{ bottom_banner.image_url }}" {% if bottom_banner.video_mime %}type="{{ bottom_banner.video_mime }}"{% endif %} />
+      </video>
+      {% else %}
+      <img
+        src="{{ bottom_banner.image_url }}"
+        alt="{{ bottom_banner.title }}"
+        class="hero-ad-media bottom-ad-media"
+        loading="lazy"
+      />
+      {% endif %}
+    </a>
+    {% else %}
+    <a class="bottom-ad-clickarea hero-ad-link bottom-ad-link" href="{{ url_for('payments.dashboard_ad_package', placement='dashboard-bottom') }}". style="margin-bottom: -5rem;">
+      <div class="hero-ad-backdrop" aria-hidden="true">
+        <span class="hero-ad-orb orb-a"></span>
+        <span class="hero-ad-orb orb-b"></span>
+        <span class="hero-ad-orb orb-c"></span>
+        <span class="hero-ad-grid"></span>
       </div>
-    </div>
-    -->
+      <div class="hero-ad-content" style="margin-top: -13rem;">
+        <div class="hero-ad-pill">Ad Space</div>
+        <p>Stay visible while people scroll. Compact, premium banner placement.</p>
+        <div class="hero-ad-actions">
+          <span class="hero-ad-cta js-ad-cta" data-cta-href="{{ url_for('payments.dashboard_ad_package', placement='dashboard-bottom') }}" role="link" tabindex="0">Claim this banner</span>
+          <span class="hero-ad-secondary">Always on-screen</span>
+        </div>
+      </div>
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+
+
 
     <script>
       window.closeBottomAdBanner = function(event) {
@@ -3609,6 +3649,26 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
           bottomBanner.removeAttribute("inert");
           document.body.classList.add("has-bottom-ad");
         }, delay);
+      });
+    </script>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        document.querySelectorAll(".js-ad-cta").forEach((el) => {
+          const href = el.dataset.ctaHref;
+          if (!href) return;
+          const go = (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            window.location.href = href;
+          };
+          el.addEventListener("click", go);
+          el.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              go(event);
+            }
+          });
+        });
       });
     </script>
 
@@ -3704,13 +3764,17 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
     .has-dashboard-ad::after {
       display: none;
     }
-    .second-ad-banner {
+.second-ad-banner {
       margin: 0;
       border-radius: 0px;
       position: relative;
       overflow: hidden;
       width: 100%;
-    }
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      z-index: 1;
+}
     .vertical-ad-banner {
       position: relative;
       margin: 12px 0 18px;
@@ -4412,9 +4476,10 @@ body.has-bottom-ad {
 
 .bottom-ad-banner {
   position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 14px;
+  width: min(860px, 94vw);
   z-index: 60;
   pointer-events: auto;
 }
@@ -4427,11 +4492,11 @@ body.has-bottom-ad {
   margin: 0;
   max-width: none;
   width: 100%;
-  background: linear-gradient(120deg, rgba(255, 237, 213, 0.98), rgba(255, 220, 210, 0.98), rgba(254, 215, 170, 0.98));
-  border-top: 1px solid rgba(251, 146, 60, 0.28);
-  box-shadow: 0 -10px 40px rgba(249, 115, 22, 0.18), 0 22px 45px rgba(15, 23, 42, 0.08);
-  border-radius: 0;
-  padding: 12px 18px 16px;
+  background: linear-gradient(135deg, #0b1120 0%, #1b1b3a 45%, #2d1b69 100%);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  box-shadow: 0 18px 40px rgba(2, 6, 23, 0.45);
+  border-radius: 7px;
+  padding: 4px 8px;
   position: relative;
   overflow: hidden;
 }
@@ -4475,6 +4540,12 @@ body.has-bottom-ad {
   z-index: 2;
 }
 
+.bottom-ad-banner .bottom-ad-label {
+  color: #e2e8f0;
+  background: rgba(15, 23, 42, 0.6);
+  border-color: rgba(148, 163, 184, 0.25);
+}
+
 .bottom-ad-close {
   position: absolute;
   top: 10px;
@@ -4494,6 +4565,22 @@ body.has-bottom-ad {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
+.bottom-ad-close.tiny {
+  top: 8px;
+  right: 10px;
+  width: 18px;
+  height: 18px;
+  font-size: 9px;
+  border-width: 1px;
+  box-shadow: none;
+  opacity: 0.75;
+}
+
+.bottom-ad-close.tiny i {
+  font-size: 9px;
+  line-height: 1;
+}
+
 .bottom-ad-close:hover {
   transform: scale(1.05);
   box-shadow: 0 8px 18px rgba(249, 115, 22, 0.2);
@@ -4507,11 +4594,16 @@ body.has-bottom-ad {
   z-index: 1;
 }
 
-@media (max-width: 1024px) {
-  .bottom-ad-banner.has-dashboard-ad {
-    display: none;
-  }
+.bottom-ad-shell {
+  min-height: 70px;
+}
 
+.bottom-ad-link {
+  min-height: 70px;
+  padding: 10px 12px;
+}
+
+@media (max-width: 1024px) {
   body.has-bottom-ad {
     padding-bottom: 0;
   }
@@ -4652,10 +4744,10 @@ body.has-bottom-ad {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.bottom-ad-cta:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 16px 32px rgba(249, 115, 22, 0.35);
-}
+    .bottom-ad-cta:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 16px 32px rgba(249, 115, 22, 0.35);
+    }
 
 .bottom-ad-media {
   display: block;
@@ -4664,6 +4756,262 @@ body.has-bottom-ad {
   object-fit: cover;
   border-radius: 16px;
 }
+
+.bottom-ad-media.hero-ad-media {
+  height: auto;
+  max-height: 80px;
+  border-radius: 10px;
+}
+
+.bottom-ad-banner .hero-ad-pill {
+  font-size: 0.56rem;
+  padding: 4px 8px;
+  margin-bottom: 6px;
+}
+
+.bottom-ad-banner .hero-ad-content h2 {
+  font-size: 1rem;
+  margin-bottom: 5px;
+}
+
+.bottom-ad-banner .hero-ad-content p {
+  font-size: 0.78rem;
+  margin-bottom: 8px;
+}
+
+.bottom-ad-banner .hero-ad-cta {
+  font-size: 0.74rem;
+  padding: 6px 12px;
+}
+
+.bottom-ad-banner .hero-ad-secondary {
+  font-size: 0.68rem;
+  color: rgba(226, 232, 240, 0.82);
+}
+
+.bottom-ad-banner .hero-ad-content {
+  text-align: center;
+}
+
+.bottom-ad-banner .hero-ad-actions {
+  justify-content: center;
+}
+
+.bottom-ad-banner .hero-ad-orb {
+  opacity: 0.6;
+}
+
+    /* Enchanting hero ad banner */
+    .hero-ad-wrap {
+      width: 100%;
+      padding: 0 0 12px;
+      margin-top: -6px;
+    }
+    .hero-ad-shell {
+      position: relative;
+      overflow: hidden;
+      border-radius: 0;
+      background: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.6), transparent 45%),
+        linear-gradient(135deg, #0f172a 0%, #1e1b4b 35%, #312e81 65%, #5b21b6 100%);
+      box-shadow: 0 28px 60px rgba(15, 23, 42, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      min-height: 200px;
+    }
+    .hero-ad-shell.has-dashboard-ad {
+      background: transparent;
+      border: 0;
+      box-shadow: none;
+    }
+    .hero-ad-link {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 18px 20px;
+      color: #f8fafc;
+      text-decoration: none;
+      min-height: 200px;
+    }
+    .hero-ad-media {
+      width: 100%;
+      max-height: 260px;
+      object-fit: cover;
+      border-radius: 0;
+      display: block;
+    }
+    .hero-ad-backdrop {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    .hero-ad-orb {
+      position: absolute;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.5), transparent 65%);
+      filter: blur(2px);
+      opacity: 0.85;
+      animation: heroOrbFloat 8s ease-in-out infinite;
+    }
+    .hero-ad-orb.orb-a {
+      top: -60px;
+      right: 20px;
+      animation-delay: 0s;
+    }
+    .hero-ad-orb.orb-b {
+      bottom: -80px;
+      left: -40px;
+      width: 260px;
+      height: 260px;
+      animation-delay: 1.5s;
+    }
+    .hero-ad-orb.orb-c {
+      top: 40%;
+      right: -80px;
+      width: 180px;
+      height: 180px;
+      animation-delay: 3s;
+    }
+    .hero-ad-grid {
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px);
+      background-size: 22px 22px;
+      opacity: 0.35;
+    }
+    .hero-ad-content {
+      position: relative;
+      z-index: 2;
+      max-width: 520px;
+    }
+    .hero-ad-content h2 {
+      margin: 0 0 8px;
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .hero-ad-content p {
+      margin: 0 0 16px;
+      font-size: 0.85rem;
+      color: rgba(248, 250, 252, 0.85);
+      font-weight: 500;
+    }
+    .hero-ad-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.15);
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      color: #f8fafc;
+    }
+    .hero-ad-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .hero-ad-cta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 16px;
+      border-radius: 999px;
+      background: linear-gradient(120deg, #38bdf8, #a855f7, #f97316);
+      color: #0f172a;
+      font-weight: 800;
+      font-size: 0.78rem;
+      box-shadow: 0 18px 30px rgba(56, 189, 248, 0.35);
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .hero-ad-cta:hover {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 22px 36px rgba(168, 85, 247, 0.4);
+    }
+    .hero-ad-secondary {
+      font-size: 0.72rem;
+      color: rgba(248, 250, 252, 0.75);
+      font-weight: 600;
+    }
+    .hero-ad-sheen {
+      position: absolute;
+      inset: -120% auto;
+      left: -20%;
+      width: 40%;
+      height: 300%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+      transform: rotate(18deg);
+      animation: heroSheen 7s ease-in-out infinite;
+      pointer-events: none;
+    }
+    .hero-ad-sparkles {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    .hero-ad-sparkles span {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.8);
+      box-shadow: 0 0 18px rgba(255, 255, 255, 0.65);
+      animation: heroSparkle 4.5s ease-in-out infinite;
+    }
+    .hero-ad-sparkles span:nth-child(1) {
+      top: 22px;
+      right: 28px;
+      animation-delay: 0s;
+    }
+    .hero-ad-sparkles span:nth-child(2) {
+      bottom: 30px;
+      left: 40px;
+      animation-delay: 1.6s;
+    }
+    .hero-ad-sparkles span:nth-child(3) {
+      top: 50%;
+      right: 120px;
+      animation-delay: 2.8s;
+    }
+    @keyframes heroOrbFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    @keyframes heroSheen {
+      0% { transform: translateX(-40%) rotate(18deg); opacity: 0; }
+      20% { opacity: 0.7; }
+      60% { opacity: 0.2; }
+      100% { transform: translateX(140%) rotate(18deg); opacity: 0; }
+    }
+    @keyframes heroSparkle {
+      0%, 100% { transform: scale(0.8); opacity: 0.6; }
+      50% { transform: scale(1.3); opacity: 1; }
+    }
+    @media (max-width: 768px) {
+      .hero-ad-link {
+        padding: 14px 16px;
+        min-height: 180px;
+      }
+      .hero-ad-content h2 {
+        font-size: 1.05rem;
+      }
+      .hero-ad-content p {
+        font-size: 0.78rem;
+      }
+      .hero-ad-cta {
+        font-size: 0.72rem;
+        padding: 7px 14px;
+      }
+    }
 
 /* Horizontal ad banner - FULL WIDTH & RESPONSIVE */
 .second-ad-banner.has-dashboard-ad {
@@ -4795,15 +5143,16 @@ body.has-bottom-ad {
 
   .bottom-ad-banner {
     bottom: 10px;
+    width: calc(100% - 12px);
   }
 
   .bottom-ad-banner.has-dashboard-ad .bottom-ad-inner {
-    width: calc(100% - 20px);
-    padding: 10px 12px 12px;
+    width: 100%;
+    padding: 6px 8px;
   }
 
   .bottom-ad-media {
-    height: 110px;
+    height: 80px;
   }
 
   .bottom-ad-empty {

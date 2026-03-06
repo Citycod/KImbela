@@ -520,14 +520,14 @@
                                                     
                                                     .hero-section {
                                                         width: 100%;
-                                                        height: 30rem;
+                                                        height: 26vh;
                                                         position: relative;
                                                         z-index: 1;
                                                         display: flex;
                                                         flex-direction: column;
                                                         align-items: center;
-                                                        justify-content: flex-start;
-                                                        padding-top: 7rem;
+                                                        justify-content: center;
+                                                        padding-top: 3.6rem;
                                                         background-image: url("/static/assets/img/peeps.jpeg");
                                                         background-size: cover;
                                                         background-position: center;
@@ -551,21 +551,80 @@
                                                     
                                                     .hero-header {
                                                         color: white;
-                                                        font-size: 3rem;
+                                                        font-size: 1.9rem;
                                                         font-weight: 700;
                                                         text-align: center;
-                                                        margin-bottom: 1.5rem;
+                                                        margin-top: 0.6rem;
+                                                        margin-bottom: 0.5rem;
+                                                        line-height: 1.1;
+                                                        letter-spacing: 0.04em;
+                                                        text-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+                                                    }
+
+                                                    .hero-section .composer-container {
+                                                        width: min(100%, 40rem);
+                                                        margin-top: 0.15rem;
+                                                        margin-bottom: 0.25rem;
+                                                        margin-left: auto;
+                                                        margin-right: auto;
+                                                        transform: translateX(0);
+                                                    }
+
+                                                    .hero-section .composer-input {
+                                                        font-size: 0.72rem;
+                                                        padding: 0.45rem 0.6rem;
+                                                        line-height: 1.3;
+                                                    }
+
+                                                    .hero-section .composer-container {
+                                                        padding: 0.42rem !important;
+                                                    }
+
+                                                    .hero-section .composer-container .composer-input {
+                                                        padding: 0.32rem 0.5rem !important;
+                                                        font-size: 0.68rem !important;
+                                                    }
+
+                                                    .hero-section .composer-container .composer-btn {
+                                                        padding: 0.22rem 0.28rem !important;
+                                                        font-size: 0.62rem !important;
+                                                    }
+
+                                                    .hero-section .composer-container .composer-btn img {
+                                                        width: 1.2rem !important;
+                                                        height: 1.2rem !important;
+                                                        margin-bottom: 0.18rem !important;
+                                                    }
+
+                                                    .hero-section .composer-container .tooltip {
+                                                        font-size: 0.52rem !important;
                                                     }
                                                     
                                                     @media (max-width: 768px) {
+                                                        .hero-section {
+                                                            height: 24vh;
+                                                            padding-top: 3.2rem;
+                                                        }
                                                         .hero-header {
-                                                            font-size: 2.25rem;
+                                                            font-size: 1.6rem;
+                                                            margin-bottom: 0.6rem;
+                                                        }
+                                                        .hero-section .composer-input {
+                                                            font-size: 0.68rem;
+                                                            padding: 0.4rem 0.55rem;
                                                         }
                                                     }
                                                     
                                                     @media (max-width: 640px) {
+                                                        .hero-section {
+                                                            height: 22vh;
+                                                            padding-top: 3rem;
+                                                        }
                                                         .hero-header {
-                                                            font-size: 1.75rem;
+                                                            font-size: 1.4rem;
+                                                        }
+                                                        .hero-section .composer-container {
+                                                            margin-bottom: 0.32rem;
                                                         }
                                                     }
                                                     /* Responsive adjustments for smaller screens */
@@ -617,11 +676,11 @@
                                                         }
                                                         /* Reduce hero section height on mobile */
                                                         .hero-section {
-                                                            height: 20rem !important;
-                                                            padding-top: 6.5rem !important;
+                                                            height: 24vh !important;
+                                                            padding-top: 3.2rem !important;
                                                         }
                                                         .hero-header {
-                                                            font-size: 2.25rem !important;
+                                                            font-size: 1.5rem !important;
                                                             padding: 0 1rem !important;
                                                         }
                                                         /* Adjust composer card on mobile */
