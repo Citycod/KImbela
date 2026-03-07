@@ -43,6 +43,7 @@ import bleach, os
 from dotenv import load_dotenv
 from extensions import mail
 from flask_mail import Message
+from email_utils import EmailService
 
 from sqlalchemy.orm import joinedload
 
@@ -1559,3 +1560,67 @@ def admin_users():
         status_filter=status_filter,
         current_user=current_user,
     )
+
+
+@admin.route("/admin/users/bulk_email", methods=["POST"])
+@login_required
+def admin_bulk_email():
+    if not current_user.is_super_admin:
+        return jsonify({"success": False, "error": "Access denied"}), 403
+
+    data = request.get_json(silent=True) or {}
+    subject = (data.get("subject") or "").strip()
+    message = (data.get("message") or "").strip()
+    user_ids = data.get("user_ids") or []
+    send_all = bool(data.get("send_all"))
+    search = data.get("search", "")
+    status_filter = data.get("status", "all")
+
+    if not subject or not message:
+        return jsonify({"success": False, "error": "Subject and message are required"}), 400
+
+    query = User.query
+
+    if search:
+        query = query.filter(
+            db.or_(
+                User.first_name.ilike(f"%{search}%"),
+                User.last_name.ilike(f"%{search}%"),
+                User.email.ilike(f"%{search}%"),
+            )
+        )
+
+    if status_filter == "active":
+        query = query.filter_by(is_active=True)
+    elif status_filter == "pending":
+        query = query.filter_by(is_active=False)
+    elif status_filter == "admins":
+        query = query.filter(db.or_(User.is_admin == True, User.is_super_admin == True))
+    elif status_filter == "suspended":
+        query = query.filter_by(is_active=False)
+
+    if send_all:
+        users = query.all()
+    else:
+        if not user_ids:
+            return jsonify({"success": False, "error": "No users selected"}), 400
+        users = query.filter(User.id.in_(user_ids)).all()
+
+    sent = 0
+    failed = 0
+    for user in users:
+        if not user.email:
+            failed += 1
+            continue
+        try:
+            EmailService.send_email(
+                to_email=user.email,
+                subject=subject,
+                html_content=f"<p>{message}</p>",
+                text_content=message,
+            )
+            sent += 1
+        except Exception:
+            failed += 1
+
+    return jsonify({"success": True, "sent": sent, "failed": failed})

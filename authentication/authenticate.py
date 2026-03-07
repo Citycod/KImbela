@@ -394,7 +394,6 @@ def register():
         first_name = request.form.get("first_name", "").strip()
         last_name = request.form.get("last_name", "").strip()
         email = request.form.get("email", "").strip().lower()
-        phone_number = request.form.get("phone_number", "").strip()
         dob_str = request.form.get("dob")
         gender = request.form.get("gender")
         marital_status = request.form.get("marital_status")
@@ -426,11 +425,6 @@ def register():
             errors["email"] = "Please enter a valid email address."
         elif User.query.filter_by(email=email).first():
             errors["email"] = "This email is already registered."
-
-        if not phone_number:
-            errors["phone_number"] = "Phone number is required."
-        elif not re.match(r"^\+?[\d\s\-\(\)]{10,}$", phone_number):
-            errors["phone_number"] = "Please enter a valid phone number."
 
         if not dob_str:
             errors["dob"] = "Date of birth is required."
@@ -502,7 +496,7 @@ def register():
                 first_name=first_name,
                 last_name=last_name,
                 email=email,
-                phone_number=phone_number,
+                phone_number="",
                 dob=dob,
                 gender=gender,
                 city=city,

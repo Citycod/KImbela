@@ -3914,6 +3914,41 @@ def view_profile(user_id):
     )
 
 
+@user.route("/api/account/delete", methods=["DELETE"])
+@login_required
+def delete_account():
+    if current_user.is_super_admin:
+        return jsonify({"success": False, "error": "Super admin accounts cannot be deleted."}), 403
+
+    user_record = User.query.get(current_user.id)
+    if not user_record:
+        return jsonify({"success": False, "error": "User not found."}), 404
+
+    try:
+        db.session.delete(user_record)
+        db.session.commit()
+        logout_user()
+        return jsonify({"success": True})
+    except Exception:
+        db.session.rollback()
+        # Fallback: soft delete to avoid FK constraint issues
+        try:
+            user_record = User.query.get(current_user.id)
+            if not user_record:
+                return jsonify({"success": False, "error": "User not found."}), 404
+            user_record.is_active = False
+            user_record.email = f"deleted_{user_record.id}@deleted.local"
+            user_record.first_name = "Deleted"
+            user_record.last_name = "User"
+            user_record.phone_number = ""
+            db.session.commit()
+            logout_user()
+            return jsonify({"success": True, "soft_deleted": True})
+        except Exception:
+            db.session.rollback()
+            return jsonify({"success": False, "error": "Unable to delete account at this time."}), 500
+
+
 def get_upcoming_birthdays(user_id, days_ahead=7):
     """
     Get friends with upcoming birthdays

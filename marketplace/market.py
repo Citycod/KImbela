@@ -728,6 +728,7 @@ def main_market():
     # =========== END LIMIT LOGIC ===========
 
     # Get categories
+    ensure_marketplace_categories()
     categories = (
         MarketplaceCategory.query.filter_by(is_active=True).order_by("sort_order").all()
     )
@@ -1124,6 +1125,7 @@ def seller_dashboard():
 def create_service():
     """Create a new service"""
     if request.method == "GET":
+        ensure_marketplace_categories()
         # Get categories
         categories = (
             MarketplaceCategory.query.filter_by(is_active=True).order_by("name").all()
@@ -1307,6 +1309,7 @@ def edit_service(service_id):
         return redirect(url_for("market.seller_dashboard"))
 
     if request.method == "GET":
+        ensure_marketplace_categories()
         categories = (
             MarketplaceCategory.query.filter_by(is_active=True).order_by("name").all()
         )
@@ -2219,6 +2222,38 @@ def manage_featured():
 
 # ==================== DATA INITIALIZATION ====================
 
+DEFAULT_MARKETPLACE_CATEGORIES = [
+    {"name": "Mentoring & Coaching", "slug": "mentoring-coaching", "icon": "bi-people-fill"},
+    {"name": "Counseling Services", "slug": "counseling-services", "icon": "bi-heart-fill"},
+    {"name": "Digital Products", "slug": "digital-products", "icon": "bi-laptop-fill"},
+    {"name": "Legal Services", "slug": "legal-services", "icon": "bi-shield-check"},
+    {"name": "Wedding Services", "slug": "wedding-services", "icon": "bi-rose"},
+    {"name": "Relationship Coaching", "slug": "relationship-coaching", "icon": "bi-chat-heart-fill"},
+    {"name": "Career Development", "slug": "career-development", "icon": "bi-briefcase-fill"},
+    {"name": "Personal Growth", "slug": "personal-growth", "icon": "bi-person-badge-fill"},
+    {"name": "Faith & Spirituality", "slug": "faith-spirituality", "icon": "bi-star-fill"},
+    {"name": "Health & Wellness", "slug": "health-wellness", "icon": "bi-heart-pulse-fill"},
+]
+
+
+def ensure_marketplace_categories():
+    """Ensure default marketplace categories exist."""
+    created = False
+    for cat_data in DEFAULT_MARKETPLACE_CATEGORIES:
+        if not MarketplaceCategory.query.filter_by(slug=cat_data["slug"]).first():
+            category = MarketplaceCategory(
+                name=cat_data["name"],
+                slug=cat_data["slug"],
+                icon=cat_data["icon"],
+                description=f"{cat_data['name']} services on Kimbela Marketplace",
+                is_active=True,
+            )
+            db.session.add(category)
+            created = True
+
+    if created:
+        db.session.commit()
+
 
 @market.route("/init-data", methods=["GET"])
 def init_marketplace_data():
@@ -2228,64 +2263,7 @@ def init_marketplace_data():
 
     try:
         # Create categories
-        categories = [
-            {
-                "name": "Mentoring & Coaching",
-                "slug": "mentoring-coaching",
-                "icon": "bi-people-fill",
-            },
-            {
-                "name": "Counseling Services",
-                "slug": "counseling-services",
-                "icon": "bi-heart-fill",
-            },
-            {
-                "name": "Digital Products",
-                "slug": "digital-products",
-                "icon": "bi-laptop-fill",
-            },
-            {
-                "name": "Legal Services",
-                "slug": "legal-services",
-                "icon": "bi-shield-check",
-            },
-            {"name": "Wedding Services", "slug": "wedding-services", "icon": "bi-rose"},
-            {
-                "name": "Relationship Coaching",
-                "slug": "relationship-coaching",
-                "icon": "bi-chat-heart-fill",
-            },
-            {
-                "name": "Career Development",
-                "slug": "career-development",
-                "icon": "bi-briefcase-fill",
-            },
-            {
-                "name": "Personal Growth",
-                "slug": "personal-growth",
-                "icon": "bi-person-badge-fill",
-            },
-            {
-                "name": "Faith & Spirituality",
-                "slug": "faith-spirituality",
-                "icon": "bi-star-fill",
-            },
-            {
-                "name": "Health & Wellness",
-                "slug": "health-wellness",
-                "icon": "bi-heart-pulse-fill",
-            },
-        ]
-
-        for cat_data in categories:
-            if not MarketplaceCategory.query.filter_by(slug=cat_data["slug"]).first():
-                category = MarketplaceCategory(
-                    name=cat_data["name"],
-                    slug=cat_data["slug"],
-                    icon=cat_data["icon"],
-                    description=f"{cat_data['name']} services on Kimbela Marketplace",
-                )
-                db.session.add(category)
+        ensure_marketplace_categories()
 
         # Create subscription plans - using correct field names based on HTML
         subscriptions = [
@@ -2378,6 +2356,7 @@ def init_marketplace_data():
 def api_categories():
     """Get all marketplace categories"""
     try:
+        ensure_marketplace_categories()
         categories = (
             MarketplaceCategory.query.filter_by(is_active=True)
             .order_by("sort_order")

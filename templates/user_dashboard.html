@@ -103,12 +103,12 @@
   margin-bottom: -5px;
 }
     </style>
-
-
-
   </head>
+
+  
+
   {% set bottom_banner = dashboard_ads.get('bottom_banner') if dashboard_ads else None %}
-  <body class="font-poppins bg-fb-gray text-fb-text has-bottom-ad">
+  <body class="font-poppins bg-fb-gray text-fb-text has-bottom-ad has-top-banner">
     <div class="simple-loader" id="loader">
       <div class="loader-logo">
         <img
@@ -128,11 +128,15 @@
       <div class="loader-text">Loading your dashboard...</div>
     </div>
 
+    
+
     <!-- NAVBAR -->
     <!-- NAVBAR -->
+    
     <nav
       class="fixed top-0 left-0 right-0 z-50 bg-white shadow-soft border-b border-fb-border h-20 flex items-center justify-between px-4 lg:px-6"
     >
+
       <!-- Left side: Logo + Mobile menu button -->
       <div class="flex items-center">
         <button
@@ -508,12 +512,11 @@
 
 
 
-<br>
-<br>
-    <!-- Hero Section - Responsive -->
+<!--<br>
+<br> -->    <!-- Hero Section - Responsive -->
 <div class="hero-section">
     <h1 class="hero-header" style="margin-top: 1rem;">
-        MEET. CONNECT. <span style="color: coral;">{{ current_user.first_name|upper }}</span>
+        WHAT'S ON YOUR MIND <span style="color: coral;">{{ current_user.first_name|upper }}?</span>
     </h1>
 
     <!-- Post Composer - DIRECTLY UNDER HERO TEXT (removed extra spacing) -->
@@ -525,7 +528,7 @@
                 </a>
                 <div class="flex-1 ml-2 sm:ml-3">
                     <div class="composer-input bg-white/70 backdrop-blur-[2px] border border-white/50 rounded-lg px-3 sm:px-4 py-2 sm:py-3 cursor-pointer hover:bg-white/80 transition-colors text-xs sm:text-sm" data-bs-toggle="modal" data-bs-target="#postModal">
-                        What's on your mind, {{ current_user.first_name }}?
+                        Share your thoughts....
                     </div>
                 </div>
             </div>
@@ -549,7 +552,7 @@
     </div>
 </div>
 
-    <!-- Enchanting ad banner (immediately after hero section) -->
+<!-- Enchanting ad banner (above navbar) -->
     {% set top_banner = dashboard_ads.get('top_banner') if dashboard_ads else None %}
     {% set top_banner_url = top_banner.target_url if top_banner else url_for('payments.dashboard_ad_package', placement='dashboard-top') %}
     {% set top_banner_image = top_banner.image_url if top_banner else None %}
@@ -4807,6 +4810,21 @@ body.has-bottom-ad {
       padding: 0 0 12px;
       margin-top: -6px;
     }
+    body.has-top-banner {
+      --top-banner-height: 200px;
+      --nav-height: 80px;
+      padding-top: calc(var(--top-banner-height) + var(--nav-height));
+    }
+    body.has-top-banner .hero-ad-wrap {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 60;
+    }
+    body.has-top-banner nav.fixed {
+      top: var(--top-banner-height);
+    }
     .hero-ad-shell {
       position: relative;
       overflow: hidden;
@@ -5010,6 +5028,14 @@ body.has-bottom-ad {
       .hero-ad-cta {
         font-size: 0.72rem;
         padding: 7px 14px;
+      }
+      body.has-top-banner {
+        --top-banner-height: 180px;
+      }
+    }
+    @media (max-width: 640px) {
+      body.has-top-banner {
+        --top-banner-height: 160px;
       }
     }
 
