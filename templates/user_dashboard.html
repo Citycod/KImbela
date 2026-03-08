@@ -4487,6 +4487,12 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
       z-index: 0;
       pointer-events: none;
     }
+    @media (max-width: 768px) {
+      body.has-top-banner .hero-ad-wrap {
+        z-index: 9000;
+        pointer-events: auto;
+      }
+    }
     body.has-top-banner .hero-ad-shell,
     body.has-top-banner .hero-ad-link {
       min-height: var(--top-banner-height);
