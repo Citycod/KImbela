@@ -11,19 +11,50 @@ from flask import (
 )
 from sqlalchemy import or_
 from flask_login import login_required, current_user
-from extensions import db
+from flask_wtf.csrf import generate_csrf
+from flask_mail import Message
+from extensions import db, mail, bcrypt
 from models import User, AdCampaign, AdPackage, PaymentTransaction, MatchmakingPayments
 import cloudinary.uploader
 import os, requests
 from email_service import EmailService
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import time
 import time
 
 
 from time_utils import utcnow
 payments = Blueprint("payments", __name__)
+
+
+def _get_or_create_guest_advertiser(name, email):
+    user = User.query.filter_by(email=email).first()
+    if user:
+        return user
+
+    parts = (name or "").strip().split()
+    first_name = parts[0] if parts else "Guest"
+    last_name = " ".join(parts[1:]) if len(parts) > 1 else "Advertiser"
+    random_password = os.urandom(12).hex()
+    password_hash = bcrypt.generate_password_hash(random_password).decode("utf-8")
+
+    user = User(
+        first_name=first_name,
+        last_name=last_name,
+        email=email,
+        password_hash=password_hash,
+        city="Unknown",
+        country="Unknown",
+        state="",
+        dob=date(1990, 1, 1),
+        gender="other",
+        phone_number="N/A",
+        is_active=False,
+    )
+    db.session.add(user)
+    db.session.commit()
+    return user
 
 
 def _require_debug_access():
@@ -82,6 +113,301 @@ def ad_packages():
     return render_template("packages.html", packages=packages)
 
 
+
+
+@payments.route("/ads/request", methods=["GET", "POST"])
+def public_ad_request():
+    placement = request.args.get("placement", "dashboard-top")
+    placement_config = DASHBOARD_AD_PLACEMENTS.get(placement)
+
+    if request.method == "POST":
+        name = request.form.get("name", "").strip()
+        email = request.form.get("email", "").strip()
+        company = request.form.get("company", "").strip()
+        message = request.form.get("message", "").strip()
+
+        if not name or not email:
+            flash("Please provide your name and email.", "error")
+            return redirect(url_for("payments.public_ad_request", placement=placement))
+
+        recipient = (
+            current_app.config.get("ADMIN_EMAIL")
+            or current_app.config.get("MAIL_DEFAULT_SENDER")
+        )
+        if recipient:
+            try:
+                msg = Message(
+                    subject="New Public Ad Request",
+                    sender=current_app.config.get("MAIL_DEFAULT_SENDER"),
+                    recipients=[recipient],
+                )
+                msg.body = (
+                    f"New ad request from {name}\n"
+                    f"Email: {email}\n"
+                    f"Company: {company}\n"
+                    f"Placement: {placement}\n"
+                    f"Message: {message}"
+                )
+                mail.send(msg)
+            except Exception:
+                current_app.logger.exception("Failed to send public ad request email")
+        flash("Thanks! We received your ad request and will reach out shortly.", "success")
+        return redirect(url_for("payments.public_ad_request", placement=placement))
+
+    return render_template(
+        "public_ad_request.html",
+        placement=placement,
+        placement_config=placement_config,
+    )
+
+
+@payments.route("/public/dashboard-ads/<placement>")
+def public_dashboard_ad_package(placement):
+    placement_config = DASHBOARD_AD_PLACEMENTS.get(placement)
+    if not placement_config:
+        flash("Unknown ad placement", "error")
+        return redirect(url_for("user.index"))
+
+    return render_template(
+        "dashboard_ad_package.html",
+        placement=placement,
+        placement_config=placement_config,
+        csrf_token=generate_csrf(),
+        is_public=True,
+        return_url=url_for("user.index"),
+        return_label="Back to home",
+        upload_image_url=url_for("payments.public_upload_dashboard_ad_image", placement=placement),
+        upload_video_url=url_for("payments.public_upload_dashboard_ad_video", placement=placement),
+        create_campaign_url=url_for("payments.public_create_campaign"),
+        initiate_payment_url=url_for("payments.public_initiate_payment"),
+    )
+
+
+@payments.route("/public/dashboard-ads/<placement>/upload", methods=["POST"])
+def public_upload_dashboard_ad_image(placement):
+    placement_config = DASHBOARD_AD_PLACEMENTS.get(placement)
+    if not placement_config:
+        return jsonify({"success": False, "error": "Unknown ad placement"}), 400
+
+    try:
+        if "image" not in request.files:
+            return jsonify({"success": False, "error": "No image provided"})
+
+        image_file = request.files["image"]
+        if image_file.filename == "":
+            return jsonify({"success": False, "error": "No image selected"})
+
+        upload_result = cloudinary.uploader.upload(
+            image_file,
+            folder="kimbela/dashboard-ads",
+            width=placement_config["image_width"],
+            height=placement_config["image_height"],
+            crop="fill",
+            quality="auto",
+        )
+
+        return jsonify(
+            {
+                "success": True,
+                "image_url": upload_result["secure_url"],
+                "public_id": upload_result["public_id"],
+            }
+        )
+
+    except Exception as e:
+        current_app.logger.error(f"❌ Public dashboard ad image upload failed: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@payments.route("/public/dashboard-ads/<placement>/upload-video", methods=["POST"])
+def public_upload_dashboard_ad_video(placement):
+    allowed_placements = {
+        "dashboard-sidebar",
+        "dashboard-vertical",
+        "dashboard-spotlight",
+    }
+    if placement not in allowed_placements:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": "Video ads are only for left/right sidebar placements",
+                }
+            ),
+            400,
+        )
+
+    try:
+        if "video" not in request.files:
+            return jsonify({"success": False, "error": "No video provided"})
+
+        video_file = request.files["video"]
+        if video_file.filename == "":
+            return jsonify({"success": False, "error": "No video selected"})
+
+        if not video_file.mimetype.startswith("video/"):
+            return jsonify({"success": False, "error": "Invalid video type"}), 400
+
+        upload_result = cloudinary.uploader.upload(
+            video_file,
+            folder="kimbela/dashboard-ads",
+            resource_type="video",
+            quality="auto",
+        )
+
+        return jsonify(
+            {
+                "success": True,
+                "video_url": upload_result["secure_url"],
+                "public_id": upload_result["public_id"],
+            }
+        )
+
+    except Exception as e:
+        current_app.logger.error(f"❌ Public dashboard ad video upload failed: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@payments.route("/public/create-campaign", methods=["POST"])
+def public_create_campaign():
+    try:
+        data = request.get_json(silent=True) or request.form.to_dict()
+        if not data:
+            return jsonify({"success": False, "error": "No data provided"}), 400
+
+        name = data.get("contact_name") or data.get("name") or ""
+        email = data.get("contact_email") or data.get("email") or ""
+        company = data.get("contact_company") or data.get("company") or ""
+
+        if not name or not email:
+            return jsonify({"success": False, "error": "Name and email are required"}), 400
+
+        daily_budget = data.get("daily_budget")
+        duration_days = data.get("duration_days")
+        title = data.get("title")
+        description = data.get("description")
+        target_url = data.get("target_url")
+        call_to_action = data.get("call_to_action", "Learn More")
+        image = data.get("image", "")
+        currency = data.get("currency", "USD")
+        placement = data.get("placement", "dashboard-top")
+
+        if not title:
+            return jsonify({"success": False, "error": "Ad title is required"}), 400
+        if not target_url:
+            return jsonify({"success": False, "error": "Target URL is required"}), 400
+        if not daily_budget or not duration_days:
+            return jsonify({"success": False, "error": "Budget and duration are required"}), 400
+        if placement in DASHBOARD_AD_PLACEMENTS and not image:
+            return jsonify({"success": False, "error": "Please upload a banner image"}), 400
+        if placement != "sponsored" and placement not in DASHBOARD_AD_PLACEMENTS:
+            return jsonify({"success": False, "error": "Invalid ad placement selected"}), 400
+
+        try:
+            daily_budget = float(daily_budget)
+            duration_days = int(duration_days)
+        except (TypeError, ValueError):
+            return jsonify({"success": False, "error": "Invalid budget or duration"}), 400
+
+        if daily_budget < 2:
+            return jsonify({"success": False, "error": "Minimum daily budget is $2"}), 400
+        if duration_days < 3:
+            return jsonify({"success": False, "error": "Minimum duration is 3 days"}), 400
+
+        user = _get_or_create_guest_advertiser(name, email)
+
+        total_budget = daily_budget * duration_days
+        details_prefix = f"Public Ad Request | {name} | {email}"
+        if company:
+            details_prefix += f" | {company}"
+        if description:
+            full_description = f"{details_prefix}\n{description}"
+        else:
+            full_description = details_prefix
+
+        campaign = AdCampaign(
+            user_id=user.id,
+            title=title,
+            description=full_description,
+            image=image,
+            target_url=target_url,
+            call_to_action=call_to_action,
+            budget=total_budget,
+            daily_budget=daily_budget,
+            duration_days=duration_days,
+            currency=currency,
+            placement=placement,
+            status="pending",
+            payment_status="pending",
+            target_gender=None,
+            target_age_min=31,
+            target_age_max=65,
+        )
+
+        db.session.add(campaign)
+        db.session.commit()
+
+        return jsonify({"success": True, "campaign_id": campaign.id})
+
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"❌ Public create campaign failed: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@payments.route("/public/initiate-payment", methods=["POST"])
+def public_initiate_payment():
+    try:
+        data = request.get_json(silent=True) or request.form.to_dict()
+        if not data:
+            return jsonify({"success": False, "error": "No data provided"}), 400
+
+        campaign_id = data.get("campaign_id")
+        amount = data.get("amount")
+        currency = (data.get("currency") or "USD").upper()
+        contact_payload = {
+            "name": data.get("contact_name") or data.get("name") or "",
+            "email": data.get("contact_email") or data.get("email") or "",
+            "company": data.get("contact_company") or data.get("company") or "",
+        }
+
+        if not campaign_id or not amount:
+            return jsonify({"success": False, "error": "Missing campaign or amount"}), 400
+
+        campaign = AdCampaign.query.get(campaign_id)
+        if not campaign:
+            return jsonify({"success": False, "error": "Campaign not found"}), 404
+
+        user = User.query.get(campaign.user_id)
+        if not user:
+            return jsonify({"success": False, "error": "Campaign owner not found"}), 404
+
+        from .payment_service_ad import AdCampaignPaymentService
+
+        ad_service = AdCampaignPaymentService()
+        result = ad_service.create_ad_campaign_payment(user, campaign, currency)
+        if not result.get("success"):
+            return jsonify(result), 400
+
+        gateway_payment_id = result.get("gateway_payment_id")
+        if gateway_payment_id:
+            tx = PaymentTransaction.query.filter_by(
+                gateway_payment_id=gateway_payment_id
+            ).first()
+            if tx:
+                try:
+                    import json
+
+                    tx.gateway_metadata = json.dumps({"public_contact": contact_payload})
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+
+        return jsonify(result)
+
+    except Exception as e:
+        current_app.logger.error(f"❌ Public initiate payment failed: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
 @payments.route("/dashboard-ads/<placement>")
 @login_required
 def dashboard_ad_package(placement):

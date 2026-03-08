@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Request a Top Banner Ad - Kimbela</title>
+    <link href="{{ url_for('static', filename='assets/img/favy.png') }}" rel="icon" />
+    <link href="{{ url_for('static', filename='assets/css/main.css') }}" rel="stylesheet" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+    />
+    <style>
+      body {
+        background: #f8fafc;
+      }
+      .public-ad-card {
+        max-width: 720px;
+        margin: 60px auto;
+        background: #ffffff;
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+        padding: 28px;
+      }
+      .public-ad-card h1 {
+        font-size: 1.6rem;
+        margin-bottom: 8px;
+      }
+      .public-ad-card p {
+        color: #475569;
+        margin-bottom: 16px;
+      }
+      .public-ad-card label {
+        font-weight: 600;
+        margin-bottom: 6px;
+        display: block;
+      }
+      .public-ad-card input,
+      .public-ad-card textarea {
+        width: 100%;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 10px 12px;
+        margin-bottom: 14px;
+      }
+      .public-ad-card button {
+        background: linear-gradient(120deg, #38bdf8, #a855f7, #f97316);
+        border: none;
+        color: #0f172a;
+        font-weight: 700;
+        padding: 12px 18px;
+        border-radius: 999px;
+        cursor: pointer;
+      }
+      .alert {
+        padding: 10px 14px;
+        border-radius: 10px;
+        margin-bottom: 12px;
+      }
+      .alert-success { background: #ecfeff; color: #0f766e; }
+      .alert-error { background: #fee2e2; color: #b91c1c; }
+    </style>
+  </head>
+  <body>
+    <div class="public-ad-card">
+      <a href="{{ url_for('user.index') }}" class="text-sm text-slate-500">
+        <i class="bi bi-arrow-left"></i> Back to home
+      </a>
+      <h1>Request a Top Banner Ad</h1>
+      <p>
+        Leave your details and we will help you publish your banner on the home page.
+        {% if placement_config %}
+        Recommended size: {{ placement_config.recommended_size }}.
+        {% endif %}
+      </p>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert {{ 'alert-success' if category == 'success' else 'alert-error' }}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <form method="POST" action="{{ url_for('payments.public_ad_request', placement=placement) }}">
+        <label for="name">Name</label>
+        <input id="name" name="name" type="text" required />
+
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" required />
+
+        <label for="company">Company (optional)</label>
+        <input id="company" name="company" type="text" />
+
+        <label for="message">Ad details (optional)</label>
+        <textarea id="message" name="message" rows="4" placeholder="Tell us about your campaign."></textarea>
+
+        <button type="submit">Send Ad Request</button>
+      </form>
+    </div>
+  </body>
+</html>

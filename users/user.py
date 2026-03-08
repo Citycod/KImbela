@@ -225,6 +225,33 @@ def calculate_age(birth_date):
         age -= 1
     return age
 
+def get_banner_ad_by_placement(placement):
+    current_time = utcnow()
+    banner_ad = (
+        AdCampaign.query.filter(
+            AdCampaign.status == "active",
+            AdCampaign.start_date <= current_time,
+            AdCampaign.end_date >= current_time,
+            AdCampaign.placement == placement,
+        )
+        .order_by(AdCampaign.budget.desc())
+        .first()
+    )
+    if not banner_ad:
+        return None
+
+    media_url = (
+        banner_ad.image
+        or "https://via.placeholder.com/1600x400/0f172a/ffffff?text=Kimbela+Ad"
+    )
+    return {
+        "id": banner_ad.id,
+        "title": banner_ad.title or "Featured Offer",
+        "image_url": media_url,
+        "target_url": banner_ad.target_url or "#",
+    }
+
+
 
 @user.route("/")
 @user.route("/index", methods=["GET", "POST"])

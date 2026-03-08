@@ -737,7 +737,7 @@
                                                     }
                                                     /* Tablet screens */
                                                     
-                                                    @media (min-width: 769px) and (max-width: 1024px) {
+@media (min-width: 769px) and (max-width: 1024px) {
                                                         /* Keep nav items visible on tablets */
                                                         .hidden.md\:flex {
                                                             display: flex !important;
@@ -2177,6 +2177,55 @@
                                                     /*
 #messengerPopup {
     display: none !important;
+}
+
+/* Extra shrink for hero header + composer on small screens */
+@media (max-width: 768px) {
+  .hero-header {
+    font-size: 1.25rem !important;
+    margin-top: 0.4rem !important;
+    margin-bottom: 0.45rem !important;
+  }
+  .hero-section .composer-container {
+    width: min(100%, 32rem) !important;
+    padding: 0.35rem !important;
+  }
+  .hero-section .composer-input {
+    font-size: 0.62rem !important;
+    padding: 0.32rem 0.45rem !important;
+  }
+  .hero-section .composer-container .composer-btn {
+    padding: 0.18rem 0.22rem !important;
+    font-size: 0.58rem !important;
+  }
+  .hero-section .composer-container .composer-btn img {
+    width: 1.6rem !important;
+    height: 1.6rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-header {
+    font-size: 1.05rem !important;
+    margin-top: 0.3rem !important;
+    margin-bottom: 0.35rem !important;
+  }
+  .hero-section .composer-container {
+    width: min(100%, 28rem) !important;
+    padding: 0.3rem !important;
+  }
+  .hero-section .composer-input {
+    font-size: 0.56rem !important;
+    padding: 0.28rem 0.4rem !important;
+  }
+  .hero-section .composer-container .composer-btn {
+    padding: 0.14rem 0.18rem !important;
+    font-size: 0.54rem !important;
+  }
+  .hero-section .composer-container .composer-btn img {
+    width: 1.4rem !important;
+    height: 1.4rem !important;
+  }
 }
 
 #messengerPopup:not(.hidden) {

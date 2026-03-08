@@ -67,48 +67,10 @@
 
     {% include 'partials/user_dashboard_head_scripts.html' %}
 
-    
-    <style>
-
-    body.has-bottom-ad {
-      padding-bottom: 0;
-      margin-bottom: 0;
-    }
-
-    .bottom-ad-banner {
-  position: fixed;
-  bottom: 0;
-  width: 100%;
-  transform: none;
-  z-index: 60;
-  pointer-events: auto;
-  margin: 0;
-  padding: 0;
-}
-
-
-.bottom-ad-banner.has-dashboard-ad .bottom-ad-inner {
-  pointer-events: auto;
-  margin: 0;
-  max-width: none;
-  width: 100%;
-  background: linear-gradient(135deg, #0b1120 0%, #1b1b3a 45%, #2d1b69 100%);
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  border-bottom: none;
-  position: relative;
-  overflow: hidden;
-  height: 90px; /* Reduced to half of previous size (was ~140px) */
-  min-height: 90px;
-  max-height: 90px;
-  margin-bottom: -5px;
-}
-    </style>
   </head>
 
   
-
-  {% set bottom_banner = dashboard_ads.get('bottom_banner') if dashboard_ads else None %}
-  <body class="font-poppins bg-fb-gray text-fb-text has-bottom-ad has-top-banner">
+  <body class="font-poppins bg-fb-gray text-fb-text has-top-banner">
     <div class="simple-loader" id="loader">
       <div class="loader-logo">
         <img
@@ -516,7 +478,7 @@
 <br> -->    <!-- Hero Section - Responsive -->
 <div class="hero-section">
     <h1 class="hero-header" style="margin-top: 1rem;">
-        WHAT'S ON YOUR MIND <span style="color: coral;">{{ current_user.first_name|upper }}?</span>
+         What's on your mind, <span style="color: coral;">{{ current_user.first_name|title }}?</span>
     </h1>
 
     <!-- Post Composer - DIRECTLY UNDER HERO TEXT (removed extra spacing) -->
@@ -910,7 +872,7 @@
     </div>
     <!-- MOBILE SIDEBAR -->
     <div
-      class="fixed inset-0 z-40 lg:hidden"
+      class="mobile-sidebar-overlay fixed inset-0 lg:hidden"
       id="mobileSidebarOverlay"
       style="display: none"
     >
@@ -919,16 +881,16 @@
         onclick="toggleMobileMenu()"
       ></div>
       <div
-        class="absolute top-0 left-0 bottom-0 w-80 bg-white shadow-strong transform -translate-x-full transition-transform duration-300"
+        class="mobile-sidebar-panel absolute top-0 left-0 bottom-0 w-80 bg-white shadow-strong transform -translate-x-full transition-transform duration-300"
         id="mobileSidebar"
       >
         <div class="p-4 border-b border-fb-border flex items-center">
-          <img
+          <!--<img
             src="{{ url_for('static', filename='assets/img/kim.png') }}"
             alt="Kimbela"
             class="h-8 mr-2"
           />
-          <span class="text-xl font-bold">Kimbela</span>
+          <span class="text-xl font-bold">Kimbela</span>-->
           <button
             class="ml-auto p-2 rounded-full hover:bg-fb-gray"
             onclick="toggleMobileMenu()"
@@ -1041,7 +1003,7 @@
           >
             <i
               class="bi bi-shop mr-3 text-lg group-hover:scale-110 group-hover:rotate-12 transition-all duration-300"
-              style="color: #f5260bff; animation: pulse-glow 2s infinite"
+              style="color: #f5260bff"
             ></i>
             <span
               class="font-medium group-hover:text-orange-700 transition-colors duration-300"
@@ -1055,7 +1017,7 @@
           >
             <i
               class="bi bi-megaphone-fill mr-3 text-lg group-hover:scale-110 group-hover:rotate-12 transition-all duration-300"
-              style="color: #f59e0b; animation: pulse-glow 2s infinite"
+              style="color: #f59e0b"
             ></i>
             <span
               class="font-medium group-hover:text-orange-700 transition-colors duration-300"
@@ -1152,7 +1114,7 @@
         >
           <i
             class="bi bi-shop mr-3 text-lg group-hover:scale-110 group-hover:rotate-12 transition-all duration-300"
-            style="color: #f5260bff; animation: pulse-glow 2s infinite"
+            style="color: #f5260bff"
           ></i>
           <span
             class="font-medium group-hover:text-orange-700 transition-colors duration-300"
@@ -1265,6 +1227,39 @@
     <div class="w-full max-w-4xl mx-auto"> 
         <!-- POST COMPOSER -->
         
+
+        {% set sidebar_banner = dashboard_ads.get('sidebar_banner') if dashboard_ads else None %}
+        {% set vertical_banner = dashboard_ads.get('vertical_banner') if dashboard_ads else None %}
+        {% set spotlight_banner = dashboard_ads.get('spotlight_banner') if dashboard_ads else None %}
+        {% set mobile_banner_candidates = [
+          {
+            'key': 'sidebar',
+            'banner': sidebar_banner,
+            'placement': 'dashboard-sidebar',
+            'label': 'Sidebar Boost',
+            'headline': 'Boost your product today',
+            'copy': 'Get your brand seen by active Kimbela shoppers and creators.',
+            'cta': 'Start advertising'
+          },
+          {
+            'key': 'vertical',
+            'banner': vertical_banner,
+            'placement': 'dashboard-vertical',
+            'label': 'Vertical Feature',
+            'headline': 'Put your brand in the spotlight',
+            'copy': 'Tall, bold placements that keep your story front and center.',
+            'cta': 'Start your promo'
+          },
+          {
+            'key': 'spotlight',
+            'banner': spotlight_banner,
+            'placement': 'dashboard-spotlight',
+            'label': 'Spotlight',
+            'headline': 'Turn views into sales',
+            'copy': 'Premium placements that put your products first.',
+            'cta': 'Get featured'
+          }
+        ] %}
 
         <!-- POSTS FEED - OPTIMIZED FOR INFINITE SCROLL -->
         <div
@@ -1734,6 +1729,45 @@
               </div>
             </div>
           </div>
+          {% if loop.index % 13 == 0 %}
+          {% set mobile_banner = mobile_banner_candidates|random %}
+          <div class="mobile-feed-ad">
+            {% if mobile_banner.banner %}
+            <a
+              class="mobile-feed-ad-link"
+              href="{{ mobile_banner.banner.target_url }}"
+              target="_blank"
+              rel="noopener"
+            >
+              <div class="mobile-feed-ad-badge">{{ mobile_banner.label }}</div>
+              {% if mobile_banner.banner.media_type == 'video' %}
+              <video class="mobile-feed-ad-media" autoplay muted loop playsinline>
+                <source src="{{ mobile_banner.banner.image_url }}" {% if mobile_banner.banner.video_mime %}type="{{ mobile_banner.banner.video_mime }}"{% endif %} />
+              </video>
+              {% else %}
+              <img
+                src="{{ mobile_banner.banner.image_url }}"
+                alt="{{ mobile_banner.banner.title }}"
+                class="mobile-feed-ad-media"
+                loading="lazy"
+              />
+              {% endif %}
+            </a>
+            {% else %}
+            <div class="mobile-feed-ad-inner">
+              <div class="mobile-feed-ad-badge">{{ mobile_banner.label }}</div>
+              <h3>{{ mobile_banner.headline }}</h3>
+              <p>{{ mobile_banner.copy }}</p>
+              <a
+                class="mobile-feed-ad-cta"
+                href="{{ url_for('payments.dashboard_ad_package', placement=mobile_banner.placement) }}"
+              >
+                {{ mobile_banner.cta }}
+              </a>
+            </div>
+            {% endif %}
+          </div>
+          {% endif %}
           {% endfor %} {% else %}
           <!-- No posts message -->
           <div class="bg-white rounded-2xl shadow-soft p-8 text-center">
@@ -3538,122 +3572,7 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
 
 
 
-    <div id="bottomAdBanner" class="bottom-ad-banner has-dashboard-ad hidden" data-ad-id="{{ bottom_banner.id }}">
-  <div class="bottom-ad-inner hero-ad-shell bottom-ad-shell">
-    
-    {% if bottom_banner %}
-    <a
-      class="bottom-ad-clickarea hero-ad-link bottom-ad-link"
-      href="{{ bottom_banner.target_url }}"
-      target="_blank"
-      rel="noopener"
-    >
-      <div class="bottom-ad-label">Sponsored</div>
-      {% if bottom_banner.media_type == 'video' %}
-      <video class="hero-ad-media bottom-ad-media" autoplay muted loop playsinline>
-        <source src="{{ bottom_banner.image_url }}" {% if bottom_banner.video_mime %}type="{{ bottom_banner.video_mime }}"{% endif %} />
-      </video>
-      {% else %}
-      <img
-        src="{{ bottom_banner.image_url }}"
-        alt="{{ bottom_banner.title }}"
-        class="hero-ad-media bottom-ad-media"
-        loading="lazy"
-      />
-      {% endif %}
-    </a>
-    {% else %}
-    <a class="bottom-ad-clickarea hero-ad-link bottom-ad-link" href="{{ url_for('payments.dashboard_ad_package', placement='dashboard-bottom') }}". style="margin-bottom: -5rem;">
-      <div class="hero-ad-backdrop" aria-hidden="true">
-        <span class="hero-ad-orb orb-a"></span>
-        <span class="hero-ad-orb orb-b"></span>
-        <span class="hero-ad-orb orb-c"></span>
-        <span class="hero-ad-grid"></span>
-      </div>
-      <div class="hero-ad-content" style="margin-top: -13rem;">
-        <div class="hero-ad-pill">Ad Space</div>
-        <p>Stay visible while people scroll. Compact, premium banner placement.</p>
-        <div class="hero-ad-actions">
-          <span class="hero-ad-cta js-ad-cta" data-cta-href="{{ url_for('payments.dashboard_ad_package', placement='dashboard-bottom') }}" role="link" tabindex="0">Claim this banner</span>
-          <span class="hero-ad-secondary">Always on-screen</span>
-        </div>
-      </div>
-    </a>
-    {% endif %}
-  </div>
-</div>
-
-
-
-
-    <script>
-      window.closeBottomAdBanner = function(event) {
-        if (event) {
-          event.preventDefault();
-          event.stopPropagation();
-        }
-        const bottomBanner = document.getElementById("bottomAdBanner");
-        if (!bottomBanner) return;
-        const bannerKey = bottomBanner.dataset.adId
-          ? `kimbela_bottom_ad_closed_${bottomBanner.dataset.adId}`
-          : "kimbela_bottom_ad_closed_default";
-        const activeEl = document.activeElement;
-        if (activeEl && typeof activeEl.blur === "function") {
-          activeEl.blur();
-        }
-        bottomBanner.classList.add("hidden");
-        bottomBanner.style.display = "none";
-        bottomBanner.setAttribute("inert", "");
-        document.body.classList.remove("has-bottom-ad");
-        localStorage.setItem(bannerKey, "1");
-      };
-
-      document.addEventListener("DOMContentLoaded", () => {
-        const bottomBanner = document.getElementById("bottomAdBanner");
-        if (!bottomBanner) return;
-        const bannerKey = bottomBanner.dataset.adId
-          ? `kimbela_bottom_ad_closed_${bottomBanner.dataset.adId}`
-          : "kimbela_bottom_ad_closed_default";
-        const bannerTimerKey = bottomBanner.dataset.adId
-          ? `kimbela_bottom_ad_timer_${bottomBanner.dataset.adId}`
-          : "kimbela_bottom_ad_timer_default";
-        if (localStorage.getItem(bannerKey) === "1") {
-          bottomBanner.classList.add("hidden");
-          document.body.classList.remove("has-bottom-ad");
-          return;
-        }
-        bottomBanner.classList.add("hidden");
-        document.body.classList.remove("has-bottom-ad");
-        const closeBanner = window.closeBottomAdBanner;
-        const closeBtn = bottomBanner.querySelector(".bottom-ad-close");
-        if (closeBtn) {
-          closeBtn.addEventListener("click", closeBanner, { capture: true });
-        }
-        bottomBanner.addEventListener(
-          "click",
-          (event) => {
-            if (event.target.closest(".bottom-ad-close")) {
-              closeBanner(event);
-            }
-          },
-          { capture: true }
-        );
-        const now = Date.now();
-        const firstSeen = parseInt(localStorage.getItem(bannerTimerKey), 10);
-        const startTime = Number.isFinite(firstSeen) ? firstSeen : now;
-        if (!Number.isFinite(firstSeen)) {
-          localStorage.setItem(bannerTimerKey, String(startTime));
-        }
-        const delay = Math.max(0, 10 * 60 * 1000 - (now - startTime));
-        setTimeout(() => {
-          if (localStorage.getItem(bannerKey) === "1") return;
-          bottomBanner.classList.remove("hidden");
-          bottomBanner.style.display = "";
-          bottomBanner.removeAttribute("inert");
-          document.body.classList.add("has-bottom-ad");
-        }, delay);
-      });
-    </script>
+    <!-- Bottom ad banner removed -->
 
     <script>
       document.addEventListener("DOMContentLoaded", () => {
@@ -4472,348 +4391,93 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
   background: transparent;
 }
 
-/* Sticky bottom banner */
-body.has-bottom-ad {
-  padding-bottom: 0;
+/* Mobile feed ad cards */
+.mobile-feed-ad {
+  display: none;
+  margin: 0 0 1.2rem;
 }
-
-.bottom-ad-banner {
-  position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: 14px;
-  width: min(860px, 94vw);
-  z-index: 60;
-  pointer-events: auto;
-}
-.bottom-ad-banner.hidden {
-  pointer-events: none;
-}
-
-.bottom-ad-banner.has-dashboard-ad .bottom-ad-inner {
-  pointer-events: auto;
-  margin: 0;
-  max-width: none;
+.mobile-feed-ad-link,
+.mobile-feed-ad-inner {
+  display: block;
   width: 100%;
-  background: linear-gradient(135deg, #0b1120 0%, #1b1b3a 45%, #2d1b69 100%);
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  box-shadow: 0 18px 40px rgba(2, 6, 23, 0.45);
-  border-radius: 7px;
-  padding: 4px 8px;
-  position: relative;
+  border-radius: 18px;
   overflow: hidden;
-}
-
-.bottom-ad-banner.has-dashboard-ad .bottom-ad-inner::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at 15% 10%, rgba(255, 255, 255, 0.7), transparent 50%),
-    radial-gradient(circle at 85% 30%, rgba(255, 255, 255, 0.4), transparent 55%);
-  pointer-events: none;
-}
-
-.bottom-ad-banner.has-dashboard-ad .bottom-ad-inner::after {
-  content: "";
-  position: absolute;
-  left: -10%;
-  top: -120%;
-  width: 40%;
-  height: 300%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
-  transform: rotate(18deg);
-  animation: banner-sheen 6s ease-in-out infinite;
-  pointer-events: none;
-}
-
-.bottom-ad-label {
-  position: absolute;
-  top: 12px;
-  left: 20px;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #9a3412;
-  background: rgba(255, 247, 237, 0.92);
-  border: 1px solid rgba(251, 146, 60, 0.28);
-  padding: 4px 8px;
-  border-radius: 999px;
-  z-index: 2;
-}
-
-.bottom-ad-banner .bottom-ad-label {
-  color: #e2e8f0;
-  background: rgba(15, 23, 42, 0.6);
-  border-color: rgba(148, 163, 184, 0.25);
-}
-
-.bottom-ad-close {
-  position: absolute;
-  top: 10px;
-  right: 16px;
-  width: 32px;
-  height: 32px;
-  border-radius: 999px;
-  border: 1px solid rgba(251, 146, 60, 0.28);
-  background: rgba(255, 255, 255, 0.9);
-  color: #9a3412;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  z-index: 3;
-  pointer-events: auto;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.bottom-ad-close.tiny {
-  top: 8px;
-  right: 10px;
-  width: 18px;
-  height: 18px;
-  font-size: 9px;
-  border-width: 1px;
-  box-shadow: none;
-  opacity: 0.75;
-}
-
-.bottom-ad-close.tiny i {
-  font-size: 9px;
-  line-height: 1;
-}
-
-.bottom-ad-close:hover {
-  transform: scale(1.05);
-  box-shadow: 0 8px 18px rgba(249, 115, 22, 0.2);
-}
-
-.bottom-ad-clickarea {
-  display: block;
+  background: #0f172a;
+  color: #f8fafc;
   text-decoration: none;
-  color: inherit;
-  position: relative;
-  z-index: 1;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  box-shadow: 0 16px 32px rgba(2, 6, 23, 0.28);
 }
-
-.bottom-ad-shell {
-  min-height: 70px;
+.mobile-feed-ad-inner {
+  padding: 16px;
+  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 45%, #312e81 100%);
 }
-
-.bottom-ad-link {
-  min-height: 70px;
-  padding: 10px 12px;
-}
-
-@media (max-width: 1024px) {
-  body.has-bottom-ad {
-    padding-bottom: 0;
-  }
-}
-
-.bottom-ad-link {
-  display: block;
-  margin-top: 18px;
-  border-radius: 16px;
-  overflow: hidden;
-}
-
-.bottom-ad-empty {
-  margin-top: 18px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 24px;
-  border-radius: 22px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.88), rgba(255, 237, 213, 0.7));
-  border: 1px solid rgba(251, 146, 60, 0.28);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
-}
-
-.bottom-ad-megaphone {
-  position: relative;
-  width: 84px;
-  height: 60px;
-  transform: rotate(-12deg);
-  flex: 0 0 auto;
-  filter: drop-shadow(0 10px 14px rgba(249, 115, 22, 0.25));
-}
-
-.megaphone-cone {
-  position: absolute;
-  left: 12px;
-  top: 10px;
-  width: 48px;
-  height: 28px;
-  background: linear-gradient(140deg, #fb7185, #f97316);
-  border-radius: 8px 20px 20px 8px;
-  box-shadow: 0 10px 18px rgba(249, 115, 22, 0.25);
-}
-
-.megaphone-cone::after {
-  content: "";
-  position: absolute;
-  right: -18px;
-  top: 4px;
-  width: 22px;
-  height: 20px;
-  background: linear-gradient(160deg, #fed7aa, #fdba74);
-  border-radius: 0 16px 16px 0;
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.7);
-}
-
-.megaphone-handle {
-  position: absolute;
-  left: 6px;
-  bottom: 2px;
-  width: 18px;
-  height: 22px;
-  background: #f97316;
-  border-radius: 10px;
-  transform: rotate(12deg);
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.6);
-}
-
-.megaphone-sound {
-  position: absolute;
-  right: -6px;
-  top: 6px;
-  width: 28px;
-  height: 28px;
-  border: 2px solid rgba(249, 115, 22, 0.45);
-  border-left-color: transparent;
-  border-bottom-color: transparent;
-  border-radius: 50%;
-  transform: rotate(20deg);
-}
-
-.megaphone-sound::after {
-  content: "";
-  position: absolute;
-  right: -8px;
-  top: -2px;
-  width: 18px;
-  height: 18px;
-  border: 2px solid rgba(251, 146, 60, 0.4);
-  border-left-color: transparent;
-  border-bottom-color: transparent;
-  border-radius: 50%;
-}
-
-.bottom-ad-empty-copy h3 {
-  font-size: 20px;
-  font-weight: 700;
-  color: #9a3412;
-  margin-bottom: 4px;
-}
-
-.bottom-ad-empty-copy p {
-  font-size: 13px;
-  color: #7c2d12;
-  opacity: 0.86;
-}
-
-.bottom-ad-empty-pill {
+.mobile-feed-ad-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 10px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.98);
-  border: 1px solid rgba(251, 146, 60, 0.3);
-  color: #c2410c;
-  font-weight: 600;
-  margin-bottom: 8px;
+  background: rgba(255, 255, 255, 0.15);
+  margin-bottom: 10px;
 }
-
-.bottom-ad-cta {
+.mobile-feed-ad-inner h3 {
+  font-size: 1rem;
+  font-weight: 800;
+  margin: 0 0 6px;
+}
+.mobile-feed-ad-inner p {
+  font-size: 0.8rem;
+  color: rgba(248, 250, 252, 0.8);
+  margin: 0 0 12px;
+}
+.mobile-feed-ad-cta {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 10px 18px;
+  padding: 8px 14px;
   border-radius: 999px;
-  background: linear-gradient(120deg, #f97316, #fb7185, #f59e0b);
-  color: #fff;
-  font-size: 13px;
-  font-weight: 600;
-  text-decoration: none;
-  box-shadow: 0 12px 26px rgba(249, 115, 22, 0.3);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-    .bottom-ad-cta:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 16px 32px rgba(249, 115, 22, 0.35);
-    }
-
-.bottom-ad-media {
-  display: block;
-  width: 100%;
-  height: 140px;
-  object-fit: cover;
-  border-radius: 16px;
-}
-
-.bottom-ad-media.hero-ad-media {
-  height: auto;
-  max-height: 80px;
-  border-radius: 10px;
-}
-
-.bottom-ad-banner .hero-ad-pill {
-  font-size: 0.56rem;
-  padding: 4px 8px;
-  margin-bottom: 6px;
-}
-
-.bottom-ad-banner .hero-ad-content h2 {
-  font-size: 1rem;
-  margin-bottom: 5px;
-}
-
-.bottom-ad-banner .hero-ad-content p {
-  font-size: 0.78rem;
-  margin-bottom: 8px;
-}
-
-.bottom-ad-banner .hero-ad-cta {
+  background: linear-gradient(120deg, #38bdf8, #a855f7, #f97316);
+  color: #0f172a;
+  font-weight: 800;
   font-size: 0.74rem;
-  padding: 6px 12px;
+  text-decoration: none;
+}
+.mobile-feed-ad-media {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  display: block;
+}
+@media (max-width: 1024px) {
+  .mobile-feed-ad {
+    display: block;
+  }
+}
+@media (max-width: 640px) {
+  .mobile-feed-ad-media {
+    height: 150px;
+  }
+  .mobile-feed-ad-inner h3 {
+    font-size: 0.95rem;
+  }
 }
 
-.bottom-ad-banner .hero-ad-secondary {
-  font-size: 0.68rem;
-  color: rgba(226, 232, 240, 0.82);
-}
-
-.bottom-ad-banner .hero-ad-content {
-  text-align: center;
-}
-
-.bottom-ad-banner .hero-ad-actions {
-  justify-content: center;
-}
-
-.bottom-ad-banner .hero-ad-orb {
-  opacity: 0.6;
-}
-
-    /* Enchanting hero ad banner */
+/* Enchanting hero ad banner */
     .hero-ad-wrap {
       width: 100%;
       padding: 0 0 12px;
       margin-top: -6px;
     }
     body.has-top-banner {
-      --top-banner-height: 200px;
+      --top-banner-height: 320px;
       --nav-height: 80px;
-      padding-top: calc(var(--top-banner-height) + var(--nav-height));
+      --top-banner-offset: 0px;
+      padding-top: calc(var(--top-banner-height) + var(--nav-height) + var(--top-banner-offset));
     }
     body.has-top-banner .hero-ad-wrap {
       position: fixed;
@@ -4822,8 +4486,12 @@ body.has-bottom-ad {
       right: 0;
       z-index: 60;
     }
+    body.has-top-banner .hero-ad-shell,
+    body.has-top-banner .hero-ad-link {
+      min-height: var(--top-banner-height);
+    }
     body.has-top-banner nav.fixed {
-      top: var(--top-banner-height);
+      top: calc(var(--top-banner-height) + var(--top-banner-offset));
     }
     .hero-ad-shell {
       position: relative;
@@ -4851,6 +4519,21 @@ body.has-bottom-ad {
       color: #f8fafc;
       text-decoration: none;
       min-height: 200px;
+    }
+    body.has-top-banner .hero-ad-shell,
+    body.has-top-banner .hero-ad-link {
+      min-height: var(--top-banner-height);
+      height: var(--top-banner-height);
+    }
+    .mobile-sidebar-overlay {
+      z-index: 10000;
+      position: fixed;
+      inset: 0;
+      isolation: isolate;
+    }
+    .mobile-sidebar-panel {
+      z-index: 10001;
+      position: fixed;
     }
     .hero-ad-media {
       width: 100%;
@@ -5030,12 +4713,43 @@ body.has-bottom-ad {
         padding: 7px 14px;
       }
       body.has-top-banner {
-        --top-banner-height: 180px;
+        --top-banner-height: 190px;
+        --top-banner-offset: 2px;
       }
     }
     @media (max-width: 640px) {
       body.has-top-banner {
-        --top-banner-height: 160px;
+        --top-banner-height: 170px;
+        --top-banner-offset: 4px;
+      }
+    }
+    @media (max-width: 480px) {
+      body.has-top-banner {
+        --top-banner-height: 150px;
+        --top-banner-offset: 6px;
+      }
+      body.has-top-banner .hero-ad-link {
+        padding: 5px 7px;
+      }
+      body.has-top-banner .hero-ad-content h2 {
+        font-size: 0.88rem;
+        margin-bottom: 3px;
+      }
+      body.has-top-banner .hero-ad-content p {
+        font-size: 0.64rem;
+        margin-bottom: 5px;
+      }
+      body.has-top-banner .hero-ad-pill {
+        font-size: 0.46rem;
+        padding: 2px 6px;
+        margin-bottom: 3px;
+      }
+      body.has-top-banner .hero-ad-cta {
+        font-size: 0.6rem;
+        padding: 5px 9px;
+      }
+      body.has-top-banner .hero-ad-secondary {
+        font-size: 0.55rem;
       }
     }
 
@@ -5163,44 +4877,35 @@ body.has-bottom-ad {
     border-radius: 0 !important;
   }
 
-  body.has-bottom-ad {
     padding-bottom: 120px;
   }
 
-  .bottom-ad-banner {
     bottom: 10px;
     width: calc(100% - 12px);
   }
 
-  .bottom-ad-banner.has-dashboard-ad .bottom-ad-inner {
     width: 100%;
     padding: 6px 8px;
   }
 
-  .bottom-ad-media {
     height: 80px;
   }
 
-  .bottom-ad-empty {
     padding: 14px;
   }
 
-  .bottom-ad-empty-copy h3 {
     font-size: 16px;
   }
 
-  .bottom-ad-megaphone {
     width: 64px;
     height: 48px;
   }
 
-  .bottom-ad-label {
     top: 10px;
     left: 14px;
   }
 }
 
-@keyframes banner-sheen {
   0% {
     transform: translateX(-20%) rotate(18deg);
     opacity: 0;
@@ -5265,5 +4970,9 @@ body.has-bottom-ad {
   display: none !important;
 }
     </style>
+
+
+
+    
   </body>
 </html>
