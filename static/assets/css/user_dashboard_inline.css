@@ -1257,7 +1257,27 @@
                                                     /* Modal z-index fix */
                                                     
                                                     .modal {
-                                                        z-index: 10000;
+                                                        z-index: 11000;
+                                                    }
+
+                                                    /* Keep all dashboard overlays above the top banner */
+                                                    #messengerPopup,
+                                                    #adModal,
+                                                    #birthdayModal,
+                                                    #birthdayCalendarModal,
+                                                    #messengerGifModal,
+                                                    #gifModal,
+                                                    #emojiModal,
+                                                    #postModal,
+                                                    #editPostModal,
+                                                    #commentModal,
+                                                    #shareModal,
+                                                    #profileModal,
+                                                    #blockedUsersModalDashboard,
+                                                    #messageContextMenu,
+                                                    #friendContextMenu,
+                                                    #birthdayNotificationPopup {
+                                                        z-index: 11000;
                                                     }
                                                     /* Emoji picker styling */
                                                     
