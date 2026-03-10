@@ -28,7 +28,10 @@ blocked_users = db.Table(
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(user_id)
+    try:
+        return User.query.get(int(user_id))
+    except (TypeError, ValueError):
+        return None
 
 
 group_members = db.Table(
