@@ -10,9 +10,6 @@ source venv/bin/activate
 
 # Run with proper settings
 gunicorn \
+  --config gunicorn.conf.py \
   --bind 0.0.0.0:5000 \
-  --workers 3 \
-  --timeout 120 \
-  --limit-request-line 8190 \
-  --limit-request-field_size 8190 \
   runserver:app

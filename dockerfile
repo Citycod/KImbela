@@ -26,4 +26,4 @@ COPY . .
 EXPOSE 5000
 
 # Command to run the application
-CMD ["gunicorn", "--timeout", "60", "--workers", "2", "--bind", "0.0.0.0:5000", "runserver:app"]
+CMD ["gunicorn", "--config", "gunicorn.conf.py", "--bind", "0.0.0.0:5000", "runserver:app"]

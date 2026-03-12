@@ -1,3 +1,8 @@
+# Ensure eventlet patches are applied before any other imports
+import eventlet
+
+eventlet.monkey_patch()
+
 # from app_config import create_app
 # from extensions import socketio
 # from models import MatchmakingPackage

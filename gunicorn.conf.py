@@ -2,8 +2,8 @@
 import os
 
 bind = "0.0.0.0:5000"
-workers = 3
-worker_class = "sync"
+workers = 1
+worker_class = "eventlet"
 timeout = 120
 keepalive = 2
 

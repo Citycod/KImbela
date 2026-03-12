@@ -59,9 +59,6 @@
         // MESSAGE HANDLING - FIXED FOR DUPLICATES
         // ========================================
         function handleNewMessage(data) {
-
-            updateUnreadBadge();
-
             const senderId = parseInt(data.sender_id);
             const receiverId = parseInt(data.receiver_id);
             const isMine = senderId === window.currentUserId;
@@ -108,9 +105,11 @@
                 // Mark as read if it's received
                 if (!isMine && data.status === 'sent') {
                     markMessageAsRead(data.id);
+                    updateUnreadBadge();
                 }
             } else {
                 updateFriendsListUnreadCount(senderId);
+                updateUnreadBadge();
             }
         }
 
