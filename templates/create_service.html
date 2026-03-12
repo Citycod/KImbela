@@ -430,7 +430,7 @@
                     
                     <!-- Service Type Selection -->
                     <div class="mb-6">
-                        <label class="block text-sm font-medium mb-2">Service Type *</label>
+                        <label class="block text-sm font-medium mb-2">Choose What You Want To Sell *</label>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div class="option-card" onclick="selectServiceType('service')">
                                 <input type="radio" name="service_type" value="service" class="hidden" checked>
@@ -455,8 +455,8 @@
                                         <i class="bi bi-laptop text-purple-600 text-lg"></i>
                                     </div>
                                     <div class="flex-1">
-                                        <h4 class="font-bold text-sm mb-1">Digital Product</h4>
-                                        <p class="text-gray-600 text-xs">E-books, courses, templates, etc.</p>
+                                        <h4 class="font-bold text-sm mb-1">Product</h4>
+                                        <p class="text-gray-600 text-xs">Physical And Digital Products</p>
                                     </div>
                                     <div class="option-check text-purple-600">
                                         <i class="bi bi-check-circle-fill text-lg"></i>
@@ -539,8 +539,8 @@
                             <i class="bi bi-journal-text"></i>
                         </div>
                         <div>
-                            <h2 class="text-lg font-bold">Service Details</h2>
-                            <p class="text-gray-600 text-xs">Describe your service in detail</p>
+                            <h2 class="text-lg font-bold">Product / Service Details</h2>
+                            <p class="text-gray-600 text-xs">Describe your product or service in detail</p>
                         </div>
                     </div>
                     
@@ -586,7 +586,7 @@
                     
                     <!-- Duration & Availability -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div>
+                        <div id="serviceDurationField">
                             <label for="duration" class="block text-sm font-medium mb-1">
                                 Duration
                                 <span class="text-xs text-gray-500 font-normal">(e.g., 60 min, 4 weeks)</span>
@@ -595,7 +595,7 @@
                                    id="duration"
                                    name="duration"
                                    class="w-full"
-                                   placeholder="e.g., 60 minutes">
+                                   placeholder="e.g., 60 minutes per session">
                         </div>
                         
                         <div>
@@ -1014,7 +1014,7 @@
                                        required>
                                 <label for="terms" class="text-xs text-gray-700">
                                     I agree to the <a href="#" class="text-primary hover:underline">Terms of Service</a> and 
-                                    <a href="#" class="text-primary hover:underline">Marketplace Guidelines</a>.
+                                    <a href="#" class="text-primary hover:underline">Marketplace & Seller Terms</a>.
                                 </label>
                             </div>
                         </div>
@@ -1415,6 +1415,20 @@ function formatNumberWithCommas(value) {
                 digitalFields.classList.remove('hidden');
             } else {
                 digitalFields.classList.add('hidden');
+            }
+
+            // Toggle service-only fields (duration)
+            const durationField = document.getElementById('serviceDurationField');
+            const durationInput = document.getElementById('duration');
+            if (durationField && durationInput) {
+                if (type === 'service') {
+                    durationField.classList.remove('hidden');
+                    durationInput.disabled = false;
+                } else {
+                    durationField.classList.add('hidden');
+                    durationInput.disabled = true;
+                    durationInput.value = '';
+                }
             }
         }
 

@@ -197,22 +197,27 @@
                     <a href="{{ url_for('user.user_dashboard') }}" class="flex items-center">
                         <img src="{{ url_for('static', filename='assets/img/kim.png') }}" 
                              alt="Kimbela Marketplace" 
-                             class="h-10" style="height: 6rem; width: 11rem; position: absolute; top: 0;"/>
+                             class="h-10 sm:h-12" style="height: 5rem; width: 10rem; position: absolute; top: 0;"/>
                     </a>
                 </div>
                 
                 <!-- User Actions -->
                 <div class="flex items-center space-x-2" style="margin-top: 10px;">
+                    <!-- Become a Seller -->
+                    <a href="{{ url_for('market.create_service') }}" 
+                       class="px-3 py-2 gradient-primary text-white rounded-lg text-xs font-medium whitespace-nowrap">
+                        <i class="bi bi-person-plus mr-1 sm:mr-1"></i><span class="hidden sm:inline"> Become a seller</span>
+                    </a>
                     <!-- Seller Dashboard Link -->
                     <a href="{{ url_for('market.seller_dashboard') }}" 
                        class="px-3 py-2 gradient-primary text-white rounded-lg text-xs font-medium whitespace-nowrap">
-                        <i class="bi bi-shop mr-1"></i> My Services
+                        <i class="bi bi-shop mr-1 sm:mr-1"></i><span class="hidden sm:inline"> My Listings</span>
                     </a>
                     
                     <!-- User Avatar -->
                     <img src="{{ current_user.profile_pic if current_user and current_user.profile_pic else url_for('static', filename='assets/img/default-avatar.png') }}" 
                          alt="Profile" 
-                         class="w-8 h-8 rounded-full object-cover border border-white shadow-sm">
+                         class="w-8 h-8 rounded-full object-cover border border-white shadow-sm hidden sm:block">
                 </div>
             </div>
         </div>
@@ -226,8 +231,7 @@
                 Discover Services & Products
             </h1>
             <p class="text-gray-600 max-w-2xl mx-auto mb-4 text-sm">
-                Connect with professionals, purchase digital products, or offer your own services.
-            </p>
+                Connect with professionals, explore services and buy physical or digital products            </p>
             
             <!-- Search Bar -->
             <div class="max-w-xl mx-auto relative mb-3">
@@ -288,7 +292,7 @@
                     <div class="space-y-1">
                         <a href="{{ url_for('market.main_market') }}" 
                            class="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm {{ 'service-category-active text-white' if not category_slug }}">
-                            All Services
+                            All Marketplace Items
                         </a>
                         {% for category in categories %}
                         <a href="{{ url_for('market.main_market', category=category.slug) }}" 
@@ -407,7 +411,7 @@
                 {% endif %}
             {% endfor %}
         {% else %}
-            Verified Services
+            Verified Listings
         {% endif %}
     </h2>
     <p class="text-gray-600 text-sm">
@@ -417,7 +421,7 @@
                 (Price range: {{ format_price(min_price if min_price else min_available) }} - {{ format_price(max_price if max_price else max_available) }})
             {% endif %}
         {% else %}
-            No verified services found
+            No verified listings found
         {% endif %}
     </p>
     
@@ -431,7 +435,7 @@
     {% elif current_user.is_authenticated and not current_user.marketplace_subscription %}
         <p class="text-xs text-amber-600 mt-1">
             <i class="bi bi-info-circle mr-1"></i>
-            Subscribe to display your services here. 
+            Subscribe to display your listings here. 
             <a href="{{ url_for('market.become_seller') }}" class="font-medium hover:underline">View plans</a>
         </p>
     {% endif %}
@@ -642,9 +646,9 @@
         </a>
         
     {% elif current_user.is_authenticated and not current_user.marketplace_subscription %}
-        <h3 class="text-lg font-semibold text-gray-700 mb-2">No Services Found</h3>
+        <h3 class="text-lg font-semibold text-gray-700 mb-2">No Listings Found</h3>
         <p class="text-gray-600 mb-4 text-sm">
-            Subscribe to start displaying your services here.
+            Subscribe to start displaying your listings here.
         </p>
         <a href="{{ url_for('market.become_seller') }}" 
            class="px-4 py-2 bg-gradient-to-r from-amber-900 to-amber-600 text-white rounded-lg hover:opacity-90 transition-opacity text-sm mr-2">
