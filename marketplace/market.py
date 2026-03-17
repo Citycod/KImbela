@@ -534,13 +534,22 @@ def main_market():
         ),
     )
 
-    # Filter by category
+    # Filter by category (parent includes its subcategories)
     category_slug = request.args.get("category")
     if category_slug:
         category = MarketplaceCategory.query.filter_by(slug=category_slug).first()
         if category:
+            category_ids = [category.id]
+            if category.parent_id is None:
+                subcategory_ids = [
+                    sub.id
+                    for sub in MarketplaceCategory.query.filter_by(
+                        parent_id=category.id, is_active=True
+                    ).all()
+                ]
+                category_ids.extend(subcategory_ids)
             services_query = services_query.filter(
-                MarketplaceService.category_id == category.id
+                MarketplaceService.category_id.in_(category_ids)
             )
 
     # Filter by search
@@ -730,7 +739,9 @@ def main_market():
     # Get categories
     ensure_marketplace_categories()
     categories = (
-        MarketplaceCategory.query.filter_by(is_active=True).order_by("sort_order").all()
+        MarketplaceCategory.query.filter_by(is_active=True, parent_id=None)
+        .order_by("sort_order")
+        .all()
     )
 
     # Get featured sellers (only from subscribed sellers)
@@ -1128,7 +1139,9 @@ def create_service():
         ensure_marketplace_categories()
         # Get categories
         categories = (
-            MarketplaceCategory.query.filter_by(is_active=True).order_by("name").all()
+            MarketplaceCategory.query.filter_by(is_active=True, parent_id=None)
+            .order_by("sort_order")
+            .all()
         )
 
         # Get subscription plans
@@ -1311,7 +1324,9 @@ def edit_service(service_id):
     if request.method == "GET":
         ensure_marketplace_categories()
         categories = (
-            MarketplaceCategory.query.filter_by(is_active=True).order_by("name").all()
+            MarketplaceCategory.query.filter_by(is_active=True, parent_id=None)
+            .order_by("sort_order")
+            .all()
         )
         subscriptions = (
             MarketplaceSubscription.query.filter_by(is_active=True)
@@ -2223,45 +2238,454 @@ def manage_featured():
 # ==================== DATA INITIALIZATION ====================
 
 DEFAULT_MARKETPLACE_CATEGORIES = [
-    {"name": "Mentoring & Coaching", "slug": "mentoring-coaching", "icon": "bi-people-fill"},
-    {"name": "Counseling & Therapy", "slug": "counseling-therapy", "icon": "bi-heart-pulse"},
-    {"name": "Career Services", "slug": "career-services", "icon": "bi-briefcase-fill"},
-    {"name": "Personal Development", "slug": "personal-development", "icon": "bi-person-badge-fill"},
-    {"name": "Education & Tutoring", "slug": "education-tutoring", "icon": "bi-mortarboard-fill"},
-    {"name": "Business & Entrepreneurship", "slug": "business-entrepreneurship", "icon": "bi-lightning-charge-fill"},
-    {"name": "Professional & Consulting Services", "slug": "professional-consulting-services", "icon": "bi-clipboard-check-fill"},
-    {"name": "Legal Services", "slug": "legal-services", "icon": "bi-shield-check"},
-    {"name": "Finance & Investment Services", "slug": "finance-investment-services", "icon": "bi-graph-up-arrow"},
-    {"name": "Health & Wellness (including supplements)", "slug": "health-wellness-supplements", "icon": "bi-heart-fill"},
-    {"name": "Faith & Spiritual Guidance", "slug": "faith-spiritual-guidance", "icon": "bi-star-fill"},
-    {"name": "Sports & Fitness", "slug": "sports-fitness", "icon": "bi-trophy-fill"},
-    {"name": "Technology & Digital Services", "slug": "technology-digital-services", "icon": "bi-cpu-fill"},
-    {"name": "Digital Products", "slug": "digital-products", "icon": "bi-laptop-fill"},
-    {"name": "Fashion & Clothing", "slug": "fashion-clothing", "icon": "bi-bag-heart-fill"},
-    {"name": "Beauty & Personal Care", "slug": "beauty-personal-care", "icon": "bi-droplet-fill"},
-    {"name": "Home & Living", "slug": "home-living", "icon": "bi-house-heart-fill"},
-    {"name": "Books & Learning Materials", "slug": "books-learning-materials", "icon": "bi-book-half"},
-    {"name": "Art, Crafts & Handmade Goods", "slug": "art-crafts-handmade-goods", "icon": "bi-brush-fill"},
-    {"name": "Events & Wedding Services", "slug": "events-wedding-services", "icon": "bi-calendar-event"},
-    {"name": "Travel & Experiences", "slug": "travel-experiences", "icon": "bi-airplane-fill"},
-    {"name": "Food, Catering & Beverages", "slug": "food-catering-beverages", "icon": "bi-cup-hot-fill"},
-    {"name": "Other", "slug": "other", "icon": "bi-tags-fill"},
+    {
+        "name": "Fashion",
+        "slug": "fashion",
+        "icon": "bi-bag-heart-fill",
+        "subcategories": [
+            {"name": "Clothing", "slug": "clothing"},
+            {"name": "Underwear & Lingerie", "slug": "underwear-lingerie"},
+            {"name": "Sportswear / Activewear", "slug": "sportswear-activewear"},
+            {"name": "Footwear", "slug": "footwear"},
+            {"name": "Bags", "slug": "bags"},
+            {"name": "Jewellery", "slug": "jewellery"},
+            {"name": "Accessories", "slug": "accessories"},
+        ],
+    },
+    {
+        "name": "Entertainment",
+        "slug": "entertainment",
+        "icon": "bi-mic-fill",
+        "subcategories": [
+            {"name": "DJs", "slug": "djs"},
+            {"name": "Live Bands", "slug": "live-bands"},
+            {"name": "MC / Event Hosts", "slug": "mc-event-hosts"},
+            {"name": "Comedians", "slug": "comedians"},
+            {"name": "Performers", "slug": "performers"},
+            {"name": "Entertainment Booking", "slug": "entertainment-booking"},
+        ],
+    },
+    {
+        "name": "Beauty & Personal Care",
+        "slug": "beauty-personal-care",
+        "icon": "bi-droplet-fill",
+        "subcategories": [
+            {"name": "Skincare Products", "slug": "skincare-products"},
+            {"name": "Makeup", "slug": "makeup"},
+            {"name": "Hair Care", "slug": "hair-care"},
+            {"name": "Grooming Products", "slug": "grooming-products"},
+            {"name": "Hair Styling", "slug": "hair-styling-products"},
+            {"name": "Nail Care", "slug": "nail-care-products"},
+        ],
+    },
+    {
+        "name": "Electronics & Gadgets",
+        "slug": "electronics-gadgets",
+        "icon": "bi-cpu-fill",
+        "subcategories": [
+            {"name": "Mobile Phones", "slug": "mobile-phones"},
+            {"name": "Laptops & Computers", "slug": "laptops-computers"},
+            {"name": "Tablets", "slug": "tablets"},
+            {"name": "Smart Watches", "slug": "smart-watches"},
+            {"name": "Headphones & Earbuds", "slug": "headphones-earbuds"},
+            {"name": "Cameras", "slug": "cameras"},
+            {"name": "Gaming Consoles", "slug": "gaming-consoles"},
+            {"name": "Phone Accessories", "slug": "phone-accessories"},
+            {"name": "Computer Accessories", "slug": "computer-accessories"},
+            {"name": "Smart Home Devices", "slug": "smart-home-devices"},
+        ],
+    },
+    {
+        "name": "Home & Living",
+        "slug": "home-living",
+        "icon": "bi-house-heart-fill",
+        "subcategories": [
+            {"name": "Home Decor", "slug": "home-decor"},
+            {"name": "Furniture", "slug": "furniture"},
+            {"name": "Kitchen Products", "slug": "kitchen-products"},
+            {"name": "Home Appliances", "slug": "home-appliances"},
+            {"name": "Household Essentials", "slug": "household-essentials"},
+            {"name": "Cleaning Supplies", "slug": "cleaning-supplies"},
+        ],
+    },
+    {
+        "name": "Garden & Outdoor",
+        "slug": "garden-outdoor",
+        "icon": "bi-flower1",
+        "subcategories": [
+            {"name": "Gardening Tools", "slug": "gardening-tools"},
+            {"name": "Plants & Seeds", "slug": "plants-seeds"},
+            {"name": "Outdoor Furniture", "slug": "outdoor-furniture"},
+            {"name": "Outdoor Decor", "slug": "outdoor-decor"},
+            {"name": "Landscaping Supplies", "slug": "landscaping-supplies"},
+        ],
+    },
+    {
+        "name": "Sports & Fitness",
+        "slug": "sports-fitness",
+        "icon": "bi-trophy-fill",
+        "subcategories": [
+            {"name": "Sports Equipment", "slug": "sports-equipment"},
+            {"name": "Gym Equipment", "slug": "gym-equipment"},
+            {"name": "Fitness Accessories", "slug": "fitness-accessories"},
+            {"name": "Yoga & Pilates Gear", "slug": "yoga-pilates-gear"},
+            {"name": "Running Gear", "slug": "running-gear"},
+            {"name": "Cycling Equipment", "slug": "cycling-equipment"},
+            {"name": "Sports Coaching", "slug": "sports-coaching"},
+            {"name": "Personal Training", "slug": "personal-training"},
+        ],
+    },
+    {
+        "name": "Books & Learning",
+        "slug": "books-learning",
+        "icon": "bi-book-half",
+        "subcategories": [
+            {"name": "Books", "slug": "books"},
+            {"name": "Educational Materials", "slug": "educational-materials"},
+            {"name": "Study Guides", "slug": "study-guides"},
+            {"name": "Training Manuals", "slug": "training-manuals"},
+            {"name": "Online Courses", "slug": "online-courses"},
+        ],
+    },
+    {
+        "name": "Art, Crafts & Handmade Goods",
+        "slug": "art-crafts-handmade-goods",
+        "icon": "bi-brush-fill",
+        "subcategories": [
+            {"name": "Artwork", "slug": "artwork"},
+            {"name": "Crafts", "slug": "crafts"},
+            {"name": "Handmade Decor", "slug": "handmade-decor"},
+            {"name": "Custom Gifts", "slug": "custom-gifts"},
+            {"name": "Custom Art", "slug": "custom-art"},
+        ],
+    },
+    {
+        "name": "Kids & Baby",
+        "slug": "kids-baby",
+        "icon": "bi-emoji-smile",
+        "subcategories": [
+            {"name": "Baby Clothing", "slug": "baby-clothing"},
+            {"name": "Kids Clothing", "slug": "kids-clothing"},
+            {"name": "Baby Products", "slug": "baby-products"},
+            {"name": "Toys & Games", "slug": "toys-games"},
+            {"name": "Baby Care Products", "slug": "baby-care-products"},
+            {"name": "Kids Learning Materials", "slug": "kids-learning-materials"},
+        ],
+    },
+    {
+        "name": "Domestic & Household Help",
+        "slug": "domestic-household-help",
+        "icon": "bi-house-check",
+        "subcategories": [
+            {"name": "House Help / Home Help", "slug": "house-help-home-help"},
+            {"name": "Nannies", "slug": "nannies"},
+            {"name": "Caregivers", "slug": "caregivers"},
+            {"name": "Elderly Care", "slug": "elderly-care"},
+            {"name": "Babysitting", "slug": "babysitting"},
+        ],
+    },
+    {
+        "name": "Automotive",
+        "slug": "automotive",
+        "icon": "bi-car-front-fill",
+        "subcategories": [
+            {"name": "Cars for Sale", "slug": "cars-for-sale"},
+            {"name": "Car Accessories", "slug": "car-accessories"},
+            {"name": "Car Care Products", "slug": "car-care-products"},
+            {"name": "Car Parts", "slug": "car-parts"},
+            {"name": "Car Electronics", "slug": "car-electronics"},
+            {"name": "Auto Repair", "slug": "auto-repair"},
+            {"name": "Car Detailing", "slug": "car-detailing"},
+            {"name": "Vehicle Maintenance", "slug": "vehicle-maintenance"},
+            {"name": "Car Inspection", "slug": "car-inspection"},
+        ],
+    },
+    {
+        "name": "Food & Groceries",
+        "slug": "food-groceries",
+        "icon": "bi-basket-fill",
+        "subcategories": [
+            {"name": "Raw Food / Fresh Produce", "slug": "raw-food-fresh-produce"},
+            {"name": "Spices, Herbs & Seasonings", "slug": "spices-herbs-seasonings"},
+            {"name": "Packaged Foods", "slug": "packaged-foods"},
+            {"name": "Homemade Foods", "slug": "homemade-foods"},
+            {"name": "Snacks", "slug": "snacks"},
+            {"name": "Beverages", "slug": "beverages"},
+        ],
+    },
+    {
+        "name": "Health & Wellness",
+        "slug": "health-wellness",
+        "icon": "bi-heart-pulse-fill",
+        "subcategories": [
+            {"name": "Health Supplements", "slug": "health-supplements"},
+            {"name": "Herbal Medicine", "slug": "herbal-medicine"},
+            {"name": "Personal Hygiene Products", "slug": "personal-hygiene-products"},
+            {"name": "Wellness Products", "slug": "wellness-products"},
+            {"name": "Nutrition Coaching", "slug": "nutrition-coaching"},
+            {"name": "Wellness Programs", "slug": "wellness-programs"},
+            {"name": "Fitness Plans", "slug": "fitness-plans"},
+        ],
+    },
+    {
+        "name": "Mentoring & Coaching",
+        "slug": "mentoring-coaching",
+        "icon": "bi-people-fill",
+        "subcategories": [
+            {"name": "Life Coaching", "slug": "life-coaching"},
+            {"name": "Leadership Coaching", "slug": "leadership-coaching"},
+            {"name": "Relationship Coaching", "slug": "relationship-coaching"},
+            {"name": "Personal Growth Coaching", "slug": "personal-growth-coaching"},
+        ],
+    },
+    {
+        "name": "Counselling & Therapy",
+        "slug": "counselling-therapy",
+        "icon": "bi-chat-heart-fill",
+        "subcategories": [
+            {"name": "Relationship Counselling", "slug": "relationship-counselling"},
+            {"name": "Family Counselling", "slug": "family-counselling"},
+            {"name": "Mental Wellness Support", "slug": "mental-wellness-support"},
+            {"name": "Emotional Support Coaching", "slug": "emotional-support-coaching"},
+            {"name": "Stress Management", "slug": "stress-management"},
+            {"name": "Personal Development Therapy", "slug": "personal-development-therapy"},
+            {"name": "Sex & Intimacy Therapy", "slug": "sex-intimacy-therapy"},
+        ],
+    },
+    {
+        "name": "Education & Tutoring",
+        "slug": "education-tutoring",
+        "icon": "bi-mortarboard-fill",
+        "subcategories": [
+            {"name": "Academic Tutoring", "slug": "academic-tutoring"},
+            {"name": "Language Learning", "slug": "language-learning"},
+            {"name": "Professional Certifications", "slug": "professional-certifications"},
+            {"name": "Online Courses", "slug": "education-online-courses"},
+            {"name": "Skill Development", "slug": "skill-development"},
+            {"name": "Exam Preparation", "slug": "exam-preparation"},
+        ],
+    },
+    {
+        "name": "Professional Services",
+        "slug": "professional-services",
+        "icon": "bi-briefcase-fill",
+        "subcategories": [
+            {"name": "HR Consulting", "slug": "hr-consulting"},
+            {"name": "Project Management", "slug": "project-management"},
+            {"name": "Operations Consulting", "slug": "operations-consulting"},
+            {"name": "Administrative Services", "slug": "administrative-services"},
+            {"name": "Virtual Assistance", "slug": "virtual-assistance"},
+            {"name": "Document Preparation", "slug": "document-preparation"},
+            {"name": "Customer Support Services", "slug": "customer-support-services"},
+            {"name": "Call Center Services", "slug": "call-center-services"},
+            {"name": "Career & Employment Services", "slug": "career-employment-services"},
+            {"name": "Business & Entrepreneurship Services", "slug": "business-entrepreneurship-services"},
+            {"name": "Personal Development Coaching", "slug": "professional-personal-development-coaching"},
+            {"name": "Other Business Services", "slug": "other-business-services"},
+        ],
+    },
+    {
+        "name": "Legal Services",
+        "slug": "legal-services",
+        "icon": "bi-shield-check",
+        "subcategories": [
+            {"name": "Legal Consultation", "slug": "legal-consultation"},
+            {"name": "Contract Drafting", "slug": "contract-drafting"},
+            {"name": "Business Registration Guidance", "slug": "business-registration-guidance"},
+            {"name": "Compliance Support", "slug": "compliance-support"},
+            {"name": "Legal Advisory", "slug": "legal-advisory"},
+        ],
+    },
+    {
+        "name": "Finance & Investment",
+        "slug": "finance-investment",
+        "icon": "bi-graph-up-arrow",
+        "subcategories": [
+            {"name": "Financial Planning", "slug": "financial-planning"},
+            {"name": "Investment Education", "slug": "investment-education"},
+            {"name": "Budgeting & Money Management", "slug": "budgeting-money-management"},
+            {"name": "Tax Guidance", "slug": "tax-guidance"},
+            {"name": "Wealth Building Strategies", "slug": "wealth-building-strategies"},
+        ],
+    },
+    {
+        "name": "Technology & Digital Services",
+        "slug": "technology-digital-services",
+        "icon": "bi-laptop-fill",
+        "subcategories": [
+            {"name": "Website Development", "slug": "website-development"},
+            {"name": "Mobile App Development", "slug": "mobile-app-development"},
+            {"name": "Software Development", "slug": "software-development"},
+            {"name": "IT Support", "slug": "it-support"},
+            {"name": "Cybersecurity Services", "slug": "cybersecurity-services"},
+        ],
+    },
+    {
+        "name": "Faith & Spiritual Guidance",
+        "slug": "faith-spiritual-guidance",
+        "icon": "bi-star-fill",
+        "subcategories": [
+            {"name": "Faith Coaching", "slug": "faith-coaching"},
+            {"name": "Spiritual Counselling", "slug": "spiritual-counselling"},
+            {"name": "Prayer & Support Sessions", "slug": "prayer-support-sessions"},
+            {"name": "Religious Study Groups", "slug": "religious-study-groups"},
+        ],
+    },
+    {
+        "name": "Beauty Services",
+        "slug": "beauty-services",
+        "icon": "bi-scissors",
+        "subcategories": [
+            {"name": "Hair Styling", "slug": "hair-styling-services"},
+            {"name": "Makeup Services", "slug": "makeup-services"},
+            {"name": "Skincare Treatments", "slug": "skincare-treatments"},
+            {"name": "Barbering / Grooming", "slug": "barbering-grooming"},
+            {"name": "Nail Care Services", "slug": "nail-care-services"},
+            {"name": "Beauty Consultations", "slug": "beauty-consultations"},
+        ],
+    },
+    {
+        "name": "Home Services",
+        "slug": "home-services",
+        "icon": "bi-house-gear",
+        "subcategories": [
+            {"name": "Interior Design", "slug": "interior-design"},
+            {"name": "Home Decoration Services", "slug": "home-decoration-services"},
+            {"name": "Furniture Assembly", "slug": "furniture-assembly"},
+            {"name": "Home Organization", "slug": "home-organization"},
+            {"name": "Home Maintenance", "slug": "home-maintenance"},
+            {"name": "Cleaning Services", "slug": "cleaning-services"},
+        ],
+    },
+    {
+        "name": "Events & Celebrations",
+        "slug": "events-celebrations",
+        "icon": "bi-calendar-event",
+        "subcategories": [
+            {"name": "Event Planning", "slug": "event-planning"},
+            {"name": "Wedding Planning", "slug": "wedding-planning"},
+            {"name": "Event Decoration", "slug": "event-decoration"},
+            {"name": "Photography", "slug": "photography"},
+            {"name": "Event Hosting", "slug": "event-hosting"},
+        ],
+    },
+    {
+        "name": "Travel & Experiences",
+        "slug": "travel-experiences",
+        "icon": "bi-airplane-fill",
+        "subcategories": [
+            {"name": "Travel Planning", "slug": "travel-planning"},
+            {"name": "Guided Tours", "slug": "guided-tours"},
+            {"name": "Retreats", "slug": "retreats"},
+            {"name": "Adventure Experiences", "slug": "adventure-experiences"},
+            {"name": "Cultural Experiences", "slug": "cultural-experiences"},
+        ],
+    },
+    {
+        "name": "Office & Business Supplies",
+        "slug": "office-business-supplies",
+        "icon": "bi-printer-fill",
+        "subcategories": [
+            {"name": "Office Supplies", "slug": "office-supplies"},
+            {"name": "Stationery", "slug": "stationery"},
+            {"name": "Business Equipment", "slug": "business-equipment"},
+            {"name": "Printers & Ink", "slug": "printers-ink"},
+            {"name": "Office Furniture", "slug": "office-furniture"},
+        ],
+    },
+    {
+        "name": "Pet Products & Services",
+        "slug": "pet-products-services",
+        "icon": "bi-paw-fill",
+        "subcategories": [
+            {"name": "Pet Food", "slug": "pet-food"},
+            {"name": "Pet Accessories", "slug": "pet-accessories"},
+            {"name": "Pet Toys", "slug": "pet-toys"},
+            {"name": "Pet Grooming", "slug": "pet-grooming"},
+            {"name": "Pet Care", "slug": "pet-care"},
+        ],
+    },
+    {
+        "name": "Music & Musical Instruments",
+        "slug": "music-musical-instruments",
+        "icon": "bi-music-note-beamed",
+        "subcategories": [
+            {"name": "Musical Instruments", "slug": "musical-instruments"},
+            {"name": "Music Accessories", "slug": "music-accessories"},
+            {"name": "Audio Equipment", "slug": "audio-equipment"},
+        ],
+    },
+    {
+        "name": "Digital Products",
+        "slug": "digital-products",
+        "icon": "bi-cloud-download",
+        "subcategories": [
+            {"name": "E-book", "slug": "e-book"},
+            {"name": "Online Templates", "slug": "online-templates"},
+            {"name": "Digital Courses", "slug": "digital-courses"},
+            {"name": "Software Tools", "slug": "software-tools"},
+            {"name": "Digital Guides", "slug": "digital-guides"},
+        ],
+    },
+    {
+        "name": "Other / Uncategorized",
+        "slug": "other-uncategorized",
+        "icon": "bi-tags-fill",
+        "subcategories": [
+            {"name": "Miscellaneous Products", "slug": "miscellaneous-products"},
+            {"name": "Miscellaneous Services", "slug": "miscellaneous-services"},
+        ],
+    },
 ]
 
 
 def ensure_marketplace_categories():
-    """Ensure default marketplace categories exist."""
+    """Ensure default marketplace categories and subcategories exist."""
     created = False
-    for cat_data in DEFAULT_MARKETPLACE_CATEGORIES:
-        if not MarketplaceCategory.query.filter_by(slug=cat_data["slug"]).first():
+    allowed_slugs = set()
+
+    def upsert_category(data, parent_id=None, sort_order=0):
+        nonlocal created
+        category = MarketplaceCategory.query.filter_by(slug=data["slug"]).first()
+        if not category:
             category = MarketplaceCategory(
-                name=cat_data["name"],
-                slug=cat_data["slug"],
-                icon=cat_data["icon"],
-                description=f"{cat_data['name']} services on Kimbela Marketplace",
+                name=data["name"],
+                slug=data["slug"],
+                icon=data.get("icon"),
+                description=f"{data['name']} services on Kimbela Marketplace",
                 is_active=True,
+                parent_id=parent_id,
+                sort_order=sort_order,
             )
             db.session.add(category)
+            created = True
+        else:
+            category.name = data["name"]
+            category.icon = data.get("icon")
+            category.is_active = True
+            category.parent_id = parent_id
+            category.sort_order = sort_order
+        return category
+
+    for parent_index, parent in enumerate(DEFAULT_MARKETPLACE_CATEGORIES, start=1):
+        allowed_slugs.add(parent["slug"])
+        parent_category = upsert_category(parent, parent_id=None, sort_order=parent_index)
+        db.session.flush()
+        for child_index, child in enumerate(parent.get("subcategories", []), start=1):
+            allowed_slugs.add(child["slug"])
+            upsert_category(child, parent_id=parent_category.id, sort_order=child_index)
+
+    # Deactivate categories not in the current list
+    inactive = (
+        MarketplaceCategory.query.filter(
+            MarketplaceCategory.slug.notin_(allowed_slugs)
+        ).all()
+        if allowed_slugs
+        else []
+    )
+    for category in inactive:
+        if category.is_active:
+            category.is_active = False
             created = True
 
     if created:

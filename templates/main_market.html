@@ -295,10 +295,26 @@
                             All Marketplace Items
                         </a>
                         {% for category in categories %}
-                        <a href="{{ url_for('market.main_market', category=category.slug) }}" 
-                           class="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm {{ 'service-category-active text-white' if category_slug == category.slug }}">
-                            {{ category.name }}
-                        </a>
+                        {% set is_parent_active = category_slug == category.slug %}
+                        {% set is_child_active = category.subcategories and (category.subcategories|selectattr('slug', 'equalto', category_slug)|list|length > 0) %}
+                        <details class="mt-2" {% if is_parent_active or is_child_active %}open{% endif %}>
+                            <summary class="block w-full list-none cursor-pointer">
+                                <a href="{{ url_for('market.main_market', category=category.slug) }}" 
+                                   class="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-semibold {{ 'service-category-active text-white' if is_parent_active }}">
+                                    {{ category.name }}
+                                </a>
+                            </summary>
+                            {% if category.subcategories %}
+                            <div class="space-y-1 pl-2">
+                                {% for sub in category.subcategories|sort(attribute='sort_order') %}
+                                <a href="{{ url_for('market.main_market', category=sub.slug) }}" 
+                                   class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == sub.slug }}">
+                                    {{ sub.name }}
+                                </a>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </details>
                         {% endfor %}
                     </div>
                 </div>

@@ -499,7 +499,15 @@
                                 required>
                             <option value="">Select a category</option>
                             {% for category in categories %}
-                            <option value="{{ category.id }}">{{ category.name }}</option>
+                                {% if category.subcategories %}
+                                    <optgroup label="{{ category.name }}">
+                                        {% for sub in category.subcategories|sort(attribute='sort_order') %}
+                                            <option value="{{ sub.id }}">{{ sub.name }}</option>
+                                        {% endfor %}
+                                    </optgroup>
+                                {% else %}
+                                    <option value="{{ category.id }}">{{ category.name }}</option>
+                                {% endif %}
                             {% endfor %}
                         </select>
                     </div>
