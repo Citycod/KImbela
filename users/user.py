@@ -123,15 +123,40 @@ def safe_cache_delete(cache_key):
             pass
 
 
+def safe_cache_get(cache_key):
+    try:
+        return app_cache.get(cache_key)
+    except Exception as exc:
+        try:
+            current_app.logger.warning(
+                "Cache get skipped for %s: %s", cache_key, exc
+            )
+        except Exception:
+            pass
+        return None
+
+
+def safe_cache_set(cache_key, value, timeout=300):
+    try:
+        app_cache.set(cache_key, value, timeout=timeout)
+    except Exception as exc:
+        try:
+            current_app.logger.warning(
+                "Cache set skipped for %s: %s", cache_key, exc
+            )
+        except Exception:
+            pass
+
+
 def get_groups_data_for_user(user_id):
     cache_key = f"user_groups_v2:{user_id}"
-    cached = app_cache.get(cache_key)
+    cached = safe_cache_get(cache_key)
     if cached is not None:
         return cached
 
     groups = Group.query.filter_by(is_active=True).order_by(Group.name.asc()).all()
     if not groups:
-        app_cache.set(cache_key, [], timeout=60)
+        safe_cache_set(cache_key, [], timeout=60)
         return []
 
     member_group_ids = {
@@ -155,7 +180,7 @@ def get_groups_data_for_user(user_id):
             }
         )
 
-    app_cache.set(cache_key, groups_data, timeout=60)
+    safe_cache_set(cache_key, groups_data, timeout=60)
     return groups_data
 
 
