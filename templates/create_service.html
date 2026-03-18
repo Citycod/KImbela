@@ -1021,8 +1021,8 @@
                                        class="mt-0.5 mr-2 w-4 h-4"
                                        required>
                                 <label for="terms" class="text-xs text-gray-700">
-                                    I agree to the <a href="#" class="text-primary hover:underline">Terms of Service</a> and 
-                                    <a href="#" class="text-primary hover:underline">Marketplace & Seller Terms</a>.
+                                    I agree to the <a href="{{ url_for('user.terms') }}" class="text-primary hover:underline">Terms of Service</a> and 
+                                    <a href="{{ url_for('user.marketplace_seller_terms') }}" class="text-primary hover:underline">Marketplace &amp; Seller Terms</a>.
                                 </label>
                             </div>
                         </div>

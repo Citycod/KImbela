@@ -416,19 +416,22 @@
               <li><a href="contact.html">Contact Us</a></li>
             </ul>
           </div>
-          <div class="col-lg-3 col-md-3 footer-links">
-            <h4>Safety & Standards</h4>
-            <ul>
-              <li><a href="#">Terms of Service</a></li>
-              <li><a href="#">Privacy Policy</a></li>
-              <li><a href="#">Cookie Policy</a></li>
-              <li><a href="#">Community Guidelines</a></li>
-              <li><a href="#">Safety Tips</a></li>
-              <li><a href="#">Marketplace &amp; Seller Terms</a></li>
-              <li><a href="#">Refund &amp; Billing Policy</a></li>
-              <li><a href="#">Disclaimer</a></li>
-            </ul>
-          </div>
+        <div class="col-lg-3 col-md-3 footer-links">
+          <h4>Safety & Standards</h4>
+          <ul>
+              <li><a href="{{ url_for('user.terms') }}">Terms of Service</a></li>
+              <li><a href="{{ url_for('user.privacy') }}">Privacy Policy</a></li>
+              <li><a href="{{ url_for('user.cookie_policy') }}">Cookie Policy</a></li>
+              <li><a href="{{ url_for('user.community_guidelines') }}">Community Guidelines</a></li>
+              <li><a href="{{ url_for('user.safety_tips') }}">Safety Tips</a></li>
+              <li><a href="{{ url_for('user.acceptable_use_policy') }}">Acceptable Use Policy</a></li>
+              <li><a href="{{ url_for('user.marketplace_seller_terms') }}">Marketplace &amp; Seller Terms</a></li>
+              <li><a href="{{ url_for('user.refund_billing_policy') }}">Refund &amp; Billing Policy</a></li>
+              <li><a href="{{ url_for('user.dispute_reporting') }}">Dispute &amp; Reporting Process</a></li>
+              <li><a href="{{ url_for('user.disclaimer') }}">Disclaimer</a></li>
+              <li><a href="{{ url_for('user.faq') }}">FAQ</a></li>
+          </ul>
+        </div>
           <div class="col-lg-3 col-md-6 footer-newsletter">
             <h4>Stay Updated</h4>
             <p>Subscribe to our newsletter for updates and special offers</p>
@@ -449,13 +452,12 @@
         </div>
       </div>
       <div class="container copyright text-center mt-4">
-        <p>
-          © <span>Copyright</span>
-          <strong class="px-1 sitename">More Peace Technology</strong>
-          <span>All Rights Reserved</span>
-        </p>
+        <p>© 2026 Kimbela. All rights reserved.</p>
         <div class="credits">
-          Designed by <a href="https://technest-gules.vercel.app/">Tech Nest</a>
+          Kimbela is a platform owned and operated by Tutaf International Limited and may operate under the brand name Kimbela Hub.
+        </div>
+        <div class="credits mt-2">
+          <small>Designed by <a href="https://technest-gules.vercel.app/">Tech Nest</a></small>
         </div>
       </div>
     </footer>

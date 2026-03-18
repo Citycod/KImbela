@@ -1,254 +1,154 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Terms of Service - Kimbela</title>
-  <link href="{{ url_for('static', filename='assets/img/favy.png') }}" rel="icon" />
-  <link href="{{ url_for('static', filename='assets/img/favy.png') }}" rel="apple-touch-icon" />
-  <!-- Tailwind + Manrope -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-  <style>body{font-family:'Manrope',sans-serif;}</style>
-  <!-- Original navbar/footer assets (keep) -->
-  <link href="{{ url_for('static', filename='assets/vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet" />
-  <link href="{{ url_for('static', filename='assets/vendor/bootstrap-icons/bootstrap-icons.css') }}" rel="stylesheet" />
-  <link href="{{ url_for('static', filename='assets/vendor/aos/aos.css') }}" rel="stylesheet" />
-  <link href="{{ url_for('static', filename='assets/vendor/swiper/swiper-bundle.min.css') }}" rel="stylesheet" />
-  <link href="{{ url_for('static', filename='assets/vendor/glightbox/css/glightbox.min.css') }}" rel="stylesheet" />
-  <link href="{{ url_for('static', filename='assets/css/main.css') }}" rel="stylesheet" />
-</head>
-<body class="bg-white text-slate-800"> <!-- pure white background -->
+{% set page_title = "Terms of Service" %}
+{% set page_updated = "April 1, 2026" %}
+{% set page_intro = "These Terms govern your access to and use of the Kimbela platform. By using Kimbela, you agree to comply with and be bound by these Terms." %}
+{% set page_meta = [
+  {"label": "Website", "value": "www.kimbela.com"},
+  {"label": "Operator", "value": "Tutaf International Limited"},
+  {"label": "Eligibility", "value": "31+ only"}
+] %}
+{% include 'policies/_policy_header.html' %}
 
-  <!-- minimal wrapper (keeps footer at bottom if needed) -->
-  <div class="relative overflow-hidden">
-    <!-- no extra background layers – pure white, ultra clean -->
-    <div class="relative">
-      <!-- =========== ORIGINAL NAVBAR (exactly as provided) =========== -->
-      <header id="header" class="header d-flex align-items-center sticky-top" style="background-color: white;">
-        <div class="header-container container-fluid container-xl position-relative d-flex align-items-center justify-content-end" style="background-color: white;">
-            <a href="{{ url_for('user.index') }}" class="logo d-flex align-items-center me-auto" style="background: none">
-                <img src="{{ url_for('static', filename='assets/img/kim.png') }}" alt="" style="width: 10rem; height: 5rem" />
-            </a>
+<section class="policy-section rounded-2xl border border-slate-200 bg-white p-6">
+  <h2 class="text-base font-semibold sm:text-lg">Overview</h2>
+  <p class="mt-2 text-sm text-slate-600">
+    Kimbela is a digital platform owned by Tutaf International Limited and operated under the brand name Kimbela Hub. These Terms of Service govern your access to and use of the platform.
+  </p>
+</section>
 
-            <nav id="navmenu" class="navmenu" style="background-color: white;">
-                <ul>
-                    <li><a href="{{ url_for('user.index') }}">Home</a></li>
-                    <li><a href="{{ url_for('user.about') }}" class="active">About Us</a></li>
-                    <li><a href="{{ url_for('user.features') }}">Features</a></li>
-                    <li><a href="{{ url_for('auth.login') }}">Login</a></li>
-                </ul>
-                <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
-            </nav>
-        </div>
-    </header>
+<section class="policy-section rounded-2xl border border-slate-200 bg-white p-6">
+  <h2 class="text-base font-semibold sm:text-lg">1. Eligibility</h2>
+  <ul class="mt-3 list-disc pl-5 text-sm text-slate-600">
+    <li>Users must be at least 31 years old.</li>
+    <li>You must provide accurate information during registration.</li>
+    <li>You must be legally capable of entering into this agreement.</li>
+  </ul>
+  <p class="mt-2 text-sm text-slate-600">Kimbela reserves the right to suspend or terminate accounts that do not meet eligibility requirements.</p>
+</section>
 
-      <!-- =========== EXTRAORDINARILY BEAUTIFUL MAIN CONTENT =========== -->
-      
-    <main class="bg-white text-slate-900">
-      <div class="mx-auto max-w-6xl px-6 pb-20 pt-10 text-sm sm:text-base">
-        <section class="rounded-3xl border border-slate-200 bg-white p-6 sm:p-10 shadow-sm">
-          <div class="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-1 text-xs uppercase tracking-[0.25em] text-emerald-700">
-            Last updated March 3, 2026
-          </div>
-          <h1 class="mt-4 text-2xl font-semibold leading-tight sm:text-3xl">Terms of Service</h1>
-          <p class="mt-3 text-sm text-slate-600">
-            These Terms explain how Kimbela works, what you can expect from us, and what we expect from you. By using Kimbela, you agree to these Terms.
-          </p>
-          <div class="mt-8 grid gap-4 sm:grid-cols-3">
-            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p class="text-xs uppercase tracking-[0.2em] text-slate-500">Eligibility</p>
-              <p class="mt-2 text-sm font-semibold">31+ community</p>
-            </div>
-            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p class="text-xs uppercase tracking-[0.2em] text-slate-500">Safety</p>
-              <p class="mt-2 text-sm font-semibold">Respect-first conduct</p>
-            </div>
-            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p class="text-xs uppercase tracking-[0.2em] text-slate-500">Support</p>
-              <p class="mt-2 text-sm font-semibold">24/7 response team</p>
-            </div>
-          </div>
-        </section>
+<section class="policy-section rounded-2xl border border-slate-200 bg-white p-6">
+  <h2 class="text-base font-semibold sm:text-lg">2. Account Registration</h2>
+  <ul class="mt-3 list-disc pl-5 text-sm text-slate-600">
+    <li>Provide truthful and accurate information.</li>
+    <li>Keep login credentials secure.</li>
+    <li>You are responsible for activity on your account.</li>
+  </ul>
+</section>
 
-        <div class="mt-10 grid gap-8 lg:grid-cols-[1fr_300px]">
-          <div class="space-y-6">
-            <section class="rounded-2xl border border-slate-200 bg-white p-6">
-              <h2 class="text-base font-semibold sm:text-lg">1. Acceptance of Terms</h2>
-              <p class="mt-2 text-sm text-slate-600">By accessing or using Kimbela, you agree to these Terms and any additional guidelines, policies, and rules posted on the platform.</p>
-            </section>
+<section class="policy-section rounded-2xl border border-slate-200 bg-white p-6">
+  <h2 class="text-base font-semibold sm:text-lg">3. Platform Purpose</h2>
+  <p class="mt-2 text-sm text-slate-600">
+    Kimbela helps individuals aged 31+ build meaningful friendships, connections, and communities. The platform may also provide matchmaking tools intended to help users discover compatible individuals for friendship or companionship.
+  </p>
+  <p class="mt-2 text-sm text-slate-600">
+    Kimbela does not guarantee successful matches, friendships, relationships, or outcomes. Compatibility depends on factors beyond Kimbela’s control.
+  </p>
+</section>
 
-            <section class="rounded-2xl border border-slate-200 bg-white p-6">
-              <h2 class="text-base font-semibold sm:text-lg">2. Eligibility</h2>
-              <ul class="mt-2 list-disc space-y-2 pl-6 text-sm text-slate-600">
-                <li>You must be at least 31 years old.</li>
-                <li>You must provide accurate profile information.</li>
-                <li>You must have legal capacity to enter this agreement.</li>
-              </ul>
-            </section>
+<section class="policy-section rounded-2xl border border-slate-200 bg-white p-6">
+  <h2 class="text-base font-semibold sm:text-lg">4. User Conduct</h2>
+  <ul class="mt-3 list-disc pl-5 text-sm text-slate-600">
+    <li>Do not harass, intimidate, or abuse other users.</li>
+    <li>Do not misrepresent your identity or share false information.</li>
+    <li>Do not use the platform for illegal activities.</li>
+    <li>Do not attempt unauthorized access to accounts.</li>
+  </ul>
+</section>
 
-            <section class="rounded-2xl border border-slate-200 bg-white p-6">
-              <h2 class="text-base font-semibold sm:text-lg">3. Accounts & Security</h2>
-              <ul class="mt-2 list-disc space-y-2 pl-6 text-sm text-slate-600">
-                <li>Keep your credentials confidential.</li>
-                <li>Notify us immediately of unauthorized access.</li>
-                <li>You are responsible for all activity under your account.</li>
-              </ul>
-            </section>
+<section class="policy-section rounded-2xl border border-slate-200 bg-white p-6">
+  <h2 class="text-base font-semibold sm:text-lg">5. User Content</h2>
+  <p class="mt-2 text-sm text-slate-600">
+    Users may post or share profile information, photos, messages, comments, and marketplace listings. Users retain ownership of their content but grant Kimbela a limited license to display it for platform operation.
+  </p>
+  <p class="mt-2 text-sm text-slate-600">
+    Users are solely responsible for their content. Kimbela does not pre-screen all content and is not liable for user-generated content.
+  </p>
+</section>
 
-            <section class="rounded-2xl border border-slate-200 bg-white p-6">
-              <h2 class="text-base font-semibold sm:text-lg">4. Community Conduct</h2>
-              <p class="mt-2 text-sm text-slate-600">Kimbela is a respectful community. You agree not to:</p>
-              <ul class="mt-2 list-disc space-y-2 pl-6 text-sm text-slate-600">
-                <li>Harass, threaten, or demean others.</li>
-                <li>Post deceptive, illegal, or explicit content.</li>
-                <li>Impersonate or misrepresent your identity.</li>
-                <li>Scrape, harvest, or misuse member data.</li>
-              </ul>
-            </section>
+<section class="policy-section rounded-2xl border border-slate-200 bg-white p-6">
+  <h2 class="text-base font-semibold sm:text-lg">6. Safety and User Interactions</h2>
+  <p class="mt-2 text-sm text-slate-600">
+    Kimbela provides tools for interactions but does not verify the identity or intentions of users. Users are responsible for their interactions and any meetings or interactions outside the platform.
+  </p>
+</section>
 
-            <section class="rounded-2xl border border-slate-200 bg-white p-6">
-              <h2 class="text-base font-semibold sm:text-lg">5. Content & Ownership</h2>
-              <p class="mt-2 text-sm text-slate-600">You retain ownership of your content. By posting, you grant Kimbela a non-exclusive, worldwide license to host, display, and distribute that content for operating the service.</p>
-            </section>
+<section class="policy-section rounded-2xl border border-slate-200 bg-white p-6">
+  <h2 class="text-base font-semibold sm:text-lg">7. Paid Features, Advertising, and Promotions</h2>
+  <ul class="mt-3 list-disc pl-5 text-sm text-slate-600">
+    <li>Marketplace subscriptions</li>
+    <li>Sponsored posts and banner advertisements</li>
+    <li>Promoted listings and profile visibility boosts</li>
+    <li>Paid matchmaking or connection features</li>
+  </ul>
+  <p class="mt-2 text-sm text-slate-600">Payment for promotion does not guarantee engagement or results. Sponsored content is not an endorsement by Kimbela.</p>
+</section>
 
-            <section class="rounded-2xl border border-slate-200 bg-white p-6">
-              <h2 class="text-base font-semibold sm:text-lg">6. Payments & Subscriptions</h2>
-              <ul class="mt-2 list-disc space-y-2 pl-6 text-sm text-slate-600">
-                <li>Paid services are billed in advance.</li>
-                <li>Subscriptions renew until canceled.</li>
-                <li>Refunds may be limited by law and policy.</li>
-              </ul>
-            </section>
+<section class="policy-section rounded-2xl border border-slate-200 bg-white p-6">
+  <h2 class="text-base font-semibold sm:text-lg">8. Cancellation and Refunds</h2>
+  <p class="mt-2 text-sm text-slate-600">Payments are generally non-refundable once activated. Cancellation prevents future billing but does not entitle refunds for the current billing period.</p>
+</section>
 
-            <section class="rounded-2xl border border-slate-200 bg-white p-6">
-              <h2 class="text-base font-semibold sm:text-lg">7. Moderation & Enforcement</h2>
-              <p class="mt-2 text-sm text-slate-600">We may remove content, suspend, or terminate accounts that violate these Terms or create risk to the community.</p>
-            </section>
+<section class="policy-section rounded-2xl border border-slate-200 bg-white p-6">
+  <h2 class="text-base font-semibold sm:text-lg">9. Account Suspension or Termination</h2>
+  <p class="mt-2 text-sm text-slate-600">Accounts may be suspended or terminated for violations, fraud, or threats to user safety.</p>
+</section>
 
-            <section class="rounded-2xl border border-slate-200 bg-white p-6">
-              <h2 class="text-base font-semibold sm:text-lg">8. Termination</h2>
-              <p class="mt-2 text-sm text-slate-600">You may stop using Kimbela at any time. We may suspend or terminate access for violations, safety concerns, or legal compliance.</p>
-            </section>
+<section class="policy-section rounded-2xl border border-slate-200 bg-white p-6">
+  <h2 class="text-base font-semibold sm:text-lg">10. Intellectual Property</h2>
+  <p class="mt-2 text-sm text-slate-600">All platform design, branding, software, and content are owned by Tutaf International Limited or its licensors.</p>
+</section>
 
-            <section class="rounded-2xl border border-slate-200 bg-white p-6">
-              <h2 class="text-base font-semibold sm:text-lg">9. Disclaimers & Limitation of Liability</h2>
-              <p class="mt-2 text-sm text-slate-600">Kimbela is provided “as is.” To the fullest extent permitted by law, we disclaim warranties and limit liability for indirect or consequential damages.</p>
-            </section>
+<section class="policy-section rounded-2xl border border-slate-200 bg-white p-6">
+  <h2 class="text-base font-semibold sm:text-lg">11. Limitation of Liability</h2>
+  <p class="mt-2 text-sm text-slate-600">Kimbela is provided “as is” and “as available.” Users assume all risk for use, interactions, and outcomes.</p>
+</section>
 
-            <section class="rounded-2xl border border-slate-200 bg-white p-6">
-              <h2 class="text-base font-semibold sm:text-lg">10. Disputes & Governing Law</h2>
-              <p class="mt-2 text-sm text-slate-600">Disputes should be resolved informally first. If required, disputes will be governed by the laws of your jurisdiction of residence unless otherwise required.</p>
-            </section>
+<section class="policy-section rounded-2xl border border-slate-200 bg-white p-6">
+  <h2 class="text-base font-semibold sm:text-lg">12. Limitation of Personal Liability</h2>
+  <p class="mt-2 text-sm text-slate-600">
+    To the fullest extent permitted by law, directors, officers, shareholders, employees, affiliates, representatives, and agents of Tutaf International Limited are not personally liable for claims arising from use of the platform.
+  </p>
+</section>
 
-            <section class="rounded-2xl border border-slate-200 bg-white p-6">
-              <h2 class="text-base font-semibold sm:text-lg">11. Changes to Terms</h2>
-              <p class="mt-2 text-sm text-slate-600">We may update these Terms periodically. Continued use of Kimbela means acceptance of updates.</p>
-            </section>
+<section class="policy-section rounded-2xl border border-slate-200 bg-white p-6">
+  <h2 class="text-base font-semibold sm:text-lg">13. Indemnification</h2>
+  <p class="mt-2 text-sm text-slate-600">Users agree to indemnify and hold harmless Tutaf International Limited and its affiliates from claims arising from their use of the platform.</p>
+</section>
 
-            <section class="rounded-2xl border border-slate-200 bg-white p-6">
-              <h2 class="text-base font-semibold sm:text-lg">12. Contact</h2>
-              <p class="mt-2 text-sm text-slate-600">Questions about these Terms? Contact <span class="font-semibold text-emerald-700">support@kimbela.com</span>.</p>
-            </section>
-          </div>
+<section class="policy-section rounded-2xl border border-slate-200 bg-white p-6">
+  <h2 class="text-base font-semibold sm:text-lg">14. Changes to These Terms</h2>
+  <p class="mt-2 text-sm text-slate-600">Kimbela may update these Terms from time to time. Continued use constitutes acceptance of updates.</p>
+</section>
 
-          <aside class="space-y-6">
-            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-              <p class="text-xs uppercase tracking-[0.2em] text-slate-500">Quick navigation</p>
-              <ul class="mt-3 space-y-2 text-xs">
-                <li><a class="text-emerald-700 hover:text-emerald-900" href="#acceptance">Acceptance</a></li>
-                <li><a class="text-emerald-700 hover:text-emerald-900" href="#eligibility">Eligibility</a></li>
-                <li><a class="text-emerald-700 hover:text-emerald-900" href="#accounts">Accounts</a></li>
-                <li><a class="text-emerald-700 hover:text-emerald-900" href="#conduct">Conduct</a></li>
-                <li><a class="text-emerald-700 hover:text-emerald-900" href="#content">Content</a></li>
-                <li><a class="text-emerald-700 hover:text-emerald-900" href="#payments">Payments</a></li>
-                <li><a class="text-emerald-700 hover:text-emerald-900" href="#moderation">Moderation</a></li>
-                <li><a class="text-emerald-700 hover:text-emerald-900" href="#termination">Termination</a></li>
-                <li><a class="text-emerald-700 hover:text-emerald-900" href="#liability">Liability</a></li>
-                <li><a class="text-emerald-700 hover:text-emerald-900" href="#disputes">Disputes</a></li>
-                <li><a class="text-emerald-700 hover:text-emerald-900" href="#changes">Changes</a></li>
-                <li><a class="text-emerald-700 hover:text-emerald-900" href="#contact">Contact</a></li>
-              </ul>
-            </div>
-            <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-xs text-emerald-800">
-              Your safety matters. Use the report tools if you feel unsafe or see abuse.
-            </div>
-          </aside>
-        </div>
-      </div>
-    </main>
+<section class="policy-section rounded-2xl border border-slate-200 bg-white p-6">
+  <h2 class="text-base font-semibold sm:text-lg">15. Governing Law</h2>
+  <p class="mt-2 text-sm text-slate-600">These Terms are governed by the laws of the Federal Republic of Nigeria. Disputes fall under Nigerian courts.</p>
+</section>
 
+<section class="policy-section rounded-2xl border border-slate-200 bg-white p-6">
+  <h2 class="text-base font-semibold sm:text-lg">16. Class Action Waiver</h2>
+  <p class="mt-2 text-sm text-slate-600">Disputes must be resolved individually, not as part of a class or group action.</p>
+</section>
 
-      <!-- =========== ORIGINAL FOOTER (exactly as provided) =========== -->
-      <footer id="footer" class="footer position-relative light-background">
-        <div class="container footer-top">
-          <div class="row gy-4">
-            <div class="col-lg-4 col-md-6 footer-about">
-              <a href="{{ url_for('user.index') }}" class="logo d-flex align-items-center">
-                <span class="sitename">Kimbela</span>
-              </a>
-              <div class="footer-contact pt-3">
-                <p>For connections that make sense</p>
-                <p class="mt-3"><strong>Email:</strong> <span>ask@kimbela.com</span></p>
-                <p><strong>Support:</strong> <span>support@kimbela.com</span></p>
-                <p><strong>Community:</strong> <span>Mature singles 31+ seeking meaningful connections</span></p>
-              </div>
-            </div>
-            <div class="col-lg-2 col-md-3 footer-links">
-              <h4>Quick Links</h4>
-              <ul>
-                <li><a href="{{ url_for('user.index') }}">Home</a></li>
-                <li><a href="{{ url_for('user.about') }}">About Us</a></li>
-                <li><a href="{{ url_for('user.features') }}">Features</a></li>
-                <li><a href="{{ url_for('auth.login') }}">Login</a></li>
-              </ul>
-            </div>
-            <div class="col-lg-3 col-md-3 footer-links">
-              <h4>Our Features</h4>
-              <ul>
-                <li><a href="{{ url_for('user.features') }}#connections">Friend Connections</a></li>
-                <li><a href="{{ url_for('user.features') }}#groups">Group Discussions</a></li>
-                <li><a href="{{ url_for('user.features') }}#mentorship">Mentorship</a></li>
-                <li><a href="{{ url_for('user.features') }}#premium">Premium Services</a></li>
-                <li><a href="{{ url_for('user.features') }}">View All Features</a></li>
-              </ul>
-            </div>
+<section class="policy-section rounded-2xl border border-slate-200 bg-white p-6">
+  <h2 class="text-base font-semibold sm:text-lg">17. Additional Policies</h2>
+  <p class="mt-2 text-sm text-slate-600">
+    Use of Kimbela is also subject to
+    <a class="text-emerald-600 hover:underline" href="{{ url_for('user.community_guidelines') }}">Community Guidelines</a>,
+    <a class="text-emerald-600 hover:underline" href="{{ url_for('user.safety_tips') }}">Safety Tips</a>,
+    <a class="text-emerald-600 hover:underline" href="{{ url_for('user.acceptable_use_policy') }}">Acceptable Use Policy</a>,
+    <a class="text-emerald-600 hover:underline" href="{{ url_for('user.marketplace_seller_terms') }}">Marketplace &amp; Seller Terms</a>,
+    <a class="text-emerald-600 hover:underline" href="{{ url_for('user.refund_billing_policy') }}">Refund &amp; Billing Policy</a>,
+    <a class="text-emerald-600 hover:underline" href="{{ url_for('user.cookie_policy') }}">Cookie Policy</a>,
+    <a class="text-emerald-600 hover:underline" href="{{ url_for('user.dispute_reporting') }}">Dispute &amp; Reporting Process</a>,
+    <a class="text-emerald-600 hover:underline" href="{{ url_for('user.disclaimer') }}">Disclaimer</a>,
+    and other policies published on the website.
+  </p>
+</section>
 
-            <div class="col-lg-3 col-md-6 footer-links">
-              <h4>Safety & Standards</h4>
-              <ul>
-                <li><a href="#">Terms of Service</a></li>
-                <li><a href="#">Privacy Policy</a></li>
-                <li><a href="#">Cookie Policy</a></li>
-                <li><a href="#">Community Guidelines</a></li>
-                <li><a href="#">Safety Tips</a></li>
-                <li><a href="#">Marketplace &amp; Seller Terms</a></li>
-                <li><a href="#">Refund &amp; Billing Policy</a></li>
-                <li><a href="#">Disclaimer</a></li>
-              </ul>
-            </div>
-          </div>
-        </div>
-        <div class="container copyright text-center mt-4">
-          <p>© <span>Copyright</span> <strong class="px-1 sitename">Kimbela</strong> <span>All Rights Reserved</span></p>
-          <div class="credits">Designed for meaningful connections</div>
-          <div class="credits mt-2">
-            <small>Designed with ❤️ by <a href="https://technest-gules.vercel.app/" target="_blank" style="color: #8e44ad; text-decoration: none;">TechNest Solutions</a></small>
-          </div>
-        </div>
-      </footer>
+<section class="policy-section rounded-2xl border border-slate-200 bg-white p-6">
+  <h2 class="text-base font-semibold sm:text-lg">18. Contact Information</h2>
+  <p class="mt-2 text-sm text-slate-600">Email: support@kimbela.com</p>
+  <p class="text-sm text-slate-600">Operated by Tutaf International Limited • Brand: Kimbela Hub</p>
+</section>
 
-    </div> <!-- closes .relative -->
-  </div> <!-- closes .relative overflow-hidden -->
-
-  <!-- original scripts -->
-  <script src="{{ url_for('static', filename='assets/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
-  <script src="{{ url_for('static', filename='assets/vendor/aos/aos.js') }}"></script>
-  <script src="{{ url_for('static', filename='assets/vendor/swiper/swiper-bundle.min.js') }}"></script>
-  <script src="{{ url_for('static', filename='assets/vendor/purecounter/purecounter_vanilla.js') }}"></script>
-  <script src="{{ url_for('static', filename='assets/vendor/imagesloaded/imagesloaded.pkgd.min.js') }}"></script>
-  <script src="{{ url_for('static', filename='assets/vendor/isotope-layout/isotope.pkgd.min.js') }}"></script>
-  <script src="{{ url_for('static', filename='assets/vendor/glightbox/js/glightbox.min.js') }}"></script>
-  <script src="{{ url_for('static', filename='assets/js/main.js') }}"></script>
-</body>
-</html>
+{% include 'policies/_policy_footer.html' %}

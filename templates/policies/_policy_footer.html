@@ -1,0 +1,92 @@
+            </div>
+
+            <aside class="space-y-4">
+              <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <p class="text-xs uppercase tracking-[0.2em] text-slate-500">Policies</p>
+                <div class="mt-3 space-y-2 text-sm">
+                  <a class="block text-slate-700 hover:text-emerald-600" href="{{ url_for('user.privacy') }}">Privacy Policy</a>
+                  <a class="block text-slate-700 hover:text-emerald-600" href="{{ url_for('user.terms') }}">Terms of Service</a>
+                  <a class="block text-slate-700 hover:text-emerald-600" href="{{ url_for('user.community_guidelines') }}">Community Guidelines</a>
+                  <a class="block text-slate-700 hover:text-emerald-600" href="{{ url_for('user.acceptable_use_policy') }}">Acceptable Use Policy</a>
+                  <a class="block text-slate-700 hover:text-emerald-600" href="{{ url_for('user.marketplace_seller_terms') }}">Marketplace &amp; Seller Terms</a>
+                  <a class="block text-slate-700 hover:text-emerald-600" href="{{ url_for('user.refund_billing_policy') }}">Refund &amp; Billing Policy</a>
+                  <a class="block text-slate-700 hover:text-emerald-600" href="{{ url_for('user.cookie_policy') }}">Cookie Policy</a>
+                  <a class="block text-slate-700 hover:text-emerald-600" href="{{ url_for('user.safety_tips') }}">Safety Tips</a>
+                  <a class="block text-slate-700 hover:text-emerald-600" href="{{ url_for('user.dispute_reporting') }}">Dispute &amp; Reporting Process</a>
+                  <a class="block text-slate-700 hover:text-emerald-600" href="{{ url_for('user.disclaimer') }}">Disclaimer</a>
+                  <a class="block text-slate-700 hover:text-emerald-600" href="{{ url_for('user.faq') }}">FAQ</a>
+                </div>
+              </div>
+              <div class="rounded-2xl border border-slate-200 bg-white p-4 text-xs text-slate-500">
+                <p class="font-semibold text-slate-700">Kimbela Hub</p>
+                <p class="mt-2">Owned and operated by Tutaf International Limited. The platform may operate under the brand name Kimbela Hub.</p>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </main>
+
+      <footer id="footer" class="footer position-relative light-background">
+        <div class="container footer-top">
+          <div class="row gy-4">
+            <div class="col-lg-4 col-md-6 footer-about">
+              <a href="{{ url_for('user.index') }}" class="logo d-flex align-items-center">
+                <span class="sitename">Kimbela</span>
+              </a>
+              <div class="footer-contact pt-3">
+                <p>For connections that make sense</p>
+                <p class="mt-3"><strong>Email:</strong> <span>ask@kimbela.com</span></p>
+                <p><strong>Support:</strong> <span>support@kimbela.com</span></p>
+                <p><strong>Community:</strong> <span>Mature singles 31+ seeking meaningful connections</span></p>
+              </div>
+            </div>
+            <div class="col-lg-2 col-md-3 footer-links">
+              <h4>Quick Links</h4>
+              <ul>
+                <li><a href="{{ url_for('user.index') }}">Home</a></li>
+                <li><a href="{{ url_for('user.about') }}">About Us</a></li>
+                <li><a href="{{ url_for('user.features') }}">Features</a></li>
+                <li><a href="{{ url_for('auth.login') }}">Login</a></li>
+              </ul>
+            </div>
+            <div class="col-lg-3 col-md-3 footer-links">
+              <h4>Policies</h4>
+              <ul>
+                <li><a href="{{ url_for('user.privacy') }}">Privacy Policy</a></li>
+                <li><a href="{{ url_for('user.terms') }}">Terms of Service</a></li>
+                <li><a href="{{ url_for('user.community_guidelines') }}">Community Guidelines</a></li>
+                <li><a href="{{ url_for('user.acceptable_use_policy') }}">Acceptable Use Policy</a></li>
+                <li><a href="{{ url_for('user.marketplace_seller_terms') }}">Marketplace &amp; Seller Terms</a></li>
+              </ul>
+            </div>
+            <div class="col-lg-3 col-md-6 footer-links">
+              <h4>Support & Safety</h4>
+              <ul>
+                <li><a href="{{ url_for('user.refund_billing_policy') }}">Refund &amp; Billing Policy</a></li>
+                <li><a href="{{ url_for('user.cookie_policy') }}">Cookie Policy</a></li>
+                <li><a href="{{ url_for('user.safety_tips') }}">Safety Tips</a></li>
+                <li><a href="{{ url_for('user.dispute_reporting') }}">Dispute &amp; Reporting Process</a></li>
+                <li><a href="{{ url_for('user.disclaimer') }}">Disclaimer</a></li>
+                <li><a href="{{ url_for('user.faq') }}">FAQ</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="container copyright text-center mt-4">
+          <p>© 2026 Kimbela. All rights reserved.</p>
+          <div class="credits">Kimbela is a platform owned and operated by Tutaf International Limited and may operate under the brand name Kimbela Hub.</div>
+        </div>
+      </footer>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='assets/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='assets/vendor/aos/aos.js') }}"></script>
+  <script src="{{ url_for('static', filename='assets/vendor/swiper/swiper-bundle.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='assets/vendor/purecounter/purecounter_vanilla.js') }}"></script>
+  <script src="{{ url_for('static', filename='assets/vendor/imagesloaded/imagesloaded.pkgd.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='assets/vendor/isotope-layout/isotope.pkgd.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='assets/vendor/glightbox/js/glightbox.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='assets/js/main.js') }}"></script>
+</body>
+</html>

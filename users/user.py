@@ -3116,6 +3116,51 @@ def privacy():
     return render_template("privacy.html")
 
 
+@user.route("/community-guidelines", methods=["GET", "POST"])
+def community_guidelines():
+    return render_template("community-guidelines.html")
+
+
+@user.route("/acceptable-use-policy", methods=["GET", "POST"])
+def acceptable_use_policy():
+    return render_template("acceptable-use-policy.html")
+
+
+@user.route("/marketplace-seller-terms", methods=["GET", "POST"])
+def marketplace_seller_terms():
+    return render_template("marketplace-seller-terms.html")
+
+
+@user.route("/refund-billing-policy", methods=["GET", "POST"])
+def refund_billing_policy():
+    return render_template("refund-billing-policy.html")
+
+
+@user.route("/cookie-policy", methods=["GET", "POST"])
+def cookie_policy():
+    return render_template("cookie-policy.html")
+
+
+@user.route("/safety-tips", methods=["GET", "POST"])
+def safety_tips():
+    return render_template("safety-tips.html")
+
+
+@user.route("/dispute-reporting", methods=["GET", "POST"])
+def dispute_reporting():
+    return render_template("dispute-reporting.html")
+
+
+@user.route("/disclaimer", methods=["GET", "POST"])
+def disclaimer():
+    return render_template("disclaimer.html")
+
+
+@user.route("/faq", methods=["GET", "POST"])
+def faq():
+    return render_template("faq.html")
+
+
 @user.route("/get_user_groups")
 @login_required
 def get_user_groups():

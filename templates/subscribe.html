@@ -373,7 +373,7 @@
                         <div class="flex items-start">
                             <input type="checkbox" id="agreeTerms" class="mt-0.5 mr-2 text-xs">
                             <label for="agreeTerms" class="text-gray-600 text-xs">
-                                I agree to the <a href="/terms" class="text-amber-600 hover:underline" target="_blank">Terms of Service</a> and <a href="/privacy" class="text-amber-600 hover:underline" target="_blank">Privacy Policy</a>. I understand that my subscription will auto-renew monthly unless cancelled.
+                                I agree to the <a href="{{ url_for('user.terms') }}" class="text-amber-600 hover:underline" target="_blank">Terms of Service</a> and <a href="{{ url_for('user.privacy') }}" class="text-amber-600 hover:underline" target="_blank">Privacy Policy</a>. I understand that my subscription will auto-renew monthly unless cancelled.
                             </label>
                         </div>
                     </div>

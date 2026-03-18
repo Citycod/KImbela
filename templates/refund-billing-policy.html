@@ -1,0 +1,62 @@
+{% set page_title = "Refund & Billing Policy" %}
+{% set page_updated = "April 1, 2026" %}
+{% set page_intro = "This policy explains how subscriptions, billing cycles, and refunds are handled on the Kimbela platform." %}
+{% set page_meta = [
+  {"label": "Brand", "value": "Kimbela Hub"},
+  {"label": "Payments", "value": "Paid services"},
+  {"label": "Support", "value": "support@kimbela.com"}
+] %}
+{% include 'policies/_policy_header.html' %}
+
+<section class="policy-section rounded-2xl border border-slate-200 bg-white p-6">
+  <h2 class="text-base font-semibold sm:text-lg">1. Subscription-Based Services</h2>
+  <p class="mt-2 text-sm text-slate-600">Kimbela may offer subscription-based services including marketplace access, promotions, and advertising options.</p>
+  <p class="mt-2 text-sm text-slate-600">This policy should be read with the <a class="text-emerald-600 hover:underline" href="{{ url_for('user.terms') }}">Terms of Service</a> and <a class="text-emerald-600 hover:underline" href="{{ url_for('user.marketplace_seller_terms') }}">Marketplace &amp; Seller Terms</a>.</p>
+</section>
+
+<section class="policy-section rounded-2xl border border-slate-200 bg-white p-6">
+  <h2 class="text-base font-semibold sm:text-lg">2. Billing Cycle</h2>
+  <p class="mt-2 text-sm text-slate-600">Subscriptions are billed on a recurring basis (e.g., monthly). Billing begins on activation and renews unless cancelled before renewal.</p>
+</section>
+
+<section class="policy-section rounded-2xl border border-slate-200 bg-white p-6">
+  <h2 class="text-base font-semibold sm:text-lg">3. Payments</h2>
+  <p class="mt-2 text-sm text-slate-600">Payments must be made through approved methods. Failed payments may result in suspended access to paid features.</p>
+</section>
+
+<section class="policy-section rounded-2xl border border-slate-200 bg-white p-6">
+  <h2 class="text-base font-semibold sm:text-lg">4. Refund Policy</h2>
+  <p class="mt-2 text-sm text-slate-600">Subscription payments are generally non-refundable once the billing period begins. Exceptions may be reviewed for billing errors or platform-related technical issues.</p>
+</section>
+
+<section class="policy-section rounded-2xl border border-slate-200 bg-white p-6">
+  <h2 class="text-base font-semibold sm:text-lg">5. Cancellation of Subscription</h2>
+  <p class="mt-2 text-sm text-slate-600">Cancellation prevents future billing but does not refund the current billing cycle.</p>
+</section>
+
+<section class="policy-section rounded-2xl border border-slate-200 bg-white p-6">
+  <h2 class="text-base font-semibold sm:text-lg">6. Marketplace Transactions</h2>
+  <p class="mt-2 text-sm text-slate-600">Transactions between buyers and sellers are conducted directly between those parties. Kimbela does not issue refunds for marketplace transactions unless otherwise stated.</p>
+</section>
+
+<section class="policy-section rounded-2xl border border-slate-200 bg-white p-6">
+  <h2 class="text-base font-semibold sm:text-lg">7. Seller Refund Policies</h2>
+  <p class="mt-2 text-sm text-slate-600">Marketplace sellers define their own refund, return, or cancellation policies. Buyers must contact sellers directly.</p>
+</section>
+
+<section class="policy-section rounded-2xl border border-slate-200 bg-white p-6">
+  <h2 class="text-base font-semibold sm:text-lg">8. Disputes and Billing Issues</h2>
+  <p class="mt-2 text-sm text-slate-600">If you believe you were incorrectly charged, contact support with details of the transaction.</p>
+</section>
+
+<section class="policy-section rounded-2xl border border-slate-200 bg-white p-6">
+  <h2 class="text-base font-semibold sm:text-lg">9. Changes to This Policy</h2>
+  <p class="mt-2 text-sm text-slate-600">Updates will be posted with a revised date. Continued use constitutes acceptance.</p>
+</section>
+
+<section class="policy-section rounded-2xl border border-slate-200 bg-white p-6">
+  <h2 class="text-base font-semibold sm:text-lg">10. Contact</h2>
+  <p class="mt-2 text-sm text-slate-600">Email: support@kimbela.com</p>
+</section>
+
+{% include 'policies/_policy_footer.html' %}

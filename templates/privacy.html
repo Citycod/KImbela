@@ -1,247 +1,163 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Privacy Policy - Kimbela</title>
-    <link href="{{ url_for('static', filename='assets/img/favy.png') }}" rel="icon" />
-    <link href="{{ url_for('static', filename='assets/img/favy.png') }}" rel="apple-touch-icon" />
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-    <style>body{font-family:'Manrope',sans-serif;}</style>
-    <!-- Index CSS for navbar/footer styling -->
-    <link href="{{ url_for('static', filename='assets/vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet" />
-    <link href="{{ url_for('static', filename='assets/vendor/bootstrap-icons/bootstrap-icons.css') }}" rel="stylesheet" />
-    <link href="{{ url_for('static', filename='assets/vendor/aos/aos.css') }}" rel="stylesheet" />
-    <link href="{{ url_for('static', filename='assets/vendor/swiper/swiper-bundle.min.css') }}" rel="stylesheet" />
-    <link href="{{ url_for('static', filename='assets/vendor/glightbox/css/glightbox.min.css') }}" rel="stylesheet" />
-    <link href="{{ url_for('static', filename='assets/css/main.css') }}" rel="stylesheet" />
-  </head>
-  <body class="bg-white text-slate-900">
-    <div class="relative overflow-hidden">
-      <div class="relative">
-        <header id="header" class="header d-flex align-items-center sticky-top">
-        <div class="header-container container-fluid container-xl position-relative d-flex align-items-center justify-content-end">
-            <a href="{{ url_for('user.index') }}" class="logo d-flex align-items-center me-auto" style="background: none">
-                <!-- Uncomment the line below if you also wish to use an image logo -->
-                <img src="{{ url_for('static', filename='assets/img/kim.png') }}" alt="" style="width: 10rem; height: 5rem" />
-            </a>
+{% set page_title = "Privacy Policy" %}
+{% set page_updated = "April 1, 2026" %}
+{% set page_intro = "This Privacy Policy explains how Kimbela collects, uses, stores, and protects your information when you use www.kimbela.com." %}
+{% set page_meta = [
+  {"label": "Website", "value": "www.kimbela.com"},
+  {"label": "Operator", "value": "Tutaf International Limited"},
+  {"label": "Brand", "value": "Kimbela Hub"}
+] %}
+{% include 'policies/_policy_header.html' %}
 
-            <nav id="navmenu" class="navmenu">
-                <ul>
-                    <li><a href="{{ url_for('user.index') }}" class="active">Home</a></li>
-                    <li><a href="{{ url_for('user.about') }}">About Us</a></li>
-                    <li><a href="{{ url_for('user.features') }}">Features</a></li>
-                    
-                    <li><a href="{{ url_for('auth.login') }}">Login</a></li>
+<section class="policy-section rounded-2xl border border-slate-200 bg-white p-6">
+  <h2 class="text-base font-semibold sm:text-lg">Overview</h2>
+  <p class="mt-2 text-sm text-slate-600">
+    Kimbela is a digital platform owned by Tutaf International Limited and operated under the brand name Kimbela Hub. References to “Kimbela,” “Kimbela Hub,” “we,” “our,” or “us” refer collectively to the Kimbela platform and its operating brand managed by Tutaf International Limited.
+  </p>
+  <p class="mt-3 text-sm text-slate-600">
+    By creating an account or using our services, you agree to the practices described in this Privacy Policy.
+  </p>
+</section>
 
-                </ul>
-                <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
-            </nav>
-        </div>
-    </header>
-        
-    
-    <main class="bg-white px-6 pb-24 sm:px-10">
-      <div class="mx-auto max-w-6xl text-sm sm:text-base">
-        <section class="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 sm:p-10 shadow-sm">
-          <div class="relative">
-            <div class="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-sky-50 px-4 py-1 text-xs uppercase tracking-[0.25em] text-sky-700">
-              Last updated March 3, 2026
-            </div>
-            <h1 class="mt-4 text-2xl font-semibold leading-tight sm:text-3xl">Privacy Policy</h1>
-            <p class="mt-3 text-sm text-slate-600">
-              This policy explains what we collect, why we collect it, and how you stay in control of your data.
-            </p>
-            <div class="mt-8 grid gap-4 sm:grid-cols-3">
-              <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <p class="text-xs uppercase tracking-[0.2em] text-slate-500">Transparency</p>
-                <p class="mt-2 text-sm font-semibold">Clear data practices</p>
-              </div>
-              <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <p class="text-xs uppercase tracking-[0.2em] text-slate-500">Control</p>
-                <p class="mt-2 text-sm font-semibold">You own your profile</p>
-              </div>
-              <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <p class="text-xs uppercase tracking-[0.2em] text-slate-500">Security</p>
-                <p class="mt-2 text-sm font-semibold">Encryption & safeguards</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <div class="mt-10 grid gap-8 lg:grid-cols-[1fr_300px]">
-          <div class="space-y-8">
-            <section id="information" class="rounded-2xl border border-slate-200 bg-white p-6">
-              <h2 class="text-base font-semibold sm:text-lg">1. Information We Collect</h2>
-              <ul class="mt-2 list-disc space-y-2 pl-6 text-sm text-slate-600">
-                <li>Account details (name, email, age, profile info).</li>
-                <li>Community content (posts, comments, messages).</li>
-                <li>Usage data (device, browser, analytics).</li>
-              </ul>
-            </section>
-
-            <section id="use" class="rounded-2xl border border-slate-200 bg-white p-6">
-              <h2 class="text-base font-semibold sm:text-lg">2. How We Use Data</h2>
-              <ul class="mt-2 list-disc space-y-2 pl-6 text-sm text-slate-600">
-                <li>Provide and improve the Kimbela experience.</li>
-                <li>Personalize recommendations and matches.</li>
-                <li>Maintain safety and enforce guidelines.</li>
-              </ul>
-            </section>
-
-            <section id="sharing" class="rounded-2xl border border-slate-200 bg-white p-6">
-              <h2 class="text-base font-semibold sm:text-lg">3. Sharing & Disclosure</h2>
-              <p class="mt-2 text-sm text-slate-600">
-                We do not sell your personal data. We share data only with trusted service providers and
-                when legally required.
-              </p>
-            </section>
-
-            <section id="cookies" class="rounded-2xl border border-slate-200 bg-white p-6">
-              <h2 class="text-base font-semibold sm:text-lg">4. Cookies & Analytics</h2>
-              <p class="mt-2 text-sm text-slate-600">
-                We use cookies to remember preferences, keep you signed in, and improve performance.
-              </p>
-            </section>
-
-            <section id="security" class="rounded-2xl border border-slate-200 bg-white p-6">
-              <h2 class="text-base font-semibold sm:text-lg">5. Security</h2>
-              <p class="mt-2 text-sm text-slate-600">
-                We use encryption, access controls, and monitoring to protect your information.
-              </p>
-            </section>
-
-            <section id="retention" class="rounded-2xl border border-slate-200 bg-white p-6">
-              <h2 class="text-base font-semibold sm:text-lg">6. Data Retention</h2>
-              <p class="mt-2 text-sm text-slate-600">
-                We retain data only as long as necessary to operate services and meet legal requirements.
-              </p>
-            </section>
-
-            <section id="rights" class="rounded-2xl border border-slate-200 bg-white p-6">
-              <h2 class="text-base font-semibold sm:text-lg">7. Your Rights & Choices</h2>
-              <ul class="mt-2 list-disc space-y-2 pl-6 text-sm text-slate-600">
-                <li>Access, update, or delete your data.</li>
-                <li>Control email preferences.</li>
-                <li>Request a copy of your data.</li>
-              </ul>
-            </section>
-
-            <section id="contact" class="rounded-2xl border border-slate-200 bg-white p-6">
-              <h2 class="text-base font-semibold sm:text-lg">8. Contact</h2>
-              <p class="mt-2 text-sm text-slate-600">
-                Privacy questions? Email <span class="font-semibold text-sky-700">privacy@kimbela.com</span>.
-              </p>
-            </section>
-          </div>
-
-          <aside class="space-y-6">
-            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-              <p class="text-xs uppercase tracking-[0.2em] text-slate-500">Quick navigation</p>
-              <ul class="mt-3 space-y-2 text-xs">
-                <li><a class="text-sky-700 hover:text-sky-900" href="#information">Information</a></li>
-                <li><a class="text-sky-700 hover:text-sky-900" href="#use">Usage</a></li>
-                <li><a class="text-sky-700 hover:text-sky-900" href="#sharing">Sharing</a></li>
-                <li><a class="text-sky-700 hover:text-sky-900" href="#cookies">Cookies</a></li>
-                <li><a class="text-sky-700 hover:text-sky-900" href="#security">Security</a></li>
-                <li><a class="text-sky-700 hover:text-sky-900" href="#retention">Retention</a></li>
-                <li><a class="text-sky-700 hover:text-sky-900" href="#rights">Your Rights</a></li>
-                <li><a class="text-sky-700 hover:text-sky-900" href="#contact">Contact</a></li>
-              </ul>
-            </div>
-            <div class="rounded-2xl border border-sky-200 bg-sky-50 p-5 text-xs text-sky-800">
-              You are in control. Update your preferences any time in settings.
-            </div>
-          </aside>
-        </div>
-      </div>
-    </main>
-
-
-        <footer id="footer" class="footer position-relative light-background">
-        <div class="container footer-top">
-            <div class="row gy-4">
-                <div class="col-lg-4 col-md-6 footer-about">
-                    <a href="{{ url_for('user.index') }}" class="logo d-flex align-items-center">
-                        <span class="sitename">Kimbela</span>
-                    </a>
-                    <div class="footer-contact pt-3">
-                        <p>For connections that make sense</p>
-                        <p class="mt-3">
-                            <strong>Email:</strong> <span>ask@kimbela.com</span>
-                        </p>
-                        <p><strong>Support:</strong> <span>support@kimbela.com</span></p>
-                        <p>
-                            <strong>Community:</strong>
-                            <span>Mature singles 31+ seeking meaningful connections</span>
-                        </p>
-                    </div>
-                    
-                </div>
-
-                <div class="col-lg-2 col-md-3 footer-links">
-                    <h4>Quick Links</h4>
-                    <ul>
-                        <li><a href="{{ url_for('user.index') }}">Home</a></li>
-                        <li><a href="{{ url_for('user.about') }}">About Us</a></li>
-                        <li><a href="{{ url_for('user.features') }}">Features</a></li>
-                        <li><a href="{{ url_for('auth.login') }}">Login</a></li>
-                    </ul>
-                </div>
-
-                <div class="col-lg-3 col-md-3 footer-links">
-                    <h4>Our Features</h4>
-                    <ul>
-                        <li><a href="{{ url_for('user.features') }}#connections">Friend Connections</a></li>
-                        <li><a href="{{ url_for('user.features') }}#groups">Group Discussions</a></li>
-                        <li><a href="{{ url_for('user.features') }}#mentorship">Mentorship</a></li>
-                        <li><a href="{{ url_for('user.features') }}#premium">Premium Services</a></li>
-                        <li><a href="{{ url_for('user.features') }}">View All Features</a></li>
-                    </ul>
-                </div>
-
-                <div class="col-lg-3 col-md-6 footer-links">
-                    <h4>Legal</h4>
-                    <ul>
-                        <li><a href="#">Terms of Service</a></li>
-                        <li><a href="#">Privacy Policy</a></li>
-                        <li><a href="#">Cookie Policy</a></li>
-                        <li><a href="#">Community Guidelines</a></li>
-                        <li><a href="#">Safety Tips</a></li>
-                        <li><a href="#">Marketplace &amp; Seller Terms</a></li>
-                        <li><a href="#">Refund &amp; Billing Policy</a></li>
-                        <li><a href="#">Disclaimer</a></li>
-                    </ul>
-                </div>
-
-                
-            </div>
-        </div>
-
-        <div class="container copyright text-center mt-4">
-            <p>
-                © <span>Copyright</span>
-                <strong class="px-1 sitename">Kimbela</strong>
-                <span>All Rights Reserved</span>
-            </p>
-            <div class="credits">
-                Designed for meaningful connections
-            </div>
-            <div class="credits mt-2">
-                <small>Designed with ❤️ by <a href="https://technest-gules.vercel.app/" target="_blank" style="color: #8e44ad; text-decoration: none;">TechNest Solutions</a></small>
-            </div>
-        </div>
-    </footer>
-      </div>
+<section class="policy-section rounded-2xl border border-slate-200 bg-white p-6">
+  <h2 class="text-base font-semibold sm:text-lg">1. Information We Collect</h2>
+  <p class="mt-2 text-sm text-slate-600">We may collect the following categories of information:</p>
+  <div class="mt-4 space-y-4 text-sm text-slate-600">
+    <div>
+      <h3 class="font-semibold text-slate-800">Personal Information</h3>
+      <ul class="mt-2 list-disc pl-5">
+        <li>First name, last name, email address</li>
+        <li>Date of birth, gender, marital status</li>
+        <li>Educational level, occupation</li>
+      </ul>
     </div>
-    <script src="{{ url_for('static', filename='assets/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='assets/vendor/aos/aos.js') }}"></script>
-    <script src="{{ url_for('static', filename='assets/vendor/swiper/swiper-bundle.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='assets/vendor/purecounter/purecounter_vanilla.js') }}"></script>
-    <script src="{{ url_for('static', filename='assets/vendor/imagesloaded/imagesloaded.pkgd.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='assets/vendor/isotope-layout/isotope.pkgd.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='assets/vendor/glightbox/js/glightbox.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='assets/js/main.js') }}"></script>
-  </body>
-</html>
+    <div>
+      <h3 class="font-semibold text-slate-800">Optional Profile Information</h3>
+      <ul class="mt-2 list-disc pl-5">
+        <li>Religion (optional), ethnicity (optional)</li>
+        <li>Interests and hobbies</li>
+        <li>Profile photo or profile description</li>
+      </ul>
+    </div>
+    <div>
+      <h3 class="font-semibold text-slate-800">Location Information</h3>
+      <ul class="mt-2 list-disc pl-5">
+        <li>Country, state or province, city</li>
+      </ul>
+    </div>
+    <div>
+      <h3 class="font-semibold text-slate-800">Account Security Information</h3>
+      <ul class="mt-2 list-disc pl-5">
+        <li>Password or login credentials</li>
+        <li>Login activity and account activity within the platform</li>
+      </ul>
+    </div>
+    <div>
+      <h3 class="font-semibold text-slate-800">Payment and Transaction Information</h3>
+      <ul class="mt-2 list-disc pl-5">
+        <li>Marketplace subscriptions</li>
+        <li>Sponsored posts and banner advertisements</li>
+        <li>Promoted listings and paid matchmaking features</li>
+      </ul>
+      <p class="mt-2">Payment processing may be handled by trusted third-party payment providers.</p>
+    </div>
+    <div>
+      <h3 class="font-semibold text-slate-800">Technical Information</h3>
+      <ul class="mt-2 list-disc pl-5">
+        <li>IP address, browser type, device type</li>
+        <li>Pages visited, date and time of visits</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="policy-section rounded-2xl border border-slate-200 bg-white p-6">
+  <h2 class="text-base font-semibold sm:text-lg">2. How We Use Your Information</h2>
+  <ul class="mt-3 list-disc pl-5 text-sm text-slate-600">
+    <li>Create and manage user accounts</li>
+    <li>Enable users to build profiles and connect with others</li>
+    <li>Facilitate interactions between users</li>
+    <li>Improve functionality and performance</li>
+    <li>Prevent fraud and maintain safety</li>
+    <li>Provide support and respond to inquiries</li>
+    <li>Process payments and manage paid services</li>
+    <li>Support matchmaking and discovery features</li>
+    <li>Display relevant sponsored content and promotions</li>
+  </ul>
+</section>
+
+<section class="policy-section rounded-2xl border border-slate-200 bg-white p-6">
+  <h2 class="text-base font-semibold sm:text-lg">3. Profile Visibility</h2>
+  <p class="mt-2 text-sm text-slate-600">
+    Kimbela is a connection platform. Information included in a user’s profile may be visible to other users as part of discovery features. Users should exercise discretion when choosing what information to include.
+  </p>
+</section>
+
+<section class="policy-section rounded-2xl border border-slate-200 bg-white p-6">
+  <h2 class="text-base font-semibold sm:text-lg">4. Sensitive Personal Information</h2>
+  <p class="mt-2 text-sm text-slate-600">
+    Some profile information (e.g., religion or ethnicity) may be sensitive. Providing this information is optional. Kimbela does not sell or distribute sensitive personal information to third parties.
+  </p>
+</section>
+
+<section class="policy-section rounded-2xl border border-slate-200 bg-white p-6">
+  <h2 class="text-base font-semibold sm:text-lg">5. Sharing of Information</h2>
+  <p class="mt-2 text-sm text-slate-600">We do not sell or rent personal information to third parties. We may share information in the following circumstances:</p>
+  <div class="mt-3 space-y-3 text-sm text-slate-600">
+    <div>
+      <h3 class="font-semibold text-slate-800">Service Providers</h3>
+      <p>Trusted providers (hosting, security, payment processing, analytics, advertising) may access information necessary to perform their services.</p>
+    </div>
+    <div>
+      <h3 class="font-semibold text-slate-800">Legal Requirements</h3>
+      <p>We may disclose information to comply with legal obligations or protect the rights and safety of Kimbela and its users.</p>
+    </div>
+  </div>
+</section>
+
+<section class="policy-section rounded-2xl border border-slate-200 bg-white p-6">
+  <h2 class="text-base font-semibold sm:text-lg">6. Data Security</h2>
+  <p class="mt-2 text-sm text-slate-600">
+    Kimbela takes reasonable technical and organizational measures to protect user information, but no internet-based service can guarantee absolute security.
+  </p>
+</section>
+
+<section class="policy-section rounded-2xl border border-slate-200 bg-white p-6">
+  <h2 class="text-base font-semibold sm:text-lg">7. Cookies and Tracking Technologies</h2>
+  <ul class="mt-3 list-disc pl-5 text-sm text-slate-600">
+    <li>Maintain login sessions</li>
+    <li>Improve website functionality</li>
+    <li>Analyze user interactions</li>
+    <li>Enhance user experience and promotional features</li>
+  </ul>
+  <p class="mt-2 text-sm text-slate-600">Users may disable cookies in their browser settings, but some features may not function properly.</p>
+</section>
+
+<section class="policy-section rounded-2xl border border-slate-200 bg-white p-6">
+  <h2 class="text-base font-semibold sm:text-lg">8. Age Requirement</h2>
+  <p class="mt-2 text-sm text-slate-600">Kimbela is intended for individuals aged 31 or older. Accounts found to belong to users under 31 may be removed.</p>
+</section>
+
+<section class="policy-section rounded-2xl border border-slate-200 bg-white p-6">
+  <h2 class="text-base font-semibold sm:text-lg">9. Account Deletion</h2>
+  <p class="mt-2 text-sm text-slate-600">
+    Users may request deletion at any time. Profile information will be removed from public visibility, but some information may be retained for legal, security, or administrative purposes.
+  </p>
+</section>
+
+<section class="policy-section rounded-2xl border border-slate-200 bg-white p-6">
+  <h2 class="text-base font-semibold sm:text-lg">10. Third-Party Links</h2>
+  <p class="mt-2 text-sm text-slate-600">Kimbela may link to third-party websites or services. We are not responsible for their privacy practices or content.</p>
+</section>
+
+<section class="policy-section rounded-2xl border border-slate-200 bg-white p-6">
+  <h2 class="text-base font-semibold sm:text-lg">11. Changes to This Privacy Policy</h2>
+  <p class="mt-2 text-sm text-slate-600">We may update this policy from time to time. Updates will be posted with a revised date.</p>
+</section>
+
+<section class="policy-section rounded-2xl border border-slate-200 bg-white p-6">
+  <h2 class="text-base font-semibold sm:text-lg">12. Contact Information</h2>
+  <p class="mt-2 text-sm text-slate-600">Email: support@kimbela.com</p>
+  <p class="text-sm text-slate-600">Operated by Tutaf International Limited • Brand: Kimbela Hub</p>
+</section>
+
+{% include 'policies/_policy_footer.html' %}

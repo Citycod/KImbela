@@ -988,10 +988,10 @@
                             <div class="terms-checkbox">
                                 <input type="checkbox" id="terms" name="terms" {% if request.form.terms %}checked{% endif %}>
                                 <label for="terms" class="terms-text">
-                                    I agree to the <a href="#">Terms of Service</a> and
-                                    <a href="#">Privacy Policy</a> and confirm that I am at least 31 years old.
+                                    I agree to the <a href="{{ url_for('user.terms') }}">Terms of Service</a> and
+                                    <a href="{{ url_for('user.privacy') }}">Privacy Policy</a> and confirm that I am at least 31 years old.
                                     I understand that my use of the platform is also subject to the
-                                    <a href="#">Community Guidelines</a>.
+                                    <a href="{{ url_for('user.community_guidelines') }}">Community Guidelines</a>.
                                 </label>
                             </div>
                             {% if errors.terms %}<div class="invalid-feedback d-block">{{ errors.terms }}</div>{% endif %}
