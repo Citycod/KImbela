@@ -28,8 +28,8 @@
         <h3 class="text-sm font-semibold text-slate-900">Active matchmaking requests</h3>
         <span class="text-xs text-slate-500">Expires soon</span>
       </div>
-      <div class="mt-4 overflow-x-auto">
-        <table class="w-full text-left text-xs">
+      <div class="admin-table-wrap mt-4 overflow-x-auto">
+        <table class="admin-table w-full text-left text-xs">
           <thead>
             <tr class="border-b border-slate-200 text-slate-500">
               <th class="pb-2 font-medium">User</th>
@@ -61,8 +61,8 @@
         <h3 class="text-sm font-semibold text-slate-900">Recent matchmaking payments</h3>
         <span class="text-xs text-slate-500">Completed</span>
       </div>
-      <div class="mt-4 overflow-x-auto">
-        <table class="w-full text-left text-xs">
+      <div class="admin-table-wrap mt-4 overflow-x-auto">
+        <table class="admin-table w-full text-left text-xs">
           <thead>
             <tr class="border-b border-slate-200 text-slate-500">
               <th class="pb-2 font-medium">User</th>
@@ -90,6 +90,62 @@
     </div>
   </div>
 
+  <section class="mt-6 rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-sm">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h3 class="text-sm font-semibold text-slate-900">Recent activity</h3>
+        <p class="text-xs text-slate-500">Live request log (IP + location)</p>
+      </div>
+      <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">Live</span>
+    </div>
+    <div class="admin-table-wrap mt-4 overflow-x-auto">
+      <table class="admin-table w-full text-left text-xs">
+        <thead>
+          <tr class="border-b border-slate-200/70 text-slate-500">
+            <th class="py-2 font-medium">Time</th>
+            <th class="py-2 font-medium">User</th>
+            <th class="py-2 font-medium">Request</th>
+            <th class="py-2 font-medium">IP</th>
+            <th class="py-2 font-medium">Location</th>
+            <th class="py-2 font-medium">Latency</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in recent_activity %}
+          <tr class="border-b border-slate-100">
+            <td class="py-2 text-slate-500">{{ log.created_at.strftime('%b %d, %H:%M') }}</td>
+            <td class="py-2 text-slate-800">
+              {% if log.user %}
+                {{ log.user.full_name }}
+              {% else %}
+                Guest
+              {% endif %}
+            </td>
+            <td class="py-2 text-slate-700">
+              <span class="mr-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] uppercase text-slate-500">{{ log.method }}</span>
+              <span class="text-slate-800">{{ log.path }}</span>
+              <span class="ml-1 text-[10px] text-slate-400">({{ log.status_code }})</span>
+            </td>
+            <td class="py-2 text-slate-500">{{ log.ip_address or "Unknown" }}</td>
+            <td class="py-2 text-slate-500">
+              {% if log.city or log.region or log.country %}
+                {{ [log.city, log.region, log.country]|select|join(', ') }}
+              {% else %}
+                Unknown
+              {% endif %}
+            </td>
+            <td class="py-2 text-slate-500">{{ log.response_ms or 0 }}ms</td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6" class="py-4 text-center text-slate-500">No activity logged yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
   <div class="grid gap-6 lg:grid-cols-2">
     <div class="rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-sm">
       <div class="flex items-center justify-between">
@@ -115,6 +171,65 @@
       <div class="mt-6 h-64">
         <canvas id="usersChart" class="h-full w-full"></canvas>
       </div>
+    </div>
+  </div>
+
+  <div class="mt-6 grid gap-4 md:grid-cols-3">
+    <div class="rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-sm">
+      <p class="text-xs uppercase tracking-widest text-slate-400">Visits today</p>
+      <p class="mt-2 text-xl font-semibold text-slate-900">{{ unique_visitors }}</p>
+      <p class="text-xs text-slate-500">Unique IPs (last 24h)</p>
+    </div>
+    <div class="rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-sm">
+      <p class="text-xs uppercase tracking-widest text-slate-400">Total events</p>
+      <p class="mt-2 text-xl font-semibold text-slate-900">{{ total_events }}</p>
+      <p class="text-xs text-slate-500">Last {{ analytics_days }} days</p>
+    </div>
+    <div class="rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-sm">
+      <p class="text-xs uppercase tracking-widest text-slate-400">Tracking</p>
+      <p class="mt-2 text-xl font-semibold text-slate-900">All users</p>
+      <p class="text-xs text-slate-500">IP + location (best effort)</p>
+    </div>
+  </div>
+
+  <div class="mt-6 grid gap-6 lg:grid-cols-3">
+    <div class="rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-sm lg:col-span-2">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-base font-semibold text-slate-900">Visits & activity</h2>
+          <p class="text-xs text-slate-500">Daily requests (last {{ analytics_days }} days)</p>
+        </div>
+        <span class="rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700">Live</span>
+      </div>
+      <div class="mt-6 h-64">
+        <canvas id="visitsChart" class="h-full w-full"></canvas>
+      </div>
+    </div>
+
+    <div class="rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-sm">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-base font-semibold text-slate-900">Activity types</h2>
+          <p class="text-xs text-slate-500">Page / API / Admin / Action</p>
+        </div>
+        <span class="rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">Breakdown</span>
+      </div>
+      <div class="mt-6 h-64">
+        <canvas id="activityTypeChart" class="h-full w-full"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-6 rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-sm">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h2 class="text-base font-semibold text-slate-900">Top pages</h2>
+        <p class="text-xs text-slate-500">Most visited paths (last {{ analytics_days }} days)</p>
+      </div>
+      <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">HTTP requests</span>
+    </div>
+    <div class="mt-6 h-64">
+      <canvas id="topPagesChart" class="h-full w-full"></canvas>
     </div>
   </div>
 
@@ -197,8 +312,8 @@
         <h3 class="text-sm font-semibold text-slate-900">Active ads</h3>
         <a href="{{ url_for('admin.admin_ads') }}" class="text-xs font-medium text-slate-500 hover:text-slate-900">Manage ads</a>
       </div>
-      <div class="mt-4 overflow-x-auto">
-        <table class="w-full text-left text-xs">
+      <div class="admin-table-wrap mt-4 overflow-x-auto">
+        <table class="admin-table w-full text-left text-xs">
           <thead>
             <tr class="border-b border-slate-200 text-slate-500">
               <th class="pb-2 font-medium">Type</th>
@@ -244,8 +359,8 @@
         <h3 class="text-sm font-semibold text-slate-900">Marketplace subscriptions</h3>
         <span class="text-xs text-slate-500">Active payments</span>
       </div>
-      <div class="mt-4 overflow-x-auto">
-        <table class="w-full text-left text-xs">
+      <div class="admin-table-wrap mt-4 overflow-x-auto">
+        <table class="admin-table w-full text-left text-xs">
           <thead>
             <tr class="border-b border-slate-200 text-slate-500">
               <th class="pb-2 font-medium">User</th>
@@ -343,8 +458,8 @@
       <h3 class="text-sm font-semibold text-slate-900">Pending reports</h3>
       <a href="{{ url_for('admin.admin_reports') }}" class="text-xs font-medium text-slate-500 hover:text-slate-900">View all reports</a>
     </div>
-    <div class="mt-4 overflow-x-auto">
-      <table class="w-full text-left text-xs">
+    <div class="admin-table-wrap mt-4 overflow-x-auto">
+      <table class="admin-table w-full text-left text-xs">
         <thead>
           <tr class="border-b border-slate-200 text-slate-500">
             <th class="pb-2 font-medium">Type</th>
@@ -402,6 +517,12 @@
     const earningsLabels = {{ earnings_labels|tojson }};
     const earningsSeries = {{ earnings_series|tojson }};
     const userSeries = {{ user_series|tojson }};
+    const activityLabels = {{ activity_labels|tojson }};
+    const visitsSeries = {{ visits_series|tojson }};
+    const topPagesLabels = {{ top_pages_labels|tojson }};
+    const topPagesSeries = {{ top_pages_series|tojson }};
+    const activityTypeLabels = {{ activity_type_labels|tojson }};
+    const activityTypeSeries = {{ activity_type_series|tojson }};
 
     const earningsCanvas = document.getElementById("earningsChart");
     if (earningsCanvas) {
@@ -469,6 +590,90 @@
           scales: {
             x: { grid: { display: false }, ticks: { color: "#94a3b8", font: { size: 10 } } },
             y: { grid: { color: "#e2e8f0" }, ticks: { color: "#94a3b8", font: { size: 10 } } },
+          },
+        },
+      });
+    }
+
+    const visitsCanvas = document.getElementById("visitsChart");
+    if (visitsCanvas) {
+      new Chart(visitsCanvas, {
+        type: "line",
+        data: {
+          labels: activityLabels,
+          datasets: [
+            {
+              label: "Visits",
+              data: visitsSeries,
+              borderColor: "#6366f1",
+              backgroundColor: "rgba(99, 102, 241, 0.15)",
+              fill: true,
+              tension: 0.35,
+              borderWidth: 2,
+              pointRadius: 0,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { display: false }, ticks: { color: "#94a3b8", font: { size: 10 } } },
+            y: { grid: { color: "#e2e8f0" }, ticks: { color: "#94a3b8", font: { size: 10 } } },
+          },
+        },
+      });
+    }
+
+    const topPagesCanvas = document.getElementById("topPagesChart");
+    if (topPagesCanvas) {
+      new Chart(topPagesCanvas, {
+        type: "bar",
+        data: {
+          labels: topPagesLabels,
+          datasets: [
+            {
+              label: "Requests",
+              data: topPagesSeries,
+              backgroundColor: "rgba(15, 118, 110, 0.35)",
+              borderColor: "#0f766e",
+              borderWidth: 1,
+              borderRadius: 8,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { display: false }, ticks: { color: "#94a3b8", font: { size: 10 }, autoSkip: false, maxRotation: 45, minRotation: 45 } },
+            y: { grid: { color: "#e2e8f0" }, ticks: { color: "#94a3b8", font: { size: 10 } } },
+          },
+        },
+      });
+    }
+
+    const activityTypeCanvas = document.getElementById("activityTypeChart");
+    if (activityTypeCanvas) {
+      new Chart(activityTypeCanvas, {
+        type: "doughnut",
+        data: {
+          labels: activityTypeLabels,
+          datasets: [
+            {
+              data: activityTypeSeries,
+              backgroundColor: ["#f59e0b", "#6366f1", "#0ea5e9", "#10b981", "#94a3b8"],
+              borderWidth: 0,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: "bottom", labels: { boxWidth: 10, color: "#64748b", font: { size: 10 } } },
           },
         },
       });

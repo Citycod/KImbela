@@ -185,6 +185,29 @@
             -webkit-box-orient: vertical;
             -webkit-line-clamp: 2;
         }
+
+        .category-toggle-btn {
+            width: 28px;
+            height: 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            border: 1px solid rgba(0,0,0,0.08);
+            background: #fff;
+            color: #94a3b8;
+            transition: transform 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+        }
+
+        .category-toggle-btn.active {
+            color: #0f172a;
+            border-color: rgba(0,0,0,0.18);
+            transform: rotate(90deg);
+        }
+
+        .category-children.hidden {
+            display: none;
+        }
     </style>
 </head>
 <body class="text-gray-800">
@@ -294,28 +317,651 @@
                            class="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm {{ 'service-category-active text-white' if not category_slug }}">
                             All Marketplace Items
                         </a>
-                        {% for category in categories %}
-                        {% set is_parent_active = category_slug == category.slug %}
-                        {% set is_child_active = category.subcategories and (category.subcategories|selectattr('slug', 'equalto', category_slug)|list|length > 0) %}
-                        <details class="mt-2" {% if is_parent_active or is_child_active %}open{% endif %}>
-                            <summary class="block w-full list-none cursor-pointer">
-                                <a href="{{ url_for('market.main_market', category=category.slug) }}" 
-                                   class="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-semibold {{ 'service-category-active text-white' if is_parent_active }}">
-                                    {{ category.name }}
+                        {% set fashion_open = category_slug in ['fashion','clothing','underwear-lingerie','sportswear-activewear','footwear','bags','jewellery','accessories'] %}
+                        <div class="mt-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <a href="{{ url_for('market.main_market', category='fashion') }}" 
+                                   class="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-semibold {{ 'service-category-active text-white' if category_slug == 'fashion' }}">
+                                    Fashion
                                 </a>
-                            </summary>
-                            {% if category.subcategories %}
-                            <div class="space-y-1 pl-2">
-                                {% for sub in category.subcategories|sort(attribute='sort_order') %}
-                                <a href="{{ url_for('market.main_market', category=sub.slug) }}" 
-                                   class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == sub.slug }}">
-                                    {{ sub.name }}
-                                </a>
-                                {% endfor %}
+                                <button type="button" class="category-toggle-btn{% if fashion_open %} active{% endif %}" data-toggle="category" data-target="cat-fashion" aria-expanded="{{ 'true' if fashion_open else 'false' }}">
+                                    <i class="bi bi-chevron-right text-xs"></i>
+                                </button>
                             </div>
-                            {% endif %}
-                        </details>
-                        {% endfor %}
+                            <div id="cat-fashion" class="category-children space-y-1 pl-2{% if not fashion_open %} hidden{% endif %}">
+                                <a href="{{ url_for('market.main_market', category='clothing') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'clothing' }}">Clothing</a>
+                                <a href="{{ url_for('market.main_market', category='underwear-lingerie') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'underwear-lingerie' }}">Underwear &amp; Lingerie</a>
+                                <a href="{{ url_for('market.main_market', category='sportswear-activewear') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'sportswear-activewear' }}">Sportswear / Activewear</a>
+                                <a href="{{ url_for('market.main_market', category='footwear') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'footwear' }}">Footwear</a>
+                                <a href="{{ url_for('market.main_market', category='bags') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'bags' }}">Bags</a>
+                                <a href="{{ url_for('market.main_market', category='jewellery') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'jewellery' }}">Jewellery</a>
+                                <a href="{{ url_for('market.main_market', category='accessories') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'accessories' }}">Accessories</a>
+                            </div>
+                        </div>
+
+                        {% set entertainment_open = category_slug in ['entertainment','djs','live-bands','mc-event-hosts','comedians','performers','entertainment-booking'] %}
+                        <div class="mt-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <a href="{{ url_for('market.main_market', category='entertainment') }}" 
+                                   class="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-semibold {{ 'service-category-active text-white' if category_slug == 'entertainment' }}">
+                                    Entertainment
+                                </a>
+                                <button type="button" class="category-toggle-btn{% if entertainment_open %} active{% endif %}" data-toggle="category" data-target="cat-entertainment" aria-expanded="{{ 'true' if entertainment_open else 'false' }}">
+                                    <i class="bi bi-chevron-right text-xs"></i>
+                                </button>
+                            </div>
+                            <div id="cat-entertainment" class="category-children space-y-1 pl-2{% if not entertainment_open %} hidden{% endif %}">
+                                <a href="{{ url_for('market.main_market', category='djs') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'djs' }}">DJs</a>
+                                <a href="{{ url_for('market.main_market', category='live-bands') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'live-bands' }}">Live Bands</a>
+                                <a href="{{ url_for('market.main_market', category='mc-event-hosts') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'mc-event-hosts' }}">MC / Event Hosts</a>
+                                <a href="{{ url_for('market.main_market', category='comedians') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'comedians' }}">Comedians</a>
+                                <a href="{{ url_for('market.main_market', category='performers') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'performers' }}">Performers</a>
+                                <a href="{{ url_for('market.main_market', category='entertainment-booking') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'entertainment-booking' }}">Entertainment Booking</a>
+                            </div>
+                        </div>
+
+                        {% set beauty_personal_open = category_slug in ['beauty-personal-care','skincare-products','makeup','hair-care','grooming-products','hair-styling-products','nail-care-products'] %}
+                        <div class="mt-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <a href="{{ url_for('market.main_market', category='beauty-personal-care') }}" 
+                                   class="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-semibold {{ 'service-category-active text-white' if category_slug == 'beauty-personal-care' }}">
+                                    Beauty &amp; Personal Care
+                                </a>
+                                <button type="button" class="category-toggle-btn{% if beauty_personal_open %} active{% endif %}" data-toggle="category" data-target="cat-beauty-personal-care" aria-expanded="{{ 'true' if beauty_personal_open else 'false' }}">
+                                    <i class="bi bi-chevron-right text-xs"></i>
+                                </button>
+                            </div>
+                            <div id="cat-beauty-personal-care" class="category-children space-y-1 pl-2{% if not beauty_personal_open %} hidden{% endif %}">
+                                <a href="{{ url_for('market.main_market', category='skincare-products') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'skincare-products' }}">Skincare Products</a>
+                                <a href="{{ url_for('market.main_market', category='makeup') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'makeup' }}">Makeup</a>
+                                <a href="{{ url_for('market.main_market', category='hair-care') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'hair-care' }}">Hair Care</a>
+                                <a href="{{ url_for('market.main_market', category='grooming-products') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'grooming-products' }}">Grooming Products</a>
+                                <a href="{{ url_for('market.main_market', category='hair-styling-products') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'hair-styling-products' }}">Hair Styling</a>
+                                <a href="{{ url_for('market.main_market', category='nail-care-products') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'nail-care-products' }}">Nail Care</a>
+                            </div>
+                        </div>
+
+                        {% set electronics_open = category_slug in ['electronics-gadgets','mobile-phones','laptops-computers','tablets','smart-watches','headphones-earbuds','cameras','gaming-consoles','phone-accessories','computer-accessories','smart-home-devices'] %}
+                        <div class="mt-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <a href="{{ url_for('market.main_market', category='electronics-gadgets') }}" 
+                                   class="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-semibold {{ 'service-category-active text-white' if category_slug == 'electronics-gadgets' }}">
+                                    Electronics &amp; Gadgets
+                                </a>
+                                <button type="button" class="category-toggle-btn{% if electronics_open %} active{% endif %}" data-toggle="category" data-target="cat-electronics-gadgets" aria-expanded="{{ 'true' if electronics_open else 'false' }}">
+                                    <i class="bi bi-chevron-right text-xs"></i>
+                                </button>
+                            </div>
+                            <div id="cat-electronics-gadgets" class="category-children space-y-1 pl-2{% if not electronics_open %} hidden{% endif %}">
+                                <a href="{{ url_for('market.main_market', category='mobile-phones') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'mobile-phones' }}">Mobile Phones</a>
+                                <a href="{{ url_for('market.main_market', category='laptops-computers') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'laptops-computers' }}">Laptops &amp; Computers</a>
+                                <a href="{{ url_for('market.main_market', category='tablets') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'tablets' }}">Tablets</a>
+                                <a href="{{ url_for('market.main_market', category='smart-watches') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'smart-watches' }}">Smart Watches</a>
+                                <a href="{{ url_for('market.main_market', category='headphones-earbuds') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'headphones-earbuds' }}">Headphones &amp; Earbuds</a>
+                                <a href="{{ url_for('market.main_market', category='cameras') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'cameras' }}">Cameras</a>
+                                <a href="{{ url_for('market.main_market', category='gaming-consoles') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'gaming-consoles' }}">Gaming Consoles</a>
+                                <a href="{{ url_for('market.main_market', category='phone-accessories') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'phone-accessories' }}">Phone Accessories</a>
+                                <a href="{{ url_for('market.main_market', category='computer-accessories') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'computer-accessories' }}">Computer Accessories</a>
+                                <a href="{{ url_for('market.main_market', category='smart-home-devices') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'smart-home-devices' }}">Smart Home Devices</a>
+                            </div>
+                        </div>
+
+                        {% set home_living_open = category_slug in ['home-living','home-decor','furniture','kitchen-products','home-appliances','household-essentials','cleaning-supplies'] %}
+                        <div class="mt-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <a href="{{ url_for('market.main_market', category='home-living') }}" 
+                                   class="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-semibold {{ 'service-category-active text-white' if category_slug == 'home-living' }}">
+                                    Home &amp; Living
+                                </a>
+                                <button type="button" class="category-toggle-btn{% if home_living_open %} active{% endif %}" data-toggle="category" data-target="cat-home-living" aria-expanded="{{ 'true' if home_living_open else 'false' }}">
+                                    <i class="bi bi-chevron-right text-xs"></i>
+                                </button>
+                            </div>
+                            <div id="cat-home-living" class="category-children space-y-1 pl-2{% if not home_living_open %} hidden{% endif %}">
+                                <a href="{{ url_for('market.main_market', category='home-decor') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'home-decor' }}">Home Decor</a>
+                                <a href="{{ url_for('market.main_market', category='furniture') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'furniture' }}">Furniture</a>
+                                <a href="{{ url_for('market.main_market', category='kitchen-products') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'kitchen-products' }}">Kitchen Products</a>
+                                <a href="{{ url_for('market.main_market', category='home-appliances') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'home-appliances' }}">Home Appliances</a>
+                                <a href="{{ url_for('market.main_market', category='household-essentials') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'household-essentials' }}">Household Essentials</a>
+                                <a href="{{ url_for('market.main_market', category='cleaning-supplies') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'cleaning-supplies' }}">Cleaning Supplies</a>
+                            </div>
+                        </div>
+
+                        {% set garden_open = category_slug in ['garden-outdoor','gardening-tools','plants-seeds','outdoor-furniture','outdoor-decor','landscaping-supplies'] %}
+                        <div class="mt-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <a href="{{ url_for('market.main_market', category='garden-outdoor') }}" 
+                                   class="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-semibold {{ 'service-category-active text-white' if category_slug == 'garden-outdoor' }}">
+                                    Garden &amp; Outdoor
+                                </a>
+                                <button type="button" class="category-toggle-btn{% if garden_open %} active{% endif %}" data-toggle="category" data-target="cat-garden-outdoor" aria-expanded="{{ 'true' if garden_open else 'false' }}">
+                                    <i class="bi bi-chevron-right text-xs"></i>
+                                </button>
+                            </div>
+                            <div id="cat-garden-outdoor" class="category-children space-y-1 pl-2{% if not garden_open %} hidden{% endif %}">
+                                <a href="{{ url_for('market.main_market', category='gardening-tools') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'gardening-tools' }}">Gardening Tools</a>
+                                <a href="{{ url_for('market.main_market', category='plants-seeds') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'plants-seeds' }}">Plants &amp; Seeds</a>
+                                <a href="{{ url_for('market.main_market', category='outdoor-furniture') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'outdoor-furniture' }}">Outdoor Furniture</a>
+                                <a href="{{ url_for('market.main_market', category='outdoor-decor') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'outdoor-decor' }}">Outdoor Decor</a>
+                                <a href="{{ url_for('market.main_market', category='landscaping-supplies') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'landscaping-supplies' }}">Landscaping Supplies</a>
+                            </div>
+                        </div>
+
+                        {% set sports_open = category_slug in ['sports-fitness','sports-equipment','gym-equipment','fitness-accessories','yoga-pilates-gear','running-gear','cycling-equipment','sports-coaching','personal-training'] %}
+                        <div class="mt-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <a href="{{ url_for('market.main_market', category='sports-fitness') }}" 
+                                   class="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-semibold {{ 'service-category-active text-white' if category_slug == 'sports-fitness' }}">
+                                    Sports &amp; Fitness
+                                </a>
+                                <button type="button" class="category-toggle-btn{% if sports_open %} active{% endif %}" data-toggle="category" data-target="cat-sports-fitness" aria-expanded="{{ 'true' if sports_open else 'false' }}">
+                                    <i class="bi bi-chevron-right text-xs"></i>
+                                </button>
+                            </div>
+                            <div id="cat-sports-fitness" class="category-children space-y-1 pl-2{% if not sports_open %} hidden{% endif %}">
+                                <a href="{{ url_for('market.main_market', category='sports-equipment') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'sports-equipment' }}">Sports Equipment</a>
+                                <a href="{{ url_for('market.main_market', category='gym-equipment') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'gym-equipment' }}">Gym Equipment</a>
+                                <a href="{{ url_for('market.main_market', category='fitness-accessories') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'fitness-accessories' }}">Fitness Accessories</a>
+                                <a href="{{ url_for('market.main_market', category='yoga-pilates-gear') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'yoga-pilates-gear' }}">Yoga &amp; Pilates Gear</a>
+                                <a href="{{ url_for('market.main_market', category='running-gear') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'running-gear' }}">Running Gear</a>
+                                <a href="{{ url_for('market.main_market', category='cycling-equipment') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'cycling-equipment' }}">Cycling Equipment</a>
+                                <a href="{{ url_for('market.main_market', category='sports-coaching') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'sports-coaching' }}">Sports Coaching</a>
+                                <a href="{{ url_for('market.main_market', category='personal-training') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'personal-training' }}">Personal Training</a>
+                            </div>
+                        </div>
+
+                        {% set books_open = category_slug in ['books-learning','books','educational-materials','study-guides','training-manuals','online-courses'] %}
+                        <div class="mt-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <a href="{{ url_for('market.main_market', category='books-learning') }}" 
+                                   class="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-semibold {{ 'service-category-active text-white' if category_slug == 'books-learning' }}">
+                                    Books &amp; Learning
+                                </a>
+                                <button type="button" class="category-toggle-btn{% if books_open %} active{% endif %}" data-toggle="category" data-target="cat-books-learning" aria-expanded="{{ 'true' if books_open else 'false' }}">
+                                    <i class="bi bi-chevron-right text-xs"></i>
+                                </button>
+                            </div>
+                            <div id="cat-books-learning" class="category-children space-y-1 pl-2{% if not books_open %} hidden{% endif %}">
+                                <a href="{{ url_for('market.main_market', category='books') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'books' }}">Books</a>
+                                <a href="{{ url_for('market.main_market', category='educational-materials') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'educational-materials' }}">Educational Materials</a>
+                                <a href="{{ url_for('market.main_market', category='study-guides') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'study-guides' }}">Study Guides</a>
+                                <a href="{{ url_for('market.main_market', category='training-manuals') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'training-manuals' }}">Training Manuals</a>
+                                <a href="{{ url_for('market.main_market', category='online-courses') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'online-courses' }}">Online Courses</a>
+                            </div>
+                        </div>
+
+                        {% set art_open = category_slug in ['art-crafts-handmade-goods','artwork','crafts','handmade-decor','custom-gifts','custom-art'] %}
+                        <div class="mt-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <a href="{{ url_for('market.main_market', category='art-crafts-handmade-goods') }}" 
+                                   class="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-semibold {{ 'service-category-active text-white' if category_slug == 'art-crafts-handmade-goods' }}">
+                                    Art, Crafts &amp; Handmade Goods
+                                </a>
+                                <button type="button" class="category-toggle-btn{% if art_open %} active{% endif %}" data-toggle="category" data-target="cat-art-crafts-handmade-goods" aria-expanded="{{ 'true' if art_open else 'false' }}">
+                                    <i class="bi bi-chevron-right text-xs"></i>
+                                </button>
+                            </div>
+                            <div id="cat-art-crafts-handmade-goods" class="category-children space-y-1 pl-2{% if not art_open %} hidden{% endif %}">
+                                <a href="{{ url_for('market.main_market', category='artwork') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'artwork' }}">Artwork</a>
+                                <a href="{{ url_for('market.main_market', category='crafts') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'crafts' }}">Crafts</a>
+                                <a href="{{ url_for('market.main_market', category='handmade-decor') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'handmade-decor' }}">Handmade Decor</a>
+                                <a href="{{ url_for('market.main_market', category='custom-gifts') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'custom-gifts' }}">Custom Gifts</a>
+                                <a href="{{ url_for('market.main_market', category='custom-art') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'custom-art' }}">Custom Art</a>
+                            </div>
+                        </div>
+
+                        {% set kids_open = category_slug in ['kids-baby','baby-clothing','kids-clothing','baby-products','toys-games','baby-care-products','kids-learning-materials'] %}
+                        <div class="mt-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <a href="{{ url_for('market.main_market', category='kids-baby') }}" 
+                                   class="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-semibold {{ 'service-category-active text-white' if category_slug == 'kids-baby' }}">
+                                    Kids &amp; Baby
+                                </a>
+                                <button type="button" class="category-toggle-btn{% if kids_open %} active{% endif %}" data-toggle="category" data-target="cat-kids-baby" aria-expanded="{{ 'true' if kids_open else 'false' }}">
+                                    <i class="bi bi-chevron-right text-xs"></i>
+                                </button>
+                            </div>
+                            <div id="cat-kids-baby" class="category-children space-y-1 pl-2{% if not kids_open %} hidden{% endif %}">
+                                <a href="{{ url_for('market.main_market', category='baby-clothing') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'baby-clothing' }}">Baby Clothing</a>
+                                <a href="{{ url_for('market.main_market', category='kids-clothing') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'kids-clothing' }}">Kids Clothing</a>
+                                <a href="{{ url_for('market.main_market', category='baby-products') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'baby-products' }}">Baby Products</a>
+                                <a href="{{ url_for('market.main_market', category='toys-games') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'toys-games' }}">Toys &amp; Games</a>
+                                <a href="{{ url_for('market.main_market', category='baby-care-products') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'baby-care-products' }}">Baby Care Products</a>
+                                <a href="{{ url_for('market.main_market', category='kids-learning-materials') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'kids-learning-materials' }}">Kids Learning Materials</a>
+                            </div>
+                        </div>
+
+                        {% set domestic_open = category_slug in ['domestic-household-help','house-help-home-help','nannies','caregivers','elderly-care','babysitting'] %}
+                        <div class="mt-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <a href="{{ url_for('market.main_market', category='domestic-household-help') }}" 
+                                   class="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-semibold {{ 'service-category-active text-white' if category_slug == 'domestic-household-help' }}">
+                                    Domestic &amp; Household Help
+                                </a>
+                                <button type="button" class="category-toggle-btn{% if domestic_open %} active{% endif %}" data-toggle="category" data-target="cat-domestic-household-help" aria-expanded="{{ 'true' if domestic_open else 'false' }}">
+                                    <i class="bi bi-chevron-right text-xs"></i>
+                                </button>
+                            </div>
+                            <div id="cat-domestic-household-help" class="category-children space-y-1 pl-2{% if not domestic_open %} hidden{% endif %}">
+                                <a href="{{ url_for('market.main_market', category='house-help-home-help') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'house-help-home-help' }}">House Help / Home Help</a>
+                                <a href="{{ url_for('market.main_market', category='nannies') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'nannies' }}">Nannies</a>
+                                <a href="{{ url_for('market.main_market', category='caregivers') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'caregivers' }}">Caregivers</a>
+                                <a href="{{ url_for('market.main_market', category='elderly-care') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'elderly-care' }}">Elderly Care</a>
+                                <a href="{{ url_for('market.main_market', category='babysitting') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'babysitting' }}">Babysitting</a>
+                            </div>
+                        </div>
+
+                        {% set automotive_open = category_slug in ['automotive','cars-for-sale','car-accessories','car-care-products','car-parts','car-electronics','auto-repair','car-detailing','vehicle-maintenance','car-inspection'] %}
+                        <div class="mt-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <a href="{{ url_for('market.main_market', category='automotive') }}" 
+                                   class="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-semibold {{ 'service-category-active text-white' if category_slug == 'automotive' }}">
+                                    Automotive
+                                </a>
+                                <button type="button" class="category-toggle-btn{% if automotive_open %} active{% endif %}" data-toggle="category" data-target="cat-automotive" aria-expanded="{{ 'true' if automotive_open else 'false' }}">
+                                    <i class="bi bi-chevron-right text-xs"></i>
+                                </button>
+                            </div>
+                            <div id="cat-automotive" class="category-children space-y-1 pl-2{% if not automotive_open %} hidden{% endif %}">
+                                <a href="{{ url_for('market.main_market', category='cars-for-sale') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'cars-for-sale' }}">Cars for Sale</a>
+                                <a href="{{ url_for('market.main_market', category='car-accessories') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'car-accessories' }}">Car Accessories</a>
+                                <a href="{{ url_for('market.main_market', category='car-care-products') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'car-care-products' }}">Car Care Products</a>
+                                <a href="{{ url_for('market.main_market', category='car-parts') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'car-parts' }}">Car Parts</a>
+                                <a href="{{ url_for('market.main_market', category='car-electronics') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'car-electronics' }}">Car Electronics</a>
+                                <a href="{{ url_for('market.main_market', category='auto-repair') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'auto-repair' }}">Auto Repair</a>
+                                <a href="{{ url_for('market.main_market', category='car-detailing') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'car-detailing' }}">Car Detailing</a>
+                                <a href="{{ url_for('market.main_market', category='vehicle-maintenance') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'vehicle-maintenance' }}">Vehicle Maintenance</a>
+                                <a href="{{ url_for('market.main_market', category='car-inspection') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'car-inspection' }}">Car Inspection</a>
+                            </div>
+                        </div>
+
+                        {% set food_open = category_slug in ['food-groceries','raw-food-fresh-produce','spices-herbs-seasonings','packaged-foods','homemade-foods','snacks','beverages'] %}
+                        <div class="mt-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <a href="{{ url_for('market.main_market', category='food-groceries') }}" 
+                                   class="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-semibold {{ 'service-category-active text-white' if category_slug == 'food-groceries' }}">
+                                    Food &amp; Groceries
+                                </a>
+                                <button type="button" class="category-toggle-btn{% if food_open %} active{% endif %}" data-toggle="category" data-target="cat-food-groceries" aria-expanded="{{ 'true' if food_open else 'false' }}">
+                                    <i class="bi bi-chevron-right text-xs"></i>
+                                </button>
+                            </div>
+                            <div id="cat-food-groceries" class="category-children space-y-1 pl-2{% if not food_open %} hidden{% endif %}">
+                                <a href="{{ url_for('market.main_market', category='raw-food-fresh-produce') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'raw-food-fresh-produce' }}">Raw Food / Fresh Produce</a>
+                                <a href="{{ url_for('market.main_market', category='spices-herbs-seasonings') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'spices-herbs-seasonings' }}">Spices, Herbs &amp; Seasonings</a>
+                                <a href="{{ url_for('market.main_market', category='packaged-foods') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'packaged-foods' }}">Packaged Foods</a>
+                                <a href="{{ url_for('market.main_market', category='homemade-foods') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'homemade-foods' }}">Homemade Foods</a>
+                                <a href="{{ url_for('market.main_market', category='snacks') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'snacks' }}">Snacks</a>
+                                <a href="{{ url_for('market.main_market', category='beverages') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'beverages' }}">Beverages</a>
+                            </div>
+                        </div>
+
+                        {% set health_open = category_slug in ['health-wellness','health-supplements','herbal-medicine','personal-hygiene-products','wellness-products','nutrition-coaching','wellness-programs','fitness-plans'] %}
+                        <div class="mt-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <a href="{{ url_for('market.main_market', category='health-wellness') }}" 
+                                   class="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-semibold {{ 'service-category-active text-white' if category_slug == 'health-wellness' }}">
+                                    Health &amp; Wellness
+                                </a>
+                                <button type="button" class="category-toggle-btn{% if health_open %} active{% endif %}" data-toggle="category" data-target="cat-health-wellness" aria-expanded="{{ 'true' if health_open else 'false' }}">
+                                    <i class="bi bi-chevron-right text-xs"></i>
+                                </button>
+                            </div>
+                            <div id="cat-health-wellness" class="category-children space-y-1 pl-2{% if not health_open %} hidden{% endif %}">
+                                <a href="{{ url_for('market.main_market', category='health-supplements') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'health-supplements' }}">Health Supplements</a>
+                                <a href="{{ url_for('market.main_market', category='herbal-medicine') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'herbal-medicine' }}">Herbal Medicine</a>
+                                <a href="{{ url_for('market.main_market', category='personal-hygiene-products') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'personal-hygiene-products' }}">Personal Hygiene Products</a>
+                                <a href="{{ url_for('market.main_market', category='wellness-products') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'wellness-products' }}">Wellness Products</a>
+                                <a href="{{ url_for('market.main_market', category='nutrition-coaching') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'nutrition-coaching' }}">Nutrition Coaching</a>
+                                <a href="{{ url_for('market.main_market', category='wellness-programs') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'wellness-programs' }}">Wellness Programs</a>
+                                <a href="{{ url_for('market.main_market', category='fitness-plans') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'fitness-plans' }}">Fitness Plans</a>
+                            </div>
+                        </div>
+
+                        {% set mentoring_open = category_slug in ['mentoring-coaching','life-coaching','leadership-coaching','relationship-coaching','personal-growth-coaching'] %}
+                        <div class="mt-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <a href="{{ url_for('market.main_market', category='mentoring-coaching') }}" 
+                                   class="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-semibold {{ 'service-category-active text-white' if category_slug == 'mentoring-coaching' }}">
+                                    Mentoring &amp; Coaching
+                                </a>
+                                <button type="button" class="category-toggle-btn{% if mentoring_open %} active{% endif %}" data-toggle="category" data-target="cat-mentoring-coaching" aria-expanded="{{ 'true' if mentoring_open else 'false' }}">
+                                    <i class="bi bi-chevron-right text-xs"></i>
+                                </button>
+                            </div>
+                            <div id="cat-mentoring-coaching" class="category-children space-y-1 pl-2{% if not mentoring_open %} hidden{% endif %}">
+                                <a href="{{ url_for('market.main_market', category='life-coaching') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'life-coaching' }}">Life Coaching</a>
+                                <a href="{{ url_for('market.main_market', category='leadership-coaching') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'leadership-coaching' }}">Leadership Coaching</a>
+                                <a href="{{ url_for('market.main_market', category='relationship-coaching') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'relationship-coaching' }}">Relationship Coaching</a>
+                                <a href="{{ url_for('market.main_market', category='personal-growth-coaching') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'personal-growth-coaching' }}">Personal Growth Coaching</a>
+                            </div>
+                        </div>
+
+                        {% set counselling_open = category_slug in ['counselling-therapy','relationship-counselling','family-counselling','mental-wellness-support','emotional-support-coaching','stress-management','personal-development-therapy','sex-intimacy-therapy'] %}
+                        <div class="mt-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <a href="{{ url_for('market.main_market', category='counselling-therapy') }}" 
+                                   class="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-semibold {{ 'service-category-active text-white' if category_slug == 'counselling-therapy' }}">
+                                    Counselling &amp; Therapy
+                                </a>
+                                <button type="button" class="category-toggle-btn{% if counselling_open %} active{% endif %}" data-toggle="category" data-target="cat-counselling-therapy" aria-expanded="{{ 'true' if counselling_open else 'false' }}">
+                                    <i class="bi bi-chevron-right text-xs"></i>
+                                </button>
+                            </div>
+                            <div id="cat-counselling-therapy" class="category-children space-y-1 pl-2{% if not counselling_open %} hidden{% endif %}">
+                                <a href="{{ url_for('market.main_market', category='relationship-counselling') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'relationship-counselling' }}">Relationship Counselling</a>
+                                <a href="{{ url_for('market.main_market', category='family-counselling') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'family-counselling' }}">Family Counselling</a>
+                                <a href="{{ url_for('market.main_market', category='mental-wellness-support') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'mental-wellness-support' }}">Mental Wellness Support</a>
+                                <a href="{{ url_for('market.main_market', category='emotional-support-coaching') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'emotional-support-coaching' }}">Emotional Support Coaching</a>
+                                <a href="{{ url_for('market.main_market', category='stress-management') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'stress-management' }}">Stress Management</a>
+                                <a href="{{ url_for('market.main_market', category='personal-development-therapy') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'personal-development-therapy' }}">Personal Development Therapy</a>
+                                <a href="{{ url_for('market.main_market', category='sex-intimacy-therapy') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'sex-intimacy-therapy' }}">Sex &amp; Intimacy Therapy</a>
+                            </div>
+                        </div>
+
+                        {% set education_open = category_slug in ['education-tutoring','academic-tutoring','language-learning','professional-certifications','education-online-courses','skill-development','exam-preparation'] %}
+                        <div class="mt-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <a href="{{ url_for('market.main_market', category='education-tutoring') }}" 
+                                   class="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-semibold {{ 'service-category-active text-white' if category_slug == 'education-tutoring' }}">
+                                    Education &amp; Tutoring
+                                </a>
+                                <button type="button" class="category-toggle-btn{% if education_open %} active{% endif %}" data-toggle="category" data-target="cat-education-tutoring" aria-expanded="{{ 'true' if education_open else 'false' }}">
+                                    <i class="bi bi-chevron-right text-xs"></i>
+                                </button>
+                            </div>
+                            <div id="cat-education-tutoring" class="category-children space-y-1 pl-2{% if not education_open %} hidden{% endif %}">
+                                <a href="{{ url_for('market.main_market', category='academic-tutoring') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'academic-tutoring' }}">Academic Tutoring</a>
+                                <a href="{{ url_for('market.main_market', category='language-learning') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'language-learning' }}">Language Learning</a>
+                                <a href="{{ url_for('market.main_market', category='professional-certifications') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'professional-certifications' }}">Professional Certifications</a>
+                                <a href="{{ url_for('market.main_market', category='education-online-courses') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'education-online-courses' }}">Online Courses</a>
+                                <a href="{{ url_for('market.main_market', category='skill-development') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'skill-development' }}">Skill Development</a>
+                                <a href="{{ url_for('market.main_market', category='exam-preparation') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'exam-preparation' }}">Exam Preparation</a>
+                            </div>
+                        </div>
+
+                        {% set professional_open = category_slug in ['professional-services','hr-consulting','project-management','operations-consulting','administrative-services','virtual-assistance','document-preparation','customer-support-services','call-center-services','career-employment-services','business-entrepreneurship-services','professional-personal-development-coaching','other-business-services'] %}
+                        <div class="mt-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <a href="{{ url_for('market.main_market', category='professional-services') }}" 
+                                   class="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-semibold {{ 'service-category-active text-white' if category_slug == 'professional-services' }}">
+                                    Professional Services
+                                </a>
+                                <button type="button" class="category-toggle-btn{% if professional_open %} active{% endif %}" data-toggle="category" data-target="cat-professional-services" aria-expanded="{{ 'true' if professional_open else 'false' }}">
+                                    <i class="bi bi-chevron-right text-xs"></i>
+                                </button>
+                            </div>
+                            <div id="cat-professional-services" class="category-children space-y-1 pl-2{% if not professional_open %} hidden{% endif %}">
+                                <a href="{{ url_for('market.main_market', category='hr-consulting') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'hr-consulting' }}">HR Consulting</a>
+                                <a href="{{ url_for('market.main_market', category='project-management') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'project-management' }}">Project Management</a>
+                                <a href="{{ url_for('market.main_market', category='operations-consulting') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'operations-consulting' }}">Operations Consulting</a>
+                                <a href="{{ url_for('market.main_market', category='administrative-services') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'administrative-services' }}">Administrative Services</a>
+                                <a href="{{ url_for('market.main_market', category='virtual-assistance') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'virtual-assistance' }}">Virtual Assistance</a>
+                                <a href="{{ url_for('market.main_market', category='document-preparation') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'document-preparation' }}">Document Preparation</a>
+                                <a href="{{ url_for('market.main_market', category='customer-support-services') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'customer-support-services' }}">Customer Support Services</a>
+                                <a href="{{ url_for('market.main_market', category='call-center-services') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'call-center-services' }}">Call Center Services</a>
+                                <a href="{{ url_for('market.main_market', category='career-employment-services') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'career-employment-services' }}">Career &amp; Employment Services</a>
+                                <a href="{{ url_for('market.main_market', category='business-entrepreneurship-services') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'business-entrepreneurship-services' }}">Business &amp; Entrepreneurship Services</a>
+                                <a href="{{ url_for('market.main_market', category='professional-personal-development-coaching') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'professional-personal-development-coaching' }}">Personal Development Coaching</a>
+                                <a href="{{ url_for('market.main_market', category='other-business-services') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'other-business-services' }}">Other Business Services</a>
+                            </div>
+                        </div>
+
+                        {% set legal_open = category_slug in ['legal-services','legal-consultation','contract-drafting','business-registration-guidance','compliance-support','legal-advisory'] %}
+                        <div class="mt-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <a href="{{ url_for('market.main_market', category='legal-services') }}" 
+                                   class="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-semibold {{ 'service-category-active text-white' if category_slug == 'legal-services' }}">
+                                    Legal Services
+                                </a>
+                                <button type="button" class="category-toggle-btn{% if legal_open %} active{% endif %}" data-toggle="category" data-target="cat-legal-services" aria-expanded="{{ 'true' if legal_open else 'false' }}">
+                                    <i class="bi bi-chevron-right text-xs"></i>
+                                </button>
+                            </div>
+                            <div id="cat-legal-services" class="category-children space-y-1 pl-2{% if not legal_open %} hidden{% endif %}">
+                                <a href="{{ url_for('market.main_market', category='legal-consultation') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'legal-consultation' }}">Legal Consultation</a>
+                                <a href="{{ url_for('market.main_market', category='contract-drafting') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'contract-drafting' }}">Contract Drafting</a>
+                                <a href="{{ url_for('market.main_market', category='business-registration-guidance') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'business-registration-guidance' }}">Business Registration Guidance</a>
+                                <a href="{{ url_for('market.main_market', category='compliance-support') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'compliance-support' }}">Compliance Support</a>
+                                <a href="{{ url_for('market.main_market', category='legal-advisory') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'legal-advisory' }}">Legal Advisory</a>
+                            </div>
+                        </div>
+
+                        {% set finance_open = category_slug in ['finance-investment','financial-planning','investment-education','budgeting-money-management','tax-guidance','wealth-building-strategies'] %}
+                        <div class="mt-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <a href="{{ url_for('market.main_market', category='finance-investment') }}" 
+                                   class="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-semibold {{ 'service-category-active text-white' if category_slug == 'finance-investment' }}">
+                                    Finance &amp; Investment
+                                </a>
+                                <button type="button" class="category-toggle-btn{% if finance_open %} active{% endif %}" data-toggle="category" data-target="cat-finance-investment" aria-expanded="{{ 'true' if finance_open else 'false' }}">
+                                    <i class="bi bi-chevron-right text-xs"></i>
+                                </button>
+                            </div>
+                            <div id="cat-finance-investment" class="category-children space-y-1 pl-2{% if not finance_open %} hidden{% endif %}">
+                                <a href="{{ url_for('market.main_market', category='financial-planning') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'financial-planning' }}">Financial Planning</a>
+                                <a href="{{ url_for('market.main_market', category='investment-education') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'investment-education' }}">Investment Education</a>
+                                <a href="{{ url_for('market.main_market', category='budgeting-money-management') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'budgeting-money-management' }}">Budgeting &amp; Money Management</a>
+                                <a href="{{ url_for('market.main_market', category='tax-guidance') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'tax-guidance' }}">Tax Guidance</a>
+                                <a href="{{ url_for('market.main_market', category='wealth-building-strategies') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'wealth-building-strategies' }}">Wealth Building Strategies</a>
+                            </div>
+                        </div>
+
+                        {% set tech_open = category_slug in ['technology-digital-services','website-development','mobile-app-development','software-development','it-support','cybersecurity-services'] %}
+                        <div class="mt-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <a href="{{ url_for('market.main_market', category='technology-digital-services') }}" 
+                                   class="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-semibold {{ 'service-category-active text-white' if category_slug == 'technology-digital-services' }}">
+                                    Technology &amp; Digital Services
+                                </a>
+                                <button type="button" class="category-toggle-btn{% if tech_open %} active{% endif %}" data-toggle="category" data-target="cat-technology-digital-services" aria-expanded="{{ 'true' if tech_open else 'false' }}">
+                                    <i class="bi bi-chevron-right text-xs"></i>
+                                </button>
+                            </div>
+                            <div id="cat-technology-digital-services" class="category-children space-y-1 pl-2{% if not tech_open %} hidden{% endif %}">
+                                <a href="{{ url_for('market.main_market', category='website-development') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'website-development' }}">Website Development</a>
+                                <a href="{{ url_for('market.main_market', category='mobile-app-development') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'mobile-app-development' }}">Mobile App Development</a>
+                                <a href="{{ url_for('market.main_market', category='software-development') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'software-development' }}">Software Development</a>
+                                <a href="{{ url_for('market.main_market', category='it-support') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'it-support' }}">IT Support</a>
+                                <a href="{{ url_for('market.main_market', category='cybersecurity-services') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'cybersecurity-services' }}">Cybersecurity Services</a>
+                            </div>
+                        </div>
+
+                        {% set faith_open = category_slug in ['faith-spiritual-guidance','faith-coaching','spiritual-counselling','prayer-support-sessions','religious-study-groups'] %}
+                        <div class="mt-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <a href="{{ url_for('market.main_market', category='faith-spiritual-guidance') }}" 
+                                   class="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-semibold {{ 'service-category-active text-white' if category_slug == 'faith-spiritual-guidance' }}">
+                                    Faith &amp; Spiritual Guidance
+                                </a>
+                                <button type="button" class="category-toggle-btn{% if faith_open %} active{% endif %}" data-toggle="category" data-target="cat-faith-spiritual-guidance" aria-expanded="{{ 'true' if faith_open else 'false' }}">
+                                    <i class="bi bi-chevron-right text-xs"></i>
+                                </button>
+                            </div>
+                            <div id="cat-faith-spiritual-guidance" class="category-children space-y-1 pl-2{% if not faith_open %} hidden{% endif %}">
+                                <a href="{{ url_for('market.main_market', category='faith-coaching') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'faith-coaching' }}">Faith Coaching</a>
+                                <a href="{{ url_for('market.main_market', category='spiritual-counselling') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'spiritual-counselling' }}">Spiritual Counselling</a>
+                                <a href="{{ url_for('market.main_market', category='prayer-support-sessions') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'prayer-support-sessions' }}">Prayer &amp; Support Sessions</a>
+                                <a href="{{ url_for('market.main_market', category='religious-study-groups') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'religious-study-groups' }}">Religious Study Groups</a>
+                            </div>
+                        </div>
+
+                        {% set beauty_services_open = category_slug in ['beauty-services','hair-styling-services','makeup-services','skincare-treatments','barbering-grooming','nail-care-services','beauty-consultations'] %}
+                        <div class="mt-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <a href="{{ url_for('market.main_market', category='beauty-services') }}" 
+                                   class="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-semibold {{ 'service-category-active text-white' if category_slug == 'beauty-services' }}">
+                                    Beauty Services
+                                </a>
+                                <button type="button" class="category-toggle-btn{% if beauty_services_open %} active{% endif %}" data-toggle="category" data-target="cat-beauty-services" aria-expanded="{{ 'true' if beauty_services_open else 'false' }}">
+                                    <i class="bi bi-chevron-right text-xs"></i>
+                                </button>
+                            </div>
+                            <div id="cat-beauty-services" class="category-children space-y-1 pl-2{% if not beauty_services_open %} hidden{% endif %}">
+                                <a href="{{ url_for('market.main_market', category='hair-styling-services') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'hair-styling-services' }}">Hair Styling</a>
+                                <a href="{{ url_for('market.main_market', category='makeup-services') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'makeup-services' }}">Makeup Services</a>
+                                <a href="{{ url_for('market.main_market', category='skincare-treatments') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'skincare-treatments' }}">Skincare Treatments</a>
+                                <a href="{{ url_for('market.main_market', category='barbering-grooming') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'barbering-grooming' }}">Barbering / Grooming</a>
+                                <a href="{{ url_for('market.main_market', category='nail-care-services') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'nail-care-services' }}">Nail Care Services</a>
+                                <a href="{{ url_for('market.main_market', category='beauty-consultations') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'beauty-consultations' }}">Beauty Consultations</a>
+                            </div>
+                        </div>
+
+                        {% set home_services_open = category_slug in ['home-services','interior-design','home-decoration-services','furniture-assembly','home-organization','home-maintenance','cleaning-services'] %}
+                        <div class="mt-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <a href="{{ url_for('market.main_market', category='home-services') }}" 
+                                   class="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-semibold {{ 'service-category-active text-white' if category_slug == 'home-services' }}">
+                                    Home Services
+                                </a>
+                                <button type="button" class="category-toggle-btn{% if home_services_open %} active{% endif %}" data-toggle="category" data-target="cat-home-services" aria-expanded="{{ 'true' if home_services_open else 'false' }}">
+                                    <i class="bi bi-chevron-right text-xs"></i>
+                                </button>
+                            </div>
+                            <div id="cat-home-services" class="category-children space-y-1 pl-2{% if not home_services_open %} hidden{% endif %}">
+                                <a href="{{ url_for('market.main_market', category='interior-design') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'interior-design' }}">Interior Design</a>
+                                <a href="{{ url_for('market.main_market', category='home-decoration-services') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'home-decoration-services' }}">Home Decoration Services</a>
+                                <a href="{{ url_for('market.main_market', category='furniture-assembly') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'furniture-assembly' }}">Furniture Assembly</a>
+                                <a href="{{ url_for('market.main_market', category='home-organization') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'home-organization' }}">Home Organization</a>
+                                <a href="{{ url_for('market.main_market', category='home-maintenance') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'home-maintenance' }}">Home Maintenance</a>
+                                <a href="{{ url_for('market.main_market', category='cleaning-services') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'cleaning-services' }}">Cleaning Services</a>
+                            </div>
+                        </div>
+
+                        {% set events_open = category_slug in ['events-celebrations','event-planning','wedding-planning','event-decoration','photography','event-hosting'] %}
+                        <div class="mt-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <a href="{{ url_for('market.main_market', category='events-celebrations') }}" 
+                                   class="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-semibold {{ 'service-category-active text-white' if category_slug == 'events-celebrations' }}">
+                                    Events &amp; Celebrations
+                                </a>
+                                <button type="button" class="category-toggle-btn{% if events_open %} active{% endif %}" data-toggle="category" data-target="cat-events-celebrations" aria-expanded="{{ 'true' if events_open else 'false' }}">
+                                    <i class="bi bi-chevron-right text-xs"></i>
+                                </button>
+                            </div>
+                            <div id="cat-events-celebrations" class="category-children space-y-1 pl-2{% if not events_open %} hidden{% endif %}">
+                                <a href="{{ url_for('market.main_market', category='event-planning') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'event-planning' }}">Event Planning</a>
+                                <a href="{{ url_for('market.main_market', category='wedding-planning') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'wedding-planning' }}">Wedding Planning</a>
+                                <a href="{{ url_for('market.main_market', category='event-decoration') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'event-decoration' }}">Event Decoration</a>
+                                <a href="{{ url_for('market.main_market', category='photography') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'photography' }}">Photography</a>
+                                <a href="{{ url_for('market.main_market', category='event-hosting') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'event-hosting' }}">Event Hosting</a>
+                            </div>
+                        </div>
+
+                        {% set travel_open = category_slug in ['travel-experiences','travel-planning','guided-tours','retreats','adventure-experiences','cultural-experiences'] %}
+                        <div class="mt-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <a href="{{ url_for('market.main_market', category='travel-experiences') }}" 
+                                   class="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-semibold {{ 'service-category-active text-white' if category_slug == 'travel-experiences' }}">
+                                    Travel &amp; Experiences
+                                </a>
+                                <button type="button" class="category-toggle-btn{% if travel_open %} active{% endif %}" data-toggle="category" data-target="cat-travel-experiences" aria-expanded="{{ 'true' if travel_open else 'false' }}">
+                                    <i class="bi bi-chevron-right text-xs"></i>
+                                </button>
+                            </div>
+                            <div id="cat-travel-experiences" class="category-children space-y-1 pl-2{% if not travel_open %} hidden{% endif %}">
+                                <a href="{{ url_for('market.main_market', category='travel-planning') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'travel-planning' }}">Travel Planning</a>
+                                <a href="{{ url_for('market.main_market', category='guided-tours') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'guided-tours' }}">Guided Tours</a>
+                                <a href="{{ url_for('market.main_market', category='retreats') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'retreats' }}">Retreats</a>
+                                <a href="{{ url_for('market.main_market', category='adventure-experiences') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'adventure-experiences' }}">Adventure Experiences</a>
+                                <a href="{{ url_for('market.main_market', category='cultural-experiences') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'cultural-experiences' }}">Cultural Experiences</a>
+                            </div>
+                        </div>
+
+                        {% set office_open = category_slug in ['office-business-supplies','office-supplies','stationery','business-equipment','printers-ink','office-furniture'] %}
+                        <div class="mt-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <a href="{{ url_for('market.main_market', category='office-business-supplies') }}" 
+                                   class="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-semibold {{ 'service-category-active text-white' if category_slug == 'office-business-supplies' }}">
+                                    Office &amp; Business Supplies
+                                </a>
+                                <button type="button" class="category-toggle-btn{% if office_open %} active{% endif %}" data-toggle="category" data-target="cat-office-business-supplies" aria-expanded="{{ 'true' if office_open else 'false' }}">
+                                    <i class="bi bi-chevron-right text-xs"></i>
+                                </button>
+                            </div>
+                            <div id="cat-office-business-supplies" class="category-children space-y-1 pl-2{% if not office_open %} hidden{% endif %}">
+                                <a href="{{ url_for('market.main_market', category='office-supplies') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'office-supplies' }}">Office Supplies</a>
+                                <a href="{{ url_for('market.main_market', category='stationery') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'stationery' }}">Stationery</a>
+                                <a href="{{ url_for('market.main_market', category='business-equipment') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'business-equipment' }}">Business Equipment</a>
+                                <a href="{{ url_for('market.main_market', category='printers-ink') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'printers-ink' }}">Printers &amp; Ink</a>
+                                <a href="{{ url_for('market.main_market', category='office-furniture') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'office-furniture' }}">Office Furniture</a>
+                            </div>
+                        </div>
+
+                        {% set pet_open = category_slug in ['pet-products-services','pet-food','pet-accessories','pet-toys','pet-grooming','pet-care'] %}
+                        <div class="mt-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <a href="{{ url_for('market.main_market', category='pet-products-services') }}" 
+                                   class="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-semibold {{ 'service-category-active text-white' if category_slug == 'pet-products-services' }}">
+                                    Pet Products &amp; Services
+                                </a>
+                                <button type="button" class="category-toggle-btn{% if pet_open %} active{% endif %}" data-toggle="category" data-target="cat-pet-products-services" aria-expanded="{{ 'true' if pet_open else 'false' }}">
+                                    <i class="bi bi-chevron-right text-xs"></i>
+                                </button>
+                            </div>
+                            <div id="cat-pet-products-services" class="category-children space-y-1 pl-2{% if not pet_open %} hidden{% endif %}">
+                                <a href="{{ url_for('market.main_market', category='pet-food') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'pet-food' }}">Pet Food</a>
+                                <a href="{{ url_for('market.main_market', category='pet-accessories') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'pet-accessories' }}">Pet Accessories</a>
+                                <a href="{{ url_for('market.main_market', category='pet-toys') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'pet-toys' }}">Pet Toys</a>
+                                <a href="{{ url_for('market.main_market', category='pet-grooming') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'pet-grooming' }}">Pet Grooming</a>
+                                <a href="{{ url_for('market.main_market', category='pet-care') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'pet-care' }}">Pet Care</a>
+                            </div>
+                        </div>
+
+                        {% set music_open = category_slug in ['music-musical-instruments','musical-instruments','music-accessories','audio-equipment'] %}
+                        <div class="mt-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <a href="{{ url_for('market.main_market', category='music-musical-instruments') }}" 
+                                   class="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-semibold {{ 'service-category-active text-white' if category_slug == 'music-musical-instruments' }}">
+                                    Music &amp; Musical Instruments
+                                </a>
+                                <button type="button" class="category-toggle-btn{% if music_open %} active{% endif %}" data-toggle="category" data-target="cat-music-musical-instruments" aria-expanded="{{ 'true' if music_open else 'false' }}">
+                                    <i class="bi bi-chevron-right text-xs"></i>
+                                </button>
+                            </div>
+                            <div id="cat-music-musical-instruments" class="category-children space-y-1 pl-2{% if not music_open %} hidden{% endif %}">
+                                <a href="{{ url_for('market.main_market', category='musical-instruments') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'musical-instruments' }}">Musical Instruments</a>
+                                <a href="{{ url_for('market.main_market', category='music-accessories') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'music-accessories' }}">Music Accessories</a>
+                                <a href="{{ url_for('market.main_market', category='audio-equipment') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'audio-equipment' }}">Audio Equipment</a>
+                            </div>
+                        </div>
+
+                        {% set digital_open = category_slug in ['digital-products','e-book','online-templates','digital-courses','software-tools','digital-guides'] %}
+                        <div class="mt-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <a href="{{ url_for('market.main_market', category='digital-products') }}" 
+                                   class="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-semibold {{ 'service-category-active text-white' if category_slug == 'digital-products' }}">
+                                    Digital Products
+                                </a>
+                                <button type="button" class="category-toggle-btn{% if digital_open %} active{% endif %}" data-toggle="category" data-target="cat-digital-products" aria-expanded="{{ 'true' if digital_open else 'false' }}">
+                                    <i class="bi bi-chevron-right text-xs"></i>
+                                </button>
+                            </div>
+                            <div id="cat-digital-products" class="category-children space-y-1 pl-2{% if not digital_open %} hidden{% endif %}">
+                                <a href="{{ url_for('market.main_market', category='e-book') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'e-book' }}">E-book</a>
+                                <a href="{{ url_for('market.main_market', category='online-templates') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'online-templates' }}">Online Templates</a>
+                                <a href="{{ url_for('market.main_market', category='digital-courses') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'digital-courses' }}">Digital Courses</a>
+                                <a href="{{ url_for('market.main_market', category='software-tools') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'software-tools' }}">Software Tools</a>
+                                <a href="{{ url_for('market.main_market', category='digital-guides') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'digital-guides' }}">Digital Guides</a>
+                            </div>
+                        </div>
+
+                        {% set other_open = category_slug in ['other-uncategorized','miscellaneous-products','miscellaneous-services'] %}
+                        <div class="mt-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <a href="{{ url_for('market.main_market', category='other-uncategorized') }}" 
+                                   class="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-semibold {{ 'service-category-active text-white' if category_slug == 'other-uncategorized' }}">
+                                    Other / Uncategorized
+                                </a>
+                                <button type="button" class="category-toggle-btn{% if other_open %} active{% endif %}" data-toggle="category" data-target="cat-other-uncategorized" aria-expanded="{{ 'true' if other_open else 'false' }}">
+                                    <i class="bi bi-chevron-right text-xs"></i>
+                                </button>
+                            </div>
+                            <div id="cat-other-uncategorized" class="category-children space-y-1 pl-2{% if not other_open %} hidden{% endif %}">
+                                <a href="{{ url_for('market.main_market', category='miscellaneous-products') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'miscellaneous-products' }}">Miscellaneous Products</a>
+                                <a href="{{ url_for('market.main_market', category='miscellaneous-services') }}" class="block w-full text-left px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs {{ 'service-category-active text-white' if category_slug == 'miscellaneous-services' }}">Miscellaneous Services</a>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
@@ -420,12 +1066,8 @@
                     <!-- Update the services count section (around line 235): -->
 <div>
     <h2 class="text-lg font-bold">
-        {% if category_slug %}
-            {% for category in categories %}
-                {% if category.slug == category_slug %}
-                    {{ category.name }}
-                {% endif %}
-            {% endfor %}
+        {% if category_name %}
+            {{ category_name }}
         {% else %}
             Verified Listings
         {% endif %}
@@ -716,6 +1358,20 @@
 
     <!-- JavaScript for dynamic price filtering -->
     <script>
+        document.querySelectorAll('[data-toggle="category"]').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('data-target');
+                const target = document.getElementById(targetId);
+                if (!target) return;
+
+                const isHidden = target.classList.contains('hidden');
+                target.classList.toggle('hidden');
+                this.classList.toggle('active', isHidden);
+                this.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
+            });
+        });
+
         // Function to format price WITHOUT currency symbol
         function formatCurrency(amount, currency = 'NGN') {
             // Format number with commas (NO currency symbol)

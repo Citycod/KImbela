@@ -27,6 +27,7 @@ from models import (
     MarketplacePayment,
     MatchmakingRequest,
     MatchmakingPayments,
+    ActivityLog,
 )
 
 from time_utils import utcnow
@@ -35,7 +36,7 @@ from time_utils import utcnow
 from datetime import datetime, timedelta
 
 from sqlalchemy.orm import joinedload
-from sqlalchemy import func
+from sqlalchemy import func, desc
 from decimal import Decimal
 
 
@@ -190,6 +191,10 @@ def admin_dashboard():
     day_start = datetime(now.year, now.month, now.day)
     month_start = datetime(now.year, now.month, 1)
     year_start = datetime(now.year, 1, 1)
+    analytics_days = 14
+    analytics_start = (now - timedelta(days=analytics_days - 1)).replace(
+        hour=0, minute=0, second=0, microsecond=0
+    )
 
     def sum_completed_payment_transactions(start_date):
         total = (
@@ -624,6 +629,63 @@ def admin_dashboard():
     )
     pending_post_map = {post.id: post for post in pending_posts}
     pending_comment_map = {comment.id: comment for comment in pending_comments}
+
+    # ======== Activity Analytics ========
+    visits_rows = (
+        db.session.query(func.date(ActivityLog.created_at), func.count(ActivityLog.id))
+        .filter(ActivityLog.created_at >= analytics_start)
+        .group_by(func.date(ActivityLog.created_at))
+        .all()
+    )
+    visits_map = {row[0]: row[1] for row in visits_rows}
+    activity_labels = []
+    visits_series = []
+    for i in range(analytics_days):
+        day = analytics_start + timedelta(days=i)
+        key = day.date()
+        activity_labels.append(day.strftime("%b %d"))
+        visits_series.append(int(visits_map.get(key, 0)))
+
+    top_pages_rows = (
+        db.session.query(ActivityLog.path, func.count(ActivityLog.id))
+        .filter(
+            ActivityLog.created_at >= analytics_start,
+            ActivityLog.event_type.in_(["page", "admin"]),
+        )
+        .group_by(ActivityLog.path)
+        .order_by(desc(func.count(ActivityLog.id)))
+        .limit(10)
+        .all()
+    )
+    top_pages_labels = [row[0] for row in top_pages_rows]
+    top_pages_series = [int(row[1]) for row in top_pages_rows]
+
+    activity_type_rows = (
+        db.session.query(ActivityLog.event_type, func.count(ActivityLog.id))
+        .filter(ActivityLog.created_at >= analytics_start)
+        .group_by(ActivityLog.event_type)
+        .order_by(desc(func.count(ActivityLog.id)))
+        .all()
+    )
+    activity_type_labels = [row[0] for row in activity_type_rows]
+    activity_type_series = [int(row[1]) for row in activity_type_rows]
+
+    recent_activity = (
+        ActivityLog.query.order_by(ActivityLog.created_at.desc()).limit(50).all()
+    )
+
+    unique_visitors = (
+        db.session.query(func.count(func.distinct(ActivityLog.ip_address)))
+        .filter(ActivityLog.created_at >= day_start)
+        .scalar()
+        or 0
+    )
+    total_events = (
+        db.session.query(func.count(ActivityLog.id))
+        .filter(ActivityLog.created_at >= analytics_start)
+        .scalar()
+        or 0
+    )
     pending_post_ids = [
         report.content_id
         for report in pending_reports_list
@@ -687,6 +749,16 @@ def admin_dashboard():
         matchmaking_recent_payments=matchmaking_recent_payments,
         sponsored_active_budget=float(sponsored_active_budget),
         ad_campaign_active_budget=float(ad_campaign_active_budget),
+        activity_labels=activity_labels,
+        visits_series=visits_series,
+        top_pages_labels=top_pages_labels,
+        top_pages_series=top_pages_series,
+        activity_type_labels=activity_type_labels,
+        activity_type_series=activity_type_series,
+        recent_activity=recent_activity,
+        unique_visitors=unique_visitors,
+        total_events=total_events,
+        analytics_days=analytics_days,
         now=now,
     )
 

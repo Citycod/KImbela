@@ -23,16 +23,34 @@ class Groups {
 
     // Initialize groups system
     init() {
+        this.loadInitialGroups();
 
         // Set up event listeners for dropdowns
         this.setupDropdownListeners();
 
         // Load groups when page loads
-        if (document.querySelector('#groupsList, #groupsListMobile')) {
+        if (document.querySelector('#groupsList, #groupsListDesktop, #groupsListMobile') && !this.cache.groups) {
             this.load();
         }
 
         return this;
+    }
+
+    // Load initial groups data embedded in HTML (to avoid extra request)
+    loadInitialGroups() {
+        const initialEl = document.getElementById('initialGroupsData');
+        if (!initialEl) return;
+
+        try {
+            const data = JSON.parse(initialEl.textContent || '[]');
+            if (Array.isArray(data) && data.length >= 0) {
+                this.cache.groups = data;
+                this.cache.lastFetch = Date.now();
+                this.displayGroups(data);
+            }
+        } catch (error) {
+            // Ignore parse errors and allow normal fetch
+        }
     }
 
     // Set up dropdown toggle listeners
@@ -90,7 +108,7 @@ class Groups {
         }
 
         // Show loading state in both lists
-        this.showLoading(['groupsList', 'groupsListMobile']);
+        this.showLoading(this.getListIds());
 
         try {
             const response = await fetch('/get_user_groups', {
@@ -120,7 +138,7 @@ class Groups {
             this.displayGroups(groups);
 
         } catch (error) {
-            this.showError(['groupsList', 'groupsListMobile'], error.message);
+            this.showError(this.getListIds(), error.message);
 
             // Clear cache on error
             this.cache.groups = null;
@@ -130,7 +148,7 @@ class Groups {
 
     // Display groups in dropdowns
     displayGroups(groups) {
-        const lists = ['groupsList', 'groupsListMobile'];
+        const lists = this.getListIds();
 
         lists.forEach(listId => {
             const list = document.getElementById(listId);
@@ -258,7 +276,7 @@ class Groups {
 
             try {
                 // Show loading state
-                this.showLoading(['groupsList', 'groupsListMobile']);
+                this.showLoading(this.getListIds());
 
                 const response = await fetch(`/search_groups?q=${encodeURIComponent(query)}`);
                 const results = await response.json();
@@ -269,7 +287,7 @@ class Groups {
                     throw new Error('Invalid search results');
                 }
             } catch (error) {
-                this.showError(['groupsList', 'groupsListMobile'], 'Search failed');
+                this.showError(this.getListIds(), 'Search failed');
             }
         }, 300); // Debounce for 300ms
     }
@@ -428,6 +446,10 @@ class Groups {
                 `;
             }
         });
+    }
+
+    getListIds() {
+        return ['groupsList', 'groupsListDesktop', 'groupsListMobile'];
     }
 
     // Show empty state

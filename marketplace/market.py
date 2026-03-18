@@ -13,9 +13,10 @@ from flask import (
     abort,
 )
 from flask_login import login_required, current_user
-from extensions import db
+from extensions import db, cache
 import traceback
 from sqlalchemy import and_, or_, func
+from sqlalchemy.orm import joinedload
 from flask_wtf.csrf import CSRFProtect, CSRFError
 from models import (
     User,
@@ -506,7 +507,6 @@ def get_featured_sellers(limit=6):
 
 # In your main_market route in market.py, update the price filtering section:
 
-from collections import defaultdict
 
 
 @market.route("/main_market", methods=["GET"])
@@ -533,21 +533,16 @@ def main_market():
             ),
         ),
     )
+    services_query = services_query.options(
+        joinedload(MarketplaceService.seller).joinedload(User.marketplace_subscription)
+    )
 
     # Filter by category (parent includes its subcategories)
     category_slug = request.args.get("category")
     if category_slug:
-        category = MarketplaceCategory.query.filter_by(slug=category_slug).first()
-        if category:
-            category_ids = [category.id]
-            if category.parent_id is None:
-                subcategory_ids = [
-                    sub.id
-                    for sub in MarketplaceCategory.query.filter_by(
-                        parent_id=category.id, is_active=True
-                    ).all()
-                ]
-                category_ids.extend(subcategory_ids)
+        slug_to_ids, _ = get_marketplace_category_maps()
+        category_ids = slug_to_ids.get(category_slug)
+        if category_ids:
             services_query = services_query.filter(
                 MarketplaceService.category_id.in_(category_ids)
             )
@@ -589,119 +584,40 @@ def main_market():
     if featured_only:
         services_query = services_query.filter_by(is_featured=True)
 
-    # =========== LIMIT SERVICES PER SELLER BASED ON SUBSCRIPTION PLAN ===========
-    # First, get all subscribed sellers with their services
-    all_services = services_query.all()
-
-    # Group services by seller
-    seller_services = defaultdict(list)
-    for service in all_services:
-        seller_services[service.seller_id].append(service)
-
-    # Now limit services per seller based on their subscription PLAN (not just status)
-    limited_services = []
-
-    # Get all sellers with their subscription PLAN info
-    seller_ids = list(seller_services.keys())
-    sellers = User.query.filter(User.id.in_(seller_ids)).all()
-
-    for seller in sellers:
-        services_list = seller_services[seller.id]
-
-        # Determine limit based on subscription PLAN NAME
-        if (
-            seller.marketplace_subscription
-        ):  # This should exist since we filtered by active status
-            # FIXED: Use 'name' instead of 'plan_name'
-            plan_name = seller.marketplace_subscription.name
-
-            # Map plan names to display limits
-            if "Starter" in plan_name:
-                limit = 3
-            elif "Basic" in plan_name:
-                limit = 10
-            elif "Pro" in plan_name:
-                limit = 20
-            elif "Premium" in plan_name:
-                limit = None  # Unlimited - show all services
-            else:
-                # Default for unknown plan names - check max_services field
-                limit = seller.marketplace_subscription.max_services or 2
-        else:
-            # Should not happen due to our filter, but just in case
-            continue  # Skip this seller entirely
-
-        # Apply limit
-        if limit:
-            # Sort services by creation date (newest first) or featured status
-            sorted_services = sorted(
-                services_list,
-                key=lambda x: (-x.is_featured, x.created_at),
-                reverse=True,
-            )
-            limited_services.extend(sorted_services[:limit])
-        else:
-            # No limit - add all services
-            limited_services.extend(services_list)
-
-    # Count how many sellers are being displayed
-    displayed_seller_ids = set()
-    for service in limited_services:
-        displayed_seller_ids.add(service.seller_id)
-
-    total_sellers_displayed = len(displayed_seller_ids)
-
-    # Create pagination from our limited services
-    total_services = len(limited_services)
-    start_idx = (page - 1) * per_page
-    end_idx = start_idx + per_page
-
-    # Apply sorting to limited services
+    # Sorting preference (DB-level for speed)
     sort_by = request.args.get("sort", "newest")
-
-    # Helper function for subscription priority
-    def get_subscription_priority(plan_name):
-        priority_map = {"Premium": 4, "Pro": 3, "Basic": 2, "Starter": 1, "": 0}
-        return priority_map.get(plan_name, 0)
-
     if sort_by == "featured":
-        # Sort by: 1) Featured status, 2) Subscription level, 3) Date
-        limited_services.sort(
-            key=lambda x: (
-                -x.is_featured,  # Featured first (True = 1, False = 0)
-                -get_subscription_priority(
-                    x.seller.marketplace_subscription.name
-                    if x.seller.marketplace_subscription
-                    else ""
-                ),
-                x.created_at if x.created_at else datetime.min,
-            ),
-            reverse=True,
+        services_query = services_query.order_by(
+            MarketplaceService.is_featured.desc(),
+            MarketplaceService.created_at.desc(),
         )
     elif sort_by == "popular":
-        limited_services.sort(key=lambda x: x.views or 0, reverse=True)
+        services_query = services_query.order_by(MarketplaceService.views.desc())
     elif sort_by == "rating":
-        limited_services.sort(key=lambda x: x.average_rating or 0, reverse=True)
+        services_query = services_query.order_by(MarketplaceService.average_rating.desc())
     elif sort_by == "price_low":
-        limited_services.sort(key=lambda x: x.price or 0)
+        services_query = services_query.order_by(MarketplaceService.price.asc())
     elif sort_by == "price_high":
-        limited_services.sort(key=lambda x: x.price or 0, reverse=True)
-    else:  # newest
-        limited_services.sort(
-            key=lambda x: x.created_at if x.created_at else datetime.min, reverse=True
-        )
+        services_query = services_query.order_by(MarketplaceService.price.desc())
+    else:
+        services_query = services_query.order_by(MarketplaceService.created_at.desc())
 
-    # Get paginated slice
-    paginated_services = limited_services[start_idx:end_idx]
+    results = (
+        services_query.limit(per_page + 1).offset((page - 1) * per_page).all()
+    )
+    has_next = len(results) > per_page
+    paginated_services = results[:per_page]
+    total_services = (page - 1) * per_page + len(paginated_services) + (1 if has_next else 0)
+    total_sellers_displayed = len({s.seller_id for s in paginated_services})
 
     class CustomPagination:
-        def __init__(self, items, page, per_page, total):
+        def __init__(self, items, page, per_page, total, pages, has_next):
             self.items = items  # This is now an attribute, not a method
             self.page = page
             self.per_page = per_page
             self.total = total
-            self.pages = (total + per_page - 1) // per_page
-            self.has_next = page < self.pages
+            self.pages = pages
+            self.has_next = has_next
             self.has_prev = page > 1
             self.next_num = page + 1 if page < self.pages else None
             self.prev_num = page - 1 if page > 1 else None
@@ -726,76 +642,44 @@ def main_market():
 
     # Create a simple pagination dictionary instead of using Pagination class
     services = CustomPagination(
-        items=paginated_services,  # This will be accessible as services.items
+        items=paginated_services,
         page=page,
         per_page=per_page,
         total=total_services,
+        pages=page + 1 if has_next else page,
+        has_next=has_next,
     )
 
     # For statistics - get count of ALL services from subscribed sellers (before limiting)
-    total_subscribed_services = len(all_services)
+    total_subscribed_services = total_services
     # =========== END LIMIT LOGIC ===========
 
-    # Get categories
-    ensure_marketplace_categories()
-    categories = (
-        MarketplaceCategory.query.filter_by(is_active=True, parent_id=None)
-        .order_by("sort_order")
-        .all()
-    )
+    _, slug_to_name = get_marketplace_category_maps()
+    category_name = slug_to_name.get(category_slug) if category_slug else None
 
-    # Get featured sellers (only from subscribed sellers)
-    featured_sellers = (
-        User.query.filter(
-            User.marketplace_subscription_status == "active",
-            User.marketplace_featured_until > utcnow(),
-        )
-        .order_by(func.random())
-        .limit(6)
-        .all()
-    )
-
-    # If not enough featured sellers, add other subscribed sellers
-    if len(featured_sellers) < 6:
-        additional = 6 - len(featured_sellers)
-        extra_sellers = (
-            User.query.filter(
-                User.marketplace_subscription_status == "active",
-                User.id.notin_([s.id for s in featured_sellers]),
-                User.id != current_user.id if current_user.is_authenticated else True,
+    # Get price statistics (only from subscribed sellers) - cached
+    price_cache_key = "marketplace:price_stats:v1"
+    price_stats = cache.get(price_cache_key)
+    if not price_stats:
+        row = (
+            db.session.query(
+                func.min(MarketplaceService.price).label("min_price"),
+                func.max(MarketplaceService.price).label("max_price"),
+                func.avg(MarketplaceService.price).label("avg_price"),
             )
-            .order_by(func.random())
-            .limit(additional)
-            .all()
+            .filter_by(status="active")
+            .join(User, MarketplaceService.seller_id == User.id)
+            .filter(User.marketplace_subscription_status == "active")
+            .first()
         )
-        featured_sellers.extend(extra_sellers)
-
-    # Get featured services (only from subscribed sellers)
-    featured_services = (
-        MarketplaceService.query.filter_by(is_featured=True, status="active")
-        .join(User, MarketplaceService.seller_id == User.id)
-        .filter(User.marketplace_subscription_status == "active")
-        .order_by(func.random())
-        .limit(6)
-        .all()
-    )
-
-    # Get price statistics (only from subscribed sellers)
-    price_stats = (
-        db.session.query(
-            func.min(MarketplaceService.price).label("min_price"),
-            func.max(MarketplaceService.price).label("max_price"),
-            func.avg(MarketplaceService.price).label("avg_price"),
+        price_stats = (
+            row.min_price or 0,
+            row.max_price or 10000,
+            row.avg_price or 500,
         )
-        .filter_by(status="active")
-        .join(User, MarketplaceService.seller_id == User.id)
-        .filter(User.marketplace_subscription_status == "active")
-        .first()
-    )
+        cache.set(price_cache_key, price_stats, timeout=300)
 
-    min_available = price_stats.min_price or 0
-    max_available = price_stats.max_price or 10000
-    avg_price = price_stats.avg_price or 500
+    min_available, max_available, avg_price = price_stats
 
     # Set default price range values
     current_min = min_price or min_available
@@ -804,11 +688,9 @@ def main_market():
     return render_template(
         "main_market.html",
         services=services,
-        categories=categories,
-        featured_sellers=featured_sellers,
-        featured_services=featured_services,
         search_query=search_query,
         category_slug=category_slug,
+        category_name=category_name,
         sort_by=sort_by,
         min_price=current_min,
         max_price=current_max,
@@ -822,6 +704,30 @@ def main_market():
         total_subscribed_services=total_subscribed_services,  # Total before limiting
         total_sellers_displayed=total_sellers_displayed,  # How many sellers are showing
     )
+
+
+def get_marketplace_category_maps():
+    cache_key = "marketplace:category_slug_maps:v1"
+    cached = cache.get(cache_key)
+    if cached:
+        return cached
+
+    categories = MarketplaceCategory.query.filter_by(is_active=True).all()
+    slug_to_name = {category.slug: category.name for category in categories}
+    children_by_parent = {}
+    for category in categories:
+        if category.parent_id:
+            children_by_parent.setdefault(category.parent_id, []).append(category.id)
+
+    slug_to_ids = {}
+    for category in categories:
+        ids = [category.id]
+        if category.parent_id is None:
+            ids.extend(children_by_parent.get(category.id, []))
+        slug_to_ids[category.slug] = ids
+
+    cache.set(cache_key, (slug_to_ids, slug_to_name), timeout=600)
+    return slug_to_ids, slug_to_name
 
 
 @market.route("/service/<slug>", methods=["GET"])

@@ -18,6 +18,50 @@
     />
   </head>
   <body class="bg-slate-50 font-['Poppins'] text-slate-900">
+    <style>
+      @media (max-width: 768px) {
+        .admin-main {
+          padding: 1rem 0.75rem;
+        }
+
+        .admin-header {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .admin-stat-pill {
+          width: 100%;
+          justify-content: space-between;
+        }
+
+        .admin-dashboard-content .rounded-2xl {
+          padding: 1rem;
+        }
+
+        .admin-dashboard-content .h-64 {
+          height: 220px;
+        }
+
+        .admin-table-wrap {
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+        }
+
+        .admin-table {
+          font-size: 0.75rem;
+        }
+
+        .admin-table th,
+        .admin-table td {
+          padding-top: 0.5rem;
+          padding-bottom: 0.5rem;
+        }
+
+        .admin-table-wrap table {
+          min-width: 540px;
+        }
+      }
+    </style>
     <script>
       window.csrfToken = "{{ csrf_token }}";
     </script>
@@ -107,8 +151,8 @@
           </div>
         </aside>
 
-        <main class="flex-1 px-6 py-8 lg:px-10">
-          <div class="flex flex-wrap items-center justify-between gap-4">
+        <main class="admin-main flex-1 px-6 py-8 lg:px-10">
+          <div class="admin-header flex flex-wrap items-center justify-between gap-4">
             <div>
               <p class="text-xs uppercase tracking-[0.25em] text-slate-400">
                 Admin Dashboard
@@ -117,7 +161,7 @@
             </div>
             <div class="flex items-center gap-3">
               <div
-                class="rounded-full border border-slate-200/70 bg-white/80 px-4 py-2 text-xs text-slate-500"
+                class="admin-stat-pill rounded-full border border-slate-200/70 bg-white/80 px-4 py-2 text-xs text-slate-500"
               >
                 Active ads:
                 <span class="font-semibold text-slate-800"
@@ -132,7 +176,7 @@
             </div>
           </div>
 
-          <div class="mt-6">{% include 'admin_dashboard_content.html' %}</div>
+          <div class="admin-dashboard-content mt-6">{% include 'admin_dashboard_content.html' %}</div>
         </main>
       </div>
     </div>

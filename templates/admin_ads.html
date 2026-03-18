@@ -146,49 +146,25 @@
                 >
                   <option
                     value="active"
-                    {%
-                    if
-                    status_filter=""
-                    ="active"
-                    %}selected{%
-                    endif
-                    %}
+                    {% if status_filter == "active" %}selected{% endif %}
                   >
                     Active
                   </option>
                   <option
                     value="paused"
-                    {%
-                    if
-                    status_filter=""
-                    ="paused"
-                    %}selected{%
-                    endif
-                    %}
+                    {% if status_filter == "paused" %}selected{% endif %}
                   >
                     Paused
                   </option>
                   <option
                     value="expired"
-                    {%
-                    if
-                    status_filter=""
-                    ="expired"
-                    %}selected{%
-                    endif
-                    %}
+                    {% if status_filter == "expired" %}selected{% endif %}
                   >
                     Expired
                   </option>
                   <option
                     value="all"
-                    {%
-                    if
-                    status_filter=""
-                    ="all"
-                    %}selected{%
-                    endif
-                    %}
+                    {% if status_filter == "all" %}selected{% endif %}
                   >
                     All
                   </option>

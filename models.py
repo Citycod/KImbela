@@ -1118,6 +1118,43 @@ class ReportedContent(db.Model):
     resolver = db.relationship("User", foreign_keys=[resolved_by])
 
 
+class ActivityLog(db.Model):
+    __tablename__ = "activity_logs"
+
+    __table_args__ = (
+        db.Index("idx_activity_created_at", "created_at"),
+        db.Index("idx_activity_user_id", "user_id"),
+        db.Index("idx_activity_path", "path"),
+        db.Index("idx_activity_event_type", "event_type"),
+        db.Index("idx_activity_ip", "ip_address"),
+        db.Index("idx_activity_country", "country"),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
+    is_authenticated = db.Column(db.Boolean, default=False)
+
+    event_type = db.Column(db.String(30), nullable=False, default="page")
+    path = db.Column(db.String(255), nullable=False)
+    method = db.Column(db.String(10), nullable=False)
+    status_code = db.Column(db.Integer, nullable=False)
+    query_string = db.Column(db.Text)
+    referrer = db.Column(db.Text)
+    user_agent = db.Column(db.Text)
+
+    ip_address = db.Column(db.String(45))
+    country = db.Column(db.String(80))
+    region = db.Column(db.String(120))
+    city = db.Column(db.String(120))
+    latitude = db.Column(db.Float)
+    longitude = db.Column(db.Float)
+
+    response_ms = db.Column(db.Integer)
+
+    user = db.relationship("User", foreign_keys=[user_id])
+
+
 class Reaction(db.Model):
     __tablename__ = "reactions"
 

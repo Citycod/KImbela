@@ -76,7 +76,12 @@ def create_app():
     app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=12)
 
     # ========== CACHE CONFIG ==========
-    app.config["CACHE_TYPE"] = "SimpleCache"
+    redis_url = os.getenv("REDIS_URL")
+    if redis_url:
+        app.config["CACHE_TYPE"] = "RedisCache"
+        app.config["CACHE_REDIS_URL"] = redis_url
+    else:
+        app.config["CACHE_TYPE"] = "SimpleCache"
     app.config["CACHE_DEFAULT_TIMEOUT"] = 300
 
     # ========== DATABASE CONFIG ==========
@@ -208,6 +213,80 @@ def create_app():
     def before_request():
         g.start_time = time.time()
 
+    def resolve_client_ip():
+        forwarded_for = request.headers.get("X-Forwarded-For", "")
+        if forwarded_for:
+            return forwarded_for.split(",")[0].strip()
+        return request.headers.get("X-Real-IP") or request.remote_addr
+
+    def resolve_location_from_headers():
+        return {
+            "country": (
+                request.headers.get("CF-IPCountry")
+                or request.headers.get("X-Geo-Country")
+                or request.headers.get("X-Country-Code")
+            ),
+            "region": (
+                request.headers.get("X-Geo-Region")
+                or request.headers.get("X-Region")
+                or request.headers.get("X-Country-Region")
+            ),
+            "city": request.headers.get("X-Geo-City") or request.headers.get("X-City"),
+            "latitude": request.headers.get("X-Geo-Latitude"),
+            "longitude": request.headers.get("X-Geo-Longitude"),
+        }
+
+    def resolve_location(ip_address):
+        if not ip_address:
+            return {}
+
+        location = resolve_location_from_headers()
+        if location.get("country") or location.get("city"):
+            return location
+
+        geoip_path = os.getenv("GEOIP_DB_PATH")
+        if not geoip_path or not os.path.exists(geoip_path):
+            return {}
+
+        try:
+            import geoip2.database  # optional dependency
+
+            with geoip2.database.Reader(geoip_path) as reader:
+                record = reader.city(ip_address)
+                return {
+                    "country": record.country.name,
+                    "region": record.subdivisions.most_specific.name,
+                    "city": record.city.name,
+                    "latitude": record.location.latitude,
+                    "longitude": record.location.longitude,
+                }
+        except Exception:
+            return {}
+
+    def resolve_event_type():
+        path = request.path or ""
+        if path.startswith("/api/"):
+            return "api"
+        if path.startswith("/admin"):
+            return "admin"
+        if path.startswith("/login") or path.startswith("/register") or path.startswith(
+            "/logout"
+        ):
+            return "auth"
+        if request.method in {"POST", "PUT", "PATCH", "DELETE"}:
+            return "action"
+        return "page"
+
+    def should_skip_activity_log():
+        path = request.path or ""
+        if (
+            path.startswith("/static/")
+            or path.startswith("/socket.io")
+            or path.startswith("/favicon")
+        ):
+            return True
+        return False
+
     @app.after_request
     def after_request(response):
         if hasattr(g, "start_time"):
@@ -217,6 +296,51 @@ def create_app():
                     f"Slow request: {request.method} {request.path} "
                     f"took {diff:.2f} seconds"
                 )
+
+            if not should_skip_activity_log():
+                try:
+                    from models import ActivityLog
+
+                    ip_address = resolve_client_ip()
+                    location = resolve_location(ip_address)
+                    response_ms = int(diff * 1000)
+                    user_id = current_user.id if current_user.is_authenticated else None
+
+                    insert_data = {
+                        "created_at": utcnow(),
+                        "user_id": user_id,
+                        "is_authenticated": bool(user_id),
+                        "event_type": resolve_event_type(),
+                        "path": (request.path or "")[:255],
+                        "method": request.method,
+                        "status_code": response.status_code,
+                        "query_string": request.query_string.decode("utf-8")[:2000]
+                        if request.query_string
+                        else None,
+                        "referrer": (request.referrer or "")[:2000] or None,
+                        "user_agent": (request.user_agent.string or "")[:1000] or None,
+                        "ip_address": (ip_address or "")[:45] or None,
+                        "country": (location.get("country") or "")[:80] or None,
+                        "region": (location.get("region") or "")[:120] or None,
+                        "city": (location.get("city") or "")[:120] or None,
+                        "latitude": (
+                            float(location.get("latitude"))
+                            if location.get("latitude")
+                            else None
+                        ),
+                        "longitude": (
+                            float(location.get("longitude"))
+                            if location.get("longitude")
+                            else None
+                        ),
+                        "response_ms": response_ms,
+                    }
+
+                    with db.engine.begin() as conn:
+                        conn.execute(ActivityLog.__table__.insert().values(**insert_data))
+                except Exception:
+                    pass
+
         return response
 
     # ========== UPDATE LAST SEEN ==========

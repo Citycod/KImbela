@@ -89,6 +89,8 @@ from models import (
 from flask_login import login_user, logout_user, login_required, current_user
 
 from extensions import db
+from extensions import cache as app_cache
+from extensions import cache as app_cache
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 from io import BytesIO
@@ -111,8 +113,6 @@ cache = Cache()
 
 def safe_cache_delete(cache_key):
     try:
-        from extensions import cache as app_cache
-
         app_cache.delete(cache_key)
     except Exception as exc:
         try:
@@ -121,6 +121,42 @@ def safe_cache_delete(cache_key):
             )
         except Exception:
             pass
+
+
+def get_groups_data_for_user(user_id):
+    cache_key = f"user_groups_v2:{user_id}"
+    cached = app_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
+    groups = Group.query.filter_by(is_active=True).order_by(Group.name.asc()).all()
+    if not groups:
+        app_cache.set(cache_key, [], timeout=60)
+        return []
+
+    member_group_ids = {
+        row[0]
+        for row in db.session.query(group_members.c.group_id)
+        .filter(group_members.c.user_id == user_id)
+        .all()
+    }
+
+    groups_data = []
+    for group in groups:
+        groups_data.append(
+            {
+                "id": group.id,
+                "name": group.name,
+                "cover_pic": group.image
+                or "https://via.placeholder.com/100x100/3B82F6/FFFFFF?text=Group",
+                "member_count": group.member_count or 0,
+                "is_member": group.id in member_group_ids,
+                "unread_count": 0,
+            }
+        )
+
+    app_cache.set(cache_key, groups_data, timeout=60)
+    return groups_data
 
 
 load_dotenv()
@@ -821,6 +857,9 @@ def user_dashboard():
         for user in random_five:
             user.friend_request_status = current_user.get_friend_request_status(user.id)
 
+    # Groups (cached, for initial HTML render)
+    groups_data = get_groups_data_for_user(current_user.id)
+
     # Sponsored ads (example)
     current_time = utcnow()
     sponsored_ads = (
@@ -955,6 +994,7 @@ def user_dashboard():
         current_user=current_user,
         friends=friends,
         random_five=random_five,
+        groups_data=groups_data,
         sponsored_ads=ads_data,
         dashboard_ads=dashboard_ads,
         csrf_token=generate_csrf(),
@@ -3082,31 +3122,7 @@ def get_user_groups():
     """Get all groups for the dropdown with membership status"""
     try:
         print(f"🔍 Fetching groups for user: {current_user.id}")
-
-        # Get all active groups
-        all_groups = (
-            Group.query.filter_by(is_active=True).order_by(Group.name.asc()).all()
-        )
-        print(f"🔍 Found {len(all_groups)} active groups")
-
-        groups_data = []
-        for group in all_groups:
-            # Get member count and check membership
-            member_count = group.members.count()
-            is_member = group.members.filter_by(id=current_user.id).first() is not None
-
-            groups_data.append(
-                {
-                    "id": group.id,
-                    "name": group.name,
-                    "cover_pic": group.image
-                    or "https://via.placeholder.com/100x100/3B82F6/FFFFFF?text=Group",
-                    "member_count": member_count,
-                    "is_member": is_member,
-                    "unread_count": 0,
-                }
-            )
-
+        groups_data = get_groups_data_for_user(current_user.id)
         print(f"🔍 Returning {len(groups_data)} groups")
         return jsonify(groups_data)
 
