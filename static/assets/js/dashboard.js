@@ -68,6 +68,217 @@ const appState = {
     blockedUserIds: window.blockedUserIds || []
 };
 
+const MobileFeedAds = {
+    trackedImpressions: new Set(),
+
+    isMobileViewport() {
+        return window.matchMedia('(max-width: 1023px)').matches;
+    },
+
+    getCandidates() {
+        const node = document.getElementById('mobileFeedAdCandidates');
+        if (!node) return [];
+
+        try {
+            const candidates = JSON.parse(node.textContent || '[]');
+            return Array.isArray(candidates) ? candidates : [];
+        } catch (error) {
+            return [];
+        }
+    },
+
+    randomInterval() {
+        return Math.floor(Math.random() * 2) + 7;
+    },
+
+    shuffle(items) {
+        const copy = [...items];
+        for (let i = copy.length - 1; i > 0; i -= 1) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [copy[i], copy[j]] = [copy[j], copy[i]];
+        }
+        return copy;
+    },
+
+    pickCandidate(candidates, usedKeys) {
+        const available = candidates.filter(candidate => !usedKeys.has(candidate.key));
+        const pool = available.length ? available : candidates;
+        const [selected] = this.shuffle(pool);
+        return selected || null;
+    },
+
+    renderMedia(candidate) {
+        const banner = candidate.banner;
+        if (!banner?.image_url) {
+            return '';
+        }
+
+        if (banner.media_type === 'video') {
+            return `
+                <video class="dashboard-ad-video" autoplay muted loop playsinline preload="metadata">
+                    <source src="${banner.image_url}" ${banner.video_mime ? `type="${banner.video_mime}"` : ''}>
+                </video>
+            `;
+        }
+
+        return `
+            <img
+                src="${banner.image_url}"
+                alt="${banner.title || candidate.headline}"
+                class="dashboard-ad-image"
+                loading="lazy"
+            />
+        `;
+    },
+
+    renderCard(candidate, index) {
+        const variantClassMap = {
+            sidebar: 'sidebar-ad-banner',
+            vertical: 'vertical-ad-banner',
+            spotlight: 'right-ad-banner-2'
+        };
+        const variantClass = variantClassMap[candidate.key] || 'sidebar-ad-banner';
+        const href = candidate.href || '#';
+        const adIdAttr = candidate.ad_id ? `data-ad-id="${candidate.ad_id}"` : '';
+        const hasBanner = Boolean(candidate.banner?.image_url);
+        const title = candidate.banner?.title || candidate.headline;
+        const ctaHref = href;
+        const iconMap = {
+            sidebar: 'bi bi-megaphone-fill',
+            vertical: 'bi bi-stars',
+            spotlight: 'bi bi-lightning-charge-fill'
+        };
+        const iconClass = iconMap[candidate.key] || 'bi bi-megaphone-fill';
+
+        return `
+            <div class="mobile-feed-ad-slot lg:hidden my-5" data-mobile-feed-ad-slot="true">
+                <div class="${variantClass} ${hasBanner ? 'has-dashboard-ad' : ''}">
+                    ${hasBanner ? `
+                        <a
+                            class="dashboard-ad-link"
+                            href="${href}"
+                            target="_blank"
+                            rel="noopener"
+                            ${adIdAttr}
+                            data-mobile-feed-ad-click="true"
+                            data-mobile-feed-ad-index="${index}"
+                        >
+                            ${this.renderMedia(candidate)}
+                        </a>
+                    ` : `
+                        <div class="sidebar-ad-badge">${candidate.label}</div>
+                        <div class="sidebar-ad-icon" aria-hidden="true">
+                            <i class="${iconClass}"></i>
+                        </div>
+                        <h3>${title}</h3>
+                        <p>${candidate.copy}</p>
+                        <a
+                            class="sidebar-ad-cta"
+                            href="${ctaHref}"
+                            data-mobile-feed-ad-click="true"
+                            data-mobile-feed-ad-index="${index}"
+                        >
+                            ${candidate.cta}
+                        </a>
+                    `}
+                </div>
+            </div>
+        `;
+    },
+
+    async trackImpression(adId) {
+        if (!adId || this.trackedImpressions.has(adId)) return;
+        this.trackedImpressions.add(adId);
+
+        try {
+            await fetch(`/api/ads/${adId}/impression`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-Token': csrfToken,
+                    'Content-Type': 'application/json'
+                }
+            });
+        } catch (error) {
+        }
+    },
+
+    async trackClick(adId) {
+        if (!adId) return;
+
+        try {
+            await fetch(`/api/ads/${adId}/click`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-Token': csrfToken,
+                    'Content-Type': 'application/json'
+                }
+            });
+        } catch (error) {
+        }
+    },
+
+    bindTracking(root) {
+        root.querySelectorAll('[data-mobile-feed-ad-click="true"]').forEach(link => {
+            if (link.dataset.mobileFeedAdBound === 'true') return;
+            link.dataset.mobileFeedAdBound = 'true';
+
+            const adId = link.dataset.adId;
+            if (adId) {
+                this.trackImpression(adId);
+                link.addEventListener('click', () => this.trackClick(adId));
+            }
+        });
+    },
+
+    clearExisting(feed) {
+        feed.querySelectorAll('[data-mobile-feed-ad-slot="true"]').forEach(slot => slot.remove());
+    },
+
+    refresh() {
+        const feed = document.getElementById('posts-feed');
+        if (!feed) return;
+
+        this.clearExisting(feed);
+
+        if (!this.isMobileViewport()) {
+            return;
+        }
+
+        const postCards = [...feed.children].filter(child => child.classList?.contains('post-card'));
+        const candidates = this.getCandidates();
+
+        if (!postCards.length || !candidates.length) {
+            return;
+        }
+
+        let nextInsertAfter = this.randomInterval();
+        let usedKeys = new Set();
+        let adIndex = 0;
+
+        postCards.forEach((postCard, index) => {
+            const postsSeen = index + 1;
+            if (postsSeen < nextInsertAfter) return;
+
+            const candidate = this.pickCandidate(candidates, usedKeys);
+            if (!candidate) return;
+
+            usedKeys.add(candidate.key);
+            adIndex += 1;
+
+            postCard.insertAdjacentHTML('afterend', this.renderCard(candidate, adIndex));
+            const inserted = postCard.nextElementSibling;
+            if (inserted) {
+                this.bindTracking(inserted);
+            }
+
+            nextInsertAfter += this.randomInterval();
+            if (usedKeys.size >= candidates.length) {
+                usedKeys = new Set();
+            }
+        });
+    }
+};
+
 // ========================================
 // GLOBAL FUNCTIONS FOR HTML ONCLICK ATTRIBUTES
 // ========================================
@@ -3350,6 +3561,7 @@ const InfiniteScroll = {
                     const postsFeed = document.getElementById('posts-feed');
                     if (postsFeed) {
                         postsFeed.insertAdjacentHTML('beforeend', data.posts);
+                        MobileFeedAds.refresh();
                         PostSystem.initInteractions();
                     }
                 }
@@ -3635,7 +3847,7 @@ const MediaPreview = {
 
             el.src = url;
             if (isVideo) el.controls = true;
-            el.className = 'w-full h-48 rounded-lg object-cover border border-gray-200';
+            el.className = 'w-full max-h-32 rounded-lg object-contain border border-gray-200 bg-gray-50';
 
             preview.innerHTML = '';
             preview.appendChild(el);
@@ -4375,6 +4587,14 @@ document.addEventListener('DOMContentLoaded', () => {
     TimeUtils.initializeTimeAgo();
     setInterval(() => TimeUtils.initializeTimeAgo(), 60000);
     InfiniteScroll.init();
+    MobileFeedAds.refresh();
+
+    window.addEventListener('resize', () => {
+        clearTimeout(window.__mobileFeedAdsResizeTimer);
+        window.__mobileFeedAdsResizeTimer = setTimeout(() => {
+            MobileFeedAds.refresh();
+        }, 150);
+    });
 
     // Initialize groups dropdown
     const groupsToggle = document.getElementById('groups-dropdown-toggle');
