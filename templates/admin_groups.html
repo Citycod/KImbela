@@ -10,35 +10,283 @@
     />
     <meta name="csrf-token" content="{{ csrf_token }}" />
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
   </head>
-  <body class="bg-slate-50 font-['Poppins'] text-slate-900">
+  <body class="admin-page bg-slate-50 font-['Poppins'] text-slate-900">
     <script>
       window.csrfToken = "{{ csrf_token }}";
     </script>
+    <style>
+      body.admin-page {
+        font-size: 13px;
+      }
+
+      .admin-sidebar-overlay {
+        display: none;
+      }
+
+      .admin-page .text-3xl {
+        font-size: 1.7rem !important;
+        line-height: 1.2 !important;
+      }
+
+      .admin-page .text-2xl {
+        font-size: 1.35rem !important;
+        line-height: 1.25 !important;
+      }
+
+      .admin-page .text-xl {
+        font-size: 1.12rem !important;
+        line-height: 1.3 !important;
+      }
+
+      .admin-page .text-lg {
+        font-size: 1rem !important;
+        line-height: 1.35 !important;
+      }
+
+      .admin-page .text-base {
+        font-size: 0.92rem !important;
+      }
+
+      .admin-page .text-sm {
+        font-size: 0.8rem !important;
+      }
+
+      .admin-page .text-xs {
+        font-size: 0.7rem !important;
+      }
+
+      @media (max-width: 1023px) {
+        .admin-layout {
+          position: relative;
+        }
+
+        .admin-sidebar {
+          position: fixed;
+          inset: 0 auto 0 0;
+          z-index: 50;
+          display: block;
+          width: min(18rem, calc(100vw - 2.5rem));
+          transform: translateX(-100%);
+          transition: transform 0.2s ease;
+          overflow-y: auto;
+        }
+
+        .admin-sidebar.is-open {
+          transform: translateX(0);
+        }
+
+        .admin-sidebar-overlay {
+          position: fixed;
+          inset: 0;
+          z-index: 40;
+          background: rgba(15, 23, 42, 0.45);
+          backdrop-filter: blur(2px);
+        }
+
+        .admin-sidebar-overlay.is-open {
+          display: block;
+        }
+
+        .admin-mobile-header {
+          display: flex;
+        }
+      }
+
+      @media (min-width: 1024px) {
+        .admin-mobile-header {
+          display: none;
+        }
+      }
+
+      .admin-layout {
+        min-height: 100vh;
+      }
+
+      .admin-main {
+        min-width: 0;
+      }
+
+      .admin-sidebar {
+        will-change: transform;
+      }
+
+      .admin-sidebar-overlay {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition: opacity 0.2s ease, visibility 0.2s ease;
+      }
+
+      .admin-sidebar-overlay.is-open {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+      }
+
+      .admin-page img {
+        max-width: 100%;
+      }
+
+      .admin-page .overflow-x-auto {
+        width: 100%;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .editor-shell .ck-editor__editable_inline {
+        min-height: 180px;
+        max-height: 320px;
+      }
+
+      .editor-shell .ck.ck-editor__main > .ck-editor__editable {
+        border-radius: 0 0 0.9rem 0.9rem;
+      }
+
+      .editor-shell .ck.ck-toolbar {
+        border-radius: 0.9rem 0.9rem 0 0;
+      }
+
+      @media (max-width: 768px) {
+        body.admin-page {
+          font-size: 10px !important;
+        }
+
+        .admin-main {
+          padding: 0.75rem 0.45rem !important;
+        }
+
+        .admin-sidebar {
+          width: min(15.5rem, calc(100vw - 1.25rem));
+          padding: 0.9rem 0.75rem;
+        }
+
+        .admin-mobile-header {
+          position: sticky;
+          top: 0.5rem;
+          z-index: 30;
+          margin-bottom: 0.75rem;
+          padding: 0.65rem 0.75rem;
+        }
+
+        .admin-page h1,
+        .admin-page .text-3xl {
+          font-size: 1rem !important;
+          line-height: 1.2 !important;
+        }
+
+        .admin-page h2,
+        .admin-page .text-2xl {
+          font-size: 0.92rem !important;
+          line-height: 1.2 !important;
+        }
+
+        .admin-page h3,
+        .admin-page .text-xl {
+          font-size: 0.82rem !important;
+          line-height: 1.25 !important;
+        }
+
+        .admin-page .text-lg {
+          font-size: 0.76rem !important;
+        }
+
+        .admin-page .text-base {
+          font-size: 0.7rem !important;
+        }
+
+        .admin-page .text-sm {
+          font-size: 0.62rem !important;
+        }
+
+        .admin-page .text-xs {
+          font-size: 0.54rem !important;
+        }
+
+        .admin-page p,
+        .admin-page span,
+        .admin-page a,
+        .admin-page th,
+        .admin-page td,
+        .admin-page label,
+        .admin-page button,
+        .admin-page input,
+        .admin-page select,
+        .admin-page textarea {
+          font-size: 0.62rem !important;
+          line-height: 1.35 !important;
+        }
+
+        .admin-page input,
+        .admin-page select,
+        .admin-page textarea,
+        .admin-page button {
+          min-height: 2rem;
+        }
+
+        .editor-shell .ck-editor__editable_inline {
+          min-height: 140px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        body.admin-page {
+          font-size: 9px !important;
+        }
+
+        .admin-page p,
+        .admin-page span,
+        .admin-page a,
+        .admin-page th,
+        .admin-page td,
+        .admin-page label,
+        .admin-page button,
+        .admin-page input,
+        .admin-page select,
+        .admin-page textarea {
+          font-size: 0.56rem !important;
+        }
+
+        .admin-page .text-xs {
+          font-size: 0.48rem !important;
+        }
+      }
+    </style>
     <div
       class="min-h-screen bg-gradient-to-br from-slate-50 via-sky-50 to-emerald-50"
     >
-      <div class="flex">
+      <div class="admin-layout flex">
         <aside
-          class="hidden w-72 flex-shrink-0 border-r border-slate-200/70 bg-white/80 px-6 py-8 shadow-sm backdrop-blur lg:block"
+          id="adminSidebar"
+          class="admin-sidebar w-72 flex-shrink-0 border-r border-slate-200/70 bg-white/80 px-6 py-8 shadow-sm backdrop-blur"
         >
-          <div class="flex items-center gap-3">
-            <span
-              class="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700"
-            >
-              <i data-lucide="shield" class="h-5 w-5"></i>
-            </span>
-            <div>
-              <p class="text-xs uppercase tracking-[0.2em] text-slate-400">
-                Admin
-              </p>
-              <p class="text-base font-semibold">Kimbela Console</p>
+          <div class="flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <span
+                class="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700"
+              >
+                <i data-lucide="shield" class="h-5 w-5"></i>
+              </span>
+              <div>
+                <p class="text-xs uppercase tracking-[0.2em] text-slate-400">
+                  Admin
+                </p>
+                <p class="text-base font-semibold">Kimbela Console</p>
+              </div>
             </div>
+            <button
+              type="button"
+              class="rounded-xl p-2 text-slate-500 hover:bg-slate-100 lg:hidden"
+              onclick="toggleAdminSidebar(false)"
+              aria-label="Close admin menu"
+            >
+              <i data-lucide="x" class="h-4 w-4"></i>
+            </button>
           </div>
 
           <nav class="mt-10 space-y-2 text-sm">
@@ -98,8 +346,33 @@
             </a>
           </div>
         </aside>
+        <button
+          id="adminSidebarOverlay"
+          type="button"
+          class="admin-sidebar-overlay"
+          onclick="toggleAdminSidebar(false)"
+          aria-label="Close admin menu"
+        ></button>
 
-        <main class="flex-1 px-6 py-8 lg:px-10">
+        <main class="admin-main flex-1 min-w-0 px-4 py-5 sm:px-6 sm:py-6 lg:px-10 lg:py-8">
+          <div
+            class="admin-mobile-header mb-6 items-center justify-between rounded-2xl border border-slate-200/70 bg-white/90 px-4 py-3 shadow-sm"
+          >
+            <div>
+              <p class="text-xs uppercase tracking-[0.25em] text-slate-400">
+                Admin panel
+              </p>
+              <p class="text-base font-semibold text-slate-900">Groups</p>
+            </div>
+            <button
+              type="button"
+              class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200/70 bg-white text-slate-700"
+              onclick="toggleAdminSidebar(true)"
+              aria-label="Open admin menu"
+            >
+              <i data-lucide="menu" class="h-4 w-4"></i>
+            </button>
+          </div>
           <div class="mb-8">
             <h2 class="text-3xl font-bold text-gray-800 mb-2">
               Group Management
@@ -128,11 +401,14 @@
                 </div>
                 <div>
                   <label class="text-sm text-slate-600">Description</label>
-                  <textarea
-                    name="description"
-                    rows="3"
-                    class="mt-1 w-full rounded-xl border border-slate-200 px-4 py-2"
-                  ></textarea>
+                  <div class="editor-shell mt-1 overflow-hidden rounded-xl border border-slate-200 bg-white">
+                    <textarea
+                      id="createGroupDescription"
+                      name="description"
+                      rows="6"
+                      class="w-full rounded-xl border-0 px-4 py-2"
+                    ></textarea>
+                  </div>
                 </div>
                 <div>
                   <label class="text-sm text-slate-600">Category</label>
@@ -209,7 +485,7 @@
                               {{ group.name }}
                             </p>
                             <p class="text-xs text-slate-500 truncate">
-                              {{ group.description or "No description" }}
+                              {{ (group.description or "No description")|striptags }}
                             </p>
                           </div>
                         </div>
@@ -286,12 +562,14 @@
           </div>
           <div>
             <label class="text-sm text-slate-600">Description</label>
-            <textarea
-              name="description"
-              id="editGroupDescription"
-              rows="3"
-              class="mt-1 w-full rounded-xl border border-slate-200 px-4 py-2"
-            ></textarea>
+            <div class="editor-shell mt-1 overflow-hidden rounded-xl border border-slate-200 bg-white">
+              <textarea
+                name="description"
+                id="editGroupDescription"
+                rows="6"
+                class="w-full rounded-xl border-0 px-4 py-2"
+              ></textarea>
+            </div>
           </div>
           <div>
             <label class="text-sm text-slate-600">Category</label>
@@ -337,9 +615,97 @@
     </div>
 
     <script>
+      let createGroupEditor = null;
+      let editGroupEditor = null;
+
+      async function initializeRichTextEditor(selector) {
+        if (!window.ClassicEditor) {
+          return null;
+        }
+
+        const element = document.querySelector(selector);
+        if (!element) {
+          return null;
+        }
+
+        return window.ClassicEditor.create(element, {
+          toolbar: [
+            "heading",
+            "|",
+            "bold",
+            "italic",
+            "underline",
+            "link",
+            "|",
+            "bulletedList",
+            "numberedList",
+            "blockQuote",
+            "insertTable",
+            "|",
+            "undo",
+            "redo",
+          ],
+          table: {
+            contentToolbar: ["tableColumn", "tableRow", "mergeTableCells"],
+          },
+        });
+      }
+
+      async function initializeGroupEditors() {
+        createGroupEditor = await initializeRichTextEditor(
+          "#createGroupDescription",
+        );
+        editGroupEditor = await initializeRichTextEditor("#editGroupDescription");
+      }
+
+      function toggleAdminSidebar(forceState) {
+        const sidebar = document.getElementById("adminSidebar");
+        const overlay = document.getElementById("adminSidebarOverlay");
+        if (!sidebar || !overlay) {
+          return;
+        }
+
+        const shouldOpen =
+          typeof forceState === "boolean"
+            ? forceState
+            : !sidebar.classList.contains("is-open");
+
+        if (window.innerWidth >= 1024 && shouldOpen) {
+          return;
+        }
+
+        sidebar.classList.toggle("is-open", shouldOpen);
+        overlay.classList.toggle("is-open", shouldOpen);
+        sidebar.setAttribute("aria-hidden", shouldOpen ? "false" : "true");
+        overlay.setAttribute("aria-hidden", shouldOpen ? "false" : "true");
+        document.body.classList.toggle("admin-sidebar-open", shouldOpen);
+        document.body.style.overflow = shouldOpen ? "hidden" : "";
+
+        document
+          .querySelectorAll('[onclick*="toggleAdminSidebar"]')
+          .forEach((button) => {
+            button.setAttribute("aria-expanded", shouldOpen ? "true" : "false");
+          });
+      }
+
+      window.addEventListener("resize", () => {
+        if (window.innerWidth >= 1024) {
+          toggleAdminSidebar(false);
+        }
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          toggleAdminSidebar(false);
+          closeEditModal();
+        }
+      });
+
       if (window.lucide) {
         window.lucide.createIcons();
       }
+
+      initializeGroupEditors();
 
       const csrfToken = window.csrfToken || "";
 
@@ -349,6 +715,9 @@
           e.preventDefault();
           const form = e.target;
           const data = new FormData(form);
+          if (createGroupEditor) {
+            data.set("description", createGroupEditor.getData());
+          }
           data.set("is_private", form.is_private.checked ? "true" : "false");
 
           const res = await fetch("/admin/groups/create", {
@@ -373,12 +742,16 @@
         }
         document.getElementById("editGroupId").value = json.group.id;
         document.getElementById("editGroupName").value = json.group.name || "";
-        document.getElementById("editGroupDescription").value =
-          json.group.description || "";
         document.getElementById("editGroupCategory").value =
           json.group.category || "";
         document.getElementById("editGroupPrivate").checked =
           !!json.group.is_private;
+        if (editGroupEditor) {
+          editGroupEditor.setData(json.group.description || "");
+        } else {
+          document.getElementById("editGroupDescription").value =
+            json.group.description || "";
+        }
         document.getElementById("editGroupModal").classList.remove("hidden");
         document.getElementById("editGroupModal").classList.add("flex");
       }
@@ -396,6 +769,9 @@
           const form = e.target;
           const groupId = document.getElementById("editGroupId").value;
           const data = new FormData(form);
+          if (editGroupEditor) {
+            data.set("description", editGroupEditor.getData());
+          }
           data.set("is_private", form.is_private.checked ? "true" : "false");
 
           const res = await fetch(`/admin/groups/${groupId}/update`, {

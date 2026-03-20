@@ -28,6 +28,7 @@ from models import (
     MatchmakingRequest,
     MatchmakingPayments,
     ActivityLog,
+    SiteSetting,
 )
 
 from time_utils import utcnow
@@ -109,6 +110,48 @@ cloudinary.config(
 admin = Blueprint("admin", __name__)
 
 
+def sanitize_group_description(raw_description):
+    allowed_tags = [
+        "p",
+        "br",
+        "strong",
+        "b",
+        "em",
+        "i",
+        "u",
+        "ul",
+        "ol",
+        "li",
+        "blockquote",
+        "h2",
+        "h3",
+        "h4",
+        "a",
+        "table",
+        "thead",
+        "tbody",
+        "tr",
+        "th",
+        "td",
+    ]
+    allowed_attributes = {
+        "a": ["href", "target", "rel"],
+        "table": ["border", "cellpadding", "cellspacing"],
+        "th": ["colspan", "rowspan"],
+        "td": ["colspan", "rowspan"],
+    }
+
+    cleaned = bleach.clean(
+        raw_description or "",
+        tags=allowed_tags,
+        attributes=allowed_attributes,
+        strip=True,
+    ).strip()
+
+    plain_text = bleach.clean(cleaned, tags=[], strip=True).strip()
+    return cleaned if plain_text else ""
+
+
 def allowed_file(filename):
     """Check if file extension is allowed"""
     allowed_extensions = {"png", "jpg", "jpeg", "gif", "mp4", "mov", "avi"}
@@ -168,6 +211,19 @@ def _require_admin_permission(permission):
     return True
 
 
+def _ensure_site_settings_table():
+    SiteSetting.__table__.create(bind=db.engine, checkfirst=True)
+
+
+def _marketplace_payments_enabled():
+    _ensure_site_settings_table()
+    default_enabled = current_app.config.get("MARKETPLACE_PAYMENTS_ENABLED", False)
+    stored_value = SiteSetting.get_value("marketplace_payments_enabled")
+    if stored_value is None:
+        return default_enabled
+    return str(stored_value).lower() in {"1", "true", "yes", "on"}
+
+
 @admin.route("/admin_dashboard")
 @login_required
 def admin_dashboard():
@@ -186,6 +242,7 @@ def admin_dashboard():
     total_posts = Post.query.count()
     total_comments = Comment.query.count()
     total_reports = ReportedContent.query.count()
+    marketplace_payments_enabled = _marketplace_payments_enabled()
 
     now = utcnow()
     day_start = datetime(now.year, now.month, now.day)
@@ -670,9 +727,11 @@ def admin_dashboard():
     activity_type_labels = [row[0] for row in activity_type_rows]
     activity_type_series = [int(row[1]) for row in activity_type_rows]
 
-    recent_activity = (
-        ActivityLog.query.order_by(ActivityLog.created_at.desc()).limit(50).all()
-    )
+    activity_page = request.args.get("activity_page", 1, type=int)
+    recent_activity_pagination = ActivityLog.query.order_by(
+        ActivityLog.created_at.desc()
+    ).paginate(page=activity_page, per_page=10, error_out=False)
+    recent_activity = recent_activity_pagination.items
 
     unique_visitors = (
         db.session.query(func.count(func.distinct(ActivityLog.ip_address)))
@@ -756,11 +815,39 @@ def admin_dashboard():
         activity_type_labels=activity_type_labels,
         activity_type_series=activity_type_series,
         recent_activity=recent_activity,
+        recent_activity_pagination=recent_activity_pagination,
         unique_visitors=unique_visitors,
         total_events=total_events,
         analytics_days=analytics_days,
         now=now,
+        marketplace_payments_enabled=marketplace_payments_enabled,
     )
+
+
+@admin.route("/admin/settings/marketplace-payments", methods=["POST"])
+@login_required
+def admin_toggle_marketplace_payments():
+    if not current_user.is_super_admin:
+        return jsonify({"success": False, "error": "Access denied"}), 403
+
+    payload = request.get_json(silent=True) or request.form
+    raw_enabled = payload.get("enabled")
+    if isinstance(raw_enabled, bool):
+        enabled = raw_enabled
+    else:
+        enabled = str(raw_enabled).strip().lower() in {"1", "true", "yes", "on"}
+
+    try:
+        _ensure_site_settings_table()
+        SiteSetting.set_value(
+            "marketplace_payments_enabled", "1" if enabled else "0"
+        )
+        db.session.commit()
+        return jsonify({"success": True, "enabled": enabled})
+    except Exception as e:
+        db.session.rollback()
+        print(f"Marketplace payments toggle error: {e}")
+        return jsonify({"success": False, "error": "Failed to update setting"}), 500
 
 
 # @admin.route('/admin/users')
@@ -932,7 +1019,7 @@ def admin_create_group():
 
     # Force parsing of form data even when files are present
     name = request.form.get("name", "").strip()
-    description = request.form.get("description", "").strip()
+    description = sanitize_group_description(request.form.get("description", ""))
     category = request.form.get("category", "social")
     is_private_str = request.form.get("is_private", "false")
     is_private = is_private_str == "true" or is_private_str == "True"
@@ -1002,7 +1089,10 @@ def admin_update_group(group_id):
     group = Group.query.get_or_404(group_id)
 
     group.name = request.form.get("name", group.name)
-    group.description = request.form.get("description", group.description)
+    description = sanitize_group_description(
+        request.form.get("description", group.description or "")
+    )
+    group.description = description or None
     group.category = request.form.get("category", group.category)
     group.is_private = request.form.get("is_private") == "true"
 
@@ -1039,8 +1129,22 @@ def admin_delete_group(group_id):
         return jsonify({"success": False, "error": "Group not found"}), 404
 
     try:
-        # 1. Remove all members (clears group_members table)
-        group.members.clear()  # This is clean and safe
+        group_posts = Post.query.filter_by(group_id=group.id).all()
+        group_post_ids = [post.id for post in group_posts]
+
+        if group_post_ids:
+            Post.query.filter(Post.shared_post_id.in_(group_post_ids)).update(
+                {Post.shared_post_id: None}, synchronize_session=False
+            )
+
+        for post in group_posts:
+            db.session.delete(post)
+
+        db.session.flush()
+
+        # 1. Remove all members from the association table
+        for member in group.members.all():
+            group.members.remove(member)
 
         # 2. Delete Cloudinary image if exists
         if group.image and "res.cloudinary.com" in group.image:

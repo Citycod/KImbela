@@ -1155,6 +1155,33 @@ class ActivityLog(db.Model):
     user = db.relationship("User", foreign_keys=[user_id])
 
 
+class SiteSetting(db.Model):
+    __tablename__ = "site_settings"
+
+    key = db.Column(db.String(100), primary_key=True)
+    value = db.Column(db.Text, nullable=True)
+    updated_at = db.Column(
+        db.DateTime, default=utcnow, onupdate=utcnow, nullable=False
+    )
+
+    @classmethod
+    def get_value(cls, key, default=None):
+        setting = cls.query.filter_by(key=key).first()
+        if setting is None or setting.value is None:
+            return default
+        return setting.value
+
+    @classmethod
+    def set_value(cls, key, value):
+        setting = cls.query.filter_by(key=key).first()
+        if setting is None:
+            setting = cls(key=key, value=value)
+            db.session.add(setting)
+        else:
+            setting.value = value
+        return setting
+
+
 class Reaction(db.Model):
     __tablename__ = "reactions"
 

@@ -30,6 +30,7 @@ from models import (
     MarketplaceSubscriptionPlan,
     MarketplaceSubscription,
     SellerRating,
+    SiteSetting,
 )
 import cloudinary.uploader
 import os, requests, json, uuid
@@ -58,6 +59,7 @@ from models import (
     MarketplaceClick,
     User,
     PaymentTransaction,
+    SiteSetting,
 )
 
 from dotenv import load_dotenv
@@ -69,6 +71,43 @@ env_path = os.path.join(os.path.dirname(__file__), ".env")
 load_dotenv(dotenv_path=env_path)
 
 market = Blueprint("market", __name__)
+
+
+def marketplace_payments_enabled():
+    default_enabled = current_app.config.get("MARKETPLACE_PAYMENTS_ENABLED", False)
+    try:
+        SiteSetting.__table__.create(bind=db.engine, checkfirst=True)
+        stored_value = SiteSetting.get_value("marketplace_payments_enabled")
+        if stored_value is None:
+            return default_enabled
+        return str(stored_value).lower() in {"1", "true", "yes", "on"}
+    except Exception as e:
+        print(f"⚠️ Failed to load marketplace payments setting: {e}")
+        return default_enabled
+
+
+def apply_marketplace_seller_visibility_filter(query):
+    if not marketplace_payments_enabled():
+        return query.options(
+            joinedload(MarketplaceService.seller).joinedload(
+                User.marketplace_subscription
+            )
+        )
+
+    now = utcnow()
+    return query.join(
+        User,
+        and_(
+            MarketplaceService.seller_id == User.id,
+            User.marketplace_subscription_status == "active",
+            or_(
+                User.marketplace_subscription_expires == None,
+                User.marketplace_subscription_expires >= now,
+            ),
+        ),
+    ).options(
+        joinedload(MarketplaceService.seller).joinedload(User.marketplace_subscription)
+    )
 
 
 def _require_debug_access():
@@ -511,31 +550,13 @@ def get_featured_sellers(limit=6):
 
 @market.route("/main_market", methods=["GET"])
 def main_market():
-    """Marketplace homepage - Only shows services from subscribed sellers"""
+    """Marketplace homepage"""
     # Get all active services with pagination
     page = request.args.get("page", 1, type=int)
     per_page = 12
 
-    # =========== CRITICAL CHANGE: Only show services from subscribed sellers ===========
-    # Start with base query for active services from subscribed sellers only
     services_query = MarketplaceService.query.filter_by(status="active")
-    now = utcnow()
-
-    # Join with users and ONLY include sellers with active subscriptions
-    services_query = services_query.join(
-        User,
-        and_(
-            MarketplaceService.seller_id == User.id,
-            User.marketplace_subscription_status == "active",
-            or_(
-                User.marketplace_subscription_expires == None,
-                User.marketplace_subscription_expires >= now,
-            ),
-        ),
-    )
-    services_query = services_query.options(
-        joinedload(MarketplaceService.seller).joinedload(User.marketplace_subscription)
-    )
+    services_query = apply_marketplace_seller_visibility_filter(services_query)
 
     # Filter by category (parent includes its subcategories)
     category_slug = request.args.get("category")
@@ -650,28 +671,33 @@ def main_market():
         has_next=has_next,
     )
 
-    # For statistics - get count of ALL services from subscribed sellers (before limiting)
+    # For statistics - get count of all visible services before limiting
     total_subscribed_services = total_services
     # =========== END LIMIT LOGIC ===========
 
     _, slug_to_name = get_marketplace_category_maps()
     category_name = slug_to_name.get(category_slug) if category_slug else None
 
-    # Get price statistics (only from subscribed sellers) - cached
-    price_cache_key = "marketplace:price_stats:v1"
+    # Get price statistics from currently visible marketplace listings
+    price_cache_key = (
+        "marketplace:price_stats:paid"
+        if marketplace_payments_enabled()
+        else "marketplace:price_stats:free"
+    )
     price_stats = cache.get(price_cache_key)
     if not price_stats:
-        row = (
+        price_query = (
             db.session.query(
                 func.min(MarketplaceService.price).label("min_price"),
                 func.max(MarketplaceService.price).label("max_price"),
                 func.avg(MarketplaceService.price).label("avg_price"),
             )
             .filter_by(status="active")
-            .join(User, MarketplaceService.seller_id == User.id)
-            .filter(User.marketplace_subscription_status == "active")
-            .first()
         )
+        if marketplace_payments_enabled():
+            price_query = price_query.join(User, MarketplaceService.seller_id == User.id)
+            price_query = price_query.filter(User.marketplace_subscription_status == "active")
+        row = price_query.first()
         price_stats = (
             row.min_price or 0,
             row.max_price or 10000,
@@ -703,6 +729,7 @@ def main_market():
         now=utcnow(),
         total_subscribed_services=total_subscribed_services,  # Total before limiting
         total_sellers_displayed=total_sellers_displayed,  # How many sellers are showing
+        marketplace_payments_enabled=marketplace_payments_enabled(),
     )
 
 
@@ -1050,15 +1077,8 @@ def create_service():
             .all()
         )
 
-        # Get subscription plans
-        subscriptions = (
-            MarketplaceSubscription.query.filter_by(is_active=True)
-            .order_by("sort_order")
-            .all()
-        )
-
         return render_template(
-            "create_service.html", categories=categories, subscriptions=subscriptions
+            "create_service.html", categories=categories, subscriptions=[]
         )
 
     # POST: Create service
@@ -1095,7 +1115,7 @@ def create_service():
 
         # Get subscription
         subscription = None
-        if subscription_id:
+        if marketplace_payments_enabled() and subscription_id:
             subscription = MarketplaceSubscription.query.get(subscription_id)
             if not subscription:
                 flash("Invalid subscription plan", "danger")
@@ -1128,7 +1148,7 @@ def create_service():
             email=request.form.get("email"),
             duration=request.form.get("duration"),
             availability=request.form.get("availability"),
-            subscription_id=subscription_id,
+            subscription_id=subscription_id if marketplace_payments_enabled() else None,
             subscription_status="pending" if subscription else "active",
             subscription_expires=(
                 utcnow() + timedelta(days=30) if subscription else None
@@ -1198,11 +1218,11 @@ def create_service():
         invalidate_cache(f"dashboard_services_{current_user.id}_*")
 
         # Redirect to payment if subscription required
-        if subscription:
+        if marketplace_payments_enabled() and subscription:
             return redirect(url_for("market.payment", service_id=service.id))
 
         flash(
-            "Service created successfully! It will be reviewed before publishing.",
+            "Service created successfully and is now live in your seller dashboard and marketplace listings.",
             "success",
         )
         return redirect(url_for("market.seller_dashboard"))
@@ -1621,18 +1641,7 @@ def api_services():
 
         # Build query
         query = MarketplaceService.query.filter_by(status="active")
-        now = utcnow()
-        query = query.join(
-            User,
-            and_(
-                MarketplaceService.seller_id == User.id,
-                User.marketplace_subscription_status == "active",
-                or_(
-                    User.marketplace_subscription_expires == None,
-                    User.marketplace_subscription_expires >= now,
-                ),
-            ),
-        )
+        query = apply_marketplace_seller_visibility_filter(query)
 
         # Apply filters
         category_id = request.args.get("category_id")
@@ -3702,8 +3711,11 @@ def download_file(service_id):
 def check_subscription():
     """Check user's subscription status"""
     try:
+        payments_enabled = marketplace_payments_enabled()
         # Check if user has an active subscription
-        has_subscription = current_user.has_active_marketplace_subscription
+        has_subscription = (
+            current_user.has_active_marketplace_subscription if payments_enabled else True
+        )
         is_featured = current_user.is_marketplace_featured
 
         # Check if user's services need attention
@@ -3714,13 +3726,13 @@ def check_subscription():
         show_modal = False
         reason = None
 
-        if not has_subscription:
+        if payments_enabled and not has_subscription:
             if has_services:
                 show_modal = True
                 reason = "no_subscription"
             else:
                 show_modal = False
-        elif (
+        elif payments_enabled and (
             current_user.marketplace_subscription_expires
             and current_user.marketplace_subscription_expires - utcnow()
             < timedelta(days=7)
@@ -3732,6 +3744,7 @@ def check_subscription():
             {
                 "success": True,
                 "has_subscription": has_subscription,
+                "payments_enabled": payments_enabled,
                 "is_featured": is_featured,
                 "subscription_tier": current_user.marketplace_subscription_tier,
                 "expires_at": (

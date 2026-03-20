@@ -224,11 +224,15 @@ class NotificationSystem {
     }
 
     init() {
+        if (window.__notificationBadgeInterval) {
+            clearInterval(window.__notificationBadgeInterval);
+        }
+
         this.load();
         this.updateBadge();
 
         // Set interval for checking notifications
-        setInterval(() => this.updateBadge(), 30000);
+        window.__notificationBadgeInterval = setInterval(() => this.updateBadge(), 30000);
 
         const dropdown = document.getElementById('notificationDropdown');
         if (dropdown) {

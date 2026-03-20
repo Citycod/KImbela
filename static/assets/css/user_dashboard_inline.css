@@ -1279,6 +1279,15 @@
                                                     #birthdayNotificationPopup {
                                                         z-index: 11000;
                                                     }
+
+                                                    #postModal,
+                                                    #editPostModal {
+                                                        z-index: 11000 !important;
+                                                    }
+
+                                                    #gifModal {
+                                                        z-index: 11050 !important;
+                                                    }
                                                     /* Emoji picker styling */
                                                     
                                                     emoji-picker {

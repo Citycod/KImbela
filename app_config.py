@@ -30,6 +30,9 @@ def create_app():
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
     app.config["PREFERRED_URL_SCHEME"] = "https"
     app.config["ENABLE_DEBUG_ROUTES"] = os.getenv("ENABLE_DEBUG_ROUTES") == "1"
+    app.config["MARKETPLACE_PAYMENTS_ENABLED"] = (
+        os.getenv("MARKETPLACE_PAYMENTS_ENABLED", "0") == "1"
+    )
 
     @app.errorhandler(RequestEntityTooLarge)
     def handle_file_too_large(error):

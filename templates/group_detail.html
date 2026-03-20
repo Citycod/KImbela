@@ -734,7 +734,9 @@
                     <!-- Group Description -->
                     {% if group.description %}
                     <div class="mt-4 md:mt-6 max-w-3xl">
-                        <p class="text-gray-700 text-sm md:text-lg leading-relaxed group-description">{{ group.description }}</p>
+                        <div class="text-gray-700 text-sm md:text-lg leading-relaxed group-description prose prose-sm md:prose-base max-w-none">
+                            {{ group.description|safe }}
+                        </div>
                     </div>
                     {% endif %}
                 </div>

@@ -221,6 +221,12 @@
     <script>
         const csrfToken = '{{ csrf_token }}';
 
+        function stripHtml(value) {
+            const temp = document.createElement('div');
+            temp.innerHTML = value || '';
+            return (temp.textContent || temp.innerText || '').trim();
+        }
+
         // Load groups function
         function loadGroups() {
             fetch('/groups/all')
@@ -268,7 +274,7 @@
                                     </h3>
                                     
                                     <p class="text-gray-600 text-sm mb-4 line-clamp-2">
-                                        ${group.description || 'No description provided.'}
+                                        ${stripHtml(group.description || 'No description provided.')}
                                     </p>
                                     
                                     <div class="flex items-center justify-between text-sm text-gray-500 mb-4">

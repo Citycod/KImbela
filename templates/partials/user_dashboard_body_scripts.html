@@ -764,6 +764,8 @@
       let gifSearchTimeout = null;
       let gifCurrentOffset = 0;
       let gifIsLoading = false;
+      let gifModalReturnTargetId = 'postModal';
+      let gifModalRestoreTargetId = null;
 
       const GIF_PROXY_URL = '/api/gifs';
 
@@ -1038,8 +1040,15 @@
           const fileInput = document.getElementById('mediaInput');
           if (fileInput) fileInput.value = '';
 
-          // Close GIF modal
+          // Close GIF modal and return to the composer with the GIF attached
           closeGifModal();
+
+          if (typeof window.openPostComposer === 'function') {
+              const postModal = window.openPostComposer();
+              if (typeof window.focusPostComposer === 'function') {
+                  window.focusPostComposer(postModal);
+              }
+          }
       }
 
       // Ensure textarea is ready when modal opens (in case of race condition)
@@ -1160,44 +1169,16 @@
               if (parentBtn) {
                   parentBtn.onclick = (e) => {
                       e.preventDefault();
-                      // Open post modal first, then GIF picker
-                      const postModal = document.getElementById('postModal');
-                      if (postModal) {
-                          postModal.classList.remove('hidden');
-                          document.body.style.overflow = 'hidden';
-
-                          // Focus on textarea and open GIF picker after a short delay
-                          setTimeout(() => {
-                              const textarea = postModal.querySelector('textarea[name="post_content"]');
-                              if (textarea) {
-                                  textarea.focus();
-                                  openGifPicker();
-                              }
-                          }, 300);
-                      }
+                      openGifPickerFromComposer();
                   };
               }
           }
       });
 
 
-          // Helper function for composer GIF button
+      // Helper function for composer GIF button
       function openGifPickerFromComposer() {
-          // Open post modal first
-          const postModal = document.getElementById('postModal');
-          if (postModal) {
-              postModal.classList.remove('hidden');
-              document.body.style.overflow = 'hidden';
-
-              // Focus on textarea and open GIF picker after a short delay
-              setTimeout(() => {
-                  const textarea = postModal.querySelector('textarea[name="post_content"]');
-                  if (textarea) {
-                      textarea.focus();
-                      openGifPicker();
-                  }
-              }, 300);
-          }
+          openGifPicker('postModal');
       }
 
           // When user selects a photo/video, remove any selected GIF
@@ -1926,6 +1907,9 @@
 
       // Replace the existing selectGif function with this updated version
       function selectGif(gifUrl, title = "") {
+        const targetModalId = gifModalReturnTargetId || "postModal";
+        const targetModal = document.getElementById(targetModalId);
+        const gifModal = document.getElementById("gifModal");
 
         // Set the hidden input value for GIF URL
         const hiddenInput = document.getElementById("selectedGifUrl");
@@ -1971,12 +1955,28 @@
           fileInput.value = "";
         }
 
-        // Close GIF modal
-        const gifModal = document.getElementById("gifModal");
         if (gifModal) {
+          document.body.classList.remove("gif-modal-open");
           gifModal.classList.add("hidden");
-          document.body.style.overflow = "";
         }
+
+        if (targetModal) {
+          targetModal.classList.remove("hidden");
+        }
+
+        document.body.style.overflow = "hidden";
+        gifModalRestoreTargetId = null;
+
+        setTimeout(() => {
+          const textarea =
+            (targetModal &&
+              (targetModal.querySelector('textarea[name="post_content"]') ||
+                targetModal.querySelector('textarea[name="content"]'))) ||
+            document.querySelector('#postModal textarea[name="post_content"]');
+          if (textarea) {
+            textarea.focus();
+          }
+        }, 50);
       }
 
       // Update clearSelectedGif function
@@ -2389,29 +2389,84 @@
     </script>
 
 <script>
-      function openGifPicker() {
+      function openGifPicker(returnTargetId = null) {
+        const postModal = document.getElementById("postModal");
+        const editPostModal = document.getElementById("editPostModal");
+        const activeComposerModal =
+          (editPostModal &&
+            !editPostModal.classList.contains("hidden") &&
+            editPostModal) ||
+          (postModal && !postModal.classList.contains("hidden") && postModal) ||
+          null;
         const gifModal = document.getElementById("gifModal");
-        if (gifModal) {
-          gifModal.classList.remove("hidden");
-          document.body.style.overflow = "hidden";
 
-          // Reset to trending when opening
-          gifCurrentOffset = 0;
-          document.getElementById("gifGrid").innerHTML = "";
-          document.getElementById("gifSearchInput").value = "";
-          loadTrendingGifs();
-
-          setTimeout(() => {
-            document.getElementById("gifSearchInput").focus();
-          }, 100);
+        if (!gifModal) {
+          return;
         }
+
+        gifModalReturnTargetId =
+          returnTargetId || (activeComposerModal ? activeComposerModal.id : "postModal");
+        gifModalRestoreTargetId = activeComposerModal ? activeComposerModal.id : null;
+
+        if (activeComposerModal) {
+          activeComposerModal.classList.add("hidden");
+        }
+
+        document.body.classList.add("gif-modal-open");
+        gifModal.classList.remove("hidden");
+        document.body.style.overflow = "hidden";
+
+        gifCurrentOffset = 0;
+        const gifGrid = document.getElementById("gifGrid");
+        const gifSearchInput = document.getElementById("gifSearchInput");
+
+        if (gifGrid) {
+          gifGrid.innerHTML = "";
+        }
+
+        if (gifSearchInput) {
+          gifSearchInput.value = "";
+        }
+
+        gifCurrentTextarea =
+          document.querySelector('#postModal textarea[name="post_content"]') ||
+          document.querySelector('#editPostModal textarea[name="content"]');
+
+        loadTrendingGifs();
+
+        setTimeout(() => {
+          if (gifSearchInput) {
+            gifSearchInput.focus();
+          }
+        }, 100);
       }
 
       function closeGifModal() {
         const gifModal = document.getElementById("gifModal");
         if (gifModal) {
+          document.body.classList.remove("gif-modal-open");
           gifModal.classList.add("hidden");
+        }
+
+        if (gifModalRestoreTargetId) {
+          const restoreModal = document.getElementById(gifModalRestoreTargetId);
+          if (restoreModal) {
+            restoreModal.classList.remove("hidden");
+            document.body.style.overflow = "hidden";
+
+            setTimeout(() => {
+              const textarea =
+                restoreModal.querySelector('textarea[name="post_content"]') ||
+                restoreModal.querySelector('textarea[name="content"]');
+              if (textarea) {
+                textarea.focus();
+              }
+            }, 50);
+          }
+        } else {
           document.body.style.overflow = "";
         }
+
+        gifModalRestoreTargetId = null;
       }
     </script>

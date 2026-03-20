@@ -191,8 +191,67 @@ async function openChatForUser(userId) {
 
 
 
+function openPostComposer() {
+    const postModal = document.getElementById('postModal');
+    if (!postModal) return null;
+
+    postModal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+
+    return postModal;
+}
+
+function focusPostComposer(postModal) {
+    const composerModal = postModal || document.getElementById('postModal');
+    if (!composerModal) return;
+
+    setTimeout(() => {
+        const textarea = composerModal.querySelector('textarea[name="post_content"]');
+        if (textarea) {
+            textarea.focus();
+        }
+    }, 50);
+}
+
+function syncComposerMediaInput(sourceInput) {
+    const modalInput = document.getElementById('mediaInput');
+    const sourceFile = sourceInput?.files?.[0];
+
+    if (!modalInput || !sourceFile) {
+        return sourceInput;
+    }
+
+    if (sourceInput === modalInput) {
+        return modalInput;
+    }
+
+    if (typeof DataTransfer === 'undefined') {
+        return sourceInput;
+    }
+
+    const transfer = new DataTransfer();
+    transfer.items.add(sourceFile);
+    modalInput.files = transfer.files;
+
+    return modalInput;
+}
+
 window.previewMedia = function(input) {
-    MediaPreview.preview(input);
+    if (!input?.files?.length) return;
+
+    const postModal = openPostComposer();
+    const activeInput = syncComposerMediaInput(input);
+
+    if (typeof window.clearSelectedGif === 'function') {
+        window.clearSelectedGif();
+    }
+
+    MediaPreview.preview(activeInput);
+    focusPostComposer(postModal);
+
+    if (input !== activeInput) {
+        input.value = '';
+    }
 };
 
 window.searchGroups = function(query) {
@@ -1947,6 +2006,10 @@ const NotificationSystem = {
     },
 
     init() {
+        if (appState.notificationCheckInterval) {
+            clearInterval(appState.notificationCheckInterval);
+        }
+
         this.load();
         this.updateBadge();
         appState.notificationCheckInterval = setInterval(() => this.updateBadge(), 30000);
