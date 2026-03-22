@@ -148,6 +148,28 @@ def safe_cache_set(cache_key, value, timeout=300):
             pass
 
 
+def resolve_user_by_identifier(user_identifier):
+    user = User.query.filter_by(public_id=user_identifier).first()
+    if user:
+        return user
+
+    if str(user_identifier).isdigit():
+        return User.query.get_or_404(int(user_identifier))
+
+    abort(404)
+
+
+def resolve_post_by_identifier(post_identifier):
+    post = Post.query.filter_by(public_id=post_identifier).first()
+    if post:
+        return post
+
+    if str(post_identifier).isdigit():
+        return Post.query.get_or_404(int(post_identifier))
+
+    abort(404)
+
+
 def get_groups_data_for_user(user_id):
     cache_key = f"user_groups_v2:{user_id}"
     cached = safe_cache_get(cache_key)
@@ -1168,6 +1190,7 @@ def handle_ajax_post_upload():
             "success": True,
             "message": "Post created successfully!",
             "post_id": new_post.id,
+            "post_public_id": new_post.public_id,
             "post_content": processed_content,
             "image_url": image_url,
             "video_url": video_url,
@@ -1811,13 +1834,15 @@ def like_post(post_id):
     return jsonify(likes=like_count, liked=liked)
 
 
-@user.route("/repost/<int:post_id>", methods=["POST"])
+@user.route("/repost/<post_identifier>", methods=["POST"])
 @login_required
-def repost_post(post_id):
-    original_post = Post.query.get_or_404(post_id)
+def repost_post(post_identifier):
+    original_post = resolve_post_by_identifier(post_identifier)
 
     existing_repost = Post.query.filter_by(
-        author_id=current_user.id, shared_post_id=post_id, share_type="repost"
+        author_id=current_user.id,
+        shared_post_id=original_post.id,
+        share_type="repost",
     ).first()
     if existing_repost:
         return jsonify(success=False, error="You already reposted this post."), 400
@@ -1841,18 +1866,20 @@ def repost_post(post_id):
     db.session.commit()
     safe_cache_delete(f"user_dashboard_{current_user.id}")
     safe_cache_delete(f"posts_feed_{current_user.id}")
-    return jsonify(success=True, post_id=new_post.id)
+    return jsonify(success=True, post_id=new_post.id, post_public_id=new_post.public_id)
 
 
-@user.route("/share_post/<int:post_id>", methods=["POST"])
+@user.route("/share_post/<post_identifier>", methods=["POST"])
 @login_required
-def share_post(post_id):
-    original_post = Post.query.get_or_404(post_id)
+def share_post(post_identifier):
+    original_post = resolve_post_by_identifier(post_identifier)
     payload = request.get_json(silent=True) or request.form
     content = (payload.get("content") or "").strip()
 
     existing_share = Post.query.filter_by(
-        author_id=current_user.id, shared_post_id=post_id, share_type="share"
+        author_id=current_user.id,
+        shared_post_id=original_post.id,
+        share_type="share",
     ).first()
     if existing_share:
         return jsonify(success=False, error="You already shared this post."), 400
@@ -1876,7 +1903,7 @@ def share_post(post_id):
     db.session.commit()
     safe_cache_delete(f"user_dashboard_{current_user.id}")
     safe_cache_delete(f"posts_feed_{current_user.id}")
-    return jsonify(success=True, post_id=new_post.id)
+    return jsonify(success=True, post_id=new_post.id, post_public_id=new_post.public_id)
 
 
 # Delete Post
@@ -2341,7 +2368,7 @@ def get_user_profile(user_id):
         "educational_level": user.educational_level,
         "ethnicity": user.ethnicity,
         "interests": user.interests,
-        "profile_url": url_for("user.profile", user_id=user.id),
+        "profile_url": url_for("user.view_profile", user_identifier=user.public_id),
         "friends_count": user.friends.count(),
         "friend_status": friend_status,  # 'none', 'sent', 'received', or 'friends'
     }
@@ -2862,6 +2889,7 @@ def search():
     users_data = [
         {
             "id": user.id,
+            "public_id": user.public_id,
             "first_name": user.first_name,
             "last_name": user.last_name,
             "profile_pic": user.profile_pic,
@@ -2873,6 +2901,7 @@ def search():
     posts_data = [
         {
             "id": post.id,
+            "public_id": post.public_id,
             "content": post.content,
             "author_first_name": post.author.first_name,
             "author_last_name": post.author.last_name,
@@ -2891,6 +2920,7 @@ def get_post(post_id):
     return jsonify(
         {
             "id": post.id,
+            "public_id": post.public_id,
             "content": post.content,
             "image": post.image,
             "video": post.video,
@@ -3080,7 +3110,13 @@ def profile(user_id):
 
     # GET request - load profile data
     posts = (
-        Post.query.filter_by(author_id=current_user.id)
+        Post.query.options(
+            joinedload(Post.author),
+            joinedload(Post.shared_post).joinedload(Post.author),
+            joinedload(Post.comments).joinedload(Comment.author),
+            joinedload(Post.likes),
+        )
+        .filter_by(author_id=current_user.id)
         .order_by(Post.created_at.desc())
         .all()
     )
@@ -3983,11 +4019,26 @@ start = time.time()
 print(f"Query took {time.time() - start:.2f} seconds")
 
 
-@user.route("/profile/<int:user_id>")
-@login_required
-def view_profile(user_id):
+@user.route("/post/<post_identifier>")
+def view_shared_post(post_identifier):
+    post = resolve_post_by_identifier(post_identifier)
+    post = (
+        Post.query.options(
+            joinedload(Post.author),
+            joinedload(Post.shared_post).joinedload(Post.author),
+            joinedload(Post.comments).joinedload(Comment.author),
+            joinedload(Post.likes),
+        )
+        .filter_by(id=post.id)
+        .first_or_404()
+    )
+    return render_template("post_detail.html", post=post)
 
-    target_user = User.query.get_or_404(user_id)
+
+@user.route("/profile/<user_identifier>")
+@login_required
+def view_profile(user_identifier):
+    target_user = resolve_user_by_identifier(user_identifier)
 
     friend_status = current_user.get_friend_request_status(target_user.id)
 
@@ -4002,7 +4053,13 @@ def view_profile(user_id):
 
     # Get the user's recent posts (visible to the viewer)
     posts = (
-        Post.query.filter_by(author_id=target_user.id)
+        Post.query.options(
+            joinedload(Post.author),
+            joinedload(Post.shared_post).joinedload(Post.author),
+            joinedload(Post.comments).joinedload(Comment.author),
+            joinedload(Post.likes),
+        )
+        .filter_by(author_id=target_user.id)
         .order_by(Post.created_at.desc())
         .limit(20)  # Adjust as needed
         .all()
@@ -4016,8 +4073,8 @@ def view_profile(user_id):
 
     # Pass everything to the template
     return render_template(
-        "public_profile.html",  # <-- create this template (see below)
-        profile_user=target_user,  # the user being viewed
+        "public_profile.html",
+        profile_user=target_user,
         current_user=current_user,
         friend_status=friend_status,
         posts=posts,

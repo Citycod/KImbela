@@ -1663,7 +1663,7 @@
 
                 <button
                   class="flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-1 md:py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 text-gray-600 repost-btn"
-                  data-post-id="{{ post.id }}"
+                  data-post-id="{{ post.public_id }}"
                 >
                   <i class="bi bi-arrow-repeat"></i>
                   <span class="text-xs md:text-sm">Repost</span>
@@ -1671,7 +1671,8 @@
 
                 <button
                   class="flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-1 md:py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 text-gray-600 share-btn"
-                  data-post-id="{{ post.id }}"
+                  data-post-id="{{ post.public_id }}"
+                  data-url="{{ url_for('user.view_shared_post', post_identifier=post.public_id) }}"
                 >
                   <i class="bi bi-share"></i>
                   <span class="text-xs md:text-sm">Share</span>

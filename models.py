@@ -66,6 +66,9 @@ class User(db.Model, UserMixin):
     )
 
     id = db.Column(db.Integer, primary_key=True)
+    public_id = db.Column(
+        db.String(36), unique=True, nullable=False, default=lambda: str(uuid.uuid4())
+    )
     first_name = db.Column(db.String(50), nullable=False)
     last_name = db.Column(db.String(50), nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
@@ -299,6 +302,10 @@ class User(db.Model, UserMixin):
     def full_name(self):
         """Get full name"""
         return f"{self.first_name} {self.last_name}"
+
+    @property
+    def uuid(self):
+        return self.public_id
 
     def get_friends(self):
         """Get all friends"""
@@ -749,6 +756,9 @@ class Post(db.Model):
     )
 
     id = db.Column(db.Integer, primary_key=True)
+    public_id = db.Column(
+        db.String(36), unique=True, nullable=False, default=lambda: str(uuid.uuid4())
+    )
     content = db.Column(db.Text, nullable=False)
     image = db.Column(db.String(255))
     video = db.Column(db.String(255))
@@ -781,6 +791,10 @@ class Post(db.Model):
         if self.emoji_data:
             return self.emoji_data
         return {}
+
+    @property
+    def uuid(self):
+        return self.public_id
 
     @property
     def comments_count(self):

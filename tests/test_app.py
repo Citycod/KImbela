@@ -21,3 +21,23 @@ def test_uploads_requires_login(client):
 def test_debug_routes_disabled_by_default(client):
     response = client.get("/debug/requests")
     assert response.status_code == 404
+
+
+def test_shared_post_page_uses_public_uuid(client, db, user):
+    from models import Post
+
+    post = Post(content="Shared link test", author_id=user.id)
+    db.session.add(post)
+    db.session.commit()
+
+    response = client.get(f"/post/{post.public_id}")
+    assert response.status_code == 200
+    assert b"Shared link test" in response.data
+
+
+def test_public_profile_accepts_user_uuid(client, db, user, login):
+    login()
+
+    response = client.get(f"/profile/{user.public_id}")
+    assert response.status_code == 200
+    assert user.first_name.encode() in response.data
