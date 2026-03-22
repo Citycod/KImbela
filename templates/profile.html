@@ -213,7 +213,7 @@
                     </div>
                     <div class="grid grid-cols-3 gap-3">
                         {% for friend in friends[:6] %}
-                        <a href="{{ url_for('user.view_profile', user_id=friend.id) }}" class="text-center group block">
+                        <a href="{{ url_for('user.view_profile', user_identifier=friend.public_id) }}" class="text-center group block">
                             <div class="relative mx-auto mb-1.5">
                                 <img src="{{ friend.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
                                      alt="{{ friend.first_name }}"
