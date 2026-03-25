@@ -77,6 +77,27 @@ def test_shared_post_page_rewrites_local_uploads_for_public_preview(client, db, 
     assert b'<meta property="og:image" content="https://www.kimbela.com/public/uploads/image/example.jpg">' in response.data
 
 
+def test_shared_post_page_includes_absolute_preview_metadata(client, db, user):
+    from models import Post
+
+    post = Post(
+        content="Metadata preview",
+        author_id=user.id,
+        image="/uploads/image/example.png",
+    )
+    db.session.add(post)
+    db.session.commit()
+
+    response = client.get(f"/post/{post.public_id}", base_url="https://www.kimbela.com")
+    assert response.status_code == 200
+    assert f'<link rel="canonical" href="https://www.kimbela.com/post/{post.public_id}">'.encode() in response.data
+    assert b'<meta property="og:url" content="https://www.kimbela.com/post/' in response.data
+    assert b'<meta property="og:image:type" content="image/png">' in response.data
+    assert b'<meta property="og:image:width" content="1200">' in response.data
+    assert b'<meta property="og:image:height" content="630">' in response.data
+    assert b'<meta name="twitter:image:alt" content="Post by ' in response.data
+
+
 def test_shared_post_page_rewrites_cloudinary_images_for_social_preview(client, db, user):
     from models import Post
 

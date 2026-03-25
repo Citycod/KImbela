@@ -59,7 +59,7 @@ class PostSystem {
                     : `${publicBaseUrl}/post/${postId}`;
 
                 if (postId && typeof window.openShareModal === 'function') {
-                    window.openShareModal(postId);
+                    window.openShareModal(postId, shareUrl);
                 } else {
                     navigator.clipboard.writeText(shareUrl);
                     Toast.show('Post link copied!', 'success');

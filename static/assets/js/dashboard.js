@@ -953,7 +953,8 @@ const PostSystem = {
             const shareBtn = e.target.closest('.share-btn');
             if (shareBtn) {
                 const postId = shareBtn.dataset.postId;
-                openShareModal(postId);
+                const shareUrl = shareBtn.dataset.url || '';
+                openShareModal(postId, shareUrl);
             }
 
             // Repost buttons
@@ -4448,6 +4449,7 @@ async function loadAllComments(postId) {
 // ========================================
 
 let currentSharePostId = null;
+let currentSharePostUrl = '';
 
 function getPublicBaseUrl() {
     return (window.publicBaseUrl || window.location.origin || '').replace(/\/$/, '');
@@ -4457,8 +4459,17 @@ function buildPublicPostUrl(postId) {
     return `${getPublicBaseUrl()}/post/${postId}`;
 }
 
-function openShareModal(postId) {
+function normalizeShareUrl(postId, shareUrl = '') {
+    if (shareUrl) {
+        return new URL(shareUrl, `${getPublicBaseUrl()}/`).toString();
+    }
+
+    return postId ? buildPublicPostUrl(postId) : '';
+}
+
+function openShareModal(postId, shareUrl = '') {
     currentSharePostId = postId;
+    currentSharePostUrl = normalizeShareUrl(postId, shareUrl);
     const messageInput = document.getElementById('sharePostMessage');
     if (messageInput) {
         messageInput.value = '';
@@ -4469,6 +4480,7 @@ function openShareModal(postId) {
 function closeShareModal() {
     Modal.close('shareModal');
     currentSharePostId = null;
+    currentSharePostUrl = '';
 }
 
 async function shareToFeed() {
@@ -4505,7 +4517,7 @@ function copyPostLink() {
         Toast.show('Select a post to share first.', 'warning');
         return;
     }
-    const url = buildPublicPostUrl(currentSharePostId);
+    const url = currentSharePostUrl || buildPublicPostUrl(currentSharePostId);
     navigator.clipboard.writeText(url).then(() => {
         Toast.show('Link copied!', 'success');
     }).catch(() => {
@@ -4522,7 +4534,7 @@ function copyPostLink() {
 function getSharePayload() {
     const messageInput = document.getElementById('sharePostMessage');
     const message = messageInput ? messageInput.value.trim() : '';
-    const url = currentSharePostId ? buildPublicPostUrl(currentSharePostId) : '';
+    const url = currentSharePostUrl || (currentSharePostId ? buildPublicPostUrl(currentSharePostId) : '');
     const text = message || 'Check this out on Kimbela';
     return { url, text };
 }

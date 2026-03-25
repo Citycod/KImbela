@@ -94,6 +94,7 @@ from extensions import cache as app_cache
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 from io import BytesIO
+import mimetypes
 
 import random
 from extensions import db, login_manager, mail
@@ -220,12 +221,17 @@ def build_post_share_meta(post):
         or f"See {title_author.full_name}'s post on Kimbela."
     ).strip()
     description = description_source[:197].rstrip() + "..." if len(description_source) > 200 else description_source
+    absolute_image_url = _social_preview_image_url(image_url)
+    image_type, _ = mimetypes.guess_type(absolute_image_url or "")
 
     return {
         "title": f"Post by {title_author.full_name} - Kimbela",
         "description": description,
         "url": _absolute_share_url(url_for("user.view_shared_post", post_identifier=post.public_id)),
-        "image": _social_preview_image_url(image_url),
+        "image": absolute_image_url,
+        "image_type": image_type or "image/jpeg",
+        "image_width": "1200",
+        "image_height": "630",
     }
 
 
