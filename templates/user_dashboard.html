@@ -916,21 +916,6 @@
           >
             <i class="bi bi-person mr-3 text-lg"></i> Profile
           </a>
-          <button
-            type="button"
-            onclick="openBlockedUsersModal()"
-            class="sidebar-item w-full flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-red-50 hover:to-rose-50 transition-all duration-300 mb-2 group"
-          >
-            <i class="bi bi-shield-lock-fill mr-3 text-lg text-rose-600"></i>
-            <span class="font-medium">Blocked Users</span>
-            <span
-              id="blockedUsersCountBadgeMobile"
-              class="ml-auto inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-700"
-            >
-              {{ current_user.get_blocked_users_count() }}
-            </span>
-          </button>
-
           <!-- In MOBILE SIDEBAR section, replace the Groups item with: -->
           <!-- Mobile Groups Dropdown -->
 
@@ -1085,31 +1070,6 @@
       <div
         class="left-sidebar hidden lg:block w-85 h-screen sticky top-16 overflow-y-auto custom-scrollbar bg-white border-r border-fb-border p-4"
       >
-        <button
-          type="button"
-          onclick="openBlockedUsersModal()"
-          class="sidebar-item w-full flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-red-50 hover:to-rose-50 transition-all duration-300 mb-2 group border border-transparent hover:border-rose-200 shadow-sm hover:shadow-md"
-        >
-          <div class="relative mr-3">
-            <i
-              class="bi bi-shield-lock-fill text-lg text-rose-600 group-hover:scale-110 transition-transform duration-300"
-            ></i>
-            <span
-              class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-rose-500 rounded-full ring-2 ring-white"
-            ></span>
-          </div>
-          <span class="font-medium group-hover:text-rose-700 transition-colors duration-300"
-            >Blocked Users</span
-          >
-          <span
-            id="blockedUsersCountBadge"
-            class="ml-auto inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-700"
-          >
-            {{ current_user.get_blocked_users_count() }}
-          </span>
-        </button>
-
-
         <!-- In your LEFT SIDEBAR section, replace the current Groups item with: -->
         <!-- Desktop Groups Dropdown -->
         

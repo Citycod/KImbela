@@ -3,7 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Post by {{ post.author.full_name }} - Kimbela</title>
+    <title>{{ share_meta.title }}</title>
+    <meta name="description" content="{{ share_meta.description }}">
+    <link rel="canonical" href="{{ share_meta.url }}">
+    <meta property="og:site_name" content="Kimbela">
+    <meta property="og:title" content="{{ share_meta.title }}">
+    <meta property="og:description" content="{{ share_meta.description }}">
+    <meta property="og:image" content="{{ share_meta.image }}">
+    <meta property="og:image:secure_url" content="{{ share_meta.image }}">
+    <meta property="og:image:alt" content="{{ share_meta.title }}">
+    <meta property="og:url" content="{{ share_meta.url }}">
+    <meta property="og:type" content="article">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ share_meta.title }}">
+    <meta name="twitter:description" content="{{ share_meta.description }}">
+    <meta name="twitter:image" content="{{ share_meta.image }}">
+    <meta name="twitter:url" content="{{ share_meta.url }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="{{ url_for('static', filename='assets/img/favy.png') }}" rel="icon" />

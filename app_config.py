@@ -29,6 +29,7 @@ def create_app():
 
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
     app.config["PREFERRED_URL_SCHEME"] = "https"
+    app.config["BASE_URL"] = os.getenv("BASE_URL", "").rstrip("/")
     app.config["ENABLE_DEBUG_ROUTES"] = os.getenv("ENABLE_DEBUG_ROUTES") == "1"
     app.config["MARKETPLACE_PAYMENTS_ENABLED"] = (
         os.getenv("MARKETPLACE_PAYMENTS_ENABLED", "0") == "1"
@@ -53,6 +54,15 @@ def create_app():
     @app.route("/uploads/<path:filename>")
     @login_required
     def serve_uploads(filename):
+        upload_folder = app.config["UPLOAD_FOLDER"]
+        file_path = safe_join(upload_folder, filename)
+        if not file_path or not os.path.isfile(file_path):
+            abort(404)
+
+        return send_from_directory(upload_folder, filename)
+
+    @app.route("/public/uploads/<path:filename>")
+    def serve_public_upload_preview(filename):
         upload_folder = app.config["UPLOAD_FOLDER"]
         file_path = safe_join(upload_folder, filename)
         if not file_path or not os.path.isfile(file_path):

@@ -14,6 +14,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <script>
+        window.publicBaseUrl = '{{ (config.get("BASE_URL") or request.url_root).rstrip("/") }}';
+    </script>
+
+    <script>
         // Check if Tailwind loads properly
         function checkTailwind() {
             setTimeout(() => {
@@ -1555,8 +1559,12 @@
         }
         
         // ==================== SHARE & COPY LINK ====================
+        function getPublicBaseUrl() {
+            return (window.publicBaseUrl || window.location.origin || '').replace(/\/$/, '');
+        }
+
         function getSharePayload() {
-            const url = `${window.location.origin}/post/${currentSharePostId}`;
+            const url = `${getPublicBaseUrl()}/post/${currentSharePostId}`;
             return { url, text: 'Check this out on Kimbela' };
         }
         
@@ -1578,23 +1586,40 @@
         function shareExternally(platform) {
             if (!currentSharePostId) return;
             const { url, text } = getSharePayload();
+            if (platform === 'instagram') {
+                if (navigator.share) {
+                    navigator.share({ title: 'Kimbela Post', text, url }).then(() => {
+                        showToast('Choose Instagram from your share apps.', 'success');
+                    }).catch(() => {});
+                    return;
+                }
+
+                navigator.clipboard.writeText(url).then(() => {
+                    showToast('Link copied. Paste it into Instagram.', 'success');
+                }).catch(() => {
+                    showToast('Copy the link and paste it into Instagram.', 'info');
+                });
+
+                const instagramWindow = window.open('https://www.instagram.com/', '_blank');
+                if (!instagramWindow) {
+                    window.location.href = 'https://www.instagram.com/';
+                }
+                return;
+            }
             const encodedUrl = encodeURIComponent(url);
             const encodedText = encodeURIComponent(text);
             const shareUrls = {
                 facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
                 x: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedText}`,
                 whatsapp: `https://wa.me/?text=${encodedText}%20${encodedUrl}`,
-                linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
-                instagram: `https://www.instagram.com/`
+                linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`
             };
             const shareUrl = shareUrls[platform];
             if (shareUrl) {
-                if (platform === 'instagram') {
-                    navigator.clipboard.writeText(url).then(() => {
-                        showToast('Link copied for Instagram!', 'success');
-                    }).catch(() => {});
+                const shareWindow = window.open(shareUrl, '_blank');
+                if (!shareWindow) {
+                    window.location.href = shareUrl;
                 }
-                window.open(shareUrl, '_blank', 'noopener,noreferrer');
             }
         }
         

@@ -11,7 +11,7 @@ from flask import (
     abort,
 )
 from datetime import date
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin
 from sqlalchemy.orm import joinedload
 from sqlalchemy import func, or_
 
@@ -168,6 +168,65 @@ def resolve_post_by_identifier(post_identifier):
         return Post.query.get_or_404(int(post_identifier))
 
     abort(404)
+
+
+def _absolute_share_url(raw_url):
+    if not raw_url:
+        return None
+
+    base_url = (current_app.config.get("BASE_URL") or "").rstrip("/")
+
+    if raw_url.startswith(("http://", "https://")):
+        return raw_url
+
+    if raw_url.startswith("/uploads/"):
+        raw_url = raw_url.replace("/uploads/", "/public/uploads/", 1)
+
+    root_url = f"{base_url}/" if base_url else request.url_root
+    return urljoin(root_url, raw_url.lstrip("/"))
+
+
+def _social_preview_image_url(raw_url):
+    absolute_url = _absolute_share_url(raw_url)
+    if not absolute_url:
+        return None
+
+    cloudinary_marker = "/image/upload/"
+    if "res.cloudinary.com" in absolute_url and cloudinary_marker in absolute_url:
+        return absolute_url.replace(
+            cloudinary_marker,
+            "/image/upload/f_jpg,q_auto,w_1200,c_limit/",
+            1,
+        )
+
+    return absolute_url
+
+
+def build_post_share_meta(post):
+    preview_post = post.shared_post or post
+    fallback_image = url_for("static", filename="assets/img/kim.png")
+    image_url = (
+        preview_post.image
+        or preview_post.gif
+        or post.image
+        or post.gif
+        or fallback_image
+    )
+
+    title_author = preview_post.author if preview_post.author else post.author
+    description_source = (
+        post.content
+        or preview_post.content
+        or f"See {title_author.full_name}'s post on Kimbela."
+    ).strip()
+    description = description_source[:197].rstrip() + "..." if len(description_source) > 200 else description_source
+
+    return {
+        "title": f"Post by {title_author.full_name} - Kimbela",
+        "description": description,
+        "url": _absolute_share_url(url_for("user.view_shared_post", post_identifier=post.public_id)),
+        "image": _social_preview_image_url(image_url),
+    }
 
 
 def get_groups_data_for_user(user_id):
@@ -4032,7 +4091,7 @@ def view_shared_post(post_identifier):
         .filter_by(id=post.id)
         .first_or_404()
     )
-    return render_template("post_detail.html", post=post)
+    return render_template("post_detail.html", post=post, share_meta=build_post_share_meta(post))
 
 
 @user.route("/profile/<user_identifier>")

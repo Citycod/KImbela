@@ -1,4 +1,6 @@
 <script>
+      window.publicBaseUrl = '{{ (config.get("BASE_URL") or request.url_root).rstrip("/") }}';
+
       // Set global variables that messenger.js needs
       window.currentUserId = {{ current_user.id }};
       window.defaultAvatar = '{{ url_for("static", filename="assets/img/default-avatar.png") }}';

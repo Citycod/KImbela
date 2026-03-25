@@ -53,9 +53,10 @@ class PostSystem {
             const shareBtn = e.target.closest('.share-btn');
             if (shareBtn) {
                 const postId = shareBtn.dataset.postId;
+                const publicBaseUrl = (window.publicBaseUrl || window.location.origin || '').replace(/\/$/, '');
                 const shareUrl = shareBtn.dataset.url
-                    ? new URL(shareBtn.dataset.url, window.location.origin).toString()
-                    : `${window.location.origin}/post/${postId}`;
+                    ? new URL(shareBtn.dataset.url, `${publicBaseUrl}/`).toString()
+                    : `${publicBaseUrl}/post/${postId}`;
 
                 if (postId && typeof window.openShareModal === 'function') {
                     window.openShareModal(postId);

@@ -4449,6 +4449,14 @@ async function loadAllComments(postId) {
 
 let currentSharePostId = null;
 
+function getPublicBaseUrl() {
+    return (window.publicBaseUrl || window.location.origin || '').replace(/\/$/, '');
+}
+
+function buildPublicPostUrl(postId) {
+    return `${getPublicBaseUrl()}/post/${postId}`;
+}
+
 function openShareModal(postId) {
     currentSharePostId = postId;
     const messageInput = document.getElementById('sharePostMessage');
@@ -4497,7 +4505,7 @@ function copyPostLink() {
         Toast.show('Select a post to share first.', 'warning');
         return;
     }
-    const url = `${window.location.origin}/post/${currentSharePostId}`;
+    const url = buildPublicPostUrl(currentSharePostId);
     navigator.clipboard.writeText(url).then(() => {
         Toast.show('Link copied!', 'success');
     }).catch(() => {
@@ -4514,7 +4522,7 @@ function copyPostLink() {
 function getSharePayload() {
     const messageInput = document.getElementById('sharePostMessage');
     const message = messageInput ? messageInput.value.trim() : '';
-    const url = currentSharePostId ? `${window.location.origin}/post/${currentSharePostId}` : '';
+    const url = currentSharePostId ? buildPublicPostUrl(currentSharePostId) : '';
     const text = message || 'Check this out on Kimbela';
     return { url, text };
 }
@@ -4538,23 +4546,41 @@ function shareExternally(platform) {
         return;
     }
     const { url, text } = getSharePayload();
+    if (platform === 'instagram') {
+        if (navigator.share) {
+            navigator.share({ title: 'Kimbela Post', text, url })
+                .then(() => Toast.show('Choose Instagram from your share apps.', 'success'))
+                .catch(() => {});
+            return;
+        }
+
+        navigator.clipboard.writeText(url).then(() => {
+            Toast.show('Link copied. Paste it into Instagram.', 'success');
+        }).catch(() => {
+            Toast.show('Copy the link and paste it into Instagram.', 'info');
+        });
+
+        const instagramWindow = window.open('https://www.instagram.com/', '_blank');
+        if (!instagramWindow) {
+            window.location.href = 'https://www.instagram.com/';
+        }
+        return;
+    }
+
     const encodedUrl = encodeURIComponent(url);
     const encodedText = encodeURIComponent(text);
     const shareUrls = {
         facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
         x: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedText}`,
         whatsapp: `https://wa.me/?text=${encodedText}%20${encodedUrl}`,
-        linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
-        instagram: `https://www.instagram.com/`
+        linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`
     };
     const shareUrl = shareUrls[platform];
     if (shareUrl) {
-        if (platform === 'instagram') {
-            navigator.clipboard.writeText(url).then(() => {
-                Toast.show('Link copied for Instagram!', 'success');
-            }).catch(() => {});
+        const shareWindow = window.open(shareUrl, '_blank');
+        if (!shareWindow) {
+            window.location.href = shareUrl;
         }
-        window.open(shareUrl, '_blank', 'noopener,noreferrer');
     }
 }
 
