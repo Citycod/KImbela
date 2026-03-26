@@ -41,7 +41,7 @@ from time_utils import utcnow
 # )
 import logging, secrets, re
 from payments.payment_service import MatchmakingPaymentService
-from flask_mail import Message
+from resend_mail import Message
 from extensions import mail
 
 load_dotenv()

@@ -1,8 +1,8 @@
 from time_utils import utcnow
 # email_service.py
-from flask_mail import Message
 from flask import render_template, current_app
 from extensions import mail
+from resend_mail import Message
 from datetime import datetime, timedelta
 import logging
 

@@ -44,7 +44,6 @@ from decimal import Decimal
 import bleach, os
 from dotenv import load_dotenv
 from extensions import mail
-from flask_mail import Message
 from email_utils import EmailService
 
 from sqlalchemy.orm import joinedload

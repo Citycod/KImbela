@@ -437,8 +437,8 @@ def send_subscription_reminder_optimized(user, reminder_type, service=None):
     """Optimized email sending with template caching"""
     try:
         # Import here to avoid circular imports
-        from flask_mail import Message
         from extensions import mail
+        from resend_mail import Message
 
         # Use template caching
         templates = {

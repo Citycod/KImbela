@@ -13,8 +13,8 @@ import logging
 import os, time
 from .payment_service_ad import AdCampaignPaymentService
 from datetime import datetime, timedelta
-from flask_mail import Message
 from extensions import mail
+from resend_mail import Message
 from models import (
     PaymentTransaction,
     AdCampaign,

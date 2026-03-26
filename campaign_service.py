@@ -1,6 +1,8 @@
+from flask import current_app
+
 from extensions import db, mail
 from models import AdCampaign, User
-from flask_mail import Message
+from resend_mail import Message
 from datetime import datetime, timedelta
 import logging
 from sqlalchemy import and_

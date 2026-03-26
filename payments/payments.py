@@ -12,12 +12,12 @@ from flask import (
 from sqlalchemy import or_
 from flask_login import login_required, current_user
 from flask_wtf.csrf import generate_csrf
-from flask_mail import Message
 from extensions import db, mail, bcrypt
 from models import User, AdCampaign, AdPackage, PaymentTransaction, MatchmakingPayments
 import cloudinary.uploader
 import os, requests
 from email_service import EmailService
+from resend_mail import Message
 import json
 from datetime import datetime, timedelta, date
 import time

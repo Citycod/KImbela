@@ -4,16 +4,17 @@ import os
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager
-from flask_mail import Mail
 from flask_wtf.csrf import CSRFProtect
 from flask_caching import Cache
 from flask_socketio import SocketIO
+
+from resend_mail import ResendMail
 
 # Initialize all extensions
 db = SQLAlchemy()
 bcrypt = Bcrypt()
 login_manager = LoginManager()
-mail = Mail()
+mail = ResendMail()
 csrf = CSRFProtect()
 cache = Cache()
 

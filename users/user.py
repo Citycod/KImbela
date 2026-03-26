@@ -99,7 +99,6 @@ import mimetypes
 import random
 from extensions import db, login_manager, mail
 import string
-from flask_mail import Message
 from dotenv import load_dotenv
 
 from flask import jsonify, request
