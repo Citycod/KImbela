@@ -3,7 +3,7 @@ from time_utils import utcnow
 from flask import current_app
 from extensions import mail
 from resend_mail import Message
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 
 logger = logging.getLogger(__name__)
@@ -56,6 +56,54 @@ class MarketplaceEmailService:
             # Log but don't crash the app
             return False
 
+    def _logo_url(self):
+        self._ensure_initialized()
+        return f"{self.base_url}/static/assets/img/kim.png"
+
+    def _render_shell(self, eyebrow, title, subtitle, body_html, accent):
+        return f"""
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+                body {{ margin: 0; padding: 0; background: #f4efe6; color: #1f2937; font-family: "Segoe UI", Arial, sans-serif; line-height: 1.55; font-size: 14px; }}
+                .wrap {{ width: 100%; padding: 24px 12px; box-sizing: border-box; }}
+                .card {{ max-width: 660px; margin: 0 auto; background: #fffdfa; border: 1px solid #e9ddca; border-radius: 24px; overflow: hidden; box-shadow: 0 18px 50px rgba(55, 42, 18, 0.08); }}
+                .hero {{ padding: 28px 28px 24px; background: {accent}; color: #fffdf8; text-align: center; }}
+                .logo {{ width: auto; max-width: 160px; max-height: 88px; display: block; margin: 0 auto 18px; }}
+                .eyebrow {{ display: inline-block; padding: 7px 12px; border-radius: 999px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.16); text-transform: uppercase; letter-spacing: 0.08em; font-size: 11px; }}
+                .hero h1 {{ margin: 16px 0 8px; font-size: 28px; line-height: 1.15; font-weight: 700; }}
+                .hero p {{ margin: 0; font-size: 14px; color: rgba(255,253,248,0.9); }}
+                .content {{ padding: 28px; }}
+                .lead {{ margin: 0 0 16px; font-size: 15px; color: #334155; }}
+                .panel {{ margin: 22px 0; padding: 20px; border-radius: 18px; background: #f7f2e8; border: 1px solid #eadfce; }}
+                .button {{ display: inline-block; margin-top: 10px; padding: 13px 22px; border-radius: 999px; background: #17324d; color: #fffdfa !important; text-decoration: none; font-size: 14px; font-weight: 700; }}
+                .footer {{ padding: 22px 28px 28px; border-top: 1px solid #ece1d2; color: #6b7280; font-size: 12px; line-height: 1.65; }}
+                @media only screen and (max-width: 640px) {{
+                    .wrap {{ padding: 12px 8px; }}
+                    .hero, .content, .footer {{ padding-left: 20px; padding-right: 20px; }}
+                    .hero h1 {{ font-size: 23px; }}
+                    .lead, .panel {{ font-size: 13px; }}
+                    .button {{ width: 100%; box-sizing: border-box; text-align: center; }}
+                    .logo {{ max-height: 72px; max-width: 140px; }}
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="wrap"><div class="card"><div class="hero">
+                <img class="logo" src="{self._logo_url()}" alt="Kimbela">
+                <span class="eyebrow">{eyebrow}</span>
+                <h1>{title}</h1>
+                <p>{subtitle}</p>
+            </div><div class="content">{body_html}</div>
+            <div class="footer">This email was sent automatically by Kimbela Marketplace.</div>
+            </div></div>
+        </body>
+        </html>
+        """
+
     def send_payment_success_email(self, user, marketplace_payment, plan):
         """Send payment success email"""
         try:
@@ -66,452 +114,25 @@ class MarketplaceEmailService:
                 days=30
             )
 
-            # Create beautiful HTML email
-            html_body = f"""
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Subscription Activated</title>
-                <style>
-                    /* Base Styles */
-                    * {{
-                        margin: 0;
-                        padding: 0;
-                        box-sizing: border-box;
-                    }}
-                    
-                    body {{
-                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-                        line-height: 1.6;
-                        color: #333;
-                        background-color: #f8f9fa;
-                        padding: 20px;
-                    }}
-                    
-                    .email-container {{
-                        max-width: 600px;
-                        margin: 0 auto;
-                        background: #ffffff;
-                        border-radius: 12px;
-                        overflow: hidden;
-                        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-                    }}
-                    
-                    /* Header */
-                    .email-header {{
-                        background: linear-gradient(135deg, #D97706 0%, #FBBF24 100%);
-                        padding: 40px 30px;
-                        text-align: center;
-                        color: white;
-                    }}
-                    
-                    .email-header h1 {{
-                        font-size: 28px;
-                        font-weight: 700;
-                        margin-bottom: 10px;
-                    }}
-                    
-                    .email-header p {{
-                        font-size: 16px;
-                        opacity: 0.9;
-                        margin-bottom: 0;
-                    }}
-                    
-                    .success-icon {{
-                        font-size: 48px;
-                        margin-bottom: 20px;
-                        display: inline-block;
-                    }}
-                    
-                    /* Content */
-                    .email-content {{
-                        padding: 40px 30px;
-                    }}
-                    
-                    .greeting {{
-                        font-size: 18px;
-                        margin-bottom: 25px;
-                        color: #4b5563;
-                    }}
-                    
-                    .greeting strong {{
-                        color: #1f2937;
-                    }}
-                    
-                    /* Order Summary */
-                    .order-summary {{
-                        background: linear-gradient(135deg, #fef3c7 0%, #fef9c3 100%);
-                        border-radius: 10px;
-                        padding: 25px;
-                        margin-bottom: 30px;
-                        border-left: 4px solid #D97706;
-                    }}
-                    
-                    .order-summary h2 {{
-                        color: #92400E;
-                        font-size: 20px;
-                        margin-bottom: 15px;
-                        display: flex;
-                        align-items: center;
-                        gap: 10px;
-                    }}
-                    
-                    .order-summary h2 i {{
-                        font-size: 24px;
-                    }}
-                    
-                    .order-details {{
-                        display: grid;
-                        grid-template-columns: 1fr 1fr;
-                        gap: 15px;
-                    }}
-                    
-                    .detail-item {{
-                        margin-bottom: 10px;
-                    }}
-                    
-                    .detail-label {{
-                        font-weight: 600;
-                        color: #6b7280;
-                        font-size: 14px;
-                        display: block;
-                        margin-bottom: 4px;
-                    }}
-                    
-                    .detail-value {{
-                        font-weight: 700;
-                        color: #1f2937;
-                        font-size: 15px;
-                    }}
-                    
-                    .status-badge {{
-                        display: inline-block;
-                        padding: 5px 12px;
-                        background: #10b981;
-                        color: white;
-                        border-radius: 20px;
-                        font-size: 12px;
-                        font-weight: 600;
-                    }}
-                    
-                    /* Next Steps */
-                    .next-steps {{
-                        background: #eff6ff;
-                        border-radius: 10px;
-                        padding: 25px;
-                        margin-bottom: 30px;
-                    }}
-                    
-                    .next-steps h2 {{
-                        color: #1e40af;
-                        font-size: 20px;
-                        margin-bottom: 20px;
-                    }}
-                    
-                    .steps-list {{
-                        list-style: none;
-                        padding: 0;
-                    }}
-                    
-                    .step-item {{
-                        display: flex;
-                        align-items: flex-start;
-                        margin-bottom: 15px;
-                        padding-bottom: 15px;
-                        border-bottom: 1px solid #dbeafe;
-                    }}
-                    
-                    .step-item:last-child {{
-                        border-bottom: none;
-                        margin-bottom: 0;
-                        padding-bottom: 0;
-                    }}
-                    
-                    .step-number {{
-                        background: #3b82f6;
-                        color: white;
-                        width: 28px;
-                        height: 28px;
-                        border-radius: 50%;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        font-weight: 700;
-                        font-size: 14px;
-                        flex-shrink: 0;
-                        margin-right: 15px;
-                    }}
-                    
-                    .step-content h3 {{
-                        color: #1e40af;
-                        font-size: 16px;
-                        margin-bottom: 5px;
-                    }}
-                    
-                    .step-content p {{
-                        color: #4b5563;
-                        font-size: 14px;
-                        line-height: 1.5;
-                    }}
-                    
-                    /* CTA Button */
-                    .cta-container {{
-                        text-align: center;
-                        margin: 30px 0;
-                    }}
-                    
-                    .cta-button {{
-                        display: inline-block;
-                        background: linear-gradient(135deg, #D97706 0%, #FBBF24 100%);
-                        color: white;
-                        text-decoration: none;
-                        padding: 16px 40px;
-                        border-radius: 8px;
-                        font-weight: 700;
-                        font-size: 16px;
-                        transition: all 0.3s ease;
-                        box-shadow: 0 4px 15px rgba(217, 119, 6, 0.3);
-                    }}
-                    
-                    .cta-button:hover {{
-                        transform: translateY(-2px);
-                        box-shadow: 0 6px 20px rgba(217, 119, 6, 0.4);
-                    }}
-                    
-                    /* Tips Section */
-                    .tips-section {{
-                        background: #f0fdf4;
-                        border-radius: 10px;
-                        padding: 25px;
-                        margin-top: 30px;
-                    }}
-                    
-                    .tips-section h2 {{
-                        color: #065f46;
-                        font-size: 20px;
-                        margin-bottom: 20px;
-                    }}
-                    
-                    .tips-grid {{
-                        display: grid;
-                        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-                        gap: 20px;
-                    }}
-                    
-                    .tip-card {{
-                        background: white;
-                        padding: 20px;
-                        border-radius: 8px;
-                        border: 1px solid #d1fae5;
-                    }}
-                    
-                    .tip-card h3 {{
-                        color: #065f46;
-                        font-size: 16px;
-                        margin-bottom: 10px;
-                        display: flex;
-                        align-items: center;
-                        gap: 8px;
-                    }}
-                    
-                    .tip-card p {{
-                        color: #4b5563;
-                        font-size: 14px;
-                        line-height: 1.5;
-                    }}
-                    
-                    /* Footer */
-                    .email-footer {{
-                        background: #1f2937;
-                        color: #9ca3af;
-                        padding: 30px;
-                        text-align: center;
-                        font-size: 12px;
-                    }}
-                    
-                    .footer-links {{
-                        margin-bottom: 20px;
-                    }}
-                    
-                    .footer-links a {{
-                        color: #d1d5db;
-                        text-decoration: none;
-                        margin: 0 10px;
-                        transition: color 0.3s ease;
-                    }}
-                    
-                    .footer-links a:hover {{
-                        color: white;
-                    }}
-                    
-                    .copyright {{
-                        opacity: 0.7;
-                    }}
-                    
-                    /* Responsive */
-                    @media (max-width: 640px) {{
-                        .order-details {{
-                            grid-template-columns: 1fr;
-                        }}
-                        
-                        .tips-grid {{
-                            grid-template-columns: 1fr;
-                        }}
-                        
-                        .email-header h1 {{
-                            font-size: 24px;
-                        }}
-                        
-                        .email-content {{
-                            padding: 20px;
-                        }}
-                    }}
-                </style>
-            </head>
-            <body>
-                <div class="email-container">
-                    <!-- Header -->
-                    <div class="email-header">
-                        <div class="success-icon">🎉</div>
-                        <h1>Welcome to Kimbela Marketplace!</h1>
-                        <p>Your seller subscription is now active</p>
-                    </div>
-                    
-                    <!-- Content -->
-                    <div class="email-content">
-                        <div class="greeting">
-                            Hello <strong>{user.full_name or user.first_name}</strong>,
-                        </div>
-                        
-                        <p style="font-size: 16px; color: #4b5563; margin-bottom: 25px; line-height: 1.6;">
-                            Thank you for choosing Kimbela Marketplace! Your subscription has been successfully 
-                            activated. You're now ready to start selling your services and connecting with buyers.
-                        </p>
-                        
-                        <!-- Order Summary -->
-                        <div class="order-summary">
-                            <h2><i>📋</i> Order Summary</h2>
-                            <div class="order-details">
-                                <div class="detail-item">
-                                    <span class="detail-label">Plan</span>
-                                    <span class="detail-value">{plan.name}</span>
-                                </div>
-                                <div class="detail-item">
-                                    <span class="detail-label">Amount Paid</span>
-                                    <span class="detail-value">${marketplace_payment.amount:.2f} {marketplace_payment.currency}</span>
-                                </div>
-                                <div class="detail-item">
-                                    <span class="detail-label">Order ID</span>
-                                    <span class="detail-value">{marketplace_payment.gateway_reference}</span>
-                                </div>
-                                <div class="detail-item">
-                                    <span class="detail-label">Payment Date</span>
-                                    <span class="detail-value">{utcnow().strftime('%B %d, %Y')}</span>
-                                </div>
-                                <div class="detail-item">
-                                    <span class="detail-label">Expires On</span>
-                                    <span class="detail-value">{expires_at.strftime('%B %d, %Y')}</span>
-                                </div>
-                                <div class="detail-item">
-                                    <span class="detail-label">Status</span>
-                                    <span class="status-badge">ACTIVE</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Next Steps -->
-                        <div class="next-steps">
-                            <h2>🚀 Your Next Steps</h2>
-                            <ul class="steps-list">
-                                <li class="step-item">
-                                    <div class="step-number">1</div>
-                                    <div class="step-content">
-                                        <h3>Complete Your Profile</h3>
-                                        <p>Add your photo, bio, and contact information to build trust with buyers.</p>
-                                    </div>
-                                </li>
-                                <li class="step-item">
-                                    <div class="step-number">2</div>
-                                    <div class="step-content">
-                                        <h3>Create Your First Service</h3>
-                                        <p>List your service with clear descriptions, pricing, and high-quality images.</p>
-                                    </div>
-                                </li>
-                                <li class="step-item">
-                                    <div class="step-number">3</div>
-                                    <div class="step-content">
-                                        <h3>Set Your Availability</h3>
-                                        <p>Let buyers know when you're available for consultations or service delivery.</p>
-                                    </div>
-                                </li>
-                                <li class="step-item">
-                                    <div class="step-number">4</div>
-                                    <div class="step-content">
-                                        <h3>Promote Your Services</h3>
-                                        <p>Share your Kimbela profile link on social media and with your network.</p>
-                                    </div>
-                                </li>
-                            </ul>
-                        </div>
-                        
-                        <!-- CTA Button -->
-                        <div class="cta-container">
-                            <a href="{self.base_url}/market/create_service" class="cta-button">
-                                🛍️ Create Your First Service
-                            </a>
-                        </div>
-                        
-                        <!-- Tips Section -->
-                        <div class="tips-section">
-                            <h2>💡 Pro Tips for Success</h2>
-                            <div class="tips-grid">
-                                <div class="tip-card">
-                                    <h3>✨ Quality Images</h3>
-                                    <p>Use clear, well-lit photos that showcase your work or service quality.</p>
-                                </div>
-                                <div class="tip-card">
-                                    <h3>📝 Detailed Descriptions</h3>
-                                    <p>Be specific about what buyers get, timelines, and any requirements.</p>
-                                </div>
-                                <div class="tip-card">
-                                    <h3>💬 Quick Responses</h3>
-                                    <p>Reply to inquiries within 24 hours to build trust and close sales faster.</p>
-                                </div>
-                                <div class="tip-card">
-                                    <h3>⭐ Collect Reviews</h3>
-                                    <p>Ask satisfied customers to leave reviews to boost your credibility.</p>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Support Note -->
-                        <div style="margin-top: 30px; padding: 20px; background: #f3f4f6; border-radius: 8px; text-align: center;">
-                            <p style="color: #4b5563; font-size: 14px; margin-bottom: 10px;">
-                                Need help? Visit our <a href="{self.base_url}/help/marketplace" style="color: #D97706; font-weight: 600; text-decoration: none;">Seller Help Center</a> 
-                                or email <a href="mailto:support@kimbela.com" style="color: #D97706; font-weight: 600; text-decoration: none;">support@kimbela.com</a>
-                            </p>
-                        </div>
-                    </div>
-                    
-                    <!-- Footer -->
-                    <div class="email-footer">
-                        <div class="footer-links">
-                            <a href="{self.base_url}/privacy">Privacy Policy</a> | 
-                            <a href="{self.base_url}/terms">Terms of Service</a> | 
-                            <a href="{self.base_url}/contact">Contact Us</a> | 
-                            <a href="{self.base_url}/unsubscribe">Unsubscribe</a>
-                        </div>
-                        <div class="copyright">
-                            © {utcnow().year} Kimbela Marketplace. Connecting African professionals worldwide.
-                            <br>This is an automated message. Please do not reply to this email.
-                        </div>
-                    </div>
+            html_body = self._render_shell(
+                "Marketplace",
+                "Your seller subscription is active",
+                "You are ready to start selling on Kimbela Marketplace.",
+                f"""
+                <p class="lead">Hello {user.full_name or user.first_name}, your marketplace subscription has been activated successfully.</p>
+                <div class="panel">
+                    <strong>Order summary</strong><br>
+                    Plan: {plan.name}<br>
+                    Amount paid: ${marketplace_payment.amount:.2f} {marketplace_payment.currency}<br>
+                    Order ID: {marketplace_payment.gateway_reference}<br>
+                    Payment date: {utcnow().strftime('%B %d, %Y')}<br>
+                    Expires on: {expires_at.strftime('%B %d, %Y')}
                 </div>
-            </body>
-            </html>
-            """
+                <p class="lead">Next, complete your profile, create your first service, and make sure your listing is ready for buyers.</p>
+                <a href="{self.base_url}/market/create_service" class="button">Create Your First Service</a>
+                """,
+                "linear-gradient(135deg, #8a5a12 0%, #d97706 55%, #f0b44c 100%)",
+            )
 
             # Plain text version for email clients that don't support HTML
             text_body = f"""
@@ -563,209 +184,25 @@ class MarketplaceEmailService:
         try:
             subject = f"❌ Payment Failed - Kimbela Marketplace Order #{marketplace_payment.gateway_reference}"
 
-            html_body = f"""
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Payment Failed</title>
-                <style>
-                    /* Reuse similar styles as success email but with red theme */
-                    body {{
-                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                        line-height: 1.6;
-                        color: #333;
-                        background-color: #f8f9fa;
-                        padding: 20px;
-                    }}
-                    
-                    .email-container {{
-                        max-width: 600px;
-                        margin: 0 auto;
-                        background: #ffffff;
-                        border-radius: 12px;
-                        overflow: hidden;
-                        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-                    }}
-                    
-                    .email-header {{
-                        background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
-                        padding: 40px 30px;
-                        text-align: center;
-                        color: white;
-                    }}
-                    
-                    .email-header h1 {{
-                        font-size: 28px;
-                        font-weight: 700;
-                        margin-bottom: 10px;
-                    }}
-                    
-                    .warning-icon {{
-                        font-size: 48px;
-                        margin-bottom: 20px;
-                    }}
-                    
-                    .email-content {{
-                        padding: 40px 30px;
-                    }}
-                    
-                    .status-badge-failed {{
-                        display: inline-block;
-                        padding: 5px 12px;
-                        background: #dc2626;
-                        color: white;
-                        border-radius: 20px;
-                        font-size: 12px;
-                        font-weight: 600;
-                    }}
-                    
-                    .retry-section {{
-                        background: linear-gradient(135deg, #fef3c7 0%, #fef9c3 100%);
-                        border-radius: 10px;
-                        padding: 25px;
-                        margin: 30px 0;
-                        border-left: 4px solid #f59e0b;
-                    }}
-                    
-                    .help-section {{
-                        background: #fef2f2;
-                        border-radius: 10px;
-                        padding: 25px;
-                        margin-top: 30px;
-                    }}
-                    
-                    .cta-button-retry {{
-                        display: inline-block;
-                        background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
-                        color: white;
-                        text-decoration: none;
-                        padding: 16px 40px;
-                        border-radius: 8px;
-                        font-weight: 700;
-                        font-size: 16px;
-                        transition: all 0.3s ease;
-                        box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
-                    }}
-                    
-                    .cta-button-retry:hover {{
-                        transform: translateY(-2px);
-                        box-shadow: 0 6px 20px rgba(220, 38, 38, 0.4);
-                    }}
-                </style>
-            </head>
-            <body>
-                <div class="email-container">
-                    <div class="email-header">
-                        <div class="warning-icon">❌</div>
-                        <h1>Payment Failed</h1>
-                        <p>We couldn't process your subscription payment</p>
-                    </div>
-                    
-                    <div class="email-content">
-                        <div style="font-size: 18px; margin-bottom: 25px; color: #4b5563;">
-                            Hello <strong>{user.full_name or user.first_name}</strong>,
-                        </div>
-                        
-                        <p style="font-size: 16px; color: #4b5563; margin-bottom: 25px; line-height: 1.6;">
-                            We attempted to process your payment for the <strong>{plan.name}</strong> subscription, 
-                            but the transaction was not successful.
-                        </p>
-                        
-                        <div style="background: #f3f4f6; border-radius: 10px; padding: 25px; margin-bottom: 30px;">
-                            <h2 style="color: #1f2937; font-size: 20px; margin-bottom: 15px;">Payment Details</h2>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                                <div>
-                                    <span style="display: block; font-weight: 600; color: #6b7280; font-size: 14px; margin-bottom: 4px;">Plan</span>
-                                    <span style="font-weight: 700; color: #1f2937;">{plan.name}</span>
-                                </div>
-                                <div>
-                                    <span style="display: block; font-weight: 600; color: #6b7280; font-size: 14px; margin-bottom: 4px;">Amount</span>
-                                    <span style="font-weight: 700; color: #1f2937;">${marketplace_payment.amount:.2f} {marketplace_payment.currency}</span>
-                                </div>
-                                <div>
-                                    <span style="display: block; font-weight: 600; color: #6b7280; font-size: 14px; margin-bottom: 4px;">Reference</span>
-                                    <span style="font-weight: 700; color: #1f2937;">{marketplace_payment.gateway_reference}</span>
-                                </div>
-                                <div>
-                                    <span style="display: block; font-weight: 600; color: #6b7280; font-size: 14px; margin-bottom: 4px;">Status</span>
-                                    <span class="status-badge-failed">FAILED</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="retry-section">
-                            <h2 style="color: #92400E; font-size: 20px; margin-bottom: 15px;">🔄 Retry Your Payment</h2>
-                            <p style="color: #92400E; margin-bottom: 20px; line-height: 1.6;">
-                                You can easily retry your payment using the same or a different payment method.
-                            </p>
-                            <div style="text-align: center; margin-top: 25px;">
-                                <a href="{self.base_url}/become-seller" class="cta-button-retry">
-                                    🔄 Retry Payment
-                                </a>
-                            </div>
-                        </div>
-                        
-                        <div class="help-section">
-                            <h2 style="color: #991b1b; font-size: 20px; margin-bottom: 15px;">💡 Need Help?</h2>
-                            
-                            {f'<p style="color: #991b1b; margin-bottom: 15px; padding: 10px; background: #fecaca; border-radius: 5px; border-left: 4px solid #dc2626;"><strong>Error Details:</strong> {error_reason}</p>' if error_reason else ''}
-                            
-                            <p style="color: #4b5563; margin-bottom: 15px; line-height: 1.6;">
-                                If you're experiencing payment issues:
-                            </p>
-                            
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
-                                <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #fca5a5;">
-                                    <h3 style="color: #dc2626; font-size: 16px; margin-bottom: 10px;">💰 Check Payment Method</h3>
-                                    <p style="color: #6b7280; font-size: 14px;">
-                                        Ensure your card details are correct and you have sufficient funds.
-                                    </p>
-                                </div>
-                                <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #fca5a5;">
-                                    <h3 style="color: #dc2626; font-size: 16px; margin-bottom: 10px;">🔄 Try Different Method</h3>
-                                    <p style="color: #6b7280; font-size: 14px;">
-                                        Try a different credit/debit card or payment method.
-                                    </p>
-                                </div>
-                                <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #fca5a5;">
-                                    <h3 style="color: #dc2626; font-size: 16px; margin-bottom: 10px;">🔒 Contact Your Bank</h3>
-                                    <p style="color: #6b7280; font-size: 14px;">
-                                        Some banks block international transactions. Contact them to approve.
-                                    </p>
-                                </div>
-                                <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #fca5a5;">
-                                    <h3 style="color: #dc2626; font-size: 16px; margin-bottom: 10px;">📞 Contact Support</h3>
-                                    <p style="color: #6b7280; font-size: 14px;">
-                                        We're here to help! Email us at support@kimbela.com
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div style="margin-top: 30px; text-align: center;">
-                            <p style="color: #6b7280; font-size: 14px;">
-                                Don't let this stop your journey to becoming a seller. We're here to help you succeed!
-                            </p>
-                        </div>
-                    </div>
-                    
-                    <div style="background: #1f2937; color: #9ca3af; padding: 30px; text-align: center; font-size: 12px;">
-                        <div style="margin-bottom: 20px;">
-                            <a href="{self.base_url}/privacy" style="color: #d1d5db; text-decoration: none; margin: 0 10px;">Privacy Policy</a> | 
-                            <a href="{self.base_url}/terms" style="color: #d1d5db; text-decoration: none; margin: 0 10px;">Terms</a> | 
-                            <a href="{self.base_url}/contact" style="color: #d1d5db; text-decoration: none; margin: 0 10px;">Contact</a>
-                        </div>
-                        <div style="opacity: 0.7;">
-                            © {utcnow().year} Kimbela Marketplace
-                            <br>This is an automated message. Please do not reply.
-                        </div>
-                    </div>
+            error_html = f"<br>Error details: {error_reason}" if error_reason else ""
+            html_body = self._render_shell(
+                "Marketplace",
+                "Payment was not completed",
+                "We could not process your marketplace subscription payment.",
+                f"""
+                <p class="lead">Hello {user.full_name or user.first_name}, your payment for the <strong>{plan.name}</strong> subscription did not go through.</p>
+                <div class="panel">
+                    <strong>Payment details</strong><br>
+                    Plan: {plan.name}<br>
+                    Amount: ${marketplace_payment.amount:.2f} {marketplace_payment.currency}<br>
+                    Reference: {marketplace_payment.gateway_reference}<br>
+                    Status: Failed{error_html}
                 </div>
-            </body>
-            </html>
-            """
+                <p class="lead">Please review your payment method, confirm available funds, or try again using a different payment option.</p>
+                <a href="{self.base_url}/become-seller" class="button">Retry Payment</a>
+                """,
+                "linear-gradient(135deg, #5d2028 0%, #9a3d38 55%, #b37b37 100%)",
+            )
 
             text_body = f"""
             PAYMENT FAILED - KIMBELA MARKETPLACE

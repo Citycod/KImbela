@@ -11,6 +11,52 @@ logger = logging.getLogger(__name__)
 
 class EmailService:
     @staticmethod
+    def _logo_url():
+        return f"{current_app.config.get('BASE_URL', 'http://localhost:5000')}/static/assets/img/kim.png"
+
+    @staticmethod
+    def _render_matchmaking_shell(eyebrow, title, subtitle, body_html, accent="linear-gradient(135deg, #17324d 0%, #3f2d64 55%, #b37b37 100%)"):
+        return f"""
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+                body {{ margin: 0; padding: 0; background: #f4efe6; color: #1f2937; font-family: "Segoe UI", Arial, sans-serif; line-height: 1.55; font-size: 14px; }}
+                .wrap {{ width: 100%; padding: 24px 12px; box-sizing: border-box; }}
+                .card {{ max-width: 660px; margin: 0 auto; background: #fffdfa; border: 1px solid #e9ddca; border-radius: 24px; overflow: hidden; box-shadow: 0 18px 50px rgba(55, 42, 18, 0.08); }}
+                .hero {{ padding: 28px 28px 24px; background: {accent}; color: #fffdf8; text-align: center; }}
+                .logo {{ width: auto; max-width: 160px; max-height: 88px; display: block; margin: 0 auto 18px; }}
+                .eyebrow {{ display: inline-block; padding: 7px 12px; border-radius: 999px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.16); text-transform: uppercase; letter-spacing: 0.08em; font-size: 11px; }}
+                .hero h1 {{ margin: 16px 0 8px; font-size: 28px; line-height: 1.15; font-weight: 700; }}
+                .hero p {{ margin: 0; font-size: 14px; color: rgba(255,253,248,0.9); }}
+                .content {{ padding: 28px; }}
+                .lead {{ margin: 0 0 16px; font-size: 15px; color: #334155; }}
+                .panel {{ margin: 22px 0; padding: 20px; border-radius: 18px; background: #f7f2e8; border: 1px solid #eadfce; }}
+                .button {{ display: inline-block; margin-top: 10px; padding: 13px 22px; border-radius: 999px; background: #17324d; color: #fffdfa !important; text-decoration: none; font-size: 14px; font-weight: 700; }}
+                .footer {{ padding: 22px 28px 28px; border-top: 1px solid #ece1d2; color: #6b7280; font-size: 12px; line-height: 1.65; }}
+                @media only screen and (max-width: 640px) {{
+                    .wrap {{ padding: 12px 8px; }}
+                    .hero, .content, .footer {{ padding-left: 20px; padding-right: 20px; }}
+                    .hero h1 {{ font-size: 23px; }}
+                    .lead, .panel {{ font-size: 13px; }}
+                    .button {{ width: 100%; box-sizing: border-box; text-align: center; }}
+                    .logo {{ max-height: 72px; max-width: 140px; }}
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="wrap"><div class="card"><div class="hero">
+            <img class="logo" src="{EmailService._logo_url()}" alt="Kimbela">
+            <span class="eyebrow">{eyebrow}</span><h1>{title}</h1><p>{subtitle}</p>
+            </div><div class="content">{body_html}</div>
+            <div class="footer">This email was sent automatically by Kimbela Matchmaking.</div>
+            </div></div>
+        </body>
+        </html>
+        """
+    @staticmethod
     def send_ad_purchase_success(user, transaction, campaign, package):
         """Send email for successful ad purchase"""
         try:
@@ -245,178 +291,83 @@ class EmailService:
         user, transaction, matchmaking_request, package, expiry_date, duration_days
     ):
         """Generate HTML for matchmaking success email"""
-        return f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <style>
-                body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
-                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-                .header {{ background: linear-gradient(135deg, #B76E79 0%, #DCAE96 100%); color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; }}
-                .content {{ background: #fdf6f0; padding: 20px; border-radius: 0 0 10px 10px; }}
-                .details {{ background: white; padding: 15px; border-radius: 5px; margin: 10px 0; border-left: 4px solid #B76E79; }}
-                .footer {{ text-align: center; margin-top: 20px; color: #666; font-size: 12px; }}
-                .heart {{ color: #B76E79; }}
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="header">
-                    <h1>💖 Matchmaking Request Activated!</h1>
-                    <p>Your journey to find meaningful connections begins now</p>
-                </div>
-                <div class="content">
-                    <p>Hello {user.full_name},</p>
-                    <p>Wonderful news! Your matchmaking request has been successfully activated and is now visible to potential matches on Kimbela.</p>
-                    
-                    <div class="details">
-                        <h3>📋 Request Details</h3>
-                        <p><strong>Package:</strong> {package.name}</p>
-                        <p><strong>Total Amount:</strong> {transaction.amount:.2f} {transaction.currency}</p>
-                        <p><strong>Duration:</strong> {duration_days} days</p>
-                        <p><strong>Start Date:</strong> {matchmaking_request.created_at.strftime('%B %d, %Y')}</p>
-                        <p><strong>Expiry Date:</strong> {expiry_date}</p>
-                    </div>
-                    
-                    <div class="details">
-                        <h3>✨ What's Next?</h3>
-                        <p><span class="heart">❤️</span> Your profile is now visible to compatible matches</p>
-                        <p><span class="heart">❤️</span> Receive likes and messages from interested users</p>
-                        <p><span class="heart">❤️</span> Browse through potential matches in your criteria</p>
-                        <p><span class="heart">❤️</span> Build meaningful connections with like-minded people</p>
-                    </div>
-                    
-                    <p>Ready to start connecting? <a href="{current_app.config.get('BASE_URL', 'http://localhost:5000')}/view_requests" style="color: #B76E79; font-weight: bold;">View your matches now</a></p>
-                    
-                    <p>Wishing you the best in your journey to find love,<br>The Kimbela Matchmaking Team</p>
-                </div>
-                <div class="footer">
-                    <p>© 2024 Kimbela Matchmaking. Connecting hearts worldwide.</p>
-                </div>
-            </div>
-        </body>
-        </html>
+        body_html = f"""
+        <p class="lead">Hello {user.full_name}, your matchmaking request is now active and visible to potential matches on Kimbela.</p>
+        <div class="panel">
+            <strong>Request details</strong><br>
+            Package: {package.name}<br>
+            Amount: {transaction.amount:.2f} {transaction.currency}<br>
+            Duration: {duration_days} days<br>
+            Start date: {matchmaking_request.created_at.strftime('%B %d, %Y')}<br>
+            Expiry date: {expiry_date}
+        </div>
+        <p class="lead">You can now receive interest from compatible users, review potential matches, and start meaningful conversations.</p>
+        <a href="{current_app.config.get('BASE_URL', 'http://localhost:5000')}/view_requests" class="button">View Matches</a>
         """
+        return EmailService._render_matchmaking_shell(
+            "Matchmaking",
+            "Your request is active",
+            "Your journey to meaningful connections begins now.",
+            body_html,
+            accent="linear-gradient(135deg, #7a3047 0%, #b76e79 55%, #d2a164 100%)",
+        )
 
     @staticmethod
     def _get_matchmaking_failed_html(
         user, package, transaction, error_message, matchmaking_request
     ):
         """Generate HTML for matchmaking failed payment email"""
-        return f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <style>
-                body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
-                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-                .header {{ background: #dc3545; color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; }}
-                .content {{ background: #fdf6f0; padding: 20px; border-radius: 0 0 10px 10px; }}
-                .footer {{ text-align: center; margin-top: 20px; color: #666; font-size: 12px; }}
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="header">
-                    <h1>❌ Matchmaking Payment Failed</h1>
-                    <p>We couldn't process your matchmaking request payment</p>
-                </div>
-                <div class="content">
-                    <p>Hello {user.full_name},</p>
-                    <p>We were unable to process the payment for your matchmaking request. Your request has been saved but will not be activated until payment is completed.</p>
-                    
-                    <p><strong>Package:</strong> {package.name if package else 'Standard'}</p>
-                    <p><strong>Amount:</strong> {transaction.amount if transaction else package.price:.2f} {transaction.currency if transaction else 'USD'}</p>
-                    <p><strong>Error:</strong> {error_message}</p>
-                    
-                    <div style="background: #fff3cd; padding: 15px; border-radius: 5px; margin: 15px 0; border-left: 4px solid #ffc107;">
-                        <h4 style="margin-top: 0; color: #856404;">💡 Need Help?</h4>
-                        <p style="margin-bottom: 0; color: #856404;">
-                            If you're experiencing payment issues, please:
-                            <br>• Check your payment method details
-                            <br>• Ensure sufficient funds are available
-                            <br>• Try a different payment method
-                            <br>• Contact our support team for assistance
-                        </p>
-                    </div>
-                    
-                    <p>You can retry the payment from your <a href="{current_app.config.get('BASE_URL', 'http://localhost:5000')}/requests" style="color: #B76E79; font-weight: bold;">matchmaking dashboard</a>.</p>
-                    
-                    <p>Best regards,<br>The Kimbela Matchmaking Team</p>
-                </div>
-                <div class="footer">
-                    <p>© 2024 Kimbela Matchmaking. Connecting hearts worldwide.</p>
-                </div>
-            </div>
-        </body>
-        </html>
+        amount = transaction.amount if transaction else package.price
+        currency = transaction.currency if transaction else "USD"
+        body_html = f"""
+        <p class="lead">Hello {user.full_name}, we could not process the payment for your matchmaking request, so it has not been activated yet.</p>
+        <div class="panel">
+            <strong>Payment details</strong><br>
+            Package: {package.name if package else 'Standard'}<br>
+            Amount: {amount:.2f} {currency}<br>
+            Error: {error_message}
+        </div>
+        <p class="lead">Please review your payment method, make sure funds are available, or try again from your matchmaking dashboard.</p>
+        <a href="{current_app.config.get('BASE_URL', 'http://localhost:5000')}/requests" class="button">Retry Payment</a>
         """
+        return EmailService._render_matchmaking_shell(
+            "Matchmaking",
+            "Payment was not completed",
+            "Your matchmaking request is saved, but it is waiting for successful payment.",
+            body_html,
+            accent="linear-gradient(135deg, #5d2028 0%, #9a3d38 55%, #b37b37 100%)",
+        )
 
     @staticmethod
     def _get_matchmaking_expiry_html(
         user, matchmaking_request, days_remaining, package_name
     ):
         """Generate HTML for matchmaking expiry reminder email"""
-        urgent_html = ""
-        if days_remaining <= 3:
-            urgent_html = """
-            <div style="background: #fff3cd; padding: 15px; border-radius: 5px; margin: 15px 0; border-left: 4px solid #ffc107;">
-                <h3 style="margin-top: 0; color: #856404;">🚨 Action Required</h3>
-                <p style="margin-bottom: 0; color: #856404;">Your request expires soon! Consider extending your package to continue receiving matches.</p>
-            </div>
-            """
+        urgent_html = (
+            "<div class='panel'><strong>Action recommended</strong><br>Your request expires very soon. Extend it now if you want to keep receiving matches without interruption.</div>"
+            if days_remaining <= 3
+            else ""
+        )
 
-        return f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <style>
-                body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
-                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-                .header {{ background: linear-gradient(135deg, #B76E79 0%, #DCAE96 100%); color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; }}
-                .content {{ background: #fdf6f0; padding: 20px; border-radius: 0 0 10px 10px; }}
-                .details {{ background: white; padding: 15px; border-radius: 5px; margin: 10px 0; border-left: 4px solid #B76E79; }}
-                .footer {{ text-align: center; margin-top: 20px; color: #666; font-size: 12px; }}
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="header">
-                    <h1>⏰ Matchmaking Expiry Reminder</h1>
-                    <p>Your request will expire in {days_remaining} days</p>
-                </div>
-                <div class="content">
-                    <p>Hello {user.full_name},</p>
-                    <p>This is a friendly reminder that your matchmaking request will expire soon.</p>
-                    
-                    <div class="details">
-                        <h3>📋 Request Details</h3>
-                        <p><strong>Package:</strong> {package_name}</p>
-                        <p><strong>Expiry Date:</strong> {matchmaking_request.end_date.strftime('%B %d, %Y')}</p>
-                        <p><strong>Days Remaining:</strong> {days_remaining} days</p>
-                    </div>
-                    
-                    {urgent_html}
-                    
-                    <div class="details">
-                        <h3>✨ Don't Miss Out!</h3>
-                        <p>• Continue receiving matches from compatible partners</p>
-                        <p>• Maintain your visibility in search results</p>
-                        <p>• Keep your conversations active</p>
-                        <p>• Extend your journey to find meaningful connections</p>
-                    </div>
-                    
-                    <p>Ready to continue your journey? <a href="{current_app.config.get('BASE_URL', 'http://localhost:5000')}/requests" style="color: #B76E79; font-weight: bold;">Extend your package now</a></p>
-                    
-                    <p>Best regards,<br>The Kimbela Matchmaking Team</p>
-                </div>
-                <div class="footer">
-                    <p>© 2024 Kimbela Matchmaking. Connecting hearts worldwide.</p>
-                </div>
-            </div>
-        </body>
-        </html>
+        body_html = f"""
+        <p class="lead">Hello {user.full_name}, this is a reminder that your matchmaking request will expire soon.</p>
+        <div class="panel">
+            <strong>Request details</strong><br>
+            Package: {package_name}<br>
+            Expiry date: {matchmaking_request.end_date.strftime('%B %d, %Y')}<br>
+            Days remaining: {days_remaining}
+        </div>
+        {urgent_html}
+        <p class="lead">Extend your package to keep your visibility active, maintain conversations, and continue receiving compatible matches.</p>
+        <a href="{current_app.config.get('BASE_URL', 'http://localhost:5000')}/requests" class="button">Extend Package</a>
         """
+        return EmailService._render_matchmaking_shell(
+            "Matchmaking",
+            "Your request expires soon",
+            f"You have {days_remaining} days remaining on your active matchmaking request.",
+            body_html,
+            accent="linear-gradient(135deg, #6b2f67 0%, #b24a76 55%, #d39b43 100%)",
+        )
 
     @staticmethod
     def send_generic_notification(user, subject, template, **kwargs):

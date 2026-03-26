@@ -12,6 +12,56 @@ logger = logging.getLogger(__name__)
 
 
 class CampaignService:
+    def _logo_url(self):
+        return f"{current_app.config.get('BASE_URL', 'http://localhost:5000')}/static/assets/img/kim.png"
+
+    def _render_email_shell(self, eyebrow, title, subtitle, body_html, accent="linear-gradient(135deg, #17324d 0%, #244f68 55%, #b37b37 100%)"):
+        return f"""
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+                body {{ margin: 0; padding: 0; background: #f4efe6; color: #1f2937; font-family: "Segoe UI", Arial, sans-serif; line-height: 1.55; font-size: 14px; }}
+                .wrap {{ width: 100%; padding: 24px 12px; box-sizing: border-box; }}
+                .card {{ max-width: 660px; margin: 0 auto; background: #fffdfa; border: 1px solid #e9ddca; border-radius: 24px; overflow: hidden; box-shadow: 0 18px 50px rgba(55, 42, 18, 0.08); }}
+                .hero {{ padding: 28px 28px 24px; background: {accent}; color: #fffdf8; text-align: center; }}
+                .logo {{ width: auto; max-width: 160px; max-height: 88px; display: block; margin: 0 auto 18px; }}
+                .eyebrow {{ display: inline-block; padding: 7px 12px; border-radius: 999px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.16); text-transform: uppercase; letter-spacing: 0.08em; font-size: 11px; }}
+                .hero h1 {{ margin: 16px 0 8px; font-size: 28px; line-height: 1.15; font-weight: 700; }}
+                .hero p {{ margin: 0; font-size: 14px; color: rgba(255,253,248,0.9); }}
+                .content {{ padding: 28px; }}
+                .lead {{ margin: 0 0 16px; font-size: 15px; color: #334155; }}
+                .panel {{ margin: 22px 0; padding: 20px; border-radius: 18px; background: #f7f2e8; border: 1px solid #eadfce; }}
+                .button {{ display: inline-block; margin-top: 10px; padding: 13px 22px; border-radius: 999px; background: #17324d; color: #fffdfa !important; text-decoration: none; font-size: 14px; font-weight: 700; }}
+                .footer {{ padding: 22px 28px 28px; border-top: 1px solid #ece1d2; color: #6b7280; font-size: 12px; line-height: 1.65; }}
+                @media only screen and (max-width: 640px) {{
+                    .wrap {{ padding: 12px 8px; }}
+                    .hero, .content, .footer {{ padding-left: 20px; padding-right: 20px; }}
+                    .hero h1 {{ font-size: 23px; }}
+                    .lead, .panel {{ font-size: 13px; }}
+                    .button {{ width: 100%; box-sizing: border-box; text-align: center; }}
+                    .logo {{ max-height: 72px; max-width: 140px; }}
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="wrap">
+                <div class="card">
+                    <div class="hero">
+                        <img class="logo" src="{self._logo_url()}" alt="Kimbela">
+                        <span class="eyebrow">{eyebrow}</span>
+                        <h1>{title}</h1>
+                        <p>{subtitle}</p>
+                    </div>
+                    <div class="content">{body_html}</div>
+                    <div class="footer">This email was sent automatically by Kimbela regarding your ad campaign.</div>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
 
     def check_campaign_expiry(self):
         """Check and expire campaigns that have reached their end date"""
@@ -56,62 +106,28 @@ class CampaignService:
 
             subject = "📅 Your Kimbela Ad Campaign Has Ended"
 
-            html_body = f"""
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <style>
-                    body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
-                    .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-                    .header {{ background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%); color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; }}
-                    .content {{ background: #f9f9f9; padding: 20px; border-radius: 0 0 10px 10px; }}
-                    .stats {{ background: white; padding: 15px; border-radius: 5px; margin: 10px 0; }}
-                    .footer {{ text-align: center; margin-top: 20px; color: #666; font-size: 12px; }}
-                    .button {{ background: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0; }}
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <div class="header">
-                        <h1>📅 Campaign Completed</h1>
-                        <p>Your ad campaign has ended - View your results</p>
-                    </div>
-                    <div class="content">
-                        <p>Hello {user.full_name},</p>
-                        <p>Your Kimbela ad campaign <strong>"{campaign.title}"</strong> has ended as scheduled.</p>
-                        
-                        <div class="stats">
-                            <h3>📊 Campaign Performance Summary</h3>
-                            <p><strong>Campaign Duration:</strong> {campaign.duration_days} days</p>
-                            <p><strong>Total Impressions:</strong> {campaign.impressions:,}</p>
-                            <p><strong>Total Clicks:</strong> {campaign.clicks:,}</p>
-                            <p><strong>Click-Through Rate:</strong> {campaign.click_through_rate:.2f}%</p>
-                            <p><strong>Total Budget:</strong> ${campaign.budget * campaign.duration_days:.2f}</p>
-                            <p><strong>Cost Per Click:</strong> ${(campaign.budget * campaign.duration_days) / campaign.clicks:.2f if campaign.clicks > 0 else 0}</p>
-                        </div>
-                        
-                        <div class="stats">
-                            <h3>🎯 What's Next?</h3>
-                            <p>• Your campaign data is preserved for future reference</p>
-                            <p>• Create a new campaign to continue reaching your audience</p>
-                            <p>• Analyze performance to optimize future campaigns</p>
-                            <p>• Consider A/B testing for better results</p>
-                        </div>
-                        
-                        <p>Ready to launch your next campaign?</p>
-                        <a href="{current_app.config.get('BASE_URL', 'http://localhost:5000')}/create-campaign" class="button">Create New Campaign</a>
-                        
-                        <p>Thank you for advertising with Kimbela!</p>
-                        
-                        <p>Best regards,<br>The Kimbela Team</p>
-                    </div>
-                    <div class="footer">
-                        <p>© 2024 Kimbela. All rights reserved.</p>
-                    </div>
-                </div>
-            </body>
-            </html>
+            cpc = ((campaign.budget * campaign.duration_days) / campaign.clicks) if campaign.clicks > 0 else 0
+            body_html = f"""
+            <p class="lead">Hello {user.full_name}, your ad campaign <strong>{campaign.title}</strong> has ended as scheduled.</p>
+            <div class="panel">
+                <strong>Performance summary</strong><br>
+                Duration: {campaign.duration_days} days<br>
+                Impressions: {campaign.impressions:,}<br>
+                Clicks: {campaign.clicks:,}<br>
+                Click-through rate: {campaign.click_through_rate:.2f}%<br>
+                Total budget: ${campaign.budget * campaign.duration_days:.2f}<br>
+                Cost per click: ${cpc:.2f}
+            </div>
+            <p class="lead">Your campaign data is preserved for reference, and you can launch a new campaign whenever you are ready.</p>
+            <a href="{current_app.config.get('BASE_URL', 'http://localhost:5000')}/create-campaign" class="button">Create New Campaign</a>
             """
+            html_body = self._render_email_shell(
+                "Advertising",
+                "Campaign completed",
+                "Your ad campaign has ended and your results are ready to review.",
+                body_html,
+                accent="linear-gradient(135deg, #5d2028 0%, #9a3d38 55%, #b37b37 100%)",
+            )
 
             msg = Message(
                 subject=subject,
@@ -154,45 +170,25 @@ class CampaignService:
 
             subject = f"⏰ Your Ad Campaign Expires in {days_remaining} Days"
 
-            html_body = f"""
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <style>
-                    body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
-                    .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-                    .header {{ background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; }}
-                    .content {{ background: #f9f9f9; padding: 20px; border-radius: 0 0 10px 10px; }}
-                    .button {{ background: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0; }}
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <div class="header">
-                        <h1>⏰ Campaign Ending Soon</h1>
-                        <p>Your ad campaign has {days_remaining} days remaining</p>
-                    </div>
-                    <div class="content">
-                        <p>Hello {user.full_name},</p>
-                        <p>Your Kimbela ad campaign <strong>"{campaign.title}"</strong> will end on <strong>{campaign.end_date.strftime('%B %d, %Y')}</strong>.</p>
-                        
-                        <p><strong>Current Performance:</strong></p>
-                        <ul>
-                            <li>Impressions: {campaign.impressions:,}</li>
-                            <li>Clicks: {campaign.clicks:,}</li>
-                            <li>Click-Through Rate: {campaign.click_through_rate:.2f}%</li>
-                        </ul>
-                        
-                        <p>To continue reaching your audience, consider renewing your campaign or creating a new one.</p>
-                        
-                        <a href="{current_app.config.get('BASE_URL', 'http://localhost:5000')}/user/dashboard" class="button">Manage Campaigns</a>
-                        
-                        <p>Best regards,<br>The Kimbela Team</p>
-                    </div>
-                </div>
-            </body>
-            </html>
+            body_html = f"""
+            <p class="lead">Hello {user.full_name}, your campaign <strong>{campaign.title}</strong> will end on <strong>{campaign.end_date.strftime('%B %d, %Y')}</strong>.</p>
+            <div class="panel">
+                <strong>Current performance</strong><br>
+                Impressions: {campaign.impressions:,}<br>
+                Clicks: {campaign.clicks:,}<br>
+                Click-through rate: {campaign.click_through_rate:.2f}%<br>
+                Days remaining: {days_remaining}
+            </div>
+            <p class="lead">If you want to keep reaching your audience, now is a good time to renew or launch a new campaign.</p>
+            <a href="{current_app.config.get('BASE_URL', 'http://localhost:5000')}/user/dashboard" class="button">Manage Campaigns</a>
             """
+            html_body = self._render_email_shell(
+                "Advertising",
+                "Campaign ending soon",
+                f"Your ad campaign has {days_remaining} days remaining.",
+                body_html,
+                accent="linear-gradient(135deg, #6b2f67 0%, #b24a76 55%, #d39b43 100%)",
+            )
 
             msg = Message(
                 subject=subject,
