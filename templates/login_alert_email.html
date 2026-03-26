@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Sign-in to Your Kimbela Account</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f3f0e8;
+            color: #1d2433;
+            font-family: Georgia, "Times New Roman", serif;
+        }
+        .shell {
+            width: 100%;
+            padding: 32px 16px;
+            box-sizing: border-box;
+        }
+        .card {
+            max-width: 680px;
+            margin: 0 auto;
+            background: #fffdf8;
+            border: 1px solid #e6ddcc;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 24px 60px rgba(56, 42, 14, 0.08);
+        }
+        .hero {
+            padding: 36px 36px 28px;
+            background: radial-gradient(circle at top right, #f5c16c, transparent 35%),
+                        linear-gradient(135deg, #17324d 0%, #254d6f 48%, #a96f2a 100%);
+            color: #fffef9;
+        }
+        .eyebrow {
+            display: inline-block;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.14);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            font-size: 12px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+        .hero h1 {
+            margin: 18px 0 10px;
+            font-size: 34px;
+            line-height: 1.1;
+        }
+        .hero p {
+            margin: 0;
+            max-width: 520px;
+            font-size: 16px;
+            line-height: 1.7;
+            color: rgba(255, 254, 249, 0.92);
+        }
+        .content {
+            padding: 34px 36px 36px;
+        }
+        .intro {
+            font-size: 17px;
+            line-height: 1.8;
+            margin: 0 0 26px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+        .item {
+            padding: 18px;
+            border-radius: 18px;
+            background: #f7f2e8;
+            border: 1px solid #e7dcc7;
+        }
+        .label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 12px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #8a6c3b;
+        }
+        .value {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #1d2433;
+            word-break: break-word;
+        }
+        .security {
+            margin: 8px 0 28px;
+            padding: 22px 24px;
+            border-left: 4px solid #b7791f;
+            border-radius: 18px;
+            background: #fff6df;
+        }
+        .security h2 {
+            margin: 0 0 10px;
+            font-size: 20px;
+            color: #5e420f;
+        }
+        .security p {
+            margin: 0;
+            font-size: 15px;
+            line-height: 1.7;
+            color: #5e420f;
+        }
+        .cta {
+            display: inline-block;
+            padding: 14px 22px;
+            border-radius: 999px;
+            background: #17324d;
+            color: #fffef9 !important;
+            text-decoration: none;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+        }
+        .footer {
+            margin-top: 22px;
+            padding-top: 20px;
+            border-top: 1px solid #eadfcf;
+            color: #6f6558;
+            font-size: 13px;
+            line-height: 1.7;
+        }
+        @media only screen and (max-width: 620px) {
+            .hero, .content {
+                padding: 24px;
+            }
+            .hero h1 {
+                font-size: 28px;
+            }
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="shell">
+        <div class="card">
+            <div class="hero">
+                <span class="eyebrow">Account activity</span>
+                <h1>New sign-in detected</h1>
+                <p>Kimbela noticed a successful login to your account and captured the key details below so you can review it quickly.</p>
+            </div>
+            <div class="content">
+                <p class="intro">Hello {{ user.first_name }}, a sign-in to your Kimbela account just happened. If it was you, you are all set. If it was not, act quickly and secure your account.</p>
+
+                <div class="grid">
+                    <div class="item">
+                        <span class="label">Time</span>
+                        <div class="value">{{ login_time_display }}</div>
+                    </div>
+                    <div class="item">
+                        <span class="label">Approximate location</span>
+                        <div class="value">{{ location }}</div>
+                    </div>
+                    <div class="item">
+                        <span class="label">Device</span>
+                        <div class="value">{{ device }}</div>
+                    </div>
+                    <div class="item">
+                        <span class="label">IP address</span>
+                        <div class="value">{{ ip_address }}</div>
+                    </div>
+                    <div class="item">
+                        <span class="label">Browser</span>
+                        <div class="value">{{ browser }}</div>
+                    </div>
+                    <div class="item">
+                        <span class="label">Operating system</span>
+                        <div class="value">{{ operating_system }}</div>
+                    </div>
+                    <div class="item">
+                        <span class="label">Remember me</span>
+                        <div class="value">{{ "Enabled" if remember else "Not enabled" }}</div>
+                    </div>
+                    <div class="item">
+                        <span class="label">Account</span>
+                        <div class="value">{{ user.email }}</div>
+                    </div>
+                </div>
+
+                <div class="security">
+                    <h2>If this was not you</h2>
+                    <p>Reset your password immediately, review your recent activity, and revoke any sessions you do not recognize. Kimbela keeps this sign-in history available in your settings so unusual access stands out fast.</p>
+                </div>
+
+                <a class="cta" href="{{ account_settings_url }}">Review Account Settings</a>
+
+                <div class="footer">
+                    This email was sent automatically by Kimbela after a successful account login. Security-focused alerts like this help you spot unexpected activity early.
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

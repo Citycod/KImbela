@@ -52,6 +52,8 @@ from models import (
     Group,
     SponsoredAd,
     ReportedContent,
+    LoginHistory,
+    UserSession,
     group_members,
     ReportedContent,
     # ReportedPost,
@@ -75,6 +77,7 @@ from random import sample
 from datetime import datetime
 from flask_limiter.util import get_remote_address
 from flask_limiter import Limiter
+from user_agents import parse as parse_user_agent
 
 
 from time_utils import utcnow
@@ -147,6 +150,166 @@ def calculate_age(birth_date):
     if (today.month, today.day) < (birth_date.month, birth_date.day):
         age -= 1
     return age
+
+
+def resolve_client_ip():
+    forwarded_for = request.headers.get("X-Forwarded-For", "")
+    if forwarded_for:
+        return forwarded_for.split(",")[0].strip()
+    return request.headers.get("X-Real-IP") or request.remote_addr
+
+
+def resolve_location_from_headers():
+    return {
+        "country": (
+            request.headers.get("CF-IPCountry")
+            or request.headers.get("X-Geo-Country")
+            or request.headers.get("X-Country-Code")
+        ),
+        "region": (
+            request.headers.get("X-Geo-Region")
+            or request.headers.get("X-Region")
+            or request.headers.get("X-Country-Region")
+        ),
+        "city": request.headers.get("X-Geo-City") or request.headers.get("X-City"),
+    }
+
+
+def format_location(location_data):
+    parts = [
+        (location_data.get("city") or "").strip(),
+        (location_data.get("region") or "").strip(),
+        (location_data.get("country") or "").strip(),
+    ]
+    return ", ".join([part for part in parts if part]) or "Unknown location"
+
+
+def build_login_metadata(remember=False):
+    user_agent_string = (request.user_agent.string or "").strip()
+    parsed_agent = parse_user_agent(user_agent_string)
+    location_data = resolve_location_from_headers()
+    ip_address = resolve_client_ip() or "Unknown"
+
+    browser_parts = [
+        parsed_agent.browser.family if user_agent_string else "Unknown browser",
+        parsed_agent.browser.version_string,
+    ]
+    os_parts = [
+        parsed_agent.os.family if user_agent_string else "Unknown OS",
+        parsed_agent.os.version_string,
+    ]
+    browser = " ".join([part for part in browser_parts if part]).strip()
+    operating_system = " ".join([part for part in os_parts if part]).strip()
+
+    if parsed_agent.is_mobile:
+        device_kind = "Mobile"
+    elif parsed_agent.is_tablet:
+        device_kind = "Tablet"
+    elif parsed_agent.is_pc:
+        device_kind = "Desktop"
+    else:
+        device_kind = "Device"
+
+    device = f"{device_kind}: {browser or 'Unknown browser'} on {operating_system or 'Unknown OS'}"
+    login_time = utcnow()
+
+    return {
+        "ip_address": ip_address,
+        "user_agent": user_agent_string or "Unknown user agent",
+        "browser": browser or "Unknown browser",
+        "operating_system": operating_system or "Unknown OS",
+        "device": device,
+        "location": format_location(location_data),
+        "remember": remember,
+        "login_time": login_time,
+        "login_time_display": login_time.strftime("%A, %B %d, %Y at %H:%M UTC"),
+    }
+
+
+def ensure_login_tracking_tables():
+    try:
+        LoginHistory.__table__.create(bind=db.engine, checkfirst=True)
+        UserSession.__table__.create(bind=db.engine, checkfirst=True)
+    except Exception as exc:
+        current_app.logger.warning("Unable to verify login tracking tables: %s", exc)
+
+
+def record_login_activity(user, metadata):
+    ensure_login_tracking_tables()
+
+    session_identifier = session.get("user_session_id")
+    if not session_identifier:
+        session_identifier = secrets.token_urlsafe(24)
+        session["user_session_id"] = session_identifier
+
+    db.session.add(
+        LoginHistory(
+            user_id=user.id,
+            ip_address=(metadata["ip_address"] or "")[:50],
+            user_agent=metadata["user_agent"],
+            device=(metadata["device"] or "")[:200],
+            location=(metadata["location"] or "")[:200],
+            success=True,
+            created_at=metadata["login_time"],
+        )
+    )
+
+    active_session = UserSession.query.filter_by(session_id=session_identifier).first()
+    if active_session:
+        active_session.user_id = user.id
+        active_session.ip_address = (metadata["ip_address"] or "")[:50]
+        active_session.user_agent = metadata["user_agent"]
+        active_session.device = (metadata["device"] or "")[:200]
+        active_session.location = (metadata["location"] or "")[:200]
+        active_session.last_active = metadata["login_time"]
+    else:
+        db.session.add(
+            UserSession(
+                user_id=user.id,
+                session_id=session_identifier,
+                ip_address=(metadata["ip_address"] or "")[:50],
+                user_agent=metadata["user_agent"],
+                device=(metadata["device"] or "")[:200],
+                location=(metadata["location"] or "")[:200],
+                last_active=metadata["login_time"],
+                created_at=metadata["login_time"],
+            )
+        )
+
+    db.session.commit()
+
+
+def send_login_alert_email(user, metadata):
+    msg = Message(
+        subject="New Sign-in to Your Kimbela Account",
+        sender=current_app.config["MAIL_DEFAULT_SENDER"],
+        recipients=[user.email],
+    )
+    msg.html = render_template(
+        "login_alert_email.html",
+        user=user,
+        login_time_display=metadata["login_time_display"],
+        ip_address=metadata["ip_address"],
+        browser=metadata["browser"],
+        operating_system=metadata["operating_system"],
+        device=metadata["device"],
+        location=metadata["location"],
+        remember=metadata["remember"],
+        account_settings_url=url_for("market.seller_settings", _external=True),
+    )
+    msg.body = (
+        f"Hello {user.first_name},\n\n"
+        "We noticed a new sign-in to your Kimbela account.\n\n"
+        f"Time: {metadata['login_time_display']}\n"
+        f"Location: {metadata['location']}\n"
+        f"IP Address: {metadata['ip_address']}\n"
+        f"Device: {metadata['device']}\n"
+        f"Browser: {metadata['browser']}\n"
+        f"Operating System: {metadata['operating_system']}\n"
+        f"Remember Me: {'Yes' if metadata['remember'] else 'No'}\n\n"
+        "If this was not you, reset your password and review your account immediately."
+    )
+    mail.send(msg)
 
 
 @auth.route("/test-email", methods=["GET", "POST"])
@@ -689,7 +852,20 @@ def login():
         #     return render_template("login.html")
 
         # === Login successful ===
+        login_metadata = build_login_metadata(remember=remember)
         login_user(user, remember=remember)
+
+        try:
+            record_login_activity(user, login_metadata)
+        except Exception as exc:
+            db.session.rollback()
+            current_app.logger.exception("Failed to record login activity: %s", exc)
+
+        try:
+            send_login_alert_email(user, login_metadata)
+        except Exception as exc:
+            current_app.logger.exception("Failed to send login alert email: %s", exc)
+
         flash(f"Welcome back, {user.first_name}! You're now logged in.", "success")
 
         # Optional: redirect to next page (e.g. ?next=/profile)
