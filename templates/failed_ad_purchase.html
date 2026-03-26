@@ -1,326 +1,64 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Payment Issue</title>
-    <link href="{{ url_for('static', filename='assets/img/favy.png') }}" rel="icon" />
-    <link href="{{ url_for('static', filename='assets/img/favy.png') }}" rel="apple-touch-icon" />
     <style>
-        /* Base styles */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
-            margin: 0;
-            padding: 20px;
-            min-height: 100vh;
-        }
-        
-        .email-container {
-            max-width: 600px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
-        }
-        
-        /* Header */
-        .header {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
-            padding: 40px 30px;
-            text-align: center;
-            color: white;
-            position: relative;
-        }
-        
-        .header:after {
-            content: '';
-            position: absolute;
-            bottom: -10px;
-            left: 0;
-            width: 100%;
-            height: 20px;
-            background: white;
-            border-radius: 20px 20px 0 0;
-        }
-        
-        .warning-icon {
-            width: 80px;
-            height: 80px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 20px;
-            font-size: 36px;
-        }
-        
-        .header h1 {
-            font-size: 32px;
-            font-weight: 700;
-            margin-bottom: 10px;
-        }
-        
-        .header p {
-            font-size: 18px;
-            opacity: 0.9;
-        }
-        
-        /* Content */
-        .content {
-            padding: 40px;
-        }
-        
-        .greeting {
-            font-size: 20px;
-            color: #2d3748;
-            margin-bottom: 30px;
-            font-weight: 600;
-        }
-        
-        .message-text {
-            font-size: 16px;
-            color: #4a5568;
-            margin-bottom: 30px;
-            line-height: 1.7;
-        }
-        
-        .error-card {
-            background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
-            border: 1px solid #fc8181;
-            border-radius: 15px;
-            padding: 25px;
-            margin: 25px 0;
-        }
-        
-        .error-card h3 {
-            color: #c53030;
-            font-size: 20px;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-        
-        .attempt-details {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            margin: 20px 0;
-            border: 1px solid #e2e8f0;
-        }
-        
-        .detail-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        
-        .detail-row:last-child {
-            border-bottom: none;
-        }
-        
-        .detail-label {
-            font-weight: 600;
-            color: #4a5568;
-        }
-        
-        .detail-value {
-            color: #2d3748;
-        }
-        
-        .suggestion-box {
-            background: #f0fff4;
-            border: 1px solid #9ae6b4;
-            border-radius: 12px;
-            padding: 25px;
-            margin: 25px 0;
-        }
-        
-        .suggestion-box h4 {
-            color: #2f855a;
-            margin-bottom: 15px;
-            font-size: 18px;
-        }
-        
-        .suggestions-list {
-            list-style: none;
-        }
-        
-        .suggestions-list li {
-            padding: 8px 0;
-            padding-left: 25px;
-            position: relative;
-            color: #2d3748;
-        }
-        
-        .suggestions-list li:before {
-            content: '💡';
-            position: absolute;
-            left: 0;
-        }
-        
-        .cta-section {
-            text-align: center;
-            margin: 30px 0;
-        }
-        
-        .cta-button {
-            display: inline-block;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 16px 40px;
-            text-decoration: none;
-            border-radius: 50px;
-            font-weight: 600;
-            font-size: 16px;
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-            transition: all 0.3s ease;
-            margin: 0 10px;
-        }
-        
-        .secondary-button {
-            background: linear-gradient(135deg, #a0aec0 0%, #718096 100%);
-            box-shadow: 0 6px 20px rgba(113, 128, 150, 0.4);
-        }
-        
-        .cta-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.5);
-        }
-        
-        .footer {
-            background: #f8f9fa;
-            padding: 30px 40px;
-            text-align: center;
-            border-top: 1px solid #e2e8f0;
-        }
-        
-        .support-info {
-            color: #718096;
-            margin: 20px 0;
-            font-size: 14px;
-        }
-        
-        .copyright {
-            margin-top: 20px;
-            font-size: 12px;
-            color: #a0aec0;
-        }
-        
-        @media (max-width: 600px) {
-            body {
-                padding: 10px;
-            }
-            
-            .content {
-                padding: 25px;
-            }
-            
-            .header {
-                padding: 30px 20px;
-            }
-            
-            .cta-button {
-                display: block;
-                margin: 10px 0;
-            }
+        body { margin: 0; padding: 0; background: #f4efe6; color: #1f2937; font-family: "Segoe UI", Arial, sans-serif; line-height: 1.55; font-size: 14px; }
+        .wrap { width: 100%; padding: 24px 12px; box-sizing: border-box; }
+        .card { max-width: 660px; margin: 0 auto; background: #fffdfa; border: 1px solid #e9ddca; border-radius: 24px; overflow: hidden; box-shadow: 0 18px 50px rgba(55, 42, 18, 0.08); }
+        .hero { padding: 28px 28px 24px; background: linear-gradient(135deg, #5d2028 0%, #9a3d38 55%, #b37b37 100%); color: #fffdf8; text-align: center; }
+        .logo { width: auto; max-width: 160px; max-height: 88px; display: block; margin: 0 auto 18px; }
+        .eyebrow { display: inline-block; padding: 7px 12px; border-radius: 999px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.16); text-transform: uppercase; letter-spacing: 0.08em; font-size: 11px; }
+        .hero h1 { margin: 16px 0 8px; font-size: 28px; line-height: 1.15; font-weight: 700; }
+        .hero p { margin: 0; font-size: 14px; color: rgba(255,253,248,0.9); }
+        .content { padding: 28px; }
+        .lead { margin: 0 0 16px; font-size: 15px; color: #334155; }
+        .panel { margin: 22px 0; padding: 20px; border-radius: 18px; background: #fff2ef; border: 1px solid #efc6bf; }
+        .panel h2 { margin: 0 0 14px; font-size: 18px; color: #8a2e23; }
+        .row { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid #ead4cf; }
+        .row:last-child { border-bottom: none; }
+        .label { color: #7b6c64; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+        .value { color: #1f2937; font-size: 14px; font-weight: 600; text-align: right; }
+        .alert { margin-top: 18px; padding: 18px; border-radius: 16px; background: #f7f2e8; border-left: 4px solid #b7791f; color: #5e420f; font-size: 14px; }
+        .button { display: inline-block; margin-top: 10px; padding: 13px 22px; border-radius: 999px; background: #17324d; color: #fffdfa !important; text-decoration: none; font-size: 14px; font-weight: 700; }
+        .footer { padding: 22px 28px 28px; border-top: 1px solid #ece1d2; color: #6b7280; font-size: 12px; line-height: 1.65; }
+        @media only screen and (max-width: 640px) {
+            .wrap { padding: 12px 8px; }
+            .hero, .content, .footer { padding-left: 20px; padding-right: 20px; }
+            .hero h1 { font-size: 23px; }
+            .lead, .value, .alert { font-size: 13px; }
+            .row { flex-direction: column; }
+            .value { text-align: left; }
+            .button { width: 100%; box-sizing: border-box; text-align: center; }
+            .logo { max-height: 72px; max-width: 140px; }
         }
     </style>
 </head>
 <body>
-    <div class="email-container">
-        <div class="header">
-                            <img src="{{ url_for('static', filename='assets/img/kim.png') }}" alt="" style="width: 13rem; height: 13rem" />
-
-            <p>We couldn't process your ad purchase</p>
-        </div>
-        
-        <div class="content">
-            <p class="greeting">Dear {{ user.first_name }},</p>
-            
-            <p class="message-text">
-                We encountered an issue while processing your payment for the advertising campaign. 
-                Your ad has not been activated yet. Here's what happened:
-            </p>
-            
-            <div class="error-card">
-                <h3>Payment Failed</h3>
-                <p style="text-align: center; color: #c53030; margin-bottom: 15px;">
-                    {{ error_message|default('The payment could not be processed successfully.') }}
-                </p>
+    <div class="wrap">
+        <div class="card">
+            <div class="hero">
+                <img class="logo" src="{{ url_for('static', filename='assets/img/kim.png', _external=True) }}" alt="Kimbela">
+                <span class="eyebrow">Advertising</span>
+                <h1>Payment could not be completed</h1>
+                <p>Your ad campaign was not activated because the purchase did not go through.</p>
             </div>
-            
-            <!-- Attempt Details -->
-            <div class="attempt-details">
-                <h4 style="color: #2d3748; margin-bottom: 15px; text-align: center;">Purchase Attempt Details</h4>
-                
-                <div class="detail-row">
-                    <span class="detail-label">Package:</span>
-                    <span class="detail-value">{{ package.name }}</span>
+            <div class="content">
+                <p class="lead">Hello {{ user.first_name }}, we ran into a payment problem while trying to activate your Kimbela ad package.</p>
+                <div class="panel">
+                    <h2>Attempt details</h2>
+                    <div class="row"><span class="label">Package</span><span class="value">{{ package.name }}</span></div>
+                    {% if transaction %}<div class="row"><span class="label">Reference</span><span class="value">{{ transaction.gateway_payment_id or transaction.id }}</span></div>{% endif %}
+                    <div class="row"><span class="label">Issue</span><span class="value">{{ error_message|default('The payment could not be processed successfully.') }}</span></div>
+                    {% if campaign %}<div class="row"><span class="label">Campaign</span><span class="value">{{ campaign.title }}</span></div>{% endif %}
                 </div>
-                
-                <div class="detail-row">
-                    <span class="detail-label">Amount:</span>
-                    <span class="detail-value">${{ "%.2f"|format(package.price) }}</span>
-                </div>
-                
-                <div class="detail-row">
-                    <span class="detail-label">Attempt Date:</span>
-                    <span class="detail-value">{{ attempt_date.strftime('%B %d, %Y at %H:%M') }}</span>
-                </div>
-                
-                {% if transaction and transaction.gateway_payment_id %}
-                <div class="detail-row">
-                    <span class="detail-label">Reference:</span>
-                    <span class="detail-value">{{ transaction.gateway_payment_id }}</span>
-                </div>
-                {% endif %}
+                <div class="alert">You can try the payment again, use a different card or method, or review the package details from your dashboard before retrying.</div>
+                <a href="{{ url_for('payments.ad_packages', _external=True) }}" class="button">Try Again</a>
             </div>
-            
-            <!-- Suggestions -->
-            <div class="suggestion-box">
-                <h4>What You Can Do Next</h4>
-                <ul class="suggestions-list">
-                    <li>Check if your payment method has sufficient funds</li>
-                    <li>Verify your card details are correct</li>
-                    <li>Contact your bank if there are any restrictions</li>
-                    <li>Try using a different payment method</li>
-                    <li>Wait a few minutes and try again</li>
-                </ul>
-            </div>
-            
-            <div class="cta-section">
-                <a href="{{ url_for('ad_packages', _external=True) }}" class="cta-button">
-                    Try Purchase Again
-                </a>
-                <a href="{{ url_for('user.user_dashboard', _external=True) }}" class="cta-button secondary-button">
-                    Go to Dashboard
-                </a>
-            </div>
-            
-            <p style="text-align: center; color: #4a5568; margin-top: 20px;">
-                If you continue experiencing issues, please contact our support team for assistance.
-            </p>
-        </div>
-        
-        <div class="footer">
-            <div class="support-info">
-                <strong>Need immediate help?</strong> Contact support@kimbela.com 
-            </div>
-            
-            <div class="copyright">
-                <p>© 2024 Kimbela. All rights reserved.</p>
-                <p>This email was sent to {{ user.email }} regarding a recent payment attempt.</p>
+            <div class="footer">
+                This notice was sent to {{ user.email }} because a Kimbela ad payment attempt failed. For help, contact support@kimbela.com.
             </div>
         </div>
     </div>
