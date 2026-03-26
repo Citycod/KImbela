@@ -312,6 +312,23 @@ def send_login_alert_email(user, metadata):
     mail.send(msg)
 
 
+def send_verification_email(user):
+    otp = user.generate_otp()
+    msg = Message(
+        subject="Your Kimbela Verification Code",
+        sender=current_app.config["MAIL_DEFAULT_SENDER"],
+        recipients=[user.email],
+    )
+    msg.html = render_template("welcome_email.html", user=user, otp=otp)
+    msg.body = (
+        f"Hello {user.first_name},\n\n"
+        f"Your Kimbela verification code is: {otp}\n\n"
+        "This code will expire in 10 minutes. If you did not create this account, please ignore this email."
+    )
+    mail.send(msg)
+    return otp
+
+
 @auth.route("/test-email", methods=["GET", "POST"])
 def test_email():
     """Test email functionality with local debug server"""
@@ -676,19 +693,9 @@ def register():
             # Generate 6-digit OTP
             db.session.add(user)
             db.session.commit()
-            otp = user.generate_otp()
-
             # === Send Verification Email with OTP ===
             try:
-                msg = Message(
-                    subject="Your Kimbela Verification Code",
-                    sender=current_app.config["MAIL_DEFAULT_SENDER"],
-                    recipients=[email],
-                )
-                msg.html = render_template(
-                    "welcome_email.html", user=user, otp=otp
-                )
-                mail.send(msg)
+                send_verification_email(user)
                 flash("Check your email for the 6-digit verification code.", "success")
             except Exception as e:
                 print(f"Email send failed: {e}")
@@ -733,7 +740,7 @@ def register():
 
 @auth.route("/verify", methods=["GET", "POST"])
 def verify_page():
-    email = request.args.get("email") or request.form.get("email")
+    email = (request.args.get("email") or request.form.get("email") or "").strip().lower()
     if not email:
         flash("No email supplied.", "danger")
         return redirect(url_for("auth.login"))
@@ -750,7 +757,7 @@ def verify_page():
             return render_template("verify.html", email=email, user=user)
 
         # Token is correct → activate
-        if user.otp_expires < utcnow():
+        if not user.otp_expires or user.otp_expires < utcnow():
             flash("Token expired. Please register again.", "danger")
             return redirect(url_for("auth.register"))
 
@@ -785,27 +792,22 @@ def verify_page():
 
 @auth.route("/resend-verification")
 def resend_verification():
-    email = request.args.get("email")
+    email = (request.args.get("email") or "").strip().lower()
+    if not email:
+        flash("No email supplied.", "danger")
+        return redirect(url_for("auth.login"))
+
     user = User.query.filter_by(email=email, is_active=False).first()
     if not user:
         flash("No pending verification for this email.", "info")
         return redirect(url_for("auth.login"))
 
-    token = user.generate_otp()
-    db.session.commit()
-
-    msg = Message(
-        "Your Kimbela verification token",
-        sender=current_app.config["MAIL_DEFAULT_SENDER"],
-        recipients=[email],
-    )
-    msg.html = render_template("welcome_email.html", user=user, otp=token)
-    msg.body = (
-        f"Hello {user.first_name},\n\n"
-        f"Your Kimbela verification code is: {token}\n\n"
-        "This code will expire soon. If you did not request this, please ignore this email."
-    )
-    mail.send(msg)
+    try:
+        send_verification_email(user)
+    except Exception as exc:
+        current_app.logger.exception("Failed to resend verification email: %s", exc)
+        flash("We could not resend the verification code right now. Please try again.", "danger")
+        return redirect(url_for("auth.verify_page", email=email))
 
     flash("A new token has been sent to your email.", "success")
     return redirect(url_for("auth.verify_page", email=email))

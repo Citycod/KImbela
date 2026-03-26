@@ -213,19 +213,22 @@
         }
 
         .logo {
-            margin-bottom: 2rem;
             text-align: center;
-            position: relative;
+            margin-bottom: 1.5rem;
         }
 
         .logo img {
-            height: 120px;
+            max-height: 160px;
+            width: auto;
+            max-width: 100%;
+            display: inline-block;
             transition: var(--transition);
             filter: drop-shadow(0 5px 15px rgba(0,0,0,0.1));
+            object-fit: contain;
         }
 
         .logo img:hover {
-            transform: scale(1.05) rotate(5deg);
+            transform: scale(1.03);
         }
 
         .title {
@@ -558,7 +561,7 @@
                 padding: 1.5rem;
             }
             .logo img {
-                height: 100px;
+                max-height: 100px;
             }
             .digit-input input {
                 width: 40px;
@@ -593,11 +596,11 @@
             <div class="logo">
                 <img src="{{ url_for('static', filename='assets/img/kim.png') }}" 
                      alt="Kimbela" 
-                     class="animate__animated animate__bounceIn" style="width: 15rem; height: 15rem; left: 0; margin-left: 2rem;">
+                     class="animate__animated animate__bounceIn">
                      
             </div>
 
-            <h1 class="title animate__animated animate__fadeIn" style="margin-left: 3rem;">Verify Email</h1>
+            <h1 class="title animate__animated animate__fadeIn">Verify Email</h1>
             <p class="subtitle animate__animated animate__fadeIn animate__delay-1s">Enter the token we emailed you</p>
 
             <!-- Success Animation (hidden by default) -->
