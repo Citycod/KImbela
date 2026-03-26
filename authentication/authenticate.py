@@ -669,15 +669,14 @@ def register():
                 ethnicity=ethnicity,
                 religion=religion,
                 about_me=about_me,  # NEW FIELD
-                is_active=True,
+                is_active=False,
             )
             user.set_password(password)
 
             # Generate 6-digit OTP
-            # otp = user.generate_otp()
-
             db.session.add(user)
             db.session.commit()
+            otp = user.generate_otp()
 
             # === Send Verification Email with OTP ===
             try:
@@ -687,7 +686,7 @@ def register():
                     recipients=[email],
                 )
                 msg.html = render_template(
-                    "welcome_email.html", user=user, otp=user.otp
+                    "welcome_email.html", user=user, otp=otp
                 )
                 mail.send(msg)
                 flash("Check your email for the 6-digit verification code.", "success")
@@ -698,8 +697,7 @@ def register():
                     "warning",
                 )
 
-            # return redirect(url_for("auth.verify_page", email=email))
-            return redirect(url_for("auth.login", email=email))
+            return redirect(url_for("auth.verify_page", email=email))
 
         except Exception as e:
             db.session.rollback()
@@ -844,12 +842,12 @@ def login():
             flash("Invalid email or password.", "danger")
             return render_template("login.html")
 
-        # if not user.is_active:
-        #     flash(
-        #         "Please you need to verify your email address before we let you in.",
-        #         "warning",
-        #     )
-        #     return render_template("login.html")
+        if not user.is_active:
+            flash(
+                "Please verify your email address before logging in.",
+                "warning",
+            )
+            return redirect(url_for("auth.verify_page", email=email))
 
         # === Login successful ===
         login_metadata = build_login_metadata(remember=remember)

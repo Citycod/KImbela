@@ -364,6 +364,7 @@ class User(db.Model, UserMixin):
         self.otp = f"{random.randint(0, 999999):06d}"
         self.otp_expires = utcnow() + timedelta(minutes=10)
         db.session.commit()
+        return self.otp
 
     def get_blocked_users(self):
         """Get list of users blocked by current user"""
