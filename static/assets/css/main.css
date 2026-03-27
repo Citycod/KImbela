@@ -12,15 +12,15 @@
 /* Global Colors - The following color variables are used throughout the website. Updating them here will change the color scheme of the entire website */
 
 :root {
-    --background-color: white;
+    --background-color: #fff8f4;
     /* Background color for the entire website, including individual sections */
-    --default-color: #010608;
+    --default-color: #3f2a36;
     /* Default color used for the majority of the text content across the entire website */
-    --heading-color: #011e2c;
+    --heading-color: #6f3c63;
     /* Color for headings, subheadings and title throughout the website */
-    --accent-color: #04415f;
+    --accent-color: #f28b6b;
     /* Accent color that represents your brand on the website. It's used for buttons, links, and other elements that need to stand out */
-    --surface-color: #ffffff;
+    --surface-color: #fffdfc;
     /* The surface color is used as a background of boxed elements within sections, such as cards, icon boxes, or other elements that require a visual separation from the global background. */
     --contrast-color: #ffffff;
     /* Contrast color for text, ensuring readability against backgrounds of accent, heading, or default colors. */
@@ -56,8 +56,8 @@ body.index-page {
 /* Color Presets - These classes override global colors when applied to any section or element, providing reuse of the sam color scheme. */
 
 .light-background {
-    --background-color: #e6edf0;
-    --surface-color: #ffffff;
+    --background-color: #fff1eb;
+    --surface-color: #fffdfc;
 }
 
 .dark-background {

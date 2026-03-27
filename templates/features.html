@@ -4,25 +4,25 @@
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>Features - Kimbela</title>
-    <meta name="description" content="Explore Kimbela's unique features designed for mature singles (31+) seeking authentic, meaningful friendships and connections." />
-    <meta name="keywords" content="kimbela features, mature dating features, friendship platform features, social network tools, connection features" />
+    <title>Features - Kimbela Marketplace & Community</title>
+    <meta name="description" content="Explore Kimbela's marketplace, community, safety, and premium features for discovery, selling, advertising, and trusted connections." />
+    <meta name="keywords" content="kimbela marketplace features, online marketplace, seller tools, buyer protection, community platform features" />
 
     <!-- Favicons -->
     <link href="{{ url_for('static', filename='assets/img/favy.png') }}" rel="icon" />
     <link href="{{ url_for('static', filename='assets/img/favy.png') }}" rel="apple-touch-icon" />
 
     <!-- Open Graph / Facebook -->
-    <meta property="og:title" content="Kimbela Features - For Connections That Make Sense">
-    <meta property="og:description" content="Discover the powerful features that make Kimbela the perfect platform for meaningful connections.">
+    <meta property="og:title" content="Kimbela Features - Marketplace, Community & Trusted Connections">
+    <meta property="og:description" content="Discover the tools that power Kimbela's marketplace, seller growth, community engagement, and safe interactions.">
     <meta property="og:image" content="https://kimbela.com/kimbela-logo.png">
     <meta property="og:url" content="https://kimbela.com/features">
     <meta property="og:type" content="website">
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Kimbela Features - For Connections That Make Sense">
-    <meta name="twitter:description" content="Discover the powerful features that make Kimbela the perfect platform for meaningful connections.">
+    <meta name="twitter:title" content="Kimbela Features - Marketplace, Community & Trusted Connections">
+    <meta name="twitter:description" content="Discover the tools that power Kimbela's marketplace, seller growth, community engagement, and safe interactions.">
     <meta name="twitter:image" content="https://kimbela.com/kimbela-logo.png">
 
     <!-- Fonts -->
@@ -48,26 +48,27 @@
     <style>
         /* Custom styles for Kimbela Features Page */
         :root {
-            --primary-color: #8e44ad;
-            --secondary-color: #9b59b6;
-            --accent-color: #f39c12;
-            --light-color: #f8f9fa;
-            --dark-color: #2c3e50;
+            --primary-color: #ec8d71;
+            --secondary-color: #bb8cff;
+            --accent-color: #f7b38a;
+            --light-color: #fff8f4;
+            --dark-color: #4f2943;
         }
         
         .service-icon {
             font-size: 2.5rem;
-            color: #8e44ad;
+            color: var(--primary-color);
             margin-bottom: 1rem;
         }
         
         .service-tag {
             display: inline-block;
-            background: #f8f9fa;
+            background: #fff1eb;
             padding: 5px 10px;
             border-radius: 20px;
             margin: 5px;
             font-size: 0.9rem;
+            color: #8a4f67;
         }
         
         .portfolio-item {
@@ -80,13 +81,13 @@
         }
         
         .btn-primary {
-            background-color: #8e44ad;
-            border-color: #8e44ad;
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
         }
         
         .btn-primary:hover {
-            background-color: #7d3c98;
-            border-color: #7d3c98;
+            background-color: #d96c54;
+            border-color: #d96c54;
         }
         
         .feature-card.active {
@@ -98,18 +99,18 @@
         }
         
         .badge-accredited {
-            background-color: #8e44ad;
+            background-color: var(--secondary-color);
         }
         
         /* Features Page Specific Styles */
         .features-hero {
-            background: linear-gradient(135deg, rgba(142, 68, 173, 0.1) 0%, rgba(155, 89, 182, 0.1) 100%);
+            background: linear-gradient(135deg, rgba(236, 141, 113, 0.12) 0%, rgba(187, 140, 255, 0.15) 100%);
             padding: 100px 0 60px;
         }
         
         .page-title {
             padding: 60px 0;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            background: linear-gradient(135deg, #fff8f4 0%, #ffe7dd 45%, #f1e4ff 100%);
             position: relative;
             overflow: hidden;
         }
@@ -139,16 +140,17 @@
         
         .category-header p {
             font-size: 1.1rem;
-            color: #666;
+            color: #7d6574;
             max-width: 700px;
             margin: 0 auto;
         }
         
         .feature-item {
-            background: white;
+            background: rgba(255, 253, 252, 0.98);
             border-radius: 15px;
             padding: 30px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(236, 141, 113, 0.12);
+            box-shadow: 0 14px 34px rgba(170, 92, 76, 0.1);
             transition: all 0.3s ease;
             height: 100%;
             position: relative;
@@ -156,7 +158,7 @@
         
         .feature-item:hover {
             transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 20px 44px rgba(170, 92, 76, 0.14);
         }
         
         .feature-icon-wrapper {
@@ -186,7 +188,7 @@
             top: 20px;
             right: 20px;
             background: var(--accent-color);
-            color: white;
+            color: #6d345f;
             padding: 5px 15px;
             border-radius: 20px;
             font-size: 0.8rem;
@@ -194,7 +196,8 @@
         }
         
         .premium-badge {
-            background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+            background: linear-gradient(135deg, #f7b38a, #bb8cff);
+            color: #4f2943;
         }
         
         .basic-badge {
@@ -222,10 +225,10 @@
         }
         
         .comparison-table {
-            background: white;
+            background: rgba(255, 253, 252, 0.98);
             border-radius: 15px;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 14px 34px rgba(170, 92, 76, 0.1);
         }
         
         .table-header {
@@ -283,9 +286,10 @@
         }
         
         .nav-tabs {
-            border-bottom: 2px solid #dee2e6;
+            border-bottom: 2px solid rgba(236, 141, 113, 0.18);
             justify-content: center;
             margin-bottom: 40px;
+            gap: 8px;
         }
         
         .nav-tabs .nav-link {
@@ -293,13 +297,53 @@
             border: none;
             padding: 12px 30px;
             font-weight: 500;
-            border-radius: 8px 8px 0 0;
+            border-radius: 999px;
+            background: rgba(255, 241, 235, 0.75);
         }
         
         .nav-tabs .nav-link.active {
             color: var(--primary-color);
-            background-color: rgba(142, 68, 173, 0.1);
-            border-bottom: 2px solid var(--primary-color);
+            background: rgba(255, 253, 252, 0.98);
+            border-bottom: none;
+            box-shadow: 0 10px 24px rgba(170, 92, 76, 0.12);
+        }
+
+        .marketplace-highlight {
+            background: linear-gradient(135deg, rgba(255, 231, 221, 0.75), rgba(241, 228, 255, 0.9));
+            border: 1px solid rgba(236, 141, 113, 0.15);
+            border-radius: 24px;
+            padding: 36px;
+            box-shadow: 0 18px 40px rgba(170, 92, 76, 0.1);
+        }
+
+        .feature-stat {
+            background: rgba(255, 253, 252, 0.95);
+            border: 1px solid rgba(236, 141, 113, 0.12);
+            border-radius: 18px;
+            padding: 20px;
+            height: 100%;
+        }
+
+        .feature-stat .number {
+            display: block;
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary-color);
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .feature-stat .label {
+            font-weight: 600;
+            color: #6d345f;
+        }
+
+        .feature-callout {
+            border-left: 4px solid var(--secondary-color);
+            padding: 18px 20px;
+            border-radius: 0 16px 16px 0;
+            background: rgba(255, 241, 235, 0.7);
+            color: #6b5564;
         }
         
         @media (max-width: 767px) {
@@ -375,7 +419,7 @@
                     <div class="col-lg-8" data-aos="fade-up">
                         <h1>Kimbela Features</h1>
                         <p class="lead">
-                            Discover the powerful tools and features designed to help you build meaningful connections
+                            Explore the marketplace, seller tools, buyer protections, and community systems that keep Kimbela active every day
                         </p>
                         <nav class="breadcrumbs mt-4">
                             <ol>
@@ -394,18 +438,23 @@
             <div class="container" data-aos="fade-up">
                 <ul class="nav nav-tabs" id="featuresTab" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="connections-tab" data-bs-toggle="tab" data-bs-target="#connections" type="button" role="tab">
-                            <i class="bi bi-people-fill me-2"></i>Connections
+                        <button class="nav-link active" id="marketplace-tab" data-bs-toggle="tab" data-bs-target="#marketplace" type="button" role="tab">
+                            <i class="bi bi-shop-window me-2"></i>Marketplace
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="selling-tab" data-bs-toggle="tab" data-bs-target="#selling" type="button" role="tab">
+                            <i class="bi bi-megaphone-fill me-2"></i>Selling & Growth
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="community-tab" data-bs-toggle="tab" data-bs-target="#community" type="button" role="tab">
-                            <i class="bi bi-chat-dots-fill me-2"></i>Community
+                            <i class="bi bi-people-fill me-2"></i>Community
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="premium-tab" data-bs-toggle="tab" data-bs-target="#premium" type="button" role="tab">
-                            <i class="bi bi-star-fill me-2"></i>Premium Features
+                            <i class="bi bi-stars me-2"></i>Premium Features
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
@@ -418,62 +467,62 @@
         </section>
         <!-- /Features Navigation -->
 
-        <!-- Connections Features -->
-        <section id="connections" class="feature-category section">
+        <!-- Marketplace Features -->
+        <section id="marketplace" class="feature-category section">
             <div class="container" data-aos="fade-up">
                 <div class="category-header">
-                    <h2>Meaningful Connections</h2>
-                    <p>Build authentic friendships with like-minded individuals</p>
+                    <h2>Marketplace That Moves Every Day</h2>
+                    <p>Kimbela is not just a listing board. It is an active marketplace where buyers discover trusted offers, sellers build reputation, and promotions keep inventory moving.</p>
                 </div>
                 
                 <div class="row g-4">
                     <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="100">
                         <div class="feature-item">
-                            
                             <div class="feature-icon-wrapper">
-                                <i class="bi bi-person-bounding-box feature-icon"></i>
+                                <i class="bi bi-search-heart feature-icon"></i>
                             </div>
-                            <h3>Smart Profile Matching</h3>
-                            <p>Our advanced algorithm suggests compatible friends based on shared values, interests, and life experiences.</p>
+                            <span class="feature-badge basic-badge">Buyer Flow</span>
+                            <h3>Fast Product & Service Discovery</h3>
+                            <p>Users can quickly search, filter, and compare marketplace offers across physical products, digital products, and services.</p>
                             <ul class="feature-list">
-                                <li>Value-based matching</li>
-                                <li>Interest compatibility scoring</li>
-                                <li>Life stage consideration</li>
-                                <li>Personalized suggestions</li>
+                                <li>Keyword search with category browsing</li>
+                                <li>Price, type, and relevance filtering</li>
+                                <li>Offer cards designed for quick scanning</li>
+                                <li>Direct paths into seller pages and listing detail</li>
                             </ul>
                         </div>
                     </div>
                     
                     <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="200">
                         <div class="feature-item">
-                            
                             <div class="feature-icon-wrapper">
-                                <i class="bi bi-chat-heart-fill feature-icon"></i>
+                                <i class="bi bi-bag-check-fill feature-icon"></i>
                             </div>
-                            <h3>Balanced Friend System</h3>
-                            <p>Connect with both same-sex and opposite-sex friends in a respectful, balanced environment.</p>
+                            <span class="feature-badge basic-badge">Transactions</span>
+                            <h3>Mixed Commerce Model</h3>
+                            <p>Kimbela supports the real way modern marketplaces operate: one platform for goods, custom work, consultations, and digital delivery.</p>
                             <ul class="feature-list">
-                                <li>Gender-based connection options</li>
-                                <li>Respectful communication guidelines</li>
-                                <li>Boundary settings</li>
-                                <li>Connection limits management</li>
+                                <li>Service sellers can showcase scope and deliverables</li>
+                                <li>Digital creators can package downloadable value</li>
+                                <li>Product-based vendors can present inventory with images</li>
+                                <li>Buyers see the offer context before they commit</li>
                             </ul>
                         </div>
                     </div>
                     
                     <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="300">
                         <div class="feature-item">
-                            
                             <div class="feature-icon-wrapper">
-                                <i class="bi bi-heart-pulse-fill feature-icon"></i>
+                                <i class="bi bi-shield-check feature-icon"></i>
                             </div>
-                            <h3>Deep Compatibility Analysis</h3>
-                            <p>Premium members get detailed compatibility reports and personalized connection advice.</p>
+                            <span class="feature-badge premium-badge">Trust Layer</span>
+                            <h3>Safer Marketplace Activity</h3>
+                            <p>Marketplace growth only works when trust is visible. Kimbela combines seller identity, community standards, and moderation to reduce low-quality behavior.</p>
                             <ul class="feature-list">
-                                <li>Detailed personality analysis</li>
-                                <li>Values alignment scoring</li>
-                                <li>Connection success prediction</li>
-                                <li>Personalized tips</li>
+                                <li>31+ gated community standards</li>
+                                <li>Reporting and review channels for suspicious activity</li>
+                                <li>Clear marketplace and seller terms</li>
+                                <li>Safer environment for repeat buyers and sellers</li>
                             </ul>
                         </div>
                     </div>
@@ -482,81 +531,191 @@
                 <div class="row mt-5 align-items-center">
                     <div class="col-lg-6" data-aos="fade-right" data-aos-delay="100">
                         <div class="feature-image">
-                            <img src="{{ url_for('static', filename='assets/img/conn.jpeg') }}" alt="Connection Features" class="img-fluid">
+                            <img src="{{ url_for('static', filename='assets/img/conn.jpeg') }}" alt="Marketplace Features" class="img-fluid">
                         </div>
                     </div>
                     <div class="col-lg-6" data-aos="fade-left" data-aos-delay="200">
-                        <h3 class="mb-4">How Our Connection System Works</h3>
-                        <p>Our connection system is designed to facilitate meaningful friendships rather than superficial interactions. We focus on:</p>
-                        <ul class="feature-list">
-                            <li><strong>Shared Values:</strong> Match based on core values and life principles</li>
-                            <li><strong>Common Interests:</strong> Connect through shared hobbies and activities</li>
-                            <li><strong>Life Stage Compatibility:</strong> Meet people at similar life stages</li>
-                            <li><strong>Respectful Communication:</strong> Built-in guidelines for positive interactions</li>
-                            <li><strong>Progressive Connection:</strong> Build relationships gradually and naturally</li>
-                        </ul>
+                        <div class="marketplace-highlight">
+                            <h3 class="mb-4">What Is Happening In The Marketplace</h3>
+                            <p>Kimbela’s marketplace is designed around live commercial activity. Sellers launch new offers, buyers compare options, creators publish digital assets, service providers win discovery through strong profiles, and advertisers use paid placements to reach ready-to-convert traffic.</p>
+                            <div class="row g-3 mt-1">
+                                <div class="col-sm-6">
+                                    <div class="feature-stat">
+                                        <span class="number">1</span>
+                                        <span class="label">One place for services, products, and digital offers</span>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="feature-stat">
+                                        <span class="number">2</span>
+                                        <span class="label">Two-sided value for both sellers and buyers</span>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="feature-stat">
+                                        <span class="number">3</span>
+                                        <span class="label">Three growth levers: listings, profile trust, and advertising</span>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="feature-stat">
+                                        <span class="number">24/7</span>
+                                        <span class="label">Continuous discovery through search, shares, and promotional placements</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="feature-callout mt-4">
+                                Strong marketplace performance comes from more than posting a listing. Kimbela supports merchandising, visibility, messaging, trust, and repeat engagement in one ecosystem.
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </section>
-        <!-- /Connections Features -->
+        <!-- /Marketplace Features -->
 
-        <!-- Community Features -->
-        <section id="community" class="feature-category section light-background">
+        <!-- Selling Features -->
+        <section id="selling" class="feature-category section light-background">
             <div class="container" data-aos="fade-up">
                 <div class="category-header">
-                    <h2>Community & Groups</h2>
-                    <p>Join interest-based communities and participate in meaningful discussions</p>
+                    <h2>Selling, Promotion & Conversion</h2>
+                    <p>Everything a serious marketplace needs to help sellers present better offers, capture attention, and turn visibility into revenue.</p>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="100">
+                        <div class="feature-item">
+                            <div class="feature-icon-wrapper">
+                                <i class="bi bi-window-stack feature-icon"></i>
+                            </div>
+                            <h3>Structured Listing Creation</h3>
+                            <p>Sellers can build clearer offers with titles, visuals, descriptions, pricing, and feature highlights that help buyers understand value faster.</p>
+                            <ul class="feature-list">
+                                <li>Cleaner service positioning</li>
+                                <li>More persuasive product presentation</li>
+                                <li>Visual-first discovery for mobile users</li>
+                                <li>Improved credibility from complete listing data</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="200">
+                        <div class="feature-item">
+                            <div class="feature-icon-wrapper">
+                                <i class="bi bi-megaphone-fill feature-icon"></i>
+                            </div>
+                            <h3>Sponsored Placement System</h3>
+                            <p>Sidebar ads, spotlight placements, and premium banner inventory give sellers multiple ways to amplify reach without changing the top browsing flow.</p>
+                            <ul class="feature-list">
+                                <li>Promotional inventory inside the dashboard</li>
+                                <li>Visibility boosts for launches and offers</li>
+                                <li>High-attention placement for urgent campaigns</li>
+                                <li>Designed for creators, brands, and sellers alike</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="300">
+                        <div class="feature-item">
+                            <div class="feature-icon-wrapper">
+                                <i class="bi bi-bar-chart-line-fill feature-icon"></i>
+                            </div>
+                            <h3>Reputation & Growth Loop</h3>
+                            <p>The marketplace becomes stronger when seller profiles, offer quality, messaging responsiveness, and platform presence all reinforce each other.</p>
+                            <ul class="feature-list">
+                                <li>Seller dashboard for active listings</li>
+                                <li>Profile trust signals that support conversions</li>
+                                <li>Repeat discovery through community activity</li>
+                                <li>More ways for quality sellers to stay visible</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-5">
+                    <div class="col-lg-12" data-aos="fade-up" data-aos-delay="400">
+                        <div class="comparison-table">
+                            <div class="table-header">
+                                <h3>How Kimbela Supports Marketplace Growth</h3>
+                            </div>
+                            <div class="table-body">
+                                <div class="table-row">
+                                    <span class="feature-name">Discovery</span>
+                                    <span class="feature-status">Search, category navigation, marketplace hero, and promoted placements</span>
+                                </div>
+                                <div class="table-row">
+                                    <span class="feature-name">Trust</span>
+                                    <span class="feature-status">Community standards, moderation, profile context, and policy framework</span>
+                                </div>
+                                <div class="table-row">
+                                    <span class="feature-name">Conversion</span>
+                                    <span class="feature-status">Clear CTAs, strong listing pages, messaging flow, and seller visibility</span>
+                                </div>
+                                <div class="table-row">
+                                    <span class="feature-name">Retention</span>
+                                    <span class="feature-status">Returning buyers, refreshed offers, advertising, and community engagement</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- /Selling Features -->
+
+        <!-- Community Features -->
+        <section id="community" class="feature-category section">
+            <div class="container" data-aos="fade-up">
+                <div class="category-header">
+                    <h2>Community That Supports Commerce</h2>
+                    <p>Kimbela’s social layer keeps the marketplace warmer, more human, and more active by connecting conversation with discovery.</p>
                 </div>
                 
                 <div class="row g-4">
                     <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="100">
                         <div class="feature-item">
-                            
                             <div class="feature-icon-wrapper">
                                 <i class="bi bi-people-fill feature-icon"></i>
                             </div>
-                            <h3>Interest Groups</h3>
-                            <p>Join groups based on hobbies, careers, wellness, faith, and personal development.</p>
+                            <h3>Interest-Based Groups</h3>
+                            <p>Buyers and sellers do not operate in isolation. Groups create the context where people ask questions, share experiences, and discover new offers naturally.</p>
                             <ul class="feature-list">
-                                <li>Book discussion groups</li>
-                                <li>Career networking circles</li>
-                                <li>Wellness and fitness communities</li>
-                                <li>Faith-based discussions</li>
+                                <li>Niche communities around lifestyle and business</li>
+                                <li>Conversation spaces that surface real needs</li>
+                                <li>Stronger trust through repeated interaction</li>
+                                <li>Organic visibility for relevant sellers and creators</li>
                             </ul>
                         </div>
                     </div>
                     
                     <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="200">
                         <div class="feature-item">
-                            
                             <div class="feature-icon-wrapper">
                                 <i class="bi bi-calendar-event-fill feature-icon"></i>
                             </div>
-                            <h3>Community Events</h3>
-                            <p>Participate in virtual and local events designed to foster meaningful interactions.</p>
+                            <h3>Community Events & Activations</h3>
+                            <p>Events, challenges, and themed discussions give the marketplace fresh momentum and encourage users to come back for more than a single transaction.</p>
                             <ul class="feature-list">
-                                <li>Virtual meetups</li>
-                                <li>Webinars and workshops</li>
-                                <li>Group challenges</li>
-                                <li>Local gatherings</li>
+                                <li>Launch support for new services and campaigns</li>
+                                <li>Educational sessions that reduce buying friction</li>
+                                <li>Live community participation around offers</li>
+                                <li>Seasonal momentum for promotions and bundles</li>
                             </ul>
                         </div>
                     </div>
                     
                     <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="300">
                         <div class="feature-item">
-                            
                             <div class="feature-icon-wrapper">
                                 <i class="bi bi-mic-fill feature-icon"></i>
                             </div>
-                            <h3>Exclusive Events</h3>
-                            <p>Premium members get access to exclusive events with experts and thought leaders.</p>
+                            <h3>Marketplace Conversations</h3>
+                            <p>Community discussion gives buyers more confidence and gives sellers a stronger feedback loop on what people actually want.</p>
                             <ul class="feature-list">
-                                <li>Expert Q&A sessions</li>
-                                <li>Mastermind groups</li>
-                                <li>VIP networking events</li>
-                                <li>Private workshops</li>
+                                <li>Questions, insights, and recommendations</li>
+                                <li>Social proof through public interaction</li>
+                                <li>Better product refinement over time</li>
+                                <li>Discovery beyond paid advertising alone</li>
                             </ul>
                         </div>
                     </div>
@@ -569,8 +728,8 @@
         <section id="premium" class="feature-category section">
             <div class="container" data-aos="fade-up">
                 <div class="category-header">
-                    <h2>Premium Services</h2>
-                    <p>Enhance your experience with our premium features and services</p>
+                    <h2>Premium Tools For Serious Sellers & Power Users</h2>
+                    <p>Advanced visibility and expert support for users who want stronger positioning, better outcomes, and deeper marketplace participation.</p>
                 </div>
                 
                 <div class="row g-4">
@@ -580,14 +739,14 @@
                             <div class="feature-icon-wrapper">
                                 <i class="bi bi-person-badge-fill feature-icon"></i>
                             </div>
-                            <h3>Professional Mentorship</h3>
-                            <p>Connect with verified professionals for guidance in relationships, career, and personal growth.</p>
+                            <h3>Professional Guidance</h3>
+                            <p>Premium support can help sellers sharpen positioning, improve offer clarity, and present services more professionally.</p>
                             <ul class="feature-list">
-                                <li>Relationship counseling</li>
-                                <li>Career coaching</li>
-                                <li>Life coaching</li>
-                                <li>Personal development</li>
-                                <li>Financial advice</li>
+                                <li>Offer refinement and brand positioning</li>
+                                <li>Service packaging support</li>
+                                <li>Professional profile improvement</li>
+                                <li>Audience-fit guidance</li>
+                                <li>Growth strategy input</li>
                             </ul>
                         </div>
                     </div>
@@ -598,14 +757,14 @@
                             <div class="feature-icon-wrapper">
                                 <i class="bi bi-journal-bookmark-fill feature-icon"></i>
                             </div>
-                            <h3>Exclusive Content Library</h3>
-                            <p>Access our curated library of resources for personal and relationship development.</p>
+                            <h3>Exclusive Content & Learning</h3>
+                            <p>Premium educational resources can help marketplace participants sell smarter, market better, and build stronger customer trust.</p>
                             <ul class="feature-list">
-                                <li>E-books and guides</li>
-                                <li>Video courses</li>
-                                <li>Expert interviews</li>
-                                <li>Research papers</li>
-                                <li>Interactive tools</li>
+                                <li>Guides for better listings and stronger copy</li>
+                                <li>Templates for service packaging and pricing</li>
+                                <li>Expert interviews on trust and conversion</li>
+                                <li>Growth education for creators and merchants</li>
+                                <li>Practical marketplace playbooks</li>
                             </ul>
                         </div>
                     </div>
@@ -621,7 +780,7 @@
             <div class="container" data-aos="fade-up">
                 <div class="category-header">
                     <h2>Safety & Privacy</h2>
-                    <p>Your safety and privacy are our top priorities</p>
+                    <p>Trust is a core marketplace feature. Buyers and sellers need a system that protects conversations, enforces standards, and gives clear escalation paths.</p>
                 </div>
                 
                 <div class="row g-4">
@@ -631,7 +790,7 @@
                                 <i class="bi bi-shield-check feature-icon"></i>
                             </div>
                             <h3>Age Verification</h3>
-                            <p>Strict 31+ age requirement with verification processes to ensure community standards.</p>
+                            <p>Strict 31+ access helps maintain the tone, professionalism, and community quality of the platform.</p>
                         </div>
                     </div>
                     
@@ -641,7 +800,7 @@
                                 <i class="bi bi-eye-slash-fill feature-icon"></i>
                             </div>
                             <h3>Privacy Controls</h3>
-                            <p>Complete control over your profile visibility and who can contact you.</p>
+                            <p>Users can control profile visibility and contact access so marketplace engagement feels intentional, not intrusive.</p>
                         </div>
                     </div>
                     
@@ -651,7 +810,7 @@
                                 <i class="bi bi-flag-fill feature-icon"></i>
                             </div>
                             <h3>Content Moderation</h3>
-                            <p>24/7 content monitoring and user reporting system for inappropriate behavior.</p>
+                            <p>Reporting flows and moderation processes help reduce spam, deceptive promotions, and unsafe behavior.</p>
                         </div>
                     </div>
                     
@@ -661,7 +820,7 @@
                                 <i class="bi bi-lock-fill feature-icon"></i>
                             </div>
                             <h3>Secure Communication</h3>
-                            <p>End-to-end encrypted messaging and secure video calls for private conversations.</p>
+                            <p>Protected messaging and controlled communication channels support safer buyer-seller conversations.</p>
                         </div>
                     </div>
                 </div>
@@ -676,7 +835,7 @@
                     <div class="col-lg-8 text-center">
                         <h2>Ready to Experience These Features?</h2>
                         <p>
-                            Join thousands of mature singles who have found meaningful connections through Kimbela's powerful features.
+                            Build, browse, promote, and grow inside a marketplace designed for trusted discovery, stronger listings, and active community-driven commerce.
                         </p>
                         <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg mt-3">Start Your Journey</a>
                     </div>
@@ -734,11 +893,11 @@
                 <div class="col-lg-3 col-md-3 footer-links">
                     <h4>Our Features</h4>
                     <ul>
-                        <li><a href="{{ url_for('user.features') }}#connections">Friend Connections</a></li>
+                        <li><a href="{{ url_for('user.features') }}#marketplace">Marketplace Discovery</a></li>
+                        <li><a href="{{ url_for('user.features') }}#selling">Selling & Promotion</a></li>
                         <li><a href="{{ url_for('user.features') }}#community">Community Groups</a></li>
                         <li><a href="{{ url_for('user.features') }}#premium">Premium Services</a></li>
                         <li><a href="{{ url_for('user.features') }}#safety">Safety Features</a></li>
-                        <li><a href="{{ url_for('user.features') }}">View All Features</a></li>
                     </ul>
                 </div>
 
@@ -767,7 +926,7 @@
                 Kimbela is a platform owned and operated by Tutaf International Limited and may operate under the brand name Kimbela Hub.
             </div>
             <div class="credits mt-2">
-                <small>Designed with ❤️ by <a href="https://technest-gules.vercel.app/" target="_blank" style="color: #8e44ad; text-decoration: none;">TechNest Solutions</a></small>
+                <small>Designed with ❤️ by <a href="https://technest-gules.vercel.app/" target="_blank" style="color: #ec8d71; text-decoration: none;">TechNest Solutions</a></small>
             </div>
         </div>
     </footer>

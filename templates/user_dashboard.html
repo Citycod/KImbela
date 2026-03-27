@@ -1091,11 +1091,11 @@
         <!-- ADD THIS SPONSORED ADS LINK -->
         <a
           href="{{ url_for('payments.ad_packages') }}"
-          class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-orange-50 hover:to-yellow-50 transition-all duration-300 mb-2 group"
+          class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-orange-50 hover:to-purple-50 transition-all duration-300 mb-2 group"
         >
           <i
             class="bi bi-megaphone-fill mr-3 text-lg"
-            style="color: #f59e0b"
+            style="color: #f28b6b"
           ></i>
           <span class="font-medium">Create Sponsored Ad</span>
         </a>
@@ -1982,11 +1982,14 @@
             {% endif %}
           </a>
           {% else %}
-            <div class="vertical-ad-badge">Kimbela Ads</div>
+            <div class="vertical-ad-badge">Promote</div>
+            <div class="sidebar-ad-icon" aria-hidden="true">
+              <i class="bi bi-megaphone-fill"></i>
+            </div>
             <div class="vertical-ad-content">
-              <h2>Put your brand in the spotlight</h2>
-              <p>Fresh ads, bold offers, and real shoppers waiting to click.</p>
-              <a class="vertical-ad-cta" href="{{ url_for('payments.dashboard_ad_package', placement='dashboard-vertical') }}">Start your promo</a>
+              <h2>Boost your product today</h2>
+              <p>Get your brand seen by active Kimbela shoppers and creators.</p>
+              <a class="vertical-ad-cta" href="{{ url_for('payments.dashboard_ad_package', placement='dashboard-vertical') }}">Start advertising</a>
             </div>
             {% endif %}
           </div>
@@ -2021,10 +2024,13 @@
             {% endif %}
           </a>
           {% else %}
-            <div class="right-ad-2-badge">Spotlight</div>
-            <h2>Turn views into sales</h2>
-            <p>Premium placements that put your products first.</p>
-            <a class="right-ad-2-cta" href="{{ url_for('payments.dashboard_ad_package', placement='dashboard-spotlight') }}">Get featured</a>
+            <div class="right-ad-2-badge">Promote</div>
+            <div class="sidebar-ad-icon" aria-hidden="true">
+              <i class="bi bi-megaphone-fill"></i>
+            </div>
+            <h2>Boost your product today</h2>
+            <p>Get your brand seen by active Kimbela shoppers and creators.</p>
+            <a class="right-ad-2-cta" href="{{ url_for('payments.dashboard_ad_package', placement='dashboard-spotlight') }}">Start advertising</a>
             <div class="right-ad-2-sparkles" aria-hidden="true">
               <span></span>
               <span></span>
@@ -3681,10 +3687,10 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
       padding: 22px;
       min-height: 380px;
       border-radius: 26px;
-      background: linear-gradient(160deg, #7c3aed 0%, #2563eb 40%, #22d3ee 100%);
-      color: #ffffff;
+      background: linear-gradient(145deg, #ffd7c7 0%, #f7a16b 48%, #caa7ff 100%);
+      color: #4f2943;
       overflow: hidden;
-      box-shadow: 0 20px 45px rgba(59, 7, 100, 0.25), 0 10px 20px rgba(0, 0, 0, 0.12);
+      box-shadow: 0 18px 34px rgba(170, 92, 76, 0.22);
       display: flex;
       align-items: flex-end;
     }
@@ -3702,7 +3708,7 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
       content: "";
       position: absolute;
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.22);
       filter: blur(2px);
     }
     .vertical-ad-banner::before {
@@ -3721,11 +3727,11 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
       position: absolute;
       top: 18px;
       left: 18px;
-      background: rgba(0, 0, 0, 0.35);
-      color: #ffffff;
+      background: rgba(255, 248, 244, 0.74);
+      color: #a6574d;
       padding: 6px 12px;
       border-radius: 999px;
-      font-size: 0.8rem;
+      font-size: 0.72rem;
       font-weight: 800;
       letter-spacing: 0.08em;
       text-transform: uppercase;
@@ -3737,43 +3743,46 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
     }
     .vertical-ad-content h2 {
       margin: 0 0 10px;
-      font-size: 1.9rem;
+      font-size: 1.35rem;
       font-weight: 900;
-      line-height: 1.1;
-      text-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+      line-height: 1.12;
+      color: #6d345f;
+      text-shadow: none;
     }
     .vertical-ad-content p {
       margin: 0 0 16px;
-      font-size: 1rem;
-      font-weight: 700;
-      opacity: 0.95;
+      font-size: 0.98rem;
+      font-weight: 600;
+      color: rgba(79, 41, 67, 0.92);
+      opacity: 1;
     }
     .vertical-ad-cta {
       border: none;
-      background: #0f172a;
-      color: #ffffff;
+      background: linear-gradient(135deg, #ec8d71 0%, #bb8cff 100%);
+      color: #fffaf8;
       padding: 12px 18px;
       border-radius: 999px;
       font-weight: 800;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       cursor: pointer;
-      box-shadow: 0 12px 22px rgba(15, 23, 42, 0.3);
+      text-decoration: none;
+      box-shadow: 0 12px 22px rgba(162, 93, 149, 0.24);
       transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
     .vertical-ad-cta:hover {
       transform: translateY(-2px);
-      box-shadow: 0 16px 28px rgba(0, 0, 0, 0.22);
+      box-shadow: 0 18px 30px rgba(162, 93, 149, 0.28);
     }
     .right-ad-banner-2 {
       position: relative;
       margin: 16px 0 20px;
       padding: 22px 18px 24px;
       border-radius: 24px;
-      color: #0f172a;
-      background: linear-gradient(135deg, #fde68a 0%, #fca5a5 45%, #93c5fd 100%);
-      box-shadow: 0 18px 38px rgba(248, 113, 113, 0.3);
+      color: #4f2943;
+      background: linear-gradient(145deg, #ffd7c7 0%, #f7a16b 48%, #caa7ff 100%);
+      box-shadow: 0 18px 34px rgba(170, 92, 76, 0.22);
       overflow: hidden;
-      animation: rightAd2Float 6s ease-in-out infinite;
+      animation: none;
     }
     .right-ad-banner-2.has-dashboard-ad {
       background: transparent;
@@ -3787,10 +3796,12 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
     .right-ad-banner-2::before {
       content: "";
       position: absolute;
-      inset: -30%;
-      background: radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.7), transparent 45%);
-      opacity: 0.8;
-      animation: rightAd2Glow 4.5s ease-in-out infinite;
+      inset: 0;
+      background:
+        radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.55), transparent 38%),
+        radial-gradient(circle at 82% 85%, rgba(255, 255, 255, 0.18), transparent 30%);
+      opacity: 1;
+      animation: none;
     }
     .right-ad-2-badge {
       position: relative;
@@ -3798,19 +3809,21 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
       display: inline-block;
       padding: 6px 12px;
       border-radius: 999px;
-      background: rgba(15, 23, 42, 0.12);
+      background: rgba(255, 248, 244, 0.74);
+      color: #a6574d;
       font-size: 0.72rem;
       font-weight: 800;
-      letter-spacing: 0.12em;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
     }
     .right-ad-banner-2 h2 {
       position: relative;
       z-index: 1;
       margin: 14px 0 8px;
-      font-size: 1.3rem;
+      font-size: 1.2rem;
       font-weight: 900;
-      text-shadow: 0 3px 10px rgba(255, 255, 255, 0.6);
+      color: #6d345f;
+      text-shadow: none;
     }
     .right-ad-banner-2 p {
       position: relative;
@@ -3818,7 +3831,8 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
       margin: 0 0 16px;
       font-size: 0.95rem;
       font-weight: 600;
-      opacity: 0.92;
+      color: rgba(79, 41, 67, 0.92);
+      opacity: 1;
     }
     .right-ad-2-cta {
       position: relative;
@@ -3828,17 +3842,17 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
       justify-content: center;
       padding: 10px 16px;
       border-radius: 999px;
-      background: #0f172a;
-      color: #ffffff;
+      background: linear-gradient(135deg, #ec8d71 0%, #bb8cff 100%);
+      color: #fffaf8;
       font-weight: 800;
       font-size: 0.85rem;
       text-decoration: none;
-      box-shadow: 0 14px 24px rgba(15, 23, 42, 0.3);
+      box-shadow: 0 12px 22px rgba(162, 93, 149, 0.24);
       transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
     .right-ad-2-cta:hover {
       transform: translateY(-2px) scale(1.02);
-      box-shadow: 0 18px 30px rgba(15, 23, 42, 0.35);
+      box-shadow: 0 18px 30px rgba(162, 93, 149, 0.28);
     }
     .right-ad-2-sparkles {
       position: absolute;
@@ -3940,9 +3954,9 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
       padding: 18px;
       min-height: 260px;
       border-radius: 22px;
-      background: linear-gradient(145deg, #10b981 0%, #22d3ee 45%, #f97316 100%);
-      color: #ffffff;
-      box-shadow: 0 16px 32px rgba(6, 95, 70, 0.25);
+      background: linear-gradient(145deg, #ffd7c7 0%, #f7a16b 48%, #caa7ff 100%);
+      color: #4f2943;
+      box-shadow: 0 18px 34px rgba(170, 92, 76, 0.22);
       overflow: hidden;
     }
     .sidebar-ad-banner.has-dashboard-ad {
@@ -3958,13 +3972,15 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
       content: "";
       position: absolute;
       inset: 0;
-      background: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.22), transparent 40%);
+      background:
+        radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.55), transparent 38%),
+        radial-gradient(circle at 82% 85%, rgba(255, 255, 255, 0.18), transparent 30%);
       pointer-events: none;
     }
     .sidebar-ad-badge {
       display: inline-block;
-      background: rgba(15, 23, 42, 0.35);
-      color: #ffffff;
+      background: rgba(255, 248, 244, 0.74);
+      color: #a6574d;
       padding: 5px 10px;
       border-radius: 999px;
       font-size: 0.72rem;
@@ -3982,12 +3998,14 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
       height: 52px;
       margin-bottom: 12px;
       border-radius: 14px;
-      background: rgba(255, 255, 255, 0.2);
+      background: rgba(255, 248, 244, 0.54);
       backdrop-filter: blur(8px);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 12px 24px rgba(170, 92, 76, 0.14);
     }
     .sidebar-ad-icon i {
       font-size: 1.8rem;
       transform: rotate(-15deg);
+      color: #a6574d;
     }
     .sidebar-ad-icon::before,
     .sidebar-ad-icon::after {
@@ -3997,8 +4015,8 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
       top: 10px;
       width: 12px;
       height: 12px;
-      border: 2px solid rgba(255, 255, 255, 0.95);
-      border-color: rgba(255, 255, 255, 0.95) rgba(255, 255, 255, 0.95) transparent transparent;
+      border: 2px solid rgba(166, 87, 77, 0.8);
+      border-color: rgba(166, 87, 77, 0.8) rgba(166, 87, 77, 0.8) transparent transparent;
       border-radius: 50%;
       transform: rotate(20deg);
       opacity: 0.9;
@@ -4014,31 +4032,33 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
       margin: 0 0 8px;
       font-size: 1.2rem;
       font-weight: 900;
-      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+      color: #6d345f;
+      text-shadow: none;
     }
     .sidebar-ad-banner p {
       margin: 0 0 14px;
       font-size: 0.95rem;
       font-weight: 600;
-      opacity: 0.95;
+      color: rgba(79, 41, 67, 0.92);
+      opacity: 1;
     }
     .sidebar-ad-cta {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      background: #0f172a;
-      color: #ffffff;
+      background: linear-gradient(135deg, #ec8d71 0%, #bb8cff 100%);
+      color: #fffaf8;
       padding: 10px 16px;
       border-radius: 999px;
       font-weight: 800;
       font-size: 0.85rem;
       text-decoration: none;
-      box-shadow: 0 10px 18px rgba(15, 23, 42, 0.3);
+      box-shadow: 0 12px 22px rgba(162, 93, 149, 0.24);
       transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
     .sidebar-ad-cta:hover {
       transform: translateY(-2px);
-      box-shadow: 0 16px 28px rgba(15, 23, 42, 0.35);
+      box-shadow: 0 18px 30px rgba(162, 93, 149, 0.28);
     }
     .matchmaking-banner {
       position: relative;
@@ -4857,14 +4877,14 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
     max-height: none !important;
     margin: 0 !important;
     padding: 1.15rem !important;
-    border: 1px solid rgba(245, 158, 11, 0.18) !important;
+    border: 1px solid rgba(236, 141, 113, 0.22) !important;
     border-radius: 26px !important;
     background:
       radial-gradient(circle at top right, rgba(255, 255, 255, 0.34), transparent 34%),
-      radial-gradient(circle at bottom left, rgba(251, 191, 36, 0.2), transparent 30%),
-      linear-gradient(145deg, #fff3dc 0%, #ffd59e 42%, #f59e0b 100%) !important;
-    color: #40210a !important;
-    box-shadow: 0 18px 40px rgba(180, 83, 9, 0.18), 0 8px 18px rgba(15, 23, 42, 0.08) !important;
+      radial-gradient(circle at bottom left, rgba(202, 167, 255, 0.22), transparent 30%),
+      linear-gradient(145deg, #ffe4d8 0%, #f6b483 46%, #cfb2ff 100%) !important;
+    color: #4f2943 !important;
+    box-shadow: 0 18px 40px rgba(170, 92, 76, 0.18), 0 8px 18px rgba(111, 60, 99, 0.08) !important;
     overflow: hidden !important;
     isolation: isolate;
   }
@@ -4912,8 +4932,8 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
     min-height: 0 !important;
     padding: 0.45rem !important;
     background:
-      linear-gradient(180deg, rgba(255, 251, 235, 0.95), rgba(255, 237, 213, 0.95)),
-      linear-gradient(145deg, #fff3dc 0%, #ffd59e 42%, #f59e0b 100%) !important;
+      linear-gradient(180deg, rgba(255, 249, 246, 0.96), rgba(255, 236, 228, 0.96)),
+      linear-gradient(145deg, #ffe4d8 0%, #f6b483 46%, #cfb2ff 100%) !important;
   }
 
   .mobile-feed-ad-slot .sidebar-ad-badge,
@@ -4925,12 +4945,12 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
     width: fit-content;
     margin-bottom: 0.9rem;
     padding: 0.42rem 0.75rem;
-    border: 1px solid rgba(180, 83, 9, 0.15);
+    border: 1px solid rgba(166, 87, 77, 0.14);
     border-radius: 999px;
-    background: rgba(255, 251, 235, 0.78) !important;
-    color: #b45309 !important;
+    background: rgba(255, 248, 244, 0.8) !important;
+    color: #a6574d !important;
     backdrop-filter: blur(10px);
-    box-shadow: 0 8px 18px rgba(217, 119, 6, 0.12);
+    box-shadow: 0 8px 18px rgba(170, 92, 76, 0.12);
   }
 
   .mobile-feed-ad-slot .sidebar-ad-icon {
@@ -4938,9 +4958,9 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
     height: 58px;
     margin-bottom: 0.95rem;
     border-radius: 18px;
-    background: linear-gradient(145deg, rgba(251, 191, 36, 0.2), rgba(249, 115, 22, 0.26));
-    color: #b45309;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 12px 24px rgba(194, 65, 12, 0.14);
+    background: linear-gradient(145deg, rgba(242, 139, 107, 0.22), rgba(187, 140, 255, 0.22));
+    color: #a6574d;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 12px 24px rgba(170, 92, 76, 0.14);
   }
 
   .mobile-feed-ad-slot .sidebar-ad-icon i {
@@ -4950,14 +4970,14 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
 
   .mobile-feed-ad-slot .sidebar-ad-icon::before,
   .mobile-feed-ad-slot .sidebar-ad-icon::after {
-    border-color: rgba(180, 83, 9, 0.72) rgba(180, 83, 9, 0.72) transparent transparent;
+    border-color: rgba(166, 87, 77, 0.72) rgba(166, 87, 77, 0.72) transparent transparent;
   }
 
   .mobile-feed-ad-slot .sidebar-ad-banner h3,
   .mobile-feed-ad-slot .vertical-ad-banner h2,
   .mobile-feed-ad-slot .right-ad-banner-2 h2 {
     margin: 0 0 0.55rem;
-    color: #4a2508 !important;
+    color: #6d345f !important;
     font-size: 1.22rem !important;
     line-height: 1.2;
     font-weight: 900;
@@ -4968,7 +4988,7 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
   .mobile-feed-ad-slot .vertical-ad-banner p,
   .mobile-feed-ad-slot .right-ad-banner-2 p {
     margin: 0 0 1rem;
-    color: rgba(74, 37, 8, 0.84) !important;
+    color: rgba(79, 41, 67, 0.84) !important;
     font-size: 0.94rem !important;
     line-height: 1.55;
     font-weight: 600;
@@ -4986,12 +5006,12 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
     padding: 0.9rem 1.15rem;
     border: 0;
     border-radius: 999px;
-    background: linear-gradient(135deg, #c2410c 0%, #f59e0b 100%) !important;
+    background: linear-gradient(135deg, #ec8d71 0%, #bb8cff 100%) !important;
     color: #fffef8 !important;
     font-size: 0.88rem !important;
     font-weight: 800;
     text-decoration: none;
-    box-shadow: 0 14px 28px rgba(194, 65, 12, 0.22);
+    box-shadow: 0 14px 28px rgba(162, 93, 149, 0.22);
   }
 
   .mobile-feed-ad-slot .dashboard-ad-link {
