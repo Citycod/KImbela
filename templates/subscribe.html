@@ -72,19 +72,19 @@
 </head>
 <body class="bg-gray-50 min-h-screen">
     <!-- Navigation -->
-    <nav class="sticky top-0 bg-white shadow-sm z-50 border-b border-gray-200">
-        <div class="container mx-auto px-4 py-2">
-            <div class="flex items-center justify-between" style="height: 40px;">
+    <nav class="sticky top-0 bg-white shadow-sm z-50 border-b border-gray-200" style="height: 6rem;">
+        <div class="container mx-auto px-3 py-2">
+            <div class="flex items-center justify-between">
                 <!-- Logo -->
                 <a href="{{ url_for('market.main_market') }}" class="flex items-center space-x-2">
                     <img src="{{ url_for('static', filename='assets/img/kim.png') }}" 
                              alt="Kimbela Marketplace" 
-                             class="h-10" style="height: 10rem; width: 10rem; position: absolute; top: 0; margin-top: -50px;"/>
+                             class="h-10 sm:h-12" style="height: 5rem; width: 10rem; position: absolute; top: 0;"/>
                 </a>
                 
                 <!-- Back to Marketplace -->
                 <a href="{{ url_for('market.seller_dashboard') }}" 
-                   class="px-3 py-1.5 border border-amber-600 text-amber-600 rounded-lg hover:bg-amber-50 transition-colors text-xs font-medium">
+                   class="px-3 py-1.5 border border-amber-600 text-amber-600 rounded-lg hover:bg-amber-50 transition-colors text-xs font-medium whitespace-nowrap">
                     <i class="fas fa-arrow-left mr-1 text-xs"></i>Back
                 </a>
             </div>
@@ -109,166 +109,83 @@
             <h2 class="text-lg md:text-xl font-bold text-center mb-1">Choose Your Plan</h2>
             <p class="text-gray-600 text-center mb-6 text-xs">Select the perfect plan for your business needs</p>
             
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 max-w-6xl mx-auto">
-                <!-- Starter Package -->
-                <div class="bg-white rounded-xl shadow-lg p-4 hover:shadow-xl transition-shadow duration-300 border border-gray-200">
-                    <div class="text-center mb-4">
-                        <h3 class="text-base font-bold mb-1">Starter</h3>
-                        <p class="text-gray-600 text-xs">Perfect for beginners</p>
-                    </div>
-                    
-                    <div class="text-center mb-4">
-                        <div class="text-xl md:text-2xl font-bold text-amber-700 mb-0.5">
-                            $2
-                        </div>
-                        <div class="text-[10px] text-gray-500">per month</div>
-                    </div>
-                    
-                    <div class="space-y-2 mb-6">
-                        <div class="flex items-center">
-                            <i class="fas fa-check-circle text-green-500 mr-2 text-xs"></i>
-                            <span class="text-gray-700 text-xs">3 service listings</span>
-                        </div>
-                        
-                        
-                        
-                        <div class="flex items-center">
-                            <i class="fas fa-check-circle text-green-500 mr-2 text-xs"></i>
-                            <span class="text-gray-700 text-xs">Email support</span>
-                        </div>
-                    </div>
-                    
-                    <button onclick="selectPlan(1, 'Starter Package', 2, 200)" 
-                            class="w-full py-2 bg-gray-800 text-white rounded-lg font-bold hover:opacity-90 transition-opacity text-xs">
-                        Choose Plan
-                    </button>
-                </div>
-                
-                <!-- Basic Package -->
-                <div class="bg-white rounded-xl shadow-lg p-4 hover:shadow-xl transition-shadow duration-300 border border-gray-200">
-                    <div class="text-center mb-4">
-                        <h3 class="text-base font-bold mb-1">Basic</h3>
-                        <p class="text-gray-600 text-xs">Great for growing sellers</p>
-                    </div>
-                    
-                    <div class="text-center mb-4">
-                        <div class="text-xl md:text-2xl font-bold text-amber-700 mb-0.5">
-                            $5
-                        </div>
-                        <div class="text-[10px] text-gray-500">per month</div>
-                    </div>
-                    
-                    <div class="space-y-2 mb-6">
-                        <div class="flex items-center">
-                            <i class="fas fa-check-circle text-green-500 mr-2 text-xs"></i>
-                            <span class="text-gray-700 text-xs">Up to 10 service listings</span>
-                        </div>
-                        
-                        
-                        
-                        <div class="flex items-center">
-                            <i class="fas fa-check-circle text-green-500 mr-2 text-xs"></i>
-                            <span class="text-gray-700 text-xs">Priority email support</span>
-                        </div>
-                    </div>
-                    
-                    <button onclick="selectPlan(2, 'Basic Package', 5, 500)" 
-                            class="w-full py-2 bg-gray-800 text-white rounded-lg font-bold hover:opacity-90 transition-opacity text-xs">
-                        Choose Plan
-                    </button>
-                </div>
-                
-                <!-- Pro Package (Most Popular) -->
-                <div class="bg-white rounded-xl shadow-lg p-4 hover:shadow-xl transition-shadow duration-300 border-2 border-amber-500 relative">
+            {% if plans %}
+            <div class="grid grid-cols-1 md:grid-cols-{{ 4 if plans|length >= 4 else plans|length }} gap-6 max-w-6xl mx-auto">
+                {% for plan in plans %}
+                <div class="bg-white rounded-xl shadow-lg p-4 hover:shadow-xl transition-shadow duration-300 {% if plan.is_popular or plan.is_featured %}border-2 border-amber-500 relative{% else %}border border-gray-200{% endif %}">
+                    {% if plan.is_popular or plan.is_featured %}
                     <div class="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-amber-900 to-amber-600 text-white px-3 py-0.5 rounded-full text-[10px] font-bold">
                         MOST POPULAR
                     </div>
-                    
+                    {% endif %}
+
                     <div class="text-center mb-4">
-                        <h3 class="text-base font-bold mb-1">Pro</h3>
-                        <p class="text-gray-600 text-xs">Best for established sellers</p>
+                        <h3 class="text-base font-bold mb-1">{{ plan.name }}</h3>
+                        <p class="text-gray-600 text-xs">{{ plan.description or 'Marketplace seller plan' }}</p>
                     </div>
-                    
+
                     <div class="text-center mb-4">
                         <div class="text-xl md:text-2xl font-bold text-amber-700 mb-0.5">
-                            $10
+                            {% if plan.price_usd == plan.price_usd|int %}
+                            ${{ plan.price_usd|int }}
+                            {% else %}
+                            ${{ '%.2f'|format(plan.price_usd) }}
+                            {% endif %}
                         </div>
-                        <div class="text-[10px] text-gray-500">per month</div>
+                        <div class="text-[10px] text-gray-500">{{ plan.billing_period|default('monthly')|capitalize }}</div>
                     </div>
-                    
+
                     <div class="space-y-2 mb-6">
                         <div class="flex items-center">
                             <i class="fas fa-check-circle text-green-500 mr-2 text-xs"></i>
-                            <span class="text-gray-700 text-xs">Up to 20 service listings</span>
+                            <span class="text-gray-700 text-xs">
+                                {% if plan.max_services == 0 %}
+                                Unlimited service listings
+                                {% elif plan.max_services == 1 %}
+                                1 service listing
+                                {% else %}
+                                Up to {{ plan.max_services }} service listings
+                                {% endif %}
+                            </span>
                         </div>
-                        
-                        
-                        
-                        <div class="flex items-center">
-                            <i class="fas fa-check-circle text-green-500 mr-2 text-xs"></i>
-                            <span class="text-gray-700 text-xs">Featured listing priority</span>
-                        </div>
-                        
-                        
-                        
-                        <div class="flex items-center">
-                            <i class="fas fa-check-circle text-green-500 mr-2 text-xs"></i>
-                            <span class="text-gray-700 text-xs">Priority support</span>
-                        </div>
-                    </div>
-                    
-                    <button onclick="selectPlan(3, 'Pro Package', 10, 1000)" 
-                            class="w-full py-2 bg-gradient-to-r from-amber-900 to-amber-600 text-white rounded-lg font-bold hover:opacity-90 transition-opacity text-xs">
-                        <i class="fas fa-star mr-1 text-xs"></i>Get Started
-                    </button>
-                </div>
-                
-                <!-- Premium Package -->
-                <div class="bg-white rounded-xl shadow-lg p-4 hover:shadow-xl transition-shadow duration-300 border border-gray-200">
-                    <div class="text-center mb-4">
-                        <h3 class="text-base font-bold mb-1">Premium</h3>
-                        <p class="text-gray-600 text-xs">For power sellers</p>
-                    </div>
-                    
-                    <div class="text-center mb-4">
-                        <div class="text-xl md:text-2xl font-bold text-amber-700 mb-0.5">
-                            $15
-                        </div>
-                        <div class="text-[10px] text-gray-500">per month</div>
-                    </div>
-                    
-                    <div class="space-y-2 mb-6">
-                        <div class="flex items-center">
-                            <i class="fas fa-check-circle text-green-500 mr-2 text-xs"></i>
-                            <span class="text-gray-700 text-xs">Unlimited service listings</span>
-                        </div>
-                        
-                       
-                        
-                        <div class="flex items-center">
-                            <i class="fas fa-check-circle text-green-500 mr-2 text-xs"></i>
-                            <span class="text-gray-700 text-xs">Premium featured priority</span>
-                        </div>
-                        
-                        
-                        
+
+                        {% if plan.can_add_digital %}
                         <div class="flex items-center">
                             <i class="fas fa-check-circle text-green-500 mr-2 text-xs"></i>
                             <span class="text-gray-700 text-xs">Digital product sales</span>
                         </div>
-                        
+                        {% endif %}
+
+                        {% if plan.is_featured %}
                         <div class="flex items-center">
                             <i class="fas fa-check-circle text-green-500 mr-2 text-xs"></i>
-                            <span class="text-gray-700 text-xs">24/7 Premium support</span>
+                            <span class="text-gray-700 text-xs">Featured listing priority</span>
+                        </div>
+                        {% endif %}
+
+                        <div class="flex items-center">
+                            <i class="fas fa-check-circle text-green-500 mr-2 text-xs"></i>
+                            <span class="text-gray-700 text-xs">{{ plan.support_level|capitalize }} support</span>
                         </div>
                     </div>
-                    
-                    <button onclick="selectPlan(4, 'Premium Package', 15, 1500)" 
-                            class="w-full py-2 bg-gray-800 text-white rounded-lg font-bold hover:opacity-90 transition-opacity text-xs">
+
+                    <button onclick="selectPlan({{ plan.id }}, {{ plan.name|tojson }}, {{ plan.price_usd }}, {{ plan.price_tokens or 0 }})"
+                            class="w-full py-2 {% if plan.is_popular or plan.is_featured %}bg-gradient-to-r from-amber-900 to-amber-600{% else %}bg-gray-800{% endif %} text-white rounded-lg font-bold hover:opacity-90 transition-opacity text-xs">
+                        {% if plan.is_popular or plan.is_featured %}
+                        <i class="fas fa-star mr-1 text-xs"></i>Get Started
+                        {% else %}
                         Choose Plan
+                        {% endif %}
                     </button>
                 </div>
+                {% endfor %}
             </div>
+            {% else %}
+            <div class="max-w-2xl mx-auto bg-white border border-amber-100 rounded-xl p-6 text-center shadow-sm">
+                <h3 class="text-base font-bold mb-2">No subscription plans are available right now</h3>
+                <p class="text-sm text-gray-600">Please add or activate marketplace seller plans in production, then reload this page.</p>
+            </div>
+            {% endif %}
         </div>
 
         <!-- How It Works -->

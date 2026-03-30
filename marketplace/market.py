@@ -3805,7 +3805,7 @@ def subscribe():
     if request.method == "GET":
         # Get all active plans
         plans = (
-            MarketplaceSubscriptionPlan.query.filter_by(is_active=True)
+            MarketplaceSubscription.query.filter_by(is_active=True)
             .order_by("sort_order")
             .all()
         )
@@ -3813,7 +3813,7 @@ def subscribe():
         # Get user's current subscription
         current_plan = None
         if current_user.marketplace_subscription_id:
-            current_plan = MarketplaceSubscriptionPlan.query.get(
+            current_plan = MarketplaceSubscription.query.get(
                 current_user.marketplace_subscription_id
             )
 
