@@ -2607,6 +2607,85 @@ def ensure_marketplace_categories():
         db.session.commit()
 
 
+def ensure_marketplace_subscriptions():
+    """Create default seller subscription plans if none exist."""
+    existing_count = MarketplaceSubscription.query.count()
+    if existing_count > 0:
+        return
+
+    subscriptions = [
+        {
+            "name": "Starter",
+            "slug": "starter",
+            "description": "Perfect for beginners",
+            "price_tokens": 200,
+            "price_usd": 2.00,
+            "max_services": 3,
+            "max_images": 5,
+            "is_featured": False,
+            "can_add_video": False,
+            "can_add_digital": True,
+            "support_level": "basic",
+            "badge_color": "gray",
+            "is_popular": False,
+            "sort_order": 1,
+        },
+        {
+            "name": "Basic",
+            "slug": "basic",
+            "description": "Great for growing sellers",
+            "price_tokens": 500,
+            "price_usd": 5.00,
+            "max_services": 10,
+            "max_images": 10,
+            "is_featured": False,
+            "can_add_video": False,
+            "can_add_digital": True,
+            "support_level": "priority",
+            "badge_color": "blue",
+            "is_popular": False,
+            "sort_order": 2,
+        },
+        {
+            "name": "Pro",
+            "slug": "pro",
+            "description": "Best for established sellers",
+            "price_tokens": 1000,
+            "price_usd": 10.00,
+            "max_services": 20,
+            "max_images": 20,
+            "is_featured": True,
+            "can_add_video": True,
+            "can_add_digital": True,
+            "support_level": "priority",
+            "badge_color": "purple",
+            "is_popular": True,
+            "sort_order": 3,
+        },
+        {
+            "name": "Premium",
+            "slug": "premium",
+            "description": "For power sellers",
+            "price_tokens": 1500,
+            "price_usd": 15.00,
+            "max_services": 0,
+            "max_images": 0,
+            "is_featured": True,
+            "can_add_video": True,
+            "can_add_digital": True,
+            "support_level": "premium",
+            "badge_color": "gold",
+            "is_popular": False,
+            "sort_order": 4,
+        },
+    ]
+
+    for sub_data in subscriptions:
+        db.session.add(MarketplaceSubscription(**sub_data))
+
+    db.session.commit()
+
+
 @market.route("/init-data", methods=["GET"])
 def init_marketplace_data():
     """Initialize marketplace data (run once)"""
@@ -2616,83 +2695,7 @@ def init_marketplace_data():
     try:
         # Create categories
         ensure_marketplace_categories()
-
-        # Create subscription plans - using correct field names based on HTML
-        subscriptions = [
-            {
-                "name": "Starter",
-                "slug": "starter",
-                "description": "Perfect for beginners",
-                "price": 200,  # Naira price
-                "price_usd": 2.00,
-                "max_services": 3,
-                "max_images": 5,
-                "is_featured": False,
-                "badge_color": "gray",
-                "sort_order": 1,
-            },
-            {
-                "name": "Basic",
-                "slug": "basic",
-                "description": "Great for growing sellers",
-                "price": 500,  # Naira price
-                "price_usd": 5.00,
-                "max_services": 10,
-                "max_images": 10,
-                "is_featured": False,
-                "badge_color": "blue",
-                "sort_order": 2,
-            },
-            {
-                "name": "Pro",
-                "slug": "pro",
-                "description": "Best for established sellers",
-                "price": 1000,  # Naira price
-                "price_usd": 10.00,
-                "max_services": 20,
-                "max_images": 20,
-                "is_featured": True,
-                "badge_color": "purple",
-                "sort_order": 3,
-            },
-            {
-                "name": "Premium",
-                "slug": "premium",
-                "description": "For power sellers",
-                "price": 1500,  # Naira price
-                "price_usd": 15.00,
-                "max_services": 0,  # 0 = unlimited
-                "max_images": 0,  # 0 = unlimited
-                "is_featured": True,
-                "badge_color": "gold",
-                "sort_order": 4,
-            },
-        ]
-
-        for sub_data in subscriptions:
-            if not MarketplaceSubscription.query.filter_by(
-                slug=sub_data["slug"]
-            ).first():
-                # Create subscription using correct field names
-                subscription = MarketplaceSubscription(
-                    name=sub_data["name"],
-                    slug=sub_data["slug"],
-                    description=sub_data["description"],
-                    price_usd=sub_data[
-                        "price_usd"
-                    ],  # Use price_usd if that's what your model expects
-                    max_services=sub_data["max_services"],
-                    max_images=sub_data["max_images"],
-                    is_featured=sub_data.get("is_featured", False),
-                    badge_color=sub_data.get("badge_color", "gray"),
-                    sort_order=sub_data["sort_order"],
-                )
-                db.session.add(subscription)
-                print(
-                    f"Created subscription: {sub_data['name']} - ${sub_data['price_usd']}/month"
-                )
-
-        db.session.commit()
+        ensure_marketplace_subscriptions()
         return "Marketplace data initialized successfully with 4 subscription plans!"
 
     except Exception as e:
@@ -3803,6 +3806,7 @@ def subscription_plans():
 def subscribe():
     """Subscribe to a marketplace plan"""
     if request.method == "GET":
+        ensure_marketplace_subscriptions()
         # Get all active plans
         plans = (
             MarketplaceSubscription.query.filter_by(is_active=True)
