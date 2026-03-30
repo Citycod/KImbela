@@ -169,8 +169,13 @@
                         </div>
                     </div>
 
-                    <button onclick="selectPlan({{ plan.id }}, {{ plan.name|tojson }}, {{ plan.price_usd }}, {{ plan.price_tokens or 0 }})"
-                            class="w-full py-2 {% if plan.is_popular or plan.is_featured %}bg-gradient-to-r from-amber-900 to-amber-600{% else %}bg-gray-800{% endif %} text-white rounded-lg font-bold hover:opacity-90 transition-opacity text-xs">
+                    <button
+                            type="button"
+                            class="plan-select-btn w-full py-2 {% if plan.is_popular or plan.is_featured %}bg-gradient-to-r from-amber-900 to-amber-600{% else %}bg-gray-800{% endif %} text-white rounded-lg font-bold hover:opacity-90 transition-opacity text-xs"
+                            data-plan-id="{{ plan.id }}"
+                            data-plan-name="{{ plan.name }}"
+                            data-plan-price="{{ plan.price_usd }}"
+                            data-plan-tokens="{{ plan.price_tokens or 0 }}">
                         {% if plan.is_popular or plan.is_featured %}
                         <i class="fas fa-star mr-1 text-xs"></i>Get Started
                         {% else %}
@@ -523,6 +528,7 @@
         
         // DOM Ready
         document.addEventListener('DOMContentLoaded', function() {
+            setupPlanButtons();
             
             // Initialize FAQ
             setupFAQ();
@@ -538,6 +544,20 @@
                 }, 500);
             }
         });
+
+        function setupPlanButtons() {
+            const planButtons = document.querySelectorAll('.plan-select-btn');
+            planButtons.forEach((button) => {
+                button.addEventListener('click', function() {
+                    selectPlan(
+                        Number(this.dataset.planId),
+                        this.dataset.planName || '',
+                        Number(this.dataset.planPrice || 0),
+                        Number(this.dataset.planTokens || 0)
+                    );
+                });
+            });
+        }
         
         // Plan Selection Function
         function selectPlan(planId, planName, price, tokens) {
@@ -571,10 +591,9 @@
         
         function selectPlanFromURL(planId) {
             // Find the button for the specified plan
-            const planButtons = document.querySelectorAll('button[onclick*="selectPlan"]');
+            const planButtons = document.querySelectorAll('.plan-select-btn');
             for (let button of planButtons) {
-                const onclickAttr = button.getAttribute('onclick');
-                if (onclickAttr && onclickAttr.includes(`selectPlan(${planId},`)) {
+                if (button.dataset.planId === String(planId)) {
                     button.click();
                     break;
                 }
