@@ -2,12 +2,13 @@ from time_utils import utcnow
 # app_config.py - UPDATED (fix eventlet issues)
 from flask import Flask, g, request, flash, redirect, url_for, render_template
 from flask_login import login_required, current_user
-from flask_wtf.csrf import generate_csrf
+from flask_wtf.csrf import CSRFError, generate_csrf
 from dotenv import load_dotenv
 import os
 from datetime import datetime, timedelta, timezone
 from flask import jsonify
-from werkzeug.exceptions import RequestEntityTooLarge
+from urllib.parse import urlparse
+from werkzeug.exceptions import BadRequest, RequestEntityTooLarge
 import time
 from scheduler import init_birthday_scheduler
 from flask import send_from_directory, abort
@@ -35,21 +36,66 @@ def create_app():
         os.getenv("MARKETPLACE_PAYMENTS_ENABLED", "0") == "1"
     )
 
+    def wants_json_response():
+        return (
+            request.is_json
+            or request.path.startswith("/api/")
+            or request.headers.get("X-Requested-With") == "XMLHttpRequest"
+            or request.accept_mimetypes.best == "application/json"
+        )
+
+    def safe_back_redirect():
+        referrer = request.referrer
+        if referrer:
+            parsed_referrer = urlparse(referrer)
+            parsed_host = urlparse(request.host_url)
+            if parsed_referrer.netloc == parsed_host.netloc:
+                return referrer
+
+        endpoint = request.endpoint or ""
+        if endpoint.startswith("market."):
+            return url_for("market.seller_dashboard")
+        if endpoint.startswith("user."):
+            return url_for("user.user_dashboard")
+        if endpoint.startswith("auth."):
+            return url_for("auth.login")
+        return url_for("user.index")
+
+    def respond_with_friendly_error(message, status_code, title=None):
+        payload = {"success": False, "error": message}
+        if title:
+            payload["title"] = title
+
+        if wants_json_response():
+            return jsonify(payload), status_code
+
+        flash(message, "danger")
+        return redirect(safe_back_redirect())
+
     @app.errorhandler(RequestEntityTooLarge)
     def handle_file_too_large(error):
-        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-            return (
-                jsonify(
-                    {
-                        "success": False,
-                        "error": "File is too large! Maximum size is 100MB.",
-                    }
-                ),
-                413,
-            )
-        else:
-            flash("File is too large! Maximum file size is 100MB.", "danger")
-            return redirect(url_for("user.user_dashboard"))
+        max_size_mb = app.config["MAX_CONTENT_LENGTH"] // (1024 * 1024)
+        return respond_with_friendly_error(
+            f"Your upload is too large. Maximum allowed size is {max_size_mb}MB. Please choose a smaller file and try again.",
+            413,
+            title="Upload Too Large",
+        )
+
+    @app.errorhandler(CSRFError)
+    def handle_csrf_error(error):
+        return respond_with_friendly_error(
+            "Your form session expired or the security token is invalid. Refresh the page and try again.",
+            400,
+            title="Invalid Form Submission",
+        )
+
+    @app.errorhandler(BadRequest)
+    def handle_bad_request(error):
+        return respond_with_friendly_error(
+            "We could not process that request. Please check your input and try again.",
+            400,
+            title="Bad Request",
+        )
 
     @app.route("/uploads/<path:filename>")
     @login_required
