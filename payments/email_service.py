@@ -5,6 +5,9 @@ from extensions import mail
 from resend_mail import Message
 from datetime import datetime, timedelta
 import logging
+import time
+
+from requests.exceptions import ConnectionError as RequestsConnectionError, Timeout
 
 logger = logging.getLogger(__name__)
 
@@ -25,36 +28,51 @@ class MarketplaceEmailService:
 
     def _send_email(self, subject, recipient, html_body, text_body=None):
         """Robust email sending with error handling"""
-        try:
-            # Ensure we have current_app context
-            self._ensure_initialized()
+        # Ensure we have current_app context
+        self._ensure_initialized()
 
-            msg = Message(
-                subject=subject,
-                recipients=[recipient],
-                html=html_body,
-                body=text_body,
-                sender=current_app.config.get(
-                    "MAIL_DEFAULT_SENDER", "noreply@kimbela.com"
-                ),
-                charset="utf-8",
-            )
+        max_attempts = 2
 
-            # Add important headers
-            msg.extra_headers = {
-                "X-Priority": "1",
-                "X-Mailer": "Kimbela Marketplace",
-                "Precedence": "bulk",
-            }
+        for attempt in range(1, max_attempts + 1):
+            try:
+                msg = Message(
+                    subject=subject,
+                    recipients=[recipient],
+                    html=html_body,
+                    body=text_body,
+                    sender=current_app.config.get(
+                        "MAIL_DEFAULT_SENDER", "noreply@kimbela.com"
+                    ),
+                    charset="utf-8",
+                )
 
-            mail.send(msg)
-            logger.info(f"✅ Email sent to {recipient}: {subject}")
-            return True
+                # Add important headers
+                msg.extra_headers = {
+                    "X-Priority": "1",
+                    "X-Mailer": "Kimbela Marketplace",
+                    "Precedence": "bulk",
+                }
 
-        except Exception as e:
-            logger.error(f"❌ Failed to send email to {recipient}: {str(e)}")
-            # Log but don't crash the app
-            return False
+                mail.send(msg)
+                logger.info(f"✅ Email sent to {recipient}: {subject}")
+                return True
+
+            except (RequestsConnectionError, Timeout) as e:
+                logger.warning(
+                    "Transient email delivery error to %s (attempt %s/%s): %s",
+                    recipient,
+                    attempt,
+                    max_attempts,
+                    e,
+                )
+                if attempt == max_attempts:
+                    logger.error(f"❌ Failed to send email to {recipient}: {str(e)}")
+                    return False
+                time.sleep(0.5 * attempt)
+            except Exception as e:
+                logger.error(f"❌ Failed to send email to {recipient}: {str(e)}")
+                # Log but don't crash the app
+                return False
 
     def _logo_url(self):
         self._ensure_initialized()

@@ -1,6 +1,8 @@
 # gunicorn_config.py
 import os
 
+os.environ.setdefault("EVENTLET_NO_GREENDNS", "yes")
+
 bind = "0.0.0.0:5000"
 workers = 1
 worker_class = "eventlet"
@@ -23,6 +25,7 @@ errorlog = "-"
 loglevel = "info"
 capture_output = True
 enable_stdio_inheritance = True
+raw_env = ["EVENTLET_NO_GREENDNS=yes"]
 
 # Debug for upload issues
 spew = False  # Set to True for extreme debugging

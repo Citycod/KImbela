@@ -1,6 +1,12 @@
 import requests as http_requests
 import json
+import socket
 from flask import current_app, url_for
+from requests.exceptions import (
+    ConnectionError as RequestsConnectionError,
+    RequestException,
+    Timeout,
+)
 from extensions import db
 from models import (
     PaymentTransaction,
@@ -31,6 +37,12 @@ from time_utils import utcnow
 logger = logging.getLogger(__name__)
 
 
+class UpstreamServiceError(Exception):
+    """Transient upstream/network failure while calling a payment provider."""
+
+    pass
+
+
 class BasePaymentService:
     """Base payment service with common functionality"""
 
@@ -57,11 +69,100 @@ class BasePaymentService:
             )
 
     def _http_request(self, method, url, **kwargs):
-        """Safe HTTP request method that re-imports requests"""
+        """HTTP request wrapper with retries for transient upstream failures."""
         import requests as http_requests
 
         method_func = getattr(http_requests, method.lower())
-        return method_func(url, **kwargs)
+        kwargs.setdefault("timeout", 30)
+
+        max_attempts = 4
+        last_error = None
+
+        for attempt in range(1, max_attempts + 1):
+            try:
+                response = method_func(url, **kwargs)
+
+                if response.status_code in {429, 502, 503, 504}:
+                    last_error = RuntimeError(
+                        f"HTTP {response.status_code} from upstream service"
+                    )
+                    logger.warning(
+                        "Transient upstream HTTP status calling %s %s (attempt %s/%s): %s",
+                        method.upper(),
+                        url,
+                        attempt,
+                        max_attempts,
+                        response.status_code,
+                    )
+                    if attempt == max_attempts:
+                        break
+                    time.sleep(min(0.75 * attempt, 2.5))
+                    continue
+
+                return response
+            except (RequestsConnectionError, Timeout, RequestException, socket.gaierror) as exc:
+                if not self._is_transient_network_error(exc):
+                    raise
+                last_error = exc
+                logger.warning(
+                    "Transient upstream error calling %s %s (attempt %s/%s): %s",
+                    method.upper(),
+                    url,
+                    attempt,
+                    max_attempts,
+                    exc,
+                )
+                if attempt == max_attempts:
+                    break
+                time.sleep(min(0.75 * attempt, 2.5))
+
+        raise UpstreamServiceError(
+            f"Unable to reach upstream payment service after {max_attempts} attempts: {self._describe_network_error(last_error)}"
+        ) from last_error
+
+    @staticmethod
+    def _is_transient_network_error(exc):
+        message = str(exc).lower()
+        transient_markers = (
+            "name resolution",
+            "failed to resolve",
+            "temporary failure in name resolution",
+            "lookup timed out",
+            "dns",
+            "max retries exceeded",
+            "connection aborted",
+            "connection reset",
+            "connection refused",
+            "timed out",
+            "timeout",
+            "enetunreach",
+            "network is unreachable",
+            "ehostunreach",
+            "host is unreachable",
+            "remote end closed connection",
+            "503",
+            "502",
+            "504",
+            "429",
+        )
+        return isinstance(
+            exc, (RequestsConnectionError, Timeout, socket.gaierror)
+        ) or any(marker in message for marker in transient_markers)
+
+    @staticmethod
+    def _describe_network_error(exc):
+        if exc is None:
+            return "unknown upstream error"
+
+        message = str(exc)
+        normalized = message.lower()
+        if "failed to resolve" in normalized or "lookup timed out" in normalized:
+            return "DNS lookup failed while contacting the upstream service"
+        if "enetunreach" in normalized or "network is unreachable" in normalized:
+            return "network route to the upstream service was unavailable"
+        if "timed out" in normalized or "timeout" in normalized:
+            return "request to the upstream service timed out"
+        return message
 
     def verify_flutterwave_payment(self, transaction_id):
         """Verify Flutterwave payment using transaction ID"""
@@ -938,6 +1039,12 @@ class MarketplacePaymentService(BasePaymentService):
             import traceback
 
             print(f"🔴 [MARKETPLACE PAYMENT] Traceback:\n{traceback.format_exc()}")
+            if isinstance(e, UpstreamServiceError):
+                return {
+                    "success": False,
+                    "error": "Payment provider is temporarily unreachable. Please try again in a moment.",
+                    "error_type": "upstream_unavailable",
+                }
             return {"success": False, "error": f"Payment processing error: {str(e)}"}
 
     def handle_marketplace_payment_success(self, marketplace_payment, flutterwave_data):
@@ -1176,17 +1283,6 @@ class MarketplacePaymentService(BasePaymentService):
                     db.session.add(marketplace_payment)
                     db.session.commit()
 
-                    # Send immediate confirmation email
-                    try:
-                        self.email_service.send_payment_success_email(
-                            user=user,
-                            marketplace_payment=marketplace_payment,
-                            plan=plan,
-                        )
-                    except Exception as e:
-                        print(f"⚠️ [PAYMENT] Failed to send initial email: {e}")
-                        # Don't fail the payment if email fails
-
                     return {
                         "success": True,
                         "payment_url": payment_url,
@@ -1215,6 +1311,12 @@ class MarketplacePaymentService(BasePaymentService):
             import traceback
 
             print(f"🔴 [MARKETPLACE PAYMENT] Traceback:\n{traceback.format_exc()}")
+            if isinstance(e, UpstreamServiceError):
+                return {
+                    "success": False,
+                    "error": "Payment provider is temporarily unreachable. Please try again in a moment.",
+                    "error_type": "upstream_unavailable",
+                }
             return {"success": False, "error": f"Payment processing error: {str(e)}"}
 
     def handle_marketplace_payment_success(self, marketplace_payment, flutterwave_data):

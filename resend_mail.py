@@ -1,8 +1,11 @@
 import logging
+import socket
+import time
 from dataclasses import dataclass, field
 
 import resend
 from flask import current_app
+from requests.exceptions import ConnectionError as RequestsConnectionError, Timeout
 
 
 logger = logging.getLogger(__name__)
@@ -64,10 +67,54 @@ class ResendMail:
         if message.extra_headers:
             payload["headers"] = message.extra_headers
 
-        response = resend.Emails.send(payload)
-        logger.info(
-            "Email sent via Resend to %s: %s",
-            ", ".join(recipients),
-            response.get("id", "no-id"),
+        max_attempts = 3
+        last_error = None
+        for attempt in range(1, max_attempts + 1):
+            try:
+                response = resend.Emails.send(payload)
+                logger.info(
+                    "Email sent via Resend to %s: %s",
+                    ", ".join(recipients),
+                    response.get("id", "no-id"),
+                )
+                return response
+            except Exception as exc:
+                if not self._is_transient_error(exc):
+                    raise
+                last_error = exc
+                logger.warning(
+                    "Resend send failed for %s (attempt %s/%s): %s",
+                    ", ".join(recipients),
+                    attempt,
+                    max_attempts,
+                    exc,
+                )
+                if attempt == max_attempts:
+                    break
+                time.sleep(min(0.75 * attempt, 2.5))
+
+        raise last_error
+
+    @staticmethod
+    def _is_transient_error(exc):
+        message = str(exc).lower()
+        transient_markers = (
+            "failed to establish a new connection",
+            "failed to resolve",
+            "lookup timed out",
+            "name resolution",
+            "dns",
+            "timed out",
+            "timeout",
+            "enetunreach",
+            "network is unreachable",
+            "ehostunreach",
+            "host is unreachable",
+            "503",
+            "502",
+            "504",
+            "429",
         )
-        return response
+        return isinstance(
+            exc, (RequestsConnectionError, Timeout, socket.gaierror)
+        ) or any(marker in message for marker in transient_markers)

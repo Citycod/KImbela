@@ -1,10 +1,13 @@
 from time_utils import utcnow
 # email_utils.py
 import os
+import socket
+import time
 from flask import render_template_string, url_for
 import resend
 from datetime import datetime
 import logging
+from requests.exceptions import ConnectionError as RequestsConnectionError, Timeout
 
 logger = logging.getLogger(__name__)
 
@@ -50,15 +53,60 @@ class EmailService:
             if text_content:
                 params["text"] = text_content
 
-            response = resend.Emails.send(params)
-            logger.info(
-                f"Email sent successfully to {to_email}: {response.get('id', 'No ID')}"
-            )
-            return True
+            max_attempts = 3
+            last_error = None
+
+            for attempt in range(1, max_attempts + 1):
+                try:
+                    response = resend.Emails.send(params)
+                    logger.info(
+                        f"Email sent successfully to {to_email}: {response.get('id', 'No ID')}"
+                    )
+                    return True
+                except Exception as exc:
+                    if not EmailService._is_transient_error(exc):
+                        raise
+                    last_error = exc
+                    logger.warning(
+                        "Transient email delivery error to %s (attempt %s/%s): %s",
+                        to_email,
+                        attempt,
+                        max_attempts,
+                        exc,
+                    )
+                    if attempt == max_attempts:
+                        break
+                    time.sleep(min(0.75 * attempt, 2.5))
+
+            raise last_error
 
         except Exception as e:
             logger.error(f"Failed to send email to {to_email}: {str(e)}")
             return False
+
+    @staticmethod
+    def _is_transient_error(exc):
+        message = str(exc).lower()
+        transient_markers = (
+            "failed to establish a new connection",
+            "failed to resolve",
+            "lookup timed out",
+            "name resolution",
+            "dns",
+            "timed out",
+            "timeout",
+            "enetunreach",
+            "network is unreachable",
+            "ehostunreach",
+            "host is unreachable",
+            "503",
+            "502",
+            "504",
+            "429",
+        )
+        return isinstance(
+            exc, (RequestsConnectionError, Timeout, socket.gaierror)
+        ) or any(marker in message for marker in transient_markers)
 
     @staticmethod
     def send_welcome_email(user, otp=None):

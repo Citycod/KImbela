@@ -4213,8 +4213,10 @@ def become_seller():
             )
         else:
             error_msg = result.get("error", "Payment initiation failed")
+            error_type = result.get("error_type")
             print(f"🔴 [BECOME-SELLER] Payment failed: {error_msg}")
-            return jsonify({"success": False, "error": error_msg}), 400
+            status_code = 503 if error_type == "upstream_unavailable" else 400
+            return jsonify({"success": False, "error": error_msg}), status_code
 
     except Exception as e:
         print(f"🔴 [BECOME-SELLER] Unhandled exception: {str(e)}")
