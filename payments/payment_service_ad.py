@@ -30,9 +30,10 @@ class AdCampaignPaymentService:
         """Delegate email sending to base service"""
         return self.base._send_email(subject, recipient, html_body)
 
-    def create_ad_campaign_payment(self, user, campaign, currency="USD"):
+    def create_ad_campaign_payment(self, user, campaign, currency="NGN"):
         """Create Flutterwave payment for ad campaigns"""
         try:
+            currency = self.base.normalize_currency(currency)
             print(f"🟡 [AD PAYMENT] Starting payment for campaign: {campaign.id}")
             print(
                 "🟡 [AD PAYMENT] Secret key present"
@@ -49,6 +50,7 @@ class AdCampaignPaymentService:
                 "amount": str(float(campaign.budget)),
                 "currency": currency,
                 "redirect_url": url_for("payments.payment_callback", _external=True),
+                "payment_options": "card,banktransfer,ussd",
                 "customer": {
                     "email": user.email,
                     "name": user.first_name or user.email.split("@")[0],
@@ -189,11 +191,25 @@ class AdCampaignPaymentService:
             if not transaction:
                 return False
 
-            # Update transaction status
-            transaction.status = "failed"
-            transaction.gateway_status = (
+            gateway_status = (
                 payment_data.get("status", "failed") if payment_data else "failed"
             )
+            if self.base.is_success_status(gateway_status) or self.base.is_pending_status(
+                gateway_status
+            ):
+                transaction.gateway_status = gateway_status
+                transaction.gateway_metadata = (
+                    json.dumps(payment_data)
+                    if payment_data
+                    else transaction.gateway_metadata
+                )
+                transaction.updated_at = utcnow()
+                db.session.commit()
+                return True
+
+            # Update transaction status
+            transaction.status = "failed"
+            transaction.gateway_status = gateway_status
             transaction.gateway_metadata = (
                 json.dumps(payment_data)
                 if payment_data

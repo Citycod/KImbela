@@ -1512,10 +1512,11 @@ def initiate_payment():
             user_id=current_user.id,
             service_id=service_id,
             subscription_id=subscription_id,
-            amount=subscription.price_usd,
+            amount=round(subscription.price_usd * get_marketplace_ngn_rate(), 2),
             tokens_paid=subscription.price,
             gateway="flutterwave",
             gateway_reference=tx_ref,
+            currency="NGN",
             status="pending",
             description=f"Marketplace subscription: {subscription.name} for service: {service.title}",
         )
@@ -1525,9 +1526,10 @@ def initiate_payment():
         # Prepare Flutterwave payment data
         payment_data = {
             "tx_ref": tx_ref,
-            "amount": str(subscription.price_usd),
-            "currency": "USD",
+            "amount": str(round(subscription.price_usd * get_marketplace_ngn_rate(), 2)),
+            "currency": "NGN",
             "redirect_url": url_for("market.payment_callback", _external=True),
+            "payment_options": "card,banktransfer,ussd",
             "customer": {
                 "email": current_user.email,
                 "name": current_user.full_name,
@@ -1571,7 +1573,7 @@ def payment_callback():
     try:
         tx_ref = request.args.get("tx_ref")
         transaction_id = request.args.get("transaction_id")
-        status = request.args.get("status")
+        status = (request.args.get("status") or "").strip().lower()
 
         # Verify payment with Flutterwave
         payment = MarketplacePayment.query.filter_by(
@@ -1582,39 +1584,53 @@ def payment_callback():
             flash("Unauthorized access", "danger")
             return redirect(url_for("market.seller_dashboard"))
 
-        if status == "successful":
-            # Update payment record
-            payment.gateway_payment_id = transaction_id
-            payment.gateway_status = "successful"
-            payment.status = "completed"
-            payment.paid_at = utcnow()
+        if status in {"successful", "completed"} and transaction_id:
+            from payments.payment_service import MarketplacePaymentService
 
-            # Update service subscription
-            service = payment.service
-            service.subscription_status = "active"
-            service.subscription_expires = utcnow() + timedelta(days=30)
-            service.status = "pending"  # Will be reviewed by admin
+            payment_service = MarketplacePaymentService()
+            verification = payment_service.verify_flutterwave_payment(transaction_id)
+            verification_data = verification.get("data", {}) or {}
+            verified_status = (verification_data.get("status") or "").strip().lower()
 
-            # Create payment transaction record
-            transaction = PaymentTransaction(
-                user_id=current_user.id,
-                amount=payment.amount,
-                currency=payment.currency,
-                gateway="flutterwave",
-                gateway_reference=tx_ref,
-                gateway_payment_id=transaction_id,
-                gateway_status="successful",
-                status="completed",
-                description=f"Marketplace subscription payment for {service.title}",
-                transaction_type="marketplace_subscription",
-            )
-            db.session.add(transaction)
-            db.session.commit()
+            if verification["success"] and verified_status in {"successful", "completed"}:
+                # Update payment record
+                payment.gateway_payment_id = str(verification_data.get("id") or transaction_id)
+                payment.gateway_status = verified_status
+                payment.status = "completed"
+                payment.gateway_metadata = json.dumps(verification_data)
+                payment.paid_at = utcnow()
 
-            flash("Payment successful! Your service is now pending review.", "success")
+                # Update service subscription
+                service = payment.service
+                service.subscription_status = "active"
+                service.subscription_expires = utcnow() + timedelta(days=30)
+                service.status = "pending"  # Will be reviewed by admin
 
-            # TODO: Send email confirmation
+                # Create payment transaction record
+                transaction = PaymentTransaction(
+                    user_id=current_user.id,
+                    amount=payment.amount,
+                    currency=payment.currency,
+                    gateway="flutterwave",
+                    gateway_reference=tx_ref,
+                    gateway_payment_id=str(verification_data.get("id") or transaction_id),
+                    gateway_status=verified_status,
+                    status="completed",
+                    description=f"Marketplace subscription payment for {service.title}",
+                    transaction_type="marketplace_subscription",
+                )
+                db.session.add(transaction)
+                db.session.commit()
 
+                flash("Payment successful! Your service is now pending review.", "success")
+            else:
+                payment.status = "failed"
+                payment.gateway_status = verified_status or status
+                payment.gateway_metadata = json.dumps(
+                    verification_data or {"status": status, "message": "Verification failed"}
+                )
+                db.session.commit()
+                flash("Payment verification failed. Please try again.", "danger")
         else:
             payment.status = "failed"
             payment.gateway_status = status
@@ -2684,6 +2700,13 @@ def ensure_marketplace_subscriptions():
         db.session.add(MarketplaceSubscription(**sub_data))
 
     db.session.commit()
+
+
+def get_marketplace_ngn_rate():
+    """Fallback NGN rate for legacy marketplace subscription plans."""
+    from payments.payment_service import BasePaymentService
+
+    return BasePaymentService().get_ngn_rate("MARKETPLACE_USD_TO_NGN_RATE")
 
 
 @market.route("/init-data", methods=["GET"])
@@ -3779,6 +3802,7 @@ def subscription_plans():
 
         plans_data = []
         for plan in plans:
+            live_price_ngn = round(float(plan.price) * get_marketplace_ngn_rate(), 2)
             plans_data.append(
                 {
                     "id": plan.id,
@@ -3786,7 +3810,7 @@ def subscription_plans():
                     "slug": plan.slug,
                     "description": plan.description,
                     "price_usd": plan.price,
-                    "price_ngn": plan.price_ngn,
+                    "price_ngn": live_price_ngn,
                     "duration_days": plan.duration_days,
                     "features": plan.features_list,
                     "is_featured": plan.is_featured,
@@ -3827,6 +3851,7 @@ def subscribe():
             current_plan=current_plan,
             current_user=current_user,
             now=utcnow(),
+            marketplace_ngn_rate=get_marketplace_ngn_rate(),
         )
 
     # POST: Process subscription
@@ -3852,11 +3877,12 @@ def subscribe():
         expires_at = utcnow() + timedelta(days=plan.duration_days)
 
         # Store subscription info in session for payment processing
+        live_price_ngn = round(float(plan.price) * get_marketplace_ngn_rate(), 2)
         session["subscription_data"] = {
             "plan_id": plan.id,
             "plan_name": plan.name,
             "price_usd": plan.price,
-            "price_ngn": plan.price_ngn,
+            "price_ngn": live_price_ngn,
             "duration_days": plan.duration_days,
             "expires_at": expires_at.isoformat(),
             "user_id": current_user.id,
@@ -3880,6 +3906,10 @@ def subscription_payment():
         return redirect(url_for("market.subscribe"))
 
     subscription_data = session["subscription_data"]
+    live_price_ngn = round(float(subscription_data["price_usd"]) * get_marketplace_ngn_rate(), 2)
+    subscription_data["price_ngn"] = live_price_ngn
+    session["subscription_data"] = subscription_data
+    session.modified = True
 
     if request.method == "GET":
         return render_template(
@@ -3896,8 +3926,8 @@ def subscription_payment():
         # Create payment record
         payment = MarketplacePayment(
             user_id=current_user.id,
-            amount=subscription_data["price_usd"],
-            currency="USD",
+            amount=live_price_ngn,
+            currency="NGN",
             gateway="flutterwave",
             gateway_reference=tx_ref,
             status="pending",
@@ -3909,9 +3939,10 @@ def subscription_payment():
         # Prepare Flutterwave payment data
         payment_data = {
             "tx_ref": tx_ref,
-            "amount": str(subscription_data["price_usd"]),
-            "currency": "USD",
+            "amount": str(live_price_ngn),
+            "currency": "NGN",
             "redirect_url": url_for("market.subscription_callback", _external=True),
+            "payment_options": "card,banktransfer,ussd",
             "customer": {
                 "email": current_user.email,
                 "name": current_user.full_name,
@@ -4194,7 +4225,7 @@ def become_seller():
 
         # Create payment
         result = marketplace_service.create_marketplace_payment(
-            user=current_user, plan=plan, currency="USD"
+            user=current_user, plan=plan, currency="NGN"
         )
 
         print(f"🟡 [BECOME-SELLER] Payment result: {result}")
@@ -4314,17 +4345,17 @@ def marketplace_payment_callback():
     """Handle Flutterwave webhook for marketplace payments"""
     try:
         # Get the webhook data
-        webhook_data = request.get_json()
+        webhook_data = request.get_json() or {}
 
         print(
             f"🟡 [MARKETPLACE WEBHOOK] Received: {json.dumps(webhook_data, indent=2)}"
         )
 
-        # Verify the event is from Flutterwave
-        if request.headers.get("verif-hash"):
-            # Verify the webhook signature
-            # You should implement this based on your Flutterwave dashboard settings
-            pass
+        webhook_hash = os.getenv("FLW_WEBHOOK_HASH")
+        received_hash = request.headers.get("verif-hash")
+        if webhook_hash and received_hash != webhook_hash:
+            print("🔴 [MARKETPLACE WEBHOOK] Invalid webhook hash")
+            return jsonify({"status": "error", "message": "Invalid signature"}), 401
 
         # Get transaction details
         event_type = webhook_data.get("event")
@@ -4335,29 +4366,35 @@ def marketplace_payment_callback():
             tx_ref = data.get("tx_ref")
             transaction_id = data.get("id")
 
+            if not tx_ref or not transaction_id:
+                print("🔴 [MARKETPLACE WEBHOOK] Missing tx_ref or transaction ID")
+                return (
+                    jsonify({"status": "error", "message": "Missing transaction data"}),
+                    400,
+                )
+
             # Find the transaction
-            transaction = PaymentTransaction.query.filter_by(
+            marketplace_payment = MarketplacePayment.query.filter_by(
                 gateway_reference=tx_ref
             ).first()
 
-            if (
-                transaction
-                and transaction.transaction_type == "marketplace_subscription"
-            ):
-                # Verify the payment with Flutterwave
-                verification = (
-                    payment_service.marketplace_service.verify_flutterwave_payment(
-                        transaction_id
-                    )
+            if marketplace_payment:
+                from payments.payment_service import MarketplacePaymentService
+
+                payment_service = MarketplacePaymentService()
+                verification = payment_service.verify_flutterwave_payment(
+                    transaction_id
                 )
 
                 if verification["success"]:
-                    # Handle successful payment
-                    payment_service.handle_marketplace_payment_success(
-                        transaction.id, verification["data"]
+                    handled = payment_service.handle_marketplace_payment_success(
+                        marketplace_payment, verification["data"]
                     )
 
-                    return jsonify({"status": "success"}), 200
+                    return (
+                        jsonify({"status": "success" if handled else "error"}),
+                        200 if handled else 500,
+                    )
 
         return jsonify({"status": "ignored"}), 200
 
@@ -4370,13 +4407,12 @@ def marketplace_payment_callback():
 
 
 @market.route("/subscription-callback", methods=["GET"])
-@login_required
 def subscription_callback():
     """Handle Flutterwave payment callback for subscriptions"""
     try:
         tx_ref = request.args.get("tx_ref")
         transaction_id = request.args.get("transaction_id")
-        status = request.args.get("status")
+        status = (request.args.get("status") or "").strip().lower()
 
         print(f"🟡 [SUBSCRIPTION CALLBACK] Processing callback")
 
@@ -4393,7 +4429,7 @@ def subscription_callback():
             flash("Payment record not found", "danger")
             return redirect(url_for("market.become_seller"))
 
-        if marketplace_payment.user_id != current_user.id:
+        if current_user.is_authenticated and marketplace_payment.user_id != current_user.id:
             flash("Unauthorized access", "danger")
             return redirect(url_for("market.seller_dashboard"))
 
@@ -4401,19 +4437,23 @@ def subscription_callback():
         from payments.payment_service import MarketplacePaymentService
 
         payment_service = MarketplacePaymentService()
+        success_statuses = {"successful", "completed"}
+        pending_statuses = {"pending", "processing"}
 
-        if status == "successful" and transaction_id:
-            print(f"🟡 [CALLBACK] Payment successful, verifying...")
+        if status in success_statuses and transaction_id:
+            print(f"🟡 [CALLBACK] Payment reported as {status}, verifying...")
 
             # Verify the payment
             verification = payment_service.verify_flutterwave_payment(transaction_id)
+            verification_data = verification.get("data", {}) or {}
+            verified_status = (verification_data.get("status") or "").strip().lower()
 
-            if verification["success"]:
-                print(f"✅ [CALLBACK] Payment verified")
+            if verification["success"] and verified_status in success_statuses:
+                print(f"✅ [CALLBACK] Payment verified with status: {verified_status}")
 
                 # Handle successful payment
                 success = payment_service.handle_marketplace_payment_success(
-                    marketplace_payment, verification["data"]
+                    marketplace_payment, verification_data
                 )
 
                 if success:
@@ -4426,13 +4466,37 @@ def subscription_callback():
                         "Subscription activated but there was an issue sending confirmation email.",
                         "warning",
                     )
+            elif verification["success"] and verified_status in pending_statuses:
+                marketplace_payment.gateway_status = verified_status
+                marketplace_payment.gateway_metadata = json.dumps(verification_data)
+                marketplace_payment.updated_at = utcnow()
+                db.session.commit()
+                flash(
+                    "Payment received and is still being confirmed by Flutterwave. Your subscription will activate once verification completes.",
+                    "info",
+                )
             else:
                 # Handle verification failure
                 payment_service.handle_marketplace_payment_failure(
                     marketplace_payment,
-                    verification.get("data", {"message": "Verification failed"}),
+                    verification_data or {"message": "Verification failed"},
                 )
                 flash("Payment verification failed. Please contact support.", "danger")
+        elif status in success_statuses:
+            marketplace_payment.gateway_status = status
+            marketplace_payment.gateway_metadata = json.dumps(
+                {
+                    "status": status,
+                    "message": "Payment completed but transaction ID was not included in the redirect callback.",
+                    "tx_ref": tx_ref,
+                }
+            )
+            marketplace_payment.updated_at = utcnow()
+            db.session.commit()
+            flash(
+                "Payment was received and is awaiting confirmation. Your subscription will activate once Flutterwave sends the final verification.",
+                "info",
+            )
         else:
             # Handle payment failure
             error_data = {
@@ -4447,7 +4511,10 @@ def subscription_callback():
                 "warning",
             )
 
-        return redirect(url_for("market.seller_dashboard"))
+        if current_user.is_authenticated:
+            return redirect(url_for("market.seller_dashboard"))
+
+        return redirect(url_for("auth.login"))
 
     except Exception as e:
         print(f"🔴 [CALLBACK] Error: {str(e)}")
@@ -4467,8 +4534,8 @@ def test_marketplace_payment_db():
         test_payment = MarketplacePayment(
             user_id=current_user.id,
             subscription_id=plan.id if plan else 1,
-            amount=9.99,
-            currency="USD",
+            amount=16000.0,
+            currency="NGN",
             tokens_paid=999,
             gateway="test",
             gateway_reference=f"TEST_{int(time.time())}",

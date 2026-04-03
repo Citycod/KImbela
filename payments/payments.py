@@ -16,6 +16,7 @@ from extensions import db, mail, bcrypt
 from models import User, AdCampaign, AdPackage, PaymentTransaction, MatchmakingPayments
 import cloudinary.uploader
 import os, requests
+import math
 from email_service import EmailService
 from resend_mail import Message
 import json
@@ -26,6 +27,29 @@ import time
 
 from time_utils import utcnow
 payments = Blueprint("payments", __name__)
+
+
+def _get_dashboard_ad_usd_to_ngn_rate():
+    from .payment_service import BasePaymentService
+
+    return BasePaymentService().get_ngn_rate("USD_TO_NGN_RATE")
+
+
+def _get_dashboard_ad_daily_budget_bounds():
+    usd_min = 2.0
+    usd_max = 50.0
+    rate = _get_dashboard_ad_usd_to_ngn_rate()
+    ngn_min = round(usd_min * rate, 2)
+    ngn_max = round(usd_max * rate, 2)
+    return {
+        "usd_min": usd_min,
+        "usd_max": usd_max,
+        "ngn_min": ngn_min,
+        "ngn_max": ngn_max,
+        "ngn_min_input": math.ceil(ngn_min),
+        "ngn_max_input": max(math.ceil(ngn_min), math.floor(ngn_max)),
+        "rate": rate,
+    }
 
 
 def _get_or_create_guest_advertiser(name, email):
@@ -110,7 +134,11 @@ DASHBOARD_AD_PLACEMENTS = {
 def ad_packages():
     """Display available ad packages"""
     packages = AdPackage.query.filter_by(is_active=True).all()
-    return render_template("packages.html", packages=packages)
+    return render_template(
+        "packages.html",
+        packages=packages,
+        ad_pricing=_get_dashboard_ad_daily_budget_bounds(),
+    )
 
 
 
@@ -180,6 +208,7 @@ def public_dashboard_ad_package(placement):
         upload_video_url=url_for("payments.public_upload_dashboard_ad_video", placement=placement),
         create_campaign_url=url_for("payments.public_create_campaign"),
         initiate_payment_url=url_for("payments.public_initiate_payment"),
+        ad_pricing=_get_dashboard_ad_daily_budget_bounds(),
     )
 
 
@@ -289,7 +318,7 @@ def public_create_campaign():
         target_url = data.get("target_url")
         call_to_action = data.get("call_to_action", "Learn More")
         image = data.get("image", "")
-        currency = data.get("currency", "USD")
+        currency = data.get("currency", "NGN")
         placement = data.get("placement", "dashboard-top")
 
         if not title:
@@ -309,8 +338,17 @@ def public_create_campaign():
         except (TypeError, ValueError):
             return jsonify({"success": False, "error": "Invalid budget or duration"}), 400
 
-        if daily_budget < 2:
-            return jsonify({"success": False, "error": "Minimum daily budget is $2"}), 400
+        ad_pricing = _get_dashboard_ad_daily_budget_bounds()
+        if daily_budget < ad_pricing["ngn_min_input"]:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": f"Minimum daily budget is ₦{ad_pricing['ngn_min_input']:,.2f}",
+                    }
+                ),
+                400,
+            )
         if duration_days < 3:
             return jsonify({"success": False, "error": "Minimum duration is 3 days"}), 400
 
@@ -363,16 +401,15 @@ def public_initiate_payment():
             return jsonify({"success": False, "error": "No data provided"}), 400
 
         campaign_id = data.get("campaign_id")
-        amount = data.get("amount")
-        currency = (data.get("currency") or "USD").upper()
+        currency = (data.get("currency") or "NGN").upper()
         contact_payload = {
             "name": data.get("contact_name") or data.get("name") or "",
             "email": data.get("contact_email") or data.get("email") or "",
             "company": data.get("contact_company") or data.get("company") or "",
         }
 
-        if not campaign_id or not amount:
-            return jsonify({"success": False, "error": "Missing campaign or amount"}), 400
+        if not campaign_id:
+            return jsonify({"success": False, "error": "Missing campaign"}), 400
 
         campaign = AdCampaign.query.get(campaign_id)
         if not campaign:
@@ -421,6 +458,7 @@ def dashboard_ad_package(placement):
         "dashboard_ad_package.html",
         placement=placement,
         placement_config=placement_config,
+        ad_pricing=_get_dashboard_ad_daily_budget_bounds(),
     )
 
 
@@ -573,10 +611,11 @@ def payment_callback():
         from flask import redirect, url_for, flash
 
         print("🟡 [PAYMENT CALLBACK] Received callback")
+        payload = request.get_json(silent=True) or {}
 
         # Get transaction reference AND transaction ID from request
-        tx_ref = request.args.get("tx_ref") or request.json.get("tx_ref")
-        status = request.args.get("status") or request.json.get("status")
+        tx_ref = request.args.get("tx_ref") or payload.get("tx_ref")
+        status = request.args.get("status") or payload.get("status")
         transaction_id = request.args.get(
             "transaction_id"
         )  # Flutterwave's transaction ID
@@ -606,7 +645,7 @@ def payment_callback():
                 flash("Transaction not found", "error")
                 return redirect(url_for("payments.payment_failed"))
 
-            if status == "successful":
+            if status in {"successful", "completed"}:
                 # Use transaction_id (Flutterwave's ID) for verification
                 if not transaction_id:
                     print(
@@ -616,10 +655,12 @@ def payment_callback():
                     return redirect(url_for("payments.payment_failed"))
 
                 verification = base_service.verify_flutterwave_payment(transaction_id)
-                if verification["success"]:
+                verification_data = verification.get("data", {}) or {}
+                verified_status = (verification_data.get("status") or "").strip().lower()
+                if verification["success"] and verified_status in {"successful", "completed"}:
                     # Update transaction and campaign
                     success = ad_service.handle_ad_payment_success(
-                        transaction.id, verification["data"]
+                        transaction.id, verification_data
                     )
                     if success:
                         print(
@@ -644,7 +685,11 @@ def payment_callback():
                         return redirect(url_for("payments.payment_failed"))
                 else:
                     print(
-                        f"🔴 [PAYMENT CALLBACK] Payment verification failed: {verification.get('error')}"
+                        f"🔴 [PAYMENT CALLBACK] Payment verification failed or returned non-success status: {verification.get('error')} | {verification_data}"
+                    )
+                    ad_service.handle_ad_payment_failure(
+                        transaction.id,
+                        verification_data or {"status": status or "failed"},
                     )
                     flash("Payment verification failed. Please try again.", "error")
                     return redirect(url_for("payments.payment_failed"))
@@ -664,7 +709,7 @@ def payment_callback():
                 flash("Payment not found", "error")
                 return redirect(url_for("payments.payment_failed"))
 
-            if status == "successful":
+            if status in {"successful", "completed"}:
                 # Use transaction_id for verification
                 if not transaction_id:
                     print(
@@ -674,10 +719,12 @@ def payment_callback():
                     return redirect(url_for("payments.payment_failed"))
 
                 verification = base_service.verify_flutterwave_payment(transaction_id)
-                if verification["success"]:
+                verification_data = verification.get("data", {}) or {}
+                verified_status = (verification_data.get("status") or "").strip().lower()
+                if verification["success"] and verified_status in {"successful", "completed"}:
                     # Update matchmaking payment and request
                     success = matchmaking_service.handle_matchmaking_payment_success(
-                        matchmaking_payment, verification["data"]
+                        matchmaking_payment, verification_data
                     )
                     if success:
                         print(
@@ -704,7 +751,11 @@ def payment_callback():
                         return redirect(url_for("payments.payment_failed"))
                 else:
                     print(
-                        f"🔴 [PAYMENT CALLBACK] Payment verification failed: {verification.get('error')}"
+                        f"🔴 [PAYMENT CALLBACK] Payment verification failed or returned non-success status: {verification.get('error')} | {verification_data}"
+                    )
+                    matchmaking_service.handle_matchmaking_payment_failure(
+                        matchmaking_payment,
+                        verification_data or {"status": status or "failed"},
                     )
                     flash("Payment verification failed. Please try again.", "error")
                     return redirect(url_for("payments.payment_failed"))
@@ -748,7 +799,7 @@ def flutterwave_callbackk():
         # This ensures both callback URLs work the same way
         return redirect(
             url_for(
-                "payments.flutterwave_callbackk",
+                "payments.payment_callback",
                 status=status,
                 tx_ref=tx_ref,
                 transaction_id=transaction_id,
@@ -799,7 +850,7 @@ def flutterwave_callback():
 
             print(f"🟡 [CALLBACK] Payment status from Flutterwave: {actual_status}")
 
-            if actual_status == "successful":
+            if actual_status in {"successful", "completed"}:
                 # Handle successful payment
                 success = payment_service.handle_successful_payment(
                     transaction.id, payment_data
@@ -1092,7 +1143,7 @@ def create_campaign():
         target_url = data.get("target_url")
         call_to_action = data.get("call_to_action", "Learn More")
         image = data.get("image", "")
-        currency = data.get("currency", "USD")
+        currency = data.get("currency", "NGN")
         placement = data.get("placement", "sponsored")
 
         # ✅ Extract targeting data
@@ -1164,9 +1215,15 @@ def create_campaign():
                 400,
             )
 
-        if daily_budget < 2:
+        ad_pricing = _get_dashboard_ad_daily_budget_bounds()
+        if daily_budget < ad_pricing["ngn_min_input"]:
             return (
-                jsonify({"success": False, "error": "Minimum daily budget is $2"}),
+                jsonify(
+                    {
+                        "success": False,
+                        "error": f"Minimum daily budget is ₦{ad_pricing['ngn_min_input']:,.2f}",
+                    }
+                ),
                 400,
             )
         if duration_days < 3:
@@ -1259,22 +1316,18 @@ def initiate_payment():
             return jsonify({"success": False, "error": "No data provided"}), 400
 
         campaign_id = data.get("campaign_id")
-        amount = data.get("amount")
-        currency = data.get("currency", "USD").upper()
+        currency = data.get("currency", "NGN").upper()
 
         print(
-            f"🟡 [INITIATE PAYMENT] campaign_id: {campaign_id}, amount: {amount}, currency: {currency}"
+            f"🟡 [INITIATE PAYMENT] campaign_id: {campaign_id}, currency: {currency}"
         )
 
         # Validate required fields
         if not campaign_id:
             return jsonify({"success": False, "error": "Campaign ID is required"}), 400
 
-        if not amount:
-            return jsonify({"success": False, "error": "Amount is required"}), 400
-
         # ✅ ADD CURRENCY VALIDATION
-        supported_currencies = ["NGN", "USD", "GBP", "EUR"]  # Your supported currencies
+        supported_currencies = ["NGN"]
         if currency not in supported_currencies:
             return (
                 jsonify(
@@ -1288,11 +1341,10 @@ def initiate_payment():
 
         try:
             campaign_id = int(campaign_id)
-            amount = float(amount)
         except (ValueError, TypeError):
             return (
                 jsonify(
-                    {"success": False, "error": "Invalid campaign ID or amount format"}
+                    {"success": False, "error": "Invalid campaign ID format"}
                 ),
                 400,
             )
@@ -1320,7 +1372,7 @@ def initiate_payment():
         result = payment_service.create_flutterwave_transaction(
             user=current_user,
             campaign=campaign,
-            amount=amount,
+            amount=float(campaign.budget),
             currency=currency,  # This now uses validated currency
         )
 
@@ -1378,7 +1430,7 @@ def debug_payment_service():
 
         # Test creating a transaction
         result = payment_service.create_flutterwave_transaction(
-            current_user, campaign, 1.0, "USD"
+            current_user, campaign, 1.0, "NGN"
         )
         debug_info["payment_test_result"] = result
 
@@ -1409,7 +1461,7 @@ def test_payment_flow(campaign_id):
         )
 
         result = payment_service.create_flutterwave_transaction(
-            current_user, campaign, amount, "USD"
+            current_user, campaign, amount, "NGN"
         )
 
         return jsonify(
@@ -1447,7 +1499,7 @@ def test_flutterwave_direct():
         test_data = {
             "tx_ref": f"direct_test_{int(time.time())}",
             "amount": "10",  # Small test amount
-            "currency": "USD",
+            "currency": "NGN",
             "redirect_url": "http://localhost:5000/user/dashboard",
             "payment_options": "card",
             "customer": {
@@ -1559,7 +1611,7 @@ def get_supported_currencies():
     """Get list of currencies supported by your Flutterwave account"""
     try:
         # For Nigerian Flutterwave accounts, these are typically supported
-        supported_currencies = ["NGN", "USD", "GBP", "EUR"]
+        supported_currencies = ["NGN"]
 
         # You could also fetch this dynamically from Flutterwave API
         # But for now, we'll use the common ones
@@ -1577,7 +1629,7 @@ def get_supported_currencies():
                 {
                     "success": False,
                     "error": str(e),
-                    "currencies": ["NGN", "USD"],  # Fallback
+                    "currencies": ["NGN"],
                 }
             ),
             500,

@@ -35,6 +35,7 @@ from .email_service import MarketplaceEmailService
 
 from time_utils import utcnow
 logger = logging.getLogger(__name__)
+_EXCHANGE_RATE_CACHE = {}
 
 
 class UpstreamServiceError(Exception):
@@ -51,6 +52,7 @@ class BasePaymentService:
         self.flutterwave_public_key = os.getenv("FLW_PUBLIC_KEY")
         self.flutterwave_secret_key = os.getenv("FLW_SECRET_KEY")
         self.flutterwave_base_url = "https://api.flutterwave.com/v3"
+        self.default_currency = os.getenv("FLW_DEFAULT_CURRENCY", "NGN").upper()
 
         print(
             f"🟡 [BASE PAYMENT INIT] Public Key configured: {self.flutterwave_public_key is not None}"
@@ -67,6 +69,79 @@ class BasePaymentService:
             print(
                 f"🟡 [BASE PAYMENT INIT] Secret Key: {self.flutterwave_secret_key[:20]}..."
             )
+
+    def normalize_currency(self, currency=None):
+        return (currency or self.default_currency or "NGN").upper()
+
+    @staticmethod
+    def is_success_status(status):
+        return (status or "").strip().lower() in {"successful", "completed"}
+
+    @staticmethod
+    def is_pending_status(status):
+        return (status or "").strip().lower() in {"pending", "processing"}
+
+    @staticmethod
+    def is_failure_status(status):
+        return (status or "").strip().lower() in {
+            "failed",
+            "cancelled",
+            "canceled",
+            "session_expired",
+            "error",
+        }
+
+    def get_ngn_rate(self, env_var="USD_TO_NGN_RATE", fallback="1600"):
+        raw_value = os.getenv(env_var)
+        try:
+            if raw_value:
+                return float(raw_value)
+        except (TypeError, ValueError):
+            logger.warning("Invalid NGN rate override for %s: %r", env_var, raw_value)
+
+        cache_key = f"USD_NGN:{env_var}"
+        cache_ttl_seconds = 3600
+        now_ts = time.time()
+        cached_rate = _EXCHANGE_RATE_CACHE.get(cache_key)
+        if cached_rate and (now_ts - cached_rate["timestamp"]) < cache_ttl_seconds:
+            return cached_rate["rate"]
+
+        providers = (
+            ("https://api.frankfurter.dev/v1/latest?base=USD&symbols=NGN", ("rates", "NGN")),
+            ("https://open.er-api.com/v6/latest/USD", ("rates", "NGN")),
+        )
+
+        for url, path in providers:
+            try:
+                response = self._http_request("GET", url, timeout=10)
+                if response.status_code != 200:
+                    continue
+                payload = response.json()
+                rate_value = payload
+                for key in path:
+                    rate_value = rate_value[key]
+                rate = float(rate_value)
+                if rate <= 0:
+                    continue
+                _EXCHANGE_RATE_CACHE[cache_key] = {
+                    "rate": rate,
+                    "timestamp": now_ts,
+                    "source": url,
+                }
+                return rate
+            except Exception as exc:
+                logger.warning("Failed to fetch live NGN rate from %s: %s", url, exc)
+
+        raw_value = (
+            os.getenv("MARKETPLACE_USD_TO_NGN_RATE")
+            or os.getenv("MATCHMAKING_USD_TO_NGN_RATE")
+            or os.getenv("USD_TO_NGN_RATE")
+            or fallback
+        )
+        try:
+            return float(raw_value)
+        except (TypeError, ValueError):
+            return float(fallback)
 
     def _http_request(self, method, url, **kwargs):
         """HTTP request wrapper with retries for transient upstream failures."""
@@ -252,7 +327,7 @@ class MatchmakingPaymentService(BasePaymentService):
         print(f"✅ [KEY VALIDATION] Keys validated successfully")
 
     def create_matchmaking_payment(
-        self, user, matchmaking_request, package, currency="USD", amount=None
+        self, user, matchmaking_request, package, currency="NGN", amount=None
     ):
         """Create Flutterwave payment for matchmaking request"""
         try:
@@ -262,7 +337,10 @@ class MatchmakingPaymentService(BasePaymentService):
             )
 
             # Use provided amount or fallback to package price
-            payment_amount = amount if amount is not None else package.price
+            currency = self.normalize_currency(currency)
+            payment_amount = float(amount) if amount is not None else float(package.price)
+            if currency == "NGN":
+                payment_amount = round(payment_amount * self.get_ngn_rate("MATCHMAKING_USD_TO_NGN_RATE"), 2)
 
             # Generate unique transaction reference
             tx_ref = f"KIMBELA_MATCH_{matchmaking_request.id}_{int(time.time())}"
@@ -273,6 +351,7 @@ class MatchmakingPaymentService(BasePaymentService):
                 "amount": str(float(payment_amount)),
                 "currency": currency,
                 "redirect_url": url_for("match.payment_callback", _external=True),
+                "payment_options": "card,banktransfer,ussd",
                 "customer": {
                     "email": user.email,
                     "name": user.full_name
@@ -338,7 +417,7 @@ class MatchmakingPaymentService(BasePaymentService):
                         user_id=user.id,
                         matchmaking_request_id=matchmaking_request.id,
                         package_id=package.id,
-                        amount=package.price,
+                        amount=payment_amount,
                         currency=currency,
                         gateway="flutterwave",
                         gateway_reference=tx_ref,
@@ -687,9 +766,10 @@ class MatchmakingPaymentService(BasePaymentService):
             print(f"❌ Failed to send matchmaking failure email: {str(e)}")
             return False
 
-    def retry_payment(self, payment_id, currency="USD"):
+    def retry_payment(self, payment_id, currency="NGN"):
         """Retry a failed matchmaking payment"""
         try:
+            currency = self.normalize_currency(currency)
             matchmaking_payment = self.get_payment_by_id(payment_id)
             if not matchmaking_payment:
                 return {"success": False, "error": "Payment not found"}
@@ -710,9 +790,14 @@ class MatchmakingPaymentService(BasePaymentService):
             # Prepare payment data
             payment_data = {
                 "tx_ref": tx_ref,
-                "amount": str(float(package.price)),
+                "amount": str(
+                    round(float(package.price) * self.get_ngn_rate("MATCHMAKING_USD_TO_NGN_RATE"), 2)
+                    if currency == "NGN"
+                    else float(package.price)
+                ),
                 "currency": currency,
                 "redirect_url": url_for("match.payment_callback", _external=True),
+                "payment_options": "card,banktransfer,ussd",
                 "customer": {
                     "email": user.email,
                     "name": user.full_name
@@ -791,7 +876,7 @@ class PaymentService:
         self.matchmaking_service = MatchmakingPaymentService()
         self.marketplace_service = MarketplacePaymentService()
 
-    def create_marketplace_payment(self, user, plan, currency="USD"):
+    def create_marketplace_payment(self, user, plan, currency="NGN"):
         """Create payment for marketplace subscription"""
         return self.marketplace_service.create_marketplace_payment(
             user=user, plan=plan, currency=currency
@@ -808,7 +893,7 @@ class PaymentService:
         )
 
     def create_flutterwave_transaction(
-        self, user, campaign=None, amount=0, currency="USD", request_id=None
+        self, user, campaign=None, amount=0, currency="NGN", request_id=None
     ):
         """Legacy method - redirect to appropriate service"""
         if request_id:
@@ -886,7 +971,7 @@ class MarketplacePaymentService(BasePaymentService):
 
     """Payment service for marketplace subscriptions"""
 
-    def create_marketplace_payment(self, user, plan, currency="USD"):
+    def create_marketplace_payment(self, user, plan, currency="NGN"):
         """Create Flutterwave payment for marketplace subscription - FIXED VERSION"""
         try:
             print(f"🟡 [MARKETPLACE PAYMENT] Starting payment for plan: {plan.name}")
@@ -909,6 +994,7 @@ class MarketplacePaymentService(BasePaymentService):
                 "amount": str(float(payment_amount)),
                 "currency": currency,
                 "redirect_url": url_for("market.subscription_callback", _external=True),
+                "payment_options": "card",
                 "customer": {
                     "email": user.email,
                     "name": user.full_name
@@ -1189,19 +1275,28 @@ class MarketplacePaymentService(BasePaymentService):
         super().__init__()
         self.email_service = MarketplaceEmailService()  # Add email service
 
-    def create_marketplace_payment(self, user, plan, currency="USD"):
+    def _get_marketplace_payment_amount(self, plan, currency):
+        currency = self.normalize_currency(currency)
+        if currency == "NGN":
+            ngn_rate = self.get_ngn_rate("MARKETPLACE_USD_TO_NGN_RATE")
+            return round(float(plan.price_usd) * ngn_rate, 2)
+
+        return float(plan.price_usd)
+
+    def create_marketplace_payment(self, user, plan, currency="NGN"):
         """Create Flutterwave payment for marketplace subscription"""
         try:
+            currency = self.normalize_currency(currency)
             print(f"🟡 [MARKETPLACE PAYMENT] Starting payment for plan: {plan.name}")
             print(
-                f"🟡 [MARKETPLACE PAYMENT] User: {user.id}, Amount: ${plan.price_usd} {currency}"
+                f"🟡 [MARKETPLACE PAYMENT] User: {user.id}, Currency: {currency}"
             )
 
             # Generate transaction reference
             import time
 
             tx_ref = f"KIMBELA_MARKET_{user.id}_{int(time.time())}"
-            payment_amount = plan.price_usd
+            payment_amount = self._get_marketplace_payment_amount(plan, currency)
 
             # Prepare payment data
             payment_data = {
@@ -1209,6 +1304,7 @@ class MarketplacePaymentService(BasePaymentService):
                 "amount": str(float(payment_amount)),
                 "currency": currency,
                 "redirect_url": url_for("market.subscription_callback", _external=True),
+                "payment_options": "card",
                 "customer": {
                     "email": user.email,
                     "name": user.full_name
@@ -1377,12 +1473,23 @@ class MarketplacePaymentService(BasePaymentService):
         """Handle failed marketplace payment"""
         try:
             print(f"🟡 [PAYMENT FAILURE] Handling failed payment")
+            gateway_status = flutterwave_data.get("status", "failed")
+
+            if self.is_success_status(gateway_status) or self.is_pending_status(
+                gateway_status
+            ):
+                marketplace_payment.gateway_status = gateway_status
+                marketplace_payment.gateway_metadata = json.dumps(flutterwave_data)
+                marketplace_payment.updated_at = utcnow()
+                db.session.commit()
+                print(
+                    f"⚠️ [PAYMENT FAILURE] Skipped failure email because provider status is {gateway_status}"
+                )
+                return True
 
             # Update payment record
             marketplace_payment.status = "failed"
-            marketplace_payment.gateway_status = flutterwave_data.get(
-                "status", "failed"
-            )
+            marketplace_payment.gateway_status = gateway_status
             marketplace_payment.gateway_metadata = json.dumps(flutterwave_data)
             marketplace_payment.updated_at = utcnow()
 

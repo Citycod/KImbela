@@ -98,13 +98,21 @@ def allowed_file(filename, allowed_extensions=None):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in allowed_extensions
 
 
+def get_matchmaking_ngn_rate():
+    from payments.payment_service import BasePaymentService
+
+    return BasePaymentService().get_ngn_rate("MATCHMAKING_USD_TO_NGN_RATE")
+
+
 # Main Routes
 @match.route("/requests", methods=["GET", "POST"])
 @login_required
 def requests():
     """Main matchmaking requests page"""
     packages = MatchmakingPackage.query.filter_by(is_active=True).all()
-    return render_template("requests.html", packages=packages)
+    return render_template(
+        "requests.html", packages=packages, matchmaking_ngn_rate=get_matchmaking_ngn_rate()
+    )
 
 
 @match.route("/view_requests", methods=["GET"])
@@ -119,7 +127,9 @@ def view_requests():
 def create_request():
     """Page to create a new matchmaking request"""
     packages = MatchmakingPackage.query.filter_by(is_active=True).all()
-    return render_template("requests.html", packages=packages)
+    return render_template(
+        "requests.html", packages=packages, matchmaking_ngn_rate=get_matchmaking_ngn_rate()
+    )
 
 
 # API Routes
@@ -388,6 +398,12 @@ def create_matchmaking_request():
     """Create a new matchmaking request with payment integration"""
     try:
         data = request.get_json()
+        if not data:
+            current_app.logger.warning(
+                "⚠️ [MATCH CREATE] Empty request body for user %s",
+                current_user.id,
+            )
+            return jsonify({"success": False, "error": "No data provided"}), 400
 
         # Handle both direct data and nested request_data
         if "request_data" in data:
@@ -397,12 +413,33 @@ def create_matchmaking_request():
             request_data = data
             package_id = data.get("package_id")
 
+        current_app.logger.info(
+            "🟡 [MATCH CREATE] User %s payload summary: package_id=%s, has_about=%s, has_ideal=%s, partner_country=%r, partner_state=%r, partner_city=%r, has_image=%s",
+            current_user.id,
+            package_id,
+            bool((request_data.get("about_you") or "").strip()),
+            bool((request_data.get("ideal_partner") or "").strip()),
+            (request_data.get("partner_country") or "").strip(),
+            (request_data.get("partner_state") or "").strip(),
+            (request_data.get("partner_city") or "").strip(),
+            bool(request_data.get("image")),
+        )
+
         # Validate package
         if not package_id:
+            current_app.logger.warning(
+                "⚠️ [MATCH CREATE] Missing package_id for user %s",
+                current_user.id,
+            )
             return jsonify({"success": False, "error": "Package ID is required"}), 400
 
         package = MatchmakingPackage.query.get(package_id)
         if not package:
+            current_app.logger.warning(
+                "⚠️ [MATCH CREATE] Invalid package_id=%s for user %s",
+                package_id,
+                current_user.id,
+            )
             return jsonify({"success": False, "error": "Invalid package selected"}), 400
 
         # Check for existing active request
@@ -422,6 +459,12 @@ def create_matchmaking_request():
                     (existing_request.end_date - utcnow()).days
                     if existing_request.end_date
                     else 0
+                )
+                current_app.logger.warning(
+                    "⚠️ [MATCH CREATE] Active request already exists for user %s: request_id=%s, days_remaining=%s",
+                    current_user.id,
+                    existing_request.id,
+                    days_remaining,
                 )
                 return (
                     jsonify(
@@ -452,6 +495,11 @@ def create_matchmaking_request():
         required_text_fields = ["about_you", "ideal_partner"]
         for field in required_text_fields:
             if not request_data.get(field) or not request_data[field].strip():
+                current_app.logger.warning(
+                    "⚠️ [MATCH CREATE] Missing required field '%s' for user %s",
+                    field,
+                    current_user.id,
+                )
                 return (
                     jsonify(
                         {
@@ -469,6 +517,10 @@ def create_matchmaking_request():
 
         # Optional: Validate that at least country is selected
         if not partner_country:
+            current_app.logger.warning(
+                "⚠️ [MATCH CREATE] Missing preferred country for user %s",
+                current_user.id,
+            )
             return (
                 jsonify(
                     {"success": False, "error": "Please select a preferred country"}
@@ -511,6 +563,13 @@ def create_matchmaking_request():
         db.session.commit()
 
         current_app.logger.info(
+            "✅ [MATCH CREATE] Request created for user %s: request_id=%s, package_id=%s",
+            current_user.id,
+            new_request.id,
+            package.id,
+        )
+
+        current_app.logger.info(
             f"Matchmaking request created - User: {current_user.id}, "
             f"Request ID: {new_request.id}, "
             f"Location: {partner_city}, {partner_state}, {partner_country}"
@@ -550,7 +609,7 @@ def initiate_matchmaking_payment():
 
         # Required fields for matchmaking
         request_id = data.get("request_id")
-        currency = data.get("currency", "USD").upper()
+        currency = data.get("currency", "NGN").upper()
         package_id = data.get("campaign_id")  # This comes from frontend as campaign_id
 
         print(
@@ -669,7 +728,7 @@ def payment_callback():
     """Handle Flutterwave payment callback for matchmaking"""
     try:
         # Get parameters from Flutterwave callback
-        status = request.args.get("status")
+        status = (request.args.get("status") or "").strip().lower()
         tx_ref = request.args.get("tx_ref")
         transaction_id = request.args.get("transaction_id")
 
@@ -677,22 +736,12 @@ def payment_callback():
             f"🟡 [PAYMENT CALLBACK] Received callback - Status: {status}, TX_REF: {tx_ref}, Transaction ID: {transaction_id}"
         )
 
-        if not status or not transaction_id:
+        if not status:
             flash("Invalid payment callback parameters", "error")
             return redirect(url_for("match.requests"))
 
         # Verify payment with Flutterwave using MatchmakingPaymentService
         payment_service = MatchmakingPaymentService()
-        verification_result = payment_service.verify_flutterwave_payment(transaction_id)
-
-        print(f"🟡 [PAYMENT CALLBACK] Verification result: {verification_result}")
-
-        if not verification_result["success"]:
-            flash("Payment verification failed", "error")
-            return redirect(url_for("match.requests"))
-
-        flutterwave_data = verification_result["data"]
-
         # Find the matchmaking payment
         matchmaking_payment = payment_service.get_payment_by_reference(tx_ref)
 
@@ -702,8 +751,22 @@ def payment_callback():
             flash("Payment transaction not found", "error")
             return redirect(url_for("match.requests"))
 
+        if status in {"successful", "completed"} and transaction_id:
+            verification_result = payment_service.verify_flutterwave_payment(transaction_id)
+            print(f"🟡 [PAYMENT CALLBACK] Verification result: {verification_result}")
+            if not verification_result["success"]:
+                flash("Payment verification failed", "error")
+                return redirect(url_for("match.requests"))
+
+            flutterwave_data = verification_result["data"]
+            verified_status = (flutterwave_data.get("status") or "").strip().lower()
+
+        else:
+            flutterwave_data = {"status": status}
+            verified_status = status
+
         # Handle payment status
-        if status == "successful" and flutterwave_data.get("status") == "successful":
+        if status in {"successful", "completed"} and verified_status in {"successful", "completed"}:
             # Successful payment
             print(f"🟡 [PAYMENT CALLBACK] Processing successful payment...")
             success = payment_service.handle_matchmaking_payment_success(
@@ -724,6 +787,16 @@ def payment_callback():
                     "error",
                 )
                 return redirect(url_for("match.requests"))
+        elif status in {"successful", "completed", "pending", "processing"}:
+            matchmaking_payment.gateway_status = verified_status or status
+            matchmaking_payment.gateway_metadata = json.dumps(flutterwave_data)
+            matchmaking_payment.updated_at = utcnow()
+            db.session.commit()
+            flash(
+                "Payment received and is still being confirmed. Your matchmaking request will activate once Flutterwave completes verification.",
+                "info",
+            )
+            return redirect(url_for("match.requests"))
         else:
             # Failed payment
             print(f"🟡 [PAYMENT CALLBACK] Processing failed payment...")

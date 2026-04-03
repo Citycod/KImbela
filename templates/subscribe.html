@@ -126,13 +126,11 @@
 
                     <div class="text-center mb-4">
                         <div class="text-xl md:text-2xl font-bold text-amber-700 mb-0.5">
-                            {% if plan.price_usd == plan.price_usd|int %}
-                            ${{ plan.price_usd|int }}
-                            {% else %}
-                            ${{ '%.2f'|format(plan.price_usd) }}
-                            {% endif %}
+                            ₦{{ ((plan.price_usd or 0) * marketplace_ngn_rate)|round|int }}
                         </div>
-                        <div class="text-[10px] text-gray-500">{{ plan.billing_period|default('monthly')|capitalize }}</div>
+                        <div class="text-[10px] text-gray-500">
+                            {{ plan.billing_period|default('monthly')|capitalize }} • ${{ '%.2f'|format(plan.price_usd or 0) }}
+                        </div>
                     </div>
 
                     <div class="space-y-2 mb-6">
@@ -174,7 +172,7 @@
                             class="plan-select-btn w-full py-2 {% if plan.is_popular or plan.is_featured %}bg-gradient-to-r from-amber-900 to-amber-600{% else %}bg-gray-800{% endif %} text-white rounded-lg font-bold hover:opacity-90 transition-opacity text-xs"
                             data-plan-id="{{ plan.id }}"
                             data-plan-name="{{ plan.name }}"
-                            data-plan-price="{{ plan.price_usd }}"
+                            data-plan-price="{{ ((plan.price_usd or 0) * marketplace_ngn_rate)|round|int }}"
                             data-plan-tokens="{{ plan.price_tokens or 0 }}">
                         {% if plan.is_popular or plan.is_featured %}
                         <i class="fas fa-star mr-1 text-xs"></i>Get Started
@@ -259,7 +257,7 @@
                                 </div>
                                 <div>
                                     <h4 class="font-bold text-sm">Credit/Debit Card</h4>
-                                    <p class="text-gray-600 text-xs">Pay with card via Flutterwave</p>
+                                    <p class="text-gray-600 text-xs">Pay in NGN with card via Flutterwave</p>
                                 </div>
                             </div>
                         </div>
@@ -268,7 +266,7 @@
                 
                 <!-- Flutterwave Payment Details -->
                 <div id="flutterwavePaymentSection" class="hidden">
-                    <h3 class="text-base font-bold mb-3">Pay with Card</h3>
+                    <h3 class="text-base font-bold mb-3">Pay with Card in NGN</h3>
                     <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
                         <div class="flex justify-between items-center mb-2">
                             <span class="font-medium text-sm">Plan:</span>
@@ -608,8 +606,16 @@
             
             if (selectedPlanNameEl) selectedPlanNameEl.textContent = selectedPlanName;
             if (planNameDisplayEl) planNameDisplayEl.textContent = selectedPlanName;
-            if (planPriceDisplayEl) planPriceDisplayEl.textContent = `$${selectedPlanPrice}/month`;
-            if (totalPriceDisplayEl) totalPriceDisplayEl.textContent = `$${selectedPlanPrice}`;
+            if (planPriceDisplayEl) planPriceDisplayEl.textContent = `${formatNgn(selectedPlanPrice)}/month`;
+            if (totalPriceDisplayEl) totalPriceDisplayEl.textContent = formatNgn(selectedPlanPrice);
+        }
+
+        function formatNgn(amount) {
+            return new Intl.NumberFormat('en-NG', {
+                style: 'currency',
+                currency: 'NGN',
+                maximumFractionDigits: 0
+            }).format(amount || 0);
         }
         
         function goBackToPlans() {
@@ -719,7 +725,7 @@
                     plan_id: selectedPlanId,
                     plan_name: selectedPlanName,
                     amount: selectedPlanPrice,
-                    currency: 'USD'
+                    currency: 'NGN'
                 };
                 
                 

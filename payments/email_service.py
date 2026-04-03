@@ -23,8 +23,16 @@ class MarketplaceEmailService:
     def _ensure_initialized(self):
         """Lazy initialization to avoid circular imports"""
         if not self._initialized:
-            self.base_url = current_app.config.get("BASE_URL", "http://localhost:5000")
+            self.base_url = (
+                current_app.config.get("BASE_URL") or "http://localhost:5000"
+            ).rstrip("/")
             self._initialized = True
+
+    @staticmethod
+    def _format_money(amount, currency):
+        currency = (currency or "NGN").upper()
+        symbol = "₦" if currency == "NGN" else "$" if currency == "USD" else ""
+        return f"{symbol}{float(amount):,.2f} {currency}".strip()
 
     def _send_email(self, subject, recipient, html_body, text_body=None):
         """Robust email sending with error handling"""
@@ -141,7 +149,7 @@ class MarketplaceEmailService:
                 <div class="panel">
                     <strong>Order summary</strong><br>
                     Plan: {plan.name}<br>
-                    Amount paid: ${marketplace_payment.amount:.2f} {marketplace_payment.currency}<br>
+                    Amount paid: {self._format_money(marketplace_payment.amount, marketplace_payment.currency)}<br>
                     Order ID: {marketplace_payment.gateway_reference}<br>
                     Payment date: {utcnow().strftime('%B %d, %Y')}<br>
                     Expires on: {expires_at.strftime('%B %d, %Y')}
@@ -163,7 +171,7 @@ class MarketplaceEmailService:
             ORDER SUMMARY:
             --------------
             Plan: {plan.name}
-            Amount Paid: ${marketplace_payment.amount:.2f} {marketplace_payment.currency}
+            Amount Paid: {self._format_money(marketplace_payment.amount, marketplace_payment.currency)}
             Order ID: {marketplace_payment.gateway_reference}
             Payment Date: {utcnow().strftime('%B %d, %Y')}
             Expires On: {expires_at.strftime('%B %d, %Y')}
@@ -212,12 +220,12 @@ class MarketplaceEmailService:
                 <div class="panel">
                     <strong>Payment details</strong><br>
                     Plan: {plan.name}<br>
-                    Amount: ${marketplace_payment.amount:.2f} {marketplace_payment.currency}<br>
+                    Amount: {self._format_money(marketplace_payment.amount, marketplace_payment.currency)}<br>
                     Reference: {marketplace_payment.gateway_reference}<br>
                     Status: Failed{error_html}
                 </div>
                 <p class="lead">Please review your payment method, confirm available funds, or try again using a different payment option.</p>
-                <a href="{self.base_url}/become-seller" class="button">Retry Payment</a>
+                <a href="{self.base_url}/subscribe" class="button">Retry Payment</a>
                 """,
                 "linear-gradient(135deg, #5d2028 0%, #9a3d38 55%, #b37b37 100%)",
             )
@@ -232,7 +240,7 @@ class MarketplaceEmailService:
             PAYMENT DETAILS:
             ----------------
             Plan: {plan.name}
-            Amount: ${marketplace_payment.amount:.2f} {marketplace_payment.currency}
+            Amount: {self._format_money(marketplace_payment.amount, marketplace_payment.currency)}
             Reference: {marketplace_payment.gateway_reference}
             Status: FAILED
             
@@ -240,7 +248,7 @@ class MarketplaceEmailService:
             
             RETRY YOUR PAYMENT:
             -------------------
-            You can retry your payment here: {self.base_url}/become-seller
+            You can retry your payment here: {self.base_url}/subscribe
             
             TROUBLESHOOTING:
             ----------------

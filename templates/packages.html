@@ -419,28 +419,29 @@
           <div class="mb-4">
             <label class="block text-primary font-medium mb-1 text-sm">Payment Currency</label>
             <select class="select-input" id="currency">
-              <option value="USD">🇺🇸 US Dollar (USD)</option>
+              <option value="NGN">🇳🇬 Nigerian Naira (NGN)</option>
             </select>
-            <p class="text-xs text-text-secondary mt-1">All payments are processed in US Dollars (USD).</p>
+            <p class="text-xs text-text-secondary mt-1">All payments are processed in Nigerian naira (NGN).</p>
           </div>
           
           <!-- Budget Slider Section -->
           <div class="mb-5">
             <div class="flex justify-between items-center mb-1">
               <label class="text-primary font-medium text-sm">Daily Budget</label>
-              <span class="text-text-secondary text-xs" id="budgetRange">$2 - $10,000</span>
+              <span class="text-text-secondary text-xs" id="budgetRange">₦{{ "{:,.2f}".format(ad_pricing.ngn_min_input) }} - ₦{{ "{:,.2f}".format(ad_pricing.ngn_max_input) }}</span>
             </div>
             
             <div class="budget-display">
-              <span id="currencySymbol">$</span><span id="budgetValue">2.00</span> / day
+              <span id="currencySymbol">₦</span><span id="budgetValue">{{ "{:,.2f}".format(ad_pricing.ngn_min_input) }}</span> / day
             </div>
             
-            <input type="range" min="2" max="10000" value="2" step="1" class="slider" id="budgetSlider">
+            <input type="range" min="{{ ad_pricing.ngn_min_input }}" max="{{ ad_pricing.ngn_max_input }}" value="{{ ad_pricing.ngn_min_input }}" step="1" class="slider" id="budgetSlider">
             
             <div class="flex justify-between text-xs text-text-secondary mt-1">
-              <span id="minBudget">$2</span>
-              <span id="maxBudget">$10,000</span>
+              <span id="minBudget">₦{{ "{:,.2f}".format(ad_pricing.ngn_min_input) }}</span>
+              <span id="maxBudget">₦{{ "{:,.2f}".format(ad_pricing.ngn_max_input) }}</span>
             </div>
+            <p class="text-xs text-text-secondary mt-1">USD base range: ${{ "{:,.0f}".format(ad_pricing.usd_min) }}-${{ "{:,.0f}".format(ad_pricing.usd_max) }} at {{ "{:,.2f}".format(ad_pricing.rate) }} NGN/USD.</p>
           </div>
           
           <!-- Duration Section -->
@@ -668,7 +669,7 @@
           
           <!-- Total Price -->
           <div class="total-price">
-            Total: <span id="currencySymbolTotal">$</span><span id="totalPrice">6.00</span>
+            Total: <span id="currencySymbolTotal">₦</span><span id="totalPrice">{{ "{:,.2f}".format(ad_pricing.ngn_min_input * 3) }}</span>
           </div>
           
           <!-- Action Buttons -->
@@ -759,7 +760,7 @@
             </div>
             <div class="info-item">
               <span>Currency</span>
-              <span id="summaryCurrency">USD</span>
+              <span id="summaryCurrency">NGN</span>
             </div>
           </div>
           
@@ -769,7 +770,7 @@
             
             <div class="info-item">
               <span>Daily Budget</span>
-              <span><span id="summaryCurrencySymbol">$</span><span id="summaryDailyBudget">2.00</span></span>
+              <span><span id="summaryCurrencySymbol">₦</span><span id="summaryDailyBudget">{{ "{:,.2f}".format(ad_pricing.ngn_min_input) }}</span></span>
             </div>
             <div class="info-item">
               <span>Duration</span>
@@ -777,7 +778,7 @@
             </div>
             <div class="info-item font-semibold text-base">
               <span>Total Amount</span>
-              <span><span id="summaryCurrencySymbolTotal">$</span><span id="summaryTotal">6.00</span></span>
+              <span><span id="summaryCurrencySymbolTotal">₦</span><span id="summaryTotal">{{ "{:,.2f}".format(ad_pricing.ngn_min_input * 3) }}</span></span>
             </div>
           </div>
         </div>
@@ -891,9 +892,14 @@
         let ageRangeMin = 31;
         let ageRangeMax = 65;
         
-        // Currency configuration - Only USD
+        // Currency configuration - Only NGN
         const currencyConfig = {
-          'USD': { symbol: '$', name: 'US Dollar', min: 2, max: 10000 }
+          'NGN': {
+            symbol: '₦',
+            name: 'Nigerian Naira',
+            min: {{ ad_pricing.ngn_min_input }},
+            max: {{ ad_pricing.ngn_max_input }}
+          }
         };
         
         // Initialize age range slider with noUiSlider
@@ -1011,7 +1017,8 @@
             targetingMultiplier *= 0.7;
           }
           
-          const scale = budget / 2 * targetingMultiplier;
+          const baseBudget = currencyConfig.NGN.min || 1;
+          const scale = (budget / baseBudget) * targetingMultiplier;
           
           const audienceMin = Math.round(baseAudienceMin * scale);
           const audienceMax = Math.round(baseAudienceMax * scale);
@@ -1339,10 +1346,10 @@
                 if (data.success) {
                     updateCurrencyDropdown(data.currencies);
                 } else {
-                    updateCurrencyDropdown(['USD']);
+                    updateCurrencyDropdown(['NGN']);
                 }
             } catch (error) {
-                updateCurrencyDropdown(['USD']);
+                updateCurrencyDropdown(['NGN']);
             }
         }
 
@@ -1351,7 +1358,7 @@
             currencySelect.innerHTML = '';
             
             const currencyNames = {
-                'USD': '🇺🇸 US Dollar (USD)'
+                'NGN': '🇳🇬 Nigerian Naira (NGN)'
             };
             
             supportedCurrencies.forEach(currency => {

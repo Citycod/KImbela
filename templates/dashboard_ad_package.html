@@ -244,13 +244,14 @@
               <input
                 id="budgetSlider"
                 type="range"
-                min="2"
-                max="50"
+                min="{{ ad_pricing.usd_min }}"
+                max="{{ ad_pricing.usd_max }}"
                 step="1"
                 value="5"
                 class="mt-3 w-full"
               />
-              <p class="text-sm text-slate-600 mt-2">$<span id="budgetValue">5</span> per day</p>
+              <p class="text-sm text-slate-600 mt-2">₦<span id="budgetValue">0</span> per day</p>
+              <p class="text-xs text-slate-500 mt-1">$<span id="budgetUsdValue">{{ '%.0f'|format(5) }}</span>/day at {{ '%.2f'|format(ad_pricing.rate) }} NGN/USD</p>
             </div>
             <div>
               <label class="text-sm font-semibold text-slate-700">Duration (days)</label>
@@ -284,17 +285,14 @@
               id="currency"
               class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-accent focus:outline-none"
             >
-              <option value="USD">USD</option>
               <option value="NGN">NGN</option>
-              <option value="GBP">GBP</option>
-              <option value="EUR">EUR</option>
             </select>
           </div>
 
           <div class="rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">
             <div class="flex items-center justify-between">
               <span>Total estimate</span>
-              <span class="text-lg font-semibold text-slate-900">$<span id="totalValue">35</span></span>
+              <span class="text-lg font-semibold text-slate-900">₦<span id="totalValue">35</span></span>
             </div>
             <p class="text-xs text-slate-500 mt-1">You will be redirected to Flutterwave to complete payment.</p>
           </div>
@@ -365,8 +363,23 @@
 
       const budgetSlider = document.getElementById('budgetSlider');
       const budgetValue = document.getElementById('budgetValue');
+      const budgetUsdValue = document.getElementById('budgetUsdValue');
       const daysInput = document.getElementById('daysInput');
       const totalValue = document.getElementById('totalValue');
+      const usdToNgnRate = {{ ad_pricing.rate|tojson }};
+      const minimumDailyBudgetNgn = {{ ad_pricing.ngn_min_input|tojson }};
+
+      function formatNaira(value) {
+        return new Intl.NumberFormat('en-NG', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }).format(value);
+      }
+
+      function getDailyBudgetNgn() {
+        const dailyUsd = parseFloat(budgetSlider.value || 0);
+        return dailyUsd * usdToNgnRate;
+      }
 
       const launchButton = document.getElementById('launchButton');
       const paymentModal = document.getElementById('paymentModal');
@@ -381,10 +394,14 @@
       }
 
       function updateTotals() {
-        const daily = parseFloat(budgetSlider.value || 0);
+        const dailyUsd = parseFloat(budgetSlider.value || 0);
+        const daily = getDailyBudgetNgn();
         const days = parseInt(daysInput.value || 0, 10);
-        budgetValue.textContent = daily.toFixed(0);
-        totalValue.textContent = (daily * days).toFixed(2);
+        budgetValue.textContent = formatNaira(daily);
+        if (budgetUsdValue) {
+          budgetUsdValue.textContent = dailyUsd.toFixed(0);
+        }
+        totalValue.textContent = formatNaira(daily * days);
       }
 
       updateTotals();
@@ -566,7 +583,7 @@
         const title = document.getElementById('adTitle').value.trim();
         const description = document.getElementById('adDescription').value.trim();
         const targetUrl = document.getElementById('targetUrl').value.trim();
-        const dailyBudget = parseFloat(budgetSlider.value || 0);
+        const dailyBudget = getDailyBudgetNgn();
         const durationDays = parseInt(daysInput.value || 0, 10);
         const callToAction = document.getElementById('callToAction').value;
         const contactName = document.getElementById('contactName')?.value.trim();
@@ -597,8 +614,8 @@ if (!title) {
           alert('Please upload a banner image.');
           return;
         }
-        if (dailyBudget < 2 || durationDays < 3) {
-          alert('Daily budget must be at least $2 and duration at least 3 days.');
+        if (dailyBudget < minimumDailyBudgetNgn || durationDays < 3) {
+          alert(`Daily budget must be at least ₦${formatNaira(minimumDailyBudgetNgn)} and duration at least 3 days.`);
           return;
         }
 
@@ -654,7 +671,6 @@ if (!title) {
             if (!data.success || !data.campaign_id) {
               throw new Error(data.error || 'Campaign creation failed');
             }
-            const totalAmount = dailyBudget * durationDays;
             return fetch(initiatePaymentUrl, {
               method: 'POST',
               headers: {
@@ -666,7 +682,6 @@ if (!title) {
                 contact_name: contactName,
                 contact_email: contactEmail,
                 contact_company: contactCompany,
-                amount: totalAmount,
                 currency: currency
               })
             });
