@@ -1171,6 +1171,12 @@
         </a>
 
         <div class="marketplace-banner">
+          <div class="banner-image-layer marketplace-image-layer" aria-hidden="true">
+            <span
+              class="banner-image-core"
+              style="background-image: url('{{ url_for('static', filename='assets/img/market.jpeg') }}');"
+            ></span>
+          </div>
           <div class="marketplace-sparkle"></div>
           <div class="marketplace-badge">Marketplace</div>
           <div class="marketplace-icon" aria-hidden="true">
@@ -1930,6 +1936,12 @@
           
 
           <div class="matchmaking-banner">
+          <div class="banner-image-layer matchmaking-image-layer" aria-hidden="true">
+            <span
+              class="banner-image-core"
+              style="background-image: url('{{ url_for('static', filename='assets/img/love.jpg') }}');"
+            ></span>
+          </div>
           <div class="matchmaking-glow"></div>
           <div class="matchmaking-badge">Matchmaking</div>
           <div class="matchmaking-title">
@@ -4071,6 +4083,57 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
       overflow: hidden;
       animation: matchmakingFloat 6s ease-in-out infinite;
     }
+    .banner-image-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 0;
+    }
+    .banner-image-core {
+      position: absolute;
+      inset: auto;
+      display: block;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: cover;
+      border-radius: 28px;
+      filter: saturate(0.95) blur(0.5px);
+      transform-origin: center;
+    }
+    .matchmaking-image-layer::before,
+    .marketplace-image-layer::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.08), rgba(255, 255, 255, 0.1) 42%, rgba(15, 23, 42, 0.08));
+      mix-blend-mode: soft-light;
+      z-index: 1;
+    }
+    .matchmaking-image-layer .banner-image-core {
+      width: 94%;
+      height: 94%;
+      right: -6%;
+      bottom: -3%;
+      opacity: 0.48;
+      transform: rotate(-6deg) scale(1.07);
+      box-shadow: 0 24px 50px rgba(15, 23, 42, 0.22);
+      mask-image: radial-gradient(circle at 42% 50%, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0.9) 56%, transparent 94%);
+      -webkit-mask-image: radial-gradient(circle at 42% 50%, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0.9) 56%, transparent 94%);
+      animation: embeddedMatchImage 9s ease-in-out infinite;
+    }
+    .marketplace-image-layer .banner-image-core {
+      width: 90%;
+      height: 90%;
+      right: 1%;
+      top: -2%;
+      opacity: 0.43;
+      transform: rotate(5deg) scale(1.06);
+      box-shadow: 0 20px 44px rgba(15, 23, 42, 0.18);
+      mask-image: radial-gradient(circle at 50% 48%, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0.88) 50%, transparent 90%);
+      -webkit-mask-image: radial-gradient(circle at 50% 48%, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0.88) 50%, transparent 90%);
+      animation: embeddedMarketImage 10s ease-in-out infinite;
+    }
     .matchmaking-banner::before {
       content: "";
       position: absolute;
@@ -4217,6 +4280,10 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
       0%, 100% { transform: scale(1); opacity: 0.35; }
       50% { transform: scale(1.06); opacity: 0.7; }
     }
+    @keyframes embeddedMatchImage {
+      0%, 100% { transform: rotate(-6deg) scale(1.07) translate3d(0, 0, 0); }
+      50% { transform: rotate(-3deg) scale(1.11) translate3d(-10px, -8px, 0); }
+    }
     .marketplace-banner {
       position: relative;
       margin: 18px 0 26px;
@@ -4324,6 +4391,10 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
     @keyframes marketplacePop {
       0%, 100% { transform: scale(1); }
       50% { transform: scale(1.05); }
+    }
+    @keyframes embeddedMarketImage {
+      0%, 100% { transform: rotate(5deg) scale(1.06) translate3d(0, 0, 0); }
+      50% { transform: rotate(2deg) scale(1.1) translate3d(-8px, 10px, 0); }
     }
 
 

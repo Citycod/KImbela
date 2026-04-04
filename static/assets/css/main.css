@@ -46,6 +46,11 @@
 
 /* Index page nav links should be black */
 body.index-page {
+    --background-color: #ffffff;
+    --default-color: #010608;
+    --heading-color: #011e2c;
+    --accent-color: #04415f;
+    --surface-color: #ffffff;
     --nav-color: #000000;
     --nav-hover-color: #000000;
     --nav-dropdown-color: #000000;
