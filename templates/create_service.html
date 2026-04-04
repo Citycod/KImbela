@@ -623,14 +623,15 @@
                     <div id="digitalProductFields" class="hidden">
                         <div class="mb-4">
                             <label class="block text-sm font-medium mb-1">
-                                Digital File *
-                                <span class="text-xs text-gray-500 font-normal">(Upload your e-book, course, or template)</span>
+                                Digital File
+                                <span class="text-xs text-green-600 font-semibold">(Optional)</span>
+                                <span class="text-xs text-gray-500 font-normal">(Upload your e-book, course, or template only if you want to. You can leave this empty and upload product images instead.)</span>
                             </label>
                             <div class="file-upload-area" onclick="document.getElementById('digitalFile').click()" 
                                  id="digitalUploadArea">
                                 <i class="bi bi-cloud-arrow-up text-2xl text-gray-400 mb-2"></i>
-                                <p class="text-sm font-medium mb-1">Upload Digital File</p>
-                                <p class="text-xs text-gray-600">PDF, DOC, DOCX, ZIP (Max 50MB)</p>
+                                <p class="text-sm font-medium mb-1">Upload Digital File (Optional)</p>
+                                <p class="text-xs text-gray-600">PDF, DOC, DOCX, ZIP (Max 50MB). You can also skip this and upload product images below.</p>
                                 <input type="file" 
                                        id="digitalFile" 
                                        name="digital_file"
@@ -656,6 +657,12 @@
                                         </button>
                                     </div>
                                 </div>
+                            </div>
+
+                            <div class="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                                <p class="text-xs text-green-800 font-medium">
+                                    This upload is optional. You can publish your digital product with images only.
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -1344,15 +1351,6 @@ function validateStep2() {
             const minFormatted = formatNumberWithCommas(minPrices[currency].toString());
             alert(`Minimum price for ${currency} is ${minFormatted}`);
             document.getElementById('price').focus();
-            return false;
-        }
-    }
-    
-    // Check if digital product has file
-    if (formState.serviceType === 'digital') {
-        const digitalFile = document.getElementById('digitalFile').files[0];
-        if (!digitalFile) {
-            alert('Please upload a digital file for your product');
             return false;
         }
     }
