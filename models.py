@@ -1765,8 +1765,8 @@ class MarketplaceService(db.Model):
 
     # Status
     status = db.Column(
-        db.String(20), default="pending"
-    )  # pending, active, rejected, paused, sold_out
+        db.String(50), default="pending"
+    )  # pending, active, rejected, paused, sold_out, awaiting_subscription
     rejection_reason = db.Column(db.Text)
 
     # Features (JSON encoded)

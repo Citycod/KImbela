@@ -1,8 +1,9 @@
 # cache_utils.py - WITH PROPER FALLBACK
-from flask import current_app
+from flask import current_app, request
 import hashlib
 from functools import wraps
 import time
+from flask_login import current_user
 
 
 class SimpleDictCache:
@@ -96,7 +97,22 @@ def cache_response(timeout=300, key_prefix="api_"):
             cache = get_cache()
 
             # Generate cache key
-            cache_key = f"{key_prefix}{f.__name__}_{hashlib.md5(str(kwargs).encode()).hexdigest()}"
+            request_signature = {
+                "path": getattr(request, "path", ""),
+                "query": sorted((request.args or {}).items(multi=True))
+                if request
+                else [],
+                "user_id": (
+                    getattr(current_user, "id", None)
+                    if getattr(current_user, "is_authenticated", False)
+                    else None
+                ),
+                "kwargs": kwargs,
+            }
+            cache_key = (
+                f"{key_prefix}{f.__name__}_"
+                f"{hashlib.md5(str(request_signature).encode()).hexdigest()}"
+            )
 
             # Try to get from cache
             try:

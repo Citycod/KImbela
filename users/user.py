@@ -240,7 +240,18 @@ def get_groups_data_for_user(user_id):
     if cached is not None:
         return cached
 
-    groups = Group.query.filter_by(is_active=True).order_by(Group.name.asc()).all()
+    def is_alumni_married_group(name):
+        normalized = (name or "").strip().lower()
+        return "alumni" in normalized and "married" in normalized
+
+    groups = Group.query.filter_by(is_active=True).all()
+    groups = sorted(
+        groups,
+        key=lambda group: (
+            is_alumni_married_group(group.name),
+            group.name.lower(),
+        ),
+    )
     if not groups:
         safe_cache_set(cache_key, [], timeout=60)
         return []

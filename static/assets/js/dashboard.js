@@ -3199,6 +3199,19 @@ const Groups = {
 
     // Display groups in dropdowns
     displayGroups(groups) {
+        const isAlumniMarriedGroup = (name) => {
+            const normalized = (name || '').trim().toLowerCase();
+            return normalized.includes('alumni') && normalized.includes('married');
+        };
+
+        const orderedGroups = [...(groups || [])].sort((a, b) => {
+            const aIsLast = isAlumniMarriedGroup(a?.name);
+            const bIsLast = isAlumniMarriedGroup(b?.name);
+
+            if (aIsLast === bIsLast) return 0;
+            return aIsLast ? 1 : -1;
+        });
+
         const lists = ['groupsList', 'groupsListMobile', 'groupsListDesktop'];
 
         lists.forEach(listId => {
@@ -3208,7 +3221,7 @@ const Groups = {
             // Clear any existing content
             list.innerHTML = '';
 
-            if (!groups || groups.length === 0) {
+            if (!orderedGroups || orderedGroups.length === 0) {
                 this.showEmptyState(list);
                 return;
             }
@@ -3216,7 +3229,7 @@ const Groups = {
             // Create document fragment for better performance
             const fragment = document.createDocumentFragment();
 
-            groups.forEach(group => {
+            orderedGroups.forEach(group => {
                 const groupElement = this.createGroupElement(group);
                 fragment.appendChild(groupElement);
             });

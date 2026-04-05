@@ -86,6 +86,45 @@ def marketplace_payments_enabled():
         return default_enabled
 
 
+def user_has_listing_subscription(user):
+    """Check whether the seller can publish more than one marketplace listing."""
+    return marketplace_payments_enabled() and user.has_active_marketplace_subscription
+
+
+def seller_has_free_marketplace_listing(user_id):
+    """A seller gets one free live marketplace listing before subscription is required."""
+    return (
+        MarketplaceService.query.filter_by(
+            seller_id=user_id, status="active", subscription_status="free"
+        ).count()
+        > 0
+    )
+
+
+def get_listing_access_type(service):
+    """Return the dashboard label for how this listing is funded."""
+    if service.status == "awaiting_subscription":
+        return "not free"
+    if service.subscription_status == "free":
+        return "free"
+    return "paid"
+
+
+def activate_waiting_marketplace_services(user_id):
+    """Promote listings that were blocked until the seller subscribed."""
+    waiting_services = MarketplaceService.query.filter_by(
+        seller_id=user_id, status="awaiting_subscription"
+    ).all()
+
+    for service in waiting_services:
+        service.status = "active"
+        service.subscription_status = "active"
+        if not service.published_at:
+            service.published_at = utcnow()
+
+    return waiting_services
+
+
 def apply_marketplace_seller_visibility_filter(query):
     if not marketplace_payments_enabled():
         return query.options(
@@ -97,12 +136,16 @@ def apply_marketplace_seller_visibility_filter(query):
     now = utcnow()
     return query.join(
         User,
-        and_(
-            MarketplaceService.seller_id == User.id,
-            User.marketplace_subscription_status == "active",
-            or_(
-                User.marketplace_subscription_expires == None,
-                User.marketplace_subscription_expires >= now,
+        MarketplaceService.seller_id == User.id,
+    ).filter(
+        or_(
+            MarketplaceService.subscription_status == "free",
+            and_(
+                User.marketplace_subscription_status == "active",
+                or_(
+                    User.marketplace_subscription_expires == None,
+                    User.marketplace_subscription_expires >= now,
+                ),
             ),
         ),
     ).options(
@@ -696,7 +739,18 @@ def main_market():
         )
         if marketplace_payments_enabled():
             price_query = price_query.join(User, MarketplaceService.seller_id == User.id)
-            price_query = price_query.filter(User.marketplace_subscription_status == "active")
+            price_query = price_query.filter(
+                or_(
+                    MarketplaceService.subscription_status == "free",
+                    and_(
+                        User.marketplace_subscription_status == "active",
+                        or_(
+                            User.marketplace_subscription_expires == None,
+                            User.marketplace_subscription_expires >= utcnow(),
+                        ),
+                    ),
+                )
+            )
         row = price_query.first()
         price_stats = (
             row.min_price or 0,
@@ -1039,7 +1093,7 @@ def seller_dashboard():
 
     # Get service statistics by status
     service_stats = {}
-    statuses = ["active", "pending", "draft", "paused"]
+    statuses = ["active", "pending", "draft", "paused", "awaiting_subscription"]
     for status in statuses:
         count = MarketplaceService.query.filter_by(
             seller_id=current_user.id, status=status
@@ -1113,9 +1167,13 @@ def create_service():
         # Create slug from title
         slug = title.lower().replace(" ", "-") + "-" + str(int(time.time()))
 
+        payments_enabled = marketplace_payments_enabled()
+        has_listing_subscription = user_has_listing_subscription(current_user)
+        has_free_listing = seller_has_free_marketplace_listing(current_user.id)
+
         # Get subscription
         subscription = None
-        if marketplace_payments_enabled() and subscription_id:
+        if payments_enabled and subscription_id:
             subscription = MarketplaceSubscription.query.get(subscription_id)
             if not subscription:
                 flash("Invalid subscription plan", "danger")
@@ -1130,6 +1188,23 @@ def create_service():
         # Debug form data
         print(f"Form data: {dict(request.form)}")
         print(f"Files: {dict(request.files)}")
+
+        if not payments_enabled:
+            listing_status = "active"
+            listing_subscription_status = "free" if not has_free_listing else "active"
+            listing_published_at = utcnow()
+        elif has_listing_subscription:
+            listing_status = "active"
+            listing_subscription_status = "active"
+            listing_published_at = utcnow()
+        elif not has_free_listing:
+            listing_status = "active"
+            listing_subscription_status = "free"
+            listing_published_at = utcnow()
+        else:
+            listing_status = "awaiting_subscription"
+            listing_subscription_status = "pending"
+            listing_published_at = None
 
         # Create service
         service = MarketplaceService(
@@ -1148,12 +1223,15 @@ def create_service():
             email=request.form.get("email"),
             duration=request.form.get("duration"),
             availability=request.form.get("availability"),
-            subscription_id=subscription_id if marketplace_payments_enabled() else None,
-            subscription_status="pending" if subscription else "active",
+            subscription_id=subscription_id if payments_enabled else None,
+            subscription_status=listing_subscription_status,
             subscription_expires=(
-                utcnow() + timedelta(days=30) if subscription else None
+                current_user.marketplace_subscription_expires
+                if has_listing_subscription
+                else (utcnow() + timedelta(days=30) if subscription else None)
             ),
-            status="pending" if subscription else "active",
+            status=listing_status,
+            published_at=listing_published_at,
         )
 
         # Handle contact methods
@@ -1217,14 +1295,25 @@ def create_service():
         invalidate_cache(f"dashboard_stats_{current_user.id}_*")
         invalidate_cache(f"dashboard_services_{current_user.id}_*")
 
-        # Redirect to payment if subscription required
-        if marketplace_payments_enabled() and subscription:
+        # Redirect to legacy per-service payment flow if a per-service subscription was selected
+        if payments_enabled and subscription:
             return redirect(url_for("market.payment", service_id=service.id))
 
-        flash(
-            "Service created successfully and is now live in your seller dashboard and marketplace listings.",
-            "success",
-        )
+        if listing_status == "active" and listing_subscription_status == "free":
+            flash(
+                "Your first marketplace item is live for free. Additional items will require an active subscription.",
+                "success",
+            )
+        elif listing_status == "active":
+            flash(
+                "Service created successfully and is now live in your seller dashboard and marketplace listings.",
+                "success",
+            )
+        else:
+            flash(
+                "Service created successfully. It will stay in Awaiting Subscription until you subscribe.",
+                "info",
+            )
         return redirect(url_for("market.seller_dashboard"))
 
     except Exception as e:
@@ -2572,12 +2661,21 @@ DEFAULT_MARKETPLACE_CATEGORIES = [
 
 def ensure_marketplace_categories():
     """Ensure default marketplace categories and subcategories exist."""
+    cache_key = "marketplace:categories_seeded:v2"
+    try:
+        if cache.get(cache_key):
+            return
+    except Exception:
+        pass
+
     created = False
     allowed_slugs = set()
+    existing_categories = MarketplaceCategory.query.all()
+    categories_by_slug = {category.slug: category for category in existing_categories}
 
     def upsert_category(data, parent_id=None, sort_order=0):
         nonlocal created
-        category = MarketplaceCategory.query.filter_by(slug=data["slug"]).first()
+        category = categories_by_slug.get(data["slug"])
         if not category:
             category = MarketplaceCategory(
                 name=data["name"],
@@ -2589,13 +2687,24 @@ def ensure_marketplace_categories():
                 sort_order=sort_order,
             )
             db.session.add(category)
+            categories_by_slug[data["slug"]] = category
             created = True
         else:
-            category.name = data["name"]
-            category.icon = data.get("icon")
-            category.is_active = True
-            category.parent_id = parent_id
-            category.sort_order = sort_order
+            if category.name != data["name"]:
+                category.name = data["name"]
+                created = True
+            if category.icon != data.get("icon"):
+                category.icon = data.get("icon")
+                created = True
+            if not category.is_active:
+                category.is_active = True
+                created = True
+            if category.parent_id != parent_id:
+                category.parent_id = parent_id
+                created = True
+            if category.sort_order != sort_order:
+                category.sort_order = sort_order
+                created = True
         return category
 
     for parent_index, parent in enumerate(DEFAULT_MARKETPLACE_CATEGORIES, start=1):
@@ -2621,6 +2730,11 @@ def ensure_marketplace_categories():
 
     if created:
         db.session.commit()
+
+    try:
+        cache.set(cache_key, True, timeout=3600)
+    except Exception:
+        pass
 
 
 def ensure_marketplace_subscriptions():
@@ -3341,62 +3455,77 @@ def get_dashboard_stats():
 
         # Chart data (last 30 days)
         chart_days = 30
+        chart_start = datetime(
+            (now - timedelta(days=chart_days - 1)).year,
+            (now - timedelta(days=chart_days - 1)).month,
+            (now - timedelta(days=chart_days - 1)).day,
+            0,
+            0,
+            0,
+        )
+
+        service_daily_rows = (
+            db.session.query(
+                func.date(MarketplaceService.updated_at).label("day"),
+                func.sum(MarketplaceService.views).label("views"),
+                func.sum(MarketplaceService.earnings).label("earnings"),
+            )
+            .filter(base_filter, MarketplaceService.updated_at >= chart_start)
+            .group_by(func.date(MarketplaceService.updated_at))
+            .all()
+        )
+        service_daily = {
+            str(row.day): {
+                "views": int(row.views or 0),
+                "earnings": float(row.earnings or 0),
+            }
+            for row in service_daily_rows
+        }
+
+        click_daily_rows = (
+            db.session.query(
+                func.date(MarketplaceClick.created_at).label("day"),
+                func.count(MarketplaceClick.id).label("clicks"),
+            )
+            .join(MarketplaceService, MarketplaceClick.service_id == MarketplaceService.id)
+            .filter(base_filter, MarketplaceClick.created_at >= chart_start)
+            .group_by(func.date(MarketplaceClick.created_at))
+            .all()
+        )
+        click_daily = {str(row.day): int(row.clicks or 0) for row in click_daily_rows}
+
         chart_data = []
         for i in range(chart_days):
             date = now - timedelta(days=chart_days - i - 1)
-            date_start = datetime(date.year, date.month, date.day, 0, 0, 0)
-            date_end = datetime(date.year, date.month, date.day, 23, 59, 59)
-
-            # Views for this day
-            day_views = (
-                db.session.query(func.sum(MarketplaceService.views))
-                .filter(
-                    base_filter,
-                    MarketplaceService.updated_at.between(date_start, date_end),
-                )
-                .scalar()
-                or 0
-            )
-
-            # Earnings for this day
-            day_earnings = (
-                db.session.query(func.sum(MarketplaceService.earnings))
-                .filter(
-                    base_filter,
-                    MarketplaceService.updated_at.between(date_start, date_end),
-                )
-                .scalar()
-                or 0
-            )
-
-            # Clicks for this day
-            day_clicks = (
-                db.session.query(func.count(MarketplaceClick.id))
-                .join(MarketplaceService)
-                .filter(
-                    base_filter,
-                    MarketplaceClick.created_at.between(date_start, date_end),
-                )
-                .scalar()
-                or 0
-            )
-
+            day_key = date.strftime("%Y-%m-%d")
+            service_day = service_daily.get(day_key, {})
             chart_data.append(
                 {
-                    "date": date.strftime("%Y-%m-%d"),
-                    "views": int(day_views),
-                    "clicks": int(day_clicks),
-                    "earnings": float(day_earnings),
+                    "date": day_key,
+                    "views": int(service_day.get("views", 0)),
+                    "clicks": int(click_daily.get(day_key, 0)),
+                    "earnings": float(service_day.get("earnings", 0)),
                 }
             )
 
         # Service status breakdown
-        service_stats = {}
-        statuses = ["active", "pending", "draft", "paused"]
-        for status in statuses:
-            count = MarketplaceService.query.filter(
-                base_filter, MarketplaceService.status == status
-            ).count()
+        status_rows = (
+            db.session.query(
+                MarketplaceService.status,
+                func.count(MarketplaceService.id),
+            )
+            .filter(base_filter)
+            .group_by(MarketplaceService.status)
+            .all()
+        )
+        service_stats = {
+            "active": 0,
+            "pending": 0,
+            "draft": 0,
+            "paused": 0,
+            "awaiting_subscription": 0,
+        }
+        for status, count in status_rows:
             service_stats[status] = count
 
         return jsonify(
@@ -3467,6 +3596,7 @@ def get_dashboard_services():
                     "price": float(service.price) if service.price else 0,
                     "currency": service.currency or "KES",
                     "is_free": service.is_free,
+                    "listing_access": get_listing_access_type(service),
                     "status": service.status,
                     "views": service.views or 0,
                     "clicks": service.clicks or 0,

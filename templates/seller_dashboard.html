@@ -132,6 +132,11 @@
             background: #F3F4F6;
             color: #6B7280;
         }
+
+        .status-awaiting-subscription {
+            background: #FDE68A;
+            color: #92400E;
+        }
         
         /* Table */
         .dashboard-table {
@@ -682,6 +687,7 @@
                                         <option value="pending">Pending</option>
                                         <option value="draft">Draft</option>
                                         <option value="paused">Paused</option>
+                                        <option value="awaiting_subscription">Awaiting Subscription</option>
                                     </select>
                                     <a href="{{ url_for('market.create_service') }}" 
                                        class="btn btn-primary btn-sm whitespace-nowrap">
@@ -699,6 +705,7 @@
                                                 <th>Service</th>
                                                 <th>Category</th>
                                                 <th>Price</th>
+                                                <th>Access</th>
                                                 <th>Status</th>
                                                 <th>Views</th>
                                                 <th>Actions</th>
@@ -730,9 +737,20 @@
         {{ currency_symbol }}{{ "{:,.2f}".format(service.price) }}
     {% endif %}
 </td>
+                                                <td class="text-sm font-medium">
+                                                    {% if service.status == 'awaiting_subscription' %}
+                                                        Not Free
+                                                    {% elif service.subscription_status == 'free' %}
+                                                        Free
+                                                    {% else %}
+                                                        Paid
+                                                    {% endif %}
+                                                </td>
                                                 <td>
                                                     {% if service.status == 'active' %}
                                                     <span class="status-badge status-published">Active</span>
+                                                    {% elif service.status == 'awaiting_subscription' %}
+                                                    <span class="status-badge status-awaiting-subscription">Awaiting Subscription</span>
                                                     {% elif service.status == 'pending' %}
                                                     <span class="status-badge status-pending">Pending</span>
                                                     {% elif service.status == 'draft' %}
@@ -1049,7 +1067,9 @@
                 const statusBadge = getStatusBadge(service.status);
                 const price = service.is_free ? 'Free' : 
                     `${getCurrencySymbol(service.currency)}${service.price.toFixed(2)}`;
-                const earnings = `${getCurrencySymbol(service.currency)}${service.earnings.toFixed(2)}`;
+                const listingAccess = service.listing_access === 'free'
+                    ? 'Free'
+                    : (service.listing_access === 'paid' ? 'Paid' : 'Not Free');
                 
                 html += `
                     <tr data-service-id="${service.id}">
@@ -1066,9 +1086,9 @@
                         </td>
                         <td class="text-sm">${service.category || 'Uncategorized'}</td>
                         <td class="font-bold text-sm">${price}</td>
+                        <td class="text-sm font-medium">${listingAccess}</td>
                         <td>${statusBadge}</td>
                         <td class="text-center text-sm">${service.views}</td>
-                        <td class="font-bold text-sm">${earnings}</td>
                         <td>
                             <div class="flex gap-1">
                                 <a href="/edit/${service.id}" 
@@ -1170,6 +1190,7 @@
         function getStatusBadge(status) {
             const badges = {
                 'active': '<span class="status-badge status-published">Active</span>',
+                'awaiting_subscription': '<span class="status-badge status-awaiting-subscription">Awaiting Subscription</span>',
                 'pending': '<span class="status-badge status-pending">Pending</span>',
                 'draft': '<span class="status-badge status-draft">Draft</span>',
                 'paused': '<span class="status-badge status-paused">Paused</span>'

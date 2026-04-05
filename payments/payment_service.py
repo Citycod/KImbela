@@ -29,6 +29,7 @@ from models import (
     MatchmakingPackage,
     MatchmakingPayments,
     MarketplacePayment,
+    MarketplaceService,
 )
 from .email_service import MarketplaceEmailService
 
@@ -1168,6 +1169,15 @@ class MarketplacePaymentService(BasePaymentService):
 
                 print(f"✅ [PAYMENT SUCCESS] User subscription updated: {user.id}")
 
+                waiting_services = MarketplaceService.query.filter_by(
+                    seller_id=user.id, status="awaiting_subscription"
+                ).all()
+                for service in waiting_services:
+                    service.status = "active"
+                    service.subscription_status = "active"
+                    if not service.published_at:
+                        service.published_at = utcnow()
+
             db.session.commit()
             print(f"✅ [PAYMENT SUCCESS] Database committed successfully")
 
@@ -1444,6 +1454,15 @@ class MarketplacePaymentService(BasePaymentService):
                 plan = marketplace_payment.subscription
                 if plan:
                     user.marketplace_subscription_tier = getattr(plan, "slug", "basic")
+
+                waiting_services = MarketplaceService.query.filter_by(
+                    seller_id=user.id, status="awaiting_subscription"
+                ).all()
+                for service in waiting_services:
+                    service.status = "active"
+                    service.subscription_status = "active"
+                    if not service.published_at:
+                        service.published_at = utcnow()
 
             db.session.commit()
             print(f"✅ [PAYMENT SUCCESS] Database updated")

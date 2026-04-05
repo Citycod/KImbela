@@ -148,6 +148,19 @@ class Groups {
 
     // Display groups in dropdowns
     displayGroups(groups) {
+        const isAlumniMarriedGroup = (name) => {
+            const normalized = (name || '').trim().toLowerCase();
+            return normalized.includes('alumni') && normalized.includes('married');
+        };
+
+        const orderedGroups = [...(groups || [])].sort((a, b) => {
+            const aIsLast = isAlumniMarriedGroup(a?.name);
+            const bIsLast = isAlumniMarriedGroup(b?.name);
+
+            if (aIsLast === bIsLast) return 0;
+            return aIsLast ? 1 : -1;
+        });
+
         const lists = this.getListIds();
 
         lists.forEach(listId => {
@@ -157,7 +170,7 @@ class Groups {
             // Clear any existing content
             list.innerHTML = '';
 
-            if (!groups || groups.length === 0) {
+            if (!orderedGroups || orderedGroups.length === 0) {
                 this.showEmptyState(list);
                 return;
             }
@@ -165,7 +178,7 @@ class Groups {
             // Create document fragment for better performance
             const fragment = document.createDocumentFragment();
 
-            groups.forEach(group => {
+            orderedGroups.forEach(group => {
                 const groupElement = this.createGroupElement(group);
                 fragment.appendChild(groupElement);
             });
@@ -173,7 +186,7 @@ class Groups {
             list.appendChild(fragment);
 
             // Add scroll indicator if many groups
-            if (groups.length > 5) {
+            if (orderedGroups.length > 5) {
                 const scrollIndicator = document.createElement('div');
                 scrollIndicator.className = 'text-center py-2 text-xs text-gray-400';
                 scrollIndicator.textContent = 'Scroll for more groups...';
