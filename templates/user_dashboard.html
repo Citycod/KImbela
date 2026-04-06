@@ -43,6 +43,10 @@
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
 
     <!-- Emoji Picker -->
     <!--<script src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>-->
@@ -123,7 +127,8 @@
           <div class="hero-ad-content">
             <div class="hero-ad-pill">Top Banner · Ad Space</div>
             <h2>Advertise Here</h2>
-            <p>Put your brand in front of Kimbela users.</p>
+            <h5 style="color: white; font-weight: 900; font-size: 2.1rem: ">Promote your brand and reach the right audience on Kimbela</h5>
+            <p>Boost Visibility. Drive Engagement. Grow your business</p>
             <div class="hero-ad-actions">
               <span class="hero-ad-cta js-ad-cta" data-cta-href="{{ top_banner_url }}" role="link" tabindex="0">Create an ad</span>
               <span class="hero-ad-secondary">Premium placement</span>
@@ -525,7 +530,7 @@
 <!--<br>
 <br> -->    <!-- Hero Section - Responsive -->
 <div class="hero-section">
-    <h1 class="hero-header text-2xl sm:text-3xl lg:text-4xl font-extrabold" style="margin-top: -2.25rem; margin-bottom: 1rem;">
+    <h1 class="hero-header text-2xl sm:text-3xl lg:text-4xl font-extrabold" style="margin-top: -2.25rem; margin-bottom: 1rem; font-family: 'Inter', sans-serif; font-weight: 800;">
          What's on your mind, <span style="color: coral;">{{ current_user.first_name|title }}?</span>
     </h1>
 
@@ -5237,6 +5242,59 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
 .vertical-ad-banner.has-dashboard-ad::after,
 .right-ad-banner-2.has-dashboard-ad::before {
   display: none !important;
+}
+
+/* Compact fallback sidebar banners when no image/video ad is present */
+.sidebar-ad-banner:not(.has-dashboard-ad) {
+  min-height: 205px !important;
+  max-height: 205px !important;
+  padding: 16px !important;
+}
+
+.vertical-ad-banner:not(.has-dashboard-ad) {
+  min-height: 225px !important;
+  max-height: 225px !important;
+  padding: 18px !important;
+}
+
+.right-ad-banner-2:not(.has-dashboard-ad) {
+  min-height: 205px !important;
+  max-height: 205px !important;
+  padding: 18px !important;
+}
+
+.sidebar-ad-banner:not(.has-dashboard-ad) h3,
+.vertical-ad-banner:not(.has-dashboard-ad) h2,
+.right-ad-banner-2:not(.has-dashboard-ad) h2 {
+  margin: 8px 0 6px !important;
+  font-size: 1rem !important;
+}
+
+.sidebar-ad-banner:not(.has-dashboard-ad) p,
+.vertical-ad-banner:not(.has-dashboard-ad) p,
+.right-ad-banner-2:not(.has-dashboard-ad) p {
+  margin: 0 0 10px !important;
+  font-size: 0.82rem !important;
+  line-height: 1.35 !important;
+}
+
+.sidebar-ad-banner:not(.has-dashboard-ad) .sidebar-ad-icon,
+.vertical-ad-banner:not(.has-dashboard-ad) .sidebar-ad-icon {
+  width: 42px !important;
+  height: 42px !important;
+  margin-bottom: 8px !important;
+}
+
+.sidebar-ad-banner:not(.has-dashboard-ad) .sidebar-ad-icon i,
+.vertical-ad-banner:not(.has-dashboard-ad) .sidebar-ad-icon i {
+  font-size: 1.3rem !important;
+}
+
+.sidebar-ad-banner:not(.has-dashboard-ad) .sidebar-ad-cta,
+.vertical-ad-banner:not(.has-dashboard-ad) .vertical-ad-cta,
+.right-ad-banner-2:not(.has-dashboard-ad) .right-ad-2-cta {
+  padding: 8px 12px !important;
+  font-size: 0.78rem !important;
 }
 
 .mobile-feed-ad-slot .sidebar-ad-banner,

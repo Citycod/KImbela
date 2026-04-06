@@ -1701,6 +1701,10 @@ class MarketplaceService(db.Model):
         # For sorting and pagination
         db.Index("idx_services_rating_views", "average_rating", "views"),
         db.Index("idx_services_price_created", "price", "created_at"),
+        db.Index("idx_services_country", "country"),
+        db.Index("idx_services_state", "state"),
+        db.Index("idx_services_city", "city"),
+        db.Index("idx_services_country_state_city", "country", "state", "city"),
         # Text search optimization
         # db.Index('idx_services_title_trgm', 'title', postgresql_using='gin', postgresql_ops={'title': 'gin_trgm_ops'}),
         # db.Index('idx_services_description_trgm', 'description', postgresql_using='gin', postgresql_ops={'description': 'gin_trgm_ops'}),
@@ -1742,6 +1746,9 @@ class MarketplaceService(db.Model):
     # Service specific
     duration = db.Column(db.String(50))  # e.g., "60 min", "4 sessions"
     availability = db.Column(db.String(200))  # e.g., "Mon-Fri, 9AM-5PM"
+    country = db.Column(db.String(128))
+    state = db.Column(db.String(128))
+    city = db.Column(db.String(128))
 
     # Contact methods (JSON encoded)
     contact_methods = db.Column(

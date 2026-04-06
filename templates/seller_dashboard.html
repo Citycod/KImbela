@@ -426,7 +426,7 @@
                                     <i class="bi bi-person mr-2 text-xs"></i>Public Profile
                                 </a>
                                 <a href="{{ url_for('market.create_service') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                    <i class="bi bi-plus-circle mr-2 text-xs"></i>Create Service
+                                    <i class="bi bi-plus-circle mr-2 text-xs"></i>Create Listing
                                 </a>
                                 
                                 
@@ -458,7 +458,7 @@
                         
                         <a href="#services" class="nav-item" onclick="switchTab('services')">
                             <i class="bi bi-bag"></i>
-                            <span>My Services</span>
+                            <span>My Listings</span>
                             <span class="ml-auto bg-primary text-white text-xs px-2 py-1 rounded-full" id="services-count">{{ total_services }}</span>
                         </a>
                         
@@ -503,7 +503,7 @@
     <div class="flex flex-col md:flex-row md:items-center justify-between">
         <div>
             <h1 class="text-lg font-bold mb-1">Welcome back, {{ current_user.username }}! 👋</h1>
-            <p class="opacity-90 text-sm">Here's what's happening with your services today.</p>
+            <p class="opacity-90 text-sm">Here's what's happening with your listings today.</p>
         </div>
         <div class="mt-3 md:mt-0 flex gap-2">
             <!-- SUBSCRIBE BUTTON -->
@@ -525,7 +525,7 @@
             
             <a href="{{ url_for('market.create_service') }}" 
                class="btn btn-sm bg-white text-primary hover:bg-opacity-90" style="color: black;">
-                <i class="bi bi-plus-lg text-xs " style="color: black;"></i> Create New Service
+                <i class="bi bi-plus-lg text-xs " style="color: black;"></i> Create New Listing
             </a>
         </div>
     </div>
@@ -548,7 +548,7 @@
                     <div class="stat-card hover-lift">
                         <div class="flex items-center justify-between mb-3">
                             <div>
-                                <p class="text-xs text-gray-600">Active Services</p>
+                                <p class="text-xs text-gray-600">Active Listings</p>
                                 <h3 class="text-lg font-bold" id="active-services">{{ active_services }}</h3>
                             </div>
                             <div class="stat-icon gradient-secondary">
@@ -646,11 +646,11 @@
                                     <div class="flex-1">
                                         <p class="text-sm">
                                             {% if activity.click_type == 'view' %}
-                                            Someone viewed your service
+                                            Someone viewed your listing
                                             {% elif activity.click_type == 'contact' %}
                                             New contact request
                                             {% else %}
-                                            Click on your service
+                                            Click on your listing
                                             {% endif %}
                                         </p>
                                         <p class="text-xs text-gray-500">{{ activity.created_at.strftime('%b %d, %I:%M %p') }}</p>
@@ -672,12 +672,12 @@
                     <div id="services-tab" class="tab-content hidden">
                         <div class="bg-white rounded-2xl p-4 shadow-soft">
                             <div class="flex flex-col md:flex-row md:items-center justify-between mb-4">
-                                <h3 class="font-bold text-base mb-3 md:mb-0">My Services ({{ total_services }})</h3>
+                                <h3 class="font-bold text-base mb-3 md:mb-0">My Listings ({{ total_services }})</h3>
                                 <div class="flex flex-col sm:flex-row gap-2">
                                     <div class="relative">
                                         <input type="text" 
                                                id="service-search"
-                                               placeholder="Search services..." 
+                                               placeholder="Search listings..." 
                                                class="pl-8 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-primary/20 focus:border-primary outline-none w-full">
                                         <i class="bi bi-search absolute left-2.5 top-2.5 text-gray-400 text-sm"></i>
                                     </div>
@@ -702,7 +702,7 @@
                                     <table class="dashboard-table">
                                         <thead>
                                             <tr>
-                                                <th>Service</th>
+                                                <th>Listing</th>
                                                 <th>Category</th>
                                                 <th>Price</th>
                                                 <th>Access</th>
@@ -789,8 +789,8 @@
                                             <tr>
                                                 <td colspan="7" class="text-center py-8 text-gray-500">
                                                     <i class="bi bi-bag text-2xl mb-2"></i>
-                                                    <p class="text-sm">No services found</p>
-                                                    <a href="{{ url_for('market.create_service') }}" class="text-primary text-sm hover:underline">Create your first service</a>
+                                                    <p class="text-sm">No listings found</p>
+                                                    <a href="{{ url_for('market.create_service') }}" class="text-primary text-sm hover:underline">Create your first listing</a>
                                                 </td>
                                             </tr>
                                             {% endif %}
@@ -882,7 +882,7 @@
                     </button>
                 </div>
                 
-                <p class="text-gray-600 text-sm mb-4" id="delete-message">Are you sure you want to delete this service? This action cannot be undone.</p>
+                <p class="text-gray-600 text-sm mb-4" id="delete-message">Are you sure you want to delete this listing? This action cannot be undone.</p>
                 
                 <div class="flex justify-end gap-2">
                     <button onclick="closeModal()" 
@@ -892,7 +892,7 @@
                     <button onclick="performDelete()" 
                             class="btn bg-red-600 text-white btn-sm hover:bg-red-700"
                             id="delete-confirm-btn">
-                        <span>Delete Service</span>
+                        <span>Delete Listing</span>
                     </button>
                 </div>
             </div>
@@ -1036,7 +1036,7 @@
                     updateServicesTable(data.services, data.pagination);
                 }
             } catch (error) {
-                showError('services-tbody', 'Failed to load services. Please try again.');
+                showError('services-tbody', 'Failed to load listings. Please try again.');
             }
         }
         
@@ -1050,8 +1050,8 @@
                     <tr>
                         <td colspan="7" class="text-center py-8 text-gray-500">
                             <i class="bi bi-bag text-2xl mb-2"></i>
-                            <p class="text-sm">No services found</p>
-                            <a href="{{ url_for('market.create_service') }}" class="text-primary text-sm hover:underline">Create your first service</a>
+                            <p class="text-sm">No listings found</p>
+                            <a href="{{ url_for('market.create_service') }}" class="text-primary text-sm hover:underline">Create your first listing</a>
                         </td>
                     </tr>
                 `;
@@ -1309,7 +1309,7 @@
                                 <p class="text-sm mb-2">${review.comment || 'No comment provided'}</p>
                                 <div class="flex items-center justify-between">
                                     <p class="text-xs text-gray-600">- ${review.customer_name}</p>
-                                    <a href="/service/${review.service_slug}" class="text-xs text-primary hover:underline">View Service</a>
+                                    <a href="/service/${review.service_slug}" class="text-xs text-primary hover:underline">View Listing</a>
                                 </div>
                             </div>
                         `;
@@ -1345,7 +1345,7 @@
                         <div class="text-gray-500">
                             <i class="bi bi-star text-2xl mb-2"></i>
                             <p class="text-sm">No reviews yet</p>
-                            <p class="text-xs mt-1">Reviews will appear here when customers rate your services.</p>
+                            <p class="text-xs mt-1">Reviews will appear here when customers rate your listings.</p>
                         </div>
                     `;
                 }
@@ -1385,19 +1385,19 @@
                                     <h4 class="text-lg font-bold">${formatCurrency(stats.total_earnings, '#')}</h4>
                                 </div>
                                 <div class="bg-green-50 p-4 rounded-xl">
-                                    <p class="text-xs text-green-600 mb-1">Active Services</p>
+                                    <p class="text-xs text-green-600 mb-1">Active Listings</p>
                                     <h4 class="text-lg font-bold">${stats.active_services}</h4>
                                 </div>
                                 <div class="bg-purple-50 p-4 rounded-xl">
-                                    <p class="text-xs text-purple-600 mb-1">Avg. per Service</p>
+                                    <p class="text-xs text-purple-600 mb-1">Avg. per Listing</p>
                                     <h4 class="text-lg font-bold">${formatCurrency(stats.total_earnings / (stats.total_services || 1), 'KES')}</h4>
                                 </div>
                             </div>
                             
                             <div class="mt-6">
-                                <h4 class="font-bold text-sm mb-3">Service-wise Earnings</h4>
+                                <h4 class="font-bold text-sm mb-3">Listing-wise Earnings</h4>
                                 <div class="space-y-2">
-                                    <p class="text-sm text-gray-600">Detailed earnings breakdown by service will be available soon.</p>
+                                    <p class="text-sm text-gray-600">Detailed earnings breakdown by listing will be available soon.</p>
                                 </div>
                             </div>
                         </div>
@@ -1497,7 +1497,7 @@
         
         if (data.success) {
             // Show success message
-            showNotification('Service deleted successfully!', 'success');
+            showNotification('Listing deleted successfully!', 'success');
             
             // Remove the row from the table
             const row = document.querySelector(`tr[data-service-id="${currentServiceToDelete}"]`);

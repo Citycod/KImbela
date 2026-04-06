@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kimbela Marketplace | Services & Digital Products</title>
+    <title>Kimbela Marketplace | Listings & Digital Products</title>
     
     <!-- Fonts & Icons -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
@@ -209,6 +209,66 @@
         .category-children.hidden {
             display: none;
         }
+
+        .market-search-shell {
+            background: rgba(255, 255, 255, 0.88);
+            border: 1px solid rgba(236, 141, 113, 0.18);
+            box-shadow: 0 18px 34px rgba(170, 92, 76, 0.08);
+        }
+
+        .filter-panel {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 248, 244, 0.92) 100%);
+            border: 1px solid rgba(236, 141, 113, 0.16);
+        }
+
+        .filter-highlight {
+            background: linear-gradient(135deg, rgba(242, 139, 107, 0.14) 0%, rgba(187, 140, 255, 0.14) 100%);
+            border: 1px solid rgba(236, 141, 113, 0.16);
+        }
+
+        .filter-input {
+            width: 100%;
+            border: 1px solid #e5d6cf;
+            background: rgba(255, 255, 255, 0.96);
+            border-radius: 0.9rem;
+            padding: 0.8rem 0.95rem;
+            font-size: 0.9rem;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+        }
+
+        .filter-input:focus {
+            outline: none;
+            border-color: rgba(242, 139, 107, 0.7);
+            box-shadow: 0 0 0 3px rgba(242, 139, 107, 0.12);
+        }
+
+        .filter-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            min-height: 1rem;
+            font-size: 0.72rem;
+            color: #8a6c62;
+        }
+
+        .filter-status.hidden {
+            display: none;
+        }
+
+        .filter-status-dot {
+            width: 0.5rem;
+            height: 0.5rem;
+            border-radius: 999px;
+            background: #f28b6b;
+            box-shadow: 0 0 0 0 rgba(242, 139, 107, 0.35);
+            animation: pulseDot 1.2s infinite;
+        }
+
+        @keyframes pulseDot {
+            0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(242, 139, 107, 0.35); }
+            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(242, 139, 107, 0); }
+            100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(242, 139, 107, 0); }
+        }
     </style>
 </head>
 <body class="text-gray-800">
@@ -252,23 +312,62 @@
         <!-- Hero Section -->
         <div class="mb-6 text-center fade-in">
             <h1 class="text-2xl font-bold mb-2">
-                Discover Services & Products
+                Discover Listings & Products
             </h1>
             <p class="text-gray-600 max-w-2xl mx-auto mb-4 text-sm">
-                Connect with professionals, explore services and buy physical or digital products            </p>
+                Connect with sellers, explore listings and buy physical or digital products            </p>
             
             <!-- Search Bar -->
-            <div class="max-w-xl mx-auto relative mb-3">
-                <form method="GET" action="{{ url_for('market.main_market') }}" class="relative">
-                    <i class="bi bi-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm"></i>
-                    <input type="text" 
-                           name="q"
-                           value="{{ search_query or '' }}"
-                           placeholder="Search services, products, sellers..."
-                           class="w-full pl-10 pr-20 py-2 bg-white rounded-xl border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none shadow-sm text-sm">
-                    <button type="submit" class="absolute right-1 top-1/2 transform -translate-y-1/2 px-3 py-1 gradient-primary text-white rounded-lg text-sm whitespace-nowrap">
-                        Search
-                    </button>
+            <div class="max-w-3xl mx-auto relative mb-3">
+                <form method="GET" action="{{ url_for('market.main_market') }}" class="market-search-shell rounded-2xl p-3 sm:p-4">
+                    {% if category_slug %}
+                    <input type="hidden" name="category" value="{{ category_slug }}">
+                    {% endif %}
+                    {% if min_price %}
+                    <input type="hidden" name="min_price" value="{{ min_price }}">
+                    {% endif %}
+                    {% if max_price %}
+                    <input type="hidden" name="max_price" value="{{ max_price }}">
+                    {% endif %}
+                    {% if selected_country %}
+                    <input type="hidden" name="country" value="{{ selected_country }}">
+                    {% endif %}
+                    {% if selected_state %}
+                    <input type="hidden" name="state" value="{{ selected_state }}">
+                    {% endif %}
+                    {% if selected_city %}
+                    <input type="hidden" name="city" value="{{ selected_city }}">
+                    {% endif %}
+                    {% if sort_by %}
+                    <input type="hidden" name="sort" value="{{ sort_by }}">
+                    {% endif %}
+                    {% if service_type %}
+                    <input type="hidden" name="type" value="{{ service_type }}">
+                    {% endif %}
+                    {% if featured_only %}
+                    <input type="hidden" name="featured" value="true">
+                    {% endif %}
+                    <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                        <div class="relative flex-1">
+                            <i class="bi bi-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm"></i>
+                            <input type="text" 
+                                   name="q"
+                                   value="{{ search_query or '' }}"
+                                   placeholder="Search by product name, listing title, seller, category or keyword"
+                                   class="w-full pl-11 pr-4 py-3 bg-white rounded-2xl border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none shadow-sm text-sm">
+                        </div>
+                        <button type="submit" class="px-4 py-3 gradient-primary text-white rounded-2xl text-sm font-semibold whitespace-nowrap shadow-soft">
+                            <i class="bi bi-stars mr-1"></i> Search listings
+                        </button>
+                    </div>
+                    <div class="mt-3 flex flex-wrap items-center gap-2 text-xs text-gray-600">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full bg-white border border-orange-100">
+                            <i class="bi bi-bag-check mr-1 text-primary"></i> Product name + location
+                        </span>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full bg-white border border-orange-100">
+                            <i class="bi bi-geo-alt mr-1 text-primary"></i> Country, state and city supported
+                        </span>
+                    </div>
                 </form>
             </div>
 
@@ -283,12 +382,12 @@
                         <h3 class="text-lg font-bold">Verified Marketplace</h3>
                         <p class="text-sm opacity-90">
                             {% if marketplace_payments_enabled %}
-                                All services are from verified subscribed sellers.
+                                All listings are from verified subscribed sellers.
                                 {% if total_sellers_displayed %}
-                                    Showing services from {{ total_sellers_displayed }} subscribed sellers.
+                                    Showing listings from {{ total_sellers_displayed }} subscribed sellers.
                                 {% endif %}
                             {% else %}
-                                Registered sellers can publish unlimited services and products for free.
+                                Registered sellers can publish unlimited listings and products for free.
                                 {% if total_sellers_displayed %}
                                     Showing listings from {{ total_sellers_displayed }} sellers.
                                 {% endif %}
@@ -989,6 +1088,21 @@
                         {% if sort_by %}
                             <input type="hidden" name="sort" value="{{ sort_by }}">
                         {% endif %}
+                        {% if selected_country %}
+                            <input type="hidden" name="country" value="{{ selected_country }}">
+                        {% endif %}
+                        {% if selected_state %}
+                            <input type="hidden" name="state" value="{{ selected_state }}">
+                        {% endif %}
+                        {% if selected_city %}
+                            <input type="hidden" name="city" value="{{ selected_city }}">
+                        {% endif %}
+                        {% if service_type %}
+                            <input type="hidden" name="type" value="{{ service_type }}">
+                        {% endif %}
+                        {% if featured_only %}
+                            <input type="hidden" name="featured" value="true">
+                        {% endif %}
                         
                         <div class="text-xs text-gray-600 mb-2">
                             Current Range: 
@@ -1044,6 +1158,79 @@
                         </div>
                     </form>
                 </div>
+
+                <div class="filter-panel rounded-2xl shadow-soft p-4">
+                    <h3 class="font-bold mb-3 flex items-center text-sm">
+                        <i class="bi bi-geo-alt-fill mr-2 text-primary"></i>
+                        Smart Filters
+                    </h3>
+                    <div class="filter-highlight rounded-2xl p-3 mb-3">
+                        <p class="text-sm font-semibold text-gray-800">Find exactly what you want</p>
+                        <p class="text-xs text-gray-600 mt-1">Enter the product or listing name, then narrow results by country, state and city.</p>
+                    </div>
+                    <form method="GET" action="{{ url_for('market.main_market') }}" id="locationFilterForm" class="space-y-3">
+                        {% if category_slug %}
+                        <input type="hidden" name="category" value="{{ category_slug }}">
+                        {% endif %}
+                        {% if min_price %}
+                        <input type="hidden" name="min_price" value="{{ min_price }}">
+                        {% endif %}
+                        {% if max_price %}
+                        <input type="hidden" name="max_price" value="{{ max_price }}">
+                        {% endif %}
+                        {% if sort_by %}
+                        <input type="hidden" name="sort" value="{{ sort_by }}">
+                        {% endif %}
+                        {% if service_type %}
+                        <input type="hidden" name="type" value="{{ service_type }}">
+                        {% endif %}
+                        {% if featured_only %}
+                        <input type="hidden" name="featured" value="true">
+                        {% endif %}
+                        <div>
+                            <label for="filter_keyword" class="block text-xs font-semibold text-gray-600 mb-1">Product or listing name</label>
+                            <div class="relative">
+                                <i class="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                                <input id="filter_keyword" name="q" type="text" value="{{ search_query or '' }}" class="filter-input pl-10" placeholder="e.g. sneakers, wedding cake, laptop, logo design">
+                            </div>
+                        </div>
+                        <div>
+                            <label for="filter_country" class="block text-xs font-semibold text-gray-600 mb-1">Country</label>
+                            <select id="filter_country" name="country" class="filter-input" data-selected="{{ selected_country or '' }}">
+                                <option value="">Any country</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="filter_state" class="block text-xs font-semibold text-gray-600 mb-1">State</label>
+                            <select id="filter_state" name="state" class="filter-input" data-selected="{{ selected_state or '' }}">
+                                <option value="">Any state</option>
+                            </select>
+                            <div id="filter_state_status" class="filter-status hidden mt-1">
+                                <span class="filter-status-dot"></span>
+                                <span>Loading states...</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="filter_city" class="block text-xs font-semibold text-gray-600 mb-1">City</label>
+                            <select id="filter_city" name="city" class="filter-input" data-selected="{{ selected_city or '' }}">
+                                <option value="">Any city</option>
+                            </select>
+                            <div id="filter_city_status" class="filter-status hidden mt-1">
+                                <span class="filter-status-dot"></span>
+                                <span>Loading cities...</span>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button type="submit" class="w-full py-2.5 bg-white text-primary rounded-xl text-sm hover:bg-orange-50 transition-colors font-semibold border-2 border-primary shadow-soft">
+                                <i class="bi bi-funnel mr-1"></i> Apply filters
+                            </button>
+                            <a href="{{ url_for('market.main_market', category=category_slug, q=search_query, min_price=min_price, max_price=max_price, sort=sort_by, type=service_type, featured='true' if featured_only else None) }}"
+                               class="w-full py-2.5 bg-white text-gray-700 rounded-xl text-sm text-center hover:bg-gray-100 transition-colors border border-gray-200">
+                                Reset
+                            </a>
+                        </div>
+                    </form>
+                </div>
                 
                 <!-- Reset Filters Button -->
                 <div class="bg-white rounded-xl shadow-soft p-4">
@@ -1083,12 +1270,15 @@
     <p class="text-gray-600 text-sm">
         {% if services.total > 0 %}
             {% if marketplace_payments_enabled %}
-                {{ services.total }} verified services from {{ total_sellers_displayed }} subscribed sellers
+                {{ services.total }} verified listings from {{ total_sellers_displayed }} subscribed sellers
             {% else %}
                 {{ services.total }} active listings from {{ total_sellers_displayed }} sellers
             {% endif %}
             {% if min_price or max_price %}
                 (Price range: {{ format_price(min_price if min_price else min_available) }} - {{ format_price(max_price if max_price else max_available) }})
+            {% endif %}
+            {% if selected_country or selected_state or selected_city %}
+                (Location: {{ selected_city or 'Any city' }}, {{ selected_state or 'Any state' }}, {{ selected_country or 'Any country' }})
             {% endif %}
         {% else %}
             No listings found
@@ -1098,7 +1288,7 @@
     {% if marketplace_payments_enabled and not current_user.is_authenticated %}
         <p class="text-xs text-amber-600 mt-1">
             <i class="bi bi-info-circle mr-1"></i>
-            Only subscribed sellers can display services. 
+            Only subscribed sellers can display listings. 
             <a href="{{ url_for('market.become_seller') }}" class="font-medium hover:underline">Become a seller</a>
         </p>
     {% elif marketplace_payments_enabled and current_user.is_authenticated and not current_user.marketplace_subscription %}
@@ -1124,6 +1314,21 @@
                                 {% endif %}
                                 {% if max_price %}
                                     <input type="hidden" name="max_price" value="{{ max_price }}">
+                                {% endif %}
+                                {% if selected_country %}
+                                    <input type="hidden" name="country" value="{{ selected_country }}">
+                                {% endif %}
+                                {% if selected_state %}
+                                    <input type="hidden" name="state" value="{{ selected_state }}">
+                                {% endif %}
+                                {% if selected_city %}
+                                    <input type="hidden" name="city" value="{{ selected_city }}">
+                                {% endif %}
+                                {% if service_type %}
+                                    <input type="hidden" name="type" value="{{ service_type }}">
+                                {% endif %}
+                                {% if featured_only %}
+                                    <input type="hidden" name="featured" value="true">
                                 {% endif %}
                                 <select name="sort" 
                                         onchange="this.form.submit()" 
@@ -1191,6 +1396,13 @@
                             <p class="text-gray-600 mb-3 line-clamp-2 text-xs">
                                 {{ service.short_description or service.description|truncate(100) }}
                             </p>
+
+                            {% if service.city or service.state or service.country %}
+                            <p class="text-xs text-gray-500 mb-3 flex items-center">
+                                <i class="bi bi-geo-alt mr-1"></i>
+                                {{ service.city or '' }}{% if service.city and service.state %}, {% endif %}{{ service.state or '' }}{% if (service.city or service.state) and service.country %}, {% endif %}{{ service.country or '' }}
+                            </p>
+                            {% endif %}
                             
                             <!-- Seller & Price -->
                             <!-- In the service card (around line 370), modify the seller section: -->
@@ -1252,7 +1464,12 @@
                                            q=search_query,
                                            sort=sort_by,
                                            min_price=min_price,
-                                           max_price=max_price) }}" 
+                                           max_price=max_price,
+                                           country=selected_country,
+                                           state=selected_state,
+                                           city=selected_city,
+                                           type=service_type,
+                                           featured='true' if featured_only else None) }}" 
                            class="px-2 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-sm">
                             <i class="bi bi-chevron-left"></i>
                         </a>
@@ -1269,7 +1486,12 @@
                                                    q=search_query,
                                                    sort=sort_by,
                                                    min_price=min_price,
-                                                   max_price=max_price) }}" 
+                                                   max_price=max_price,
+                                                   country=selected_country,
+                                                   state=selected_state,
+                                                   city=selected_city,
+                                                   type=service_type,
+                                                   featured='true' if featured_only else None) }}" 
                                    class="px-2 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-sm">
                                     {{ page_num }}
                                 </a>
@@ -1286,7 +1508,12 @@
                                            q=search_query,
                                            sort=sort_by,
                                            min_price=min_price,
-                                           max_price=max_price) }}" 
+                                           max_price=max_price,
+                                           country=selected_country,
+                                           state=selected_state,
+                                           city=selected_city,
+                                           type=service_type,
+                                           featured='true' if featured_only else None) }}" 
                            class="px-2 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-sm">
                             <i class="bi bi-chevron-right"></i>
                         </a>
@@ -1296,7 +1523,7 @@
                 {% endif %}
                 
                 {% else %}
-                <!-- No Services Found -->
+                <!-- No Listings Found -->
                 <!-- Update the empty services section (around line 420): -->
 {% if services.total == 0 %}
 <div class="col-span-full text-center py-12">
@@ -1306,13 +1533,13 @@
     
     {% if not current_user.is_authenticated %}
         <h3 class="text-lg font-semibold text-gray-700 mb-2">
-            {% if marketplace_payments_enabled %}No Verified Services Available{% else %}No Listings Available Yet{% endif %}
+                {% if marketplace_payments_enabled %}No Verified Listings Available{% else %}No Listings Available Yet{% endif %}
         </h3>
         <p class="text-gray-600 mb-4 text-sm">
             {% if marketplace_payments_enabled %}
-                This marketplace only displays services from verified subscribed sellers.
+                This marketplace only displays listings from verified subscribed sellers.
             {% else %}
-                Be the first to publish a service or product in the marketplace.
+                Be the first to publish a listing or product in the marketplace.
             {% endif %}
         </p>
         <a href="{{ url_for('market.create_service') }}" 
@@ -1331,7 +1558,7 @@
         </a>
         
     {% else %}
-        <h3 class="text-lg font-semibold text-gray-700 mb-2">No Services Found</h3>
+        <h3 class="text-lg font-semibold text-gray-700 mb-2">No Listings Found</h3>
         <p class="text-gray-600 mb-4 text-sm">
             Try adjusting your search or filters
         </p>
@@ -1504,7 +1731,183 @@
                     this.form.submit();
                 }
             });
+
+            initializeLocationFilters();
         });
+
+        let marketplaceCountriesCache = null;
+        const marketplaceStatesCache = new Map();
+        const marketplaceCitiesCache = new Map();
+
+        function setFilterStatus(element, message = '', isLoading = false) {
+            if (!element) {
+                return;
+            }
+
+            if (!message) {
+                element.classList.add('hidden');
+                return;
+            }
+
+            element.classList.remove('hidden');
+            const label = element.querySelector('span:last-child');
+            if (label) {
+                label.textContent = message;
+            }
+            element.style.color = isLoading ? '#8a6c62' : '#6b7280';
+        }
+
+        async function populateLocationOptions(selectElement, items, placeholder, selectedValue = '') {
+            selectElement.innerHTML = `<option value="">${placeholder}</option>`;
+            items.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.name;
+                option.textContent = item.name;
+                if (selectedValue && item.name.toLowerCase() === selectedValue.toLowerCase()) {
+                    option.selected = true;
+                }
+                selectElement.appendChild(option);
+            });
+        }
+
+        async function getMarketplaceCountries() {
+            if (marketplaceCountriesCache) {
+                return marketplaceCountriesCache;
+            }
+            marketplaceCountriesCache = await fetch('{{ url_for("user.get_countries") }}').then(response => response.json());
+            return marketplaceCountriesCache;
+        }
+
+        async function getMarketplaceStates(countryId) {
+            if (marketplaceStatesCache.has(countryId)) {
+                return marketplaceStatesCache.get(countryId);
+            }
+            const states = await fetch(`{{ url_for("user.get_states") }}?country_id=${countryId}`).then(response => response.json());
+            marketplaceStatesCache.set(countryId, states);
+            return states;
+        }
+
+        async function getMarketplaceCities(stateId) {
+            if (marketplaceCitiesCache.has(stateId)) {
+                return marketplaceCitiesCache.get(stateId);
+            }
+            const cities = await fetch(`{{ url_for("user.get_cities") }}?state_id=${stateId}`).then(response => response.json());
+            marketplaceCitiesCache.set(stateId, cities);
+            return cities;
+        }
+
+        async function initializeLocationFilters() {
+            const countrySelect = document.getElementById('filter_country');
+            const stateSelect = document.getElementById('filter_state');
+            const citySelect = document.getElementById('filter_city');
+            const stateStatus = document.getElementById('filter_state_status');
+            const cityStatus = document.getElementById('filter_city_status');
+
+            if (!countrySelect || !stateSelect || !citySelect) {
+                return;
+            }
+
+            const selectedCountry = countrySelect.dataset.selected || '';
+            const selectedState = stateSelect.dataset.selected || '';
+            const selectedCity = citySelect.dataset.selected || '';
+
+            const countries = await getMarketplaceCountries();
+            await populateLocationOptions(countrySelect, countries, 'Any country', selectedCountry);
+
+            countrySelect.addEventListener('change', async function() {
+                setFilterStatus(cityStatus);
+                await loadMarketplaceStates(this.value, '');
+                await loadMarketplaceCities('', '');
+            });
+
+            stateSelect.addEventListener('change', async function() {
+                await loadMarketplaceCities(this.value, '');
+            });
+
+            if (selectedCountry) {
+                await loadMarketplaceStates(selectedCountry, selectedState);
+            }
+            if (selectedState) {
+                await loadMarketplaceCities(selectedState, selectedCity);
+            }
+
+            setFilterStatus(stateStatus);
+            setFilterStatus(cityStatus);
+        }
+
+        async function loadMarketplaceStates(countryName, selectedState = '') {
+            const stateSelect = document.getElementById('filter_state');
+            const citySelect = document.getElementById('filter_city');
+            const stateStatus = document.getElementById('filter_state_status');
+            const cityStatus = document.getElementById('filter_city_status');
+            stateSelect.innerHTML = '<option value="">Any state</option>';
+            citySelect.innerHTML = '<option value="">Any city</option>';
+            stateSelect.disabled = true;
+            citySelect.disabled = true;
+
+            if (!countryName) {
+                setFilterStatus(stateStatus, 'Select a country to load states');
+                setFilterStatus(cityStatus, 'Select a state to load cities');
+                stateSelect.disabled = false;
+                citySelect.disabled = false;
+                return;
+            }
+
+            setFilterStatus(stateStatus, 'Loading states...', true);
+            setFilterStatus(cityStatus, 'Select a state to load cities');
+
+            const countries = await getMarketplaceCountries();
+            const country = countries.find(item => item.name === countryName);
+            if (!country) {
+                setFilterStatus(stateStatus, 'No matching country found');
+                stateSelect.disabled = false;
+                citySelect.disabled = false;
+                return;
+            }
+
+            const states = await getMarketplaceStates(country.id);
+            await populateLocationOptions(stateSelect, states, 'Any state', selectedState);
+            stateSelect.disabled = false;
+            citySelect.disabled = false;
+            setFilterStatus(stateStatus, states.length ? `${states.length} state options ready` : 'No states found for this country');
+        }
+
+        async function loadMarketplaceCities(stateName, selectedCity = '') {
+            const countrySelect = document.getElementById('filter_country');
+            const citySelect = document.getElementById('filter_city');
+            const cityStatus = document.getElementById('filter_city_status');
+            citySelect.innerHTML = '<option value="">Any city</option>';
+            citySelect.disabled = true;
+
+            if (!stateName || !countrySelect.value) {
+                setFilterStatus(cityStatus, 'Select a state to load cities');
+                citySelect.disabled = false;
+                return;
+            }
+
+            setFilterStatus(cityStatus, 'Loading cities...', true);
+
+            const countries = await getMarketplaceCountries();
+            const country = countries.find(item => item.name === countrySelect.value);
+            if (!country) {
+                setFilterStatus(cityStatus, 'No matching country found');
+                citySelect.disabled = false;
+                return;
+            }
+
+            const states = await getMarketplaceStates(country.id);
+            const state = states.find(item => item.name === stateName);
+            if (!state) {
+                setFilterStatus(cityStatus, 'No matching state found');
+                citySelect.disabled = false;
+                return;
+            }
+
+            const cities = await getMarketplaceCities(state.id);
+            await populateLocationOptions(citySelect, cities, 'Any city', selectedCity);
+            citySelect.disabled = false;
+            setFilterStatus(cityStatus, cities.length ? `${cities.length} city options ready` : 'No cities found for this state');
+        }
     </script>
 </body>
 </html>

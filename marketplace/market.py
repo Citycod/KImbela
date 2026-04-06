@@ -153,6 +153,96 @@ def apply_marketplace_seller_visibility_filter(query):
     )
 
 
+def normalize_marketplace_location(value):
+    if value is None:
+        return None
+    value = re.sub(r"\s+", " ", str(value)).strip()
+    return value or None
+
+
+def normalize_marketplace_search(value):
+    normalized = normalize_marketplace_location(value)
+    if not normalized:
+        return None
+    return re.sub(r"\s+", " ", normalized)
+
+
+def split_marketplace_search_terms(search_query):
+    cleaned = re.sub(r"[^\w\s-]", " ", search_query.lower())
+    terms = [term for term in re.split(r"[\s,/]+", cleaned) if len(term) >= 2]
+
+    deduped_terms = []
+    seen = set()
+    for term in terms:
+        if term not in seen:
+            deduped_terms.append(term)
+            seen.add(term)
+
+    return deduped_terms
+
+
+def apply_marketplace_search_filter(query, raw_search):
+    search_query = normalize_marketplace_search(raw_search)
+    if not search_query:
+        return query, None
+
+    phrase_wildcard = f"%{search_query}%"
+    search_terms = split_marketplace_search_terms(search_query)
+
+    phrase_filter = or_(
+        MarketplaceService.title.ilike(phrase_wildcard),
+        MarketplaceService.description.ilike(phrase_wildcard),
+        MarketplaceService.short_description.ilike(phrase_wildcard),
+        MarketplaceService.country.ilike(phrase_wildcard),
+        MarketplaceService.state.ilike(phrase_wildcard),
+        MarketplaceService.city.ilike(phrase_wildcard),
+        MarketplaceService.category.has(MarketplaceCategory.name.ilike(phrase_wildcard)),
+        MarketplaceService.seller.has(User.first_name.ilike(phrase_wildcard)),
+        MarketplaceService.seller.has(User.last_name.ilike(phrase_wildcard)),
+        MarketplaceService.seller.has(User.email.ilike(phrase_wildcard)),
+    )
+
+    if not search_terms:
+        return query.filter(phrase_filter), search_query
+
+    token_filters = []
+    for term in search_terms:
+        wildcard = f"%{term}%"
+        token_filters.append(
+            or_(
+                MarketplaceService.title.ilike(wildcard),
+                MarketplaceService.description.ilike(wildcard),
+                MarketplaceService.short_description.ilike(wildcard),
+                MarketplaceService.country.ilike(wildcard),
+                MarketplaceService.state.ilike(wildcard),
+                MarketplaceService.city.ilike(wildcard),
+                MarketplaceService.category.has(MarketplaceCategory.name.ilike(wildcard)),
+                MarketplaceService.seller.has(User.first_name.ilike(wildcard)),
+                MarketplaceService.seller.has(User.last_name.ilike(wildcard)),
+                MarketplaceService.seller.has(User.email.ilike(wildcard)),
+            )
+        )
+
+    query = query.filter(or_(phrase_filter, and_(*token_filters)))
+
+    return query, search_query
+
+
+def apply_marketplace_location_filters(query, country=None, state=None, city=None):
+    country = normalize_marketplace_location(country)
+    state = normalize_marketplace_location(state)
+    city = normalize_marketplace_location(city)
+
+    if country:
+        query = query.filter(MarketplaceService.country.ilike(country))
+    if state:
+        query = query.filter(MarketplaceService.state.ilike(state))
+    if city:
+        query = query.filter(MarketplaceService.city.ilike(city))
+
+    return query, country, state, city
+
+
 def _require_debug_access():
     """Restrict debug endpoints to admins when explicitly enabled."""
     if not current_user.is_authenticated:
@@ -611,16 +701,18 @@ def main_market():
                 MarketplaceService.category_id.in_(category_ids)
             )
 
-    # Filter by search
     search_query = request.args.get("q")
-    if search_query:
-        services_query = services_query.filter(
-            or_(
-                MarketplaceService.title.ilike(f"%{search_query}%"),
-                MarketplaceService.description.ilike(f"%{search_query}%"),
-                MarketplaceService.short_description.ilike(f"%{search_query}%"),
-            )
+    services_query, search_query = apply_marketplace_search_filter(
+        services_query, search_query
+    )
+    services_query, selected_country, selected_state, selected_city = (
+        apply_marketplace_location_filters(
+            services_query,
+            request.args.get("country"),
+            request.args.get("state"),
+            request.args.get("city"),
         )
+    )
 
     # Filter by price
     min_price = request.args.get("min_price")
@@ -779,6 +871,9 @@ def main_market():
         avg_price=avg_price,
         service_type=service_type,
         featured_only=featured_only,
+        selected_country=selected_country,
+        selected_state=selected_state,
+        selected_city=selected_city,
         format_price=format_price,
         now=utcnow(),
         total_subscribed_services=total_subscribed_services,  # Total before limiting
@@ -1141,6 +1236,9 @@ def create_service():
         title = request.form.get("title")
         category_id = request.form.get("category_id")
         description = request.form.get("description")
+        country = normalize_marketplace_location(request.form.get("country"))
+        state = normalize_marketplace_location(request.form.get("state"))
+        city = normalize_marketplace_location(request.form.get("city"))
 
         # FIX: Handle price input with commas
         price_str = request.form.get("price", "0")
@@ -1160,8 +1258,11 @@ def create_service():
             f"Price from form: {price_str}, After conversion: {price}, Type: {type(price)}"
         )
 
-        if not all([title, category_id, description]):
-            flash("Please fill in all required fields", "danger")
+        if not all([title, category_id, description, country, state, city]):
+            flash(
+                "Please fill in all required fields, including country, state, and city.",
+                "danger",
+            )
             return redirect(url_for("market.create_service"))
 
         # Create slug from title
@@ -1223,6 +1324,9 @@ def create_service():
             email=request.form.get("email"),
             duration=request.form.get("duration"),
             availability=request.form.get("availability"),
+            country=country,
+            state=state,
+            city=city,
             subscription_id=subscription_id if payments_enabled else None,
             subscription_status=listing_subscription_status,
             subscription_expires=(
@@ -1306,12 +1410,12 @@ def create_service():
             )
         elif listing_status == "active":
             flash(
-                "Service created successfully and is now live in your seller dashboard and marketplace listings.",
+                "Listing created successfully and is now live in your seller dashboard and marketplace listings.",
                 "success",
             )
         else:
             flash(
-                "Service created successfully. It will stay in Awaiting Subscription until you subscribe.",
+                "Listing created successfully. It will stay in Awaiting Subscription until you subscribe.",
                 "info",
             )
         return redirect(url_for("market.seller_dashboard"))
@@ -1320,7 +1424,7 @@ def create_service():
         db.session.rollback()
         print(f"Error creating service: {e}")
         flash(
-            "An error occurred while creating the service. Please try again.", "danger"
+            "An error occurred while creating the listing. Please try again.", "danger"
         )
         return redirect(url_for("market.create_service"))
 
@@ -1382,6 +1486,13 @@ def edit_service(service_id):
         service.email = request.form.get("email")
         service.duration = request.form.get("duration")
         service.availability = request.form.get("availability")
+        service.country = normalize_marketplace_location(request.form.get("country"))
+        service.state = normalize_marketplace_location(request.form.get("state"))
+        service.city = normalize_marketplace_location(request.form.get("city"))
+
+        if not all([service.country, service.state, service.city]):
+            flash("Country, state, and city are required for every listing.", "danger")
+            return redirect(url_for("market.edit_service", service_id=service_id))
 
         # Update contact methods
         contact_methods = []
@@ -1434,14 +1545,15 @@ def edit_service(service_id):
 
         db.session.commit()
 
-        flash("Service updated successfully!", "success")
+        flash("Listing updated successfully!", "success")
         return redirect(url_for("market.seller_dashboard"))
 
     except Exception as e:
         db.session.rollback()
         print(f"Error updating service: {e}")
         flash(
-            "An error occurred while updating the service. Please try again.", "danger"
+            "An error occurred while updating the listing. Please try again.",
+            "danger",
         )
         return redirect(url_for("market.edit_service", service_id=service_id))
 
@@ -1754,13 +1866,15 @@ def api_services():
             query = query.filter_by(category_id=category_id)
 
         search = request.args.get("search")
-        if search:
-            query = query.filter(
-                or_(
-                    MarketplaceService.title.ilike(f"%{search}%"),
-                    MarketplaceService.description.ilike(f"%{search}%"),
-                )
+        query, _ = apply_marketplace_search_filter(query, search)
+        query, selected_country, selected_state, selected_city = (
+            apply_marketplace_location_filters(
+                query,
+                request.args.get("country"),
+                request.args.get("state"),
+                request.args.get("city"),
             )
+        )
 
         min_price = request.args.get("min_price", type=int)
         max_price = request.args.get("max_price", type=int)
@@ -1811,6 +1925,9 @@ def api_services():
                     or url_for("static", filename="assets/img/default-service.jpg"),
                     "service_type": service.service_type,
                     "duration": service.duration,
+                    "country": service.country,
+                    "state": service.state,
+                    "city": service.city,
                     "average_rating": service.average_rating,
                     "review_count": service.review_count,
                     "views": service.views,
@@ -1839,6 +1956,11 @@ def api_services():
                 "page": pagination.page,
                 "pages": pagination.pages,
                 "total": pagination.total,
+                "filters": {
+                    "country": selected_country,
+                    "state": selected_state,
+                    "city": selected_city,
+                },
             }
         )
 

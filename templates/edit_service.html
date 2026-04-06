@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Service - Kimbela Marketplace</title>
+    <title>Edit Listing - Kimbela Marketplace</title>
     <link href="{{ url_for('static', filename='assets/img/favy.png') }}" rel="icon" />
     <link href="{{ url_for('static', filename='assets/img/favy.png') }}" rel="apple-touch-icon" />
     
@@ -432,7 +432,7 @@
                          class="h-6 w-auto">
                     <div>
                         <span class="text-xs font-bold gradient-primary bg-clip-text text-transparent">
-                            Edit Service
+                            Edit Listing
                         </span>
                     </div>
                 </a>
@@ -496,7 +496,7 @@
                     <!-- Title -->
                     <div class="mb-4">
                         <label for="title" class="block text-xs font-medium mb-1">
-                            Service Title *
+                            Listing Title *
                         </label>
                         <input type="text" 
                                id="title"
@@ -569,7 +569,7 @@
                             <i class="bi bi-journal-text"></i>
                         </div>
                         <div>
-                            <h3 class="text-sm font-bold">Service Details</h3>
+                            <h3 class="text-sm font-bold">Listing Details</h3>
                         </div>
                     </div>
                     
@@ -582,7 +582,7 @@
                                   name="description"
                                   rows="6"
                                   class="w-full text-sm resize-none"
-                                  placeholder="Describe your service..."
+                                  placeholder="Describe your listing..."
                                   required>{{ service.description }}</textarea>
                     </div>
                     
@@ -590,7 +590,7 @@
                     <div class="mb-4">
                         <label for="price" class="block text-xs font-medium mb-1">
                             Price *
-                            <span class="text-xs text-gray-500">(Enter 0 for free service)</span>
+                            <span class="text-xs text-gray-500">(Enter 0 for a free listing)</span>
                         </label>
                         <div class="relative">
                             <input type="text" 
@@ -606,7 +606,7 @@
                         </div>
                         <div class="mt-1 text-xs text-gray-600">
                             {% if service.price == 0 %}
-                            <span class="text-green-600">Free service</span>
+                            <span class="text-green-600">Free listing</span>
                             {% else %}
                             <span>Current price: ₦{{ service.price|default(0) }}</span>
                             {% endif %}
@@ -668,6 +668,42 @@
                                    value="{{ service.availability or '' }}"
                                    class="w-full text-sm"
                                    placeholder="e.g., Mon-Fri">
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block text-xs font-medium mb-2">Listing Location *</label>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label for="listing_country" class="block text-xs font-medium mb-1">Country</label>
+                                <select id="listing_country"
+                                        name="country"
+                                        class="w-full text-sm"
+                                        data-selected="{{ service.country or '' }}"
+                                        required>
+                                    <option value="">Select country</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="listing_state" class="block text-xs font-medium mb-1">State</label>
+                                <select id="listing_state"
+                                        name="state"
+                                        class="w-full text-sm"
+                                        data-selected="{{ service.state or '' }}"
+                                        required>
+                                    <option value="">Select state</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="listing_city" class="block text-xs font-medium mb-1">City</label>
+                                <select id="listing_city"
+                                        name="city"
+                                        class="w-full text-sm"
+                                        data-selected="{{ service.city or '' }}"
+                                        required>
+                                    <option value="">Select city</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                     
@@ -997,6 +1033,7 @@
             setupCharacterCounters();
             updateProgress();
             setupSelectionCards();
+            initializeLocationSelectors();
             
             // Form submission
             const form = document.getElementById('editServiceForm');
@@ -1113,7 +1150,7 @@
             const shortDescription = document.getElementById('short_description').value.trim();
             
             if (!title) {
-                alert('Please enter a service title');
+                alert('Please enter a listing title');
                 document.getElementById('title').focus();
                 return false;
             }
@@ -1136,6 +1173,9 @@
         function validateStep2() {
             const description = document.getElementById('description').value.trim();
             const price = document.getElementById('price').value.replace(/,/g, '');
+            const country = document.getElementById('listing_country').value;
+            const state = document.getElementById('listing_state').value;
+            const city = document.getElementById('listing_city').value;
             
             if (!description) {
                 alert('Please enter a description');
@@ -1148,6 +1188,12 @@
                 document.getElementById('price').focus();
                 return false;
             }
+
+            if (!country || !state || !city) {
+                alert('Please select the country, state, and city for this listing');
+                (!country ? document.getElementById('listing_country') : !state ? document.getElementById('listing_state') : document.getElementById('listing_city')).focus();
+                return false;
+            }
             
             return true;
         }
@@ -1157,7 +1203,7 @@
             const hasExistingImage = {{ 'true' if service.cover_image else 'false' }};
             
             if (!hasExistingImage && !mainImageFile) {
-                alert('Please upload a main service image');
+                alert('Please upload a main listing image');
                 return false;
             }
             
@@ -1205,6 +1251,100 @@
                     }
                 });
             });
+        }
+
+        async function populateSelectOptions(selectElement, items, placeholder, selectedValue = '') {
+            selectElement.innerHTML = `<option value="">${placeholder}</option>`;
+            items.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.name;
+                option.textContent = item.name;
+                if (selectedValue && item.name.toLowerCase() === selectedValue.toLowerCase()) {
+                    option.selected = true;
+                }
+                selectElement.appendChild(option);
+            });
+        }
+
+        async function initializeLocationSelectors() {
+            const countrySelect = document.getElementById('listing_country');
+            const stateSelect = document.getElementById('listing_state');
+            const citySelect = document.getElementById('listing_city');
+
+            if (!countrySelect || !stateSelect || !citySelect) {
+                return;
+            }
+
+            const selectedCountry = countrySelect.dataset.selected || '';
+            const selectedState = stateSelect.dataset.selected || '';
+            const selectedCity = citySelect.dataset.selected || '';
+
+            const countries = await fetch('{{ url_for("user.get_countries") }}').then(response => response.json());
+            await populateSelectOptions(countrySelect, countries, 'Select country', selectedCountry);
+
+            countrySelect.addEventListener('change', async function() {
+                await loadStatesForCountry(this.value, '');
+                await loadCitiesForState('', '');
+            });
+
+            stateSelect.addEventListener('change', async function() {
+                await loadCitiesForState(this.value, '');
+            });
+
+            if (selectedCountry) {
+                await loadStatesForCountry(selectedCountry, selectedState);
+            }
+            if (selectedState) {
+                await loadCitiesForState(selectedState, selectedCity);
+            }
+        }
+
+        async function loadStatesForCountry(countryName, selectedState = '') {
+            const countrySelect = document.getElementById('listing_country');
+            const stateSelect = document.getElementById('listing_state');
+            const citySelect = document.getElementById('listing_city');
+
+            stateSelect.innerHTML = '<option value="">Select state</option>';
+            citySelect.innerHTML = '<option value="">Select city</option>';
+
+            if (!countryName) {
+                return;
+            }
+
+            const countries = await fetch('{{ url_for("user.get_countries") }}').then(response => response.json());
+            const country = countries.find(item => item.name === countryName);
+            if (!country) {
+                return;
+            }
+
+            const states = await fetch(`{{ url_for("user.get_states") }}?country_id=${country.id}`).then(response => response.json());
+            await populateSelectOptions(stateSelect, states, 'Select state', selectedState);
+        }
+
+        async function loadCitiesForState(stateName, selectedCity = '') {
+            const countrySelect = document.getElementById('listing_country');
+            const citySelect = document.getElementById('listing_city');
+
+            citySelect.innerHTML = '<option value="">Select city</option>';
+
+            if (!stateName || !countrySelect.value) {
+                return;
+            }
+
+            const countries = await fetch('{{ url_for("user.get_countries") }}').then(response => response.json());
+            const country = countries.find(item => item.name === countrySelect.value);
+            if (!country) {
+                return;
+            }
+
+            const states = await fetch(`{{ url_for("user.get_states") }}?country_id=${country.id}`).then(response => response.json());
+            const state = states.find(item => item.name === stateName);
+            if (!state) {
+                return;
+            }
+
+            const cities = await fetch(`{{ url_for("user.get_cities") }}?state_id=${state.id}`).then(response => response.json());
+            await populateSelectOptions(citySelect, cities, 'Select city', selectedCity);
         }
 
         // Features Management

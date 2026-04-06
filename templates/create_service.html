@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Service - Kimbela Marketplace</title>
+    <title>Create Listing - Kimbela Marketplace</title>
     <link href="{{ url_for('static', filename='assets/img/favy.png') }}" rel="icon" />
     <link href="{{ url_for('static', filename='assets/img/favy.png') }}" rel="apple-touch-icon" />
     
@@ -348,6 +348,35 @@
                 font-size: 13px;
             }
         }
+
+        .location-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            min-height: 1rem;
+            margin-top: 0.35rem;
+            font-size: 0.72rem;
+            color: #8a6c62;
+        }
+
+        .location-status.hidden {
+            display: none;
+        }
+
+        .location-status-dot {
+            width: 0.5rem;
+            height: 0.5rem;
+            border-radius: 999px;
+            background: #f28b6b;
+            box-shadow: 0 0 0 0 rgba(242, 139, 107, 0.35);
+            animation: locationPulse 1.2s infinite;
+        }
+
+        @keyframes locationPulse {
+            0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(242, 139, 107, 0.35); }
+            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(242, 139, 107, 0); }
+            100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(242, 139, 107, 0); }
+        }
     </style>
 </head>
 <body>
@@ -424,13 +453,13 @@
                         </div>
                         <div>
                             <h2 class="text-lg font-bold">Basic Information</h2>
-                            <p class="text-gray-600 text-xs">Tell us about your service / product</p>
+                            <p class="text-gray-600 text-xs">Tell us about your listing</p>
                         </div>
                     </div>
                     
                     <!-- Service Type Selection -->
                     <div class="mb-6">
-                        <label class="block text-sm font-medium mb-2">Choose What You Want To Sell *</label>
+                        <label class="block text-sm font-medium mb-2">Choose Your Listing Type *</label>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div class="option-card" onclick="selectServiceType('service')">
                                 <input type="radio" name="service_type" value="service" class="hidden" checked>
@@ -439,7 +468,7 @@
                                         <i class="bi bi-person-workspace text-blue-600 text-lg"></i>
                                     </div>
                                     <div class="flex-1">
-                                        <h4 class="font-bold text-sm mb-1">Service</h4>
+                                        <h4 class="font-bold text-sm mb-1">Listing</h4>
                                         <p class="text-gray-600 text-xs">Coaching, counseling, consulting, etc.</p>
                                     </div>
                                     <div class="option-check text-blue-600">
@@ -468,7 +497,7 @@
                             <div class="flex items-center gap-2">
                                 <i class="bi bi-info-circle text-blue-500"></i>
                                 <p class="text-xs text-blue-700">
-                                    Selected: <span id="selectedServiceType" class="font-bold">Service</span>
+                                    Selected: <span id="selectedServiceType" class="font-bold">Listing</span>
                                 </p>
                             </div>
                         </div>
@@ -523,7 +552,7 @@
                                   maxlength="200"
                                   rows="2"
                                   class="w-full resize-none"
-                                  placeholder="Briefly describe what your service offers..."
+                                  placeholder="Briefly describe what your listing offers..."
                                   required></textarea>
                         <div class="char-counter" id="shortDescCounter">0/200</div>
                     </div>
@@ -547,8 +576,8 @@
                             <i class="bi bi-journal-text"></i>
                         </div>
                         <div>
-                            <h2 class="text-lg font-bold">Product / Service Details</h2>
-                            <p class="text-gray-600 text-xs">Describe your product or service in detail</p>
+                            <h2 class="text-lg font-bold">Listing Details</h2>
+                            <p class="text-gray-600 text-xs">Describe your listing in detail</p>
                         </div>
                     </div>
                     
@@ -562,7 +591,7 @@
                                   name="description"
                                   rows="6"
                                   class="w-full resize-none"
-                                  placeholder="Describe your service in detail..."
+                                  placeholder="Describe your listing in detail..."
                                   required></textarea>
                         <div class="char-counter" id="descCounter">0 characters</div>
                     </div>
@@ -617,6 +646,53 @@
                                    class="w-full"
                                    placeholder="e.g., Monday to Friday">
                         </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium mb-2">Listing Location *</label>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label for="listing_country" class="block text-sm font-medium mb-1">Country</label>
+                                <select id="listing_country"
+                                        name="country"
+                                        class="w-full"
+                                        data-selected="{{ current_user.country or '' }}"
+                                        required>
+                                    <option value="">Select country</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="listing_state" class="block text-sm font-medium mb-1">State</label>
+                                <select id="listing_state"
+                                        name="state"
+                                        class="w-full"
+                                        data-selected="{{ current_user.state or '' }}"
+                                        required>
+                                    <option value="">Select state</option>
+                                </select>
+                                <div id="listing_state_status" class="location-status hidden">
+                                    <span class="location-status-dot"></span>
+                                    <span>Loading states...</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="listing_city" class="block text-sm font-medium mb-1">City</label>
+                                <select id="listing_city"
+                                        name="city"
+                                        class="w-full"
+                                        data-selected="{{ current_user.city or '' }}"
+                                        required>
+                                    <option value="">Select city</option>
+                                </select>
+                                <div id="listing_city_status" class="location-status hidden">
+                                    <span class="location-status-dot"></span>
+                                    <span>Loading cities...</span>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="mt-2 text-xs text-gray-500">
+                            Buyers can use these fields to filter listings by country, state, and city.
+                        </p>
                     </div>
                     
                     <!-- Digital Product Specific -->
@@ -676,7 +752,7 @@
                         </div>
                         <div>
                             <h2 class="text-lg font-bold">Pricing</h2>
-                            <p class="text-gray-600 text-xs">Set your service price</p>
+                            <p class="text-gray-600 text-xs">Set your listing price</p>
                         </div>
                     </div>
                     
@@ -691,7 +767,7 @@
                                         <i class="bi bi-coin text-green-600 text-lg"></i>
                                     </div>
                                     <div class="flex-1">
-                                        <h4 class="font-bold text-sm mb-1">Paid Service</h4>
+                                        <h4 class="font-bold text-sm mb-1">Paid Listing</h4>
                                         <p class="text-gray-600 text-xs">Set your own price</p>
                                     </div>
                                     <div class="option-check text-green-600">
@@ -707,8 +783,8 @@
                                         <i class="bi bi-gift text-blue-600 text-lg"></i>
                                     </div>
                                     <div class="flex-1">
-                                        <h4 class="font-bold text-sm mb-1">Free Service</h4>
-                                        <p class="text-gray-600 text-xs">Offer your service for free</p>
+                                        <h4 class="font-bold text-sm mb-1">Free Listing</h4>
+                                        <p class="text-gray-600 text-xs">Offer your listing for free</p>
                                     </div>
                                     <div class="option-check text-blue-600">
                                         <i class="bi bi-check-circle-fill text-lg"></i>
@@ -720,7 +796,7 @@
                             <div class="flex items-center gap-2">
                                 <i class="bi bi-info-circle text-green-500"></i>
                                 <p class="text-xs text-green-700">
-                                    Selected: <span id="selectedPricingType" class="font-bold">Paid Service</span>
+                                    Selected: <span id="selectedPricingType" class="font-bold">Paid Listing</span>
                                 </p>
                             </div>
                         </div>
@@ -795,15 +871,15 @@
                         </div>
                         <div>
                             <h2 class="text-lg font-bold">Media & Gallery</h2>
-                            <p class="text-gray-600 text-xs">Upload images and videos of your service</p>
+                            <p class="text-gray-600 text-xs">Upload images and videos for your listing</p>
                         </div>
                     </div>
                     
-                    <!-- Main Service Image -->
+                    <!-- Main Listing Image -->
                     <div class="mb-6">
                         <label class="block text-sm font-medium mb-1">
-                            Main Service Image *
-                            <span class="text-xs text-gray-500 font-normal">(Thumbnail for your service)</span>
+                            Main Listing Image *
+                            <span class="text-xs text-gray-500 font-normal">(Thumbnail for your listing)</span>
                         </label>
                         <div class="file-upload-area" onclick="document.getElementById('cover_image').click()" 
                              id="mainImageUploadArea">
@@ -953,7 +1029,7 @@
                         </div>
                         <div>
                             <h2 class="text-lg font-bold">Review & Publish</h2>
-                            <p class="text-gray-600 text-xs">Preview your service before publishing</p>
+                            <p class="text-gray-600 text-xs">Preview your listing before publishing</p>
                         </div>
                     </div>
                     
@@ -961,9 +1037,9 @@
                     <div class="mb-6">
                         <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
                             <div class="flex items-center justify-between mb-3">
-                                <h3 class="text-base font-bold">Service Preview</h3>
+                                <h3 class="text-base font-bold">Listing Preview</h3>
                                 <div class="flex items-center gap-2">
-                                    <span class="preview-badge" id="previewServiceTypeBadge">Service</span>
+                                    <span class="preview-badge" id="previewServiceTypeBadge">Listing</span>
                                     <span class="preview-badge" id="previewPricingTypeBadge">Paid</span>
                                 </div>
                             </div>
@@ -1054,7 +1130,7 @@
                         <button type="submit" 
                                 id="publishBtn"
                                 class="btn btn-primary">
-                            <span id="publishText">Publish Service</span>
+                            <span id="publishText">Publish Listing</span>
                             <span id="publishLoading" class="hidden">
                                 <span class="loading mr-1"></span> Publishing...
                             </span>
@@ -1070,7 +1146,7 @@
         <div class="modal-content">
             <div class="p-4">
                 <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-lg font-bold">Full Service Preview</h2>
+                    <h2 class="text-lg font-bold">Full Listing Preview</h2>
                     <button type="button" 
                             onclick="closePreviewModal()"
                             class="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center">
@@ -1151,6 +1227,7 @@ document.addEventListener('DOMContentLoaded', function() {
             setupCharacterCounters();
             updateProgress();
             setupCurrencyInfo();
+            initializeLocationSelectors();
             
             // Initialize selections
             selectServiceType('service');
@@ -1286,7 +1363,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const shortDescription = document.getElementById('short_description').value.trim();
             
             if (!title) {
-                alert('Please enter a service title');
+                alert('Please enter a listing title');
                 document.getElementById('title').focus();
                 return false;
             }
@@ -1308,13 +1385,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // In your existing JavaScript, update the validateStep2 function:
 function validateStep2() {
-    const description = document.getElementById('description').value.trim();
+            const description = document.getElementById('description').value.trim();
+            const country = document.getElementById('listing_country').value;
+            const state = document.getElementById('listing_state').value;
+            const city = document.getElementById('listing_city').value;
     
-    if (!description) {
-        alert('Please enter a description');
-        document.getElementById('description').focus();
-        return false;
-    }
+            if (!description) {
+                alert('Please enter a description');
+                document.getElementById('description').focus();
+                return false;
+            }
+
+            if (!country || !state || !city) {
+                alert('Please select the country, state, and city for this listing');
+                (!country ? document.getElementById('listing_country') : !state ? document.getElementById('listing_state') : document.getElementById('listing_city')).focus();
+                return false;
+            }
     
     if (formState.pricingType === 'paid') {
         const priceInput = document.getElementById('price');
@@ -1377,7 +1463,7 @@ function formatNumberWithCommas(value) {
             const mainImage = document.getElementById('cover_image').files[0];
             
             if (!mainImage) {
-                alert('Please upload a main service image');
+                alert('Please upload a main listing image');
                 return false;
             }
             
@@ -1412,7 +1498,7 @@ function formatNumberWithCommas(value) {
             selectedCard.classList.add('selected');
             
             // Update info display
-            const typeName = type === 'service' ? 'Service' : 'Digital Product';
+            const typeName = type === 'service' ? 'Listing' : 'Digital Product';
             document.getElementById('selectedServiceType').textContent = typeName;
             
             // Toggle digital product fields
@@ -1454,7 +1540,7 @@ function formatNumberWithCommas(value) {
             selectedCard.classList.add('selected');
             
             // Update info display
-            const typeName = type === 'paid' ? 'Paid Service' : 'Free Service';
+            const typeName = type === 'paid' ? 'Paid Listing' : 'Free Listing';
             document.getElementById('selectedPricingType').textContent = typeName;
             
             // Toggle price fields
@@ -1538,6 +1624,183 @@ function formatNumberWithCommas(value) {
                     document.getElementById('descCounter').textContent = `${this.value.length} characters`;
                 });
             }
+        }
+
+        async function populateSelectOptions(selectElement, items, placeholder, selectedValue = '') {
+            selectElement.innerHTML = `<option value="">${placeholder}</option>`;
+            items.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.name;
+                option.textContent = item.name;
+                if (selectedValue && item.name.toLowerCase() === selectedValue.toLowerCase()) {
+                    option.selected = true;
+                }
+                selectElement.appendChild(option);
+            });
+        }
+
+        let createListingCountriesCache = null;
+        const createListingStatesCache = new Map();
+        const createListingCitiesCache = new Map();
+
+        function setLocationStatus(element, message = '', isLoading = false) {
+            if (!element) {
+                return;
+            }
+
+            if (!message) {
+                element.classList.add('hidden');
+                return;
+            }
+
+            element.classList.remove('hidden');
+            const label = element.querySelector('span:last-child');
+            if (label) {
+                label.textContent = message;
+            }
+            element.style.color = isLoading ? '#8a6c62' : '#6b7280';
+        }
+
+        async function getCreateListingCountries() {
+            if (createListingCountriesCache) {
+                return createListingCountriesCache;
+            }
+            createListingCountriesCache = await fetch('{{ url_for("user.get_countries") }}').then(response => response.json());
+            return createListingCountriesCache;
+        }
+
+        async function getCreateListingStates(countryId) {
+            if (createListingStatesCache.has(countryId)) {
+                return createListingStatesCache.get(countryId);
+            }
+            const states = await fetch(`{{ url_for("user.get_states") }}?country_id=${countryId}`).then(response => response.json());
+            createListingStatesCache.set(countryId, states);
+            return states;
+        }
+
+        async function getCreateListingCities(stateId) {
+            if (createListingCitiesCache.has(stateId)) {
+                return createListingCitiesCache.get(stateId);
+            }
+            const cities = await fetch(`{{ url_for("user.get_cities") }}?state_id=${stateId}`).then(response => response.json());
+            createListingCitiesCache.set(stateId, cities);
+            return cities;
+        }
+
+        async function initializeLocationSelectors() {
+            const countrySelect = document.getElementById('listing_country');
+            const stateSelect = document.getElementById('listing_state');
+            const citySelect = document.getElementById('listing_city');
+            const stateStatus = document.getElementById('listing_state_status');
+            const cityStatus = document.getElementById('listing_city_status');
+
+            if (!countrySelect || !stateSelect || !citySelect) {
+                return;
+            }
+
+            const selectedCountry = countrySelect.dataset.selected || '';
+            const selectedState = stateSelect.dataset.selected || '';
+            const selectedCity = citySelect.dataset.selected || '';
+
+            const countries = await getCreateListingCountries();
+            await populateSelectOptions(countrySelect, countries, 'Select country', selectedCountry);
+
+            countrySelect.addEventListener('change', async function() {
+                setLocationStatus(cityStatus);
+                await loadStatesForCountry(this.value, '');
+                await loadCitiesForState('', '');
+            });
+
+            stateSelect.addEventListener('change', async function() {
+                await loadCitiesForState(this.value, '');
+            });
+
+            if (selectedCountry) {
+                await loadStatesForCountry(selectedCountry, selectedState);
+            }
+            if (selectedState) {
+                await loadCitiesForState(selectedState, selectedCity);
+            }
+
+            setLocationStatus(stateStatus);
+            setLocationStatus(cityStatus);
+        }
+
+        async function loadStatesForCountry(countryName, selectedState = '') {
+            const countrySelect = document.getElementById('listing_country');
+            const stateSelect = document.getElementById('listing_state');
+            const citySelect = document.getElementById('listing_city');
+            const stateStatus = document.getElementById('listing_state_status');
+            const cityStatus = document.getElementById('listing_city_status');
+
+            stateSelect.innerHTML = '<option value="">Select state</option>';
+            citySelect.innerHTML = '<option value="">Select city</option>';
+            stateSelect.disabled = true;
+            citySelect.disabled = true;
+
+            if (!countryName) {
+                setLocationStatus(stateStatus, 'Select a country to load states');
+                setLocationStatus(cityStatus, 'Select a state to load cities');
+                stateSelect.disabled = false;
+                citySelect.disabled = false;
+                return;
+            }
+
+            setLocationStatus(stateStatus, 'Loading states...', true);
+            setLocationStatus(cityStatus, 'Select a state to load cities');
+
+            const countries = await getCreateListingCountries();
+            const country = countries.find(item => item.name === countryName);
+            if (!country) {
+                setLocationStatus(stateStatus, 'No matching country found');
+                stateSelect.disabled = false;
+                citySelect.disabled = false;
+                return;
+            }
+
+            const states = await getCreateListingStates(country.id);
+            await populateSelectOptions(stateSelect, states, 'Select state', selectedState);
+            stateSelect.disabled = false;
+            citySelect.disabled = false;
+            setLocationStatus(stateStatus, states.length ? `${states.length} state options ready` : 'No states found for this country');
+        }
+
+        async function loadCitiesForState(stateName, selectedCity = '') {
+            const countrySelect = document.getElementById('listing_country');
+            const citySelect = document.getElementById('listing_city');
+            const cityStatus = document.getElementById('listing_city_status');
+
+            citySelect.innerHTML = '<option value="">Select city</option>';
+            citySelect.disabled = true;
+
+            if (!stateName || !countrySelect.value) {
+                setLocationStatus(cityStatus, 'Select a state to load cities');
+                citySelect.disabled = false;
+                return;
+            }
+
+            setLocationStatus(cityStatus, 'Loading cities...', true);
+
+            const countries = await getCreateListingCountries();
+            const country = countries.find(item => item.name === countrySelect.value);
+            if (!country) {
+                setLocationStatus(cityStatus, 'No matching country found');
+                citySelect.disabled = false;
+                return;
+            }
+
+            const states = await getCreateListingStates(country.id);
+            const state = states.find(item => item.name === stateName);
+            if (!state) {
+                setLocationStatus(cityStatus, 'No matching state found');
+                citySelect.disabled = false;
+                return;
+            }
+
+            const cities = await getCreateListingCities(state.id);
+            await populateSelectOptions(citySelect, cities, 'Select city', selectedCity);
+            citySelect.disabled = false;
+            setLocationStatus(cityStatus, cities.length ? `${cities.length} city options ready` : 'No cities found for this state');
         }
 
         // Features Management
@@ -1696,7 +1959,7 @@ function formatNumberWithCommas(value) {
         function updatePreview() {
             // Update badges
             document.getElementById('previewServiceTypeBadge').textContent = 
-                formState.serviceType === 'service' ? 'Service' : 'Digital Product';
+                formState.serviceType === 'service' ? 'Listing' : 'Digital Product';
             document.getElementById('previewPricingTypeBadge').textContent = 
                 formState.pricingType === 'paid' ? 'Paid' : 'Free';
             
@@ -1761,14 +2024,14 @@ function formatNumberWithCommas(value) {
             content.innerHTML = `
                 <div class="space-y-4">
                     <div>
-                        <h3 class="text-base font-bold mb-1">${document.getElementById('title').value || 'Service Title'}</h3>
+                        <h3 class="text-base font-bold mb-1">${document.getElementById('title').value || 'Listing Title'}</h3>
                         <p class="text-sm text-gray-600">${document.getElementById('short_description').value || 'No description'}</p>
                     </div>
                     
                     <div class="grid grid-cols-2 gap-3">
                         <div class="bg-gray-100 p-3 rounded-lg">
-                            <p class="text-xs text-gray-600">Service Type</p>
-                            <p class="text-sm font-medium">${formState.serviceType === 'service' ? 'Service' : 'Digital Product'}</p>
+                            <p class="text-xs text-gray-600">Listing Type</p>
+                            <p class="text-sm font-medium">${formState.serviceType === 'service' ? 'Listing' : 'Digital Product'}</p>
                         </div>
                         <div class="bg-gray-100 p-3 rounded-lg">
                             <p class="text-xs text-gray-600">Pricing</p>
