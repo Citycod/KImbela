@@ -127,7 +127,7 @@
           <div class="hero-ad-content">
             <div class="hero-ad-pill">Top Banner · Ad Space</div>
             <h2>Advertise Here</h2>
-            <h5 style="color: white; font-weight: 900; font-size: 2.1rem: ">Promote your brand and reach the right audience on Kimbela</h5>
+            <h5 class="hero-ad-highlight" >Promote your brand and reach the right audience on Kimbela</h5>
             <p>Boost Visibility. Drive Engagement. Grow your business</p>
             <div class="hero-ad-actions">
               <span class="hero-ad-cta js-ad-cta" data-cta-href="{{ top_banner_url }}" role="link" tabindex="0">Create an ad</span>
@@ -542,7 +542,7 @@
                     <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" alt="" class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover" />
                 </a>
                 <div class="flex-1 ml-2 sm:ml-3">
-                    <div class="composer-input bg-white/70 backdrop-blur-[2px] border border-white/50 rounded-lg px-3 sm:px-4 py-2 sm:py-3 cursor-pointer hover:bg-white/80 transition-colors text-xs sm:text-sm" data-bs-toggle="modal" data-bs-target="#postModal">
+                    <div class="composer-input bg-white/70 backdrop-blur-[2px] border border-white/50 rounded-lg px-3 sm:px-4 py-2 sm:py-3 cursor-pointer hover:bg-white/80 transition-colors text-xs sm:text-sm" style="font-family: 'Inter', sans-serif;" data-bs-toggle="modal" data-bs-target="#postModal">
                         Share your thoughts....
                     </div>
                 </div>
@@ -1106,7 +1106,7 @@
         </a>
 
         {% set sidebar_banner = dashboard_ads.get('sidebar_banner') if dashboard_ads else None %}
-        <div class="sidebar-ad-banner {% if sidebar_banner %}has-dashboard-ad{% endif %}">
+        <div class="sidebar-ad-banner {% if sidebar_banner %}has-dashboard-ad{% endif %} ">
           {% if sidebar_banner %}
           <a
             class="dashboard-ad-link"
@@ -2116,6 +2116,7 @@
             <textarea
               name="post_content"
               class="w-full border-0 focus:ring-0 focus:outline-none text-base sm:text-lg resize-none"
+              style="font-family: 'Inter', sans-serif;"
               rows="3"
               placeholder="What's on your mind?"
               required
@@ -4070,6 +4071,7 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
       font-weight: 800;
       font-size: 0.85rem;
       text-decoration: none;
+      margin-top: 2rem;
       box-shadow: 0 12px 22px rgba(162, 93, 149, 0.24);
       transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
@@ -4656,23 +4658,34 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
       position: relative;
       z-index: 2;
       max-width: 520px;
-      font-family: "Poppins", "Roboto", sans-serif;
+      font-family: "Inter", "Poppins", "Roboto", sans-serif;
     }
     .hero-ad-content h2 {
       margin: 0 0 8px;
-      font-size: 1.9rem;
+      font-size: 1.45rem;
       font-weight: 900;
       letter-spacing: -0.05em;
-      line-height: 0.95;
+      line-height: 1;
       text-transform: uppercase;
-      font-family: "Poppins", "Roboto", sans-serif;
+      font-family: "Inter", "Poppins", "Roboto", sans-serif;
+    }
+    .hero-ad-highlight {
+      margin: 0 0 10px;
+      color: #ffffff;
+      font-size: 1.10rem;
+      line-height: 1.16;
+      font-weight: 950;
+      letter-spacing: -0.025em;
+      font-family: "Inter", "Poppins", "Roboto", sans-serif;
+      text-wrap: pretty;
+      word-break: keep-all;
     }
     .hero-ad-content p {
       margin: 0 0 16px;
-      font-size: 0.96rem;
+      font-size: 0.82rem;
       color: rgba(248, 250, 252, 0.95);
       font-weight: 700;
-      font-family: "Roboto", "Poppins", sans-serif;
+      font-family: "Inter", "Poppins", "Roboto", sans-serif;
     }
     .hero-ad-pill {
       display: inline-flex;
@@ -4687,7 +4700,7 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
       text-transform: uppercase;
       margin-bottom: 12px;
       color: #f8fafc;
-      font-family: "Poppins", "Roboto", sans-serif;
+      font-family: "Inter", "Poppins", "Roboto", sans-serif;
     }
     .hero-ad-actions {
       display: flex;
@@ -4710,7 +4723,7 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
       box-shadow: 0 18px 30px rgba(56, 189, 248, 0.35);
       cursor: pointer;
       transition: transform 0.2s ease, box-shadow 0.2s ease;
-      font-family: "Poppins", "Roboto", sans-serif;
+      font-family: "Inter", "Poppins", "Roboto", sans-serif;
     }
     .hero-ad-cta:hover {
       transform: translateY(-2px) scale(1.02);
@@ -4722,7 +4735,7 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
       font-weight: 800;
       letter-spacing: 0.06em;
       text-transform: uppercase;
-      font-family: "Poppins", "Roboto", sans-serif;
+      font-family: "Inter", "Poppins", "Roboto", sans-serif;
     }
     .hero-ad-sheen {
       position: absolute;
@@ -4784,14 +4797,24 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
         min-height: 180px;
       }
       .hero-ad-content h2 {
-        font-size: 1.05rem;
+        font-size: 0.82rem;
+        margin-bottom: 3px;
+      }
+      .hero-ad-highlight {
+        font-size: 0.72rem;
+        line-height: 1.2;
+        letter-spacing: -0.01em;
+        margin-bottom: 4px;
+        max-width: 22rem;
       }
       .hero-ad-content p {
-        font-size: 0.78rem;
+        font-size: 0.58rem;
+        line-height: 1.28;
+        margin-bottom: 6px;
       }
       .hero-ad-cta {
-        font-size: 0.72rem;
-        padding: 7px 14px;
+        font-size: 0.58rem;
+        padding: 5px 10px;
       }
       body.has-top-banner {
         --top-banner-height: 160px;
@@ -4799,6 +4822,33 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
       }
     }
     @media (max-width: 640px) {
+      .hero-ad-content h2 {
+        font-size: 0.68rem;
+        margin-bottom: 2px;
+      }
+      .hero-ad-highlight {
+        font-size: 0.58rem;
+        line-height: 1.18;
+        margin-bottom: 3px;
+        max-width: 100%;
+      }
+      .hero-ad-content p {
+        font-size: 0.48rem;
+        line-height: 1.22;
+        margin-bottom: 5px;
+      }
+      .hero-ad-pill {
+        font-size: 0.38rem;
+        padding: 2px 4px;
+        margin-bottom: 3px;
+      }
+      .hero-ad-cta {
+        font-size: 0.48rem;
+        padding: 4px 7px;
+      }
+      .hero-ad-secondary {
+        font-size: 0.42rem;
+      }
       body.has-top-banner {
         --top-banner-height: 140px;
         --top-banner-offset: 4px;
@@ -4813,24 +4863,31 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
         padding: 5px 7px;
       }
       body.has-top-banner .hero-ad-content h2 {
-        font-size: 0.88rem;
-        margin-bottom: 3px;
+        font-size: 0.74rem;
+        margin-bottom: 2px;
+      }
+      body.has-top-banner .hero-ad-highlight {
+        font-size: 0.52rem;
+        line-height: 1.16;
+        margin-bottom: 2px;
+        max-width: 100%;
       }
       body.has-top-banner .hero-ad-content p {
-        font-size: 0.64rem;
-        margin-bottom: 5px;
+        font-size: 0.42rem;
+        line-height: 1.18;
+        margin-bottom: 3px;
       }
       body.has-top-banner .hero-ad-pill {
-        font-size: 0.46rem;
-        padding: 2px 6px;
+        font-size: 0.38rem;
+        padding: 2px 5px;
         margin-bottom: 3px;
       }
       body.has-top-banner .hero-ad-cta {
-        font-size: 0.6rem;
-        padding: 5px 9px;
+        font-size: 0.48rem;
+        padding: 4px 7px;
       }
       body.has-top-banner .hero-ad-secondary {
-        font-size: 0.55rem;
+        font-size: 0.42rem;
       }
     }
 
@@ -4858,49 +4915,49 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
   object-fit: cover !important; /* Changed to cover for better responsiveness */
 }
 
-/* Sidebar ads - INCREASED HEIGHT */
+/* Sidebar ads - original height */
 .sidebar-ad-banner {
-  min-height: 320px !important; /* Increased from 260px */
+  min-height: 260px !important;
   height: auto !important;
-  max-height: 400px !important; /* Added max-height constraint */
+  max-height: none !important;
   overflow: hidden !important;
 }
 
 .sidebar-ad-banner .dashboard-ad-image {
   width: 100% !important;
   height: 100% !important;
-  min-height: 320px !important;
+  min-height: 260px !important;
   border-radius: 16px !important;
   object-fit: cover !important;
 }
 
-/* Right sidebar vertical ad - INCREASED HEIGHT */
+/* Right sidebar vertical ad - original height */
 .vertical-ad-banner {
-  min-height: 420px !important; /* Increased from 380px */
+  min-height: 380px !important;
   height: auto !important;
-  max-height: 500px !important; /* Added max-height constraint */
+  max-height: none !important;
   padding: 20px !important;
 }
 
 .vertical-ad-banner .dashboard-ad-image {
   width: 100% !important;
   height: 100% !important;
-  min-height: 420px !important;
+  min-height: 380px !important;
   border-radius: 16px !important;
   object-fit: cover !important;
 }
 
-/* Right sidebar spotlight ad - INCREASED HEIGHT */
+/* Right sidebar spotlight ad - original height */
 .right-ad-banner-2 {
-  min-height: 320px !important; /* Increased from default */
+  min-height: unset !important;
   height: auto !important;
-  max-height: 400px !important; /* Added max-height constraint */
+  max-height: none !important;
 }
 
 .right-ad-banner-2 .dashboard-ad-image {
   width: 100% !important;
   height: 100% !important;
-  min-height: 320px !important;
+  min-height: unset !important;
   border-radius: 16px !important;
   object-fit: cover !important;
 }
@@ -4913,6 +4970,21 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
   align-items: center !important;
   justify-content: center !important;
   overflow: hidden !important;
+}
+
+.sidebar-ad-banner.has-dashboard-ad {
+  min-height: 260px !important;
+  max-height: none !important;
+}
+
+.vertical-ad-banner.has-dashboard-ad {
+  min-height: 380px !important;
+  max-height: none !important;
+}
+
+.right-ad-banner-2.has-dashboard-ad {
+  min-height: unset !important;
+  max-height: none !important;
 }
 
 /* Maintain clickable area */
@@ -5199,7 +5271,7 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
 @media (min-width: 769px) and (max-width: 1024px) {
   /* Tablet landscape adjustments */
   .sidebar-ad-banner {
-    min-height: 300px !important;
+    min-height: 260px !important;
   }
   
   .vertical-ad-banner {
@@ -5207,7 +5279,7 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
   }
   
   .right-ad-banner-2 {
-    min-height: 300px !important;
+    min-height: unset !important;
   }
 }
 
@@ -5246,55 +5318,71 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea
 
 /* Compact fallback sidebar banners when no image/video ad is present */
 .sidebar-ad-banner:not(.has-dashboard-ad) {
-  min-height: 205px !important;
-  max-height: 205px !important;
-  padding: 16px !important;
+  min-height: 260px !important;
+  max-height: none !important;
+  padding: 18px !important;
 }
 
 .vertical-ad-banner:not(.has-dashboard-ad) {
-  min-height: 225px !important;
-  max-height: 225px !important;
-  padding: 18px !important;
+  min-height: 380px !important;
+  max-height: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+  padding: 56px 22px 22px !important;
 }
 
 .right-ad-banner-2:not(.has-dashboard-ad) {
-  min-height: 205px !important;
-  max-height: 205px !important;
-  padding: 18px !important;
+  min-height: unset !important;
+  max-height: none !important;
+  padding: 22px 18px 24px !important;
 }
 
 .sidebar-ad-banner:not(.has-dashboard-ad) h3,
 .vertical-ad-banner:not(.has-dashboard-ad) h2,
 .right-ad-banner-2:not(.has-dashboard-ad) h2 {
-  margin: 8px 0 6px !important;
-  font-size: 1rem !important;
+  margin: 14px 0 8px !important;
+  font-size: 1.2rem !important;
 }
 
 .sidebar-ad-banner:not(.has-dashboard-ad) p,
 .vertical-ad-banner:not(.has-dashboard-ad) p,
 .right-ad-banner-2:not(.has-dashboard-ad) p {
-  margin: 0 0 10px !important;
-  font-size: 0.82rem !important;
-  line-height: 1.35 !important;
+  margin: 0 0 14px !important;
+  font-size: 0.95rem !important;
+  line-height: 1.5 !important;
 }
 
 .sidebar-ad-banner:not(.has-dashboard-ad) .sidebar-ad-icon,
 .vertical-ad-banner:not(.has-dashboard-ad) .sidebar-ad-icon {
-  width: 42px !important;
-  height: 42px !important;
-  margin-bottom: 8px !important;
+  width: 52px !important;
+  height: 52px !important;
+  margin-bottom: 12px !important;
+}
+
+.vertical-ad-banner:not(.has-dashboard-ad) .vertical-ad-content {
+  margin-top: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  width: 100% !important;
 }
 
 .sidebar-ad-banner:not(.has-dashboard-ad) .sidebar-ad-icon i,
 .vertical-ad-banner:not(.has-dashboard-ad) .sidebar-ad-icon i {
-  font-size: 1.3rem !important;
+  font-size: 1.8rem !important;
 }
 
 .sidebar-ad-banner:not(.has-dashboard-ad) .sidebar-ad-cta,
 .vertical-ad-banner:not(.has-dashboard-ad) .vertical-ad-cta,
 .right-ad-banner-2:not(.has-dashboard-ad) .right-ad-2-cta {
-  padding: 8px 12px !important;
-  font-size: 0.78rem !important;
+  padding: 10px 16px !important;
+  font-size: 0.85rem !important;
+}
+
+.vertical-ad-banner:not(.has-dashboard-ad) .vertical-ad-cta {
+  margin-top: auto !important;
 }
 
 .mobile-feed-ad-slot .sidebar-ad-banner,
