@@ -1047,12 +1047,16 @@
                                     <h4 class="font-bold text-primary text-sm mb-2">Basic Information</h4>
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                                         <div>
-                                            <p class="text-xs text-gray-600">Category</p>
-                                            <p class="font-medium text-sm" id="previewCategory">Not selected</p>
+                                            <p class="text-xs text-gray-600">Listing Type</p>
+                                            <p class="font-medium text-sm" id="previewServiceTypeBadge">Listing</p>
                                         </div>
                                         <div>
-                                            <p class="text-xs text-gray-600">Duration</p>
-                                            <p class="font-medium text-sm" id="previewDuration">Not specified</p>
+                                            <p class="text-xs text-gray-600">Pricing Type</p>
+                                            <p class="font-medium text-sm" id="previewPricingTypeBadge">Paid</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-xs text-gray-600">Category</p>
+                                            <p class="font-medium text-sm" id="previewCategory">Not selected</p>
                                         </div>
                                         <div class="md:col-span-2">
                                             <p class="text-xs text-gray-600">Title</p>
@@ -1062,7 +1066,16 @@
                                             <p class="text-xs text-gray-600">Short Description</p>
                                             <p class="text-gray-700 text-sm" id="previewShortDesc">No description entered</p>
                                         </div>
+                                        <div class="md:col-span-2">
+                                            <p class="text-xs text-gray-600">Location</p>
+                                            <p class="text-gray-700 text-sm" id="previewLocation">No location selected</p>
+                                        </div>
                                     </div>
+                                </div>
+
+                                <div>
+                                    <h4 class="font-bold text-primary text-sm mb-2">Full Description</h4>
+                                    <p class="text-gray-700 text-sm whitespace-pre-line" id="previewDescription">No description entered</p>
                                 </div>
                                 
                                 <!-- Pricing Preview -->
@@ -1085,6 +1098,13 @@
                                     <h4 class="font-bold text-primary text-sm mb-2">What's Included</h4>
                                     <ul class="list-disc pl-4 space-y-1 text-sm" id="previewFeatures">
                                         <li>No features added</li>
+                                    </ul>
+                                </div>
+
+                                <div>
+                                    <h4 class="font-bold text-primary text-sm mb-2">Contact Methods</h4>
+                                    <ul class="list-disc pl-4 space-y-1 text-sm" id="previewContactMethods">
+                                        <li>Email</li>
                                     </ul>
                                 </div>
                             </div>
@@ -1280,6 +1300,34 @@ document.addEventListener('DOMContentLoaded', function() {
                 this.submit();
             });
         });
+
+        function syncFeatureInputs() {
+            const form = document.getElementById('createServiceForm');
+            if (!form) return;
+
+            form.querySelectorAll('input[data-feature-input="true"]').forEach(input => input.remove());
+
+            formState.features.forEach((feature, index) => {
+                const featureInput = document.createElement('input');
+                featureInput.type = 'hidden';
+                featureInput.name = `feature_${index + 1}`;
+                featureInput.value = feature;
+                featureInput.setAttribute('data-feature-input', 'true');
+                form.appendChild(featureInput);
+            });
+
+            let featureCountInput = document.getElementById('featureCountInput');
+            if (!featureCountInput) {
+                featureCountInput = document.createElement('input');
+                featureCountInput.type = 'hidden';
+                featureCountInput.name = 'feature_count';
+                featureCountInput.id = 'featureCountInput';
+                form.appendChild(featureCountInput);
+            }
+
+            featureCountInput.value = String(formState.features.length);
+            document.getElementById('featuresInput').value = JSON.stringify(formState.features);
+        }
 
         // Step Navigation
         function nextStep() {
@@ -1833,6 +1881,8 @@ function formatNumberWithCommas(value) {
                 `;
                 container.appendChild(featureElement);
             });
+
+            syncFeatureInputs();
         }
 
         // File Upload Handlers
@@ -1954,23 +2004,35 @@ function formatNumberWithCommas(value) {
 
         // Preview Functions
         function updatePreview() {
-            // Update badges
-            document.getElementById('previewServiceTypeBadge').textContent = 
-                formState.serviceType === 'service' ? 'Listing' : 'Digital Product';
-            document.getElementById('previewPricingTypeBadge').textContent = 
-                formState.pricingType === 'paid' ? 'Paid' : 'Free';
+            const serviceTypePreview = document.getElementById('previewServiceTypeBadge');
+            const pricingTypePreview = document.getElementById('previewPricingTypeBadge');
+
+            if (serviceTypePreview) {
+                serviceTypePreview.textContent =
+                    formState.serviceType === 'service' ? 'Service' : 'Product';
+            }
+
+            if (pricingTypePreview) {
+                pricingTypePreview.textContent =
+                    formState.pricingType === 'paid' ? 'Paid' : 'Free';
+            }
             
             // Basic Info
             const categorySelect = document.getElementById('category');
             const category = categorySelect.options[categorySelect.selectedIndex]?.text || 'Not selected';
             const title = document.getElementById('title').value || 'No title entered';
             const shortDesc = document.getElementById('short_description').value || 'No description entered';
-            const duration = document.getElementById('duration').value || 'Not specified';
+            const description = document.getElementById('description').value || 'No description entered';
+            const country = document.getElementById('listing_country').value;
+            const state = document.getElementById('listing_state').value;
+            const city = document.getElementById('listing_city').value;
+            const location = [city, state, country].filter(Boolean).join(', ') || 'No location selected';
             
             document.getElementById('previewCategory').textContent = category;
             document.getElementById('previewTitle').textContent = title;
             document.getElementById('previewShortDesc').textContent = shortDesc;
-            document.getElementById('previewDuration').textContent = duration;
+            document.getElementById('previewDescription').textContent = description;
+            document.getElementById('previewLocation').textContent = location;
             
             // Pricing
             const currency = document.getElementById('currency').value || 'Not selected';
@@ -1997,6 +2059,26 @@ function formatNumberWithCommas(value) {
                 const li = document.createElement('li');
                 li.textContent = 'No features added';
                 featuresList.appendChild(li);
+            }
+
+            const contactMethodsList = document.getElementById('previewContactMethods');
+            const selectedMethods = [];
+
+            if (document.getElementById('contact_whatsapp').checked) selectedMethods.push('WhatsApp');
+            if (document.getElementById('contact_phone').checked) selectedMethods.push('Phone Call');
+            if (document.getElementById('contact_email').checked) selectedMethods.push('Email');
+
+            contactMethodsList.innerHTML = '';
+            if (selectedMethods.length > 0) {
+                selectedMethods.forEach(method => {
+                    const li = document.createElement('li');
+                    li.textContent = method;
+                    contactMethodsList.appendChild(li);
+                });
+            } else {
+                const li = document.createElement('li');
+                li.textContent = 'No contact methods selected';
+                contactMethodsList.appendChild(li);
             }
         }
 

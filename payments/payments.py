@@ -35,8 +35,8 @@ def _get_dashboard_ad_usd_to_ngn_rate():
     return BasePaymentService().get_ngn_rate("USD_TO_NGN_RATE")
 
 
-def _get_dashboard_ad_daily_budget_bounds():
-    usd_min = 2.0
+def _get_dashboard_ad_daily_budget_bounds(placement=None):
+    usd_min = 5.0 if placement == "dashboard-top" else 2.0
     usd_max = 50.0
     rate = _get_dashboard_ad_usd_to_ngn_rate()
     ngn_min = round(usd_min * rate, 2)
@@ -208,7 +208,7 @@ def public_dashboard_ad_package(placement):
         upload_video_url=url_for("payments.public_upload_dashboard_ad_video", placement=placement),
         create_campaign_url=url_for("payments.public_create_campaign"),
         initiate_payment_url=url_for("payments.public_initiate_payment"),
-        ad_pricing=_get_dashboard_ad_daily_budget_bounds(),
+        ad_pricing=_get_dashboard_ad_daily_budget_bounds(placement),
     )
 
 
@@ -338,7 +338,7 @@ def public_create_campaign():
         except (TypeError, ValueError):
             return jsonify({"success": False, "error": "Invalid budget or duration"}), 400
 
-        ad_pricing = _get_dashboard_ad_daily_budget_bounds()
+        ad_pricing = _get_dashboard_ad_daily_budget_bounds(placement)
         if daily_budget < ad_pricing["ngn_min_input"]:
             return (
                 jsonify(
@@ -458,7 +458,7 @@ def dashboard_ad_package(placement):
         "dashboard_ad_package.html",
         placement=placement,
         placement_config=placement_config,
-        ad_pricing=_get_dashboard_ad_daily_budget_bounds(),
+        ad_pricing=_get_dashboard_ad_daily_budget_bounds(placement),
     )
 
 
@@ -1215,7 +1215,7 @@ def create_campaign():
                 400,
             )
 
-        ad_pricing = _get_dashboard_ad_daily_budget_bounds()
+        ad_pricing = _get_dashboard_ad_daily_budget_bounds(placement)
         if daily_budget < ad_pricing["ngn_min_input"]:
             return (
                 jsonify(

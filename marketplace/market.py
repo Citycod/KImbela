@@ -125,6 +125,58 @@ def activate_waiting_marketplace_services(user_id):
     return waiting_services
 
 
+def extract_marketplace_features(form):
+    """Support both indexed feature inputs and the JSON array used by the create form."""
+    features = []
+    feature_count = int(form.get("feature_count", 0) or 0)
+    for i in range(1, feature_count + 1):
+        feature = (form.get(f"feature_{i}") or "").strip()
+        if feature:
+            features.append(feature)
+
+    if features:
+        return features
+
+    raw_features = form.get("features")
+    if not raw_features:
+        return []
+
+    try:
+        parsed_features = json.loads(raw_features)
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return []
+
+    if not isinstance(parsed_features, list):
+        return []
+
+    return [str(feature).strip() for feature in parsed_features if str(feature).strip()]
+
+
+def extract_marketplace_gallery_images(files):
+    """Support both indexed gallery uploads and the multi-file input used by the create form."""
+    gallery_images = []
+
+    for file in files.getlist("gallery_images[]"):
+        if file and allowed_file(file.filename):
+            image_url = upload_to_cloudinary(file, "services/gallery")
+            if image_url:
+                gallery_images.append(image_url)
+
+    if gallery_images:
+        return gallery_images
+
+    for i in range(1, 6):
+        file_key = f"gallery_image_{i}"
+        if file_key in files:
+            file = files[file_key]
+            if file and allowed_file(file.filename):
+                image_url = upload_to_cloudinary(file, "services/gallery")
+                if image_url:
+                    gallery_images.append(image_url)
+
+    return gallery_images
+
+
 def apply_marketplace_seller_visibility_filter(query):
     if not marketplace_payments_enabled():
         return query.options(
@@ -1351,13 +1403,7 @@ def create_service():
         service.contact_methods = json.dumps(contact_methods)
 
         # Handle features
-        features = []
-        feature_count = int(request.form.get("feature_count", 0))
-        for i in range(1, feature_count + 1):
-            feature = request.form.get(f"feature_{i}")
-            if feature:
-                features.append(feature)
-        service.features = json.dumps(features)
+        service.features = json.dumps(extract_marketplace_features(request.form))
 
         # Handle cover image upload
         if "cover_image" in request.files:
@@ -1368,15 +1414,7 @@ def create_service():
                     service.cover_image = image_url
 
         # Handle gallery images
-        gallery_images = []
-        for i in range(1, 6):
-            file_key = f"gallery_image_{i}"
-            if file_key in request.files:
-                file = request.files[file_key]
-                if file and allowed_file(file.filename):
-                    image_url = upload_to_cloudinary(file, "services/gallery")
-                    if image_url:
-                        gallery_images.append(image_url)
+        gallery_images = extract_marketplace_gallery_images(request.files)
         if gallery_images:
             service.gallery_images = json.dumps(gallery_images)
 
@@ -1507,13 +1545,7 @@ def edit_service(service_id):
         service.contact_methods = json.dumps(contact_methods)
 
         # Update features
-        features = []
-        feature_count = int(request.form.get("feature_count", 0))
-        for i in range(1, feature_count + 1):
-            feature = request.form.get(f"feature_{i}")
-            if feature:
-                features.append(feature)
-        service.features = json.dumps(features)
+        service.features = json.dumps(extract_marketplace_features(request.form))
 
         # Update cover image
         if "cover_image" in request.files:
@@ -1525,14 +1557,9 @@ def edit_service(service_id):
 
         # Update gallery images
         gallery_images = service.gallery_images_list
-        for i in range(1, 6):
-            file_key = f"gallery_image_{i}"
-            if file_key in request.files:
-                file = request.files[file_key]
-                if file and allowed_file(file.filename):
-                    image_url = upload_to_cloudinary(file, "services/gallery")
-                    if image_url and image_url not in gallery_images:
-                        gallery_images.append(image_url)
+        for image_url in extract_marketplace_gallery_images(request.files):
+            if image_url not in gallery_images:
+                gallery_images.append(image_url)
 
         # Handle remove gallery images
         remove_images = request.form.getlist("remove_gallery")
