@@ -493,14 +493,6 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
-                            <div class="flex items-center gap-2">
-                                <i class="bi bi-info-circle text-blue-500"></i>
-                                <p class="text-xs text-blue-700">
-                                    Selected: <span id="selectedServiceType" class="font-bold">Listing</span>
-                                </p>
-                            </div>
-                        </div>
                     </div>
                     
                     <!-- Title -->
@@ -1542,10 +1534,6 @@ function formatNumberWithCommas(value) {
             const selectedCard = document.querySelector(`input[name="service_type"][value="${type}"]`).closest('.option-card');
             selectedCard.classList.add('selected');
             
-            // Update info display
-            const typeName = type === 'service' ? 'Services' : 'Digital Product';
-            document.getElementById('selectedServiceType').textContent = typeName;
-            
             // Toggle digital product fields
             const digitalFields = document.getElementById('digitalProductFields');
             if (type === 'digital') {
@@ -1583,8 +1571,7 @@ function formatNumberWithCommas(value) {
             
             const selectedCard = document.querySelector(`input[name="pricing_type"][value="${type}"]`).closest('.option-card');
             selectedCard.classList.add('selected');
-            
-            // Update info display
+
             const typeName = type === 'paid' ? 'Paid Listing' : 'Free Listing';
             document.getElementById('selectedPricingType').textContent = typeName;
             
