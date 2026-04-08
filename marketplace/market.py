@@ -13,7 +13,7 @@ from flask import (
     abort,
 )
 from flask_login import login_required, current_user
-from extensions import db, cache
+from extensions import db, cache, csrf
 import traceback
 from sqlalchemy import and_, or_, func
 from sqlalchemy.orm import joinedload
@@ -1794,7 +1794,7 @@ def initiate_payment():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-@market.route("/payment-callback", methods=["GET"])
+@market.route("/marketplace/payment-callback", methods=["GET"])
 @login_required
 def payment_callback():
     """Handle Flutterwave payment callback"""
@@ -1812,13 +1812,18 @@ def payment_callback():
             flash("Unauthorized access", "danger")
             return redirect(url_for("market.seller_dashboard"))
 
-        if status in {"successful", "completed"} and transaction_id:
+        if tx_ref:
             from payments.payment_service import MarketplacePaymentService
 
             payment_service = MarketplacePaymentService()
-            verification = payment_service.verify_flutterwave_payment(transaction_id)
+            verification = payment_service.resolve_flutterwave_verification(
+                tx_ref=tx_ref, transaction_id=transaction_id
+            )
             verification_data = verification.get("data", {}) or {}
-            verified_status = (verification_data.get("status") or "").strip().lower()
+            verified_status = (
+                verification.get("verified_status")
+                or (verification_data.get("status") or "").strip().lower()
+            )
 
             if verification["success"] and verified_status in {"successful", "completed"}:
                 # Update payment record
@@ -1851,6 +1856,20 @@ def payment_callback():
                 db.session.commit()
 
                 flash("Payment successful! Your service is now pending review.", "success")
+            elif status in {"successful", "completed", "pending", "processing"}:
+                payment.gateway_status = verified_status or status
+                payment.gateway_metadata = json.dumps(
+                    verification_data
+                    or {
+                        "status": status,
+                        "message": "Payment received but verification data was not available yet",
+                    }
+                )
+                db.session.commit()
+                flash(
+                    "Payment received and is still being confirmed by Flutterwave.",
+                    "info",
+                )
             else:
                 payment.status = "failed"
                 payment.gateway_status = verified_status or status
@@ -1859,11 +1878,6 @@ def payment_callback():
                 )
                 db.session.commit()
                 flash("Payment verification failed. Please try again.", "danger")
-        else:
-            payment.status = "failed"
-            payment.gateway_status = status
-            db.session.commit()
-            flash("Payment failed. Please try again.", "danger")
 
         return redirect(url_for("market.seller_dashboard"))
 
@@ -4619,6 +4633,7 @@ def create_default_plans():
 
 
 # Add this callback route for Flutterwave webhook:
+@csrf.exempt
 @market.route("/marketplace-payment-callback", methods=["POST"])
 def marketplace_payment_callback():
     """Handle Flutterwave webhook for marketplace payments"""
@@ -4630,7 +4645,9 @@ def marketplace_payment_callback():
             f"🟡 [MARKETPLACE WEBHOOK] Received: {json.dumps(webhook_data, indent=2)}"
         )
 
-        webhook_hash = os.getenv("FLW_WEBHOOK_HASH")
+        webhook_hash = current_app.config.get("FLUTTERWAVE_WEBHOOK_HASH") or os.getenv(
+            "FLW_WEBHOOK_HASH"
+        )
         received_hash = request.headers.get("verif-hash")
         if webhook_hash and received_hash != webhook_hash:
             print("🔴 [MARKETPLACE WEBHOOK] Invalid webhook hash")
@@ -4718,56 +4735,62 @@ def subscription_callback():
         payment_service = MarketplacePaymentService()
         success_statuses = {"successful", "completed"}
         pending_statuses = {"pending", "processing"}
+        verification = None
+        verification_data = {}
+        verified_status = ""
 
-        if status in success_statuses and transaction_id:
-            print(f"🟡 [CALLBACK] Payment reported as {status}, verifying...")
-
-            # Verify the payment
+        if transaction_id:
             verification = payment_service.verify_flutterwave_payment(transaction_id)
             verification_data = verification.get("data", {}) or {}
             verified_status = (verification_data.get("status") or "").strip().lower()
 
-            if verification["success"] and verified_status in success_statuses:
-                print(f"✅ [CALLBACK] Payment verified with status: {verified_status}")
+        if not verified_status:
+            reference_verification = payment_service.verify_flutterwave_payment_by_reference(
+                tx_ref
+            )
+            reference_data = reference_verification.get("data", {}) or {}
+            reference_status = (reference_data.get("status") or "").strip().lower()
+            if reference_verification.get("success") and reference_status:
+                verification = reference_verification
+                verification_data = reference_data
+                verified_status = reference_status
+                if not transaction_id:
+                    transaction_id = verification_data.get("id")
 
-                # Handle successful payment
-                success = payment_service.handle_marketplace_payment_success(
-                    marketplace_payment, verification_data
-                )
+        if verification and verification.get("success") and verified_status in success_statuses:
+            print(f"✅ [CALLBACK] Payment verified with status: {verified_status}")
 
-                if success:
-                    flash(
-                        "🎉 Subscription activated successfully! Check your email for confirmation.",
-                        "success",
-                    )
-                else:
-                    flash(
-                        "Subscription activated but there was an issue sending confirmation email.",
-                        "warning",
-                    )
-            elif verification["success"] and verified_status in pending_statuses:
-                marketplace_payment.gateway_status = verified_status
-                marketplace_payment.gateway_metadata = json.dumps(verification_data)
-                marketplace_payment.updated_at = utcnow()
-                db.session.commit()
+            success = payment_service.handle_marketplace_payment_success(
+                marketplace_payment, verification_data
+            )
+
+            if success:
                 flash(
-                    "Payment received and is still being confirmed by Flutterwave. Your subscription will activate once verification completes.",
-                    "info",
+                    "🎉 Subscription activated successfully! Check your email for confirmation.",
+                    "success",
                 )
             else:
-                # Handle verification failure
-                payment_service.handle_marketplace_payment_failure(
-                    marketplace_payment,
-                    verification_data or {"message": "Verification failed"},
+                flash(
+                    "Subscription activated but there was an issue sending confirmation email.",
+                    "warning",
                 )
-                flash("Payment verification failed. Please contact support.", "danger")
+        elif verification and verification.get("success") and verified_status in pending_statuses:
+            marketplace_payment.gateway_status = verified_status
+            marketplace_payment.gateway_metadata = json.dumps(verification_data)
+            marketplace_payment.updated_at = utcnow()
+            db.session.commit()
+            flash(
+                "Payment received and is still being confirmed by Flutterwave. Your subscription will activate once verification completes.",
+                "info",
+            )
         elif status in success_statuses:
             marketplace_payment.gateway_status = status
             marketplace_payment.gateway_metadata = json.dumps(
                 {
                     "status": status,
-                    "message": "Payment completed but transaction ID was not included in the redirect callback.",
+                    "message": "Payment completed but verification data was not available yet.",
                     "tx_ref": tx_ref,
+                    "transaction_id": transaction_id,
                 }
             )
             marketplace_payment.updated_at = utcnow()
@@ -4777,10 +4800,15 @@ def subscription_callback():
                 "info",
             )
         else:
-            # Handle payment failure
             error_data = {
-                "status": status or "cancelled",
-                "message": "Payment was not completed",
+                "status": verified_status or status or "cancelled",
+                "message": (
+                    "Payment was not completed"
+                    if not verification_data
+                    else verification_data.get("processor_response")
+                    or verification_data.get("message")
+                    or "Payment was not completed"
+                ),
             }
             payment_service.handle_marketplace_payment_failure(
                 marketplace_payment, error_data

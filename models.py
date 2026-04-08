@@ -29,8 +29,13 @@ blocked_users = db.Table(
 @login_manager.user_loader
 def load_user(user_id):
     try:
-        return User.query.get(int(user_id))
+        user_id = int(user_id)
     except (TypeError, ValueError):
+        return None
+
+    try:
+        return db.session.get(User, user_id)
+    except Exception:
         return None
 
 

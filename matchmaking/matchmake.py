@@ -722,7 +722,7 @@ def initiate_matchmaking_payment():
         )
 
 
-@match.route("/payment-callback")
+@match.route("/matchmaking/payment-callback")
 @login_required
 def payment_callback():
     """Handle Flutterwave payment callback for matchmaking"""
@@ -751,22 +751,18 @@ def payment_callback():
             flash("Payment transaction not found", "error")
             return redirect(url_for("match.requests"))
 
-        if status in {"successful", "completed"} and transaction_id:
-            verification_result = payment_service.verify_flutterwave_payment(transaction_id)
-            print(f"🟡 [PAYMENT CALLBACK] Verification result: {verification_result}")
-            if not verification_result["success"]:
-                flash("Payment verification failed", "error")
-                return redirect(url_for("match.requests"))
+        verification_result = payment_service.resolve_flutterwave_verification(
+            tx_ref=tx_ref, transaction_id=transaction_id
+        )
+        print(f"🟡 [PAYMENT CALLBACK] Verification result: {verification_result}")
 
-            flutterwave_data = verification_result["data"]
-            verified_status = (flutterwave_data.get("status") or "").strip().lower()
-
-        else:
-            flutterwave_data = {"status": status}
-            verified_status = status
+        flutterwave_data = verification_result.get("data", {}) or {"status": status}
+        verified_status = (
+            verification_result.get("verified_status") or status or ""
+        ).strip().lower()
 
         # Handle payment status
-        if status in {"successful", "completed"} and verified_status in {"successful", "completed"}:
+        if verified_status in {"successful", "completed"}:
             # Successful payment
             print(f"🟡 [PAYMENT CALLBACK] Processing successful payment...")
             success = payment_service.handle_matchmaking_payment_success(
@@ -787,7 +783,12 @@ def payment_callback():
                     "error",
                 )
                 return redirect(url_for("match.requests"))
-        elif status in {"successful", "completed", "pending", "processing"}:
+        elif verified_status in {"pending", "processing"} or status in {
+            "successful",
+            "completed",
+            "pending",
+            "processing",
+        }:
             matchmaking_payment.gateway_status = verified_status or status
             matchmaking_payment.gateway_metadata = json.dumps(flutterwave_data)
             matchmaking_payment.updated_at = utcnow()

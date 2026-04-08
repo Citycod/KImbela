@@ -127,8 +127,110 @@ def test_shared_post_page_does_not_use_profile_picture_as_preview(client, db, us
 
     response = client.get(f"/post/{post.public_id}", base_url="https://www.kimbela.com")
     assert response.status_code == 200
-    assert b'https://cdn.example.com/profile.jpg' not in response.data
-    assert b'/static/assets/img/kim.png' in response.data
+    head_html = response.data.split(b"</head>", 1)[0]
+    assert b'<meta property="og:image" content="https://www.kimbela.com/static/assets/img/kim.png">' in head_html
+    assert b'<meta name="twitter:image" content="https://www.kimbela.com/static/assets/img/kim.png">' in head_html
+    assert b'https://cdn.example.com/profile.jpg' not in head_html
+
+
+def test_subscription_callback_recovers_success_via_reference_verification(
+    client, db, user, login, monkeypatch
+):
+    from datetime import timedelta
+
+    from models import MarketplacePayment, MarketplaceSubscription
+    from payments.payment_service import MarketplacePaymentService
+    from time_utils import utcnow
+
+    plan = MarketplaceSubscription(
+        name="Starter",
+        slug="starter-test",
+        price_tokens=100,
+        price_usd=2.0,
+    )
+    db.session.add(plan)
+    db.session.flush()
+
+    payment = MarketplacePayment(
+        user_id=user.id,
+        subscription_id=plan.id,
+        amount=2756.59,
+        currency="NGN",
+        tokens_paid=275659,
+        gateway="flutterwave",
+        gateway_reference="KIMBELA_MARKET_TEST_REF",
+        status="pending",
+        gateway_status="initiated",
+        start_date=utcnow(),
+        end_date=utcnow() + timedelta(days=30),
+    )
+    db.session.add(payment)
+    db.session.commit()
+
+    login()
+
+    def fake_verify_by_id(self, transaction_id):
+        return {"success": False, "data": {}}
+
+    def fake_verify_by_reference(self, tx_ref):
+        assert tx_ref == "KIMBELA_MARKET_TEST_REF"
+        return {
+            "success": True,
+            "data": {
+                "id": 2018701314,
+                "tx_ref": tx_ref,
+                "status": "successful",
+                "amount": 2756.59,
+                "currency": "NGN",
+                "payment_type": "card",
+            },
+        }
+
+    def fake_handle_success(self, marketplace_payment, flutterwave_data):
+        marketplace_payment.status = "completed"
+        marketplace_payment.gateway_status = flutterwave_data["status"]
+        marketplace_payment.gateway_payment_id = str(flutterwave_data["id"])
+        marketplace_payment.paid_at = utcnow()
+        marketplace_payment.user.marketplace_subscription_status = "active"
+        marketplace_payment.user.marketplace_subscription_id = (
+            marketplace_payment.subscription_id
+        )
+        marketplace_payment.user.marketplace_subscription_expires = (
+            marketplace_payment.end_date
+        )
+        db.session.commit()
+        return True
+
+    monkeypatch.setattr(
+        MarketplacePaymentService,
+        "verify_flutterwave_payment",
+        fake_verify_by_id,
+    )
+    monkeypatch.setattr(
+        MarketplacePaymentService,
+        "verify_flutterwave_payment_by_reference",
+        fake_verify_by_reference,
+    )
+    monkeypatch.setattr(
+        MarketplacePaymentService,
+        "handle_marketplace_payment_success",
+        fake_handle_success,
+    )
+
+    response = client.get(
+        "/subscription-callback?tx_ref=KIMBELA_MARKET_TEST_REF&status=session_expired",
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+
+    db.session.refresh(payment)
+    db.session.refresh(user)
+    assert payment.status == "completed"
+    assert payment.gateway_status == "successful"
+    assert payment.gateway_payment_id == "2018701314"
+    assert user.marketplace_subscription_status == "active"
+    assert user.marketplace_subscription_id == plan.id
 
 
 def test_public_profile_accepts_user_uuid(client, db, user, login):

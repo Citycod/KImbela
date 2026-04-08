@@ -12,8 +12,15 @@ from flask import (
 from sqlalchemy import or_
 from flask_login import login_required, current_user
 from flask_wtf.csrf import generate_csrf
-from extensions import db, mail, bcrypt
-from models import User, AdCampaign, AdPackage, PaymentTransaction, MatchmakingPayments
+from extensions import db, mail, bcrypt, csrf
+from models import (
+    User,
+    AdCampaign,
+    AdPackage,
+    PaymentTransaction,
+    MatchmakingPayments,
+    MarketplacePayment,
+)
 import cloudinary.uploader
 import os, requests
 import math
@@ -27,6 +34,19 @@ import time
 
 from time_utils import utcnow
 payments = Blueprint("payments", __name__)
+
+
+def _find_payment_transaction_by_tx_ref(tx_ref):
+    return PaymentTransaction.query.filter(
+        or_(
+            PaymentTransaction.gateway_reference == tx_ref,
+            PaymentTransaction.gateway_payment_id == tx_ref,
+        )
+    ).first()
+
+
+def _is_marketplace_tx_ref(tx_ref):
+    return (tx_ref or "").startswith(("KIMBELA-MP-", "KIMBELA_MARKET_", "KIMBELA-SUB-"))
 
 
 def _get_dashboard_ad_usd_to_ngn_rate():
@@ -637,27 +657,19 @@ def payment_callback():
         # Determine transaction type and handle accordingly
         if tx_ref.startswith("KIMBELA_AD_"):
             # Ad campaign payment
-            transaction = PaymentTransaction.query.filter_by(
-                gateway_payment_id=tx_ref
-            ).first()
+            transaction = _find_payment_transaction_by_tx_ref(tx_ref)
             if not transaction:
                 print(f"🔴 [PAYMENT CALLBACK] Ad transaction not found: {tx_ref}")
                 flash("Transaction not found", "error")
                 return redirect(url_for("payments.payment_failed"))
 
-            if status in {"successful", "completed"}:
-                # Use transaction_id (Flutterwave's ID) for verification
-                if not transaction_id:
-                    print(
-                        f"🔴 [PAYMENT CALLBACK] Missing transaction_id for verification"
-                    )
-                    flash("Missing transaction ID", "error")
-                    return redirect(url_for("payments.payment_failed"))
+            verification = base_service.resolve_flutterwave_verification(
+                tx_ref=tx_ref, transaction_id=transaction_id
+            )
+            verification_data = verification.get("data", {}) or {}
+            verified_status = (verification.get("verified_status") or "").strip().lower()
 
-                verification = base_service.verify_flutterwave_payment(transaction_id)
-                verification_data = verification.get("data", {}) or {}
-                verified_status = (verification_data.get("status") or "").strip().lower()
-                if verification["success"] and verified_status in {"successful", "completed"}:
+            if verified_status in {"successful", "completed"}:
                     # Update transaction and campaign
                     success = ad_service.handle_ad_payment_success(
                         transaction.id, verification_data
@@ -683,19 +695,22 @@ def payment_callback():
                             "error",
                         )
                         return redirect(url_for("payments.payment_failed"))
-                else:
-                    print(
-                        f"🔴 [PAYMENT CALLBACK] Payment verification failed or returned non-success status: {verification.get('error')} | {verification_data}"
-                    )
-                    ad_service.handle_ad_payment_failure(
-                        transaction.id,
-                        verification_data or {"status": status or "failed"},
-                    )
-                    flash("Payment verification failed. Please try again.", "error")
-                    return redirect(url_for("payments.payment_failed"))
+            elif verified_status in {"pending", "processing"}:
+                ad_service.handle_ad_payment_failure(
+                    transaction.id,
+                    verification_data or {"status": verified_status},
+                )
+                flash(
+                    "Payment received and is still being confirmed by Flutterwave.",
+                    "info",
+                )
+                return redirect(url_for("payments.payment_failed"))
             else:
-                # Payment failed
-                ad_service.handle_ad_payment_failure(transaction.id, {"status": status})
+                ad_service.handle_ad_payment_failure(
+                    transaction.id,
+                    verification_data
+                    or {"status": status or "failed", "message": verification.get("error")},
+                )
                 flash("Payment failed. Please try again.", "error")
                 return redirect(url_for("payments.payment_failed"))
 
@@ -709,19 +724,13 @@ def payment_callback():
                 flash("Payment not found", "error")
                 return redirect(url_for("payments.payment_failed"))
 
-            if status in {"successful", "completed"}:
-                # Use transaction_id for verification
-                if not transaction_id:
-                    print(
-                        f"🔴 [PAYMENT CALLBACK] Missing transaction_id for matchmaking verification"
-                    )
-                    flash("Missing transaction ID", "error")
-                    return redirect(url_for("payments.payment_failed"))
+            verification = base_service.resolve_flutterwave_verification(
+                tx_ref=tx_ref, transaction_id=transaction_id
+            )
+            verification_data = verification.get("data", {}) or {}
+            verified_status = (verification.get("verified_status") or "").strip().lower()
 
-                verification = base_service.verify_flutterwave_payment(transaction_id)
-                verification_data = verification.get("data", {}) or {}
-                verified_status = (verification_data.get("status") or "").strip().lower()
-                if verification["success"] and verified_status in {"successful", "completed"}:
+            if verified_status in {"successful", "completed"}:
                     # Update matchmaking payment and request
                     success = matchmaking_service.handle_matchmaking_payment_success(
                         matchmaking_payment, verification_data
@@ -749,23 +758,83 @@ def payment_callback():
                             "error",
                         )
                         return redirect(url_for("payments.payment_failed"))
-                else:
-                    print(
-                        f"🔴 [PAYMENT CALLBACK] Payment verification failed or returned non-success status: {verification.get('error')} | {verification_data}"
-                    )
-                    matchmaking_service.handle_matchmaking_payment_failure(
-                        matchmaking_payment,
-                        verification_data or {"status": status or "failed"},
-                    )
-                    flash("Payment verification failed. Please try again.", "error")
-                    return redirect(url_for("payments.payment_failed"))
-            else:
-                # Payment failed
+            elif verified_status in {"pending", "processing"}:
                 matchmaking_service.handle_matchmaking_payment_failure(
-                    matchmaking_payment, {"status": status}
+                    matchmaking_payment,
+                    verification_data or {"status": verified_status},
+                )
+                flash(
+                    "Payment received and is still being confirmed by Flutterwave.",
+                    "info",
+                )
+                return redirect(url_for("payments.payment_failed"))
+            else:
+                matchmaking_service.handle_matchmaking_payment_failure(
+                    matchmaking_payment,
+                    verification_data
+                    or {"status": status or "failed", "message": verification.get("error")},
                 )
                 flash("Payment failed. Please try again.", "error")
                 return redirect(url_for("payments.payment_failed"))
+        elif tx_ref.startswith("KIMBELA-MP-"):
+            marketplace_payment = MarketplacePayment.query.filter_by(
+                gateway_reference=tx_ref
+            ).first()
+            if not marketplace_payment:
+                print(f"🔴 [PAYMENT CALLBACK] Marketplace payment not found: {tx_ref}")
+                flash("Payment not found", "error")
+                return redirect(url_for("payments.payment_failed"))
+
+            verification = base_service.resolve_flutterwave_verification(
+                tx_ref=tx_ref, transaction_id=transaction_id
+            )
+            verification_data = verification.get("data", {}) or {}
+            verified_status = (verification.get("verified_status") or "").strip().lower()
+
+            if verified_status in {"successful", "completed"}:
+                marketplace_payment.gateway_payment_id = str(
+                    verification_data.get("id") or transaction_id or ""
+                )
+                marketplace_payment.gateway_status = verified_status
+                marketplace_payment.status = "completed"
+                marketplace_payment.gateway_metadata = json.dumps(verification_data)
+                marketplace_payment.paid_at = utcnow()
+
+                service = marketplace_payment.service
+                if service:
+                    service.subscription_status = "active"
+                    service.subscription_expires = utcnow() + timedelta(days=30)
+                    service.status = "pending"
+
+                db.session.commit()
+                flash(
+                    "Payment successful! Your service is now pending review.",
+                    "success",
+                )
+                return redirect(url_for("market.seller_dashboard"))
+            elif verified_status in {"pending", "processing"}:
+                marketplace_payment.gateway_status = verified_status
+                marketplace_payment.gateway_metadata = json.dumps(
+                    verification_data or {"status": verified_status}
+                )
+                marketplace_payment.updated_at = utcnow()
+                db.session.commit()
+                flash(
+                    "Payment received and is still being confirmed by Flutterwave.",
+                    "info",
+                )
+                return redirect(url_for("market.seller_dashboard"))
+            else:
+                marketplace_payment.status = "failed"
+                marketplace_payment.gateway_status = verified_status or status
+                marketplace_payment.gateway_metadata = json.dumps(
+                    verification_data
+                    or {"status": status or "failed", "message": verification.get("error")}
+                )
+                marketplace_payment.updated_at = utcnow()
+                db.session.commit()
+                flash("Payment failed. Please try again.", "error")
+                return redirect(url_for("market.seller_dashboard"))
         else:
             print(f"🔴 [PAYMENT CALLBACK] Unknown transaction type: {tx_ref}")
             flash("Unknown transaction type", "error")
@@ -778,6 +847,124 @@ def payment_callback():
         print(f"🔴 [PAYMENT CALLBACK] Traceback: {traceback.format_exc()}")
         flash("An error occurred during payment processing.", "error")
         return redirect(url_for("payments.payment_failed"))
+
+
+@csrf.exempt
+@payments.route("/flutterwave/webhook", methods=["POST"])
+def flutterwave_webhook():
+    """Handle verified Flutterwave webhooks for all supported payment types."""
+    try:
+        from .payment_service import (
+            AdCampaignPaymentService,
+            BasePaymentService,
+            MatchmakingPaymentService,
+            MarketplacePaymentService,
+        )
+
+        payload = request.get_json(silent=True) or {}
+        current_app.logger.info(
+            "🟡 [FLUTTERWAVE WEBHOOK] Received payload: %s", payload
+        )
+
+        webhook_hash = current_app.config.get("FLUTTERWAVE_WEBHOOK_HASH") or os.getenv(
+            "FLW_WEBHOOK_HASH", ""
+        )
+        received_hash = request.headers.get("verif-hash", "")
+        if webhook_hash and received_hash != webhook_hash:
+            current_app.logger.warning("🔴 [FLUTTERWAVE WEBHOOK] Invalid webhook hash")
+            return jsonify({"status": "error", "message": "Invalid signature"}), 401
+
+        event_type = payload.get("event")
+        if event_type != "charge.completed":
+            return jsonify({"status": "ignored", "message": "Event not handled"}), 200
+
+        data = payload.get("data", {}) or {}
+        tx_ref = data.get("tx_ref")
+        transaction_id = data.get("id")
+        if not tx_ref:
+            return (
+                jsonify({"status": "error", "message": "Missing transaction reference"}),
+                400,
+            )
+
+        base_service = BasePaymentService()
+        verification = base_service.resolve_flutterwave_verification(
+            tx_ref=tx_ref, transaction_id=transaction_id
+        )
+        verification_data = verification.get("data", {}) or data
+        verified_status = (verification.get("verified_status") or "").strip().lower()
+        if not verified_status:
+            verified_status = (verification_data.get("status") or "").strip().lower()
+
+        if tx_ref.startswith("KIMBELA_AD_"):
+            transaction = _find_payment_transaction_by_tx_ref(tx_ref)
+            if not transaction:
+                return jsonify({"status": "error", "message": "Transaction not found"}), 404
+
+            ad_service = AdCampaignPaymentService()
+            if verified_status in {"successful", "completed"}:
+                handled = ad_service.handle_ad_payment_success(
+                    transaction.id, verification_data
+                )
+            else:
+                handled = ad_service.handle_ad_payment_failure(
+                    transaction.id,
+                    verification_data
+                    or {"status": verified_status or "failed", "message": verification.get("error")},
+                )
+        elif tx_ref.startswith("KIMBELA_MATCH_"):
+            matchmaking_service = MatchmakingPaymentService()
+            matchmaking_payment = matchmaking_service.get_payment_by_reference(tx_ref)
+            if not matchmaking_payment:
+                return jsonify({"status": "error", "message": "Payment not found"}), 404
+
+            if verified_status in {"successful", "completed"}:
+                handled = matchmaking_service.handle_matchmaking_payment_success(
+                    matchmaking_payment, verification_data
+                )
+            else:
+                handled = matchmaking_service.handle_matchmaking_payment_failure(
+                    matchmaking_payment,
+                    verification_data
+                    or {"status": verified_status or "failed", "message": verification.get("error")},
+                )
+        elif _is_marketplace_tx_ref(tx_ref):
+            marketplace_payment = MarketplacePayment.query.filter_by(
+                gateway_reference=tx_ref
+            ).first()
+            if not marketplace_payment:
+                return jsonify({"status": "error", "message": "Payment not found"}), 404
+
+            marketplace_service = MarketplacePaymentService()
+            if verified_status in {"successful", "completed"}:
+                handled = marketplace_service.handle_marketplace_payment_success(
+                    marketplace_payment, verification_data
+                )
+            else:
+                handled = marketplace_service.handle_marketplace_payment_failure(
+                    marketplace_payment,
+                    verification_data
+                    or {"status": verified_status or "failed", "message": verification.get("error")},
+                )
+        else:
+            return (
+                jsonify(
+                    {
+                        "status": "ignored",
+                        "message": f"Unsupported transaction reference: {tx_ref}",
+                    }
+                ),
+                200,
+            )
+
+        if not handled:
+            return jsonify({"status": "error", "message": "Processing failed"}), 500
+
+        return jsonify({"status": "success", "verified_status": verified_status}), 200
+
+    except Exception as e:
+        current_app.logger.exception("🔴 [FLUTTERWAVE WEBHOOK] Error: %s", e)
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 
 @payments.route("/flutterwave-callback")
@@ -829,9 +1016,7 @@ def flutterwave_callback():
         payment_service = PaymentService()
 
         # Find transaction by tx_ref (our reference)
-        transaction = PaymentTransaction.query.filter_by(
-            gateway_payment_id=tx_ref
-        ).first()
+        transaction = _find_payment_transaction_by_tx_ref(tx_ref)
 
         if not transaction:
             print(f"🔴 [CALLBACK] No transaction found for tx_ref: {tx_ref}")
@@ -841,12 +1026,17 @@ def flutterwave_callback():
         print(f"✅ [CALLBACK] Found transaction: {transaction.id}")
 
         # Verify payment with Flutterwave
-        verification_result = payment_service.verify_flutterwave_payment(transaction_id)
+        verification_result = payment_service.resolve_flutterwave_verification(
+            tx_ref=tx_ref, transaction_id=transaction_id
+        )
         print(f"🟡 [CALLBACK] Verification result: {verification_result}")
 
         if verification_result["success"]:
             payment_data = verification_result.get("data", {})
-            actual_status = payment_data.get("status", "failed")
+            actual_status = (
+                verification_result.get("verified_status")
+                or (payment_data.get("status") or "").strip().lower()
+            )
 
             print(f"🟡 [CALLBACK] Payment status from Flutterwave: {actual_status}")
 
@@ -903,13 +1093,14 @@ def payment_success(transaction_id):
         # Verify payment is actually completed
         if transaction.status != "completed":
             payment_service = PaymentService()
-            verification_result = payment_service.verify_flutterwave_payment(
-                transaction.gateway_payment_id
+            verification_result = payment_service.resolve_flutterwave_verification(
+                tx_ref=transaction.gateway_reference or transaction.gateway_payment_id,
+                transaction_id=transaction.gateway_payment_id,
             )
 
             if (
                 verification_result["success"]
-                and verification_result["data"].get("status") == "successful"
+                and verification_result.get("verified_status") in {"successful", "completed"}
             ):
                 payment_service.handle_successful_payment(
                     transaction.id, verification_result["data"]

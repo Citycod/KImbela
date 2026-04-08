@@ -102,7 +102,8 @@ class AdCampaignPaymentService:
                         campaign_id=campaign.id,
                         amount=campaign.budget,
                         currency=currency,
-                        gateway_payment_id=tx_ref,
+                        gateway_reference=tx_ref,
+                        gateway_payment_id=str(result["data"].get("id") or ""),
                         gateway="flutterwave",
                         status="pending",
                         transaction_type="ad_campaign",
@@ -153,7 +154,9 @@ class AdCampaignPaymentService:
 
             # Update transaction
             transaction.status = "completed"
-            transaction.gateway_status = "successful"
+            transaction.gateway_status = (payment_data or {}).get("status", "successful")
+            if payment_data and payment_data.get("id") is not None:
+                transaction.gateway_payment_id = str(payment_data.get("id"))
             if payment_data:
                 transaction.gateway_metadata = json.dumps(payment_data)
             transaction.updated_at = utcnow()

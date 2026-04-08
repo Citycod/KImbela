@@ -278,6 +278,98 @@ class BasePaymentService:
             print(f"🔴 [VERIFY PAYMENT] Exception: {str(e)}")
             return {"success": False, "error": str(e), "data": {}}
 
+    def verify_flutterwave_payment_by_reference(self, tx_ref):
+        """Verify Flutterwave payment using merchant transaction reference."""
+        try:
+            headers = {
+                "Authorization": f"Bearer {self.flutterwave_secret_key}",
+                "Content-Type": "application/json",
+            }
+
+            response = self._http_request(
+                "GET",
+                f"{self.flutterwave_base_url}/transactions/verify_by_reference",
+                headers=headers,
+                params={"tx_ref": tx_ref},
+                timeout=30,
+            )
+
+            print(
+                f"🟡 [VERIFY PAYMENT BY REFERENCE] Response status: {response.status_code}"
+            )
+
+            if response.status_code == 200:
+                result = response.json()
+                print(
+                    f"🟡 [VERIFY PAYMENT BY REFERENCE] Verification result: {result}"
+                )
+                return {
+                    "success": result.get("status") == "success",
+                    "data": result.get("data", {}),
+                }
+
+            print(
+                "🔴 [VERIFY PAYMENT BY REFERENCE] HTTP Error: "
+                f"{response.status_code} - {response.text}"
+            )
+            return {
+                "success": False,
+                "error": f"HTTP {response.status_code}",
+                "data": {},
+            }
+
+        except Exception as e:
+            print(f"🔴 [VERIFY PAYMENT BY REFERENCE] Exception: {str(e)}")
+            return {"success": False, "error": str(e), "data": {}}
+
+    def resolve_flutterwave_verification(self, tx_ref=None, transaction_id=None):
+        """Resolve payment state from Flutterwave using transaction ID, tx_ref, or both."""
+        verification_attempts = []
+
+        if transaction_id:
+            verification = self.verify_flutterwave_payment(transaction_id)
+            verification_attempts.append(("transaction_id", verification))
+            verified_status = (
+                (verification.get("data", {}) or {}).get("status") or ""
+            ).strip().lower()
+            if verification.get("success") and verified_status:
+                return {
+                    "success": True,
+                    "data": verification.get("data", {}) or {},
+                    "verified_status": verified_status,
+                    "source": "transaction_id",
+                }
+
+        if tx_ref:
+            verification = self.verify_flutterwave_payment_by_reference(tx_ref)
+            verification_attempts.append(("tx_ref", verification))
+            verified_status = (
+                (verification.get("data", {}) or {}).get("status") or ""
+            ).strip().lower()
+            if verification.get("success") and verified_status:
+                return {
+                    "success": True,
+                    "data": verification.get("data", {}) or {},
+                    "verified_status": verified_status,
+                    "source": "tx_ref",
+                }
+
+        fallback_data = {}
+        fallback_error = None
+        for source, attempt in reversed(verification_attempts):
+            if attempt.get("data"):
+                fallback_data = attempt.get("data", {}) or {}
+            if attempt.get("error"):
+                fallback_error = attempt.get("error")
+
+        return {
+            "success": False,
+            "data": fallback_data,
+            "verified_status": ((fallback_data.get("status") or "").strip().lower()),
+            "source": None,
+            "error": fallback_error or "Payment verification failed",
+        }
+
     def _send_email(self, subject, recipient, html_body):
         """Helper method to send emails"""
         try:
@@ -553,12 +645,20 @@ class MatchmakingPaymentService(BasePaymentService):
     def handle_matchmaking_payment_failure(self, matchmaking_payment, flutterwave_data):
         """Handle failed matchmaking payment"""
         try:
+            gateway_status = flutterwave_data.get("status", "failed")
+            if self.is_success_status(gateway_status) or self.is_pending_status(
+                gateway_status
+            ):
+                matchmaking_payment.gateway_status = gateway_status
+                matchmaking_payment.gateway_metadata = json.dumps(flutterwave_data)
+                matchmaking_payment.updated_at = utcnow()
+                db.session.commit()
+                return True
+
             # Update matchmaking payment record
             matchmaking_payment.status = "failed"
             matchmaking_payment.payment_status = "failed"
-            matchmaking_payment.gateway_status = flutterwave_data.get(
-                "status", "failed"
-            )
+            matchmaking_payment.gateway_status = gateway_status
             matchmaking_payment.gateway_metadata = json.dumps(flutterwave_data)
             matchmaking_payment.updated_at = utcnow()
 
@@ -883,14 +983,20 @@ class PaymentService:
             user=user, plan=plan, currency=currency
         )
 
+    def resolve_flutterwave_verification(self, tx_ref=None, transaction_id=None):
+        """Resolve Flutterwave verification using transaction ID or tx_ref."""
+        return self.marketplace_service.resolve_flutterwave_verification(
+            tx_ref=tx_ref, transaction_id=transaction_id
+        )
+
     def handle_marketplace_payment_success(self, transaction_id, payment_data):
         """Handle successful marketplace payment"""
-        transaction = PaymentTransaction.query.get(transaction_id)
-        if not transaction:
+        marketplace_payment = MarketplacePayment.query.get(transaction_id)
+        if not marketplace_payment:
             return False
 
         return self.marketplace_service.handle_marketplace_payment_success(
-            transaction=transaction, flutterwave_data=payment_data
+            marketplace_payment=marketplace_payment, flutterwave_data=payment_data
         )
 
     def create_flutterwave_transaction(

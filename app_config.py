@@ -35,6 +35,13 @@ def create_app():
     app.config["MARKETPLACE_PAYMENTS_ENABLED"] = (
         os.getenv("MARKETPLACE_PAYMENTS_ENABLED", "0") == "1"
     )
+    app.config["FLUTTERWAVE_PUBLIC_KEY"] = (
+        os.getenv("FLUTTERWAVE_PUBLIC_KEY") or os.getenv("FLW_PUBLIC_KEY")
+    )
+    app.config["FLUTTERWAVE_SECRET_KEY"] = (
+        os.getenv("FLUTTERWAVE_SECRET_KEY") or os.getenv("FLW_SECRET_KEY")
+    )
+    app.config["FLUTTERWAVE_WEBHOOK_HASH"] = os.getenv("FLW_WEBHOOK_HASH", "")
 
     def wants_json_response():
         return (
@@ -407,16 +414,22 @@ def create_app():
     def update_last_seen():
         from flask_login import current_user
 
-        if current_user.is_authenticated:
-            if (
-                not current_user.last_seen
-                or (utcnow() - current_user.last_seen).seconds > 300
-            ):
-                current_user.last_seen = utcnow()
-                try:
-                    db.session.commit()
-                except Exception:
-                    db.session.rollback()
+        try:
+            if current_user.is_authenticated:
+                if (
+                    not current_user.last_seen
+                    or (utcnow() - current_user.last_seen).seconds > 300
+                ):
+                    current_user.last_seen = utcnow()
+                    try:
+                        db.session.commit()
+                    except Exception:
+                        db.session.rollback()
+        except Exception:
+            try:
+                db.session.rollback()
+            except Exception:
+                pass
 
     # ========== SIMPLE TEST ROUTE ==========
     @app.route("/socket-test")
