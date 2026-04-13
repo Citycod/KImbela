@@ -110,6 +110,40 @@ def get_listing_access_type(service):
     return "paid"
 
 
+NIGERIA_COUNTRY_ALIASES = {"nigeria", "ng", "nga", "federal republic of nigeria"}
+
+
+def get_marketplace_checkout_currency(user):
+    """Use NGN for Nigerian users and USD for everyone else."""
+    country = (getattr(user, "country", "") or "").strip().lower()
+    if country in NIGERIA_COUNTRY_ALIASES:
+        return "NGN"
+    return "USD"
+
+
+def get_marketplace_plan_usd_amount(plan):
+    """Read the USD amount from either subscription-plan model shape."""
+    if isinstance(plan, dict):
+        usd_amount = plan.get("price_usd")
+        if usd_amount is None:
+            usd_amount = plan.get("price")
+        return float(usd_amount or 0)
+
+    usd_amount = getattr(plan, "price_usd", None)
+    if usd_amount is None:
+        usd_amount = getattr(plan, "price", 0)
+    return float(usd_amount or 0)
+
+
+def get_marketplace_checkout_amount(plan, currency):
+    """Convert the plan amount into the user's checkout currency."""
+    currency = (currency or "NGN").upper()
+    usd_amount = get_marketplace_plan_usd_amount(plan)
+    if currency == "NGN":
+        return round(usd_amount * get_marketplace_ngn_rate(), 2)
+    return round(usd_amount, 2)
+
+
 def activate_waiting_marketplace_services(user_id):
     """Promote listings that were blocked until the seller subscribed."""
     waiting_services = MarketplaceService.query.filter_by(
@@ -4124,6 +4158,7 @@ def subscribe():
     """Subscribe to a marketplace plan"""
     if request.method == "GET":
         ensure_marketplace_subscriptions()
+        checkout_currency = get_marketplace_checkout_currency(current_user)
         # Get all active plans
         plans = (
             MarketplaceSubscription.query.filter_by(is_active=True)
@@ -4145,6 +4180,7 @@ def subscribe():
             current_user=current_user,
             now=utcnow(),
             marketplace_ngn_rate=get_marketplace_ngn_rate(),
+            checkout_currency=checkout_currency,
         )
 
     # POST: Process subscription
@@ -4168,14 +4204,16 @@ def subscribe():
 
         # Calculate expiration date
         expires_at = utcnow() + timedelta(days=plan.duration_days)
+        checkout_currency = get_marketplace_checkout_currency(current_user)
+        live_price = get_marketplace_checkout_amount(plan, checkout_currency)
 
         # Store subscription info in session for payment processing
-        live_price_ngn = round(float(plan.price) * get_marketplace_ngn_rate(), 2)
         session["subscription_data"] = {
             "plan_id": plan.id,
             "plan_name": plan.name,
-            "price_usd": plan.price,
-            "price_ngn": live_price_ngn,
+            "price_usd": get_marketplace_plan_usd_amount(plan),
+            "currency": checkout_currency,
+            "amount": live_price,
             "duration_days": plan.duration_days,
             "expires_at": expires_at.isoformat(),
             "user_id": current_user.id,
@@ -4199,16 +4237,26 @@ def subscription_payment():
         return redirect(url_for("market.subscribe"))
 
     subscription_data = session["subscription_data"]
-    live_price_ngn = round(float(subscription_data["price_usd"]) * get_marketplace_ngn_rate(), 2)
-    subscription_data["price_ngn"] = live_price_ngn
+    checkout_currency = subscription_data.get(
+        "currency", get_marketplace_checkout_currency(current_user)
+    )
+    live_price = get_marketplace_checkout_amount(subscription_data, checkout_currency)
+    subscription_data["currency"] = checkout_currency
+    subscription_data["amount"] = live_price
     session["subscription_data"] = subscription_data
     session.modified = True
+    display_price = format_price(live_price, checkout_currency)
 
     if request.method == "GET":
         return render_template(
             "subscription_payment.html",
             subscription_data=subscription_data,
             current_user=current_user,
+            display_price=display_price,
+            checkout_currency=checkout_currency,
+            payment_options=(
+                "card,banktransfer,ussd" if checkout_currency == "NGN" else "card"
+            ),
         )
 
     # POST: Process payment
@@ -4219,8 +4267,8 @@ def subscription_payment():
         # Create payment record
         payment = MarketplacePayment(
             user_id=current_user.id,
-            amount=live_price_ngn,
-            currency="NGN",
+            amount=live_price,
+            currency=checkout_currency,
             gateway="flutterwave",
             gateway_reference=tx_ref,
             status="pending",
@@ -4232,10 +4280,12 @@ def subscription_payment():
         # Prepare Flutterwave payment data
         payment_data = {
             "tx_ref": tx_ref,
-            "amount": str(live_price_ngn),
-            "currency": "NGN",
+            "amount": str(live_price),
+            "currency": checkout_currency,
             "redirect_url": url_for("market.subscription_callback", _external=True),
-            "payment_options": "card,banktransfer,ussd",
+            "payment_options": (
+                "card,banktransfer,ussd" if checkout_currency == "NGN" else "card"
+            ),
             "customer": {
                 "email": current_user.email,
                 "name": current_user.full_name,
@@ -4500,6 +4550,7 @@ def become_seller():
         from payments.payment_service import MarketplacePaymentService
 
         marketplace_service = MarketplacePaymentService()
+        checkout_currency = get_marketplace_checkout_currency(current_user)
 
         # Check if keys are set
         if not marketplace_service.flutterwave_secret_key:
@@ -4518,7 +4569,7 @@ def become_seller():
 
         # Create payment
         result = marketplace_service.create_marketplace_payment(
-            user=current_user, plan=plan, currency="NGN"
+            user=current_user, plan=plan, currency=checkout_currency
         )
 
         print(f"🟡 [BECOME-SELLER] Payment result: {result}")
@@ -4532,6 +4583,7 @@ def become_seller():
                         "payment_id"
                     ),  # Now returns marketplace_payment.id
                     "gateway_reference": result.get("gateway_reference"),
+                    "currency": checkout_currency,
                     "message": result.get("message", "Payment initiated successfully"),
                 }
             )

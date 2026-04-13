@@ -35,12 +35,12 @@
                     </div>
                     <div class="flex justify-between">
                         <span>Price:</span>
-                        <span class="font-bold">₦{{ "{:,.0f}".format(subscription_data.price_ngn) }}</span>
+                        <span class="font-bold">{{ display_price }}</span>
                     </div>
                     <div class="border-t pt-3">
                         <div class="flex justify-between font-bold text-lg">
                             <span>Total:</span>
-                            <span>₦{{ "{:,.0f}".format(subscription_data.price_ngn) }}</span>
+                            <span>{{ display_price }}</span>
                         </div>
                     </div>
                 </div>
@@ -70,7 +70,7 @@
                     </div>
                     <button type="submit" id="pay-btn" 
                             class="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700">
-                        Pay ₦{{ "{:,.0f}".format(subscription_data.price_ngn) }}
+                        Pay {{ display_price }}
                     </button>
                 </form>
             </div>
@@ -94,9 +94,9 @@
             FlutterwaveCheckout({
                 public_key: "{{ current_app.config.get('FLUTTERWAVE_PUBLIC_KEY') }}",
                 tx_ref: "KIMBELA-SUB-{{ subscription_data.plan_id }}-{{ current_user.id }}-{{ timestamp }}",
-                amount: {{ subscription_data.price_ngn }},
-                currency: "NGN",
-                payment_options: "card, banktransfer, ussd",
+                amount: {{ subscription_data.amount }},
+                currency: "{{ checkout_currency }}",
+                payment_options: "{{ payment_options }}",
                 customer: {
                     email: "{{ current_user.email }}",
                     phone_number: "{{ current_user.phone_number }}",
@@ -114,7 +114,7 @@
                                           "&status=" + response.status;
                 },
                 onclose: function() {
-                    payBtn.innerHTML = 'Pay ₦{{ "{:,.0f}".format(subscription_data.price_ngn) }}';
+                    payBtn.innerHTML = 'Pay {{ display_price }}';
                     payBtn.disabled = false;
                 }
             });
