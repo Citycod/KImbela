@@ -8,7 +8,7 @@ from models import User, Message
 from flask import request, session
 import traceback
 
-print("✅ Socket.IO event handlers loading...")
+print("[INFO] Socket.IO event handlers loading...")
 
 
 # WebSocket connection handler with better error handling
@@ -17,14 +17,14 @@ def handle_connect():
     """Handle user connection"""
     try:
         if not current_user.is_authenticated:
-            print(f"⚠️ Unauthenticated connection attempt: {request.sid}")
+            print(f"[WARN] Unauthenticated connection attempt: {request.sid}")
             return False
 
         user_id = current_user.id
 
         # Join user's personal room
         join_room(f"user_{user_id}")
-        print(f"✅ User {user_id} connected (sid: {request.sid})")
+        print(f"[OK] User {user_id} connected (sid: {request.sid})")
 
         # Update online status
         current_user.is_online = True
@@ -44,7 +44,7 @@ def handle_connect():
         )
 
     except Exception as e:
-        print(f"❌ Connection error: {e}")
+        print(f"[ERROR] Connection error: {e}")
         return False
 
 
@@ -63,10 +63,10 @@ def handle_disconnect():
             # Notify friends
             notify_friends_offline(user_id)
 
-            print(f"👋 User {user_id} disconnected")
+            print(f"[INFO] User {user_id} disconnected")
 
     except Exception as e:
-        print(f"❌ Disconnect error: {e}")
+        print(f"[ERROR] Disconnect error: {e}")
 
 
 def notify_friends_online(user_id):
@@ -89,7 +89,7 @@ def notify_friends_online(user_id):
                 )
 
     except Exception as e:
-        print(f"❌ Error notifying friends online: {e}")
+        print(f"[ERROR] Error notifying friends online: {e}")
 
 
 def notify_friends_offline(user_id):
@@ -112,14 +112,14 @@ def notify_friends_offline(user_id):
                 )
 
     except Exception as e:
-        print(f"❌ Error notifying friends offline: {e}")
+        print(f"[ERROR] Error notifying friends offline: {e}")
 
 
 # Test endpoint
 @socketio.on("ping")
 def handle_ping(data=None):
     """Test ping endpoint"""
-    print(f"🏓 Ping received from {request.sid}")
+    print(f"[INFO] Ping received from {request.sid}")
     return {
         "status": "ok",
         "message": "pong",
@@ -147,10 +147,10 @@ def handle_join_chat(data):
         )
         join_room(room)
 
-        print(f"💬 User {current_user.id} joined chat room: {room}")
+        print(f"[INFO] User {current_user.id} joined chat room: {room}")
 
     except Exception as e:
-        print(f"❌ Join chat error: {e}")
+        print(f"[ERROR] Join chat error: {e}")
 
 
 @socketio.on("send_message")
@@ -194,7 +194,7 @@ def handle_send_message(data):
             db.session.add(message)
             db.session.commit()
         except Exception as e:
-            print(f"❌ Error saving message to db: {e}")
+            print(f"[ERROR] Error saving message to db: {e}")
 
         # Update status
         if friend.is_online:
@@ -226,7 +226,7 @@ def handle_send_message(data):
         # socketio.emit('new_message', message_data, room=room)
 
     except Exception as e:
-        print(f"❌ Error sending message via Socket.IO: {e}")
+        print(f"[ERROR] Error sending message via Socket.IO: {e}")
         db.session.rollback()
 
 
@@ -252,7 +252,7 @@ def handle_typing_start(data):
         )
 
     except Exception as e:
-        print(f"❌ Typing start error: {e}")
+        print(f"[ERROR] Typing start error: {e}")
 
 
 @socketio.on("typing_stop")
@@ -270,7 +270,7 @@ def handle_typing_stop(data):
         )
 
     except Exception as e:
-        print(f"❌ Typing stop error: {e}")
+        print(f"[ERROR] Typing stop error: {e}")
 
 
 @socketio.on("message_read")
@@ -297,7 +297,7 @@ def handle_message_read(data):
             )
 
     except Exception as e:
-        print(f"❌ Message read error: {e}")
+        print(f"[ERROR] Message read error: {e}")
         db.session.rollback()
 
 
@@ -328,7 +328,7 @@ def handle_user_online(data):
                 )
 
     except Exception as e:
-        print(f"❌ User online error: {e}")
+        print(f"[ERROR] User online error: {e}")
         db.session.rollback()
 
 
@@ -359,7 +359,7 @@ def handle_user_offline(data):
                 )
 
     except Exception as e:
-        print(f"❌ User offline error: {e}")
+        print(f"[ERROR] User offline error: {e}")
         db.session.rollback()
 
 
@@ -430,7 +430,7 @@ def handle_message_reaction(data):
             )
 
     except Exception as e:
-        print(f"❌ Message reaction error: {e}")
+        print(f"[ERROR] Message reaction error: {e}")
         db.session.rollback()
 
 
@@ -509,7 +509,7 @@ def handle_friend_request_accepted(data):
             "friend_id": user_id,
             "message": f"You are now friends with {User.query.get(user_id).full_name}",
         },
-        room=f"user_{friend_id}",
+        room=f"friend_id",
     )
 
     @socketio.on("disconnect")
@@ -527,7 +527,7 @@ def handle_friend_request_accepted(data):
                 # Notify friends
                 notify_friends_offline(user_id)
 
-                print(f"👋 User {user_id} disconnected")
+                print(f"[INFO] User {user_id} disconnected")
 
         except Exception as e:
-            print(f"❌ Disconnect error: {e}")
+            print(f"[ERROR] Disconnect error: {e}")

@@ -5,7 +5,7 @@ import random, string, uuid, secrets
 import json  # Add this import
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask import url_for
+from flask import url_for, current_app
 from sqlalchemy import event, func
 import requests
 
@@ -2337,3 +2337,4 @@ class City(db.Model):
     country = db.relationship("Country", backref=db.backref("cities", lazy="dynamic"))
 
     __table_args__ = (db.Index("ix_cities_state_name", "state_id", "name"),)
+

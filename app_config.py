@@ -210,6 +210,7 @@ def create_app():
         from matchmaking.matchmake import match as matchmaking_blueprint
         from payments.payments import payments as payments_blueprint
         from messages.messaging import messaging as message_blueprint
+        from payments.paystack_routes import paystack_bp
 
         app.register_blueprint(auth)
         app.register_blueprint(user_blueprint)
@@ -218,6 +219,7 @@ def create_app():
         app.register_blueprint(payments_blueprint)
         app.register_blueprint(matchmaking_blueprint)
         app.register_blueprint(market_blueprint)
+        app.register_blueprint(paystack_bp)
 
     register_blueprints()
 
@@ -226,9 +228,9 @@ def create_app():
     try:
         import socketio_events
 
-        print("✅ Socket.IO event handlers imported successfully")
+        print("[OK] Socket.IO event handlers imported successfully")
     except Exception as e:
-        print(f"⚠️ Could not import Socket.IO handlers: {e}")
+        print(f"[WARN] Could not import Socket.IO handlers: {e}")
 
     # ========== CONTEXT PROCESSORS ==========
     @app.context_processor
@@ -479,7 +481,7 @@ def create_app():
 
 # Create the app instance
 app = create_app()
-print("✅ App created successfully")
+print("[OK] App created successfully")
 
 
 @app.route("/test-messaging")

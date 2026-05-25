@@ -261,8 +261,27 @@
                 </div>
                 
                 <!-- Payment Method Selection -->
-                
-                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div id="flutterwavePayment" onclick="selectPaymentMethod('flutterwave')" class="border border-gray-200 rounded-xl p-4 cursor-pointer hover:border-amber-500 transition-colors">
+                        <div class="flex items-center">
+                            <input type="radio" name="payment_method" value="flutterwave" class="mr-3 text-amber-600 focus:ring-amber-500" checked>
+                            <div>
+                                <h4 class="font-bold text-sm">Flutterwave</h4>
+                                <p class="text-xs text-gray-500">Pay securely with card, bank, or USSD</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="paystackPayment" onclick="selectPaymentMethod('paystack')" class="border border-gray-200 rounded-xl p-4 cursor-pointer hover:border-amber-500 transition-colors">
+                        <div class="flex items-center">
+                            <input type="radio" name="payment_method" value="paystack" class="mr-3 text-amber-600 focus:ring-amber-500">
+                            <div>
+                                <h4 class="font-bold text-sm">Paystack</h4>
+                                <p class="text-xs text-gray-500">Pay securely with card, transfer, or mobile money</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <!-- Flutterwave Payment Details -->
                 <div id="flutterwavePaymentSection" class="hidden">
                     <h3 class="text-base font-bold mb-3">Payment Plan Review</h3>
@@ -304,6 +323,50 @@
                             <i class="fas fa-lock mr-1 text-xs"></i>Pay Securely with Flutterwave
                         </button>
                         <p class="text-gray-500 text-xs mt-2">Secure payment powered by Flutterwave</p>
+                    </div>
+                </div>
+
+                <!-- Paystack Payment Details -->
+                <div id="paystackPaymentSection" class="hidden">
+                    <h3 class="text-base font-bold mb-3">Payment Plan Review (Paystack)</h3>
+                    <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-medium text-sm">Plan:</span>
+                            <span class="font-bold text-sm" id="paystackPlanNameDisplay"></span>
+                        </div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-medium text-sm">Monthly Price:</span>
+                            <span class="font-bold text-sm" id="paystackPlanPriceDisplay"></span>
+                        </div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-medium text-sm">Billing Cycle:</span>
+                            <span class="text-sm">Monthly</span>
+                        </div>
+                        <div class="border-t border-blue-300 pt-2 mt-2">
+                            <div class="flex justify-between items-center">
+                                <span class="font-bold text-sm">Total Due Now:</span>
+                                <span class="font-bold text-amber-700 text-base" id="paystackTotalPriceDisplay"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Terms Checkbox -->
+                    <div class="mb-4">
+                        <div class="flex items-start">
+                            <input type="checkbox" id="paystackAgreeTerms" class="mt-0.5 mr-2 text-xs">
+                            <label for="paystackAgreeTerms" class="text-gray-600 text-xs">
+                                I agree to the <a href="{{ url_for('user.terms') }}" class="text-amber-600 hover:underline" target="_blank">Terms of Service</a> and <a href="{{ url_for('user.privacy') }}" class="text-amber-600 hover:underline" target="_blank">Privacy Policy</a>. I understand that my subscription will auto-renew monthly unless cancelled.
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Payment Button -->
+                    <div class="text-center">
+                        <button onclick="processPaystackPayment()" 
+                                class="w-full py-3 bg-gradient-to-r from-amber-900 to-amber-600 text-white rounded-lg font-bold hover:opacity-90 transition-opacity text-sm">
+                            <i class="fas fa-lock mr-1 text-xs"></i>Pay Securely with Paystack
+                        </button>
+                        <p class="text-gray-500 text-xs mt-2">Secure payment powered by Paystack</p>
                     </div>
                 </div>
             </div>
@@ -606,10 +669,18 @@
             const planPriceDisplayEl = document.getElementById('planPriceDisplay');
             const totalPriceDisplayEl = document.getElementById('totalPriceDisplay');
             
+            const paystackPlanNameDisplayEl = document.getElementById('paystackPlanNameDisplay');
+            const paystackPlanPriceDisplayEl = document.getElementById('paystackPlanPriceDisplay');
+            const paystackTotalPriceDisplayEl = document.getElementById('paystackTotalPriceDisplay');
+            
             if (selectedPlanNameEl) selectedPlanNameEl.textContent = selectedPlanName;
             if (planNameDisplayEl) planNameDisplayEl.textContent = selectedPlanName;
             if (planPriceDisplayEl) planPriceDisplayEl.textContent = `${formatCurrency(selectedPlanPrice, selectedPlanCurrency)}/month`;
             if (totalPriceDisplayEl) totalPriceDisplayEl.textContent = formatCurrency(selectedPlanPrice, selectedPlanCurrency);
+            
+            if (paystackPlanNameDisplayEl) paystackPlanNameDisplayEl.textContent = selectedPlanName;
+            if (paystackPlanPriceDisplayEl) paystackPlanPriceDisplayEl.textContent = `${formatCurrency(selectedPlanPrice, selectedPlanCurrency)}/month`;
+            if (paystackTotalPriceDisplayEl) paystackTotalPriceDisplayEl.textContent = formatCurrency(selectedPlanPrice, selectedPlanCurrency);
         }
 
         function formatCurrency(amount, currency) {
@@ -645,17 +716,29 @@
             if (flutterwavePayment) {
                 flutterwavePayment.classList.remove('border-amber-500', 'bg-amber-50');
             }
+            const paystackPayment = document.getElementById('paystackPayment');
+            if (paystackPayment) {
+                paystackPayment.classList.remove('border-amber-500', 'bg-amber-50');
+            }
             
-            // Hide Flutterwave section
+            // Hide payment sections
             const flutterwaveSection = document.getElementById('flutterwavePaymentSection');
             if (flutterwaveSection) {
                 flutterwaveSection.classList.add('hidden');
+            }
+            const paystackSection = document.getElementById('paystackPaymentSection');
+            if (paystackSection) {
+                paystackSection.classList.add('hidden');
             }
             
             // Uncheck terms checkbox
             const agreeTerms = document.getElementById('agreeTerms');
             if (agreeTerms) {
                 agreeTerms.checked = false;
+            }
+            const paystackAgreeTerms = document.getElementById('paystackAgreeTerms');
+            if (paystackAgreeTerms) {
+                paystackAgreeTerms.checked = false;
             }
             
             // Scroll back to plans
@@ -686,16 +769,31 @@
             if (flutterwaveSection) {
                 flutterwaveSection.classList.add('hidden');
             }
+            const paystackSection = document.getElementById('paystackPaymentSection');
+            if (paystackSection) {
+                paystackSection.classList.add('hidden');
+            }
             
             // Show selected payment method
             if (method === 'flutterwave') {
                 const flutterwaveEl = document.getElementById('flutterwavePayment');
                 if (flutterwaveEl) {
                     flutterwaveEl.classList.add('border-amber-500', 'bg-amber-50');
+                    flutterwaveEl.querySelector('input[type="radio"]').checked = true;
                 }
                 
                 if (flutterwaveSection) {
                     flutterwaveSection.classList.remove('hidden');
+                }
+            } else if (method === 'paystack') {
+                const paystackEl = document.getElementById('paystackPayment');
+                if (paystackEl) {
+                    paystackEl.classList.add('border-amber-500', 'bg-amber-50');
+                    paystackEl.querySelector('input[type="radio"]').checked = true;
+                }
+                
+                if (paystackSection) {
+                    paystackSection.classList.remove('hidden');
                 }
             }
         }
@@ -789,6 +887,104 @@
                 if (response.ok && result.success) {
                     
                     // Redirect to Flutterwave payment page
+                    window.location.href = result.payment_url;
+                } else {
+                    hideModal('paymentModal');
+                    const errorMsg = result.error || result.message || 'Payment processing failed.';
+                    showError('Payment Failed', errorMsg);
+                }
+                
+            } catch (error) {
+                hideModal('paymentModal');
+                showError('Payment Error', error.message || 'Network error occurred.');
+            }
+        }
+
+        // Paystack Payment Processing
+        async function processPaystackPayment() {
+            
+            // Check if user agreed to terms
+            const agreeTerms = document.getElementById('paystackAgreeTerms');
+            if (!agreeTerms || !agreeTerms.checked) {
+                showError('Terms Required', 'Please agree to the Terms of Service and Privacy Policy to continue.');
+                return;
+            }
+            
+            // Validate plan selection
+            if (!selectedPlanId || !selectedPlanName || !selectedPlanPrice) {
+                showError('Plan Selection Required', 'Please select a plan first.');
+                return;
+            }
+            
+            // Show processing modal
+            showModal('paymentModal');
+            
+            try {
+                // Get CSRF token
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                
+                if (!csrfToken) {
+                    throw new Error('CSRF token not found. Please refresh the page.');
+                }
+                
+                // Create request data
+                const requestData = {
+                    plan_id: selectedPlanId,
+                    plan_name: selectedPlanName,
+                    amount: selectedPlanPrice,
+                    currency: selectedPlanCurrency,
+                    payment_method: 'paystack'
+                };
+                
+                // Send payment request
+                const response = await fetch('/become-seller', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken,
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify(requestData),
+                    credentials: 'include'
+                });
+                
+                // Get the full response text
+                const responseText = await response.text();
+                
+                // Check if it's HTML error page
+                if (responseText.trim().startsWith('<!DOCTYPE') || 
+                    responseText.includes('<!DOCTYPE html>') ||
+                    responseText.includes('<html')) {
+                    
+                    // Try to extract error message from HTML
+                    const errorTitleMatch = responseText.match(/<title[^>]*>([^<]+)<\/title>/i);
+                    const errorMessageMatch = responseText.match(/<h1[^>]*>([^<]+)<\/h1>/i);
+                    const errorPMatch = responseText.match(/<p[^>]*>([^<]+)<\/p>/i);
+                    
+                    const errorTitle = errorTitleMatch ? errorTitleMatch[1].trim() : 'Server Error';
+                    const errorMessage = errorMessageMatch ? errorMessageMatch[1].trim() : 
+                                       errorPMatch ? errorPMatch[1].trim() : 
+                                       'The server returned an HTML error page';
+                    
+                    hideModal('paymentModal');
+                    showError(errorTitle, errorMessage);
+                    return;
+                }
+                
+                // Try to parse as JSON
+                let result;
+                try {
+                    result = JSON.parse(responseText);
+                } catch (parseError) {
+                    hideModal('paymentModal');
+                    showError('Server Response Error', 
+                        'The server returned an invalid response. Please check server logs.');
+                    return;
+                }
+                
+                if (response.ok && result.success) {
+                    // Redirect to Paystack payment page
                     window.location.href = result.payment_url;
                 } else {
                     hideModal('paymentModal');

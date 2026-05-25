@@ -476,6 +476,21 @@
                     Choose country, then state and city if needed.
                   </div>
                 </div>
+              <!-- Payment Gateway -->
+              <div class="bg-gray-50 rounded-xl p-6 mt-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                  Payment Method
+                </h3>
+                <div class="flex items-center space-x-6">
+                  <label class="flex items-center cursor-pointer">
+                    <input type="radio" name="payment_gateway" value="flutterwave" class="form-radio h-5 w-5 text-blue-600" checked>
+                    <span class="ml-2 text-gray-700">Flutterwave</span>
+                  </label>
+                  <label class="flex items-center cursor-pointer">
+                    <input type="radio" name="payment_gateway" value="paystack" class="form-radio h-5 w-5 text-blue-600">
+                    <span class="ml-2 text-gray-700">Paystack (Bank Transfer available)</span>
+                  </label>
+                </div>
               </div>
 
               <!-- Action Buttons -->
@@ -788,6 +803,7 @@
               localStorage.setItem("currentCampaignId", result.campaign_id);
 
               // Initiate payment
+              const paymentGateway = document.querySelector('input[name="payment_gateway"]:checked').value;
               const paymentResponse = await fetch(
                 "{{ url_for('payments.initiate_payment') }}",
                 {
@@ -799,6 +815,7 @@
                   body: JSON.stringify({
                     campaign_id: result.campaign_id,
                     currency: "NGN",
+                    gateway: paymentGateway
                   }),
                 },
               );
@@ -806,8 +823,8 @@
               const paymentResult = await paymentResponse.json();
 
               if (paymentResult.success) {
-                // Redirect to Paystack
-                window.location.href = paymentResult.authorization_url;
+                // Redirect to Gateway
+                window.location.href = paymentResult.authorization_url || paymentResult.payment_url;
               } else {
                 throw new Error(
                   paymentResult.error || "Payment initiation failed",

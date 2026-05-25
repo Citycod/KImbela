@@ -53,7 +53,10 @@ from datetime import timedelta, datetime
 from sqlalchemy.orm import joinedload
 from io import BytesIO
 from datetime import datetime
-from weasyprint import HTML
+try:
+    from weasyprint import HTML
+except (ImportError, OSError):
+    HTML = None
 from flask_login import (
     LoginManager,
     login_user,

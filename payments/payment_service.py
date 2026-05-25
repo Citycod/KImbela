@@ -53,22 +53,27 @@ class BasePaymentService:
         self.flutterwave_public_key = os.getenv("FLW_PUBLIC_KEY")
         self.flutterwave_secret_key = os.getenv("FLW_SECRET_KEY")
         self.flutterwave_base_url = "https://api.flutterwave.com/v3"
+        
+        self.paystack_public_key = os.getenv("PAYSTACK_PUBLIC_KEY")
+        self.paystack_secret_key = os.getenv("PAYSTACK_SECRET_KEY")
+        self.paystack_base_url = "https://api.paystack.co"
+        
         self.default_currency = os.getenv("FLW_DEFAULT_CURRENCY", "NGN").upper()
 
         print(
-            f"🟡 [BASE PAYMENT INIT] Public Key configured: {self.flutterwave_public_key is not None}"
+            f"[INFO] [BASE PAYMENT INIT] Public Key configured: {self.flutterwave_public_key is not None}"
         )
         print(
-            f"🟡 [BASE PAYMENT INIT] Secret Key configured: {self.flutterwave_secret_key is not None}"
+            f"[INFO] [BASE PAYMENT INIT] Secret Key configured: {self.flutterwave_secret_key is not None}"
         )
 
         if self.flutterwave_public_key:
             print(
-                f"🟡 [BASE PAYMENT INIT] Public Key: {self.flutterwave_public_key[:20]}..."
+                f"[INFO] [BASE PAYMENT INIT] Public Key: {self.flutterwave_public_key[:20]}..."
             )
         if self.flutterwave_secret_key:
             print(
-                f"🟡 [BASE PAYMENT INIT] Secret Key: {self.flutterwave_secret_key[:20]}..."
+                f"[INFO] [BASE PAYMENT INIT] Secret Key: {self.flutterwave_secret_key[:20]}..."
             )
 
     def normalize_currency(self, currency=None):
@@ -322,6 +327,52 @@ class BasePaymentService:
             print(f"🔴 [VERIFY PAYMENT BY REFERENCE] Exception: {str(e)}")
             return {"success": False, "error": str(e), "data": {}}
 
+    def verify_paystack_payment(self, reference):
+        """Verify Paystack payment using merchant transaction reference."""
+        try:
+            if not self.paystack_secret_key:
+                return {"success": False, "error": "Paystack secret key not configured", "data": {}}
+
+            headers = {
+                "Authorization": f"Bearer {self.paystack_secret_key}",
+                "Content-Type": "application/json",
+            }
+
+            response = self._http_request(
+                "GET",
+                f"{self.paystack_base_url}/transaction/verify/{reference}",
+                headers=headers,
+                timeout=30,
+            )
+
+            print(
+                f"🟡 [VERIFY PAYSTACK PAYMENT] Response status: {response.status_code}"
+            )
+
+            if response.status_code == 200:
+                result = response.json()
+                print(
+                    f"🟡 [VERIFY PAYSTACK PAYMENT] Verification result: {result}"
+                )
+                return {
+                    "success": result.get("status") is True or result.get("data", {}).get("status") == "success",
+                    "data": result.get("data", {}),
+                }
+
+            print(
+                "🔴 [VERIFY PAYSTACK PAYMENT] HTTP Error: "
+                f"{response.status_code} - {response.text}"
+            )
+            return {
+                "success": False,
+                "error": f"HTTP {response.status_code}",
+                "data": {},
+            }
+
+        except Exception as e:
+            print(f"🔴 [VERIFY PAYSTACK PAYMENT] Exception: {str(e)}")
+            return {"success": False, "error": str(e), "data": {}}
+
     def resolve_flutterwave_verification(self, tx_ref=None, transaction_id=None):
         """Resolve payment state from Flutterwave using transaction ID, tx_ref, or both."""
         verification_attempts = []
@@ -370,6 +421,33 @@ class BasePaymentService:
             "error": fallback_error or "Payment verification failed",
         }
 
+    def resolve_paystack_verification(self, reference=None):
+        """Resolve payment state from Paystack using merchant reference."""
+        if reference:
+            verification = self.verify_paystack_payment(reference)
+            verified_status = (
+                (verification.get("data", {}) or {}).get("status") or ""
+            ).strip().lower()
+            if verification.get("success") and verified_status:
+                return {
+                    "success": True,
+                    "data": verification.get("data", {}) or {},
+                    "verified_status": verified_status,
+                    "source": "reference",
+                }
+            return {
+                "success": False,
+                "error": verification.get("error", "Failed to verify Paystack payment"),
+                "data": verification.get("data", {}),
+                "verified_status": verified_status or "failed",
+            }
+        return {
+            "success": False,
+            "error": "No reference provided for Paystack verification",
+            "data": {},
+            "verified_status": "failed",
+        }
+
     def _send_email(self, subject, recipient, html_body):
         """Helper method to send emails"""
         try:
@@ -397,10 +475,10 @@ class MatchmakingPaymentService(BasePaymentService):
     def _validate_keys(self):
         """Validate that Flutterwave keys are properly configured"""
         print(
-            f"🔑 [KEY VALIDATION] Public Key: {'✅ SET' if self.flutterwave_public_key else '❌ MISSING'}"
+            f"[INFO] [KEY VALIDATION] Public Key: {'SET' if self.flutterwave_public_key else 'MISSING'}"
         )
         print(
-            f"🔑 [KEY VALIDATION] Secret Key: {'✅ SET' if self.flutterwave_secret_key else '❌ MISSING'}"
+            f"[INFO] [KEY VALIDATION] Secret Key: {'SET' if self.flutterwave_secret_key else 'MISSING'}"
         )
 
         if not self.flutterwave_secret_key:
@@ -410,23 +488,23 @@ class MatchmakingPaymentService(BasePaymentService):
         if self.flutterwave_secret_key and not self.flutterwave_secret_key.startswith(
             ("FLWSECK-", "FLWSECK_TEST-")
         ):
-            print("⚠️ [KEY VALIDATION] Secret key format may be incorrect")
+            print("[WARN] [KEY VALIDATION] Secret key format may be incorrect")
 
         if self.flutterwave_public_key and not self.flutterwave_public_key.startswith(
             ("FLWPUBK-", "FLWPUBK_TEST-")
         ):
-            print("⚠️ [KEY VALIDATION] Public key format may be incorrect")
+            print("[WARN] [KEY VALIDATION] Public key format may be incorrect")
 
-        print(f"✅ [KEY VALIDATION] Keys validated successfully")
+        print(f"[OK] [KEY VALIDATION] Keys validated successfully")
 
     def create_matchmaking_payment(
-        self, user, matchmaking_request, package, currency="NGN", amount=None
+        self, user, matchmaking_request, package, currency="NGN", amount=None, gateway="flutterwave"
     ):
-        """Create Flutterwave payment for matchmaking request"""
+        """Create payment for matchmaking request using Flutterwave or Paystack"""
         try:
             print(f"🟡 [MATCHMAKING PAYMENT] Starting payment process")
             print(
-                f"🟡 [MATCHMAKING PAYMENT] User: {user.id}, Request: {matchmaking_request.id}, Package: {package.name}"
+                f"🟡 [MATCHMAKING PAYMENT] User: {user.id}, Request: {matchmaking_request.id}, Package: {package.name}, Gateway: {gateway}"
             )
 
             # Use provided amount or fallback to package price
@@ -438,7 +516,70 @@ class MatchmakingPaymentService(BasePaymentService):
             # Generate unique transaction reference
             tx_ref = f"KIMBELA_MATCH_{matchmaking_request.id}_{int(time.time())}"
 
-            # Prepare payment data for matchmaking
+            if gateway == "paystack":
+                payment_data = {
+                    "email": user.email,
+                    "amount": int(payment_amount * 100),  # Paystack uses kobo
+                    "currency": currency,
+                    "reference": tx_ref,
+                    "callback_url": url_for("match.payment_callback", _external=True),
+                    "metadata": {
+                        "user_id": user.id,
+                        "matchmaking_request_id": matchmaking_request.id,
+                        "package_id": package.id,
+                        "transaction_type": "matchmaking",
+                    }
+                }
+                
+                headers = {
+                    "Authorization": f"Bearer {self.paystack_secret_key}",
+                    "Content-Type": "application/json",
+                }
+
+                print(f"🟡 [MATCHMAKING PAYMENT] Sending request to Paystack...")
+                
+                response = self._http_request(
+                    "POST",
+                    f"{self.paystack_base_url}/transaction/initialize",
+                    headers=headers,
+                    json=payment_data,
+                    timeout=30,
+                )
+
+                if response.status_code == 200:
+                    result = response.json()
+                    if result.get("status") is True:
+                        payment_url = result["data"]["authorization_url"]
+                        
+                        matchmaking_payment = MatchmakingPayments(
+                            user_id=user.id,
+                            matchmaking_request_id=matchmaking_request.id,
+                            package_id=package.id,
+                            amount=payment_amount,
+                            currency=currency,
+                            gateway="paystack",
+                            gateway_reference=tx_ref,
+                            gateway_status="initiated",
+                            status="pending",
+                            payment_status="pending",
+                            description=f"Matchmaking Package: {package.name}",
+                        )
+                        db.session.add(matchmaking_payment)
+                        db.session.commit()
+
+                        return {
+                            "success": True,
+                            "payment_url": payment_url,
+                            "payment_id": matchmaking_payment.id,
+                            "gateway_reference": tx_ref,
+                            "message": "Matchmaking payment initiated successfully via Paystack",
+                        }
+                    else:
+                        return {"success": False, "error": f"Paystack error: {result.get('message')}"}
+                else:
+                    return {"success": False, "error": f"Paystack returned error: {response.status_code}"}
+
+            # Prepare payment data for matchmaking (Flutterwave)
             payment_data = {
                 "tx_ref": tx_ref,
                 "amount": str(float(payment_amount)),
@@ -473,12 +614,6 @@ class MatchmakingPaymentService(BasePaymentService):
             }
 
             print(f"🟡 [MATCHMAKING PAYMENT] Sending request to Flutterwave...")
-            print(
-                f"🟡 [MATCHMAKING PAYMENT] Using Secret Key: {self.flutterwave_secret_key[:20]}..."
-            )
-            print(
-                f"🟡 [MATCHMAKING PAYMENT] Request data: {json.dumps(payment_data, indent=2)}"
-            )
 
             response = self._http_request(
                 "POST",
@@ -489,21 +624,12 @@ class MatchmakingPaymentService(BasePaymentService):
             )
 
             print(f"🟡 [MATCHMAKING PAYMENT] Response status: {response.status_code}")
-            print(
-                f"🟡 [MATCHMAKING PAYMENT] Response headers: {dict(response.headers)}"
-            )
-
+            
             if response.status_code == 200:
                 result = response.json()
-                print(
-                    f"🟡 [MATCHMAKING PAYMENT] Flutterwave response: {json.dumps(result, indent=2)}"
-                )
 
                 if result.get("status") == "success":
                     payment_url = result["data"]["link"]
-                    print(
-                        f"✅ [MATCHMAKING PAYMENT] Payment URL generated: {payment_url}"
-                    )
 
                     # Create matchmaking payment record
                     matchmaking_payment = MatchmakingPayments(
@@ -528,20 +654,16 @@ class MatchmakingPaymentService(BasePaymentService):
                         "payment_url": payment_url,
                         "payment_id": matchmaking_payment.id,
                         "gateway_reference": tx_ref,
-                        "message": "Matchmaking payment initiated successfully",
+                        "message": "Matchmaking payment initiated successfully via Flutterwave",
                     }
                 else:
                     error_msg = result.get("message", "Unknown Flutterwave error")
-                    print(f"🔴 [MATCHMAKING PAYMENT] Flutterwave error: {error_msg}")
                     return {
                         "success": False,
                         "error": f"Payment gateway error: {error_msg}",
                     }
             else:
                 error_text = response.text
-                print(
-                    f"🔴 [MATCHMAKING PAYMENT] HTTP error {response.status_code}: {error_text}"
-                )
 
                 # More specific error handling
                 if response.status_code == 401:
@@ -1081,19 +1203,21 @@ class MarketplacePaymentService(BasePaymentService):
     def create_marketplace_payment(self, user, plan, currency="NGN"):
         """Create Flutterwave payment for marketplace subscription - FIXED VERSION"""
         try:
-            print(f"🟡 [MARKETPLACE PAYMENT] Starting payment for plan: {plan.name}")
+            from marketplace.market import get_marketplace_checkout_amount
+            payment_amount = get_marketplace_checkout_amount(plan, currency)
+
+            print(f"[INFO] [MARKETPLACE PAYMENT] Starting payment for plan: {plan.name}")
             print(
-                f"🟡 [MARKETPLACE PAYMENT] User: {user.id}, Amount: ${plan.price} {currency}"
+                f"[INFO] [MARKETPLACE PAYMENT] User: {user.id}, Amount: {payment_amount} {currency}"
             )
 
             # Generate transaction reference
             import time
 
             tx_ref = f"KIMBELA_MARKET_{user.id}_{int(time.time())}"
-            payment_amount = plan.price
 
-            print(f"🟡 [MARKETPLACE PAYMENT] TX Ref: {tx_ref}")
-            print(f"🟡 [MARKETPLACE PAYMENT] Amount: ${payment_amount}")
+            print(f"[INFO] [MARKETPLACE PAYMENT] TX Ref: {tx_ref}")
+            print(f"[INFO] [MARKETPLACE PAYMENT] Amount: {payment_amount}")
 
             # Prepare payment data
             payment_data = {
@@ -1238,6 +1362,98 @@ class MarketplacePaymentService(BasePaymentService):
                     "error": "Payment provider is temporarily unreachable. Please try again in a moment.",
                     "error_type": "upstream_unavailable",
                 }
+            return {"success": False, "error": f"Payment processing error: {str(e)}"}
+
+    def create_paystack_marketplace_payment(self, user, plan, currency="NGN"):
+        """Create Paystack payment for marketplace subscription"""
+        try:
+            from marketplace.market import get_marketplace_checkout_amount
+            payment_amount = get_marketplace_checkout_amount(plan, currency)
+
+            print(f"[INFO] [PAYSTACK SUBSCRIPTION] Starting payment for plan: {plan.name}")
+            print(f"[INFO] [PAYSTACK SUBSCRIPTION] User: {user.id}, Amount: {payment_amount} {currency}")
+
+            # Import PaystackService dynamically
+            from utils.paystack import PaystackService
+            paystack_service = PaystackService()
+
+            # Generate transaction reference
+            import time
+            tx_ref = f"KIMBELA_MARKET_{user.id}_{int(time.time())}"
+
+            print(f"[INFO] [PAYSTACK SUBSCRIPTION] TX Ref: {tx_ref}")
+
+            callback_url = url_for("market.subscription_callback", _external=True)
+
+            metadata = {
+                "user_id": user.id,
+                "plan_id": plan.id,
+                "plan_name": plan.name,
+                "transaction_type": "marketplace_subscription",
+                "custom_fields": [
+                    {
+                        "display_name": "Plan Name",
+                        "variable_name": "plan_name",
+                        "value": plan.name
+                    }
+                ]
+            }
+
+            # Initialize Paystack payment
+            result = paystack_service.initialize_transaction(
+                email=user.email,
+                amount=float(payment_amount),
+                reference=tx_ref,
+                callback_url=callback_url,
+                metadata=metadata
+            )
+
+            print(f"[INFO] [PAYSTACK SUBSCRIPTION] Result: {result}")
+
+            if result.get("status"):
+                payment_url = result["data"]["authorization_url"]
+                
+                # Create MarketplacePayment record
+                marketplace_payment = MarketplacePayment(
+                    user_id=user.id,
+                    subscription_id=plan.id,
+                    amount=payment_amount,
+                    currency=currency,
+                    tokens_paid=int(payment_amount * 100),
+                    gateway="paystack",
+                    gateway_reference=tx_ref,
+                    gateway_payment_id=result["data"].get("reference"),
+                    gateway_status="initiated",
+                    gateway_metadata=json.dumps(result.get("data", {})),
+                    status="pending",
+                    payment_method="card",
+                    description=f"Marketplace Subscription: {plan.name}",
+                    start_date=utcnow(),
+                    end_date=utcnow() + timedelta(days=getattr(plan, "duration_days", 30)),
+                )
+
+                db.session.add(marketplace_payment)
+                db.session.commit()
+
+                print(f"[SUCCESS] [PAYSTACK SUBSCRIPTION] Payment record created: {marketplace_payment.id}")
+
+                return {
+                    "success": True,
+                    "payment_url": payment_url,
+                    "payment_id": marketplace_payment.id,
+                    "gateway_reference": tx_ref,
+                    "message": "Marketplace subscription payment initiated successfully",
+                }
+            else:
+                return {
+                    "success": False,
+                    "error": result.get("message", "Paystack initialization failed"),
+                }
+
+        except Exception as e:
+            print(f"[ERROR] [PAYSTACK SUBSCRIPTION] Exception: {str(e)}")
+            import traceback
+            print(f"[ERROR] [PAYSTACK SUBSCRIPTION] Traceback:\n{traceback.format_exc()}")
             return {"success": False, "error": f"Payment processing error: {str(e)}"}
 
     def handle_marketplace_payment_success(self, marketplace_payment, flutterwave_data):
@@ -1399,13 +1615,13 @@ class MarketplacePaymentService(BasePaymentService):
 
         return float(plan.price_usd)
 
-    def create_marketplace_payment(self, user, plan, currency="NGN"):
-        """Create Flutterwave payment for marketplace subscription"""
+    def create_marketplace_payment(self, user, plan, currency="NGN", gateway="flutterwave"):
+        """Create payment for marketplace subscription"""
         try:
             currency = self.normalize_currency(currency)
-            print(f"🟡 [MARKETPLACE PAYMENT] Starting payment for plan: {plan.name}")
+            print(f"[INFO] [MARKETPLACE PAYMENT] Starting payment for plan: {plan.name}")
             print(
-                f"🟡 [MARKETPLACE PAYMENT] User: {user.id}, Currency: {currency}"
+                f"[INFO] [MARKETPLACE PAYMENT] User: {user.id}, Currency: {currency}, Gateway: {gateway}"
             )
 
             # Generate transaction reference
@@ -1413,6 +1629,67 @@ class MarketplacePaymentService(BasePaymentService):
 
             tx_ref = f"KIMBELA_MARKET_{user.id}_{int(time.time())}"
             payment_amount = self._get_marketplace_payment_amount(plan, currency)
+
+            if gateway == "paystack":
+                payment_data = {
+                    "email": user.email,
+                    "amount": int(payment_amount * 100),  # Paystack uses kobo
+                    "currency": currency,
+                    "reference": tx_ref,
+                    "callback_url": url_for("market.subscription_callback", _external=True),
+                    "metadata": {
+                        "user_id": user.id,
+                        "plan_id": plan.id,
+                        "plan_name": plan.name,
+                        "transaction_type": "marketplace_subscription",
+                    }
+                }
+
+                headers = {
+                    "Authorization": f"Bearer {self.paystack_secret_key}",
+                    "Content-Type": "application/json",
+                }
+
+                print(f"[INFO] [MARKETPLACE PAYMENT] Sending request to Paystack...")
+
+                response = self._http_request(
+                    "POST",
+                    f"{self.paystack_base_url}/transaction/initialize",
+                    headers=headers,
+                    json=payment_data,
+                    timeout=30,
+                )
+
+                if response.status_code == 200:
+                    result = response.json()
+                    if result.get("status") is True:
+                        payment_url = result["data"]["authorization_url"]
+
+                        marketplace_payment = MarketplacePayment(
+                            user_id=user.id,
+                            subscription_id=plan.id,
+                            amount=payment_amount,
+                            currency=currency,
+                            tokens_paid=int(payment_amount * 100),
+                            gateway="paystack",
+                            gateway_reference=tx_ref,
+                            gateway_status="initiated",
+                            status="pending",
+                            payment_method="card",
+                        )
+                        db.session.add(marketplace_payment)
+                        db.session.commit()
+
+                        return {
+                            "success": True,
+                            "payment_url": payment_url,
+                            "gateway_reference": tx_ref,
+                            "message": "Marketplace payment initiated successfully via Paystack",
+                        }
+                    else:
+                        return {"success": False, "error": f"Paystack error: {result.get('message')}"}
+                else:
+                    return {"success": False, "error": f"Paystack returned error: {response.status_code}"}
 
             # Prepare payment data
             payment_data = {
@@ -1448,7 +1725,7 @@ class MarketplacePaymentService(BasePaymentService):
                 "Content-Type": "application/json",
             }
 
-            print(f"🟡 [MARKETPLACE PAYMENT] Sending request to Flutterwave...")
+            print(f"[INFO] [MARKETPLACE PAYMENT] Sending request to Flutterwave...")
 
             response = self._http_request(
                 "POST",
@@ -1458,18 +1735,18 @@ class MarketplacePaymentService(BasePaymentService):
                 timeout=30,
             )
 
-            print(f"🟡 [MARKETPLACE PAYMENT] Response status: {response.status_code}")
+            print(f"[INFO] [MARKETPLACE PAYMENT] Response status: {response.status_code}")
 
             if response.status_code == 200:
                 result = response.json()
                 print(
-                    f"🟡 [MARKETPLACE PAYMENT] Flutterwave response: {json.dumps(result, indent=2)}"
+                    f"[INFO] [MARKETPLACE PAYMENT] Flutterwave response: {json.dumps(result, indent=2)}"
                 )
 
                 if result.get("status") == "success":
                     payment_url = result["data"]["link"]
                     print(
-                        f"✅ [MARKETPLACE PAYMENT] Payment URL generated: {payment_url}"
+                        f"[SUCCESS] [MARKETPLACE PAYMENT] Payment URL generated: {payment_url}"
                     )
 
                     # Create MarketplacePayment record
@@ -1504,14 +1781,14 @@ class MarketplacePaymentService(BasePaymentService):
                     }
                 else:
                     error_msg = result.get("message", "Unknown Flutterwave error")
-                    print(f"🔴 [MARKETPLACE PAYMENT] Flutterwave error: {error_msg}")
+                    print(f"[ERROR] [MARKETPLACE PAYMENT] Flutterwave error: {error_msg}")
                     return {
                         "success": False,
                         "error": f"Payment gateway error: {error_msg}",
                     }
             else:
                 print(
-                    f"🔴 [MARKETPLACE PAYMENT] HTTP error {response.status_code}: {response.text}"
+                    f"[ERROR] [MARKETPLACE PAYMENT] HTTP error {response.status_code}: {response.text}"
                 )
                 return {
                     "success": False,
@@ -1519,10 +1796,10 @@ class MarketplacePaymentService(BasePaymentService):
                 }
 
         except Exception as e:
-            print(f"🔴 [MARKETPLACE PAYMENT] Exception: {str(e)}")
+            print(f"[ERROR] [MARKETPLACE PAYMENT] Exception: {str(e)}")
             import traceback
 
-            print(f"🔴 [MARKETPLACE PAYMENT] Traceback:\n{traceback.format_exc()}")
+            print(f"[ERROR] [MARKETPLACE PAYMENT] Traceback:\n{traceback.format_exc()}")
             if isinstance(e, UpstreamServiceError):
                 return {
                     "success": False,
@@ -1534,7 +1811,7 @@ class MarketplacePaymentService(BasePaymentService):
     def handle_marketplace_payment_success(self, marketplace_payment, flutterwave_data):
         """Handle successful marketplace payment"""
         try:
-            print(f"🟡 [PAYMENT SUCCESS] Starting to handle successful payment")
+            print(f"[INFO] [PAYMENT SUCCESS] Starting to handle successful payment")
 
             # Update payment record
             marketplace_payment.status = "completed"

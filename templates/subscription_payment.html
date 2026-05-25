@@ -49,15 +49,17 @@
             <!-- Payment Methods -->
             <h2 class="font-bold mb-4">Select Payment Method</h2>
             <div class="grid grid-cols-2 gap-4 mb-8">
-                <button id="flutterwave-btn" class="p-4 border-2 border-blue-500 rounded-lg flex items-center justify-center hover:bg-blue-50">
+                <button id="flutterwave-btn" class="p-4 border-2 border-blue-500 rounded-lg flex items-center justify-center hover:bg-blue-50 transition-colors">
                     <img src="https://flutterwave.com/images/logo-colored.svg" alt="Flutterwave" class="h-8">
                 </button>
-                <!-- Add more payment methods as needed -->
+                <button id="paystack-btn" class="p-4 border-2 border-gray-200 rounded-lg flex items-center justify-center hover:bg-gray-50 transition-colors">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/0/0b/Paystack_Logo.png" alt="Paystack" class="h-8">
+                </button>
             </div>
             
             <!-- Payment Form -->
             <div id="payment-form" style="display: none;">
-                <form id="flutterwave-form">
+                <form id="payment-submit-form">
                     <div class="mb-4">
                         <label class="block text-sm font-medium mb-2">Email</label>
                         <input type="email" value="{{ current_user.email }}" 
@@ -77,12 +79,25 @@
         </div>
     </div>
 
+    <script src="https://js.paystack.co/v1/inline.js"></script>
     <script>
+        let selectedGateway = 'flutterwave';
+
         document.getElementById('flutterwave-btn').addEventListener('click', function() {
+            selectedGateway = 'flutterwave';
+            document.getElementById('flutterwave-btn').classList.replace('border-gray-200', 'border-blue-500');
+            document.getElementById('paystack-btn').classList.replace('border-blue-500', 'border-gray-200');
             document.getElementById('payment-form').style.display = 'block';
         });
 
-        document.getElementById('flutterwave-form').addEventListener('submit', function(e) {
+        document.getElementById('paystack-btn').addEventListener('click', function() {
+            selectedGateway = 'paystack';
+            document.getElementById('paystack-btn').classList.replace('border-gray-200', 'border-blue-500');
+            document.getElementById('flutterwave-btn').classList.replace('border-blue-500', 'border-gray-200');
+            document.getElementById('payment-form').style.display = 'block';
+        });
+
+        document.getElementById('payment-submit-form').addEventListener('submit', function(e) {
             e.preventDefault();
             
             // Show loading state
@@ -90,34 +105,53 @@
             payBtn.innerHTML = 'Processing...';
             payBtn.disabled = true;
             
-            // Make payment
-            FlutterwaveCheckout({
-                public_key: "{{ current_app.config.get('FLUTTERWAVE_PUBLIC_KEY') }}",
-                tx_ref: "KIMBELA-SUB-{{ subscription_data.plan_id }}-{{ current_user.id }}-{{ timestamp }}",
-                amount: {{ subscription_data.amount }},
-                currency: "{{ checkout_currency }}",
-                payment_options: "{{ payment_options }}",
-                customer: {
+            if (selectedGateway === 'flutterwave') {
+                FlutterwaveCheckout({
+                    public_key: "{{ current_app.config.get('FLUTTERWAVE_PUBLIC_KEY') }}",
+                    tx_ref: "KIMBELA-SUB-{{ subscription_data.plan_id }}-{{ current_user.id }}-{{ timestamp }}",
+                    amount: {{ subscription_data.amount }},
+                    currency: "{{ checkout_currency }}",
+                    payment_options: "{{ payment_options }}",
+                    customer: {
+                        email: "{{ current_user.email }}",
+                        phone_number: "{{ current_user.phone_number }}",
+                        name: "{{ current_user.full_name }}",
+                    },
+                    customizations: {
+                        title: "Kimbela Marketplace Subscription",
+                        description: "{{ subscription_data.plan_name }} Plan",
+                        logo: "{{ url_for('static', filename='assets/img/kim.png', _external=True) }}",
+                    },
+                    callback: function(response) {
+                        // Redirect to callback URL
+                        window.location.href = "{{ url_for('market.subscription_callback', _external=True) }}?tx_ref=" + 
+                                            response.tx_ref + "&transaction_id=" + response.transaction_id + 
+                                            "&status=" + response.status;
+                    },
+                    onclose: function() {
+                        payBtn.innerHTML = 'Pay {{ display_price }}';
+                        payBtn.disabled = false;
+                    }
+                });
+            } else {
+                let handler = PaystackPop.setup({
+                    key: "{{ current_app.config.get('PAYSTACK_PUBLIC_KEY') }}",
                     email: "{{ current_user.email }}",
-                    phone_number: "{{ current_user.phone_number }}",
-                    name: "{{ current_user.full_name }}",
-                },
-                customizations: {
-                    title: "Kimbela Marketplace Subscription",
-                    description: "{{ subscription_data.plan_name }} Plan",
-                    logo: "{{ url_for('static', filename='assets/img/kim.png', _external=True) }}",
-                },
-                callback: function(response) {
-                    // Redirect to callback URL
-                    window.location.href = "{{ url_for('market.subscription_callback', _external=True) }}?tx_ref=" + 
-                                          response.tx_ref + "&transaction_id=" + response.transaction_id + 
-                                          "&status=" + response.status;
-                },
-                onclose: function() {
-                    payBtn.innerHTML = 'Pay {{ display_price }}';
-                    payBtn.disabled = false;
-                }
-            });
+                    amount: {{ subscription_data.amount }} * 100, // Paystack uses kobo
+                    currency: "{{ checkout_currency }}",
+                    ref: "KIMBELA-SUB-{{ subscription_data.plan_id }}-{{ current_user.id }}-{{ timestamp }}",
+                    callback: function(response) {
+                        window.location.href = "{{ url_for('market.subscription_callback', _external=True) }}?tx_ref=" + 
+                                            response.reference + "&transaction_id=" + response.transaction + 
+                                            "&status=" + response.status;
+                    },
+                    onClose: function() {
+                        payBtn.innerHTML = 'Pay {{ display_price }}';
+                        payBtn.disabled = false;
+                    }
+                });
+                handler.openIframe();
+            }
         });
     </script>
 </body>

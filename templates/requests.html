@@ -1029,6 +1029,16 @@
                                             <i class="bi bi-credit-card text-green-600 text-sm"></i>
                                         </div>
                                     </label>
+                                    <label class="radio-label p-3 border border-border-color rounded-lg hover:border-rose-gold transition-all duration-300 bg-white mt-2">
+                                        <input type="radio" name="paymentMethod" value="paystack" class="mr-3">
+                                        <div class="flex-1">
+                                            <div class="font-semibold text-primary text-sm">Paystack</div>
+                                            <div class="text-xs text-text-secondary">Cards, Bank Transfer</div>
+                                        </div>
+                                        <div class="w-6 h-6 bg-blue-100 rounded flex items-center justify-center">
+                                            <i class="bi bi-credit-card-2-front text-blue-600 text-sm"></i>
+                                        </div>
+                                    </label>
                                 </div>
                             </div>
                             
@@ -1757,13 +1767,15 @@
                 
                 if (data.success) {
                     
+                    const selectedGateway = document.querySelector('input[name="paymentMethod"]:checked')?.value || 'flutterwave';
                     const paymentPayload = {
                         request_id: data.request_id,
                         currency: requestData.currency || 'NGN',
                         amount: String(MATCHMAKING_PRICE_NGN),
                         campaign_id: AppState.selectedPackageId,
                         campaign_title: 'Matchmaking Service',
-                        campaign_description: `Premium matchmaking service - ₦${MATCHMAKING_PRICE_NGN}/month`
+                        campaign_description: `Premium matchmaking service - ₦${MATCHMAKING_PRICE_NGN}/month`,
+                        gateway: selectedGateway
                     };
 
                     

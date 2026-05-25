@@ -54,9 +54,9 @@ if __name__ == "__main__":
     background_thread.start()
 
     print("=" * 50)
-    print("🚀 Starting Kimbela Server")
-    print("📡 Web: http://localhost:5001")
-    print("🔌 Socket.IO: Ready")
+    print("[INFO] Starting Kimbela Server")
+    print("[INFO] Web: http://localhost:5001")
+    print("[INFO] Socket.IO: Ready")
     print("=" * 50)
 
     socketio.run(app, host="0.0.0.0", port=5001, debug=True)

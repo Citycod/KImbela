@@ -30,21 +30,74 @@ class AdCampaignPaymentService:
         """Delegate email sending to base service"""
         return self.base._send_email(subject, recipient, html_body)
 
-    def create_ad_campaign_payment(self, user, campaign, currency="NGN"):
-        """Create Flutterwave payment for ad campaigns"""
+    def create_ad_campaign_payment(self, user, campaign, currency="NGN", gateway="flutterwave"):
+        """Create payment for ad campaigns using Flutterwave or Paystack"""
         try:
             currency = self.base.normalize_currency(currency)
-            print(f"🟡 [AD PAYMENT] Starting payment for campaign: {campaign.id}")
-            print(
-                "🟡 [AD PAYMENT] Secret key present"
-                if self.FLW_SECRET_KEY
-                else "🔴 [AD PAYMENT] No secret key!"
-            )
-
+            print(f"🟡 [AD PAYMENT] Starting payment for campaign: {campaign.id}, Gateway: {gateway}")
+            
             # Generate unique transaction reference
             tx_ref = f"KIMBELA_AD_{campaign.id}_{int(time.time())}"
 
-            # Prepare payment data
+            if gateway == "paystack":
+                payment_data = {
+                    "email": user.email,
+                    "amount": int(float(campaign.budget) * 100),  # Paystack uses kobo
+                    "currency": currency,
+                    "reference": tx_ref,
+                    "callback_url": url_for("payments.payment_callback", _external=True),
+                    "metadata": {
+                        "user_id": user.id,
+                        "campaign_id": campaign.id,
+                        "transaction_type": "ad_campaign",
+                    }
+                }
+                
+                headers = {
+                    "Authorization": f"Bearer {self.base.paystack_secret_key}",
+                    "Content-Type": "application/json",
+                }
+
+                print(f"🟡 [AD PAYMENT] Sending request to Paystack...")
+                
+                response = self._http_request(
+                    "POST",
+                    f"{self.base.paystack_base_url}/transaction/initialize",
+                    headers=headers,
+                    json=payment_data,
+                    timeout=30,
+                )
+
+                if response.status_code == 200:
+                    result = response.json()
+                    if result.get("status") is True:
+                        payment_url = result["data"]["authorization_url"]
+                        
+                        payment = PaymentTransaction(
+                            user_id=user.id,
+                            campaign_id=campaign.id,
+                            amount=campaign.budget,
+                            currency=currency,
+                            gateway_reference=tx_ref,
+                            gateway="paystack",
+                            status="pending",
+                            transaction_type="ad_campaign",
+                        )
+                        db.session.add(payment)
+                        db.session.commit()
+
+                        return {
+                            "success": True,
+                            "payment_url": payment_url,
+                            "gateway_payment_id": tx_ref,
+                            "message": "Ad campaign payment initiated successfully via Paystack",
+                        }
+                    else:
+                        return {"success": False, "error": f"Paystack error: {result.get('message')}"}
+                else:
+                    return {"success": False, "error": f"Paystack returned error: {response.status_code}"}
+
+            # Prepare payment data for Flutterwave
             payment_data = {
                 "tx_ref": tx_ref,
                 "amount": str(float(campaign.budget)),

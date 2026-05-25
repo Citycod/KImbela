@@ -38,4 +38,4 @@ if redis_url:
 
 socketio = SocketIO(**socketio_kwargs)
 
-print("✅ Extensions initialized with WebSocket support (eventlet)")
+print("[OK] Extensions initialized with WebSocket support (eventlet)")

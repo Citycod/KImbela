@@ -360,7 +360,7 @@ def log_service_activity(service_id, action, user_id=None):
     try:
         # You can save to database if needed
         print(
-            f"📊 Service Activity: service_id={service_id}, action={action}, user_id={user_id}"
+            f"[INFO] Service Activity: service_id={service_id}, action={action}, user_id={user_id}"
         )
 
         # Example database logging (uncomment if you have ServiceActivity model):
@@ -374,7 +374,7 @@ def log_service_activity(service_id, action, user_id=None):
         # db.session.commit()
 
     except Exception as e:
-        print(f"❌ Failed to log service activity: {e}")
+        print(f"[ERROR] Failed to log service activity: {e}")
 
 
 def parse_cloudinary_url(url):
@@ -1850,9 +1850,12 @@ def payment_callback():
             from payments.payment_service import MarketplacePaymentService
 
             payment_service = MarketplacePaymentService()
-            verification = payment_service.resolve_flutterwave_verification(
-                tx_ref=tx_ref, transaction_id=transaction_id
-            )
+            if payment.gateway == "paystack":
+                verification = payment_service.resolve_paystack_verification(reference=tx_ref)
+            else:
+                verification = payment_service.resolve_flutterwave_verification(
+                    tx_ref=tx_ref, transaction_id=transaction_id
+                )
             verification_data = verification.get("data", {}) or {}
             verified_status = (
                 verification.get("verified_status")
@@ -4535,7 +4538,7 @@ def become_seller():
 
         # Check if user already has subscription
         if current_user.marketplace_subscription_status == "active":
-            print(f"🔴 [BECOME-SELLER] User already has active subscription")
+            print(f"[ERROR] [BECOME-SELLER] User already has active subscription")
             return (
                 jsonify(
                     {
@@ -4546,33 +4549,45 @@ def become_seller():
                 400,
             )
 
+        payment_method = data.get("payment_method", "flutterwave")
+        print(f"[INFO] [BECOME-SELLER] Payment Method: {payment_method}")
+
         # Get marketplace service
         from payments.payment_service import MarketplacePaymentService
 
         marketplace_service = MarketplacePaymentService()
         checkout_currency = get_marketplace_checkout_currency(current_user)
 
-        # Check if keys are set
-        if not marketplace_service.flutterwave_secret_key:
-            print(f"🔴 [BECOME-SELLER] Flutterwave secret key is not set")
-            return (
-                jsonify(
-                    {"success": False, "error": "Payment gateway configuration error"}
-                ),
-                500,
-            )
+        # Handle Paystack key validation
+        if payment_method == "paystack":
+            from utils.paystack import PaystackService
+            paystack_api = PaystackService()
+            if not paystack_api.secret_key:
+                print(f"[ERROR] [BECOME-SELLER] Paystack secret key is not set")
+                return (
+                    jsonify(
+                        {"success": False, "error": "Paystack payment gateway is not configured."}
+                    ),
+                    500,
+                )
+        else:
+            # Check Flutterwave keys
+            if not marketplace_service.flutterwave_secret_key:
+                print(f"[ERROR] [BECOME-SELLER] Flutterwave secret key is not set")
+                return (
+                    jsonify(
+                        {"success": False, "error": "Flutterwave payment gateway is not configured."}
+                    ),
+                    500,
+                )
 
-        print(f"🟡 [BECOME-SELLER] Creating payment with Flutterwave...")
-        print(
-            f"🟡 [BECOME-SELLER] Secret Key preview: {marketplace_service.flutterwave_secret_key[:20]}..."
-        )
-
-        # Create payment
+        print(f"[INFO] [BECOME-SELLER] Creating payment with gateway: {payment_method}...")
+        # Create payment using the unified method
         result = marketplace_service.create_marketplace_payment(
-            user=current_user, plan=plan, currency=checkout_currency
+            user=current_user, plan=plan, currency=checkout_currency, gateway=payment_method
         )
 
-        print(f"🟡 [BECOME-SELLER] Payment result: {result}")
+        print(f"[INFO] [BECOME-SELLER] Payment result: {result}")
 
         if result.get("success"):
             return jsonify(
@@ -4590,15 +4605,15 @@ def become_seller():
         else:
             error_msg = result.get("error", "Payment initiation failed")
             error_type = result.get("error_type")
-            print(f"🔴 [BECOME-SELLER] Payment failed: {error_msg}")
+            print(f"[ERROR] [BECOME-SELLER] Payment failed: {error_msg}")
             status_code = 503 if error_type == "upstream_unavailable" else 400
             return jsonify({"success": False, "error": error_msg}), status_code
 
     except Exception as e:
-        print(f"🔴 [BECOME-SELLER] Unhandled exception: {str(e)}")
+        print(f"[ERROR] [BECOME-SELLER] Unhandled exception: {str(e)}")
         import traceback
 
-        print(f"🔴 [BECOME-SELLER] Traceback:\n{traceback.format_exc()}")
+        print(f"[ERROR] [BECOME-SELLER] Traceback:\n{traceback.format_exc()}")
 
         return (
             jsonify({"success": False, "error": f"Internal server error: {str(e)}"}),
@@ -4756,13 +4771,13 @@ def marketplace_payment_callback():
 
 @market.route("/subscription-callback", methods=["GET"])
 def subscription_callback():
-    """Handle Flutterwave payment callback for subscriptions"""
+    """Handle payment callback for subscriptions (Flutterwave or Paystack)"""
     try:
-        tx_ref = request.args.get("tx_ref")
+        tx_ref = request.args.get("tx_ref") or request.args.get("reference")
         transaction_id = request.args.get("transaction_id")
         status = (request.args.get("status") or "").strip().lower()
 
-        print(f"🟡 [SUBSCRIPTION CALLBACK] Processing callback")
+        print(f"🟡 [SUBSCRIPTION CALLBACK] Processing callback. Ref: {tx_ref}")
 
         if not tx_ref:
             flash("Invalid callback parameters", "danger")
@@ -4785,31 +4800,43 @@ def subscription_callback():
         from payments.payment_service import MarketplacePaymentService
 
         payment_service = MarketplacePaymentService()
-        success_statuses = {"successful", "completed"}
+        success_statuses = {"successful", "completed", "success"}
         pending_statuses = {"pending", "processing"}
         verification = None
         verification_data = {}
         verified_status = ""
 
-        if transaction_id:
-            verification = payment_service.verify_flutterwave_payment(transaction_id)
+        # Paystack verification
+        if marketplace_payment.gateway == "paystack":
+            from utils.paystack import PaystackService
+            paystack_api = PaystackService()
+            verification = paystack_api.verify_transaction(tx_ref)
             verification_data = verification.get("data", {}) or {}
             verified_status = (verification_data.get("status") or "").strip().lower()
+            if verification.get("status") and verified_status == "success":
+                # Ensure it maps to success_statuses
+                verified_status = "successful"
+        else:
+            # Flutterwave verification
+            if transaction_id:
+                verification = payment_service.verify_flutterwave_payment(transaction_id)
+                verification_data = verification.get("data", {}) or {}
+                verified_status = (verification_data.get("status") or "").strip().lower()
 
-        if not verified_status:
-            reference_verification = payment_service.verify_flutterwave_payment_by_reference(
-                tx_ref
-            )
-            reference_data = reference_verification.get("data", {}) or {}
-            reference_status = (reference_data.get("status") or "").strip().lower()
-            if reference_verification.get("success") and reference_status:
-                verification = reference_verification
-                verification_data = reference_data
-                verified_status = reference_status
-                if not transaction_id:
-                    transaction_id = verification_data.get("id")
+            if not verified_status:
+                reference_verification = payment_service.verify_flutterwave_payment_by_reference(
+                    tx_ref
+                )
+                reference_data = reference_verification.get("data", {}) or {}
+                reference_status = (reference_data.get("status") or "").strip().lower()
+                if reference_verification.get("success") and reference_status:
+                    verification = reference_verification
+                    verification_data = reference_data
+                    verified_status = reference_status
+                    if not transaction_id:
+                        transaction_id = verification_data.get("id")
 
-        if verification and verification.get("success") and verified_status in success_statuses:
+        if (verification and (verification.get("success") or verification.get("status")) and verified_status in success_statuses):
             print(f"✅ [CALLBACK] Payment verified with status: {verified_status}")
 
             success = payment_service.handle_marketplace_payment_success(
