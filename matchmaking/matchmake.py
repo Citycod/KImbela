@@ -610,10 +610,11 @@ def initiate_matchmaking_payment():
         # Required fields for matchmaking
         request_id = data.get("request_id")
         currency = data.get("currency", "NGN").upper()
+        gateway = (data.get("gateway") or "flutterwave").lower()
         package_id = data.get("campaign_id")  # This comes from frontend as campaign_id
 
         print(
-            f"🟡 [INITIATE MATCHMAKING PAYMENT] request_id: {request_id}, currency: {currency}, package_id: {package_id}"
+            f"🟡 [INITIATE MATCHMAKING PAYMENT] request_id: {request_id}, currency: {currency}, gateway: {gateway}, package_id: {package_id}"
         )
 
         if not request_id or not package_id:
@@ -695,6 +696,7 @@ def initiate_matchmaking_payment():
             matchmaking_request=matchmaking_request,
             package=package,
             currency=currency,
+            gateway=gateway,
         )
 
         print(f"🟡 [INITIATE MATCHMAKING PAYMENT] Payment service result: {result}")

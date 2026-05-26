@@ -286,6 +286,18 @@
               class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-accent focus:outline-none"
             >
               <option value="NGN">NGN</option>
+              <option value="USD">USD</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="text-sm font-semibold text-slate-700">Payment Gateway</label>
+            <select
+              id="paymentGateway"
+              class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-accent focus:outline-none"
+            >
+              <option value="paystack">Paystack</option>
+              <option value="flutterwave">Flutterwave</option>
             </select>
           </div>
 
@@ -394,17 +406,27 @@
       }
 
       function updateTotals() {
+        const currency = document.getElementById('currency').value;
         const dailyUsd = parseFloat(budgetSlider.value || 0);
         const daily = getDailyBudgetNgn();
         const days = parseInt(daysInput.value || 0, 10);
-        budgetValue.textContent = formatNaira(daily);
+        
+        const currencySymbol = currency === 'USD' ? '$' : '₦';
+        const displayDaily = currency === 'USD' ? dailyUsd.toFixed(2) : formatNaira(daily);
+        const displayTotal = currency === 'USD' ? (dailyUsd * days).toFixed(2) : formatNaira(daily * days);
+
+        // Update DOM elements manually instead of just textContent to avoid replacing innerHTML
+        document.querySelector('p.text-sm.text-slate-600.mt-2').innerHTML = `${currencySymbol}<span id="budgetValue">${displayDaily}</span> per day`;
+        document.querySelector('.rounded-2xl.bg-slate-50.p-4 .text-lg.font-semibold.text-slate-900').innerHTML = `${currencySymbol}<span id="totalValue">${displayTotal}</span>`;
+
         if (budgetUsdValue) {
           budgetUsdValue.textContent = dailyUsd.toFixed(0);
         }
-        totalValue.textContent = formatNaira(daily * days);
       }
 
       updateTotals();
+
+      document.getElementById('currency').addEventListener('change', updateTotals);
 
       budgetSlider.addEventListener('input', updateTotals);
       daysInput.addEventListener('input', updateTotals);
@@ -591,6 +613,7 @@
         const contactCompany = document.getElementById('contactCompany')?.value.trim();
 
         const currency = document.getElementById('currency').value;
+        const gateway = document.getElementById('paymentGateway').value;
 
         
         if ({{ 'true' if is_public else 'false' }} && (!contactName || !contactEmail)) {
@@ -621,6 +644,12 @@ if (!title) {
 
         paymentModal.classList.remove('hidden');
         paymentModal.classList.add('flex');
+        
+        // Update loading text based on gateway
+        const loadingText = document.querySelector('#paymentModal p');
+        if (loadingText) {
+          loadingText.textContent = `Redirecting to ${gateway === 'paystack' ? 'Paystack' : 'Flutterwave'}...`;
+        }
 
         const mediaUrl = uploadedVideoUrl || uploadedImageUrl;
         const campaignPayload = {
@@ -682,7 +711,8 @@ if (!title) {
                 contact_name: contactName,
                 contact_email: contactEmail,
                 contact_company: contactCompany,
-                currency: currency
+                currency: currency,
+                gateway: gateway
               })
             });
           })

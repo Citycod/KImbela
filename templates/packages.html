@@ -420,8 +420,24 @@
             <label class="block text-primary font-medium mb-1 text-sm">Payment Currency</label>
             <select class="select-input" id="currency">
               <option value="NGN">🇳🇬 Nigerian Naira (NGN)</option>
+              <option value="USD">🇺🇸 US Dollar (USD)</option>
             </select>
-            <p class="text-xs text-text-secondary mt-1">All payments are processed in Nigerian naira (NGN).</p>
+            <p class="text-xs text-text-secondary mt-1">Select your preferred currency.</p>
+          </div>
+
+          <!-- Payment Gateway -->
+          <div class="mb-5">
+            <h3 class="text-base font-semibold text-primary mb-3">Payment Method</h3>
+            <div class="flex items-center space-x-4">
+              <label class="radio-label">
+                <input type="radio" name="payment_gateway" value="flutterwave" class="mr-1.5" checked>
+                <span>Flutterwave</span>
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="payment_gateway" value="paystack" class="mr-1.5">
+                <span>Paystack (Bank Transfer available)</span>
+              </label>
+            </div>
           </div>
           
           <!-- Budget Slider Section -->
@@ -892,13 +908,19 @@
         let ageRangeMin = 31;
         let ageRangeMax = 65;
         
-        // Currency configuration - Only NGN
+        // Currency configuration
         const currencyConfig = {
           'NGN': {
             symbol: '₦',
             name: 'Nigerian Naira',
             min: {{ ad_pricing.ngn_min_input }},
             max: {{ ad_pricing.ngn_max_input }}
+          },
+          'USD': {
+            symbol: '$',
+            name: 'US Dollar',
+            min: {{ ad_pricing.usd_min }},
+            max: {{ ad_pricing.usd_max }}
           }
         };
         
@@ -1358,7 +1380,8 @@
             currencySelect.innerHTML = '';
             
             const currencyNames = {
-                'NGN': '🇳🇬 Nigerian Naira (NGN)'
+                'NGN': '🇳🇬 Nigerian Naira (NGN)',
+                'USD': '🇺🇸 US Dollar (USD)'
             };
             
             supportedCurrencies.forEach(currency => {
@@ -1479,10 +1502,12 @@
             const totalAmount = budget * days;
             
             // 8️⃣ Prepare payment payload with selected currency
+            const paymentGateway = document.querySelector('input[name="payment_gateway"]:checked').value;
             const paymentPayload = {
               campaign_id: campaignId,
               amount: totalAmount,
               currency: currency,
+              gateway: paymentGateway,
               payment_options: 'card,account,ussd,banktransfer',
               redirect_url: window.location.origin + '/payment-callback',
               meta: {

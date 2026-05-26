@@ -1766,30 +1766,79 @@ def initiate_payment():
         if service.seller_id != current_user.id:
             return jsonify({"success": False, "error": "Permission denied"}), 403
 
+        currency = request.form.get("currency", "NGN").upper()
+        gateway = request.form.get("gateway", "flutterwave").lower()
+
         # Generate unique transaction reference
         tx_ref = f"KIMBELA-MP-{int(time.time())}-{service_id}"
+
+        from marketplace.market import get_marketplace_ngn_rate # Make sure to import or use the already imported rate
+        # Calculate amount based on currency
+        if currency == "USD":
+            amount = subscription.price_usd
+        else:
+            amount = round(subscription.price_usd * get_marketplace_ngn_rate(), 2)
 
         # Create payment record
         payment = MarketplacePayment(
             user_id=current_user.id,
             service_id=service_id,
             subscription_id=subscription_id,
-            amount=round(subscription.price_usd * get_marketplace_ngn_rate(), 2),
+            amount=amount,
             tokens_paid=subscription.price,
-            gateway="flutterwave",
+            gateway=gateway,
             gateway_reference=tx_ref,
-            currency="NGN",
+            currency=currency,
             status="pending",
             description=f"Marketplace subscription: {subscription.name} for service: {service.title}",
         )
         db.session.add(payment)
         db.session.commit()
 
+        # Prepare Paystack payment data
+        if gateway == "paystack":
+            payment_data = {
+                "email": current_user.email,
+                "amount": int(float(amount) * 100),  # Paystack uses smallest currency unit
+                "currency": currency,
+                "reference": tx_ref,
+                "callback_url": url_for("market.payment_callback", _external=True),
+                "metadata": {
+                    "service_id": service_id,
+                    "subscription_id": subscription_id,
+                    "payment_id": payment.id,
+                    "user_id": current_user.id,
+                }
+            }
+
+            from utils.paystack import PaystackService
+            paystack_service = PaystackService()
+            response = paystack_service.initialize_transaction(
+                email=current_user.email,
+                amount=amount,
+                reference=tx_ref,
+                callback_url=url_for("market.payment_callback", _external=True),
+                metadata=payment_data["metadata"],
+                currency=currency
+            )
+
+            if response.get("status"):
+                return jsonify(
+                    {
+                        "success": True,
+                        "payment_url": response["data"]["authorization_url"],
+                        "gateway": "paystack",
+                    }
+                )
+            else:
+                db.session.rollback()
+                return jsonify({"success": False, "error": response.get("message", "Paystack initialization failed")}), 400
+
         # Prepare Flutterwave payment data
         payment_data = {
             "tx_ref": tx_ref,
-            "amount": str(round(subscription.price_usd * get_marketplace_ngn_rate(), 2)),
-            "currency": "NGN",
+            "amount": str(float(amount)),
+            "currency": currency,
             "redirect_url": url_for("market.payment_callback", _external=True),
             "payment_options": "card,banktransfer,ussd",
             "customer": {
@@ -1819,6 +1868,7 @@ def initiate_payment():
                 "flutterwave_public_key": current_app.config.get(
                     "FLUTTERWAVE_PUBLIC_KEY"
                 ),
+                "gateway": "flutterwave"
             }
         )
 

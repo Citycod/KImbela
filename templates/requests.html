@@ -1047,8 +1047,9 @@
                                 <label class="block text-base font-semibold mb-2 text-primary">Payment Currency</label>
                                 <select class="select-input" id="currency">
                                     <option value="NGN">🇳🇬 Nigerian Naira (NGN)</option>
+                                    <option value="USD">🇺🇸 US Dollar (USD)</option>
                                 </select>
-                                <p class="text-xs text-text-secondary mt-1">Flutterwave payments are processed in Nigerian naira</p>
+                                <p class="text-xs text-text-secondary mt-1" id="currencyHint">Select your preferred currency</p>
                             </div>
                             
                             <div class="bg-gradient-to-br from-primary/5 to-rose-gold/5 rounded-lg p-4 border border-primary/10">
@@ -1525,7 +1526,8 @@
                 ideal_partner: document.getElementById('idealPartner').value,
                 your_interests: AppState.selectedYourInterests,
                 lifestyles: lifestyles,
-                image: AppState.uploadedImageUrl
+                image: AppState.uploadedImageUrl,
+                currency: document.getElementById('currency').value
             };
         }
 
@@ -1774,7 +1776,7 @@
                         amount: String(MATCHMAKING_PRICE_NGN),
                         campaign_id: AppState.selectedPackageId,
                         campaign_title: 'Matchmaking Service',
-                        campaign_description: `Premium matchmaking service - ₦${MATCHMAKING_PRICE_NGN}/month`,
+                        campaign_description: `Premium matchmaking service - ${requestData.currency === 'USD' ? '$' : '₦'}${requestData.currency === 'USD' ? 10 : MATCHMAKING_PRICE_NGN}/month`,
                         gateway: selectedGateway
                     };
 
@@ -1960,10 +1962,40 @@
                     AppState.selectedPackagePrice = MATCHMAKING_PRICE_NGN;
                     AppState.selectedPackageDuration = DEFAULT_MATCHMAKING_DURATION_DAYS;
 
+                    // Ensure the initial currency state matches the dropdown
+                    updateCurrencyDisplay();
+
                     resetForm();
                     showStep(1);
                     document.getElementById('matchmakingModal').classList.remove('hidden');
                 });
+
+                const currencySelect = document.getElementById('currency');
+                if (currencySelect) {
+                    currencySelect.addEventListener('change', updateCurrencyDisplay);
+                }
+
+                function updateCurrencyDisplay() {
+                    const currency = document.getElementById('currency').value;
+                    const priceElement = document.getElementById('summaryTotal');
+                    const priceDescription = document.querySelector('.bg-gradient-to-br p.text-xs.text-center');
+                    const previewPrice = document.querySelector('.matchmaking-header p.text-xs');
+                    const activePrice = document.querySelector('.bg-rose-gold\\/10 p.text-xs');
+
+                    if (currency === 'USD') {
+                        const usdPrice = 10;
+                        if (priceElement) priceElement.textContent = `$${usdPrice}`;
+                        if (priceDescription) priceDescription.textContent = `Fixed price - $${usdPrice}/month`;
+                        if (previewPrice) previewPrice.textContent = `$${usdPrice}/month - 30 days duration`;
+                        if (activePrice) activePrice.textContent = `Fixed price: $${usdPrice} per month. Cancel anytime.`;
+                    } else {
+                        const formattedNgn = MATCHMAKING_PRICE_NGN.toLocaleString('en-NG');
+                        if (priceElement) priceElement.textContent = `₦${formattedNgn}`;
+                        if (priceDescription) priceDescription.textContent = `Fixed price - ₦${formattedNgn}/month`;
+                        if (previewPrice) previewPrice.textContent = `₦${formattedNgn}/month - 30 days duration`;
+                        if (activePrice) activePrice.textContent = `Fixed price: ₦${formattedNgn} per month. Cancel anytime.`;
+                    }
+                }
 
                 const minAgeInput = document.getElementById('minAge');
                     const maxAgeInput = document.getElementById('maxAge');

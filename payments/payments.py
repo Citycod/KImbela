@@ -422,6 +422,7 @@ def public_initiate_payment():
 
         campaign_id = data.get("campaign_id")
         currency = (data.get("currency") or "NGN").upper()
+        gateway = (data.get("gateway") or "flutterwave").lower()
         contact_payload = {
             "name": data.get("contact_name") or data.get("name") or "",
             "email": data.get("contact_email") or data.get("email") or "",
@@ -442,7 +443,7 @@ def public_initiate_payment():
         from .payment_service_ad import AdCampaignPaymentService
 
         ad_service = AdCampaignPaymentService()
-        result = ad_service.create_ad_campaign_payment(user, campaign, currency)
+        result = ad_service.create_ad_campaign_payment(user, campaign, currency, gateway)
         if not result.get("success"):
             return jsonify(result), 400
 
@@ -1520,9 +1521,10 @@ def initiate_payment():
 
         campaign_id = data.get("campaign_id")
         currency = data.get("currency", "NGN").upper()
+        gateway = (data.get("gateway") or "flutterwave").lower()
 
         print(
-            f"🟡 [INITIATE PAYMENT] campaign_id: {campaign_id}, currency: {currency}"
+            f"🟡 [INITIATE PAYMENT] campaign_id: {campaign_id}, currency: {currency}, gateway: {gateway}"
         )
 
         # Validate required fields
@@ -1530,7 +1532,7 @@ def initiate_payment():
             return jsonify({"success": False, "error": "Campaign ID is required"}), 400
 
         # ✅ ADD CURRENCY VALIDATION
-        supported_currencies = ["NGN"]
+        supported_currencies = ["NGN", "USD"]
         if currency not in supported_currencies:
             return (
                 jsonify(
@@ -1570,13 +1572,14 @@ def initiate_payment():
             f"🟡 [INITIATE PAYMENT] Campaign found: {campaign.title}, User: {current_user.email}"
         )
 
-        payment_service = PaymentService()
+        from .payment_service_ad import AdCampaignPaymentService
+        ad_service = AdCampaignPaymentService()
 
-        result = payment_service.create_flutterwave_transaction(
+        result = ad_service.create_ad_campaign_payment(
             user=current_user,
             campaign=campaign,
-            amount=float(campaign.budget),
-            currency=currency,  # This now uses validated currency
+            currency=currency,
+            gateway=gateway
         )
 
         print(f"🟡 [INITIATE PAYMENT] Payment service result: {result}")

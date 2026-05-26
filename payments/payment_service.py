@@ -1200,13 +1200,13 @@ class MarketplacePaymentService(BasePaymentService):
 
     """Payment service for marketplace subscriptions"""
 
-    def create_marketplace_payment(self, user, plan, currency="NGN"):
-        """Create Flutterwave payment for marketplace subscription - FIXED VERSION"""
+    def create_marketplace_payment(self, user, plan, currency="NGN", gateway="flutterwave"):
+        """Create Flutterwave or Paystack payment for marketplace subscription - FIXED VERSION"""
         try:
             from marketplace.market import get_marketplace_checkout_amount
             payment_amount = get_marketplace_checkout_amount(plan, currency)
 
-            print(f"[INFO] [MARKETPLACE PAYMENT] Starting payment for plan: {plan.name}")
+            print(f"[INFO] [MARKETPLACE PAYMENT] Starting payment for plan: {plan.name}, Gateway: {gateway}")
             print(
                 f"[INFO] [MARKETPLACE PAYMENT] User: {user.id}, Amount: {payment_amount} {currency}"
             )
@@ -1219,52 +1219,55 @@ class MarketplacePaymentService(BasePaymentService):
             print(f"[INFO] [MARKETPLACE PAYMENT] TX Ref: {tx_ref}")
             print(f"[INFO] [MARKETPLACE PAYMENT] Amount: {payment_amount}")
 
-            # Prepare payment data
-            payment_data = {
-                "tx_ref": tx_ref,
-                "amount": str(float(payment_amount)),
-                "currency": currency,
-                "redirect_url": url_for("market.subscription_callback", _external=True),
-                "payment_options": "card",
-                "customer": {
-                    "email": user.email,
-                    "name": user.full_name
-                    or user.first_name
-                    or user.email.split("@")[0],
-                },
-                "meta": {
-                    "user_id": user.id,
-                    "plan_id": plan.id,
-                    "plan_name": plan.name,
-                    "transaction_type": "marketplace_subscription",
-                },
-                "customizations": {
-                    "title": "Kimbela Marketplace",
-                    "description": f"Subscription Plan: {plan.name}",
-                },
-            }
+            if gateway == "paystack":
+                return self.create_paystack_marketplace_payment(user, plan, currency)
+            else:
+                # Prepare payment data for Flutterwave
+                payment_data = {
+                    "tx_ref": tx_ref,
+                    "amount": str(float(payment_amount)),
+                    "currency": currency,
+                    "redirect_url": url_for("market.subscription_callback", _external=True),
+                    "payment_options": "card",
+                    "customer": {
+                        "email": user.email,
+                        "name": user.full_name
+                        or user.first_name
+                        or user.email.split("@")[0],
+                    },
+                    "meta": {
+                        "user_id": user.id,
+                        "plan_id": plan.id,
+                        "plan_name": plan.name,
+                        "transaction_type": "marketplace_subscription",
+                    },
+                    "customizations": {
+                        "title": "Kimbela Marketplace",
+                        "description": f"Subscription Plan: {plan.name}",
+                    },
+                }
 
-            # Add phone number if available
-            if hasattr(user, "phone_number") and user.phone_number:
-                payment_data["customer"]["phone_number"] = user.phone_number
+                # Add phone number if available
+                if hasattr(user, "phone_number") and user.phone_number:
+                    payment_data["customer"]["phone_number"] = user.phone_number
 
-            headers = {
-                "Authorization": f"Bearer {self.flutterwave_secret_key}",
-                "Content-Type": "application/json",
-            }
+                headers = {
+                    "Authorization": f"Bearer {self.flutterwave_secret_key}",
+                    "Content-Type": "application/json",
+                }
 
-            print(f"🟡 [MARKETPLACE PAYMENT] Sending request to Flutterwave...")
-            print(f"🟡 [MARKETPLACE PAYMENT] URL: {self.flutterwave_base_url}/payments")
-            print(f"🟡 [MARKETPLACE PAYMENT] Headers: {headers}")
+                print(f"🟡 [MARKETPLACE PAYMENT] Sending request to Flutterwave...")
+                print(f"🟡 [MARKETPLACE PAYMENT] URL: {self.flutterwave_base_url}/payments")
+                print(f"🟡 [MARKETPLACE PAYMENT] Headers: {headers}")
 
-            # Make the request
-            response = self._http_request(
-                "POST",
-                f"{self.flutterwave_base_url}/payments",
-                headers=headers,
-                json=payment_data,
-                timeout=30,
-            )
+                # Make the request
+                response = self._http_request(
+                    "POST",
+                    f"{self.flutterwave_base_url}/payments",
+                    headers=headers,
+                    json=payment_data,
+                    timeout=30,
+                )
 
             print(f"🟡 [MARKETPLACE PAYMENT] Response status: {response.status_code}")
             print(
