@@ -102,49 +102,6 @@
 
     
 
-    <!-- Enchanting ad banner (above navbar) -->
-    {% set top_banner = dashboard_ads.get('top_banner') if dashboard_ads else None %}
-    {% set top_banner_url = top_banner.target_url if top_banner else url_for('payments.dashboard_ad_package', placement='dashboard-top') %}
-    {% set top_banner_image = top_banner.image_url if top_banner else None %}
-    {% set top_banner_title = top_banner.title if top_banner else "Ad space" %}
-    <section class="hero-ad-wrap">
-      <div class="hero-ad-shell {% if top_banner %}has-dashboard-ad{% endif %}">
-        <a class="hero-ad-link" href="{{ top_banner_url }}" {% if top_banner %}target="_blank" rel="noopener"{% endif %}>
-          {% if top_banner_image %}
-          <img
-            src="{{ top_banner_image }}"
-            alt="{{ top_banner_title }}"
-            class="hero-ad-media"
-            loading="lazy"
-          />
-          {% else %}
-          <div class="hero-ad-backdrop" aria-hidden="true">
-            <span class="hero-ad-orb orb-a"></span>
-            <span class="hero-ad-orb orb-b"></span>
-            <span class="hero-ad-orb orb-c"></span>
-            <span class="hero-ad-grid"></span>
-          </div>
-          <div class="hero-ad-content">
-            <div class="hero-ad-pill">Top Banner · Ad Space</div>
-            <h2 style="color: #f8fafc;">Advertise Here</h2>
-            <h5 class="hero-ad-highlight" >Promote your brand and reach the right audience on Kimbela</h5>
-            <p>Boost Visibility. Drive Engagement. Grow your business</p>
-            <div class="hero-ad-actions">
-              <span class="hero-ad-cta js-ad-cta" data-cta-href="{{ top_banner_url }}" role="link" tabindex="0">Create an ad</span>
-              <span class="hero-ad-secondary">Premium placement</span>
-            </div>
-          </div>
-          {% endif %}
-        </a>
-        <div class="hero-ad-sheen" aria-hidden="true"></div>
-        <div class="hero-ad-sparkles" aria-hidden="true">
-          <span></span>
-          <span></span>
-          <span></span>
-        </div>
-      </div>
-    </section>
-
     <!-- NAVBAR -->
     <!-- NAVBAR -->
     
@@ -524,7 +481,48 @@
       </div>
     </nav>
 
-
+    <!-- Enchanting ad banner (below navbar) -->
+    {% set top_banner = dashboard_ads.get('top_banner') if dashboard_ads else None %}
+    {% set top_banner_url = top_banner.target_url if top_banner else url_for('payments.dashboard_ad_package', placement='dashboard-top') %}
+    {% set top_banner_image = top_banner.image_url if top_banner else None %}
+    {% set top_banner_title = top_banner.title if top_banner else "Ad space" %}
+    <section class="hero-ad-wrap mt-4">
+      <div class="hero-ad-shell {% if top_banner %}has-dashboard-ad{% endif %}">
+        <a class="hero-ad-link" href="{{ top_banner_url }}" {% if top_banner %}target="_blank" rel="noopener"{% endif %}>
+          {% if top_banner_image %}
+          <img
+            src="{{ top_banner_image }}"
+            alt="{{ top_banner_title }}"
+            class="hero-ad-media"
+            loading="lazy"
+          />
+          {% else %}
+          <div class="hero-ad-backdrop" aria-hidden="true">
+            <span class="hero-ad-orb orb-a"></span>
+            <span class="hero-ad-orb orb-b"></span>
+            <span class="hero-ad-orb orb-c"></span>
+            <span class="hero-ad-grid"></span>
+          </div>
+          <div class="hero-ad-content">
+            <div class="hero-ad-pill">Top Banner · Ad Space</div>
+            <h2 style="color: #f8fafc;">Advertise Here</h2>
+            <h5 class="hero-ad-highlight" >Promote your brand and reach the right audience on Kimbela</h5>
+            <p>Boost Visibility. Drive Engagement. Grow your business</p>
+            <div class="hero-ad-actions">
+              <span class="hero-ad-cta js-ad-cta" data-cta-href="{{ top_banner_url }}" role="link" tabindex="0">Create an ad</span>
+              <span class="hero-ad-secondary">Premium placement</span>
+            </div>
+          </div>
+          {% endif %}
+        </a>
+        <div class="hero-ad-sheen" aria-hidden="true"></div>
+        <div class="hero-ad-sparkles" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+    </section>
 
 
 <!--<br>
