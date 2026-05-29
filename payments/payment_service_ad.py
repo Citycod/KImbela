@@ -39,11 +39,22 @@ class AdCampaignPaymentService:
             # Generate unique transaction reference
             tx_ref = f"KIMBELA_AD_{campaign.id}_{int(time.time())}"
 
+            # Auto-convert USD to NGN for local payment gateways
+            # This avoids 403 errors on Paystack and enables USSD/Bank Transfer on Flutterwave
+            checkout_currency = currency
+            checkout_amount = float(campaign.budget)
+
+            if checkout_currency == "USD":
+                checkout_currency = "NGN"
+                rate = float(self.base.get_ngn_rate())
+                checkout_amount = checkout_amount * rate
+                print(f"🟡 [AD PAYMENT] Converted USD {campaign.budget} to NGN {checkout_amount} at rate {rate}")
+
             if gateway == "paystack":
                 payment_data = {
                     "email": user.email,
-                    "amount": int(float(campaign.budget) * 100),  # Paystack uses kobo
-                    "currency": currency,
+                    "amount": int(checkout_amount * 100),  # Paystack uses kobo
+                    "currency": checkout_currency,
                     "reference": tx_ref,
                     "callback_url": url_for("payments.payment_callback", _external=True),
                     "metadata": {
@@ -76,8 +87,8 @@ class AdCampaignPaymentService:
                         payment = PaymentTransaction(
                             user_id=user.id,
                             campaign_id=campaign.id,
-                            amount=campaign.budget,
-                            currency=currency,
+                            amount=checkout_amount,
+                            currency=checkout_currency,
                             gateway_reference=tx_ref,
                             gateway="paystack",
                             status="pending",
@@ -100,8 +111,8 @@ class AdCampaignPaymentService:
             # Prepare payment data for Flutterwave
             payment_data = {
                 "tx_ref": tx_ref,
-                "amount": str(float(campaign.budget)),
-                "currency": currency,
+                "amount": str(checkout_amount),
+                "currency": checkout_currency,
                 "redirect_url": url_for("payments.payment_callback", _external=True),
                 "payment_options": "card,banktransfer,ussd",
                 "customer": {
@@ -153,8 +164,8 @@ class AdCampaignPaymentService:
                     payment = PaymentTransaction(
                         user_id=user.id,
                         campaign_id=campaign.id,
-                        amount=campaign.budget,
-                        currency=currency,
+                        amount=checkout_amount,
+                        currency=checkout_currency,
                         gateway_reference=tx_ref,
                         gateway_payment_id=str(result["data"].get("id") or ""),
                         gateway="flutterwave",
