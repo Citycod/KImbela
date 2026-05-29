@@ -30,7 +30,7 @@ class AdCampaignPaymentService:
         """Delegate email sending to base service"""
         return self.base._send_email(subject, recipient, html_body)
 
-    def create_ad_campaign_payment(self, user, campaign, currency="NGN", gateway="flutterwave"):
+    def create_ad_campaign_payment(self, user, campaign, currency="USD", gateway="flutterwave"):
         """Create payment for ad campaigns using Flutterwave or Paystack"""
         try:
             currency = self.base.normalize_currency(currency)

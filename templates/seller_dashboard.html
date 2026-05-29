@@ -1005,7 +1005,7 @@
                     
                     // Update stats display
                     document.getElementById('total-earnings').textContent = 
-                        formatCurrency(stats.total_earnings, 'KES');
+                        formatCurrency(stats.total_earnings, 'USD');
                     document.getElementById('active-services').textContent = stats.active_services;
                     document.getElementById('total-views').textContent = stats.total_views.toLocaleString();
                     document.getElementById('avg-rating').textContent = stats.average_rating;
@@ -1203,9 +1203,7 @@
             const symbols = {
                 'USD': '$',
                 'EUR': '€',
-                'GBP': '£',
                 'KES': '#',
-                'NGN': '₦',
                 'GHS': 'GH₵',
                 'ZAR': 'R'
             };
@@ -1213,7 +1211,7 @@
         }
         
         // Format currency
-        function formatCurrency(amount, currency = 'KES') {
+        function formatCurrency(amount, currency = 'USD') {
     const symbol = getCurrencySymbol(currency);
     // Use proper number formatting with commas
     const formattedAmount = new Intl.NumberFormat('en-US', {
@@ -1390,7 +1388,7 @@
                                 </div>
                                 <div class="bg-purple-50 p-4 rounded-xl">
                                     <p class="text-xs text-purple-600 mb-1">Avg. per Listing</p>
-                                    <h4 class="text-lg font-bold">${formatCurrency(stats.total_earnings / (stats.total_services || 1), 'KES')}</h4>
+                                    <h4 class="text-lg font-bold">${formatCurrency(stats.total_earnings / (stats.total_services || 1), 'USD')}</h4>
                                 </div>
                             </div>
                             

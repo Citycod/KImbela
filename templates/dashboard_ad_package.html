@@ -250,8 +250,7 @@
                 value="5"
                 class="mt-3 w-full"
               />
-              <p class="text-sm text-slate-600 mt-2">₦<span id="budgetValue">0</span> per day</p>
-              <p class="text-xs text-slate-500 mt-1">$<span id="budgetUsdValue">{{ '%.0f'|format(5) }}</span>/day at {{ '%.2f'|format(ad_pricing.rate) }} NGN/USD</p>
+              <p class="text-sm text-slate-600 mt-2">$<span id="budgetValue">5</span> per day</p>
             </div>
             <div>
               <label class="text-sm font-semibold text-slate-700">Duration (days)</label>
@@ -280,14 +279,7 @@
           </div>
 
           <div>
-            <label class="text-sm font-semibold text-slate-700">Currency</label>
-            <select
-              id="currency"
-              class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-accent focus:outline-none"
-            >
-              <option value="NGN">NGN</option>
-              <option value="USD">USD</option>
-            </select>
+            <input type="hidden" id="currency" value="USD" />
           </div>
 
           <div>
@@ -304,7 +296,7 @@
           <div class="rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">
             <div class="flex items-center justify-between">
               <span>Total estimate</span>
-              <span class="text-lg font-semibold text-slate-900">₦<span id="totalValue">35</span></span>
+              <span class="text-lg font-semibold text-slate-900">$<span id="totalValue">35</span></span>
             </div>
             <p class="text-xs text-slate-500 mt-1">You will be redirected to Flutterwave to complete payment.</p>
           </div>
@@ -375,11 +367,7 @@
 
       const budgetSlider = document.getElementById('budgetSlider');
       const budgetValue = document.getElementById('budgetValue');
-      const budgetUsdValue = document.getElementById('budgetUsdValue');
-      const daysInput = document.getElementById('daysInput');
-      const totalValue = document.getElementById('totalValue');
-      const usdToNgnRate = {{ ad_pricing.rate|tojson }};
-      const minimumDailyBudgetNgn = {{ ad_pricing.ngn_min_input|tojson }};
+      const minimumDailyBudgetUsd = {{ ad_pricing.usd_min|tojson }};
 
       function formatNaira(value) {
         return new Intl.NumberFormat('en-NG', {
@@ -388,9 +376,8 @@
         }).format(value);
       }
 
-      function getDailyBudgetNgn() {
-        const dailyUsd = parseFloat(budgetSlider.value || 0);
-        return dailyUsd * usdToNgnRate;
+      function getDailyBudgetUsd() {
+        return parseFloat(budgetSlider.value || 0);
       }
 
       const launchButton = document.getElementById('launchButton');
@@ -406,27 +393,20 @@
       }
 
       function updateTotals() {
-        const currency = document.getElementById('currency').value;
-        const dailyUsd = parseFloat(budgetSlider.value || 0);
-        const daily = getDailyBudgetNgn();
+        const dailyUsd = getDailyBudgetUsd();
         const days = parseInt(daysInput.value || 0, 10);
         
-        const currencySymbol = currency === 'USD' ? '$' : '₦';
-        const displayDaily = currency === 'USD' ? dailyUsd.toFixed(2) : formatNaira(daily);
-        const displayTotal = currency === 'USD' ? (dailyUsd * days).toFixed(2) : formatNaira(daily * days);
+        const displayDaily = dailyUsd.toFixed(2);
+        const displayTotal = (dailyUsd * days).toFixed(2);
 
         // Update DOM elements manually instead of just textContent to avoid replacing innerHTML
-        document.querySelector('p.text-sm.text-slate-600.mt-2').innerHTML = `${currencySymbol}<span id="budgetValue">${displayDaily}</span> per day`;
-        document.querySelector('.rounded-2xl.bg-slate-50.p-4 .text-lg.font-semibold.text-slate-900').innerHTML = `${currencySymbol}<span id="totalValue">${displayTotal}</span>`;
-
-        if (budgetUsdValue) {
-          budgetUsdValue.textContent = dailyUsd.toFixed(0);
-        }
+        document.querySelector('p.text-sm.text-slate-600.mt-2').innerHTML = `$<span id="budgetValue">${displayDaily}</span> per day`;
+        document.querySelector('.rounded-2xl.bg-slate-50.p-4 .text-lg.font-semibold.text-slate-900').innerHTML = `$<span id="totalValue">${displayTotal}</span>`;
       }
 
       updateTotals();
 
-      document.getElementById('currency').addEventListener('change', updateTotals);
+
 
       budgetSlider.addEventListener('input', updateTotals);
       daysInput.addEventListener('input', updateTotals);
@@ -605,7 +585,7 @@
         const title = document.getElementById('adTitle').value.trim();
         const description = document.getElementById('adDescription').value.trim();
         const targetUrl = document.getElementById('targetUrl').value.trim();
-        const dailyBudget = getDailyBudgetNgn();
+        const dailyBudget = getDailyBudgetUsd();
         const durationDays = parseInt(daysInput.value || 0, 10);
         const callToAction = document.getElementById('callToAction').value;
         const contactName = document.getElementById('contactName')?.value.trim();
@@ -637,8 +617,8 @@ if (!title) {
           alert('Please upload a banner image.');
           return;
         }
-        if (dailyBudget < minimumDailyBudgetNgn || durationDays < 3) {
-          alert(`Daily budget must be at least ₦${formatNaira(minimumDailyBudgetNgn)} and duration at least 3 days.`);
+        if (dailyBudget < minimumDailyBudgetUsd || durationDays < 3) {
+          alert(`Daily budget must be at least $${minimumDailyBudgetUsd} and duration at least 3 days.`);
           return;
         }
 

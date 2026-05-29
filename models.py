@@ -1268,7 +1268,7 @@ class AdCampaign(db.Model):
     payment_status = db.Column(db.String(20), default="pending")
     payment_gateway = db.Column(db.String(20))
     payment_id = db.Column(db.String(255))
-    currency = db.Column(db.String(3), default="NGN")
+    currency = db.Column(db.String(3), default="USD")
 
     # Targeting fields
     target_gender = db.Column(db.Text)  # JSON string of genders
@@ -1345,7 +1345,7 @@ class PaymentTransaction(db.Model):
     )
 
     amount = db.Column(db.Numeric(10, 2), nullable=False)
-    currency = db.Column(db.String(3), default="NGN")
+    currency = db.Column(db.String(3), default="USD")
     gateway = db.Column(db.String(50))  # 'flutterwave', 'paypal', etc.
     gateway_reference = db.Column(db.String(100), unique=True)
     gateway_payment_id = db.Column(db.String(100))
@@ -1591,7 +1591,7 @@ class MatchmakingPayments(db.Model):
 
     # Payment details
     amount = db.Column(db.Float, nullable=False)
-    currency = db.Column(db.String(10), default="NGN")
+    currency = db.Column(db.String(10), default="USD")
     gateway = db.Column(
         db.String(50), default="flutterwave"
     )  # 'flutterwave', 'paypal', etc.
@@ -1728,7 +1728,7 @@ class MarketplaceService(db.Model):
     short_description = db.Column(db.String(500))
     service_type = db.Column(db.String(50), default="service")  # "service" or "digital"
     earnings = db.Column(db.Numeric(10, 2), default=0)
-    currency = db.Column(db.String(10), default="NGN")
+    currency = db.Column(db.String(10), default="USD")
 
     # Pricing
     price = db.Column(db.Numeric(10, 2), default=0)
@@ -2140,7 +2140,7 @@ class MarketplacePayment(db.Model):
 
     # Payment details
     amount = db.Column(db.Float, nullable=False)
-    currency = db.Column(db.String(10), default="NGN")
+    currency = db.Column(db.String(10), default="USD")
     tokens_paid = db.Column(db.Integer, nullable=False)
 
     # Gateway

@@ -657,7 +657,7 @@
                     </p>
                 </div>
 
-                <!-- Single Package - NGN billing -->
+                <!-- Single Package - USD billing -->
                 <div class="flex justify-center">
                     <div class="floral-card rounded-lg shadow-strong overflow-hidden card-hover popular-plan animate-slide-up w-full max-w-md">
                         <div class="p-6 text-center">
@@ -669,7 +669,7 @@
                             <h3 class="text-xl font-playfair font-bold text-primary mb-2">Matchmaking Service</h3>
                             <p class="text-text-secondary mb-4">Premium matchmaking to find your perfect partner</p>
                             <div class="mb-6">
-                                <span class="text-3xl font-bold text-primary">₦{{ "{:,.0f}".format(((packages[0].price if packages else 10) * matchmaking_ngn_rate)|round|int) }}</span>
+                                <span class="text-3xl font-bold text-primary">${{ "{:,.0f}".format((packages[0].price if packages else 10)|round|int) }}</span>
                                 <span class="text-text-secondary text-base">/month</span>
                             </div>
                             <ul class="feature-list mb-6 text-text-secondary text-left mx-auto max-w-xs">
@@ -681,8 +681,8 @@
                                 <li>Personalized Recommendations</li>
                             </ul>
                             <button class="w-full gradient-rose text-white py-3 rounded-lg btn hover:opacity-90 transition-all duration-300 font-semibold text-base btn-select-package" 
-                                    data-package-id="1" data-package-name="Matchmaking" data-package-price="{{ ((packages[0].price if packages else 10) * matchmaking_ngn_rate)|round|int }}" data-duration-days="30">
-                                Start Matchmaking - ₦{{ "{:,.0f}".format(((packages[0].price if packages else 10) * matchmaking_ngn_rate)|round|int) }}/month
+                                    data-package-id="1" data-package-name="Matchmaking" data-package-price="{{ (packages[0].price if packages else 10)|round|int }}" data-duration-days="30">
+                                Start Matchmaking - ${{ "{:,.0f}".format((packages[0].price if packages else 10)|round|int) }}/month
                             </button>
                             <p class="text-xs text-text-secondary mt-3">Only one plan available - Simple, affordable, effective</p>
                         </div>
@@ -1043,14 +1043,7 @@
                             </div>
                             
                             <!-- Currency Selection -->
-                            <div>
-                                <label class="block text-base font-semibold mb-2 text-primary">Payment Currency</label>
-                                <select class="select-input" id="currency">
-                                    <option value="NGN">🇳🇬 Nigerian Naira (NGN)</option>
-                                    <option value="USD">🇺🇸 US Dollar (USD)</option>
-                                </select>
-                                <p class="text-xs text-text-secondary mt-1" id="currencyHint">Select your preferred currency</p>
-                            </div>
+                            <input type="hidden" id="currency" value="USD">
                             
                             <div class="bg-gradient-to-br from-primary/5 to-rose-gold/5 rounded-lg p-4 border border-primary/10">
                                 <h5 class="font-playfair font-bold text-base mb-3 text-primary">Request Summary</h5>
@@ -1065,10 +1058,10 @@
                                     </div>
                                     <div class="flex justify-between items-center py-1.5">
                                         <span class="text-text-secondary font-medium">Total Amount:</span>
-                                        <span id="summaryTotal" class="text-xl font-bold text-rose-gold">₦{{ "{:,.0f}".format(((packages[0].price if packages else 10) * matchmaking_ngn_rate)|round|int) }}</span>
+                                        <span id="summaryTotal" class="text-xl font-bold text-rose-gold">${{ "{:,.0f}".format((packages[0].price if packages else 10)|round|int) }}</span>
                                     </div>
                                 </div>
-                                <p class="text-xs text-text-secondary mt-2 text-center">Fixed price - ₦{{ "{:,.0f}".format(((packages[0].price if packages else 10) * matchmaking_ngn_rate)|round|int) }}/month</p>
+                                <p class="text-xs text-text-secondary mt-2 text-center">Fixed price - ${{ "{:,.0f}".format((packages[0].price if packages else 10)|round|int) }}/month</p>
                             </div>
                         </div>
                         <div class="space-y-4">
@@ -1082,7 +1075,7 @@
                                             </div>
                                             <div>
                                                 <h5 class="font-playfair font-bold text-base text-primary">Matchmaking Request</h5>
-                                <p class="text-text-secondary text-xs">₦{{ "{:,.0f}".format(((packages[0].price if packages else 10) * matchmaking_ngn_rate)|round|int) }}/month - 30 days duration</p>
+                                <p class="text-text-secondary text-xs">${{ "{:,.0f}".format((packages[0].price if packages else 10)|round|int) }}/month - 30 days duration</p>
                                             </div>
                                         </div>
                                     </div>
@@ -1121,7 +1114,7 @@
                                         <div class="text-xs text-text-secondary">Your payment information is encrypted</div>
                                     </div>
                                 </div>
-                                <p class="text-xs text-text-secondary">Fixed price: ₦{{ "{:,.0f}".format(((packages[0].price if packages else 10) * matchmaking_ngn_rate)|round|int) }} per month. Cancel anytime.</p>
+                                <p class="text-xs text-text-secondary">Fixed price: ${{ "{:,.0f}".format((packages[0].price if packages else 10)|round|int) }} per month. Cancel anytime.</p>
                             </div>
                         </div>
                     </div>
@@ -1236,13 +1229,13 @@
         const DEFAULT_MATCHMAKING_PACKAGE_ID = {{ packages[0].id if packages else 1 }};
         const DEFAULT_MATCHMAKING_PACKAGE_NAME = {{ (packages[0].name if packages else 'Matchmaking')|tojson }};
         const DEFAULT_MATCHMAKING_DURATION_DAYS = {{ packages[0].duration_days if packages else 30 }};
-        const MATCHMAKING_PRICE_NGN = {{ ((packages[0].price if packages else 10) * matchmaking_ngn_rate)|round|int }};
+        const MATCHMAKING_PRICE_USD = {{ (packages[0].price if packages else 10)|round|int }};
         // Application State - Updated for single price
         const AppState = {
             currentStep: 1,
             selectedPackageId: DEFAULT_MATCHMAKING_PACKAGE_ID,
             selectedPackageName: DEFAULT_MATCHMAKING_PACKAGE_NAME,
-            selectedPackagePrice: MATCHMAKING_PRICE_NGN,
+            selectedPackagePrice: MATCHMAKING_PRICE_USD,
             selectedPackageDuration: DEFAULT_MATCHMAKING_DURATION_DAYS,
             uploadedImageUrl: '',
             selectedInterests: [],
@@ -1294,7 +1287,7 @@
             1: {
                 id: "MATCHMAKING",
                 name: "Matchmaking",
-                price: MATCHMAKING_PRICE_NGN,
+                price: MATCHMAKING_PRICE_USD,
                 description: "Premium matchmaking service",
                 flutterwave_id: "MATCH_10"
             }
@@ -1723,7 +1716,7 @@
             }, 300);
         }
 
-        // Payment Processing - Updated for fixed NGN price
+        // Payment Processing - Updated for fixed USD price
         function createRequestAndProcessPayment(requestData) {
             // Add this debug line at the beginning of your function
             
@@ -1772,11 +1765,11 @@
                     const selectedGateway = document.querySelector('input[name="paymentMethod"]:checked')?.value || 'flutterwave';
                     const paymentPayload = {
                         request_id: data.request_id,
-                        currency: requestData.currency || 'NGN',
-                        amount: String(MATCHMAKING_PRICE_NGN),
+                        currency: 'USD',
+                        amount: String(MATCHMAKING_PRICE_USD),
                         campaign_id: AppState.selectedPackageId,
                         campaign_title: 'Matchmaking Service',
-                        campaign_description: `Premium matchmaking service - ${requestData.currency === 'USD' ? '$' : '₦'}${requestData.currency === 'USD' ? 10 : MATCHMAKING_PRICE_NGN}/month`,
+                        campaign_description: `Premium matchmaking service - $${MATCHMAKING_PRICE_USD}/month`,
                         gateway: selectedGateway
                     };
 
@@ -1959,7 +1952,7 @@
                     
                     AppState.selectedPackageId = DEFAULT_MATCHMAKING_PACKAGE_ID;
                     AppState.selectedPackageName = DEFAULT_MATCHMAKING_PACKAGE_NAME;
-                    AppState.selectedPackagePrice = MATCHMAKING_PRICE_NGN;
+                    AppState.selectedPackagePrice = MATCHMAKING_PRICE_USD;
                     AppState.selectedPackageDuration = DEFAULT_MATCHMAKING_DURATION_DAYS;
 
                     // Ensure the initial currency state matches the dropdown
@@ -1976,25 +1969,16 @@
                 }
 
                 function updateCurrencyDisplay() {
-                    const currency = document.getElementById('currency').value;
                     const priceElement = document.getElementById('summaryTotal');
                     const priceDescription = document.querySelector('.bg-gradient-to-br p.text-xs.text-center');
                     const previewPrice = document.querySelector('.matchmaking-header p.text-xs');
                     const activePrice = document.querySelector('.bg-rose-gold\\/10 p.text-xs');
 
-                    if (currency === 'USD') {
-                        const usdPrice = 10;
-                        if (priceElement) priceElement.textContent = `$${usdPrice}`;
-                        if (priceDescription) priceDescription.textContent = `Fixed price - $${usdPrice}/month`;
-                        if (previewPrice) previewPrice.textContent = `$${usdPrice}/month - 30 days duration`;
-                        if (activePrice) activePrice.textContent = `Fixed price: $${usdPrice} per month. Cancel anytime.`;
-                    } else {
-                        const formattedNgn = MATCHMAKING_PRICE_NGN.toLocaleString('en-NG');
-                        if (priceElement) priceElement.textContent = `₦${formattedNgn}`;
-                        if (priceDescription) priceDescription.textContent = `Fixed price - ₦${formattedNgn}/month`;
-                        if (previewPrice) previewPrice.textContent = `₦${formattedNgn}/month - 30 days duration`;
-                        if (activePrice) activePrice.textContent = `Fixed price: ₦${formattedNgn} per month. Cancel anytime.`;
-                    }
+                    const usdPrice = MATCHMAKING_PRICE_USD;
+                    if (priceElement) priceElement.textContent = `$${usdPrice}`;
+                    if (priceDescription) priceDescription.textContent = `Fixed price - $${usdPrice}/month`;
+                    if (previewPrice) previewPrice.textContent = `$${usdPrice}/month - 30 days duration`;
+                    if (activePrice) activePrice.textContent = `Fixed price: $${usdPrice} per month. Cancel anytime.`;
                 }
 
                 const minAgeInput = document.getElementById('minAge');

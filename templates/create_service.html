@@ -1,17 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Listing - Kimbela Marketplace</title>
     <link href="{{ url_for('static', filename='assets/img/favy.png') }}" rel="icon" />
     <link href="{{ url_for('static', filename='assets/img/favy.png') }}" rel="apple-touch-icon" />
-    
+
     <!-- Fonts & Icons -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
     <!-- Styles -->
     <style>
         :root {
@@ -21,38 +23,45 @@
             --accent: #10B981;
             --background: #F9FAFB;
         }
-        
+
         body {
             font-family: 'Poppins', sans-serif;
             background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
             min-height: 100vh;
             font-size: 14px;
         }
-        
+
         .form-step {
             display: none;
         }
-        
+
         .form-step.active {
             display: block;
             animation: fadeIn 0.3s ease-in-out;
         }
-        
+
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
-        
+
         .glass-effect {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(8px);
             border-bottom: 1px solid rgba(0, 0, 0, 0.1);
         }
-        
+
         .gradient-primary {
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
         }
-        
+
         /* Form Sections */
         .form-section {
             background: white;
@@ -62,7 +71,7 @@
             margin-bottom: 16px;
             border: 1px solid #e5e7eb;
         }
-        
+
         .form-section-title {
             display: flex;
             align-items: center;
@@ -70,7 +79,7 @@
             padding-bottom: 12px;
             border-bottom: 1px solid #f3f4f6;
         }
-        
+
         .form-section-icon {
             width: 32px;
             height: 32px;
@@ -83,7 +92,7 @@
             margin-right: 12px;
             font-size: 14px;
         }
-        
+
         /* Selection Cards */
         .option-card {
             border: 2px solid #e5e7eb;
@@ -94,17 +103,17 @@
             background: white;
             position: relative;
         }
-        
+
         .option-card:hover {
             border-color: var(--primary);
             transform: translateY(-1px);
         }
-        
+
         .option-card.selected {
             border-color: var(--primary);
             background: linear-gradient(135deg, rgba(90, 69, 0, 0.05) 0%, rgba(184, 137, 0, 0.05) 100%);
         }
-        
+
         .option-check {
             position: absolute;
             top: 12px;
@@ -112,11 +121,11 @@
             opacity: 0;
             transition: opacity 0.2s ease;
         }
-        
+
         .option-card.selected .option-check {
             opacity: 1;
         }
-        
+
         /* File Upload */
         .file-upload-area {
             border: 2px dashed #d1d5db;
@@ -127,17 +136,17 @@
             transition: all 0.2s ease;
             background: #f9fafb;
         }
-        
+
         .file-upload-area:hover {
             border-color: var(--primary);
             background: rgba(90, 69, 0, 0.05);
         }
-        
+
         .file-upload-area.dragover {
             border-color: var(--primary);
             background: rgba(90, 69, 0, 0.1);
         }
-        
+
         /* Feature Items */
         .feature-item {
             background: #f8fafc;
@@ -149,7 +158,7 @@
             margin-bottom: 8px;
             font-size: 13px;
         }
-        
+
         /* Step Indicator */
         .step-indicator {
             display: flex;
@@ -157,7 +166,7 @@
             margin-bottom: 20px;
             position: relative;
         }
-        
+
         .step-indicator::before {
             content: '';
             position: absolute;
@@ -168,14 +177,14 @@
             background: #e5e7eb;
             z-index: 1;
         }
-        
+
         .step {
             position: relative;
             z-index: 2;
             text-align: center;
             flex: 1;
         }
-        
+
         .step-circle {
             width: 32px;
             height: 32px;
@@ -190,27 +199,27 @@
             font-size: 13px;
             transition: all 0.3s ease;
         }
-        
+
         .step.active .step-circle {
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
             color: white;
         }
-        
+
         .step.completed .step-circle {
             background: #10b981;
             color: white;
         }
-        
+
         .step-label {
             font-size: 11px;
             color: #6b7280;
         }
-        
+
         .step.active .step-label {
             color: var(--primary);
             font-weight: 500;
         }
-        
+
         /* Buttons */
         .btn {
             padding: 8px 16px;
@@ -223,49 +232,53 @@
             justify-content: center;
             gap: 6px;
         }
-        
+
         .btn-primary {
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
             color: white;
             border: none;
         }
-        
+
         .btn-primary:hover {
             opacity: 0.9;
             transform: translateY(-1px);
         }
-        
+
         .btn-outline {
             border: 1px solid #d1d5db;
             color: #4b5563;
             background: white;
         }
-        
+
         .btn-outline:hover {
             background: #f9fafb;
             border-color: #9ca3af;
         }
-        
+
         .btn-sm {
             padding: 6px 12px;
             font-size: 12px;
         }
-        
+
         /* Form Controls */
-        input, select, textarea {
+        input,
+        select,
+        textarea {
             font-size: 14px;
             padding: 10px 12px;
             border: 1px solid #d1d5db;
             border-radius: 8px;
             width: 100%;
         }
-        
-        input:focus, select:focus, textarea:focus {
+
+        input:focus,
+        select:focus,
+        textarea:focus {
             outline: none;
             border-color: var(--primary);
             box-shadow: 0 0 0 3px rgba(90, 69, 0, 0.1);
         }
-        
+
         /* Preview */
         .preview-badge {
             background: #dcfce7;
@@ -275,7 +288,7 @@
             font-size: 12px;
             font-weight: 500;
         }
-        
+
         /* Character Counter */
         .char-counter {
             text-align: right;
@@ -283,7 +296,7 @@
             color: #6b7280;
             margin-top: 2px;
         }
-        
+
         /* Loading Spinner */
         .loading {
             display: inline-block;
@@ -294,12 +307,17 @@
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
-        
+
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
-        
+
         /* Modal */
         .modal-overlay {
             position: fixed;
@@ -314,11 +332,11 @@
             z-index: 1000;
             padding: 16px;
         }
-        
+
         .modal-overlay.show {
             display: flex;
         }
-        
+
         .modal-content {
             background: white;
             border-radius: 12px;
@@ -327,23 +345,25 @@
             max-height: 90vh;
             overflow-y: auto;
         }
-        
+
         /* Responsive Adjustments */
         @media (max-width: 640px) {
             .form-section {
                 padding: 14px;
             }
-            
+
             .option-card {
                 padding: 12px;
             }
-            
+
             .btn {
                 padding: 8px 14px;
                 font-size: 12px;
             }
-            
-            input, select, textarea {
+
+            input,
+            select,
+            textarea {
                 padding: 8px 12px;
                 font-size: 13px;
             }
@@ -373,27 +393,38 @@
         }
 
         @keyframes locationPulse {
-            0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(242, 139, 107, 0.35); }
-            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(242, 139, 107, 0); }
-            100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(242, 139, 107, 0); }
+            0% {
+                transform: scale(0.9);
+                box-shadow: 0 0 0 0 rgba(242, 139, 107, 0.35);
+            }
+
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 8px rgba(242, 139, 107, 0);
+            }
+
+            100% {
+                transform: scale(0.9);
+                box-shadow: 0 0 0 0 rgba(242, 139, 107, 0);
+            }
         }
     </style>
 </head>
+
 <body>
     <!-- Navigation -->
     <nav class="sticky top-0 z-50 glass-effect shadow-sm" style="height: 6rem;">
         <div class="container mx-auto px-3 py-2">
             <div class="flex items-center justify-between" style="height: 40px;">
                 <!-- Logo -->
-                <a href="{{ url_for('market.main_market') }}" class="flex items-center gap-2" >
-                    <img src="{{ url_for('static', filename='assets/img/kim.png') }}" 
-                             alt="Kimbela Marketplace" 
-                             class="h-10" style="height: 6rem; width: 11rem; position: absolute; top: 0; "/>
+                <a href="{{ url_for('market.main_market') }}" class="flex items-center gap-2">
+                    <img src="{{ url_for('static', filename='assets/img/kim.png') }}" alt="Kimbela Marketplace"
+                        class="h-10" style="height: 6rem; width: 11rem; position: absolute; top: 0; " />
                     <div>
-                        
+
                     </div>
                 </a>
-                
+
                 <!-- Progress & Actions -->
                 <div class="flex items-center gap-2">
                     <div class="hidden sm:block">
@@ -402,14 +433,13 @@
                             <div id="progressBar" class="h-full gradient-primary rounded-full" style="width: 25%"></div>
                         </div>
                     </div>
-                    
-<!--                    <button type="button" onclick="saveDraft()" -->
-<!--                            class="btn btn-outline btn-sm">-->
-<!--                        <i class="bi bi-save text-xs"></i>Save-->
-<!--                    </button>-->
-                    
-                    <a href="{{ url_for('market.seller_dashboard') }}" 
-                       class="btn btn-outline btn-sm">
+
+                    <!--                    <button type="button" onclick="saveDraft()" -->
+                    <!--                            class="btn btn-outline btn-sm">-->
+                    <!--                        <i class="bi bi-save text-xs"></i>Save-->
+                    <!--                    </button>-->
+
+                    <a href="{{ url_for('market.seller_dashboard') }}" class="btn btn-outline btn-sm">
                         <i class="bi bi-x text-xs"></i>Cancel
                     </a>
                 </div>
@@ -441,7 +471,8 @@
 
     <!-- Main Form -->
     <div class="container mx-auto px-3 py-4">
-        <form id="createServiceForm" enctype="multipart/form-data" method="POST" action="{{ url_for('market.create_service') }}" class="max-w-3xl mx-auto">
+        <form id="createServiceForm" enctype="multipart/form-data" method="POST"
+            action="{{ url_for('market.create_service') }}" class="max-w-3xl mx-auto">
             <input type="hidden" name="csrf_token" value="{{ csrf_token if csrf_token else '' }}">
 
             <!-- Step 1: Basic Information -->
@@ -456,7 +487,7 @@
                             <p class="text-gray-600 text-xs">Tell us about your listing</p>
                         </div>
                     </div>
-                    
+
                     <!-- Service Type Selection -->
                     <div class="mb-6">
                         <label class="block text-sm font-medium mb-2">Choose Your Listing Type *</label>
@@ -464,7 +495,8 @@
                             <div class="option-card" onclick="selectServiceType('service')">
                                 <input type="radio" name="service_type" value="service" class="hidden" checked>
                                 <div class="flex items-start gap-3">
-                                    <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                                    <div
+                                        class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
                                         <i class="bi bi-person-workspace text-blue-600 text-lg"></i>
                                     </div>
                                     <div class="flex-1">
@@ -476,11 +508,12 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="option-card" onclick="selectServiceType('digital')">
                                 <input type="radio" name="service_type" value="digital" class="hidden">
                                 <div class="flex items-start gap-3">
-                                    <div class="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
+                                    <div
+                                        class="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
                                         <i class="bi bi-laptop text-purple-600 text-lg"></i>
                                     </div>
                                     <div class="flex-1">
@@ -494,72 +527,58 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Title -->
                     <div class="mb-4">
                         <label for="title" class="block text-sm font-medium mb-1">
                             Title *
                             <span class="text-xs text-gray-500 font-normal">(Max 100 characters)</span>
                         </label>
-                        <input type="text" 
-                               id="title"
-                               name="title"
-                               maxlength="100"
-                               class="w-full"
-                               placeholder="e.g., Professional Career Coaching Session"
-                               required>
+                        <input type="text" id="title" name="title" maxlength="100" class="w-full"
+                            placeholder="e.g., Professional Career Coaching Session" required>
                         <div class="char-counter" id="titleCounter">0/100</div>
                     </div>
-                    
+
                     <!-- Category -->
                     <div class="mb-4">
                         <label for="category" class="block text-sm font-medium mb-1">Category *</label>
-                        <select id="category" 
-                                name="category_id"
-                                class="w-full"
-                                required>
+                        <select id="category" name="category_id" class="w-full" required>
                             <option value="">Select a category</option>
                             {% for category in categories %}
-                                {% if category.subcategories %}
-                                    <optgroup label="{{ category.name }}">
-                                        {% for sub in category.subcategories|sort(attribute='sort_order') %}
-                                            <option value="{{ sub.id }}">{{ sub.name }}</option>
-                                        {% endfor %}
-                                    </optgroup>
-                                {% else %}
-                                    <option value="{{ category.id }}">{{ category.name }}</option>
-                                {% endif %}
+                            {% if category.subcategories %}
+                            <optgroup label="{{ category.name }}">
+                                {% for sub in category.subcategories|sort(attribute='sort_order') %}
+                                <option value="{{ sub.id }}">{{ sub.name }}</option>
+                                {% endfor %}
+                            </optgroup>
+                            {% else %}
+                            <option value="{{ category.id }}">{{ category.name }}</option>
+                            {% endif %}
                             {% endfor %}
                         </select>
                     </div>
-                    
+
                     <!-- Short Description -->
                     <div class="mb-4">
                         <label for="short_description" class="block text-sm font-medium mb-1">
                             Short Description *
                             <span class="text-xs text-gray-500 font-normal">(Appears in search results)</span>
                         </label>
-                        <textarea id="short_description"
-                                  name="short_description"
-                                  maxlength="200"
-                                  rows="2"
-                                  class="w-full resize-none"
-                                  placeholder="Briefly describe what your listing offers..."
-                                  required></textarea>
+                        <textarea id="short_description" name="short_description" maxlength="200" rows="2"
+                            class="w-full resize-none" placeholder="Briefly describe what your listing offers..."
+                            required></textarea>
                         <div class="char-counter" id="shortDescCounter">0/200</div>
                     </div>
                 </div>
-                
+
                 <!-- Navigation -->
                 <div class="flex justify-end">
-                    <button type="button" 
-                            onclick="nextStep()"
-                            class="btn btn-primary">
+                    <button type="button" onclick="nextStep()" class="btn btn-primary">
                         Continue <i class="bi bi-arrow-right"></i>
                     </button>
                 </div>
             </div>
-            
+
             <!-- Step 2: Service Details -->
             <div class="form-step" id="step-2" data-step="2">
                 <div class="form-section">
@@ -572,47 +591,40 @@
                             <p class="text-gray-600 text-xs">Describe your listing in detail</p>
                         </div>
                     </div>
-                    
+
                     <!-- Description -->
                     <div class="mb-4">
                         <label for="description" class="block text-sm font-medium mb-1">
                             Full Description *
-                            <span class="text-xs text-gray-500 font-normal">(Be detailed about what clients will get)</span>
+                            <span class="text-xs text-gray-500 font-normal">(Be detailed about what clients will
+                                get)</span>
                         </label>
-                        <textarea id="description"
-                                  name="description"
-                                  rows="6"
-                                  class="w-full resize-none"
-                                  placeholder="Describe your listing in detail..."
-                                  required></textarea>
+                        <textarea id="description" name="description" rows="6" class="w-full resize-none"
+                            placeholder="Describe your listing in detail..." required></textarea>
                         <div class="char-counter" id="descCounter">0 characters</div>
                     </div>
-                    
+
                     <!-- Features/What's Included -->
                     <div class="mb-4">
                         <label class="block text-sm font-medium mb-1">
                             What's Included
                             <span class="text-xs text-gray-500 font-normal">(List key features or deliverables)</span>
                         </label>
-                        
+
                         <div id="featuresContainer" class="mb-3">
                             <!-- Features will be added here -->
                         </div>
-                        
+
                         <div class="flex gap-2">
-                            <input type="text" 
-                                   id="featureInput"
-                                   class="flex-1"
-                                   placeholder="Add a feature (e.g., 60-minute session)">
-                            <button type="button" 
-                                    onclick="addFeature()"
-                                    class="btn btn-primary btn-sm">
+                            <input type="text" id="featureInput" class="flex-1"
+                                placeholder="Add a feature (e.g., 60-minute session)">
+                            <button type="button" onclick="addFeature()" class="btn btn-primary btn-sm">
                                 Add
                             </button>
                         </div>
                         <input type="hidden" name="features" id="featuresInput" value="">
                     </div>
-                    
+
                     <!-- Duration & Availability -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div id="serviceDurationField">
@@ -620,23 +632,17 @@
                                 Duration
                                 <span class="text-xs text-gray-500 font-normal">(e.g., 60 min, 4 weeks)</span>
                             </label>
-                            <input type="text" 
-                                   id="duration"
-                                   name="duration"
-                                   class="w-full"
-                                   placeholder="e.g., 60 minutes per session">
+                            <input type="text" id="duration" name="duration" class="w-full"
+                                placeholder="e.g., 60 minutes per session">
                         </div>
-                        
+
                         <div>
                             <label for="availability" class="block text-sm font-medium mb-1">
                                 Availability
                                 <span class="text-xs text-gray-500 font-normal">(e.g., Mon-Fri, 9AM-5PM)</span>
                             </label>
-                            <input type="text" 
-                                   id="availability"
-                                   name="availability"
-                                   class="w-full"
-                                   placeholder="e.g., Monday to Friday">
+                            <input type="text" id="availability" name="availability" class="w-full"
+                                placeholder="e.g., Monday to Friday">
                         </div>
                     </div>
 
@@ -645,21 +651,15 @@
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <label for="listing_country" class="block text-sm font-medium mb-1">Country</label>
-                                <select id="listing_country"
-                                        name="country"
-                                        class="w-full"
-                                        data-selected="{{ current_user.country or '' }}"
-                                        required>
+                                <select id="listing_country" name="country" class="w-full"
+                                    data-selected="{{ current_user.country or '' }}" required>
                                     <option value="">Select country</option>
                                 </select>
                             </div>
                             <div>
                                 <label for="listing_state" class="block text-sm font-medium mb-1">State</label>
-                                <select id="listing_state"
-                                        name="state"
-                                        class="w-full"
-                                        data-selected="{{ current_user.state or '' }}"
-                                        required>
+                                <select id="listing_state" name="state" class="w-full"
+                                    data-selected="{{ current_user.state or '' }}" required>
                                     <option value="">Select state</option>
                                 </select>
                                 <div id="listing_state_status" class="location-status hidden">
@@ -669,11 +669,8 @@
                             </div>
                             <div>
                                 <label for="listing_city" class="block text-sm font-medium mb-1">City</label>
-                                <select id="listing_city"
-                                        name="city"
-                                        class="w-full"
-                                        data-selected="{{ current_user.city or '' }}"
-                                        required>
+                                <select id="listing_city" name="city" class="w-full"
+                                    data-selected="{{ current_user.city or '' }}" required>
                                     <option value="">Select city</option>
                                 </select>
                                 <div id="listing_city_status" class="location-status hidden">
@@ -686,28 +683,27 @@
                             Buyers can use these fields to filter listings by country, state, and city.
                         </p>
                     </div>
-                    
+
                     <!-- Digital Product Specific -->
                     <div id="digitalProductFields" class="hidden">
                         <div class="mb-4">
                             <label class="block text-sm font-medium mb-1">
                                 Digital File
                                 <span class="text-xs text-green-600 font-semibold">(Optional)</span>
-                                <span class="text-xs text-gray-500 font-normal">(Upload your e-book, course, or template only if you want to. You can leave this empty and upload product images instead.)</span>
+                                <span class="text-xs text-gray-500 font-normal">(Upload your e-book, course, or template
+                                    only if you want to. You can leave this empty and upload product images
+                                    instead.)</span>
                             </label>
-                            <div class="file-upload-area" onclick="document.getElementById('digitalFile').click()" 
-                                 id="digitalUploadArea">
+                            <div class="file-upload-area" onclick="document.getElementById('digitalFile').click()"
+                                id="digitalUploadArea">
                                 <i class="bi bi-cloud-arrow-up text-2xl text-gray-400 mb-2"></i>
                                 <p class="text-sm font-medium mb-1">Upload Digital File (Optional)</p>
-                                <p class="text-xs text-gray-600">PDF, DOC, DOCX, ZIP (Max 50MB). You can also skip this and upload product images below.</p>
-                                <input type="file" 
-                                       id="digitalFile" 
-                                       name="digital_file"
-                                       accept=".pdf,.doc,.docx,.zip"
-                                       hidden
-                                       onchange="handleDigitalFileSelect(event)">
+                                <p class="text-xs text-gray-600">PDF, DOC, DOCX, ZIP (Max 50MB). You can also skip this
+                                    and upload product images below.</p>
+                                <input type="file" id="digitalFile" name="digital_file" accept=".pdf,.doc,.docx,.zip"
+                                    hidden onchange="handleDigitalFileSelect(event)">
                             </div>
-                            
+
                             <div id="digitalFilePreview" class="mt-3 hidden">
                                 <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
                                     <div class="flex items-center justify-between">
@@ -718,9 +714,8 @@
                                                 <p class="text-xs text-gray-600" id="digitalFileSize"></p>
                                             </div>
                                         </div>
-                                        <button type="button" 
-                                                onclick="removeDigitalFile()"
-                                                class="text-red-600 hover:text-red-800">
+                                        <button type="button" onclick="removeDigitalFile()"
+                                            class="text-red-600 hover:text-red-800">
                                             <i class="bi bi-trash"></i>
                                         </button>
                                     </div>
@@ -735,7 +730,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Pricing Section -->
                 <div class="form-section">
                     <div class="form-section-title">
@@ -747,7 +742,7 @@
                             <p class="text-gray-600 text-xs">Set your listing price</p>
                         </div>
                     </div>
-                    
+
                     <!-- Pricing Type Selection -->
                     <div class="mb-4">
                         <label class="block text-sm font-medium mb-2">Pricing Type</label>
@@ -755,7 +750,8 @@
                             <div class="option-card" onclick="selectPricingType('paid')">
                                 <input type="radio" name="pricing_type" value="paid" class="hidden" checked>
                                 <div class="flex items-start gap-3">
-                                    <div class="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
+                                    <div
+                                        class="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
                                         <i class="bi bi-coin text-green-600 text-lg"></i>
                                     </div>
                                     <div class="flex-1">
@@ -767,11 +763,12 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="option-card" onclick="selectPricingType('free')">
                                 <input type="radio" name="pricing_type" value="free" class="hidden">
                                 <div class="flex items-start gap-3">
-                                    <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                                    <div
+                                        class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
                                         <i class="bi bi-gift text-blue-600 text-lg"></i>
                                     </div>
                                     <div class="flex-1">
@@ -793,67 +790,55 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Price Input for Paid Services -->
                     <div id="priceFields">
-    <label for="price" class="block text-sm font-medium mb-1">
-        Price *
-        <span class="text-xs text-gray-500 font-normal">(Minimum amount varies by currency)</span>
-    </label>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div class="relative">
-            <input type="text" 
-                   id="price"
-                   name="price"
-                   class="w-full pl-8"
-                   placeholder="0.00"
-                   
-                   oninput="formatPrice(this)">
-            <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" id="priceSymbol">
-                $
-            </div>
-        </div>
-        
-        <div>
-            <select id="currency" 
-                    name="currency"
-                    class="w-full"
-                
-                    onchange="updateCurrencySymbol(this.value)">
-                <option value="">Select Currency *</option>
-                <option value="USD">USD - US Dollar</option>
-                <option value="NGN">NGN - Nigerian Naira</option>
-                <option value="EUR">EUR - Euro</option>
-                <option value="GBP">GBP - British Pound</option>
-                <option value="KES">KES - Kenyan Shilling</option>
-                <option value="GHS">GHS - Ghanaian Cedi</option>
-                <option value="ZAR">ZAR - South African Rand</option>
-            </select>
-        </div>
-    </div>
-    <div class="mt-2 text-xs text-gray-600" id="currencyInfo">
-        Select a currency to see minimum price requirements
-    </div>
-</div>
+                        <label for="price" class="block text-sm font-medium mb-1">
+                            Price *
+                            <span class="text-xs text-gray-500 font-normal">(Minimum amount varies by currency)</span>
+                        </label>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div class="relative">
+                                <input type="text" id="price" name="price" class="w-full pl-8" placeholder="0.00"
+                                    oninput="formatPrice(this)">
+                                <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+                                    id="priceSymbol">
+                                    $
+                                </div>
+                            </div>
+
+                            <div>
+                                <select id="currency" name="currency" class="w-full"
+                                    onchange="updateCurrencySymbol(this.value)">
+                                    <option value="">Select Currency *</option>
+                                    <option value="USD">USD - US Dollar</option>
+                                    <option value="EUR">EUR - Euro</option>
+                                    <option value="GBP">GBP - British Pound</option>
+                                    <option value="KES">KES - Kenyan Shilling</option>
+                                    <option value="GHS">GHS - Ghanaian Cedi</option>
+                                    <option value="ZAR">ZAR - South African Rand</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mt-2 text-xs text-gray-600" id="currencyInfo">
+                            Select a currency to see minimum price requirements
+                        </div>
+                    </div>
 
                 </div>
-                
+
                 <!-- Navigation -->
                 <div class="flex justify-between">
-                    <button type="button" 
-                            onclick="prevStep()"
-                            class="btn btn-outline">
+                    <button type="button" onclick="prevStep()" class="btn btn-outline">
                         <i class="bi bi-arrow-left"></i>Back
                     </button>
-                    
-                    <button type="button" 
-                            onclick="nextStep()"
-                            class="btn btn-primary">
+
+                    <button type="button" onclick="nextStep()" class="btn btn-primary">
                         Continue <i class="bi bi-arrow-right"></i>
                     </button>
                 </div>
             </div>
-            
+
             <!-- Step 3: Media & Gallery -->
             <div class="form-step" id="step-3" data-step="3">
                 <div class="form-section">
@@ -866,58 +851,48 @@
                             <p class="text-gray-600 text-xs">Upload images and videos for your listing</p>
                         </div>
                     </div>
-                    
+
                     <!-- Main Listing Image -->
                     <div class="mb-6">
                         <label class="block text-sm font-medium mb-1">
                             Main Listing Image *
                             <span class="text-xs text-gray-500 font-normal">(Thumbnail for your listing)</span>
                         </label>
-                        <div class="file-upload-area" onclick="document.getElementById('cover_image').click()" 
-                             id="mainImageUploadArea">
+                        <div class="file-upload-area" onclick="document.getElementById('cover_image').click()"
+                            id="mainImageUploadArea">
                             <i class="bi bi-camera text-2xl text-gray-400 mb-2"></i>
                             <p class="text-sm font-medium mb-1">Upload Main Image</p>
                             <p class="text-xs text-gray-600">JPG, PNG, or WebP (Recommended: 800x600px)</p>
-                            <input type="file" 
-                                   id="cover_image" 
-                                   name="cover_image"
-                                   accept="image/*"
-                                   hidden
-                                   onchange="handleMainImageSelect(event)">
+                            <input type="file" id="cover_image" name="cover_image" accept="image/*" hidden
+                                onchange="handleMainImageSelect(event)">
                         </div>
-                        
+
                         <div id="mainImagePreview" class="mt-3 hidden">
                             <div class="relative max-w-xs">
                                 <img id="mainImagePreviewImg" class="w-full h-40 object-cover rounded-lg">
-                                <button type="button" 
-                                        onclick="removeMainImage()"
-                                        class="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600">
+                                <button type="button" onclick="removeMainImage()"
+                                    class="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600">
                                     <i class="bi bi-x text-xs"></i>
                                 </button>
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Gallery Images -->
                     <div class="mb-6">
                         <label class="block text-sm font-medium mb-1">
                             Gallery Images
                             <span class="text-xs text-gray-500 font-normal">(Up to 5 images)</span>
                         </label>
-                        <div class="file-upload-area" onclick="document.getElementById('galleryImages').click()" 
-                             id="galleryUploadArea">
+                        <div class="file-upload-area" onclick="document.getElementById('galleryImages').click()"
+                            id="galleryUploadArea">
                             <i class="bi bi-collection text-2xl text-gray-400 mb-2"></i>
                             <p class="text-sm font-medium mb-1">Upload Gallery Images</p>
                             <p class="text-xs text-gray-600">JPG, PNG, or WebP (Max 5MB each)</p>
-                            <input type="file" 
-                                   id="galleryImages" 
-                                   name="gallery_images[]"
-                                   accept="image/*"
-                                   multiple
-                                   hidden
-                                   onchange="handleGalleryImagesSelect(event)">
+                            <input type="file" id="galleryImages" name="gallery_images[]" accept="image/*" multiple
+                                hidden onchange="handleGalleryImagesSelect(event)">
                         </div>
-                        
+
                         <div id="galleryPreviewContainer" class="mt-3">
                             <div class="grid grid-cols-2 md:grid-cols-3 gap-3" id="galleryPreviews">
                                 <!-- Gallery images will be previewed here -->
@@ -925,7 +900,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Contact Information -->
                 <div class="form-section">
                     <div class="form-section-title">
@@ -937,12 +912,13 @@
                             <p class="text-gray-600 text-xs">How clients can contact you</p>
                         </div>
                     </div>
-                    
+
                     <div class="mb-4">
                         <label class="block text-sm font-medium mb-2">Contact Methods</label>
                         <div class="space-y-2">
                             <div class="flex items-center">
-                                <input type="checkbox" id="contact_whatsapp" name="contact_whatsapp" class="mr-2 w-4 h-4">
+                                <input type="checkbox" id="contact_whatsapp" name="contact_whatsapp"
+                                    class="mr-2 w-4 h-4">
                                 <label for="contact_whatsapp" class="flex items-center text-sm">
                                     <i class="bi bi-whatsapp text-green-500 mr-2 text-sm"></i>
                                     WhatsApp
@@ -956,7 +932,8 @@
                                 </label>
                             </div>
                             <div class="flex items-center">
-                                <input type="checkbox" id="contact_email" name="contact_email" class="mr-2 w-4 h-4" checked>
+                                <input type="checkbox" id="contact_email" name="contact_email" class="mr-2 w-4 h-4"
+                                    checked>
                                 <label for="contact_email" class="flex items-center text-sm">
                                     <i class="bi bi-envelope text-red-500 mr-2 text-sm"></i>
                                     Email
@@ -964,54 +941,40 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label for="whatsapp_number" class="block text-sm font-medium mb-1">WhatsApp Number</label>
-                            <input type="tel" 
-                                   id="whatsapp_number"
-                                   name="whatsapp_number"
-                                   class="w-full"
-                                   placeholder="+254 700 000 000">
+                            <input type="tel" id="whatsapp_number" name="whatsapp_number" class="w-full"
+                                placeholder="+254 700 000 000">
                         </div>
-                        
+
                         <div>
                             <label for="phone_number" class="block text-sm font-medium mb-1">Phone Number</label>
-                            <input type="tel" 
-                                   id="phone_number"
-                                   name="phone_number"
-                                   class="w-full"
-                                   placeholder="+254 700 000 000">
+                            <input type="tel" id="phone_number" name="phone_number" class="w-full"
+                                placeholder="+254 700 000 000">
                         </div>
-                        
+
                         <div class="md:col-span-2">
                             <label for="email" class="block text-sm font-medium mb-1">Email Address</label>
-                            <input type="email" 
-                                   id="email"
-                                   name="email"
-                                   class="w-full"
-                                   placeholder="your@email.com"
-                                   value="{{ current_user.email }}">
+                            <input type="email" id="email" name="email" class="w-full" placeholder="your@email.com"
+                                value="{{ current_user.email }}">
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Navigation -->
                 <div class="flex justify-between">
-                    <button type="button" 
-                            onclick="prevStep()"
-                            class="btn btn-outline">
+                    <button type="button" onclick="prevStep()" class="btn btn-outline">
                         <i class="bi bi-arrow-left"></i>Back
                     </button>
-                    
-                    <button type="button" 
-                            onclick="nextStep()"
-                            class="btn btn-primary">
+
+                    <button type="button" onclick="nextStep()" class="btn btn-primary">
                         Continue <i class="bi bi-arrow-right"></i>
                     </button>
                 </div>
             </div>
-            
+
             <!-- Step 4: Review & Publish -->
             <div class="form-step" id="step-4" data-step="4">
                 <div class="form-section">
@@ -1024,15 +987,15 @@
                             <p class="text-gray-600 text-xs">Preview your listing before publishing</p>
                         </div>
                     </div>
-                    
+
                     <!-- Preview -->
                     <div class="mb-6">
                         <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
                             <div class="flex items-center justify-between mb-3">
                                 <h3 class="text-base font-bold">Listing Preview</h3>
-                                
+
                             </div>
-                            
+
                             <div class="space-y-4">
                                 <!-- Basic Info Preview -->
                                 <div>
@@ -1056,20 +1019,23 @@
                                         </div>
                                         <div class="md:col-span-2">
                                             <p class="text-xs text-gray-600">Short Description</p>
-                                            <p class="text-gray-700 text-sm" id="previewShortDesc">No description entered</p>
+                                            <p class="text-gray-700 text-sm" id="previewShortDesc">No description
+                                                entered</p>
                                         </div>
                                         <div class="md:col-span-2">
                                             <p class="text-xs text-gray-600">Location</p>
-                                            <p class="text-gray-700 text-sm" id="previewLocation">No location selected</p>
+                                            <p class="text-gray-700 text-sm" id="previewLocation">No location selected
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div>
                                     <h4 class="font-bold text-primary text-sm mb-2">Full Description</h4>
-                                    <p class="text-gray-700 text-sm whitespace-pre-line" id="previewDescription">No description entered</p>
+                                    <p class="text-gray-700 text-sm whitespace-pre-line" id="previewDescription">No
+                                        description entered</p>
                                 </div>
-                                
+
                                 <!-- Pricing Preview -->
                                 <div>
                                     <h4 class="font-bold text-primary text-sm mb-2">Pricing</h4>
@@ -1084,7 +1050,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                
+
                                 <!-- Features Preview -->
                                 <div>
                                     <h4 class="font-bold text-primary text-sm mb-2">What's Included</h4>
@@ -1102,43 +1068,37 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Terms & Conditions -->
                     <div class="mb-6">
                         <div class="border border-gray-200 rounded-lg p-3">
                             <div class="flex items-start">
-                                <input type="checkbox" 
-                                       id="terms"
-                                       name="terms"
-                                       class="mt-0.5 mr-2 w-4 h-4"
-                                       required>
+                                <input type="checkbox" id="terms" name="terms" class="mt-0.5 mr-2 w-4 h-4" required>
                                 <label for="terms" class="text-xs text-gray-700">
-                                    I agree to the <a href="{{ url_for('user.terms') }}" class="text-primary hover:underline">Terms of Service</a> and 
-                                    <a href="{{ url_for('user.marketplace_seller_terms') }}" class="text-primary hover:underline">Marketplace &amp; Seller Terms</a>.
+                                    I agree to the <a href="{{ url_for('user.terms') }}"
+                                        class="text-primary hover:underline">Terms of Service</a> and
+                                    <a href="{{ url_for('user.marketplace_seller_terms') }}"
+                                        class="text-primary hover:underline">Marketplace &amp; Seller Terms</a>.
                                 </label>
                             </div>
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Navigation -->
                 <div class="flex justify-between">
-                    <button type="button" 
-                            onclick="prevStep()"
-                            class="btn btn-outline">
+                    <button type="button" onclick="prevStep()" class="btn btn-outline">
                         <i class="bi bi-arrow-left"></i>Back
                     </button>
-                    
+
                     <div class="flex gap-2">
-<!--                        <button type="button" -->
-<!--                                onclick="saveDraft()"-->
-<!--                                class="btn btn-outline">-->
-<!--                            Save Draft-->
-<!--                        </button>-->
-                        
-                        <button type="submit" 
-                                id="publishBtn"
-                                class="btn btn-primary">
+                        <!--                        <button type="button" -->
+                        <!--                                onclick="saveDraft()"-->
+                        <!--                                class="btn btn-outline">-->
+                        <!--                            Save Draft-->
+                        <!--                        </button>-->
+
+                        <button type="submit" id="publishBtn" class="btn btn-primary">
                             <span id="publishText">Publish Listing</span>
                             <span id="publishLoading" class="hidden">
                                 <span class="loading mr-1"></span> Publishing...
@@ -1156,21 +1116,18 @@
             <div class="p-4">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-lg font-bold">Full Listing Preview</h2>
-                    <button type="button" 
-                            onclick="closePreviewModal()"
-                            class="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center">
+                    <button type="button" onclick="closePreviewModal()"
+                        class="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center">
                         <i class="bi bi-x text-sm"></i>
                     </button>
                 </div>
-                
+
                 <div class="space-y-4">
                     <div id="fullPreviewContent"></div>
                 </div>
-                
+
                 <div class="mt-4 flex justify-end">
-                    <button type="button" 
-                            onclick="closePreviewModal()"
-                            class="btn btn-outline btn-sm">
+                    <button type="button" onclick="closePreviewModal()" class="btn btn-outline btn-sm">
                         Close Preview
                     </button>
                 </div>
@@ -1179,45 +1136,45 @@
     </div>
 
     <script>
-// Format price input with commas
-document.addEventListener('DOMContentLoaded', function() {
-    const priceInput = document.getElementById('price');
-    if (priceInput) {
-        // Format on blur (add commas)
-        priceInput.addEventListener('blur', function() {
-            const value = this.value.replace(/,/g, '');
-            if (value && !isNaN(value)) {
-                // Format with commas
-                this.value = parseFloat(value).toLocaleString('en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
+        // Format price input with commas
+        document.addEventListener('DOMContentLoaded', function () {
+            const priceInput = document.getElementById('price');
+            if (priceInput) {
+                // Format on blur (add commas)
+                priceInput.addEventListener('blur', function () {
+                    const value = this.value.replace(/,/g, '');
+                    if (value && !isNaN(value)) {
+                        // Format with commas
+                        this.value = parseFloat(value).toLocaleString('en-US', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        });
+                    }
                 });
+
+                // Remove commas on focus for editing
+                priceInput.addEventListener('focus', function () {
+                    this.value = this.value.replace(/,/g, '');
+                });
+
+                // Remove commas before form submission
+                const form = priceInput.closest('form');
+                if (form) {
+                    form.addEventListener('submit', function () {
+                        // Remove all commas before submitting
+                        priceInput.value = priceInput.value.replace(/,/g, '');
+
+                        // Ensure we have a valid number
+                        if (priceInput.value && isNaN(parseFloat(priceInput.value))) {
+                            alert('Please enter a valid price');
+                            priceInput.focus();
+                            return false;
+                        }
+                    });
+                }
             }
         });
-        
-        // Remove commas on focus for editing
-        priceInput.addEventListener('focus', function() {
-            this.value = this.value.replace(/,/g, '');
-        });
-        
-        // Remove commas before form submission
-        const form = priceInput.closest('form');
-        if (form) {
-            form.addEventListener('submit', function() {
-                // Remove all commas before submitting
-                priceInput.value = priceInput.value.replace(/,/g, '');
-                
-                // Ensure we have a valid number
-                if (priceInput.value && isNaN(parseFloat(priceInput.value))) {
-                    alert('Please enter a valid price');
-                    priceInput.focus();
-                    return false;
-                }
-            });
-        }
-    }
-});
-</script>
+    </script>
 
     <!-- JavaScript -->
     <script>
@@ -1232,62 +1189,62 @@ document.addEventListener('DOMContentLoaded', function() {
         };
 
         // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             setupCharacterCounters();
             updateProgress();
             setupCurrencyInfo();
             initializeLocationSelectors();
-            
+
             // Initialize selections
             selectServiceType('service');
             selectPricingType('paid');
-            
+
             // Currency change handler
             const currencySelect = document.getElementById('currency');
             if (currencySelect) {
-                currencySelect.addEventListener('change', function() {
+                currencySelect.addEventListener('change', function () {
                     updateCurrencyInfo(this.value);
                     updatePriceSymbol(this.value);
                 });
             }
-            
+
             // Service type radio button sync
             document.querySelectorAll('input[name="service_type"]').forEach(radio => {
-                radio.addEventListener('change', function() {
+                radio.addEventListener('change', function () {
                     selectServiceType(this.value);
                 });
             });
-            
+
             // Pricing type radio button sync
             document.querySelectorAll('input[name="pricing_type"]').forEach(radio => {
-                radio.addEventListener('change', function() {
+                radio.addEventListener('change', function () {
                     selectPricingType(this.value);
                 });
             });
-            
+
             // Price field change handler
             const priceInput = document.getElementById('price');
             if (priceInput) {
                 priceInput.addEventListener('input', updatePriceSymbol);
             }
-            
+
             // Form submission
             const form = document.getElementById('createServiceForm');
-            form.addEventListener('submit', function(event) {
+            form.addEventListener('submit', function (event) {
                 event.preventDefault();
-                
+
                 // Update features input before submission
                 document.getElementById('featuresInput').value = JSON.stringify(formState.features);
-                
+
                 // Show loading state
                 const publishBtn = document.getElementById('publishBtn');
                 const publishText = document.getElementById('publishText');
                 const publishLoading = document.getElementById('publishLoading');
-                
+
                 publishBtn.disabled = true;
                 publishText.classList.add('hidden');
                 publishLoading.classList.remove('hidden');
-                
+
                 // Submit form
                 this.submit();
             });
@@ -1324,32 +1281,32 @@ document.addEventListener('DOMContentLoaded', function() {
         // Step Navigation
         function nextStep() {
             if (!validateCurrentStep()) return;
-            
+
             const currentStepElement = document.getElementById(`step-${formState.currentStep}`);
             const nextStepNum = formState.currentStep + 1;
-            
+
             if (nextStepNum <= formState.totalSteps) {
                 // Hide current step
                 currentStepElement.classList.remove('active');
-                
+
                 // Update step indicator
                 document.querySelector(`.step[data-step="${formState.currentStep}"]`).classList.remove('active');
                 document.querySelector(`.step[data-step="${formState.currentStep}"]`).classList.add('completed');
                 document.querySelector(`.step[data-step="${nextStepNum}"]`).classList.add('active');
-                
+
                 // Show next step
                 const nextStepElement = document.getElementById(`step-${nextStepNum}`);
                 nextStepElement.classList.add('active');
-                
+
                 // Update form state and progress
                 formState.currentStep = nextStepNum;
                 updateProgress();
-                
+
                 // Update preview if we're on the last step
                 if (nextStepNum === 4) {
                     updatePreview();
                 }
-                
+
                 // Scroll to top of form
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
@@ -1357,23 +1314,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
         function prevStep() {
             const prevStepNum = formState.currentStep - 1;
-            
+
             if (prevStepNum >= 1) {
                 // Hide current step
                 document.getElementById(`step-${formState.currentStep}`).classList.remove('active');
-                
+
                 // Update step indicator
                 document.querySelector(`.step[data-step="${formState.currentStep}"]`).classList.remove('active');
                 document.querySelector(`.step[data-step="${prevStepNum}"]`).classList.add('active');
                 document.querySelector(`.step[data-step="${formState.currentStep}"]`).classList.remove('completed');
-                
+
                 // Show previous step
                 document.getElementById(`step-${prevStepNum}`).classList.add('active');
-                
+
                 // Update form state and progress
                 formState.currentStep = prevStepNum;
                 updateProgress();
-                
+
                 // Scroll to top of form
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
@@ -1381,8 +1338,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         function validateCurrentStep() {
             const currentStep = formState.currentStep;
-            
-            switch(currentStep) {
+
+            switch (currentStep) {
                 case 1:
                     return validateStep1();
                 case 2:
@@ -1398,35 +1355,35 @@ document.addEventListener('DOMContentLoaded', function() {
             const title = document.getElementById('title').value.trim();
             const category = document.getElementById('category').value;
             const shortDescription = document.getElementById('short_description').value.trim();
-            
+
             if (!title) {
                 alert('Please enter a listing title');
                 document.getElementById('title').focus();
                 return false;
             }
-            
+
             if (!category) {
                 alert('Please select a category');
                 document.getElementById('category').focus();
                 return false;
             }
-            
+
             if (!shortDescription) {
                 alert('Please enter a short description');
                 document.getElementById('short_description').focus();
                 return false;
             }
-            
+
             return true;
         }
 
         // In your existing JavaScript, update the validateStep2 function:
-function validateStep2() {
+        function validateStep2() {
             const description = document.getElementById('description').value.trim();
             const country = document.getElementById('listing_country').value;
             const state = document.getElementById('listing_state').value;
             const city = document.getElementById('listing_city').value;
-    
+
             if (!description) {
                 alert('Please enter a description');
                 document.getElementById('description').focus();
@@ -1438,78 +1395,77 @@ function validateStep2() {
                 (!country ? document.getElementById('listing_country') : !state ? document.getElementById('listing_state') : document.getElementById('listing_city')).focus();
                 return false;
             }
-    
-    if (formState.pricingType === 'paid') {
-        const priceInput = document.getElementById('price');
-        // Get the raw value from data attribute or parse the formatted value
-        const rawPrice = priceInput.getAttribute('data-raw-value') || 
-                         parseFloat(priceInput.value.replace(/,/g, '')) || 0;
-        const price = parseFloat(rawPrice);
-        const currency = document.getElementById('currency').value;
-        
-        if (!price || price <= 0 || isNaN(price)) {
-            alert('Please enter a valid price');
-            document.getElementById('price').focus();
-            return false;
-        }
-        
-        if (!currency) {
-            alert('Please select a currency');
-            document.getElementById('currency').focus();
-            return false;
-        }
-        
-        // Validate minimum price based on currency
-        const minPrices = {
-            'USD': 1,
-            'NGN': 100,
-            'EUR': 1,
-            'GBP': 1,
-            'KES': 100,
-            'GHS': 1,
-            'ZAR': 10
-        };
-        
-        if (price < minPrices[currency]) {
-            const minFormatted = formatNumberWithCommas(minPrices[currency].toString());
-            alert(`Minimum price for ${currency} is ${minFormatted}`);
-            document.getElementById('price').focus();
-            return false;
-        }
-    }
-    
-    return true;
-}
 
-// Also add this formatNumberWithCommas function to your main JavaScript if not already there:
-function formatNumberWithCommas(value) {
-    if (!value) return '';
-    
-    // Split into whole and decimal parts
-    const parts = value.toString().split('.');
-    let wholePart = parts[0];
-    const decimalPart = parts.length > 1 ? '.' + parts[1] : '';
-    
-    // Add commas to whole number part
-    wholePart = wholePart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    
-    return wholePart + decimalPart;
-}
+            if (formState.pricingType === 'paid') {
+                const priceInput = document.getElementById('price');
+                // Get the raw value from data attribute or parse the formatted value
+                const rawPrice = priceInput.getAttribute('data-raw-value') ||
+                    parseFloat(priceInput.value.replace(/,/g, '')) || 0;
+                const price = parseFloat(rawPrice);
+                const currency = document.getElementById('currency').value;
+
+                if (!price || price <= 0 || isNaN(price)) {
+                    alert('Please enter a valid price');
+                    document.getElementById('price').focus();
+                    return false;
+                }
+
+                if (!currency) {
+                    alert('Please select a currency');
+                    document.getElementById('currency').focus();
+                    return false;
+                }
+
+                // Validate minimum price based on currency
+                const minPrices = {
+                    'USD': 1,
+                    'EUR': 1,
+                    'GBP': 1,
+                    'KES': 100,
+                    'GHS': 1,
+                    'ZAR': 10
+                };
+
+                if (price < minPrices[currency]) {
+                    const minFormatted = formatNumberWithCommas(minPrices[currency].toString());
+                    alert(`Minimum price for ${currency} is ${minFormatted}`);
+                    document.getElementById('price').focus();
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        // Also add this formatNumberWithCommas function to your main JavaScript if not already there:
+        function formatNumberWithCommas(value) {
+            if (!value) return '';
+
+            // Split into whole and decimal parts
+            const parts = value.toString().split('.');
+            let wholePart = parts[0];
+            const decimalPart = parts.length > 1 ? '.' + parts[1] : '';
+
+            // Add commas to whole number part
+            wholePart = wholePart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+            return wholePart + decimalPart;
+        }
 
         function validateStep3() {
             const mainImage = document.getElementById('cover_image').files[0];
-            
+
             if (!mainImage) {
                 alert('Please upload a main listing image');
                 return false;
             }
-            
+
             // Validate image size
             if (mainImage.size > 5 * 1024 * 1024) {
                 alert('Main image must be less than 5MB');
                 return false;
             }
-            
+
             return true;
         }
 
@@ -1522,18 +1478,18 @@ function formatNumberWithCommas(value) {
         // Service Type Selection
         function selectServiceType(type) {
             formState.serviceType = type;
-            
+
             // Update radio button
             document.querySelector(`input[name="service_type"][value="${type}"]`).checked = true;
-            
+
             // Update visual selection
             document.querySelectorAll('.option-card').forEach(card => {
                 card.classList.remove('selected');
             });
-            
+
             const selectedCard = document.querySelector(`input[name="service_type"][value="${type}"]`).closest('.option-card');
             selectedCard.classList.add('selected');
-            
+
             // Toggle digital product fields
             const digitalFields = document.getElementById('digitalProductFields');
             if (type === 'digital') {
@@ -1560,21 +1516,21 @@ function formatNumberWithCommas(value) {
         // Pricing Type Selection
         function selectPricingType(type) {
             formState.pricingType = type;
-            
+
             // Update radio button
             document.querySelector(`input[name="pricing_type"][value="${type}"]`).checked = true;
-            
+
             // Update visual selection
             document.querySelectorAll('.option-card').forEach(card => {
                 card.classList.remove('selected');
             });
-            
+
             const selectedCard = document.querySelector(`input[name="pricing_type"][value="${type}"]`).closest('.option-card');
             selectedCard.classList.add('selected');
 
             const typeName = type === 'paid' ? 'Paid Listing' : 'Free Listing';
             document.getElementById('selectedPricingType').textContent = typeName;
-            
+
             // Toggle price fields
             const priceFields = document.getElementById('priceFields');
             if (type === 'paid') {
@@ -1596,14 +1552,13 @@ function formatNumberWithCommas(value) {
         function updateCurrencyInfo(currency) {
             const minPrices = {
                 'USD': '$1.00',
-                'NGN': '₦100',
                 'EUR': '€1.00',
                 'GBP': '£1.00',
                 'KES': 'KSh 100',
                 'GHS': 'GH₵ 1.00',
                 'ZAR': 'R10.00'
             };
-            
+
             const infoElement = document.getElementById('currencyInfo');
             if (currency && minPrices[currency]) {
                 infoElement.textContent = `Minimum price: ${minPrices[currency]}`;
@@ -1617,18 +1572,17 @@ function formatNumberWithCommas(value) {
         function updatePriceSymbol() {
             const currency = document.getElementById('currency').value;
             const priceSymbol = document.querySelector('#price + .absolute > div');
-            
+
             if (priceSymbol) {
                 const symbols = {
                     'USD': '$',
-                    'NGN': '₦',
                     'EUR': '€',
                     'GBP': '£',
                     'KES': 'KSh ',
                     'GHS': 'GH₵ ',
                     'ZAR': 'R'
                 };
-                
+
                 priceSymbol.textContent = symbols[currency] || '$';
             }
         }
@@ -1638,21 +1592,21 @@ function formatNumberWithCommas(value) {
             const titleInput = document.getElementById('title');
             const shortDescInput = document.getElementById('short_description');
             const descInput = document.getElementById('description');
-            
+
             if (titleInput) {
-                titleInput.addEventListener('input', function() {
+                titleInput.addEventListener('input', function () {
                     document.getElementById('titleCounter').textContent = `${this.value.length}/100`;
                 });
             }
-            
+
             if (shortDescInput) {
-                shortDescInput.addEventListener('input', function() {
+                shortDescInput.addEventListener('input', function () {
                     document.getElementById('shortDescCounter').textContent = `${this.value.length}/200`;
                 });
             }
-            
+
             if (descInput) {
-                descInput.addEventListener('input', function() {
+                descInput.addEventListener('input', function () {
                     document.getElementById('descCounter').textContent = `${this.value.length} characters`;
                 });
             }
@@ -1737,13 +1691,13 @@ function formatNumberWithCommas(value) {
             const countries = await getCreateListingCountries();
             await populateSelectOptions(countrySelect, countries, 'Select country', selectedCountry);
 
-            countrySelect.addEventListener('change', async function() {
+            countrySelect.addEventListener('change', async function () {
                 setLocationStatus(cityStatus);
                 await loadStatesForCountry(this.value, '');
                 await loadCitiesForState('', '');
             });
 
-            stateSelect.addEventListener('change', async function() {
+            stateSelect.addEventListener('change', async function () {
                 await loadCitiesForState(this.value, '');
             });
 
@@ -1839,7 +1793,7 @@ function formatNumberWithCommas(value) {
         function addFeature() {
             const input = document.getElementById('featureInput');
             const feature = input.value.trim();
-            
+
             if (feature) {
                 formState.features.push(feature);
                 renderFeatures();
@@ -1856,7 +1810,7 @@ function formatNumberWithCommas(value) {
         function renderFeatures() {
             const container = document.getElementById('featuresContainer');
             container.innerHTML = '';
-            
+
             formState.features.forEach((feature, index) => {
                 const featureElement = document.createElement('div');
                 featureElement.className = 'feature-item';
@@ -1880,17 +1834,17 @@ function formatNumberWithCommas(value) {
                     alert('Please select an image file');
                     return;
                 }
-                
+
                 if (file.size > 5 * 1024 * 1024) {
                     alert('Image must be less than 5MB');
                     return;
                 }
-                
+
                 const preview = document.getElementById('mainImagePreview');
                 const img = document.getElementById('mainImagePreviewImg');
-                
+
                 const reader = new FileReader();
-                reader.onload = function(e) {
+                reader.onload = function (e) {
                     img.src = e.target.result;
                     preview.classList.remove('hidden');
                 };
@@ -1906,12 +1860,12 @@ function formatNumberWithCommas(value) {
         function handleGalleryImagesSelect(event) {
             const files = Array.from(event.target.files);
             const maxFiles = 5 - formState.galleryImages.length;
-            
+
             if (files.length > maxFiles) {
                 alert(`You can only upload ${maxFiles} more images (maximum 5 total)`);
                 return;
             }
-            
+
             // Validate each file
             for (const file of files) {
                 if (file.size > 5 * 1024 * 1024) {
@@ -1923,7 +1877,7 @@ function formatNumberWithCommas(value) {
                     return;
                 }
             }
-            
+
             formState.galleryImages.push(...files);
             renderGalleryPreviews();
         }
@@ -1938,13 +1892,13 @@ function formatNumberWithCommas(value) {
         function renderGalleryPreviews() {
             const container = document.getElementById('galleryPreviews');
             container.innerHTML = '';
-            
+
             formState.galleryImages.forEach((file, index) => {
                 const preview = document.createElement('div');
                 preview.className = 'relative rounded-lg overflow-hidden h-32';
-                
+
                 const reader = new FileReader();
-                reader.onload = function(e) {
+                reader.onload = function (e) {
                     preview.innerHTML = `
                         <img src="${e.target.result}" alt="Gallery image ${index + 1}" class="w-full h-full object-cover">
                         <button type="button" onclick="removeGalleryImage(${index})" class="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center">
@@ -1953,7 +1907,7 @@ function formatNumberWithCommas(value) {
                     `;
                 };
                 reader.readAsDataURL(file);
-                
+
                 container.appendChild(preview);
             });
         }
@@ -1965,11 +1919,11 @@ function formatNumberWithCommas(value) {
                     alert('File must be less than 50MB');
                     return;
                 }
-                
+
                 const preview = document.getElementById('digitalFilePreview');
                 const fileName = document.getElementById('digitalFileName');
                 const fileSize = document.getElementById('digitalFileSize');
-                
+
                 fileName.textContent = file.name;
                 fileSize.textContent = formatFileSize(file.size);
                 preview.classList.remove('hidden');
@@ -2003,7 +1957,7 @@ function formatNumberWithCommas(value) {
                 pricingTypePreview.textContent =
                     formState.pricingType === 'paid' ? 'Paid' : 'Free';
             }
-            
+
             // Basic Info
             const categorySelect = document.getElementById('category');
             const category = categorySelect.options[categorySelect.selectedIndex]?.text || 'Not selected';
@@ -2014,28 +1968,28 @@ function formatNumberWithCommas(value) {
             const state = document.getElementById('listing_state').value;
             const city = document.getElementById('listing_city').value;
             const location = [city, state, country].filter(Boolean).join(', ') || 'No location selected';
-            
+
             document.getElementById('previewCategory').textContent = category;
             document.getElementById('previewTitle').textContent = title;
             document.getElementById('previewShortDesc').textContent = shortDesc;
             document.getElementById('previewDescription').textContent = description;
             document.getElementById('previewLocation').textContent = location;
-            
+
             // Pricing
             const currency = document.getElementById('currency').value || 'Not selected';
             const price = document.getElementById('price').value || '0.00';
-            
+
             document.getElementById('previewCurrency').textContent = currency;
             if (formState.pricingType === 'paid') {
                 document.getElementById('previewPrice').textContent = `${getCurrencySymbol(currency)}${price}`;
             } else {
                 document.getElementById('previewPrice').textContent = 'Free';
             }
-            
+
             // Features
             const featuresList = document.getElementById('previewFeatures');
             featuresList.innerHTML = '';
-            
+
             if (formState.features.length > 0) {
                 formState.features.forEach(feature => {
                     const li = document.createElement('li');
@@ -2072,7 +2026,6 @@ function formatNumberWithCommas(value) {
         function getCurrencySymbol(currency) {
             const symbols = {
                 'USD': '$',
-                'NGN': '₦',
                 'EUR': '€',
                 'GBP': '£',
                 'KES': 'KSh ',
@@ -2085,7 +2038,7 @@ function formatNumberWithCommas(value) {
         function openPreviewModal() {
             const modal = document.getElementById('previewModal');
             const content = document.getElementById('fullPreviewContent');
-            
+
             // Populate modal content
             content.innerHTML = `
                 <div class="space-y-4">
@@ -2122,7 +2075,7 @@ function formatNumberWithCommas(value) {
                     ` : ''}
                 </div>
             `;
-            
+
             modal.classList.add('show');
             document.body.style.overflow = 'hidden';
         }
@@ -2138,17 +2091,17 @@ function formatNumberWithCommas(value) {
             try {
                 // Update features input before saving
                 document.getElementById('featuresInput').value = JSON.stringify(formState.features);
-                
+
                 // Submit form with draft status
                 const form = document.getElementById('createServiceForm');
                 const formData = new FormData(form);
                 formData.append('status', 'draft');
-                
+
                 const response = await fetch(form.action, {
                     method: 'POST',
                     body: formData
                 });
-                
+
                 if (response.ok) {
                     alert('Draft saved successfully!');
                 } else {
@@ -2160,30 +2113,30 @@ function formatNumberWithCommas(value) {
         }
 
         // Drag and Drop
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const uploadAreas = [
                 'mainImageUploadArea',
                 'galleryUploadArea',
                 'digitalUploadArea'
             ];
-            
+
             uploadAreas.forEach(areaId => {
                 const area = document.getElementById(areaId);
                 if (area) {
-                    area.addEventListener('dragover', function(e) {
+                    area.addEventListener('dragover', function (e) {
                         e.preventDefault();
                         this.classList.add('dragover');
                     });
-                    
-                    area.addEventListener('dragleave', function(e) {
+
+                    area.addEventListener('dragleave', function (e) {
                         e.preventDefault();
                         this.classList.remove('dragover');
                     });
-                    
-                    area.addEventListener('drop', function(e) {
+
+                    area.addEventListener('drop', function (e) {
                         e.preventDefault();
                         this.classList.remove('dragover');
-                        
+
                         const files = e.dataTransfer.files;
                         if (files.length > 0) {
                             // Handle file based on area
@@ -2208,116 +2161,115 @@ function formatNumberWithCommas(value) {
     </script>
 
     <script>
-// Price formatting function
-function formatPrice(input) {
-    // Get cursor position
-    let cursorPos = input.selectionStart;
-    
-    // Remove all non-digit characters except decimal point
-    let value = input.value.replace(/[^\d.]/g, '');
-    
-    // Remove extra decimal points
-    const parts = value.split('.');
-    if (parts.length > 2) {
-        value = parts[0] + '.' + parts.slice(1).join('');
-    }
-    
-    // Limit to 2 decimal places
-    if (parts.length === 2) {
-        value = parts[0] + '.' + parts[1].slice(0, 2);
-    }
-    
-    // Format with commas
-    const formattedValue = formatNumberWithCommas(value);
-    
-    // Update input value
-    input.value = formattedValue;
-    
-    // Restore cursor position (adjust for added commas)
-    cursorPos = adjustCursorPosition(cursorPos, input.value, formattedValue);
-    input.setSelectionRange(cursorPos, cursorPos);
-    
-    // Store raw numeric value in a data attribute for form submission
-    const rawValue = parseFloat(value) || 0;
-    input.setAttribute('data-raw-value', rawValue.toFixed(2));
-}
+        // Price formatting function
+        function formatPrice(input) {
+            // Get cursor position
+            let cursorPos = input.selectionStart;
 
-function formatNumberWithCommas(value) {
-    if (!value) return '';
-    
-    // Split into whole and decimal parts
-    const parts = value.split('.');
-    let wholePart = parts[0];
-    const decimalPart = parts.length > 1 ? '.' + parts[1] : '';
-    
-    // Add commas to whole number part
-    wholePart = wholePart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    
-    return wholePart + decimalPart;
-}
+            // Remove all non-digit characters except decimal point
+            let value = input.value.replace(/[^\d.]/g, '');
 
-function adjustCursorPosition(oldPos, oldValue, newValue) {
-    // Count commas before cursor in old value
-    const commasBeforeOld = (oldValue.substring(0, oldPos).match(/,/g) || []).length;
-    
-    // Count commas before same position in new value
-    let commasBeforeNew = 0;
-    for (let i = 0; i < oldPos && i < newValue.length; i++) {
-        if (newValue[i] === ',') commasBeforeNew++;
-    }
-    
-    // Adjust cursor position
-    return oldPos + (commasBeforeNew - commasBeforeOld);
-}
+            // Remove extra decimal points
+            const parts = value.split('.');
+            if (parts.length > 2) {
+                value = parts[0] + '.' + parts.slice(1).join('');
+            }
 
-function updateCurrencySymbol(currency) {
-    const symbols = {
-        'USD': '$',
-        'NGN': '₦',
-        'EUR': '€',
-        'GBP': '£',
-        'KES': 'KSh ',
-        'GHS': 'GH₵ ',
-        'ZAR': 'R'
-    };
-    
-    const symbolElement = document.getElementById('priceSymbol');
-    if (symbolElement) {
-        symbolElement.textContent = symbols[currency] || '$';
-    }
-    
-    // Update currency info
-    updateCurrencyInfo(currency);
-}
+            // Limit to 2 decimal places
+            if (parts.length === 2) {
+                value = parts[0] + '.' + parts[1].slice(0, 2);
+            }
 
-function updateCurrencyInfo(currency) {
-    const minPrices = {
-        'USD': '$1.00',
-        'NGN': '₦100',
-        'EUR': '€1.00',
-        'GBP': '£1.00',
-        'KES': 'KSh 100',
-        'GHS': 'GH₵ 1.00',
-        'ZAR': 'R10.00'
-    };
-    
-    const infoElement = document.getElementById('currencyInfo');
-    if (currency && minPrices[currency]) {
-        infoElement.textContent = `Minimum price: ${minPrices[currency]}`;
-        infoElement.className = 'mt-2 text-xs text-green-600';
-    } else {
-        infoElement.textContent = 'Select a currency to see minimum price requirements';
-        infoElement.className = 'mt-2 text-xs text-gray-600';
-    }
-}
+            // Format with commas
+            const formattedValue = formatNumberWithCommas(value);
 
-// Initialize currency symbol
-document.addEventListener('DOMContentLoaded', function() {
-    const currencySelect = document.getElementById('currency');
-    if (currencySelect) {
-        updateCurrencySymbol(currencySelect.value);
-    }
-});
-</script>
+            // Update input value
+            input.value = formattedValue;
+
+            // Restore cursor position (adjust for added commas)
+            cursorPos = adjustCursorPosition(cursorPos, input.value, formattedValue);
+            input.setSelectionRange(cursorPos, cursorPos);
+
+            // Store raw numeric value in a data attribute for form submission
+            const rawValue = parseFloat(value) || 0;
+            input.setAttribute('data-raw-value', rawValue.toFixed(2));
+        }
+
+        function formatNumberWithCommas(value) {
+            if (!value) return '';
+
+            // Split into whole and decimal parts
+            const parts = value.split('.');
+            let wholePart = parts[0];
+            const decimalPart = parts.length > 1 ? '.' + parts[1] : '';
+
+            // Add commas to whole number part
+            wholePart = wholePart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+            return wholePart + decimalPart;
+        }
+
+        function adjustCursorPosition(oldPos, oldValue, newValue) {
+            // Count commas before cursor in old value
+            const commasBeforeOld = (oldValue.substring(0, oldPos).match(/,/g) || []).length;
+
+            // Count commas before same position in new value
+            let commasBeforeNew = 0;
+            for (let i = 0; i < oldPos && i < newValue.length; i++) {
+                if (newValue[i] === ',') commasBeforeNew++;
+            }
+
+            // Adjust cursor position
+            return oldPos + (commasBeforeNew - commasBeforeOld);
+        }
+
+        function updateCurrencySymbol(currency) {
+            const symbols = {
+                'USD': '$',
+                'EUR': '€',
+                'GBP': '£',
+                'KES': 'KSh ',
+                'GHS': 'GH₵ ',
+                'ZAR': 'R'
+            };
+
+            const symbolElement = document.getElementById('priceSymbol');
+            if (symbolElement) {
+                symbolElement.textContent = symbols[currency] || '$';
+            }
+
+            // Update currency info
+            updateCurrencyInfo(currency);
+        }
+
+        function updateCurrencyInfo(currency) {
+            const minPrices = {
+                'USD': '$1.00',
+                'EUR': '€1.00',
+                'GBP': '£1.00',
+                'KES': 'KSh 100',
+                'GHS': 'GH₵ 1.00',
+                'ZAR': 'R10.00'
+            };
+
+            const infoElement = document.getElementById('currencyInfo');
+            if (currency && minPrices[currency]) {
+                infoElement.textContent = `Minimum price: ${minPrices[currency]}`;
+                infoElement.className = 'mt-2 text-xs text-green-600';
+            } else {
+                infoElement.textContent = 'Select a currency to see minimum price requirements';
+                infoElement.className = 'mt-2 text-xs text-gray-600';
+            }
+        }
+
+        // Initialize currency symbol
+        document.addEventListener('DOMContentLoaded', function () {
+            const currencySelect = document.getElementById('currency');
+            if (currencySelect) {
+                updateCurrencySymbol(currencySelect.value);
+            }
+        });
+    </script>
 </body>
+
 </html>

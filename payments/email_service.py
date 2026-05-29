@@ -30,8 +30,9 @@ class MarketplaceEmailService:
 
     @staticmethod
     def _format_money(amount, currency):
-        currency = (currency or "NGN").upper()
-        symbol = "₦" if currency == "NGN" else "$" if currency == "USD" else ""
+        currency = (currency or "USD").upper()
+        symbols = {"USD": "$", "EUR": "€", "GBP": "£"}
+        symbol = symbols.get(currency, "$")
         return f"{symbol}{float(amount):,.2f} {currency}".strip()
 
     def _send_email(self, subject, recipient, html_body, text_body=None):

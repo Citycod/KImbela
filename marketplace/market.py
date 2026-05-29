@@ -114,10 +114,7 @@ NIGERIA_COUNTRY_ALIASES = {"nigeria", "ng", "nga", "federal republic of nigeria"
 
 
 def get_marketplace_checkout_currency(user):
-    """Use NGN for Nigerian users and USD for everyone else."""
-    country = (getattr(user, "country", "") or "").strip().lower()
-    if country in NIGERIA_COUNTRY_ALIASES:
-        return "NGN"
+    """Use USD for everyone."""
     return "USD"
 
 
@@ -137,10 +134,8 @@ def get_marketplace_plan_usd_amount(plan):
 
 def get_marketplace_checkout_amount(plan, currency):
     """Convert the plan amount into the user's checkout currency."""
-    currency = (currency or "NGN").upper()
+    currency = (currency or "USD").upper()
     usd_amount = get_marketplace_plan_usd_amount(plan)
-    if currency == "NGN":
-        return round(usd_amount * get_marketplace_ngn_rate(), 2)
     return round(usd_amount, 2)
 
 
@@ -662,7 +657,7 @@ def debug_cloudinary():
 # In market.py, update the format_price function:
 
 
-def format_price(price, currency="NGN"):
+def format_price(price, currency="USD"):
     """Format price with currency symbol"""
     if price is None or price == 0:
         return "Free"
@@ -698,7 +693,7 @@ def format_price(price, currency="NGN"):
         return f"{currency}0"
 
 
-def format_price_with_currency(price, currency="NGN"):
+def format_price_with_currency(price, currency="USD"):
     """Format price with currency symbol for display in templates"""
     return format_price(price, currency)
 
@@ -1065,7 +1060,7 @@ def service_detail(slug):
 
     # Ensure price has a default value
     service_price = service.price if service.price is not None else 0
-    service_currency = service.currency or "KES"
+    service_currency = service.currency or "USD"
 
     # Get currency symbols
     currency_symbols = {
@@ -1268,7 +1263,7 @@ def seller_dashboard():
     }
 
     # Format price function with currency
-    def format_price_with_currency(price, currency="KES"):
+    def format_price_with_currency(price, currency="USD"):
         symbol = currency_symbols.get(currency, "")
         return f"{symbol}{price:,.2f}" if price else f"{symbol}0.00"
 
@@ -1335,7 +1330,7 @@ def create_service():
         except (ValueError, AttributeError):
             price = 0.0
 
-        currency = request.form.get("currency", "NGN")
+        currency = request.form.get("currency", "USD")
         service_type = request.form.get("service_type", "service")
         subscription_id = request.form.get("subscription_id")
 
@@ -1766,18 +1761,14 @@ def initiate_payment():
         if service.seller_id != current_user.id:
             return jsonify({"success": False, "error": "Permission denied"}), 403
 
-        currency = request.form.get("currency", "NGN").upper()
+        currency = request.form.get("currency", "USD").upper()
         gateway = request.form.get("gateway", "flutterwave").lower()
 
         # Generate unique transaction reference
         tx_ref = f"KIMBELA-MP-{int(time.time())}-{service_id}"
 
-        from marketplace.market import get_marketplace_ngn_rate # Make sure to import or use the already imported rate
         # Calculate amount based on currency
-        if currency == "USD":
-            amount = subscription.price_usd
-        else:
-            amount = round(subscription.price_usd * get_marketplace_ngn_rate(), 2)
+        amount = subscription.price_usd
 
         # Create payment record
         payment = MarketplacePayment(
@@ -3067,10 +3058,8 @@ def ensure_marketplace_subscriptions():
 
 
 def get_marketplace_ngn_rate():
-    """Fallback NGN rate for legacy marketplace subscription plans."""
-    from payments.payment_service import BasePaymentService
-
-    return BasePaymentService().get_ngn_rate("MARKETPLACE_USD_TO_NGN_RATE")
+    """Legacy rate helper — returns 1.0 since system is now USD-native."""
+    return 1.0
 
 
 @market.route("/init-data", methods=["GET"])
@@ -3844,7 +3833,7 @@ def get_dashboard_services():
                     "slug": service.slug,
                     "short_description": service.short_description,
                     "price": float(service.price) if service.price else 0,
-                    "currency": service.currency or "KES",
+                    "currency": service.currency or "USD",
                     "is_free": service.is_free,
                     "listing_access": get_listing_access_type(service),
                     "status": service.status,
@@ -4182,7 +4171,6 @@ def subscription_plans():
 
         plans_data = []
         for plan in plans:
-            live_price_ngn = round(float(plan.price) * get_marketplace_ngn_rate(), 2)
             plans_data.append(
                 {
                     "id": plan.id,
@@ -4190,7 +4178,7 @@ def subscription_plans():
                     "slug": plan.slug,
                     "description": plan.description,
                     "price_usd": plan.price,
-                    "price_ngn": live_price_ngn,
+                    "price_ngn": plan.price,
                     "duration_days": plan.duration_days,
                     "features": plan.features_list,
                     "is_featured": plan.is_featured,
@@ -4970,8 +4958,8 @@ def test_marketplace_payment_db():
         test_payment = MarketplacePayment(
             user_id=current_user.id,
             subscription_id=plan.id if plan else 1,
-            amount=16000.0,
-            currency="NGN",
+            amount=10.0,
+            currency="USD",
             tokens_paid=999,
             gateway="test",
             gateway_reference=f"TEST_{int(time.time())}",

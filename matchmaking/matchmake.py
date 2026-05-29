@@ -99,9 +99,7 @@ def allowed_file(filename, allowed_extensions=None):
 
 
 def get_matchmaking_ngn_rate():
-    from payments.payment_service import BasePaymentService
-
-    return BasePaymentService().get_ngn_rate("MATCHMAKING_USD_TO_NGN_RATE")
+    return 1.0
 
 
 # Main Routes
@@ -609,7 +607,7 @@ def initiate_matchmaking_payment():
 
         # Required fields for matchmaking
         request_id = data.get("request_id")
-        currency = data.get("currency", "NGN").upper()
+        currency = data.get("currency", "USD").upper()
         gateway = (data.get("gateway") or "flutterwave").lower()
         package_id = data.get("campaign_id")  # This comes from frontend as campaign_id
 

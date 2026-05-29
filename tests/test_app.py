@@ -155,7 +155,7 @@ def test_subscription_callback_recovers_success_via_reference_verification(
         user_id=user.id,
         subscription_id=plan.id,
         amount=2756.59,
-        currency="NGN",
+        currency="USD",
         tokens_paid=275659,
         gateway="flutterwave",
         gateway_reference="KIMBELA_MARKET_TEST_REF",
@@ -181,7 +181,7 @@ def test_subscription_callback_recovers_success_via_reference_verification(
                 "tx_ref": tx_ref,
                 "status": "successful",
                 "amount": 2756.59,
-                "currency": "NGN",
+                "currency": "USD",
                 "payment_type": "card",
             },
         }

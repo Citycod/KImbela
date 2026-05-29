@@ -58,17 +58,12 @@ def _get_dashboard_ad_usd_to_ngn_rate():
 def _get_dashboard_ad_daily_budget_bounds(placement=None):
     usd_min = 5.0 if placement == "dashboard-top" else 2.0
     usd_max = 50.0
-    rate = _get_dashboard_ad_usd_to_ngn_rate()
-    ngn_min = round(usd_min * rate, 2)
-    ngn_max = round(usd_max * rate, 2)
     return {
         "usd_min": usd_min,
         "usd_max": usd_max,
-        "ngn_min": ngn_min,
-        "ngn_max": ngn_max,
-        "ngn_min_input": math.ceil(ngn_min),
-        "ngn_max_input": max(math.ceil(ngn_min), math.floor(ngn_max)),
-        "rate": rate,
+        "ngn_min_input": math.ceil(usd_min), # Kept for backward compatibility if needed, but holds USD value
+        "ngn_max_input": math.ceil(usd_max),
+        "rate": 1.0,
     }
 
 
@@ -338,7 +333,7 @@ def public_create_campaign():
         target_url = data.get("target_url")
         call_to_action = data.get("call_to_action", "Learn More")
         image = data.get("image", "")
-        currency = data.get("currency", "NGN")
+        currency = data.get("currency", "USD")
         placement = data.get("placement", "dashboard-top")
 
         if not title:
@@ -359,12 +354,12 @@ def public_create_campaign():
             return jsonify({"success": False, "error": "Invalid budget or duration"}), 400
 
         ad_pricing = _get_dashboard_ad_daily_budget_bounds(placement)
-        if daily_budget < ad_pricing["ngn_min_input"]:
+        if daily_budget < ad_pricing["usd_min"]:
             return (
                 jsonify(
                     {
                         "success": False,
-                        "error": f"Minimum daily budget is ₦{ad_pricing['ngn_min_input']:,.2f}",
+                        "error": f"Minimum daily budget is ${ad_pricing['usd_min']:,.2f}",
                     }
                 ),
                 400,
@@ -421,7 +416,7 @@ def public_initiate_payment():
             return jsonify({"success": False, "error": "No data provided"}), 400
 
         campaign_id = data.get("campaign_id")
-        currency = (data.get("currency") or "NGN").upper()
+        currency = (data.get("currency") or "USD").upper()
         gateway = (data.get("gateway") or "flutterwave").lower()
         contact_payload = {
             "name": data.get("contact_name") or data.get("name") or "",
@@ -1347,7 +1342,7 @@ def create_campaign():
         target_url = data.get("target_url")
         call_to_action = data.get("call_to_action", "Learn More")
         image = data.get("image", "")
-        currency = data.get("currency", "NGN")
+        currency = data.get("currency", "USD")
         placement = data.get("placement", "sponsored")
 
         # ✅ Extract targeting data
@@ -1420,12 +1415,12 @@ def create_campaign():
             )
 
         ad_pricing = _get_dashboard_ad_daily_budget_bounds(placement)
-        if daily_budget < ad_pricing["ngn_min_input"]:
+        if daily_budget < ad_pricing["usd_min"]:
             return (
                 jsonify(
                     {
                         "success": False,
-                        "error": f"Minimum daily budget is ₦{ad_pricing['ngn_min_input']:,.2f}",
+                        "error": f"Minimum daily budget is ${ad_pricing['usd_min']:,.2f}",
                     }
                 ),
                 400,
@@ -1520,7 +1515,7 @@ def initiate_payment():
             return jsonify({"success": False, "error": "No data provided"}), 400
 
         campaign_id = data.get("campaign_id")
-        currency = data.get("currency", "NGN").upper()
+        currency = data.get("currency", "USD").upper()
         gateway = (data.get("gateway") or "flutterwave").lower()
 
         print(
@@ -1532,7 +1527,7 @@ def initiate_payment():
             return jsonify({"success": False, "error": "Campaign ID is required"}), 400
 
         # ✅ ADD CURRENCY VALIDATION
-        supported_currencies = ["NGN", "USD"]
+        supported_currencies = ["USD"]
         if currency not in supported_currencies:
             return (
                 jsonify(
@@ -1636,7 +1631,7 @@ def debug_payment_service():
 
         # Test creating a transaction
         result = payment_service.create_flutterwave_transaction(
-            current_user, campaign, 1.0, "NGN"
+            current_user, campaign, 1.0, "USD"
         )
         debug_info["payment_test_result"] = result
 
@@ -1667,7 +1662,7 @@ def test_payment_flow(campaign_id):
         )
 
         result = payment_service.create_flutterwave_transaction(
-            current_user, campaign, amount, "NGN"
+            current_user, campaign, amount, "USD"
         )
 
         return jsonify(
@@ -1705,7 +1700,7 @@ def test_flutterwave_direct():
         test_data = {
             "tx_ref": f"direct_test_{int(time.time())}",
             "amount": "10",  # Small test amount
-            "currency": "NGN",
+            "currency": "USD",
             "redirect_url": "http://localhost:5000/user/dashboard",
             "payment_options": "card",
             "customer": {
@@ -1817,7 +1812,7 @@ def get_supported_currencies():
     """Get list of currencies supported by your Flutterwave account"""
     try:
         # For Nigerian Flutterwave accounts, these are typically supported
-        supported_currencies = ["NGN"]
+        supported_currencies = ["USD"]
 
         # You could also fetch this dynamically from Flutterwave API
         # But for now, we'll use the common ones
@@ -1835,7 +1830,7 @@ def get_supported_currencies():
                 {
                     "success": False,
                     "error": str(e),
-                    "currencies": ["NGN"],
+                    "currencies": ["USD"],
                 }
             ),
             500,

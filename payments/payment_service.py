@@ -58,7 +58,7 @@ class BasePaymentService:
         self.paystack_secret_key = os.getenv("PAYSTACK_SECRET_KEY")
         self.paystack_base_url = "https://api.paystack.co"
         
-        self.default_currency = os.getenv("FLW_DEFAULT_CURRENCY", "NGN").upper()
+        self.default_currency = os.getenv("FLW_DEFAULT_CURRENCY", "USD").upper()
 
         print(
             f"[INFO] [BASE PAYMENT INIT] Public Key configured: {self.flutterwave_public_key is not None}"
@@ -77,7 +77,7 @@ class BasePaymentService:
             )
 
     def normalize_currency(self, currency=None):
-        return (currency or self.default_currency or "NGN").upper()
+        return (currency or self.default_currency or "USD").upper()
 
     @staticmethod
     def is_success_status(status):
@@ -498,7 +498,7 @@ class MatchmakingPaymentService(BasePaymentService):
         print(f"[OK] [KEY VALIDATION] Keys validated successfully")
 
     def create_matchmaking_payment(
-        self, user, matchmaking_request, package, currency="NGN", amount=None, gateway="flutterwave"
+        self, user, matchmaking_request, package, currency="USD", amount=None, gateway="flutterwave"
     ):
         """Create payment for matchmaking request using Flutterwave or Paystack"""
         try:
@@ -510,8 +510,6 @@ class MatchmakingPaymentService(BasePaymentService):
             # Use provided amount or fallback to package price
             currency = self.normalize_currency(currency)
             payment_amount = float(amount) if amount is not None else float(package.price)
-            if currency == "NGN":
-                payment_amount = round(payment_amount * self.get_ngn_rate("MATCHMAKING_USD_TO_NGN_RATE"), 2)
 
             # Generate unique transaction reference
             tx_ref = f"KIMBELA_MATCH_{matchmaking_request.id}_{int(time.time())}"
@@ -989,7 +987,7 @@ class MatchmakingPaymentService(BasePaymentService):
             print(f"❌ Failed to send matchmaking failure email: {str(e)}")
             return False
 
-    def retry_payment(self, payment_id, currency="NGN"):
+    def retry_payment(self, payment_id, currency="USD"):
         """Retry a failed matchmaking payment"""
         try:
             currency = self.normalize_currency(currency)
@@ -1013,11 +1011,7 @@ class MatchmakingPaymentService(BasePaymentService):
             # Prepare payment data
             payment_data = {
                 "tx_ref": tx_ref,
-                "amount": str(
-                    round(float(package.price) * self.get_ngn_rate("MATCHMAKING_USD_TO_NGN_RATE"), 2)
-                    if currency == "NGN"
-                    else float(package.price)
-                ),
+                "amount": str(float(package.price)),
                 "currency": currency,
                 "redirect_url": url_for("match.payment_callback", _external=True),
                 "payment_options": "card,banktransfer,ussd",
@@ -1099,7 +1093,7 @@ class PaymentService:
         self.matchmaking_service = MatchmakingPaymentService()
         self.marketplace_service = MarketplacePaymentService()
 
-    def create_marketplace_payment(self, user, plan, currency="NGN"):
+    def create_marketplace_payment(self, user, plan, currency="USD"):
         """Create payment for marketplace subscription"""
         return self.marketplace_service.create_marketplace_payment(
             user=user, plan=plan, currency=currency
@@ -1122,7 +1116,7 @@ class PaymentService:
         )
 
     def create_flutterwave_transaction(
-        self, user, campaign=None, amount=0, currency="NGN", request_id=None
+        self, user, campaign=None, amount=0, currency="USD", request_id=None
     ):
         """Legacy method - redirect to appropriate service"""
         if request_id:
@@ -1200,7 +1194,7 @@ class MarketplacePaymentService(BasePaymentService):
 
     """Payment service for marketplace subscriptions"""
 
-    def create_marketplace_payment(self, user, plan, currency="NGN", gateway="flutterwave"):
+    def create_marketplace_payment(self, user, plan, currency="USD", gateway="flutterwave"):
         """Create Flutterwave or Paystack payment for marketplace subscription - FIXED VERSION"""
         try:
             from marketplace.market import get_marketplace_checkout_amount
@@ -1367,7 +1361,7 @@ class MarketplacePaymentService(BasePaymentService):
                 }
             return {"success": False, "error": f"Payment processing error: {str(e)}"}
 
-    def create_paystack_marketplace_payment(self, user, plan, currency="NGN"):
+    def create_paystack_marketplace_payment(self, user, plan, currency="USD"):
         """Create Paystack payment for marketplace subscription"""
         try:
             from marketplace.market import get_marketplace_checkout_amount
@@ -1612,13 +1606,9 @@ class MarketplacePaymentService(BasePaymentService):
 
     def _get_marketplace_payment_amount(self, plan, currency):
         currency = self.normalize_currency(currency)
-        if currency == "NGN":
-            ngn_rate = self.get_ngn_rate("MARKETPLACE_USD_TO_NGN_RATE")
-            return round(float(plan.price_usd) * ngn_rate, 2)
-
         return float(plan.price_usd)
 
-    def create_marketplace_payment(self, user, plan, currency="NGN", gateway="flutterwave"):
+    def create_marketplace_payment(self, user, plan, currency="USD", gateway="flutterwave"):
         """Create payment for marketplace subscription"""
         try:
             currency = self.normalize_currency(currency)

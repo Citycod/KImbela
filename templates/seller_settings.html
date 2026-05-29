@@ -527,7 +527,6 @@
                                     <div class="col-md-6">
                                         <label class="form-label">Display Currency</label>
                                         <select class="form-select" name="display_currency">
-                                            <option value="NGN" {% if current_user.display_currency == 'NGN' %}selected{% endif %}>Nigerian Naira (₦)</option>
                                             <option value="USD" {% if current_user.display_currency == 'USD' %}selected{% endif %}>US Dollar ($)</option>
                                             <option value="EUR" {% if current_user.display_currency == 'EUR' %}selected{% endif %}>Euro (€)</option>
                                             <option value="GBP" {% if current_user.display_currency == 'GBP' %}selected{% endif %}>British Pound (£)</option>
@@ -536,7 +535,6 @@
                                     <div class="col-md-6">
                                         <label class="form-label">Payout Currency</label>
                                         <select class="form-select" name="payout_currency">
-                                            <option value="NGN" {% if current_user.payout_currency == 'NGN' %}selected{% endif %}>Nigerian Naira (₦)</option>
                                             <option value="USD" {% if current_user.payout_currency == 'USD' %}selected{% endif %}>US Dollar ($)</option>
                                         </select>
                                     </div>

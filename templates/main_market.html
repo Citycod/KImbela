@@ -1437,7 +1437,7 @@
         </div>
         {% else %}
         <div class="price-tag text-white font-bold rounded text-xs">
-            {{ format_price(service.price, service.currency or 'NGN') }} 
+            {{ format_price(service.price, service.currency or 'USD') }} 
         </div>
         {% endif %}
     </div>
@@ -1617,7 +1617,7 @@
         });
 
         // Function to format price WITHOUT currency symbol
-        function formatCurrency(amount, currency = 'NGN') {
+        function formatCurrency(amount, currency = 'USD') {
             // Format number with commas (NO currency symbol)
             amount = parseInt(amount) || 0;
             const formatted = amount.toLocaleString('en-US');
