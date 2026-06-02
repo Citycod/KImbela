@@ -64,6 +64,10 @@ def _get_dashboard_ad_daily_budget_bounds(placement=None):
         "ngn_min_input": math.ceil(usd_min), # Kept for backward compatibility if needed, but holds USD value
         "ngn_max_input": math.ceil(usd_max),
         "rate": 1.0,
+        "est_reach_min_per_usd": 240,
+        "est_reach_max_per_usd": 680,
+        "est_clicks_min_per_usd": 5,
+        "est_clicks_max_per_usd": 15,
     }
 
 
@@ -246,7 +250,7 @@ def public_upload_dashboard_ad_image(placement):
             folder="kimbela/dashboard-ads",
             width=placement_config["image_width"],
             height=placement_config["image_height"],
-            crop="fill",
+            crop="fit",
             quality="auto",
         )
 
@@ -499,7 +503,7 @@ def upload_dashboard_ad_image(placement):
             folder="kimbela/dashboard-ads",
             width=placement_config["image_width"],
             height=placement_config["image_height"],
-            crop="fill",
+            crop="fit",
             quality="auto",
         )
 
@@ -593,7 +597,7 @@ def upload_image():
             folder="kimbela/ads",
             width=1200,
             height=630,
-            crop="fill",
+            crop="fit",
             quality="auto",
         )
 
