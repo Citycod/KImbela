@@ -340,6 +340,7 @@
 
     const budgetSlider = document.getElementById('budgetSlider');
     const budgetValue = document.getElementById('budgetValue');
+    const daysInput = document.getElementById('daysInput');
     const minimumDailyBudgetUsd = {{ ad_pricing.usd_min| tojson }};
 
     function formatNaira(value) {
@@ -382,30 +383,29 @@
       document.querySelector('.rounded-2xl.bg-slate-50.p-4 .text-lg.font-semibold.text-slate-900').innerHTML = `$<span id="totalValue">${displayTotal}</span>`;
 
       // Update estimated results dynamically from the Kimbela backend
-      const estReachMinPerUsd = {{ ad_pricing.est_reach_min_per_usd| tojson
-    }};
-    const estReachMaxPerUsd = {{ ad_pricing.est_reach_max_per_usd| tojson }};
-    const estClicksMinPerUsd = {{ ad_pricing.est_clicks_min_per_usd| tojson }};
-    const estClicksMaxPerUsd = {{ ad_pricing.est_clicks_max_per_usd| tojson }};
+      const estReachMinPerUsd = {{ ad_pricing.est_reach_min_per_usd|tojson }};
+      const estReachMaxPerUsd = {{ ad_pricing.est_reach_max_per_usd|tojson }};
+      const estClicksMinPerUsd = {{ ad_pricing.est_clicks_min_per_usd|tojson }};
+      const estClicksMaxPerUsd = {{ ad_pricing.est_clicks_max_per_usd|tojson }};
 
-    const minReach = Math.floor(dailyUsd * estReachMinPerUsd);
-    const maxReach = Math.floor(dailyUsd * estReachMaxPerUsd);
-    const minClicks = Math.floor(dailyUsd * estClicksMinPerUsd);
-    const maxClicks = Math.floor(dailyUsd * estClicksMaxPerUsd);
+      const minReach = Math.floor(dailyUsd * estReachMinPerUsd);
+      const maxReach = Math.floor(dailyUsd * estReachMaxPerUsd);
+      const minClicks = Math.floor(dailyUsd * estClicksMinPerUsd);
+      const maxClicks = Math.floor(dailyUsd * estClicksMaxPerUsd);
 
-    const formatNumber = (num) => {
-      if (num >= 1000) {
-        return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
-      }
-      return num.toLocaleString();
-    };
+      const formatNumber = (num) => {
+        if (num >= 1000) {
+          return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+        }
+        return num.toLocaleString();
+      };
 
-    const estReachEl = document.getElementById('estReach');
-    if (estReachEl) estReachEl.textContent = `${formatNumber(minReach)} - ${formatNumber(maxReach)}`;
+      const estReachEl = document.getElementById('estReach');
+      if (estReachEl) estReachEl.textContent = `${formatNumber(minReach)} - ${formatNumber(maxReach)}`;
 
-    const estClicksEl = document.getElementById('estClicks');
-    if (estClicksEl) estClicksEl.textContent = `${formatNumber(minClicks)} - ${formatNumber(maxClicks)}`;
-      }
+      const estClicksEl = document.getElementById('estClicks');
+      if (estClicksEl) estClicksEl.textContent = `${formatNumber(minClicks)} - ${formatNumber(maxClicks)}`;
+    }
 
     updateTotals();
 
@@ -718,7 +718,7 @@
         paymentModal.classList.remove('flex');
         alert(error.message);
       });
-      });
+    });
   </script>
 </body>
 
