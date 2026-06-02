@@ -599,7 +599,7 @@
       const gateway = document.getElementById('paymentGateway').value;
 
 
-      if ({{ 'true' if is_public else 'false' }}) && (!contactName || !contactEmail)) {
+      if ({{ 'true' if is_public else 'false' }} && (!contactName || !contactEmail)) {
       alert('Please enter your name and email.');
       return;
     }
