@@ -39,16 +39,18 @@ class AdCampaignPaymentService:
             # Generate unique transaction reference
             tx_ref = f"KIMBELA_AD_{campaign.id}_{int(time.time())}"
 
-            # Auto-convert USD to NGN for local payment gateways
-            # This avoids 403 errors on Paystack and enables USSD/Bank Transfer on Flutterwave
+            # Auto-convert USD to NGN for Paystack only
+            # Flutterwave supports USD directly for international payments
             checkout_currency = currency
             checkout_amount = float(campaign.budget)
 
-            if checkout_currency == "USD":
+            if gateway == "paystack" and checkout_currency == "USD":
                 checkout_currency = "NGN"
                 rate = float(self.base.get_ngn_rate())
                 checkout_amount = checkout_amount * rate
                 print(f"🟡 [AD PAYMENT] Converted USD {campaign.budget} to NGN {checkout_amount} at rate {rate}")
+            elif gateway == "flutterwave" and checkout_currency == "USD":
+                print(f"🟡 [AD PAYMENT] Using USD {checkout_amount} for Flutterwave payment")
 
             if gateway == "paystack":
                 payment_data = {
