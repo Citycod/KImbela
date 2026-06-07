@@ -230,7 +230,6 @@ class AdCampaignPaymentService:
                 "amount": str(checkout_amount),
                 "currency": checkout_currency,
                 "redirect_url": url_for("payments.payment_callback", _external=True),
-                "payment_options": "card,banktransfer,ussd",
                 "customer": {
                     "email": user.email,
                     "name": user.first_name or user.email.split("@")[0],
