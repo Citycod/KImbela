@@ -54,9 +54,17 @@ class BasePaymentService:
         self.flutterwave_secret_key = os.getenv("FLW_SECRET_KEY")
         self.flutterwave_base_url = "https://api.flutterwave.com/v3"
         
-        self.paystack_public_key = os.getenv("PAYSTACK_PUBLIC_KEY")
-        self.paystack_secret_key = os.getenv("PAYSTACK_SECRET_KEY")
-        self.paystack_base_url = "https://api.paystack.co"
+        # self.paystack_public_key = os.getenv("PAYSTACK_PUBLIC_KEY")
+        # self.paystack_secret_key = os.getenv("PAYSTACK_SECRET_KEY")
+        # self.paystack_base_url = "https://api.paystack.co"
+        
+        self.stripe_public_key = os.getenv("STRIPE_PUBLIC_KEY")
+        self.stripe_secret_key = os.getenv("STRIPE_SECRET_KEY")
+        
+        self.monnify_api_key = os.getenv("MONNIFY_API_KEY")
+        self.monnify_secret_key = os.getenv("MONNIFY_SECRET_KEY")
+        self.monnify_contract_code = os.getenv("MONNIFY_CONTRACT_CODE")
+        self.monnify_base_url = os.getenv("MONNIFY_BASE_URL", "https://sandbox.monnify.com/api/v1")
         
         self.default_currency = os.getenv("FLW_DEFAULT_CURRENCY", "USD").upper()
 
@@ -327,51 +335,51 @@ class BasePaymentService:
             print(f"🔴 [VERIFY PAYMENT BY REFERENCE] Exception: {str(e)}")
             return {"success": False, "error": str(e), "data": {}}
 
-    def verify_paystack_payment(self, reference):
-        """Verify Paystack payment using merchant transaction reference."""
-        try:
-            if not self.paystack_secret_key:
-                return {"success": False, "error": "Paystack secret key not configured", "data": {}}
-
-            headers = {
-                "Authorization": f"Bearer {self.paystack_secret_key}",
-                "Content-Type": "application/json",
-            }
-
-            response = self._http_request(
-                "GET",
-                f"{self.paystack_base_url}/transaction/verify/{reference}",
-                headers=headers,
-                timeout=30,
-            )
-
-            print(
-                f"🟡 [VERIFY PAYSTACK PAYMENT] Response status: {response.status_code}"
-            )
-
-            if response.status_code == 200:
-                result = response.json()
-                print(
-                    f"🟡 [VERIFY PAYSTACK PAYMENT] Verification result: {result}"
-                )
-                return {
-                    "success": result.get("status") is True or result.get("data", {}).get("status") == "success",
-                    "data": result.get("data", {}),
-                }
-
-            print(
-                "🔴 [VERIFY PAYSTACK PAYMENT] HTTP Error: "
-                f"{response.status_code} - {response.text}"
-            )
-            return {
-                "success": False,
-                "error": f"HTTP {response.status_code}",
-                "data": {},
-            }
-
-        except Exception as e:
-            print(f"🔴 [VERIFY PAYSTACK PAYMENT] Exception: {str(e)}")
-            return {"success": False, "error": str(e), "data": {}}
+    # def verify_paystack_payment(self, reference):
+    #     """Verify Paystack payment using merchant transaction reference."""
+    #     try:
+    #         if not self.paystack_secret_key:
+    #             return {"success": False, "error": "Paystack secret key not configured", "data": {}}
+    #
+    #         headers = {
+    #             "Authorization": f"Bearer {self.paystack_secret_key}",
+    #             "Content-Type": "application/json",
+    #         }
+    #
+    #         response = self._http_request(
+    #             "GET",
+    #             f"{self.paystack_base_url}/transaction/verify/{reference}",
+    #             headers=headers,
+    #             timeout=30,
+    #         )
+    #
+    #         print(
+    #             f"🟡 [VERIFY PAYSTACK PAYMENT] Response status: {response.status_code}"
+    #         )
+    #
+    #         if response.status_code == 200:
+    #             result = response.json()
+    #             print(
+    #                 f"🟡 [VERIFY PAYSTACK PAYMENT] Verification result: {result}"
+    #             )
+    #             return {
+    #                 "success": result.get("status") is True or result.get("data", {}).get("status") == "success",
+    #                 "data": result.get("data", {}),
+    #             }
+    #
+    #         print(
+    #             "🔴 [VERIFY PAYSTACK PAYMENT] HTTP Error: "
+    #             f"{response.status_code} - {response.text}"
+    #         )
+    #         return {
+    #             "success": False,
+    #             "error": f"HTTP {response.status_code}",
+    #             "data": {},
+    #         }
+    #
+    #     except Exception as e:
+    #         print(f"🔴 [VERIFY PAYSTACK PAYMENT] Exception: {str(e)}")
+    #         return {"success": False, "error": str(e), "data": {}}
 
     def resolve_flutterwave_verification(self, tx_ref=None, transaction_id=None):
         """Resolve payment state from Flutterwave using transaction ID, tx_ref, or both."""
@@ -421,14 +429,97 @@ class BasePaymentService:
             "error": fallback_error or "Payment verification failed",
         }
 
-    def resolve_paystack_verification(self, reference=None):
-        """Resolve payment state from Paystack using merchant reference."""
+    # def resolve_paystack_verification(self, reference=None):
+    #     """Resolve payment state from Paystack using merchant reference."""
+    #     if reference:
+    #         verification = self.verify_paystack_payment(reference)
+    #         verified_status = (
+    #             (verification.get("data", {}) or {}).get("status") or ""
+    #         ).strip().lower()
+    #         if verification.get("success") and verified_status:
+    #             return {
+    #                 "success": True,
+    #                 "data": verification.get("data", {}) or {},
+    #                 "verified_status": verified_status,
+    #                 "source": "reference",
+    #             }
+    #         return {
+    #             "success": False,
+    #             "error": verification.get("error", "Failed to verify Paystack payment"),
+    #             "data": verification.get("data", {}),
+    #             "verified_status": verified_status or "failed",
+    #         }
+    #     return {
+    #         "success": False,
+    #         "error": "No reference provided for Paystack verification",
+    #         "data": {},
+    #         "verified_status": "failed",
+    #     }
+
+    def get_monnify_token(self):
+        """Get access token for Monnify API."""
+        import base64
+        if not self.monnify_api_key or not self.monnify_secret_key:
+            print("🔴 [MONNIFY AUTH] Missing API keys")
+            return None
+        
+        auth_str = f"{self.monnify_api_key}:{self.monnify_secret_key}"
+        b64_auth_str = base64.b64encode(auth_str.encode()).decode()
+        
+        headers = {
+            "Authorization": f"Basic {b64_auth_str}"
+        }
+        try:
+            response = self._http_request(
+                "POST",
+                f"{self.monnify_base_url}/auth/login",
+                headers=headers,
+                timeout=30
+            )
+            if response.status_code == 200:
+                result = response.json()
+                return result.get("responseBody", {}).get("accessToken")
+            else:
+                print(f"🔴 [MONNIFY AUTH] Error: {response.text}")
+        except Exception as e:
+            print(f"🔴 [MONNIFY AUTH] Exception: {str(e)}")
+        return None
+
+    def verify_monnify_payment(self, transaction_reference):
+        """Verify Monnify payment using transaction reference."""
+        token = self.get_monnify_token()
+        if not token:
+            return {"success": False, "error": "Could not authenticate with Monnify", "data": {}}
+            
+        headers = {
+            "Authorization": f"Bearer {token}"
+        }
+        try:
+            response = self._http_request(
+                "GET",
+                f"{self.monnify_base_url}/merchant/transactions/query?transactionReference={transaction_reference}",
+                headers=headers,
+                timeout=30
+            )
+            if response.status_code == 200:
+                result = response.json()
+                data = result.get("responseBody", {})
+                status = data.get("paymentStatus")
+                return {
+                    "success": status == "PAID",
+                    "data": data,
+                    "verified_status": status.lower() if status else "failed"
+                }
+            return {"success": False, "error": f"HTTP {response.status_code}", "data": {}, "verified_status": "failed"}
+        except Exception as e:
+            return {"success": False, "error": str(e), "data": {}, "verified_status": "failed"}
+
+    def resolve_monnify_verification(self, reference=None):
+        """Resolve payment state from Monnify using merchant reference."""
         if reference:
-            verification = self.verify_paystack_payment(reference)
-            verified_status = (
-                (verification.get("data", {}) or {}).get("status") or ""
-            ).strip().lower()
-            if verification.get("success") and verified_status:
+            verification = self.verify_monnify_payment(reference)
+            verified_status = verification.get("verified_status", "failed")
+            if verification.get("success"):
                 return {
                     "success": True,
                     "data": verification.get("data", {}) or {},
@@ -437,13 +528,52 @@ class BasePaymentService:
                 }
             return {
                 "success": False,
-                "error": verification.get("error", "Failed to verify Paystack payment"),
+                "error": verification.get("error", "Failed to verify Monnify payment"),
                 "data": verification.get("data", {}),
-                "verified_status": verified_status or "failed",
+                "verified_status": verified_status,
             }
         return {
             "success": False,
-            "error": "No reference provided for Paystack verification",
+            "error": "No reference provided for Monnify verification",
+            "data": {},
+            "verified_status": "failed",
+        }
+
+    def verify_stripe_payment(self, session_id):
+        """Verify Stripe checkout session."""
+        try:
+            import stripe
+            stripe.api_key = self.stripe_secret_key
+            session = stripe.checkout.Session.retrieve(session_id)
+            return {
+                "success": session.payment_status == "paid",
+                "data": session,
+                "verified_status": session.payment_status
+            }
+        except Exception as e:
+            return {"success": False, "error": str(e), "data": {}, "verified_status": "failed"}
+
+    def resolve_stripe_verification(self, session_id=None):
+        """Resolve payment state from Stripe using session ID."""
+        if session_id:
+            verification = self.verify_stripe_payment(session_id)
+            verified_status = verification.get("verified_status", "failed")
+            if verification.get("success"):
+                return {
+                    "success": True,
+                    "data": verification.get("data", {}),
+                    "verified_status": verified_status,
+                    "source": "session_id",
+                }
+            return {
+                "success": False,
+                "error": verification.get("error", "Failed to verify Stripe payment"),
+                "data": verification.get("data", {}),
+                "verified_status": verified_status,
+            }
+        return {
+            "success": False,
+            "error": "No session ID provided for Stripe verification",
             "data": {},
             "verified_status": "failed",
         }
@@ -514,31 +644,96 @@ class MatchmakingPaymentService(BasePaymentService):
             # Generate unique transaction reference
             tx_ref = f"KIMBELA_MATCH_{matchmaking_request.id}_{int(time.time())}"
 
-            if gateway == "paystack":
+            # if gateway == "paystack":
+            #     payment_data = {
+            #         "email": user.email,
+            #         "amount": int(payment_amount * 100),  # Paystack uses kobo
+            #         "currency": currency,
+            #         "reference": tx_ref,
+            #         "callback_url": url_for("match.payment_callback", _external=True),
+            #         "metadata": {
+            #             "user_id": user.id,
+            #             "matchmaking_request_id": matchmaking_request.id,
+            #             "package_id": package.id,
+            #             "transaction_type": "matchmaking",
+            #         }
+            #     }
+            #     
+            #     headers = {
+            #         "Authorization": f"Bearer {self.paystack_secret_key}",
+            #         "Content-Type": "application/json",
+            #     }
+            #
+            #     print(f"🟡 [MATCHMAKING PAYMENT] Sending request to Paystack...")
+            #     
+            #     response = self._http_request(
+            #         "POST",
+            #         f"{self.paystack_base_url}/transaction/initialize",
+            #         headers=headers,
+            #         json=payment_data,
+            #         timeout=30,
+            #     )
+            #
+            #     if response.status_code == 200:
+            #         result = response.json()
+            #         if result.get("status") is True:
+            #             payment_url = result["data"]["authorization_url"]
+            #             
+            #             matchmaking_payment = MatchmakingPayments(
+            #                 user_id=user.id,
+            #                 matchmaking_request_id=matchmaking_request.id,
+            #                 package_id=package.id,
+            #                 amount=payment_amount,
+            #                 currency=currency,
+            #                 gateway="paystack",
+            #                 gateway_reference=tx_ref,
+            #                 gateway_status="initiated",
+            #                 status="pending",
+            #                 payment_status="pending",
+            #                 description=f"Matchmaking Package: {package.name}",
+            #             )
+            #             db.session.add(matchmaking_payment)
+            #             db.session.commit()
+            #
+            #             return {
+            #                 "success": True,
+            #                 "payment_url": payment_url,
+            #                 "payment_id": matchmaking_payment.id,
+            #                 "gateway_reference": tx_ref,
+            #                 "message": "Matchmaking payment initiated successfully via Paystack",
+            #             }
+            #         else:
+            #             return {"success": False, "error": f"Paystack error: {result.get('message')}"}
+            #     else:
+            #         return {"success": False, "error": f"Paystack returned error: {response.status_code}"}
+
+            if gateway == "monnify":
+                token = self.get_monnify_token()
+                if not token:
+                    return {"success": False, "error": "Monnify authentication failed"}
+
                 payment_data = {
-                    "email": user.email,
-                    "amount": int(payment_amount * 100),  # Paystack uses kobo
-                    "currency": currency,
-                    "reference": tx_ref,
-                    "callback_url": url_for("match.payment_callback", _external=True),
-                    "metadata": {
-                        "user_id": user.id,
-                        "matchmaking_request_id": matchmaking_request.id,
-                        "package_id": package.id,
-                        "transaction_type": "matchmaking",
-                    }
+                    "amount": payment_amount,
+                    "customerName": user.full_name or user.first_name or user.email.split("@")[0],
+                    "customerEmail": user.email,
+                    "paymentReference": tx_ref,
+                    "paymentDescription": f"Matchmaking Package: {package.name}",
+                    "currencyCode": currency,
+                    "contractCode": self.monnify_contract_code,
+                    "redirectUrl": url_for("match.payment_callback", _external=True),
+                    "paymentMethods": ["CARD", "ACCOUNT_TRANSFER"]
                 }
                 
                 headers = {
-                    "Authorization": f"Bearer {self.paystack_secret_key}",
+                    "Authorization": f"Bearer {token}",
                     "Content-Type": "application/json",
                 }
 
-                print(f"🟡 [MATCHMAKING PAYMENT] Sending request to Paystack...")
+                print(f"🟡 [MATCHMAKING PAYMENT] Sending request to Monnify...")
                 
                 response = self._http_request(
                     "POST",
-                    f"{self.paystack_base_url}/transaction/initialize",
+                    f"{self.monnify_base_url}/merchant/transactions/init-transaction",
                     headers=headers,
                     json=payment_data,
                     timeout=30,
@@ -546,8 +741,8 @@ class MatchmakingPaymentService(BasePaymentService):
 
                 if response.status_code == 200:
                     result = response.json()
-                    if result.get("status") is True:
-                        payment_url = result["data"]["authorization_url"]
+                    if result.get("requestSuccessful"):
+                        payment_url = result["responseBody"]["checkoutUrl"]
                         
                         matchmaking_payment = MatchmakingPayments(
                             user_id=user.id,
@@ -555,7 +750,7 @@ class MatchmakingPaymentService(BasePaymentService):
                             package_id=package.id,
                             amount=payment_amount,
                             currency=currency,
-                            gateway="paystack",
+                            gateway="monnify",
                             gateway_reference=tx_ref,
                             gateway_status="initiated",
                             status="pending",
@@ -570,18 +765,84 @@ class MatchmakingPaymentService(BasePaymentService):
                             "payment_url": payment_url,
                             "payment_id": matchmaking_payment.id,
                             "gateway_reference": tx_ref,
-                            "message": "Matchmaking payment initiated successfully via Paystack",
+                            "message": "Matchmaking payment initiated successfully via Monnify",
                         }
                     else:
-                        return {"success": False, "error": f"Paystack error: {result.get('message')}"}
+                        return {"success": False, "error": f"Monnify error: {result.get('responseMessage')}"}
                 else:
-                    return {"success": False, "error": f"Paystack returned error: {response.status_code}"}
+                    return {"success": False, "error": f"Monnify returned error: {response.status_code}"}
+
+            if gateway == "stripe":
+                try:
+                    import stripe
+                    stripe.api_key = self.stripe_secret_key
+                    
+                    callback_url = url_for("match.payment_callback", _external=True)
+                    
+                    session = stripe.checkout.Session.create(
+                        payment_method_types=['card'],
+                        line_items=[{
+                            'price_data': {
+                                'currency': currency.lower(),
+                                'product_data': {
+                                    'name': f"Kimbela Matchmaking: {package.name}",
+                                },
+                                'unit_amount': int(payment_amount * 100), # Stripe uses cents
+                            },
+                            'quantity': 1,
+                        }],
+                        mode='payment',
+                        success_url=callback_url + f"?tx_ref={tx_ref}&status=successful",
+                        cancel_url=callback_url + f"?tx_ref={tx_ref}&status=cancelled",
+                        client_reference_id=tx_ref,
+                        metadata={
+                            "user_id": user.id,
+                            "matchmaking_request_id": matchmaking_request.id,
+                            "package_id": package.id,
+                            "transaction_type": "matchmaking"
+                        }
+                    )
+                    
+                    matchmaking_payment = MatchmakingPayments(
+                        user_id=user.id,
+                        matchmaking_request_id=matchmaking_request.id,
+                        package_id=package.id,
+                        amount=payment_amount,
+                        currency=currency,
+                        gateway="stripe",
+                        gateway_reference=tx_ref,
+                        gateway_status="initiated",
+                        status="pending",
+                        payment_status="pending",
+                        description=f"Matchmaking Package: {package.name}",
+                    )
+                    db.session.add(matchmaking_payment)
+                    db.session.commit()
+
+                    return {
+                        "success": True,
+                        "payment_url": session.url,
+                        "payment_id": matchmaking_payment.id,
+                        "gateway_reference": tx_ref,
+                        "message": "Matchmaking payment initiated successfully via Stripe",
+                    }
+                except Exception as e:
+                    print(f"🔴 [MATCHMAKING PAYMENT] Stripe Exception: {str(e)}")
+                    return {"success": False, "error": f"Stripe error: {str(e)}"}
+
+            # Convert USD to NGN for Flutterwave checkout — all payments in Naira
+            checkout_currency = "NGN"
+            checkout_amount = float(payment_amount)
+            if currency.upper() == "USD":
+                rate = float(self.get_ngn_rate())
+                checkout_amount = round(checkout_amount * rate, 2)
+                print(f"🟡 [MATCHMAKING PAYMENT] Converted USD {payment_amount} to NGN {checkout_amount} at rate {rate}")
 
             # Prepare payment data for matchmaking (Flutterwave)
             payment_data = {
                 "tx_ref": tx_ref,
-                "amount": str(float(payment_amount)),
-                "currency": currency,
+                "amount": str(checkout_amount),
+                "currency": checkout_currency,
                 "redirect_url": url_for("match.payment_callback", _external=True),
                 "payment_options": "card,banktransfer,ussd",
                 "customer": {
@@ -1008,11 +1269,19 @@ class MatchmakingPaymentService(BasePaymentService):
             # Generate new transaction reference
             tx_ref = f"KIMBELA_MATCH_RETRY_{matchmaking_request.id}_{int(time.time())}"
 
+            # Convert USD to NGN for Flutterwave checkout — all payments in Naira
+            checkout_currency = "NGN"
+            checkout_amount = float(package.price)
+            if currency.upper() == "USD":
+                rate = float(self.get_ngn_rate())
+                checkout_amount = round(checkout_amount * rate, 2)
+                print(f"🟡 [MATCHMAKING RETRY] Converted USD {package.price} to NGN {checkout_amount} at rate {rate}")
+
             # Prepare payment data
             payment_data = {
                 "tx_ref": tx_ref,
-                "amount": str(float(package.price)),
-                "currency": currency,
+                "amount": str(checkout_amount),
+                "currency": checkout_currency,
                 "redirect_url": url_for("match.payment_callback", _external=True),
                 "payment_options": "card,banktransfer,ussd",
                 "customer": {
@@ -1213,14 +1482,147 @@ class MarketplacePaymentService(BasePaymentService):
             print(f"[INFO] [MARKETPLACE PAYMENT] TX Ref: {tx_ref}")
             print(f"[INFO] [MARKETPLACE PAYMENT] Amount: {payment_amount}")
 
-            if gateway == "paystack":
-                return self.create_paystack_marketplace_payment(user, plan, currency)
+            # if gateway == "paystack":
+            #     return self.create_paystack_marketplace_payment(user, plan, currency)
+            
+            if gateway == "monnify":
+                token = self.get_monnify_token()
+                if not token:
+                    return {"success": False, "error": "Monnify authentication failed"}
+
+                payment_data = {
+                    "amount": payment_amount,
+                    "customerName": user.full_name or user.first_name or user.email.split("@")[0],
+                    "customerEmail": user.email,
+                    "paymentReference": tx_ref,
+                    "paymentDescription": f"Marketplace Subscription: {plan.name}",
+                    "currencyCode": currency,
+                    "contractCode": self.monnify_contract_code,
+                    "redirectUrl": url_for("market.subscription_callback", _external=True),
+                    "paymentMethods": ["CARD", "ACCOUNT_TRANSFER"]
+                }
+                
+                headers = {
+                    "Authorization": f"Bearer {token}",
+                    "Content-Type": "application/json",
+                }
+
+                response = self._http_request(
+                    "POST",
+                    f"{self.monnify_base_url}/merchant/transactions/init-transaction",
+                    headers=headers,
+                    json=payment_data,
+                    timeout=30,
+                )
+
+                if response.status_code == 200:
+                    result = response.json()
+                    if result.get("requestSuccessful"):
+                        payment_url = result["responseBody"]["checkoutUrl"]
+                        
+                        marketplace_payment = MarketplacePayment(
+                            user_id=user.id,
+                            subscription_id=plan.id,
+                            amount=payment_amount,
+                            currency=currency,
+                            tokens_paid=int(payment_amount * 100),
+                            gateway="monnify",
+                            gateway_reference=tx_ref,
+                            gateway_status="initiated",
+                            status="pending",
+                            payment_method="card",
+                            description=f"Marketplace Subscription: {plan.name}",
+                            start_date=utcnow(),
+                            end_date=utcnow() + timedelta(days=getattr(plan, "duration_days", 30)),
+                        )
+                        db.session.add(marketplace_payment)
+                        db.session.commit()
+
+                        return {
+                            "success": True,
+                            "payment_url": payment_url,
+                            "payment_id": marketplace_payment.id,
+                            "gateway_reference": tx_ref,
+                            "message": "Marketplace subscription payment initiated successfully via Monnify",
+                        }
+                    else:
+                        return {"success": False, "error": f"Monnify error: {result.get('responseMessage')}"}
+                else:
+                    return {"success": False, "error": f"Monnify returned error: {response.status_code}"}
+
+            elif gateway == "stripe":
+                try:
+                    import stripe
+                    stripe.api_key = self.stripe_secret_key
+                    
+                    callback_url = url_for("market.subscription_callback", _external=True)
+                    
+                    session = stripe.checkout.Session.create(
+                        payment_method_types=['card'],
+                        line_items=[{
+                            'price_data': {
+                                'currency': currency.lower(),
+                                'product_data': {
+                                    'name': f"Kimbela Marketplace: {plan.name}",
+                                },
+                                'unit_amount': int(payment_amount * 100),
+                            },
+                            'quantity': 1,
+                        }],
+                        mode='payment',
+                        success_url=callback_url + f"?tx_ref={tx_ref}&status=successful",
+                        cancel_url=callback_url + f"?tx_ref={tx_ref}&status=cancelled",
+                        client_reference_id=tx_ref,
+                        metadata={
+                            "user_id": user.id,
+                            "plan_id": plan.id,
+                            "plan_name": plan.name,
+                            "transaction_type": "marketplace_subscription",
+                        }
+                    )
+                    
+                    marketplace_payment = MarketplacePayment(
+                        user_id=user.id,
+                        subscription_id=plan.id,
+                        amount=payment_amount,
+                        currency=currency,
+                        tokens_paid=int(payment_amount * 100),
+                        gateway="stripe",
+                        gateway_reference=tx_ref,
+                        gateway_status="initiated",
+                        status="pending",
+                        payment_method="card",
+                        description=f"Marketplace Subscription: {plan.name}",
+                        start_date=utcnow(),
+                        end_date=utcnow() + timedelta(days=getattr(plan, "duration_days", 30)),
+                    )
+                    db.session.add(marketplace_payment)
+                    db.session.commit()
+
+                    return {
+                        "success": True,
+                        "payment_url": session.url,
+                        "payment_id": marketplace_payment.id,
+                        "gateway_reference": tx_ref,
+                        "message": "Marketplace payment initiated successfully via Stripe",
+                    }
+                except Exception as e:
+                    return {"success": False, "error": f"Stripe error: {str(e)}"}
+            
             else:
+                # Convert USD to NGN for Flutterwave checkout — all payments in Naira
+                checkout_currency = "NGN"
+                checkout_amount = float(payment_amount)
+                if currency.upper() == "USD":
+                    rate = float(self.get_ngn_rate())
+                    checkout_amount = round(checkout_amount * rate, 2)
+                    print(f"🟡 [MARKETPLACE PAYMENT] Converted USD {payment_amount} to NGN {checkout_amount} at rate {rate}")
+
                 # Prepare payment data for Flutterwave
                 payment_data = {
                     "tx_ref": tx_ref,
-                    "amount": str(float(payment_amount)),
-                    "currency": currency,
+                    "amount": str(checkout_amount),
+                    "currency": checkout_currency,
                     "redirect_url": url_for("market.subscription_callback", _external=True),
                     "payment_options": "card",
                     "customer": {

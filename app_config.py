@@ -210,7 +210,9 @@ def create_app():
         from matchmaking.matchmake import match as matchmaking_blueprint
         from payments.payments import payments as payments_blueprint
         from messages.messaging import messaging as message_blueprint
-        from payments.paystack_routes import paystack_bp
+        # from payments.paystack_routes import paystack_bp
+        from payments.stripe_routes import stripe_bp
+        from payments.monnify_routes import monnify_bp
 
         app.register_blueprint(auth)
         app.register_blueprint(user_blueprint)
@@ -219,7 +221,9 @@ def create_app():
         app.register_blueprint(payments_blueprint)
         app.register_blueprint(matchmaking_blueprint)
         app.register_blueprint(market_blueprint)
-        app.register_blueprint(paystack_bp)
+        # app.register_blueprint(paystack_bp)
+        app.register_blueprint(stripe_bp)
+        app.register_blueprint(monnify_bp)
 
     register_blueprints()
 

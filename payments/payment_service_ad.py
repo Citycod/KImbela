@@ -39,43 +39,105 @@ class AdCampaignPaymentService:
             # Generate unique transaction reference
             tx_ref = f"KIMBELA_AD_{campaign.id}_{int(time.time())}"
 
-            # Auto-convert USD to NGN for Paystack only
-            # Flutterwave supports USD directly for international payments
+            # Auto-convert to NGN for Flutterwave checkout
             checkout_currency = currency
             checkout_amount = float(campaign.budget)
 
             if gateway == "paystack" and checkout_currency == "USD":
                 checkout_currency = "NGN"
                 rate = float(self.base.get_ngn_rate())
-                checkout_amount = checkout_amount * rate
+                checkout_amount = round(checkout_amount * rate, 2)
                 print(f"🟡 [AD PAYMENT] Converted USD {campaign.budget} to NGN {checkout_amount} at rate {rate}")
             elif gateway == "flutterwave" and checkout_currency == "USD":
-                print(f"🟡 [AD PAYMENT] Using USD {checkout_amount} for Flutterwave payment")
+                # Convert USD to NGN for Flutterwave — all payments in Naira
+                checkout_currency = "NGN"
+                rate = float(self.base.get_ngn_rate())
+                checkout_amount = round(checkout_amount * rate, 2)
+                print(f"🟡 [AD PAYMENT] Converted USD {campaign.budget} to NGN {checkout_amount} at rate {rate}")
 
-            if gateway == "paystack":
+            # if gateway == "paystack":
+            #     payment_data = {
+            #         "email": user.email,
+            #         "amount": int(checkout_amount * 100),  # Paystack uses kobo
+            #         "currency": checkout_currency,
+            #         "reference": tx_ref,
+            #         "callback_url": url_for("payments.payment_callback", _external=True),
+            #         "metadata": {
+            #             "user_id": user.id,
+            #             "campaign_id": campaign.id,
+            #             "transaction_type": "ad_campaign",
+            #         }
+            #     }
+            #     
+            #     headers = {
+            #         "Authorization": f"Bearer {self.base.paystack_secret_key}",
+            #         "Content-Type": "application/json",
+            #     }
+            #
+            #     print(f"🟡 [AD PAYMENT] Sending request to Paystack...")
+            #     
+            #     response = self._http_request(
+            #         "POST",
+            #         f"{self.base.paystack_base_url}/transaction/initialize",
+            #         headers=headers,
+            #         json=payment_data,
+            #         timeout=30,
+            #     )
+            #
+            #     if response.status_code == 200:
+            #         result = response.json()
+            #         if result.get("status") is True:
+            #             payment_url = result["data"]["authorization_url"]
+            #             
+            #             payment = PaymentTransaction(
+            #                 user_id=user.id,
+            #                 campaign_id=campaign.id,
+            #                 amount=checkout_amount,
+            #                 currency=checkout_currency,
+            #                 gateway_reference=tx_ref,
+            #                 gateway="paystack",
+            #                 status="pending",
+            #                 transaction_type="ad_campaign",
+            #             )
+            #             db.session.add(payment)
+            #             db.session.commit()
+            #
+            #             return {
+            #                 "success": True,
+            #                 "payment_url": payment_url,
+            #                 "gateway_payment_id": tx_ref,
+            #                 "message": "Ad campaign payment initiated successfully via Paystack",
+            #             }
+            #         else:
+            #             return {"success": False, "error": f"Paystack error: {result.get('message')}"}
+            #     else:
+            #         return {"success": False, "error": f"Paystack returned error: {response.status_code}"}
+
+            if gateway == "monnify":
+                token = self.base.get_monnify_token()
+                if not token:
+                    return {"success": False, "error": "Monnify authentication failed"}
+
                 payment_data = {
-                    "email": user.email,
-                    "amount": int(checkout_amount * 100),  # Paystack uses kobo
-                    "currency": checkout_currency,
-                    "reference": tx_ref,
-                    "callback_url": url_for("payments.payment_callback", _external=True),
-                    "metadata": {
-                        "user_id": user.id,
-                        "campaign_id": campaign.id,
-                        "transaction_type": "ad_campaign",
-                    }
+                    "amount": checkout_amount,
+                    "customerName": user.first_name or user.email.split("@")[0],
+                    "customerEmail": user.email,
+                    "paymentReference": tx_ref,
+                    "paymentDescription": f"Ad Campaign: {campaign.title}",
+                    "currencyCode": checkout_currency,
+                    "contractCode": self.base.monnify_contract_code,
+                    "redirectUrl": url_for("payments.payment_callback", _external=True),
+                    "paymentMethods": ["CARD", "ACCOUNT_TRANSFER"]
                 }
                 
                 headers = {
-                    "Authorization": f"Bearer {self.base.paystack_secret_key}",
+                    "Authorization": f"Bearer {token}",
                     "Content-Type": "application/json",
                 }
 
-                print(f"🟡 [AD PAYMENT] Sending request to Paystack...")
-                
                 response = self._http_request(
                     "POST",
-                    f"{self.base.paystack_base_url}/transaction/initialize",
+                    f"{self.base.monnify_base_url}/merchant/transactions/init-transaction",
                     headers=headers,
                     json=payment_data,
                     timeout=30,
@@ -83,8 +145,8 @@ class AdCampaignPaymentService:
 
                 if response.status_code == 200:
                     result = response.json()
-                    if result.get("status") is True:
-                        payment_url = result["data"]["authorization_url"]
+                    if result.get("requestSuccessful"):
+                        payment_url = result["responseBody"]["checkoutUrl"]
                         
                         payment = PaymentTransaction(
                             user_id=user.id,
@@ -92,7 +154,7 @@ class AdCampaignPaymentService:
                             amount=checkout_amount,
                             currency=checkout_currency,
                             gateway_reference=tx_ref,
-                            gateway="paystack",
+                            gateway="monnify",
                             status="pending",
                             transaction_type="ad_campaign",
                         )
@@ -103,13 +165,65 @@ class AdCampaignPaymentService:
                             "success": True,
                             "payment_url": payment_url,
                             "gateway_payment_id": tx_ref,
-                            "message": "Ad campaign payment initiated successfully via Paystack",
+                            "message": "Ad campaign payment initiated successfully via Monnify",
                         }
                     else:
-                        return {"success": False, "error": f"Paystack error: {result.get('message')}"}
+                        return {"success": False, "error": f"Monnify error: {result.get('responseMessage')}"}
                 else:
-                    return {"success": False, "error": f"Paystack returned error: {response.status_code}"}
+                    return {"success": False, "error": f"Monnify returned error: {response.status_code}"}
 
+            elif gateway == "stripe":
+                try:
+                    import stripe
+                    stripe.api_key = self.base.stripe_secret_key
+                    
+                    callback_url = url_for("payments.payment_callback", _external=True)
+                    
+                    session = stripe.checkout.Session.create(
+                        payment_method_types=['card'],
+                        line_items=[{
+                            'price_data': {
+                                'currency': checkout_currency.lower(),
+                                'product_data': {
+                                    'name': f"Kimbela Ad Campaign: {campaign.title}",
+                                },
+                                'unit_amount': int(checkout_amount * 100),
+                            },
+                            'quantity': 1,
+                        }],
+                        mode='payment',
+                        success_url=callback_url + f"?tx_ref={tx_ref}&status=successful",
+                        cancel_url=callback_url + f"?tx_ref={tx_ref}&status=cancelled",
+                        client_reference_id=tx_ref,
+                        metadata={
+                            "user_id": user.id,
+                            "campaign_id": campaign.id,
+                            "transaction_type": "ad_campaign",
+                        }
+                    )
+                    
+                    payment = PaymentTransaction(
+                        user_id=user.id,
+                        campaign_id=campaign.id,
+                        amount=checkout_amount,
+                        currency=checkout_currency,
+                        gateway_reference=tx_ref,
+                        gateway="stripe",
+                        status="pending",
+                        transaction_type="ad_campaign",
+                    )
+                    db.session.add(payment)
+                    db.session.commit()
+
+                    return {
+                        "success": True,
+                        "payment_url": session.url,
+                        "gateway_payment_id": tx_ref,
+                        "message": "Ad campaign payment initiated successfully via Stripe",
+                    }
+                except Exception as e:
+                    return {"success": False, "error": f"Stripe error: {str(e)}"}
+            
             # Prepare payment data for Flutterwave
             payment_data = {
                 "tx_ref": tx_ref,
