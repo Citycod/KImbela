@@ -56,14 +56,16 @@ def _get_dashboard_ad_usd_to_ngn_rate():
 
 
 def _get_dashboard_ad_daily_budget_bounds(placement=None):
+    from .payment_service import BasePaymentService
+    rate = float(BasePaymentService().get_ngn_rate("USD_TO_NGN_RATE", "1600"))
     usd_min = 5.0 if placement == "dashboard-top" else 2.0
     usd_max = 50.0
     return {
         "usd_min": usd_min,
         "usd_max": usd_max,
-        "ngn_min_input": math.ceil(usd_min), # Kept for backward compatibility if needed, but holds USD value
-        "ngn_max_input": math.ceil(usd_max),
-        "rate": 1.0,
+        "ngn_min_input": math.ceil(usd_min * rate),
+        "ngn_max_input": math.ceil(usd_max * rate),
+        "rate": rate,
         "est_reach_min_per_usd": 240,
         "est_reach_max_per_usd": 680,
         "est_clicks_min_per_usd": 5,

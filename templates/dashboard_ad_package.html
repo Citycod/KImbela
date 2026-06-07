@@ -55,18 +55,22 @@
       border-radius: 1.5rem;
       background: linear-gradient(135deg, #0f172a, #1e293b);
       color: #e2e8f0;
-      padding: 1.5rem;
       min-height: 240px;
       display: flex;
       align-items: center;
       justify-content: center;
       text-align: center;
+      overflow: hidden;
+    }
+
+    #previewEmpty {
+      padding: 1.5rem;
     }
 
     .preview-image {
       width: 100%;
-      border-radius: 1.25rem;
-      max-height: 320px;
+      border-radius: 0;
+      height: auto;
       object-fit: contain;
     }
 
@@ -379,7 +383,11 @@
       } else {
         document.querySelector('p.text-sm.text-slate-600.mt-2').innerHTML = `$<span id="budgetValue">${displayDaily}</span> per day`;
       }
-      document.querySelector('.rounded-2xl.bg-slate-50.p-4 .text-lg.font-semibold.text-slate-900').innerHTML = `$<span id="totalValue">${displayTotal}</span>`;
+      
+      const rate = {{ ad_pricing.rate | tojson }};
+      const totalNgn = formatNaira(dailyUsd * days * rate);
+      
+      document.querySelector('.rounded-2xl.bg-slate-50.p-4 .text-lg.font-semibold.text-slate-900').innerHTML = `$<span id="totalValue">${displayTotal}</span> <span class="text-sm font-normal text-slate-500 ml-1">(~₦${totalNgn})</span>`;
 
       // Update estimated results dynamically from the Kimbela backend
       const estReachMinPerUsd = {{ ad_pricing.est_reach_min_per_usd|tojson }};
