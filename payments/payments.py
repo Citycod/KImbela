@@ -663,12 +663,15 @@ def payment_callback():
                 flash("Transaction not found", "error")
                 return redirect(url_for("payments.payment_failed"))
 
-            if transaction.gateway == "paystack":
-                verification = base_service.resolve_paystack_verification(reference=tx_ref)
-            else:
-                verification = base_service.resolve_flutterwave_verification(
-                    tx_ref=tx_ref, transaction_id=transaction_id
-                )
+            # if transaction.gateway == "paystack":
+            #     verification = base_service.resolve_paystack_verification(reference=tx_ref)
+            # else:
+            #     verification = base_service.resolve_flutterwave_verification(
+            #         tx_ref=tx_ref, transaction_id=transaction_id
+            #     )
+            verification = base_service.resolve_flutterwave_verification(
+                tx_ref=tx_ref, transaction_id=transaction_id
+            )
                 
             verification_data = verification.get("data", {}) or {}
             verified_status = (verification.get("verified_status") or "").strip().lower()
@@ -728,12 +731,15 @@ def payment_callback():
                 flash("Payment not found", "error")
                 return redirect(url_for("payments.payment_failed"))
 
-            if matchmaking_payment.gateway == "paystack":
-                verification = base_service.resolve_paystack_verification(reference=tx_ref)
-            else:
-                verification = base_service.resolve_flutterwave_verification(
-                    tx_ref=tx_ref, transaction_id=transaction_id
-                )
+            # if matchmaking_payment.gateway == "paystack":
+            #     verification = base_service.resolve_paystack_verification(reference=tx_ref)
+            # else:
+            #     verification = base_service.resolve_flutterwave_verification(
+            #         tx_ref=tx_ref, transaction_id=transaction_id
+            #     )
+            verification = base_service.resolve_flutterwave_verification(
+                tx_ref=tx_ref, transaction_id=transaction_id
+            )
                 
             verification_data = verification.get("data", {}) or {}
             verified_status = (verification.get("verified_status") or "").strip().lower()
@@ -793,12 +799,15 @@ def payment_callback():
                 flash("Payment not found", "error")
                 return redirect(url_for("payments.payment_failed"))
 
-            if marketplace_payment.gateway == "paystack":
-                verification = base_service.resolve_paystack_verification(reference=tx_ref)
-            else:
-                verification = base_service.resolve_flutterwave_verification(
-                    tx_ref=tx_ref, transaction_id=transaction_id
-                )
+            # if marketplace_payment.gateway == "paystack":
+            #     verification = base_service.resolve_paystack_verification(reference=tx_ref)
+            # else:
+            #     verification = base_service.resolve_flutterwave_verification(
+            #         tx_ref=tx_ref, transaction_id=transaction_id
+            #     )
+            verification = base_service.resolve_flutterwave_verification(
+                tx_ref=tx_ref, transaction_id=transaction_id
+            )
                 
             verification_data = verification.get("data", {}) or {}
             verified_status = (verification.get("verified_status") or "").strip().lower()
@@ -1237,21 +1246,22 @@ def update_payment_status():
 
         if status == "completed":
             # Verify with payment gateway first
-            if transaction.gateway == "paystack":
-                verification_result = payment_service.verify_paystack_payment(
-                    transaction.gateway_payment_id
-                )
-                if (
-                    verification_result["success"]
-                    and verification_result["data"]["status"] == "success"
-                ):
-                    payment_service.handle_successful_payment(
-                        transaction.id, verification_result["data"]
-                    )
-                else:
-                    return jsonify(
-                        {"success": False, "error": "Payment verification failed"}
-                    )
+            pass # Only handling Flutterwave webhooks/callbacks now
+            # if transaction.gateway == "paystack":
+            #     verification_result = payment_service.verify_paystack_payment(
+            #         transaction.gateway_payment_id
+            #     )
+            #     if (
+            #         verification_result["success"]
+            #         and verification_result["data"]["status"] == "success"
+            #     ):
+            #         payment_service.handle_successful_payment(
+            #             transaction.id, verification_result["data"]
+            #         )
+            #     else:
+            #         return jsonify(
+            #             {"success": False, "error": "Payment verification failed"}
+            #         )
 
         return jsonify({"success": True, "message": "Payment status updated"})
 

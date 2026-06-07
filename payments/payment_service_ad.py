@@ -43,12 +43,12 @@ class AdCampaignPaymentService:
             checkout_currency = currency
             checkout_amount = float(campaign.budget)
 
-            if gateway == "paystack" and checkout_currency == "USD":
-                checkout_currency = "NGN"
-                rate = float(self.base.get_ngn_rate())
-                checkout_amount = round(checkout_amount * rate, 2)
-                print(f"🟡 [AD PAYMENT] Converted USD {campaign.budget} to NGN {checkout_amount} at rate {rate}")
-            elif gateway == "flutterwave" and checkout_currency == "USD":
+#            if gateway == "paystack" and checkout_currency == "USD":
+#                checkout_currency = "NGN"
+#                rate = float(self.base.get_ngn_rate())
+#                checkout_amount = round(checkout_amount * rate, 2)
+#                print(f"🟡 [AD PAYMENT] Converted USD {campaign.budget} to NGN {checkout_amount} at rate {rate}")
+            if gateway == "flutterwave" and checkout_currency == "USD":
                 # Convert USD to NGN for Flutterwave — all payments in Naira
                 checkout_currency = "NGN"
                 rate = float(self.base.get_ngn_rate())
@@ -113,116 +113,116 @@ class AdCampaignPaymentService:
             #     else:
             #         return {"success": False, "error": f"Paystack returned error: {response.status_code}"}
 
-            if gateway == "monnify":
-                token = self.base.get_monnify_token()
-                if not token:
-                    return {"success": False, "error": "Monnify authentication failed"}
+#            if gateway == "monnify":
+#                token = self.base.get_monnify_token()
+#                if not token:
+#                    return {"success": False, "error": "Monnify authentication failed"}
 
-                payment_data = {
-                    "amount": checkout_amount,
-                    "customerName": user.first_name or user.email.split("@")[0],
-                    "customerEmail": user.email,
-                    "paymentReference": tx_ref,
-                    "paymentDescription": f"Ad Campaign: {campaign.title}",
-                    "currencyCode": checkout_currency,
-                    "contractCode": self.base.monnify_contract_code,
-                    "redirectUrl": url_for("payments.payment_callback", _external=True),
-                    "paymentMethods": ["CARD", "ACCOUNT_TRANSFER"]
-                }
+#                payment_data = {
+#                    "amount": checkout_amount,
+#                    "customerName": user.first_name or user.email.split("@")[0],
+#                    "customerEmail": user.email,
+#                    "paymentReference": tx_ref,
+#                    "paymentDescription": f"Ad Campaign: {campaign.title}",
+#                    "currencyCode": checkout_currency,
+#                    "contractCode": self.base.monnify_contract_code,
+#                    "redirectUrl": url_for("payments.payment_callback", _external=True),
+#                    "paymentMethods": ["CARD", "ACCOUNT_TRANSFER"]
+#                }
                 
-                headers = {
-                    "Authorization": f"Bearer {token}",
-                    "Content-Type": "application/json",
-                }
+#                headers = {
+#                    "Authorization": f"Bearer {token}",
+#                    "Content-Type": "application/json",
+#                }
 
-                response = self._http_request(
-                    "POST",
-                    f"{self.base.monnify_base_url}/merchant/transactions/init-transaction",
-                    headers=headers,
-                    json=payment_data,
-                    timeout=30,
-                )
+#                response = self._http_request(
+#                    "POST",
+#                    f"{self.base.monnify_base_url}/merchant/transactions/init-transaction",
+#                    headers=headers,
+#                    json=payment_data,
+#                    timeout=30,
+#                )
 
-                if response.status_code == 200:
-                    result = response.json()
-                    if result.get("requestSuccessful"):
-                        payment_url = result["responseBody"]["checkoutUrl"]
+#                if response.status_code == 200:
+#                    result = response.json()
+#                    if result.get("requestSuccessful"):
+#                        payment_url = result["responseBody"]["checkoutUrl"]
                         
-                        payment = PaymentTransaction(
-                            user_id=user.id,
-                            campaign_id=campaign.id,
-                            amount=checkout_amount,
-                            currency=checkout_currency,
-                            gateway_reference=tx_ref,
-                            gateway="monnify",
-                            status="pending",
-                            transaction_type="ad_campaign",
-                        )
-                        db.session.add(payment)
-                        db.session.commit()
+#                        payment = PaymentTransaction(
+#                            user_id=user.id,
+#                            campaign_id=campaign.id,
+#                            amount=checkout_amount,
+#                            currency=checkout_currency,
+#                            gateway_reference=tx_ref,
+#                            gateway="monnify",
+#                            status="pending",
+#                            transaction_type="ad_campaign",
+#                        )
+#                        db.session.add(payment)
+#                        db.session.commit()
 
-                        return {
-                            "success": True,
-                            "payment_url": payment_url,
-                            "gateway_payment_id": tx_ref,
-                            "message": "Ad campaign payment initiated successfully via Monnify",
-                        }
-                    else:
-                        return {"success": False, "error": f"Monnify error: {result.get('responseMessage')}"}
-                else:
-                    return {"success": False, "error": f"Monnify returned error: {response.status_code}"}
+#                        return {
+#                            "success": True,
+#                            "payment_url": payment_url,
+#                            "gateway_payment_id": tx_ref,
+#                            "message": "Ad campaign payment initiated successfully via Monnify",
+#                        }
+#                    else:
+#                        return {"success": False, "error": f"Monnify error: {result.get('responseMessage')}"}
+#                else:
+#                    return {"success": False, "error": f"Monnify returned error: {response.status_code}"}
 
-            elif gateway == "stripe":
-                try:
-                    import stripe
-                    stripe.api_key = self.base.stripe_secret_key
+#            elif gateway == "stripe":
+#                try:
+#                    import stripe
+#                    stripe.api_key = self.base.stripe_secret_key
                     
-                    callback_url = url_for("payments.payment_callback", _external=True)
+#                    callback_url = url_for("payments.payment_callback", _external=True)
                     
-                    session = stripe.checkout.Session.create(
-                        payment_method_types=['card'],
-                        line_items=[{
-                            'price_data': {
-                                'currency': checkout_currency.lower(),
-                                'product_data': {
-                                    'name': f"Kimbela Ad Campaign: {campaign.title}",
-                                },
-                                'unit_amount': int(checkout_amount * 100),
-                            },
-                            'quantity': 1,
-                        }],
-                        mode='payment',
-                        success_url=callback_url + f"?tx_ref={tx_ref}&status=successful",
-                        cancel_url=callback_url + f"?tx_ref={tx_ref}&status=cancelled",
-                        client_reference_id=tx_ref,
-                        metadata={
-                            "user_id": user.id,
-                            "campaign_id": campaign.id,
-                            "transaction_type": "ad_campaign",
-                        }
-                    )
+#                    session = stripe.checkout.Session.create(
+#                        payment_method_types=['card'],
+#                        line_items=[{
+#                            'price_data': {
+#                                'currency': checkout_currency.lower(),
+#                                'product_data': {
+#                                    'name': f"Kimbela Ad Campaign: {campaign.title}",
+#                                },
+#                                'unit_amount': int(checkout_amount * 100),
+#                            },
+#                            'quantity': 1,
+#                        }],
+#                        mode='payment',
+#                        success_url=callback_url + f"?tx_ref={tx_ref}&status=successful",
+#                        cancel_url=callback_url + f"?tx_ref={tx_ref}&status=cancelled",
+#                        client_reference_id=tx_ref,
+#                        metadata={
+#                            "user_id": user.id,
+#                            "campaign_id": campaign.id,
+#                            "transaction_type": "ad_campaign",
+#                        }
+#                    )
                     
-                    payment = PaymentTransaction(
-                        user_id=user.id,
-                        campaign_id=campaign.id,
-                        amount=checkout_amount,
-                        currency=checkout_currency,
-                        gateway_reference=tx_ref,
-                        gateway="stripe",
-                        status="pending",
-                        transaction_type="ad_campaign",
-                    )
-                    db.session.add(payment)
-                    db.session.commit()
+#                    payment = PaymentTransaction(
+#                        user_id=user.id,
+#                        campaign_id=campaign.id,
+#                        amount=checkout_amount,
+#                        currency=checkout_currency,
+#                        gateway_reference=tx_ref,
+#                        gateway="stripe",
+#                        status="pending",
+#                        transaction_type="ad_campaign",
+#                    )
+#                    db.session.add(payment)
+#                    db.session.commit()
 
-                    return {
-                        "success": True,
-                        "payment_url": session.url,
-                        "gateway_payment_id": tx_ref,
-                        "message": "Ad campaign payment initiated successfully via Stripe",
-                    }
-                except Exception as e:
-                    return {"success": False, "error": f"Stripe error: {str(e)}"}
+#                    return {
+#                        "success": True,
+#                        "payment_url": session.url,
+#                        "gateway_payment_id": tx_ref,
+#                        "message": "Ad campaign payment initiated successfully via Stripe",
+#                    }
+#                except Exception as e:
+#                    return {"success": False, "error": f"Stripe error: {str(e)}"}
             
             # Prepare payment data for Flutterwave
             payment_data = {

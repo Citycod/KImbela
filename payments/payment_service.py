@@ -707,128 +707,128 @@ class MatchmakingPaymentService(BasePaymentService):
             #     else:
             #         return {"success": False, "error": f"Paystack returned error: {response.status_code}"}
 
-            if gateway == "monnify":
-                token = self.get_monnify_token()
-                if not token:
-                    return {"success": False, "error": "Monnify authentication failed"}
+#            if gateway == "monnify":
+#                token = self.get_monnify_token()
+#                if not token:
+#                    return {"success": False, "error": "Monnify authentication failed"}
 
-                payment_data = {
-                    "amount": payment_amount,
-                    "customerName": user.full_name or user.first_name or user.email.split("@")[0],
-                    "customerEmail": user.email,
-                    "paymentReference": tx_ref,
-                    "paymentDescription": f"Matchmaking Package: {package.name}",
-                    "currencyCode": currency,
-                    "contractCode": self.monnify_contract_code,
-                    "redirectUrl": url_for("match.payment_callback", _external=True),
-                    "paymentMethods": ["CARD", "ACCOUNT_TRANSFER"]
-                }
+#                payment_data = {
+#                    "amount": payment_amount,
+#                    "customerName": user.full_name or user.first_name or user.email.split("@")[0],
+#                    "customerEmail": user.email,
+#                    "paymentReference": tx_ref,
+#                    "paymentDescription": f"Matchmaking Package: {package.name}",
+#                    "currencyCode": currency,
+#                    "contractCode": self.monnify_contract_code,
+#                    "redirectUrl": url_for("match.payment_callback", _external=True),
+#                    "paymentMethods": ["CARD", "ACCOUNT_TRANSFER"]
+#                }
                 
-                headers = {
-                    "Authorization": f"Bearer {token}",
-                    "Content-Type": "application/json",
-                }
+#                headers = {
+#                    "Authorization": f"Bearer {token}",
+#                    "Content-Type": "application/json",
+#                }
 
-                print(f"🟡 [MATCHMAKING PAYMENT] Sending request to Monnify...")
+#                print(f"🟡 [MATCHMAKING PAYMENT] Sending request to Monnify...")
                 
-                response = self._http_request(
-                    "POST",
-                    f"{self.monnify_base_url}/merchant/transactions/init-transaction",
-                    headers=headers,
-                    json=payment_data,
-                    timeout=30,
-                )
+#                response = self._http_request(
+#                    "POST",
+#                    f"{self.monnify_base_url}/merchant/transactions/init-transaction",
+#                    headers=headers,
+#                    json=payment_data,
+#                    timeout=30,
+#                )
 
-                if response.status_code == 200:
-                    result = response.json()
-                    if result.get("requestSuccessful"):
-                        payment_url = result["responseBody"]["checkoutUrl"]
+#                if response.status_code == 200:
+#                    result = response.json()
+#                    if result.get("requestSuccessful"):
+#                        payment_url = result["responseBody"]["checkoutUrl"]
                         
-                        matchmaking_payment = MatchmakingPayments(
-                            user_id=user.id,
-                            matchmaking_request_id=matchmaking_request.id,
-                            package_id=package.id,
-                            amount=payment_amount,
-                            currency=currency,
-                            gateway="monnify",
-                            gateway_reference=tx_ref,
-                            gateway_status="initiated",
-                            status="pending",
-                            payment_status="pending",
-                            description=f"Matchmaking Package: {package.name}",
-                        )
-                        db.session.add(matchmaking_payment)
-                        db.session.commit()
+#                        matchmaking_payment = MatchmakingPayments(
+#                            user_id=user.id,
+#                            matchmaking_request_id=matchmaking_request.id,
+#                            package_id=package.id,
+#                            amount=payment_amount,
+#                            currency=currency,
+#                            gateway="monnify",
+#                            gateway_reference=tx_ref,
+#                            gateway_status="initiated",
+#                            status="pending",
+#                            payment_status="pending",
+#                            description=f"Matchmaking Package: {package.name}",
+#                        )
+#                        db.session.add(matchmaking_payment)
+#                        db.session.commit()
 
-                        return {
-                            "success": True,
-                            "payment_url": payment_url,
-                            "payment_id": matchmaking_payment.id,
-                            "gateway_reference": tx_ref,
-                            "message": "Matchmaking payment initiated successfully via Monnify",
-                        }
-                    else:
-                        return {"success": False, "error": f"Monnify error: {result.get('responseMessage')}"}
-                else:
-                    return {"success": False, "error": f"Monnify returned error: {response.status_code}"}
+#                        return {
+#                            "success": True,
+#                            "payment_url": payment_url,
+#                            "payment_id": matchmaking_payment.id,
+#                            "gateway_reference": tx_ref,
+#                            "message": "Matchmaking payment initiated successfully via Monnify",
+#                        }
+#                    else:
+#                        return {"success": False, "error": f"Monnify error: {result.get('responseMessage')}"}
+#                else:
+#                    return {"success": False, "error": f"Monnify returned error: {response.status_code}"}
 
-            if gateway == "stripe":
-                try:
-                    import stripe
-                    stripe.api_key = self.stripe_secret_key
+#            if gateway == "stripe":
+#                try:
+#                    import stripe
+#                    stripe.api_key = self.stripe_secret_key
                     
-                    callback_url = url_for("match.payment_callback", _external=True)
+#                    callback_url = url_for("match.payment_callback", _external=True)
                     
-                    session = stripe.checkout.Session.create(
-                        payment_method_types=['card'],
-                        line_items=[{
-                            'price_data': {
-                                'currency': currency.lower(),
-                                'product_data': {
-                                    'name': f"Kimbela Matchmaking: {package.name}",
-                                },
-                                'unit_amount': int(payment_amount * 100), # Stripe uses cents
-                            },
-                            'quantity': 1,
-                        }],
-                        mode='payment',
-                        success_url=callback_url + f"?tx_ref={tx_ref}&status=successful",
-                        cancel_url=callback_url + f"?tx_ref={tx_ref}&status=cancelled",
-                        client_reference_id=tx_ref,
-                        metadata={
-                            "user_id": user.id,
-                            "matchmaking_request_id": matchmaking_request.id,
-                            "package_id": package.id,
-                            "transaction_type": "matchmaking"
-                        }
-                    )
+#                    session = stripe.checkout.Session.create(
+#                        payment_method_types=['card'],
+#                        line_items=[{
+#                            'price_data': {
+#                                'currency': currency.lower(),
+#                                'product_data': {
+#                                    'name': f"Kimbela Matchmaking: {package.name}",
+#                                },
+#                                'unit_amount': int(payment_amount * 100), # Stripe uses cents
+#                            },
+#                            'quantity': 1,
+#                        }],
+#                        mode='payment',
+#                        success_url=callback_url + f"?tx_ref={tx_ref}&status=successful",
+#                        cancel_url=callback_url + f"?tx_ref={tx_ref}&status=cancelled",
+#                        client_reference_id=tx_ref,
+#                        metadata={
+#                            "user_id": user.id,
+#                            "matchmaking_request_id": matchmaking_request.id,
+#                            "package_id": package.id,
+#                            "transaction_type": "matchmaking"
+#                        }
+#                    )
                     
-                    matchmaking_payment = MatchmakingPayments(
-                        user_id=user.id,
-                        matchmaking_request_id=matchmaking_request.id,
-                        package_id=package.id,
-                        amount=payment_amount,
-                        currency=currency,
-                        gateway="stripe",
-                        gateway_reference=tx_ref,
-                        gateway_status="initiated",
-                        status="pending",
-                        payment_status="pending",
-                        description=f"Matchmaking Package: {package.name}",
-                    )
-                    db.session.add(matchmaking_payment)
-                    db.session.commit()
+#                    matchmaking_payment = MatchmakingPayments(
+#                        user_id=user.id,
+#                        matchmaking_request_id=matchmaking_request.id,
+#                        package_id=package.id,
+#                        amount=payment_amount,
+#                        currency=currency,
+#                        gateway="stripe",
+#                        gateway_reference=tx_ref,
+#                        gateway_status="initiated",
+#                        status="pending",
+#                        payment_status="pending",
+#                        description=f"Matchmaking Package: {package.name}",
+#                    )
+#                    db.session.add(matchmaking_payment)
+#                    db.session.commit()
 
-                    return {
-                        "success": True,
-                        "payment_url": session.url,
-                        "payment_id": matchmaking_payment.id,
-                        "gateway_reference": tx_ref,
-                        "message": "Matchmaking payment initiated successfully via Stripe",
-                    }
-                except Exception as e:
-                    print(f"🔴 [MATCHMAKING PAYMENT] Stripe Exception: {str(e)}")
-                    return {"success": False, "error": f"Stripe error: {str(e)}"}
+#                    return {
+#                        "success": True,
+#                        "payment_url": session.url,
+#                        "payment_id": matchmaking_payment.id,
+#                        "gateway_reference": tx_ref,
+#                        "message": "Matchmaking payment initiated successfully via Stripe",
+#                    }
+#                except Exception as e:
+#                    print(f"🔴 [MATCHMAKING PAYMENT] Stripe Exception: {str(e)}")
+#                    return {"success": False, "error": f"Stripe error: {str(e)}"}
 
             # Convert USD to NGN for Flutterwave checkout — all payments in Naira
             checkout_currency = "NGN"
@@ -1485,606 +1485,606 @@ class MarketplacePaymentService(BasePaymentService):
             # if gateway == "paystack":
             #     return self.create_paystack_marketplace_payment(user, plan, currency)
             
-            if gateway == "monnify":
-                token = self.get_monnify_token()
-                if not token:
-                    return {"success": False, "error": "Monnify authentication failed"}
+#            if gateway == "monnify":
+#                token = self.get_monnify_token()
+#                if not token:
+#                    return {"success": False, "error": "Monnify authentication failed"}
 
-                payment_data = {
-                    "amount": payment_amount,
-                    "customerName": user.full_name or user.first_name or user.email.split("@")[0],
-                    "customerEmail": user.email,
-                    "paymentReference": tx_ref,
-                    "paymentDescription": f"Marketplace Subscription: {plan.name}",
-                    "currencyCode": currency,
-                    "contractCode": self.monnify_contract_code,
-                    "redirectUrl": url_for("market.subscription_callback", _external=True),
-                    "paymentMethods": ["CARD", "ACCOUNT_TRANSFER"]
-                }
+#                payment_data = {
+#                    "amount": payment_amount,
+#                    "customerName": user.full_name or user.first_name or user.email.split("@")[0],
+#                    "customerEmail": user.email,
+#                    "paymentReference": tx_ref,
+#                    "paymentDescription": f"Marketplace Subscription: {plan.name}",
+#                    "currencyCode": currency,
+#                    "contractCode": self.monnify_contract_code,
+#                    "redirectUrl": url_for("market.subscription_callback", _external=True),
+#                    "paymentMethods": ["CARD", "ACCOUNT_TRANSFER"]
+#                }
                 
-                headers = {
-                    "Authorization": f"Bearer {token}",
-                    "Content-Type": "application/json",
-                }
+#                headers = {
+#                    "Authorization": f"Bearer {token}",
+#                    "Content-Type": "application/json",
+#                }
 
-                response = self._http_request(
-                    "POST",
-                    f"{self.monnify_base_url}/merchant/transactions/init-transaction",
-                    headers=headers,
-                    json=payment_data,
-                    timeout=30,
-                )
+#                response = self._http_request(
+#                    "POST",
+#                    f"{self.monnify_base_url}/merchant/transactions/init-transaction",
+#                    headers=headers,
+#                    json=payment_data,
+#                    timeout=30,
+#                )
 
-                if response.status_code == 200:
-                    result = response.json()
-                    if result.get("requestSuccessful"):
-                        payment_url = result["responseBody"]["checkoutUrl"]
+#                if response.status_code == 200:
+#                    result = response.json()
+#                    if result.get("requestSuccessful"):
+#                        payment_url = result["responseBody"]["checkoutUrl"]
                         
-                        marketplace_payment = MarketplacePayment(
-                            user_id=user.id,
-                            subscription_id=plan.id,
-                            amount=payment_amount,
-                            currency=currency,
-                            tokens_paid=int(payment_amount * 100),
-                            gateway="monnify",
-                            gateway_reference=tx_ref,
-                            gateway_status="initiated",
-                            status="pending",
-                            payment_method="card",
-                            description=f"Marketplace Subscription: {plan.name}",
-                            start_date=utcnow(),
-                            end_date=utcnow() + timedelta(days=getattr(plan, "duration_days", 30)),
-                        )
-                        db.session.add(marketplace_payment)
-                        db.session.commit()
+#                        marketplace_payment = MarketplacePayment(
+#                            user_id=user.id,
+#                            subscription_id=plan.id,
+#                            amount=payment_amount,
+#                            currency=currency,
+#                            tokens_paid=int(payment_amount * 100),
+#                            gateway="monnify",
+#                            gateway_reference=tx_ref,
+#                            gateway_status="initiated",
+#                            status="pending",
+#                            payment_method="card",
+#                            description=f"Marketplace Subscription: {plan.name}",
+#                            start_date=utcnow(),
+#                            end_date=utcnow() + timedelta(days=getattr(plan, "duration_days", 30)),
+#                        )
+#                        db.session.add(marketplace_payment)
+#                        db.session.commit()
 
-                        return {
-                            "success": True,
-                            "payment_url": payment_url,
-                            "payment_id": marketplace_payment.id,
-                            "gateway_reference": tx_ref,
-                            "message": "Marketplace subscription payment initiated successfully via Monnify",
-                        }
-                    else:
-                        return {"success": False, "error": f"Monnify error: {result.get('responseMessage')}"}
-                else:
-                    return {"success": False, "error": f"Monnify returned error: {response.status_code}"}
+#                        return {
+#                            "success": True,
+#                            "payment_url": payment_url,
+#                            "payment_id": marketplace_payment.id,
+#                            "gateway_reference": tx_ref,
+#                            "message": "Marketplace subscription payment initiated successfully via Monnify",
+#                        }
+#                    else:
+#                        return {"success": False, "error": f"Monnify error: {result.get('responseMessage')}"}
+#                else:
+#                    return {"success": False, "error": f"Monnify returned error: {response.status_code}"}
 
-            elif gateway == "stripe":
-                try:
-                    import stripe
-                    stripe.api_key = self.stripe_secret_key
+#            elif gateway == "stripe":
+#                try:
+#                    import stripe
+#                    stripe.api_key = self.stripe_secret_key
                     
-                    callback_url = url_for("market.subscription_callback", _external=True)
+#                    callback_url = url_for("market.subscription_callback", _external=True)
                     
-                    session = stripe.checkout.Session.create(
-                        payment_method_types=['card'],
-                        line_items=[{
-                            'price_data': {
-                                'currency': currency.lower(),
-                                'product_data': {
-                                    'name': f"Kimbela Marketplace: {plan.name}",
-                                },
-                                'unit_amount': int(payment_amount * 100),
-                            },
-                            'quantity': 1,
-                        }],
-                        mode='payment',
-                        success_url=callback_url + f"?tx_ref={tx_ref}&status=successful",
-                        cancel_url=callback_url + f"?tx_ref={tx_ref}&status=cancelled",
-                        client_reference_id=tx_ref,
-                        metadata={
-                            "user_id": user.id,
-                            "plan_id": plan.id,
-                            "plan_name": plan.name,
-                            "transaction_type": "marketplace_subscription",
-                        }
-                    )
+#                    session = stripe.checkout.Session.create(
+#                        payment_method_types=['card'],
+#                        line_items=[{
+#                            'price_data': {
+#                                'currency': currency.lower(),
+#                                'product_data': {
+#                                    'name': f"Kimbela Marketplace: {plan.name}",
+#                                },
+#                                'unit_amount': int(payment_amount * 100),
+#                            },
+#                            'quantity': 1,
+#                        }],
+#                        mode='payment',
+#                        success_url=callback_url + f"?tx_ref={tx_ref}&status=successful",
+#                        cancel_url=callback_url + f"?tx_ref={tx_ref}&status=cancelled",
+#                        client_reference_id=tx_ref,
+#                        metadata={
+#                            "user_id": user.id,
+#                            "plan_id": plan.id,
+#                            "plan_name": plan.name,
+#                            "transaction_type": "marketplace_subscription",
+#                        }
+#                    )
                     
-                    marketplace_payment = MarketplacePayment(
-                        user_id=user.id,
-                        subscription_id=plan.id,
-                        amount=payment_amount,
-                        currency=currency,
-                        tokens_paid=int(payment_amount * 100),
-                        gateway="stripe",
-                        gateway_reference=tx_ref,
-                        gateway_status="initiated",
-                        status="pending",
-                        payment_method="card",
-                        description=f"Marketplace Subscription: {plan.name}",
-                        start_date=utcnow(),
-                        end_date=utcnow() + timedelta(days=getattr(plan, "duration_days", 30)),
-                    )
-                    db.session.add(marketplace_payment)
-                    db.session.commit()
+#                    marketplace_payment = MarketplacePayment(
+#                        user_id=user.id,
+#                        subscription_id=plan.id,
+#                        amount=payment_amount,
+#                        currency=currency,
+#                        tokens_paid=int(payment_amount * 100),
+#                        gateway="stripe",
+#                        gateway_reference=tx_ref,
+#                        gateway_status="initiated",
+#                        status="pending",
+#                        payment_method="card",
+#                        description=f"Marketplace Subscription: {plan.name}",
+#                        start_date=utcnow(),
+#                        end_date=utcnow() + timedelta(days=getattr(plan, "duration_days", 30)),
+#                    )
+#                    db.session.add(marketplace_payment)
+#                    db.session.commit()
 
-                    return {
-                        "success": True,
-                        "payment_url": session.url,
-                        "payment_id": marketplace_payment.id,
-                        "gateway_reference": tx_ref,
-                        "message": "Marketplace payment initiated successfully via Stripe",
-                    }
-                except Exception as e:
-                    return {"success": False, "error": f"Stripe error: {str(e)}"}
+#                    return {
+#                        "success": True,
+#                        "payment_url": session.url,
+#                        "payment_id": marketplace_payment.id,
+#                        "gateway_reference": tx_ref,
+#                        "message": "Marketplace payment initiated successfully via Stripe",
+#                    }
+#                except Exception as e:
+#                    return {"success": False, "error": f"Stripe error: {str(e)}"}
             
-            else:
+#            else:
                 # Convert USD to NGN for Flutterwave checkout — all payments in Naira
-                checkout_currency = "NGN"
-                checkout_amount = float(payment_amount)
-                if currency.upper() == "USD":
-                    rate = float(self.get_ngn_rate())
-                    checkout_amount = round(checkout_amount * rate, 2)
-                    print(f"🟡 [MARKETPLACE PAYMENT] Converted USD {payment_amount} to NGN {checkout_amount} at rate {rate}")
+#                checkout_currency = "NGN"
+#                checkout_amount = float(payment_amount)
+#                if currency.upper() == "USD":
+#                    rate = float(self.get_ngn_rate())
+#                    checkout_amount = round(checkout_amount * rate, 2)
+#                    print(f"🟡 [MARKETPLACE PAYMENT] Converted USD {payment_amount} to NGN {checkout_amount} at rate {rate}")
 
                 # Prepare payment data for Flutterwave
-                payment_data = {
-                    "tx_ref": tx_ref,
-                    "amount": str(checkout_amount),
-                    "currency": checkout_currency,
-                    "redirect_url": url_for("market.subscription_callback", _external=True),
-                    "payment_options": "card",
-                    "customer": {
-                        "email": user.email,
-                        "name": user.full_name
-                        or user.first_name
-                        or user.email.split("@")[0],
-                    },
-                    "meta": {
-                        "user_id": user.id,
-                        "plan_id": plan.id,
-                        "plan_name": plan.name,
-                        "transaction_type": "marketplace_subscription",
-                    },
-                    "customizations": {
-                        "title": "Kimbela Marketplace",
-                        "description": f"Subscription Plan: {plan.name}",
-                    },
-                }
+#                payment_data = {
+#                    "tx_ref": tx_ref,
+#                    "amount": str(checkout_amount),
+#                    "currency": checkout_currency,
+#                    "redirect_url": url_for("market.subscription_callback", _external=True),
+#                    "payment_options": "card",
+#                    "customer": {
+#                        "email": user.email,
+#                        "name": user.full_name
+#                        or user.first_name
+#                        or user.email.split("@")[0],
+#                    },
+#                    "meta": {
+#                        "user_id": user.id,
+#                        "plan_id": plan.id,
+#                        "plan_name": plan.name,
+#                        "transaction_type": "marketplace_subscription",
+#                    },
+#                    "customizations": {
+#                        "title": "Kimbela Marketplace",
+#                        "description": f"Subscription Plan: {plan.name}",
+#                    },
+#                }
 
                 # Add phone number if available
-                if hasattr(user, "phone_number") and user.phone_number:
-                    payment_data["customer"]["phone_number"] = user.phone_number
+#                if hasattr(user, "phone_number") and user.phone_number:
+#                    payment_data["customer"]["phone_number"] = user.phone_number
 
-                headers = {
-                    "Authorization": f"Bearer {self.flutterwave_secret_key}",
-                    "Content-Type": "application/json",
-                }
+#                headers = {
+#                    "Authorization": f"Bearer {self.flutterwave_secret_key}",
+#                    "Content-Type": "application/json",
+#                }
 
-                print(f"🟡 [MARKETPLACE PAYMENT] Sending request to Flutterwave...")
-                print(f"🟡 [MARKETPLACE PAYMENT] URL: {self.flutterwave_base_url}/payments")
-                print(f"🟡 [MARKETPLACE PAYMENT] Headers: {headers}")
+#                print(f"🟡 [MARKETPLACE PAYMENT] Sending request to Flutterwave...")
+#                print(f"🟡 [MARKETPLACE PAYMENT] URL: {self.flutterwave_base_url}/payments")
+#                print(f"🟡 [MARKETPLACE PAYMENT] Headers: {headers}")
 
                 # Make the request
-                response = self._http_request(
-                    "POST",
-                    f"{self.flutterwave_base_url}/payments",
-                    headers=headers,
-                    json=payment_data,
-                    timeout=30,
-                )
+#                response = self._http_request(
+#                    "POST",
+#                    f"{self.flutterwave_base_url}/payments",
+#                    headers=headers,
+#                    json=payment_data,
+#                    timeout=30,
+#                )
 
-            print(f"🟡 [MARKETPLACE PAYMENT] Response status: {response.status_code}")
-            print(
-                f"🟡 [MARKETPLACE PAYMENT] Response headers: {dict(response.headers)}"
-            )
+#            print(f"🟡 [MARKETPLACE PAYMENT] Response status: {response.status_code}")
+#            print(
+#                f"🟡 [MARKETPLACE PAYMENT] Response headers: {dict(response.headers)}"
+#            )
 
             # Parse response
-            response_text = response.text
-            print(f"🟡 [MARKETPLACE PAYMENT] Response text: {response_text[:500]}...")
+#            response_text = response.text
+#            print(f"🟡 [MARKETPLACE PAYMENT] Response text: {response_text[:500]}...")
 
-            if response.status_code == 200:
-                try:
-                    result = response.json()
-                    print(f"🟡 [MARKETPLACE PAYMENT] Parsed JSON: {result}")
+#            if response.status_code == 200:
+#                try:
+#                    result = response.json()
+#                    print(f"🟡 [MARKETPLACE PAYMENT] Parsed JSON: {result}")
 
-                    if result.get("status") == "success":
-                        payment_url = result["data"]["link"]
-                        print(
-                            f"✅ [MARKETPLACE PAYMENT] Payment URL generated: {payment_url}"
-                        )
+#                    if result.get("status") == "success":
+#                        payment_url = result["data"]["link"]
+#                        print(
+#                            f"✅ [MARKETPLACE PAYMENT] Payment URL generated: {payment_url}"
+#                        )
 
                         # Create MarketplacePayment record
-                        marketplace_payment = MarketplacePayment(
-                            user_id=user.id,
-                            subscription_id=plan.id,
-                            amount=payment_amount,
-                            currency=currency,
-                            tokens_paid=int(payment_amount * 100),
-                            gateway="flutterwave",
-                            gateway_reference=tx_ref,
-                            gateway_payment_id=result["data"].get("id"),
-                            gateway_status="initiated",
-                            gateway_metadata=json.dumps(result.get("data", {})),
-                            status="pending",
-                            payment_method="card",
-                            description=f"Marketplace Subscription: {plan.name}",
-                            start_date=utcnow(),
-                            end_date=utcnow()
-                            + timedelta(days=getattr(plan, "duration_days", 30)),
-                        )
+#                        marketplace_payment = MarketplacePayment(
+#                            user_id=user.id,
+#                            subscription_id=plan.id,
+#                            amount=payment_amount,
+#                            currency=currency,
+#                            tokens_paid=int(payment_amount * 100),
+#                            gateway="flutterwave",
+#                            gateway_reference=tx_ref,
+#                            gateway_payment_id=result["data"].get("id"),
+#                            gateway_status="initiated",
+#                            gateway_metadata=json.dumps(result.get("data", {})),
+#                            status="pending",
+#                            payment_method="card",
+#                            description=f"Marketplace Subscription: {plan.name}",
+#                            start_date=utcnow(),
+#                            end_date=utcnow()
+#                            + timedelta(days=getattr(plan, "duration_days", 30)),
+#                        )
 
-                        db.session.add(marketplace_payment)
-                        db.session.commit()
+#                        db.session.add(marketplace_payment)
+#                        db.session.commit()
 
-                        print(
-                            f"✅ [MARKETPLACE PAYMENT] Payment record created: {marketplace_payment.id}"
-                        )
+#                        print(
+#                            f"✅ [MARKETPLACE PAYMENT] Payment record created: {marketplace_payment.id}"
+#                        )
 
-                        return {
-                            "success": True,
-                            "payment_url": payment_url,
-                            "payment_id": marketplace_payment.id,
-                            "gateway_reference": tx_ref,
-                            "message": "Marketplace subscription payment initiated successfully",
-                        }
-                    else:
-                        error_msg = result.get("message", "Unknown Flutterwave error")
-                        print(
-                            f"🔴 [MARKETPLACE PAYMENT] Flutterwave error: {error_msg}"
-                        )
-                        return {
-                            "success": False,
-                            "error": f"Payment gateway error: {error_msg}",
-                        }
+#                        return {
+#                            "success": True,
+#                            "payment_url": payment_url,
+#                            "payment_id": marketplace_payment.id,
+#                            "gateway_reference": tx_ref,
+#                            "message": "Marketplace subscription payment initiated successfully",
+#                        }
+#                    else:
+#                        error_msg = result.get("message", "Unknown Flutterwave error")
+#                        print(
+#                            f"🔴 [MARKETPLACE PAYMENT] Flutterwave error: {error_msg}"
+#                        )
+#                        return {
+#                            "success": False,
+#                            "error": f"Payment gateway error: {error_msg}",
+#                        }
 
-                except json.JSONDecodeError as e:
-                    print(f"🔴 [MARKETPLACE PAYMENT] Failed to parse JSON: {e}")
-                    print(f"🔴 [MARKETPLACE PAYMENT] Raw response: {response_text}")
-                    return {
-                        "success": False,
-                        "error": f"Invalid response from payment gateway: {response_text[:200]}",
-                    }
-            else:
-                error_text = (
-                    response.text[:500]
-                    if hasattr(response, "text")
-                    else "No response text"
-                )
-                print(
-                    f"🔴 [MARKETPLACE PAYMENT] HTTP error {response.status_code}: {error_text}"
-                )
-                return {
-                    "success": False,
-                    "error": f"Payment gateway returned error: {response.status_code} - {error_text}",
-                }
+#                except json.JSONDecodeError as e:
+#                    print(f"🔴 [MARKETPLACE PAYMENT] Failed to parse JSON: {e}")
+#                    print(f"🔴 [MARKETPLACE PAYMENT] Raw response: {response_text}")
+#                    return {
+#                        "success": False,
+#                        "error": f"Invalid response from payment gateway: {response_text[:200]}",
+#                    }
+#            else:
+#                error_text = (
+#                    response.text[:500]
+#                    if hasattr(response, "text")
+#                    else "No response text"
+#                )
+#                print(
+#                    f"🔴 [MARKETPLACE PAYMENT] HTTP error {response.status_code}: {error_text}"
+#                )
+#                return {
+#                    "success": False,
+#                    "error": f"Payment gateway returned error: {response.status_code} - {error_text}",
+#                }
 
-        except Exception as e:
-            print(f"🔴 [MARKETPLACE PAYMENT] Exception: {str(e)}")
-            import traceback
+#        except Exception as e:
+#            print(f"🔴 [MARKETPLACE PAYMENT] Exception: {str(e)}")
+#            import traceback
 
-            print(f"🔴 [MARKETPLACE PAYMENT] Traceback:\n{traceback.format_exc()}")
-            if isinstance(e, UpstreamServiceError):
-                return {
-                    "success": False,
-                    "error": "Payment provider is temporarily unreachable. Please try again in a moment.",
-                    "error_type": "upstream_unavailable",
-                }
-            return {"success": False, "error": f"Payment processing error: {str(e)}"}
+#            print(f"🔴 [MARKETPLACE PAYMENT] Traceback:\n{traceback.format_exc()}")
+#            if isinstance(e, UpstreamServiceError):
+#                return {
+#                    "success": False,
+#                    "error": "Payment provider is temporarily unreachable. Please try again in a moment.",
+#                    "error_type": "upstream_unavailable",
+#                }
+#            return {"success": False, "error": f"Payment processing error: {str(e)}"}
 
-    def create_paystack_marketplace_payment(self, user, plan, currency="USD"):
-        """Create Paystack payment for marketplace subscription"""
-        try:
-            from marketplace.market import get_marketplace_checkout_amount
-            payment_amount = get_marketplace_checkout_amount(plan, currency)
+#    def create_paystack_marketplace_payment(self, user, plan, currency="USD"):
+#        """Create Paystack payment for marketplace subscription"""
+#        try:
+#            from marketplace.market import get_marketplace_checkout_amount
+#            payment_amount = get_marketplace_checkout_amount(plan, currency)
 
-            print(f"[INFO] [PAYSTACK SUBSCRIPTION] Starting payment for plan: {plan.name}")
-            print(f"[INFO] [PAYSTACK SUBSCRIPTION] User: {user.id}, Amount: {payment_amount} {currency}")
+#            print(f"[INFO] [PAYSTACK SUBSCRIPTION] Starting payment for plan: {plan.name}")
+#            print(f"[INFO] [PAYSTACK SUBSCRIPTION] User: {user.id}, Amount: {payment_amount} {currency}")
 
             # Import PaystackService dynamically
-            from utils.paystack import PaystackService
-            paystack_service = PaystackService()
+#            from utils.paystack import PaystackService
+#            paystack_service = PaystackService()
 
             # Generate transaction reference
-            import time
-            tx_ref = f"KIMBELA_MARKET_{user.id}_{int(time.time())}"
+#            import time
+#            tx_ref = f"KIMBELA_MARKET_{user.id}_{int(time.time())}"
 
-            print(f"[INFO] [PAYSTACK SUBSCRIPTION] TX Ref: {tx_ref}")
+#            print(f"[INFO] [PAYSTACK SUBSCRIPTION] TX Ref: {tx_ref}")
 
-            callback_url = url_for("market.subscription_callback", _external=True)
+#            callback_url = url_for("market.subscription_callback", _external=True)
 
-            metadata = {
-                "user_id": user.id,
-                "plan_id": plan.id,
-                "plan_name": plan.name,
-                "transaction_type": "marketplace_subscription",
-                "custom_fields": [
-                    {
-                        "display_name": "Plan Name",
-                        "variable_name": "plan_name",
-                        "value": plan.name
-                    }
-                ]
-            }
+#            metadata = {
+#                "user_id": user.id,
+#                "plan_id": plan.id,
+#                "plan_name": plan.name,
+#                "transaction_type": "marketplace_subscription",
+#                "custom_fields": [
+#                    {
+#                        "display_name": "Plan Name",
+#                        "variable_name": "plan_name",
+#                        "value": plan.name
+#                    }
+#                ]
+#            }
 
             # Initialize Paystack payment
-            result = paystack_service.initialize_transaction(
-                email=user.email,
-                amount=float(payment_amount),
-                reference=tx_ref,
-                callback_url=callback_url,
-                metadata=metadata
-            )
+#            result = paystack_service.initialize_transaction(
+#                email=user.email,
+#                amount=float(payment_amount),
+#                reference=tx_ref,
+#                callback_url=callback_url,
+#                metadata=metadata
+#            )
 
-            print(f"[INFO] [PAYSTACK SUBSCRIPTION] Result: {result}")
+#            print(f"[INFO] [PAYSTACK SUBSCRIPTION] Result: {result}")
 
-            if result.get("status"):
-                payment_url = result["data"]["authorization_url"]
+#            if result.get("status"):
+#                payment_url = result["data"]["authorization_url"]
                 
                 # Create MarketplacePayment record
-                marketplace_payment = MarketplacePayment(
-                    user_id=user.id,
-                    subscription_id=plan.id,
-                    amount=payment_amount,
-                    currency=currency,
-                    tokens_paid=int(payment_amount * 100),
-                    gateway="paystack",
-                    gateway_reference=tx_ref,
-                    gateway_payment_id=result["data"].get("reference"),
-                    gateway_status="initiated",
-                    gateway_metadata=json.dumps(result.get("data", {})),
-                    status="pending",
-                    payment_method="card",
-                    description=f"Marketplace Subscription: {plan.name}",
-                    start_date=utcnow(),
-                    end_date=utcnow() + timedelta(days=getattr(plan, "duration_days", 30)),
-                )
+#                marketplace_payment = MarketplacePayment(
+#                    user_id=user.id,
+#                    subscription_id=plan.id,
+#                    amount=payment_amount,
+#                    currency=currency,
+#                    tokens_paid=int(payment_amount * 100),
+#                    gateway="paystack",
+#                    gateway_reference=tx_ref,
+#                    gateway_payment_id=result["data"].get("reference"),
+#                    gateway_status="initiated",
+#                    gateway_metadata=json.dumps(result.get("data", {})),
+#                    status="pending",
+#                    payment_method="card",
+#                    description=f"Marketplace Subscription: {plan.name}",
+#                    start_date=utcnow(),
+#                    end_date=utcnow() + timedelta(days=getattr(plan, "duration_days", 30)),
+#                )
 
-                db.session.add(marketplace_payment)
-                db.session.commit()
+#                db.session.add(marketplace_payment)
+#                db.session.commit()
 
-                print(f"[SUCCESS] [PAYSTACK SUBSCRIPTION] Payment record created: {marketplace_payment.id}")
+#                print(f"[SUCCESS] [PAYSTACK SUBSCRIPTION] Payment record created: {marketplace_payment.id}")
 
-                return {
-                    "success": True,
-                    "payment_url": payment_url,
-                    "payment_id": marketplace_payment.id,
-                    "gateway_reference": tx_ref,
-                    "message": "Marketplace subscription payment initiated successfully",
-                }
-            else:
-                return {
-                    "success": False,
-                    "error": result.get("message", "Paystack initialization failed"),
-                }
+#                return {
+#                    "success": True,
+#                    "payment_url": payment_url,
+#                    "payment_id": marketplace_payment.id,
+#                    "gateway_reference": tx_ref,
+#                    "message": "Marketplace subscription payment initiated successfully",
+#                }
+#            else:
+#                return {
+#                    "success": False,
+#                    "error": result.get("message", "Paystack initialization failed"),
+#                }
 
-        except Exception as e:
-            print(f"[ERROR] [PAYSTACK SUBSCRIPTION] Exception: {str(e)}")
-            import traceback
-            print(f"[ERROR] [PAYSTACK SUBSCRIPTION] Traceback:\n{traceback.format_exc()}")
-            return {"success": False, "error": f"Payment processing error: {str(e)}"}
+#        except Exception as e:
+#            print(f"[ERROR] [PAYSTACK SUBSCRIPTION] Exception: {str(e)}")
+#            import traceback
+#            print(f"[ERROR] [PAYSTACK SUBSCRIPTION] Traceback:\n{traceback.format_exc()}")
+#            return {"success": False, "error": f"Payment processing error: {str(e)}"}
 
-    def handle_marketplace_payment_success(self, marketplace_payment, flutterwave_data):
-        """Handle successful marketplace payment"""
-        try:
-            print(
-                f"🟡 [PAYMENT SUCCESS] Starting to handle successful payment for payment ID: {marketplace_payment.id}"
-            )
+#    def handle_marketplace_payment_success(self, marketplace_payment, flutterwave_data):
+#        """Handle successful marketplace payment"""
+#        try:
+#            print(
+#                f"🟡 [PAYMENT SUCCESS] Starting to handle successful payment for payment ID: {marketplace_payment.id}"
+#            )
 
             # Update marketplace payment record
-            marketplace_payment.status = "completed"
-            marketplace_payment.gateway_status = flutterwave_data.get(
-                "status", "successful"
-            )
-            marketplace_payment.gateway_payment_id = flutterwave_data.get("id")
-            marketplace_payment.gateway_metadata = json.dumps(flutterwave_data)
-            marketplace_payment.paid_at = utcnow()
-            marketplace_payment.updated_at = utcnow()
+#            marketplace_payment.status = "completed"
+#            marketplace_payment.gateway_status = flutterwave_data.get(
+#                "status", "successful"
+#            )
+#            marketplace_payment.gateway_payment_id = flutterwave_data.get("id")
+#            marketplace_payment.gateway_metadata = json.dumps(flutterwave_data)
+#            marketplace_payment.paid_at = utcnow()
+#            marketplace_payment.updated_at = utcnow()
 
-            print(
-                f"🟡 [PAYMENT SUCCESS] Updated payment record: {marketplace_payment.id}"
-            )
+#            print(
+#                f"🟡 [PAYMENT SUCCESS] Updated payment record: {marketplace_payment.id}"
+#            )
 
             # Update user subscription
-            user = marketplace_payment.user
-            if user:
-                user.marketplace_subscription_id = marketplace_payment.subscription_id
-                user.marketplace_subscription_status = "active"
-                user.marketplace_subscription_expires = utcnow() + timedelta(
-                    days=30
-                )  # Adjust as needed
+#            user = marketplace_payment.user
+#            if user:
+#                user.marketplace_subscription_id = marketplace_payment.subscription_id
+#                user.marketplace_subscription_status = "active"
+#                user.marketplace_subscription_expires = utcnow() + timedelta(
+#                    days=30
+#                )  # Adjust as needed
 
                 # Set featured until date if plan includes featured status
                 # You might need to check the subscription plan details
 
-                print(f"✅ [PAYMENT SUCCESS] User subscription updated: {user.id}")
+#                print(f"✅ [PAYMENT SUCCESS] User subscription updated: {user.id}")
 
-                waiting_services = MarketplaceService.query.filter_by(
-                    seller_id=user.id, status="awaiting_subscription"
-                ).all()
-                for service in waiting_services:
-                    service.status = "active"
-                    service.subscription_status = "active"
-                    if not service.published_at:
-                        service.published_at = utcnow()
+#                waiting_services = MarketplaceService.query.filter_by(
+#                    seller_id=user.id, status="awaiting_subscription"
+#                ).all()
+#                for service in waiting_services:
+#                    service.status = "active"
+#                    service.subscription_status = "active"
+#                    if not service.published_at:
+#                        service.published_at = utcnow()
 
-            db.session.commit()
-            print(f"✅ [PAYMENT SUCCESS] Database committed successfully")
+#            db.session.commit()
+#            print(f"✅ [PAYMENT SUCCESS] Database committed successfully")
 
             # Send success email
-            self.send_marketplace_payment_success_email(marketplace_payment)
+#            self.send_marketplace_payment_success_email(marketplace_payment)
 
-            return True
+#            return True
 
-        except Exception as e:
-            db.session.rollback()
-            print(f"🔴 [PAYMENT SUCCESS] Exception: {str(e)}")
-            import traceback
+#        except Exception as e:
+#            db.session.rollback()
+#            print(f"🔴 [PAYMENT SUCCESS] Exception: {str(e)}")
+#            import traceback
 
-            print(f"🔴 [PAYMENT SUCCESS] Traceback: {traceback.format_exc()}")
-            return False
+#            print(f"🔴 [PAYMENT SUCCESS] Traceback: {traceback.format_exc()}")
+#            return False
 
-    def send_marketplace_payment_success_email(self, transaction):
-        """Send payment success email for marketplace subscription"""
-        try:
-            user = transaction.user
-            if not user:
-                return False
+#    def send_marketplace_payment_success_email(self, transaction):
+#        """Send payment success email for marketplace subscription"""
+#        try:
+#            user = transaction.user
+#            if not user:
+#                return False
 
             # Parse plan info from meta
-            meta_data = (
-                json.loads(transaction.meta_data) if transaction.meta_data else {}
-            )
-            meta = meta_data.get("meta", {})
-            plan_name = meta.get("plan_name", "Marketplace Subscription")
+#            meta_data = (
+#                json.loads(transaction.meta_data) if transaction.meta_data else {}
+#            )
+#            meta = meta_data.get("meta", {})
+#            plan_name = meta.get("plan_name", "Marketplace Subscription")
 
-            subject = "🎉 Your Kimbela Marketplace Subscription is Active!"
+#            subject = "🎉 Your Kimbela Marketplace Subscription is Active!"
 
-            html_body = f"""
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <style>
-                    body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
-                    .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-                    .header {{ background: linear-gradient(135deg, #D97706 0%, #FBBF24 100%); color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; }}
-                    .content {{ background: #FFFBEB; padding: 20px; border-radius: 0 0 10px 10px; }}
-                    .details {{ background: white; padding: 15px; border-radius: 5px; margin: 10px 0; border-left: 4px solid #D97706; }}
-                    .footer {{ text-align: center; margin-top: 20px; color: #666; font-size: 12px; }}
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <div class="header">
-                        <h1>🎉 Welcome to Kimbela Marketplace!</h1>
-                        <p>Your seller subscription is now active</p>
-                    </div>
-                    <div class="content">
-                        <p>Hello {user.full_name},</p>
-                        <p>Congratulations! Your Kimbela Marketplace subscription has been successfully activated. You can now start selling your services and digital products.</p>
+#            html_body = f"""
+#            <!DOCTYPE html>
+#            <html>
+#            <head>
+#                <style>
+#                    body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+#                    .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+#                    .header {{ background: linear-gradient(135deg, #D97706 0%, #FBBF24 100%); color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; }}
+#                    .content {{ background: #FFFBEB; padding: 20px; border-radius: 0 0 10px 10px; }}
+#                    .details {{ background: white; padding: 15px; border-radius: 5px; margin: 10px 0; border-left: 4px solid #D97706; }}
+#                    .footer {{ text-align: center; margin-top: 20px; color: #666; font-size: 12px; }}
+#                </style>
+#            </head>
+#            <body>
+#                <div class="container">
+#                    <div class="header">
+#                        <h1>🎉 Welcome to Kimbela Marketplace!</h1>
+#                        <p>Your seller subscription is now active</p>
+#                    </div>
+#                    <div class="content">
+#                        <p>Hello {user.full_name},</p>
+#                        <p>Congratulations! Your Kimbela Marketplace subscription has been successfully activated. You can now start selling your services and digital products.</p>
                         
-                        <div class="details">
-                            <h3>📋 Subscription Details</h3>
-                            <p><strong>Plan:</strong> {plan_name}</p>
-                            <p><strong>Amount Paid:</strong> {transaction.amount:.2f} {transaction.currency}</p>
-                            <p><strong>Transaction ID:</strong> {transaction.gateway_reference}</p>
-                            <p><strong>Activation Date:</strong> {utcnow().strftime('%B %d, %Y %I:%M %p')}</p>
-                            <p><strong>Status:</strong> <span style="color: #10B981; font-weight: bold;">Active ✅</span></p>
-                        </div>
+#                        <div class="details">
+#                            <h3>📋 Subscription Details</h3>
+#                            <p><strong>Plan:</strong> {plan_name}</p>
+#                            <p><strong>Amount Paid:</strong> {transaction.amount:.2f} {transaction.currency}</p>
+#                            <p><strong>Transaction ID:</strong> {transaction.gateway_reference}</p>
+#                            <p><strong>Activation Date:</strong> {utcnow().strftime('%B %d, %Y %I:%M %p')}</p>
+#                            <p><strong>Status:</strong> <span style="color: #10B981; font-weight: bold;">Active ✅</span></p>
+#                        </div>
                         
-                        <div class="details">
-                            <h3>🚀 Next Steps</h3>
-                            <p>1. <a href="{current_app.config.get('BASE_URL', 'http://localhost:5000')}/market/create_service" style="color: #D97706; font-weight: bold;">Create your first service listing</a></p>
-                            <p>2. Complete your seller profile</p>
-                            <p>3. Add your contact information</p>
-                            <p>4. Start promoting your services</p>
-                        </div>
+#                        <div class="details">
+#                            <h3>🚀 Next Steps</h3>
+#                            <p>1. <a href="{current_app.config.get('BASE_URL', 'http://localhost:5000')}/market/create_service" style="color: #D97706; font-weight: bold;">Create your first service listing</a></p>
+#                            <p>2. Complete your seller profile</p>
+#                            <p>3. Add your contact information</p>
+#                            <p>4. Start promoting your services</p>
+#                        </div>
                         
-                        <div class="details">
-                            <h3>💡 Tips for Success</h3>
-                            <p>• Use high-quality images for your services</p>
-                            <p>• Write detailed descriptions</p>
-                            <p>• Set competitive prices</p>
-                            <p>• Respond quickly to inquiries</p>
-                            <p>• Ask satisfied clients for reviews</p>
-                        </div>
+#                        <div class="details">
+#                            <h3>💡 Tips for Success</h3>
+#                            <p>• Use high-quality images for your services</p>
+#                            <p>• Write detailed descriptions</p>
+#                            <p>• Set competitive prices</p>
+#                            <p>• Respond quickly to inquiries</p>
+#                            <p>• Ask satisfied clients for reviews</p>
+#                        </div>
                         
-                        <p>Need help getting started? Visit our <a href="{current_app.config.get('BASE_URL', 'http://localhost:5000')}/help/marketplace" style="color: #D97706; font-weight: bold;">Marketplace Seller Guide</a> for tips and best practices.</p>
+#                        <p>Need help getting started? Visit our <a href="{current_app.config.get('BASE_URL', 'http://localhost:5000')}/help/marketplace" style="color: #D97706; font-weight: bold;">Marketplace Seller Guide</a> for tips and best practices.</p>
                         
-                        <p>Happy selling!<br>The Kimbela Marketplace Team</p>
-                    </div>
-                    <div class="footer">
-                        <p>© {utcnow().year} Kimbela Marketplace. Empowering African creators and professionals.</p>
-                    </div>
-                </div>
-            </body>
-            </html>
-            """
+#                        <p>Happy selling!<br>The Kimbela Marketplace Team</p>
+#                    </div>
+#                    <div class="footer">
+#                        <p>© {utcnow().year} Kimbela Marketplace. Empowering African creators and professionals.</p>
+#                    </div>
+#                </div>
+#            </body>
+#            </html>
+#            """
 
-            return self._send_email(subject, user.email, html_body)
+#            return self._send_email(subject, user.email, html_body)
 
-        except Exception as e:
-            print(f"❌ Failed to send marketplace success email: {str(e)}")
-            return False
+#        except Exception as e:
+#            print(f"❌ Failed to send marketplace success email: {str(e)}")
+#            return False
 
 
-class MarketplacePaymentService(BasePaymentService):
-    """Payment service for marketplace subscriptions"""
+#class MarketplacePaymentService(BasePaymentService):
+#    """Payment service for marketplace subscriptions"""
 
-    def __init__(self):
-        super().__init__()
-        self.email_service = MarketplaceEmailService()  # Add email service
+#    def __init__(self):
+#        super().__init__()
+#        self.email_service = MarketplaceEmailService()  # Add email service
 
-    def _get_marketplace_payment_amount(self, plan, currency):
-        currency = self.normalize_currency(currency)
-        return float(plan.price_usd)
+#    def _get_marketplace_payment_amount(self, plan, currency):
+#        currency = self.normalize_currency(currency)
+#        return float(plan.price_usd)
 
-    def create_marketplace_payment(self, user, plan, currency="USD", gateway="flutterwave"):
-        """Create payment for marketplace subscription"""
-        try:
-            currency = self.normalize_currency(currency)
-            print(f"[INFO] [MARKETPLACE PAYMENT] Starting payment for plan: {plan.name}")
-            print(
-                f"[INFO] [MARKETPLACE PAYMENT] User: {user.id}, Currency: {currency}, Gateway: {gateway}"
-            )
+#    def create_marketplace_payment(self, user, plan, currency="USD", gateway="flutterwave"):
+#        """Create payment for marketplace subscription"""
+#        try:
+#            currency = self.normalize_currency(currency)
+#            print(f"[INFO] [MARKETPLACE PAYMENT] Starting payment for plan: {plan.name}")
+#            print(
+#                f"[INFO] [MARKETPLACE PAYMENT] User: {user.id}, Currency: {currency}, Gateway: {gateway}"
+#            )
 
             # Generate transaction reference
-            import time
+#            import time
 
-            tx_ref = f"KIMBELA_MARKET_{user.id}_{int(time.time())}"
-            payment_amount = self._get_marketplace_payment_amount(plan, currency)
+#            tx_ref = f"KIMBELA_MARKET_{user.id}_{int(time.time())}"
+#            payment_amount = self._get_marketplace_payment_amount(plan, currency)
 
-            if gateway == "paystack":
-                payment_data = {
-                    "email": user.email,
-                    "amount": int(payment_amount * 100),  # Paystack uses kobo
-                    "currency": currency,
-                    "reference": tx_ref,
-                    "callback_url": url_for("market.subscription_callback", _external=True),
-                    "metadata": {
-                        "user_id": user.id,
-                        "plan_id": plan.id,
-                        "plan_name": plan.name,
-                        "transaction_type": "marketplace_subscription",
-                    }
-                }
+#            if gateway == "paystack":
+#                payment_data = {
+#                    "email": user.email,
+#                    "amount": int(payment_amount * 100),  # Paystack uses kobo
+#                    "currency": currency,
+#                    "reference": tx_ref,
+#                    "callback_url": url_for("market.subscription_callback", _external=True),
+#                    "metadata": {
+#                        "user_id": user.id,
+#                        "plan_id": plan.id,
+#                        "plan_name": plan.name,
+#                        "transaction_type": "marketplace_subscription",
+#                    }
+#                }
 
-                headers = {
-                    "Authorization": f"Bearer {self.paystack_secret_key}",
-                    "Content-Type": "application/json",
-                }
+#                headers = {
+#                    "Authorization": f"Bearer {self.paystack_secret_key}",
+#                    "Content-Type": "application/json",
+#                }
 
-                print(f"[INFO] [MARKETPLACE PAYMENT] Sending request to Paystack...")
+#                print(f"[INFO] [MARKETPLACE PAYMENT] Sending request to Paystack...")
 
-                response = self._http_request(
-                    "POST",
-                    f"{self.paystack_base_url}/transaction/initialize",
-                    headers=headers,
-                    json=payment_data,
-                    timeout=30,
-                )
+#                response = self._http_request(
+#                    "POST",
+#                    f"{self.paystack_base_url}/transaction/initialize",
+#                    headers=headers,
+#                    json=payment_data,
+#                    timeout=30,
+#                )
 
-                if response.status_code == 200:
-                    result = response.json()
-                    if result.get("status") is True:
-                        payment_url = result["data"]["authorization_url"]
+#                if response.status_code == 200:
+#                    result = response.json()
+#                    if result.get("status") is True:
+#                        payment_url = result["data"]["authorization_url"]
 
-                        marketplace_payment = MarketplacePayment(
-                            user_id=user.id,
-                            subscription_id=plan.id,
-                            amount=payment_amount,
-                            currency=currency,
-                            tokens_paid=int(payment_amount * 100),
-                            gateway="paystack",
-                            gateway_reference=tx_ref,
-                            gateway_status="initiated",
-                            status="pending",
-                            payment_method="card",
-                        )
-                        db.session.add(marketplace_payment)
-                        db.session.commit()
+#                        marketplace_payment = MarketplacePayment(
+#                            user_id=user.id,
+#                            subscription_id=plan.id,
+#                            amount=payment_amount,
+#                            currency=currency,
+#                            tokens_paid=int(payment_amount * 100),
+#                            gateway="paystack",
+#                            gateway_reference=tx_ref,
+#                            gateway_status="initiated",
+#                            status="pending",
+#                            payment_method="card",
+#                        )
+#                        db.session.add(marketplace_payment)
+#                        db.session.commit()
 
-                        return {
-                            "success": True,
-                            "payment_url": payment_url,
-                            "gateway_reference": tx_ref,
-                            "message": "Marketplace payment initiated successfully via Paystack",
-                        }
-                    else:
-                        return {"success": False, "error": f"Paystack error: {result.get('message')}"}
-                else:
-                    return {"success": False, "error": f"Paystack returned error: {response.status_code}"}
+#                        return {
+#                            "success": True,
+#                            "payment_url": payment_url,
+#                            "gateway_reference": tx_ref,
+#                            "message": "Marketplace payment initiated successfully via Paystack",
+#                        }
+#                    else:
+#                        return {"success": False, "error": f"Paystack error: {result.get('message')}"}
+#                else:
+#                    return {"success": False, "error": f"Paystack returned error: {response.status_code}"}
 
             # Prepare payment data
             payment_data = {
