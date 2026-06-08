@@ -480,6 +480,30 @@ def create_app():
         </html>
         """
 
+    # ========== GITHUB WEBHOOK ==========
+    @app.route("/webhook", methods=["POST"])
+    @csrf.exempt
+    def github_webhook():
+        # Verify the event type
+        event = request.headers.get("X-GitHub-Event", "ping")
+        if event == "ping":
+            return jsonify({"msg": "Pong!"})
+        
+        if event == "push":
+            payload = request.get_json()
+            if payload and payload.get("ref") == "refs/heads/main":
+                import subprocess
+                try:
+                    # Run git pull asynchronously to avoid blocking the webhook response
+                    subprocess.Popen(["git", "pull", "origin", "main"], cwd=BASE_DIR)
+                    return jsonify({"msg": "Deployment initiated"})
+                except Exception as e:
+                    app.logger.error(f"Auto-deploy failed: {e}")
+                    return jsonify({"error": str(e)}), 500
+            return jsonify({"msg": "Push ignored (not main branch)"})
+            
+        return jsonify({"msg": f"Event {event} ignored"})
+
     return app
 
 
