@@ -6,12 +6,16 @@
     <!-- Header -->
     <div class="flex items-center justify-between mb-4">
         <div class="flex items-center gap-3">
-            <img src="{{ post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-                alt="{{ post.author.first_name }}" class="w-12 h-12 rounded-xl border-2 border-purple-200 object-cover">
+            <a href="{{ url_for('user.view_profile', user_identifier=post.author.id) }}" class="flex-shrink-0">
+                <img src="{{ post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+                    alt="{{ post.author.first_name }}" class="w-12 h-12 rounded-xl border-2 border-purple-200 object-cover hover:opacity-90 transition-opacity">
+            </a>
             <div>
-                <h6 class="font-bold text-gray-900 text-sm">
-                    {{ post.author.first_name }} {{ post.author.last_name }}
-                </h6>
+                <a href="{{ url_for('user.view_profile', user_identifier=post.author.id) }}" class="hover:underline">
+                    <h6 class="font-bold text-gray-900 text-sm">
+                        {{ post.author.first_name }} {{ post.author.last_name }}
+                    </h6>
+                </a>
                 <p class="text-xs text-gray-500">
                     {{ post.created_at.strftime('%b %d, %Y at %I:%M %p') }}
                 </p>
@@ -38,12 +42,16 @@
         {% if post.shared_post %}
         <div class="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
             <div class="flex items-center gap-3 mb-3">
-                <img src="{{ post.shared_post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-                    alt="{{ post.shared_post.author.first_name }}" class="w-10 h-10 rounded-xl object-cover">
+                <a href="{{ url_for('user.view_profile', user_identifier=post.shared_post.author.id) }}" class="flex-shrink-0">
+                    <img src="{{ post.shared_post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+                        alt="{{ post.shared_post.author.first_name }}" class="w-10 h-10 rounded-xl object-cover hover:opacity-90 transition-opacity">
+                </a>
                 <div>
-                    <h6 class="font-semibold text-sm text-gray-900">
-                        {{ post.shared_post.author.first_name }} {{ post.shared_post.author.last_name }}
-                    </h6>
+                    <a href="{{ url_for('user.view_profile', user_identifier=post.shared_post.author.id) }}" class="hover:underline">
+                        <h6 class="font-semibold text-sm text-gray-900">
+                            {{ post.shared_post.author.first_name }} {{ post.shared_post.author.last_name }}
+                        </h6>
+                    </a>
                     <p class="text-xs text-gray-500">
                         {{ post.shared_post.created_at.strftime('%b %d, %Y at %I:%M %p') }}
                     </p>
@@ -125,14 +133,18 @@
             {% if post.comments_count > 0 %}
             {% for comment in post.comments|reverse %}
             <div class="flex gap-2 comment-item">
-                <img src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-                    alt="{{ comment.author.first_name }}" class="w-6 h-6 rounded-full object-cover flex-shrink-0 mt-1">
+                <a href="{{ url_for('user.view_profile', user_identifier=comment.author.id) }}" class="flex-shrink-0">
+                    <img src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+                        alt="{{ comment.author.first_name }}" class="w-6 h-6 rounded-full object-cover mt-1 hover:opacity-90 transition-opacity">
+                </a>
                 <div class="flex-1 min-w-0">
                     <div class="bg-white rounded-xl px-3 py-2 shadow-sm border border-gray-100">
                         <div class="flex items-start justify-between mb-0.5">
-                            <span class="font-semibold text-xs text-gray-800 truncate">
-                                {{ comment.author.first_name }} {{ comment.author.last_name }}
-                            </span>
+                            <a href="{{ url_for('user.view_profile', user_identifier=comment.author.id) }}" class="hover:underline block truncate">
+                                <span class="font-semibold text-xs text-gray-800">
+                                    {{ comment.author.first_name }} {{ comment.author.last_name }}
+                                </span>
+                            </a>
                             <span class="text-[10px] text-gray-400 whitespace-nowrap ml-2">
                                 {{ comment.created_at.strftime('%b %d') }}
                             </span>

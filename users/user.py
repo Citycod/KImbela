@@ -3002,6 +3002,7 @@ def get_post(post_id):
             "image": post.image,
             "video": post.video,
             "location": post.location,
+            "author_id": post.author.id,
             "author_first_name": post.author.first_name,
             "author_last_name": post.author.last_name,
             "author_profile_pic": post.author.profile_pic

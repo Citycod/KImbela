@@ -4,14 +4,18 @@
      data-post-time="{{ post.created_at.timestamp() }}">
     <div class="p-4 flex justify-between items-start">
         <div class="flex items-start space-x-3">
-            <img
-                src="{{ post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-                class="w-10 h-10 rounded-full object-cover"
-            />
+            <a href="{{ url_for('user.view_profile', user_identifier=post.author.id) }}" class="flex-shrink-0">
+                <img
+                    src="{{ post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+                    class="w-10 h-10 rounded-full object-cover hover:opacity-90 transition-opacity"
+                />
+            </a>
             <div>
-                <div class="font-semibold">
-                    {{ post.author.first_name }} {{ post.author.last_name }}
-                </div>
+                <a href="{{ url_for('user.view_profile', user_identifier=post.author.id) }}" class="hover:underline text-gray-900 block">
+                    <div class="font-semibold">
+                        {{ post.author.first_name }} {{ post.author.last_name }}
+                    </div>
+                </a>
                 <div class="text-sm text-fb-text-light">
                     {{ post.created_at.strftime('%b %d at %I:%M %p') }}
                 </div>
@@ -81,15 +85,19 @@
             <div class="shared-post-card mt-3">
                 {% if post.shared_post %}
                 <div class="shared-post-header flex items-start gap-3">
-                    <img
-                        src="{{ post.shared_post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-                        alt="{{ post.shared_post.author.full_name }}"
-                        class="w-9 h-9 rounded-full object-cover flex-shrink-0"
-                    />
+                    <a href="{{ url_for('user.view_profile', user_identifier=post.shared_post.author.id) }}" class="flex-shrink-0">
+                        <img
+                            src="{{ post.shared_post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+                            alt="{{ post.shared_post.author.full_name }}"
+                            class="w-9 h-9 rounded-full object-cover flex-shrink-0 hover:opacity-90 transition-opacity"
+                        />
+                    </a>
                     <div>
-                        <div class="font-semibold text-sm">
-                            {{ post.shared_post.author.first_name }} {{ post.shared_post.author.last_name }}
-                        </div>
+                        <a href="{{ url_for('user.view_profile', user_identifier=post.shared_post.author.id) }}" class="hover:underline text-gray-900 block">
+                            <div class="font-semibold text-sm">
+                                {{ post.shared_post.author.first_name }} {{ post.shared_post.author.last_name }}
+                            </div>
+                        </a>
                         <div class="text-xs text-gray-500">
                             {{ post.shared_post.created_at.strftime('%b %d at %I:%M %p') }}
                         </div>
@@ -244,16 +252,20 @@
             class="comment flex space-x-2 mb-3"
             id="comment-{{ comment.id }}"
         >
-            <img
-                src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-                alt=""
-                class="w-8 h-8 rounded-full object-cover flex-shrink-0"
-            />
+            <a href="{{ url_for('user.view_profile', user_identifier=comment.author.id) }}" class="flex-shrink-0">
+                <img
+                    src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+                    alt=""
+                    class="w-8 h-8 rounded-full object-cover flex-shrink-0 hover:opacity-90 transition-opacity"
+                />
+            </a>
             <div class="flex-1">
                 <div class="bg-white rounded-2xl px-3 py-2">
-                    <div class="font-semibold text-sm">
-                        {{ comment.author.first_name }}
-                    </div>
+                    <a href="{{ url_for('user.view_profile', user_identifier=comment.author.id) }}" class="hover:underline text-gray-900">
+                        <div class="font-semibold text-sm">
+                            {{ comment.author.first_name }}
+                        </div>
+                    </a>
                     <div class="text-sm">{{ comment.content[:100] }}{% if comment.content|length > 100 %}...{% endif %}</div>
                 </div>
             </div>

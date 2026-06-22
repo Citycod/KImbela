@@ -898,11 +898,15 @@ const PostSystem = {
             body.innerHTML += `
                 <div class="comment mb-5 border-b pb-4">
                     <div class="flex space-x-3">
-                        <img src="${comment.avatar || window.defaultAvatar}" class="w-10 h-10 rounded-full object-cover flex-shrink-0">
+                        <a href="/profile/${comment.author_id}" class="flex-shrink-0">
+                            <img src="${comment.avatar || window.defaultAvatar}" class="w-10 h-10 rounded-full object-cover hover:opacity-90 transition-opacity">
+                        </a>
                         <div class="flex-1">
                             <div class="bg-gray-50 rounded-2xl px-4 py-3">
-                                <div class="font-semibold">${comment.name || 'User'}</div>
-                                <div class="text-sm ${isLong ? 'truncated' : ''}">
+                                <a href="/profile/${comment.author_id}" class="hover:underline text-gray-900 block">
+                                    <div class="font-semibold">${comment.name || 'User'}</div>
+                                </a>
+                                <div class="text-sm ${isLong ? 'truncated' : ''} mt-1">
                                     ${comment.content || ''}
                                 </div>
                                 ${isLong ? `
@@ -2410,9 +2414,13 @@ const SearchSystem = {
             <div class="post-card bg-white rounded-2xl shadow-soft overflow-hidden">
                 <div class="p-4 flex justify-between items-start">
                     <div class="flex items-start space-x-3">
-                        <img src="${post.author_profile_pic || window.defaultAvatar}" class="w-10 h-10 rounded-full object-cover">
+                        <a href="/profile/${post.author_id}" class="flex-shrink-0">
+                            <img src="${post.author_profile_pic || window.defaultAvatar}" class="w-10 h-10 rounded-full object-cover hover:opacity-90 transition-opacity">
+                        </a>
                         <div>
-                            <div class="font-semibold">${post.author_first_name || ''} ${post.author_last_name || ''}</div>
+                            <a href="/profile/${post.author_id}" class="hover:underline text-gray-900 block">
+                                <div class="font-semibold">${post.author_first_name || ''} ${post.author_last_name || ''}</div>
+                            </a>
                             <div class="text-sm text-gray-500">
                                 ${new Date(post.created_at).toLocaleString()}
                                 ${post.location ? `<span class="mx-1">•</span><span class="inline-flex items-center gap-1 text-blue-600"><i class="bi bi-geo-alt-fill"></i>Posting from ${post.location}</span>` : ''}
