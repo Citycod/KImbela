@@ -16,6 +16,9 @@
 
   <link href="{{ url_for('static', filename='assets/css/user_dashboard_inline.css') }}" rel="stylesheet" />
 
+  <!-- Dashboard Redesign Override -->
+  <link href="{{ url_for('static', filename='assets/css/dashboard_redesign.css') }}" rel="stylesheet" />
+
   <!-- External CSS -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" />
@@ -289,6 +292,12 @@
       </div>
     </div>
 
+    <!-- + Create Button -->
+    <button class="kb-create-btn hidden lg:inline-flex" data-bs-toggle="modal" data-bs-target="#postModal">
+      <i class="bi bi-plus-lg"></i>
+      <span class="btn-text">Create</span>
+    </button>
+
     <!-- Messenger & Notifications (keep these on far right) -->
     <div class="flex items-center space-x-1 lg:space-x-2 ml-2 lg:ml-4 border-l border-gray-200 pl-2 lg:pl-4">
       <button id="openMessaging" onclick="window.openMessenger()"
@@ -321,8 +330,663 @@
           </div>
         </div>
       </div>
+
+      <!-- User Avatar -->
+      <a href="{{ url_for('user.profile', user_id=current_user.id) }}">
+        <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+          alt="{{ current_user.first_name }}" class="kb-nav-avatar" />
+      </a>
     </div>
   </nav>
+
+  <!-- ═══════════════════════════════════════════
+       NEW REDESIGNED 3-COLUMN DASHBOARD LAYOUT
+       ═══════════════════════════════════════════ -->
+  {% set top_banner_new = dashboard_ads.get('top_banner') if dashboard_ads else None %}
+  {% set top_banner_url_new = top_banner_new.target_url if top_banner_new else url_for('payments.dashboard_ad_package', placement='dashboard-top') %}
+
+  <div class="kb-dashboard-layout">
+    <!-- ── LEFT SIDEBAR ── -->
+    <aside class="kb-left-sidebar">
+      <div class="kb-sidebar-card">
+        <ul class="kb-sidebar-nav">
+          <li>
+            <a href="{{ url_for('user.user_dashboard') }}" class="kb-active">
+              <i class="bi bi-house-door-fill"></i> Home
+            </a>
+          </li>
+          <li>
+            <a href="{{ url_for('user.profile', user_id=current_user.id) }}">
+              <i class="bi bi-person"></i> Profile
+            </a>
+          </li>
+          <li>
+            <button onclick="loadGroups()" type="button">
+              <i class="bi bi-people"></i> Groups
+            </button>
+          </li>
+          <li>
+            <a href="{{ url_for('market.main_market') }}">
+              <i class="bi bi-shop"></i> Market Place
+            </a>
+          </li>
+          <li>
+            <a href="{{ url_for('payments.ad_packages') }}">
+              <i class="bi bi-megaphone"></i> Ads
+            </a>
+          </li>
+          <li>
+            <a href="{{ url_for('match.requests') }}">
+              <i class="bi bi-heart"></i> Match
+            </a>
+          </li>
+          <div class="kb-sidebar-divider"></div>
+          <li>
+            <button id="openMessagingSidebar" onclick="window.openMessenger()" type="button">
+              <i class="bi bi-chat-dots"></i> Messages
+              <span class="kb-sidebar-badge" id="sidebarMsgBadge" style="display:none">0</span>
+            </button>
+          </li>
+          <li>
+            <a href="#" onclick="event.preventDefault(); document.getElementById('notificationDropdown').click();">
+              <i class="bi bi-bell"></i> Notifications
+              <span class="kb-sidebar-badge" id="sidebarNotifBadge" style="display:none">0</span>
+            </a>
+          </li>
+          <li>
+            <a href="{{ url_for('user.profile', user_id=current_user.id) }}">
+              <i class="bi bi-bookmark"></i> Saved
+            </a>
+          </li>
+          <li>
+            <a href="{{ url_for('user.profile', user_id=current_user.id) }}">
+              <i class="bi bi-gear"></i> Settings
+            </a>
+          </li>
+        </ul>
+        <div class="kb-sidebar-divider"></div>
+        <div class="kb-dark-toggle" onclick="document.body.classList.toggle('dark-mode')">
+          <i class="bi bi-moon"></i> Dark Mode
+          <span class="toggle-switch"></span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ── MAIN CONTENT ── -->
+    <main class="kb-main-content">
+
+      <!-- HERO BANNER AD -->
+      <div class="kb-hero-banner {% if top_banner_new %}has-ad{% endif %}">
+        <a href="{{ top_banner_url_new }}" {% if top_banner_new %}target="_blank" rel="noopener"{% endif %}>
+          <div class="kb-hero-bg-decor">
+            <div class="circle circle-1"></div>
+            <div class="circle circle-2"></div>
+          </div>
+          <div class="kb-hero-inner">
+            <div class="kb-hero-text">
+              <span class="kb-hero-pill">{{ 'SPONSORED' if top_banner_new else 'FEATURED' }}</span>
+              <h2 class="kb-hero-title">{{ top_banner_new.title if top_banner_new else 'Advertise Here' }}</h2>
+              <p class="kb-hero-desc">
+                {% if top_banner_new and top_banner_new.description %}
+                  {{ top_banner_new.description }}
+                {% else %}
+                  Promote your brand and reach the right audience on Kimbela. Boost Visibility. Drive Engagement.
+                {% endif %}
+              </p>
+              <div class="kb-hero-actions">
+                <span class="kb-hero-cta">{{ top_banner_new.call_to_action if top_banner_new and top_banner_new.call_to_action else 'Shop Now' }}</span>
+                <span class="kb-hero-secondary">Learn More</span>
+              </div>
+            </div>
+            {% if top_banner_new and top_banner_new.image_url %}
+            <div class="kb-hero-image">
+              <img src="{{ top_banner_new.image_url }}" alt="{{ top_banner_new.title }}" loading="lazy" />
+            </div>
+            {% endif %}
+          </div>
+        </a>
+      </div>
+
+      <!-- POST COMPOSER -->
+      <div class="kb-composer">
+        <div class="kb-composer-top">
+          <a href="{{ url_for('user.profile', user_id=current_user.id) }}">
+            <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+              alt="{{ current_user.first_name }}" />
+          </a>
+          <div class="kb-composer-input" data-bs-toggle="modal" data-bs-target="#postModal">
+            Share your thoughts, wisdom, or updates...
+          </div>
+        </div>
+        <div class="kb-composer-actions">
+          <div class="kb-composer-btns">
+            <button class="kb-composer-btn photo" onclick="document.getElementById('photoInput').click()">
+              <i class="bi bi-image"></i> <span>Photo</span>
+            </button>
+            <button class="kb-composer-btn video" data-bs-toggle="modal" data-bs-target="#postModal">
+              <i class="bi bi-camera-video"></i> <span>Video</span>
+            </button>
+            <button class="kb-composer-btn poll" data-bs-toggle="modal" data-bs-target="#postModal">
+              <i class="bi bi-bar-chart"></i> <span>Poll</span>
+            </button>
+            <button class="kb-composer-btn feeling" data-bs-toggle="modal" data-bs-target="#postModal">
+              <i class="bi bi-emoji-smile"></i> <span>Feeling</span>
+            </button>
+          </div>
+          <button class="kb-post-btn" data-bs-toggle="modal" data-bs-target="#postModal">Post</button>
+        </div>
+      </div>
+
+      <!-- POSTS FEED (uses existing feed div via JS) -->
+      <div id="posts-feed" data-has-more="{{ has_more|tojson }}" data-next-cursor="{{ next_cursor }}">
+        <!-- PEOPLE YOU MAY KNOW -->
+
+
+        <!-- INITIAL POSTS (Loaded server-side) -->
+        {% if initial_posts %} {% for post in initial_posts %}
+        <div class="post-card bg-white rounded-2xl shadow-soft mb-6 overflow-hidden card-hover initial"
+          data-post-id="{{ post.id }}" id="post-{{ post.id }}">
+          <div class="p-4 flex justify-between items-start">
+            <div class="flex items-start space-x-3">
+              <a href="{{ url_for('user.view_profile', user_identifier=post.author.id) }}" class="flex-shrink-0">
+                <img src="{{ post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+                  class="w-10 h-10 rounded-full object-cover hover:opacity-90 transition-opacity" />
+              </a>
+              <div>
+                <a href="{{ url_for('user.view_profile', user_identifier=post.author.id) }}" class="hover:underline text-gray-900 block">
+                  <div class="font-semibold">
+                    {{ post.author.first_name }} {{ post.author.last_name }}
+                  </div>
+                </a>
+                <div class="text-sm text-fb-text-light">
+                  {{ post.created_at.strftime('%b %d at %I:%M %p') }}
+                  {% if post.location %}
+                  <span class="mx-1">•</span>
+                  <span class="inline-flex items-center gap-1 text-blue-600">
+                    <i class="bi bi-geo-alt-fill"></i>
+                    Posting from {{ post.location }}
+                  </span>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+            <div class="dropdown relative">
+              <button class="p-2 rounded-full hover:bg-fb-gray transition-colors" data-bs-toggle="dropdown">
+                <i class="bi bi-three-dots"></i>
+              </button>
+              <div
+                class="dropdown-menu absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-strong overflow-hidden z-10 hidden">
+                {% if post.author.id == current_user.id %}
+                <a class="dropdown-item block px-4 py-2 hover:bg-fb-gray transition-colors text-blue-600 edit-post"
+                  href="#" data-bs-toggle="modal" data-bs-target="#editPostModal" data-post-id="{{ post.id }}">
+                  Edit
+                </a>
+                <a class="dropdown-item block px-4 py-2 hover:bg-fb-gray transition-colors text-red-600 delete-post"
+                  href="#" data-post-id="{{ post.id }}">
+                  Delete
+                  <span class="loader inline-block ml-1" style="display: none"></span>
+                </a>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <div class="px-4 pb-3">
+            {% if post.share_type in ['share', 'repost'] %}
+            <div class="shared-meta text-xs text-gray-500 flex items-center gap-2 mb-2">
+              <i class="bi bi-arrow-repeat"></i>
+              <span>{{ 'Reposted' if post.share_type == 'repost' else 'Shared' }}</span>
+            </div>
+            {% endif %}
+
+            {% if post.share_type in ['share', 'repost'] %}
+            {% if post.content %}
+            <p class="post-text {% if post.content|length > 100 %}truncated{% endif %}" id="post-text-{{ post.id }}">
+              {{ post.content }}
+            </p>
+            {% if post.content|length > 100 %}
+            <button class="see-more-btn text-blue-600 font-medium text-sm mt-1" onclick="togglePostText({{ post.id }})">
+              See More
+            </button>
+            {% endif %}
+            {% endif %}
+
+            <div class="shared-post-card mt-3">
+              {% if post.shared_post %}
+              <div class="shared-post-header flex items-start gap-3">
+                <a href="{{ url_for('user.view_profile', user_identifier=post.shared_post.author.id) }}" class="flex-shrink-0">
+                  <img
+                    src="{{ post.shared_post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+                    alt="{{ post.shared_post.author.full_name }}"
+                    class="w-9 h-9 rounded-full object-cover flex-shrink-0 hover:opacity-90 transition-opacity" />
+                </a>
+                <div>
+                  <a href="{{ url_for('user.view_profile', user_identifier=post.shared_post.author.id) }}" class="hover:underline text-gray-900 block">
+                    <div class="font-semibold text-sm">
+                      {{ post.shared_post.author.first_name }} {{ post.shared_post.author.last_name }}
+                    </div>
+                  </a>
+                  <div class="text-xs text-gray-500">
+                    {{ post.shared_post.created_at.strftime('%b %d at %I:%M %p') }}
+                    {% if post.shared_post.location %}
+                    <span class="mx-1">•</span>
+                    <span class="inline-flex items-center gap-1 text-blue-600">
+                      <i class="bi bi-geo-alt-fill"></i>
+                      Posting from {{ post.shared_post.location }}
+                    </span>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              {% if post.shared_post.content %}
+              <p class="shared-post-text mt-2 text-sm text-gray-800">
+                {{ post.shared_post.content }}
+              </p>
+              {% endif %}
+
+              {% if post.shared_post.image %}
+              <div class="post-media mt-3 -mx-4 sm:-mx-6 md:mx-0">
+                <img src="{{ post.shared_post.image }}" alt="Shared post image"
+                  class="w-full rounded-2xl max-h-96 object-contain bg-gray-100" loading="lazy" />
+              </div>
+              {% endif %}
+
+              {% if post.shared_post.gif %}
+              <div class="post-media mt-3 -mx-4 sm:-mx-6 md:mx-0">
+                <img src="{{ post.shared_post.gif }}" alt="Shared GIF"
+                  class="w-full rounded-2xl max-h-96 object-contain bg-gray-100" loading="lazy" />
+              </div>
+              {% endif %}
+
+              {% if post.shared_post.video %}
+              <div class="post-media mt-3 relative -mx-4 sm:mx-0 flex justify-center">
+                <video controls class="w-full rounded-2xl max-h-96 autoplay-video" preload="metadata" playsinline
+                  poster="{{ post.shared_post.video_thumbnail or '' }}" data-post-id="{{ post.shared_post.id }}"
+                  onloadedmetadata="this.classList.remove('video-loading')"
+                  onloadstart="this.classList.add('video-loading')">
+                  <source src="{{ post.shared_post.video }}" type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
+                <div
+                  class="video-loading-overlay absolute inset-0 bg-gray-900/50 flex items-center justify-center rounded-2xl hidden">
+                  <div class="text-center">
+                    <div class="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-2">
+                    </div>
+                    <p class="text-white text-sm">Loading video...</p>
+                  </div>
+                </div>
+              </div>
+              {% endif %}
+              {% else %}
+              <div class="shared-post-missing text-sm text-gray-500">
+                Original post is no longer available.
+              </div>
+              {% endif %}
+            </div>
+            {% else %}
+            <p class="post-text {% if post.content|length > 100 %}truncated{% endif %}" id="post-text-{{ post.id }}">
+              {{ post.content }}
+            </p>
+            {% if post.content|length > 100 %}
+            <button class="see-more-btn text-blue-600 font-medium text-sm mt-1" onclick="togglePostText({{ post.id }})">
+              See More
+            </button>
+            {% endif %} {% if post.image %}
+            <div class="post-media mt-3 -mx-4 sm:-mx-6 md:mx-0">
+              <img src="{{ post.image }}" alt="Post image"
+                class="w-full rounded-2xl max-h-96 object-contain bg-gray-100" loading="lazy" />
+            </div>
+            {% endif %}
+
+            <!-- GIPHY / External GIF -->
+            {% if post.gif %}
+            <div class="post-media mt-3 -mx-4 sm:-mx-6 md:mx-0">
+              <img src="{{ post.gif }}" alt="GIF" class="w-full rounded-2xl max-h-96 object-contain bg-gray-100"
+                loading="lazy" />
+            </div>
+            {% endif %} {% if post.video %}
+            <div class="post-media mt-3 relative -mx-4 sm:mx-0 flex justify-center">
+              <video controls class="w-full rounded-2xl max-h-96 autoplay-video" preload="metadata" playsinline
+                poster="{{ post.video_thumbnail or '' }}" data-post-id="{{ post.id }}"
+                onloadedmetadata="this.classList.remove('video-loading')"
+                onloadstart="this.classList.add('video-loading')">
+                <source src="{{ post.video }}" type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+              <div
+                class="video-loading-overlay absolute inset-0 bg-gray-900/50 flex items-center justify-center rounded-2xl hidden">
+                <div class="text-center">
+                  <div class="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-2">
+                  </div>
+                  <p class="text-white text-sm">Loading video...</p>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+            {% endif %}
+          </div>
+
+          <!-- Post Stats – With Icons & Real Reactions Count -->
+          <div class="flex items-center justify-between text-sm text-gray-600 mb-4 pb-3 border-b border-gray-200">
+            <span id="reaction-count-{{ post.id }}" class="flex items-center gap-1.5 font-medium">
+              <i class="bi bi-hand-thumbs-up-fill text-blue-600 text-base"></i>
+              <span>{{ post.reactions_count }} {{ 'reaction' if
+                post.reactions_count == 1 else 'reactions' }}</span>
+            </span>
+            <span id="comment-count-{{ post.id }}" class="flex items-center gap-1.5 font-medium">
+              <img src="{{ url_for('static', filename='assets/img/microphone2.png') }}" alt="Chimes" class="w-4 h-4" />
+              <span>{{ post.comments_count }} {{ 'chime' if post.comments_count
+                == 1 else 'chimes' }}</span>
+            </span>
+          </div>
+
+          <!-- Post Actions -->
+          <div class="px-4 md:px-6 py-2 md:py-3 border-t border-gray-100">
+            <div class="flex flex-wrap justify-around gap-1">
+              <!-- Like Button with Reactions -->
+              <div class="reactions-container">
+                {% set user_reaction = current_user.get_user_reaction(post.id)
+                %}
+                <button onclick="likePost({{ post.id }})"
+                  class="flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-1 md:py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 like-btn {% if user_reaction %}active-{{ user_reaction }} text-{% if user_reaction == 'like' %}blue{% elif user_reaction == 'love' %}red{% elif user_reaction in ['care', 'haha', 'wow', 'sad'] %}yellow{% elif user_reaction == 'angry' %}red{% endif %}-600{% else %}text-gray-600{% endif %}"
+                  id="like-btn-{{ post.id }}" onmouseenter="showReactions({{ post.id }})"
+                  onmouseleave="hideReactions({{ post.id }})">
+                  <i class="bi {% if user_reaction %}{% if user_reaction == 'like' %}bi-hand-thumbs-up-fill{% elif user_reaction == 'love' %}bi-heart-fill{% elif user_reaction == 'care' %}bi-emoji-heart-eyes{% elif user_reaction == 'haha' %}bi-emoji-laughing{% elif user_reaction == 'wow' %}bi-emoji-surprise{% elif user_reaction == 'sad' %}bi-emoji-frown{% elif user_reaction == 'angry' %}bi-emoji-angry{% endif %}{% else %}bi-hand-thumbs-up{% endif %}"
+                    id="like-icon-{{ post.id }}"></i>
+                  <span id="like-text-{{ post.id }}" class="text-xs md:text-sm">
+                    {% if user_reaction %} {% if user_reaction == 'like'
+                    %}Liked {% elif user_reaction == 'love' %}Loved {% elif
+                    user_reaction == 'care' %}Cared {% elif user_reaction ==
+                    'haha' %}Haha {% elif user_reaction == 'wow' %}Wow {% elif
+                    user_reaction == 'sad' %}Sad {% elif user_reaction ==
+                    'angry' %}Angry {% endif %} {% else %} Like {% endif %}
+                  </span>
+                </button>
+
+                <!-- Reactions Tooltip -->
+                <div class="reactions-tooltip" id="reactions-{{ post.id }}">
+                  <div class="reaction-option like text-lg md:text-xl" onclick="reactToPost({{ post.id }}, 'like')"
+                    title="Like">
+                    👍
+                  </div>
+                  <div class="reaction-option love text-lg md:text-xl" onclick="reactToPost({{ post.id }}, 'love')"
+                    title="Love">
+                    ❤️
+                  </div>
+                  <div class="reaction-option care text-lg md:text-xl" onclick="reactToPost({{ post.id }}, 'care')"
+                    title="Care">
+                    🥰
+                  </div>
+                  <div class="reaction-option haha text-lg md:text-xl" onclick="reactToPost({{ post.id }}, 'haha')"
+                    title="Haha">
+                    😂
+                  </div>
+                  <div class="reaction-option wow text-lg md:text-xl" onclick="reactToPost({{ post.id }}, 'wow')"
+                    title="Wow">
+                    😮
+                  </div>
+                  <div class="reaction-option sad text-lg md:text-xl" onclick="reactToPost({{ post.id }}, 'sad')"
+                    title="Sad">
+                    😢
+                  </div>
+                  <div class="reaction-option angry text-lg md:text-xl" onclick="reactToPost({{ post.id }}, 'angry')"
+                    title="Angry">
+                    😠
+                  </div>
+                </div>
+              </div>
+
+              <button onclick="focusCommentInput({{ post.id }})"
+                class="flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-1 md:py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 text-gray-600">
+                <img src="{{ url_for('static', filename='assets/img/microphone2.png') }}" alt="Chime" class="w-4 h-4" />
+                <span class="text-xs md:text-sm">Chime</span>
+              </button>
+
+              <button
+                class="flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-1 md:py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 text-gray-600 repost-btn"
+                data-post-id="{{ post.public_id }}">
+                <i class="bi bi-arrow-repeat"></i>
+                <span class="text-xs md:text-sm">Repost</span>
+              </button>
+
+              <button
+                class="flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-1 md:py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 text-gray-600 share-btn"
+                data-post-id="{{ post.public_id }}"
+                data-url="{{ url_for('user.view_shared_post', post_identifier=post.public_id) }}">
+                <i class="bi bi-share"></i>
+                <span class="text-xs md:text-sm">Share</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Comments Section -->
+          <!-- Comments Section - Scrollable with Dates & Avatars -->
+          <!-- Comments Section -->
+          <div class="comments-section -mx-4 px-4 py-4 bg-gray-50 border-t border-gray-100">
+            <!-- Comment Input -->
+            <div class="flex items-center space-x-3 mb-4">
+              <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+                alt="{{ current_user.full_name }}" class="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+              <div class="flex-1 relative">
+                <input type="text" id="commentInput-{{ post.id }}" placeholder="Drop a chime..."
+                  class="w-full bg-white rounded-full px-4 py-2.5 text-sm border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                  onkeypress="handleCommentKeypress(event, {{ post.id }})" />
+              </div>
+            </div>
+
+            <!-- Comments List Container -->
+            <div id="commentsList-{{ post.id }}" class="comments-list space-y-4">
+              {% if post.comments_count > 0 %} {% for comment in
+              post.comments[:20]|reverse %}
+              <div class="flex space-x-3 comment-item" id="comment-{{ comment.id }}">
+                <a href="{{ url_for('user.view_profile', user_identifier=comment.author.id) }}" class="flex-shrink-0">
+                  <img
+                    src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+                    alt="{{ comment.author.full_name }}" class="w-9 h-9 rounded-full object-cover flex-shrink-0 hover:opacity-90 transition-opacity" />
+                </a>
+                <div class="flex-1">
+                  <div class="bg-white rounded-2xl px-4 py-3 shadow-sm">
+                    <div class="flex justify-between items-start">
+                      <a href="{{ url_for('user.view_profile', user_identifier=comment.author.id) }}" class="hover:underline text-gray-900">
+                        <h6 class="font-semibold text-sm">
+                          {{ comment.author.full_name }}
+                        </h6>
+                      </a>
+                      <span class="text-xs text-gray-500">
+                        {{ comment.created_at.strftime('%b %d at %I:%M %p') }}
+                      </span>
+                    </div>
+                    <p class="text-gray-800 text-sm mt-2 leading-relaxed">
+                      {{ comment.content }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              {% endfor %} {% else %}
+              <p class="text-center text-gray-500 text-sm py-6 no-comments-message">
+                No chimes yet. Be the first to chime!
+              </p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% if loop.index % 13 == 0 %}
+        {% set mobile_banner = mobile_banner_candidates|random %}
+        <div class="mobile-feed-ad">
+          {% if mobile_banner.banner %}
+          <a class="mobile-feed-ad-link" href="{{ mobile_banner.banner.target_url }}" target="_blank" rel="noopener">
+            <div class="mobile-feed-ad-badge">{{ mobile_banner.label }}</div>
+            {% if mobile_banner.banner.media_type == 'video' %}
+            <video class="mobile-feed-ad-media" autoplay muted loop playsinline>
+              <source src="{{ mobile_banner.banner.image_url }}" {% if mobile_banner.banner.video_mime
+                %}type="{{ mobile_banner.banner.video_mime }}" {% endif %} />
+            </video>
+            {% else %}
+            <img src="{{ mobile_banner.banner.image_url }}" alt="{{ mobile_banner.banner.title }}"
+              class="mobile-feed-ad-media" loading="lazy" />
+            {% endif %}
+          </a>
+          {% else %}
+          <div class="mobile-feed-ad-inner">
+            <div class="mobile-feed-ad-badge">{{ mobile_banner.label }}</div>
+            <h3>{{ mobile_banner.headline }}</h3>
+            <p>{{ mobile_banner.copy }}</p>
+            <a class="mobile-feed-ad-cta"
+              href="{{ url_for('payments.dashboard_ad_package', placement=mobile_banner.placement) }}">
+              {{ mobile_banner.cta }}
+            </a>
+          </div>
+          {% endif %}
+        </div>
+        {% endif %}
+        {% endfor %} {% else %}
+        <!-- No posts message -->
+        <div class="bg-white rounded-2xl shadow-soft p-8 text-center">
+          <i class="bi bi-newspaper text-4xl text-gray-400 mb-4"></i>
+          <h3 class="text-xl font-semibold text-gray-700 mb-2">
+            No posts yet
+          </h3>
+          <p class="text-gray-500 mb-4">Be the first to share something!</p>
+          <button class="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+            data-bs-toggle="modal" data-bs-target="#postModal">
+            Create Your First Post
+          </button>
+        </div>
+        {% endif %}
+
+        <!-- INFINITE SCROLL LOADING INDICATOR -->
+        <div id="loading-spinner" class="hidden mb-6">
+          <div class="bg-white rounded-2xl shadow-soft p-8 text-center">
+            <div class="flex flex-col items-center">
+              <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-3"></div>
+              <p class="text-gray-600">Loading more posts...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- LOAD MORE BUTTON (Fallback for non-JS) -->
+        {% if has_more and next_cursor %}
+        <div id="load-more-container" class="text-center mb-6">
+          <button id="load-more-btn"
+            class="px-6 py-3 bg-white text-blue-600 rounded-xl shadow-soft hover:bg-gray-50 transition-colors font-medium border border-gray-200"
+            data-cursor="{{ next_cursor }}">
+            Load More Posts
+          </button>
+        </div>
+        {% endif %}
+
+        <!-- END OF FEED MESSAGE -->
+        <div id="end-of-feed" class="hidden text-center py-8 text-gray-500">
+          <i class="bi bi-check-circle text-2xl mb-2"></i>
+          <p>You've reached the end</p>
+          <p class="text-sm mt-1">No more posts to load</p>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- ── RIGHT SIDEBAR ── -->
+    <aside class="kb-right-sidebar">
+
+      <!-- Trending Groups -->
+      <div class="kb-right-card">
+        <div class="kb-right-card-header">
+          <h3>Trending Groups</h3>
+          <a href="#">View all</a>
+        </div>
+        {% if groups is defined and groups %}
+          {% for group in groups[:4] %}
+          <div class="kb-right-item">
+            <img src="{{ group.cover_image or url_for('static', filename='assets/img/default-avatar.png') }}" class="kb-right-item-avatar" alt="{{ group.name }}" />
+            <div class="kb-right-item-info">
+              <div class="kb-right-item-name">{{ group.name }}</div>
+              <div class="kb-right-item-meta">{{ group.members_count|default('') }} active</div>
+            </div>
+            <button class="kb-join-btn">Join</button>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="kb-right-item">
+            <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#ec4899);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;flex-shrink:0;">E</div>
+            <div class="kb-right-item-info">
+              <div class="kb-right-item-name">Entrepreneurs Hub</div>
+              <div class="kb-right-item-meta">1.2K active</div>
+            </div>
+            <button class="kb-join-btn">Join</button>
+          </div>
+          <div class="kb-right-item">
+            <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#06b6d4);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;flex-shrink:0;">T</div>
+            <div class="kb-right-item-info">
+              <div class="kb-right-item-name">Tech Innovators</div>
+              <div class="kb-right-item-meta">980 active</div>
+            </div>
+            <button class="kb-join-btn">Join</button>
+          </div>
+          <div class="kb-right-item">
+            <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#ef4444);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;flex-shrink:0;">M</div>
+            <div class="kb-right-item-info">
+              <div class="kb-right-item-name">Mindset Mastery</div>
+              <div class="kb-right-item-meta">1.5K active</div>
+            </div>
+            <button class="kb-join-btn">Join</button>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Suggested for You -->
+      <div class="kb-right-card">
+        <div class="kb-right-card-header">
+          <h3>Suggested for You</h3>
+          <a href="#">View all</a>
+        </div>
+        {% if random_five is defined and random_five %}
+          {% for user in random_five[:3] %}
+          <div class="kb-right-item" onclick="openProfileModal({{ user.id }})" style="cursor:pointer">
+            <img src="{{ user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" class="kb-right-item-avatar" alt="{{ user.first_name }}" />
+            <div class="kb-right-item-info">
+              <div class="kb-right-item-name">{{ user.first_name }} {{ user.last_name }}</div>
+              <div class="kb-right-item-meta">{{ user.mutual_friends_count|default('') }} mutual friends</div>
+            </div>
+            <button class="kb-follow-btn" onclick="event.stopPropagation(); addFriend({{ user.id }}, this)">Follow</button>
+          </div>
+          {% endfor %}
+        {% else %}
+          <p style="text-align:center;color:#9ca3af;font-size:0.85rem;padding:1rem 0;">Connect with new people!</p>
+        {% endif %}
+      </div>
+
+      <!-- Popular Hashtags -->
+      <div class="kb-right-card">
+        <div class="kb-right-card-header">
+          <h3>Popular Hashtags</h3>
+        </div>
+        <div class="kb-hashtag-item">
+          <div class="kb-hashtag-icon">#</div>
+          <div>
+            <div class="kb-hashtag-name">Motivation</div>
+            <div class="kb-hashtag-count">2.3K posts</div>
+          </div>
+        </div>
+        <div class="kb-hashtag-item">
+          <div class="kb-hashtag-icon">#</div>
+          <div>
+            <div class="kb-hashtag-name">GrowthMindset</div>
+            <div class="kb-hashtag-count">1.8K posts</div>
+          </div>
+        </div>
+        <div class="kb-hashtag-item">
+          <div class="kb-hashtag-icon">#</div>
+          <div>
+            <div class="kb-hashtag-name">Success</div>
+            <div class="kb-hashtag-count">3.1K posts</div>
+          </div>
+        </div>
+      </div>
+
+    </aside>
+  </div>
+  <!-- END NEW LAYOUT -->
 
   <!-- Enchanting ad banner (below navbar) -->
   {% set top_banner = dashboard_ads.get('top_banner') if dashboard_ads else None %}
@@ -954,411 +1618,6 @@
         </script>
 
       <!-- POSTS FEED - OPTIMIZED FOR INFINITE SCROLL -->
-      <div id="posts-feed" data-has-more="{{ has_more|tojson }}" data-next-cursor="{{ next_cursor }}">
-        <!-- PEOPLE YOU MAY KNOW -->
-
-
-        <!-- INITIAL POSTS (Loaded server-side) -->
-        {% if initial_posts %} {% for post in initial_posts %}
-        <div class="post-card bg-white rounded-2xl shadow-soft mb-6 overflow-hidden card-hover initial"
-          data-post-id="{{ post.id }}" id="post-{{ post.id }}">
-          <div class="p-4 flex justify-between items-start">
-            <div class="flex items-start space-x-3">
-              <a href="{{ url_for('user.view_profile', user_identifier=post.author.id) }}" class="flex-shrink-0">
-                <img src="{{ post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-                  class="w-10 h-10 rounded-full object-cover hover:opacity-90 transition-opacity" />
-              </a>
-              <div>
-                <a href="{{ url_for('user.view_profile', user_identifier=post.author.id) }}" class="hover:underline text-gray-900 block">
-                  <div class="font-semibold">
-                    {{ post.author.first_name }} {{ post.author.last_name }}
-                  </div>
-                </a>
-                <div class="text-sm text-fb-text-light">
-                  {{ post.created_at.strftime('%b %d at %I:%M %p') }}
-                  {% if post.location %}
-                  <span class="mx-1">•</span>
-                  <span class="inline-flex items-center gap-1 text-blue-600">
-                    <i class="bi bi-geo-alt-fill"></i>
-                    Posting from {{ post.location }}
-                  </span>
-                  {% endif %}
-                </div>
-              </div>
-            </div>
-            <div class="dropdown relative">
-              <button class="p-2 rounded-full hover:bg-fb-gray transition-colors" data-bs-toggle="dropdown">
-                <i class="bi bi-three-dots"></i>
-              </button>
-              <div
-                class="dropdown-menu absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-strong overflow-hidden z-10 hidden">
-                {% if post.author.id == current_user.id %}
-                <a class="dropdown-item block px-4 py-2 hover:bg-fb-gray transition-colors text-blue-600 edit-post"
-                  href="#" data-bs-toggle="modal" data-bs-target="#editPostModal" data-post-id="{{ post.id }}">
-                  Edit
-                </a>
-                <a class="dropdown-item block px-4 py-2 hover:bg-fb-gray transition-colors text-red-600 delete-post"
-                  href="#" data-post-id="{{ post.id }}">
-                  Delete
-                  <span class="loader inline-block ml-1" style="display: none"></span>
-                </a>
-                {% endif %}
-              </div>
-            </div>
-          </div>
-
-          <div class="px-4 pb-3">
-            {% if post.share_type in ['share', 'repost'] %}
-            <div class="shared-meta text-xs text-gray-500 flex items-center gap-2 mb-2">
-              <i class="bi bi-arrow-repeat"></i>
-              <span>{{ 'Reposted' if post.share_type == 'repost' else 'Shared' }}</span>
-            </div>
-            {% endif %}
-
-            {% if post.share_type in ['share', 'repost'] %}
-            {% if post.content %}
-            <p class="post-text {% if post.content|length > 100 %}truncated{% endif %}" id="post-text-{{ post.id }}">
-              {{ post.content }}
-            </p>
-            {% if post.content|length > 100 %}
-            <button class="see-more-btn text-blue-600 font-medium text-sm mt-1" onclick="togglePostText({{ post.id }})">
-              See More
-            </button>
-            {% endif %}
-            {% endif %}
-
-            <div class="shared-post-card mt-3">
-              {% if post.shared_post %}
-              <div class="shared-post-header flex items-start gap-3">
-                <a href="{{ url_for('user.view_profile', user_identifier=post.shared_post.author.id) }}" class="flex-shrink-0">
-                  <img
-                    src="{{ post.shared_post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-                    alt="{{ post.shared_post.author.full_name }}"
-                    class="w-9 h-9 rounded-full object-cover flex-shrink-0 hover:opacity-90 transition-opacity" />
-                </a>
-                <div>
-                  <a href="{{ url_for('user.view_profile', user_identifier=post.shared_post.author.id) }}" class="hover:underline text-gray-900 block">
-                    <div class="font-semibold text-sm">
-                      {{ post.shared_post.author.first_name }} {{ post.shared_post.author.last_name }}
-                    </div>
-                  </a>
-                  <div class="text-xs text-gray-500">
-                    {{ post.shared_post.created_at.strftime('%b %d at %I:%M %p') }}
-                    {% if post.shared_post.location %}
-                    <span class="mx-1">•</span>
-                    <span class="inline-flex items-center gap-1 text-blue-600">
-                      <i class="bi bi-geo-alt-fill"></i>
-                      Posting from {{ post.shared_post.location }}
-                    </span>
-                    {% endif %}
-                  </div>
-                </div>
-              </div>
-
-              {% if post.shared_post.content %}
-              <p class="shared-post-text mt-2 text-sm text-gray-800">
-                {{ post.shared_post.content }}
-              </p>
-              {% endif %}
-
-              {% if post.shared_post.image %}
-              <div class="post-media mt-3 -mx-4 sm:-mx-6 md:mx-0">
-                <img src="{{ post.shared_post.image }}" alt="Shared post image"
-                  class="w-full rounded-2xl max-h-96 object-contain bg-gray-100" loading="lazy" />
-              </div>
-              {% endif %}
-
-              {% if post.shared_post.gif %}
-              <div class="post-media mt-3 -mx-4 sm:-mx-6 md:mx-0">
-                <img src="{{ post.shared_post.gif }}" alt="Shared GIF"
-                  class="w-full rounded-2xl max-h-96 object-contain bg-gray-100" loading="lazy" />
-              </div>
-              {% endif %}
-
-              {% if post.shared_post.video %}
-              <div class="post-media mt-3 relative -mx-4 sm:mx-0 flex justify-center">
-                <video controls class="w-full rounded-2xl max-h-96 autoplay-video" preload="metadata" playsinline
-                  poster="{{ post.shared_post.video_thumbnail or '' }}" data-post-id="{{ post.shared_post.id }}"
-                  onloadedmetadata="this.classList.remove('video-loading')"
-                  onloadstart="this.classList.add('video-loading')">
-                  <source src="{{ post.shared_post.video }}" type="video/mp4" />
-                  Your browser does not support the video tag.
-                </video>
-                <div
-                  class="video-loading-overlay absolute inset-0 bg-gray-900/50 flex items-center justify-center rounded-2xl hidden">
-                  <div class="text-center">
-                    <div class="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-2">
-                    </div>
-                    <p class="text-white text-sm">Loading video...</p>
-                  </div>
-                </div>
-              </div>
-              {% endif %}
-              {% else %}
-              <div class="shared-post-missing text-sm text-gray-500">
-                Original post is no longer available.
-              </div>
-              {% endif %}
-            </div>
-            {% else %}
-            <p class="post-text {% if post.content|length > 100 %}truncated{% endif %}" id="post-text-{{ post.id }}">
-              {{ post.content }}
-            </p>
-            {% if post.content|length > 100 %}
-            <button class="see-more-btn text-blue-600 font-medium text-sm mt-1" onclick="togglePostText({{ post.id }})">
-              See More
-            </button>
-            {% endif %} {% if post.image %}
-            <div class="post-media mt-3 -mx-4 sm:-mx-6 md:mx-0">
-              <img src="{{ post.image }}" alt="Post image"
-                class="w-full rounded-2xl max-h-96 object-contain bg-gray-100" loading="lazy" />
-            </div>
-            {% endif %}
-
-            <!-- GIPHY / External GIF -->
-            {% if post.gif %}
-            <div class="post-media mt-3 -mx-4 sm:-mx-6 md:mx-0">
-              <img src="{{ post.gif }}" alt="GIF" class="w-full rounded-2xl max-h-96 object-contain bg-gray-100"
-                loading="lazy" />
-            </div>
-            {% endif %} {% if post.video %}
-            <div class="post-media mt-3 relative -mx-4 sm:mx-0 flex justify-center">
-              <video controls class="w-full rounded-2xl max-h-96 autoplay-video" preload="metadata" playsinline
-                poster="{{ post.video_thumbnail or '' }}" data-post-id="{{ post.id }}"
-                onloadedmetadata="this.classList.remove('video-loading')"
-                onloadstart="this.classList.add('video-loading')">
-                <source src="{{ post.video }}" type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
-              <div
-                class="video-loading-overlay absolute inset-0 bg-gray-900/50 flex items-center justify-center rounded-2xl hidden">
-                <div class="text-center">
-                  <div class="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-2">
-                  </div>
-                  <p class="text-white text-sm">Loading video...</p>
-                </div>
-              </div>
-            </div>
-            {% endif %}
-            {% endif %}
-          </div>
-
-          <!-- Post Stats – With Icons & Real Reactions Count -->
-          <div class="flex items-center justify-between text-sm text-gray-600 mb-4 pb-3 border-b border-gray-200">
-            <span id="reaction-count-{{ post.id }}" class="flex items-center gap-1.5 font-medium">
-              <i class="bi bi-hand-thumbs-up-fill text-blue-600 text-base"></i>
-              <span>{{ post.reactions_count }} {{ 'reaction' if
-                post.reactions_count == 1 else 'reactions' }}</span>
-            </span>
-            <span id="comment-count-{{ post.id }}" class="flex items-center gap-1.5 font-medium">
-              <img src="{{ url_for('static', filename='assets/img/microphone2.png') }}" alt="Chimes" class="w-4 h-4" />
-              <span>{{ post.comments_count }} {{ 'chime' if post.comments_count
-                == 1 else 'chimes' }}</span>
-            </span>
-          </div>
-
-          <!-- Post Actions -->
-          <div class="px-4 md:px-6 py-2 md:py-3 border-t border-gray-100">
-            <div class="flex flex-wrap justify-around gap-1">
-              <!-- Like Button with Reactions -->
-              <div class="reactions-container">
-                {% set user_reaction = current_user.get_user_reaction(post.id)
-                %}
-                <button onclick="likePost({{ post.id }})"
-                  class="flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-1 md:py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 like-btn {% if user_reaction %}active-{{ user_reaction }} text-{% if user_reaction == 'like' %}blue{% elif user_reaction == 'love' %}red{% elif user_reaction in ['care', 'haha', 'wow', 'sad'] %}yellow{% elif user_reaction == 'angry' %}red{% endif %}-600{% else %}text-gray-600{% endif %}"
-                  id="like-btn-{{ post.id }}" onmouseenter="showReactions({{ post.id }})"
-                  onmouseleave="hideReactions({{ post.id }})">
-                  <i class="bi {% if user_reaction %}{% if user_reaction == 'like' %}bi-hand-thumbs-up-fill{% elif user_reaction == 'love' %}bi-heart-fill{% elif user_reaction == 'care' %}bi-emoji-heart-eyes{% elif user_reaction == 'haha' %}bi-emoji-laughing{% elif user_reaction == 'wow' %}bi-emoji-surprise{% elif user_reaction == 'sad' %}bi-emoji-frown{% elif user_reaction == 'angry' %}bi-emoji-angry{% endif %}{% else %}bi-hand-thumbs-up{% endif %}"
-                    id="like-icon-{{ post.id }}"></i>
-                  <span id="like-text-{{ post.id }}" class="text-xs md:text-sm">
-                    {% if user_reaction %} {% if user_reaction == 'like'
-                    %}Liked {% elif user_reaction == 'love' %}Loved {% elif
-                    user_reaction == 'care' %}Cared {% elif user_reaction ==
-                    'haha' %}Haha {% elif user_reaction == 'wow' %}Wow {% elif
-                    user_reaction == 'sad' %}Sad {% elif user_reaction ==
-                    'angry' %}Angry {% endif %} {% else %} Like {% endif %}
-                  </span>
-                </button>
-
-                <!-- Reactions Tooltip -->
-                <div class="reactions-tooltip" id="reactions-{{ post.id }}">
-                  <div class="reaction-option like text-lg md:text-xl" onclick="reactToPost({{ post.id }}, 'like')"
-                    title="Like">
-                    👍
-                  </div>
-                  <div class="reaction-option love text-lg md:text-xl" onclick="reactToPost({{ post.id }}, 'love')"
-                    title="Love">
-                    ❤️
-                  </div>
-                  <div class="reaction-option care text-lg md:text-xl" onclick="reactToPost({{ post.id }}, 'care')"
-                    title="Care">
-                    🥰
-                  </div>
-                  <div class="reaction-option haha text-lg md:text-xl" onclick="reactToPost({{ post.id }}, 'haha')"
-                    title="Haha">
-                    😂
-                  </div>
-                  <div class="reaction-option wow text-lg md:text-xl" onclick="reactToPost({{ post.id }}, 'wow')"
-                    title="Wow">
-                    😮
-                  </div>
-                  <div class="reaction-option sad text-lg md:text-xl" onclick="reactToPost({{ post.id }}, 'sad')"
-                    title="Sad">
-                    😢
-                  </div>
-                  <div class="reaction-option angry text-lg md:text-xl" onclick="reactToPost({{ post.id }}, 'angry')"
-                    title="Angry">
-                    😠
-                  </div>
-                </div>
-              </div>
-
-              <button onclick="focusCommentInput({{ post.id }})"
-                class="flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-1 md:py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 text-gray-600">
-                <img src="{{ url_for('static', filename='assets/img/microphone2.png') }}" alt="Chime" class="w-4 h-4" />
-                <span class="text-xs md:text-sm">Chime</span>
-              </button>
-
-              <button
-                class="flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-1 md:py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 text-gray-600 repost-btn"
-                data-post-id="{{ post.public_id }}">
-                <i class="bi bi-arrow-repeat"></i>
-                <span class="text-xs md:text-sm">Repost</span>
-              </button>
-
-              <button
-                class="flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-1 md:py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 text-gray-600 share-btn"
-                data-post-id="{{ post.public_id }}"
-                data-url="{{ url_for('user.view_shared_post', post_identifier=post.public_id) }}">
-                <i class="bi bi-share"></i>
-                <span class="text-xs md:text-sm">Share</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Comments Section -->
-          <!-- Comments Section - Scrollable with Dates & Avatars -->
-          <!-- Comments Section -->
-          <div class="comments-section -mx-4 px-4 py-4 bg-gray-50 border-t border-gray-100">
-            <!-- Comment Input -->
-            <div class="flex items-center space-x-3 mb-4">
-              <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-                alt="{{ current_user.full_name }}" class="w-8 h-8 rounded-full object-cover flex-shrink-0" />
-              <div class="flex-1 relative">
-                <input type="text" id="commentInput-{{ post.id }}" placeholder="Drop a chime..."
-                  class="w-full bg-white rounded-full px-4 py-2.5 text-sm border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                  onkeypress="handleCommentKeypress(event, {{ post.id }})" />
-              </div>
-            </div>
-
-            <!-- Comments List Container -->
-            <div id="commentsList-{{ post.id }}" class="comments-list space-y-4">
-              {% if post.comments_count > 0 %} {% for comment in
-              post.comments[:20]|reverse %}
-              <div class="flex space-x-3 comment-item" id="comment-{{ comment.id }}">
-                <a href="{{ url_for('user.view_profile', user_identifier=comment.author.id) }}" class="flex-shrink-0">
-                  <img
-                    src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-                    alt="{{ comment.author.full_name }}" class="w-9 h-9 rounded-full object-cover flex-shrink-0 hover:opacity-90 transition-opacity" />
-                </a>
-                <div class="flex-1">
-                  <div class="bg-white rounded-2xl px-4 py-3 shadow-sm">
-                    <div class="flex justify-between items-start">
-                      <a href="{{ url_for('user.view_profile', user_identifier=comment.author.id) }}" class="hover:underline text-gray-900">
-                        <h6 class="font-semibold text-sm">
-                          {{ comment.author.full_name }}
-                        </h6>
-                      </a>
-                      <span class="text-xs text-gray-500">
-                        {{ comment.created_at.strftime('%b %d at %I:%M %p') }}
-                      </span>
-                    </div>
-                    <p class="text-gray-800 text-sm mt-2 leading-relaxed">
-                      {{ comment.content }}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              {% endfor %} {% else %}
-              <p class="text-center text-gray-500 text-sm py-6 no-comments-message">
-                No chimes yet. Be the first to chime!
-              </p>
-              {% endif %}
-            </div>
-          </div>
-        </div>
-        {% if loop.index % 13 == 0 %}
-        {% set mobile_banner = mobile_banner_candidates|random %}
-        <div class="mobile-feed-ad">
-          {% if mobile_banner.banner %}
-          <a class="mobile-feed-ad-link" href="{{ mobile_banner.banner.target_url }}" target="_blank" rel="noopener">
-            <div class="mobile-feed-ad-badge">{{ mobile_banner.label }}</div>
-            {% if mobile_banner.banner.media_type == 'video' %}
-            <video class="mobile-feed-ad-media" autoplay muted loop playsinline>
-              <source src="{{ mobile_banner.banner.image_url }}" {% if mobile_banner.banner.video_mime
-                %}type="{{ mobile_banner.banner.video_mime }}" {% endif %} />
-            </video>
-            {% else %}
-            <img src="{{ mobile_banner.banner.image_url }}" alt="{{ mobile_banner.banner.title }}"
-              class="mobile-feed-ad-media" loading="lazy" />
-            {% endif %}
-          </a>
-          {% else %}
-          <div class="mobile-feed-ad-inner">
-            <div class="mobile-feed-ad-badge">{{ mobile_banner.label }}</div>
-            <h3>{{ mobile_banner.headline }}</h3>
-            <p>{{ mobile_banner.copy }}</p>
-            <a class="mobile-feed-ad-cta"
-              href="{{ url_for('payments.dashboard_ad_package', placement=mobile_banner.placement) }}">
-              {{ mobile_banner.cta }}
-            </a>
-          </div>
-          {% endif %}
-        </div>
-        {% endif %}
-        {% endfor %} {% else %}
-        <!-- No posts message -->
-        <div class="bg-white rounded-2xl shadow-soft p-8 text-center">
-          <i class="bi bi-newspaper text-4xl text-gray-400 mb-4"></i>
-          <h3 class="text-xl font-semibold text-gray-700 mb-2">
-            No posts yet
-          </h3>
-          <p class="text-gray-500 mb-4">Be the first to share something!</p>
-          <button class="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
-            data-bs-toggle="modal" data-bs-target="#postModal">
-            Create Your First Post
-          </button>
-        </div>
-        {% endif %}
-
-        <!-- INFINITE SCROLL LOADING INDICATOR -->
-        <div id="loading-spinner" class="hidden mb-6">
-          <div class="bg-white rounded-2xl shadow-soft p-8 text-center">
-            <div class="flex flex-col items-center">
-              <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-3"></div>
-              <p class="text-gray-600">Loading more posts...</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- LOAD MORE BUTTON (Fallback for non-JS) -->
-        {% if has_more and next_cursor %}
-        <div id="load-more-container" class="text-center mb-6">
-          <button id="load-more-btn"
-            class="px-6 py-3 bg-white text-blue-600 rounded-xl shadow-soft hover:bg-gray-50 transition-colors font-medium border border-gray-200"
-            data-cursor="{{ next_cursor }}">
-            Load More Posts
-          </button>
-        </div>
-        {% endif %}
-
-        <!-- END OF FEED MESSAGE -->
-        <div id="end-of-feed" class="hidden text-center py-8 text-gray-500">
-          <i class="bi bi-check-circle text-2xl mb-2"></i>
-          <p>You've reached the end</p>
-          <p class="text-sm mt-1">No more posts to load</p>
-        </div>
-      </div>
     </div>
 
     <!-- RIGHT SIDEBAR -->
