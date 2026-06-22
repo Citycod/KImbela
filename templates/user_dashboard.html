@@ -52,7 +52,7 @@
 </head>
 
 
-<body class="font-poppins bg-fb-gray text-fb-text has-top-banner">
+<body class="font-poppins bg-fb-gray text-fb-text">
   <div class="simple-loader" id="loader">
     <div class="loader-logo">
       <img src="{{ url_for('static', filename='assets/img/kim.png') }}" alt="Kimbela" class="h-10" style="
@@ -324,28 +324,23 @@
     </div>
   </nav>
 
-  <!-- Enchanting ad banner (below navbar) -->
+  <!-- Top banner ad (below navbar) — Jumia-style -->
   {% set top_banner = dashboard_ads.get('top_banner') if dashboard_ads else None %}
   {% set top_banner_url = top_banner.target_url if top_banner else url_for('payments.dashboard_ad_package',
   placement='dashboard-top') %}
   {% set top_banner_image = top_banner.image_url if top_banner else None %}
   {% set top_banner_title = top_banner.title if top_banner else "Ad space" %}
-  <section class="hero-ad-wrap mt-1">
-    <div class="hero-ad-shell {% if top_banner %}has-dashboard-ad{% endif %}">
-      <a class="hero-ad-link" href="{{ top_banner_url }}" {% if top_banner %}target="_blank" rel="noopener" {% endif %}>
-        {% if top_banner_image %}
-        <img src="{{ top_banner_image }}" alt="{{ top_banner_title }}" class="hero-ad-media" loading="lazy" />
-        <div class="hero-ad-content" style="background: linear-gradient(to right, rgba(15,23,42,0.9) 0%, rgba(15,23,42,0.6) 50%, transparent 100%); width: 100%; pointer-events: none; border-radius: inherit;">
-          <div class="hero-ad-pill">Sponsored</div>
-          <h2 style="color: #f8fafc; font-weight: 700; text-shadow: 1px 1px 4px rgba(0,0,0,0.8);">{{ top_banner_title }}</h2>
-          {% if top_banner.description %}
-          <h5 class="hero-ad-highlight" style="text-shadow: 1px 1px 4px rgba(0,0,0,0.8);">{{ top_banner.description }}</h5>
-          {% endif %}
-          <div class="hero-ad-actions" style="pointer-events: auto;">
-            <span class="hero-ad-cta js-ad-cta" data-cta-href="{{ top_banner_url }}" role="link" tabindex="0">{{ top_banner.call_to_action or 'Learn More' }}</span>
-          </div>
-        </div>
-        {% else %}
+  <section class="hero-ad-wrap">
+    {% if top_banner_image %}
+    <!-- Active ad: full-width clickable image banner -->
+    <a class="hero-ad-link hero-ad-link--active" href="{{ top_banner_url }}" target="_blank" rel="noopener">
+      <img src="{{ top_banner_image }}" alt="{{ top_banner_title }}" class="hero-ad-media" loading="lazy" />
+      <span class="hero-ad-badge">Sponsored</span>
+    </a>
+    {% else %}
+    <!-- Placeholder: invite users to advertise -->
+    <div class="hero-ad-shell">
+      <a class="hero-ad-link hero-ad-link--placeholder" href="{{ top_banner_url }}">
         <div class="hero-ad-backdrop" aria-hidden="true">
           <span class="hero-ad-orb orb-a"></span>
           <span class="hero-ad-orb orb-b"></span>
@@ -363,15 +358,15 @@
             <span class="hero-ad-secondary">Premium placement</span>
           </div>
         </div>
-        {% endif %}
+        <div class="hero-ad-sheen" aria-hidden="true"></div>
+        <div class="hero-ad-sparkles" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
       </a>
-      <div class="hero-ad-sheen" aria-hidden="true"></div>
-      <div class="hero-ad-sparkles" aria-hidden="true">
-        <span></span>
-        <span></span>
-        <span></span>
-      </div>
     </div>
+    {% endif %}
   </section>
 
 
@@ -3979,66 +3974,76 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
       }
     }
 
-    /* Enchanting hero ad banner */
+    /* ===== TOP BANNER AD — Jumia-style ===== */
     .hero-ad-wrap {
       width: 100%;
-      padding: 0 0 12px;
-      margin-top: -6px;
+      padding: 0;
+      margin: 0;
+      line-height: 0; /* collapse whitespace around img */
     }
 
-    body.has-top-banner {
-      --top-banner-height: 220px;
-      --nav-height: 80px;
-      --top-banner-offset: 0px;
-      padding-top: 0;
-    }
-
-    body.has-top-banner .hero-ad-wrap {
+    /* ----- Active ad (image banner) ----- */
+    .hero-ad-link--active {
+      display: block;
+      width: 100%;
       position: relative;
-      z-index: 40;
-      pointer-events: auto;
+      overflow: hidden;
+      text-decoration: none;
+      line-height: 0;
     }
 
-    body.has-top-banner .hero-ad-shell,
-    body.has-top-banner .hero-ad-link {
-      min-height: var(--top-banner-height);
+    .hero-ad-media {
+      display: block;
+      width: 100%;
+      height: auto;
+      max-height: 320px;
+      object-fit: cover;
     }
 
+    .hero-ad-badge {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(4px);
+      color: #fff;
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-family: "Inter", "Poppins", "Roboto", sans-serif;
+      line-height: 1.2;
+      z-index: 2;
+    }
+
+    /* ----- Placeholder state (no ad purchased) ----- */
     .hero-ad-shell {
       position: relative;
       overflow: hidden;
       border-radius: 0;
       background: radial-gradient(circle at 20% 20%, transparent 45%),
         linear-gradient(135deg, #0f172a 0%, #1e1b4b 35%, #312e81 65%, #5b21b6 100%);
-      rgba(255, 255, 255, 0.6),
       box-shadow: 0 28px 60px rgba(15, 23, 42, 0.35);
       border: 1px solid rgba(255, 255, 255, 0.12);
       min-height: 200px;
     }
 
-    .hero-ad-shell.has-dashboard-ad {
-      background: transparent;
-      border: 0;
-      box-shadow: none;
-    }
-
-    .hero-ad-link {
+    .hero-ad-link--placeholder {
       position: relative;
       z-index: 2;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 24px;
-      padding: 0;
+      padding: 18px 20px;
       color: #f8fafc;
       text-decoration: none;
       min-height: 200px;
-    }
-
-    body.has-top-banner .hero-ad-shell,
-    body.has-top-banner .hero-ad-link {
-      min-height: var(--top-banner-height);
-      height: var(--top-banner-height);
     }
 
     .mobile-sidebar-overlay {
@@ -4053,74 +4058,19 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
       position: fixed;
     }
 
-    .hero-ad-media {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      border-radius: 0;
-      z-index: 1;
-    }
-
     .hero-ad-backdrop {
       position: absolute;
       inset: 0;
       pointer-events: none;
     }
 
-    .hero-ad-orb {
-      position: absolute;
-      width: 220px;
-      height: 220px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(255, 255, 255, 0.5), transparent 65%);
-      filter: blur(2px);
-      opacity: 0.85;
-      animation: heroOrbFloat 8s ease-in-out infinite;
-    }
-
-    .hero-ad-orb.orb-a {
-      top: -60px;
-      right: 20px;
-      animation-delay: 0s;
-    }
-
-    .hero-ad-orb.orb-b {
-      bottom: -80px;
-      left: -40px;
-      width: 260px;
-      height: 260px;
-      animation-delay: 1.5s;
-    }
-
-    .hero-ad-orb.orb-c {
-      top: 40%;
-      right: -80px;
-      width: 180px;
-      height: 180px;
-      animation-delay: 3s;
-    }
-
-    .hero-ad-grid {
-      position: absolute;
-      inset: 0;
-      background-image: radial-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px);
-      background-size: 22px 22px;
-      opacity: 0.35;
-    }
-
     .hero-ad-content {
       position: relative;
       z-index: 2;
-      max-width: 100%;
-      height: 100%;
-      min-height: 200px;
+      max-width: 520px;
       padding: 18px 20px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
       font-family: "Inter", "Poppins", "Roboto", sans-serif;
+      line-height: 1.4;
     }
 
     .hero-ad-content h2 {
@@ -4186,22 +4136,21 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
       background: linear-gradient(120deg, #38bdf8, #a855f7, #f97316);
       color: #0f172a;
       font-weight: 500;
-      font-size: 0.88rem;
-      letter-spacing: 0.05em;
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
       text-transform: uppercase;
-      box-shadow: 0 18px 30px rgba(56, 189, 248, 0.35);
       cursor: pointer;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      transition: transform 0.25s, box-shadow 0.25s;
+      box-shadow: 0 4px 14px rgba(168, 85, 247, 0.35);
       font-family: "Inter", "Poppins", "Roboto", sans-serif;
     }
 
     .hero-ad-cta:hover {
-      transform: translateY(-2px) scale(1.02);
-      box-shadow: 0 22px 36px rgba(168, 85, 247, 0.4);
+      transform: translateY(-2px) scale(1.04);
+      box-shadow: 0 8px 24px rgba(168, 85, 247, 0.5);
     }
 
     .hero-ad-secondary {
-      font-size: 0.82rem;
       color: rgba(248, 250, 252, 0.9);
       font-weight: 600;
       letter-spacing: 0.06em;
@@ -4256,149 +4205,96 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
     }
 
     @keyframes heroOrbFloat {
-
-      0%,
-      100% {
-        transform: translateY(0);
-      }
-
-      50% {
-        transform: translateY(-10px);
-      }
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
     }
 
     @keyframes heroSheen {
-      0% {
-        transform: translateX(-40%) rotate(18deg);
-        opacity: 0;
-      }
-
-      20% {
-        opacity: 0.7;
-      }
-
-      60% {
-        opacity: 0.2;
-      }
-
-      100% {
-        transform: translateX(140%) rotate(18deg);
-        opacity: 0;
-      }
+      0% { transform: translateX(-40%) rotate(18deg); opacity: 0; }
+      20% { opacity: 0.7; }
+      60% { opacity: 0.2; }
+      100% { transform: translateX(140%) rotate(18deg); opacity: 0; }
     }
 
     @keyframes heroSparkle {
-
-      0%,
-      100% {
-        transform: scale(0.8);
-        opacity: 0.6;
-      }
-
-      50% {
-        transform: scale(1.3);
-        opacity: 1;
-      }
+      0%, 100% { transform: scale(0.8); opacity: 0.6; }
+      50% { transform: scale(1.3); opacity: 1; }
     }
 
+    /* ----- Responsive: tablet ----- */
     @media (max-width: 768px) {
-      .hero-ad-link {
-        padding: 0;
-        min-height: 180px;
+      .hero-ad-media {
+        max-height: 220px;
       }
+
+      .hero-ad-badge {
+        top: 6px;
+        right: 8px;
+        font-size: 0.55rem;
+        padding: 3px 8px;
+      }
+
+      .hero-ad-link--placeholder {
+        padding: 14px 16px;
+        min-height: 160px;
+      }
+
       .hero-ad-content {
         padding: 14px 16px;
       }
 
       .hero-ad-content h2 {
-        font-size: 0.82rem;
-        margin-bottom: 3px;
-        line-height: 1.22;
-      }
-
-      .hero-ad-highlight {
-        font-size: 0.72rem;
-        line-height: 1.3;
-        letter-spacing: -0.01em;
-        margin-bottom: 4px;
-        max-width: 22rem;
-      }
-
-      .hero-ad-content p {
-        font-size: 0.58rem;
-        line-height: 1.36;
-        margin-bottom: 6px;
+        font-size: 1.1rem;
       }
 
       .hero-ad-cta {
         font-size: 0.58rem;
         padding: 5px 10px;
       }
-
-      body.has-top-banner {
-        --top-banner-height: 160px;
-        --top-banner-offset: 2px;
-      }
     }
 
+    /* ----- Responsive: mobile ----- */
     @media (max-width: 640px) {
+      .hero-ad-media {
+        max-height: 180px;
+      }
+
       .hero-ad-content h2 {
         font-size: 0.68rem;
         margin-bottom: 2px;
         line-height: 1.24;
       }
-
-      .hero-ad-highlight {
-        font-size: 0.58rem;
-        line-height: 1.28;
-        margin-bottom: 3px;
-        max-width: 100%;
-      }
-
-      .hero-ad-content p {
-        font-size: 0.48rem;
-        line-height: 1.3;
-        margin-bottom: 5px;
-      }
-
-      .hero-ad-pill {
-        font-size: 0.38rem;
-        padding: 2px 4px;
-        margin-bottom: 3px;
-      }
-
-      .hero-ad-cta {
-        font-size: 0.48rem;
-        padding: 4px 7px;
-      }
-
-      .hero-ad-secondary {
-        font-size: 0.42rem;
-      }
-
-      body.has-top-banner {
-        --top-banner-height: 140px;
-        --top-banner-offset: 4px;
-      }
     }
 
+    /* ----- Responsive: small mobile ----- */
     @media (max-width: 480px) {
-      body.has-top-banner {
-        --top-banner-height: 130px;
-        --top-banner-offset: 6px;
+      .hero-ad-media {
+        max-height: 150px;
       }
 
-      body.has-top-banner .hero-ad-link {
-        padding: 5px 7px;
+      .hero-ad-badge {
+        top: 4px;
+        right: 6px;
+        font-size: 0.5rem;
+        padding: 2px 6px;
       }
 
-      body.has-top-banner .hero-ad-content h2 {
+      .hero-ad-link--placeholder {
+        padding: 10px 12px;
+        min-height: 130px;
+      }
+
+      .hero-ad-content {
+        padding: 10px 12px;
+      }
+
+      .hero-ad-content h2 {
         font-size: 0.74rem;
         margin-bottom: 2px;
         line-height: 1.22;
       }
 
-      body.has-top-banner .hero-ad-highlight {
+      .hero-ad-highlight {
         font-size: 0.52rem;
         line-height: 1.24;
         margin-bottom: 2px;
