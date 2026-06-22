@@ -807,29 +807,37 @@ body.has-top-banner .hero-ad-wrap {
   }
 
   .kb-hero-inner {
-    padding: 1.25rem;
-    gap: 1rem;
+    padding: 0.85rem;
+    gap: 0.75rem;
     min-height: auto;
   }
 
+  .kb-hero-text {
+    flex: 1;
+    min-width: 0;
+  }
+
   .kb-hero-title {
-    font-size: 1.1rem;
-    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+    margin-bottom: 0.4rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .kb-hero-desc {
-    font-size: 0.8rem;
-    margin-bottom: 1rem;
+    font-size: 0.75rem;
+    margin-bottom: 0.75rem;
     -webkit-line-clamp: 2; /* more compact on mobile */
   }
 
   .kb-hero-image {
-    width: 45%;
+    flex: 0 0 50%;
     height: auto;
   }
 
   .kb-hero-image img {
-    max-height: 120px;
+    max-height: 160px;
   }
 
   .kb-hero-actions {
