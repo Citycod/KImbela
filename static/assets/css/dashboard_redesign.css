@@ -312,46 +312,42 @@ nav .searching .search_input:focus {
 
 /* ── HERO BANNER AD (NEW DESIGN) ── */
 .kb-hero-banner {
-  background: linear-gradient(135deg, var(--kb-primary-800) 0%, var(--kb-primary) 50%, var(--kb-primary-light) 100%);
+  background: var(--kb-primary-50);
   border-radius: var(--kb-radius);
   overflow: hidden;
   margin-bottom: 1.25rem;
   position: relative;
-  min-height: 200px;
+  min-height: 240px;
 }
 
 .kb-hero-banner a {
   text-decoration: none;
-  color: white;
+  color: var(--kb-text);
 }
 
 .kb-hero-inner {
   display: flex;
   align-items: center;
-  padding: 1.75rem 2rem;
-  gap: 1.5rem;
-  min-height: 200px;
+  padding: 2rem 2.5rem;
+  gap: 2rem;
+  min-height: 240px;
   position: relative;
   z-index: 2;
 }
 
 .kb-hero-text {
-  flex: 1;
+  flex: 0 0 45%;
   min-width: 0;
 }
 
 .kb-hero-pill {
   display: inline-block;
-  background: rgba(255,255,255,0.2);
-  color: white;
-  font-size: 0.7rem;
+  color: var(--kb-primary);
+  font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  padding: 0.3rem 0.85rem;
-  border-radius: 20px;
   margin-bottom: 0.85rem;
-  backdrop-filter: blur(4px);
 }
 
 .kb-hero-title {
@@ -359,32 +355,32 @@ nav .searching .search_input:focus {
   font-size: 1.6rem;
   font-weight: 700;
   line-height: 1.2;
-  color: white;
-  margin: 0 0 0.6rem;
+  color: var(--kb-text);
+  margin: 0 0 0.85rem;
   letter-spacing: -0.02em;
 }
 
 .kb-hero-desc {
   font-size: 0.9rem;
-  color: rgba(255,255,255,0.85);
-  line-height: 1.5;
-  margin: 0 0 1.25rem;
-  max-width: 360px;
+  color: var(--kb-text-light);
+  line-height: 1.6;
+  margin: 0 0 1.5rem;
 }
 
 .kb-hero-actions {
   display: flex;
-  gap: 0.75rem;
+  gap: 1.25rem;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 .kb-hero-cta {
   display: inline-flex;
   align-items: center;
-  padding: 0.6rem 1.5rem;
-  background: white;
-  color: var(--kb-primary-dark);
-  border-radius: 10px;
+  padding: 0.65rem 1.75rem;
+  background: var(--kb-primary);
+  color: white;
+  border-radius: 12px;
   font-weight: 600;
   font-size: 0.85rem;
   text-decoration: none;
@@ -393,56 +389,57 @@ nav .searching .search_input:focus {
 }
 
 .kb-hero-cta:hover {
+  background: var(--kb-primary-dark);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
+  color: white;
 }
 
 .kb-hero-secondary {
   display: inline-flex;
   align-items: center;
-  padding: 0.6rem 1.5rem;
+  color: var(--kb-primary);
   background: transparent;
-  color: white;
-  border: 1px solid rgba(255,255,255,0.4);
-  border-radius: 10px;
+  border: none;
   font-weight: 500;
   font-size: 0.85rem;
   text-decoration: none;
   cursor: pointer;
   transition: all 0.2s ease;
+  padding: 0;
 }
 
 .kb-hero-secondary:hover {
-  background: rgba(255,255,255,0.1);
-  border-color: rgba(255,255,255,0.6);
+  color: var(--kb-primary-dark);
+  text-decoration: underline;
 }
 
 .kb-hero-image {
-  flex-shrink: 0;
-  width: 220px;
-  height: 160px;
-  border-radius: var(--kb-radius-sm);
-  overflow: hidden;
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  height: 100%;
 }
 
 .kb-hero-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  max-width: 100%;
+  max-height: 240px;
+  object-fit: contain;
+  border-radius: var(--kb-radius-sm);
+  mix-blend-mode: multiply;
 }
 
 /* When there's a real ad with its own image */
 .kb-hero-banner.has-ad .kb-hero-image img {
   border-radius: var(--kb-radius-sm);
+  mix-blend-mode: normal;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
 }
 
 /* Animated background elements */
 .kb-hero-bg-decor {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  overflow: hidden;
-  z-index: 1;
+  display: none;
 }
 
 .kb-hero-bg-decor .circle {
