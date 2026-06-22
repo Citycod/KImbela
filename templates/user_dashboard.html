@@ -361,9 +361,9 @@
             </a>
           </li>
           <li>
-            <button onclick="loadGroups()" type="button">
+            <a href="{{ url_for('user.groups_page') }}">
               <i class="bi bi-people"></i> Groups
-            </button>
+            </a>
           </li>
           <li>
             <a href="{{ url_for('market.main_market') }}">
@@ -920,42 +920,23 @@
           <h3>Trending Groups</h3>
           <a href="#">View all</a>
         </div>
-        {% if groups is defined and groups %}
-          {% for group in groups[:4] %}
+        {% if groups_data is defined and groups_data %}
+          {% for group in groups_data[:4] %}
           <div class="kb-right-item">
-            <img src="{{ group.cover_image or url_for('static', filename='assets/img/default-avatar.png') }}" class="kb-right-item-avatar" alt="{{ group.name }}" />
+            <img src="{{ group.cover_pic }}" class="kb-right-item-avatar" alt="{{ group.name }}" />
             <div class="kb-right-item-info">
               <div class="kb-right-item-name">{{ group.name }}</div>
-              <div class="kb-right-item-meta">{{ group.members_count|default('') }} active</div>
+              <div class="kb-right-item-meta">{{ group.member_count }} members</div>
             </div>
-            <button class="kb-join-btn">Join</button>
+            {% if not group.is_member %}
+              <button class="kb-join-btn" onclick="joinGroup('{{ group.id }}')">Join</button>
+            {% else %}
+              <a href="{{ url_for('user.group_detail', group_id=group.id) }}" class="kb-join-btn" style="text-decoration:none;display:inline-flex;align-items:center;">View</a>
+            {% endif %}
           </div>
           {% endfor %}
         {% else %}
-          <div class="kb-right-item">
-            <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#ec4899);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;flex-shrink:0;">E</div>
-            <div class="kb-right-item-info">
-              <div class="kb-right-item-name">Entrepreneurs Hub</div>
-              <div class="kb-right-item-meta">1.2K active</div>
-            </div>
-            <button class="kb-join-btn">Join</button>
-          </div>
-          <div class="kb-right-item">
-            <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#06b6d4);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;flex-shrink:0;">T</div>
-            <div class="kb-right-item-info">
-              <div class="kb-right-item-name">Tech Innovators</div>
-              <div class="kb-right-item-meta">980 active</div>
-            </div>
-            <button class="kb-join-btn">Join</button>
-          </div>
-          <div class="kb-right-item">
-            <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#ef4444);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;flex-shrink:0;">M</div>
-            <div class="kb-right-item-info">
-              <div class="kb-right-item-name">Mindset Mastery</div>
-              <div class="kb-right-item-meta">1.5K active</div>
-            </div>
-            <button class="kb-join-btn">Join</button>
-          </div>
+          <div class="text-center p-3 text-gray-500 text-sm">No trending groups found</div>
         {% endif %}
       </div>
 
