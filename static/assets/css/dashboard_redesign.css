@@ -438,8 +438,8 @@ nav .searching .search_input:focus {
 /* When there's a real ad with its own image */
 .kb-hero-banner.has-ad .kb-hero-image img {
   border-radius: var(--kb-radius-sm);
-  mix-blend-mode: normal;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  /* Use multiply to remove white backgrounds from uploaded ad images */
+  mix-blend-mode: multiply;
 }
 
 /* Animated background elements */
@@ -795,9 +795,8 @@ body.has-top-banner .hero-ad-wrap {
     padding-right: 1rem;
   }
   
-  .kb-hero-image {
-    width: 160px;
-    height: 130px;
+  .kb-hero-image img {
+    max-height: 160px;
   }
 }
 
@@ -808,28 +807,42 @@ body.has-top-banner .hero-ad-wrap {
   }
 
   .kb-hero-inner {
-    flex-direction: column;
     padding: 1.25rem;
-    text-align: center;
+    gap: 1rem;
+    min-height: auto;
   }
 
-  .kb-hero-text {
-    order: 1;
-  }
-
-  .kb-hero-image {
-    order: 2;
-    width: 100%;
-    height: 140px;
-    margin-top: 0.5rem;
-  }
-
-  .kb-hero-actions {
-    justify-content: center;
+  .kb-hero-title {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
   }
 
   .kb-hero-desc {
-    max-width: 100%;
+    font-size: 0.8rem;
+    margin-bottom: 1rem;
+    -webkit-line-clamp: 2; /* more compact on mobile */
+  }
+
+  .kb-hero-image {
+    width: 45%;
+    height: auto;
+  }
+
+  .kb-hero-image img {
+    max-height: 120px;
+  }
+
+  .kb-hero-actions {
+    gap: 0.5rem;
+  }
+
+  .kb-hero-cta {
+    padding: 0.5rem 1rem;
+    font-size: 0.75rem;
+  }
+
+  .kb-hero-secondary {
+    font-size: 0.75rem;
   }
 
   .kb-composer-btns {
