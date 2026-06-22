@@ -335,6 +335,16 @@
       <a class="hero-ad-link" href="{{ top_banner_url }}" {% if top_banner %}target="_blank" rel="noopener" {% endif %}>
         {% if top_banner_image %}
         <img src="{{ top_banner_image }}" alt="{{ top_banner_title }}" class="hero-ad-media" loading="lazy" />
+        <div class="hero-ad-content" style="background: linear-gradient(to right, rgba(15,23,42,0.9) 0%, rgba(15,23,42,0.6) 50%, transparent 100%); width: 100%; pointer-events: none; border-radius: inherit;">
+          <div class="hero-ad-pill">Sponsored</div>
+          <h2 style="color: #f8fafc; font-weight: 700; text-shadow: 1px 1px 4px rgba(0,0,0,0.8);">{{ top_banner_title }}</h2>
+          {% if top_banner.description %}
+          <h5 class="hero-ad-highlight" style="text-shadow: 1px 1px 4px rgba(0,0,0,0.8);">{{ top_banner.description }}</h5>
+          {% endif %}
+          <div class="hero-ad-actions" style="pointer-events: auto;">
+            <span class="hero-ad-cta js-ad-cta" data-cta-href="{{ top_banner_url }}" role="link" tabindex="0">{{ top_banner.call_to_action or 'Learn More' }}</span>
+          </div>
+        </div>
         {% else %}
         <div class="hero-ad-backdrop" aria-hidden="true">
           <span class="hero-ad-orb orb-a"></span>

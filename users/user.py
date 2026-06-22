@@ -1045,6 +1045,8 @@ def user_dashboard():
             dashboard_ads[key] = {
                 "id": banner_ad.id,
                 "title": banner_ad.title or "Featured Offer",
+                "description": banner_ad.description or "",
+                "call_to_action": banner_ad.call_to_action or "Learn More",
                 "image_url": media_url,
                 "media_type": media_type,
                 "video_mime": video_mime,

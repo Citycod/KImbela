@@ -625,11 +625,12 @@
                     <th class="py-3 font-medium">Budget</th>
                     <th class="py-3 font-medium">Dates</th>
                     <th class="py-3 font-medium">Status</th>
+                    <th class="py-3 font-medium">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {% for campaign in campaigns %}
-                  <tr class="border-b border-slate-100">
+                  <tr class="border-b border-slate-100" data-campaign-row="{{ campaign.id }}">
                     <td class="py-4">
                       <p class="text-sm font-semibold text-slate-900">
                         {{ campaign.title }}
@@ -672,6 +673,14 @@
                         class="inline-flex rounded-full px-3 py-1 text-[10px] font-semibold uppercase {{ campaign_badge }}"
                         >{{ campaign.status }}</span
                       >
+                    </td>
+                    <td class="py-4">
+                      <button
+                        class="rounded-lg border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-medium text-rose-600 hover:bg-rose-100"
+                        onclick="deleteAdCampaign({{ campaign.id }})"
+                      >
+                        Delete
+                      </button>
                     </td>
                   </tr>
                   {% else %}
@@ -799,6 +808,32 @@
           return;
         }
         const row = document.querySelector(`[data-ad-row='${adId}']`);
+        if (row) {
+          row.remove();
+        }
+      }
+
+      async function deleteAdCampaign(campaignId) {
+        if (!confirm("Delete this user ad campaign permanently?")) {
+          return;
+        }
+        const response = await fetch(`/admin/ad_campaigns/${campaignId}/delete`, {
+          method: "POST",
+          headers: { "X-CSRFToken": window.csrfToken || "" },
+        });
+        const text = await response.text();
+        let data = null;
+        try {
+          data = JSON.parse(text);
+        } catch (error) {
+          alert("Request failed. Please refresh and try again.");
+          return;
+        }
+        if (!data.success) {
+          alert(data.error || "Unable to delete campaign");
+          return;
+        }
+        const row = document.querySelector(`[data-campaign-row='${campaignId}']`);
         if (row) {
           row.remove();
         }

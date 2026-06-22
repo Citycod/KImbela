@@ -1432,6 +1432,19 @@ def admin_delete_ad(ad_id):
     return jsonify({"success": True})
 
 
+@admin.route("/admin/ad_campaigns/<int:campaign_id>/delete", methods=["POST"])
+@login_required
+def admin_delete_ad_campaign(campaign_id):
+    if not current_user.is_super_admin:
+        return jsonify({"success": False, "error": "Access denied"}), 403
+
+    campaign = AdCampaign.query.get_or_404(campaign_id)
+    db.session.delete(campaign)
+    db.session.commit()
+
+    return jsonify({"success": True})
+
+
 @admin.route("/admin/stats")
 @login_required
 def admin_stats():
