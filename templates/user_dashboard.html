@@ -480,7 +480,7 @@
               alt="{{ current_user.first_name }}" />
           </a>
           <div class="kb-composer-input" data-bs-toggle="modal" data-bs-target="#postModal">
-            Share your thoughts, wisdom, or updates...
+            What's on your mind, {{ current_user.first_name }}?
           </div>
         </div>
         <div class="kb-composer-actions">
@@ -500,6 +500,85 @@
           </div>
           <button class="kb-post-btn" data-bs-toggle="modal" data-bs-target="#postModal">Post</button>
         </div>
+      </div>
+
+      <!-- MOBILE ADS CAROUSEL -->
+      <div class="kb-mobile-ads-wrapper">
+      {% set vertical_banner = dashboard_ads.get('vertical_banner') if dashboard_ads else None %}
+      <div class="vertical-ad-banner {% if vertical_banner %}has-dashboard-ad{% endif %}">
+        {% if vertical_banner %}
+        <a class="dashboard-ad-link" href="{{ vertical_banner.target_url }}" target="_blank" rel="noopener">
+          {% if vertical_banner.media_type == 'video' %}
+          <video class="dashboard-ad-video" autoplay muted loop playsinline preload="metadata">
+            <source src="{{ vertical_banner.image_url }}" {% if vertical_banner.video_mime %}type="{{ vertical_banner.video_mime }}" {% endif %} />
+          </video>
+          {% else %}
+          <img src="{{ vertical_banner.image_url }}" alt="{{ vertical_banner.title }}" class="dashboard-ad-image" loading="lazy" />
+          {% endif %}
+        </a>
+        {% else %}
+        <div class="vertical-ad-badge">Promote</div>
+        <div class="sidebar-ad-icon" aria-hidden="true">
+          <i class="bi bi-megaphone-fill"></i>
+        </div>
+        <div class="vertical-ad-content">
+          <h2>Boost your product today</h2>
+          <p>Get your brand seen by active Kimbela shoppers and creators.</p>
+          <a class="vertical-ad-cta" href="{{ url_for('payments.dashboard_ad_package', placement='dashboard-vertical') }}">Start advertising</a>
+        </div>
+        {% endif %}
+      </div>
+      <div class="matchmaking-banner mt-4">
+        <div class="banner-image-layer matchmaking-image-layer" aria-hidden="true">
+          <span class="banner-image-core" style="background-image: url('{{ url_for('static', filename='assets/img/love.jpg') }}');"></span>
+        </div>
+        <div class="matchmaking-glow"></div>
+        <div class="matchmaking-badge">Matchmaking</div>
+        <div class="matchmaking-title">
+          <span>Find your</span>
+          <span class="matchmaking-highlight">perfect</span>
+          <span>match on Kimbela</span>
+        </div>
+        <p class="matchmaking-copy">
+          Smart matches, real vibes, and meaningful connections.
+        </p>
+        <div class="matchmaking-actions">
+          <a class="matchmaking-cta primary" href="{{ url_for('match.requests') }}">Start Matching</a>
+          <a class="matchmaking-cta ghost" href="{{ url_for('match.view_requests') }}">Explore Matches</a>
+        </div>
+        <div class="matchmaking-orbits" aria-hidden="true">
+          <span class="orbit orbit-1"></span>
+          <span class="orbit orbit-2"></span>
+          <span class="orbit orbit-3"></span>
+        </div>
+      </div>
+      {% set spotlight_banner = dashboard_ads.get('spotlight_banner') if dashboard_ads else None %}
+      <div class="right-ad-banner-2 mt-4 {% if spotlight_banner %}has-dashboard-ad{% endif %}">
+        {% if spotlight_banner %}
+        <a class="dashboard-ad-link" href="{{ spotlight_banner.target_url }}" target="_blank" rel="noopener">
+          {% if spotlight_banner.media_type == 'video' %}
+          <video class="dashboard-ad-video" autoplay muted loop playsinline preload="metadata">
+            <source src="{{ spotlight_banner.image_url }}" {% if spotlight_banner.video_mime %}type="{{ spotlight_banner.video_mime }}" {% endif %} />
+          </video>
+          {% else %}
+          <img src="{{ spotlight_banner.image_url }}" alt="{{ spotlight_banner.title }}" class="dashboard-ad-image" loading="lazy" />
+          {% endif %}
+        </a>
+        {% else %}
+        <div class="right-ad-2-badge">Promote</div>
+        <div class="sidebar-ad-icon" aria-hidden="true">
+          <i class="bi bi-megaphone-fill"></i>
+        </div>
+        <h2>Boost your product today</h2>
+        <p>Get your brand seen by active Kimbela shoppers and creators.</p>
+        <a class="right-ad-2-cta" href="{{ url_for('payments.dashboard_ad_package', placement='dashboard-spotlight') }}">Start advertising</a>
+        <div class="right-ad-2-sparkles" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        {% endif %}
+      </div>
       </div>
 
       <!-- POSTS FEED (uses existing feed div via JS) -->
@@ -940,10 +1019,10 @@
         {% endif %}
       </div>
 
-      <!-- Suggested for You -->
+      <!-- Say Hi -->
       <div class="kb-right-card">
         <div class="kb-right-card-header">
-          <h3>Suggested for You</h3>
+          <h3>Say Hi</h3>
           <a href="#">View all</a>
         </div>
         {% if random_five is defined and random_five %}
@@ -1117,7 +1196,7 @@
             <div
               class="composer-input bg-white/70 backdrop-blur-[2px] border border-white/50 rounded-lg px-3 sm:px-4 py-2 sm:py-3 cursor-pointer hover:bg-white/80 transition-colors text-xs sm:text-sm"
               style="font-family: 'Inter', sans-serif;" data-bs-toggle="modal" data-bs-target="#postModal">
-              Share your thoughts....
+              What's on your mind, {{ current_user.first_name }}?
             </div>
           </div>
         </div>
@@ -1924,7 +2003,7 @@
           <!-- Post content -->
           <textarea name="post_content"
             class="w-full border-0 focus:ring-0 focus:outline-none text-base sm:text-lg resize-none"
-            style="font-family: 'Inter', sans-serif;" rows="3" placeholder="What's on your mind?" required></textarea>
+            style="font-family: 'Inter', sans-serif;" rows="3" placeholder="What's on your mind, {{ current_user.first_name }}?" required></textarea>
 
           <!-- Location Preview -->
           <div id="postLocationPreview" class="hidden mt-2">
