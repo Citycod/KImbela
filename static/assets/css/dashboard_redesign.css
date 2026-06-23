@@ -154,8 +154,10 @@ nav .searching .search_input:focus {
 /* ── LAYOUT: 3-COLUMN ── */
 .kb-dashboard-layout {
   display: flex;
-  max-width: 1320px;
+  justify-content: space-between;
+  max-width: 1800px; /* Expands significantly for large screens */
   margin: 0 auto;
+  padding: 0 1rem;
   padding-top: calc(var(--kb-nav-height) + 8px);
   min-height: 100vh;
   gap: 1.5rem;
@@ -307,7 +309,8 @@ nav .searching .search_input:focus {
 .kb-main-content {
   flex: 1;
   min-width: 0;
-  max-width: 680px;
+  max-width: 850px;
+  margin: 0 auto;
 }
 
 /* ── HERO BANNER AD (NEW DESIGN) ── */
