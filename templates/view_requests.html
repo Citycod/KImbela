@@ -1381,7 +1381,7 @@
                              class="w-10 h-10 rounded-full object-cover border-2 ${request.is_own_request ? 'border-rose-gold' : 'border-white'} shadow-soft">
                     </div>
                     <div class="flex-1">
-                        <h4 class="font-bold text-sm text-primary mb-0.5">${request.user.full_name}, ${request.user.age}</h4>
+                        <h4 class="font-bold text-sm text-primary mb-0.5"><a href="/profile/${request.user.id}" target="_blank" class="hover:underline">${request.user.full_name}</a>, ${request.user.age}</h4>
                         <p class="text-xs text-text-secondary flex items-center gap-1">
                             <i class="bi bi-geo-alt text-rose-gold text-xs"></i>
                             <span>${request.user.location}</span>
@@ -1541,7 +1541,7 @@
                             <!-- Profile Info -->
                             <div class="flex-1 text-center sm:text-left">
                                 <div class="mb-2">
-                                    <h4 class="font-bold text-base text-primary mb-1">${request.user.full_name}</h4>
+                                    <h4 class="font-bold text-base text-primary mb-1"><a href="/profile/${request.user.id}" target="_blank" class="hover:underline">${request.user.full_name}</a></h4>
                                     <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-2">
                                         <span class="px-2 py-0.5 bg-gradient-to-r from-primary/10 to-rose-gold/10 text-primary rounded-full text-xs font-semibold border border-primary/20">
                                             ${request.user.age} years
@@ -1619,19 +1619,35 @@
                 </div>
                 
                 <!-- Uploaded Image Section -->
-                ${hasUploadedImage ? `
+                ${hasUploadedImage || request.is_own_request ? `
                 <div class="mb-4">
-                    <div class="flex items-center gap-2 mb-2">
-                        <h5 class="font-semibold text-sm text-primary">Featured Image</h5>
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-2">
+                            <h5 class="font-semibold text-sm text-primary">Featured Image</h5>
+                        </div>
+                        ${request.is_own_request ? `
+                        <button onclick="editMatchmakingImage(${request.id})" class="text-xs text-primary hover:text-secondary font-medium flex items-center gap-1 transition-colors px-2 py-1 rounded bg-primary/5 hover:bg-primary/10">
+                            <i class="bi bi-pencil-square"></i> Edit Image
+                        </button>
+                        <input type="file" id="editMatchmakingImageInput" class="hidden" accept="image/*" onchange="uploadNewMatchmakingImage(event, ${request.id})">
+                        ` : ''}
                     </div>
-                    <div class="uploaded-image-container relative group cursor-pointer" data-src="${request.image}" data-caption="Featured image by ${request.user.full_name}">
+                    ${hasUploadedImage ? `
+                    <div class="uploaded-image-container relative group cursor-pointer" data-src="${request.image}" data-caption="Featured image by ${request.user.full_name}" id="matchmakingImageContainer_${request.id}">
                         <img src="${request.image}" 
                              alt="Featured image" 
-                             class="w-full h-auto max-h-96 object-contain bg-black/5 rounded-lg border-2 border-white shadow-float transform group-hover:scale-[1.01] transition-transform duration-300">
+                             class="w-full h-auto max-h-96 object-contain bg-black/5 rounded-lg border-2 border-white shadow-float transform group-hover:scale-[1.01] transition-transform duration-300"
+                             id="matchmakingImageDisplay_${request.id}">
                         <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center p-2">
                             <span class="text-white text-xs font-medium">Click to view full size</span>
                         </div>
                     </div>
+                    ` : `
+                    <div class="w-full h-32 bg-gray-50 border-2 border-dashed border-gray-200 rounded-lg flex flex-col items-center justify-center text-gray-400 cursor-pointer hover:bg-gray-100 hover:border-primary transition-colors" onclick="editMatchmakingImage(${request.id})" id="matchmakingImageContainer_${request.id}">
+                        <i class="bi bi-cloud-arrow-up text-2xl mb-1"></i>
+                        <span class="text-xs font-medium">Click to upload an image</span>
+                    </div>
+                    `}
                 </div>
                 ` : ''}
                 
@@ -1993,6 +2009,87 @@
         setTimeout(() => {
           toast.remove();
         }, 3000);
+      }
+
+      function editMatchmakingImage(requestId) {
+          const input = document.getElementById('editMatchmakingImageInput');
+          if (input) {
+              input.click();
+          }
+      }
+
+      async function uploadNewMatchmakingImage(event, requestId) {
+          const file = event.target.files[0];
+          if (!file) return;
+
+          const formData = new FormData();
+          formData.append('image', file);
+
+          const container = document.getElementById(`matchmakingImageContainer_${requestId}`);
+          if (container) {
+              container.style.opacity = '0.5';
+          }
+          
+          showSuccess('Uploading image...');
+
+          try {
+              // 1. Upload to cloudinary via our endpoint
+              const uploadRes = await fetch('/upload-image', {
+                  method: 'POST',
+                  headers: {
+                      'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                  },
+                  body: formData
+              });
+              
+              const uploadData = await uploadRes.json();
+              if (!uploadData.success) {
+                  throw new Error(uploadData.error || 'Upload failed');
+              }
+
+              // 2. Update the request with the new image URL
+              const updateRes = await fetch(`/api/requests/${requestId}/update-image`, {
+                  method: 'POST',
+                  headers: {
+                      'Content-Type': 'application/json',
+                      'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                  },
+                  body: JSON.stringify({ image_url: uploadData.image_url })
+              });
+              
+              const updateData = await updateRes.json();
+              if (!updateData.success) {
+                  throw new Error(updateData.error || 'Failed to update request');
+              }
+
+              showSuccess('Image updated successfully!');
+              
+              // 3. Update the modal display immediately
+              const displayImg = document.getElementById(`matchmakingImageDisplay_${requestId}`);
+              if (displayImg) {
+                  displayImg.src = updateData.image_url;
+              } else if (container) {
+                  // If it was empty before, we might just reload
+                  loadRequests();
+              }
+              
+              if (container) {
+                  container.dataset.src = updateData.image_url;
+                  container.style.opacity = '1';
+              }
+              
+              // 4. Update the card in the background so it reflects if they close the modal
+              const requestCardImg = document.querySelector(`.request-card[data-id="${requestId}"] .uploaded-image-container img`);
+              if (requestCardImg) {
+                  requestCardImg.src = updateData.image_url;
+              }
+
+          } catch (error) {
+              showError(error.message);
+              if (container) container.style.opacity = '1';
+          } finally {
+              event.target.value = '';
+          }
       }
 
       // Close modals on ESC key

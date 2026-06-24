@@ -407,7 +407,7 @@
                         <button class="flex items-center gap-2 focus:outline-none" id="user-menu-button">
                             <div class="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center text-sm overflow-hidden">
                                 {% if current_user.profile_pic %}
-                                <img src="{{ current_user.profile_pic }}" alt="{{ current_user.username }}" class="w-full h-full object-cover">
+                                <img src="{{ current_user.profile_pic }}" alt="{{ current_user.username }}" class="w-full h-full object-contain bg-black/5 max-h-96">
                                 {% else %}
                                 <i class="bi bi-person"></i>
                                 {% endif %}

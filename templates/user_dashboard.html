@@ -191,18 +191,18 @@
 
       <!-- Market Place -->
       <a href="{{ url_for('market.main_market') }}"
-        class="nav-item flex flex-col items-center px-2 lg:px-3 py-1 rounded-lg hover:bg-gradient-to-b hover:from-orange-50 hover:to-yellow-50 transition-all group">
-        <i class="bi bi-shop text-xl lg:text-2xl text-orange-500 group-hover:scale-110 group-hover:rotate-12 transition-all"
+        class="nav-item flex flex-col items-center px-2 lg:px-3 py-1 rounded-lg hover:bg-gradient-to-b hover:from-indigo-50 hover:to-purple-50 transition-all group">
+        <i class="bi bi-shop text-xl lg:text-2xl text-indigo-500 group-hover:scale-110 group-hover:rotate-12 transition-all"
           style="font-size: 1rem"></i>
-        <span class="text-[10px] lg:text-xs font-medium text-orange-700 mt-0.5" style="font-size: 0.7rem">Market</span>
+        <span class="text-[10px] lg:text-xs font-medium text-indigo-700 mt-0.5" style="font-size: 0.7rem">Market</span>
       </a>
 
       <!-- Create Sponsored Ad -->
       <a href="{{ url_for('payments.ad_packages') }}"
-        class="nav-item flex flex-col items-center px-2 lg:px-3 py-1 rounded-lg hover:bg-gradient-to-b hover:from-amber-50 hover:to-yellow-50 transition-all group">
-        <i class="bi bi-megaphone-fill text-xl lg:text-2xl text-amber-600 group-hover:scale-110 group-hover:rotate-12 transition-all"
+        class="nav-item flex flex-col items-center px-2 lg:px-3 py-1 rounded-lg hover:bg-gradient-to-b hover:from-indigo-50 hover:to-purple-50 transition-all group">
+        <i class="bi bi-megaphone-fill text-xl lg:text-2xl text-indigo-600 group-hover:scale-110 group-hover:rotate-12 transition-all"
           style="font-size: 1rem"></i>
-        <span class="text-[10px] lg:text-xs font-medium text-amber-700 mt-0.5" style="font-size: 0.7rem">Ads</span>
+        <span class="text-[10px] lg:text-xs font-medium text-indigo-700 mt-0.5" style="font-size: 0.7rem">Ads</span>
       </a>
 
       <!-- Match Making (dropdown or two items) -->
@@ -998,7 +998,26 @@
     <!-- ── RIGHT SIDEBAR ── -->
     <aside class="kb-right-sidebar">
 
-      <!-- Trending Groups -->
+      <!-- Marketplace Awareness Banner -->
+      <div class="kb-right-card bg-gradient-to-br from-indigo-500 to-purple-600 text-white overflow-hidden relative cursor-pointer group mb-4" onclick="window.location.href='{{ url_for('market.main_market') }}'" style="border:none;">
+        <div class="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full blur-xl group-hover:bg-white/20 transition-all"></div>
+        <div class="absolute -left-6 -bottom-6 w-20 h-20 bg-indigo-400/20 rounded-full blur-lg"></div>
+        <div class="relative z-10">
+          <div class="flex items-center gap-3 mb-2">
+            <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+              <i class="bi bi-shop text-xl text-white"></i>
+            </div>
+            <div>
+              <h3 class="font-bold text-white text-base m-0 leading-tight">Kimbela Market</h3>
+              <p class="text-indigo-100 text-xs m-0 font-medium">Buy & Sell Products</p>
+            </div>
+          </div>
+          <p class="text-[13px] text-indigo-50 leading-snug mb-3 opacity-90">Discover amazing products, digital items, or start your own business today!</p>
+          <button class="w-full py-2 bg-white text-indigo-600 rounded-lg text-sm font-bold shadow-sm group-hover:shadow-md transition-all">
+            Explore Marketplace
+          </button>
+        </div>
+      </div>      <!-- Trending Groups -->
       <div class="kb-right-card">
         <div class="kb-right-card-header">
           <h3>Trending Groups</h3>
@@ -1434,7 +1453,7 @@
     class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm p-4" aria-hidden="true">
     <div
       class="relative w-full max-w-xl overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10 transform transition-all scale-95 opacity-0">
-      <div class="bg-gradient-to-r from-rose-600 via-pink-600 to-orange-500 px-6 py-5 text-white">
+      <div class="bg-gradient-to-r from-rose-600 via-pink-600 to-indigo-500 px-6 py-5 text-white">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
             <div class="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center">
@@ -1568,17 +1587,17 @@
         </div>
 
         <a href="{{ url_for('market.main_market') }}"
-          class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-orange-50 hover:to-yellow-50 transition-all duration-300 mb-2 group border border-transparent hover:border-orange-200 shadow-sm hover:shadow-md">
+          class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 transition-all duration-300 mb-2 group border border-transparent hover:border-indigo-200 shadow-sm hover:shadow-md">
           <i class="bi bi-shop mr-3 text-lg group-hover:scale-110 group-hover:rotate-12 transition-all duration-300"
             style="color: #f5260bff"></i>
-          <span class="font-medium group-hover:text-orange-700 transition-colors duration-300">Market Place</span>
+          <span class="font-medium group-hover:text-indigo-700 transition-colors duration-300">Market Place</span>
         </a>
 
         <a href="{{ url_for('payments.ad_packages') }}"
-          class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-orange-50 hover:to-yellow-50 transition-all duration-300 mb-2 group border border-transparent hover:border-orange-200 shadow-sm hover:shadow-md">
+          class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 transition-all duration-300 mb-2 group border border-transparent hover:border-indigo-200 shadow-sm hover:shadow-md">
           <i class="bi bi-megaphone-fill mr-3 text-lg group-hover:scale-110 group-hover:rotate-12 transition-all duration-300"
             style="color: #f59e0b"></i>
-          <span class="font-medium group-hover:text-orange-700 transition-colors duration-300">Create Sponsored
+          <span class="font-medium group-hover:text-indigo-700 transition-colors duration-300">Create Sponsored
             Ad</span>
         </a>
 
@@ -1625,16 +1644,16 @@
 
 
       <a href="{{ url_for('market.main_market') }}"
-        class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-orange-50 hover:to-yellow-50 transition-all duration-300 mb-2 group border border-transparent hover:border-orange-200 shadow-sm hover:shadow-md">
+        class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 transition-all duration-300 mb-2 group border border-transparent hover:border-indigo-200 shadow-sm hover:shadow-md">
         <i class="bi bi-shop mr-3 text-lg group-hover:scale-110 group-hover:rotate-12 transition-all duration-300"
           style="color: #f5260bff"></i>
-        <span class="font-medium group-hover:text-orange-700 transition-colors duration-300">Market Place</span>
+        <span class="font-medium group-hover:text-indigo-700 transition-colors duration-300">Market Place</span>
       </a>
 
       <!-- ADD THIS SPONSORED ADS LINK -->
       <a href="{{ url_for('payments.ad_packages') }}"
-        class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-orange-50 hover:to-purple-50 transition-all duration-300 mb-2 group">
-        <i class="bi bi-megaphone-fill mr-3 text-lg" style="color: #f28b6b"></i>
+        class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 transition-all duration-300 mb-2 group">
+        <i class="bi bi-megaphone-fill mr-3 text-lg" style="color: #4F46E5"></i>
         <span class="font-medium">Create Sponsored Ad</span>
       </a>
 
@@ -2052,7 +2071,7 @@
               <button type="button"
                 class="p-1.5 sm:p-2 rounded-full hover:bg-white transition-colors bg-white shadow-sm"
                 onclick="openEmojiPicker()" title="Add Emoji">
-                <i class="bi bi-emoji-smile-fill text-yellow-500 text-lg"></i>
+                <i class="bi bi-emoji-smile-fill text-purple-500 text-lg"></i>
               </button>
               <button type="button"
                 class="p-1.5 sm:p-2 rounded-full hover:bg-white transition-colors bg-white shadow-sm"
@@ -2247,7 +2266,7 @@
     <div class="relative group">
       <!-- Main Button - Smaller -->
       <button onclick="toggleFloatingAd()"
-        class="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl shadow-lg flex items-center justify-center text-white hover:from-orange-600 hover:to-red-600 transition-all duration-300">
+        class="w-10 h-10 bg-gradient-to-r from-indigo-500 to-red-500 rounded-xl shadow-lg flex items-center justify-center text-white hover:from-indigo-600 hover:to-red-600 transition-all duration-300">
         <i class="bi bi-megaphone-fill text-sm"></i>
       </button>
 
@@ -2439,7 +2458,7 @@
             </div>
           </div>
           <h2
-            class="text-3xl md:text-4xl font-bold bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 bg-clip-text text-transparent animate-gradient">
+            class="text-3xl md:text-4xl font-bold bg-gradient-to-r from-pink-500 via-red-500 to-purple-500 bg-clip-text text-transparent animate-gradient">
             🎉 Happy Birthday! 🎉
           </h2>
           <p class="text-gray-600 mt-2">It's someone's special day!</p>
@@ -2460,7 +2479,7 @@
         </div>
 
         <!-- Wish Form -->
-        <div class="bg-gradient-to-br from-pink-50 to-yellow-50 p-6 rounded-2xl border-2 border-pink-200 mb-6">
+        <div class="bg-gradient-to-br from-pink-50 to-purple-50 p-6 rounded-2xl border-2 border-pink-200 mb-6">
           <h4 class="text-lg font-semibold text-gray-800 mb-3">
             Send Birthday Wishes
           </h4>
@@ -3352,7 +3371,7 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
       min-height: 380px;
       border-radius: 26px;
       background: linear-gradient(145deg, #ffd7c7 0%, #f7a16b 48%, #caa7ff 100%);
-      color: #4f2943;
+      color: #1E293B;
       overflow: hidden;
       box-shadow: 0 18px 34px rgba(170, 92, 76, 0.22);
       display: flex;
@@ -3418,7 +3437,7 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
       font-size: 1.35rem;
       font-weight: 900;
       line-height: 1.12;
-      color: #6d345f;
+      color: #4F46E5;
       text-shadow: none;
     }
 
@@ -3432,7 +3451,7 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
 
     .vertical-ad-cta {
       border: none;
-      background: linear-gradient(135deg, #ec8d71 0%, #bb8cff 100%);
+      background: linear-gradient(135deg, #ec8d71 0%, #8B5CF6 100%);
       color: #fffaf8;
       padding: 12px 18px;
       border-radius: 999px;
@@ -3454,7 +3473,7 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
       margin: 16px 0 20px;
       padding: 22px 18px 24px;
       border-radius: 24px;
-      color: #4f2943;
+      color: #1E293B;
       background: linear-gradient(145deg, #ffd7c7 0%, #f7a16b 48%, #caa7ff 100%);
       box-shadow: 0 18px 34px rgba(170, 92, 76, 0.22);
       overflow: hidden;
@@ -3503,7 +3522,7 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
       margin: 14px 0 8px;
       font-size: 1.2rem;
       font-weight: 900;
-      color: #6d345f;
+      color: #4F46E5;
       text-shadow: none;
     }
 
@@ -3525,7 +3544,7 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
       justify-content: center;
       padding: 10px 16px;
       border-radius: 999px;
-      background: linear-gradient(135deg, #ec8d71 0%, #bb8cff 100%);
+      background: linear-gradient(135deg, #ec8d71 0%, #8B5CF6 100%);
       color: #fffaf8;
       font-weight: 800;
       font-size: 0.85rem;
@@ -3679,7 +3698,7 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
       min-height: 260px;
       border-radius: 22px;
       background: linear-gradient(145deg, #ffd7c7 0%, #f7a16b 48%, #caa7ff 100%);
-      color: #4f2943;
+      color: #1E293B;
       box-shadow: 0 18px 34px rgba(170, 92, 76, 0.22);
       overflow: hidden;
     }
@@ -3765,7 +3784,7 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
       margin: 0 0 8px;
       font-size: 1.2rem;
       font-weight: 900;
-      color: #6d345f;
+      color: #4F46E5;
       text-shadow: none;
     }
 
@@ -3781,7 +3800,7 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(135deg, #ec8d71 0%, #bb8cff 100%);
+      background: linear-gradient(135deg, #ec8d71 0%, #8B5CF6 100%);
       color: #fffaf8;
       padding: 10px 16px;
       border-radius: 999px;
@@ -4971,7 +4990,7 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
           radial-gradient(circle at top right, rgba(255, 255, 255, 0.34), transparent 34%),
           radial-gradient(circle at bottom left, rgba(202, 167, 255, 0.22), transparent 30%),
           linear-gradient(145deg, #ffe4d8 0%, #f6b483 46%, #cfb2ff 100%) !important;
-        color: #4f2943 !important;
+        color: #1E293B !important;
         box-shadow: 0 18px 40px rgba(170, 92, 76, 0.18), 0 8px 18px rgba(111, 60, 99, 0.08) !important;
         overflow: hidden !important;
         isolation: isolate;
@@ -5038,7 +5057,7 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
         background: rgba(255, 248, 244, 0.8) !important;
         color: #a6574d !important;
         backdrop-filter: blur(10px);
-        box-shadow: 0 8px 18px rgba(170, 92, 76, 0.12);
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
       }
 
       .mobile-feed-ad-slot .sidebar-ad-icon {
@@ -5065,7 +5084,7 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
       .mobile-feed-ad-slot .vertical-ad-banner h2,
       .mobile-feed-ad-slot .right-ad-banner-2 h2 {
         margin: 0 0 0.55rem;
-        color: #6d345f !important;
+        color: #4F46E5 !important;
         font-size: 1.22rem !important;
         line-height: 1.2;
         font-weight: 900;
@@ -5094,7 +5113,7 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
         padding: 0.9rem 1.15rem;
         border: 0;
         border-radius: 999px;
-        background: linear-gradient(135deg, #ec8d71 0%, #bb8cff 100%) !important;
+        background: linear-gradient(135deg, #ec8d71 0%, #8B5CF6 100%) !important;
         color: #fffef8 !important;
         font-size: 0.88rem !important;
         font-weight: 800;

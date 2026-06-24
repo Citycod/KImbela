@@ -1066,6 +1066,36 @@ def extend_request(request_id):
         return jsonify({"success": False, "error": "Failed to extend request"}), 500
 
 
+@match.route("/api/requests/<int:request_id>/update-image", methods=["POST"])
+@login_required
+def update_request_image(request_id):
+    """Update the featured image of an active matchmaking request"""
+    try:
+        req = MatchmakingRequest.query.get_or_404(request_id)
+        
+        if req.user_id != current_user.id:
+            return jsonify({"success": False, "error": "Unauthorized"}), 403
+            
+        data = request.get_json()
+        if not data or "image_url" not in data:
+            return jsonify({"success": False, "error": "Missing image_url"}), 400
+            
+        req.image = data["image_url"]
+        db.session.commit()
+        
+        return jsonify({
+            "success": True,
+            "message": "Image updated successfully",
+            "image_url": req.image
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error updating image for request {request_id}: {str(e)}")
+        return jsonify({"success": False, "error": "Failed to update image"}), 500
+
+
+
 # Utility Routes
 @match.route("/upload-image", methods=["POST"])
 @login_required

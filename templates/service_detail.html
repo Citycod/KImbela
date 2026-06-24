@@ -831,7 +831,7 @@ button:not(:disabled):hover {
                                 {% if service.seller.profile_pic %}
                                 <img src="{{ service.seller.profile_pic }}" 
                                      alt="{{ service.seller.full_name }}" 
-                                     class="w-full h-full object-cover">
+                                     class="w-full h-full object-contain bg-black/5 max-h-96">
                                 {% else %}
                                 <div class="w-full h-full bg-primary text-white flex items-center justify-center">
                                     <i class="bi bi-person"></i>
@@ -915,7 +915,7 @@ button:not(:disabled):hover {
                                         {% if review.customer and review.customer.profile_pic %}
                                         <img src="{{ review.customer.profile_pic }}" 
                                              alt="{{ review.customer.full_name }}" 
-                                             class="w-full h-full object-cover">
+                                             class="w-full h-full object-contain bg-black/5 max-h-96">
                                         {% else %}
                                         <div class="w-full h-full bg-gray-200 flex items-center justify-center">
                                             <i class="bi bi-person text-gray-600 text-xs"></i>
@@ -1127,7 +1127,7 @@ button:not(:disabled):hover {
                             <div class="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
                                 <img src="{{ related.cover_image or url_for('static', filename='assets/img/default-service.jpg') }}" 
                                      alt="{{ related.title }}" 
-                                     class="w-full h-full object-cover">
+                                     class="w-full h-full object-contain bg-black/5 max-h-96">
                             </div>
                             <div class="flex-1 min-w-0">
                                 <h4 class="font-bold text-xs truncate">{{ related.title }}</h4>
@@ -1178,7 +1178,7 @@ button:not(:disabled):hover {
                             <div class="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
                                 <img src="{{ seller_service.cover_image or url_for('static', filename='assets/img/default-service.jpg') }}" 
                                      alt="{{ seller_service.title }}" 
-                                     class="w-full h-full object-cover">
+                                     class="w-full h-full object-contain bg-black/5 max-h-96">
                             </div>
                             <div class="flex-1 min-w-0">
                                 <h4 class="font-bold text-xs truncate">{{ seller_service.title }}</h4>

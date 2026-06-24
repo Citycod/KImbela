@@ -97,7 +97,7 @@
         <div class="text-center mb-8">
             <h1 class="text-xl md:text-2xl font-bold mb-2">
                 Start Selling on 
-                <span class="bg-gradient-to-r from-amber-900 to-amber-600 bg-clip-text text-transparent">Kimbela Marketplace</span>
+                <span class="bg-gradient-to-r from-indigo-900 to-indigo-600 bg-clip-text text-transparent">Kimbela Marketplace</span>
             </h1>
             <p class="text-gray-600 max-w-2xl mx-auto text-sm">
                 Share your expertise, sell digital products, and earn tokens. Join thousands of successful sellers today.
@@ -117,7 +117,7 @@
                 {% for plan in plans %}
                 <div class="bg-white rounded-xl shadow-lg p-4 hover:shadow-xl transition-shadow duration-300 {% if plan.is_popular or plan.is_featured %}border-2 border-amber-500 relative{% else %}border border-gray-200{% endif %}">
                     {% if plan.is_popular or plan.is_featured %}
-                    <div class="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-amber-900 to-amber-600 text-white px-3 py-0.5 rounded-full text-[10px] font-bold">
+                    <div class="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-indigo-900 to-indigo-600 text-white px-3 py-0.5 rounded-full text-[10px] font-bold">
                         MOST POPULAR
                     </div>
                     {% endif %}
@@ -172,7 +172,7 @@
 
                     <button
                             type="button"
-                            class="plan-select-btn w-full py-2 {% if plan.is_popular or plan.is_featured %}bg-gradient-to-r from-amber-900 to-amber-600{% else %}bg-gray-800{% endif %} text-white rounded-lg font-bold hover:opacity-90 transition-opacity text-xs"
+                            class="plan-select-btn w-full py-2 {% if plan.is_popular or plan.is_featured %}bg-gradient-to-r from-indigo-900 to-indigo-600{% else %}bg-gray-800{% endif %} text-white rounded-lg font-bold hover:opacity-90 transition-opacity text-xs"
                             data-plan-id="{{ plan.id }}"
                             data-plan-name="{{ plan.name }}"
                             data-plan-price="{{ '%.2f'|format(plan.price_usd or 0) }}"
@@ -202,7 +202,7 @@
             
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div class="text-center">
-                    <div class="w-12 h-12 bg-gradient-to-r from-amber-900 to-amber-600 text-white rounded-lg flex items-center justify-center mx-auto mb-3">
+                    <div class="w-12 h-12 bg-gradient-to-r from-indigo-900 to-indigo-600 text-white rounded-lg flex items-center justify-center mx-auto mb-3">
                         <i class="fas fa-search text-sm"></i>
                     </div>
                     <h4 class="font-bold text-sm mb-1">1. Choose Plan</h4>
@@ -210,7 +210,7 @@
                 </div>
                 
                 <div class="text-center">
-                    <div class="w-12 h-12 bg-gradient-to-r from-amber-900 to-amber-600 text-white rounded-lg flex items-center justify-center mx-auto mb-3">
+                    <div class="w-12 h-12 bg-gradient-to-r from-indigo-900 to-indigo-600 text-white rounded-lg flex items-center justify-center mx-auto mb-3">
                         <i class="fas fa-credit-card text-sm"></i>
                     </div>
                     <h4 class="font-bold text-sm mb-1">2. Pay & Verify</h4>
@@ -218,7 +218,7 @@
                 </div>
                 
                 <div class="text-center">
-                    <div class="w-12 h-12 bg-gradient-to-r from-amber-900 to-amber-600 text-white rounded-lg flex items-center justify-center mx-auto mb-3">
+                    <div class="w-12 h-12 bg-gradient-to-r from-indigo-900 to-indigo-600 text-white rounded-lg flex items-center justify-center mx-auto mb-3">
                         <i class="fas fa-plus-circle text-sm"></i>
                     </div>
                     <h4 class="font-bold text-sm mb-1">3. Create Service</h4>
@@ -226,7 +226,7 @@
                 </div>
                 
                 <div class="text-center">
-                    <div class="w-12 h-12 bg-gradient-to-r from-amber-900 to-amber-600 text-white rounded-lg flex items-center justify-center mx-auto mb-3">
+                    <div class="w-12 h-12 bg-gradient-to-r from-indigo-900 to-indigo-600 text-white rounded-lg flex items-center justify-center mx-auto mb-3">
                         <i class="fas fa-money-bill-wave text-sm"></i>
                     </div>
                     <h4 class="font-bold text-sm mb-1">4. Start Earning</h4>
@@ -307,7 +307,7 @@
                     <!-- Payment Button -->
                     <div class="text-center">
                         <button onclick="processFlutterwavePayment()" 
-                                class="w-full py-3 bg-gradient-to-r from-amber-900 to-amber-600 text-white rounded-lg font-bold hover:opacity-90 transition-opacity text-sm">
+                                class="w-full py-3 bg-gradient-to-r from-indigo-900 to-indigo-600 text-white rounded-lg font-bold hover:opacity-90 transition-opacity text-sm">
                             <i class="fas fa-lock mr-1 text-xs"></i>Pay Securely with Flutterwave
                         </button>
                         <p class="text-gray-500 text-xs mt-2">Secure payment powered by Flutterwave</p>
@@ -351,7 +351,7 @@
                     <!-- Payment Button -->
                     <div class="text-center">
                         <button onclick="processPaystackPayment()" 
-                                class="w-full py-3 bg-gradient-to-r from-amber-900 to-amber-600 text-white rounded-lg font-bold hover:opacity-90 transition-opacity text-sm">
+                                class="w-full py-3 bg-gradient-to-r from-indigo-900 to-indigo-600 text-white rounded-lg font-bold hover:opacity-90 transition-opacity text-sm">
                             <i class="fas fa-lock mr-1 text-xs"></i>Pay Securely with Paystack
                         </button>
                         <p class="text-gray-500 text-xs mt-2">Secure payment powered by Paystack</p>
@@ -483,7 +483,7 @@
                 Join thousands of successful sellers on Africa's fastest growing marketplace for professionals and digital creators.
             </p>
             <button onclick="scrollToPlans()" 
-                    class="px-6 py-2.5 bg-gradient-to-r from-amber-900 to-amber-600 text-white rounded-lg font-bold hover:opacity-90 transition-opacity text-sm">
+                    class="px-6 py-2.5 bg-gradient-to-r from-indigo-900 to-indigo-600 text-white rounded-lg font-bold hover:opacity-90 transition-opacity text-sm">
                 <i class="fas fa-rocket mr-1 text-xs"></i>View Pricing Plans
             </button>
         </div>
@@ -529,7 +529,7 @@
                 
                 <div class="flex flex-col sm:flex-row gap-3 justify-center">
                     <a href="{{ url_for('market.create_service') }}" 
-                       class="px-4 py-2 bg-gradient-to-r from-amber-900 to-amber-600 text-white rounded-lg font-bold hover:opacity-90 transition-opacity text-xs">
+                       class="px-4 py-2 bg-gradient-to-r from-indigo-900 to-indigo-600 text-white rounded-lg font-bold hover:opacity-90 transition-opacity text-xs">
                         <i class="fas fa-plus-circle mr-1 text-xs"></i>Create Service
                     </a>
                     <a href="{{ url_for('market.seller_dashboard') }}" 

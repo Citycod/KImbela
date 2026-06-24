@@ -376,7 +376,7 @@
             min-height: 1rem;
             margin-top: 0.35rem;
             font-size: 0.72rem;
-            color: #8a6c62;
+            color: #64748B;
         }
 
         .location-status.hidden {
@@ -387,25 +387,25 @@
             width: 0.5rem;
             height: 0.5rem;
             border-radius: 999px;
-            background: #f28b6b;
-            box-shadow: 0 0 0 0 rgba(242, 139, 107, 0.35);
+            background: #4F46E5;
+            box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.35);
             animation: locationPulse 1.2s infinite;
         }
 
         @keyframes locationPulse {
             0% {
                 transform: scale(0.9);
-                box-shadow: 0 0 0 0 rgba(242, 139, 107, 0.35);
+                box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.35);
             }
 
             70% {
                 transform: scale(1);
-                box-shadow: 0 0 0 8px rgba(242, 139, 107, 0);
+                box-shadow: 0 0 0 8px rgba(79, 70, 229, 0);
             }
 
             100% {
                 transform: scale(0.9);
-                box-shadow: 0 0 0 0 rgba(242, 139, 107, 0);
+                box-shadow: 0 0 0 0 rgba(79, 70, 229, 0);
             }
         }
     </style>
@@ -1644,7 +1644,7 @@
             if (label) {
                 label.textContent = message;
             }
-            element.style.color = isLoading ? '#8a6c62' : '#6b7280';
+            element.style.color = isLoading ? '#64748B' : '#6b7280';
         }
 
         async function getCreateListingCountries() {
