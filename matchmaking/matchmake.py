@@ -363,6 +363,9 @@ def get_request_detail(request_id):
                 "gender": req.partner_gender,
                 "ethnicity": req.partner_ethnicity,
                 "religion": req.partner_religion,
+                "partner_country": req.partner_country,
+                "partner_state": req.partner_state,
+                "partner_city": req.partner_city,
             },
             "interests": req.get_your_interests(),
             "partner_interests": req.get_partner_interests(),
@@ -376,6 +379,7 @@ def get_request_detail(request_id):
             "expires_in": (req.end_date - utcnow()).days,
             "package": req.package.name,
             "is_liked": is_liked,
+            "is_own_request": req.user_id == current_user.id,
         }
 
         return jsonify({"success": True, "request": request_data})
@@ -1094,6 +1098,92 @@ def update_request_image(request_id):
         current_app.logger.error(f"Error updating image for request {request_id}: {str(e)}")
         return jsonify({"success": False, "error": "Failed to update image"}), 500
 
+
+
+@match.route("/api/requests/<int:request_id>/edit", methods=["PUT", "POST"])
+@login_required
+def edit_matchmaking_request(request_id):
+    """Edit an existing active matchmaking request"""
+    try:
+        req = MatchmakingRequest.query.get_or_404(request_id)
+
+        # Authorization: only the owner can edit
+        if req.user_id != current_user.id:
+            return jsonify({"success": False, "error": "Unauthorized"}), 403
+
+        # Only allow editing active requests
+        if req.status != "active" or (req.end_date and req.end_date <= utcnow()):
+            return jsonify({"success": False, "error": "Only active requests can be edited"}), 400
+
+        data = request.get_json()
+        if not data:
+            return jsonify({"success": False, "error": "No data provided"}), 400
+
+        # ── Editable text fields ──
+        if "about_you" in data:
+            val = (data["about_you"] or "").strip()
+            if not val:
+                return jsonify({"success": False, "error": "About You cannot be empty"}), 400
+            req.about_you = val
+
+        if "ideal_partner" in data:
+            val = (data["ideal_partner"] or "").strip()
+            if not val:
+                return jsonify({"success": False, "error": "Ideal Partner cannot be empty"}), 400
+            req.ideal_partner = val
+
+        # ── Image ──
+        if "image" in data:
+            req.image = data["image"]  # URL or None to remove
+
+        # ── Interests / Lifestyles (JSON lists) ──
+        if "your_interests" in data:
+            req.your_interests = json.dumps(data["your_interests"] if isinstance(data["your_interests"], list) else [])
+
+        if "partner_interests" in data:
+            req.partner_interests = json.dumps(data["partner_interests"] if isinstance(data["partner_interests"], list) else [])
+
+        if "lifestyles" in data:
+            req.lifestyles = json.dumps(data["lifestyles"] if isinstance(data["lifestyles"], list) else [])
+
+        # ── Partner preferences ──
+        if "min_age" in data:
+            req.min_age = data["min_age"]
+        if "max_age" in data:
+            req.max_age = data["max_age"]
+        if "partner_gender" in data:
+            req.partner_gender = data["partner_gender"]
+        if "partner_ethnicity" in data:
+            req.partner_ethnicity = data["partner_ethnicity"]
+        if "partner_religion" in data:
+            req.partner_religion = data["partner_religion"]
+
+        # ── Location preferences ──
+        if "partner_country" in data:
+            req.partner_country = (data["partner_country"] or "").strip() or None
+        if "partner_state" in data:
+            req.partner_state = (data["partner_state"] or "").strip() or None
+        if "partner_city" in data:
+            req.partner_city = (data["partner_city"] or "").strip() or None
+
+        db.session.commit()
+
+        current_app.logger.info(
+            "✅ [MATCH EDIT] Request %s updated by user %s",
+            request_id, current_user.id,
+        )
+
+        return jsonify({
+            "success": True,
+            "message": "Matchmaking request updated successfully!",
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(
+            f"Error editing matchmaking request {request_id}: {str(e)}", exc_info=True
+        )
+        return jsonify({"success": False, "error": "Failed to update request"}), 500
 
 
 # Utility Routes

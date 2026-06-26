@@ -786,6 +786,53 @@
         }
       }
 
+      /* Edit Modal Tabs */
+      .edit-tab {
+        color: #94A3B8;
+        border-bottom: 2px solid transparent;
+        background: transparent;
+      }
+
+      .edit-tab:hover {
+        color: #4F46E5;
+        background: rgba(79, 70, 229, 0.05);
+      }
+
+      .edit-tab.active {
+        color: #4F46E5;
+        border-bottom-color: #EC4899;
+        background: linear-gradient(to bottom, rgba(79, 70, 229, 0.08), transparent);
+      }
+
+      .edit-tag-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.6875rem;
+        font-weight: 600;
+        background: linear-gradient(135deg, #EEF2FF, #E0E7FF);
+        color: #4F46E5;
+        border: 1px solid #C7D2FE;
+        animation: fadeIn 0.2s ease-out;
+      }
+
+      .edit-tag-pill button {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #A5B4FC;
+        font-size: 0.75rem;
+        padding: 0;
+        line-height: 1;
+        transition: color 0.2s;
+      }
+
+      .edit-tag-pill button:hover {
+        color: #EF4444;
+      }
+
       h1{
         font-size: 2rem;
       }
@@ -1086,6 +1133,209 @@
              onclick="closeFullscreenImage()" 
              src="" 
              alt="Fullscreen view">
+      </div>
+    </div>
+
+    <!-- Edit Request Modal -->
+    <div id="editRequestModal" class="fixed inset-0 z-[70] hidden">
+      <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeEditModal()"></div>
+      
+      <div class="modal-center animate-slide-up">
+        <div class="relative bg-gradient-to-br from-white via-ivory to-champagne rounded-xl shadow-float overflow-hidden max-h-[90vh]">
+          <!-- Modal Header -->
+          <div class="bg-gradient-to-r from-primary via-secondary to-rose-gold text-white p-4 relative overflow-hidden">
+            <div class="absolute inset-0 bg-[radial-gradient(circle_at_30%_70%,rgba(255,255,255,0.15),transparent_50%)]"></div>
+            <div class="relative z-10 flex justify-between items-center">
+              <div>
+                <h3 class="text-base font-bold mb-0.5 drop-shadow-md">
+                  <i class="bi bi-pencil-square mr-1"></i> Edit Your Request
+                </h3>
+                <p class="text-white/80 text-xs">Update your matchmaking details</p>
+              </div>
+              <button onclick="closeEditModal()" class="p-1.5 rounded-full bg-white/20 hover:bg-white/30 transition-all">
+                <i class="bi bi-x-lg text-sm"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Modal Body -->
+          <div class="overflow-y-auto max-h-[calc(90vh-130px)] p-4" id="editModalBody">
+            <form id="editRequestForm" onsubmit="return false;">
+              <input type="hidden" id="editRequestId" value="">
+
+              <!-- Tabs -->
+              <div class="flex border-b border-border-color mb-4 gap-1 overflow-x-auto">
+                <button type="button" class="edit-tab active px-3 py-2 text-xs font-semibold rounded-t-lg transition-all whitespace-nowrap" data-tab="about">
+                  <i class="bi bi-person-heart mr-1"></i> About
+                </button>
+                <button type="button" class="edit-tab px-3 py-2 text-xs font-semibold rounded-t-lg transition-all whitespace-nowrap" data-tab="image">
+                  <i class="bi bi-image mr-1"></i> Image
+                </button>
+                <button type="button" class="edit-tab px-3 py-2 text-xs font-semibold rounded-t-lg transition-all whitespace-nowrap" data-tab="interests">
+                  <i class="bi bi-stars mr-1"></i> Interests
+                </button>
+                <button type="button" class="edit-tab px-3 py-2 text-xs font-semibold rounded-t-lg transition-all whitespace-nowrap" data-tab="preferences">
+                  <i class="bi bi-sliders mr-1"></i> Preferences
+                </button>
+              </div>
+
+              <!-- Tab: About -->
+              <div class="edit-tab-content" id="tab-about">
+                <div class="mb-4">
+                  <label class="block text-xs font-semibold text-primary mb-1.5">
+                    <i class="bi bi-chat-quote mr-1"></i> About You
+                  </label>
+                  <textarea id="editAboutYou" rows="4" class="form-input resize-none" placeholder="Tell people about yourself..."></textarea>
+                  <p class="text-xs text-text-secondary/60 mt-1">Describe yourself, your personality, hobbies, etc.</p>
+                </div>
+                <div class="mb-4">
+                  <label class="block text-xs font-semibold text-primary mb-1.5">
+                    <i class="bi bi-heart mr-1"></i> Ideal Partner
+                  </label>
+                  <textarea id="editIdealPartner" rows="4" class="form-input resize-none" placeholder="Describe your ideal match..."></textarea>
+                  <p class="text-xs text-text-secondary/60 mt-1">What are you looking for in a partner?</p>
+                </div>
+              </div>
+
+              <!-- Tab: Image -->
+              <div class="edit-tab-content hidden" id="tab-image">
+                <div class="mb-4">
+                  <label class="block text-xs font-semibold text-primary mb-2">
+                    <i class="bi bi-camera mr-1"></i> Featured Image
+                  </label>
+                  <div id="editImagePreview" class="relative mb-3">
+                    <div id="editImagePlaceholder" class="w-full h-48 bg-gray-50 border-2 border-dashed border-gray-200 rounded-lg flex flex-col items-center justify-center text-gray-400 cursor-pointer hover:bg-gray-100 hover:border-primary transition-colors" onclick="document.getElementById('editImageInput').click()">
+                      <i class="bi bi-cloud-arrow-up text-3xl mb-2"></i>
+                      <span class="text-xs font-medium">Click to upload a new image</span>
+                      <span class="text-xs text-gray-400 mt-1">PNG, JPG, JPEG, GIF, WEBP</span>
+                    </div>
+                    <img id="editImagePreviewImg" src="" alt="Preview" class="hidden w-full h-48 object-cover rounded-lg border-2 border-white shadow-soft cursor-pointer" onclick="document.getElementById('editImageInput').click()">
+                    <button type="button" id="editRemoveImageBtn" class="hidden absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full text-xs hover:bg-red-600 transition-colors shadow-md" onclick="removeEditImage()">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                  <input type="file" id="editImageInput" class="hidden" accept="image/*" onchange="handleEditImageUpload(event)">
+                  <div id="editImageUploadProgress" class="hidden">
+                    <div class="flex items-center gap-2 text-xs text-primary">
+                      <div class="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+                      <span>Uploading image...</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Tab: Interests -->
+              <div class="edit-tab-content hidden" id="tab-interests">
+                <div class="mb-4">
+                  <label class="block text-xs font-semibold text-primary mb-1.5">
+                    <i class="bi bi-star mr-1"></i> Your Interests
+                  </label>
+                  <div class="flex gap-2 mb-2">
+                    <input type="text" id="editInterestInput" class="form-input flex-1" placeholder="Add an interest..." onkeydown="if(event.key==='Enter'){event.preventDefault();addEditTag('interest')}">
+                    <button type="button" class="btn btn-rose text-xs" onclick="addEditTag('interest')">
+                      <i class="bi bi-plus-lg"></i> Add
+                    </button>
+                  </div>
+                  <div id="editInterestsTags" class="flex flex-wrap gap-1.5 min-h-[2rem]"></div>
+                </div>
+
+                <div class="mb-4">
+                  <label class="block text-xs font-semibold text-primary mb-1.5">
+                    <i class="bi bi-heart-half mr-1"></i> Partner Interests
+                  </label>
+                  <div class="flex gap-2 mb-2">
+                    <input type="text" id="editPartnerInterestInput" class="form-input flex-1" placeholder="Add a partner interest..." onkeydown="if(event.key==='Enter'){event.preventDefault();addEditTag('partnerInterest')}">
+                    <button type="button" class="btn btn-primary text-xs" onclick="addEditTag('partnerInterest')">
+                      <i class="bi bi-plus-lg"></i> Add
+                    </button>
+                  </div>
+                  <div id="editPartnerInterestsTags" class="flex flex-wrap gap-1.5 min-h-[2rem]"></div>
+                </div>
+
+                <div class="mb-4">
+                  <label class="block text-xs font-semibold text-primary mb-1.5">
+                    <i class="bi bi-emoji-sunglasses mr-1"></i> Lifestyle
+                  </label>
+                  <div class="flex gap-2 mb-2">
+                    <input type="text" id="editLifestyleInput" class="form-input flex-1" placeholder="Add a lifestyle tag..." onkeydown="if(event.key==='Enter'){event.preventDefault();addEditTag('lifestyle')}">
+                    <button type="button" class="btn btn-outline text-xs" onclick="addEditTag('lifestyle')">
+                      <i class="bi bi-plus-lg"></i> Add
+                    </button>
+                  </div>
+                  <div id="editLifestylesTags" class="flex flex-wrap gap-1.5 min-h-[2rem]"></div>
+                </div>
+              </div>
+
+              <!-- Tab: Preferences -->
+              <div class="edit-tab-content hidden" id="tab-preferences">
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                  <div>
+                    <label class="block text-xs font-semibold text-primary mb-1">Min Age</label>
+                    <input type="number" id="editMinAge" class="form-input" min="18" max="99" placeholder="18">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-primary mb-1">Max Age</label>
+                    <input type="number" id="editMaxAge" class="form-input" min="18" max="99" placeholder="99">
+                  </div>
+                </div>
+
+                <div class="mb-4">
+                  <label class="block text-xs font-semibold text-primary mb-1">Preferred Gender</label>
+                  <select id="editPartnerGender" class="form-select">
+                    <option value="any">Any</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="non-binary">Non-binary</option>
+                  </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                  <div>
+                    <label class="block text-xs font-semibold text-primary mb-1">Ethnicity</label>
+                    <input type="text" id="editPartnerEthnicity" class="form-input" placeholder="Any">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-primary mb-1">Religion</label>
+                    <input type="text" id="editPartnerReligion" class="form-input" placeholder="Any">
+                  </div>
+                </div>
+
+                <div class="mb-4">
+                  <label class="block text-xs font-semibold text-primary mb-2">
+                    <i class="bi bi-geo-alt mr-1"></i> Preferred Location
+                  </label>
+                  <div class="space-y-2">
+                    <select id="editPartnerCountry" class="form-select text-xs">
+                      <option value="">Any Country</option>
+                    </select>
+                    <select id="editPartnerState" class="form-select text-xs" disabled>
+                      <option value="">Any State</option>
+                    </select>
+                    <select id="editPartnerCity" class="form-select text-xs" disabled>
+                      <option value="">Any City</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          <!-- Modal Footer -->
+          <div class="sticky bottom-0 bg-gradient-to-t from-white via-white to-white/90 border-t border-border-color/50 p-3 flex gap-2">
+            <button type="button" onclick="closeEditModal()" class="btn btn-outline flex-1 py-2 text-xs">
+              <i class="bi bi-x-lg mr-1"></i> Cancel
+            </button>
+            <button type="button" onclick="saveEditRequest()" id="editSaveBtn" class="btn btn-primary flex-1 py-2 text-xs">
+              <i class="bi bi-check-lg mr-1"></i> Save Changes
+            </button>
+          </div>
+
+          <!-- Edit Loader Overlay -->
+          <div id="editModalLoader" class="hidden absolute inset-0 bg-white/90 flex flex-col items-center justify-center z-50 rounded-xl">
+            <div class="loader-spinner mb-3"></div>
+            <p class="text-sm text-primary font-semibold" id="editLoaderText">Saving changes...</p>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1519,7 +1769,7 @@
         const compatibilityScore = calculateCompatibility(request);
         
         // Check if this is user's own request
-        const isOwnRequest = currentUserId === request.user?.id;
+        const isOwnRequest = request.is_own_request || false;
         
         // Check if there's an uploaded image
         const hasUploadedImage = request.image;
@@ -1751,11 +2001,17 @@
                     </div>
                 </div>
                 ` : `
-                <div class="bg-gradient-to-r from-rose-50 to-rose-100 border border-rose-200 rounded-lg p-3 text-center mb-4">
-                    <p class="text-xs text-rose-700 flex items-center justify-center gap-2">
-                        <i class="bi bi-info-circle text-rose-gold"></i>
-                        This is your own matchmaking request
-                    </p>
+                <div class="sticky bottom-0 bg-gradient-to-t from-white via-white/95 to-transparent pt-4 pb-2 -mx-4 px-4">
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <button onclick="openEditModal(${request.id})" class="btn btn-primary flex-1 py-2 text-xs">
+                            <i class="bi bi-pencil-square text-xs"></i>
+                            Edit Your Request
+                        </button>
+                        <button onclick="deactivateRequest(${request.id})" class="btn btn-outline flex-1 py-2 text-xs text-red-500 border-red-200 hover:bg-red-50">
+                            <i class="bi bi-x-circle text-xs"></i>
+                            Deactivate
+                        </button>
+                    </div>
                 </div>
                 `}
                 
@@ -2092,9 +2348,411 @@
           }
       }
 
+      // ══════════════════════════════════════════════════════
+      // EDIT MODAL LOGIC
+      // ══════════════════════════════════════════════════════
+      
+      let editData = {
+        interests: [],
+        partnerInterests: [],
+        lifestyles: [],
+        imageUrl: null,
+      };
+
+      // Tab switching
+      document.addEventListener('click', function(e) {
+        const tab = e.target.closest('.edit-tab');
+        if (!tab) return;
+        
+        document.querySelectorAll('.edit-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.edit-tab-content').forEach(c => c.classList.add('hidden'));
+        
+        tab.classList.add('active');
+        const tabName = tab.dataset.tab;
+        document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+      });
+
+      async function openEditModal(requestId) {
+        // Show loader
+        document.getElementById('editModalLoader').classList.remove('hidden');
+        document.getElementById('editLoaderText').textContent = 'Loading your request...';
+        document.getElementById('editRequestModal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+
+        try {
+          const response = await fetch(`/api/requests/${requestId}`);
+          const data = await response.json();
+
+          if (!data.success) {
+            showError('Failed to load request for editing');
+            closeEditModal();
+            return;
+          }
+
+          const req = data.request;
+
+          // Store ID
+          document.getElementById('editRequestId').value = requestId;
+
+          // About tab
+          document.getElementById('editAboutYou').value = req.about_you || '';
+          document.getElementById('editIdealPartner').value = req.ideal_partner || '';
+
+          // Image tab
+          editData.imageUrl = req.image || null;
+          updateEditImagePreview();
+
+          // Interests tab
+          editData.interests = [...(req.interests || [])];
+          editData.partnerInterests = [...(req.partner_interests || [])];
+          editData.lifestyles = [...(req.lifestyles || [])];
+          renderEditTags('interest');
+          renderEditTags('partnerInterest');
+          renderEditTags('lifestyle');
+
+          // Preferences tab
+          document.getElementById('editMinAge').value = req.partner_preferences?.min_age || '';
+          document.getElementById('editMaxAge').value = req.partner_preferences?.max_age || '';
+          document.getElementById('editPartnerGender').value = req.partner_preferences?.gender || 'any';
+          document.getElementById('editPartnerEthnicity').value = req.partner_preferences?.ethnicity || '';
+          document.getElementById('editPartnerReligion').value = req.partner_preferences?.religion || '';
+
+          // Location – load countries then set values
+          await loadEditCountries(req.partner_preferences?.partner_country, req.partner_preferences?.partner_state, req.partner_preferences?.partner_city);
+
+          // Reset to first tab
+          document.querySelectorAll('.edit-tab').forEach(t => t.classList.remove('active'));
+          document.querySelectorAll('.edit-tab-content').forEach(c => c.classList.add('hidden'));
+          document.querySelector('.edit-tab[data-tab="about"]').classList.add('active');
+          document.getElementById('tab-about').classList.remove('hidden');
+
+          // Hide loader
+          document.getElementById('editModalLoader').classList.add('hidden');
+
+        } catch (error) {
+          showError('Failed to load request for editing');
+          closeEditModal();
+        }
+      }
+
+      function closeEditModal() {
+        document.getElementById('editRequestModal').classList.add('hidden');
+        document.getElementById('editModalLoader').classList.add('hidden');
+        // Only restore scroll if the detail modal isn't open
+        if (document.getElementById('requestModal').classList.contains('hidden')) {
+          document.body.style.overflow = '';
+        }
+      }
+
+      // ── Image handling ──
+      function updateEditImagePreview() {
+        const placeholder = document.getElementById('editImagePlaceholder');
+        const previewImg = document.getElementById('editImagePreviewImg');
+        const removeBtn = document.getElementById('editRemoveImageBtn');
+
+        if (editData.imageUrl) {
+          placeholder.classList.add('hidden');
+          previewImg.src = editData.imageUrl;
+          previewImg.classList.remove('hidden');
+          removeBtn.classList.remove('hidden');
+        } else {
+          placeholder.classList.remove('hidden');
+          previewImg.classList.add('hidden');
+          removeBtn.classList.add('hidden');
+        }
+      }
+
+      function removeEditImage() {
+        editData.imageUrl = null;
+        updateEditImagePreview();
+      }
+
+      async function handleEditImageUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const progress = document.getElementById('editImageUploadProgress');
+        progress.classList.remove('hidden');
+
+        const formData = new FormData();
+        formData.append('image', file);
+
+        try {
+          const res = await fetch('/upload-image', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken },
+            body: formData,
+          });
+          const data = await res.json();
+
+          if (data.success) {
+            editData.imageUrl = data.image_url;
+            updateEditImagePreview();
+            showSuccess('Image uploaded!');
+          } else {
+            showError(data.error || 'Upload failed');
+          }
+        } catch (err) {
+          showError('Image upload failed');
+        } finally {
+          progress.classList.add('hidden');
+          event.target.value = '';
+        }
+      }
+
+      // ── Tag management ──
+      function addEditTag(type) {
+        const inputMap = {
+          interest: 'editInterestInput',
+          partnerInterest: 'editPartnerInterestInput',
+          lifestyle: 'editLifestyleInput',
+        };
+        const dataMap = {
+          interest: 'interests',
+          partnerInterest: 'partnerInterests',
+          lifestyle: 'lifestyles',
+        };
+
+        const input = document.getElementById(inputMap[type]);
+        const val = (input.value || '').trim();
+        if (!val) return;
+
+        const arr = editData[dataMap[type]];
+        if (!arr.includes(val)) {
+          arr.push(val);
+          renderEditTags(type);
+        }
+        input.value = '';
+        input.focus();
+      }
+
+      function removeEditTag(type, index) {
+        const dataMap = {
+          interest: 'interests',
+          partnerInterest: 'partnerInterests',
+          lifestyle: 'lifestyles',
+        };
+        editData[dataMap[type]].splice(index, 1);
+        renderEditTags(type);
+      }
+
+      function renderEditTags(type) {
+        const containerMap = {
+          interest: 'editInterestsTags',
+          partnerInterest: 'editPartnerInterestsTags',
+          lifestyle: 'editLifestylesTags',
+        };
+        const dataMap = {
+          interest: 'interests',
+          partnerInterest: 'partnerInterests',
+          lifestyle: 'lifestyles',
+        };
+
+        const container = document.getElementById(containerMap[type]);
+        const arr = editData[dataMap[type]];
+
+        container.innerHTML = arr.map((tag, i) => `
+          <span class="edit-tag-pill">
+            ${tag}
+            <button type="button" onclick="removeEditTag('${type}', ${i})" title="Remove">
+              <i class="bi bi-x"></i>
+            </button>
+          </span>
+        `).join('');
+      }
+
+      // ── Location cascading dropdowns for edit modal ──
+      async function loadEditCountries(preselectedCountry, preselectedState, preselectedCity) {
+        const countrySelect = document.getElementById('editPartnerCountry');
+        const stateSelect = document.getElementById('editPartnerState');
+        const citySelect = document.getElementById('editPartnerCity');
+
+        // Reset
+        countrySelect.innerHTML = '<option value="">Any Country</option>';
+        stateSelect.innerHTML = '<option value="">Any State</option>';
+        stateSelect.disabled = true;
+        citySelect.innerHTML = '<option value="">Any City</option>';
+        citySelect.disabled = true;
+
+        try {
+          const res = await fetch('{{ url_for("user.get_countries") }}');
+          const countries = await res.json();
+
+          countries.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.name;
+            opt.setAttribute('data-country-id', c.id);
+            opt.textContent = c.name;
+            if (c.name === preselectedCountry) opt.selected = true;
+            countrySelect.appendChild(opt);
+          });
+
+          // If there's a preselected country, load states
+          if (preselectedCountry) {
+            const selectedOpt = countrySelect.querySelector(`option[value="${preselectedCountry}"]`);
+            if (selectedOpt) {
+              const countryId = selectedOpt.getAttribute('data-country-id');
+              if (countryId) {
+                await loadEditStates(countryId, preselectedState, preselectedCity);
+              }
+            }
+          }
+        } catch (e) {}
+
+        // Wire up change events
+        countrySelect.onchange = function() {
+          const selectedOpt = this.options[this.selectedIndex];
+          const countryId = selectedOpt ? selectedOpt.getAttribute('data-country-id') : null;
+          stateSelect.innerHTML = '<option value="">Any State</option>';
+          stateSelect.disabled = true;
+          citySelect.innerHTML = '<option value="">Any City</option>';
+          citySelect.disabled = true;
+          if (countryId) loadEditStates(countryId);
+        };
+
+        stateSelect.onchange = function() {
+          const selectedOpt = this.options[this.selectedIndex];
+          const stateId = selectedOpt ? selectedOpt.getAttribute('data-state-id') : null;
+          citySelect.innerHTML = '<option value="">Any City</option>';
+          citySelect.disabled = true;
+          if (stateId) loadEditCities(stateId);
+        };
+      }
+
+      async function loadEditStates(countryId, preselectedState, preselectedCity) {
+        const stateSelect = document.getElementById('editPartnerState');
+        try {
+          const res = await fetch(`{{ url_for("user.get_states") }}?country_id=${countryId}`);
+          const states = await res.json();
+
+          stateSelect.innerHTML = '<option value="">Any State</option>';
+          states.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.name;
+            opt.setAttribute('data-state-id', s.id);
+            opt.textContent = s.name;
+            if (s.name === preselectedState) opt.selected = true;
+            stateSelect.appendChild(opt);
+          });
+          stateSelect.disabled = states.length === 0;
+
+          // If preselected state, load cities
+          if (preselectedState) {
+            const selectedOpt = stateSelect.querySelector(`option[value="${preselectedState}"]`);
+            if (selectedOpt) {
+              const stateId = selectedOpt.getAttribute('data-state-id');
+              if (stateId) await loadEditCities(stateId, preselectedCity);
+            }
+          }
+        } catch (e) {}
+      }
+
+      async function loadEditCities(stateId, preselectedCity) {
+        const citySelect = document.getElementById('editPartnerCity');
+        try {
+          const res = await fetch(`{{ url_for("user.get_cities") }}?state_id=${stateId}`);
+          const cities = await res.json();
+
+          citySelect.innerHTML = '<option value="">Any City</option>';
+          cities.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.name;
+            opt.textContent = c.name;
+            if (c.name === preselectedCity) opt.selected = true;
+            citySelect.appendChild(opt);
+          });
+          citySelect.disabled = false;
+        } catch (e) {}
+      }
+
+      // ── Save ──
+      async function saveEditRequest() {
+        const requestId = document.getElementById('editRequestId').value;
+        if (!requestId) return;
+
+        const saveBtn = document.getElementById('editSaveBtn');
+        const loader = document.getElementById('editModalLoader');
+        const loaderText = document.getElementById('editLoaderText');
+
+        saveBtn.disabled = true;
+        loader.classList.remove('hidden');
+        loaderText.textContent = 'Saving changes...';
+
+        const payload = {
+          about_you: document.getElementById('editAboutYou').value,
+          ideal_partner: document.getElementById('editIdealPartner').value,
+          image: editData.imageUrl,
+          your_interests: editData.interests,
+          partner_interests: editData.partnerInterests,
+          lifestyles: editData.lifestyles,
+          min_age: parseInt(document.getElementById('editMinAge').value) || null,
+          max_age: parseInt(document.getElementById('editMaxAge').value) || null,
+          partner_gender: document.getElementById('editPartnerGender').value,
+          partner_ethnicity: document.getElementById('editPartnerEthnicity').value,
+          partner_religion: document.getElementById('editPartnerReligion').value,
+          partner_country: document.getElementById('editPartnerCountry').value,
+          partner_state: document.getElementById('editPartnerState').value,
+          partner_city: document.getElementById('editPartnerCity').value,
+        };
+
+        try {
+          const res = await fetch(`/api/requests/${requestId}/edit`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': csrfToken,
+            },
+            body: JSON.stringify(payload),
+          });
+
+          const data = await res.json();
+
+          if (data.success) {
+            showSuccess('Request updated successfully! 🎉');
+            closeEditModal();
+            closeModal();
+            reloadRequests();
+          } else {
+            showError(data.error || 'Failed to save changes');
+          }
+        } catch (err) {
+          showError('Failed to save changes');
+        } finally {
+          saveBtn.disabled = false;
+          loader.classList.add('hidden');
+        }
+      }
+
+      // ── Deactivate ──
+      async function deactivateRequest(requestId) {
+        if (!confirm('Are you sure you want to deactivate your matchmaking request? This cannot be undone.')) return;
+
+        try {
+          const res = await fetch(`/api/requests/${requestId}/deactivate`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': csrfToken,
+            },
+          });
+
+          const data = await res.json();
+          if (data.success) {
+            showSuccess('Request deactivated');
+            closeModal();
+            reloadRequests();
+          } else {
+            showError(data.error || 'Failed to deactivate');
+          }
+        } catch (err) {
+          showError('Failed to deactivate request');
+        }
+      }
+
       // Close modals on ESC key
       document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
+          closeEditModal();
           closeModal();
           closeFullscreenImage();
         }

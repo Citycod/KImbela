@@ -1004,24 +1004,19 @@
     <aside class="kb-right-sidebar">
 
       <!-- Marketplace Awareness Banner -->
-      <div class="kb-right-card bg-gradient-to-br from-indigo-500 to-purple-600 text-white overflow-hidden relative cursor-pointer group mb-4" onclick="window.location.href='{{ url_for('market.main_market') }}'" style="border:none;">
-        <div class="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full blur-xl group-hover:bg-white/20 transition-all"></div>
-        <div class="absolute -left-6 -bottom-6 w-20 h-20 bg-indigo-400/20 rounded-full blur-lg"></div>
-        <div class="relative z-10">
-          <div class="flex items-center gap-3 mb-2">
-            <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
-              <i class="bi bi-shop text-xl text-white"></i>
-            </div>
-            <div>
-              <h3 class="font-bold text-white text-base m-0 leading-tight">Kimbela Market</h3>
-              <p class="text-indigo-100 text-xs m-0 font-medium">Buy & Sell Products</p>
-            </div>
-          </div>
-          <p class="text-[13px] text-indigo-50 leading-snug mb-3 opacity-90">Discover amazing products, digital items, or start your own business today!</p>
-          <button class="w-full py-2 bg-white text-indigo-600 rounded-lg text-sm font-bold shadow-sm group-hover:shadow-md transition-all">
-            Explore Marketplace
-          </button>
+      <div class="marketplace-banner mb-4">
+        <div class="banner-image-layer marketplace-image-layer" aria-hidden="true">
+          <span class="banner-image-core"
+            style="background-image: url('{{ url_for('static', filename='assets/img/market.jpeg') }}');"></span>
         </div>
+        <div class="marketplace-sparkle"></div>
+        <div class="marketplace-badge">Marketplace</div>
+        <div class="marketplace-icon" aria-hidden="true">
+          <i class="bi bi-shop"></i>
+        </div>
+        <h3>Shop the Kimbela market</h3>
+        <p>Trending items, verified sellers, and deals made for you.</p>
+        <a class="marketplace-cta" href="{{ url_for('market.main_market') }}">Explore the market</a>
       </div>      <!-- Trending Groups -->
       <div class="kb-right-card">
         <div class="kb-right-card-header">
