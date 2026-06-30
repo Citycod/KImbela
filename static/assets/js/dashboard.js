@@ -4767,21 +4767,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     const response = await fetch(this.action, {
                         method: 'POST',
                         headers: {
-                            'X-CSRFToken': csrfToken
+                            'X-CSRFToken': csrfToken,
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-File-Upload': 'true'
                         },
                         body: new FormData(this)
                     });
 
-                    if (response.ok) {
+                    const data = await response.json();
+                    if (response.ok && data.success) {
                         Toast.show('Post created successfully!', 'success');
                         setTimeout(() => location.reload(), 1000);
                     } else {
-                        const errorText = await response.text();
-                        throw new Error('Failed to create post');
+                        throw new Error(data.error || 'Failed to create post');
                     }
                 }
             } catch (error) {
-                Toast.show('Failed to create post', 'danger');
+                Toast.show(error.message || 'Failed to create post', 'danger');
             } finally {
                 Loader.quick(submitBtn, 'hide');
             }

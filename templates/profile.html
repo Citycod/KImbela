@@ -653,7 +653,7 @@
                 </div>
             </div>
 
-            <form method="POST" enctype="multipart/form-data" action="{{ url_for('user.profile', user_id=user.id) }}" class="p-4 space-y-4" id="createPostForm">
+            <form method="POST" enctype="multipart/form-data" action="{{ url_for('user.user_dashboard') }}" class="p-4 space-y-4" id="createPostForm">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 
                 <div class="flex items-center space-x-3 mb-3">
@@ -944,16 +944,26 @@
 
                 fetch(this.action, {
                     method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-File-Upload': 'true'
+                    },
                     body: formData
                 })
                 .then(response => {
-                    if (response.ok) {
+                    if (response.redirected) {
+                        return { success: true };
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
                         showNotification('Post created successfully!', 'success');
                         setTimeout(() => {
                             location.reload();
                         }, 1500);
                     } else {
-                        showNotification('Error creating post. Please try again.', 'error');
+                        showNotification(data.error || 'Error creating post. Please try again.', 'error');
                         submitBtn.innerHTML = originalText;
                         submitBtn.disabled = false;
                     }
