@@ -378,52 +378,16 @@
                   id="statusFilter"
                   class="rounded-xl border border-slate-200/70 bg-white px-3 py-2 text-xs text-slate-700 focus:border-emerald-400 focus:outline-none"
                 >
-                  <option
-                    value="pending"
-                    {%
-                    if
-                    status_filter=""
-                    ="pending"
-                    %}selected{%
-                    endif
-                    %}
-                  >
+                  <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>
                     Pending
                   </option>
-                  <option
-                    value="resolved"
-                    {%
-                    if
-                    status_filter=""
-                    ="resolved"
-                    %}selected{%
-                    endif
-                    %}
-                  >
+                  <option value="resolved" {% if status_filter == 'resolved' %}selected{% endif %}>
                     Resolved
                   </option>
-                  <option
-                    value="dismissed"
-                    {%
-                    if
-                    status_filter=""
-                    ="dismissed"
-                    %}selected{%
-                    endif
-                    %}
-                  >
+                  <option value="dismissed" {% if status_filter == 'dismissed' %}selected{% endif %}>
                     Dismissed
                   </option>
-                  <option
-                    value="all"
-                    {%
-                    if
-                    status_filter=""
-                    ="all"
-                    %}selected{%
-                    endif
-                    %}
-                  >
+                  <option value="all" {% if status_filter == 'all' %}selected{% endif %}>
                     All
                   </option>
                 </select>
@@ -434,52 +398,16 @@
                   id="typeFilter"
                   class="rounded-xl border border-slate-200/70 bg-white px-3 py-2 text-xs text-slate-700 focus:border-emerald-400 focus:outline-none"
                 >
-                  <option
-                    value="all"
-                    {%
-                    if
-                    type_filter=""
-                    ="all"
-                    %}selected{%
-                    endif
-                    %}
-                  >
+                  <option value="all" {% if type_filter == 'all' %}selected{% endif %}>
                     All
                   </option>
-                  <option
-                    value="post"
-                    {%
-                    if
-                    type_filter=""
-                    ="post"
-                    %}selected{%
-                    endif
-                    %}
-                  >
+                  <option value="post" {% if type_filter == 'post' %}selected{% endif %}>
                     Post
                   </option>
-                  <option
-                    value="comment"
-                    {%
-                    if
-                    type_filter=""
-                    ="comment"
-                    %}selected{%
-                    endif
-                    %}
-                  >
+                  <option value="comment" {% if type_filter == 'comment' %}selected{% endif %}>
                     Comment
                   </option>
-                  <option
-                    value="user"
-                    {%
-                    if
-                    type_filter=""
-                    ="user"
-                    %}selected{%
-                    endif
-                    %}
-                  >
+                  <option value="user" {% if type_filter == 'user' %}selected{% endif %}>
                     User
                   </option>
                 </select>
