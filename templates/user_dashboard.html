@@ -78,24 +78,22 @@
   <nav
     class="relative z-50 bg-white shadow-soft border-b border-fb-border h-20 flex items-center justify-between px-4 lg:px-6">
 
-    <!-- Left side: Logo + Mobile menu button -->
     <div class="flex items-center">
-      <button class="lg:hidden p-2 rounded-full hover:bg-fb-gray transition-colors mr-2" onclick="toggleMobileMenu()">
+      <button class="lg:hidden p-2 rounded-full hover:bg-fb-gray transition-colors mr-1" onclick="toggleMobileMenu()">
         <i class="bi bi-list text-xl"></i>
       </button>
 
       <a href="{{ url_for('user.user_dashboard') }}" class="flex items-center">
-        <img src="{{ url_for('static', filename='assets/img/kim.png') }}" alt="Kimbela" class="h-18 lg:h-20 my_logo"
-          style="width: 160px; object-fit: contain;" />
+        <img src="{{ url_for('static', filename='assets/img/kim.png') }}" alt="Kimbela" class="h-10 lg:h-14 my_logo w-24 lg:w-40 object-contain" />
       </a>
     </div>
 
     <!-- Center: Search bar -->
-    <div class="flex justify-start w-[800px] ml-4 lg:ml-40 mr-auto searching" style="width: 20rem">
+    <div class="flex justify-start flex-1 mx-2 lg:ml-10 lg:mr-auto lg:max-w-md searching">
       <div class="relative w-full">
-        <i class="bi bi-search absolute left-4 top-1/2 transform -translate-y-1/2 text-fb-text-light text-lg"></i>
-        <input type="text" id="globalSearch" placeholder="Search users, posts, and more..."
-          class="w-full pl-12 pr-4 py-2.5 bg-fb-gray rounded-full border border-gray-300 focus:border-fb-blue focus:ring-2 focus:ring-fb-blue focus:outline-none transition-all text-sm lg:text-base searching search_input" />
+        <i class="bi bi-search absolute left-3 lg:left-4 top-1/2 transform -translate-y-1/2 text-fb-text-light text-base lg:text-lg"></i>
+        <input type="text" id="globalSearch" placeholder="Search..."
+          class="w-full pl-10 lg:pl-12 pr-3 lg:pr-4 py-2 bg-fb-gray rounded-full border border-gray-300 focus:border-fb-blue focus:ring-2 focus:ring-fb-blue focus:outline-none transition-all text-xs lg:text-base searching search_input" />
 
         <div
           class="search-results absolute top-full left-0 right-0 mt-1 bg-white rounded-xl shadow-strong overflow-hidden z-50 hidden"
@@ -106,7 +104,7 @@
     </div>
 
     <!-- Right side: Nav icons (same as sidebar) -->
-    <div class="nav-icon-bar flex items-center space-x-1 lg:space-x-2" style="margin-right: 13rem">
+    <div class="nav-icon-bar hidden lg:flex items-center space-x-1 lg:space-x-2 xl:mr-12 2xl:mr-48">
       <!-- Home -->
       <a href="{{ url_for('user.user_dashboard') }}"
         class="nav-item flex flex-col items-center px-2 lg:px-3 py-1 rounded-lg hover:bg-gradient-to-b hover:from-blue-50 hover:to-blue-100 transition-all group">
@@ -343,7 +341,8 @@
        NEW REDESIGNED 3-COLUMN DASHBOARD LAYOUT
        ═══════════════════════════════════════════ -->
   {% set top_banner_new = dashboard_ads.get('top_banner') if dashboard_ads else None %}
-  {% set top_banner_url_new = top_banner_new.target_url if top_banner_new else url_for('payments.dashboard_ad_package', placement='dashboard-top') %}
+  {% set top_banner_url_new = top_banner_new.target_url if top_banner_new else url_for('payments.dashboard_ad_package',
+  placement='dashboard-top') %}
 
   <div class="kb-dashboard-layout">
     <!-- ── LEFT SIDEBAR ── -->
@@ -422,10 +421,12 @@
         <a class="dashboard-ad-link" href="{{ vertical_banner.target_url }}" target="_blank" rel="noopener">
           {% if vertical_banner.media_type == 'video' %}
           <video class="dashboard-ad-video" autoplay muted loop playsinline preload="metadata">
-            <source src="{{ vertical_banner.image_url }}" {% if vertical_banner.video_mime %}type="{{ vertical_banner.video_mime }}" {% endif %} />
+            <source src="{{ vertical_banner.image_url }}" {% if vertical_banner.video_mime
+              %}type="{{ vertical_banner.video_mime }}" {% endif %} />
           </video>
           {% else %}
-          <img src="{{ vertical_banner.image_url }}" alt="{{ vertical_banner.title }}" class="dashboard-ad-image" loading="lazy" />
+          <img src="{{ vertical_banner.image_url }}" alt="{{ vertical_banner.title }}" class="dashboard-ad-image"
+            loading="lazy" />
           {% endif %}
         </a>
         {% else %}
@@ -436,7 +437,8 @@
         <div class="vertical-ad-content">
           <h2>Boost your product today</h2>
           <p>Get your brand seen by active Kimbela shoppers and creators.</p>
-          <a class="vertical-ad-cta" href="{{ url_for('payments.dashboard_ad_package', placement='dashboard-vertical') }}">Start advertising</a>
+          <a class="vertical-ad-cta"
+            href="{{ url_for('payments.dashboard_ad_package', placement='dashboard-vertical') }}">Start advertising</a>
         </div>
         {% endif %}
       </div>
@@ -447,7 +449,7 @@
 
       <!-- HERO BANNER AD -->
       <div class="kb-hero-banner {% if top_banner_new %}has-ad{% endif %}">
-        <a href="{{ top_banner_url_new }}" {% if top_banner_new %}target="_blank" rel="noopener"{% endif %}>
+        <a href="{{ top_banner_url_new }}" {% if top_banner_new %}target="_blank" rel="noopener" {% endif %}>
           <div class="kb-hero-bg-decor">
             <div class="circle circle-1"></div>
             <div class="circle circle-2"></div>
@@ -458,13 +460,14 @@
               <h2 class="kb-hero-title">{{ top_banner_new.title if top_banner_new else 'Advertise Here' }}</h2>
               <p class="kb-hero-desc">
                 {% if top_banner_new and top_banner_new.description %}
-                  {{ top_banner_new.description }}
+                {{ top_banner_new.description }}
                 {% else %}
-                  Promote your brand and reach the right audience on Kimbela. Boost Visibility. Drive Engagement.
+                Promote your brand and reach the right audience on Kimbela. Boost Visibility. Drive Engagement.
                 {% endif %}
               </p>
               <div class="kb-hero-actions">
-                <span class="kb-hero-cta">{{ top_banner_new.call_to_action if top_banner_new and top_banner_new.call_to_action else 'Shop Now' }}</span>
+                <span class="kb-hero-cta">{{ top_banner_new.call_to_action if top_banner_new and
+                  top_banner_new.call_to_action else 'Start Now' }}</span>
                 <span class="kb-hero-secondary">Learn More</span>
               </div>
             </div>
@@ -509,81 +512,89 @@
 
       <!-- MOBILE ADS CAROUSEL -->
       <div class="kb-mobile-ads-wrapper">
-      {% set vertical_banner = dashboard_ads.get('vertical_banner') if dashboard_ads else None %}
-      <div class="vertical-ad-banner {% if vertical_banner %}has-dashboard-ad{% endif %}">
-        {% if vertical_banner %}
-        <a class="dashboard-ad-link" href="{{ vertical_banner.target_url }}" target="_blank" rel="noopener">
-          {% if vertical_banner.media_type == 'video' %}
-          <video class="dashboard-ad-video" autoplay muted loop playsinline preload="metadata">
-            <source src="{{ vertical_banner.image_url }}" {% if vertical_banner.video_mime %}type="{{ vertical_banner.video_mime }}" {% endif %} />
-          </video>
+        {% set vertical_banner = dashboard_ads.get('vertical_banner') if dashboard_ads else None %}
+        <div class="vertical-ad-banner {% if vertical_banner %}has-dashboard-ad{% endif %}">
+          {% if vertical_banner %}
+          <a class="dashboard-ad-link" href="{{ vertical_banner.target_url }}" target="_blank" rel="noopener">
+            {% if vertical_banner.media_type == 'video' %}
+            <video class="dashboard-ad-video" autoplay muted loop playsinline preload="metadata">
+              <source src="{{ vertical_banner.image_url }}" {% if vertical_banner.video_mime
+                %}type="{{ vertical_banner.video_mime }}" {% endif %} />
+            </video>
+            {% else %}
+            <img src="{{ vertical_banner.image_url }}" alt="{{ vertical_banner.title }}" class="dashboard-ad-image"
+              loading="lazy" />
+            {% endif %}
+          </a>
           {% else %}
-          <img src="{{ vertical_banner.image_url }}" alt="{{ vertical_banner.title }}" class="dashboard-ad-image" loading="lazy" />
+          <div class="vertical-ad-badge">Promote</div>
+          <div class="sidebar-ad-icon" aria-hidden="true">
+            <i class="bi bi-megaphone-fill"></i>
+          </div>
+          <div class="vertical-ad-content">
+            <h2>Boost your product today</h2>
+            <p>Get your brand seen by active Kimbela shoppers and creators.</p>
+            <a class="vertical-ad-cta"
+              href="{{ url_for('payments.dashboard_ad_package', placement='dashboard-vertical') }}">Start
+              advertising</a>
+          </div>
           {% endif %}
-        </a>
-        {% else %}
-        <div class="vertical-ad-badge">Promote</div>
-        <div class="sidebar-ad-icon" aria-hidden="true">
-          <i class="bi bi-megaphone-fill"></i>
         </div>
-        <div class="vertical-ad-content">
+        <div class="matchmaking-banner mt-4">
+          <div class="banner-image-layer matchmaking-image-layer" aria-hidden="true">
+            <span class="banner-image-core"
+              style="background-image: url('{{ url_for('static', filename='assets/img/love.jpg') }}');"></span>
+          </div>
+          <div class="matchmaking-glow"></div>
+          <div class="matchmaking-badge">Matchmaking</div>
+          <div class="matchmaking-title">
+            <span>Find your</span>
+            <span class="matchmaking-highlight">perfect</span>
+            <span>match on Kimbela</span>
+          </div>
+          <p class="matchmaking-copy">
+            Smart matches, real vibes, and meaningful connections.
+          </p>
+          <div class="matchmaking-actions">
+            <a class="matchmaking-cta primary" href="{{ url_for('match.requests') }}">Start Matching</a>
+            <a class="matchmaking-cta ghost" href="{{ url_for('match.view_requests') }}">Explore Matches</a>
+          </div>
+          <div class="matchmaking-orbits" aria-hidden="true">
+            <span class="orbit orbit-1"></span>
+            <span class="orbit orbit-2"></span>
+            <span class="orbit orbit-3"></span>
+          </div>
+        </div>
+        {% set spotlight_banner = dashboard_ads.get('spotlight_banner') if dashboard_ads else None %}
+        <div class="right-ad-banner-2 mt-4 {% if spotlight_banner %}has-dashboard-ad{% endif %}">
+          {% if spotlight_banner %}
+          <a class="dashboard-ad-link" href="{{ spotlight_banner.target_url }}" target="_blank" rel="noopener">
+            {% if spotlight_banner.media_type == 'video' %}
+            <video class="dashboard-ad-video" autoplay muted loop playsinline preload="metadata">
+              <source src="{{ spotlight_banner.image_url }}" {% if spotlight_banner.video_mime
+                %}type="{{ spotlight_banner.video_mime }}" {% endif %} />
+            </video>
+            {% else %}
+            <img src="{{ spotlight_banner.image_url }}" alt="{{ spotlight_banner.title }}" class="dashboard-ad-image"
+              loading="lazy" />
+            {% endif %}
+          </a>
+          {% else %}
+          <div class="right-ad-2-badge">Promote</div>
+          <div class="sidebar-ad-icon" aria-hidden="true">
+            <i class="bi bi-megaphone-fill"></i>
+          </div>
           <h2>Boost your product today</h2>
           <p>Get your brand seen by active Kimbela shoppers and creators.</p>
-          <a class="vertical-ad-cta" href="{{ url_for('payments.dashboard_ad_package', placement='dashboard-vertical') }}">Start advertising</a>
-        </div>
-        {% endif %}
-      </div>
-      <div class="matchmaking-banner mt-4">
-        <div class="banner-image-layer matchmaking-image-layer" aria-hidden="true">
-          <span class="banner-image-core" style="background-image: url('{{ url_for('static', filename='assets/img/love.jpg') }}');"></span>
-        </div>
-        <div class="matchmaking-glow"></div>
-        <div class="matchmaking-badge">Matchmaking</div>
-        <div class="matchmaking-title">
-          <span>Find your</span>
-          <span class="matchmaking-highlight">perfect</span>
-          <span>match on Kimbela</span>
-        </div>
-        <p class="matchmaking-copy">
-          Smart matches, real vibes, and meaningful connections.
-        </p>
-        <div class="matchmaking-actions">
-          <a class="matchmaking-cta primary" href="{{ url_for('match.requests') }}">Start Matching</a>
-          <a class="matchmaking-cta ghost" href="{{ url_for('match.view_requests') }}">Explore Matches</a>
-        </div>
-        <div class="matchmaking-orbits" aria-hidden="true">
-          <span class="orbit orbit-1"></span>
-          <span class="orbit orbit-2"></span>
-          <span class="orbit orbit-3"></span>
-        </div>
-      </div>
-      {% set spotlight_banner = dashboard_ads.get('spotlight_banner') if dashboard_ads else None %}
-      <div class="right-ad-banner-2 mt-4 {% if spotlight_banner %}has-dashboard-ad{% endif %}">
-        {% if spotlight_banner %}
-        <a class="dashboard-ad-link" href="{{ spotlight_banner.target_url }}" target="_blank" rel="noopener">
-          {% if spotlight_banner.media_type == 'video' %}
-          <video class="dashboard-ad-video" autoplay muted loop playsinline preload="metadata">
-            <source src="{{ spotlight_banner.image_url }}" {% if spotlight_banner.video_mime %}type="{{ spotlight_banner.video_mime }}" {% endif %} />
-          </video>
-          {% else %}
-          <img src="{{ spotlight_banner.image_url }}" alt="{{ spotlight_banner.title }}" class="dashboard-ad-image" loading="lazy" />
+          <a class="right-ad-2-cta"
+            href="{{ url_for('payments.dashboard_ad_package', placement='dashboard-spotlight') }}">Start advertising</a>
+          <div class="right-ad-2-sparkles" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
           {% endif %}
-        </a>
-        {% else %}
-        <div class="right-ad-2-badge">Promote</div>
-        <div class="sidebar-ad-icon" aria-hidden="true">
-          <i class="bi bi-megaphone-fill"></i>
         </div>
-        <h2>Boost your product today</h2>
-        <p>Get your brand seen by active Kimbela shoppers and creators.</p>
-        <a class="right-ad-2-cta" href="{{ url_for('payments.dashboard_ad_package', placement='dashboard-spotlight') }}">Start advertising</a>
-        <div class="right-ad-2-sparkles" aria-hidden="true">
-          <span></span>
-          <span></span>
-          <span></span>
-        </div>
-        {% endif %}
-      </div>
       </div>
 
       <!-- POSTS FEED (uses existing feed div via JS) -->
@@ -602,7 +613,8 @@
                   class="w-10 h-10 rounded-full object-cover hover:opacity-90 transition-opacity" />
               </a>
               <div>
-                <a href="{{ url_for('user.view_profile', user_identifier=post.author.id) }}" class="hover:underline text-gray-900 block">
+                <a href="{{ url_for('user.view_profile', user_identifier=post.author.id) }}"
+                  class="hover:underline text-gray-900 block">
                   <div class="font-semibold">
                     {{ post.author.first_name }} {{ post.author.last_name }}
                   </div>
@@ -663,14 +675,16 @@
             <div class="shared-post-card mt-3">
               {% if post.shared_post %}
               <div class="shared-post-header flex items-start gap-3">
-                <a href="{{ url_for('user.view_profile', user_identifier=post.shared_post.author.id) }}" class="flex-shrink-0">
+                <a href="{{ url_for('user.view_profile', user_identifier=post.shared_post.author.id) }}"
+                  class="flex-shrink-0">
                   <img
                     src="{{ post.shared_post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
                     alt="{{ post.shared_post.author.full_name }}"
                     class="w-9 h-9 rounded-full object-cover flex-shrink-0 hover:opacity-90 transition-opacity" />
                 </a>
                 <div>
-                  <a href="{{ url_for('user.view_profile', user_identifier=post.shared_post.author.id) }}" class="hover:underline text-gray-900 block">
+                  <a href="{{ url_for('user.view_profile', user_identifier=post.shared_post.author.id) }}"
+                    class="hover:underline text-gray-900 block">
                     <div class="font-semibold text-sm">
                       {{ post.shared_post.author.first_name }} {{ post.shared_post.author.last_name }}
                     </div>
@@ -892,12 +906,14 @@
                 <a href="{{ url_for('user.view_profile', user_identifier=comment.author.id) }}" class="flex-shrink-0">
                   <img
                     src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-                    alt="{{ comment.author.full_name }}" class="w-9 h-9 rounded-full object-cover flex-shrink-0 hover:opacity-90 transition-opacity" />
+                    alt="{{ comment.author.full_name }}"
+                    class="w-9 h-9 rounded-full object-cover flex-shrink-0 hover:opacity-90 transition-opacity" />
                 </a>
                 <div class="flex-1">
                   <div class="bg-white rounded-2xl px-4 py-3 shadow-sm">
                     <div class="flex justify-between items-start">
-                      <a href="{{ url_for('user.view_profile', user_identifier=comment.author.id) }}" class="hover:underline text-gray-900">
+                      <a href="{{ url_for('user.view_profile', user_identifier=comment.author.id) }}"
+                        class="hover:underline text-gray-900">
                         <h6 class="font-semibold text-sm">
                           {{ comment.author.full_name }}
                         </h6>
@@ -992,10 +1008,12 @@
           <p class="text-sm mt-1">No more posts to load</p>
         </div>
       </div>
-      
+
       <!-- Footer Credit -->
       <div class="text-center py-6 mt-8 border-t border-gray-100">
-        <p class="text-sm text-gray-500 font-medium">Redesigned by <a href="https://uplix.vercel.app" target="_blank" class="text-blue-600 hover:text-blue-800 transition-colors font-bold" style="color: var(--kb-primary);">Uplix</a></p>
+        <p class="text-sm text-gray-500 font-medium">Redesigned by <a href="https://uplix.vercel.app" target="_blank"
+            class="text-blue-600 hover:text-blue-800 transition-colors font-bold"
+            style="color: var(--kb-primary);">Uplix</a></p>
       </div>
 
     </main>
@@ -1017,29 +1035,30 @@
         <h3>Shop the Kimbela market</h3>
         <p>Trending items, verified sellers, and deals made for you.</p>
         <a class="marketplace-cta" href="{{ url_for('market.main_market') }}">Explore the market</a>
-      </div>      <!-- Trending Groups -->
+      </div> <!-- Trending Groups -->
       <div class="kb-right-card">
         <div class="kb-right-card-header">
           <h3>Trending Groups</h3>
           <a href="#">View all</a>
         </div>
         {% if groups_data is defined and groups_data %}
-          {% for group in groups_data[:4] %}
-          <div class="kb-right-item">
-            <img src="{{ group.cover_pic }}" class="kb-right-item-avatar" alt="{{ group.name }}" />
-            <div class="kb-right-item-info">
-              <div class="kb-right-item-name">{{ group.name }}</div>
-              <div class="kb-right-item-meta">{{ group.member_count }} members</div>
-            </div>
-            {% if not group.is_member %}
-              <button class="kb-join-btn" onclick="joinGroup('{{ group.id }}')">Join</button>
-            {% else %}
-              <a href="{{ url_for('user.group_detail', group_id=group.id) }}" class="kb-join-btn" style="text-decoration:none;display:inline-flex;align-items:center;">View</a>
-            {% endif %}
+        {% for group in groups_data[:4] %}
+        <div class="kb-right-item">
+          <img src="{{ group.cover_pic }}" class="kb-right-item-avatar" alt="{{ group.name }}" />
+          <div class="kb-right-item-info">
+            <div class="kb-right-item-name">{{ group.name }}</div>
+            <div class="kb-right-item-meta">{{ group.member_count }} members</div>
           </div>
-          {% endfor %}
+          {% if not group.is_member %}
+          <button class="kb-join-btn" onclick="joinGroup('{{ group.id }}')">Join</button>
+          {% else %}
+          <a href="{{ url_for('user.group_detail', group_id=group.id) }}" class="kb-join-btn"
+            style="text-decoration:none;display:inline-flex;align-items:center;">View</a>
+          {% endif %}
+        </div>
+        {% endfor %}
         {% else %}
-          <div class="text-center p-3 text-gray-500 text-sm">No trending groups found</div>
+        <div class="text-center p-3 text-gray-500 text-sm">No trending groups found</div>
         {% endif %}
       </div>
 
@@ -1050,18 +1069,20 @@
           <a href="#">View all</a>
         </div>
         {% if random_five is defined and random_five %}
-          {% for user in random_five[:3] %}
-          <div class="kb-right-item" onclick="openProfileModal({{ user.id }})" style="cursor:pointer">
-            <img src="{{ user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" class="kb-right-item-avatar" alt="{{ user.first_name }}" />
-            <div class="kb-right-item-info">
-              <div class="kb-right-item-name">{{ user.first_name }} {{ user.last_name }}</div>
-              <div class="kb-right-item-meta">{{ user.mutual_friends_count|default('') }} mutual friends</div>
-            </div>
-            <button class="kb-follow-btn" onclick="event.stopPropagation(); addFriend({{ user.id }}, this)">Follow</button>
+        {% for user in random_five[:3] %}
+        <div class="kb-right-item" onclick="openProfileModal({{ user.id }})" style="cursor:pointer">
+          <img src="{{ user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+            class="kb-right-item-avatar" alt="{{ user.first_name }}" />
+          <div class="kb-right-item-info">
+            <div class="kb-right-item-name">{{ user.first_name }} {{ user.last_name }}</div>
+            <div class="kb-right-item-meta">{{ user.mutual_friends_count|default('') }} mutual friends</div>
           </div>
-          {% endfor %}
+          <button class="kb-follow-btn"
+            onclick="event.stopPropagation(); addFriend({{ user.id }}, this)">Follow</button>
+        </div>
+        {% endfor %}
         {% else %}
-          <p style="text-align:center;color:#9ca3af;font-size:0.85rem;padding:1rem 0;">Connect with new people!</p>
+        <p style="text-align:center;color:#9ca3af;font-size:0.85rem;padding:1rem 0;">Connect with new people!</p>
         {% endif %}
       </div>
 
@@ -1095,7 +1116,8 @@
 
       <div class="matchmaking-banner mt-4">
         <div class="banner-image-layer matchmaking-image-layer" aria-hidden="true">
-          <span class="banner-image-core" style="background-image: url('{{ url_for('static', filename='assets/img/love.jpg') }}');"></span>
+          <span class="banner-image-core"
+            style="background-image: url('{{ url_for('static', filename='assets/img/love.jpg') }}');"></span>
         </div>
         <div class="matchmaking-glow"></div>
         <div class="matchmaking-badge">Matchmaking</div>
@@ -1124,10 +1146,12 @@
         <a class="dashboard-ad-link" href="{{ spotlight_banner.target_url }}" target="_blank" rel="noopener">
           {% if spotlight_banner.media_type == 'video' %}
           <video class="dashboard-ad-video" autoplay muted loop playsinline preload="metadata">
-            <source src="{{ spotlight_banner.image_url }}" {% if spotlight_banner.video_mime %}type="{{ spotlight_banner.video_mime }}" {% endif %} />
+            <source src="{{ spotlight_banner.image_url }}" {% if spotlight_banner.video_mime
+              %}type="{{ spotlight_banner.video_mime }}" {% endif %} />
           </video>
           {% else %}
-          <img src="{{ spotlight_banner.image_url }}" alt="{{ spotlight_banner.title }}" class="dashboard-ad-image" loading="lazy" />
+          <img src="{{ spotlight_banner.image_url }}" alt="{{ spotlight_banner.title }}" class="dashboard-ad-image"
+            loading="lazy" />
           {% endif %}
         </a>
         {% else %}
@@ -1137,7 +1161,8 @@
         </div>
         <h2>Boost your product today</h2>
         <p>Get your brand seen by active Kimbela shoppers and creators.</p>
-        <a class="right-ad-2-cta" href="{{ url_for('payments.dashboard_ad_package', placement='dashboard-spotlight') }}">Start advertising</a>
+        <a class="right-ad-2-cta"
+          href="{{ url_for('payments.dashboard_ad_package', placement='dashboard-spotlight') }}">Start advertising</a>
         <div class="right-ad-2-sparkles" aria-hidden="true">
           <span></span>
           <span></span>
@@ -1160,14 +1185,18 @@
       <a class="hero-ad-link" href="{{ top_banner_url }}" {% if top_banner %}target="_blank" rel="noopener" {% endif %}>
         {% if top_banner_image %}
         <img src="{{ top_banner_image }}" alt="{{ top_banner_title }}" class="hero-ad-media" loading="lazy" />
-        <div class="hero-ad-content" style="background: linear-gradient(to right, rgba(15,23,42,0.9) 0%, rgba(15,23,42,0.6) 50%, transparent 100%); width: 100%; pointer-events: none; border-radius: inherit;">
+        <div class="hero-ad-content"
+          style="background: linear-gradient(to right, rgba(15,23,42,0.9) 0%, rgba(15,23,42,0.6) 50%, transparent 100%); width: 100%; pointer-events: none; border-radius: inherit;">
           <div class="hero-ad-pill">Sponsored</div>
-          <h2 style="color: #f8fafc; font-weight: 700; text-shadow: 1px 1px 4px rgba(0,0,0,0.8);">{{ top_banner_title }}</h2>
+          <h2 style="color: #f8fafc; font-weight: 700; text-shadow: 1px 1px 4px rgba(0,0,0,0.8);">{{ top_banner_title }}
+          </h2>
           {% if top_banner.description %}
-          <h5 class="hero-ad-highlight" style="text-shadow: 1px 1px 4px rgba(0,0,0,0.8);">{{ top_banner.description }}</h5>
+          <h5 class="hero-ad-highlight" style="text-shadow: 1px 1px 4px rgba(0,0,0,0.8);">{{ top_banner.description }}
+          </h5>
           {% endif %}
           <div class="hero-ad-actions" style="pointer-events: auto;">
-            <span class="hero-ad-cta js-ad-cta" data-cta-href="{{ top_banner_url }}" role="link" tabindex="0">{{ top_banner.call_to_action or 'Learn More' }}</span>
+            <span class="hero-ad-cta js-ad-cta" data-cta-href="{{ top_banner_url }}" role="link" tabindex="0">{{
+              top_banner.call_to_action or 'Learn More' }}</span>
           </div>
         </div>
         {% else %}
@@ -2027,7 +2056,8 @@
           <!-- Post content -->
           <textarea name="post_content"
             class="w-full border-0 focus:ring-0 focus:outline-none text-base sm:text-lg resize-none"
-            style="font-family: 'Inter', sans-serif;" rows="3" placeholder="What's on your mind, {{ current_user.first_name }}?" required></textarea>
+            style="font-family: 'Inter', sans-serif;" rows="3"
+            placeholder="What's on your mind, {{ current_user.first_name }}?" required></textarea>
 
           <!-- Location Preview -->
           <div id="postLocationPreview" class="hidden mt-2">
