@@ -291,7 +291,7 @@
     </div>
 
     <!-- + Create Button -->
-    <button class="kb-create-btn hidden lg:inline-flex" data-bs-toggle="modal" data-bs-target="#postModal">
+    <button class="kb-create-btn inline-flex" data-bs-toggle="modal" data-bs-target="#postModal">
       <i class="bi bi-plus-lg"></i>
       <span class="btn-text">Create</span>
     </button>
@@ -510,92 +510,56 @@
         </div>
       </div>
 
-      <!-- MOBILE ADS CAROUSEL -->
-      <div class="kb-mobile-ads-wrapper">
-        {% set vertical_banner = dashboard_ads.get('vertical_banner') if dashboard_ads else None %}
-        <div class="vertical-ad-banner {% if vertical_banner %}has-dashboard-ad{% endif %}">
-          {% if vertical_banner %}
-          <a class="dashboard-ad-link" href="{{ vertical_banner.target_url }}" target="_blank" rel="noopener">
-            {% if vertical_banner.media_type == 'video' %}
-            <video class="dashboard-ad-video" autoplay muted loop playsinline preload="metadata">
-              <source src="{{ vertical_banner.image_url }}" {% if vertical_banner.video_mime
-                %}type="{{ vertical_banner.video_mime }}" {% endif %} />
-            </video>
-            {% else %}
-            <img src="{{ vertical_banner.image_url }}" alt="{{ vertical_banner.title }}" class="dashboard-ad-image"
-              loading="lazy" />
-            {% endif %}
-          </a>
-          {% else %}
-          <div class="vertical-ad-badge">Promote</div>
-          <div class="sidebar-ad-icon" aria-hidden="true">
-            <i class="bi bi-megaphone-fill"></i>
-          </div>
-          <div class="vertical-ad-content">
-            <h2>Boost your product today</h2>
-            <p>Get your brand seen by active Kimbela shoppers and creators.</p>
-            <a class="vertical-ad-cta"
-              href="{{ url_for('payments.dashboard_ad_package', placement='dashboard-vertical') }}">Start
-              advertising</a>
-          </div>
-          {% endif %}
-        </div>
-        <div class="matchmaking-banner mt-4">
-          <div class="banner-image-layer matchmaking-image-layer" aria-hidden="true">
-            <span class="banner-image-core"
-              style="background-image: url('{{ url_for('static', filename='assets/img/love.jpg') }}');"></span>
-          </div>
-          <div class="matchmaking-glow"></div>
-          <div class="matchmaking-badge">Matchmaking</div>
-          <div class="matchmaking-title">
-            <span>Find your</span>
-            <span class="matchmaking-highlight">perfect</span>
-            <span>match on Kimbela</span>
-          </div>
-          <p class="matchmaking-copy">
-            Smart matches, real vibes, and meaningful connections.
-          </p>
-          <div class="matchmaking-actions">
-            <a class="matchmaking-cta primary" href="{{ url_for('match.requests') }}">Start Matching</a>
-            <a class="matchmaking-cta ghost" href="{{ url_for('match.view_requests') }}">Explore Matches</a>
-          </div>
-          <div class="matchmaking-orbits" aria-hidden="true">
-            <span class="orbit orbit-1"></span>
-            <span class="orbit orbit-2"></span>
-            <span class="orbit orbit-3"></span>
-          </div>
-        </div>
-        {% set spotlight_banner = dashboard_ads.get('spotlight_banner') if dashboard_ads else None %}
-        <div class="right-ad-banner-2 mt-4 {% if spotlight_banner %}has-dashboard-ad{% endif %}">
-          {% if spotlight_banner %}
-          <a class="dashboard-ad-link" href="{{ spotlight_banner.target_url }}" target="_blank" rel="noopener">
-            {% if spotlight_banner.media_type == 'video' %}
-            <video class="dashboard-ad-video" autoplay muted loop playsinline preload="metadata">
-              <source src="{{ spotlight_banner.image_url }}" {% if spotlight_banner.video_mime
-                %}type="{{ spotlight_banner.video_mime }}" {% endif %} />
-            </video>
-            {% else %}
-            <img src="{{ spotlight_banner.image_url }}" alt="{{ spotlight_banner.title }}" class="dashboard-ad-image"
-              loading="lazy" />
-            {% endif %}
-          </a>
-          {% else %}
-          <div class="right-ad-2-badge">Promote</div>
-          <div class="sidebar-ad-icon" aria-hidden="true">
-            <i class="bi bi-megaphone-fill"></i>
-          </div>
-          <h2>Boost your product today</h2>
-          <p>Get your brand seen by active Kimbela shoppers and creators.</p>
-          <a class="right-ad-2-cta"
-            href="{{ url_for('payments.dashboard_ad_package', placement='dashboard-spotlight') }}">Start advertising</a>
-          <div class="right-ad-2-sparkles" aria-hidden="true">
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
-          {% endif %}
-        </div>
-      </div>
+      <style>
+        /* Compact Mobile Ads styles */
+        @media (max-width: 1024px) {
+          .mobile-feed-ad {
+            margin: 1.5rem 0;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            background: var(--kb-card);
+          }
+          .mobile-feed-ad .vertical-ad-banner,
+          .mobile-feed-ad .matchmaking-banner,
+          .mobile-feed-ad .right-ad-banner-2 {
+            border-radius: 0;
+            margin: 0 !important;
+            padding: 1.25rem !important;
+            min-height: auto !important;
+            box-shadow: none !important;
+            border: 1px solid var(--kb-border);
+          }
+          .mobile-feed-ad .dashboard-ad-image,
+          .mobile-feed-ad .dashboard-ad-video {
+            max-height: 160px !important;
+            width: 100% !important;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+          }
+          .mobile-feed-ad .matchmaking-title {
+            font-size: 1.1rem !important;
+            margin-top: 0.5rem;
+          }
+          .mobile-feed-ad .vertical-ad-content h2,
+          .mobile-feed-ad h2 {
+            font-size: 1.1rem !important;
+            margin-top: 0.5rem;
+          }
+          .mobile-feed-ad p {
+            font-size: 0.8rem !important;
+            margin-bottom: 0.75rem !important;
+          }
+          .mobile-feed-ad .matchmaking-actions,
+          .mobile-feed-ad .vertical-ad-cta,
+          .mobile-feed-ad .right-ad-2-cta {
+            padding: 0.5rem 1rem !important;
+            font-size: 0.8rem !important;
+            display: inline-block;
+          }
+        }
+      </style>
 
       <!-- POSTS FEED (uses existing feed div via JS) -->
       <div id="posts-feed" data-has-more="{{ has_more|tojson }}" data-next-cursor="{{ next_cursor }}">
@@ -936,6 +900,76 @@
             </div>
           </div>
         </div>
+
+        {% if loop.index == 1 %}
+        <div class="mobile-feed-ad lg:hidden">
+          {% set vertical_banner = dashboard_ads.get('vertical_banner') if dashboard_ads else None %}
+          <div class="vertical-ad-banner {% if vertical_banner %}has-dashboard-ad{% endif %}">
+            {% if vertical_banner %}
+            <a class="dashboard-ad-link" href="{{ vertical_banner.target_url }}" target="_blank" rel="noopener">
+              {% if vertical_banner.media_type == 'video' %}
+              <video class="dashboard-ad-video" autoplay muted loop playsinline preload="metadata">
+                <source src="{{ vertical_banner.image_url }}" {% if vertical_banner.video_mime %}type="{{ vertical_banner.video_mime }}" {% endif %} />
+              </video>
+              {% else %}
+              <img src="{{ vertical_banner.image_url }}" alt="{{ vertical_banner.title }}" class="dashboard-ad-image" loading="lazy" />
+              {% endif %}
+            </a>
+            {% else %}
+            <div class="vertical-ad-badge">Promote</div>
+            <div class="sidebar-ad-icon" aria-hidden="true"><i class="bi bi-megaphone-fill"></i></div>
+            <div class="vertical-ad-content">
+              <h2>Boost your product today</h2>
+              <p>Get your brand seen by active Kimbela shoppers and creators.</p>
+              <a class="vertical-ad-cta" href="{{ url_for('payments.dashboard_ad_package', placement='dashboard-vertical') }}">Start advertising</a>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        {% elif loop.index == 3 %}
+        <div class="mobile-feed-ad lg:hidden">
+          <div class="matchmaking-banner mt-4">
+            <div class="banner-image-layer matchmaking-image-layer" aria-hidden="true">
+              <span class="banner-image-core" style="background-image: url('{{ url_for('static', filename='assets/img/love.jpg') }}');"></span>
+            </div>
+            <div class="matchmaking-glow"></div>
+            <div class="matchmaking-badge">Matchmaking</div>
+            <div class="matchmaking-title">
+              <span>Find your</span> <span class="matchmaking-highlight">perfect</span> <span>match on Kimbela</span>
+            </div>
+            <p class="matchmaking-copy">Smart matches, real vibes, and meaningful connections.</p>
+            <div class="matchmaking-actions">
+              <a class="matchmaking-cta primary" href="{{ url_for('match.requests') }}">Start Matching</a>
+              <a class="matchmaking-cta ghost" href="{{ url_for('match.view_requests') }}">Explore Matches</a>
+            </div>
+            <div class="matchmaking-orbits" aria-hidden="true"><span class="orbit orbit-1"></span><span class="orbit orbit-2"></span><span class="orbit orbit-3"></span></div>
+          </div>
+        </div>
+        {% elif loop.index == 5 %}
+        <div class="mobile-feed-ad lg:hidden">
+          {% set spotlight_banner = dashboard_ads.get('spotlight_banner') if dashboard_ads else None %}
+          <div class="right-ad-banner-2 mt-4 {% if spotlight_banner %}has-dashboard-ad{% endif %}">
+            {% if spotlight_banner %}
+            <a class="dashboard-ad-link" href="{{ spotlight_banner.target_url }}" target="_blank" rel="noopener">
+              {% if spotlight_banner.media_type == 'video' %}
+              <video class="dashboard-ad-video" autoplay muted loop playsinline preload="metadata">
+                <source src="{{ spotlight_banner.image_url }}" {% if spotlight_banner.video_mime %}type="{{ spotlight_banner.video_mime }}" {% endif %} />
+              </video>
+              {% else %}
+              <img src="{{ spotlight_banner.image_url }}" alt="{{ spotlight_banner.title }}" class="dashboard-ad-image" loading="lazy" />
+              {% endif %}
+            </a>
+            {% else %}
+            <div class="right-ad-2-badge">Promote</div>
+            <div class="sidebar-ad-icon" aria-hidden="true"><i class="bi bi-megaphone-fill"></i></div>
+            <h2>Boost your product today</h2>
+            <p>Get your brand seen by active Kimbela shoppers and creators.</p>
+            <a class="right-ad-2-cta" href="{{ url_for('payments.dashboard_ad_package', placement='dashboard-spotlight') }}">Start advertising</a>
+            <div class="right-ad-2-sparkles" aria-hidden="true"><span></span><span></span><span></span></div>
+            {% endif %}
+          </div>
+        </div>
+        {% endif %}
         {% if loop.index % 13 == 0 %}
         {% set mobile_banner = mobile_banner_candidates|random %}
         <div class="mobile-feed-ad">
