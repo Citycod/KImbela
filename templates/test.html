@@ -1961,6 +1961,7 @@
         enctype="multipart/form-data"
         action="{{ url_for('user.user_dashboard') }}"
         id="createPostForm"
+        autocomplete="off"
       >
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
 

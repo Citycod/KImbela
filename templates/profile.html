@@ -653,7 +653,7 @@
                 </div>
             </div>
 
-            <form method="POST" enctype="multipart/form-data" action="{{ url_for('user.user_dashboard') }}" class="p-4 space-y-4" id="createPostForm">
+            <form method="POST" enctype="multipart/form-data" action="{{ url_for('user.user_dashboard') }}" class="p-4 space-y-4" id="createPostForm" autocomplete="off">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 
                 <div class="flex items-center space-x-3 mb-3">
@@ -959,6 +959,18 @@
                 .then(data => {
                     if (data.success) {
                         showNotification('Post created successfully!', 'success');
+                        const createPostForm = document.getElementById('createPostForm');
+                        if (createPostForm) createPostForm.reset();
+                        const mediaInput = document.getElementById('mediaInput');
+                        if (mediaInput) mediaInput.value = '';
+                        const mediaPreview = document.getElementById('mediaPreview');
+                        if (mediaPreview) {
+                            mediaPreview.innerHTML = '';
+                            mediaPreview.classList.add('hidden');
+                        }
+                        const selectedGifUrl = document.getElementById('selectedGifUrl');
+                        if (selectedGifUrl) selectedGifUrl.value = '';
+
                         setTimeout(() => {
                             location.reload();
                         }, 1500);

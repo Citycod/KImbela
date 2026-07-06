@@ -230,6 +230,19 @@ class DashboardApp {
 
                         if (response.ok) {
                             Toast.show('Post created successfully!', 'success');
+                            
+                            // Clear form explicitly
+                            createPostForm.reset();
+                            const mInput = document.getElementById('mediaInput');
+                            if (mInput) mInput.value = '';
+                            const mPre = document.getElementById('mediaPreview');
+                            if (mPre) {
+                                mPre.innerHTML = '';
+                                mPre.classList.add('hidden');
+                            }
+                            const sGifUrl = document.getElementById('selectedGifUrl');
+                            if (sGifUrl) sGifUrl.value = '';
+
                             setTimeout(() => location.reload(), 1000);
                         } else {
                             throw new Error('Failed to create post');

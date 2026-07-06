@@ -2070,7 +2070,7 @@
       </div>
 
       <form method="POST" enctype="multipart/form-data" action="{{ url_for('user.user_dashboard') }}"
-        id="createPostForm" class="flex flex-col flex-1 min-h-0">
+        id="createPostForm" class="flex flex-col flex-1 min-h-0" autocomplete="off">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
         <input type="hidden" name="gif_url" id="selectedGifUrl" value="" />
         <input type="hidden" name="post_location" id="postLocationInput" value="" />

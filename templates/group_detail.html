@@ -1043,7 +1043,7 @@
                 </button>
             </div>
             
-            <form id="createPostForm" enctype="multipart/form-data" class="flex flex-col h-full">
+            <form id="createPostForm" enctype="multipart/form-data" class="flex flex-col h-full" autocomplete="off">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 
                 <!-- Scrollable Content Area -->
@@ -1442,6 +1442,18 @@
                 
                 if (data.success) {
                     showToast('Post created!', 'success');
+                    const form = document.getElementById('createPostForm');
+                    if (form) form.reset();
+                    const mediaInput = document.getElementById('mediaInput');
+                    if (mediaInput) mediaInput.value = '';
+                    const mediaPreview = document.getElementById('mediaPreview');
+                    if (mediaPreview) {
+                        mediaPreview.innerHTML = '';
+                        mediaPreview.classList.add('hidden');
+                    }
+                    const selectedGifUrl = document.getElementById('selectedGifUrl');
+                    if (selectedGifUrl) selectedGifUrl.value = '';
+                    
                     closePostModal();
                     setTimeout(() => location.reload(), 1000);
                 } else {

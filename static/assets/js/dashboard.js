@@ -3922,6 +3922,17 @@ const PostUploader = {
                         const response = JSON.parse(xhr.responseText);
                         if (response.success) {
                             Toast.show('Post created successfully!', 'success');
+                            form.reset();
+                            const mediaInput = document.getElementById('mediaInput');
+                            if (mediaInput) mediaInput.value = '';
+                            const mediaPreview = document.getElementById('mediaPreview');
+                            if (mediaPreview) {
+                                mediaPreview.innerHTML = '';
+                                mediaPreview.classList.add('hidden');
+                            }
+                            const selectedGifUrl = document.getElementById('selectedGifUrl');
+                            if (selectedGifUrl) selectedGifUrl.value = '';
+                            
                             setTimeout(() => location.reload(), 1500);
                             resolve(true);
                         } else {
@@ -4777,6 +4788,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     const data = await response.json();
                     if (response.ok && data.success) {
                         Toast.show('Post created successfully!', 'success');
+                        
+                        // Clear form explicitly to prevent cache across soft reloads
+                        if (createPostForm) createPostForm.reset();
+                        const mediaInput = document.getElementById('mediaInput');
+                        if (mediaInput) mediaInput.value = '';
+                        const mediaPreview = document.getElementById('mediaPreview');
+                        if (mediaPreview) {
+                            mediaPreview.innerHTML = '';
+                            mediaPreview.classList.add('hidden');
+                        }
+                        const selectedGifUrl = document.getElementById('selectedGifUrl');
+                        if (selectedGifUrl) selectedGifUrl.value = '';
+
                         setTimeout(() => location.reload(), 1000);
                     } else {
                         throw new Error(data.error || 'Failed to create post');
