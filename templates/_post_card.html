@@ -36,7 +36,7 @@
         {% endif %}
 
         {% if post.content %}
-        <p class="text-gray-800 leading-relaxed text-sm">{{ post.content }}</p>
+        <p class="text-gray-800 leading-relaxed text-sm whitespace-pre-wrap break-words">{{ post.content }}</p>
         {% endif %}
 
         {% if post.shared_post %}
@@ -59,7 +59,7 @@
             </div>
 
             {% if post.shared_post.content %}
-            <p class="text-gray-800 leading-relaxed text-sm">{{ post.shared_post.content }}</p>
+            <p class="text-gray-800 leading-relaxed text-sm whitespace-pre-wrap break-words">{{ post.shared_post.content }}</p>
             {% endif %}
 
             {% if post.shared_post.image %}

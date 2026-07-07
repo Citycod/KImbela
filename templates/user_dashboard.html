@@ -2089,8 +2089,9 @@
 
           <!-- Post content -->
           <textarea name="post_content"
-            class="w-full border-0 focus:ring-0 focus:outline-none text-base sm:text-lg resize-none"
+            class="w-full border-0 focus:ring-0 focus:outline-none text-base sm:text-lg resize-y min-h-[80px] max-h-[500px] overflow-y-auto whitespace-pre-wrap"
             style="font-family: 'Inter', sans-serif;" rows="3"
+            oninput="this.style.height = ''; this.style.height = Math.min(this.scrollHeight, 500) + 'px'"
             placeholder="What's on your mind, {{ current_user.first_name }}?" required></textarea>
 
           <!-- Location Preview -->
@@ -2182,7 +2183,8 @@
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
         <div class="modal-body p-3 sm:p-4">
           <textarea name="content"
-            class="w-full border-0 focus:ring-0 focus:outline-none text-base sm:text-lg resize-none text-left" rows="3"
+            class="w-full border-0 focus:ring-0 focus:outline-none text-base sm:text-lg resize-y text-left min-h-[80px] max-h-[500px] overflow-y-auto whitespace-pre-wrap" rows="3"
+            oninput="this.style.height = ''; this.style.height = Math.min(this.scrollHeight, 500) + 'px'"
             id="editPostContent"></textarea>
           <!-- Compact Media Preview -->
           <div id="editMediaPreview" class="mt-2"></div>
