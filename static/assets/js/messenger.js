@@ -389,14 +389,15 @@
 
         const div = document.createElement('div');
         const wrapperClass = type === 'sent'
-            ? 'message-wrapper sent flex justify-end'
-            : 'message-wrapper received flex justify-start';
+            ? 'message-wrapper sent flex flex-col items-end w-full'
+            : 'message-wrapper received flex flex-col items-start w-full';
+        const hasContent = !!content;
         const bubbleClass = type === 'sent'
-            ? 'message-bubble sent px-3 py-2 rounded-2xl rounded-br-md bg-gradient-to-br from-blue-600 via-sky-600 to-emerald-500 text-white shadow-md'
-            : 'message-bubble received px-3 py-2 rounded-2xl rounded-bl-md bg-white border border-gray-200 text-gray-900 shadow-sm';
+            ? `message-bubble sent px-3 py-2 rounded-2xl rounded-br-md text-white shadow-md ${hasContent ? 'bg-gradient-to-br from-blue-600 via-sky-600 to-emerald-500' : 'bg-transparent shadow-none px-0 py-0 text-gray-700'}`
+            : `message-bubble received px-3 py-2 rounded-2xl rounded-bl-md border border-gray-200 text-gray-900 shadow-sm ${hasContent ? 'bg-white' : 'bg-transparent border-none shadow-none px-0 py-0'}`;
         const attachmentsClass = type === 'sent'
-            ? 'message-attachments sent px-3 mb-1 flex justify-end'
-            : 'message-attachments received px-3 mb-1 flex justify-start';
+            ? 'message-attachments sent mb-1 flex justify-end w-full'
+            : 'message-attachments received mb-1 flex justify-start w-full';
         div.className = wrapperClass;
         const msgKey = msg.id || msg.temp_id || ('temp-' + Date.now());
         div.setAttribute('data-message-id', msgKey);

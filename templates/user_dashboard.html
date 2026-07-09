@@ -1084,7 +1084,7 @@
             <div class="kb-right-item-meta">{{ group.member_count }} members</div>
           </div>
           {% if not group.is_member %}
-          <button class="kb-join-btn" onclick="joinGroup('{{ group.id }}')">Join</button>
+          <button class="kb-join-btn" onclick="joinGroup('{{ group.id }}', this)">Join</button>
           {% else %}
           <a href="{{ url_for('user.group_detail', group_id=group.id) }}" class="kb-join-btn"
             style="text-decoration:none;display:inline-flex;align-items:center;">View</a>

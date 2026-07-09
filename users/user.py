@@ -1520,6 +1520,7 @@ def get_visible_posts_optimized(user_id, cursor=None, limit=10):
             FROM user_blocks 
             WHERE blocked_id = :user_id
         )
+        AND p.group_id IS NULL
         {cursor_clause}
         ORDER BY p.created_at DESC
         LIMIT :limit + 1  -- Get one extra to check if there are more
@@ -3424,49 +3425,12 @@ def user_groups():
         return jsonify([])
 
 
-@user.route("/groups/all")
-@login_required
-def all_groups():
-    """Get all groups for discovery"""
-    search = request.args.get("search", "")
-    category = request.args.get("category", "all")
 
-    query = Group.query.filter_by(is_active=True)
-
-    if search:
-        query = query.filter(
-            db.or_(
-                Group.name.ilike(f"%{search}%"), Group.description.ilike(f"%{search}%")
-            )
-        )
-
-    if category != "all":
-        query = query.filter_by(category=category)
-
-    groups = query.order_by(Group.member_count.desc()).limit(20).all()
-
-    return jsonify(
-        [
-            {
-                "id": group.id,
-                "name": group.name,
-                "description": group.description,
-                "image": group.image,
-                "category": group.category,
-                "is_private": group.is_private,
-                "member_count": group.member_count,
-                "created_at": group.created_at.isoformat(),
-                "is_member": group.members.filter_by(id=current_user.id).first()
-                is not None,  # Proper membership check
-            }
-            for group in groups
-        ]
-    )
 
 
 @user.route("/groups/<int:group_id>")
 @login_required
-def group_page(group_id):
+def group_detail(group_id):
     """Get group page HTML"""
     group = Group.query.get_or_404(group_id)
 
@@ -3531,30 +3495,6 @@ def report_comment(comment_id):
 def groups_page():
     """Main groups discovery page"""
     return render_template("groups.html")
-
-
-@user.route("/groups/<int:group_id>")
-@login_required
-def group_detail(group_id):
-    """Individual group page with posts and interactions"""
-    group = Group.query.get_or_404(group_id)
-    is_member = current_user in group.members
-
-    default_avatar = url_for("static", filename="assets/img/default-avatar.png")
-
-    # Get posts for this group
-    posts = (
-        Post.query.filter_by(group_id=group_id).order_by(Post.created_at.desc()).all()
-    )
-
-    return render_template(
-        "group_detail.html",
-        group=group,
-        is_member=is_member,
-        posts=posts,
-        current_user=current_user,
-        default_avatar=default_avatar,
-    )
 
 
 @user.route("/groups/create", methods=["GET", "POST"])

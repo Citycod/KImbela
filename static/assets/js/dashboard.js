@@ -473,8 +473,8 @@ window.loadGroups = function() {
     Groups.load();
 };
 
-window.joinGroup = function(groupId) {
-    Groups.join(groupId);
+window.joinGroup = function(groupId, button) {
+    Groups.join(groupId, button);
 };
 
 window.leaveGroup = function(groupId) {

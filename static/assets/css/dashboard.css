@@ -2590,3 +2590,9 @@ body {
 .message-wrapper {
     margin-bottom: 3px !important;   /* very dense chat */
 }
+
+/* Post text formatting */
+.post-text, .shared-post-text, .post-content {
+    white-space: pre-wrap !important;
+    word-break: break-word !important;
+}
