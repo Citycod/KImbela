@@ -199,6 +199,7 @@
         </div>
 
         <!-- Create Group Button -->
+        {% if current_user.is_admin %}
         <div class="text-center mb-8">
             <a href="{{ url_for('user.create_group') }}" 
                class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 shadow-lg">
@@ -206,6 +207,7 @@
                 Create New Group
             </a>
         </div>
+        {% endif %}
 
         <!-- Groups Grid -->
         <div id="groupsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">

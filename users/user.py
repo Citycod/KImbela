@@ -3301,6 +3301,12 @@ def faq():
     return render_template("faq.html")
 
 
+@user.route("/explore_users")
+@login_required
+def explore_users():
+    users = User.query.filter(User.id != current_user.id).order_by(db.func.random()).limit(50).all()
+    return render_template("explore.html", users=users)
+
 @user.route("/get_user_groups")
 @login_required
 def get_user_groups():

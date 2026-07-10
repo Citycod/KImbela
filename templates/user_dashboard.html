@@ -1073,7 +1073,7 @@
       <div class="kb-right-card">
         <div class="kb-right-card-header">
           <h3>Trending Groups</h3>
-          <a href="#">View all</a>
+          <a href="{{ url_for('user.groups_page') }}">View all</a>
         </div>
         {% if groups_data is defined and groups_data %}
         {% for group in groups_data[:4] %}
@@ -1100,7 +1100,7 @@
       <div class="kb-right-card">
         <div class="kb-right-card-header">
           <h3>Say Hi</h3>
-          <a href="#">View all</a>
+          <a href="{{ url_for('user.explore_users') }}">View all</a>
         </div>
         {% if random_five is defined and random_five %}
         {% for user in random_five[:3] %}
