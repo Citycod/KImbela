@@ -415,11 +415,14 @@
             <div class="lg:col-span-3 space-y-4">
                 <!-- Categories -->
                 <div class="bg-white rounded-xl shadow-soft p-4">
-                    <h3 class="font-bold mb-3 flex items-center text-sm">
-                        <i class="bi bi-grid-3x3-gap-fill mr-2 text-primary"></i>
-                        Categories
-                    </h3>
-                    <div class="space-y-1">
+                    <div class="flex items-center justify-between cursor-pointer lg:cursor-default" onclick="toggleMobileCategories()">
+                        <h3 class="font-bold flex items-center text-sm m-0">
+                            <i class="bi bi-grid-3x3-gap-fill mr-2 text-primary"></i>
+                            Categories
+                        </h3>
+                        <i id="mobileCategoriesIcon" class="bi bi-chevron-down lg:hidden text-gray-500 transition-transform duration-200"></i>
+                    </div>
+                    <div id="mobileCategoriesContent" class="space-y-1 hidden lg:block mt-3">
                         <a href="{{ url_for('market.main_market') }}" 
                            class="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm {{ 'service-category-active text-white' if not category_slug }}">
                             All Marketplace Items
@@ -1907,6 +1910,20 @@
             await populateLocationOptions(citySelect, cities, 'Any city', selectedCity);
             citySelect.disabled = false;
             setFilterStatus(cityStatus, cities.length ? `${cities.length} city options ready` : 'No cities found for this state');
+        }
+        function toggleMobileCategories() {
+            if (window.innerWidth >= 1024) return; // Only run on mobile/tablet
+            
+            const content = document.getElementById('mobileCategoriesContent');
+            const icon = document.getElementById('mobileCategoriesIcon');
+            
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                icon.style.transform = 'rotate(180deg)';
+            } else {
+                content.classList.add('hidden');
+                icon.style.transform = 'rotate(0deg)';
+            }
         }
     </script>
 </body>
