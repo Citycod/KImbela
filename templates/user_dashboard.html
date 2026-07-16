@@ -5419,6 +5419,50 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
       {{ groups_data|tojson }}
     </script>
 
+  {% set birthday_friends = [] %}
+  {% for friend in current_user.friends %}
+    {% if friend.is_birthday_today %}
+      {% set _ = birthday_friends.append(friend) %}
+    {% endif %}
+  {% endfor %}
+  {% if birthday_friends %}
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      {% for friend in birthday_friends %}
+        setTimeout(() => {
+            const bdayPop = document.createElement('div');
+            bdayPop.className = 'fixed bottom-4 right-4 bg-gradient-to-r from-pink-500 to-purple-500 text-white p-4 rounded-xl shadow-2xl z-50 flex items-center space-x-3 cursor-pointer transform hover:scale-105 transition-transform duration-300';
+            bdayPop.style.animation = 'slideInRight 0.5s ease-out forwards';
+            bdayPop.innerHTML = `
+                <div class="text-3xl">🎂</div>
+                <div class="flex-1">
+                    <h4 class="font-bold text-lg leading-tight">Birthday Alert!</h4>
+                    <p class="text-sm">Today is {{ friend.first_name }}'s birthday!</p>
+                </div>
+                <button class="ml-3 text-white hover:text-gray-200 focus:outline-none" onclick="this.parentElement.remove(); event.stopPropagation();">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            `;
+            bdayPop.onclick = function(e) {
+                if(e.target.tagName !== 'BUTTON' && !e.target.closest('button')) {
+                    window.location.href = "{{ url_for('user.view_profile', user_identifier=friend.id) }}";
+                }
+            };
+            document.body.appendChild(bdayPop);
+            setTimeout(() => {
+                if (bdayPop.parentElement) {
+                    bdayPop.style.opacity = '0';
+                    bdayPop.style.transform = 'translateY(20px)';
+                    bdayPop.style.transition = 'opacity 0.5s ease-out, transform 0.5s ease-out';
+                    setTimeout(() => bdayPop.remove(), 500);
+                }
+            }, 10000); // 10 seconds
+        }, {{ loop.index0 * 1000 }}); // Stagger multiple notifications
+      {% endfor %}
+    });
+  </script>
+  {% endif %}
+
 </body>
 
 </html>

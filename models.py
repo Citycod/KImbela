@@ -312,6 +312,22 @@ class User(db.Model, UserMixin):
     def uuid(self):
         return self.public_id
 
+    @property
+    def age(self):
+        """Calculate the user's age based on dob"""
+        if not self.dob:
+            return None
+        today = utcnow().date()
+        return today.year - self.dob.year - ((today.month, today.day) < (self.dob.month, self.dob.day))
+
+    @property
+    def is_birthday_today(self):
+        """Check if today is the user's birthday"""
+        if not self.dob:
+            return False
+        today = utcnow().date()
+        return today.month == self.dob.month and today.day == self.dob.day
+
     def get_friends(self):
         """Get all friends"""
         return self.friends.all()

@@ -82,6 +82,12 @@
                         </a>
                     </h3>
                     
+                    {% if u.age %}
+                    <p class="text-sm font-medium text-gray-700 mb-2">
+                        <i class="bi bi-calendar3 mr-1"></i>Age: {{ u.age }}
+                    </p>
+                    {% endif %}
+                    
                     {% if u.city and u.country %}
                     <p class="text-sm text-gray-500 mb-4">
                         <i class="bi bi-geo-alt mr-1"></i>{{ u.city }}, {{ u.country }}
