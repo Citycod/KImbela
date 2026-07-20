@@ -108,6 +108,7 @@
           const nameEl = document.getElementById("birthdayFriendName");
           const avatarEl = document.getElementById("birthdayFriendAvatar");
           const ageEl = document.getElementById("birthdayFriendAge");
+          const messageInput = document.getElementById("birthdayWishMessage");
 
           if (modal && nameEl && avatarEl && ageEl) {
             // Set friend info
@@ -116,6 +117,11 @@
             ageEl.textContent = friend.age
               ? `Turning ${friend.age} today! 🎉`
               : "Celebrating Birthday! 🎂";
+
+            // Pre-draft a happy birthday message
+            if (messageInput) {
+                messageInput.value = "Happy Birthday! 🎉";
+            }
 
             // Show modal
             modal.classList.remove("hidden");

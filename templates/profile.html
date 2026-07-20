@@ -103,6 +103,14 @@
                        class="hidden md:flex gradient-primary text-white px-5 py-2 rounded-lg font-bold hover-lift shadow-medium items-center space-x-2 text-xs">
                         <i class="fas fa-home"></i> <span>Dashboard</span>
                     </a>
+                    <!-- Messenger -->
+                    <button onclick="window.openMessenger && window.openMessenger()" class="text-gray-600 hover:text-blue-600 transition-colors relative">
+                        <i class="fas fa-comment-dots text-xl"></i>
+                    </button>
+                    <!-- Notifications -->
+                    <a href="{{ url_for('user.user_dashboard') }}" class="text-gray-600 hover:text-blue-600 transition-colors relative">
+                        <i class="fas fa-bell text-xl"></i>
+                    </a>
                     <div class="relative">
                         <img src="{{ user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
                              alt="You" class="w-10 h-10 rounded-xl border-2 border-purple-500 shadow-medium object-cover">

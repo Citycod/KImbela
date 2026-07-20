@@ -485,14 +485,15 @@ def get_today_birthdays():
     """Get friends with birthdays today"""
     today = date.today()
 
+    birthday_users = User.query.filter(
+        db.extract('month', User.dob) == today.month,
+        db.extract('day', User.dob) == today.day,
+        User.id != current_user.id
+    ).all()
+
     birthday_friends = []
-    for friend in current_user.friends:
-        if (
-            friend.dob
-            and friend.dob.month == today.month
-            and friend.dob.day == today.day
-        ):
-            birthday_friends.append(
+    for friend in birthday_users:
+        birthday_friends.append(
                 {
                     "id": friend.id,
                     "name": friend.full_name,
@@ -590,14 +591,7 @@ def send_birthday_wish():
 
         print(f"✅ Friend found: {friend.full_name} (ID: {friend.id})")
 
-        # Check friendship status
-        print(f"🤝 Checking friendship between {current_user.id} and {friend.id}")
-        are_friends = current_user.is_friend_with(friend)
-        print(f"   → Are friends: {are_friends}")
-
-        if not are_friends:
-            print(f"❌ [ERROR] Users are not friends")
-            return jsonify({"success": False, "error": "Not friends"}), 403
+        # Friendship check removed for birthday wishes
 
         # Check if friend has birthday today
         today = date.today()

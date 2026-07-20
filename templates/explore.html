@@ -49,6 +49,14 @@
                     <a href="{{ url_for('user.profile', user_id=current_user.id) }}" class="text-gray-600 hover:text-blue-600 transition-colors">
                         <i class="bi bi-person text-xl"></i>
                     </a>
+                    <!-- Messenger -->
+                    <button onclick="window.openMessenger && window.openMessenger()" class="text-gray-600 hover:text-blue-600 transition-colors relative">
+                        <i class="bi bi-chat-dots text-xl"></i>
+                    </button>
+                    <!-- Notifications -->
+                    <a href="{{ url_for('user.user_dashboard') }}" class="text-gray-600 hover:text-blue-600 transition-colors relative">
+                        <i class="bi bi-bell text-xl"></i>
+                    </a>
                 </div>
             </div>
         </div>
@@ -85,6 +93,12 @@
                     {% if u.age %}
                     <p class="text-sm font-medium text-gray-700 mb-2">
                         <i class="bi bi-calendar3 mr-1"></i>Age: {{ u.age }}
+                    </p>
+                    {% endif %}
+                    
+                    {% if u.gender %}
+                    <p class="text-sm font-medium text-gray-700 mb-2">
+                        <i class="bi bi-gender-ambiguous mr-1"></i>Gender: {{ u.gender }}
                     </p>
                     {% endif %}
                     
