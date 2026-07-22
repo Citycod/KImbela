@@ -38,6 +38,7 @@ from flask_wtf.csrf import generate_csrf
 from werkzeug.security import check_password_hash
 
 from flask_login import login_user, logout_user, login_required, current_user
+import bleach
 import cloudinary.uploader, os
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
@@ -3503,8 +3504,8 @@ def create_group():
     """Create a new group"""
     if request.method == "POST":
         try:
-            name = request.form.get("name", "").strip()
-            description = request.form.get("description", "").strip()
+            name = bleach.clean(request.form.get("name", "").strip(), strip=True)
+            description = bleach.clean(request.form.get("description", "").strip(), strip=True)
             category = request.form.get("category", "social")
             is_private = request.form.get("is_private") == "true"
 

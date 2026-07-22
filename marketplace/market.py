@@ -33,6 +33,7 @@ from models import (
     SiteSetting,
 )
 import cloudinary.uploader
+import bleach
 import os, requests, json, uuid
 from datetime import datetime, timedelta
 from sqlalchemy import or_, desc, func
@@ -1316,7 +1317,7 @@ def create_service():
         # Validate required fields
         title = request.form.get("title")
         category_id = request.form.get("category_id")
-        description = request.form.get("description")
+        description = bleach.clean(request.form.get("description", ""), strip=True)
         country = normalize_marketplace_location(request.form.get("country"))
         state = normalize_marketplace_location(request.form.get("state"))
         city = normalize_marketplace_location(request.form.get("city"))
@@ -1531,7 +1532,7 @@ def edit_service(service_id):
     try:
         service.title = request.form.get("title", service.title)
         service.category_id = request.form.get("category_id", service.category_id)
-        service.description = request.form.get("description", service.description)
+        service.description = bleach.clean(request.form.get("description", service.description), strip=True)
         service.short_description = request.form.get(
             "short_description", service.short_description
         )[:500]

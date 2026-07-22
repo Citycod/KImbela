@@ -9,7 +9,7 @@
       // Current user info for messaging
       window.currentUserInfo = {
           id: {{ current_user.id }},
-          name: '{{ current_user.full_name|replace("'", "\\'")|safe }}',
+          name: '{{ current_user.full_name|replace("'", "\\'") }}',
           avatar: '{{ current_user.profile_pic or url_for("static", filename="assets/img/default-avatar.png") }}'
       };
     </script>
@@ -29,7 +29,7 @@
 <script>
       // Set global variables
       window.currentUserId = {{ current_user.id }};
-      window.currentUserName = '{{ current_user.full_name|safe }}';
+      window.currentUserName = '{{ current_user.full_name|replace("'", "\\'") }}';
       window.currentUserAvatar = '{{ current_user.profile_pic or url_for("static", filename="assets/img/default-avatar.png") }}';
       window.defaultAvatar = '{{ url_for("static", filename="assets/img/default-avatar.png") }}';
       window.csrfToken = '{{ csrf_token }}';
