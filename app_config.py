@@ -484,6 +484,25 @@ def create_app():
     @app.route("/webhook", methods=["POST"])
     @csrf.exempt
     def github_webhook():
+        import hmac
+        import hashlib
+        import os
+        
+        # Verify the signature if secret is configured
+        secret = os.environ.get("GITHUB_WEBHOOK_SECRET")
+        if secret:
+            signature = request.headers.get("X-Hub-Signature-256")
+            if not signature or not signature.startswith("sha256="):
+                return jsonify({"error": "Missing or invalid signature header"}), 403
+            
+            payload_body = request.get_data()
+            expected_hmac = hmac.new(
+                secret.encode("utf-8"), payload_body, hashlib.sha256
+            ).hexdigest()
+            
+            if not hmac.compare_digest(f"sha256={expected_hmac}", signature):
+                return jsonify({"error": "Invalid signature"}), 403
+
         # Verify the event type
         event = request.headers.get("X-GitHub-Event", "ping")
         if event == "ping":

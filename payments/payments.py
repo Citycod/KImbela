@@ -20,6 +20,7 @@ from models import (
     PaymentTransaction,
     MatchmakingPayments,
     MarketplacePayment,
+    Donation,
 )
 import cloudinary.uploader
 import os, requests
@@ -620,6 +621,63 @@ def upload_image():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@payments.route("/donate", methods=["GET"])
+def donate():
+    """Render the donation page"""
+    return render_template("donate.html")
+
+
+@payments.route("/donate/initiate", methods=["POST"])
+def initiate_donation():
+    """Process donation and redirect to payment gateway"""
+    try:
+        name = request.form.get("name", "").strip()
+        email = request.form.get("email", "").strip()
+        amount_str = request.form.get("amount", "")
+        currency = request.form.get("currency", "USD").upper()
+
+        if not email or not amount_str:
+            flash("Email and amount are required.", "error")
+            return redirect(url_for("payments.donate"))
+
+        try:
+            amount = float(amount_str)
+            if amount <= 0:
+                raise ValueError
+        except ValueError:
+            flash("Please enter a valid amount greater than 0.", "error")
+            return redirect(url_for("payments.donate"))
+            
+        if currency not in ["USD", "NGN"]:
+            currency = "USD"
+
+        # Create donation record
+        donation = Donation(
+            name=name,
+            email=email,
+            amount=amount,
+            currency=currency,
+            status="pending"
+        )
+        db.session.add(donation)
+        db.session.commit()
+
+        from .payment_service_donation import DonationPaymentService
+        donation_service = DonationPaymentService()
+        result = donation_service.create_donation_payment(donation)
+
+        if result.get("success"):
+            return redirect(result["payment_url"])
+        else:
+            flash(result.get("error", "Failed to initiate payment."), "error")
+            return redirect(url_for("payments.donate"))
+
+    except Exception as e:
+        current_app.logger.exception(f"Donation error: {e}")
+        flash("An error occurred. Please try again.", "error")
+        return redirect(url_for("payments.donate"))
+
+
 @payments.route("/payment-callback", methods=["GET", "POST"])
 def payment_callback():
     """Handle payment callback from Flutterwave and redirect to appropriate pages"""
@@ -858,6 +916,33 @@ def payment_callback():
                 db.session.commit()
                 flash("Payment failed. Please try again.", "error")
                 return redirect(url_for("market.seller_dashboard"))
+        
+        elif tx_ref.startswith("KIMBELA_DONATION_"):
+            from .payment_service_donation import DonationPaymentService
+            donation_service = DonationPaymentService()
+            
+            verification = base_service.resolve_flutterwave_verification(
+                tx_ref=tx_ref, transaction_id=transaction_id
+            )
+            verification_data = verification.get("data", {}) or {}
+            verified_status = (verification.get("verified_status") or "").strip().lower()
+
+            if verified_status in {"successful", "completed"}:
+                success = donation_service.handle_donation_payment_success(tx_ref, verification_data)
+                if success:
+                    flash("Thank you for your generous donation!", "success")
+                    return redirect(url_for("user.index"))
+                else:
+                    flash("Payment confirmed but failed to update record.", "error")
+                    return redirect(url_for("user.index"))
+            elif verified_status in {"pending", "processing"}:
+                donation_service.handle_donation_payment_failure(tx_ref, verification_data or {"status": verified_status})
+                flash("Donation payment is pending confirmation.", "info")
+                return redirect(url_for("user.index"))
+            else:
+                donation_service.handle_donation_payment_failure(tx_ref, verification_data or {"status": status})
+                flash("Donation payment failed.", "error")
+                return redirect(url_for("payments.donate"))
         else:
             print(f"🔴 [PAYMENT CALLBACK] Unknown transaction type: {tx_ref}")
             flash("Unknown transaction type", "error")
@@ -969,6 +1054,13 @@ def flutterwave_webhook():
                     verification_data
                     or {"status": verified_status or "failed", "message": verification.get("error")},
                 )
+        elif tx_ref.startswith("KIMBELA_DONATION_"):
+            from .payment_service_donation import DonationPaymentService
+            donation_service = DonationPaymentService()
+            if verified_status in {"successful", "completed"}:
+                handled = donation_service.handle_donation_payment_success(tx_ref, verification_data)
+            else:
+                handled = donation_service.handle_donation_payment_failure(tx_ref, verification_data)
         else:
             return (
                 jsonify(

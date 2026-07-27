@@ -1982,7 +1982,6 @@ def share_post(post_identifier):
 # Delete Post
 @user.route("/delete_post/<int:post_id>", methods=["POST"])
 @login_required
-@csrf.exempt
 def delete_post(post_id):
     post = Post.query.get_or_404(post_id)
     if post.author_id != current_user.id:
@@ -3853,24 +3852,6 @@ def edit_group_post(post_id):
         db.session.rollback()
         return jsonify({"success": False, "error": str(e)}), 500
 
-
-@user.route("/delete_post/<int:post_id>", methods=["POST"])
-@login_required
-def delete_group_post(post_id):
-    try:
-        post = Post.query.get_or_404(post_id)
-
-        # Check if the current user is the author
-        if post.author_id != current_user.id:
-            return jsonify({"success": False, "error": "Unauthorized"}), 403
-
-        db.session.delete(post)
-        db.session.commit()
-        return jsonify({"success": True})
-
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @user.route("/delete_comment/<int:comment_id>", methods=["POST"])

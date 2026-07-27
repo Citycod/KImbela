@@ -2354,3 +2354,24 @@ class City(db.Model):
 
     __table_args__ = (db.Index("ix_cities_state_name", "state_id", "name"),)
 
+
+class Donation(db.Model):
+    __tablename__ = "donations"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(120), nullable=False)
+    amount = db.Column(db.Numeric(10, 2), nullable=False)
+    currency = db.Column(db.String(3), default="USD")
+    
+    # Payment tracking
+    status = db.Column(db.String(20), default="pending")  # pending, completed, failed
+    gateway_reference = db.Column(db.String(100), unique=True)
+    gateway_payment_id = db.Column(db.String(100))
+    gateway = db.Column(db.String(50), default="flutterwave")
+    
+    created_at = db.Column(db.DateTime, default=utcnow)
+    updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow)
+
+    def __repr__(self):
+        return f"<Donation {self.id} - {self.name} - {self.amount} {self.currency}>"
