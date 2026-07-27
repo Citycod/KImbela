@@ -33,11 +33,7 @@
             flex-direction: column;
         }
 
-        .header {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 2px 15px rgba(0,0,0,0.05);
-        }
+
 
         .donate-container {
             flex: 1;
@@ -163,20 +159,24 @@
 </head>
 
 <body>
-    <header id="header" class="header d-flex align-items-center">
-        <div class="header-container container-fluid container-xl position-relative d-flex align-items-center justify-content-between">
-            <a href="{{ url_for('user.index') }}" class="logo d-flex align-items-center">
+    <header id="header" class="header d-flex align-items-center sticky-top">
+        <div class="header-container container-fluid container-xl position-relative d-flex align-items-center justify-content-end">
+            <a href="{{ url_for('user.index') }}" class="logo d-flex align-items-center me-auto" style="background: none">
                 <img src="{{ url_for('static', filename='assets/img/kim.png') }}" alt="" style="width: 10rem; height: 5rem" />
             </a>
             <nav id="navmenu" class="navmenu">
                 <ul>
                     <li><a href="{{ url_for('user.index') }}">Home</a></li>
+                    <li><a href="{{ url_for('user.about') }}">About Us</a></li>
+                    <li><a href="{{ url_for('user.features') }}">Features</a></li>
+                    <li><a href="{{ url_for('payments.donate') }}" class="active">Donate</a></li>
                     {% if current_user.is_authenticated %}
-                        <li><a href="{{ url_for('user.dashboard') }}">Dashboard</a></li>
+                        <li><a href="{{ url_for('user.user_dashboard') }}">Dashboard</a></li>
                     {% else %}
                         <li><a href="{{ url_for('auth.login') }}">Login</a></li>
                     {% endif %}
                 </ul>
+                <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
             </nav>
         </div>
     </header>
@@ -295,5 +295,7 @@
             });
         });
     </script>
+    <!-- Main JS File -->
+    <script src="{{ url_for('static', filename='assets/js/main.js') }}"></script>
 </body>
 </html>
