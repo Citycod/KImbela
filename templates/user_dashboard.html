@@ -89,7 +89,7 @@
     </div>
 
     <!-- Center: Search bar -->
-    <div class="flex justify-start flex-1 mx-2 lg:ml-10 lg:mr-auto lg:max-w-md searching">
+    <div class="flex justify-start flex-1 max-w-[120px] sm:max-w-[200px] md:max-w-[300px] lg:max-w-md mx-2 lg:ml-10 lg:mr-auto searching">
       <div class="relative w-full">
         <i class="bi bi-search absolute left-3 lg:left-4 top-1/2 transform -translate-y-1/2 text-fb-text-light text-base lg:text-lg"></i>
         <input type="text" id="globalSearch" placeholder="Search..."
@@ -293,7 +293,7 @@
     <!-- + Create Button -->
     <button class="kb-create-btn inline-flex" data-bs-toggle="modal" data-bs-target="#postModal">
       <i class="bi bi-plus-lg"></i>
-      <span class="btn-text">Create</span>
+      <span class="btn-text hidden sm:inline">Create</span>
     </button>
 
     <!-- Messenger & Notifications (keep these on far right) -->
