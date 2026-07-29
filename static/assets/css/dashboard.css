@@ -1904,11 +1904,7 @@ body {
         width: 230px !important;
     }
     .my_logo {
-        display: none;
-    }
-    .searching {
-        width: 13rem;
-        height: 2rem;
+        display: block;
     }
     .results {
         font-size: 0.6rem;
