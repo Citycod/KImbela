@@ -1691,6 +1691,14 @@
             Requests</span>
         </a>
 
+        <!-- Donate -->
+        <a href="{{ url_for('payments.donate') }}"
+          class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-yellow-50 hover:to-orange-50 transition-all duration-300 mb-2 group border border-transparent hover:border-yellow-200 shadow-sm hover:shadow-md">
+          <i class="bi bi-gift-fill mr-3 text-lg group-hover:scale-110 group-hover:rotate-12 transition-all duration-300"
+            style="color: #f59e0b"></i>
+          <span class="font-medium group-hover:text-yellow-700 transition-colors duration-300">Donate</span>
+        </a>
+
         <a class="dropdown-item block px-4 py-2 text-red-500 hover:bg-red-50 transition-colors"
           href="{{ url_for('user.logout') }}">
           <i class="bi bi-box-arrow-right mr-2"></i> Logout
@@ -1764,6 +1772,13 @@
         class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 transition-all duration-300 mb-2 group">
         <i class="bi bi-binoculars-fill mr-3 text-lg" style="color: #10b981"></i>
         <span class="font-medium">Browse Match Requests</span>
+      </a>
+
+      <!-- Donate -->
+      <a href="{{ url_for('payments.donate') }}"
+        class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-yellow-50 hover:to-orange-50 transition-all duration-300 mb-2 group">
+        <i class="bi bi-gift-fill mr-3 text-lg" style="color: #f59e0b"></i>
+        <span class="font-medium">Donate</span>
       </a>
 
       <a class="dropdown-item block px-4 py-2 text-red-500 hover:bg-red-50 transition-colors"
