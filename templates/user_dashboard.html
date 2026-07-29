@@ -83,7 +83,7 @@
         <i class="bi bi-list text-xl"></i>
       </button>
 
-      <a href="{{ url_for('user.user_dashboard') }}" class="flex items-center">
+      <a href="{{ url_for('user.user_dashboard') }}" class="hidden lg:flex items-center">
         <img src="{{ url_for('static', filename='assets/img/kim.png') }}" alt="Kimbela" class="h-6 sm:h-8 lg:h-14 my_logo w-auto lg:w-40 object-contain" />
       </a>
     </div>
@@ -1584,12 +1584,11 @@
       class="mobile-sidebar-panel absolute top-0 left-0 bottom-0 w-80 bg-white shadow-strong transform -translate-x-full transition-transform duration-300"
       id="mobileSidebar">
       <div class="p-4 border-b border-fb-border flex items-center">
-        <!--<img
+        <img
             src="{{ url_for('static', filename='assets/img/kim.png') }}"
             alt="Kimbela"
-            class="h-8 mr-2"
+            class="h-8 w-auto object-contain mr-2"
           />
-          <span class="text-xl font-bold">Kimbela</span>-->
         <button class="ml-auto p-2 rounded-full hover:bg-fb-gray" onclick="toggleMobileMenu()">
           <i class="bi bi-x-lg"></i>
         </button>
