@@ -655,10 +655,9 @@
                                                             font-size: 0.875rem !important;
                                                             padding: 0.5rem 0.5rem 0.5rem 2.5rem !important;
                                                         }
-                                                        /* Adjust logo size on mobile to save space */
+                                                        /* Adjust logo size on mobile */
                                                         .my_logo {
-                                                            height: 1.75rem !important;
-                                                            width: auto !important;
+                                                            height: 3rem !important;
                                                         }
                                                         /* Make main content narrower on mobile */
                                                         .max-w-4xl {
