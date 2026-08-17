@@ -87,14 +87,22 @@
     </style>
 
 
+
+
+
+
+
+
 <!-- Profile Actions Script -->
 <script>
-    // Handle message button click by redirecting to dashboard
+    window.openMessenger = function() {
+        window.location.href = '/dashboard';
+    };
+
     function handleMessageButtonClick(userId) {
         window.location.href = `/dashboard?chat=${userId}`;
     }
 
-    // Friend System Actions
     const FriendSystem = {
         async add(userId, button) {
             const originalHTML = button.innerHTML;
@@ -103,7 +111,7 @@
             try {
                 const response = await fetch(`/add_friend/${userId}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': typeof csrfToken !== 'undefined' ? csrfToken : '' }
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' }
                 });
                 const data = await response.json();
                 if (data.success) {
@@ -127,7 +135,7 @@
             try {
                 const response = await fetch(`/cancel_friend_request/${userId}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': typeof csrfToken !== 'undefined' ? csrfToken : '' }
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' }
                 });
                 const data = await response.json();
                 if (data.success) {
@@ -151,7 +159,7 @@
             try {
                 const response = await fetch(`/accept_friend_request/${userId}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': typeof csrfToken !== 'undefined' ? csrfToken : '' }
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' }
                 });
                 const data = await response.json();
                 if (data.success) {
@@ -175,7 +183,7 @@
             try {
                 const response = await fetch(`/decline_friend_request/${userId}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': typeof csrfToken !== 'undefined' ? csrfToken : '' }
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' }
                 });
                 const data = await response.json();
                 if (data.success) {
@@ -191,14 +199,6 @@
                 alert('Network error');
             }
         }
-    };
-</script>
-
-
-<script>
-    // Ensure the messenger button redirects to the dashboard to open the chat
-    window.openMessenger = function() {
-        window.location.href = '/dashboard';
     };
 </script>
 
@@ -1004,14 +1004,22 @@
 
 <!-- ======================= MODALS ======================= -->
 
+
+
+
+
+
+
 <!-- Profile Actions Script -->
 <script>
-    // Handle message button click by redirecting to dashboard
+    window.openMessenger = function() {
+        window.location.href = '/dashboard';
+    };
+
     function handleMessageButtonClick(userId) {
         window.location.href = `/dashboard?chat=${userId}`;
     }
 
-    // Friend System Actions
     const FriendSystem = {
         async add(userId, button) {
             const originalHTML = button.innerHTML;
@@ -1108,14 +1116,6 @@
                 alert('Network error');
             }
         }
-    };
-</script>
-
-
-<script>
-    // Ensure the messenger button redirects to the dashboard to open the chat
-    window.openMessenger = function() {
-        window.location.href = '/dashboard';
     };
 </script>
 
