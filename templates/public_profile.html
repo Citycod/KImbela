@@ -1020,7 +1020,7 @@
             try {
                 const response = await fetch(`/add_friend/${userId}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token() }}' }
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' }
                 });
                 const data = await response.json();
                 if (data.success) {
@@ -1044,7 +1044,7 @@
             try {
                 const response = await fetch(`/cancel_friend_request/${userId}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token() }}' }
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' }
                 });
                 const data = await response.json();
                 if (data.success) {
@@ -1068,7 +1068,7 @@
             try {
                 const response = await fetch(`/accept_friend_request/${userId}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token() }}' }
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' }
                 });
                 const data = await response.json();
                 if (data.success) {
@@ -1092,7 +1092,7 @@
             try {
                 const response = await fetch(`/decline_friend_request/${userId}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token() }}' }
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' }
                 });
                 const data = await response.json();
                 if (data.success) {
