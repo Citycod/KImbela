@@ -438,6 +438,21 @@ def send_message():
                     "new_message", message_data, room=f"user_{current_user.id}"
                 )
 
+            # Send Push Notification
+            try:
+                from models import User
+                recipient = User.query.get(friend_id)
+                if recipient and not recipient.is_online:
+                    from utils.push_service import send_push_notification
+                    push_payload = {
+                        "title": f"New Message from {current_user.first_name}",
+                        "body": content if message_type == 'text' else f"Sent you a {message_type}",
+                        "url": "/messages"
+                    }
+                    send_push_notification(friend_id, push_payload)
+            except Exception as e:
+                print(f"[PUSH ERROR] Failed to send push for HTTP message: {e}")
+
             return jsonify({"success": True, "message": message_data})
 
     except Exception as e:

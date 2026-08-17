@@ -126,35 +126,35 @@
                     </div>
 
                     <!-- Action Buttons -->
-<!--                    <div class="flex gap-3">-->
-<!--                        {% if not is_own_profile %}-->
-<!--                            {% if friend_status == 'friends' %}-->
-<!--                                <button onclick="handleMessageButtonClick({{ profile_user.id }})"-->
-<!--                                        class="px-6 py-3 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 shadow-lg flex items-center gap-2">-->
-<!--                                    <i class="fas fa-comment-dots"></i> Message-->
-<!--                                </button>-->
-<!--                            {% elif friend_status == 'request_sent' %}-->
-<!--                                <button onclick="FriendSystem.cancelRequest({{ profile_user.id }}, this)"-->
-<!--                                        class="px-6 py-3 bg-gray-500 text-white rounded-xl font-medium hover:bg-gray-600 shadow-lg">-->
-<!--                                    Cancel Request-->
-<!--                                </button>-->
-<!--                            {% elif friend_status == 'request_received' %}-->
-<!--                                <button onclick="FriendSystem.acceptFriendRequest({{ profile_user.id }}, this)"-->
-<!--                                        class="px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 shadow-lg flex items-center gap-2">-->
-<!--                                    <i class="fas fa-check"></i> Accept-->
-<!--                                </button>-->
-<!--                                <button onclick="FriendSystem.declineFriendRequest({{ profile_user.id }}, this)"-->
-<!--                                        class="px-6 py-3 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 shadow-lg">-->
-<!--                                    Decline-->
-<!--                                </button>-->
-<!--                            {% else %}-->
-<!--                                <button onclick="FriendSystem.add({{ profile_user.id }}, this)"-->
-<!--                                        class="px-6 py-3 gradient-primary text-white rounded-xl font-medium hover-lift shadow-lg flex items-center gap-2">-->
-<!--                                    <i class="fas fa-user-plus"></i> Connect-->
-<!--                                </button>-->
-<!--                            {% endif %}-->
-<!--                        {% endif %}-->
-<!--                    </div>-->
+                    <div class="flex gap-3">
+                        {% if not is_own_profile %}
+                            {% if friend_status == 'friends' %}
+                                <button onclick="handleMessageButtonClick({{ profile_user.id }})"
+                                        class="px-6 py-3 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 shadow-lg flex items-center gap-2">
+                                    <i class="fas fa-comment-dots"></i> Message
+                                </button>
+                            {% elif friend_status == 'request_sent' %}
+                                <button onclick="FriendSystem.cancelRequest({{ profile_user.id }}, this)"
+                                        class="px-6 py-3 bg-gray-500 text-white rounded-xl font-medium hover:bg-gray-600 shadow-lg">
+                                    Cancel Request
+                                </button>
+                            {% elif friend_status == 'request_received' %}
+                                <button onclick="FriendSystem.acceptFriendRequest({{ profile_user.id }}, this)"
+                                        class="px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 shadow-lg flex items-center gap-2">
+                                    <i class="fas fa-check"></i> Accept
+                                </button>
+                                <button onclick="FriendSystem.declineFriendRequest({{ profile_user.id }}, this)"
+                                        class="px-6 py-3 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 shadow-lg">
+                                    Decline
+                                </button>
+                            {% else %}
+                                <button onclick="FriendSystem.add({{ profile_user.id }}, this)"
+                                        class="px-6 py-3 gradient-primary text-white rounded-xl font-medium hover-lift shadow-lg flex items-center gap-2">
+                                    <i class="fas fa-user-plus"></i> Connect
+                                </button>
+                            {% endif %}
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>

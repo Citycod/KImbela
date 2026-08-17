@@ -785,10 +785,12 @@
                     <div class="space-y-2 md:space-y-3">
                         {% for member in group.members.limit(5).all() %}
                         <div class="flex items-center space-x-2 md:space-x-3">
-                            <img src="{{ member.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
-                                 alt="{{ member.full_name }}" 
-                                 class="w-8 h-8 rounded-full object-cover member-avatar">
-                            <span class="text-sm font-medium member-name">{{ member.full_name }}</span>
+                            <a href="{{ url_for('user.profile', user_identifier=member.public_id) }}">
+                                <img src="{{ member.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
+                                     alt="{{ member.full_name }}" 
+                                     class="w-8 h-8 rounded-full object-cover member-avatar">
+                            </a>
+                            <a href="{{ url_for('user.profile', user_identifier=member.public_id) }}" class="text-sm font-medium member-name hover:underline">{{ member.full_name }}</a>
                         </div>
                         {% endfor %}
                     </div>
@@ -836,11 +838,15 @@
                         <div class="p-4 md:p-6 pb-3 md:pb-4">
                             <div class="flex justify-between items-start">
                                 <div class="flex items-center space-x-2 md:space-x-3">
-                                    <img src="{{ post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
-                                         alt="{{ post.author.full_name }}" 
-                                         class="w-8 h-8 md:w-10 md:h-10 rounded-full object-cover post-avatar">
+                                    <a href="{{ url_for('user.profile', user_identifier=post.author.public_id) }}">
+                                        <img src="{{ post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
+                                             alt="{{ post.author.full_name }}" 
+                                             class="w-8 h-8 md:w-10 md:h-10 rounded-full object-cover post-avatar">
+                                    </a>
                                     <div>
-                                        <h4 class="font-semibold text-gray-900 text-sm md:text-base post-author">{{ post.author.full_name }}</h4>
+                                        <a href="{{ url_for('user.profile', user_identifier=post.author.public_id) }}">
+                                            <h4 class="font-semibold text-gray-900 text-sm md:text-base post-author hover:underline">{{ post.author.full_name }}</h4>
+                                        </a>
                                         <p class="text-xs md:text-sm text-gray-500 post-time">{{ post.created_at.strftime('%b %d at %I:%M %p') }}</p>
                                     </div>
                                 </div>
@@ -962,13 +968,17 @@
                                 <div class="flex space-x-2 md:space-x-3 mb-3 md:mb-4 comment-item comment-fade-in" id="comment-{{ comment.id }}">
                                     
        
-                                    <img src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
-                                         alt="{{ comment.author.full_name }}" 
-                                         class="w-6 h-6 md:w-8 md:h-8 rounded-full object-cover flex-shrink-0 comment-avatar">
+                                    <a href="{{ url_for('user.profile', user_identifier=comment.author.public_id) }}">
+                                        <img src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
+                                             alt="{{ comment.author.full_name }}" 
+                                             class="w-6 h-6 md:w-8 md:h-8 rounded-full object-cover flex-shrink-0 comment-avatar">
+                                    </a>
                                     <div class="flex-1">
                                         <div class="bg-white rounded-xl md:rounded-2xl px-3 py-2 md:px-4 md:py-3">
                                             <div class="flex justify-between items-start mb-1">
-                                                <h5 class="font-semibold text-xs md:text-sm comment-author">{{ comment.author.full_name }}</h5>
+                                                <a href="{{ url_for('user.profile', user_identifier=comment.author.public_id) }}">
+                                                    <h5 class="font-semibold text-xs md:text-sm comment-author hover:underline">{{ comment.author.full_name }}</h5>
+                                                </a>
                                                 <div class="dropdown relative">
                                                     <button class="p-0.5 md:p-1 rounded-full hover:bg-gray-100 transition-colors duration-300">
                                                         <i class="bi bi-three-dots text-gray-400 text-xs md:text-xs"></i>

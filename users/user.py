@@ -1575,13 +1575,13 @@ def get_posts_with_pagination(user_id, cursor=None, limit=10):
     blocked_ids = {u.id for u in user.blocked_users}
     blocked_ids.update(u.id for u in user.blocked_by)
 
-    # Build posts query
     query = Post.query.options(
         joinedload(Post.author),
         joinedload(Post.comments).joinedload(Comment.author),
         joinedload(Post.shared_post).joinedload(Post.author),
     ).filter(
-        ~Post.author_id.in_(list(blocked_ids))
+        ~Post.author_id.in_(list(blocked_ids)),
+        Post.group_id.is_(None)
     )  # Convert to list for IN clause
 
     if cursor:
@@ -2135,6 +2135,31 @@ def create_notification(user_id, actor_id, type_, message, entity_id=None):
     )
     db.session.add(notification)
     db.session.commit()
+
+    # Trigger push notification if the user is offline
+    try:
+        from models import User
+        target_user = User.query.get(user_id)
+        if target_user and not target_user.is_online:
+            from utils.push_service import send_push_notification
+            
+            url = "/"
+            if type_ == "message": url = "/messages"
+            elif type_ in ["friend_request", "friend_accept"]:
+                # In this context, actor_id is the person who sent the request
+                actor = User.query.get(actor_id)
+                if actor: url = f"/profile/{actor.public_id}"
+            elif type_ in ["like", "comment", "repost"]: url = "/"
+            elif type_ in ["group_invite", "group_post"]: url = "/groups"
+
+            push_payload = {
+                "title": "Kimbela",
+                "body": message,
+                "url": url
+            }
+            send_push_notification(user_id, push_payload)
+    except Exception as e:
+        print(f"[PUSH ERROR] Failed to send push from create_notification: {e}")
 
 
 # In your add_friend route
@@ -2822,7 +2847,7 @@ def handle_notification_count_request(data):
         cache.set(cache_key, count, timeout=30)
 
     # Send count to the specific user
-    emit("notification_count_update", {"count": count}, room=f"user_{user_id}")
+    socketio.emit("notification_count_update", {"count": count}, room=f"user_{user_id}")
 
 
 # ===== CACHE INVALIDATION TRIGGERS =====
@@ -3359,6 +3384,7 @@ def get_messages_api(friend_id):
             return jsonify({"error": "You must be friends to message"}), 403
 
         # Get messages
+        from models import Message
         messages = (
             Message.query.filter(
                 (
