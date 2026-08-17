@@ -6,7 +6,7 @@
     <title>{{ user.first_name }} {{ user.last_name }} - Kimbela</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="{{ url_for('static', filename='assets/img/favy.png') }}" rel="icon" />
     <link href="{{ url_for('static', filename='assets/img/favy.png') }}" rel="apple-touch-icon" />
 
@@ -29,13 +29,13 @@
                     },
                     fontFamily: { inter: ["Inter", "sans-serif"] },
                     fontSize: {
-                        'xs': '0.6875rem',   // ~11px
-                        'sm': '0.75rem',     // ~12px
-                        'base': '0.8125rem', // ~13px
-                        'lg': '0.9375rem',   // ~15px
-                        'xl': '1.0625rem',   // ~17px
-                        '2xl': '1.1875rem',  // ~19px
-                        '3xl': '1.375rem',   // ~22px
+                        'xs': '0.6875rem',
+                        'sm': '0.75rem',
+                        'base': '0.8125rem',
+                        'lg': '0.9375rem',
+                        'xl': '1.0625rem',
+                        '2xl': '1.1875rem',
+                        '3xl': '1.375rem',
                     },
                 },
             },
@@ -51,354 +51,430 @@
         .shadow-medium { box-shadow: 0 4px 6px -3px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.05); }
         .shadow-strong { box-shadow: 0 8px 10px -5px rgba(0,0,0,0.1), 0 4px 6px -3px rgba(0,0,0,0.05); }
         .hover-lift:hover { transform: translateY(-4px); transition: all 0.3s ease; }
-        .profile-cover { height: 220px; }
         .glass-effect { background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); }
         .fade-in { animation: fadeIn 0.5s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        @media (max-width: 768px) {
-            .profile-cover { height: 180px; }
-            .quick-actions { display: none; }
+        /* Cover photo */
+        .profile-cover-section {
+            position: relative;
+            height: 200px;
+            overflow: hidden;
+        }
+        @media (min-width: 768px) {
+            .profile-cover-section { height: 280px; }
         }
 
-        .card-hover:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            transition: all 0.3s ease;
+        /* Floating avatar */
+        .profile-avatar-wrap {
+            margin-top: -56px;
+            position: relative;
+            z-index: 10;
         }
+
+        /* Tab underline */
+        .tab-btn { position: relative; padding-bottom: 10px; }
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 3px;
+            border-radius: 3px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .tab-btn.active { color: #764ba2; font-weight: 700; }
 
         /* Scrollable comments section */
-        .comments-section {
-            max-height: 250px;
-            overflow-y: auto;
-            padding-right: 4px;
-        }
-        .comments-section::-webkit-scrollbar {
-            width: 6px;
-        }
-        .comments-section::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
-        }
-        .comments-section::-webkit-scrollbar-thumb {
-            background: #c1c1c1;
-            border-radius: 10px;
-        }
-        .comments-section::-webkit-scrollbar-thumb:hover {
-            background: #a8a8a8;
-        }
+        .comments-section { max-height: 250px; overflow-y: auto; padding-right: 4px; }
+        .comments-section::-webkit-scrollbar { width: 6px; }
+        .comments-section::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        .comments-section::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 10px; }
+        .comments-section::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+
+        /* Details list */
+        .detail-row { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; }
+        .detail-row:nth-child(odd) { background: #faf5ff; }
+        .detail-row:nth-child(even) { background: #f0fdf4; }
     </style>
 {% endblock %}
 
 {% block content %}
-<!-- Navigation -->
-    <nav class="bg-white/90 backdrop-blur-md shadow-soft sticky top-0 z-50 border-b border-gray-200" style="height: 5rem;">
-        <div class="w-full px-4 lg:px-8" style="margin-top: 0.5rem;">
-            <div class="flex justify-between items-center h-12">
-                <a href="{{ url_for('user.user_dashboard') }}" class="flex items-center">
-                    <img src="{{ url_for('static', filename='assets/img/kim.png') }}"
-                         alt="Kimbela" class="h-10" style="width: 11rem; height: 6rem; object-fit: contain;">
-                </a>
-                <div class="flex items-center space-x-4">
-                    <a href="{{ url_for('user.user_dashboard') }}"
-                       class="hidden md:flex gradient-primary text-white px-5 py-2 rounded-lg font-bold hover-lift shadow-medium items-center space-x-2 text-xs">
-                        <i class="fas fa-home"></i> <span>Dashboard</span>
-                    </a>
-                    <!-- Messenger -->
-                    <button onclick="window.openMessenger && window.openMessenger()" class="text-gray-600 hover:text-blue-600 transition-colors relative">
-                        <i class="fas fa-comment-dots text-xl"></i>
-                    </button>
-                    <!-- Notifications -->
-                    <a href="{{ url_for('user.user_dashboard') }}" class="text-gray-600 hover:text-blue-600 transition-colors relative">
-                        <i class="fas fa-bell text-xl"></i>
-                    </a>
-                    <div class="relative">
-                        <img src="{{ user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-                             alt="You" class="w-10 h-10 rounded-xl border-2 border-purple-500 shadow-medium object-cover">
-                        <div class="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </nav>
+<!-- ====== Mobile App Header ====== -->
+<nav class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100">
+    <div class="flex items-center justify-between px-4 h-14">
+        <!-- Back button -->
+        <a href="{{ url_for('user.user_dashboard') }}" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition">
+            <i class="fas fa-arrow-left text-gray-800 text-base"></i>
+        </a>
 
-    <!-- Main Content -->
-    <div class="max-w-7xl mx-auto px-4 lg:px-8 py-8 fade-in">
-        <!-- Cover & Header -->
-        <div class="relative rounded-2xl overflow-hidden shadow-strong mb-8 profile-cover">
-            <img src="{{ user.cover_pic or url_for('static', filename='assets/img/default-cover.jpg') }}"
-                 alt="Cover" class="w-full h-full object-cover">
-            <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
-
-            <div class="absolute bottom-0 left-0 right-0 p-6 text-white">
-                <div class="flex flex-col lg:flex-row items-start lg:items-end gap-6">
-                    <img src="{{ user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-                         alt="{{ user.first_name }}"
-                         class="w-32 h-32 rounded-2xl border-4 border-white shadow-2xl object-cover">
-                    <div class="flex-1">
-                        <h1 class="text-2xl lg:text-3xl font-bold mb-1">{{ user.first_name }} {{ user.last_name }}</h1>
-                        <p class="text-sm opacity-90 mb-4 max-w-3xl">{{ user.bio or 'Welcome to my profile! Let’s connect and share amazing moments together.' }}</p>
-                        <div class="flex flex-wrap gap-3 text-xs">
-                            <div class="glass-effect px-3 py-1.5 rounded-xl flex items-center gap-2">
-                                <i class="fas fa-newspaper"></i> {{ posts|length }} Posts
-                            </div>
-                            <div class="glass-effect px-3 py-1.5 rounded-xl flex items-center gap-2">
-                                <i class="fas fa-users"></i> {{ friends|length }} Friends
-                            </div>
-                            <div class="glass-effect px-3 py-1.5 rounded-xl flex items-center gap-2">
-                                <i class="fas fa-user-slash"></i> {{ user.get_blocked_users()|length }} Blocked
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <!-- Centered name -->
+        <div class="flex items-center gap-2">
+            <h1 class="text-base font-bold text-gray-900 truncate max-w-[180px]">{{ user.first_name }} {{ user.last_name }}</h1>
         </div>
 
-        <!-- Grid Layout -->
-        <div class="grid grid-cols-1 xl:grid-cols-4 gap-8">
-            <!-- Left Sidebar -->
-            <div class="space-y-6">
-                <!-- About Me -->
-                <div class="bg-white rounded-2xl shadow-medium p-6 border border-gray-100 hover-lift">
-                    <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
-                        <div class="w-9 h-9 gradient-primary rounded-xl flex items-center justify-center">
-                            <i class="fas fa-info-circle text-white"></i>
-                        </div>
-                        About Me
-                    </h3>
-                    <div class="space-y-3 text-xs">
-                        {% if user.city and user.country %}
-                        <div class="flex items-center gap-3 p-3 bg-purple-50 rounded-xl">
-                            <i class="fas fa-map-marker-alt text-purple-600 text-base"></i>
-                            <div>
-                                <p class="text-gray-600">Location</p>
-                                <p class="font-semibold text-gray-900">{{ user.city }}, {{ user.country }}</p>
-                            </div>
-                        </div>
-                        {% endif %}
+        <!-- Right actions -->
+        <div class="flex items-center gap-2">
+            <button onclick="window.openMessenger && window.openMessenger()" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition relative">
+                <i class="fas fa-comment-dots text-gray-700 text-base"></i>
+            </button>
+            <a href="{{ url_for('user.user_dashboard') }}" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition relative">
+                <i class="fas fa-bell text-gray-700 text-base"></i>
+            </a>
+        </div>
+    </div>
+</nav>
 
-                        {% if user.gender %}
-                        <div class="flex items-center gap-3 p-3 bg-blue-50 rounded-xl">
-                            <i class="fas fa-venus-mars text-blue-600 text-base"></i>
-                            <div>
-                                <p class="text-gray-600">Gender</p>
-                                <p class="font-semibold text-gray-900">{{ user.gender }}</p>
-                            </div>
-                        </div>
-                        {% endif %}
+<!-- ====== Main Profile Content ====== -->
+<div class="fade-in bg-gray-50 min-h-screen pb-8">
 
-                        {% if user.marital_status %}
-                        <div class="flex items-center gap-3 p-3 bg-green-50 rounded-xl">
-                            <i class="fas fa-heart text-green-600 text-base"></i>
-                            <div>
-                                <p class="text-gray-600">Status</p>
-                                <p class="font-semibold text-gray-900">{{ user.marital_status }}</p>
-                            </div>
-                        </div>
-                        {% endif %}
+    <!-- Cover Photo -->
+    <div class="profile-cover-section">
+        <img src="{{ user.cover_pic or url_for('static', filename='assets/img/default-cover.jpg') }}"
+             alt="Cover" class="w-full h-full object-cover">
+        <!-- Camera icon to change cover -->
+        <label class="absolute bottom-3 right-3 w-9 h-9 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center cursor-pointer transition z-20">
+            <i class="fas fa-camera text-white text-sm"></i>
+            <input type="file" name="cover_pic_quick" accept="image/*" hidden
+                   onchange="quickUploadCover(this)">
+        </label>
+    </div>
 
-                        {% if user.dob %}
-                        <div class="flex items-center gap-3 p-3 bg-yellow-50 rounded-xl">
-                            <i class="fas fa-birthday-cake text-yellow-600 text-base"></i>
-                            <div>
-                                <p class="text-gray-600">Age</p>
-                                <p class="font-semibold text-gray-900">{{ ((datetime.utcnow().date() - user.dob).days // 365) }} years old</p>
-                            </div>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
+    <!-- Centered Profile Avatar (floats over cover) -->
+    <div class="flex flex-col items-center profile-avatar-wrap px-4">
+        <div class="relative">
+            <img src="{{ user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+                 alt="{{ user.first_name }}"
+                 class="w-28 h-28 rounded-full border-4 border-white shadow-strong object-cover">
+            <!-- Camera icon on avatar -->
+            <label class="absolute bottom-1 right-1 w-8 h-8 bg-purple-600 hover:bg-purple-700 rounded-full flex items-center justify-center cursor-pointer shadow-md transition">
+                <i class="fas fa-camera text-white text-xs"></i>
+                <input type="file" name="profile_pic_quick" accept="image/*" hidden
+                       onchange="quickUploadProfilePic(this)">
+            </label>
+            <!-- Online indicator -->
+            <div class="absolute top-1 right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+        </div>
 
-                <!-- Friends Preview -->
-                <div class="bg-white rounded-2xl shadow-medium p-6 border border-gray-100 hover-lift">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="font-bold text-lg flex items-center gap-2">
-                            <div class="w-9 h-9 gradient-success rounded-xl flex items-center justify-center">
-                                <i class="fas fa-users text-white"></i>
-                            </div>
-                            Friends
-                        </h3>
-                        <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-bold">{{ friends|length }}</span>
-                    </div>
-                    <div class="grid grid-cols-3 gap-3">
-                        {% for friend in friends[:6] %}
-                        <a href="{{ url_for('user.view_profile', user_identifier=friend.public_id) }}" class="text-center group block">
-                            <div class="relative mx-auto mb-1.5">
-                                <img src="{{ friend.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-                                     alt="{{ friend.first_name }}"
-                                     class="w-14 h-14 rounded-xl object-cover border-2 border-transparent group-hover:border-green-500 transition-all">
-                            </div>
-                            <p class="text-xs font-medium text-gray-800 truncate">{{ friend.first_name }}</p>
-                        </a>
-                        {% endfor %}
-                    </div>
-                    {% if friends|length > 6 %}
-                    <button class="w-full mt-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl text-xs font-semibold hover:bg-gray-200 transition">
-                        View All Friends
-                    </button>
-                    {% endif %}
-                </div>
+        <!-- Name & Bio -->
+        <h2 class="mt-3 text-xl font-bold text-gray-900">{{ user.first_name }} {{ user.last_name }}</h2>
+        <p class="mt-1 text-sm text-gray-500 text-center max-w-sm leading-relaxed">{{ user.bio or 'Welcome to my profile! Let\'s connect and share amazing moments together.' }}</p>
+
+        <!-- Stats row -->
+        <div class="flex gap-6 mt-3">
+            <div class="text-center">
+                <span class="text-lg font-bold text-gray-900">{{ posts|length }}</span>
+                <p class="text-xs text-gray-500">Posts</p>
             </div>
-
-            <!-- Posts Feed -->
-            <div class="xl:col-span-2 space-y-6">
-                {% if posts %}
-                    {% for post in posts %}
-                        {% include "_post_card.html" %}
-                    {% endfor %}
-                {% else %}
-                    <div class="bg-white rounded-2xl shadow-medium p-16 text-center border border-gray-100">
-                        <i class="fas fa-newspaper text-5xl text-gray-300 mb-5"></i>
-                        <h3 class="text-xl font-bold text-gray-800 mb-2">No posts yet</h3>
-                        <p class="text-sm text-gray-600">Start sharing your thoughts with friends!</p>
-                    </div>
-                {% endif %}
+            <div class="text-center">
+                <span class="text-lg font-bold text-gray-900">{{ friends|length }}</span>
+                <p class="text-xs text-gray-500">Friends</p>
             </div>
-
-            <!-- Right Sidebar -->
-            <div class="space-y-6">
-                <!-- Profile Strength -->
-                <div class="bg-white rounded-2xl shadow-medium p-6 border border-gray-100 hover-lift">
-                    <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
-                        <div class="w-9 h-9 gradient-secondary rounded-xl flex items-center justify-center">
-                            <i class="fas fa-trophy text-white"></i>
-                        </div>
-                        Profile Strength
-                    </h3>
-                    {% set completion = 40 %}
-                    {% if user.bio %}{% set completion = completion + 10 %}{% endif %}
-                    {% if user.occupation %}{% set completion = completion + 10 %}{% endif %}
-                    {% if user.educational_level %}{% set completion = completion + 10 %}{% endif %}
-                    {% if user.marital_status %}{% set completion = completion + 10 %}{% endif %}
-                    {% if user.interests %}{% set completion = completion + 10 %}{% endif %}
-                    {% if user.profile_pic %}{% set completion = completion + 10 %}{% endif %}
-
-                    <div class="mb-4">
-                        <div class="flex justify-between text-xs mb-1.5">
-                            <span class="font-medium text-gray-700">Completion</span>
-                            <span class="font-bold text-purple-600">{{ completion }}%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2.5">
-                            <div class="gradient-primary h-2.5 rounded-full transition-all duration-1000" style="width: {{ completion }}%"></div>
-                        </div>
-                    </div>
-                    <p class="text-xs text-gray-600 text-center">Add more info to strengthen your profile</p>
-                </div>
-
-                <!-- Quick Actions -->
-                <div class="bg-white rounded-2xl shadow-medium p-6 border border-gray-100 hover-lift">
-                    <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
-                        <div class="w-9 h-9 gradient-primary rounded-xl flex items-center justify-center">
-                            <i class="fas fa-bolt text-white"></i>
-                        </div>
-                        Quick Actions
-                    </h3>
-                    <div class="space-y-3">
-                        <button onclick="openModal('editProfileModal')"
-                                class="w-full py-3.5 gradient-primary text-white rounded-xl font-semibold hover-lift shadow-medium flex items-center justify-center gap-2 text-xs">
-                            <i class="fas fa-edit"></i> Edit Profile
-                        </button>
-                        <button onclick="openModal('blockedUsersModal')"
-                                class="w-full py-3.5 gradient-secondary text-white rounded-xl font-semibold hover-lift shadow-medium flex items-center justify-center gap-2 text-xs">
-                            <i class="fas fa-user-slash"></i> Manage Blocks
-                        </button>
-                        <a href="{{ url_for('payments.ad_packages') }}"
-                           class="w-full block py-3.5 bg-gradient-to-r from-orange-500 to-yellow-500 text-white rounded-xl font-semibold hover-lift shadow-medium text-center flex items-center justify-center gap-2 text-xs">
-                            <i class="fas fa-megaphone"></i> Create Ad
-                        </a>
-                        <a href="{{ url_for('user.user_dashboard') }}"
-                           class="w-full block py-3.5 gradient-success text-white rounded-xl font-semibold hover-lift shadow-medium text-center flex items-center justify-center gap-2 text-xs">
-                            <i class="fas fa-home"></i> Dashboard
-                        </a>
-                    </div>
-                </div>
+            <div class="text-center">
+                <span class="text-lg font-bold text-gray-900">{{ user.get_blocked_users()|length }}</span>
+                <p class="text-xs text-gray-500">Blocked</p>
             </div>
         </div>
     </div>
 
-    <!-- Modals (Edit Profile, Blocked Users, Create Post) -->
-    <!-- Keep your existing modal code here – unchanged -->
+    <!-- Action Buttons Row -->
+    <div class="flex items-center gap-2 px-4 mt-5">
+        <button onclick="openModal('createPostModal')"
+                class="flex-1 py-2.5 gradient-primary text-white rounded-lg font-semibold text-sm flex items-center justify-center gap-2 shadow-medium hover-lift transition">
+            <i class="fas fa-plus text-xs"></i> Add to Story
+        </button>
+        <button onclick="openModal('editProfileModal')"
+                class="flex-1 py-2.5 bg-gray-200 text-gray-800 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 hover:bg-gray-300 transition">
+            <i class="fas fa-pen text-xs"></i> Edit profile
+        </button>
+        <button onclick="openModal('blockedUsersModal')"
+                class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center hover:bg-gray-300 transition">
+            <i class="fas fa-ellipsis-h text-gray-700 text-sm"></i>
+        </button>
+    </div>
 
-    <!-- Edit Profile Modal -->
-    <div id="editProfileModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 z-50 hidden transition-opacity duration-300">
-        <div class="bg-white rounded-lg shadow-strong max-w-lg w-full max-h-[90vh] overflow-y-auto transform transition-all duration-300 scale-95 opacity-0">
-            <div class="p-4 border-b border-gray-200">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-bold text-gray-900 flex items-center">
-                        <div class="w-8 h-8 gradient-primary rounded flex items-center justify-center mr-2">
-                            <i class="fas fa-user-edit text-white text-sm"></i>
-                        </div>
-                        Edit Profile
-                    </h3>
-                    <button onclick="closeModal('editProfileModal')"
-                            class="text-gray-400 hover:text-gray-600 transition-colors duration-300 p-1.5 rounded hover:bg-gray-100">
-                        <i class="fas fa-times text-sm"></i>
-                    </button>
+    <!-- ====== Tabs (Posts / Details) ====== -->
+    <div class="mt-6 border-b border-gray-200 px-4">
+        <div class="flex">
+            <button class="tab-btn active flex-1 text-center text-sm text-gray-500 pb-3 transition" data-tab="posts" onclick="switchTab('posts')">
+                Posts
+            </button>
+            <button class="tab-btn flex-1 text-center text-sm text-gray-500 pb-3 transition" data-tab="details" onclick="switchTab('details')">
+                Details
+            </button>
+        </div>
+    </div>
+
+    <!-- ====== Tab Content: Posts ====== -->
+    <div id="tab-posts" class="tab-content px-4 mt-4 max-w-3xl mx-auto">
+        {% if posts %}
+            {% for post in posts %}
+                {% include "_post_card.html" %}
+            {% endfor %}
+        {% else %}
+            <div class="bg-white rounded-2xl shadow-medium p-12 text-center border border-gray-100">
+                <i class="fas fa-newspaper text-5xl text-gray-300 mb-5"></i>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">No posts yet</h3>
+                <p class="text-sm text-gray-600">Start sharing your thoughts with friends!</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- ====== Tab Content: Details ====== -->
+    <div id="tab-details" class="tab-content px-4 mt-4 max-w-3xl mx-auto hidden">
+
+        <!-- About Section -->
+        <div class="bg-white rounded-2xl shadow-soft p-5 mb-5 border border-gray-100">
+            <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+                <div class="w-8 h-8 gradient-primary rounded-lg flex items-center justify-center">
+                    <i class="fas fa-info-circle text-white text-sm"></i>
+                </div>
+                Details
+            </h3>
+            <div class="space-y-2">
+                {% if user.occupation %}
+                <div class="detail-row">
+                    <i class="fas fa-briefcase text-purple-600 w-5 text-center"></i>
+                    <div>
+                        <p class="text-xs text-gray-500">Occupation</p>
+                        <p class="text-sm font-semibold text-gray-900">{{ user.occupation }}</p>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if user.educational_level %}
+                <div class="detail-row">
+                    <i class="fas fa-graduation-cap text-blue-600 w-5 text-center"></i>
+                    <div>
+                        <p class="text-xs text-gray-500">Education</p>
+                        <p class="text-sm font-semibold text-gray-900">{{ user.educational_level }}</p>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if user.city and user.country %}
+                <div class="detail-row">
+                    <i class="fas fa-map-marker-alt text-red-500 w-5 text-center"></i>
+                    <div>
+                        <p class="text-xs text-gray-500">Lives in</p>
+                        <p class="text-sm font-semibold text-gray-900">{{ user.city }}, {{ user.country }}</p>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if user.gender %}
+                <div class="detail-row">
+                    <i class="fas fa-venus-mars text-indigo-600 w-5 text-center"></i>
+                    <div>
+                        <p class="text-xs text-gray-500">Gender</p>
+                        <p class="text-sm font-semibold text-gray-900">{{ user.gender }}</p>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if user.marital_status %}
+                <div class="detail-row">
+                    <i class="fas fa-heart text-pink-500 w-5 text-center"></i>
+                    <div>
+                        <p class="text-xs text-gray-500">Status</p>
+                        <p class="text-sm font-semibold text-gray-900">{{ user.marital_status }}</p>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if user.dob %}
+                <div class="detail-row">
+                    <i class="fas fa-birthday-cake text-yellow-600 w-5 text-center"></i>
+                    <div>
+                        <p class="text-xs text-gray-500">Age</p>
+                        <p class="text-sm font-semibold text-gray-900">{{ ((datetime.utcnow().date() - user.dob).days // 365) }} years old</p>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if user.religion %}
+                <div class="detail-row">
+                    <i class="fas fa-pray text-teal-600 w-5 text-center"></i>
+                    <div>
+                        <p class="text-xs text-gray-500">Religion</p>
+                        <p class="text-sm font-semibold text-gray-900">{{ user.religion }}</p>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if user.interests %}
+                <div class="detail-row">
+                    <i class="fas fa-star text-orange-500 w-5 text-center"></i>
+                    <div>
+                        <p class="text-xs text-gray-500">Interests</p>
+                        <p class="text-sm font-semibold text-gray-900">{{ user.interests }}</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Profile Strength -->
+        <div class="bg-white rounded-2xl shadow-soft p-5 mb-5 border border-gray-100">
+            <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+                <div class="w-8 h-8 gradient-secondary rounded-lg flex items-center justify-center">
+                    <i class="fas fa-trophy text-white text-sm"></i>
+                </div>
+                Profile Strength
+            </h3>
+            {% set completion = 40 %}
+            {% if user.bio %}{% set completion = completion + 10 %}{% endif %}
+            {% if user.occupation %}{% set completion = completion + 10 %}{% endif %}
+            {% if user.educational_level %}{% set completion = completion + 10 %}{% endif %}
+            {% if user.marital_status %}{% set completion = completion + 10 %}{% endif %}
+            {% if user.interests %}{% set completion = completion + 10 %}{% endif %}
+            {% if user.profile_pic %}{% set completion = completion + 10 %}{% endif %}
+
+            <div class="mb-3">
+                <div class="flex justify-between text-xs mb-1.5">
+                    <span class="font-medium text-gray-700">Completion</span>
+                    <span class="font-bold text-purple-600">{{ completion }}%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                    <div class="gradient-primary h-2.5 rounded-full transition-all duration-1000" style="width: {{ completion }}%"></div>
+                </div>
+            </div>
+            <p class="text-xs text-gray-500 text-center">Add more info to strengthen your profile</p>
+        </div>
+
+        <!-- Friends Preview -->
+        <div class="bg-white rounded-2xl shadow-soft p-5 mb-5 border border-gray-100">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-lg flex items-center gap-2">
+                    <div class="w-8 h-8 gradient-success rounded-lg flex items-center justify-center">
+                        <i class="fas fa-users text-white text-sm"></i>
+                    </div>
+                    Friends
+                </h3>
+                <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-bold">{{ friends|length }}</span>
+            </div>
+            <div class="grid grid-cols-3 gap-3">
+                {% for friend in friends[:6] %}
+                <a href="{{ url_for('user.view_profile', user_identifier=friend.public_id) }}" class="text-center group block">
+                    <div class="relative mx-auto mb-1.5">
+                        <img src="{{ friend.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+                             alt="{{ friend.first_name }}"
+                             class="w-14 h-14 rounded-xl object-cover border-2 border-transparent group-hover:border-purple-500 transition-all">
+                    </div>
+                    <p class="text-xs font-medium text-gray-800 truncate">{{ friend.first_name }}</p>
+                </a>
+                {% endfor %}
+            </div>
+            {% if friends|length > 6 %}
+            <button class="w-full mt-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl text-xs font-semibold hover:bg-gray-200 transition">
+                View All Friends
+            </button>
+            {% endif %}
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="bg-white rounded-2xl shadow-soft p-5 mb-5 border border-gray-100">
+            <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+                <div class="w-8 h-8 gradient-primary rounded-lg flex items-center justify-center">
+                    <i class="fas fa-bolt text-white text-sm"></i>
+                </div>
+                Quick Actions
+            </h3>
+            <div class="space-y-3">
+                <a href="{{ url_for('payments.ad_packages') }}"
+                   class="w-full block py-3 bg-gradient-to-r from-orange-500 to-yellow-500 text-white rounded-xl font-semibold text-center flex items-center justify-center gap-2 text-xs shadow-medium hover-lift">
+                    <i class="fas fa-megaphone"></i> Create Ad
+                </a>
+                <a href="{{ url_for('user.user_dashboard') }}"
+                   class="w-full block py-3 gradient-success text-white rounded-xl font-semibold text-center flex items-center justify-center gap-2 text-xs shadow-medium hover-lift">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ======================= MODALS ======================= -->
+
+<!-- Edit Profile Modal -->
+<div id="editProfileModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 z-50 hidden transition-opacity duration-300">
+    <div class="bg-white rounded-lg shadow-strong max-w-lg w-full max-h-[90vh] overflow-y-auto transform transition-all duration-300 scale-95 opacity-0">
+        <div class="p-4 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold text-gray-900 flex items-center">
+                    <div class="w-8 h-8 gradient-primary rounded flex items-center justify-center mr-2">
+                        <i class="fas fa-user-edit text-white text-sm"></i>
+                    </div>
+                    Edit Profile
+                </h3>
+                <button onclick="closeModal('editProfileModal')"
+                        class="text-gray-400 hover:text-gray-600 transition-colors duration-300 p-1.5 rounded hover:bg-gray-100">
+                    <i class="fas fa-times text-sm"></i>
+                </button>
+            </div>
+        </div>
+
+        <form method="POST" enctype="multipart/form-data" action="{{ url_for('user.profile', user_id=user.id) }}" class="p-4 space-y-4" id="profileForm">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+            <!-- Profile and Cover Photos -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Profile Picture -->
+                <div class="text-center">
+                    <label class="block text-xs font-bold text-gray-700 mb-2">Profile Picture</label>
+                    <div class="relative inline-block">
+                        <img id="profilePreview"
+                             src="{{ user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+                             class="w-24 h-24 rounded-lg border-2 border-purple-200 shadow object-cover">
+                        <label class="absolute bottom-0 right-0 bg-purple-500 text-white p-2 rounded cursor-pointer hover:bg-purple-600 transition-colors duration-300 shadow-medium">
+                            <i class="fas fa-camera text-xs"></i>
+                            <input type="file" name="profile_pic" accept="image/*" hidden
+                                   onchange="previewImage(this, 'profilePreview')">
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Cover Photo -->
+                <div class="text-center">
+                    <label class="block text-xs font-bold text-gray-700 mb-2">Cover Photo</label>
+                    <div class="relative">
+                        <img id="coverPreview"
+                             src="{{ user.cover_pic or url_for('static', filename='assets/img/default-cover.jpg') }}"
+                             class="w-full h-24 rounded-lg object-cover shadow">
+                        <label class="absolute bottom-1 right-1 bg-purple-500 text-white px-2 py-1 rounded text-xs cursor-pointer hover:bg-purple-600 transition-colors duration-300 shadow-medium">
+                            <i class="fas fa-image mr-1 text-xs"></i>Change
+                            <input type="file" name="cover_pic" accept="image/*" hidden
+                                   onchange="previewImage(this, 'coverPreview')">
+                        </label>
+                    </div>
                 </div>
             </div>
 
-            <form method="POST" enctype="multipart/form-data" action="{{ url_for('user.profile', user_id=user.id) }}" class="p-4 space-y-4" id="profileForm">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <!-- Personal Information -->
+            <div class="space-y-3">
+                <h4 class="text-sm font-bold text-gray-900 border-b border-gray-200 pb-1">Personal Information</h4>
 
-                <!-- Profile and Cover Photos -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Profile Picture -->
-                    <div class="text-center">
-                        <label class="block text-xs font-bold text-gray-700 mb-2">Profile Picture</label>
-                        <div class="relative inline-block">
-                            <img id="profilePreview"
-                                 src="{{ user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-                                 class="w-24 h-24 rounded-lg border-2 border-purple-200 shadow object-cover">
-                            <label class="absolute bottom-0 right-0 bg-purple-500 text-white p-2 rounded cursor-pointer hover:bg-purple-600 transition-colors duration-300 shadow-medium">
-                                <i class="fas fa-camera text-xs"></i>
-                                <input type="file" name="profile_pic" accept="image/*" hidden
-                                       onchange="previewImage(this, 'profilePreview')">
-                            </label>
-                        </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">First Name</label>
+                        <input type="text" name="first_name" value="{{ user.first_name }}"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
                     </div>
 
-                    <!-- Cover Photo -->
-                    <div class="text-center">
-                        <label class="block text-xs font-bold text-gray-700 mb-2">Cover Photo</label>
-                        <div class="relative">
-                            <img id="coverPreview"
-                                 src="{{ user.cover_pic or url_for('static', filename='assets/img/default-cover.jpg') }}"
-                                 class="w-full h-24 rounded-lg object-cover shadow">
-                            <label class="absolute bottom-1 right-1 bg-purple-500 text-white px-2 py-1 rounded text-xs cursor-pointer hover:bg-purple-600 transition-colors duration-300 shadow-medium">
-                                <i class="fas fa-image mr-1 text-xs"></i>Change
-                                <input type="file" name="cover_pic" accept="image/*" hidden
-                                       onchange="previewImage(this, 'coverPreview')">
-                            </label>
-                        </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">Last Name</label>
+                        <input type="text" name="last_name" value="{{ user.last_name }}"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
                     </div>
                 </div>
 
-                <!-- Personal Information -->
-                <div class="space-y-3">
-                    <h4 class="text-sm font-bold text-gray-900 border-b border-gray-200 pb-1">Personal Information</h4>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-1">First Name</label>
-                            <input type="text" name="first_name" value="{{ user.first_name }}"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-1">Last Name</label>
-                            <input type="text" name="last_name" value="{{ user.last_name }}"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
-                        </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">Email</label>
+                        <input type="email" name="email" value="{{ user.email }}"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-1">Email</label>
-                            <input type="email" name="email" value="{{ user.email }}"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
-                        </div>
-
-                        <!-- Religion Dropdown -->
+                    <!-- Religion Dropdown -->
 <div>
     <label class="block text-xs font-bold text-gray-700 mb-1">Religion</label>
     <select name="religion" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
@@ -428,7 +504,7 @@
     </select>
 </div>
 
-                        <!-- Ethnicity Dropdown -->
+                    <!-- Ethnicity Dropdown -->
 <div>
     <label class="block text-xs font-bold text-gray-700 mb-1">Ethnicity</label>
     <select name="ethnicity" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
@@ -453,7 +529,7 @@
     </select>
 </div>
 
-                        <!-- Educational Level Dropdown -->
+                    <!-- Educational Level Dropdown -->
 <div>
     <label class="block text-xs font-bold text-gray-700 mb-1">Educational Level</label>
     <select name="educational_level" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
@@ -471,577 +547,603 @@
     </select>
 </div>
 
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-1">Phone Number</label>
-                            <input type="tel" name="phone_number" value="{{ user.phone_number }}"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-1">Date of Birth</label>
-                            <input type="date" name="dob" value="{{ user.dob.strftime('%Y-%m-%d') if user.dob else '' }}"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-1">Gender</label>
-                            <select name="gender" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
-                                <option value="">Select Gender</option>
-                                <option value="Male" {{ 'selected' if user.gender == 'Male' }}>Male</option>
-                                <option value="Female" {{ 'selected' if user.gender == 'Female' }}>Female</option>
-                                <option value="Other" {{ 'selected' if user.gender == 'Other' }}>Other</option>
-                            </select>
-                        </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">Phone Number</label>
+                        <input type="tel" name="phone_number" value="{{ user.phone_number }}"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
                     </div>
                 </div>
 
-                <!-- Location Information -->
-                <!-- Location Information - Cascading Dropdowns -->
-                <div class="space-y-3">
-                    <h4 class="text-sm font-bold text-gray-900 border-b border-gray-200 pb-1">Location</h4>
-
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <!-- Country -->
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-1">Country</label>
-                            <select id="profile_country_select" name="country"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
-                                <option value="">Select Country</option>
-                            </select>
-                        </div>
-
-                        <!-- State / Province -->
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-1">State / Province</label>
-                            <select id="profile_state_select" name="state" disabled
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
-                                <option value="">Select State First</option>
-                            </select>
-                        </div>
-
-                        <!-- City -->
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-1">City</label>
-                            <select id="profile_city_select" name="city" disabled
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
-                                <option value="">Select State First</option>
-                            </select>
-                        </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">Date of Birth</label>
+                        <input type="date" name="dob" value="{{ user.dob.strftime('%Y-%m-%d') if user.dob else '' }}"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
                     </div>
-                </div>
-
-                <!-- Additional Information -->
-                <div class="space-y-3">
-                    <h4 class="text-sm font-bold text-gray-900 border-b border-gray-200 pb-1">Additional Information</h4>
 
                     <div>
-                        <label class="block text-xs font-bold text-gray-700 mb-1">Status</label>
-                        <select name="marital_status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
-                            <option value="">Select Status</option>
-                            <option value="Single" {{ 'selected' if user.marital_status == 'Single' }}>Single</option>
-                            <option value="Divorced" {{ 'selected' if user.marital_status == 'Divorced' }}>Divorced</option>
-                            <option value="Widowed" {{ 'selected' if user.marital_status == 'Widowed' }}>Widowed</option>
-                            <option value="Alumni" {{ 'selected' if user.marital_status == 'Alumni' }}>Alumni (Now Married)</option>
-                            <option value="In a relationship" {{ 'selected' if user.marital_status == 'In a relationship' }}>In a relationship</option>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">Gender</label>
+                        <select name="gender" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
+                            <option value="">Select Gender</option>
+                            <option value="Male" {{ 'selected' if user.gender == 'Male' }}>Male</option>
+                            <option value="Female" {{ 'selected' if user.gender == 'Female' }}>Female</option>
+                            <option value="Other" {{ 'selected' if user.gender == 'Other' }}>Other</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Location Information - Cascading Dropdowns -->
+            <div class="space-y-3">
+                <h4 class="text-sm font-bold text-gray-900 border-b border-gray-200 pb-1">Location</h4>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <!-- Country -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">Country</label>
+                        <select id="profile_country_select" name="country"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
+                            <option value="">Select Country</option>
                         </select>
                     </div>
 
+                    <!-- State / Province -->
                     <div>
-                        <label class="block text-xs font-bold text-gray-700 mb-1">Bio</label>
-                        <textarea name="bio" rows="2" placeholder="Tell us about yourself..."
-                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white resize-none text-sm">{{ user.bio or '' }}</textarea>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">State / Province</label>
+                        <select id="profile_state_select" name="state" disabled
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
+                            <option value="">Select State First</option>
+                        </select>
                     </div>
 
+                    <!-- City -->
                     <div>
-                        <label class="block text-xs font-bold text-gray-700 mb-1">Interests & Hobbies</label>
-                        <textarea name="interests" rows="2" placeholder="Your interests, hobbies, passions..."
-                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white resize-none text-sm">{{ user.interests or '' }}</textarea>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">City</label>
+                        <select id="profile_city_select" name="city" disabled
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
+                            <option value="">Select State First</option>
+                        </select>
                     </div>
                 </div>
-
-                <!-- Form Actions -->
-                <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-                    <button type="button"
-                            onclick="closeModal('editProfileModal')"
-                            class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-bold hover:bg-gray-50 transition-all duration-300 text-sm">
-                        Cancel
-                    </button>
-                    <button type="submit"
-                            class="px-4 py-2 gradient-primary text-white rounded-lg font-bold hover-lift shadow-medium transition-all duration-300 flex items-center space-x-1.5 text-sm">
-                        <i class="fas fa-save text-xs"></i>
-                        <span>Save Changes</span>
-                    </button>
-                </div>
-            </form>
-            <div class="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
-                <h4 class="text-xs font-bold text-amber-800 mb-2">Delete Account</h4>
-                <p class="text-xs text-amber-700 mb-3">
-                    Permanently remove your account and associated data.
-                </p>
-                <button
-                    type="button"
-                    onclick="deleteAccount()"
-                    class="px-4 py-2 text-xs font-semibold text-white rounded-lg bg-amber-600 hover:bg-amber-700 transition-colors"
-                >
-                    Delete My Account
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Blocked Users Modal -->
-    <div id="blockedUsersModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden transition-opacity duration-300">
-        <div class="bg-white rounded-2xl shadow-strong max-w-lg w-full max-h-[85vh] overflow-hidden transform transition-all duration-300 scale-95 opacity-0 ring-1 ring-black/10">
-            <div class="bg-gradient-to-r from-rose-600 via-pink-600 to-orange-500 px-6 py-5 text-white">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <div class="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center">
-                            <i class="fas fa-user-slash text-lg"></i>
-                        </div>
-                        <div>
-                            <h3 class="text-lg font-bold">Blocked Users</h3>
-                            <p class="text-xs text-white/80">Control who can view your profile.</p>
-                        </div>
-                    </div>
-                    <button onclick="closeModal('blockedUsersModal')"
-                            class="w-9 h-9 inline-flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition">
-                        <i class="fas fa-times text-sm"></i>
-                    </button>
-                </div>
-                <div class="mt-4 inline-flex items-center gap-2 text-xs bg-white/10 rounded-full px-3 py-1">
-                    <i class="fas fa-users"></i>
-                    <span id="blockedUsersCount">0</span>
-                    <span>blocked</span>
-                </div>
             </div>
 
-            <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
-                <div class="relative">
-                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
-                    <input type="text" id="blockedUsersSearch"
-                           placeholder="Search blocked users..."
-                           class="w-full pl-10 pr-4 py-2.5 rounded-full bg-white border border-gray-200 focus:ring-1 focus:ring-purple-500 focus:border-transparent outline-none text-xs"
-                           oninput="filterBlockedUsersList()">
-                </div>
-            </div>
+            <!-- Additional Information -->
+            <div class="space-y-3">
+                <h4 class="text-sm font-bold text-gray-900 border-b border-gray-200 pb-1">Additional Information</h4>
 
-            <div class="p-5 max-h-[60vh] overflow-y-auto" id="blockedUsersList">
-                <div class="text-center py-6">
-                    <div class="loader-spinner mx-auto mb-2"></div>
-                    <p class="text-sm text-gray-600">Loading blocked users...</p>
-                </div>
-            </div>
-
-            <div class="px-6 py-4 bg-white border-t border-gray-200 flex items-center justify-between">
-                <p class="text-xs text-gray-500">Unblock anytime to restore visibility.</p>
-                <button onclick="closeModal('blockedUsersModal')"
-                        class="px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-xs font-semibold hover:bg-gray-200 transition">
-                    Done
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Create Post Modal -->
-    <div id="createPostModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 z-50 hidden transition-opacity duration-300">
-        <div class="bg-white rounded-lg shadow-strong max-w-lg w-full max-h-[90vh] overflow-y-auto transform transition-all duration-300 scale-95 opacity-0">
-            <div class="p-4 border-b border-gray-200">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-bold text-gray-900 flex items-center">
-                        <div class="w-8 h-8 gradient-primary rounded flex items-center justify-center mr-2">
-                            <i class="fas fa-edit text-white text-sm"></i>
-                        </div>
-                        Create Post
-                    </h3>
-                    <button onclick="closeModal('createPostModal')"
-                            class="text-gray-400 hover:text-gray-600 transition-colors duration-300 p-1.5 rounded hover:bg-gray-100">
-                        <i class="fas fa-times text-sm"></i>
-                    </button>
-                </div>
-            </div>
-
-            <form method="POST" enctype="multipart/form-data" action="{{ url_for('user.user_dashboard') }}" class="p-4 space-y-4" id="createPostForm" autocomplete="off">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-
-                <div class="flex items-center space-x-3 mb-3">
-                    <img src="{{ user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-                         alt="{{ user.first_name }}"
-                         class="w-10 h-10 rounded-lg border border-purple-200">
-                    <div>
-                        <h4 class="font-bold text-gray-900 text-sm">{{ user.first_name }} {{ user.last_name }}</h4>
-                        <p class="text-xs text-gray-500">Posting to your profile</p>
-                    </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">Status</label>
+                    <select name="marital_status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white text-sm">
+                        <option value="">Select Status</option>
+                        <option value="Single" {{ 'selected' if user.marital_status == 'Single' }}>Single</option>
+                        <option value="Divorced" {{ 'selected' if user.marital_status == 'Divorced' }}>Divorced</option>
+                        <option value="Widowed" {{ 'selected' if user.marital_status == 'Widowed' }}>Widowed</option>
+                        <option value="Alumni" {{ 'selected' if user.marital_status == 'Alumni' }}>Alumni (Now Married)</option>
+                        <option value="In a relationship" {{ 'selected' if user.marital_status == 'In a relationship' }}>In a relationship</option>
+                    </select>
                 </div>
 
                 <div>
-                    <textarea name="post_content" rows="3" placeholder="What's on your mind, {{ user.first_name }}?"
-                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white resize-none text-sm"></textarea>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">Bio</label>
+                    <textarea name="bio" rows="2" placeholder="Tell us about yourself..."
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white resize-none text-sm">{{ user.bio or '' }}</textarea>
                 </div>
 
-                <div id="mediaPreview" class="rounded-lg overflow-hidden hidden">
-                    <!-- Media preview will be inserted here -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">Interests & Hobbies</label>
+                    <textarea name="interests" rows="2" placeholder="Your interests, hobbies, passions..."
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white resize-none text-sm">{{ user.interests or '' }}</textarea>
                 </div>
+            </div>
 
-                <div class="flex items-center justify-between border-t border-gray-200 pt-3">
-                    <div class="flex items-center space-x-3">
-                        <label class="flex items-center space-x-1.5 text-gray-600 hover:text-green-500 transition-all duration-300 cursor-pointer p-1.5 rounded hover:bg-green-50 text-sm">
-                            <i class="fas fa-image text-sm"></i>
-                            <span>Photo</span>
-                            <input type="file" name="media" accept="image/*" hidden
-                                   onchange="previewPostMedia(this)">
-                        </label>
-                    </div>
-
-                    <button type="submit"
-                            class="px-4 py-2 gradient-primary text-white rounded-lg font-bold hover-lift shadow-medium transition-all duration-300 flex items-center space-x-1.5 text-sm">
-                        <i class="fas fa-paper-plane text-xs"></i>
-                        <span>Post</span>
-                    </button>
-                </div>
-            </form>
+            <!-- Form Actions -->
+            <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                <button type="button"
+                        onclick="closeModal('editProfileModal')"
+                        class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-bold hover:bg-gray-50 transition-all duration-300 text-sm">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="px-4 py-2 gradient-primary text-white rounded-lg font-bold hover-lift shadow-medium transition-all duration-300 flex items-center space-x-1.5 text-sm">
+                    <i class="fas fa-save text-xs"></i>
+                    <span>Save Changes</span>
+                </button>
+            </div>
+        </form>
+        <div class="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
+            <h4 class="text-xs font-bold text-amber-800 mb-2">Delete Account</h4>
+            <p class="text-xs text-amber-700 mb-3">
+                Permanently remove your account and associated data.
+            </p>
+            <button
+                type="button"
+                onclick="deleteAccount()"
+                class="px-4 py-2 text-xs font-semibold text-white rounded-lg bg-amber-600 hover:bg-amber-700 transition-colors"
+            >
+                Delete My Account
+            </button>
         </div>
     </div>
+</div>
 
-    <script>
-        // Modal Functions
-        function openModal(modalId) {
-            const modal = document.getElementById(modalId);
-            modal.classList.remove('hidden');
-            setTimeout(() => {
-                modal.querySelector('.transform').classList.remove('scale-95', 'opacity-0');
-            }, 10);
-
-            if (modalId === 'blockedUsersModal') {
-                loadBlockedUsers();
-            }
-        }
-
-        function closeModal(modalId) {
-            const modal = document.getElementById(modalId);
-            modal.querySelector('.transform').classList.add('scale-95', 'opacity-0');
-            setTimeout(() => {
-                modal.classList.add('hidden');
-            }, 200);
-        }
-
-        // Image Preview Function
-        function previewImage(input, previewId) {
-            const preview = document.getElementById(previewId);
-            const file = input.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = e => {
-                    preview.src = e.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        // Post Media Preview
-        function previewPostMedia(input) {
-            const preview = document.getElementById('mediaPreview');
-            const file = input.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = e => {
-                    preview.innerHTML = '';
-                    if (file.type.startsWith('image/')) {
-                        const img = document.createElement('img');
-                        img.src = e.target.result;
-                        img.className = 'w-full h-auto max-h-64 object-cover';
-                        preview.appendChild(img);
-                    } else if (file.type.startsWith('video/')) {
-                        const video = document.createElement('video');
-                        video.src = e.target.result;
-                        video.controls = true;
-                        video.className = 'w-full h-auto max-h-64';
-                        preview.appendChild(video);
-                    }
-                    preview.classList.remove('hidden');
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        const blockedUsersState = { list: [] };
-
-        function setBlockedUsersCount(count) {
-            const badge = document.getElementById('blockedUsersCount');
-            if (badge) badge.textContent = count;
-        }
-
-        function filterBlockedUsersList() {
-            const input = document.getElementById('blockedUsersSearch');
-            if (!input) return;
-            const query = input.value.toLowerCase();
-            const filtered = blockedUsersState.list.filter(u =>
-                `${u.first_name} ${u.last_name}`.toLowerCase().includes(query)
-            );
-            renderBlockedUsersList(filtered, false);
-            setBlockedUsersCount(blockedUsersState.list.length);
-        }
-
-        function renderBlockedUsersList(users, updateCount = true) {
-            const list = document.getElementById('blockedUsersList');
-            if (!list) return;
-
-            if (!users.length) {
-                list.innerHTML = `
-                    <div class="text-center py-8">
-                        <div class="w-14 h-14 gradient-success rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-medium">
-                            <i class="fas fa-user-check text-white text-lg"></i>
-                        </div>
-                        <h4 class="text-sm font-bold text-gray-900 mb-1">No Blocked Users</h4>
-                        <p class="text-gray-600 text-xs">Your list is empty for now.</p>
+<!-- Blocked Users Modal -->
+<div id="blockedUsersModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden transition-opacity duration-300">
+    <div class="bg-white rounded-2xl shadow-strong max-w-lg w-full max-h-[85vh] overflow-hidden transform transition-all duration-300 scale-95 opacity-0 ring-1 ring-black/10">
+        <div class="bg-gradient-to-r from-rose-600 via-pink-600 to-orange-500 px-6 py-5 text-white">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center">
+                        <i class="fas fa-user-slash text-lg"></i>
                     </div>
-                `;
-                if (updateCount) setBlockedUsersCount(0);
-                return;
-            }
-
-            if (updateCount) setBlockedUsersCount(users.length);
-
-            list.innerHTML = users.map(u => `
-                <div class="flex items-center justify-between p-3 bg-white rounded-2xl hover:shadow-md transition-all duration-300 border border-gray-200 mb-3 blocked-user-card">
-                    <div class="flex items-center space-x-3 min-w-0">
-                        <div class="relative">
-                            <img src="${u.profile_pic || '{{ url_for("static", filename="assets/img/default-avatar.png") }}'}"
-                                 alt="${u.first_name}"
-                                 class="w-12 h-12 rounded-2xl object-cover ring-2 ring-rose-100">
-                            <span class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-rose-500 ring-2 ring-white"></span>
-                        </div>
-                        <div class="min-w-0">
-                            <h4 class="font-bold text-gray-900 text-sm truncate">${u.first_name} ${u.last_name}</h4>
-                            <p class="text-xs text-gray-500">Blocked</p>
-                        </div>
+                    <div>
+                        <h3 class="text-lg font-bold">Blocked Users</h3>
+                        <p class="text-xs text-white/80">Control who can view your profile.</p>
                     </div>
-                    <button class="bg-emerald-500 text-white px-3 py-2 rounded-full font-bold hover:bg-emerald-600 transition-all duration-300 hover-lift flex items-center space-x-1.5 text-xs unblock-btn shadow-sm"
-                            data-user-id="${u.id}" data-user-name="${u.first_name}">
-                        <i class="fas fa-unlock text-xs"></i>
-                        <span>Unblock</span>
-                    </button>
                 </div>
-            `).join('');
+                <button onclick="closeModal('blockedUsersModal')"
+                        class="w-9 h-9 inline-flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition">
+                    <i class="fas fa-times text-sm"></i>
+                </button>
+            </div>
+            <div class="mt-4 inline-flex items-center gap-2 text-xs bg-white/10 rounded-full px-3 py-1">
+                <i class="fas fa-users"></i>
+                <span id="blockedUsersCount">0</span>
+                <span>blocked</span>
+            </div>
+        </div>
 
-            attachUnblockListeners();
+        <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+            <div class="relative">
+                <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                <input type="text" id="blockedUsersSearch"
+                       placeholder="Search blocked users..."
+                       class="w-full pl-10 pr-4 py-2.5 rounded-full bg-white border border-gray-200 focus:ring-1 focus:ring-purple-500 focus:border-transparent outline-none text-xs"
+                       oninput="filterBlockedUsersList()">
+            </div>
+        </div>
+
+        <div class="p-5 max-h-[60vh] overflow-y-auto" id="blockedUsersList">
+            <div class="text-center py-6">
+                <div class="loader-spinner mx-auto mb-2"></div>
+                <p class="text-sm text-gray-600">Loading blocked users...</p>
+            </div>
+        </div>
+
+        <div class="px-6 py-4 bg-white border-t border-gray-200 flex items-center justify-between">
+            <p class="text-xs text-gray-500">Unblock anytime to restore visibility.</p>
+            <button onclick="closeModal('blockedUsersModal')"
+                    class="px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-xs font-semibold hover:bg-gray-200 transition">
+                Done
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Create Post Modal -->
+<div id="createPostModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 z-50 hidden transition-opacity duration-300">
+    <div class="bg-white rounded-lg shadow-strong max-w-lg w-full max-h-[90vh] overflow-y-auto transform transition-all duration-300 scale-95 opacity-0">
+        <div class="p-4 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold text-gray-900 flex items-center">
+                    <div class="w-8 h-8 gradient-primary rounded flex items-center justify-center mr-2">
+                        <i class="fas fa-edit text-white text-sm"></i>
+                    </div>
+                    Create Post
+                </h3>
+                <button onclick="closeModal('createPostModal')"
+                        class="text-gray-400 hover:text-gray-600 transition-colors duration-300 p-1.5 rounded hover:bg-gray-100">
+                    <i class="fas fa-times text-sm"></i>
+                </button>
+            </div>
+        </div>
+
+        <form method="POST" enctype="multipart/form-data" action="{{ url_for('user.user_dashboard') }}" class="p-4 space-y-4" id="createPostForm" autocomplete="off">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+            <div class="flex items-center space-x-3 mb-3">
+                <img src="{{ user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+                     alt="{{ user.first_name }}"
+                     class="w-10 h-10 rounded-lg border border-purple-200">
+                <div>
+                    <h4 class="font-bold text-gray-900 text-sm">{{ user.first_name }} {{ user.last_name }}</h4>
+                    <p class="text-xs text-gray-500">Posting to your profile</p>
+                </div>
+            </div>
+
+            <div>
+                <textarea name="post_content" rows="3" placeholder="What's on your mind, {{ user.first_name }}?"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white resize-none text-sm"></textarea>
+            </div>
+
+            <div id="mediaPreview" class="rounded-lg overflow-hidden hidden">
+                <!-- Media preview will be inserted here -->
+            </div>
+
+            <div class="flex items-center justify-between border-t border-gray-200 pt-3">
+                <div class="flex items-center space-x-3">
+                    <label class="flex items-center space-x-1.5 text-gray-600 hover:text-green-500 transition-all duration-300 cursor-pointer p-1.5 rounded hover:bg-green-50 text-sm">
+                        <i class="fas fa-image text-sm"></i>
+                        <span>Photo</span>
+                        <input type="file" name="media" accept="image/*" hidden
+                               onchange="previewPostMedia(this)">
+                    </label>
+                </div>
+
+                <button type="submit"
+                        class="px-4 py-2 gradient-primary text-white rounded-lg font-bold hover-lift shadow-medium transition-all duration-300 flex items-center space-x-1.5 text-sm">
+                    <i class="fas fa-paper-plane text-xs"></i>
+                    <span>Post</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ======================= SCRIPTS ======================= -->
+<script>
+    // ===== Tab Switching =====
+    function switchTab(tabName) {
+        // Hide all tab content
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+        // Deactivate all tab buttons
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+
+        // Show selected tab
+        document.getElementById('tab-' + tabName).classList.remove('hidden');
+        // Activate clicked button
+        document.querySelector(`.tab-btn[data-tab="${tabName}"]`).classList.add('active');
+    }
+
+    // ===== Quick Upload Handlers =====
+    function quickUploadProfilePic(input) {
+        const file = input.files[0];
+        if (!file) return;
+        const formData = new FormData();
+        formData.append('profile_pic', file);
+        formData.append('csrf_token', '{{ csrf_token }}');
+
+        fetch('{{ url_for("user.profile", user_id=user.id) }}', {
+            method: 'POST',
+            body: formData
+        }).then(resp => {
+            if (resp.ok) {
+                showNotification('Profile picture updated!', 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showNotification('Error uploading picture.', 'error');
+            }
+        }).catch(() => showNotification('Error uploading picture.', 'error'));
+    }
+
+    function quickUploadCover(input) {
+        const file = input.files[0];
+        if (!file) return;
+        const formData = new FormData();
+        formData.append('cover_pic', file);
+        formData.append('csrf_token', '{{ csrf_token }}');
+
+        fetch('{{ url_for("user.profile", user_id=user.id) }}', {
+            method: 'POST',
+            body: formData
+        }).then(resp => {
+            if (resp.ok) {
+                showNotification('Cover photo updated!', 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showNotification('Error uploading cover.', 'error');
+            }
+        }).catch(() => showNotification('Error uploading cover.', 'error'));
+    }
+
+    // ===== Modal Functions =====
+    function openModal(modalId) {
+        const modal = document.getElementById(modalId);
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            modal.querySelector('.transform').classList.remove('scale-95', 'opacity-0');
+        }, 10);
+
+        if (modalId === 'blockedUsersModal') {
+            loadBlockedUsers();
         }
+    }
 
-        // Load Blocked Users
-        function loadBlockedUsers() {
-            const list = document.getElementById('blockedUsersList');
+    function closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        modal.querySelector('.transform').classList.add('scale-95', 'opacity-0');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 200);
+    }
+
+    // ===== Image Preview =====
+    function previewImage(input, previewId) {
+        const preview = document.getElementById(previewId);
+        const file = input.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = e => { preview.src = e.target.result; };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    // ===== Post Media Preview =====
+    function previewPostMedia(input) {
+        const preview = document.getElementById('mediaPreview');
+        const file = input.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = e => {
+                preview.innerHTML = '';
+                if (file.type.startsWith('image/')) {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'w-full h-auto max-h-64 object-cover';
+                    preview.appendChild(img);
+                } else if (file.type.startsWith('video/')) {
+                    const video = document.createElement('video');
+                    video.src = e.target.result;
+                    video.controls = true;
+                    video.className = 'w-full h-auto max-h-64';
+                    preview.appendChild(video);
+                }
+                preview.classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    // ===== Blocked Users =====
+    const blockedUsersState = { list: [] };
+
+    function setBlockedUsersCount(count) {
+        const badge = document.getElementById('blockedUsersCount');
+        if (badge) badge.textContent = count;
+    }
+
+    function filterBlockedUsersList() {
+        const input = document.getElementById('blockedUsersSearch');
+        if (!input) return;
+        const query = input.value.toLowerCase();
+        const filtered = blockedUsersState.list.filter(u =>
+            `${u.first_name} ${u.last_name}`.toLowerCase().includes(query)
+        );
+        renderBlockedUsersList(filtered, false);
+        setBlockedUsersCount(blockedUsersState.list.length);
+    }
+
+    function renderBlockedUsersList(users, updateCount = true) {
+        const list = document.getElementById('blockedUsersList');
+        if (!list) return;
+
+        if (!users.length) {
             list.innerHTML = `
-                <div class="text-center py-4">
-                    <div class="loader-spinner mx-auto mb-2"></div>
-                    <p class="text-sm text-gray-600">Loading blocked users...</p>
+                <div class="text-center py-8">
+                    <div class="w-14 h-14 gradient-success rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-medium">
+                        <i class="fas fa-user-check text-white text-lg"></i>
+                    </div>
+                    <h4 class="text-sm font-bold text-gray-900 mb-1">No Blocked Users</h4>
+                    <p class="text-gray-600 text-xs">Your list is empty for now.</p>
                 </div>
             `;
+            if (updateCount) setBlockedUsersCount(0);
+            return;
+        }
 
-            fetch('/get_blocked_users')
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(users => {
-                    blockedUsersState.list = Array.isArray(users) ? users : [];
-                    renderBlockedUsersList(blockedUsersState.list);
-                })
-                .catch(error => {
-                    list.innerHTML = `
-                        <div class="text-center py-4">
-                            <div class="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                                <i class="fas fa-exclamation-triangle text-amber-500 text-sm"></i>
-                            </div>
-                            <h4 class="text-sm font-bold text-gray-900 mb-1">Failed to Load</h4>
-                            <p class="text-gray-600 text-xs">Unable to load blocked users. Please try again.</p>
+        if (updateCount) setBlockedUsersCount(users.length);
+
+        list.innerHTML = users.map(u => `
+            <div class="flex items-center justify-between p-3 bg-white rounded-2xl hover:shadow-md transition-all duration-300 border border-gray-200 mb-3 blocked-user-card">
+                <div class="flex items-center space-x-3 min-w-0">
+                    <div class="relative">
+                        <img src="${u.profile_pic || '{{ url_for("static", filename="assets/img/default-avatar.png") }}'}"
+                             alt="${u.first_name}"
+                             class="w-12 h-12 rounded-2xl object-cover ring-2 ring-rose-100">
+                        <span class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-rose-500 ring-2 ring-white"></span>
+                    </div>
+                    <div class="min-w-0">
+                        <h4 class="font-bold text-gray-900 text-sm truncate">${u.first_name} ${u.last_name}</h4>
+                        <p class="text-xs text-gray-500">Blocked</p>
+                    </div>
+                </div>
+                <button class="bg-emerald-500 text-white px-3 py-2 rounded-full font-bold hover:bg-emerald-600 transition-all duration-300 hover-lift flex items-center space-x-1.5 text-xs unblock-btn shadow-sm"
+                        data-user-id="${u.id}" data-user-name="${u.first_name}">
+                    <i class="fas fa-unlock text-xs"></i>
+                    <span>Unblock</span>
+                </button>
+            </div>
+        `).join('');
+
+        attachUnblockListeners();
+    }
+
+    function loadBlockedUsers() {
+        const list = document.getElementById('blockedUsersList');
+        list.innerHTML = `
+            <div class="text-center py-4">
+                <div class="loader-spinner mx-auto mb-2"></div>
+                <p class="text-sm text-gray-600">Loading blocked users...</p>
+            </div>
+        `;
+
+        fetch('/get_blocked_users')
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+            })
+            .then(users => {
+                blockedUsersState.list = Array.isArray(users) ? users : [];
+                renderBlockedUsersList(blockedUsersState.list);
+            })
+            .catch(error => {
+                list.innerHTML = `
+                    <div class="text-center py-4">
+                        <div class="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-exclamation-triangle text-amber-500 text-sm"></i>
                         </div>
-                    `;
-                });
-        }
-
-        // Attach Unblock Listeners
-        function attachUnblockListeners() {
-            document.querySelectorAll('.unblock-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const userId = this.dataset.userId;
-                    const userName = this.dataset.userName;
-
-                    if (confirm(`Are you sure you want to unblock ${userName}?`)) {
-                        fetch(`/unblock_user/${userId}`, {
-                            method: 'POST',
-                            headers: {
-                                'X-CSRFToken': '{{ csrf_token }}',
-                                'Content-Type': 'application/json'
-                            }
-                        })
-                        .then(response => {
-                            if (!response.ok) {
-                                throw new Error('Network response was not ok');
-                            }
-                            return response.json();
-                        })
-                        .then(data => {
-                            if (data.success) {
-                                showNotification(`${userName} has been unblocked successfully!`, 'success');
-                                blockedUsersState.list = blockedUsersState.list.filter(u => `${u.id}` !== `${userId}`);
-                                filterBlockedUsersList();
-                            } else {
-                                showNotification('Error unblocking user: ' + data.error, 'error');
-                            }
-                        })
-                        .catch(error => {
-                            showNotification('Error unblocking user. Please try again.', 'error');
-                        });
-                    }
-                });
-            });
-        }
-
-        // Form Submission Handling
-        document.addEventListener('DOMContentLoaded', function() {
-            // Profile Form
-            document.getElementById('profileForm')?.addEventListener('submit', function(e) {
-                e.preventDefault();
-                const formData = new FormData(this);
-                const submitBtn = this.querySelector('button[type="submit"]');
-                const originalText = submitBtn.innerHTML;
-
-                submitBtn.innerHTML = `
-                    <div class="loader-spinner mx-auto" style="width: 16px; height: 16px;"></div>
-                    <span class="ml-1.5">Saving...</span>
+                        <h4 class="text-sm font-bold text-gray-900 mb-1">Failed to Load</h4>
+                        <p class="text-gray-600 text-xs">Unable to load blocked users. Please try again.</p>
+                    </div>
                 `;
-                submitBtn.disabled = true;
-
-                fetch(this.action, {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => {
-                    if (response.ok) {
-                        showNotification('Profile updated successfully!', 'success');
-                        setTimeout(() => {
-                            location.reload();
-                        }, 1500);
-                    } else {
-                        showNotification('Error updating profile. Please try again.', 'error');
-                        submitBtn.innerHTML = originalText;
-                        submitBtn.disabled = false;
-                    }
-                })
-                .catch(error => {
-                    showNotification('Error updating profile. Please try again.', 'error');
-                    submitBtn.innerHTML = originalText;
-                    submitBtn.disabled = false;
-                });
             });
+    }
 
-            // Create Post Form
-            document.getElementById('createPostForm')?.addEventListener('submit', function(e) {
-                e.preventDefault();
-                const formData = new FormData(this);
-                const submitBtn = this.querySelector('button[type="submit"]');
-                const originalText = submitBtn.innerHTML;
+    function attachUnblockListeners() {
+        document.querySelectorAll('.unblock-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const userId = this.dataset.userId;
+                const userName = this.dataset.userName;
 
-                submitBtn.innerHTML = `
-                    <div class="loader-spinner mx-auto" style="width: 16px; height: 16px;"></div>
-                    <span class="ml-1.5">Posting...</span>
-                `;
-                submitBtn.disabled = true;
-
-                fetch(this.action, {
-                    method: 'POST',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-File-Upload': 'true'
-                    },
-                    body: formData
-                })
-                .then(response => {
-                    if (response.redirected) {
-                        return { success: true };
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.success) {
-                        showNotification('Post created successfully!', 'success');
-                        const createPostForm = document.getElementById('createPostForm');
-                        if (createPostForm) createPostForm.reset();
-                        const mediaInput = document.getElementById('mediaInput');
-                        if (mediaInput) mediaInput.value = '';
-                        const mediaPreview = document.getElementById('mediaPreview');
-                        if (mediaPreview) {
-                            mediaPreview.innerHTML = '';
-                            mediaPreview.classList.add('hidden');
+                if (confirm(`Are you sure you want to unblock ${userName}?`)) {
+                    fetch(`/unblock_user/${userId}`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}',
+                            'Content-Type': 'application/json'
                         }
-                        const selectedGifUrl = document.getElementById('selectedGifUrl');
-                        if (selectedGifUrl) selectedGifUrl.value = '';
-
-                        setTimeout(() => {
-                            location.reload();
-                        }, 1500);
-                    } else {
-                        showNotification(data.error || 'Error creating post. Please try again.', 'error');
-                        submitBtn.innerHTML = originalText;
-                        submitBtn.disabled = false;
-                    }
-                })
-                .catch(error => {
-                    showNotification('Error creating post. Please try again.', 'error');
-                    submitBtn.innerHTML = originalText;
-                    submitBtn.disabled = false;
-                });
-            });
-
-            // Close modals on outside click
-            document.addEventListener('click', function(e) {
-                if (e.target.classList.contains('fixed')) {
-                    const modals = document.querySelectorAll('.fixed.hidden');
-                    modals.forEach(modal => {
-                        if (!modal.classList.contains('hidden')) {
-                            const modalId = modal.id;
-                            closeModal(modalId);
+                    })
+                    .then(response => {
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            showNotification(`${userName} has been unblocked successfully!`, 'success');
+                            blockedUsersState.list = blockedUsersState.list.filter(u => `${u.id}` !== `${userId}`);
+                            filterBlockedUsersList();
+                        } else {
+                            showNotification('Error unblocking user: ' + data.error, 'error');
                         }
+                    })
+                    .catch(error => {
+                        showNotification('Error unblocking user. Please try again.', 'error');
                     });
                 }
             });
         });
+    }
 
-        // Notification Function
-        function showNotification(message, type = 'info') {
-            const notification = document.createElement('div');
-            notification.className = `fixed top-3 right-3 z-50 px-4 py-2 rounded-lg font-bold shadow-strong transform transition-all duration-300 text-sm ${
-                type === 'success' ? 'bg-green-500 text-white' :
-                type === 'error' ? 'bg-red-500 text-white' :
-                'bg-blue-500 text-white'
-            }`;
-            notification.textContent = message;
-            document.body.appendChild(notification);
+    // ===== Form Submission =====
+    document.addEventListener('DOMContentLoaded', function() {
+        // Profile Form
+        document.getElementById('profileForm')?.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
 
-            setTimeout(() => {
-                notification.style.transform = 'translateX(100%)';
-                setTimeout(() => notification.remove(), 200);
-            }, 3000);
-        }
+            submitBtn.innerHTML = `
+                <div class="loader-spinner mx-auto" style="width: 16px; height: 16px;"></div>
+                <span class="ml-1.5">Saving...</span>
+            `;
+            submitBtn.disabled = true;
 
-        // Initialize animations
-        document.addEventListener('DOMContentLoaded', function() {
-            // Add hover effects to all cards
-            const cards = document.querySelectorAll('.bg-white');
-            cards.forEach(card => {
-                card.addEventListener('mouseenter', function() {
-                    this.classList.add('hover-lift');
-                });
-                card.addEventListener('mouseleave', function() {
-                    this.classList.remove('hover-lift');
-                });
+            fetch(this.action, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    showNotification('Profile updated successfully!', 'success');
+                    setTimeout(() => { location.reload(); }, 1500);
+                } else {
+                    showNotification('Error updating profile. Please try again.', 'error');
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                }
+            })
+            .catch(error => {
+                showNotification('Error updating profile. Please try again.', 'error');
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
             });
         });
-    </script>
 
+        // Create Post Form
+        document.getElementById('createPostForm')?.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+
+            submitBtn.innerHTML = `
+                <div class="loader-spinner mx-auto" style="width: 16px; height: 16px;"></div>
+                <span class="ml-1.5">Posting...</span>
+            `;
+            submitBtn.disabled = true;
+
+            fetch(this.action, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-File-Upload': 'true'
+                },
+                body: formData
+            })
+            .then(response => {
+                if (response.redirected) return { success: true };
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    showNotification('Post created successfully!', 'success');
+                    const createPostForm = document.getElementById('createPostForm');
+                    if (createPostForm) createPostForm.reset();
+                    const mediaInput = document.getElementById('mediaInput');
+                    if (mediaInput) mediaInput.value = '';
+                    const mediaPreview = document.getElementById('mediaPreview');
+                    if (mediaPreview) {
+                        mediaPreview.innerHTML = '';
+                        mediaPreview.classList.add('hidden');
+                    }
+                    const selectedGifUrl = document.getElementById('selectedGifUrl');
+                    if (selectedGifUrl) selectedGifUrl.value = '';
+
+                    setTimeout(() => { location.reload(); }, 1500);
+                } else {
+                    showNotification(data.error || 'Error creating post. Please try again.', 'error');
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                }
+            })
+            .catch(error => {
+                showNotification('Error creating post. Please try again.', 'error');
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            });
+        });
+
+        // Close modals on outside click
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('fixed')) {
+                const modals = document.querySelectorAll('.fixed.hidden');
+                modals.forEach(modal => {
+                    if (!modal.classList.contains('hidden')) {
+                        const modalId = modal.id;
+                        closeModal(modalId);
+                    }
+                });
+            }
+        });
+    });
+
+    // ===== Notification Toast =====
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `fixed top-3 right-3 z-50 px-4 py-2 rounded-lg font-bold shadow-strong transform transition-all duration-300 text-sm ${
+            type === 'success' ? 'bg-green-500 text-white' :
+            type === 'error' ? 'bg-red-500 text-white' :
+            'bg-blue-500 text-white'
+        }`;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            notification.style.transform = 'translateX(100%)';
+            setTimeout(() => notification.remove(), 200);
+        }, 3000);
+    }
+</script>
 
 <script>
 // Profile Page: Dynamic Country → State → City Dropdowns
@@ -1196,14 +1298,5 @@ document.addEventListener('DOMContentLoaded', function () {
                 alert('Confirmation text did not match. Account not deleted.');
             }
         }
-    </script>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('.bg-white').forEach(card => {
-                card.addEventListener('mouseenter', () => card.classList.add('hover-lift'));
-                card.addEventListener('mouseleave', () => card.classList.remove('hover-lift'));
-            });
-        });
     </script>
 {% endblock %}
