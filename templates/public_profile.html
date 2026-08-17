@@ -86,6 +86,114 @@
     
     </style>
 
+
+<!-- Profile Actions Script -->
+<script>
+    // Handle message button click by redirecting to dashboard
+    function handleMessageButtonClick(userId) {
+        window.location.href = `/dashboard?chat=${userId}`;
+    }
+
+    // Friend System Actions
+    const FriendSystem = {
+        async add(userId, button) {
+            const originalHTML = button.innerHTML;
+            button.innerHTML = '...';
+            button.disabled = true;
+            try {
+                const response = await fetch(`/add_friend/${userId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': typeof csrfToken !== 'undefined' ? csrfToken : '' }
+                });
+                const data = await response.json();
+                if (data.success) {
+                    location.reload();
+                } else {
+                    button.innerHTML = originalHTML;
+                    button.disabled = false;
+                    alert(data.error || 'Failed to send request');
+                }
+            } catch (err) {
+                button.innerHTML = originalHTML;
+                button.disabled = false;
+                alert('Network error');
+            }
+        },
+
+        async cancelRequest(userId, button) {
+            const originalHTML = button.innerHTML;
+            button.innerHTML = '...';
+            button.disabled = true;
+            try {
+                const response = await fetch(`/cancel_friend_request/${userId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': typeof csrfToken !== 'undefined' ? csrfToken : '' }
+                });
+                const data = await response.json();
+                if (data.success) {
+                    location.reload();
+                } else {
+                    button.innerHTML = originalHTML;
+                    button.disabled = false;
+                    alert(data.error || 'Failed to cancel request');
+                }
+            } catch (err) {
+                button.innerHTML = originalHTML;
+                button.disabled = false;
+                alert('Network error');
+            }
+        },
+
+        async acceptFriendRequest(userId, button) {
+            const originalHTML = button.innerHTML;
+            button.innerHTML = '...';
+            button.disabled = true;
+            try {
+                const response = await fetch(`/accept_friend_request/${userId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': typeof csrfToken !== 'undefined' ? csrfToken : '' }
+                });
+                const data = await response.json();
+                if (data.success) {
+                    location.reload();
+                } else {
+                    button.innerHTML = originalHTML;
+                    button.disabled = false;
+                    alert(data.error || 'Failed to accept request');
+                }
+            } catch (err) {
+                button.innerHTML = originalHTML;
+                button.disabled = false;
+                alert('Network error');
+            }
+        },
+
+        async declineFriendRequest(userId, button) {
+            const originalHTML = button.innerHTML;
+            button.innerHTML = '...';
+            button.disabled = true;
+            try {
+                const response = await fetch(`/decline_friend_request/${userId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': typeof csrfToken !== 'undefined' ? csrfToken : '' }
+                });
+                const data = await response.json();
+                if (data.success) {
+                    location.reload();
+                } else {
+                    button.innerHTML = originalHTML;
+                    button.disabled = false;
+                    alert(data.error || 'Failed to decline request');
+                }
+            } catch (err) {
+                button.innerHTML = originalHTML;
+                button.disabled = false;
+                alert('Network error');
+            }
+        }
+    };
+</script>
+
 {% endblock %}
 
 {% block content %}
@@ -887,4 +995,112 @@
 </div>
 
 <!-- ======================= MODALS ======================= -->
+
+<!-- Profile Actions Script -->
+<script>
+    // Handle message button click by redirecting to dashboard
+    function handleMessageButtonClick(userId) {
+        window.location.href = `/dashboard?chat=${userId}`;
+    }
+
+    // Friend System Actions
+    const FriendSystem = {
+        async add(userId, button) {
+            const originalHTML = button.innerHTML;
+            button.innerHTML = '...';
+            button.disabled = true;
+            try {
+                const response = await fetch(`/add_friend/${userId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': typeof csrfToken !== 'undefined' ? csrfToken : '' }
+                });
+                const data = await response.json();
+                if (data.success) {
+                    location.reload();
+                } else {
+                    button.innerHTML = originalHTML;
+                    button.disabled = false;
+                    alert(data.error || 'Failed to send request');
+                }
+            } catch (err) {
+                button.innerHTML = originalHTML;
+                button.disabled = false;
+                alert('Network error');
+            }
+        },
+
+        async cancelRequest(userId, button) {
+            const originalHTML = button.innerHTML;
+            button.innerHTML = '...';
+            button.disabled = true;
+            try {
+                const response = await fetch(`/cancel_friend_request/${userId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': typeof csrfToken !== 'undefined' ? csrfToken : '' }
+                });
+                const data = await response.json();
+                if (data.success) {
+                    location.reload();
+                } else {
+                    button.innerHTML = originalHTML;
+                    button.disabled = false;
+                    alert(data.error || 'Failed to cancel request');
+                }
+            } catch (err) {
+                button.innerHTML = originalHTML;
+                button.disabled = false;
+                alert('Network error');
+            }
+        },
+
+        async acceptFriendRequest(userId, button) {
+            const originalHTML = button.innerHTML;
+            button.innerHTML = '...';
+            button.disabled = true;
+            try {
+                const response = await fetch(`/accept_friend_request/${userId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': typeof csrfToken !== 'undefined' ? csrfToken : '' }
+                });
+                const data = await response.json();
+                if (data.success) {
+                    location.reload();
+                } else {
+                    button.innerHTML = originalHTML;
+                    button.disabled = false;
+                    alert(data.error || 'Failed to accept request');
+                }
+            } catch (err) {
+                button.innerHTML = originalHTML;
+                button.disabled = false;
+                alert('Network error');
+            }
+        },
+
+        async declineFriendRequest(userId, button) {
+            const originalHTML = button.innerHTML;
+            button.innerHTML = '...';
+            button.disabled = true;
+            try {
+                const response = await fetch(`/decline_friend_request/${userId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': typeof csrfToken !== 'undefined' ? csrfToken : '' }
+                });
+                const data = await response.json();
+                if (data.success) {
+                    location.reload();
+                } else {
+                    button.innerHTML = originalHTML;
+                    button.disabled = false;
+                    alert(data.error || 'Failed to decline request');
+                }
+            } catch (err) {
+                button.innerHTML = originalHTML;
+                button.disabled = false;
+                alert('Network error');
+            }
+        }
+    };
+</script>
+
 {% endblock %}
