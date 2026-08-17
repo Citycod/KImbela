@@ -108,6 +108,14 @@
     
     </style>
 
+
+<script>
+    // Ensure the messenger button redirects to the dashboard to open the chat
+    window.openMessenger = function() {
+        window.location.href = '/dashboard';
+    };
+</script>
+
 {% endblock %}
 
 {% block content %}
@@ -1793,5 +1801,13 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     </script>
 
+
+
+<script>
+    // Ensure the messenger button redirects to the dashboard to open the chat
+    window.openMessenger = function() {
+        window.location.href = '/dashboard';
+    };
+</script>
 
 {% endblock %}
