@@ -272,12 +272,12 @@
                                         class="px-6 py-3 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 shadow-lg flex items-center gap-2">
                                     <i class="fas fa-comment-dots"></i> Message
                                 </button>
-                            {% elif friend_status == 'request_sent' %}
+                            {% elif friend_status == 'sent' %}
                                 <button onclick="FriendSystem.cancelRequest({{ profile_user.id }}, this)"
                                         class="px-6 py-3 bg-gray-500 text-white rounded-xl font-medium hover:bg-gray-600 shadow-lg">
                                     Cancel Request
                                 </button>
-                            {% elif friend_status == 'request_received' %}
+                            {% elif friend_status == 'received' %}
                                 <button onclick="FriendSystem.acceptFriendRequest({{ profile_user.id }}, this)"
                                         class="px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 shadow-lg flex items-center gap-2">
                                     <i class="fas fa-check"></i> Accept
@@ -535,12 +535,12 @@
                                         class="px-6 py-3 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 shadow-lg flex items-center gap-2">
                                     <i class="fas fa-comment-dots"></i> Message
                                 </button>
-                            {% elif friend_status == 'request_sent' %}
+                            {% elif friend_status == 'sent' %}
                                 <button onclick="FriendSystem.cancelRequest({{ profile_user.id }}, this)"
                                         class="px-6 py-3 bg-gray-500 text-white rounded-xl font-medium hover:bg-gray-600 shadow-lg">
                                     Cancel Request
                                 </button>
-                            {% elif friend_status == 'request_received' %}
+                            {% elif friend_status == 'received' %}
                                 <button onclick="FriendSystem.acceptFriendRequest({{ profile_user.id }}, this)"
                                         class="px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 shadow-lg flex items-center gap-2">
                                     <i class="fas fa-check"></i> Accept
@@ -804,12 +804,12 @@
                 <button class="flex-1 py-2.5 bg-gray-200 text-gray-800 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 hover:bg-gray-300 transition">
                     <i class="fas fa-user-check text-xs"></i> Friends
                 </button>
-            {% elif friend_status == 'request_sent' %}
+            {% elif friend_status == 'sent' %}
                 <button onclick="FriendSystem.cancelRequest({{ profile_user.id }}, this)"
                         class="flex-1 py-2.5 bg-gray-500 text-white rounded-lg font-semibold text-sm flex items-center justify-center gap-2 shadow-medium hover:bg-gray-600 transition">
                     <i class="fas fa-clock text-xs"></i> Cancel Request
                 </button>
-            {% elif friend_status == 'request_received' %}
+            {% elif friend_status == 'received' %}
                 <button onclick="FriendSystem.acceptFriendRequest({{ profile_user.id }}, this)"
                         class="flex-1 py-2.5 gradient-primary text-white rounded-lg font-semibold text-sm flex items-center justify-center gap-2 shadow-medium hover-lift transition">
                     <i class="fas fa-check text-xs"></i> Accept
