@@ -1,7 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
+{% extends 'base.html' %}
+
+{% block head %}
+<meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Discover Groups - Kimbela</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -162,9 +162,10 @@
 
         
     </style>
-</head>
-<body class="font-poppins bg-gradient-to-br from-blue-50 to-purple-50 min-h-screen">
-    <!-- Navigation -->
+{% endblock %}
+
+{% block content %}
+<!-- Navigation -->
     <nav class="bg-white shadow-lg sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
@@ -392,5 +393,4 @@
         // Load groups when page loads
         document.addEventListener('DOMContentLoaded', loadGroups);
     </script>
-</body>
-</html>
+{% endblock %}

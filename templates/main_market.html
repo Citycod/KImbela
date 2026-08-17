@@ -1,7 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
+{% extends 'base.html' %}
+
+{% block head %}
+<meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kimbela Marketplace | Listings & Digital Products</title>
     
@@ -270,9 +270,10 @@
             100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
         }
     </style>
-</head>
-<body class="text-gray-800">
-    <!-- Marketplace Header -->
+{% endblock %}
+
+{% block content %}
+<!-- Marketplace Header -->
     <nav class="sticky top-0 z-40 glass-effect shadow-soft" style="height: 6rem;">
         <div class="container mx-auto px-3 py-2">
             <div class="flex items-center justify-between">
@@ -1926,5 +1927,4 @@
             }
         }
     </script>
-</body>
-</html>
+{% endblock %}

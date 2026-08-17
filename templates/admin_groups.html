@@ -1,7 +1,7 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
+{% extends 'base.html' %}
+
+{% block head %}
+<meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Groups - Kimbela Admin</title>
     <link
@@ -16,9 +16,10 @@
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
-  </head>
-  <body class="admin-page bg-slate-50 font-['Poppins'] text-slate-900">
-    <script>
+{% endblock %}
+
+{% block content %}
+<script>
       window.csrfToken = "{{ csrf_token }}";
     </script>
     <style>
@@ -811,5 +812,4 @@
         });
       }
     </script>
-  </body>
-</html>
+{% endblock %}

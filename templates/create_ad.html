@@ -1,7 +1,7 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
+{% extends 'base.html' %}
+
+{% block head %}
+<meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Create Sponsored Ad - Kimbela</title>
     <link
@@ -206,9 +206,10 @@
         color: white;
       }
     </style>
-  </head>
-  <body class="font-poppins bg-gray-50 min-h-screen">
-    <!-- Navigation -->
+{% endblock %}
+
+{% block content %}
+<!-- Navigation -->
     <nav class="bg-white shadow-sm border-b">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
@@ -1000,5 +1001,4 @@
         });
       });
     </script>
-  </body>
-</html>
+{% endblock %}

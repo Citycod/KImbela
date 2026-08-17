@@ -1,7 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
+{% extends 'base.html' %}
+
+{% block head %}
+<meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sponsored Ad Packages – Kimbela</title>
     <link href="{{ url_for('static', filename='assets/img/favy.png') }}" rel="icon" />
@@ -449,9 +449,10 @@
         }
       }
     </style>
-  </head>
-  <body class="font-inter bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen">
-    <!-- Enhanced Loader -->
+{% endblock %}
+
+{% block content %}
+<!-- Enhanced Loader -->
     <div class="simple-loader fixed inset-0 bg-white flex flex-col justify-center items-center z-50" id="loader">
       <div class="text-center animate-fade-in">
         <div class="loader-spinner mb-4"></div>
@@ -1628,5 +1629,4 @@
         handlePaystackCallback();
       });
     </script>
-  </body>
-</html>
+{% endblock %}

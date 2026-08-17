@@ -1,7 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
+{% extends 'base.html' %}
+
+{% block head %}
+<meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{{ page_title }} - Kimbela</title>
   <link href="{{ url_for('static', filename='assets/img/favy.png') }}" rel="icon" />
@@ -18,9 +18,10 @@
   <link href="{{ url_for('static', filename='assets/vendor/swiper/swiper-bundle.min.css') }}" rel="stylesheet" />
   <link href="{{ url_for('static', filename='assets/vendor/glightbox/css/glightbox.min.css') }}" rel="stylesheet" />
   <link href="{{ url_for('static', filename='assets/css/main.css') }}" rel="stylesheet" />
-</head>
-<body class="bg-white text-slate-800">
-  <div class="relative overflow-hidden">
+{% endblock %}
+
+{% block content %}
+<div class="relative overflow-hidden">
     <div class="relative">
       <header id="header" class="header d-flex align-items-center sticky-top" style="background-color: white;">
         <div class="header-container container-fluid container-xl position-relative d-flex align-items-center justify-content-end" style="background-color: white;">
@@ -62,3 +63,4 @@
 
           <div class="mt-10 grid gap-8 lg:grid-cols-[1fr_300px]">
             <div class="space-y-6">
+{% endblock %}

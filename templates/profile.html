@@ -1,7 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
+{% extends 'base.html' %}
+
+{% block head %}
+<meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ user.first_name }} {{ user.last_name }} - Kimbela</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -88,9 +88,10 @@
             background: #a8a8a8;
         }
     </style>
-</head>
-<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
-    <!-- Navigation -->
+{% endblock %}
+
+{% block content %}
+<!-- Navigation -->
     <nav class="bg-white/90 backdrop-blur-md shadow-soft sticky top-0 z-50 border-b border-gray-200" style="height: 5rem;">
         <div class="w-full px-4 lg:px-8" style="margin-top: 0.5rem;">
             <div class="flex justify-between items-center h-12">
@@ -1205,5 +1206,4 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
     </script>
-</body>
-</html>
+{% endblock %}

@@ -107,7 +107,7 @@ class User(db.Model, UserMixin):
 
     # FIXED: Payment transactions relationship
     campaigns = db.relationship("AdCampaign", back_populates="user", lazy="dynamic")
-
+    push_subscriptions = db.relationship("PushSubscription", back_populates="user", cascade="all, delete-orphan")
     profile_pic = db.Column(
         db.String(500),
         default="https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg",
@@ -2375,3 +2375,14 @@ class Donation(db.Model):
 
     def __repr__(self):
         return f"<Donation {self.id} - {self.name} - {self.amount} {self.currency}>"
+
+class PushSubscription(db.Model):
+    __tablename__ = 'push_subscriptions'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    endpoint = db.Column(db.String(500), nullable=False)
+    p256dh = db.Column(db.String(255), nullable=False)
+    auth = db.Column(db.String(255), nullable=False)
+    created_at = db.Column(db.DateTime, default=utcnow)
+    
+    user = db.relationship('User', back_populates='push_subscriptions')

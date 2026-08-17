@@ -1,7 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
+{% extends 'base.html' %}
+
+{% block head %}
+<meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Matchmaking Requests - Kimbela</title>
     <meta name="csrf-token" content="{{ csrf_token }}">
@@ -567,9 +567,10 @@
             backdrop-filter: blur(4px);
         }
     </style>
-</head>
-<body class="font-poppins bg-gradient-to-br from-ivory to-champagne min-h-screen">
-    <!-- Loader -->
+{% endblock %}
+
+{% block content %}
+<!-- Loader -->
     <div class="simple-loader fixed inset-0 bg-white flex flex-col justify-center items-center z-50" id="loader">
         <div class="text-center animate-fade-in">
             <div class="loader-spinner mb-3"></div>
@@ -2297,5 +2298,4 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 </script>
-</body>
-</html>
+{% endblock %}

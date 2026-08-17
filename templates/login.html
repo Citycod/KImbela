@@ -1,7 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8" />
+{% extends 'base.html' %}
+
+{% block head %}
+<meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>Login - Kimbela | For Connections That Make Sense</title>
     <meta name="description" content="Login to your Kimbela account to connect with like-minded mature singles and build meaningful friendships." />
@@ -649,10 +649,10 @@
             }
         }
     </style>
-</head>
+{% endblock %}
 
-<body>
-    <div class="login-container">
+{% block content %}
+<div class="login-container">
         <!-- Left Side - Hidden on mobile -->
         <div class="login-animation">
             <div class="floating-shapes">
@@ -852,5 +852,4 @@
             }
         });
     </script>
-</body>
-</html>
+{% endblock %}

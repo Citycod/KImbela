@@ -1,7 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
+{% extends 'base.html' %}
+
+{% block head %}
+<meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Payment Failed - Kimbela</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -143,10 +143,10 @@
             50% { opacity: 0.7; }
         }
     </style>
-</head>
-<body class="bg-gradient-to-br from-red-50 to-orange-50 min-h-screen flex items-center justify-center p-4">
-    
-    <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 text-center failed-animation">
+{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 text-center failed-animation">
         <!-- Failed Icon -->
         <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <i class="bi bi-x-circle-fill text-red-500 text-4xl"></i>
@@ -337,5 +337,4 @@
             }
         });
     </script>
-</body>
-</html>
+{% endblock %}

@@ -1,7 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
+{% extends 'base.html' %}
+
+{% block head %}
+<meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Become a Seller - Kimbela Marketplace</title>
     <meta name="csrf-token" content="{{ csrf_token }}">
@@ -69,9 +69,10 @@
             max-height: 500px;
         }
     </style>
-</head>
-<body class="bg-gray-50 min-h-screen">
-    <!-- Navigation -->
+{% endblock %}
+
+{% block content %}
+<!-- Navigation -->
     <nav class="sticky top-0 bg-white shadow-sm z-50 border-b border-gray-200" style="height: 6rem;">
         <div class="container mx-auto px-3 py-2">
             <div class="flex items-center justify-between">
@@ -1111,5 +1112,4 @@
             selectPlan(3, 'Pro Package', 10, '{{ checkout_currency }}', 1000);
         };
     </script>
-</body>
-</html>
+{% endblock %}

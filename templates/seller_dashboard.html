@@ -1,7 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
+{% extends 'base.html' %}
+
+{% block head %}
+<meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Seller Dashboard - Kimbela Marketplace</title>
     
@@ -385,9 +385,10 @@
             }
         }
     </style>
-</head>
-<body>
-    <!-- Navigation -->
+{% endblock %}
+
+{% block content %}
+<!-- Navigation -->
     <nav class="sticky top-0 z-50 glass-effect shadow-soft" style="height: 6rem;">
         <div class="container mx-auto px-3 py-2">
             <div class="flex items-center justify-between" style="height: 40px;">
@@ -1818,5 +1819,4 @@ document.addEventListener('DOMContentLoaded', async function() {
     scheduleSubscriptionReminder();
 });
     </script>
-</body>
-</html>
+{% endblock %}

@@ -1,7 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
+{% extends 'base.html' %}
+
+{% block head %}
+<meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Listing - Kimbela Marketplace</title>
     <link href="{{ url_for('static', filename='assets/img/favy.png') }}" rel="icon" />
@@ -419,9 +419,10 @@
             }
         }
     </style>
-</head>
-<body>
-    <!-- Navigation -->
+{% endblock %}
+
+{% block content %}
+<!-- Navigation -->
     <nav class="sticky top-0 z-50 glass-effect shadow-soft">
         <div class="container mx-auto px-3 py-2">
             <div class="flex items-center justify-between">
@@ -1547,5 +1548,4 @@
             });
         });
     </script>
-</body>
-</html>
+{% endblock %}

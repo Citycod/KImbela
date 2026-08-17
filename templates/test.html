@@ -1,7 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
+{% extends 'base.html' %}
+
+{% block head %}
+<meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dashboard – Kimbela</title>
 
@@ -668,9 +668,10 @@
   visibility: visible;
 }
 </style>
-  </head>
-  <body class="font-poppins bg-fb-gray text-fb-text">
-  <div class="simple-loader" id="loader">
+{% endblock %}
+
+{% block content %}
+<div class="simple-loader" id="loader">
     <div class="loader-logo">
       <img
         src="{{ url_for('static', filename='assets/img/kim.png') }}"
@@ -2330,5 +2331,4 @@
     window.currentUserId = {{ current_user.id }};
     window.defaultAvatar = '{{ url_for('static', filename='assets/img/default-avatar.png') }}';
   </script>
-</body>
-</html>
+{% endblock %}

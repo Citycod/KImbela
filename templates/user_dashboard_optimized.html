@@ -1,7 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
+{% extends 'base.html' %}
+
+{% block head %}
+<meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard – Kimbela</title>
     
@@ -12,9 +12,10 @@
     
     <!-- Single external CSS file -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
-</head>
-<body class="font-poppins bg-gray-100">
-    <!-- Simple loader -->
+{% endblock %}
+
+{% block content %}
+<!-- Simple loader -->
     <div id="loader" class="simple-loader">
         <div class="loader-spinner"></div>
         <div class="loader-text">Loading your dashboard...</div>
@@ -265,5 +266,4 @@
             }
         }
     </script>
-</body>
-</html>
+{% endblock %}

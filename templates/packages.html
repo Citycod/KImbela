@@ -1,7 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
+{% extends 'base.html' %}
+
+{% block head %}
+<meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Create Ad Campaign - Kimbela</title>
     <link href="{{ url_for('static', filename='assets/img/favy.png') }}" rel="icon" />
@@ -384,9 +384,10 @@
         }
       }
     </style>
-  </head>
-  <body class="font-inter bg-gray-50 min-h-screen">
-    <!-- Header -->
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
     <header class="bg-white shadow-sm sticky top-0 z-40 border-b border-gray-200/50">
       <div class="container mx-auto px-3 sm:px-4 py-2">
         <div class="flex justify-between items-center">
@@ -1624,5 +1625,4 @@
     <!-- Include noUiSlider for age range -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.0/nouislider.min.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.0/nouislider.min.js"></script>
-  </body>
-</html>
+{% endblock %}

@@ -1,7 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
+{% extends 'base.html' %}
+
+{% block head %}
+<meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ service.title }} - Kimbela Marketplace</title>
     
@@ -229,9 +229,10 @@
             padding: 20px;
         }
     </style>
-</head>
-<body>
-    <!-- Navigation -->
+{% endblock %}
+
+{% block content %}
+<!-- Navigation -->
     <nav class="sticky top-0 z-50 glass-effect shadow-sm">
         <div class="container mx-auto px-3 py-1">
             <div class="flex items-center justify-between" style="width: 140px; height: 40px;">
@@ -1525,5 +1526,4 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
     </script>
-</body>
-</html>
+{% endblock %}

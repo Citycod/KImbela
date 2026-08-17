@@ -1,8 +1,7 @@
-<!doctype html>
-<html lang="en">
+{% extends 'base.html' %}
 
-<head>
-  <meta charset="UTF-8" />
+{% block head %}
+<meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard – Kimbela</title>
 
@@ -45,18 +44,10 @@
   <script src="{{ url_for('static', filename='assets/js/messenger.js') }}"></script>
 
   {% include 'partials/user_dashboard_head_scripts.html' %}
+{% endblock %}
 
-
-
-
-
-
-
-</head>
-
-
-<body class="font-poppins bg-fb-gray text-fb-text has-top-banner">
-  <div class="simple-loader" id="loader">
+{% block content %}
+<div class="simple-loader" id="loader">
     <div class="loader-logo">
       <img src="{{ url_for('static', filename='assets/img/kim.png') }}" alt="Kimbela" class="h-10" style="
             max-width: 60vw;
@@ -5481,7 +5472,4 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
     });
   </script>
   {% endif %}
-
-</body>
-
-</html>
+{% endblock %}

@@ -1,7 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
+{% extends 'base.html' %}
+
+{% block head %}
+<meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>Join Kimbela - For Connections That Make Sense</title>
     <meta name="description" content="Join Kimbela, the social platform for mature singles seeking authentic, meaningful friendships based on respect, integrity, and shared values." />
@@ -740,10 +740,10 @@
             }
         }
     </style>
-</head>
+{% endblock %}
 
-<body>
-    <!-- Registration Container -->
+{% block content %}
+<!-- Registration Container -->
     <div class="register-container">
         <!-- Form Container -->
         <div class="register-form-container">
@@ -1660,5 +1660,4 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 </script>
-</body>
-</html>
+{% endblock %}

@@ -1,3 +1,5 @@
+import json
+from flask import url_for
 from time_utils import utcnow
 # socketio_events.py - IMPROVED with better error handling
 from flask_socketio import emit, join_room, leave_room
@@ -221,6 +223,17 @@ def handle_send_message(data):
         socketio.emit("new_message", message_data, room=f"user_{receiver_id}")
         socketio.emit("new_message", message_data, room=f"user_{current_user.id}")
 
+        if not friend.is_online:
+            try:
+                from utils.push_service import send_push_notification
+                push_payload = {
+                    "title": f"New message from {current_user.full_name}",
+                    "body": content[:100] + ("..." if len(content) > 100 else ""),
+                    "url": f"/messages"
+                }
+                send_push_notification(receiver_id, push_payload)
+            except Exception as e:
+                print(f"[ERROR] Push notification failed: {e}")
         # Also emit to chat room
         # room = f'chat_{min(current_user.id, receiver_id)}_{max(current_user.id, receiver_id)}'
         # socketio.emit('new_message', message_data, room=room)

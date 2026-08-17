@@ -1,7 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
+{% extends 'base.html' %}
+
+{% block head %}
+<meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>Contact - More Peace Technology LLC</title>
     <link href="{{ url_for('static', filename='assets/img/favy.png') }}" rel="icon" />
@@ -186,10 +186,10 @@
         color: #155724;
       }
     </style>
-  </head>
+{% endblock %}
 
-  <body class="contact-page">
-    <header id="header" class="header d-flex align-items-center sticky-top">
+{% block content %}
+<header id="header" class="header d-flex align-items-center sticky-top">
       <div
         class="header-container container-fluid container-xl position-relative d-flex align-items-center justify-content-end"
       >
@@ -556,5 +556,4 @@
         }
       });
     </script>
-  </body>
-</html>
+{% endblock %}

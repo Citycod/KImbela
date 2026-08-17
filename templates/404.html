@@ -1,7 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
+{% extends 'base.html' %}
+
+{% block head %}
+<meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>404 - College Bootstrap Template</title>
     <meta name="description" content="" />
@@ -37,11 +37,10 @@
 
     <!-- Main CSS File -->
     <link href="assets/css/main.css" rel="stylesheet" />
+{% endblock %}
 
-  </head>
-
-  <body class="page-404">
-    <header id="header" class="header d-flex align-items-center sticky-top">
+{% block content %}
+<header id="header" class="header d-flex align-items-center sticky-top">
       <div
         class="header-container container-fluid container-xl position-relative d-flex align-items-center justify-content-end"
       >
@@ -291,5 +290,4 @@
 
     <!-- Main JS File -->
     <script src="assets/js/main.js"></script>
-  </body>
-</html>
+{% endblock %}

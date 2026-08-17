@@ -117,3 +117,6 @@ Flask-Talisman
 gevent-websocket
 flask-caching
 redis
+
+pywebpush==1.14.0
+

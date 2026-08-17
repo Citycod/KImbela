@@ -1,8 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends 'base.html' %}
 
-<head>
-    <meta charset="utf-8" />
+{% block head %}
+<meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>Donate - Kimbela</title>
     <meta name="description" content="Support Kimbela. Make a donation." />
@@ -156,10 +155,10 @@
             padding-left: 2.5rem;
         }
     </style>
-</head>
+{% endblock %}
 
-<body>
-    <header id="header" class="header d-flex align-items-center sticky-top">
+{% block content %}
+<header id="header" class="header d-flex align-items-center sticky-top">
         <div class="header-container container-fluid container-xl position-relative d-flex align-items-center justify-content-end">
             <a href="{{ url_for('user.index') }}" class="logo d-flex align-items-center me-auto" style="background: none">
                 <img src="{{ url_for('static', filename='assets/img/kim.png') }}" alt="" style="width: 10rem; height: 5rem" />
@@ -297,5 +296,4 @@
     </script>
     <!-- Main JS File -->
     <script src="{{ url_for('static', filename='assets/js/main.js') }}"></script>
-</body>
-</html>
+{% endblock %}

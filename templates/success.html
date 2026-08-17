@@ -1,7 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
+{% extends 'base.html' %}
+
+{% block head %}
+<meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Payment Successful - Kimbela</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -148,9 +148,10 @@
             100% { transform: scale(1); opacity: 1; }
         }
     </style>
-</head>
-<body class="bg-gradient-to-br from-green-50 to-blue-50 min-h-screen flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 text-center success-animation">
+{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 text-center success-animation">
         <!-- Success Icon -->
         <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <i class="bi bi-check-circle-fill text-green-500 text-4xl"></i>
@@ -256,5 +257,4 @@
             }, 10000);
         });
     </script>
-</body>
-</html>
+{% endblock %}

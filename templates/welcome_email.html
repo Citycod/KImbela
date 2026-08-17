@@ -1,7 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
+{% extends 'base.html' %}
+
+{% block head %}
+<meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome to Kimbela</title>
     <style>
@@ -130,9 +130,10 @@
             .logo { max-height: 72px; max-width: 140px; }
         }
     </style>
-</head>
-<body>
-    <div class="wrap">
+{% endblock %}
+
+{% block content %}
+<div class="wrap">
         <div class="card">
             <div class="hero">
                 <img class="logo" src="{{ url_for('static', filename='assets/img/kim.png', _external=True) }}" alt="Kimbela">
@@ -173,5 +174,4 @@
             </div>
         </div>
     </div>
-</body>
-</html>
+{% endblock %}
