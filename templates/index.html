@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% block body_class %}index-page{% endblock %}
 
 {% block head %}
 <meta charset="utf-8" />
@@ -123,8 +124,12 @@
             border-color: #7d3c98 !important;
         }
 
-        .hero {
+        body, .hero, .header, .header-container {
             background-color: #ffffff !important;
+        }
+        
+        .mobile-nav-toggle {
+            color: #000000 !important;
         }
 
         .feature-card.active {
