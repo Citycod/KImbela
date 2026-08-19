@@ -3215,6 +3215,7 @@ def profile(user_id):
             joinedload(Post.likes),
         )
         .filter_by(author_id=current_user.id)
+        .filter(Post.group_id.is_(None))
         .order_by(Post.created_at.desc())
         .all()
     )
@@ -4086,6 +4087,7 @@ def view_profile(user_identifier):
             joinedload(Post.likes),
         )
         .filter_by(author_id=target_user.id)
+        .filter(Post.group_id.is_(None))
         .order_by(Post.created_at.desc())
         .limit(20)  # Adjust as needed
         .all()
