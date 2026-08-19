@@ -4185,33 +4185,63 @@ def get_upcoming_birthdays(user_id, days_ahead=7):
 def pwa_subscribe():
     from models import PushSubscription
     from extensions import db
-    import json
-    
+    from time_utils import utcnow
+
     data = request.get_json()
     if not data or 'endpoint' not in data:
         return jsonify({'error': 'Invalid subscription data'}), 400
-        
+
     endpoint = data['endpoint']
     keys = data.get('keys', {})
     p256dh = keys.get('p256dh')
     auth = keys.get('auth')
-    
+    ua = request.headers.get('User-Agent', '')
+
     # Check if subscription already exists for this endpoint
     existing = PushSubscription.query.filter_by(endpoint=endpoint).first()
     if existing:
-        # If it exists but belongs to a different user, update it
-        if existing.user_id != current_user.id:
-            existing.user_id = current_user.id
-            db.session.commit()
+        # Upsert: update user_id and last_seen_at
+        existing.user_id = current_user.id
+        existing.p256dh = p256dh
+        existing.auth = auth
+        existing.user_agent = ua
+        existing.last_seen_at = utcnow()
+        db.session.commit()
         return jsonify({'message': 'Subscription updated'})
-        
+
     new_sub = PushSubscription(
         user_id=current_user.id,
         endpoint=endpoint,
         p256dh=p256dh,
-        auth=auth
+        auth=auth,
+        user_agent=ua,
     )
     db.session.add(new_sub)
     db.session.commit()
-    
+
     return jsonify({'message': 'Subscription created'})
+
+
+@user.route('/api/pwa/unsubscribe', methods=['POST'])
+@login_required
+def pwa_unsubscribe():
+    from models import PushSubscription
+    from extensions import db
+
+    data = request.get_json()
+    if not data or 'endpoint' not in data:
+        return jsonify({'error': 'Endpoint is required'}), 400
+
+    endpoint = data['endpoint']
+    sub = PushSubscription.query.filter_by(
+        endpoint=endpoint,
+        user_id=current_user.id
+    ).first()
+
+    if sub:
+        db.session.delete(sub)
+        db.session.commit()
+        return jsonify({'message': 'Unsubscribed successfully'})
+
+    return jsonify({'message': 'Subscription not found'}), 404
+

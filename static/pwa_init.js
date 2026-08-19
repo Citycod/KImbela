@@ -16,53 +16,96 @@ function urlBase64ToUint8Array(base64String) {
   return outputArray;
 }
 
-if ('serviceWorker' in navigator && 'PushManager' in window) {
+// Helper to get CSRF token from meta tag or window global
+function getPushCsrfToken() {
+  var meta = document.querySelector('meta[name="csrf-token"]');
+  if (meta) return meta.getAttribute('content');
+  if (typeof window.csrfToken === 'string') return window.csrfToken;
+  return '';
+}
+
+// Register service worker on load (needed for caching), but do NOT auto-prompt for push
+if ('serviceWorker' in navigator) {
   window.addEventListener('load', function() {
     navigator.serviceWorker.register('/static/sw.js')
       .then(function(registration) {
         console.log('ServiceWorker registration successful with scope: ', registration.scope);
-        
-        // Request notification permission and subscribe
-        if (Notification.permission !== 'denied') {
-          Notification.requestPermission().then(function(permission) {
-            if (permission === 'granted') {
-              subscribeUser(registration);
-            }
-          });
-        }
+        // Store registration for later use by enablePushNotifications()
+        window._swRegistration = registration;
       }, function(err) {
         console.error('ServiceWorker registration failed: ', err);
       });
   });
 }
 
+/**
+ * Call this from a user-initiated action (button click) to request push permission
+ * and subscribe. Do NOT call on page load — browsers penalize auto-prompts.
+ *
+ * Usage: <button onclick="enablePushNotifications()">Enable Notifications</button>
+ *
+ * Returns a Promise that resolves to true (subscribed) or false (denied/unsupported).
+ */
+window.enablePushNotifications = function() {
+  // Check browser support
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    alert('Push notifications are not supported in this browser. For the best experience, use Chrome or add Kimbela to your home screen.');
+    return Promise.resolve(false);
+  }
+
+  // Wait for SW registration
+  var regPromise = window._swRegistration
+    ? Promise.resolve(window._swRegistration)
+    : navigator.serviceWorker.ready;
+
+  return regPromise.then(function(registration) {
+    return Notification.requestPermission().then(function(permission) {
+      if (permission !== 'granted') {
+        console.log('Push notification permission denied.');
+        return false;
+      }
+      return subscribeUser(registration);
+    });
+  }).catch(function(err) {
+    console.error('Error enabling push notifications:', err);
+    return false;
+  });
+};
+
 function subscribeUser(registration) {
   const applicationServerKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
-  registration.pushManager.subscribe({
+  return registration.pushManager.subscribe({
     userVisibleOnly: true,
     applicationServerKey: applicationServerKey
   })
   .then(function(subscription) {
     console.log('User is subscribed to Push:', subscription);
-    
-    // Send subscription to backend
-    fetch('/api/pwa/subscribe', {
+
+    // Send subscription to backend with CSRF token
+    return fetch('/api/pwa/subscribe', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getPushCsrfToken()
       },
       body: JSON.stringify(subscription)
     })
-    .then(response => {
+    .then(function(response) {
       if (!response.ok) {
-        console.error('Failed to save subscription on backend');
+        console.error('Failed to save subscription on backend (status ' + response.status + ')');
+        return false;
       }
+      console.log('Subscription saved on backend.');
+      return true;
     })
-    .catch(err => console.error('Error saving subscription:', err));
-    
+    .catch(function(err) {
+      console.error('Error saving subscription:', err);
+      return false;
+    });
   })
   .catch(function(err) {
     console.log('Failed to subscribe the user: ', err);
+    return false;
   });
 }
 

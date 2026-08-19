@@ -42,6 +42,8 @@ def send_push_notification(user_id, payload_dict):
                 vapid_private_key=vapid_private_key,
                 vapid_claims=vapid_claims
             )
+            sub.last_seen_at = db.func.now()
+            db.session.commit()
             success_count += 1
         except WebPushException as ex:
             print(f"WebPushException: {repr(ex)}")
