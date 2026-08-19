@@ -17,15 +17,20 @@ depends_on = None
 
 
 def upgrade():
-    # Add new columns
-    with op.batch_alter_table('push_subscriptions', schema=None) as batch_op:
-        batch_op.add_column(sa.Column('user_agent', sa.String(length=500), nullable=True))
-        batch_op.add_column(sa.Column('last_seen_at', sa.DateTime(), nullable=True))
-        batch_op.create_unique_constraint('uq_push_subscriptions_endpoint', ['endpoint'])
+    op.create_table('push_subscriptions',
+        sa.Column('id', sa.Integer(), nullable=False),
+        sa.Column('user_id', sa.Integer(), nullable=False),
+        sa.Column('endpoint', sa.String(length=500), nullable=False),
+        sa.Column('p256dh', sa.String(length=255), nullable=False),
+        sa.Column('auth', sa.String(length=255), nullable=False),
+        sa.Column('user_agent', sa.String(length=500), nullable=True),
+        sa.Column('created_at', sa.DateTime(), nullable=True),
+        sa.Column('last_seen_at', sa.DateTime(), nullable=True),
+        sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
+        sa.PrimaryKeyConstraint('id'),
+        sa.UniqueConstraint('endpoint', name='uq_push_subscriptions_endpoint')
+    )
 
 
 def downgrade():
-    with op.batch_alter_table('push_subscriptions', schema=None) as batch_op:
-        batch_op.drop_constraint('uq_push_subscriptions_endpoint', type_='unique')
-        batch_op.drop_column('last_seen_at')
-        batch_op.drop_column('user_agent')
+    op.drop_table('push_subscriptions')
