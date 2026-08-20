@@ -28,7 +28,7 @@
             <div class="dropdown-menu absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-strong overflow-hidden z-10 hidden">
                 {% if post.author.id == current_user.id %}
                 <a class="dropdown-item block px-4 py-2 hover:bg-gray-50 transition-colors text-blue-600 edit-post"
-                  href="#" data-bs-toggle="modal" data-bs-target="#editPostModal" data-post-id="{{ post.id }}">
+                  href="#" data-post-id="{{ post.id }}">
                   Edit
                 </a>
                 <a class="dropdown-item block px-4 py-2 hover:bg-gray-50 transition-colors text-red-600 delete-post"

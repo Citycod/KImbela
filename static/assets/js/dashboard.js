@@ -294,7 +294,12 @@ window.closeModal = function(modalId) {
     if (modal) {
         modal.classList.add('hidden');
         modal.style.display = 'none';  // Keep this for safety
-        document.body.style.overflow = 'auto';  // Explicitly restore scrolling (use 'visible' if 'auto' doesn't work)
+        document.body.style.overflow = 'auto';  // Explicitly restore scrolling
+        document.body.style.paddingRight = ''; // Clear Bootstrap padding
+        document.body.classList.remove('modal-open'); // Clear Bootstrap class
+
+        // Clean up any Bootstrap backdrops that might have been created
+        document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
     }
 };
 
@@ -823,6 +828,7 @@ const PostSystem = {
         if (!postText) return;
 
         document.getElementById('editPostContent').value = postText.textContent;
+        window.openModal('editPostModal');
 
         const form = document.getElementById('editPostForm');
         form.onsubmit = async (e) => {
@@ -4649,8 +4655,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }, 1000);
 
+    // Intercept Bootstrap JS modal triggers for custom Tailwind modals
+    document.addEventListener('show.bs.modal', function (event) {
+        const modal = event.target;
+        if (modal && modal.classList.contains('hidden')) {
+            // It's a custom Tailwind modal, prevent Bootstrap from managing it
+            event.preventDefault();
+            window.openModal(modal.id);
+        }
+    });
+
     // Initialize all systems
-    Dropdown.init();
+    Dropdown.init(); // Keep this enabled because Bootstrap CSS is missing, so we need custom logic to toggle Tailwind's .hidden class
     PostSystem.initInteractions();
     NotificationSystem.init();
     SearchSystem.init();
