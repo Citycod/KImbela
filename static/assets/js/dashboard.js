@@ -4654,6 +4654,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (document.getElementById('nativeAd') || document.getElementById('floatingAd')) {
             AdSystem.init();
         }
+    }, 1000);
     // Initialize all systems
     Dropdown.init(); // Keep this enabled because Bootstrap CSS is missing, so we need custom logic to toggle Tailwind's .hidden class
     PostSystem.initInteractions();
@@ -4819,16 +4820,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Close dropdowns
-    document.addEventListener('click', e => {
-        if (!e.target.closest('.dropdown')) {
-            document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.add('hidden'));
-        }
-        if (e.target.closest('.dropdown button')) {
-            const menu = e.target.closest('.dropdown').querySelector('.dropdown-menu');
-            menu.classList.toggle('hidden');
-        }
-    });
+
 
 });
 
