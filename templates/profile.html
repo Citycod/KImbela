@@ -1809,5 +1809,6 @@ document.addEventListener('DOMContentLoaded', function () {
         window.location.href = '/dashboard';
     };
 </script>
-
+<script src="{{ url_for('static', filename='assets/js/dashboard.js') }}"></script>
+{% include 'partials/report_modal.html' %}
 {% endblock %}

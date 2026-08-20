@@ -1,0 +1,13 @@
+[Unit]
+Description=Kimbela Background Scheduler
+After=network.target
+
+[Service]
+User=uplix
+WorkingDirectory=/var/www/Kimbela
+Environment="PATH=/var/www/Kimbela/my_env/bin"
+ExecStart=/var/www/Kimbela/my_env/bin/python scheduler.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
