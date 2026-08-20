@@ -737,10 +737,11 @@ const Dropdown = {
                 });
             }
 
-            // Handle dropdown toggle
-            const dropdownToggle = e.target.closest('[data-bs-toggle="dropdown"]');
+            // Handle dropdown toggle (custom attribute to avoid Bootstrap JS conflict)
+            const dropdownToggle = e.target.closest('[data-kb-toggle="dropdown"]');
             if (dropdownToggle) {
                 e.preventDefault();
+                e.stopPropagation();
                 const dropdown = dropdownToggle.closest('.dropdown');
                 const menu = dropdown.querySelector('.dropdown-menu');
 

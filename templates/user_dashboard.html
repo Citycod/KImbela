@@ -298,7 +298,7 @@
 
       <div class="dropdown relative">
         <div class="p-2 rounded-full hover:bg-fb-gray transition-colors cursor-pointer relative"
-          data-bs-toggle="dropdown" id="notificationDropdown">
+          data-kb-toggle="dropdown" id="notificationDropdown">
           <img src="{{ url_for('static', filename='assets/img/notify 2.png') }}" alt="chat" class="h-6 mr-2" />
           <span
             class="notification-badge absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden"
@@ -592,14 +592,14 @@
               </div>
             </div>
             <div class="dropdown relative">
-              <button class="p-2 rounded-full hover:bg-fb-gray transition-colors" data-bs-toggle="dropdown">
+              <button class="p-2 rounded-full hover:bg-fb-gray transition-colors" data-kb-toggle="dropdown">
                 <i class="bi bi-three-dots"></i>
               </button>
               <div
                 class="dropdown-menu absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-strong overflow-hidden z-10 hidden">
                 {% if post.author.id == current_user.id %}
                 <a class="dropdown-item block px-4 py-2 hover:bg-fb-gray transition-colors text-blue-600 edit-post"
-                  href="#" data-bs-toggle="modal" data-bs-target="#editPostModal" data-post-id="{{ post.id }}">
+                  href="#" data-post-id="{{ post.id }}">
                   Edit
                 </a>
                 <a class="dropdown-item block px-4 py-2 hover:bg-fb-gray transition-colors text-red-600 delete-post"
@@ -607,6 +607,13 @@
                   Delete
                   <span class="loader inline-block ml-1" style="display: none"></span>
                 </a>
+                {% else %}
+                <button
+                    onclick="reportContent('post', {{ post.id }})"
+                    class="dropdown-item block w-full text-left px-4 py-2 hover:bg-fb-gray transition-colors text-orange-600 text-sm"
+                >
+                    <i class="bi bi-flag mr-2 text-xs md:text-sm"></i>Report
+                </button>
                 {% endif %}
               </div>
             </div>
