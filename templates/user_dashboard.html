@@ -11,12 +11,12 @@
 
   <!-- CSS Files -->
   <link href="{{ url_for('static', filename='assets/css/main.css') }}" rel="stylesheet" />
-  <link href="{{ url_for('static', filename='assets/css/dashboard.css') }}" rel="stylesheet" />
+  <link href="{{ url_for('static', filename='assets/css/dashboard.css') }}?v={{ range(1, 1000000) | random }}" rel="stylesheet" />
 
-  <link href="{{ url_for('static', filename='assets/css/user_dashboard_inline.css') }}" rel="stylesheet" />
+  <link href="{{ url_for('static', filename='assets/css/user_dashboard_inline.css') }}?v={{ range(1, 1000000) | random }}" rel="stylesheet" />
 
   <!-- Dashboard Redesign Override -->
-  <link href="{{ url_for('static', filename='assets/css/dashboard_redesign.css') }}" rel="stylesheet" />
+  <link href="{{ url_for('static', filename='assets/css/dashboard_redesign.css') }}?v={{ range(1, 1000000) | random }}" rel="stylesheet" />
 
   <!-- External CSS -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
@@ -2332,7 +2332,7 @@
 
   <!--  <script src="{{ url_for('static', filename='assets/js/main.js') }}"></script> -->
   {% include 'partials/user_dashboard_pre_scripts.html' %}
-  <script src="{{ url_for('static', filename='assets/js/dashboard.js') }}"></script>
+  <script src="{{ url_for('static', filename='assets/js/dashboard.js') }}?v={{ range(1, 1000000) | random }}"></script>
 
   <!-- Floating Corner Widget -->
   <!-- Floating Corner Widget - Compact Version -->
