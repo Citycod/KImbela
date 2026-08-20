@@ -4654,18 +4654,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (document.getElementById('nativeAd') || document.getElementById('floatingAd')) {
             AdSystem.init();
         }
-    }, 1000);
-
-    // Intercept Bootstrap JS modal triggers for custom Tailwind modals
-    document.addEventListener('show.bs.modal', function (event) {
-        const modal = event.target;
-        if (modal && modal.classList.contains('hidden')) {
-            // It's a custom Tailwind modal, prevent Bootstrap from managing it
-            event.preventDefault();
-            window.openModal(modal.id);
-        }
-    });
-
     // Initialize all systems
     Dropdown.init(); // Keep this enabled because Bootstrap CSS is missing, so we need custom logic to toggle Tailwind's .hidden class
     PostSystem.initInteractions();
