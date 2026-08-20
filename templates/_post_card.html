@@ -36,6 +36,13 @@
                   Delete
                   <span class="loader inline-block ml-1" style="display: none"></span>
                 </a>
+                {% else %}
+                <button
+                    onclick="reportContent('post', {{ post.id }})"
+                    class="dropdown-item block w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors text-orange-600 text-sm"
+                >
+                    <i class="fas fa-flag mr-2 text-xs"></i>Report
+                </button>
                 {% endif %}
             </div>
         </div>
