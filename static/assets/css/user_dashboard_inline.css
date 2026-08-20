@@ -1212,12 +1212,6 @@
                                                             transition: none;
                                                         }
                                                     }
-                                                    /* Add this to ensure dropdown menus work */
-                                                    
-                                                    .dropdown:hover .dropdown-menu,
-                                                    .dropdown:focus-within .dropdown-menu {
-                                                        display: block !important;
-                                                    }
                                                     
                                                     .groups-dropdown-glass,
                                                     .match-dropdown-glass {
