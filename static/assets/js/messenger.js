@@ -23,6 +23,10 @@
         function initSocket() {
             if (socket && socket.connected) return;
 
+            if (typeof io === 'undefined') {
+                console.error("Socket.IO failed to load from CDN. Messenger features will be disabled.");
+                return;
+            }
 
             socket = io({
                 transports: ['websocket', 'polling'],

@@ -37,11 +37,11 @@
   <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1.21.0/index.js"></script>
 
   <!-- Add this to your HTML template -->
-  <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+  <script src="https://cdn.socket.io/4.6.1/socket.io.min.js" defer></script>
 
   <!-- Add this in the head or body before the script tag that loads dashboard.js -->
   <!-- Add this in the head or before closing body tag -->
-  <script src="{{ url_for('static', filename='assets/js/messenger.js') }}"></script>
+  <script src="{{ url_for('static', filename='assets/js/messenger.js') }}" defer></script>
 
   {% include 'partials/user_dashboard_head_scripts.html' %}
 {% endblock %}
@@ -2327,8 +2327,7 @@
     </div>
   </div>
 
-  <!-- JavaScript -->
-  <script src="https://cdn.socket.io/4.6.1/socket.io.min.js" crossorigin="anonymous"></script>
+  <!-- JavaScript (Socket.io loaded in head with defer) -->
 
   <!--  <script src="{{ url_for('static', filename='assets/js/main.js') }}"></script> -->
   {% include 'partials/user_dashboard_pre_scripts.html' %}
