@@ -350,7 +350,8 @@
     </script>
 
 <script>
-      window.csrfToken = '{{ csrf_token() }}';
+      {% set _csrf_val = csrf_token() if csrf_token is callable else csrf_token %}
+      window.csrfToken = '{{ _csrf_val }}';
       window.currentUserId = {{ current_user.id|tojson }};
       window.hasMorePosts = {{ has_more|tojson|default(false) }};
       window.nextCursor = {{ next_cursor|tojson|default(None) }};
