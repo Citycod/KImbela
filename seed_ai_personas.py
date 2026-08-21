@@ -25,6 +25,13 @@ def seed():
 
         personas_spec = data.get("personas", [])
 
+        surnames = {
+            "Amara": "Okafor",
+            "Tunde": "Balogun",
+            "Ngozi": "Eze",
+            "Emeka": "Obi"
+        }
+
         for p_data in personas_spec:
             name = p_data["name"]
             email = f"ai.{name.lower()}@kimbela.com"
@@ -33,7 +40,7 @@ def seed():
             if not user:
                 user = User(
                     first_name=name,
-                    last_name="AI",
+                    last_name=surnames.get(name, "User"),
                     email=email,
                     password_hash=generate_password_hash("PersonaPass123!"),
                     is_active=True,
