@@ -137,9 +137,12 @@ def execute_persona_post(persona: AIPersona, prompt_topic: str) -> bool:
             sess["_user_id"] = str(persona.user_id)
             sess["_fresh"] = True
 
+        from flask_wtf.csrf import generate_csrf
+        
+        csrf_token = generate_csrf()
         res = client.post(
             "/user_dashboard",
-            data={"post_content": response.content},
+            data={"post_content": response.content, "csrf_token": csrf_token},
             follow_redirects=True,
         )
 
@@ -222,9 +225,13 @@ def execute_persona_comment(persona: AIPersona, post: Post) -> bool:
             sess["_user_id"] = str(persona.user_id)
             sess["_fresh"] = True
 
+        from flask_wtf.csrf import generate_csrf
+        
+        csrf_token = generate_csrf()
         res = client.post(
             f"/add_comment/{post.id}",
             json={"content": response.content},
+            headers={"X-CSRFToken": csrf_token},
         )
 
         if res.status_code == 200 and res.json.get("success"):

@@ -187,7 +187,8 @@ def generate_content(
             latency_ms = int((time.monotonic() - start) * 1000)
 
             import re
-            content = re.sub(r"<think>.*?</think>", "", content, flags=re.DOTALL).strip()
+            # Strip <think> blocks (including unclosed ones if generation is cut off by max_tokens)
+            content = re.sub(r"<think>.*?(?:</think>|$)", "", content, flags=re.DOTALL).strip()
             
             # Strip literal <p> tags that LLMs sometimes hallucinate around their output
             content = content.replace("<p>", "").replace("</p>", "").strip()

@@ -120,3 +120,7 @@ redis
 
 pywebpush==1.14.0
 
+
+groq
+google-genai
+openai
