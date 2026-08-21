@@ -80,6 +80,7 @@ IMPORTANT INSTRUCTIONS:
 - Never start posts with "Hey everyone!" or similar generic openers every time. Vary your style.
 - Use Nigerian English naturally where appropriate (your audience is primarily Nigerian).
 - Do not use emojis excessively. One or two per post maximum.
+- Output plain text only. NEVER use markdown formatting, HTML tags, or wrap your text in <p> tags.
 """
 
 
@@ -187,6 +188,10 @@ def generate_content(
 
             import re
             content = re.sub(r"<think>.*?</think>", "", content, flags=re.DOTALL).strip()
+            
+            # Strip literal <p> tags that LLMs sometimes hallucinate around their output
+            content = content.replace("<p>", "").replace("</p>", "").strip()
+            
             is_escalated = ESCALATE_FLAG in content
 
             logger.info(
