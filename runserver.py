@@ -13,6 +13,7 @@ from flask_migrate import Migrate
 
 from app_config import app, socketio
 from extensions import db
+from models import AIPersona, AILog # Imported so Alembic detects them
 
 
 print(">>> MIGRATE REGISTERING <<<")

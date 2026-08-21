@@ -36,7 +36,37 @@ def init_scheduler(app):
         },
     )
 
-    # ========== OPTIMIZED JOBS ==========
+    # AI Persona Activity Job - runs every 2 hours
+    @scheduler.scheduled_job("interval", hours=2, id="ai_persona_activity")
+    def run_ai_persona_activity():
+        """Periodically run AI persona posting and commenting tasks"""
+        with app.app_context():
+            try:
+                import random
+                from models import AIPersona, Post
+                from ai_action_engine import execute_persona_post, execute_persona_comment
+
+                personas = AIPersona.query.filter_by(is_active=True).all()
+                if not personas:
+                    return
+
+                # Pick a persona randomly to check for actions
+                persona = random.choice(personas)
+                
+                # Try to post if due
+                topics = persona.interests or ["socializing", "daily life"]
+                topic = random.choice(topics)
+                posted = execute_persona_post(persona, topic)
+
+                if not posted:
+                    # Try commenting on recent non-persona posts matching interests
+                    recent_posts = Post.query.filter(Post.author_id != persona.user_id).order_by(Post.created_at.desc()).limit(10).all()
+                    if recent_posts:
+                        target_post = random.choice(recent_posts)
+                        execute_persona_comment(persona, target_post)
+
+            except Exception as exc:
+                logger.error("Error in run_ai_persona_activity: %s", exc)
 
     # Campaign expiry check - every 6 hours (was every hour)
     @scheduler.scheduled_job("interval", hours=6, id="campaign_expiry_check")
