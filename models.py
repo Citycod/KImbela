@@ -81,6 +81,7 @@ class User(db.Model, UserMixin):
     is_super_admin = db.Column(db.Boolean, default=False)
     is_admin = db.Column(db.Boolean, default=False)
     is_active = db.Column(db.Boolean, default=False)
+    is_ai_persona = db.Column(db.Boolean, default=False)
     city = db.Column(db.String(50), nullable=False)
     country = db.Column(db.String(50), nullable=False)
     state = db.Column(db.String(50), nullable=True)
@@ -2388,4 +2389,43 @@ class PushSubscription(db.Model):
     last_seen_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow)
 
     user = db.relationship('User', back_populates='push_subscriptions')
+
+class AIPersona(db.Model):
+    __tablename__ = "ai_personas"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, unique=True)
+    name = db.Column(db.String(50), nullable=False)
+    bio_disclosure = db.Column(db.Text, nullable=False)
+    personality = db.Column(db.Text, nullable=False)
+    interests = db.Column(db.JSON, nullable=True)
+    posting_frequency = db.Column(db.String(100), nullable=True)
+    comment_frequency = db.Column(db.String(255), nullable=True)
+    allowed_actions = db.Column(db.JSON, nullable=True)
+    forbidden_actions = db.Column(db.JSON, nullable=True)
+    escalation_rule = db.Column(db.Text, nullable=True)
+    voice_samples = db.Column(db.JSON, nullable=True)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=utcnow)
+    updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow)
+    
+    # Relationship to user
+    user = db.relationship("User", backref=db.backref("ai_persona", uselist=False))
+
+class AILog(db.Model):
+    __tablename__ = "ai_logs"
+
+    id = db.Column(db.Integer, primary_key=True)
+    persona_id = db.Column(db.Integer, db.ForeignKey("ai_personas.id"), nullable=False)
+    action_type = db.Column(db.String(50), nullable=False) # e.g. "CREATE_POST", "REPLY_COMMENT"
+    target_id = db.Column(db.Integer, nullable=True) # e.g. post_id or comment_id if replying/reacting
+    prompt_context = db.Column(db.Text, nullable=True)
+    generated_content = db.Column(db.Text, nullable=True)
+    provider_used = db.Column(db.String(50), nullable=True) # e.g. "groq", "gemini", "openai"
+    is_escalated = db.Column(db.Boolean, default=False)
+    timestamp = db.Column(db.DateTime, default=utcnow)
+    
+    # Relationship to persona
+    persona = db.relationship("AIPersona", backref=db.backref("logs", lazy="dynamic", cascade="all, delete-orphan"))
+
 
