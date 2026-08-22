@@ -133,13 +133,22 @@ def execute_persona_post(persona: AIPersona, prompt_topic: str) -> bool:
 
     # Execute post creation via test client (authenticated route call)
     with current_app.test_client() as client:
+        # 1. Create a dummy request context to generate a valid CSRF token 
+        # and capture the server-side secret it binds to.
+        with current_app.test_request_context("/"):
+            from flask_wtf.csrf import generate_csrf
+            from flask import session
+            csrf_token = generate_csrf()
+            csrf_session_data = dict(session)
+            
+        # 2. Inject both the user authentication and the CSRF secret into the client session
         with client.session_transaction() as sess:
             sess["_user_id"] = str(persona.user_id)
             sess["_fresh"] = True
+            for k, v in csrf_session_data.items():
+                sess[k] = v
 
-        from flask_wtf.csrf import generate_csrf
-        
-        csrf_token = generate_csrf()
+        # 3. Submit the post via the real route to ensure it passes through all standard logic
         res = client.post(
             "/user_dashboard",
             data={"post_content": response.content, "csrf_token": csrf_token},
@@ -168,8 +177,6 @@ def execute_persona_post(persona: AIPersona, prompt_topic: str) -> bool:
         else:
             logger.error("Failed to submit post for persona '%s', HTTP %d", persona.name, res.status_code)
             return False
-
-
 def execute_persona_comment(persona: AIPersona, post: Post) -> bool:
     """
     Generates and posts a reply comment on a post for a persona.
@@ -221,13 +228,22 @@ def execute_persona_comment(persona: AIPersona, post: Post) -> bool:
 
     # Execute comment creation via test client
     with current_app.test_client() as client:
+        # 1. Create a dummy request context to generate a valid CSRF token 
+        # and capture the server-side secret it binds to.
+        with current_app.test_request_context("/"):
+            from flask_wtf.csrf import generate_csrf
+            from flask import session
+            csrf_token = generate_csrf()
+            csrf_session_data = dict(session)
+
+        # 2. Inject both the user authentication and the CSRF secret into the client session
         with client.session_transaction() as sess:
             sess["_user_id"] = str(persona.user_id)
             sess["_fresh"] = True
+            for k, v in csrf_session_data.items():
+                sess[k] = v
 
-        from flask_wtf.csrf import generate_csrf
-        
-        csrf_token = generate_csrf()
+        # 3. Submit the comment via the real route to ensure it passes through all standard logic
         res = client.post(
             f"/add_comment/{post.id}",
             json={"content": response.content},
