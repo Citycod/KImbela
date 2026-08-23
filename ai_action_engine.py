@@ -185,8 +185,7 @@ def execute_persona_post(persona: AIPersona, prompt_topic: str, force: bool = Fa
             print(f"❌ Authentication failed! @login_required redirected to: {res.location}")
             return False
 
-        db.session.commit()
-        db.session.expire_all()
+        db.session.remove()
         latest_post = Post.query.filter_by(author_id=persona.user_id).order_by(Post.id.desc()).first()
         
         if not latest_post or latest_post.content != response.content:

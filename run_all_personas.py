@@ -24,6 +24,7 @@ with app.app_context():
     results = []
 
     for idx, persona in enumerate(personas, start=1):
+        db.session.remove()
         user_obj = db.session.get(User, persona.user_id)
         if not user_obj:
             print(f"[{idx}/{len(personas)}] ❌ {persona.name} (Persona ID {persona.id}): User ID {persona.user_id} missing in DB!")
@@ -42,8 +43,7 @@ with app.app_context():
         success = execute_persona_post(persona, topic, force=True)
 
         if success:
-            db.session.commit()
-            db.session.expire_all()
+            db.session.remove()
             latest_post = Post.query.filter_by(author_id=persona.user_id).order_by(Post.id.desc()).first()
             post_id = latest_post.id if latest_post else "N/A"
             post_content = latest_post.content if latest_post else ""
