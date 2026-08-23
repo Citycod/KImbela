@@ -147,32 +147,41 @@ def execute_persona_post(persona: AIPersona, prompt_topic: str, force: bool = Fa
     with current_app.test_client() as client:
         with current_app.test_request_context("/"):
             from flask_wtf.csrf import generate_csrf
+            from flask_login import login_user
             from flask import session
+            
+            user_obj = db.session.get(User, persona.user_id)
+            if not user_obj:
+                print(f"❌ User ID {persona.user_id} for persona '{persona.name}' does not exist in DB!")
+                return False
+                
+            login_user(user_obj)
             csrf_token = generate_csrf()
-            csrf_session_data = dict(session)
+            auth_session_data = dict(session)
             
         with client.session_transaction() as sess:
-            sess["_user_id"] = str(persona.user_id)
-            sess["_fresh"] = True
-            for k, v in csrf_session_data.items():
+            for k, v in auth_session_data.items():
                 sess[k] = v
 
         res = client.post(
             "/user_dashboard",
             data={"post_content": response.content, "csrf_token": csrf_token},
-            follow_redirects=True,
+            follow_redirects=False,
         )
 
-        if res.status_code in (200, 302):
-            db.session.commit()
-            db.session.expire_all()
-            latest_post = Post.query.filter_by(author_id=persona.user_id).order_by(Post.id.desc()).first()
-            
-            if not latest_post or latest_post.content != response.content:
-                actual_content = latest_post.content[:30] if latest_post else "None"
-                print(f"❌ Route call status {res.status_code}, expected '{response.content[:30]}...', got '{actual_content}...'")
-                logger.error("Post creation failed for persona '%s': post not found in DB or content mismatch.", persona.name)
-                return False
+        if res.status_code == 302 and "/login" in (res.location or ""):
+            print(f"❌ Authentication failed! @login_required redirected to: {res.location}")
+            return False
+
+        db.session.commit()
+        db.session.expire_all()
+        latest_post = Post.query.filter_by(author_id=persona.user_id).order_by(Post.id.desc()).first()
+        
+        if not latest_post or latest_post.content != response.content:
+            actual_content = latest_post.content[:30] if latest_post else "None"
+            print(f"❌ Route status {res.status_code} (Location: {res.headers.get('Location')}), expected '{response.content[:30]}...', got '{actual_content}...'")
+            logger.error("Post creation failed for persona '%s': post not found in DB or content mismatch.", persona.name)
+            return False
 
             log_entry = AILog(
                 persona_id=persona.id,
@@ -248,19 +257,22 @@ def execute_persona_comment(persona: AIPersona, post: Post) -> bool:
 
     # Execute comment creation via test client
     with current_app.test_client() as client:
-        # 1. Create a dummy request context to generate a valid CSRF token 
-        # and capture the server-side secret it binds to.
         with current_app.test_request_context("/"):
             from flask_wtf.csrf import generate_csrf
+            from flask_login import login_user
             from flask import session
+            
+            user_obj = db.session.get(User, persona.user_id)
+            if not user_obj:
+                logger.error("User ID %d for persona '%s' does not exist in DB!", persona.user_id, persona.name)
+                return False
+                
+            login_user(user_obj)
             csrf_token = generate_csrf()
-            csrf_session_data = dict(session)
+            auth_session_data = dict(session)
 
-        # 2. Inject both the user authentication and the CSRF secret into the client session
         with client.session_transaction() as sess:
-            sess["_user_id"] = str(persona.user_id)
-            sess["_fresh"] = True
-            for k, v in csrf_session_data.items():
+            for k, v in auth_session_data.items():
                 sess[k] = v
 
         # 3. Submit the comment via the real route to ensure it passes through all standard logic
