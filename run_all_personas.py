@@ -51,16 +51,20 @@ for idx, persona_id in enumerate(active_persona_ids, start=1):
 
         print(f"[{idx}/{len(active_persona_ids)}] 🚀 Generating post for {persona.name} about '{topic}'...")
         
+        # Capture scalars before execute_persona_post calls db.session.remove() and detaches persona
+        persona_user_id = persona.user_id
+        persona_name = persona.name
+
         success = execute_persona_post(persona, topic, force=True)
 
         if success:
-            latest_post = Post.query.filter_by(author_id=persona.user_id).order_by(Post.id.desc()).first()
+            latest_post = Post.query.filter_by(author_id=persona_user_id).order_by(Post.id.desc()).first()
             post_id = latest_post.id if latest_post else "N/A"
             post_content = latest_post.content if latest_post else ""
             
             results.append({
-                "name": persona.name,
-                "user_id": persona.user_id,
+                "name": persona_name,
+                "user_id": persona_user_id,
                 "post_id": post_id,
                 "status": "SUCCESS",
                 "content": post_content
@@ -68,13 +72,13 @@ for idx, persona_id in enumerate(active_persona_ids, start=1):
             print(f"   ✅ Published Post ID {post_id}")
         else:
             results.append({
-                "name": persona.name,
-                "user_id": persona.user_id,
+                "name": persona_name,
+                "user_id": persona_user_id,
                 "post_id": "N/A",
                 "status": "FAILED",
                 "content": ""
             })
-            print(f"   ❌ Failed to publish post for {persona.name}")
+            print(f"   ❌ Failed to publish post for {persona_name}")
         print("-" * 60)
 
 print("\n" + "=" * 60)
