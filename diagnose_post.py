@@ -89,6 +89,8 @@ with app.app_context():
 
         print(f"   HTTP Status Code: {res.status_code}")
         print(f"   Location Header: {res.location}")
+        with client.session_transaction() as test_sess:
+            print(f"   Flashed Messages: {test_sess.get('_flashes')}")
         
         # If redirected to login
         if res.status_code == 302 and "/login" in (res.location or ""):
