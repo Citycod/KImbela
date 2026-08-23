@@ -157,6 +157,7 @@ def execute_persona_post(persona: AIPersona, prompt_topic: str, force: bool = Fa
     t_route_start = time.perf_counter()
     with current_app.test_client() as client:
         user_obj = db.session.get(User, persona.user_id)
+        print(f"🔍 [DIAGNOSTIC] user_obj Python ID: {id(user_obj)} | DB ID: {user_obj.id if user_obj else 'None'}")
         if not user_obj:
             print(f"❌ User ID {persona.user_id} for persona '{persona.name}' does not exist in DB!")
             return False
@@ -190,6 +191,9 @@ def execute_persona_post(persona: AIPersona, prompt_topic: str, force: bool = Fa
         csrf_token = match.group(1)
 
         # Step 4: Execute the POST using the exact same client and session
+        with client.session_transaction() as sess:
+            print(f"🔍 [DIAGNOSTIC] CSRF Token in test_client session: {sess.get('csrf_token')} | Form token being submitted: {csrf_token}")
+
         res = client.post(
             "/user_dashboard",
             data={"post_content": response.content, "csrf_token": csrf_token},
