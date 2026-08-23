@@ -98,7 +98,7 @@ def _call_groq(system_prompt: str, user_prompt: str) -> str:
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
         ],
-        max_tokens=300,
+        max_tokens=1024,
         temperature=0.8,
     )
     return response.choices[0].message.content.strip()
@@ -116,7 +116,7 @@ def _call_gemini(system_prompt: str, user_prompt: str) -> str:
         model="gemini-2.0-flash",
         contents=f"{system_prompt}\n\n{user_prompt}",
         config={
-            "max_output_tokens": 300,
+            "max_output_tokens": 1024,
             "temperature": 0.8,
         },
     )
@@ -137,7 +137,7 @@ def _call_openai(system_prompt: str, user_prompt: str) -> str:
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
         ],
-        max_tokens=300,
+        max_tokens=1024,
         temperature=0.8,
     )
     return response.choices[0].message.content.strip()

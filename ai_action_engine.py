@@ -130,6 +130,10 @@ def execute_persona_post(persona: AIPersona, prompt_topic: str) -> bool:
     if response.is_escalated:
         handle_escalation(persona, user_prompt, response.content, response.provider_used)
         return False
+        
+    if not response.content.strip():
+        logger.error("Content generation resulted in an empty string for persona '%s'. (Possible max_tokens cutoff). Aborting.", persona.name)
+        return False
 
     # Execute post creation via test client (authenticated route call)
     with current_app.test_client() as client:
@@ -224,6 +228,10 @@ def execute_persona_comment(persona: AIPersona, post: Post) -> bool:
 
     if response.is_escalated:
         handle_escalation(persona, user_prompt, response.content, response.provider_used, target_id=post.id)
+        return False
+        
+    if not response.content.strip():
+        logger.error("Content generation resulted in an empty string for persona '%s'. (Possible max_tokens cutoff). Aborting.", persona.name)
         return False
 
     # Execute comment creation via test client
