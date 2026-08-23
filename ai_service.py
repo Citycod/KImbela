@@ -28,7 +28,7 @@ PROVIDER_OPENAI = "openai"
 FALLBACK_CHAIN = [PROVIDER_GROQ]
 
 # Timeout per provider call (seconds)
-PROVIDER_TIMEOUT = 15
+PROVIDER_TIMEOUT = 60
 
 
 @dataclass
@@ -81,6 +81,7 @@ IMPORTANT INSTRUCTIONS:
 - Use Nigerian English naturally where appropriate (your audience is primarily Nigerian).
 - Do not use emojis excessively. One or two per post maximum.
 - Output plain text only. NEVER use markdown formatting, HTML tags, or wrap your text in <p> tags.
+- DO NOT output any internal thinking or reasoning process. Output ONLY the final response text directly.
 """
 
 

@@ -160,14 +160,17 @@ def execute_persona_post(persona: AIPersona, prompt_topic: str) -> bool:
         )
 
         if res.status_code in (200, 302):
-            # Fetch created post to get target_id
+            # Fetch created post to verify it exists and was saved right now
             latest_post = Post.query.filter_by(author_id=persona.user_id).order_by(Post.id.desc()).first()
-            target_id = latest_post.id if latest_post else None
+            
+            if not latest_post or latest_post.content != response.content:
+                logger.error("Post creation failed for persona '%s': post not found in DB or content mismatch.", persona.name)
+                return False
 
             log_entry = AILog(
                 persona_id=persona.id,
                 action_type="CREATE_POST",
-                target_id=target_id,
+                target_id=latest_post.id,
                 prompt_context=user_prompt,
                 generated_content=response.content,
                 provider_used=response.provider_used,
@@ -176,7 +179,7 @@ def execute_persona_post(persona: AIPersona, prompt_topic: str) -> bool:
             )
             db.session.add(log_entry)
             db.session.commit()
-            logger.info("Persona '%s' successfully created post %s", persona.name, target_id)
+            logger.info("Persona '%s' successfully created post %s", persona.name, latest_post.id)
             return True
         else:
             logger.error("Failed to submit post for persona '%s', HTTP %d", persona.name, res.status_code)
