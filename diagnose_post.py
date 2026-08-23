@@ -30,7 +30,11 @@ with app.app_context():
     if not user_obj:
         print(f"❌ ERROR: User record ID {persona.user_id} for persona does NOT exist!")
         sys.exit(1)
-    print(f"   User record found: {user_obj.first_name} {user_obj.last_name} ({user_obj.email})")
+    if not user_obj.is_active:
+        print(f"⚠️ Activating User record ID {persona.user_id}...")
+        user_obj.is_active = True
+        db.session.commit()
+    print(f"   User record found: {user_obj.first_name} {user_obj.last_name} (Active: {user_obj.is_active})")
 
     # 2. Topic & Prompt
     topic = random.choice(persona.interests) if persona.interests else "cooking"

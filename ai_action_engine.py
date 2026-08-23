@@ -155,6 +155,11 @@ def execute_persona_post(persona: AIPersona, prompt_topic: str, force: bool = Fa
                 print(f"❌ User ID {persona.user_id} for persona '{persona.name}' does not exist in DB!")
                 return False
                 
+            if not user_obj.is_active:
+                print(f"⚠️ Activating User ID {persona.user_id} for AI persona '{persona.name}'...")
+                user_obj.is_active = True
+                db.session.commit()
+
             login_user(user_obj)
             csrf_token = generate_csrf()
             auth_session_data = dict(session)
@@ -272,6 +277,10 @@ def execute_persona_comment(persona: AIPersona, post: Post) -> bool:
                 logger.error("User ID %d for persona '%s' does not exist in DB!", persona.user_id, persona.name)
                 return False
                 
+            if not user_obj.is_active:
+                user_obj.is_active = True
+                db.session.commit()
+
             login_user(user_obj)
             csrf_token = generate_csrf()
             auth_session_data = dict(session)
