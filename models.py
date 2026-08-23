@@ -88,6 +88,7 @@ class User(db.Model, UserMixin):
     dob = db.Column(db.Date, nullable=False)
     gender = db.Column(db.String(20), nullable=False)
     phone_number = db.Column(db.String(20), nullable=False)
+    timezone = db.Column(db.String(50), default='UTC', nullable=False)
     interests = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=utcnow)
     updated_at = db.Column(
@@ -2389,6 +2390,19 @@ class PushSubscription(db.Model):
     last_seen_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow)
 
     user = db.relationship('User', back_populates='push_subscriptions')
+
+class BirthdayNotificationLog(db.Model):
+    __tablename__ = 'birthday_notification_logs'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    year = db.Column(db.Integer, nullable=False)
+    notified_self = db.Column(db.Boolean, default=False)
+    notified_friends_count = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=utcnow)
+    
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'year', name='uix_user_year'),
+    )
 
 class AIPersona(db.Model):
     __tablename__ = "ai_personas"
