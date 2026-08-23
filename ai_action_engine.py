@@ -195,25 +195,21 @@ def execute_persona_post(persona: AIPersona, prompt_topic: str, force: bool = Fa
             logger.error("Post creation failed for persona '%s': post not found in DB or content mismatch.", persona.name)
             return False
 
-            log_entry = AILog(
-                persona_id=persona.id,
-                action_type="CREATE_POST",
-                target_id=latest_post.id,
-                prompt_context=user_prompt,
-                generated_content=response.content,
-                provider_used=response.provider_used,
-                is_escalated=False,
-                timestamp=utcnow(),
-            )
-            db.session.add(log_entry)
-            db.session.commit()
-            print(f"✅ Successfully created post ID {latest_post.id} for '{persona.name}'")
-            logger.info("Persona '%s' successfully created post %s", persona.name, latest_post.id)
-            return True
-        else:
-            print(f"❌ Route call failed with HTTP status {res.status_code}")
-            logger.error("Failed to submit post for persona '%s', HTTP %d", persona.name, res.status_code)
-            return False
+        log_entry = AILog(
+            persona_id=persona.id,
+            action_type="CREATE_POST",
+            target_id=latest_post.id,
+            prompt_context=user_prompt,
+            generated_content=response.content,
+            provider_used=response.provider_used,
+            is_escalated=False,
+            timestamp=utcnow(),
+        )
+        db.session.add(log_entry)
+        db.session.commit()
+        print(f"✅ Successfully created post ID {latest_post.id} for '{persona.name}'")
+        logger.info("Persona '%s' successfully created post %s", persona.name, latest_post.id)
+        return True
 def execute_persona_comment(persona: AIPersona, post: Post) -> bool:
     """
     Generates and posts a reply comment on a post for a persona.
