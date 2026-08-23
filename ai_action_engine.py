@@ -100,6 +100,11 @@ def execute_persona_post(persona: AIPersona, prompt_topic: str, force: bool = Fa
         logger.info("Persona '%s' reached daily post limit.", persona.name)
         return False
 
+    if not persona.is_active:
+        print(f"❌ Persona '{persona.name}' is inactive (AIPersona table). Skipping.")
+        logger.info("Persona '%s' is inactive (AIPersona table). Skipping.", persona.name)
+        return False
+
     persona_config = {
         "name": persona.name,
         "personality": persona.personality,
@@ -151,34 +156,40 @@ def execute_persona_post(persona: AIPersona, prompt_topic: str, force: bool = Fa
     # Execute post creation via test client (authenticated route call)
     t_route_start = time.perf_counter()
     with current_app.test_client() as client:
-        with current_app.test_request_context("/", base_url="http://localhost/"):
-            from flask_wtf.csrf import generate_csrf
-            from flask_login import login_user
-            from flask import session
+        user_obj = db.session.get(User, persona.user_id)
+        if not user_obj:
+            print(f"❌ User ID {persona.user_id} for persona '{persona.name}' does not exist in DB!")
+            return False
             
-            user_obj = db.session.get(User, persona.user_id)
-            if not user_obj:
-                print(f"❌ User ID {persona.user_id} for persona '{persona.name}' does not exist in DB!")
-                return False
-                
-            if not getattr(user_obj, "is_ai_persona", False):
-                print(f"❌ Security violation: User ID {persona.user_id} is NOT an AI persona account!")
-                logger.error("Security violation: User ID %d is NOT an AI persona account.", persona.user_id)
-                return False
+        if not getattr(user_obj, "is_ai_persona", False):
+            print(f"❌ Security violation: User ID {persona.user_id} is NOT an AI persona account!")
+            logger.error("Security violation: User ID %d is NOT an AI persona account.", persona.user_id)
+            return False
 
-            if not user_obj.is_active:
-                print(f"❌ User ID {persona.user_id} for persona '{persona.name}' is inactive! Run seed script to activate.")
-                logger.error("User ID %d for persona '%s' is inactive.", persona.user_id, persona.name)
-                return False
+        if not user_obj.is_active:
+            print(f"❌ User ID {persona.user_id} for persona '{persona.name}' is inactive! Run seed script to activate.")
+            logger.error("User ID %d for persona '%s' is inactive.", persona.user_id, persona.name)
+            return False
 
-            login_user(user_obj)
-            csrf_token = generate_csrf()
-            auth_session_data = dict(session)
-            
+        # Step 1: Log the user in natively via session_transaction
         with client.session_transaction() as sess:
-            for k, v in auth_session_data.items():
-                sess[k] = v
+            sess["_user_id"] = str(user_obj.id)
+            sess["_fresh"] = True
+            
+        # Step 2: Do a GET to fetch the page and establish CSRF token natively
+        get_res = client.get("/user_dashboard", base_url="http://localhost/")
+        
+        # Step 3: Parse the CSRF token out of the HTML form
+        import re
+        html_str = get_res.data.decode('utf-8', errors='ignore')
+        match = re.search(r'name="csrf_token"\s+value="([^"]+)"', html_str)
+        if not match:
+            print("❌ Failed to find csrf_token in the GET response HTML.")
+            logger.error("Failed to find csrf_token in the GET response HTML for persona '%s'.", persona.name)
+            return False
+        csrf_token = match.group(1)
 
+        # Step 4: Execute the POST using the exact same client and session
         res = client.post(
             "/user_dashboard",
             data={"post_content": response.content, "csrf_token": csrf_token},
@@ -197,6 +208,14 @@ def execute_persona_post(persona: AIPersona, prompt_topic: str, force: bool = Fa
     if res.status_code == 302 and "/login" in (res.location or ""):
         print(f"❌ Authentication failed! @login_required redirected to: {res.location}")
         return False
+
+    if res.status_code == 302 and "/user_dashboard" not in (res.location or "") and res.location != "http://localhost/user_dashboard":
+        pass  # Just in case
+
+    if res.status_code == 302 and (res.location or "") == "http://localhost/user_dashboard":
+        with client.session_transaction() as sess:
+            flashes = sess.get("_flashes", [])
+            print(f"⚠️  [DIAGNOSTIC] Redirected to absolute URL. Flashed messages: {flashes}")
 
     t_db_start = time.perf_counter()
     db.session.remove()
@@ -232,6 +251,10 @@ def execute_persona_comment(persona: AIPersona, post: Post) -> bool:
     """
     if get_daily_action_count(persona.id, "REPLY_COMMENT") >= MAX_DAILY_COMMENTS:
         logger.info("Persona '%s' reached daily comment limit.", persona.name)
+        return False
+
+    if not persona.is_active:
+        logger.info("Persona '%s' is inactive (AIPersona table). Skipping.", persona.name)
         return False
 
     persona_config = {
@@ -281,37 +304,41 @@ def execute_persona_comment(persona: AIPersona, post: Post) -> bool:
 
     # Execute comment creation via test client
     with current_app.test_client() as client:
-        with current_app.test_request_context("/", base_url="http://localhost/"):
-            from flask_wtf.csrf import generate_csrf
-            from flask_login import login_user
-            from flask import session
+        user_obj = db.session.get(User, persona.user_id)
+        if not user_obj:
+            logger.error("User ID %d for persona '%s' does not exist in DB!", persona.user_id, persona.name)
+            return False
             
-            user_obj = db.session.get(User, persona.user_id)
-            if not user_obj:
-                logger.error("User ID %d for persona '%s' does not exist in DB!", persona.user_id, persona.name)
-                return False
-                
-            if not getattr(user_obj, "is_ai_persona", False):
-                logger.error("Security violation: User ID %d is NOT an AI persona account!", persona.user_id)
-                return False
+        if not getattr(user_obj, "is_ai_persona", False):
+            logger.error("Security violation: User ID %d is NOT an AI persona account!", persona.user_id)
+            return False
 
-            if not user_obj.is_active:
-                logger.error("User ID %d for persona '%s' is inactive!", persona.user_id, persona.name)
-                return False
+        if not user_obj.is_active:
+            logger.error("User ID %d for persona '%s' is inactive!", persona.user_id, persona.name)
+            return False
 
-            login_user(user_obj)
-            csrf_token = generate_csrf()
-            auth_session_data = dict(session)
-
+        # Step 1: Log the user in natively via session_transaction
         with client.session_transaction() as sess:
-            for k, v in auth_session_data.items():
-                sess[k] = v
+            sess["_user_id"] = str(user_obj.id)
+            sess["_fresh"] = True
+
+        # Step 2: Do a GET to fetch the page and establish CSRF token natively
+        get_res = client.get("/user_dashboard", base_url="http://localhost/")
+        
+        # Step 3: Parse the CSRF token out of the HTML form
+        import re
+        html_str = get_res.data.decode('utf-8', errors='ignore')
+        match = re.search(r'name="csrf_token"\s+value="([^"]+)"', html_str)
+        if not match:
+            logger.error("Failed to find csrf_token in the GET response HTML for persona '%s'.", persona.name)
+            return False
+        csrf_token = match.group(1)
 
         # 3. Submit the comment via the real route to ensure it passes through all standard logic
         res = client.post(
             f"/add_comment/{post.id}",
             json={"content": response.content},
-            headers={"X-CSRFToken": csrf_token, "Referer": f"http://localhost/add_comment/{post.id}"},
+            headers={"X-CSRFToken": csrf_token, "Referer": f"http://localhost/user_dashboard"},
             base_url="http://localhost/",
         )
 
