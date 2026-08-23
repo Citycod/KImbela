@@ -111,6 +111,7 @@ def execute_persona_post(persona: AIPersona, prompt_topic: str) -> bool:
     
     # Hard Pre-Filter Check
     if is_financial_request(prompt_topic):
+        print(f"❌ Persona '{persona.name}' blocked by financial pre-filter")
         logger.warning("Persona '%s' blocked by financial pre-filter on post generation", persona.name)
         handle_escalation(
             persona, 
@@ -124,35 +125,36 @@ def execute_persona_post(persona: AIPersona, prompt_topic: str) -> bool:
     try:
         response: LLMResponse = generate_content(persona_config, user_prompt)
     except Exception as exc:
+        print(f"❌ Exception during generate_content for '{persona.name}': {exc}")
+        import traceback
+        traceback.print_exc()
         logger.error("Failed content generation for persona '%s': %s", persona.name, exc)
         return False
 
     if response.is_escalated:
+        print(f"⚠️ Persona '{persona.name}' generated escalated response")
         handle_escalation(persona, user_prompt, response.content, response.provider_used)
         return False
         
     if not response.content.strip():
+        print(f"❌ Generated content was empty after stripping think blocks for '{persona.name}'")
         logger.error("Content generation resulted in an empty string for persona '%s'. (Possible max_tokens cutoff). Aborting.", persona.name)
         return False
 
     # Execute post creation via test client (authenticated route call)
     with current_app.test_client() as client:
-        # 1. Create a dummy request context to generate a valid CSRF token 
-        # and capture the server-side secret it binds to.
         with current_app.test_request_context("/"):
             from flask_wtf.csrf import generate_csrf
             from flask import session
             csrf_token = generate_csrf()
             csrf_session_data = dict(session)
             
-        # 2. Inject both the user authentication and the CSRF secret into the client session
         with client.session_transaction() as sess:
             sess["_user_id"] = str(persona.user_id)
             sess["_fresh"] = True
             for k, v in csrf_session_data.items():
                 sess[k] = v
 
-        # 3. Submit the post via the real route to ensure it passes through all standard logic
         res = client.post(
             "/user_dashboard",
             data={"post_content": response.content, "csrf_token": csrf_token},
@@ -160,10 +162,10 @@ def execute_persona_post(persona: AIPersona, prompt_topic: str) -> bool:
         )
 
         if res.status_code in (200, 302):
-            # Fetch created post to verify it exists and was saved right now
             latest_post = Post.query.filter_by(author_id=persona.user_id).order_by(Post.id.desc()).first()
             
             if not latest_post or latest_post.content != response.content:
+                print(f"❌ Route call status {res.status_code}, but post not found or content mismatch! Expected content: '{response.content[:30]}...'")
                 logger.error("Post creation failed for persona '%s': post not found in DB or content mismatch.", persona.name)
                 return False
 
@@ -179,9 +181,11 @@ def execute_persona_post(persona: AIPersona, prompt_topic: str) -> bool:
             )
             db.session.add(log_entry)
             db.session.commit()
+            print(f"✅ Successfully created post ID {latest_post.id} for '{persona.name}'")
             logger.info("Persona '%s' successfully created post %s", persona.name, latest_post.id)
             return True
         else:
+            print(f"❌ Route call failed with HTTP status {res.status_code}")
             logger.error("Failed to submit post for persona '%s', HTTP %d", persona.name, res.status_code)
             return False
 def execute_persona_comment(persona: AIPersona, post: Post) -> bool:
