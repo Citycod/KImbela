@@ -190,6 +190,11 @@ def execute_persona_post(persona: AIPersona, prompt_topic: str, force: bool = Fa
             return False
         csrf_token = match.group(1)
 
+        # Capture scalar values before DB session tears down during request
+        persona_user_id = persona.user_id
+        persona_name = persona.name
+        persona_pk = persona.id
+
         # Step 4: Execute the POST using the exact same client and session
         with client.session_transaction() as sess:
             print(f"🔍 [DIAGNOSTIC] CSRF Token in test_client session: {sess.get('csrf_token')} | Form token being submitted: {csrf_token}")
@@ -223,7 +228,7 @@ def execute_persona_post(persona: AIPersona, prompt_topic: str, force: bool = Fa
 
     t_db_start = time.perf_counter()
     db.session.remove()
-    latest_post = Post.query.filter_by(author_id=persona.user_id).order_by(Post.id.desc()).first()
+    latest_post = Post.query.filter_by(author_id=persona_user_id).order_by(Post.id.desc()).first()
     t_db_end = time.perf_counter()
     print(f"⏱️  [TIMING] DB Query verification took: {t_db_end - t_db_start:.3f}s")
     print(f"⏱️  [TIMING] Total persona execution took: {time.perf_counter() - t_start:.3f}s")
@@ -231,11 +236,11 @@ def execute_persona_post(persona: AIPersona, prompt_topic: str, force: bool = Fa
     if not latest_post or latest_post.content != response.content:
         actual_content = latest_post.content[:30] if latest_post else "None"
         print(f"❌ Post verification failed! Expected '{response.content[:30]}...', got '{actual_content}...'")
-        logger.error("Post creation failed for persona '%s': post not found in DB or content mismatch.", persona.name)
+        logger.error("Post creation failed for persona '%s': post not found in DB or content mismatch.", persona_name)
         return False
 
     log_entry = AILog(
-        persona_id=persona.id,
+        persona_id=persona_pk,
         action_type="CREATE_POST",
         target_id=latest_post.id,
         prompt_context=user_prompt,
@@ -246,8 +251,8 @@ def execute_persona_post(persona: AIPersona, prompt_topic: str, force: bool = Fa
     )
     db.session.add(log_entry)
     db.session.commit()
-    print(f"✅ Successfully created post ID {latest_post.id} for '{persona.name}'")
-    logger.info("Persona '%s' successfully created post %s", persona.name, latest_post.id)
+    print(f"✅ Successfully created post ID {latest_post.id} for '{persona_name}'")
+    logger.info("Persona '%s' successfully created post %s", persona_name, latest_post.id)
     return True
 def execute_persona_comment(persona: AIPersona, post: Post) -> bool:
     """
@@ -338,6 +343,11 @@ def execute_persona_comment(persona: AIPersona, post: Post) -> bool:
             return False
         csrf_token = match.group(1)
 
+        # Capture scalar values before DB session tears down during request
+        persona_user_id = persona.user_id
+        persona_name = persona.name
+        persona_pk = persona.id
+
         # 3. Submit the comment via the real route to ensure it passes through all standard logic
         res = client.post(
             f"/add_comment/{post.id}",
@@ -349,7 +359,7 @@ def execute_persona_comment(persona: AIPersona, post: Post) -> bool:
         if res.status_code == 200 and res.json.get("success"):
             comment_id = res.json.get("comment", {}).get("id")
             log_entry = AILog(
-                persona_id=persona.id,
+                persona_id=persona_pk,
                 action_type="REPLY_COMMENT",
                 target_id=comment_id or post.id,
                 prompt_context=user_prompt,
@@ -360,8 +370,8 @@ def execute_persona_comment(persona: AIPersona, post: Post) -> bool:
             )
             db.session.add(log_entry)
             db.session.commit()
-            logger.info("Persona '%s' commented on post %d", persona.name, post.id)
+            logger.info("Persona '%s' commented on post %d", persona_name, post.id)
             return True
         else:
-            logger.error("Failed comment post for persona '%s', HTTP %d", persona.name, res.status_code)
+            logger.error("Failed comment post for persona '%s', HTTP %d", persona_name, res.status_code)
             return False
