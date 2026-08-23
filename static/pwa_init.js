@@ -81,6 +81,9 @@ function subscribeUser(registration) {
   .then(function(subscription) {
     console.log('User is subscribed to Push:', subscription);
 
+    const payload = JSON.parse(JSON.stringify(subscription));
+    payload.isStandalone = ('standalone' in window.navigator && window.navigator.standalone) || window.matchMedia('(display-mode: standalone)').matches;
+
     // Send subscription to backend with CSRF token
     return fetch('/api/pwa/subscribe', {
       method: 'POST',
@@ -88,7 +91,7 @@ function subscribeUser(registration) {
         'Content-Type': 'application/json',
         'X-CSRFToken': getPushCsrfToken()
       },
-      body: JSON.stringify(subscription)
+      body: JSON.stringify(payload)
     })
     .then(function(response) {
       if (!response.ok) {

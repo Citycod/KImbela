@@ -207,6 +207,52 @@ def init_scheduler(app):
             except Exception as e:
                 logger.error(f"Error in weekly performance report: {str(e)}")
 
+    # Birthday Pushes - Hourly check (Step 5 & 6)
+    @scheduler.scheduled_job("cron", minute=0, id="birthday_web_pushes")
+    def send_birthday_pushes():
+        """Hourly check to send birthday pushes to users in their local timezone"""
+        with app.app_context():
+            from models import User, BirthdayNotificationLog
+            import pytz
+            from utils.push_service import send_push_notification
+            
+            try:
+                users = User.query.filter(User.dob != None).all()
+                for user in users:
+                    # 1. Get user's local time
+                    tz_name = user.timezone or 'UTC'
+                    try:
+                        local_tz = pytz.timezone(tz_name)
+                    except:
+                        local_tz = pytz.UTC
+                    
+                    local_now = datetime.now(pytz.utc).astimezone(local_tz)
+                    
+                    # Send if it's their birthday today (local time) and hour >= 9 AM
+                    if local_now.month == user.dob.month and local_now.day == user.dob.day:
+                        if local_now.hour >= 9:
+                            # 2. Check if we already sent for this year
+                            log = BirthdayNotificationLog.query.filter_by(user_id=user.id, year=local_now.year).first()
+                            if not log:
+                                # 3. Send Push!
+                                payload = {
+                                    "title": "🎉 Happy Birthday!",
+                                    "body": f"Wishing you a great day, {user.first_name or 'friend'}! 🎂",
+                                    "icon": "/static/assets/img/kimbela_icon_512.png",
+                                    "url": "/user_dashboard"
+                                }
+                                # send_push_notification handles iterating subscriptions and pruning dead ones
+                                send_push_notification(user.id, payload)
+                                
+                                # Log it to prevent duplicate sends this year
+                                new_log = BirthdayNotificationLog(user_id=user.id, year=local_now.year)
+                                db.session.add(new_log)
+                                db.session.commit()
+                                time.sleep(0.5) # Prevent blasting the CPU/network
+            except Exception as e:
+                logger.error(f"Error in send_birthday_pushes: {str(e)}")
+                db.session.rollback()
+
     # Start the scheduler
     scheduler.start()
     logger.info("Optimized scheduler started successfully")

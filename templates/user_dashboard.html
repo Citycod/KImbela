@@ -443,6 +443,52 @@
     <!-- ── MAIN CONTENT ── -->
     <main class="kb-main-content">
 
+      <!-- Push Notification Prompt Banner -->
+      <div id="push-prompt-banner" class="alert alert-primary alert-dismissible fade show d-none align-items-center mb-4" role="alert" style="border-radius: 12px; background: rgba(13, 110, 253, 0.1); border: 1px solid rgba(13, 110, 253, 0.2);">
+        <div class="d-flex w-100 justify-content-between align-items-center">
+          <div>
+            <strong><i class="bi bi-bell-fill text-primary me-2"></i> Never miss an update!</strong>
+            <span class="d-block d-sm-inline ms-sm-2 text-muted">Enable push notifications to get birthday reminders and instant alerts.</span>
+          </div>
+          <button class="btn btn-primary btn-sm ms-3 text-nowrap" onclick="handlePushEnableClick(this)">Turn On</button>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" onclick="localStorage.setItem('pushPromptDismissed', 'true')"></button>
+      </div>
+
+      <script>
+        function handlePushEnableClick(btn) {
+          btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+          btn.disabled = true;
+          if (typeof enablePushNotifications === 'function') {
+            enablePushNotifications().then(success => {
+              if (success) {
+                document.getElementById('push-prompt-banner').classList.add('d-none');
+                alert("Notifications enabled successfully!");
+              } else {
+                btn.innerHTML = 'Turn On';
+                btn.disabled = false;
+              }
+            });
+          }
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+          // Only show banner if PushManager is supported, permission hasn't been asked/denied yet, and user hasn't dismissed it
+          if ('serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window) {
+            if (Notification.permission === 'default' && !localStorage.getItem('pushPromptDismissed')) {
+              // On iOS, only show if they are actually inside the installed PWA
+              const isIos = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
+              const isStandalone = ('standalone' in window.navigator && window.navigator.standalone) || window.matchMedia('(display-mode: standalone)').matches;
+              
+              if (!isIos || isStandalone) {
+                document.getElementById('push-prompt-banner').classList.remove('d-none');
+                document.getElementById('push-prompt-banner').classList.add('d-flex');
+              }
+            }
+          }
+        });
+      </script>
+
       <!-- HERO BANNER AD -->
       <div class="kb-hero-banner {% if top_banner_new %}has-ad{% endif %}">
         <a href="{{ top_banner_url_new }}" {% if top_banner_new %}target="_blank" rel="noopener" {% endif %}>
@@ -5478,5 +5524,22 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
     });
   </script>
   {% endif %}
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      if (typeof Intl !== 'undefined' && Intl.DateTimeFormat) {
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        if (tz) {
+          fetch('/api/user/timezone', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': typeof csrfToken !== 'undefined' ? csrfToken : (document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : '')
+            },
+            body: JSON.stringify({ timezone: tz })
+          }).catch(err => console.error("Timezone sync error:", err));
+        }
+      }
+    });
+  </script>
   {% include 'partials/report_modal.html' %}
 {% endblock %}

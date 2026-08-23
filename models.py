@@ -88,7 +88,7 @@ class User(db.Model, UserMixin):
     dob = db.Column(db.Date, nullable=False)
     gender = db.Column(db.String(20), nullable=False)
     phone_number = db.Column(db.String(20), nullable=False)
-    timezone = db.Column(db.String(50), default='UTC', nullable=False)
+    timezone = db.Column(db.String(50), default='UTC', server_default='UTC', nullable=False)
     interests = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=utcnow)
     updated_at = db.Column(

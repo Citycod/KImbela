@@ -4180,6 +4180,21 @@ def get_upcoming_birthdays(user_id, days_ahead=7):
     return upcoming_birthdays
 
 
+@user.route('/api/user/timezone', methods=['POST'])
+@login_required
+def update_timezone():
+    from extensions import db
+    data = request.get_json()
+    if not data or 'timezone' not in data:
+        return jsonify({'error': 'Timezone is required'}), 400
+    
+    tz = data['timezone']
+    if current_user.timezone != tz:
+        current_user.timezone = tz
+        db.session.commit()
+    
+    return jsonify({'message': 'Timezone synced', 'timezone': tz})
+
 @user.route('/api/pwa/subscribe', methods=['POST'])
 @login_required
 def pwa_subscribe():
@@ -4195,7 +4210,26 @@ def pwa_subscribe():
     keys = data.get('keys', {})
     p256dh = keys.get('p256dh')
     auth = keys.get('auth')
-    ua = request.headers.get('User-Agent', '')
+    
+    is_standalone = data.get('isStandalone', False)
+    raw_ua = request.headers.get('User-Agent', '')
+    
+    # Infer platform
+    is_ios = any(x in raw_ua.lower() for x in ['iphone', 'ipad', 'ipod', 'mac os x']) and 'mobile' in raw_ua.lower()
+    is_android = 'android' in raw_ua.lower()
+    
+    if is_ios and is_standalone:
+        platform_tag = '[iOS PWA]'
+    elif is_android and is_standalone:
+        platform_tag = '[Android PWA]'
+    elif is_ios:
+        platform_tag = '[iOS Web]'
+    elif is_android:
+        platform_tag = '[Android Web]'
+    else:
+        platform_tag = '[Desktop Web]'
+
+    ua = f"{platform_tag} {raw_ua}"
 
     # Check if subscription already exists for this endpoint
     existing = PushSubscription.query.filter_by(endpoint=endpoint).first()
