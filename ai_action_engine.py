@@ -90,11 +90,13 @@ def handle_escalation(persona: AIPersona, prompt_context: str, generated_content
     )
 
 
-def execute_persona_post(persona: AIPersona, prompt_topic: str) -> bool:
+def execute_persona_post(persona: AIPersona, prompt_topic: str, force: bool = False) -> bool:
     """
     Generates and publishes a post for a persona via internal client/route.
+    Set force=True to bypass daily post limit checks during manual testing.
     """
-    if get_daily_action_count(persona.id, "CREATE_POST") >= MAX_DAILY_POSTS:
+    if not force and get_daily_action_count(persona.id, "CREATE_POST") >= MAX_DAILY_POSTS:
+        print(f"🛑 Persona '{persona.name}' reached daily post limit ({MAX_DAILY_POSTS}/day). Use force=True to bypass.")
         logger.info("Persona '%s' reached daily post limit.", persona.name)
         return False
 
