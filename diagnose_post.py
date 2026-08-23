@@ -72,7 +72,12 @@ with app.app_context():
     # 4. Test Client Authentication & CSRF
     print("\n4. Setting up Test Client & Authenticated Session...")
     with app.test_client() as client:
-        with app.test_request_context("/"):
+        with app.test_request_context("/", base_url="http://localhost/"):
+            if not user_obj.is_active:
+                print(f"⚠️ Activating User record ID {persona.user_id}...")
+                user_obj.is_active = True
+                db.session.commit()
+                
             login_user(user_obj)
             csrf_token = generate_csrf()
             session_data = dict(session)
@@ -88,6 +93,8 @@ with app.app_context():
         res = client.post(
             "/user_dashboard",
             data={"post_content": response.content, "csrf_token": csrf_token},
+            headers={"Referer": "http://localhost/user_dashboard"},
+            base_url="http://localhost/",
             follow_redirects=False,
         )
 

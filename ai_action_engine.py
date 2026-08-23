@@ -145,7 +145,7 @@ def execute_persona_post(persona: AIPersona, prompt_topic: str, force: bool = Fa
 
     # Execute post creation via test client (authenticated route call)
     with current_app.test_client() as client:
-        with current_app.test_request_context("/"):
+        with current_app.test_request_context("/", base_url="http://localhost/"):
             from flask_wtf.csrf import generate_csrf
             from flask_login import login_user
             from flask import session
@@ -171,6 +171,8 @@ def execute_persona_post(persona: AIPersona, prompt_topic: str, force: bool = Fa
         res = client.post(
             "/user_dashboard",
             data={"post_content": response.content, "csrf_token": csrf_token},
+            headers={"Referer": "http://localhost/user_dashboard"},
+            base_url="http://localhost/",
             follow_redirects=False,
         )
 
@@ -267,7 +269,7 @@ def execute_persona_comment(persona: AIPersona, post: Post) -> bool:
 
     # Execute comment creation via test client
     with current_app.test_client() as client:
-        with current_app.test_request_context("/"):
+        with current_app.test_request_context("/", base_url="http://localhost/"):
             from flask_wtf.csrf import generate_csrf
             from flask_login import login_user
             from flask import session
@@ -293,7 +295,8 @@ def execute_persona_comment(persona: AIPersona, post: Post) -> bool:
         res = client.post(
             f"/add_comment/{post.id}",
             json={"content": response.content},
-            headers={"X-CSRFToken": csrf_token},
+            headers={"X-CSRFToken": csrf_token, "Referer": f"http://localhost/add_comment/{post.id}"},
+            base_url="http://localhost/",
         )
 
         if res.status_code == 200 and res.json.get("success"):
