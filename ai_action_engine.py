@@ -124,8 +124,13 @@ def execute_persona_post(persona: AIPersona, prompt_topic: str, force: bool = Fa
         )
         return False
 
+    import time
+    t_start = time.perf_counter()
     try:
+        t_llm_start = time.perf_counter()
         response: LLMResponse = generate_content(persona_config, user_prompt)
+        t_llm_end = time.perf_counter()
+        print(f"⏱️  [TIMING] LLM Generation took: {t_llm_end - t_llm_start:.3f}s")
     except Exception as exc:
         print(f"❌ Exception during generate_content for '{persona.name}': {exc}")
         import traceback
@@ -144,6 +149,7 @@ def execute_persona_post(persona: AIPersona, prompt_topic: str, force: bool = Fa
         return False
 
     # Execute post creation via test client (authenticated route call)
+    t_route_start = time.perf_counter()
     with current_app.test_client() as client:
         with current_app.test_request_context("/", base_url="http://localhost/"):
             from flask_wtf.csrf import generate_csrf
@@ -181,39 +187,45 @@ def execute_persona_post(persona: AIPersona, prompt_topic: str, force: bool = Fa
             follow_redirects=False,
         )
 
-        print(f"📄 Route Response Status: {res.status_code}")
-        print(f"📄 Route Response Location: {res.location}")
-        if res.status_code not in (200, 302):
-            print(f"📄 Route Response Body: {res.data.decode('utf-8', errors='ignore')[:400]}")
+    t_route_end = time.perf_counter()
+    print(f"⏱️  [TIMING] Route HTTP POST /user_dashboard took: {t_route_end - t_route_start:.3f}s")
+    print(f"📄 Route Response Status: {res.status_code}")
+    print(f"📄 Route Response Location: {res.location}")
+    if res.status_code not in (200, 302):
+        print(f"📄 Route Response Body: {res.data.decode('utf-8', errors='ignore')[:400]}")
 
-        if res.status_code == 302 and "/login" in (res.location or ""):
-            print(f"❌ Authentication failed! @login_required redirected to: {res.location}")
-            return False
+    if res.status_code == 302 and "/login" in (res.location or ""):
+        print(f"❌ Authentication failed! @login_required redirected to: {res.location}")
+        return False
 
-        db.session.remove()
-        latest_post = Post.query.filter_by(author_id=persona.user_id).order_by(Post.id.desc()).first()
+    t_db_start = time.perf_counter()
+    db.session.remove()
+    latest_post = Post.query.filter_by(author_id=persona.user_id).order_by(Post.id.desc()).first()
+    t_db_end = time.perf_counter()
+    print(f"⏱️  [TIMING] DB Query verification took: {t_db_end - t_db_start:.3f}s")
+    print(f"⏱️  [TIMING] Total persona execution took: {time.perf_counter() - t_start:.3f}s")
         
-        if not latest_post or latest_post.content != response.content:
-            actual_content = latest_post.content[:30] if latest_post else "None"
-            print(f"❌ Post verification failed! Expected '{response.content[:30]}...', got '{actual_content}...'")
-            logger.error("Post creation failed for persona '%s': post not found in DB or content mismatch.", persona.name)
-            return False
+    if not latest_post or latest_post.content != response.content:
+        actual_content = latest_post.content[:30] if latest_post else "None"
+        print(f"❌ Post verification failed! Expected '{response.content[:30]}...', got '{actual_content}...'")
+        logger.error("Post creation failed for persona '%s': post not found in DB or content mismatch.", persona.name)
+        return False
 
-        log_entry = AILog(
-            persona_id=persona.id,
-            action_type="CREATE_POST",
-            target_id=latest_post.id,
-            prompt_context=user_prompt,
-            generated_content=response.content,
-            provider_used=response.provider_used,
-            is_escalated=False,
-            timestamp=utcnow(),
-        )
-        db.session.add(log_entry)
-        db.session.commit()
-        print(f"✅ Successfully created post ID {latest_post.id} for '{persona.name}'")
-        logger.info("Persona '%s' successfully created post %s", persona.name, latest_post.id)
-        return True
+    log_entry = AILog(
+        persona_id=persona.id,
+        action_type="CREATE_POST",
+        target_id=latest_post.id,
+        prompt_context=user_prompt,
+        generated_content=response.content,
+        provider_used=response.provider_used,
+        is_escalated=False,
+        timestamp=utcnow(),
+    )
+    db.session.add(log_entry)
+    db.session.commit()
+    print(f"✅ Successfully created post ID {latest_post.id} for '{persona.name}'")
+    logger.info("Persona '%s' successfully created post %s", persona.name, latest_post.id)
+    return True
 def execute_persona_comment(persona: AIPersona, post: Post) -> bool:
     """
     Generates and posts a reply comment on a post for a persona.
