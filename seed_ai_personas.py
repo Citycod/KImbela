@@ -83,6 +83,7 @@ def seed():
                 db.session.add(persona_rec)
             else:
                 persona_rec.personality = p_data["personality"]
+                persona_rec.bio_disclosure = p_data["bio_disclosure"]
                 persona_rec.interests = p_data["interests"]
                 persona_rec.escalation_rule = p_data["escalation_rule"]
                 persona_rec.forbidden_actions = p_data["forbidden_actions"]
