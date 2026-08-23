@@ -57,10 +57,11 @@ def seed():
                 db.session.commit()
                 print(f"✓ Created User account for {name} (ID: {user.id})")
             else:
+                user.is_active = True
                 user.is_ai_persona = True
                 user.bio = p_data["bio_disclosure"]
                 db.session.commit()
-                print(f"✓ Updated existing User account for {name} (ID: {user.id})")
+                print(f"✓ Updated existing User account for {name} (ID: {user.id}, Active: {user.is_active})")
 
             # Create or update AIPersona config
             persona_rec = AIPersona.query.filter_by(user_id=user.id).first()

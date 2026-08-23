@@ -155,10 +155,15 @@ def execute_persona_post(persona: AIPersona, prompt_topic: str, force: bool = Fa
                 print(f"❌ User ID {persona.user_id} for persona '{persona.name}' does not exist in DB!")
                 return False
                 
+            if not getattr(user_obj, "is_ai_persona", False):
+                print(f"❌ Security violation: User ID {persona.user_id} is NOT an AI persona account!")
+                logger.error("Security violation: User ID %d is NOT an AI persona account.", persona.user_id)
+                return False
+
             if not user_obj.is_active:
-                print(f"⚠️ Activating User ID {persona.user_id} for AI persona '{persona.name}'...")
-                user_obj.is_active = True
-                db.session.commit()
+                print(f"❌ User ID {persona.user_id} for persona '{persona.name}' is inactive! Run seed script to activate.")
+                logger.error("User ID %d for persona '%s' is inactive.", persona.user_id, persona.name)
+                return False
 
             login_user(user_obj)
             csrf_token = generate_csrf()
@@ -274,9 +279,13 @@ def execute_persona_comment(persona: AIPersona, post: Post) -> bool:
                 logger.error("User ID %d for persona '%s' does not exist in DB!", persona.user_id, persona.name)
                 return False
                 
+            if not getattr(user_obj, "is_ai_persona", False):
+                logger.error("Security violation: User ID %d is NOT an AI persona account!", persona.user_id)
+                return False
+
             if not user_obj.is_active:
-                user_obj.is_active = True
-                db.session.commit()
+                logger.error("User ID %d for persona '%s' is inactive!", persona.user_id, persona.name)
+                return False
 
             login_user(user_obj)
             csrf_token = generate_csrf()
