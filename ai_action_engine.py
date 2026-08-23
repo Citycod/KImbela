@@ -169,6 +169,11 @@ def execute_persona_post(persona: AIPersona, prompt_topic: str, force: bool = Fa
             follow_redirects=False,
         )
 
+        print(f"📄 Route Response Status: {res.status_code}")
+        print(f"📄 Route Response Location: {res.location}")
+        if res.status_code not in (200, 302):
+            print(f"📄 Route Response Body: {res.data.decode('utf-8', errors='ignore')[:400]}")
+
         if res.status_code == 302 and "/login" in (res.location or ""):
             print(f"❌ Authentication failed! @login_required redirected to: {res.location}")
             return False
@@ -179,7 +184,7 @@ def execute_persona_post(persona: AIPersona, prompt_topic: str, force: bool = Fa
         
         if not latest_post or latest_post.content != response.content:
             actual_content = latest_post.content[:30] if latest_post else "None"
-            print(f"❌ Route status {res.status_code} (Location: {res.headers.get('Location')}), expected '{response.content[:30]}...', got '{actual_content}...'")
+            print(f"❌ Post verification failed! Expected '{response.content[:30]}...', got '{actual_content}...'")
             logger.error("Post creation failed for persona '%s': post not found in DB or content mismatch.", persona.name)
             return False
 
