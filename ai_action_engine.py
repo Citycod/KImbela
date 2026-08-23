@@ -164,10 +164,13 @@ def execute_persona_post(persona: AIPersona, prompt_topic: str, force: bool = Fa
         )
 
         if res.status_code in (200, 302):
+            db.session.commit()
+            db.session.expire_all()
             latest_post = Post.query.filter_by(author_id=persona.user_id).order_by(Post.id.desc()).first()
             
             if not latest_post or latest_post.content != response.content:
-                print(f"❌ Route call status {res.status_code}, but post not found or content mismatch! Expected content: '{response.content[:30]}...'")
+                actual_content = latest_post.content[:30] if latest_post else "None"
+                print(f"❌ Route call status {res.status_code}, expected '{response.content[:30]}...', got '{actual_content}...'")
                 logger.error("Post creation failed for persona '%s': post not found in DB or content mismatch.", persona.name)
                 return False
 
