@@ -22,7 +22,7 @@ def test_push_and_email(email):
         print(f"Found user: {user.first_name} {user.last_name}")
         
         # 1. Test Push Notification
-        subs = user.push_subscriptions.all()
+        subs = user.push_subscriptions
         if not subs:
             print(f"⚠️ User has NO active push subscriptions.")
             print("Please log in on your device, tap 'Turn On' notifications in the dashboard banner, and try again.")
