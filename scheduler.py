@@ -244,6 +244,10 @@ def init_scheduler(app):
                                 # send_push_notification handles iterating subscriptions and pruning dead ones
                                 send_push_notification(user.id, payload)
                                 
+                                # Send Email fallback!
+                                from email_service import EmailService
+                                EmailService.send_birthday_email(user)
+                                
                                 # Log it to prevent duplicate sends this year
                                 new_log = BirthdayNotificationLog(user_id=user.id, year=local_now.year)
                                 db.session.add(new_log)

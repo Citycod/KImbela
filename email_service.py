@@ -15,6 +15,50 @@ class EmailService:
         return f"{current_app.config.get('BASE_URL', 'http://localhost:5000')}/static/assets/img/kim.png"
 
     @staticmethod
+    def send_birthday_email(user):
+        """Send a birthday email to the user."""
+        try:
+            eyebrow = "🎉 Happy Birthday"
+            title = f"Happy Birthday, {user.first_name}!"
+            subtitle = "Wishing you a fantastic day from Kimbela! 🎂"
+            
+            body_html = f"""
+            <div class="lead">
+                Hi {user.first_name},
+            </div>
+            <p>
+                We noticed it's your birthday today! On behalf of the entire Kimbela community, we want to wish you a very happy birthday.
+            </p>
+            <p>
+                We hope your day is filled with joy, and your year ahead brings you everything you're hoping for.
+            </p>
+            <div class="panel" style="text-align: center;">
+                <strong>Log in today to see what's new!</strong><br>
+                <a href="{current_app.config.get('BASE_URL', 'http://localhost:5001')}/user_dashboard" class="button">Go to Dashboard</a>
+            </div>
+            """
+            
+            html = EmailService._render_matchmaking_shell(
+                eyebrow=eyebrow,
+                title=title,
+                subtitle=subtitle,
+                body_html=body_html,
+                accent="linear-gradient(135deg, #FF6B6B 0%, #FF8E53 55%, #FFAF38 100%)"
+            )
+            
+            msg = Message(
+                subject=title,
+                recipients=[user.email],
+                sender=current_app.config["MAIL_DEFAULT_SENDER"],
+            )
+            msg.html = html
+            mail.send(msg)
+            return True
+        except Exception as e:
+            logger.error(f"Error sending birthday email to {user.email}: {e}")
+            return False
+
+    @staticmethod
     def _render_matchmaking_shell(eyebrow, title, subtitle, body_html, accent="linear-gradient(135deg, #17324d 0%, #3f2d64 55%, #b37b37 100%)"):
         return f"""
         <!DOCTYPE html>
