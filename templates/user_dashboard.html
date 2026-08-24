@@ -17,10 +17,11 @@
 <link href="{{ url_for('static', filename='assets/css/user_dashboard_inline.css') }}?v={{ range(1, 1000000) | random }}"
   rel="stylesheet" />
 
-<!-- Dashboard Redesign Override -p->
-  <link href="{{ url_for('static', filename='assets/css/dashboard_redesign.css') }}?v={{ range(1, 1000000) | random }}" rel="stylesheet" />
+<!-- Dashboard Redesign Override -->
+<link href="{{ url_for('static', filename='assets/css/dashboard_redesign.css') }}?v={{ range(1, 1000000) | random }}"
+  rel="stylesheet" />
 
-  <!-- External CSS -->
+<!-- External CSS -->
 <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" />
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
@@ -1950,7 +1951,7 @@ placement='dashboard-top') %}
           {% endif %}
         </div> -->
 
-    <!--PEOPLE YOU MAY KNOW -->
+    <!-- PEOPLE YOU MAY KNOW -->
 
     <h1 class="font-semibold text-lg">Say Hi to Someone New</h1>
 
@@ -1979,7 +1980,7 @@ placement='dashboard-top') %}
               New to Kimbela
             </div>
 
-            Dynamic Button based on status
+            <!-- Dynamic Button based on status -->
             {% if user.friend_request_status == 'sent' %}
             <button
               class="btn-cancel-request w-full py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors"
@@ -2019,7 +2020,6 @@ placement='dashboard-top') %}
       </div>
     </div>
     {% endif %}
-
 
 
 
