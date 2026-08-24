@@ -443,7 +443,7 @@
     <!-- ── MAIN CONTENT ── -->
     <main class="kb-main-content">
 
-      {% if not current_user.push_subscriptions.first() %}
+      {% if not current_user.push_subscriptions %}
       <!-- Push Notification Prompt Banner -->
       <div id="push-prompt-banner" class="alert alert-primary alert-dismissible fade show align-items-center mb-4" role="alert" style="border-radius: 12px; background: rgba(13, 110, 253, 0.1); border: 1px solid rgba(13, 110, 253, 0.2);">
         <div class="d-flex w-100 justify-content-between align-items-center">
