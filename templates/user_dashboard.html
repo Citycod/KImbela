@@ -443,8 +443,9 @@
     <!-- ── MAIN CONTENT ── -->
     <main class="kb-main-content">
 
+      {% if not current_user.push_subscriptions.first() %}
       <!-- Push Notification Prompt Banner -->
-      <div id="push-prompt-banner" class="alert alert-primary alert-dismissible fade show d-none align-items-center mb-4" role="alert" style="border-radius: 12px; background: rgba(13, 110, 253, 0.1); border: 1px solid rgba(13, 110, 253, 0.2);">
+      <div id="push-prompt-banner" class="alert alert-primary alert-dismissible fade show align-items-center mb-4" role="alert" style="border-radius: 12px; background: rgba(13, 110, 253, 0.1); border: 1px solid rgba(13, 110, 253, 0.2);">
         <div class="d-flex w-100 justify-content-between align-items-center">
           <div>
             <strong><i class="bi bi-bell-fill text-primary me-2"></i> Never miss an update!</strong>
@@ -462,8 +463,7 @@
           if (typeof enablePushNotifications === 'function') {
             enablePushNotifications().then(success => {
               if (success) {
-                document.getElementById('push-prompt-banner').classList.remove('d-flex');
-                document.getElementById('push-prompt-banner').classList.add('d-none');
+                document.getElementById('push-prompt-banner').style.display = 'none';
                 alert("Notifications enabled successfully!");
               } else {
                 btn.innerHTML = 'Turn On';
@@ -472,23 +472,8 @@
             });
           }
         }
-
-        document.addEventListener("DOMContentLoaded", function() {
-          // Only show banner if PushManager is supported, permission hasn't been asked/denied yet, and user hasn't dismissed it
-          if ('serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window) {
-            if (Notification.permission === 'default' && !localStorage.getItem('pushPromptDismissed')) {
-              // On iOS, only show if they are actually inside the installed PWA
-              const isIos = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
-              const isStandalone = ('standalone' in window.navigator && window.navigator.standalone) || window.matchMedia('(display-mode: standalone)').matches;
-              
-              if (!isIos || isStandalone) {
-                document.getElementById('push-prompt-banner').classList.remove('d-none');
-                document.getElementById('push-prompt-banner').classList.add('d-flex');
-              }
-            }
-          }
-        });
       </script>
+      {% endif %}
 
       <!-- HERO BANNER AD -->
       <div class="kb-hero-banner {% if top_banner_new %}has-ad{% endif %}">
