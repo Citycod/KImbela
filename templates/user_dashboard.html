@@ -462,6 +462,7 @@
           if (typeof enablePushNotifications === 'function') {
             enablePushNotifications().then(success => {
               if (success) {
+                document.getElementById('push-prompt-banner').classList.remove('d-flex');
                 document.getElementById('push-prompt-banner').classList.add('d-none');
                 alert("Notifications enabled successfully!");
               } else {
