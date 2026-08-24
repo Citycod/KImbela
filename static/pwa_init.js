@@ -74,42 +74,54 @@ window.enablePushNotifications = function() {
 
 function subscribeUser(registration) {
   const applicationServerKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
-  return registration.pushManager.subscribe({
-    userVisibleOnly: true,
-    applicationServerKey: applicationServerKey
-  })
-  .then(function(subscription) {
-    console.log('User is subscribed to Push:', subscription);
-
-    const payload = JSON.parse(JSON.stringify(subscription));
-    payload.isStandalone = ('standalone' in window.navigator && window.navigator.standalone) || window.matchMedia('(display-mode: standalone)').matches;
-
-    // Send subscription to backend with CSRF token
-    return fetch('/api/pwa/subscribe', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': getPushCsrfToken()
-      },
-      body: JSON.stringify(payload)
-    })
-    .then(function(response) {
-      if (!response.ok) {
-        console.error('Failed to save subscription on backend (status ' + response.status + ')');
-        return false;
+  
+  // First, check if there's an existing subscription (with old keys) and clear it
+  return registration.pushManager.getSubscription()
+    .then(function(existingSubscription) {
+      if (existingSubscription) {
+        console.log('Clearing old subscription before re-subscribing...');
+        return existingSubscription.unsubscribe();
       }
-      console.log('Subscription saved on backend.');
-      return true;
+    })
+    .then(function() {
+      // Now create a fresh subscription with the new keys
+      return registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: applicationServerKey
+      });
+    })
+    .then(function(subscription) {
+      console.log('User is subscribed to Push:', subscription);
+
+      const payload = JSON.parse(JSON.stringify(subscription));
+      payload.isStandalone = ('standalone' in window.navigator && window.navigator.standalone) || window.matchMedia('(display-mode: standalone)').matches;
+
+      // Send subscription to backend with CSRF token
+      return fetch('/api/pwa/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getPushCsrfToken()
+        },
+        body: JSON.stringify(payload)
+      })
+      .then(function(response) {
+        if (!response.ok) {
+          console.error('Failed to save subscription on backend (status ' + response.status + ')');
+          return false;
+        }
+        console.log('Subscription saved on backend.');
+        return true;
+      })
+      .catch(function(err) {
+        console.error('Error saving subscription:', err);
+        return false;
+      });
     })
     .catch(function(err) {
-      console.error('Error saving subscription:', err);
+      console.log('Failed to subscribe the user: ', err);
       return false;
     });
-  })
-  .catch(function(err) {
-    console.log('Failed to subscribe the user: ', err);
-    return false;
-  });
 }
 
 
