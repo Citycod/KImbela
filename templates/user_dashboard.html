@@ -1953,73 +1953,7 @@ placement='dashboard-top') %}
 
     <!-- PEOPLE YOU MAY KNOW -->
 
-    <h1 class="font-semibold text-lg">Say Hi to Someone New</h1>
 
-    {% if random_five %}
-    <div class="suggestions-section bg-white rounded-2xl shadow-soft p-4 mb-6">
-      <div class="flex justify-between items-center mb-3 sm:mb-4">
-      </div>
-      <div class="relative suggestions-carousel">
-        <button class="suggestions-nav suggestions-prev" id="suggestionsPrev" type="button"
-          aria-label="Previous profile">
-          <i class="bi bi-chevron-left"></i>
-        </button>
-        <button class="suggestions-nav suggestions-next" id="suggestionsNext" type="button" aria-label="Next profile">
-          <i class="bi bi-chevron-right"></i>
-        </button>
-        <div class="suggestions-track flex items-center space-x-4" id="suggestionsTrack">
-          {% for user in random_five %}
-          <div class="suggestion-card bg-gray-50 rounded-2xl p-4 text-center w-full max-w-xs cursor-pointer card-hover"
-            onclick="openProfileModal({{ user.id }})">
-            <img src="{{ user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-              alt="{{ user.first_name }}" class="w-20 h-20 rounded-full object-cover mx-auto mb-2 sm:mb-3" />
-            <div class="suggestion-name font-semibold">
-              {{ user.first_name }} {{ user.last_name }}
-            </div>
-            <div class="suggestion-mutual text-sm text-fb-text-light mb-3">
-              New to Kimbela
-            </div>
-
-            <!-- Dynamic Button based on status -->
-            {% if user.friend_request_status == 'sent' %}
-            <button
-              class="btn-cancel-request w-full py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors"
-              onclick="event.stopPropagation(); cancelFriendRequest({{ user.id }}, this)" data-user-id="{{ user.id }}">
-              <i class="bi bi-clock-history mr-1"></i> Cancel Request
-            </button>
-            {% elif user.friend_request_status == 'received' %}
-            <div class="space-y-2">
-              <button
-                class="w-full py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
-                onclick="event.stopPropagation(); acceptFriendRequest({{ user.id }}, this)">
-                <i class="bi bi-check-lg mr-1"></i> Accept
-              </button>
-              <button
-                class="w-full py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors"
-                onclick="event.stopPropagation(); declineFriendRequest({{ user.id }}, this)">
-                <i class="bi bi-x-lg mr-1"></i> Decline
-              </button>
-            </div>
-            {% elif user.friend_request_status == 'friends' %}
-            <button
-              class="w-full py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
-              onclick="event.stopPropagation(); window.openMessenger({{ user.id }})">
-              <i class="bi bi-chat-dots mr-1"></i> Message
-            </button>
-            {% else %}
-            <button
-              class="btn-add-friend w-full py-2 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
-              onclick="event.stopPropagation(); addFriend({{ user.id }}, this)" data-user-id="{{ user.id }}"
-              style="background: #ff7f50">
-              <i class="bi bi-person-plus mr-1"></i> Connect
-            </button>
-            {% endif %}
-          </div>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
-    {% endif %}
 
 
 
