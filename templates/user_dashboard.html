@@ -83,12 +83,15 @@
   </div>
 
   <!-- Center: Search bar -->
-  <div class="flex justify-start flex-1 min-w-0 mx-2 lg:ml-10 lg:mr-auto lg:max-w-md searching">
-    <div class="relative w-full min-w-0">
-      <i
+  <div id="searchContainer" class="hidden md:flex justify-start flex-1 min-w-0 mx-2 lg:ml-10 lg:mr-auto lg:max-w-md searching">
+    <div class="relative w-full min-w-0 flex items-center">
+      <button class="md:hidden p-2 mr-2 text-gray-500 hover:bg-gray-100 rounded-full flex-shrink-0" onclick="toggleMobileSearch()" id="closeMobileSearchBtn" style="display:none;">
+        <i class="bi bi-arrow-left text-xl"></i>
+      </button>
+      <i id="searchIconInner"
         class="bi bi-search absolute left-3 lg:left-4 top-1/2 transform -translate-y-1/2 text-fb-text-light text-base lg:text-lg"></i>
       <input type="text" id="globalSearch" placeholder="Search..."
-        class="w-full pl-10 lg:pl-12 pr-3 lg:pr-4 py-2 bg-fb-gray rounded-full border border-gray-300 focus:border-fb-blue focus:ring-2 focus:ring-fb-blue focus:outline-none transition-all text-xs lg:text-base searching search_input" />
+        class="w-full pl-10 lg:pl-12 pr-3 lg:pr-4 py-2 bg-fb-gray rounded-full border border-gray-300 focus:border-fb-blue focus:ring-2 focus:ring-fb-blue focus:outline-none transition-all text-sm lg:text-base searching search_input" />
 
       <div
         class="search-results absolute top-full left-0 right-0 mt-1 bg-white rounded-xl shadow-strong overflow-hidden z-50 hidden"
@@ -292,6 +295,10 @@
   <!-- Messenger & Notifications (keep these on far right) -->
   <div
     class="flex items-center flex-shrink-0 space-x-1 lg:space-x-2 ml-1 sm:ml-2 lg:ml-4 border-l border-gray-200 pl-1 sm:pl-2 lg:pl-4">
+    <!-- Mobile Search Toggle -->
+    <button class="p-2 rounded-full hover:bg-fb-gray transition-colors md:hidden" onclick="toggleMobileSearch()">
+      <i class="bi bi-search text-xl font-bold"></i>
+    </button>
     <button id="openMessaging" onclick="window.openMessenger()"
       class="p-2 rounded-full hover:bg-fb-gray transition-colors relative">
       <img src="{{ url_for('static', filename='assets/img/message 1.png') }}" alt="chat" class="h-6 mr-2" />
@@ -329,6 +336,34 @@
         alt="{{ current_user.first_name }}" class="kb-nav-avatar" />
     </a>
   </div>
+
+  <script>
+  function toggleMobileSearch() {
+    const container = document.getElementById('searchContainer');
+    const closeBtn = document.getElementById('closeMobileSearchBtn');
+    const innerIcon = document.getElementById('searchIconInner');
+    const searchInput = document.getElementById('globalSearch');
+    
+    if (container.classList.contains('hidden')) {
+      // Open mobile search overlay
+      container.classList.remove('hidden');
+      container.classList.add('flex', 'absolute', 'top-0', 'left-0', 'w-full', 'h-full', 'bg-white', 'z-[60]', 'px-3', 'items-center', '!m-0');
+      closeBtn.style.display = 'block';
+      innerIcon.style.display = 'none';
+      searchInput.classList.remove('pl-10');
+      searchInput.classList.add('pl-4');
+      setTimeout(() => searchInput.focus(), 100);
+    } else {
+      // Close mobile search overlay
+      container.classList.add('hidden');
+      container.classList.remove('flex', 'absolute', 'top-0', 'left-0', 'w-full', 'h-full', 'bg-white', 'z-[60]', 'px-3', 'items-center', '!m-0');
+      closeBtn.style.display = 'none';
+      innerIcon.style.display = 'block';
+      searchInput.classList.add('pl-10');
+      searchInput.classList.remove('pl-4');
+    }
+  }
+  </script>
 </nav>
 
 <!-- ═══════════════════════════════════════════
