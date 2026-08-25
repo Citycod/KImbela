@@ -32,6 +32,7 @@ def create_app():
     app.config["PREFERRED_URL_SCHEME"] = "https"
     app.config["BASE_URL"] = os.getenv("BASE_URL", "").rstrip("/")
     app.config["ENABLE_DEBUG_ROUTES"] = os.getenv("ENABLE_DEBUG_ROUTES") == "1"
+    app.config["ASSET_VERSION"] = str(int(time.time()))
     app.config["MARKETPLACE_PAYMENTS_ENABLED"] = (
         os.getenv("MARKETPLACE_PAYMENTS_ENABLED", "0") == "1"
     )
@@ -213,6 +214,7 @@ def create_app():
         # from payments.paystack_routes import paystack_bp
         from payments.stripe_routes import stripe_bp
         from payments.monnify_routes import monnify_bp
+        from core import core_bp
 
         app.register_blueprint(auth)
         app.register_blueprint(user_blueprint)
@@ -224,6 +226,7 @@ def create_app():
         # app.register_blueprint(paystack_bp)
         app.register_blueprint(stripe_bp)
         app.register_blueprint(monnify_bp)
+        app.register_blueprint(core_bp)
 
     register_blueprints()
 

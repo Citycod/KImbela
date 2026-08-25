@@ -27,14 +27,25 @@ function getPushCsrfToken() {
 // Register service worker on load (needed for caching), but do NOT auto-prompt for push
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function() {
-    navigator.serviceWorker.register('/static/sw.js')
-      .then(function(registration) {
-        console.log('ServiceWorker registration successful with scope: ', registration.scope);
-        // Store registration for later use by enablePushNotifications()
-        window._swRegistration = registration;
-      }, function(err) {
-        console.error('ServiceWorker registration failed: ', err);
-      });
+    // Unregister any old /static/ scoped service workers to prevent orphaned instances
+    navigator.serviceWorker.getRegistrations().then(function(registrations) {
+      for (let registration of registrations) {
+        if (registration.scope.includes('/static/')) {
+          console.log('Unregistering old /static/ scoped Service Worker');
+          registration.unregister();
+        }
+      }
+    }).then(function() {
+      // Register the new root-scoped service worker
+      navigator.serviceWorker.register('/sw.js')
+        .then(function(registration) {
+          console.log('ServiceWorker registration successful with scope: ', registration.scope);
+          // Store registration for later use by enablePushNotifications()
+          window._swRegistration = registration;
+        }, function(err) {
+          console.error('ServiceWorker registration failed: ', err);
+        });
+    });
   });
 }
 
