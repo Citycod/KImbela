@@ -921,6 +921,10 @@ def user_dashboard():
             return redirect(url_for("user.user_dashboard"))
 
     # ===== GET REQUEST =====
+    import time
+    timings = {}
+    
+    t0 = time.time()
     user_id = current_user.id
     cursor = request.args.get("cursor", type=int)
     limit = request.args.get("limit", 10, type=int)
@@ -928,8 +932,10 @@ def user_dashboard():
     posts, next_cursor, has_more = get_visible_posts_optimized(
         user_id, cursor=cursor, limit=limit
     )
+    timings['get_visible_posts_optimized'] = time.time() - t0
 
     # Friends
+    t0 = time.time()
     friend_query = text(
         """
         SELECT friend_id FROM friendship WHERE user_id = :user_id
@@ -958,26 +964,35 @@ def user_dashboard():
             .limit(20)
             .all()
         )
+    timings['friends_queries'] = time.time() - t0
 
     # People you may know (suggestions)
+    t0 = time.time()
     suggestions_query = User.query.filter(
         User.id != user_id,
         ~User.id.in_(friend_ids),
         ~User.id.in_(blocked_ids),
         User.is_active == True,
     )
+    t_suggestions_count_start = time.time()
     eligible_count = suggestions_query.count()
+    timings['suggestions_query.count()'] = time.time() - t_suggestions_count_start
+    
     random_five = []
     if eligible_count > 0:
         offset = random.randint(0, max(eligible_count - 5, 0))
         random_five = suggestions_query.offset(offset).limit(5).all()
         for user in random_five:
             user.friend_request_status = current_user.get_friend_request_status(user.id)
+    timings['suggestions_full_block'] = time.time() - t0
 
     # Groups (cached, for initial HTML render)
+    t0 = time.time()
     groups_data = get_groups_data_for_user(current_user.id)
+    timings['get_groups_data_for_user'] = time.time() - t0
 
     # Sponsored ads (example)
+    t0 = time.time()
     current_time = utcnow()
     sponsored_ads = (
         AdCampaign.query.filter(
@@ -990,6 +1005,25 @@ def user_dashboard():
         .limit(3)
         .all()
     )
+    timings['sponsored_ads_query'] = time.time() - t0
+    
+    # Log the timings
+    from flask import current_app
+    current_app.logger.info("=== DASHBOARD ROUTE TIMINGS ===")
+    longest_segment = ""
+    max_time = 0
+    for name, t in timings.items():
+        current_app.logger.info(f"{name}: {t:.4f}s")
+        if t > max_time and name != 'suggestions_full_block':  # avoid overlapping segments
+            max_time = t
+            longest_segment = name
+    if timings.get('suggestions_full_block', 0) > max_time:
+         max_time = timings['suggestions_full_block']
+         longest_segment = 'suggestions_full_block'
+         
+    current_app.logger.info(f"*** LONGEST SEGMENT: {longest_segment} took {max_time:.4f}s ***")
+    current_app.logger.info("===============================")
+
 
     def get_video_mime(url):
         if not url:

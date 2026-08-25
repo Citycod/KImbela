@@ -31,6 +31,7 @@ def create_app():
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
     app.config["PREFERRED_URL_SCHEME"] = "https"
     app.config["BASE_URL"] = os.getenv("BASE_URL", "").rstrip("/")
+    app.config["ASSET_VERSION"] = os.getenv("ASSET_VERSION", "1.0.0")
     app.config["ENABLE_DEBUG_ROUTES"] = os.getenv("ENABLE_DEBUG_ROUTES") == "1"
     app.config["MARKETPLACE_PAYMENTS_ENABLED"] = (
         os.getenv("MARKETPLACE_PAYMENTS_ENABLED", "0") == "1"
