@@ -72,7 +72,9 @@
   class="relative z-50 bg-white shadow-soft border-b border-fb-border h-20 flex items-center justify-between px-2 sm:px-4 lg:px-6 w-full">
 
   <div class="flex items-center flex-shrink-0">
-    <button class="p-2 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors mr-2 md:mr-4 flex items-center justify-center bg-white shadow-sm w-10 h-10" onclick="toggleMobileMenu()">
+    <button
+      class="p-2 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors mr-2 md:mr-4 flex items-center justify-center bg-white shadow-sm w-10 h-10"
+      onclick="toggleMobileMenu()">
       <i class="bi bi-list text-xl"></i>
     </button>
 
@@ -93,9 +95,12 @@
         class="bi bi-search absolute left-3 lg:left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-base"></i>
       <input type="text" id="globalSearch" placeholder="Search anything..."
         class="w-full pl-10 lg:pl-12 pr-16 py-2.5 bg-gray-50/80 rounded-xl border border-gray-200 focus:bg-white focus:border-purple-400 focus:ring-2 focus:ring-purple-100 focus:outline-none transition-all text-sm searching search_input shadow-sm" />
-      <div class="absolute right-3 top-1/2 transform -translate-y-1/2 hidden md:flex items-center gap-1 text-gray-400" style="pointer-events: none;">
-        <kbd class="px-1.5 py-0.5 text-[10px] font-semibold bg-white border border-gray-200 rounded shadow-sm font-sans">⌘</kbd>
-        <kbd class="px-1.5 py-0.5 text-[10px] font-semibold bg-white border border-gray-200 rounded shadow-sm font-sans">K</kbd>
+      <div class="absolute right-3 top-1/2 transform -translate-y-1/2 hidden md:flex items-center gap-1 text-gray-400"
+        style="pointer-events: none;">
+        <kbd
+          class="px-1.5 py-0.5 text-[10px] font-semibold bg-white border border-gray-200 rounded shadow-sm font-sans">⌘</kbd>
+        <kbd
+          class="px-1.5 py-0.5 text-[10px] font-semibold bg-white border border-gray-200 rounded shadow-sm font-sans">K</kbd>
       </div>
 
       <div
@@ -107,14 +112,17 @@
   </div>
 
   <div class="flex items-center flex-shrink-0 space-x-2 sm:space-x-4 ml-auto border-l border-gray-200 pl-3 sm:pl-5">
-    
+
     <!-- Mobile Search Toggle -->
-    <button class="p-2 rounded-full hover:bg-gray-100 transition-colors md:hidden text-gray-600" onclick="toggleMobileSearch()">
+    <button class="p-2 rounded-full hover:bg-gray-100 transition-colors md:hidden text-gray-600"
+      onclick="toggleMobileSearch()">
       <i class="bi bi-search text-xl"></i>
     </button>
 
     <!-- + Create Button -->
-    <button class="w-10 h-10 rounded-xl bg-purple-600 hover:bg-purple-700 text-white flex items-center justify-center transition-colors shadow-sm hidden sm:flex" onclick="window.openModal('postModal')">
+    <button
+      class="w-10 h-10 rounded-xl bg-purple-600 hover:bg-purple-700 text-white flex items-center justify-center transition-colors shadow-sm hidden sm:flex"
+      onclick="window.openModal('postModal')">
       <i class="bi bi-plus-lg text-lg"></i>
     </button>
 
@@ -128,8 +136,9 @@
 
     <!-- Notifications -->
     <div class="dropdown relative">
-      <div class="w-10 h-10 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors cursor-pointer relative text-gray-600" data-kb-toggle="dropdown"
-        id="notificationDropdown">
+      <div
+        class="w-10 h-10 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors cursor-pointer relative text-gray-600"
+        data-kb-toggle="dropdown" id="notificationDropdown">
         <i class="bi bi-bell text-xl"></i>
         <span
           class="notification-badge absolute top-0 -right-1 bg-yellow-400 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center border border-white hidden"
@@ -152,7 +161,8 @@
     </div>
 
     <!-- User Avatar -->
-    <a href="{{ url_for('user.profile', user_id=current_user.id) }}" class="flex items-center p-1 pr-2 sm:pr-3 rounded-full hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200 ml-1">
+    <a href="{{ url_for('user.profile', user_id=current_user.id) }}"
+      class="flex items-center p-1 pr-2 sm:pr-3 rounded-full hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200 ml-1">
       <div class="relative">
         <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
           alt="{{ current_user.first_name }}" class="w-8 h-8 rounded-full object-cover border border-gray-200" />
@@ -239,7 +249,7 @@ placement='dashboard-top') %}
         </li>
         <li>
           <a href="{{ url_for('match.requests') }}">
-            <i class="bi bi-heart"></i> Match
+            <i class="bi bi-heart"></i> Matchmaking
           </a>
         </li>
         <li>
@@ -1515,57 +1525,10 @@ placement='dashboard-top') %}
         class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-fb-gray transition-colors mb-2">
         <i class="bi bi-person mr-3 text-lg"></i> Profile
       </a>
-      <!-- In MOBILE SIDEBAR section, replace the Groups item with: -->
-      <!-- Mobile Groups Dropdown -->
-
-      <div class="dropdown relative">
-        <div
-          class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-300 mb-2 cursor-pointer group"
-          data-bs-toggle="groups-dropdown-mobile">
-          <i
-            class="bi bi-people-fill mr-3 text-lg text-blue-600 group-hover:text-purple-600 transition-colors duration-300"></i>
-          <span class="font-medium group-hover:text-blue-700 transition-colors duration-300">Groups</span>
-          <i
-            class="bi bi-chevron-down ml-auto text-sm text-gray-400 group-hover:text-blue-500 transform group-hover:rotate-180 transition-all duration-300"></i>
-        </div>
-
-        <div
-          class="dropdown-menu absolute left-0 mt-1 w-85 bg-white rounded-2xl shadow-2xl overflow-hidden z-10 hidden border border-gray-100"
-          id="groupsDropdownMenuMobile" style="
-                background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);
-              ">
-          <!-- Same beautiful content as desktop -->
-          <div class="p-4 border-b border-gray-100 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-            <div class="flex items-center justify-between">
-              <div>
-                <h4 class="font-bold text-lg">Discover Groups</h4>
-                <p class="text-blue-100 text-sm mt-1">
-                  Connect with amazing communities
-                </p>
-              </div>
-              <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                <i class="bi bi-people-fill text-lg"></i>
-              </div>
-            </div>
-          </div>
-
-          <div class="max-h-64 overflow-y-auto custom-scrollbar bg-gradient-to-b from-white to-blue-50/30"
-            id="groupsListMobile">
-            <div class="flex flex-col items-center justify-center p-8 text-gray-500">
-              <div class="relative mb-4">
-                <div class="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-                <div class="absolute inset-0 flex items-center justify-center">
-                  <i class="bi bi-people text-blue-600"></i>
-                </div>
-              </div>
-              <p class="text-sm font-medium">Loading amazing groups...</p>
-              <p class="text-xs mt-1 text-gray-400">
-                Finding the best communities for you
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+      <a href="{{ url_for('user.groups_page') }}"
+        class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-fb-gray transition-colors mb-2">
+        <i class="bi bi-people mr-3 text-lg"></i> Groups
+      </a>
 
       <a href="{{ url_for('market.main_market') }}"
         class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 transition-all duration-300 mb-2 group border border-transparent hover:border-indigo-200 shadow-sm hover:shadow-md">
