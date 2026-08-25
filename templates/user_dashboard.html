@@ -72,7 +72,7 @@
   class="relative z-50 bg-white shadow-soft border-b border-fb-border h-20 flex items-center justify-between px-2 sm:px-4 lg:px-6 w-full">
 
   <div class="flex items-center flex-shrink-0">
-    <button class="lg:hidden p-2 rounded-full hover:bg-fb-gray transition-colors mr-1" onclick="toggleMobileMenu()">
+    <button class="p-2 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors mr-2 md:mr-4 flex items-center justify-center bg-white shadow-sm w-10 h-10" onclick="toggleMobileMenu()">
       <i class="bi bi-list text-xl"></i>
     </button>
 
@@ -83,17 +83,20 @@
   </div>
 
   <!-- Center: Search bar -->
-  <div id="searchContainer"
-    class="flex justify-start flex-1 min-w-0 mx-2 lg:ml-10 lg:mr-auto lg:max-w-md searching mobile-hidden-search">
-    <div class="relative w-full min-w-0 flex items-center">
+  <div id="searchContainer" class="flex justify-center flex-1 min-w-0 mx-4 lg:mx-10 searching mobile-hidden-search">
+    <div class="relative w-full max-w-2xl min-w-0 flex items-center">
       <button class="md:hidden p-2 mr-2 text-gray-500 hover:bg-gray-100 rounded-full flex-shrink-0"
         onclick="toggleMobileSearch()" id="closeMobileSearchBtn" style="display:none;">
         <i class="bi bi-arrow-left text-xl"></i>
       </button>
       <i id="searchIconInner"
-        class="bi bi-search absolute left-3 lg:left-4 top-1/2 transform -translate-y-1/2 text-fb-text-light text-base lg:text-lg"></i>
-      <input type="text" id="globalSearch" placeholder="Search..."
-        class="w-full pl-10 lg:pl-12 pr-3 lg:pr-4 py-2 bg-fb-gray rounded-full border border-gray-300 focus:border-fb-blue focus:ring-2 focus:ring-fb-blue focus:outline-none transition-all text-sm lg:text-base searching search_input" />
+        class="bi bi-search absolute left-3 lg:left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-base"></i>
+      <input type="text" id="globalSearch" placeholder="Search anything..."
+        class="w-full pl-10 lg:pl-12 pr-16 py-2.5 bg-gray-50/80 rounded-xl border border-gray-200 focus:bg-white focus:border-purple-400 focus:ring-2 focus:ring-purple-100 focus:outline-none transition-all text-sm searching search_input shadow-sm" />
+      <div class="absolute right-3 top-1/2 transform -translate-y-1/2 hidden md:flex items-center gap-1 text-gray-400" style="pointer-events: none;">
+        <kbd class="px-1.5 py-0.5 text-[10px] font-semibold bg-white border border-gray-200 rounded shadow-sm font-sans">⌘</kbd>
+        <kbd class="px-1.5 py-0.5 text-[10px] font-semibold bg-white border border-gray-200 rounded shadow-sm font-sans">K</kbd>
+      </div>
 
       <div
         class="search-results absolute top-full left-0 right-0 mt-1 bg-white rounded-xl shadow-strong overflow-hidden z-50 hidden"
@@ -103,217 +106,33 @@
     </div>
   </div>
 
-  <!-- Right side: Nav icons (same as sidebar) -->
-  <div class="nav-icon-bar hidden lg:flex items-center space-x-1 lg:space-x-2 xl:mr-12 2xl:mr-48">
-    <!-- Home -->
-    <a href="{{ url_for('user.user_dashboard') }}"
-      class="nav-item flex flex-col items-center px-2 lg:px-3 py-1 rounded-lg hover:bg-gradient-to-b hover:from-blue-50 hover:to-blue-100 transition-all group">
-      <i class="bi bi-house-door-fill text-xl lg:text-2xl text-blue-600 group-hover:scale-110 transition-transform"
-        style="font-size: 1rem"></i>
-      <span class="text-[10px] lg:text-xs font-medium text-blue-700 mt-0.5" style="font-size: 0.7rem">Home</span>
-    </a>
-
-    <!-- Profile -->
-    <a href="{{ url_for('user.profile', user_id=current_user.id) }}"
-      class="nav-item flex flex-col items-center px-2 lg:px-3 py-1 rounded-lg hover:bg-gradient-to-b hover:from-purple-50 hover:to-purple-100 transition-all group"
-      style="font-size: 1rem">
-      <i class="bi bi-person-fill text-xl lg:text-2xl text-purple-600 group-hover:scale-110 transition-transform"></i>
-      <span class="text-[10px] lg:text-xs font-medium text-purple-700 mt-0.5" style="font-size: 0.7rem">Profile</span>
-    </a>
-
-    <!-- Groups (dropdown trigger) -->
-    <!-- Groups (dropdown trigger) – BEAUTIFUL GLASSMORPHISM -->
-    <div class="relative nav-item group nav-dropdown">
-      <button
-        class="nav-dropdown-trigger flex flex-col items-center px-2 lg:px-3 py-1 rounded-xl hover:bg-gradient-to-br hover:from-indigo-50/80 hover:to-purple-50/80 transition-all duration-300 backdrop-blur-sm"
-        type="button" aria-expanded="false">
-        <div class="relative">
-          <i
-            class="bi bi-people-fill text-2xl text-indigo-600 group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300"></i>
-          <span
-            class="absolute -top-1 -right-1 w-3.5 h-3.5 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full animate-ping-slow"></span>
-        </div>
-        <span
-          class="text-xs font-semibold text-indigo-700 mt-1 tracking-tight group-hover:text-indigo-800 transition-colors">Groups</span>
-      </button>
-
-      <!-- ════════════════════════════════════════════════════════════
-         Glassmorphism Dropdown – very pretty version
-    ════════════════════════════════════════════════════════════ -->
-      <div
-        class="groups-dropdown-glass absolute right-0 top-full -mt-1 w-96 bg-white/70 backdrop-blur-xl border border-white/30 rounded-2xl shadow-2xl overflow-hidden z-[100] scale-95 opacity-0 pointer-events-none transition-all duration-300 origin-top-right group-hover:scale-100 group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:scale-100 group-focus-within:opacity-100 group-focus-within:pointer-events-auto hover:scale-100 hover:opacity-100 hover:pointer-events-auto">
-        <!-- Gradient Header -->
-        <div
-          class="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 p-5 text-white relative overflow-hidden">
-          <div
-            class="absolute inset-0 bg-[radial-gradient(circle_at_30%_70%,rgba(255,255,255,0.2),transparent_50%)] pointer-events-none">
-          </div>
-
-          <div class="flex items-center justify-between relative z-10">
-            <div>
-              <h4 class="font-bold text-lg tracking-tight drop-shadow-md">
-                Discover Communities
-              </h4>
-              <p class="text-indigo-100/90 text-sm mt-1 font-light">
-                Find people who share your vibe
-              </p>
-            </div>
-            <div
-              class="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-inner border border-white/30">
-              <i class="bi bi-people-fill text-2xl"></i>
-            </div>
-          </div>
-        </div>
-
-        <!-- Groups content area -->
-        <div class="max-h-[420px] overflow-y-auto custom-scrollbar bg-gradient-to-b from-white/40 to-indigo-50/20 p-3">
-          <div id="groupsListDesktop" class="space-y-2.5">
-            <!-- Loading state – beautiful version -->
-            <div class="flex flex-col items-center justify-center py-12 text-gray-500">
-              <div class="relative mb-5">
-                <div class="w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
-                <div class="absolute inset-0 flex items-center justify-center text-indigo-600">
-                  <i class="bi bi-people text-2xl"></i>
-                </div>
-              </div>
-              <p class="font-medium text-indigo-700">
-                Finding vibrant groups for you...
-              </p>
-              <p class="text-xs mt-2 text-gray-500/80">Almost there ✨</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Market Place -->
-    <a href="{{ url_for('market.main_market') }}"
-      class="nav-item flex flex-col items-center px-2 lg:px-3 py-1 rounded-lg hover:bg-gradient-to-b hover:from-indigo-50 hover:to-purple-50 transition-all group">
-      <i class="bi bi-shop text-xl lg:text-2xl text-indigo-500 group-hover:scale-110 group-hover:rotate-12 transition-all"
-        style="font-size: 1rem"></i>
-      <span class="text-[10px] lg:text-xs font-medium text-indigo-700 mt-0.5" style="font-size: 0.7rem">Market</span>
-    </a>
-
-    <!-- Create Sponsored Ad -->
-    <a href="{{ url_for('payments.ad_packages') }}"
-      class="nav-item flex flex-col items-center px-2 lg:px-3 py-1 rounded-lg hover:bg-gradient-to-b hover:from-indigo-50 hover:to-purple-50 transition-all group">
-      <i class="bi bi-megaphone-fill text-xl lg:text-2xl text-indigo-600 group-hover:scale-110 group-hover:rotate-12 transition-all"
-        style="font-size: 1rem"></i>
-      <span class="text-[10px] lg:text-xs font-medium text-indigo-700 mt-0.5" style="font-size: 0.7rem">Ads</span>
-    </a>
-
-    <!-- Match Making (dropdown or two items) -->
-    <!-- Match Making (dropdown trigger) – GLASSMORPHISM STYLE (matching Groups) -->
-    <div class="relative nav-item group nav-dropdown">
-      <button
-        class="nav-dropdown-trigger flex flex-col items-center px-2 lg:px-3 py-1 rounded-xl hover:bg-gradient-to-br hover:from-pink-50/80 hover:to-rose-50/80 transition-all duration-300 backdrop-blur-sm"
-        type="button" aria-expanded="false">
-        <div class="relative">
-          <i
-            class="bi bi-heart-fill text-2xl text-pink-600 group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300"></i>
-          <span
-            class="absolute -top-1 -right-1 w-3.5 h-3.5 bg-gradient-to-br from-pink-400 to-rose-500 rounded-full animate-ping-slow"></span>
-        </div>
-        <span
-          class="text-xs font-semibold text-pink-700 mt-1 tracking-tight group-hover:text-pink-800 transition-colors">Match</span>
-      </button>
-
-      <!-- ════════════════════════════════════════════════════════════
-         Glassmorphism Dropdown – romantic/pink version
-    ════════════════════════════════════════════════════════════ -->
-      <div
-        class="match-dropdown-glass absolute right-0 top-full -mt-1 w-80 bg-white/70 backdrop-blur-xl border border-white/30 rounded-2xl shadow-2xl overflow-hidden z-[100] scale-95 opacity-0 pointer-events-none transition-all duration-300 origin-top-right group-hover:scale-100 group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:scale-100 group-focus-within:opacity-100 group-focus-within:pointer-events-auto hover:scale-100 hover:opacity-100 hover:pointer-events-auto">
-        <!-- Gradient Header – romantic colors -->
-        <div class="bg-gradient-to-r from-pink-500 via-rose-500 to-purple-500 p-5 text-white relative overflow-hidden">
-          <div
-            class="absolute inset-0 bg-[radial-gradient(circle_at_70%_30%,rgba(255,255,255,0.25),transparent_60%)] pointer-events-none">
-          </div>
-
-          <div class="flex items-center justify-between relative z-10">
-            <div>
-              <h4 class="font-bold text-lg tracking-tight drop-shadow-md">
-                Find Your Match
-              </h4>
-              <p class="text-pink-100/90 text-sm mt-1 font-light">
-                Connect with someone special
-              </p>
-            </div>
-            <div
-              class="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-inner border border-white/30">
-              <i class="bi bi-heart-fill text-2xl"></i>
-            </div>
-          </div>
-        </div>
-
-        <!-- Actions content area -->
-        <div class="bg-gradient-to-b from-white/40 to-pink-50/20 p-3 space-y-2">
-          <!-- Create Request -->
-          <a href="{{ url_for('match.requests') }}"
-            class="flex items-center px-4 py-3.5 rounded-xl hover:bg-white/60 transition-all duration-200 group/item">
-            <div
-              class="w-10 h-10 bg-gradient-to-br from-pink-400 to-rose-500 rounded-xl flex items-center justify-center text-white shadow-md mr-3 flex-shrink-0">
-              <i class="bi bi-heart-fill text-lg"></i>
-            </div>
-            <div>
-              <div class="font-semibold text-gray-800 group-hover/item:text-pink-700 transition-colors">
-                Create Match Request
-              </div>
-              <div class="text-xs text-gray-600">
-                Looking for something specific?
-              </div>
-            </div>
-          </a>
-
-          <!-- Browse Requests -->
-          <a href="{{ url_for('match.view_requests') }}"
-            class="flex items-center px-4 py-3.5 rounded-xl hover:bg-white/60 transition-all duration-200 group/item">
-            <div
-              class="w-10 h-10 bg-gradient-to-br from-purple-400 to-indigo-500 rounded-xl flex items-center justify-center text-white shadow-md mr-3 flex-shrink-0">
-              <i class="bi bi-binoculars-fill text-lg"></i>
-            </div>
-            <div>
-              <div class="font-semibold text-gray-800 group-hover/item:text-purple-700 transition-colors">
-                Browse Match Requests
-              </div>
-              <div class="text-xs text-gray-600">
-                Discover people near you
-              </div>
-            </div>
-          </a>
-        </div>
-
-        <!-- Subtle footer accent -->
-        <div class="h-1 bg-gradient-to-r from-pink-500 via-rose-500 to-purple-500"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- + Create Button -->
-  <button class="kb-create-btn inline-flex" onclick="window.openModal('postModal')">
-    <i class="bi bi-plus-lg"></i>
-    <span class="btn-text hidden sm:inline">Create</span>
-  </button>
-
-  <!-- Messenger & Notifications (keep these on far right) -->
-  <div
-    class="flex items-center flex-shrink-0 space-x-1 lg:space-x-2 ml-1 sm:ml-2 lg:ml-4 border-l border-gray-200 pl-1 sm:pl-2 lg:pl-4">
+  <div class="flex items-center flex-shrink-0 space-x-2 sm:space-x-4 ml-auto border-l border-gray-200 pl-3 sm:pl-5">
+    
     <!-- Mobile Search Toggle -->
-    <button class="p-2 rounded-full hover:bg-fb-gray transition-colors md:hidden" onclick="toggleMobileSearch()">
-      <i class="bi bi-search text-xl font-bold"></i>
-    </button>
-    <button id="openMessaging" onclick="window.openMessenger()"
-      class="p-2 rounded-full hover:bg-fb-gray transition-colors relative">
-      <img src="{{ url_for('static', filename='assets/img/message 1.png') }}" alt="chat" class="h-6 mr-2" />
-      <span id="unreadMessagesBadge"
-        class="notification-badge absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden">0</span>
+    <button class="p-2 rounded-full hover:bg-gray-100 transition-colors md:hidden text-gray-600" onclick="toggleMobileSearch()">
+      <i class="bi bi-search text-xl"></i>
     </button>
 
+    <!-- + Create Button -->
+    <button class="w-10 h-10 rounded-xl bg-purple-600 hover:bg-purple-700 text-white flex items-center justify-center transition-colors shadow-sm hidden sm:flex" onclick="window.openModal('postModal')">
+      <i class="bi bi-plus-lg text-lg"></i>
+    </button>
+
+    <!-- Messenger -->
+    <button id="openMessaging" onclick="window.openMessenger()"
+      class="w-10 h-10 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors relative text-gray-600">
+      <i class="bi bi-chat-left-dots text-xl"></i>
+      <span id="unreadMessagesBadge"
+        class="notification-badge absolute top-0 -right-1 bg-purple-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center border border-white hidden">0</span>
+    </button>
+
+    <!-- Notifications -->
     <div class="dropdown relative">
-      <div class="p-2 rounded-full hover:bg-fb-gray transition-colors cursor-pointer relative" data-kb-toggle="dropdown"
+      <div class="w-10 h-10 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors cursor-pointer relative text-gray-600" data-kb-toggle="dropdown"
         id="notificationDropdown">
-        <img src="{{ url_for('static', filename='assets/img/notify 2.png') }}" alt="chat" class="h-6 mr-2" />
+        <i class="bi bi-bell text-xl"></i>
         <span
-          class="notification-badge absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden"
+          class="notification-badge absolute top-0 -right-1 bg-yellow-400 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center border border-white hidden"
           id="notificationBadge">0</span>
       </div>
 
@@ -333,9 +152,14 @@
     </div>
 
     <!-- User Avatar -->
-    <a href="{{ url_for('user.profile', user_id=current_user.id) }}">
-      <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-        alt="{{ current_user.first_name }}" class="kb-nav-avatar" />
+    <a href="{{ url_for('user.profile', user_id=current_user.id) }}" class="flex items-center p-1 pr-2 sm:pr-3 rounded-full hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200 ml-1">
+      <div class="relative">
+        <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
+          alt="{{ current_user.first_name }}" class="w-8 h-8 rounded-full object-cover border border-gray-200" />
+        <div class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></div>
+      </div>
+      <span class="ml-2 text-sm font-semibold text-gray-700 hidden md:block">{{ current_user.first_name }}</span>
+      <i class="bi bi-chevron-down ml-1 text-xs text-gray-500 hidden md:block"></i>
     </a>
   </div>
 
