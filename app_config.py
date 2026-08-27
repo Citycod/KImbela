@@ -125,7 +125,12 @@ def create_app():
 
     @app.route("/sw.js")
     def serve_sw():
-        return send_from_directory(app.static_folder, "sw.js", mimetype="application/javascript")
+        response = send_from_directory(
+            app.static_folder, "sw.js", mimetype="application/javascript"
+        )
+        response.headers["Service-Worker-Allowed"] = "/"
+        response.headers["Cache-Control"] = "no-cache"
+        return response
 
     @app.route("/offline")
     def serve_offline():

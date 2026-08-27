@@ -1,8 +1,9 @@
-const CACHE_NAME = 'kimbela-cache-v3';
-const urlsToCache = [
-  '/',
-  '/offline',
-  '/static/css/style.css',
+const KIMBELA_CACHE_PREFIX = 'kimbela-';
+const PRECACHE_NAME = 'kimbela-precache-v4';
+const STATIC_CACHE_NAME = 'kimbela-static-v4';
+const OFFLINE_URL = '/offline';
+const ESSENTIAL_PRECACHE_URLS = [
+  OFFLINE_URL,
   '/static/manifest.json',
   '/static/img/icons/icon-192x192.png',
   '/static/img/icons/icon-512x512.png',
@@ -10,21 +11,19 @@ const urlsToCache = [
 
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        return cache.addAll(urlsToCache).catch(err => {
-            console.error("Failed to cache some items, continuing anyway", err);
-        });
-      })
+    caches.open(PRECACHE_NAME)
+      .then(cache => cache.addAll(ESSENTIAL_PRECACHE_URLS))
   );
-  self.skipWaiting();
 });
 
 self.addEventListener('activate', event => {
+  const currentCaches = new Set([PRECACHE_NAME, STATIC_CACHE_NAME]);
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
-        cacheNames.filter(name => name !== CACHE_NAME)
+        cacheNames.filter(name => (
+          name.startsWith(KIMBELA_CACHE_PREFIX) && !currentCaches.has(name)
+        ))
           .map(name => caches.delete(name))
       );
     }).then(() => self.clients.claim())
@@ -32,26 +31,47 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
-  // Simple cache-first strategy for static assets
-  if (event.request.url.includes('/static/')) {
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
+  if (event.request.mode === 'navigate') {
     event.respondWith(
-      caches.match(event.request)
-        .then(response => {
-          return response || fetch(event.request);
-        })
+      fetch(event.request).catch(() => (
+        caches.match(OFFLINE_URL).then(response => (
+          response || new Response('You are offline.', {
+            status: 503,
+            headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+          })
+        ))
+      ))
     );
-  } else if (event.request.mode === 'navigate') {
-    // Navigation requests: Network-first, fallback to /offline page if offline
+    return;
+  }
+
+  const requestUrl = new URL(event.request.url);
+  const isPublicStaticAsset = (
+    requestUrl.origin === self.location.origin
+    && requestUrl.pathname.startsWith('/static/')
+    && !event.request.headers.has('range')
+  );
+
+  if (isPublicStaticAsset) {
     event.respondWith(
-      fetch(event.request).catch(() => {
-        return caches.match('/offline');
-      })
-    );
-  } else {
-    // Network-first for other requests
-    event.respondWith(
-      fetch(event.request).catch(() => {
-        return caches.match(event.request);
+      caches.match(event.request).then(cachedResponse => {
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+
+        return fetch(event.request).then(networkResponse => {
+          if (networkResponse.status === 200 && networkResponse.type !== 'opaque') {
+            const responseToCache = networkResponse.clone();
+            caches.open(STATIC_CACHE_NAME)
+              .then(cache => cache.put(event.request, responseToCache))
+              .catch(error => console.error('Static asset cache write failed', error));
+          }
+          return networkResponse;
+        });
       })
     );
   }
