@@ -162,46 +162,42 @@ def handle_send_message(data):
         if not current_user.is_authenticated:
             return
 
+        receiver_id = data.get("receiver_id")
+        content = data.get("content", "").strip()
+        message_type = data.get("type", "text")
+        metadata = data.get("metadata", {})
+        temp_id = data.get("temp_id")
+
+        if not receiver_id or (not content and message_type == "text"):
+            return
+
+        friend = User.query.get(receiver_id)
+        if not friend:
+            return
+
+        # Check permissions
+        if not current_user.can_interact_with(
+            friend
+        ) or not current_user.is_friend_with(friend):
+            return
+
+        message = Message(
+            sender_id=current_user.id,
+            receiver_id=receiver_id,
+            content=content,
+            message_type=message_type,
+            message_data=metadata if metadata else None,
+            status="delivered" if friend.is_online else "sent",
+        )
+
         try:
-
-            receiver_id = data.get("receiver_id")
-            content = data.get("content", "").strip()
-            message_type = data.get("type", "text")
-            metadata = data.get("metadata", {})
-            temp_id = data.get("temp_id")
-
-            if not receiver_id or (not content and message_type == "text"):
-                return
-
-            friend = User.query.get(receiver_id)
-            if not friend:
-                return
-
-            # Check permissions
-            if not current_user.can_interact_with(
-                friend
-            ) or not current_user.is_friend_with(friend):
-                return
-
-            # Create message
-            message = Message(
-                sender_id=current_user.id,
-                receiver_id=receiver_id,
-                content=content,
-                message_type=message_type,
-                metadata=json.dumps(metadata) if metadata else None,
-                status="sent",
-            )
-
             db.session.add(message)
             db.session.commit()
-        except Exception as e:
-            print(f"[ERROR] Error saving message to db: {e}")
-
-        # Update status
-        if friend.is_online:
-            message.status = "delivered"
-            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            traceback.print_exc()
+            print("[ERROR] Error saving Socket.IO message to db")
+            return
 
         # Prepare message data
         message_data = {
@@ -219,9 +215,12 @@ def handle_send_message(data):
             "temp_id": temp_id,
         }
 
-        # Emit to both users
-        socketio.emit("new_message", message_data, room=f"user_{receiver_id}")
-        socketio.emit("new_message", message_data, room=f"user_{current_user.id}")
+        try:
+            socketio.emit("new_message", message_data, room=f"user_{receiver_id}")
+            socketio.emit("new_message", message_data, room=f"user_{current_user.id}")
+        except Exception:
+            traceback.print_exc()
+            print("[ERROR] Failed to emit persisted Socket.IO message")
 
         if not friend.is_online:
             try:
@@ -232,8 +231,9 @@ def handle_send_message(data):
                     "url": f"/messages"
                 }
                 send_push_notification(receiver_id, push_payload)
-            except Exception as e:
-                print(f"[ERROR] Push notification failed: {e}")
+            except Exception:
+                traceback.print_exc()
+                print("[ERROR] Push notification failed for persisted Socket.IO message")
         # Also emit to chat room
         # room = f'chat_{min(current_user.id, receiver_id)}_{max(current_user.id, receiver_id)}'
         # socketio.emit('new_message', message_data, room=room)

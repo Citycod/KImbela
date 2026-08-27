@@ -123,6 +123,14 @@ def create_app():
 
         return send_from_directory(upload_folder, filename)
 
+    @app.route("/sw.js")
+    def serve_sw():
+        return send_from_directory(app.static_folder, "sw.js", mimetype="application/javascript")
+
+    @app.route("/offline")
+    def serve_offline():
+        return render_template("offline.html")
+
     # ========== BASIC APP CONFIG ==========
     app.config["MAX_CONTENT_LENGTH"] = 100 * 1024 * 1024  # 100MB
     BASE_DIR = os.path.abspath(os.path.dirname(__file__))

@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify, request, url_for, current_app
 from flask_login import login_required, current_user
 from flask_socketio import emit, join_room, leave_room
 from models import Message, User
-from extensions import db
+from extensions import db, socketio
 from sqlalchemy import or_, and_, desc, func
 from datetime import datetime, timedelta
 import os, json, pytz, uuid
@@ -346,118 +346,115 @@ def send_message():
         if not data:
             return jsonify({"success": False, "error": "No data provided"}), 400
 
-        try:
-            friend_id = data.get("friend_id") or data.get("receiver_id")
-            content = data.get("content", "").strip()
-            message_type = data.get("type", "text")
-            metadata = data.get("metadata", {})
+        friend_id = data.get("friend_id") or data.get("receiver_id")
+        content = data.get("content", "").strip()
+        message_type = data.get("type", "text")
+        metadata = data.get("metadata", {})
 
-            if not friend_id:
-                return (
-                    jsonify({"success": False, "error": "No recipient specified"}),
-                    400,
-                )
-
-            if not content and message_type == "text":
-                return (
-                    jsonify({"success": False, "error": "Message content is required"}),
-                    400,
-                )
-
-            friend = User.query.get(friend_id)
-            if not friend:
-                return jsonify({"success": False, "error": "User not found"}), 404
-
-            # Check permissions
-            if not current_user.can_interact_with(friend):
-                return (
-                    jsonify({"success": False, "error": "Cannot message this user"}),
-                    403,
-                )
-
-            if not current_user.is_friend_with(friend):
-                return (
-                    jsonify(
-                        {"success": False, "error": "You must be friends to message"}
-                    ),
-                    403,
-                )
-
-            # Create message - FIXED: Store metadata as dict (JSON column handles it)
-            message = Message(
-                sender_id=current_user.id,
-                receiver_id=friend_id,
-                content=content,
-                message_type=message_type,
-                message_data=metadata if metadata else None,  # Store as dict directly
-                status="sent",
+        if not friend_id:
+            return (
+                jsonify({"success": False, "error": "No recipient specified"}),
+                400,
             )
 
+        if not content and message_type == "text":
+            return (
+                jsonify({"success": False, "error": "Message content is required"}),
+                400,
+            )
+
+        friend = User.query.get(friend_id)
+        if not friend:
+            return jsonify({"success": False, "error": "User not found"}), 404
+
+        # Check permissions
+        if not current_user.can_interact_with(friend):
+            return (
+                jsonify({"success": False, "error": "Cannot message this user"}),
+                403,
+            )
+
+        if not current_user.is_friend_with(friend):
+            return (
+                jsonify(
+                    {"success": False, "error": "You must be friends to message"}
+                ),
+                403,
+            )
+
+        message = Message(
+            sender_id=current_user.id,
+            receiver_id=friend_id,
+            content=content,
+            message_type=message_type,
+            message_data=metadata if metadata else None,
+            status="delivered" if friend.is_online else "sent",
+        )
+
+        try:
             db.session.add(message)
             db.session.commit()
         except Exception as e:
-            print(f"❌ Error saving messageeeeeeeeeeeeeeeee to db: {e}")
+            db.session.rollback()
+            current_app.logger.exception("Failed to persist HTTP message")
+            return jsonify({"success": False, "error": str(e)}), 500
 
-            # Update status based on friend's online status
-            if friend.is_online:
-                message.status = "delivered"
-                db.session.commit()
+        message_data = {
+            "id": message.id,
+            "sender_id": message.sender_id,
+            "receiver_id": message.receiver_id,
+            "content": message.content,
+            "type": message.message_type,
+            "timestamp": message.timestamp.isoformat() if message.timestamp else None,
+            "status": message.status,
+            "sender_name": current_user.full_name,
+            "sender_avatar": current_user.profile_pic
+            or url_for("static", filename="assets/img/default-avatar.png"),
+        }
 
-            # Prepare response
-            message_data = {
-                "id": message.id,
-                "sender_id": message.sender_id,
-                "receiver_id": message.receiver_id,
-                "content": message.content,
-                "type": message.message_type,
-                "timestamp": (
-                    message.timestamp.isoformat() if message.timestamp else None
-                ),
-                "status": message.status,
-                "sender_name": current_user.full_name,
-                "sender_avatar": current_user.profile_pic
-                or url_for("static", filename="assets/img/default-avatar.png"),
-            }
-
-            # Handle metadata for response
-            if message.message_data:  # CHANGED FROM message.metadata
-                if isinstance(message.message_data, dict):
-                    message_data["metadata"] = message.message_data
-                else:
-                    try:
-                        message_data["metadata"] = json.loads(str(message.message_data))
-                    except:
-                        message_data["metadata"] = {}
+        if message.message_data:
+            if isinstance(message.message_data, dict):
+                message_data["metadata"] = message.message_data
             else:
-                message_data["metadata"] = {}
+                try:
+                    message_data["metadata"] = json.loads(str(message.message_data))
+                except (TypeError, ValueError):
+                    message_data["metadata"] = {}
+        else:
+            message_data["metadata"] = {}
 
-            # Emit via Socket.IO
-            if socketio:
-                socketio.emit("new_message", message_data, room=f"user_{friend_id}")
-                socketio.emit(
-                    "new_message", message_data, room=f"user_{current_user.id}"
+        try:
+            socketio.emit("new_message", message_data, room=f"user_{friend_id}")
+            socketio.emit(
+                "new_message", message_data, room=f"user_{current_user.id}"
+            )
+        except Exception:
+            current_app.logger.exception("Failed to emit persisted HTTP message")
+
+        if not friend.is_online:
+            try:
+                from utils.push_service import send_push_notification
+
+                push_payload = {
+                    "title": f"New Message from {current_user.first_name}",
+                    "body": (
+                        content
+                        if message_type == "text"
+                        else f"Sent you a {message_type}"
+                    ),
+                    "url": "/messages",
+                }
+                send_push_notification(friend_id, push_payload)
+            except Exception:
+                current_app.logger.exception(
+                    "Failed to send push for persisted HTTP message"
                 )
 
-            # Send Push Notification
-            try:
-                from models import User
-                recipient = User.query.get(friend_id)
-                if recipient and not recipient.is_online:
-                    from utils.push_service import send_push_notification
-                    push_payload = {
-                        "title": f"New Message from {current_user.first_name}",
-                        "body": content if message_type == 'text' else f"Sent you a {message_type}",
-                        "url": "/messages"
-                    }
-                    send_push_notification(friend_id, push_payload)
-            except Exception as e:
-                print(f"[PUSH ERROR] Failed to send push for HTTP message: {e}")
-
-            return jsonify({"success": True, "message": message_data})
+        return jsonify({"success": True, "message": message_data})
 
     except Exception as e:
-        print(f"❌ Error sending message: {e}")
         db.session.rollback()
+        current_app.logger.exception("Error sending HTTP message")
         return jsonify({"success": False, "error": str(e)}), 500
 
 

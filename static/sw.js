@@ -1,11 +1,11 @@
-const CACHE_NAME = 'kimbela-cache-v2';
+const CACHE_NAME = 'kimbela-cache-v3';
 const urlsToCache = [
   '/',
+  '/offline',
   '/static/css/style.css',
   '/static/manifest.json',
   '/static/img/icons/icon-192x192.png',
   '/static/img/icons/icon-512x512.png',
-  // offline fallback page would go here if implemented, e.g. '/offline.html'
 ];
 
 self.addEventListener('install', event => {
@@ -39,6 +39,13 @@ self.addEventListener('fetch', event => {
         .then(response => {
           return response || fetch(event.request);
         })
+    );
+  } else if (event.request.mode === 'navigate') {
+    // Navigation requests: Network-first, fallback to /offline page if offline
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        return caches.match('/offline');
+      })
     );
   } else {
     // Network-first for other requests

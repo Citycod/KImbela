@@ -1,9 +1,12 @@
 import os
 import json
+import logging
 from pywebpush import webpush, WebPushException
 from models import PushSubscription
 from extensions import db
-import traceback
+
+
+logger = logging.getLogger(__name__)
 
 def send_push_notification(user_id, payload_dict):
     """
@@ -11,16 +14,21 @@ def send_push_notification(user_id, payload_dict):
     payload_dict: dict containing the push notification data (e.g. title, body, url)
     """
     vapid_private_key = os.environ.get("VAPID_PRIVATE_KEY")
-    vapid_public_key = os.environ.get("VAPID_PUBLIC_KEY")
     vapid_claims = {
         "sub": "mailto:no-reply@kimbela.com"
     }
 
     if not vapid_private_key:
-        print("VAPID keys not configured, skipping push.")
+        logger.warning("VAPID private key not configured, skipping push")
         return False
 
-    subscriptions = PushSubscription.query.filter_by(user_id=user_id).all()
+    try:
+        subscriptions = PushSubscription.query.filter_by(user_id=user_id).all()
+    except Exception:
+        db.session.rollback()
+        logger.exception("Failed to load push subscriptions for user %s", user_id)
+        return False
+
     if not subscriptions:
         return False
 
@@ -46,14 +54,25 @@ def send_push_notification(user_id, payload_dict):
             db.session.commit()
             success_count += 1
         except WebPushException as ex:
-            print(f"WebPushException: {repr(ex)}")
             # If the subscription is expired or the user revoked permission, the server returns 410 or 404
             if ex.response is not None and ex.response.status_code in [404, 410]:
-                print(f"Subscription for endpoint {sub.endpoint} is dead (status {ex.response.status_code}). Removing from DB.")
-                db.session.delete(sub)
-                db.session.commit()
-        except Exception as e:
-            print(f"Failed to send push to {sub.endpoint}: {e}")
-            traceback.print_exc()
+                try:
+                    db.session.delete(sub)
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+                    logger.exception(
+                        "Failed to remove expired push subscription for user %s",
+                        user_id,
+                    )
+            else:
+                logger.warning(
+                    "Push provider rejected a subscription for user %s: %s",
+                    user_id,
+                    ex,
+                )
+        except Exception:
+            db.session.rollback()
+            logger.exception("Failed to send push notification for user %s", user_id)
 
     return success_count > 0

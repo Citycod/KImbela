@@ -27,7 +27,7 @@ function getPushCsrfToken() {
 // Register service worker on load (needed for caching), but do NOT auto-prompt for push
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function() {
-    navigator.serviceWorker.register('/static/sw.js')
+    navigator.serviceWorker.register('/sw.js')
       .then(function(registration) {
         console.log('ServiceWorker registration successful with scope: ', registration.scope);
         // Store registration for later use by enablePushNotifications()
