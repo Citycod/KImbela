@@ -84,6 +84,7 @@ from models import (
     Country,
     State,
     City,
+    Reaction,
     # ReportedPost,
 )
 
@@ -772,6 +773,127 @@ def mark_birthday_notifications_seen():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+DASHBOARD_AD_PLACEMENTS = {
+    "top_banner": "dashboard-top",
+    "sidebar_banner": "dashboard-sidebar",
+    "vertical_banner": "dashboard-vertical",
+    "spotlight_banner": "dashboard-spotlight",
+    "bottom_banner": "dashboard-bottom",
+}
+
+
+def get_dashboard_reaction_data(post_ids, user_id):
+    """Bulk-load reaction totals, type breakdowns, and viewer state."""
+    post_ids = list(dict.fromkeys(post_ids))
+    if not post_ids:
+        return {}, {}, {}
+
+    reaction_counts_by_post_id = {}
+    reaction_types_by_post_id = {}
+    reaction_rows = (
+        db.session.query(
+            Reaction.post_id,
+            Reaction.reaction_type,
+            func.count(Reaction.id),
+        )
+        .filter(Reaction.post_id.in_(post_ids))
+        .group_by(Reaction.post_id, Reaction.reaction_type)
+        .all()
+    )
+    for post_id, reaction_type, count in reaction_rows:
+        reaction_counts_by_post_id[post_id] = (
+            reaction_counts_by_post_id.get(post_id, 0) + count
+        )
+        reaction_types_by_post_id.setdefault(post_id, {})[reaction_type] = count
+
+    current_user_reaction_by_post_id = dict(
+        db.session.query(Reaction.post_id, Reaction.reaction_type)
+        .filter(
+            Reaction.user_id == user_id,
+            Reaction.post_id.in_(post_ids),
+        )
+        .all()
+    )
+
+    return (
+        reaction_counts_by_post_id,
+        reaction_types_by_post_id,
+        current_user_reaction_by_post_id,
+    )
+
+
+def get_dashboard_friend_request_states(user_id, suggestion_ids, friend_ids):
+    """Bulk-load the existing request/friend state for dashboard suggestions."""
+    suggestion_ids = list(dict.fromkeys(suggestion_ids))
+    if not suggestion_ids:
+        return {}
+
+    pending_rows = (
+        db.session.query(FriendRequest.sender_id, FriendRequest.receiver_id)
+        .filter(
+            FriendRequest.status == "pending",
+            or_(
+                and_(
+                    FriendRequest.sender_id == user_id,
+                    FriendRequest.receiver_id.in_(suggestion_ids),
+                ),
+                and_(
+                    FriendRequest.receiver_id == user_id,
+                    FriendRequest.sender_id.in_(suggestion_ids),
+                ),
+            ),
+        )
+        .all()
+    )
+    sent_ids = {
+        receiver_id
+        for sender_id, receiver_id in pending_rows
+        if sender_id == user_id
+    }
+    received_ids = {
+        sender_id
+        for sender_id, receiver_id in pending_rows
+        if receiver_id == user_id
+    }
+    friend_ids = set(friend_ids)
+
+    states = {}
+    for suggestion_id in suggestion_ids:
+        if suggestion_id in sent_ids:
+            states[suggestion_id] = "sent"
+        elif suggestion_id in received_ids:
+            states[suggestion_id] = "received"
+        elif suggestion_id in friend_ids:
+            states[suggestion_id] = "friends"
+        else:
+            states[suggestion_id] = "none"
+    return states
+
+
+def get_dashboard_banner_campaigns(current_time):
+    """Return the highest-budget eligible campaign for each dashboard placement."""
+    campaigns = (
+        AdCampaign.query.filter(
+            AdCampaign.status == "active",
+            AdCampaign.start_date <= current_time,
+            AdCampaign.end_date >= current_time,
+            AdCampaign.placement.in_(DASHBOARD_AD_PLACEMENTS.values()),
+        )
+        .order_by(AdCampaign.budget.desc())
+        .all()
+    )
+
+    campaign_by_placement = {}
+    for campaign in campaigns:
+        campaign_by_placement.setdefault(campaign.placement, campaign)
+
+    return {
+        key: campaign_by_placement[placement]
+        for key, placement in DASHBOARD_AD_PLACEMENTS.items()
+        if placement in campaign_by_placement
+    }
+
+
 @user.route("/user_dashboard", methods=["GET", "POST"])
 @login_required
 def user_dashboard():
@@ -934,6 +1056,24 @@ def user_dashboard():
     )
     timings['get_visible_posts_optimized'] = time.time() - t0
 
+    is_ajax_request = request.headers.get("X-Requested-With") == "XMLHttpRequest"
+    post_ids = [post.id for post in posts]
+    reaction_counts_by_post_id = {}
+    reaction_types_by_post_id = {}
+    current_user_reaction_by_post_id = {}
+    if not is_ajax_request:
+        (
+            reaction_counts_by_post_id,
+            reaction_types_by_post_id,
+            current_user_reaction_by_post_id,
+        ) = get_dashboard_reaction_data(post_ids, user_id)
+
+    current_user_liked_post_ids = {
+        post.id
+        for post in posts
+        if any(like.user_id == user_id for like in post.likes)
+    }
+
     # Friends
     t0 = time.time()
     friend_query = text(
@@ -982,8 +1122,15 @@ def user_dashboard():
     if eligible_count > 0:
         offset = random.randint(0, max(eligible_count - 5, 0))
         random_five = suggestions_query.offset(offset).limit(5).all()
-        for user in random_five:
-            user.friend_request_status = current_user.get_friend_request_status(user.id)
+        friend_request_state_by_user_id = get_dashboard_friend_request_states(
+            user_id,
+            [suggested_user.id for suggested_user in random_five],
+            friend_ids,
+        )
+        for suggested_user in random_five:
+            suggested_user.friend_request_status = (
+                friend_request_state_by_user_id[suggested_user.id]
+            )
     timings['suggestions_full_block'] = time.time() - t0
 
     # Groups (cached, for initial HTML render)
@@ -1039,48 +1186,31 @@ def user_dashboard():
             return "video/mp4"
         return ""
 
-    placement_map = {
-        "top_banner": "dashboard-top",
-        "sidebar_banner": "dashboard-sidebar",
-        "vertical_banner": "dashboard-vertical",
-        "spotlight_banner": "dashboard-spotlight",
-        "bottom_banner": "dashboard-bottom",
-    }
     dashboard_ads = {}
-    for key, placement in placement_map.items():
-        banner_ad = (
-            AdCampaign.query.filter(
-                AdCampaign.status == "active",
-                AdCampaign.start_date <= current_time,
-                AdCampaign.end_date >= current_time,
-                AdCampaign.placement == placement,
-            )
-            .order_by(AdCampaign.budget.desc())
-            .first()
+    for key, banner_ad in get_dashboard_banner_campaigns(current_time).items():
+        placement = DASHBOARD_AD_PLACEMENTS[key]
+        media_url = (
+            banner_ad.image
+            or "https://via.placeholder.com/1200x600/0f172a/ffffff?text=Kimbela+Ad"
         )
-        if banner_ad:
-            media_url = (
-                banner_ad.image
-                or "https://via.placeholder.com/1200x600/0f172a/ffffff?text=Kimbela+Ad"
-            )
-            video_mime = get_video_mime(media_url)
-            media_type = (
-                "video"
-                if placement
-                in ["dashboard-sidebar", "dashboard-vertical", "dashboard-spotlight"]
-                and video_mime
-                else "image"
-            )
-            dashboard_ads[key] = {
-                "id": banner_ad.id,
-                "title": banner_ad.title or "Featured Offer",
-                "description": banner_ad.description or "",
-                "call_to_action": banner_ad.call_to_action or "Learn More",
-                "image_url": media_url,
-                "media_type": media_type,
-                "video_mime": video_mime,
-                "target_url": banner_ad.target_url or "#",
-            }
+        video_mime = get_video_mime(media_url)
+        media_type = (
+            "video"
+            if placement
+            in ["dashboard-sidebar", "dashboard-vertical", "dashboard-spotlight"]
+            and video_mime
+            else "image"
+        )
+        dashboard_ads[key] = {
+            "id": banner_ad.id,
+            "title": banner_ad.title or "Featured Offer",
+            "description": banner_ad.description or "",
+            "call_to_action": banner_ad.call_to_action or "Learn More",
+            "image_url": media_url,
+            "media_type": media_type,
+            "video_mime": video_mime,
+            "target_url": banner_ad.target_url or "#",
+        }
 
     ads_data = [
         {
@@ -1097,11 +1227,12 @@ def user_dashboard():
     ]
 
     # AJAX partial posts
-    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+    if is_ajax_request:
         posts_html = render_template(
             "_posts_partial.html",
             posts=posts,
             current_user=current_user,
+            current_user_liked_post_ids=current_user_liked_post_ids,
             default_avatar=url_for("static", filename="assets/img/default-avatar.png"),
         )
         return jsonify(
@@ -1150,6 +1281,9 @@ def user_dashboard():
         groups_data=groups_data,
         sponsored_ads=ads_data,
         dashboard_ads=dashboard_ads,
+        reaction_counts_by_post_id=reaction_counts_by_post_id,
+        reaction_types_by_post_id=reaction_types_by_post_id,
+        current_user_reaction_by_post_id=current_user_reaction_by_post_id,
         csrf_token=generate_csrf(),
         default_avatar=url_for("static", filename="assets/img/default-avatar.png"),
     )
@@ -4312,4 +4446,3 @@ def pwa_unsubscribe():
         return jsonify({'message': 'Unsubscribed successfully'})
 
     return jsonify({'message': 'Subscription not found'}), 404
-

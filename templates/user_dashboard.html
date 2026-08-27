@@ -481,6 +481,48 @@ placement='dashboard-top') %}
       }
     </style>
 
+    {% set sidebar_banner = dashboard_ads.get('sidebar_banner') if dashboard_ads else None %}
+    {% set vertical_banner = dashboard_ads.get('vertical_banner') if dashboard_ads else None %}
+    {% set spotlight_banner = dashboard_ads.get('spotlight_banner') if dashboard_ads else None %}
+    {% set mobile_banner_candidates = [
+    {
+    'key': 'sidebar',
+    'placement': 'dashboard-sidebar',
+    'label': 'Sidebar Boost',
+    'headline': 'Boost your product today',
+    'copy': 'Get your brand seen by active Kimbela shoppers and creators.',
+    'cta': 'Start advertising',
+    'banner': sidebar_banner,
+    'href': sidebar_banner.target_url if sidebar_banner else url_for('payments.dashboard_ad_package',
+    placement='dashboard-sidebar'),
+    'ad_id': sidebar_banner.id if sidebar_banner else None
+    },
+    {
+    'key': 'vertical',
+    'placement': 'dashboard-vertical',
+    'label': 'Vertical Feature',
+    'headline': 'Put your brand in the spotlight',
+    'copy': 'Tall, bold placements that keep your story front and center.',
+    'cta': 'Start your promo',
+    'banner': vertical_banner,
+    'href': vertical_banner.target_url if vertical_banner else url_for('payments.dashboard_ad_package',
+    placement='dashboard-vertical'),
+    'ad_id': vertical_banner.id if vertical_banner else None
+    },
+    {
+    'key': 'spotlight',
+    'placement': 'dashboard-spotlight',
+    'label': 'Spotlight',
+    'headline': 'Turn views into sales',
+    'copy': 'Premium placements that put your products first.',
+    'cta': 'Get featured',
+    'banner': spotlight_banner,
+    'href': spotlight_banner.target_url if spotlight_banner else url_for('payments.dashboard_ad_package',
+    placement='dashboard-spotlight'),
+    'ad_id': spotlight_banner.id if spotlight_banner else None
+    }
+    ] %}
+
     <!-- POSTS FEED (uses existing feed div via JS) -->
     <div id="posts-feed" data-has-more="{{ has_more|tojson }}" data-next-cursor="{{ next_cursor }}">
       <!-- PEOPLE YOU MAY KNOW -->
@@ -680,11 +722,12 @@ placement='dashboard-top') %}
         </div>
 
         <!-- Post Stats – With Icons & Real Reactions Count -->
+        {% set reaction_count = reaction_counts_by_post_id.get(post.id, 0) %}
         <div class="flex items-center justify-between text-sm text-gray-600 mb-4 pb-3 border-b border-gray-200">
           <span id="reaction-count-{{ post.id }}" class="flex items-center gap-1.5 font-medium">
             <i class="bi bi-hand-thumbs-up-fill text-blue-600 text-base"></i>
-            <span>{{ post.reactions_count }} {{ 'reaction' if
-              post.reactions_count == 1 else 'reactions' }}</span>
+            <span>{{ reaction_count }} {{ 'reaction' if
+              reaction_count == 1 else 'reactions' }}</span>
           </span>
           <span id="comment-count-{{ post.id }}" class="flex items-center gap-1.5 font-medium">
             <img src="{{ url_for('static', filename='assets/img/microphone2.png') }}" alt="Chimes" class="w-4 h-4" />
@@ -698,8 +741,7 @@ placement='dashboard-top') %}
           <div class="flex flex-wrap justify-around gap-1">
             <!-- Like Button with Reactions -->
             <div class="reactions-container">
-              {% set user_reaction = current_user.get_user_reaction(post.id)
-              %}
+              {% set user_reaction = current_user_reaction_by_post_id.get(post.id) %}
               <button onclick="likePost({{ post.id }})"
                 class="flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-1 md:py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 like-btn {% if user_reaction %}active-{{ user_reaction }} text-{% if user_reaction == 'like' %}blue{% elif user_reaction == 'love' %}red{% elif user_reaction in ['care', 'haha', 'wow', 'sad'] %}yellow{% elif user_reaction == 'angry' %}red{% endif %}-600{% else %}text-gray-600{% endif %}"
                 id="like-btn-{{ post.id }}" onmouseenter="showReactions({{ post.id }})"
@@ -1572,48 +1614,6 @@ placement='dashboard-top') %}
   <div class="w-full max-w-4xl mx-auto">
     <!-- POST COMPOSER -->
 
-
-    {% set sidebar_banner = dashboard_ads.get('sidebar_banner') if dashboard_ads else None %}
-    {% set vertical_banner = dashboard_ads.get('vertical_banner') if dashboard_ads else None %}
-    {% set spotlight_banner = dashboard_ads.get('spotlight_banner') if dashboard_ads else None %}
-    {% set mobile_banner_candidates = [
-    {
-    'key': 'sidebar',
-    'placement': 'dashboard-sidebar',
-    'label': 'Sidebar Boost',
-    'headline': 'Boost your product today',
-    'copy': 'Get your brand seen by active Kimbela shoppers and creators.',
-    'cta': 'Start advertising',
-    'banner': sidebar_banner,
-    'href': sidebar_banner.target_url if sidebar_banner else url_for('payments.dashboard_ad_package',
-    placement='dashboard-sidebar'),
-    'ad_id': sidebar_banner.id if sidebar_banner else None
-    },
-    {
-    'key': 'vertical',
-    'placement': 'dashboard-vertical',
-    'label': 'Vertical Feature',
-    'headline': 'Put your brand in the spotlight',
-    'copy': 'Tall, bold placements that keep your story front and center.',
-    'cta': 'Start your promo',
-    'banner': vertical_banner,
-    'href': vertical_banner.target_url if vertical_banner else url_for('payments.dashboard_ad_package',
-    placement='dashboard-vertical'),
-    'ad_id': vertical_banner.id if vertical_banner else None
-    },
-    {
-    'key': 'spotlight',
-    'placement': 'dashboard-spotlight',
-    'label': 'Spotlight',
-    'headline': 'Turn views into sales',
-    'copy': 'Premium placements that put your products first.',
-    'cta': 'Get featured',
-    'banner': spotlight_banner,
-    'href': spotlight_banner.target_url if spotlight_banner else url_for('payments.dashboard_ad_package',
-    placement='dashboard-spotlight'),
-    'ad_id': spotlight_banner.id if spotlight_banner else None
-    }
-    ] %}
 
     <script id="mobileFeedAdCandidates" type="application/json">
           {{ mobile_banner_candidates|tojson }}

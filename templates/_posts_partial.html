@@ -199,14 +199,15 @@
     </div>
     
     <!-- Likes/Comments/Share -->
+    {% set current_user_liked = post.id in current_user_liked_post_ids %}
     <div
         class="px-4 py-3 border-t border-fb-border flex justify-between text-fb-text-light font-medium"
     >
         <button
-            class="action-btn like-btn flex items-center space-x-1 px-2 py-1 rounded-lg hover:bg-fb-gray transition-colors {% if current_user.has_liked_post(post.id) %}text-blue-600{% endif %}"
+            class="action-btn like-btn flex items-center space-x-1 px-2 py-1 rounded-lg hover:bg-fb-gray transition-colors {% if current_user_liked %}text-blue-600{% endif %}"
             data-post-id="{{ post.id }}"
         >
-            <i class="bi bi-hand-thumbs-up{% if current_user.has_liked_post(post.id) %}-fill{% endif %}"></i>
+            <i class="bi bi-hand-thumbs-up{% if current_user_liked %}-fill{% endif %}"></i>
             <span class="like-count">{{ post.likes_count }}</span>
         </button>
         <button
