@@ -27,6 +27,7 @@ function loadWorker(overrides = {}) {
   const cachePuts = [];
   const addAllCalls = [];
   const notifications = [];
+  const subscriptionCalls = [];
   let claimCount = 0;
 
   const runtimeCache = {
@@ -58,10 +59,16 @@ function loadWorker(overrides = {}) {
       claim: async () => {
         claimCount += 1;
       },
-      matchAll: async () => [],
+      matchAll: async () => overrides.windowClients || [],
       openWindow: async () => undefined,
     },
     registration: {
+      pushManager: {
+        subscribe: async (options) => {
+          subscriptionCalls.push(options);
+          return overrides.replacementSubscription;
+        },
+      },
       showNotification: async (title, options) => {
         notifications.push({ title, options });
       },
@@ -94,6 +101,7 @@ function loadWorker(overrides = {}) {
     deletedCaches,
     handlers,
     notifications,
+    subscriptionCalls,
     getClaimCount: () => claimCount,
   };
 }
@@ -225,4 +233,37 @@ test('push and notification-click handlers remain registered', async () => {
   assert.equal(worker.notifications.length, 1);
   assert.equal(worker.notifications[0].title, 'New message');
   assert.equal(worker.notifications[0].options.data.url, '/messages');
+});
+
+test('push subscription changes are replaced and sent to open clients', async () => {
+  const postedMessages = [];
+  const options = { userVisibleOnly: true, applicationServerKey: 'existing-key' };
+  const replacement = {
+    toJSON: () => ({
+      endpoint: 'https://push.example/replacement',
+      keys: { p256dh: 'replacement-p256dh', auth: 'replacement-auth' },
+    }),
+  };
+  const worker = loadWorker({
+    replacementSubscription: replacement,
+    windowClients: [{ postMessage: message => postedMessages.push(message) }],
+  });
+  let changePromise;
+
+  assert.equal(typeof worker.handlers.pushsubscriptionchange, 'function');
+  worker.handlers.pushsubscriptionchange({
+    oldSubscription: { options },
+    newSubscription: null,
+    waitUntil: promise => { changePromise = promise; },
+  });
+  await changePromise;
+
+  assert.equal(worker.subscriptionCalls.length, 1);
+  assert.equal(worker.subscriptionCalls[0], options);
+  assert.equal(postedMessages.length, 1);
+  assert.equal(postedMessages[0].type, 'PUSH_SUBSCRIPTION_CHANGED');
+  assert.equal(
+    postedMessages[0].subscription.endpoint,
+    'https://push.example/replacement',
+  );
 });

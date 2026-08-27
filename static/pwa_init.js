@@ -123,6 +123,17 @@ function getExistingRegistrations() {
   return Promise.resolve([]);
 }
 
+async function resynchronizeCanonicalSubscription(registration) {
+  if (!('Notification' in window) || Notification.permission !== 'granted') {
+    return false;
+  }
+
+  const subscription = await registration.pushManager.getSubscription();
+  if (!subscription) return false;
+
+  return savePushSubscription(subscription);
+}
+
 async function initializeCanonicalServiceWorker() {
   const registrations = await getExistingRegistrations();
   const legacyRegistrations = registrations.filter(function(registration) {
@@ -164,6 +175,7 @@ async function initializeCanonicalServiceWorker() {
   }
 
   if (!hasLegacyPushSubscription) {
+    await resynchronizeCanonicalSubscription(canonicalRegistration);
     return canonicalRegistration;
   }
 
@@ -215,6 +227,18 @@ async function initializeCanonicalServiceWorker() {
 
 // Register one canonical root-scoped worker. Permission prompts remain user initiated.
 if ('serviceWorker' in navigator) {
+  if (navigator.serviceWorker.addEventListener) {
+    navigator.serviceWorker.addEventListener('message', function(event) {
+      if (
+        event.data
+        && event.data.type === 'PUSH_SUBSCRIPTION_CHANGED'
+        && event.data.subscription
+      ) {
+        savePushSubscription(event.data.subscription);
+      }
+    });
+  }
+
   window._swRegistrationPromise = new Promise(function(resolve, reject) {
     window.addEventListener('load', function() {
       initializeCanonicalServiceWorker().then(resolve, reject);

@@ -97,6 +97,33 @@ self.addEventListener('push', event => {
   }
 });
 
+self.addEventListener('pushsubscriptionchange', event => {
+  const replacementPromise = event.newSubscription
+    ? Promise.resolve(event.newSubscription)
+    : (
+      event.oldSubscription && event.oldSubscription.options
+        ? self.registration.pushManager.subscribe(event.oldSubscription.options)
+        : Promise.reject(new Error('Push subscription replacement options unavailable'))
+    );
+
+  event.waitUntil(
+    replacementPromise.then(subscription => (
+      self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+        .then(windowClients => {
+          const subscriptionData = subscription.toJSON
+            ? subscription.toJSON()
+            : subscription;
+          windowClients.forEach(client => client.postMessage({
+            type: 'PUSH_SUBSCRIPTION_CHANGED',
+            subscription: subscriptionData,
+          }));
+        })
+    )).catch(error => {
+      console.error('Failed to refresh push subscription', error);
+    })
+  );
+});
+
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   const urlToOpen = event.notification.data.url;

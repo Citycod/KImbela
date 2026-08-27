@@ -431,24 +431,26 @@ def send_message():
         except Exception:
             current_app.logger.exception("Failed to emit persisted HTTP message")
 
-        if not friend.is_online:
-            try:
-                from utils.push_service import send_push_notification
+        # The account-level is_online flag cannot identify which device or
+        # conversation is active. Suppressing here can silence every subscribed
+        # device after any one Socket.IO connection comes online.
+        try:
+            from utils.push_service import send_push_notification
 
-                push_payload = {
-                    "title": f"New Message from {current_user.first_name}",
-                    "body": (
-                        content
-                        if message_type == "text"
-                        else f"Sent you a {message_type}"
-                    ),
-                    "url": "/messages",
-                }
-                send_push_notification(friend_id, push_payload)
-            except Exception:
-                current_app.logger.exception(
-                    "Failed to send push for persisted HTTP message"
-                )
+            push_payload = {
+                "title": f"New Message from {current_user.first_name}",
+                "body": (
+                    content
+                    if message_type == "text"
+                    else f"Sent you a {message_type}"
+                ),
+                "url": "/messages",
+            }
+            send_push_notification(friend_id, push_payload)
+        except Exception:
+            current_app.logger.exception(
+                "Failed to send push for persisted HTTP message"
+            )
 
         return jsonify({"success": True, "message": message_data})
 

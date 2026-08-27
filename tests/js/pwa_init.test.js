@@ -69,10 +69,15 @@ function jsonResponse({ ok = true, status = 200, redirected = false } = {}) {
 
 function loadInitializer({ registrations = [], canonical, fetchImpl } = {}) {
   const listeners = {};
+  const serviceWorkerListeners = {};
   const registerCalls = [];
   const fetchCalls = [];
   const canonicalRegistration = canonical || createRegistration('/sw.js');
   const serviceWorker = {
+    addEventListener(type, handler) {
+      serviceWorkerListeners[type] = serviceWorkerListeners[type] || [];
+      serviceWorkerListeners[type].push(handler);
+    },
     async getRegistrations() {
       return registrations;
     },
@@ -143,6 +148,10 @@ function loadInitializer({ registrations = [], canonical, fetchImpl } = {}) {
     async triggerLoad() {
       for (const listener of listeners.load || []) listener();
       return window._swRegistrationPromise;
+    },
+    async triggerServiceWorkerMessage(data) {
+      for (const listener of serviceWorkerListeners.message || []) listener({ data });
+      await new Promise(resolve => setImmediate(resolve));
     },
   };
 }
@@ -218,5 +227,34 @@ test('normal push enablement reuses an existing canonical subscription', async (
   assert.equal(enabled, true);
   assert.equal(canonical.getSubscribeCount(), 0);
   assert.equal(existing.getUnsubscribeCount(), 0);
+  assert.deepEqual(runtime.fetchCalls.map(call => call.url), [
+    '/api/pwa/subscribe',
+    '/api/pwa/subscribe',
+  ]);
+});
+
+test('existing canonical subscription is resynchronized on page load', async () => {
+  const existing = createSubscription('https://push.example/resynchronize');
+  const canonical = createRegistration('/sw.js', existing);
+  const runtime = loadInitializer({ registrations: [canonical], canonical });
+
+  await runtime.triggerLoad();
+
+  assert.equal(runtime.fetchCalls.length, 1);
   assert.equal(runtime.fetchCalls[0].url, '/api/pwa/subscribe');
+  assert.equal(JSON.parse(runtime.fetchCalls[0].options.body).endpoint, existing.endpoint);
+});
+
+test('subscription-change message resynchronizes replacement subscription', async () => {
+  const runtime = loadInitializer();
+  const replacement = createSubscription('https://push.example/replacement').toJSON();
+
+  await runtime.triggerServiceWorkerMessage({
+    type: 'PUSH_SUBSCRIPTION_CHANGED',
+    subscription: replacement,
+  });
+
+  assert.equal(runtime.fetchCalls.length, 1);
+  assert.equal(runtime.fetchCalls[0].url, '/api/pwa/subscribe');
+  assert.equal(JSON.parse(runtime.fetchCalls[0].options.body).endpoint, replacement.endpoint);
 });

@@ -222,18 +222,19 @@ def handle_send_message(data):
             traceback.print_exc()
             print("[ERROR] Failed to emit persisted Socket.IO message")
 
-        if not friend.is_online:
-            try:
-                from utils.push_service import send_push_notification
-                push_payload = {
-                    "title": f"New message from {current_user.full_name}",
-                    "body": content[:100] + ("..." if len(content) > 100 else ""),
-                    "url": f"/messages"
-                }
-                send_push_notification(receiver_id, push_payload)
-            except Exception:
-                traceback.print_exc()
-                print("[ERROR] Push notification failed for persisted Socket.IO message")
+        # is_online is account-global and cannot identify the active device or
+        # conversation, so it is not safe as a push-suppression signal.
+        try:
+            from utils.push_service import send_push_notification
+            push_payload = {
+                "title": f"New message from {current_user.full_name}",
+                "body": content[:100] + ("..." if len(content) > 100 else ""),
+                "url": f"/messages"
+            }
+            send_push_notification(receiver_id, push_payload)
+        except Exception:
+            traceback.print_exc()
+            print("[ERROR] Push notification failed for persisted Socket.IO message")
         # Also emit to chat room
         # room = f'chat_{min(current_user.id, receiver_id)}_{max(current_user.id, receiver_id)}'
         # socketio.emit('new_message', message_data, room=room)

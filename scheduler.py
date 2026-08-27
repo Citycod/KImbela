@@ -17,6 +17,55 @@ logger = logging.getLogger(__name__)
 scheduler = None
 
 
+def process_birthday_push(user, year):
+    """Attempt one user's annual birthday push and record completed outcomes."""
+    from models import BirthdayNotificationLog, PushSubscription
+    from utils.push_service import send_push_notification
+
+    existing_log = BirthdayNotificationLog.query.filter_by(
+        user_id=user.id,
+        year=year,
+    ).first()
+    if existing_log:
+        return "already_completed"
+
+    payload = {
+        "title": "🎉 Happy Birthday!",
+        "body": f"Wishing you a great day, {user.first_name or 'friend'}! 🎂",
+        "icon": "/static/assets/img/kimbela_icon_512.png",
+        "url": "/user_dashboard",
+    }
+
+    try:
+        push_succeeded = send_push_notification(user.id, payload)
+    except Exception:
+        db.session.rollback()
+        logger.exception("Birthday push raised unexpectedly for user %s", user.id)
+        return "retry"
+
+    if not push_succeeded:
+        remaining_subscriptions = PushSubscription.query.filter_by(user_id=user.id).count()
+        if remaining_subscriptions:
+            logger.warning(
+                "Birthday push failed transiently for user %s; leaving it eligible for retry",
+                user.id,
+            )
+            return "retry"
+
+    # No subscription before the attempt, or only permanently expired 404/410
+    # subscriptions, keeps the existing email-fallback/annual-completion behavior.
+    try:
+        from email_service import EmailService
+
+        EmailService.send_birthday_email(user)
+    except Exception:
+        logger.exception("Birthday fallback email failed for user %s", user.id)
+
+    db.session.add(BirthdayNotificationLog(user_id=user.id, year=year))
+    db.session.commit()
+    return "completed"
+
+
 def init_scheduler(app):
     """Initialize the background scheduler with optimized settings"""
     global scheduler
@@ -212,10 +261,9 @@ def init_scheduler(app):
     def send_birthday_pushes():
         """Hourly check to send birthday pushes to users in their local timezone"""
         with app.app_context():
-            from models import User, BirthdayNotificationLog
+            from models import User
             import pytz
-            from utils.push_service import send_push_notification
-            
+
             try:
                 users = User.query.filter(User.dob != None).all()
                 for user in users:
@@ -231,27 +279,8 @@ def init_scheduler(app):
                     # Send if it's their birthday today (local time) and hour >= 9 AM
                     if local_now.month == user.dob.month and local_now.day == user.dob.day:
                         if local_now.hour >= 9:
-                            # 2. Check if we already sent for this year
-                            log = BirthdayNotificationLog.query.filter_by(user_id=user.id, year=local_now.year).first()
-                            if not log:
-                                # 3. Send Push!
-                                payload = {
-                                    "title": "🎉 Happy Birthday!",
-                                    "body": f"Wishing you a great day, {user.first_name or 'friend'}! 🎂",
-                                    "icon": "/static/assets/img/kimbela_icon_512.png",
-                                    "url": "/user_dashboard"
-                                }
-                                # send_push_notification handles iterating subscriptions and pruning dead ones
-                                send_push_notification(user.id, payload)
-                                
-                                # Send Email fallback!
-                                from email_service import EmailService
-                                EmailService.send_birthday_email(user)
-                                
-                                # Log it to prevent duplicate sends this year
-                                new_log = BirthdayNotificationLog(user_id=user.id, year=local_now.year)
-                                db.session.add(new_log)
-                                db.session.commit()
+                            result = process_birthday_push(user, local_now.year)
+                            if result == "completed":
                                 time.sleep(0.5) # Prevent blasting the CPU/network
             except Exception as e:
                 logger.error(f"Error in send_birthday_pushes: {str(e)}")

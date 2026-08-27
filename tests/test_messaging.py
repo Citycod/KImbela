@@ -103,7 +103,7 @@ def test_http_send_persists_emits_once_and_pushes_offline_recipient(
     assert push_mock.call_args.args[0] == recipient.id
 
 
-def test_http_send_does_not_push_online_recipient(
+def test_http_send_pushes_online_recipient_without_device_conversation_mapping(
     client, login, user, db, monkeypatch
 ):
     recipient = create_recipient(db, user, is_online=True)
@@ -122,7 +122,74 @@ def test_http_send_does_not_push_online_recipient(
     assert response.status_code == 200
     assert response.get_json()["message"]["status"] == "delivered"
     assert emit_mock.call_count == 2
-    push_mock.assert_not_called()
+    push_mock.assert_called_once_with(
+        recipient.id,
+        {
+            "title": f"New Message from {user.first_name}",
+            "body": "Online message",
+            "url": "/messages",
+        },
+    )
+
+
+def test_http_repeated_push_is_not_suppressed_after_recipient_connects(
+    client, login, user, db, monkeypatch
+):
+    recipient = create_recipient(db, user, is_online=False)
+    login_without_sending_alert(monkeypatch, login)
+
+    monkeypatch.setattr("messages.messaging.socketio.emit", Mock())
+    push_mock = Mock(return_value=True)
+    monkeypatch.setattr("utils.push_service.send_push_notification", push_mock)
+
+    responses = []
+    responses.append(client.post(
+        "/api/messaging/send",
+        json={"receiver_id": recipient.id, "content": "First offline message"},
+    ))
+
+    recipient.is_online = True  # Exact persistent state written by Socket.IO connect.
+    db.session.commit()
+
+    for content in ("Second message", "Third message"):
+        responses.append(client.post(
+            "/api/messaging/send",
+            json={"receiver_id": recipient.id, "content": content},
+        ))
+
+    assert [response.status_code for response in responses] == [200, 200, 200]
+    assert push_mock.call_count == 3
+    assert [call_.args[0] for call_ in push_mock.call_args_list] == [
+        recipient.id,
+        recipient.id,
+        recipient.id,
+    ]
+
+
+def test_multiple_tab_presence_transitions_do_not_suppress_push(
+    client, login, user, db, monkeypatch
+):
+    recipient = create_recipient(db, user, is_online=True)
+    login_without_sending_alert(monkeypatch, login)
+
+    monkeypatch.setattr("messages.messaging.socketio.emit", Mock())
+    push_mock = Mock(return_value=True)
+    monkeypatch.setattr("utils.push_service.send_push_notification", push_mock)
+
+    first = client.post(
+        "/api/messaging/send",
+        json={"receiver_id": recipient.id, "content": "While a tab is connected"},
+    )
+    recipient.is_online = False  # One tab disconnecting can write this stale value.
+    db.session.commit()
+    second = client.post(
+        "/api/messaging/send",
+        json={"receiver_id": recipient.id, "content": "After one tab disconnects"},
+    )
+
+    assert first.status_code == 200
+    assert second.status_code == 200
+    assert push_mock.call_count == 2
 
 
 def test_http_push_failure_does_not_fail_persisted_message(
@@ -255,6 +322,31 @@ def test_socketio_persistence_failure_does_not_emit_or_push(
     socket_client.disconnect()
 
 
+def test_socketio_send_pushes_when_recipient_account_is_marked_online(
+    app, client, login, user, db, monkeypatch
+):
+    from extensions import socketio
+
+    recipient = create_recipient(db, user, is_online=True)
+    login_without_sending_alert(monkeypatch, login)
+    register_test_socketio_message_handler(socketio)
+    socket_client = socketio.test_client(app, flask_test_client=client)
+    assert socket_client.is_connected()
+
+    monkeypatch.setattr("socketio_events.socketio.emit", Mock())
+    push_mock = Mock(return_value=True)
+    monkeypatch.setattr("utils.push_service.send_push_notification", push_mock)
+
+    socket_client.emit(
+        "send_message",
+        {"receiver_id": recipient.id, "content": "Online Socket.IO recipient"},
+    )
+
+    push_mock.assert_called_once()
+    assert push_mock.call_args.args[0] == recipient.id
+    socket_client.disconnect()
+
+
 def test_expired_push_subscription_is_pruned_without_blocking_valid_subscription(
     user, db, monkeypatch
 ):
@@ -320,4 +412,62 @@ def test_invalid_push_subscription_failure_is_isolated(user, db, monkeypatch):
 
     assert result is False
     webpush_mock.assert_called_once()
+    assert db.session.get(PushSubscription, subscription_id) is not None
+
+
+def test_three_pushes_reuse_all_device_subscriptions(user, db, monkeypatch):
+    from models import PushSubscription
+    from utils.push_service import send_push_notification
+
+    subscriptions = [
+        PushSubscription(
+            user_id=user.id,
+            endpoint=f"https://push.example/device-{device}-{uuid.uuid4().hex}",
+            p256dh=f"p256dh-{device}",
+            auth=f"auth-{device}",
+        )
+        for device in (1, 2)
+    ]
+    db.session.add_all(subscriptions)
+    db.session.commit()
+    subscription_ids = [subscription.id for subscription in subscriptions]
+
+    monkeypatch.setenv("VAPID_PRIVATE_KEY", "test-private-key")
+    webpush_mock = Mock()
+    monkeypatch.setattr("utils.push_service.webpush", webpush_mock)
+
+    results = [
+        send_push_notification(user.id, {"title": "Test", "body": f"Message {number}"})
+        for number in (1, 2, 3)
+    ]
+
+    assert results == [True, True, True]
+    assert webpush_mock.call_count == 6
+    assert all(db.session.get(PushSubscription, sub_id) is not None for sub_id in subscription_ids)
+
+
+def test_transient_provider_failure_does_not_delete_valid_subscription(
+    user, db, monkeypatch
+):
+    from models import PushSubscription
+    from utils.push_service import send_push_notification
+
+    subscription = PushSubscription(
+        user_id=user.id,
+        endpoint=f"https://push.example/transient-{uuid.uuid4().hex}",
+        p256dh="transient-p256dh",
+        auth="transient-auth",
+    )
+    db.session.add(subscription)
+    db.session.commit()
+    subscription_id = subscription.id
+
+    monkeypatch.setenv("VAPID_PRIVATE_KEY", "test-private-key")
+    response = SimpleNamespace(status_code=503, text="temporarily unavailable")
+    monkeypatch.setattr(
+        "utils.push_service.webpush",
+        Mock(side_effect=WebPushException("provider unavailable", response=response)),
+    )
+
+    assert send_push_notification(user.id, {"title": "Test"}) is False
     assert db.session.get(PushSubscription, subscription_id) is not None
