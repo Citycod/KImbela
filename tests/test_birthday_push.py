@@ -16,7 +16,9 @@ def add_push_subscription(db, user):
     return subscription
 
 
-def test_successful_birthday_push_creates_annual_log(user, db, monkeypatch):
+def test_successful_birthday_push_creates_annual_log(
+    user, db, client, monkeypatch
+):
     from models import BirthdayNotificationLog
     from scheduler import process_birthday_push
 
@@ -29,6 +31,8 @@ def test_successful_birthday_push_creates_annual_log(user, db, monkeypatch):
     assert process_birthday_push(user, 2026) == "completed"
     assert BirthdayNotificationLog.query.filter_by(user_id=user.id, year=2026).count() == 1
     push_mock.assert_called_once()
+    assert push_mock.call_args.args[1]["url"] == "/user_dashboard"
+    assert client.get(push_mock.call_args.args[1]["url"]).status_code != 404
     email_mock.assert_called_once_with(user)
 
 

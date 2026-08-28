@@ -444,7 +444,7 @@ def send_message():
                     if message_type == "text"
                     else f"Sent you a {message_type}"
                 ),
-                "url": "/messages",
+                "url": url_for("user.user_dashboard", chat=current_user.id),
             }
             send_push_notification(friend_id, push_payload)
         except Exception:

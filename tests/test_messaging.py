@@ -127,9 +127,10 @@ def test_http_send_pushes_online_recipient_without_device_conversation_mapping(
         {
             "title": f"New Message from {user.first_name}",
             "body": "Online message",
-            "url": "/messages",
+            "url": f"/user_dashboard?chat={user.id}",
         },
     )
+    assert client.get(push_mock.call_args.args[1]["url"]).status_code == 200
 
 
 def test_http_repeated_push_is_not_suppressed_after_recipient_connects(
@@ -283,6 +284,7 @@ def test_socketio_send_persists_emits_once_and_pushes_offline_recipient(
     ]
     push_mock.assert_called_once()
     assert push_mock.call_args.args[0] == recipient.id
+    assert push_mock.call_args.args[1]["url"] == f"/user_dashboard?chat={user.id}"
 
     socket_client.disconnect()
 
@@ -344,6 +346,7 @@ def test_socketio_send_pushes_when_recipient_account_is_marked_online(
 
     push_mock.assert_called_once()
     assert push_mock.call_args.args[0] == recipient.id
+    assert push_mock.call_args.args[1]["url"] == f"/user_dashboard?chat={user.id}"
     socket_client.disconnect()
 
 
@@ -471,3 +474,18 @@ def test_transient_provider_failure_does_not_delete_valid_subscription(
 
     assert send_push_notification(user.id, {"title": "Test"}) is False
     assert db.session.get(PushSubscription, subscription_id) is not None
+
+
+def test_message_push_sources_do_not_generate_stale_page_routes():
+    from pathlib import Path
+
+    project_root = Path(__file__).resolve().parents[1]
+    for relative_path in (
+        "messages/messaging.py",
+        "socketio_events.py",
+        "users/user.py",
+    ):
+        source = (project_root / relative_path).read_text()
+        assert '"url": "/messages"' not in source
+        assert '"url": f"/messages"' not in source
+        assert '"url": "/dashboard"' not in source

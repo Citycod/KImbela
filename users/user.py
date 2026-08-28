@@ -2312,7 +2312,8 @@ def create_notification(user_id, actor_id, type_, message, entity_id=None):
             from utils.push_service import send_push_notification
             
             url = "/"
-            if type_ == "message": url = "/messages"
+            if type_ == "message":
+                url = url_for("user.user_dashboard", chat=actor_id)
             elif type_ in ["friend_request", "friend_accept"]:
                 # In this context, actor_id is the person who sent the request
                 actor = User.query.get(actor_id)

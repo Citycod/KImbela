@@ -27,6 +27,7 @@ function loadWorker(overrides = {}) {
   const cachePuts = [];
   const addAllCalls = [];
   const notifications = [];
+  const openedWindows = [];
   const subscriptionCalls = [];
   let claimCount = 0;
 
@@ -60,7 +61,10 @@ function loadWorker(overrides = {}) {
         claimCount += 1;
       },
       matchAll: async () => overrides.windowClients || [],
-      openWindow: async () => undefined,
+      openWindow: async (url) => {
+        openedWindows.push(url);
+        return undefined;
+      },
     },
     registration: {
       pushManager: {
@@ -101,6 +105,7 @@ function loadWorker(overrides = {}) {
     deletedCaches,
     handlers,
     notifications,
+    openedWindows,
     subscriptionCalls,
     getClaimCount: () => claimCount,
   };
@@ -224,7 +229,11 @@ test('push and notification-click handlers remain registered', async () => {
 
   worker.handlers.push({
     data: {
-      json: () => ({ title: 'New message', body: 'Hello', url: '/messages' }),
+      json: () => ({
+        title: 'New message',
+        body: 'Hello',
+        url: '/user_dashboard?chat=13',
+      }),
     },
     waitUntil: (promise) => { pushPromise = promise; },
   });
@@ -232,7 +241,54 @@ test('push and notification-click handlers remain registered', async () => {
 
   assert.equal(worker.notifications.length, 1);
   assert.equal(worker.notifications[0].title, 'New message');
-  assert.equal(worker.notifications[0].options.data.url, '/messages');
+  assert.equal(
+    worker.notifications[0].options.data.url,
+    '/user_dashboard?chat=13',
+  );
+});
+
+test('notification click focuses an existing app at the destination', async () => {
+  let focusCount = 0;
+  const destination = '/user_dashboard?chat=13';
+  const worker = loadWorker({
+    windowClients: [{
+      url: `https://kimbela.test${destination}`,
+      async focus() {
+        focusCount += 1;
+      },
+    }],
+  });
+  let clickPromise;
+  let closeCount = 0;
+
+  worker.handlers.notificationclick({
+    notification: {
+      data: { url: destination },
+      close() {
+        closeCount += 1;
+      },
+    },
+    waitUntil: promise => { clickPromise = promise; },
+  });
+  await clickPromise;
+
+  assert.equal(closeCount, 1);
+  assert.equal(focusCount, 1);
+  assert.deepEqual(worker.openedWindows, []);
+});
+
+test('notification click opens the valid destination when the app is closed', async () => {
+  const destination = '/user_dashboard?chat=13';
+  const worker = loadWorker({ windowClients: [] });
+  let clickPromise;
+
+  worker.handlers.notificationclick({
+    notification: { data: { url: destination }, close() {} },
+    waitUntil: promise => { clickPromise = promise; },
+  });
+  await clickPromise;
+
+  assert.deepEqual(worker.openedWindows, [destination]);
 });
 
 test('push subscription changes are replaced and sent to open clients', async () => {
