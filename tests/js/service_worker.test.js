@@ -137,6 +137,19 @@ test('install successfully precaches every essential offline resource', async ()
   ]]);
 });
 
+test('precache excludes dashboard, authenticated API, and large content', async () => {
+  const worker = loadWorker();
+  let installPromise;
+
+  worker.handlers.install({ waitUntil: (promise) => { installPromise = promise; } });
+  await installPromise;
+
+  const precachedUrls = worker.addAllCalls.flat();
+  assert.equal(precachedUrls.some(url => url.includes('user_dashboard')), false);
+  assert.equal(precachedUrls.some(url => url.startsWith('/api/')), false);
+  assert.equal(precachedUrls.some(url => /\.(?:css|js|mp4|webp|jpe?g)$/.test(url)), false);
+});
+
 test('install rejects when an essential precache resource is missing', async () => {
   const worker = loadWorker({ addAllError: new Error('missing asset') });
   let installPromise;

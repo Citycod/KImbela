@@ -23,8 +23,8 @@
               this.showBirthdayNotification(data.birthdays);
             }
 
-            // Check for unseen birthday notifications
-            this.updateBirthdayBadge();
+            // Reuse the bootstrap response instead of requesting the same data twice.
+            this.updateBirthdayBadge(data);
           } catch (error) {
           }
         }
@@ -63,10 +63,13 @@
         }
 
         // Update birthday badge count
-        async updateBirthdayBadge() {
+        async updateBirthdayBadge(existingData = null) {
           try {
-            const response = await fetch("/api/birthdays/today");
-            const data = await response.json();
+            let data = existingData;
+            if (!data) {
+              const response = await fetch("/api/birthdays/today");
+              data = await response.json();
+            }
 
             const count = document.getElementById("birthdayCount");
             const badge = document.getElementById("birthdayNotificationBadge");

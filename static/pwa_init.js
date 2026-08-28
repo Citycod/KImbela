@@ -326,11 +326,15 @@ const INSTALL_STYLE_ID = 'kimbela-install-prompt-styles';
 const INSTALL_DISMISSAL_KEY = 'kimbelaInstallDismissedAt';
 const LEGACY_IOS_DISMISSAL_KEY = 'iosInstallPromptDismissed';
 const INSTALL_DISMISSAL_MS = 14 * 24 * 60 * 60 * 1000;
+const INSTALLING_FEEDBACK_MS = 20 * 1000;
+const INSTALL_SUCCESS_FEEDBACK_MS = 3500;
 
 let deferredInstallPrompt = null;
 let installPromptElement = null;
 let installCompleted = false;
 let installDomReady = document.readyState !== 'loading';
+let installFeedbackTimer = null;
+let installReadinessPromise = null;
 
 function readInstallStorage(key) {
   try {
@@ -486,15 +490,88 @@ function ensureInstallPromptStyles() {
       cursor: wait;
       opacity: 0.65;
     }
+    .kimbela-install-card[role="status"] {
+      pointer-events: none;
+    }
   `;
   document.head.appendChild(style);
 }
 
+function clearInstallFeedbackTimer() {
+  if (installFeedbackTimer !== null) {
+    window.clearTimeout(installFeedbackTimer);
+    installFeedbackTimer = null;
+  }
+}
+
 function hideInstallPrompt() {
+  clearInstallFeedbackTimer();
   if (installPromptElement) {
     installPromptElement.remove();
     installPromptElement = null;
   }
+}
+
+function showInstallFeedback(state) {
+  hideInstallPrompt();
+  if (isStandaloneDisplayMode()) return false;
+
+  ensureInstallPromptStyles();
+  const card = createInstallElement('aside', 'kimbela-install-card');
+  card.id = INSTALL_PROMPT_ID;
+  card.setAttribute('role', 'status');
+  card.setAttribute('aria-live', 'polite');
+
+  const isSuccess = state === 'success';
+  const title = createInstallElement(
+    'h2',
+    'kimbela-install-title',
+    isSuccess ? 'Kimbela installed successfully' : 'Installing Kimbela…'
+  );
+  card.appendChild(title);
+
+  if (!isSuccess) {
+    card.appendChild(createInstallElement(
+      'p',
+      'kimbela-install-description',
+      'This may take a moment on slower connections. You can continue using Kimbela.'
+    ));
+  }
+
+  document.body.appendChild(card);
+  installPromptElement = card;
+  installFeedbackTimer = window.setTimeout(
+    hideInstallPrompt,
+    isSuccess ? INSTALL_SUCCESS_FEEDBACK_MS : INSTALLING_FEEDBACK_MS
+  );
+  return true;
+}
+
+function waitForInstallReadiness() {
+  if (!('serviceWorker' in navigator)) return Promise.resolve(false);
+  if (installReadinessPromise) return installReadinessPromise;
+
+  const registrationPromise = window._swRegistrationPromise
+    || navigator.serviceWorker.ready;
+  installReadinessPromise = Promise.resolve(registrationPromise)
+    .then(function(registration) {
+      // The worker install fails if the manifest, icons, or offline page cannot
+      // be precached, so an active canonical registration is our readiness gate.
+      return Boolean(registration && registration.active);
+    })
+    .catch(function() {
+      return false;
+    });
+  return installReadinessPromise;
+}
+
+function revealInstallPromptWhenReady(mode) {
+  if (!installDomReady) return;
+
+  waitForInstallReadiness().then(function(ready) {
+    if (!ready || !installDomReady) return;
+    showInstallPrompt(mode);
+  });
 }
 
 async function runNativeInstallPrompt(installButton) {
@@ -508,9 +585,8 @@ async function runNativeInstallPrompt(installButton) {
     await promptEvent.prompt();
     const choice = await promptEvent.userChoice;
     if (choice && choice.outcome === 'accepted') {
-      installCompleted = true;
       clearInstallDismissal();
-      hideInstallPrompt();
+      if (!installCompleted) showInstallFeedback('installing');
       return;
     }
 
@@ -618,23 +694,23 @@ function initializeInstallExperience() {
   }
 
   if (isIosOrIpadOs()) {
-    showInstallPrompt('ios');
+    revealInstallPromptWhenReady('ios');
   } else if (deferredInstallPrompt) {
-    showInstallPrompt('native');
+    revealInstallPromptWhenReady('native');
   }
 }
 
 window.addEventListener('beforeinstallprompt', function(event) {
   event.preventDefault();
   deferredInstallPrompt = event;
-  if (installDomReady) showInstallPrompt('native');
+  revealInstallPromptWhenReady('native');
 });
 
 window.addEventListener('appinstalled', function() {
   deferredInstallPrompt = null;
   installCompleted = true;
   clearInstallDismissal();
-  hideInstallPrompt();
+  showInstallFeedback('success');
 });
 
 if (document.readyState === 'loading') {

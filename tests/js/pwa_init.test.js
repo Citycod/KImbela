@@ -67,16 +67,19 @@ function jsonResponse({ ok = true, status = 200, redirected = false } = {}) {
   };
 }
 
-function createLocalStorage(initialValues = {}) {
+function createLocalStorage(initialValues = {}, shouldThrow = false) {
   const values = new Map(Object.entries(initialValues));
   return {
     getItem(key) {
+      if (shouldThrow) throw new Error('localStorage unavailable');
       return values.has(key) ? values.get(key) : null;
     },
     setItem(key, value) {
+      if (shouldThrow) throw new Error('localStorage unavailable');
       values.set(key, String(value));
     },
     removeItem(key) {
+      if (shouldThrow) throw new Error('localStorage unavailable');
       values.delete(key);
     },
     snapshot() {
@@ -191,6 +194,7 @@ function createDocument(readyState = 'loading') {
 function loadInitializer({
   registrations = [],
   canonical,
+  registerError = null,
   fetchImpl,
   userAgent = 'test browser',
   platform = 'Linux',
@@ -199,6 +203,7 @@ function loadInitializer({
   displayModeStandalone = false,
   matchMediaAvailable = true,
   storageValues = {},
+  storageThrows = false,
   documentReadyState = 'loading',
 } = {}) {
   const listeners = {};
@@ -206,7 +211,9 @@ function loadInitializer({
   const registerCalls = [];
   const fetchCalls = [];
   const mediaQueryListeners = [];
-  const localStorage = createLocalStorage(storageValues);
+  const localStorage = createLocalStorage(storageValues, storageThrows);
+  const timers = new Map();
+  let nextTimerId = 1;
   const document = createDocument(documentReadyState);
   const canonicalRegistration = canonical || createRegistration('/sw.js');
   const serviceWorker = {
@@ -219,6 +226,7 @@ function loadInitializer({
     },
     async register(pathname, options) {
       registerCalls.push({ pathname, options });
+      if (registerError) throw registerError;
       return canonicalRegistration;
     },
     ready: Promise.resolve(canonicalRegistration),
@@ -244,6 +252,15 @@ function loadInitializer({
     addEventListener(type, handler) {
       listeners[type] = listeners[type] || [];
       listeners[type].push(handler);
+    },
+    setTimeout(handler, delay) {
+      const timerId = nextTimerId;
+      nextTimerId += 1;
+      timers.set(timerId, { handler, delay });
+      return timerId;
+    },
+    clearTimeout(timerId) {
+      timers.delete(timerId);
     },
   };
   if (matchMediaAvailable) window.matchMedia = () => standaloneMediaQuery;
@@ -289,6 +306,13 @@ function loadInitializer({
     document,
     getNotificationPermissionRequests: () => notificationPermissionRequests,
     getInstallPrompt: () => document.getElementById('kimbela-install-prompt'),
+    getTimers: () => Array.from(timers.values()),
+    async runTimers() {
+      const pendingTimers = Array.from(timers.entries());
+      timers.clear();
+      for (const [, timer] of pendingTimers) timer.handler();
+      await new Promise(resolve => setImmediate(resolve));
+    },
     async triggerWindowEvent(type, event = {}) {
       const results = (listeners[type] || []).map(listener => listener(event));
       await Promise.all(results.filter(result => result && typeof result.then === 'function'));
@@ -297,6 +321,11 @@ function loadInitializer({
     async triggerDOMContentLoaded() {
       document.readyState = 'interactive';
       await this.triggerWindowEvent('DOMContentLoaded');
+    },
+    async triggerPageLoad() {
+      await this.triggerDOMContentLoaded();
+      await this.triggerLoad();
+      await new Promise(resolve => setImmediate(resolve));
     },
     async triggerStandaloneChange(matches) {
       standaloneMediaQuery.matches = matches;
@@ -433,7 +462,7 @@ test('subscription-change message resynchronizes replacement subscription', asyn
   assert.equal(JSON.parse(runtime.fetchCalls[0].options.body).endpoint, replacement.endpoint);
 });
 
-test('beforeinstallprompt is captured and shown after the DOM is ready', async () => {
+test('beforeinstallprompt waits for DOM and canonical worker readiness', async () => {
   const runtime = loadInitializer();
   const installEvent = createBeforeInstallPromptEvent();
 
@@ -443,6 +472,10 @@ test('beforeinstallprompt is captured and shown after the DOM is ready', async (
   assert.equal(runtime.getInstallPrompt(), null);
 
   await runtime.triggerDOMContentLoaded();
+  assert.equal(runtime.getInstallPrompt(), null);
+
+  await runtime.triggerLoad();
+  await new Promise(resolve => setImmediate(resolve));
 
   const prompt = runtime.getInstallPrompt();
   assert.ok(prompt);
@@ -450,23 +483,59 @@ test('beforeinstallprompt is captured and shown after the DOM is ready', async (
   assert.ok(prompt.querySelector('[data-action="install"]'));
 });
 
-test('Install invokes the native prompt and an accepted install hides the UI', async () => {
+test('failed canonical worker readiness does not expose install UI', async () => {
+  const runtime = loadInitializer({
+    registerError: new Error('essential precache failed'),
+  });
+  const installEvent = createBeforeInstallPromptEvent();
+  await runtime.triggerWindowEvent('beforeinstallprompt', installEvent);
+  await runtime.triggerDOMContentLoaded();
+
+  await assert.rejects(runtime.triggerLoad(), /essential precache failed/);
+  await new Promise(resolve => setImmediate(resolve));
+
+  assert.equal(installEvent.getPreventDefaultCount(), 1);
+  assert.equal(runtime.getInstallPrompt(), null);
+});
+
+test('accepted native install shows a non-blocking installing state', async () => {
   const runtime = loadInitializer();
   const installEvent = createBeforeInstallPromptEvent('accepted');
-  await runtime.triggerDOMContentLoaded();
+  await runtime.triggerPageLoad();
   await runtime.triggerWindowEvent('beforeinstallprompt', installEvent);
 
   await runtime.getInstallPrompt().querySelector('[data-action="install"]').click();
 
   assert.equal(installEvent.getPromptCount(), 1);
-  assert.equal(runtime.getInstallPrompt(), null);
+  assert.ok(runtime.getInstallPrompt());
+  assert.equal(runtime.getInstallPrompt().getAttribute('role'), 'status');
+  assert.match(runtime.getInstallPrompt().textContent, /Installing Kimbela…/);
+  assert.match(runtime.getInstallPrompt().textContent, /continue using Kimbela/);
+  assert.equal(runtime.getInstallPrompt().querySelector('[data-action="install"]'), null);
   assert.equal(runtime.getNotificationPermissionRequests(), 0);
+});
+
+test('delayed appinstalled never blocks the page or leaves permanent feedback', async () => {
+  const runtime = loadInitializer();
+  const installEvent = createBeforeInstallPromptEvent('accepted');
+  await runtime.triggerPageLoad();
+  await runtime.triggerWindowEvent('beforeinstallprompt', installEvent);
+
+  await runtime.getInstallPrompt().querySelector('[data-action="install"]').click();
+
+  const feedback = runtime.getInstallPrompt();
+  assert.equal(feedback.getAttribute('role'), 'status');
+  assert.equal(feedback.querySelector('button'), null);
+  assert.deepEqual(runtime.getTimers().map(timer => timer.delay), [20000]);
+
+  await runtime.runTimers();
+  assert.equal(runtime.getInstallPrompt(), null);
 });
 
 test('dismissed native prompt is hidden and snoozed locally', async () => {
   const runtime = loadInitializer();
   const installEvent = createBeforeInstallPromptEvent('dismissed');
-  await runtime.triggerDOMContentLoaded();
+  await runtime.triggerPageLoad();
   await runtime.triggerWindowEvent('beforeinstallprompt', installEvent);
 
   await runtime.getInstallPrompt().querySelector('[data-action="install"]').click();
@@ -479,14 +548,14 @@ test('dismissed native prompt is hidden and snoozed locally', async () => {
 test('Not now snoozes install discovery without opening the native prompt', async () => {
   const runtime = loadInitializer();
   const firstEvent = createBeforeInstallPromptEvent();
-  await runtime.triggerDOMContentLoaded();
+  await runtime.triggerPageLoad();
   await runtime.triggerWindowEvent('beforeinstallprompt', firstEvent);
 
   await runtime.getInstallPrompt().querySelector('[data-action="dismiss"]').click();
   const reloadedRuntime = loadInitializer({
     storageValues: runtime.localStorage.snapshot(),
   });
-  await reloadedRuntime.triggerDOMContentLoaded();
+  await reloadedRuntime.triggerPageLoad();
   await reloadedRuntime.triggerWindowEvent(
     'beforeinstallprompt',
     createBeforeInstallPromptEvent(),
@@ -504,7 +573,7 @@ test('expired local dismissal permits install discovery again', async () => {
   const runtime = loadInitializer({
     storageValues: { kimbelaInstallDismissedAt: String(expired) },
   });
-  await runtime.triggerDOMContentLoaded();
+  await runtime.triggerPageLoad();
   await runtime.triggerWindowEvent(
     'beforeinstallprompt',
     createBeforeInstallPromptEvent(),
@@ -520,16 +589,16 @@ test('legacy permanent iOS dismissal is migrated to the temporary snooze', async
     storageValues: { iosInstallPromptDismissed: 'true' },
   });
 
-  await runtime.triggerDOMContentLoaded();
+  await runtime.triggerPageLoad();
 
   assert.equal(runtime.getInstallPrompt(), null);
   assert.equal(runtime.localStorage.getItem('iosInstallPromptDismissed'), null);
   assert.ok(Number(runtime.localStorage.getItem('kimbelaInstallDismissedAt')) > 0);
 });
 
-test('appinstalled hides install UI and clears a prior dismissal', async () => {
+test('appinstalled shows success briefly and clears a prior dismissal', async () => {
   const runtime = loadInitializer();
-  await runtime.triggerDOMContentLoaded();
+  await runtime.triggerPageLoad();
   await runtime.triggerWindowEvent(
     'beforeinstallprompt',
     createBeforeInstallPromptEvent(),
@@ -543,13 +612,16 @@ test('appinstalled hides install UI and clears a prior dismissal', async () => {
     createBeforeInstallPromptEvent(),
   );
 
-  assert.equal(runtime.getInstallPrompt(), null);
+  assert.ok(runtime.getInstallPrompt());
+  assert.match(runtime.getInstallPrompt().textContent, /Kimbela installed successfully/);
   assert.equal(runtime.localStorage.getItem('kimbelaInstallDismissedAt'), null);
+  await runtime.runTimers();
+  assert.equal(runtime.getInstallPrompt(), null);
 });
 
 test('standalone display mode never shows native install UI', async () => {
   const runtime = loadInitializer({ displayModeStandalone: true });
-  await runtime.triggerDOMContentLoaded();
+  await runtime.triggerPageLoad();
   await runtime.triggerWindowEvent(
     'beforeinstallprompt',
     createBeforeInstallPromptEvent(),
@@ -560,7 +632,7 @@ test('standalone display mode never shows native install UI', async () => {
 
 test('switching to standalone display mode hides visible install UI', async () => {
   const runtime = loadInitializer();
-  await runtime.triggerDOMContentLoaded();
+  await runtime.triggerPageLoad();
   await runtime.triggerWindowEvent(
     'beforeinstallprompt',
     createBeforeInstallPromptEvent(),
@@ -572,12 +644,26 @@ test('switching to standalone display mode hides visible install UI', async () =
   assert.equal(runtime.getInstallPrompt(), null);
 });
 
+test('switching to standalone mode hides an in-progress install state', async () => {
+  const runtime = loadInitializer();
+  const installEvent = createBeforeInstallPromptEvent('accepted');
+  await runtime.triggerPageLoad();
+  await runtime.triggerWindowEvent('beforeinstallprompt', installEvent);
+  await runtime.getInstallPrompt().querySelector('[data-action="install"]').click();
+  assert.match(runtime.getInstallPrompt().textContent, /Installing Kimbela/);
+
+  await runtime.triggerStandaloneChange(true);
+
+  assert.equal(runtime.getInstallPrompt(), null);
+  assert.deepEqual(runtime.getTimers(), []);
+});
+
 test('iOS shows Home Screen instructions only outside standalone mode', async () => {
   const runtime = loadInitializer({
     userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)',
   });
 
-  await runtime.triggerDOMContentLoaded();
+  await runtime.triggerPageLoad();
 
   const prompt = runtime.getInstallPrompt();
   assert.ok(prompt);
@@ -591,7 +677,7 @@ test('iOS shows Home Screen instructions only outside standalone mode', async ()
     userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)',
     standalone: true,
   });
-  await standaloneRuntime.triggerDOMContentLoaded();
+  await standaloneRuntime.triggerPageLoad();
   assert.equal(standaloneRuntime.getInstallPrompt(), null);
 });
 
@@ -602,7 +688,7 @@ test('iPadOS desktop user agent receives iOS installation instructions', async (
     maxTouchPoints: 5,
   });
 
-  await runtime.triggerDOMContentLoaded();
+  await runtime.triggerPageLoad();
 
   assert.ok(runtime.getInstallPrompt());
   assert.ok(runtime.getInstallPrompt().querySelector('[data-action="ios-help"]'));
@@ -611,8 +697,22 @@ test('iPadOS desktop user agent receives iOS installation instructions', async (
 test('unsupported browsers show no install controls or permission prompt', async () => {
   const runtime = loadInitializer({ matchMediaAvailable: false });
 
-  await runtime.triggerDOMContentLoaded();
+  await runtime.triggerPageLoad();
 
+  assert.equal(runtime.getInstallPrompt(), null);
+  assert.equal(runtime.getNotificationPermissionRequests(), 0);
+});
+
+test('blocked localStorage does not break install discovery or dismissal', async () => {
+  const runtime = loadInitializer({ storageThrows: true });
+  await runtime.triggerPageLoad();
+  await runtime.triggerWindowEvent(
+    'beforeinstallprompt',
+    createBeforeInstallPromptEvent(),
+  );
+
+  assert.ok(runtime.getInstallPrompt());
+  await runtime.getInstallPrompt().querySelector('[data-action="dismiss"]').click();
   assert.equal(runtime.getInstallPrompt(), null);
   assert.equal(runtime.getNotificationPermissionRequests(), 0);
 });

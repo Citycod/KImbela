@@ -8,6 +8,7 @@
                 <img
                     src="{{ post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
                     class="w-10 h-10 rounded-full object-cover hover:opacity-90 transition-opacity"
+                    width="40" height="40" loading="lazy"
                 />
             </a>
             <div>
@@ -95,6 +96,7 @@
                             src="{{ post.shared_post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
                             alt="{{ post.shared_post.author.full_name }}"
                             class="w-9 h-9 rounded-full object-cover flex-shrink-0 hover:opacity-90 transition-opacity"
+                            width="36" height="36" loading="lazy"
                         />
                     </a>
                     <div>
@@ -243,6 +245,7 @@
                 src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
                 alt=""
                 class="w-8 h-8 rounded-full object-cover"
+                width="32" height="32" loading="lazy"
             />
             <input
                 type="text"
@@ -261,6 +264,7 @@
                     src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
                     alt=""
                     class="w-8 h-8 rounded-full object-cover flex-shrink-0 hover:opacity-90 transition-opacity"
+                    width="32" height="32" loading="lazy"
                 />
             </a>
             <div class="flex-1">

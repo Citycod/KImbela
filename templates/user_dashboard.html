@@ -12,14 +12,14 @@
 
 <!-- CSS Files -->
 <link href="{{ url_for('static', filename='assets/css/main.css') }}" rel="stylesheet" />
-<link href="{{ url_for('static', filename='assets/css/dashboard.css') }}?v={{ range(1, 1000000) | random }}"
+<link href="{{ url_for('static', filename='assets/css/dashboard.css', v='slow-network-1') }}"
   rel="stylesheet" />
 
-<link href="{{ url_for('static', filename='assets/css/user_dashboard_inline.css') }}?v={{ range(1, 1000000) | random }}"
+<link href="{{ url_for('static', filename='assets/css/user_dashboard_inline.css', v='slow-network-1') }}"
   rel="stylesheet" />
 
 <!-- Dashboard Redesign Override -->
-<link href="{{ url_for('static', filename='assets/css/dashboard_redesign.css') }}?v={{ range(1, 1000000) | random }}"
+<link href="{{ url_for('static', filename='assets/css/dashboard_redesign.css', v='slow-network-1') }}"
   rel="stylesheet" />
 
 <!-- External CSS -->
@@ -537,7 +537,8 @@ placement='dashboard-top') %}
           <div class="flex items-start space-x-3">
             <a href="{{ url_for('user.view_profile', user_identifier=post.author.id) }}" class="flex-shrink-0">
               <img src="{{ post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-                class="w-10 h-10 rounded-full object-cover hover:opacity-90 transition-opacity" />
+                class="w-10 h-10 rounded-full object-cover hover:opacity-90 transition-opacity"
+                width="40" height="40" loading="lazy" />
             </a>
             <div>
               <a href="{{ url_for('user.view_profile', user_identifier=post.author.id) }}"
@@ -612,7 +613,8 @@ placement='dashboard-top') %}
                 <img
                   src="{{ post.shared_post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
                   alt="{{ post.shared_post.author.full_name }}"
-                  class="w-9 h-9 rounded-full object-cover flex-shrink-0 hover:opacity-90 transition-opacity" />
+                  class="w-9 h-9 rounded-full object-cover flex-shrink-0 hover:opacity-90 transition-opacity"
+                  width="36" height="36" loading="lazy" />
               </a>
               <div>
                 <a href="{{ url_for('user.view_profile', user_identifier=post.shared_post.author.id) }}"
@@ -822,7 +824,8 @@ placement='dashboard-top') %}
           <!-- Comment Input -->
           <div class="flex items-center space-x-3 mb-4">
             <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-              alt="{{ current_user.full_name }}" class="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+              alt="{{ current_user.full_name }}" class="w-8 h-8 rounded-full object-cover flex-shrink-0"
+              width="32" height="32" loading="lazy" />
             <div class="flex-1 relative">
               <input type="text" id="commentInput-{{ post.id }}" placeholder="Drop a chime..."
                 class="w-full bg-white rounded-full px-4 py-2.5 text-sm border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
@@ -839,7 +842,8 @@ placement='dashboard-top') %}
                 <img
                   src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
                   alt="{{ comment.author.full_name }}"
-                  class="w-9 h-9 rounded-full object-cover flex-shrink-0 hover:opacity-90 transition-opacity" />
+                  class="w-9 h-9 rounded-full object-cover flex-shrink-0 hover:opacity-90 transition-opacity"
+                  width="36" height="36" loading="lazy" />
               </a>
               <div class="flex-1">
                 <div class="bg-white rounded-2xl px-4 py-3 shadow-sm">
@@ -1055,7 +1059,8 @@ placement='dashboard-top') %}
       {% if groups_data is defined and groups_data %}
       {% for group in groups_data[:4] %}
       <div class="kb-right-item">
-        <img src="{{ group.cover_pic }}" class="kb-right-item-avatar" alt="{{ group.name }}" />
+        <img src="{{ group.cover_pic }}" class="kb-right-item-avatar" alt="{{ group.name }}"
+          width="40" height="40" loading="lazy" />
         <div class="kb-right-item-info">
           <div class="kb-right-item-name">{{ group.name }}</div>
           <div class="kb-right-item-meta">{{ group.member_count }} members</div>
@@ -1083,7 +1088,7 @@ placement='dashboard-top') %}
       {% for user in random_five[:3] %}
       <div class="kb-right-item" onclick="openProfileModal({{ user.id }})" style="cursor:pointer">
         <img src="{{ user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-          class="kb-right-item-avatar" alt="{{ user.first_name }}" />
+          class="kb-right-item-avatar" alt="{{ user.first_name }}" width="40" height="40" loading="lazy" />
         <div class="kb-right-item-info">
           <div class="kb-right-item-name">{{ user.first_name }} {{ user.last_name }}</div>
           <div class="kb-right-item-meta">{{ user.mutual_friends_count|default('') }} mutual friends</div>
@@ -2022,7 +2027,7 @@ placement='dashboard-top') %}
 
 <!--  <script src="{{ url_for('static', filename='assets/js/main.js') }}"></script> -->
 {% include 'partials/user_dashboard_pre_scripts.html' %}
-<script src="{{ url_for('static', filename='assets/js/dashboard.js') }}?v={{ range(1, 1000000) | random }}"></script>
+<script src="{{ url_for('static', filename='assets/js/dashboard.js', v='slow-network-1') }}"></script>
 
 <!-- Floating Corner Widget -->
 <!-- Floating Corner Widget - Compact Version -->

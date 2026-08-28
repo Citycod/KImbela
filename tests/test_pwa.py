@@ -35,3 +35,39 @@ def test_worker_does_not_reference_removed_precache_asset():
     assert "/static/css/style.css" not in source
     assert "'/offline'" in source
     assert "'/static/manifest.json'" in source
+
+
+def test_install_readiness_manifest_and_icons_are_available(client):
+    manifest_response = client.get("/static/manifest.json")
+    icon_192_response = client.get("/static/img/icons/icon-192x192.png")
+    icon_512_response = client.get("/static/img/icons/icon-512x512.png")
+
+    assert manifest_response.status_code == 200
+    assert manifest_response.get_json()["display"] == "standalone"
+    assert icon_192_response.status_code == 200
+    assert icon_192_response.mimetype == "image/png"
+    assert icon_512_response.status_code == 200
+    assert icon_512_response.mimetype == "image/png"
+
+
+def test_dashboard_static_assets_use_reusable_version_urls():
+    source = (PROJECT_ROOT / "templates" / "user_dashboard.html").read_text()
+
+    assert "range(1, 1000000) | random" not in source
+    assert source.count("v='slow-network-1'") == 4
+
+
+def test_dashboard_feed_uses_native_lazy_loading_for_appended_content():
+    source = (PROJECT_ROOT / "templates" / "_posts_partial.html").read_text()
+
+    assert source.count('loading="lazy"') >= 8
+    assert 'width="40" height="40" loading="lazy"' in source
+
+
+def test_dashboard_birthday_bootstrap_reuses_its_initial_response():
+    source = (
+        PROJECT_ROOT / "templates" / "partials" / "user_dashboard_body_scripts.html"
+    ).read_text()
+
+    assert "this.updateBirthdayBadge(data);" in source
+    assert "async updateBirthdayBadge(existingData = null)" in source
