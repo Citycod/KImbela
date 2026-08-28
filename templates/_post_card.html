@@ -154,7 +154,7 @@
         <div class="space-y-3 max-h-[250px] overflow-y-auto pr-2">
             {% if post.comments_count > 0 %}
             {% for comment in post.comments|reverse %}
-            <div class="flex gap-2 comment-item">
+            <div id="comment-{{ comment.id }}" class="flex gap-2 comment-item">
                 <a href="{{ url_for('user.view_profile', user_identifier=comment.author.id) }}" class="flex-shrink-0">
                     <img src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
                         alt="{{ comment.author.first_name }}" class="w-6 h-6 rounded-full object-cover mt-1 hover:opacity-90 transition-opacity">

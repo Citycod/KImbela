@@ -13,7 +13,7 @@ from flask import (
 from datetime import date
 from urllib.parse import urlparse, urljoin
 from sqlalchemy.orm import joinedload
-from sqlalchemy import func, or_
+from sqlalchemy import and_, func, or_
 
 from models import (
     MatchmakingPackage,
@@ -2174,27 +2174,238 @@ def edit_post():
 
 # Add Comment
 # In your add_comment route
+def _current_group_member_ids(group):
+    return {
+        member_id
+        for (member_id,) in group.members.with_entities(User.id).all()
+    }
+
+
+def _eligible_group_social_recipient_ids(group, actor_id):
+    member_ids = _current_group_member_ids(group)
+    member_ids.discard(actor_id)
+    if not member_ids:
+        return set()
+
+    blocks = User._blocked_users
+    blocked_pairs = (
+        db.session.query(blocks.c.blocker_id, blocks.c.blocked_id)
+        .filter(
+            or_(
+                and_(
+                    blocks.c.blocker_id == actor_id,
+                    blocks.c.blocked_id.in_(member_ids),
+                ),
+                and_(
+                    blocks.c.blocked_id == actor_id,
+                    blocks.c.blocker_id.in_(member_ids),
+                ),
+            )
+        )
+        .all()
+    )
+    blocked_member_ids = {
+        blocked_id if blocker_id == actor_id else blocker_id
+        for blocker_id, blocked_id in blocked_pairs
+    }
+    return member_ids - blocked_member_ids
+
+
+def _notify_group_post_members(group, post, actor):
+    recipient_ids = _eligible_group_social_recipient_ids(group, actor.id)
+    if not recipient_ids:
+        return
+
+    body = f"{actor.full_name} posted in {group.name}."
+    try:
+        db.session.add_all(
+            Notification(
+                user_id=user_id,
+                actor_id=actor.id,
+                type=NotificationType.NEW_POST,
+                entity_id=post.id,
+                entity_type="group_post",
+                message=body,
+            )
+            for user_id in recipient_ids
+        )
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception(
+            "Failed to persist group post notifications for post %s",
+            post.id,
+        )
+
+    try:
+        from utils.push_service import send_push_notifications
+
+        send_push_notifications(
+            recipient_ids,
+            {
+                "title": "New group post",
+                "body": body,
+                "url": url_for(
+                    "user.group_detail",
+                    group_id=group.id,
+                    _anchor=f"post-{post.id}",
+                ),
+            },
+        )
+    except Exception:
+        current_app.logger.exception(
+            "Failed to send group post push for post %s",
+            post.id,
+        )
+
+
+def _comment_social_targets(post, comment, actor, parent_comment=None):
+    """Return one notification plan per eligible recipient for this comment."""
+    is_group_comment = post.group_id is not None
+    destination = (
+        url_for(
+            "user.group_detail",
+            group_id=post.group_id,
+            _anchor=f"comment-{comment.id}",
+        )
+        if is_group_comment
+        else url_for(
+            "user.view_shared_post",
+            post_identifier=post.public_id,
+            _anchor=f"comment-{comment.id}",
+        )
+    )
+
+    targets = {}
+    if post.author_id != actor.id:
+        targets[post.author_id] = {
+            "user": post.author,
+            "title": "New group comment" if is_group_comment else "New comment",
+            "body": (
+                f"{actor.full_name} commented on your group post."
+                if is_group_comment
+                else f"{actor.full_name} commented on your post."
+            ),
+            "entity_id": post.id,
+            "entity_type": "post",
+        }
+
+    if parent_comment and parent_comment.author_id != actor.id:
+        targets[parent_comment.author_id] = {
+            "user": parent_comment.author,
+            "title": "New group reply" if is_group_comment else "New reply",
+            "body": (
+                f"{actor.full_name} replied to your group comment."
+                if is_group_comment
+                else f"{actor.full_name} replied to your comment."
+            ),
+            "entity_id": comment.id,
+            "entity_type": "comment",
+        }
+
+    if is_group_comment:
+        group = db.session.get(Group, post.group_id)
+        if not group:
+            return {}, destination
+        member_ids = _current_group_member_ids(group)
+        if actor.id not in member_ids:
+            return {}, destination
+        targets = {
+            user_id: target
+            for user_id, target in targets.items()
+            if user_id in member_ids
+        }
+
+    return {
+        user_id: target
+        for user_id, target in targets.items()
+        if target["user"].can_interact_with(actor)
+    }, destination
+
+
+def _persist_social_notifications(targets, actor_id):
+    if not targets:
+        return
+
+    try:
+        db.session.add_all(
+            Notification(
+                user_id=user_id,
+                actor_id=actor_id,
+                type=NotificationType.NEW_COMMENT,
+                entity_id=target["entity_id"],
+                entity_type=target["entity_type"],
+                message=target["body"],
+            )
+            for user_id, target in targets.items()
+        )
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception("Failed to persist social notifications")
+
+
+def _send_comment_social_pushes(targets, destination):
+    from utils.push_service import send_push_notification
+
+    for user_id, target in targets.items():
+        try:
+            send_push_notification(
+                user_id,
+                {
+                    "title": target["title"],
+                    "body": target["body"],
+                    "url": destination,
+                },
+            )
+        except Exception:
+            current_app.logger.exception(
+                "Failed to send social push to user %s",
+                user_id,
+            )
+
+
 @user.route("/add_comment/<int:post_id>", methods=["POST"])
 @login_required
 def add_comment(post_id):
     post = Post.query.get_or_404(post_id)
-    content = request.json.get("content", "").strip()
+    data = request.get_json(silent=True) or {}
+    content = data.get("content", "").strip()
 
     if not content:
         return jsonify(success=False, error="Comment cannot be empty"), 400
 
-    comment = Comment(content=content, author_id=current_user.id, post_id=post_id)
+    parent_comment = None
+    parent_id = data.get("parent_id")
+    if parent_id is not None:
+        try:
+            parent_id = int(parent_id)
+        except (TypeError, ValueError):
+            return jsonify(success=False, error="Invalid parent comment"), 400
+        parent_comment = Comment.query.filter_by(
+            id=parent_id,
+            post_id=post_id,
+        ).first()
+        if not parent_comment:
+            return jsonify(success=False, error="Invalid parent comment"), 400
+
+    comment = Comment(
+        content=content,
+        author_id=current_user.id,
+        post_id=post_id,
+        parent_id=parent_comment.id if parent_comment else None,
+    )
     db.session.add(comment)
     db.session.commit()
 
-    # Create notification for post owner (if not commenting on own post)
-    if post.author_id != current_user.id:
-        post.author.create_notification(
-            actor=current_user,
-            notification_type=NotificationType.NEW_COMMENT,
-            entity_id=post_id,
-            entity_type="post",
-        )
+    targets, destination = _comment_social_targets(
+        post,
+        comment,
+        current_user,
+        parent_comment,
+    )
+    _persist_social_notifications(targets, current_user.id)
+    _send_comment_social_pushes(targets, destination)
 
     return jsonify(
         success=True,
@@ -2204,6 +2415,7 @@ def add_comment(post_id):
             "avatar": current_user.profile_pic
             or url_for("static", filename="assets/img/default-avatar.png"),
             "content": content,
+            "parent_id": comment.parent_id,
             "created_at": comment.created_at.isoformat(),
             "created_at_formatted": comment.created_at.strftime(
                 "%b %d, %Y at %I:%M %p"
@@ -3843,6 +4055,8 @@ def create_group_post(group_id):
 
         db.session.add(post)
         db.session.commit()
+
+        _notify_group_post_members(group, post, current_user)
 
         return jsonify(
             {

@@ -833,7 +833,7 @@
                 <!-- Posts Container -->
                 <div id="postsContainer">
                     {% for post in posts %}
-                    <div class="bg-white rounded-xl md:rounded-2xl shadow-lg mb-4 md:mb-6 card-hover post-card" data-post-id="{{ post.id }}">
+                    <div id="post-{{ post.id }}" class="bg-white rounded-xl md:rounded-2xl shadow-lg mb-4 md:mb-6 card-hover post-card" data-post-id="{{ post.id }}">
                         <!-- Post Header -->
                         <div class="p-4 md:p-6 pb-3 md:pb-4">
                             <div class="flex justify-between items-start">
