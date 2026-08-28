@@ -30,7 +30,10 @@ function getPushCsrfToken() {
 function isStandaloneDisplayMode() {
   return (
     ('standalone' in window.navigator && window.navigator.standalone)
-    || window.matchMedia('(display-mode: standalone)').matches
+    || (
+      typeof window.matchMedia === 'function'
+      && window.matchMedia('(display-mode: standalone)').matches
+    )
   );
 }
 
@@ -317,95 +320,337 @@ function subscribeUser(registration) {
 }
 
 
-// iOS Add to Home Screen Prompt
-function showIosInstallPrompt() {
-  const isIos = () => {
-    const userAgent = window.navigator.userAgent.toLowerCase();
-    return /iphone|ipad|ipod/.test(userAgent);
-  };
+// Lightweight PWA install discovery. Installation never requests push permission.
+const INSTALL_PROMPT_ID = 'kimbela-install-prompt';
+const INSTALL_STYLE_ID = 'kimbela-install-prompt-styles';
+const INSTALL_DISMISSAL_KEY = 'kimbelaInstallDismissedAt';
+const LEGACY_IOS_DISMISSAL_KEY = 'iosInstallPromptDismissed';
+const INSTALL_DISMISSAL_MS = 14 * 24 * 60 * 60 * 1000;
 
-  const isStandalone = () => {
-    return ('standalone' in window.navigator) && window.navigator.standalone;
-  };
+let deferredInstallPrompt = null;
+let installPromptElement = null;
+let installCompleted = false;
+let installDomReady = document.readyState !== 'loading';
 
-  if (isIos() && !isStandalone() && !localStorage.getItem('iosInstallPromptDismissed')) {
-    // Inject CSS
-    const style = document.createElement('style');
-    style.innerHTML = `
-      .ios-prompt-container {
-        position: fixed;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 90%;
-        max-width: 400px;
-        background-color: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(10px);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        border-radius: 12px;
-        padding: 15px;
-        z-index: 999999;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        animation: slideUp 0.5s ease-out;
-      }
-      .ios-prompt-container p {
-        margin: 0 0 10px 0;
-        font-size: 14px;
-        color: #333;
-        line-height: 1.4;
-      }
-      .ios-prompt-close {
-        position: absolute;
-        top: 5px;
-        right: 10px;
-        background: none;
-        border: none;
-        font-size: 20px;
-        color: #999;
-        cursor: pointer;
-      }
-      @keyframes slideUp {
-        from { bottom: -100px; opacity: 0; }
-        to { bottom: 20px; opacity: 1; }
-      }
-      .ios-icon-share {
-        display: inline-block;
-        width: 16px;
-        height: 16px;
-        background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 24 24" fill="none" stroke="%230d6efd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>') no-repeat center;
-        vertical-align: middle;
-      }
-      .ios-icon-add {
-        display: inline-block;
-        width: 16px;
-        height: 16px;
-        background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 24 24" fill="none" stroke="%23333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>') no-repeat center;
-        vertical-align: middle;
-      }
-    `;
-    document.head.appendChild(style);
-
-    // Inject HTML
-    const prompt = document.createElement('div');
-    prompt.className = 'ios-prompt-container';
-    prompt.innerHTML = `
-      <button class="ios-prompt-close" aria-label="Close">&times;</button>
-      <p><strong>Install Kimbela</strong></p>
-      <p>Install this app on your device for the best experience. Tap the <span class="ios-icon-share"></span> <strong>Share</strong> button at the bottom of your screen, then tap <span class="ios-icon-add"></span> <strong>Add to Home Screen</strong>.</p>
-    `;
-    document.body.appendChild(prompt);
-
-    // Handle Close
-    prompt.querySelector('.ios-prompt-close').addEventListener('click', () => {
-      prompt.style.display = 'none';
-      localStorage.setItem('iosInstallPromptDismissed', 'true');
-    });
+function readInstallStorage(key) {
+  try {
+    return window.localStorage.getItem(key);
+  } catch (error) {
+    return null;
   }
 }
 
-// Call on load
-window.addEventListener('DOMContentLoaded', showIosInstallPrompt);
+function writeInstallStorage(key, value) {
+  try {
+    window.localStorage.setItem(key, value);
+  } catch (error) {
+    // Installation remains available when storage is blocked.
+  }
+}
+
+function removeInstallStorage(key) {
+  try {
+    window.localStorage.removeItem(key);
+  } catch (error) {
+    // Nothing else is required when storage is blocked.
+  }
+}
+
+function migrateLegacyInstallDismissal() {
+  if (
+    readInstallStorage(LEGACY_IOS_DISMISSAL_KEY)
+    && !readInstallStorage(INSTALL_DISMISSAL_KEY)
+  ) {
+    writeInstallStorage(INSTALL_DISMISSAL_KEY, String(Date.now()));
+  }
+  removeInstallStorage(LEGACY_IOS_DISMISSAL_KEY);
+}
+
+function isInstallPromptDismissed() {
+  const dismissedAt = Number(readInstallStorage(INSTALL_DISMISSAL_KEY));
+  if (!Number.isFinite(dismissedAt) || dismissedAt <= 0) return false;
+
+  const dismissalAge = Date.now() - dismissedAt;
+  if (dismissalAge >= 0 && dismissalAge < INSTALL_DISMISSAL_MS) return true;
+
+  removeInstallStorage(INSTALL_DISMISSAL_KEY);
+  return false;
+}
+
+function dismissInstallPrompt() {
+  writeInstallStorage(INSTALL_DISMISSAL_KEY, String(Date.now()));
+  deferredInstallPrompt = null;
+  hideInstallPrompt();
+}
+
+function clearInstallDismissal() {
+  removeInstallStorage(INSTALL_DISMISSAL_KEY);
+  removeInstallStorage(LEGACY_IOS_DISMISSAL_KEY);
+}
+
+function isIosOrIpadOs() {
+  const userAgent = window.navigator.userAgent.toLowerCase();
+  const classicIos = /iphone|ipad|ipod/.test(userAgent);
+  const desktopModeIpad = (
+    window.navigator.platform === 'MacIntel'
+    && window.navigator.maxTouchPoints > 1
+  );
+  return classicIos || desktopModeIpad;
+}
+
+function canShowInstallPrompt() {
+  return (
+    !installCompleted
+    && !isStandaloneDisplayMode()
+    && !isInstallPromptDismissed()
+  );
+}
+
+function createInstallElement(tagName, className, textContent) {
+  const element = document.createElement(tagName);
+  if (className) element.className = className;
+  if (textContent) element.textContent = textContent;
+  return element;
+}
+
+function ensureInstallPromptStyles() {
+  if (document.getElementById(INSTALL_STYLE_ID)) return;
+
+  const style = document.createElement('style');
+  style.id = INSTALL_STYLE_ID;
+  style.textContent = `
+    .kimbela-install-card {
+      position: fixed;
+      left: 50%;
+      bottom: max(16px, env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      width: min(calc(100% - 28px), 420px);
+      box-sizing: border-box;
+      padding: 16px;
+      border: 1px solid rgba(15, 23, 42, 0.12);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.98);
+      color: #1f2937;
+      box-shadow: 0 14px 35px rgba(15, 23, 42, 0.18);
+      z-index: 999999;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+    .kimbela-install-title {
+      margin: 0 0 5px;
+      color: #111827;
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .kimbela-install-description {
+      margin: 0;
+      color: #4b5563;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .kimbela-install-steps {
+      margin: 12px 0 0;
+      padding-left: 22px;
+      color: #374151;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+    .kimbela-install-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .kimbela-install-button {
+      min-height: 38px;
+      padding: 8px 14px;
+      border: 0;
+      border-radius: 10px;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .kimbela-install-button:focus-visible {
+      outline: 3px solid rgba(13, 110, 253, 0.3);
+      outline-offset: 2px;
+    }
+    .kimbela-install-button-primary {
+      background: #0d6efd;
+      color: #ffffff;
+    }
+    .kimbela-install-button-secondary {
+      background: #f3f4f6;
+      color: #374151;
+    }
+    .kimbela-install-button:disabled {
+      cursor: wait;
+      opacity: 0.65;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+function hideInstallPrompt() {
+  if (installPromptElement) {
+    installPromptElement.remove();
+    installPromptElement = null;
+  }
+}
+
+async function runNativeInstallPrompt(installButton) {
+  const promptEvent = deferredInstallPrompt;
+  if (!promptEvent) return;
+
+  deferredInstallPrompt = null;
+  installButton.disabled = true;
+
+  try {
+    await promptEvent.prompt();
+    const choice = await promptEvent.userChoice;
+    if (choice && choice.outcome === 'accepted') {
+      installCompleted = true;
+      clearInstallDismissal();
+      hideInstallPrompt();
+      return;
+    }
+
+    dismissInstallPrompt();
+  } catch (error) {
+    console.error('Unable to open the PWA install prompt:', error);
+    hideInstallPrompt();
+  }
+}
+
+function showInstallPrompt(mode) {
+  if (!canShowInstallPrompt() || installPromptElement) return false;
+  if (mode === 'native' && !deferredInstallPrompt) return false;
+
+  ensureInstallPromptStyles();
+
+  const card = createInstallElement('aside', 'kimbela-install-card');
+  card.id = INSTALL_PROMPT_ID;
+  card.setAttribute('role', 'dialog');
+  card.setAttribute('aria-labelledby', 'kimbela-install-title');
+
+  const title = createInstallElement(
+    'h2',
+    'kimbela-install-title',
+    'Install Kimbela'
+  );
+  title.id = 'kimbela-install-title';
+  card.appendChild(title);
+
+  const description = createInstallElement(
+    'p',
+    'kimbela-install-description',
+    mode === 'ios'
+      ? 'Add Kimbela to your Home Screen for faster access and notifications.'
+      : 'Add Kimbela to your device for faster access and notifications.'
+  );
+  card.appendChild(description);
+
+  let instructions = null;
+  if (mode === 'ios') {
+    instructions = createInstallElement('ol', 'kimbela-install-steps');
+    instructions.tabIndex = -1;
+    [
+      'Tap the Share button',
+      'Choose “Add to Home Screen”',
+      'Tap Add',
+    ].forEach(function(instruction) {
+      instructions.appendChild(createInstallElement('li', '', instruction));
+    });
+    card.appendChild(instructions);
+  }
+
+  const actions = createInstallElement('div', 'kimbela-install-actions');
+
+  if (mode === 'native') {
+    const installButton = createInstallElement(
+      'button',
+      'kimbela-install-button kimbela-install-button-primary',
+      'Install'
+    );
+    installButton.type = 'button';
+    installButton.dataset.action = 'install';
+    installButton.addEventListener('click', function() {
+      return runNativeInstallPrompt(installButton);
+    });
+    actions.appendChild(installButton);
+  } else {
+    const helpButton = createInstallElement(
+      'button',
+      'kimbela-install-button kimbela-install-button-primary',
+      'How to install'
+    );
+    helpButton.type = 'button';
+    helpButton.dataset.action = 'ios-help';
+    helpButton.addEventListener('click', function() {
+      if (instructions && instructions.focus) instructions.focus();
+    });
+    actions.appendChild(helpButton);
+  }
+
+  const dismissButton = createInstallElement(
+    'button',
+    'kimbela-install-button kimbela-install-button-secondary',
+    'Not now'
+  );
+  dismissButton.type = 'button';
+  dismissButton.dataset.action = 'dismiss';
+  dismissButton.addEventListener('click', dismissInstallPrompt);
+  actions.appendChild(dismissButton);
+  card.appendChild(actions);
+
+  document.body.appendChild(card);
+  installPromptElement = card;
+  return true;
+}
+
+function initializeInstallExperience() {
+  installDomReady = true;
+  migrateLegacyInstallDismissal();
+
+  if (isStandaloneDisplayMode()) {
+    installCompleted = true;
+    hideInstallPrompt();
+    return;
+  }
+
+  if (isIosOrIpadOs()) {
+    showInstallPrompt('ios');
+  } else if (deferredInstallPrompt) {
+    showInstallPrompt('native');
+  }
+}
+
+window.addEventListener('beforeinstallprompt', function(event) {
+  event.preventDefault();
+  deferredInstallPrompt = event;
+  if (installDomReady) showInstallPrompt('native');
+});
+
+window.addEventListener('appinstalled', function() {
+  deferredInstallPrompt = null;
+  installCompleted = true;
+  clearInstallDismissal();
+  hideInstallPrompt();
+});
+
+if (document.readyState === 'loading') {
+  window.addEventListener('DOMContentLoaded', initializeInstallExperience, { once: true });
+} else {
+  initializeInstallExperience();
+}
+
+if (typeof window.matchMedia === 'function') {
+  const standaloneMediaQuery = window.matchMedia('(display-mode: standalone)');
+  if (standaloneMediaQuery.addEventListener) {
+    standaloneMediaQuery.addEventListener('change', function(event) {
+      if (event.matches) {
+        installCompleted = true;
+        hideInstallPrompt();
+      }
+    });
+  }
+}

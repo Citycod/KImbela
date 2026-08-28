@@ -67,11 +67,147 @@ function jsonResponse({ ok = true, status = 200, redirected = false } = {}) {
   };
 }
 
-function loadInitializer({ registrations = [], canonical, fetchImpl } = {}) {
+function createLocalStorage(initialValues = {}) {
+  const values = new Map(Object.entries(initialValues));
+  return {
+    getItem(key) {
+      return values.has(key) ? values.get(key) : null;
+    },
+    setItem(key, value) {
+      values.set(key, String(value));
+    },
+    removeItem(key) {
+      values.delete(key);
+    },
+    snapshot() {
+      return Object.fromEntries(values);
+    },
+  };
+}
+
+function elementMatches(element, selector) {
+  if (selector.startsWith('#')) return element.id === selector.slice(1);
+  if (selector.startsWith('.')) {
+    return element.className.split(/\s+/).includes(selector.slice(1));
+  }
+
+  const dataAction = selector.match(/^\[data-action="([^"]+)"\]$/);
+  if (dataAction) return element.dataset.action === dataAction[1];
+
+  return element.tagName.toLowerCase() === selector.toLowerCase();
+}
+
+class FakeElement {
+  constructor(tagName) {
+    this.tagName = tagName.toUpperCase();
+    this.children = [];
+    this.parentNode = null;
+    this.style = {};
+    this.dataset = {};
+    this.attributes = {};
+    this.listeners = {};
+    this.className = '';
+    this.id = '';
+    this.disabled = false;
+    this.focused = false;
+    this._textContent = '';
+  }
+
+  set textContent(value) {
+    this._textContent = String(value);
+    this.children = [];
+  }
+
+  get textContent() {
+    return this._textContent + this.children.map(child => child.textContent).join('');
+  }
+
+  setAttribute(name, value) {
+    this.attributes[name] = String(value);
+  }
+
+  getAttribute(name) {
+    return this.attributes[name] || null;
+  }
+
+  appendChild(child) {
+    child.parentNode = this;
+    this.children.push(child);
+    return child;
+  }
+
+  remove() {
+    if (!this.parentNode) return;
+    this.parentNode.children = this.parentNode.children.filter(child => child !== this);
+    this.parentNode = null;
+  }
+
+  addEventListener(type, handler) {
+    this.listeners[type] = this.listeners[type] || [];
+    this.listeners[type].push(handler);
+  }
+
+  querySelector(selector) {
+    for (const child of this.children) {
+      if (elementMatches(child, selector)) return child;
+      const descendant = child.querySelector(selector);
+      if (descendant) return descendant;
+    }
+    return null;
+  }
+
+  async click() {
+    const results = (this.listeners.click || []).map(handler => handler({ target: this }));
+    await Promise.all(results.filter(result => result && typeof result.then === 'function'));
+  }
+
+  focus() {
+    this.focused = true;
+  }
+}
+
+function createDocument(readyState = 'loading') {
+  const head = new FakeElement('head');
+  const body = new FakeElement('body');
+  return {
+    readyState,
+    head,
+    body,
+    createElement(tagName) {
+      return new FakeElement(tagName);
+    },
+    getElementById(id) {
+      return head.querySelector(`#${id}`) || body.querySelector(`#${id}`);
+    },
+    querySelector(selector) {
+      if (selector === 'meta[name="csrf-token"]') {
+        return { getAttribute: () => 'csrf-token' };
+      }
+      return head.querySelector(selector) || body.querySelector(selector);
+    },
+  };
+}
+
+function loadInitializer({
+  registrations = [],
+  canonical,
+  fetchImpl,
+  userAgent = 'test browser',
+  platform = 'Linux',
+  maxTouchPoints = 0,
+  standalone = false,
+  displayModeStandalone = false,
+  matchMediaAvailable = true,
+  storageValues = {},
+  documentReadyState = 'loading',
+} = {}) {
   const listeners = {};
   const serviceWorkerListeners = {};
   const registerCalls = [];
   const fetchCalls = [];
+  const mediaQueryListeners = [];
+  const localStorage = createLocalStorage(storageValues);
+  const document = createDocument(documentReadyState);
   const canonicalRegistration = canonical || createRegistration('/sw.js');
   const serviceWorker = {
     addEventListener(type, handler) {
@@ -89,34 +225,38 @@ function loadInitializer({ registrations = [], canonical, fetchImpl } = {}) {
   };
   const navigator = {
     serviceWorker,
-    userAgent: 'test browser',
-    standalone: false,
+    userAgent,
+    platform,
+    maxTouchPoints,
+    standalone,
+  };
+  const standaloneMediaQuery = {
+    matches: displayModeStandalone,
+    addEventListener(type, handler) {
+      if (type === 'change') mediaQueryListeners.push(handler);
+    },
   };
   const window = {
     navigator,
     location: { origin: 'https://kimbela.test' },
-    matchMedia: () => ({ matches: false }),
+    localStorage,
     atob: value => Buffer.from(value, 'base64').toString('binary'),
     addEventListener(type, handler) {
       listeners[type] = listeners[type] || [];
       listeners[type].push(handler);
     },
   };
+  if (matchMediaAvailable) window.matchMedia = () => standaloneMediaQuery;
+  let notificationPermissionRequests = 0;
   const notification = {
     permission: 'granted',
-    requestPermission: async () => 'granted',
+    async requestPermission() {
+      notificationPermissionRequests += 1;
+      return 'granted';
+    },
   };
   window.Notification = notification;
   window.PushManager = function PushManager() {};
-  const document = {
-    querySelector: () => ({ getAttribute: () => 'csrf-token' }),
-    createElement: () => ({
-      style: {},
-      querySelector: () => ({ addEventListener() {} }),
-    }),
-    head: { appendChild() {} },
-    body: { appendChild() {} },
-  };
   const context = {
     Buffer,
     Error,
@@ -132,7 +272,7 @@ function loadInitializer({ registrations = [], canonical, fetchImpl } = {}) {
       fetchCalls.push({ url, options });
       return fetchImpl ? fetchImpl(url, options) : jsonResponse();
     },
-    localStorage: { getItem: () => null, setItem() {} },
+    localStorage,
     navigator,
     window,
   };
@@ -143,8 +283,26 @@ function loadInitializer({ registrations = [], canonical, fetchImpl } = {}) {
     canonicalRegistration,
     fetchCalls,
     listeners,
+    localStorage,
     registerCalls,
     window,
+    document,
+    getNotificationPermissionRequests: () => notificationPermissionRequests,
+    getInstallPrompt: () => document.getElementById('kimbela-install-prompt'),
+    async triggerWindowEvent(type, event = {}) {
+      const results = (listeners[type] || []).map(listener => listener(event));
+      await Promise.all(results.filter(result => result && typeof result.then === 'function'));
+      await new Promise(resolve => setImmediate(resolve));
+    },
+    async triggerDOMContentLoaded() {
+      document.readyState = 'interactive';
+      await this.triggerWindowEvent('DOMContentLoaded');
+    },
+    async triggerStandaloneChange(matches) {
+      standaloneMediaQuery.matches = matches;
+      const results = mediaQueryListeners.map(listener => listener({ matches }));
+      await Promise.all(results.filter(result => result && typeof result.then === 'function'));
+    },
     async triggerLoad() {
       for (const listener of listeners.load || []) listener();
       return window._swRegistrationPromise;
@@ -153,6 +311,22 @@ function loadInitializer({ registrations = [], canonical, fetchImpl } = {}) {
       for (const listener of serviceWorkerListeners.message || []) listener({ data });
       await new Promise(resolve => setImmediate(resolve));
     },
+  };
+}
+
+function createBeforeInstallPromptEvent(outcome = 'accepted') {
+  let preventDefaultCount = 0;
+  let promptCount = 0;
+  return {
+    preventDefault() {
+      preventDefaultCount += 1;
+    },
+    async prompt() {
+      promptCount += 1;
+    },
+    userChoice: Promise.resolve({ outcome }),
+    getPreventDefaultCount: () => preventDefaultCount,
+    getPromptCount: () => promptCount,
   };
 }
 
@@ -257,4 +431,188 @@ test('subscription-change message resynchronizes replacement subscription', asyn
   assert.equal(runtime.fetchCalls.length, 1);
   assert.equal(runtime.fetchCalls[0].url, '/api/pwa/subscribe');
   assert.equal(JSON.parse(runtime.fetchCalls[0].options.body).endpoint, replacement.endpoint);
+});
+
+test('beforeinstallprompt is captured and shown after the DOM is ready', async () => {
+  const runtime = loadInitializer();
+  const installEvent = createBeforeInstallPromptEvent();
+
+  await runtime.triggerWindowEvent('beforeinstallprompt', installEvent);
+
+  assert.equal(installEvent.getPreventDefaultCount(), 1);
+  assert.equal(runtime.getInstallPrompt(), null);
+
+  await runtime.triggerDOMContentLoaded();
+
+  const prompt = runtime.getInstallPrompt();
+  assert.ok(prompt);
+  assert.match(prompt.textContent, /Install Kimbela/);
+  assert.ok(prompt.querySelector('[data-action="install"]'));
+});
+
+test('Install invokes the native prompt and an accepted install hides the UI', async () => {
+  const runtime = loadInitializer();
+  const installEvent = createBeforeInstallPromptEvent('accepted');
+  await runtime.triggerDOMContentLoaded();
+  await runtime.triggerWindowEvent('beforeinstallprompt', installEvent);
+
+  await runtime.getInstallPrompt().querySelector('[data-action="install"]').click();
+
+  assert.equal(installEvent.getPromptCount(), 1);
+  assert.equal(runtime.getInstallPrompt(), null);
+  assert.equal(runtime.getNotificationPermissionRequests(), 0);
+});
+
+test('dismissed native prompt is hidden and snoozed locally', async () => {
+  const runtime = loadInitializer();
+  const installEvent = createBeforeInstallPromptEvent('dismissed');
+  await runtime.triggerDOMContentLoaded();
+  await runtime.triggerWindowEvent('beforeinstallprompt', installEvent);
+
+  await runtime.getInstallPrompt().querySelector('[data-action="install"]').click();
+
+  assert.equal(installEvent.getPromptCount(), 1);
+  assert.equal(runtime.getInstallPrompt(), null);
+  assert.ok(Number(runtime.localStorage.getItem('kimbelaInstallDismissedAt')) > 0);
+});
+
+test('Not now snoozes install discovery without opening the native prompt', async () => {
+  const runtime = loadInitializer();
+  const firstEvent = createBeforeInstallPromptEvent();
+  await runtime.triggerDOMContentLoaded();
+  await runtime.triggerWindowEvent('beforeinstallprompt', firstEvent);
+
+  await runtime.getInstallPrompt().querySelector('[data-action="dismiss"]').click();
+  const reloadedRuntime = loadInitializer({
+    storageValues: runtime.localStorage.snapshot(),
+  });
+  await reloadedRuntime.triggerDOMContentLoaded();
+  await reloadedRuntime.triggerWindowEvent(
+    'beforeinstallprompt',
+    createBeforeInstallPromptEvent(),
+  );
+
+  assert.equal(firstEvent.getPromptCount(), 0);
+  assert.equal(runtime.getInstallPrompt(), null);
+  assert.ok(Number(runtime.localStorage.getItem('kimbelaInstallDismissedAt')) > 0);
+  assert.equal(reloadedRuntime.getInstallPrompt(), null);
+  assert.equal(runtime.getNotificationPermissionRequests(), 0);
+});
+
+test('expired local dismissal permits install discovery again', async () => {
+  const expired = Date.now() - (15 * 24 * 60 * 60 * 1000);
+  const runtime = loadInitializer({
+    storageValues: { kimbelaInstallDismissedAt: String(expired) },
+  });
+  await runtime.triggerDOMContentLoaded();
+  await runtime.triggerWindowEvent(
+    'beforeinstallprompt',
+    createBeforeInstallPromptEvent(),
+  );
+
+  assert.ok(runtime.getInstallPrompt());
+  assert.equal(runtime.localStorage.getItem('kimbelaInstallDismissedAt'), null);
+});
+
+test('legacy permanent iOS dismissal is migrated to the temporary snooze', async () => {
+  const runtime = loadInitializer({
+    userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)',
+    storageValues: { iosInstallPromptDismissed: 'true' },
+  });
+
+  await runtime.triggerDOMContentLoaded();
+
+  assert.equal(runtime.getInstallPrompt(), null);
+  assert.equal(runtime.localStorage.getItem('iosInstallPromptDismissed'), null);
+  assert.ok(Number(runtime.localStorage.getItem('kimbelaInstallDismissedAt')) > 0);
+});
+
+test('appinstalled hides install UI and clears a prior dismissal', async () => {
+  const runtime = loadInitializer();
+  await runtime.triggerDOMContentLoaded();
+  await runtime.triggerWindowEvent(
+    'beforeinstallprompt',
+    createBeforeInstallPromptEvent(),
+  );
+  assert.ok(runtime.getInstallPrompt());
+  runtime.localStorage.setItem('kimbelaInstallDismissedAt', String(Date.now()));
+
+  await runtime.triggerWindowEvent('appinstalled');
+  await runtime.triggerWindowEvent(
+    'beforeinstallprompt',
+    createBeforeInstallPromptEvent(),
+  );
+
+  assert.equal(runtime.getInstallPrompt(), null);
+  assert.equal(runtime.localStorage.getItem('kimbelaInstallDismissedAt'), null);
+});
+
+test('standalone display mode never shows native install UI', async () => {
+  const runtime = loadInitializer({ displayModeStandalone: true });
+  await runtime.triggerDOMContentLoaded();
+  await runtime.triggerWindowEvent(
+    'beforeinstallprompt',
+    createBeforeInstallPromptEvent(),
+  );
+
+  assert.equal(runtime.getInstallPrompt(), null);
+});
+
+test('switching to standalone display mode hides visible install UI', async () => {
+  const runtime = loadInitializer();
+  await runtime.triggerDOMContentLoaded();
+  await runtime.triggerWindowEvent(
+    'beforeinstallprompt',
+    createBeforeInstallPromptEvent(),
+  );
+  assert.ok(runtime.getInstallPrompt());
+
+  await runtime.triggerStandaloneChange(true);
+
+  assert.equal(runtime.getInstallPrompt(), null);
+});
+
+test('iOS shows Home Screen instructions only outside standalone mode', async () => {
+  const runtime = loadInitializer({
+    userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)',
+  });
+
+  await runtime.triggerDOMContentLoaded();
+
+  const prompt = runtime.getInstallPrompt();
+  assert.ok(prompt);
+  assert.match(prompt.textContent, /Tap the Share button/);
+  assert.match(prompt.textContent, /Choose “Add to Home Screen”/);
+  assert.match(prompt.textContent, /Tap Add/);
+  assert.ok(prompt.querySelector('[data-action="ios-help"]'));
+  assert.equal(prompt.querySelector('[data-action="install"]'), null);
+
+  const standaloneRuntime = loadInitializer({
+    userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)',
+    standalone: true,
+  });
+  await standaloneRuntime.triggerDOMContentLoaded();
+  assert.equal(standaloneRuntime.getInstallPrompt(), null);
+});
+
+test('iPadOS desktop user agent receives iOS installation instructions', async () => {
+  const runtime = loadInitializer({
+    userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15)',
+    platform: 'MacIntel',
+    maxTouchPoints: 5,
+  });
+
+  await runtime.triggerDOMContentLoaded();
+
+  assert.ok(runtime.getInstallPrompt());
+  assert.ok(runtime.getInstallPrompt().querySelector('[data-action="ios-help"]'));
+});
+
+test('unsupported browsers show no install controls or permission prompt', async () => {
+  const runtime = loadInitializer({ matchMediaAvailable: false });
+
+  await runtime.triggerDOMContentLoaded();
+
+  assert.equal(runtime.getInstallPrompt(), null);
+  assert.equal(runtime.getNotificationPermissionRequests(), 0);
 });

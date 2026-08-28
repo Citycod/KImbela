@@ -5,6 +5,8 @@ from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 from datetime import datetime, timedelta
 import logging
+import signal
+import threading
 import time
 from flask import current_app
 from extensions import db
@@ -256,6 +258,18 @@ def init_scheduler(app):
             except Exception as e:
                 logger.error(f"Error in weekly performance report: {str(e)}")
 
+    # In-app birthday notifications - daily at 9 AM.
+    @scheduler.scheduled_job(
+        "cron", hour=9, minute=0, id="birthday_in_app_notifications"
+    )
+    def create_birthday_notifications():
+        with app.app_context():
+            try:
+                check_and_create_birthday_notifications()
+            except Exception as exc:
+                logger.error("Error creating in-app birthday notifications: %s", exc)
+                db.session.rollback()
+
     # Birthday Pushes - Hourly check (Step 5 & 6)
     @scheduler.scheduled_job("cron", minute=0, id="birthday_web_pushes")
     def send_birthday_pushes():
@@ -289,11 +303,6 @@ def init_scheduler(app):
     # Start the scheduler
     scheduler.start()
     logger.info("Optimized scheduler started successfully")
-
-    # Add shutdown handler
-    import atexit
-
-    atexit.register(lambda: scheduler.shutdown() if scheduler else None)
 
     return scheduler
 
@@ -709,11 +718,58 @@ def check_and_create_birthday_notifications():
     print(f"✅ Birthday check completed at {datetime.now()}")
 
 
-def init_birthday_scheduler():
-    """Initialize the birthday scheduler"""
-    scheduler = BackgroundScheduler()
+def _install_shutdown_signal_handlers(stop_event):
+    """Install process signal handlers and return the previous handlers."""
+    previous_handlers = {}
 
-    # Run daily at 9 AM
-    scheduler.add_job(check_and_create_birthday_notifications, "cron", hour=9, minute=0)
+    def request_shutdown(signum, _frame):
+        logger.info("Scheduler shutdown requested by signal %s", signum)
+        stop_event.set()
 
-    scheduler.start()
+    for signum in (signal.SIGTERM, signal.SIGINT):
+        previous_handlers[signum] = signal.getsignal(signum)
+        signal.signal(signum, request_shutdown)
+
+    return previous_handlers
+
+
+def _restore_signal_handlers(previous_handlers):
+    for signum, handler in previous_handlers.items():
+        signal.signal(signum, handler)
+
+
+def run_scheduler_process(app, stop_event=None, scheduler_initializer=init_scheduler):
+    """Start one scheduler instance, wait for shutdown, and stop it cleanly."""
+    stop_event = stop_event or threading.Event()
+    previous_handlers = _install_shutdown_signal_handlers(stop_event)
+    scheduler_instance = None
+
+    try:
+        with app.app_context():
+            scheduler_instance = scheduler_initializer(app)
+
+        logger.info("Kimbela scheduler process is running")
+        stop_event.wait()
+    finally:
+        if scheduler_instance is not None and scheduler_instance.running:
+            scheduler_instance.shutdown(wait=True)
+            logger.info("Kimbela scheduler stopped cleanly")
+        _restore_signal_handlers(previous_handlers)
+
+
+def main():
+    """Executable entry point used by kimbela-scheduler.service."""
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    )
+
+    # app_config.app is created by the existing create_app() application factory.
+    from app_config import app
+
+    run_scheduler_process(app)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

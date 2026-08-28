@@ -10,7 +10,6 @@ from flask import jsonify
 from urllib.parse import urlparse
 from werkzeug.exceptions import BadRequest, RequestEntityTooLarge
 import time
-from scheduler import init_birthday_scheduler
 from flask import send_from_directory, abort
 from werkzeug.utils import safe_join
 
@@ -18,9 +17,6 @@ from werkzeug.utils import safe_join
 from extensions import db, bcrypt, login_manager, mail, csrf, cache, socketio
 
 load_dotenv()
-
-# Initialize birthday scheduler
-init_birthday_scheduler()
 
 
 def create_app():
