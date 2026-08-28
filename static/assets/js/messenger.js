@@ -16,6 +16,52 @@
         let gifSearchQuery = '';
         let gifIsLoading = false;
         let gifSearchTimeout = null;
+        let initialMessengerNavigationHandled = false;
+
+        function openRequestedProfileChat(friends) {
+            if (initialMessengerNavigationHandled) return;
+
+            const params = new URLSearchParams(window.location.search);
+            const requestedChat = params.get('chat');
+            const requestedFriendList = params.get('messenger') === '1';
+            if (requestedChat === null && !requestedFriendList) return;
+
+            initialMessengerNavigationHandled = true;
+
+            if (requestedChat === null) {
+                const popup = document.getElementById('messengerPopup');
+                const friendList = document.getElementById('friendList');
+                const chatArea = document.getElementById('chatArea');
+                if (!popup) return;
+
+                popup.classList.remove('hidden');
+                if (friendList) friendList.classList.remove('hidden');
+                if (chatArea) chatArea.classList.add('hidden');
+                document.body.style.overflow = 'hidden';
+                return;
+            }
+
+            if (!/^[1-9]\d*$/.test(requestedChat)) return;
+
+            const requestedUserId = Number(requestedChat);
+            if (!Number.isSafeInteger(requestedUserId)) return;
+
+            const requestedFriend = friends.find(
+                friend => Number(friend.id) === requestedUserId
+            );
+            if (!requestedFriend) return;
+
+            const popup = document.getElementById('messengerPopup');
+            if (!popup) return;
+
+            popup.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            openChat(
+                requestedFriend.id,
+                requestedFriend.name,
+                requestedFriend.avatar
+            );
+        }
 
         // ========================================
         // SOCKET.IO SETUP
@@ -143,6 +189,7 @@
                         <p class="text-sm mt-2">Connect with friends to start chatting!</p>
                     </div>
                 `;
+                    if (result.success) openRequestedProfileChat(result.friends);
                     return;
                 }
 
@@ -173,6 +220,8 @@
                 friendEl.onclick = () => openChat(friend.id, friend.name, friend.avatar);
                 container.appendChild(friendEl);
             });
+
+            openRequestedProfileChat(result.friends);
 
         } catch (error) {
             container.innerHTML = `

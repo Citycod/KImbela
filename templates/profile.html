@@ -112,7 +112,7 @@
 <script>
     // Ensure the messenger button redirects to the dashboard to open the chat
     window.openMessenger = function() {
-        window.location.href = '/dashboard';
+        window.location.href = '{{ url_for("user.user_dashboard", messenger=1) }}';
     };
 </script>
 
@@ -1806,7 +1806,7 @@ document.addEventListener('DOMContentLoaded', function () {
 <script>
     // Ensure the messenger button redirects to the dashboard to open the chat
     window.openMessenger = function() {
-        window.location.href = '/dashboard';
+        window.location.href = '{{ url_for("user.user_dashboard", messenger=1) }}';
     };
 </script>
 <script src="{{ url_for('static', filename='assets/js/dashboard.js') }}?v={{ range(1, 1000000) | random }}"></script>

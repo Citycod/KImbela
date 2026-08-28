@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% set messenger_asset_url = url_for('static', filename='assets/js/messenger.js', v='profile-chat-1') %}
 
 {% block head %}
 <meta charset="UTF-8" />
@@ -43,7 +44,7 @@
 
 <!-- Add this in the head or body before the script tag that loads dashboard.js -->
 <!-- Add this in the head or before closing body tag -->
-<script src="{{ url_for('static', filename='assets/js/messenger.js') }}" defer></script>
+<script src="{{ messenger_asset_url }}" defer></script>
 
 {% include 'partials/user_dashboard_head_scripts.html' %}
 {% endblock %}

@@ -96,11 +96,11 @@
 <!-- Profile Actions Script -->
 <script>
     window.openMessenger = function() {
-        window.location.href = '/dashboard';
+        window.location.href = '{{ url_for("user.user_dashboard", messenger=1) }}';
     };
 
     function handleMessageButtonClick(userId) {
-        window.location.href = `/dashboard?chat=${userId}`;
+        window.location.href = `{{ url_for("user.user_dashboard") }}?chat=${encodeURIComponent(userId)}`;
     }
 
     const FriendSystem = {
@@ -1013,11 +1013,11 @@
 <!-- Profile Actions Script -->
 <script>
     window.openMessenger = function() {
-        window.location.href = '/dashboard';
+        window.location.href = '{{ url_for("user.user_dashboard", messenger=1) }}';
     };
 
     function handleMessageButtonClick(userId) {
-        window.location.href = `/dashboard?chat=${userId}`;
+        window.location.href = `{{ url_for("user.user_dashboard") }}?chat=${encodeURIComponent(userId)}`;
     }
 
     const FriendSystem = {

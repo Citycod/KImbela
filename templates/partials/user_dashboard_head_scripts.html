@@ -65,7 +65,7 @@
               // Create a promise to wait for script load
               const loadMessenger = new Promise((resolve, reject) => {
                   const script = document.createElement('script');
-                  script.src = '{{ url_for("static", filename="assets/js/messenger.js") }}';
+                  script.src = '{{ messenger_asset_url }}';
                   script.onload = () => {
                       resolve();
                   };
