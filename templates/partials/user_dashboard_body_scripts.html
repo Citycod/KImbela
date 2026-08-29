@@ -5,6 +5,7 @@
           this.currentFriend = null;
           this.fireworksInterval = null;
           this.confettiInterval = null;
+          this.checkInFlight = null;
         }
 
         // Initialize birthday system
@@ -15,17 +16,38 @@
 
         // Check for birthdays and show notifications
         async checkBirthdays() {
-          try {
-            const response = await fetch("/api/birthdays/today");
-            const data = await response.json();
+          if (window.KimbelaNetwork && !window.KimbelaNetwork.isOnline()) {
+            return false;
+          }
+          if (this.checkInFlight) return this.checkInFlight;
 
-            if (data.success && data.birthdays.length > 0) {
-              this.showBirthdayNotification(data.birthdays);
+          this.checkInFlight = (async () => {
+            try {
+              const data = window.KimbelaNetwork
+                ? await window.KimbelaNetwork.requestJson(
+                    "birthdays-today",
+                    "/api/birthdays/today",
+                  )
+                : await fetch("/api/birthdays/today").then((response) =>
+                    response.json(),
+                  );
+
+              if (data.success && data.birthdays.length > 0) {
+                this.showBirthdayNotification(data.birthdays);
+              }
+
+              // Reuse the bootstrap response instead of requesting the same data twice.
+              this.updateBirthdayBadge(data);
+              return true;
+            } catch (error) {
+              return false;
             }
+          })();
 
-            // Reuse the bootstrap response instead of requesting the same data twice.
-            this.updateBirthdayBadge(data);
-          } catch (error) {
+          try {
+            return await this.checkInFlight;
+          } finally {
+            this.checkInFlight = null;
           }
         }
 
@@ -611,7 +633,9 @@
 
       // Auto-check birthdays every hour
       setInterval(() => {
-        birthdaySystem.checkBirthdays();
+        if (!window.KimbelaNetwork || window.KimbelaNetwork.isOnline()) {
+          birthdaySystem.checkBirthdays();
+        }
       }, 3600000); // 1 hour
     </script>
 

@@ -77,7 +77,7 @@ def test_dashboard_uses_one_versioned_messenger_asset_url(client, login):
 
     assert response.status_code == 200
     body = response.get_data(as_text=True)
-    versioned_url = "/static/assets/js/messenger.js?v=profile-chat-1"
+    versioned_url = "/static/assets/js/messenger.js?v=network-resilience-1"
     assert body.count(versioned_url) == 3
     assert 'src="/static/assets/js/messenger.js"' not in body
 

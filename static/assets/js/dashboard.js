@@ -68,6 +68,48 @@ const appState = {
     blockedUserIds: window.blockedUserIds || []
 };
 
+function isDashboardOnline() {
+    return window.KimbelaNetwork
+        ? window.KimbelaNetwork.isOnline()
+        : (typeof navigator === 'undefined' || navigator.onLine !== false);
+}
+
+function dashboardRequestJson(key, url, options) {
+    if (window.KimbelaNetwork) {
+        return window.KimbelaNetwork.requestJson(key, url, options);
+    }
+    if (!isDashboardOnline()) {
+        const error = new Error("You're offline. Reconnect and try again.");
+        error.kind = 'offline';
+        return Promise.reject(error);
+    }
+    return fetch(url, options).then(response => {
+        if (!response.ok) {
+            const error = new Error(`Request failed with status ${response.status}`);
+            error.kind = 'server';
+            throw error;
+        }
+        return response.json();
+    });
+}
+
+function commentFailureKind(error) {
+    if (window.KimbelaNetwork) {
+        return window.KimbelaNetwork.classifyError(error);
+    }
+    if (!isDashboardOnline() || error?.kind === 'offline') return 'offline';
+    return error?.kind || 'network';
+}
+
+function commentFailureMessage(error) {
+    if (window.KimbelaNetwork) {
+        return window.KimbelaNetwork.commentFeedback(error);
+    }
+    return commentFailureKind(error) === 'offline'
+        ? "You're offline. Reconnect to load comments."
+        : 'Failed to load comments';
+}
+
 const MobileFeedAds = {
     trackedImpressions: new Set(),
 
@@ -877,14 +919,23 @@ const PostSystem = {
         Modal.open('commentModal');
 
         try {
-            const response = await fetch(`/get_comments/${postId}`);
-            if (!response.ok) throw new Error('Network error');
-
-            const comments = await response.json();
-            this.displayCommentsModal(comments);
+            const data = await dashboardRequestJson(
+                `post-comments-modal-${postId}`,
+                `/get_comments/${postId}`
+            );
+            this.displayCommentsModal(data.comments || data);
         } catch (error) {
             if (modalBody) {
-                modalBody.innerHTML = '<div class="text-center py-8 text-red-500">Failed to load comments</div>';
+                const kind = commentFailureKind(error);
+                const retry = kind === 'offline' || kind === 'network'
+                    ? `<button type="button" class="mt-3 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white" onclick="PostSystem.viewComments(${postId})">Try again</button>`
+                    : '';
+                modalBody.innerHTML = `
+                    <div class="text-center py-8 ${kind === 'server' ? 'text-red-500' : 'text-gray-600'}">
+                        <p>${commentFailureMessage(error)}</p>
+                        ${retry}
+                    </div>
+                `;
             }
         }
     },
@@ -2014,30 +2065,70 @@ const BlockSystem = {
 // ========================================
 
 const NotificationSystem = {
+    badgeRequest: null,
+    onlineUnsubscribe: null,
+    offlineUnsubscribe: null,
+
+    stopPolling() {
+        if (appState.notificationCheckInterval) {
+            clearInterval(appState.notificationCheckInterval);
+            appState.notificationCheckInterval = null;
+        }
+    },
+
+    startPolling() {
+        this.stopPolling();
+        if (!isDashboardOnline()) return;
+        appState.notificationCheckInterval = setInterval(
+            () => this.updateBadge(),
+            30000
+        );
+    },
+
     async updateBadge() {
-        try {
-            const response = await fetch('/notifications/count');
-            if (!response.ok) return;
-            const contentType = response.headers.get('content-type') || '';
-            if (!contentType.includes('application/json')) return;
+        if (!isDashboardOnline()) return false;
+        if (this.badgeRequest) return this.badgeRequest;
 
-            const data = await response.json();
-            const badge = document.getElementById('notificationBadge');
-            if (!badge) return;
+        this.badgeRequest = (async () => {
+            try {
+                const data = await dashboardRequestJson(
+                    'notification-count',
+                    '/notifications/count'
+                );
+                const badge = document.getElementById('notificationBadge');
+                if (!badge) return false;
 
-            if (data.count > 0) {
-                badge.textContent = data.count > 99 ? '99+' : data.count;
-                badge.classList.remove('hidden');
-            } else {
-                badge.classList.add('hidden');
+                if (data.count > 0) {
+                    badge.textContent = data.count > 99 ? '99+' : data.count;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+                return true;
+            } catch (error) {
+                return false;
             }
-        } catch (error) {
+        })();
+
+        try {
+            return await this.badgeRequest;
+        } finally {
+            this.badgeRequest = null;
         }
     },
 
     async load() {
         const list = document.getElementById('notificationsList');
         if (!list) return;
+        if (!isDashboardOnline()) {
+            list.innerHTML = `
+                <div class="p-5 text-center text-gray-500">
+                    <i class="bi bi-wifi-off text-2xl"></i>
+                    <p class="mt-2">You're offline. Notifications will refresh when you reconnect.</p>
+                </div>
+            `;
+            return false;
+        }
 
         list.innerHTML = `
             <div class="space-y-3 p-3">
@@ -2054,16 +2145,15 @@ const NotificationSystem = {
         `;
 
         try {
-            const response = await fetch('/notifications');
-            if (!response.ok) throw new Error('Network error');
-            const contentType = response.headers.get('content-type') || '';
-            if (!contentType.includes('application/json')) {
-                throw new Error('Invalid notifications response');
-            }
-            const notifications = await response.json();
+            const notifications = await dashboardRequestJson(
+                'notification-list',
+                '/notifications'
+            );
             this.display(notifications, list);
+            return true;
         } catch (error) {
             list.innerHTML = '<div class="text-center p-4 text-red-500"><i class="bi bi-exclamation-triangle"></i><p>Error loading notifications</p></div>';
+            return false;
         }
     },
 
@@ -2229,13 +2319,22 @@ const NotificationSystem = {
     },
 
     init() {
-        if (appState.notificationCheckInterval) {
-            clearInterval(appState.notificationCheckInterval);
-        }
-
+        this.stopPolling();
         this.load();
         this.updateBadge();
-        appState.notificationCheckInterval = setInterval(() => this.updateBadge(), 30000);
+        this.startPolling();
+
+        if (!this.onlineUnsubscribe && window.KimbelaNetwork) {
+            this.onlineUnsubscribe = window.KimbelaNetwork.onOnline(() => {
+                this.updateBadge();
+                this.startPolling();
+            });
+        }
+        if (!this.offlineUnsubscribe && window.KimbelaNetwork) {
+            this.offlineUnsubscribe = window.KimbelaNetwork.onOffline(() => {
+                this.stopPolling();
+            });
+        }
 
         const dropdown = document.getElementById('notificationDropdown');
         if (dropdown) {
@@ -4441,8 +4540,10 @@ async function loadAllComments(postId) {
         const countElement = document.getElementById(`comment-count-${postId}`);
         const totalComments = parseInt(countElement?.getAttribute('data-total-comments')) || 0;
 
-        const res = await fetch(`/get_comments/${postId}?limit=${totalComments}`);
-        const data = await res.json();
+        const data = await dashboardRequestJson(
+            `post-comments-list-${postId}`,
+            `/get_comments/${postId}?limit=${totalComments}`
+        );
 
         if (data.comments) {
             const container = document.getElementById(`comments-${postId}`);
@@ -4479,7 +4580,12 @@ async function loadAllComments(postId) {
             if (btn && btn.tagName === 'BUTTON') btn.remove();
         }
     } catch (error) {
-        Toast.show('Failed to load comments', 'danger');
+        const kind = commentFailureKind(error);
+        const message = commentFailureMessage(error);
+        Toast.show(
+            kind === 'server' ? message : `${message} Tap “View all” to retry.`,
+            kind === 'server' ? 'danger' : 'warning'
+        );
     }
 }
 

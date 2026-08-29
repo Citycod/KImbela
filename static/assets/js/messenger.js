@@ -17,6 +17,68 @@
         let gifIsLoading = false;
         let gifSearchTimeout = null;
         let initialMessengerNavigationHandled = false;
+        let friendsRequest = null;
+        let unreadRequest = null;
+        let messagingRefresh = null;
+        let hasConnected = false;
+        let refreshAfterConnect = false;
+        let networkListenersReady = false;
+
+        function isOnline() {
+            return window.KimbelaNetwork
+                ? window.KimbelaNetwork.isOnline()
+                : (typeof navigator === 'undefined' || navigator.onLine !== false);
+        }
+
+        function requestJson(key, url, options) {
+            if (window.KimbelaNetwork) {
+                return window.KimbelaNetwork.requestJson(key, url, options);
+            }
+            if (!isOnline()) {
+                const error = new Error("You're offline. Reconnect and try again.");
+                error.kind = 'offline';
+                return Promise.reject(error);
+            }
+            return fetch(url, options).then(response => {
+                if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
+                return response.json();
+            });
+        }
+
+        function refreshMessagingState() {
+            if (!isOnline()) return Promise.resolve(false);
+            if (messagingRefresh) return messagingRefresh;
+
+            messagingRefresh = Promise.all([
+                loadFriendsList(),
+                updateUnreadBadge()
+            ]).finally(() => {
+                messagingRefresh = null;
+            });
+            return messagingRefresh;
+        }
+
+        function setupNetworkListeners() {
+            if (networkListenersReady) return;
+            networkListenersReady = true;
+
+            const handleOffline = () => {
+                refreshAfterConnect = true;
+                if (socket) socket.disconnect();
+            };
+            const handleOnline = () => {
+                refreshAfterConnect = true;
+                initSocket();
+            };
+
+            if (window.KimbelaNetwork) {
+                window.KimbelaNetwork.onOffline(handleOffline);
+                window.KimbelaNetwork.onOnline(handleOnline);
+            } else {
+                window.addEventListener('offline', handleOffline);
+                window.addEventListener('online', handleOnline);
+            }
+        }
 
         function openRequestedProfileChat(friends) {
             if (initialMessengerNavigationHandled) return;
@@ -67,7 +129,15 @@
         // SOCKET.IO SETUP
         // ========================================
         function initSocket() {
-            if (socket && socket.connected) return;
+            if (!isOnline()) {
+                refreshAfterConnect = true;
+                return;
+            }
+
+            if (socket) {
+                if (!socket.connected) socket.connect();
+                return;
+            }
 
             if (typeof io === 'undefined') {
                 console.error("Socket.IO failed to load from CDN. Messenger features will be disabled.");
@@ -77,24 +147,28 @@
             socket = io({
                 transports: ['websocket', 'polling'],
                 reconnection: true,
-                reconnectionAttempts: 5,
-                reconnectionDelay: 1000
+                reconnectionAttempts: Infinity,
+                reconnectionDelay: 1000,
+                reconnectionDelayMax: 10000,
+                randomizationFactor: 0.5
             });
 
             socket.on('connect', () => {
                 if (window.currentUserId) {
                     socket.emit('user_connected', { user_id: window.currentUserId });
                 }
-                loadFriendsList();
-                updateUnreadBadge();
+                const shouldRefresh = hasConnected || refreshAfterConnect;
+                hasConnected = true;
+                refreshAfterConnect = false;
+                if (shouldRefresh) refreshMessagingState();
             });
 
-            socket.on('connect_error', (error) => {
-                loadFriendsList();
-                updateUnreadBadge();
+            socket.on('connect_error', () => {
+                refreshAfterConnect = true;
             });
 
             socket.on('disconnect', (reason) => {
+                refreshAfterConnect = true;
             });
 
             // Message events
@@ -169,8 +243,19 @@
         async function loadFriendsList() {
             const container = document.getElementById('friendsContainer');
             if (!container) return;
+            if (!isOnline()) {
+                container.innerHTML = `
+                    <div class="text-center py-12 text-gray-500">
+                        <i class="bi bi-wifi-off text-3xl mb-3"></i>
+                        <p>You're offline.</p>
+                        <p class="text-sm mt-2">Conversations will refresh when you reconnect.</p>
+                    </div>
+                `;
+                return false;
+            }
+            if (friendsRequest) return friendsRequest;
 
-            try {
+            friendsRequest = (async () => {
                 container.innerHTML = `
                 <div class="text-center py-12">
                     <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3"></div>
@@ -178,8 +263,10 @@
                 </div>
             `;
 
-                const response = await fetch('/api/messaging/friends');
-                const result = await response.json();
+                const result = await requestJson(
+                    'messaging-friends',
+                    '/api/messaging/friends'
+                );
 
                 if (!result.success || result.friends.length === 0) {
                     container.innerHTML = `
@@ -223,14 +310,29 @@
 
             openRequestedProfileChat(result.friends);
 
-        } catch (error) {
-            container.innerHTML = `
-                <div class="text-center py-12 text-red-500">
-                    <i class="bi bi-exclamation-triangle text-2xl mb-2"></i>
-                    <p>Failed to load conversations</p>
-                </div>
-            `;
-        }
+                return true;
+            })();
+
+            try {
+                return await friendsRequest;
+            } catch (error) {
+                const offline = !isOnline() || error.kind === 'offline';
+                container.innerHTML = offline ? `
+                    <div class="text-center py-12 text-gray-500">
+                        <i class="bi bi-wifi-off text-3xl mb-3"></i>
+                        <p>You're offline.</p>
+                        <p class="text-sm mt-2">Conversations will refresh when you reconnect.</p>
+                    </div>
+                ` : `
+                    <div class="text-center py-12 text-red-500">
+                        <i class="bi bi-exclamation-triangle text-2xl mb-2"></i>
+                        <p>Failed to load conversations</p>
+                    </div>
+                `;
+                return false;
+            } finally {
+                friendsRequest = null;
+            }
     }
 
     // ========================================
@@ -785,8 +887,13 @@
     }
 
     function updateUnreadBadge() {
-        fetch('/api/messaging/unread-count')
-            .then(response => response.json())
+        if (!isOnline()) return Promise.resolve(false);
+        if (unreadRequest) return unreadRequest;
+
+        unreadRequest = requestJson(
+            'messaging-unread-count',
+            '/api/messaging/unread-count'
+        )
             .then(data => {
                 const badge = ensureNavbarBadge();
                 const openBtnBadge = badge;
@@ -804,8 +911,13 @@
                     if (badge) badge.classList.add('hidden');
                     if (openBtnBadge) openBtnBadge.classList.add('hidden');
                 }
+                return true;
             })
-            .catch(() => {});
+            .catch(() => false)
+            .finally(() => {
+                unreadRequest = null;
+            });
+        return unreadRequest;
     }
 
     function updateFriendsListUnreadCount(fromUserId) {
@@ -1197,7 +1309,7 @@
         init: function() {
             if (isInitialized) return;
 
-
+            setupNetworkListeners();
             loadFriendsList();
             updateUnreadBadge();
             initSocket();
@@ -1209,6 +1321,7 @@
         openChat: openChat,
         sendMessage: sendMessage,
         loadFriendsList: loadFriendsList,
+        refreshState: refreshMessagingState,
         openGifPicker: openGifPicker,
         closeGifPicker: closeGifPicker,
         selectGif: selectGif

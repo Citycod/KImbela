@@ -93,10 +93,10 @@ function loadMessenger({ search, friends }) {
     fetch: async url => {
       fetchCalls.push(url);
       if (url === '/api/messaging/friends') {
-        return { json: async () => ({ success: true, friends }) };
+        return { ok: true, status: 200, json: async () => ({ success: true, friends }) };
       }
       if (url.startsWith('/api/messaging/messages/')) {
-        return { json: async () => ({ messages: [], has_more: false }) };
+        return { ok: true, status: 200, json: async () => ({ messages: [], has_more: false }) };
       }
       throw new Error(`Unexpected request: ${url}`);
     },

@@ -1811,8 +1811,15 @@
         // ==================== LOAD ALL COMMENTS ====================
         async function loadAllComments(postId) {
             try {
-                const res = await fetch(`/get_comments/${postId}`);
-                const data = await res.json();
+                const data = window.KimbelaNetwork
+                    ? await window.KimbelaNetwork.requestJson(
+                        `group-comments-${postId}`,
+                        `/get_comments/${postId}`
+                    )
+                    : await fetch(`/get_comments/${postId}`).then(async response => {
+                        if (!response.ok) throw new Error('Server error');
+                        return response.json();
+                    });
                 if (data.comments) {
                     const container = document.getElementById(`comments-${postId}`);
                     const btn = container.nextElementSibling;
@@ -1847,7 +1854,18 @@
                     if (btn && btn.tagName === 'BUTTON') btn.remove();
                 }
             } catch (error) {
-                showToast('Failed to load comments', 'danger');
+                const kind = window.KimbelaNetwork
+                    ? window.KimbelaNetwork.classifyError(error)
+                    : (navigator.onLine === false ? 'offline' : 'server');
+                const message = window.KimbelaNetwork
+                    ? window.KimbelaNetwork.commentFeedback(error)
+                    : (kind === 'offline'
+                        ? "You're offline. Reconnect to load comments."
+                        : 'Failed to load comments');
+                showToast(
+                    kind === 'server' ? message : `${message} Tap “View all” to retry.`,
+                    kind === 'server' ? 'danger' : 'warning'
+                );
             }
         }
         

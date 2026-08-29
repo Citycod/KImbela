@@ -54,7 +54,15 @@ def test_dashboard_static_assets_use_reusable_version_urls():
     source = (PROJECT_ROOT / "templates" / "user_dashboard.html").read_text()
 
     assert "range(1, 1000000) | random" not in source
-    assert source.count("v='slow-network-1'") == 4
+    assert source.count("v='slow-network-1'") == 3
+    assert source.count("v='network-resilience-1'") == 2
+
+
+def test_network_resilience_script_is_loaded_by_base_template():
+    source = (PROJECT_ROOT / "templates" / "base.html").read_text()
+
+    assert "assets/js/network_resilience.js" in source
+    assert "v='network-resilience-1'" in source
 
 
 def test_dashboard_feed_uses_native_lazy_loading_for_appended_content():
