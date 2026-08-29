@@ -949,17 +949,24 @@
                         <!-- Comments Section -->
                         <div class="comments-section px-4 md:px-6 py-3 md:py-4 border-t border-gray-100 bg-gray-50">
                             <!-- Comment Input -->
-                            <div class="flex items-center space-x-2 md:space-x-3 mb-3 md:mb-4">
+                            <div class="comment-composer flex items-center space-x-2 md:space-x-3 mb-3 md:mb-4 relative" data-post-id="{{ post.id }}">
                                 <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
                                      alt="{{ current_user.full_name }}" 
                                      class="w-7 h-7 md:w-8 md:h-8 rounded-full object-cover comment-input-avatar">
-                                <div class="flex-1 relative">
+                                <div class="flex-1 relative min-w-0">
                                     <input type="text" 
                                            id="commentInput-{{ post.id }}" 
                                            placeholder="Write a comment..." 
-                                           class="w-full bg-white rounded-full px-3 py-1.5 md:px-4 md:py-2 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 comment-input"
-                                           onkeypress="handleCommentKeypress(event, {{ post.id }})">
+                                           class="comment-composer-input w-full bg-white rounded-full pl-3 pr-10 py-2 md:pl-4 md:pr-11 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 comment-input">
+                                    <button type="button" class="comment-composer-emoji absolute right-1 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            aria-label="Add emoji" title="Add emoji">
+                                        <i class="bi bi-emoji-smile" aria-hidden="true"></i>
+                                    </button>
                                 </div>
+                                <button type="button" class="comment-composer-send inline-flex min-h-[40px] min-w-[40px] items-center justify-center gap-1.5 rounded-full bg-blue-600 px-3 text-xs md:text-sm font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                        aria-label="Send comment" disabled aria-disabled="true">
+                                    <i class="bi bi-send-fill" aria-hidden="true"></i><span class="hidden sm:inline">Send</span>
+                                </button>
                             </div>
 
                             <!-- Comments List -->
@@ -1491,22 +1498,34 @@
             const input = document.getElementById(`commentInput-${postId}`);
             const container = document.getElementById(`comments-${postId}`);
             const count = document.getElementById(`comment-count-${postId}`);
-            
-            input.disabled = true;
-            const placeholder = input.placeholder;
-            input.placeholder = 'Posting...';
+
+            if (!input || !container || !count) return false;
             
             try {
-                const response = await fetch(`/add_comment/${postId}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrfToken
-                    },
-                    body: JSON.stringify({ content })
-                });
-                
-                const data = await response.json();
+                const data = window.KimbelaNetwork
+                    ? await window.KimbelaNetwork.requestJson(
+                        `comment-submit-${postId}`,
+                        `/add_comment/${postId}`,
+                        {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': csrfToken
+                            },
+                            body: JSON.stringify({ content })
+                        }
+                    )
+                    : await fetch(`/add_comment/${postId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken
+                        },
+                        body: JSON.stringify({ content })
+                    }).then(async response => {
+                        if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
+                        return response.json();
+                    });
                 
                 if (data.success || data.id) {
                     const comment = data.comment || data;
@@ -1541,15 +1560,23 @@
                     
                     showToast('Comment added!', 'success');
                     setTimeout(() => div.scrollIntoView({ behavior: 'smooth' }), 100);
+                    return true;
                 } else {
                     showToast(data.error || 'Failed', 'danger');
+                    return false;
                 }
             } catch (error) {
-                showToast('Network error', 'danger');
-            } finally {
-                input.disabled = false;
-                input.placeholder = placeholder;
-                input.focus();
+                const kind = window.KimbelaNetwork
+                    ? window.KimbelaNetwork.classifyError(error)
+                    : (navigator.onLine === false ? 'offline' : 'network');
+                if (kind === 'offline') {
+                    showToast("You're offline. Reconnect to post your comment.", 'warning');
+                } else if (kind === 'network') {
+                    showToast('Connection lost. Reconnect and try posting again.', 'warning');
+                } else {
+                    showToast('Failed to add comment', 'danger');
+                }
+                return false;
             }
         }
         
@@ -1951,4 +1978,5 @@
         window.previewPostMedia = previewPostMedia;
         
         </script>
+        <script src="{{ url_for('static', filename='assets/js/comment_composer.js', v='comment-composer-1') }}"></script>
 {% endblock %}

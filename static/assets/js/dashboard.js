@@ -4341,30 +4341,22 @@ function handleCommentKeypress(event, postId) {
 async function addComment(postId, content) {
     const input = document.getElementById(`commentInput-${postId}`);
     if (!input) {
-        return;
+        return false;
     }
 
-    // Store original state
-    input.disabled = true;
-    const originalPlaceholder = input.placeholder;
-    input.placeholder = 'Posting...';
-
     try {
-        const response = await fetch(`/add_comment/${postId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken
-            },
-            body: JSON.stringify({ content })
-        });
-
-        if (!response.ok) {
-            const text = await response.text();
-            throw new Error(`HTTP ${response.status}: ${text.substring(0, 100)}`);
-        }
-
-        const data = await response.json();
+        const data = await dashboardRequestJson(
+            `comment-submit-${postId}`,
+            `/add_comment/${postId}`,
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({ content })
+            }
+        );
 
         if (data.success || data.id) {
             // Use global user info
@@ -4453,24 +4445,26 @@ async function addComment(postId, content) {
             setTimeout(() => {
                 div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }, 100);
+            return true;
         } else {
             Toast.show(data.error || 'Failed to add comment', 'danger');
+            return false;
         }
     } catch (error) {
-
+        const kind = commentFailureKind(error);
         if (error.message.includes('401') || error.message.includes('login')) {
             Toast.show('Please log in again to comment', 'warning');
             setTimeout(() => {
                 window.location.href = '/login';
             }, 2000);
+        } else if (kind === 'offline') {
+            Toast.show("You're offline. Reconnect to post your comment.", 'warning');
+        } else if (kind === 'network') {
+            Toast.show('Connection lost. Reconnect and try posting again.', 'warning');
         } else {
-            Toast.show('Failed to add comment: ' + error.message, 'danger');
+            Toast.show('Failed to add comment', 'danger');
         }
-    } finally {
-        // Restore input state
-        input.disabled = false;
-        input.placeholder = originalPlaceholder;
-        input.focus();
+        return false;
     }
 }
 
