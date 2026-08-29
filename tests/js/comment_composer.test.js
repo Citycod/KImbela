@@ -37,6 +37,7 @@ function makeRuntime({ online = true, addComment } = {}) {
     navigator: { onLine: online },
     window: {
       addComment: addComment || (async () => true),
+      addEventListener() {},
       KimbelaNetwork: { isOnline: () => online },
       Toast: { show(message, type) { feedback.push({ message, type }); } },
     },
@@ -190,6 +191,18 @@ test('comment picker is created only after the emoji control is activated', () =
   );
   assert.match(source, /function toggleEmojiPicker\(button\)/);
   assert.match(source, /document\.createElement\('div'\)/);
+  assert.match(source, /document\.body\.appendChild\(picker\)/);
+  assert.match(source, /picker\.style\.position = 'fixed'/);
+  assert.doesNotMatch(source, /composer\.appendChild\(picker\)/);
+});
+
+test('emoji controls include the Tailwind 2 transform utility for centering', () => {
+  for (const template of [dashboardTemplate, partialTemplate, groupTemplate]) {
+    assert.match(
+      template,
+      /comment-composer-emoji[^>]*top-1\/2 transform -translate-y-1\/2/,
+    );
+  }
 });
 
 test('feed and group submission paths use the existing resilience layer', () => {

@@ -958,7 +958,7 @@
                                            id="commentInput-{{ post.id }}" 
                                            placeholder="Write a comment..." 
                                            class="comment-composer-input w-full bg-white rounded-full pl-3 pr-10 py-2 md:pl-4 md:pr-11 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 comment-input">
-                                    <button type="button" class="comment-composer-emoji absolute right-1 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    <button type="button" class="comment-composer-emoji absolute right-1 top-1/2 transform -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                             aria-label="Add emoji" title="Add emoji">
                                         <i class="bi bi-emoji-smile" aria-hidden="true"></i>
                                     </button>
@@ -1978,5 +1978,5 @@
         window.previewPostMedia = previewPostMedia;
         
         </script>
-        <script src="{{ url_for('static', filename='assets/js/comment_composer.js', v='comment-composer-1') }}"></script>
+        <script src="{{ url_for('static', filename='assets/js/comment_composer.js', v='comment-composer-2') }}"></script>
 {% endblock %}

@@ -8,6 +8,8 @@
     '😭', '😡', '👍', '👏', '🙌', '🙏', '❤️', '🔥',
     '🎉', '💯', '✨', '🤗', '😮', '😉', '💪', '🌟',
   ];
+  let activePicker = null;
+  let activeComposer = null;
 
   function composerFor(element) {
     return element && element.closest
@@ -63,10 +65,10 @@
     sync(composer);
   }
 
-  function closePickers(except) {
-    document.querySelectorAll('.comment-emoji-picker').forEach((picker) => {
-      if (picker !== except) picker.remove();
-    });
+  function closePicker() {
+    if (activePicker) activePicker.remove();
+    activePicker = null;
+    activeComposer = null;
   }
 
   function insertEmoji(input, emoji) {
@@ -90,18 +92,20 @@
     const input = inputFor(composer);
     if (!composer || !input) return;
 
-    const existing = composer.querySelector('.comment-emoji-picker');
-    if (existing) {
-      existing.remove();
+    if (activePicker && activeComposer === composer) {
+      closePicker();
       input.focus();
       return;
     }
 
-    closePickers();
+    closePicker();
     const picker = document.createElement('div');
-    picker.className = 'comment-emoji-picker absolute bottom-full right-0 z-30 mb-2 grid w-64 grid-cols-8 gap-1 rounded-xl border border-gray-200 bg-white p-2 shadow-lg';
+    picker.className = 'comment-emoji-picker fixed grid grid-cols-8 gap-1 rounded-xl border border-gray-200 bg-white p-2 shadow-lg';
     picker.setAttribute('role', 'listbox');
     picker.setAttribute('aria-label', 'Choose an emoji');
+    picker.style.position = 'fixed';
+    picker.style.zIndex = '10000';
+    picker.style.width = '16rem';
 
     emojis.forEach((emoji) => {
       const option = document.createElement('button');
@@ -111,12 +115,27 @@
       option.setAttribute('aria-label', `Add ${emoji}`);
       option.addEventListener('click', () => {
         insertEmoji(input, emoji);
-        picker.remove();
+        closePicker();
       });
       picker.appendChild(option);
     });
 
-    composer.appendChild(picker);
+    document.body.appendChild(picker);
+    activePicker = picker;
+    activeComposer = composer;
+
+    const buttonRect = button.getBoundingClientRect();
+    const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+    const pickerWidth = picker.offsetWidth || 256;
+    const pickerHeight = picker.offsetHeight || 128;
+    const left = Math.max(8, Math.min(buttonRect.right - pickerWidth, viewportWidth - pickerWidth - 8));
+    const above = buttonRect.top - pickerHeight - 8;
+    const top = above >= 8
+      ? above
+      : Math.min(buttonRect.bottom + 8, viewportHeight - pickerHeight - 8);
+    picker.style.left = `${left}px`;
+    picker.style.top = `${Math.max(8, top)}px`;
     picker.querySelector('button')?.focus();
   }
 
@@ -137,7 +156,7 @@
     if (typeof window.addComment !== 'function') return false;
 
     setSubmitting(composer, true);
-    closePickers();
+    closePicker();
     let succeeded = false;
     try {
       succeeded = (await window.addComment(composer.dataset.postId, content)) === true;
@@ -178,8 +197,11 @@
       return;
     }
 
-    if (!event.target.closest('.comment-emoji-picker')) closePickers();
+    if (!event.target.closest('.comment-emoji-picker')) closePicker();
   });
+
+  window.addEventListener('resize', closePicker);
+  window.addEventListener('scroll', closePicker, true);
 
   document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.comment-composer').forEach(sync);
