@@ -112,7 +112,7 @@
     </div>
   </div>
 
-  <div class="flex items-center flex-shrink-0 space-x-2 sm:space-x-4 ml-auto border-l border-gray-200 pl-3 sm:pl-5">
+  <div class="flex items-center flex-shrink-0 space-x-1 sm:space-x-4 ml-auto border-l border-gray-200 pl-2 sm:pl-5">
 
     <!-- Mobile Search Toggle -->
     <button class="p-2 rounded-full hover:bg-gray-100 transition-colors md:hidden text-gray-600"
@@ -125,6 +125,16 @@
       class="w-10 h-10 rounded-xl bg-purple-600 hover:bg-purple-700 text-white flex items-center justify-center transition-colors shadow-sm hidden sm:flex"
       onclick="window.openModal('postModal')">
       <i class="bi bi-plus-lg text-lg"></i>
+    </button>
+
+    <!-- Birthdays -->
+    <button id="birthdayShortcut" onclick="showBirthdayNotifications()" type="button"
+      aria-label="Birthdays, none today" title="Birthdays, none today"
+      class="w-9 h-9 sm:w-10 sm:h-10 rounded-full hover:bg-pink-50 flex items-center justify-center transition-colors relative text-pink-600">
+      <i class="bi bi-gift-fill text-xl"></i>
+      <span id="birthdayCount"
+        class="absolute -top-1 -right-1 bg-pink-600 text-white text-[10px] font-bold rounded-full h-4 min-w-[16px] px-1 hidden items-center justify-center border border-white"
+        style="display:none" aria-hidden="true">0</span>
     </button>
 
     <!-- Messenger -->
@@ -2308,16 +2318,9 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
   </div>
 </div>
 
-<!-- Birthday Notification Badge -->
-<div id="birthdayNotificationBadge" class="fixed top-20 right-4 z-40 hidden">
+<!-- Existing birthday popup host; opened by the permanent dashboard shortcut. -->
+<div id="birthdayNotificationBadge" class="fixed top-20 right-4 z-40">
   <div class="relative group">
-    <button onclick="showBirthdayNotifications()"
-      class="bg-gradient-to-r from-pink-500 to-red-500 text-white p-3 rounded-full shadow-lg hover:shadow-2xl transform hover:scale-110 transition-all duration-300 animate-bounce">
-      <i class="bi bi-gift-fill text-2xl"></i>
-      <span id="birthdayCount"
-        class="absolute -top-1 -right-1 bg-yellow-400 text-black text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">0</span>
-    </button>
-
     <!-- Birthday Notification Popup -->
     <div id="birthdayNotificationPopup"
       class="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-2xl overflow-hidden hidden transform origin-top-right scale-95 opacity-0 transition-all duration-300">

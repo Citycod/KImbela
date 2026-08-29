@@ -96,6 +96,20 @@ def test_dashboard_renders_header_and_sidebar_unread_message_badges(client, logi
     assert body.count('aria-label="Messages, no unread messages"') == 2
 
 
+def test_dashboard_always_renders_birthday_shortcut_and_existing_popup(client, login):
+    login()
+
+    response = client.get("/user_dashboard")
+
+    assert response.status_code == 200
+    body = response.get_data(as_text=True)
+    assert body.count('id="birthdayShortcut"') == 1
+    assert body.count('id="birthdayCount"') == 1
+    assert body.count('id="birthdayNotificationPopup"') == 1
+    assert 'onclick="showBirthdayNotifications()"' in body
+    assert 'aria-label="Birthdays, none today"' in body
+
+
 def test_blocked_profile_behavior_remains_redirected(client, login, user, db):
     profile_user = create_profile_user(db)
     user.block(profile_user)

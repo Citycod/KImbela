@@ -6,6 +6,8 @@
           this.fireworksInterval = null;
           this.confettiInterval = null;
           this.checkInFlight = null;
+          this.todayBirthdays = [];
+          this.hasLoadedTodayBirthdays = false;
         }
 
         // Initialize birthday system
@@ -32,8 +34,12 @@
                     response.json(),
                   );
 
-              if (data.success && data.birthdays.length > 0) {
-                this.showBirthdayNotification(data.birthdays);
+              if (data.success) {
+                this.todayBirthdays = Array.isArray(data.birthdays)
+                  ? data.birthdays
+                  : [];
+                this.hasLoadedTodayBirthdays = true;
+                this.showBirthdayNotification(this.todayBirthdays);
               }
 
               // Reuse the bootstrap response instead of requesting the same data twice.
@@ -53,18 +59,13 @@
 
         // Show birthday notification badge
         showBirthdayNotification(birthdays) {
-          const badge = document.getElementById("birthdayNotificationBadge");
-          const count = document.getElementById("birthdayCount");
           const notificationList = document.getElementById(
             "birthdayNotificationList",
           );
 
-          if (badge && birthdays.length > 0) {
-            badge.classList.remove("hidden");
-            count.textContent = birthdays.length;
-
-            // Populate notification list
-            notificationList.innerHTML = birthdays
+          if (notificationList) {
+            notificationList.innerHTML = birthdays.length
+              ? birthdays
               .map(
                 (friend) => `
                 <div class="birthday-notification-item p-3 hover:bg-pink-50 rounded-xl cursor-pointer transition-colors" onclick="openBirthdayForFriend(${friend.id})">
@@ -80,7 +81,13 @@
                 </div>
             `,
               )
-              .join("");
+              .join("")
+              : `
+                <div class="p-6 text-center text-gray-500">
+                  <i class="bi bi-cake2 text-3xl text-pink-400"></i>
+                  <p class="mt-2 text-sm">No birthdays today.</p>
+                </div>
+              `;
           }
         }
 
@@ -89,19 +96,39 @@
           try {
             let data = existingData;
             if (!data) {
-              const response = await fetch("/api/birthdays/today");
-              data = await response.json();
+              if (this.hasLoadedTodayBirthdays) {
+                data = {
+                  success: true,
+                  birthdays: this.todayBirthdays,
+                  count: this.todayBirthdays.length,
+                };
+              } else {
+                await this.checkBirthdays();
+                return;
+              }
             }
 
             const count = document.getElementById("birthdayCount");
-            const badge = document.getElementById("birthdayNotificationBadge");
+            const shortcut = document.getElementById("birthdayShortcut");
 
             if (data.success) {
-              if (data.count > 0) {
-                count.textContent = data.count;
-                badge?.classList.remove("hidden");
+              const birthdayCount = Array.isArray(data.birthdays)
+                ? data.birthdays.length
+                : Math.max(0, Number(data.count) || 0);
+              if (count && birthdayCount > 0) {
+                count.textContent = birthdayCount > 9 ? "9+" : birthdayCount;
+                count.classList.remove("hidden");
+                count.style.display = "flex";
               } else {
-                badge?.classList.add("hidden");
+                count?.classList.add("hidden");
+                if (count) count.style.display = "none";
+              }
+              if (shortcut) {
+                const label = birthdayCount > 0
+                  ? `Birthdays, ${birthdayCount} today`
+                  : "Birthdays, none today";
+                shortcut.setAttribute("aria-label", label);
+                shortcut.setAttribute("title", label);
               }
             }
           } catch (error) {
@@ -112,17 +139,17 @@
         openBirthdayForFriend(friendId) {
           this.closeBirthdayPopup();
 
-          // Find friend data
-          fetch("/api/birthdays/today")
-            .then((response) => response.json())
-            .then((data) => {
-              if (data.success) {
-                const friend = data.birthdays.find((f) => f.id == friendId);
-                if (friend) {
-                  this.showBirthdayModal(friend);
-                }
+          if (!this.hasLoadedTodayBirthdays) {
+            this.checkBirthdays().then((loaded) => {
+              if (loaded && this.hasLoadedTodayBirthdays) {
+                this.openBirthdayForFriend(friendId);
               }
             });
+            return;
+          }
+
+          const friend = this.todayBirthdays.find((item) => item.id == friendId);
+          if (friend) this.showBirthdayModal(friend);
         }
 
         // Show birthday modal with fireworks
@@ -570,12 +597,14 @@
           document.addEventListener("click", (e) => {
             const badge = document.getElementById("birthdayNotificationBadge");
             const popup = document.getElementById("birthdayNotificationPopup");
+            const shortcut = document.getElementById("birthdayShortcut");
 
             if (
               badge &&
               popup &&
               !badge.contains(e.target) &&
-              !popup.contains(e.target)
+              !popup.contains(e.target) &&
+              !shortcut?.contains(e.target)
             ) {
               this.closeBirthdayPopup();
             }
