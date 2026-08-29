@@ -23,6 +23,7 @@
         let hasConnected = false;
         let refreshAfterConnect = false;
         let networkListenersReady = false;
+        let lastKnownUnreadCount = 0;
 
         function isOnline() {
             return window.KimbelaNetwork
@@ -228,12 +229,14 @@
 
                 // Mark as read if it's received
                 if (!isMine && data.status === 'sent') {
-                    markMessageAsRead(data.id);
-                    updateUnreadBadge();
+                    markConversationAsRead(senderId);
                 }
             } else {
-                updateFriendsListUnreadCount(senderId);
-                updateUnreadBadge();
+                if (!isMine) {
+                    updateFriendsListUnreadCount(senderId);
+                    renderUnreadBadges(lastKnownUnreadCount + 1);
+                }
+                updateUnreadBadge(true);
             }
         }
 
@@ -850,14 +853,19 @@
     }
 
     function markConversationAsRead(userId) {
-        fetch(`/api/messaging/mark-conversation-read/${userId}`, {
+        return requestJson(
+            `messaging-mark-conversation-read-${userId}`,
+            `/api/messaging/mark-conversation-read/${userId}`,
+            {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': window.csrfToken || ''
             }
-        }).catch(() => {})
-          .finally(() => updateUnreadBadge());
+            }
+        )
+            .then(() => updateUnreadBadge(true))
+            .catch(() => false);
     }
 
     function markMessageAsRead(messageId) {
@@ -879,38 +887,71 @@
         if (!badge) {
             badge = document.createElement('span');
             badge.id = 'unreadMessagesBadge';
-            badge.className = 'notification-badge absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden';
+            badge.className = 'notification-badge message-unread-badge absolute -top-1 -right-1 bg-purple-600 text-white text-xs font-bold rounded-full flex items-center justify-center border border-white hidden';
+            badge.setAttribute('aria-hidden', 'true');
             badge.textContent = '0';
             openBtn.appendChild(badge);
         }
         return badge;
     }
 
-    function updateUnreadBadge() {
+    function normalizeUnreadCount(value) {
+        const count = Number(value);
+        return Number.isFinite(count) && count > 0 ? Math.floor(count) : 0;
+    }
+
+    function formatUnreadCount(count) {
+        return count > 9 ? '9+' : String(count);
+    }
+
+    function renderUnreadBadges(value) {
+        const count = normalizeUnreadCount(value);
+        const label = count === 1 ? '1 unread message' : `${count} unread messages`;
+        const formatted = formatUnreadCount(count);
+        lastKnownUnreadCount = count;
+
+        const navbarBadge = ensureNavbarBadge();
+        const sidebarBadge = document.getElementById('sidebarMsgBadge');
+        [navbarBadge, sidebarBadge].forEach(badge => {
+            if (!badge) return;
+            badge.textContent = formatted;
+            badge.dataset.unreadCount = String(count);
+            if (count > 0) {
+                badge.classList.remove('hidden');
+                badge.style.display = badge === sidebarBadge ? 'inline-flex' : 'flex';
+            } else {
+                badge.classList.add('hidden');
+                badge.style.display = 'none';
+            }
+        });
+
+        [
+            document.getElementById('openMessaging'),
+            document.getElementById('openMessagingSidebar')
+        ].forEach(button => {
+            if (!button) return;
+            const accessibleLabel = count > 0 ? `Messages, ${label}` : 'Messages, no unread messages';
+            button.setAttribute('aria-label', accessibleLabel);
+            button.setAttribute('title', accessibleLabel);
+        });
+
+        return count;
+    }
+
+    function updateUnreadBadge(afterCurrent = false) {
         if (!isOnline()) return Promise.resolve(false);
-        if (unreadRequest) return unreadRequest;
+        if (unreadRequest) {
+            return afterCurrent
+                ? unreadRequest.then(() => updateUnreadBadge())
+                : unreadRequest;
+        }
 
         unreadRequest = requestJson(
             'messaging-unread-count',
             '/api/messaging/unread-count'
         )
             .then(data => {
-                const badge = ensureNavbarBadge();
-                const openBtnBadge = badge;
-
-                if (data.unread_count > 0) {
-                    if (badge) {
-                        badge.textContent = data.unread_count > 99 ? '99+' : data.unread_count;
-                        badge.classList.remove('hidden');
-                    }
-                    if (openBtnBadge) {
-                        openBtnBadge.textContent = data.unread_count > 99 ? '99+' : data.unread_count;
-                        openBtnBadge.classList.remove('hidden');
-                    }
-                } else {
-                    if (badge) badge.classList.add('hidden');
-                    if (openBtnBadge) openBtnBadge.classList.add('hidden');
-                }
+                renderUnreadBadges(data.unread_count);
                 return true;
             })
             .catch(() => false)
@@ -1322,6 +1363,9 @@
         sendMessage: sendMessage,
         loadFriendsList: loadFriendsList,
         refreshState: refreshMessagingState,
+        updateUnreadBadge: updateUnreadBadge,
+        renderUnreadBadges: renderUnreadBadges,
+        markConversationAsRead: markConversationAsRead,
         openGifPicker: openGifPicker,
         closeGifPicker: closeGifPicker,
         selectGif: selectGif

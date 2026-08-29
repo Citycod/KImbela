@@ -19,7 +19,7 @@
   rel="stylesheet" />
 
 <!-- Dashboard Redesign Override -->
-<link href="{{ url_for('static', filename='assets/css/dashboard_redesign.css', v='slow-network-1') }}"
+<link href="{{ url_for('static', filename='assets/css/dashboard_redesign.css', v='unread-badge-1') }}"
   rel="stylesheet" />
 
 <!-- External CSS -->
@@ -128,11 +128,13 @@
     </button>
 
     <!-- Messenger -->
-    <button id="openMessaging" onclick="window.openMessenger()"
+    <button id="openMessaging" onclick="window.openMessenger()" aria-label="Messages, no unread messages"
+      title="Messages, no unread messages"
       class="w-10 h-10 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors relative text-gray-600">
       <i class="bi bi-chat-left-dots text-xl text-purple-600"></i>
       <span id="unreadMessagesBadge"
-        class="notification-badge absolute top-0 -right-1 bg-purple-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center border border-white hidden">0</span>
+        class="notification-badge message-unread-badge absolute -top-1 -right-1 bg-purple-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center border border-white hidden"
+        aria-hidden="true">0</span>
     </button>
 
     <!-- Notifications -->
@@ -260,9 +262,10 @@ placement='dashboard-top') %}
         </li>
         <div class="kb-sidebar-divider"></div>
         <li>
-          <button id="openMessagingSidebar" onclick="window.openMessenger()" type="button">
+          <button id="openMessagingSidebar" onclick="window.openMessenger()" type="button"
+            aria-label="Messages, no unread messages" title="Messages, no unread messages">
             <i class="bi bi-chat-dots"></i> Messages
-            <span class="kb-sidebar-badge" id="sidebarMsgBadge" style="display:none">0</span>
+            <span class="kb-sidebar-badge" id="sidebarMsgBadge" style="display:none" aria-hidden="true">0</span>
           </button>
         </li>
         <li>

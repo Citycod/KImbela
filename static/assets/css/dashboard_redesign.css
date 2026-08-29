@@ -891,6 +891,19 @@ body.has-top-banner .hero-ad-wrap {
   background: var(--kb-primary) !important;
 }
 
+.message-unread-badge {
+  z-index: 20;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.message-unread-badge.hidden {
+  display: none !important;
+}
+
 /* ── SMOOTH TRANSITIONS ── */
 .kb-left-sidebar *,
 .kb-right-sidebar * {
