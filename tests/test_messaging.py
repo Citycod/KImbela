@@ -1,4 +1,5 @@
 from datetime import date
+import json
 from types import SimpleNamespace
 from unittest.mock import Mock, call
 import uuid
@@ -128,6 +129,8 @@ def test_http_send_pushes_online_recipient_without_device_conversation_mapping(
             "title": f"New Message from {user.first_name}",
             "body": "Online message",
             "url": f"/user_dashboard?chat={user.id}",
+            "tag": f"message-{user.id}",
+            "renotify": True,
         },
     )
     assert client.get(push_mock.call_args.args[1]["url"]).status_code == 200
@@ -347,7 +350,47 @@ def test_socketio_send_pushes_when_recipient_account_is_marked_online(
     push_mock.assert_called_once()
     assert push_mock.call_args.args[0] == recipient.id
     assert push_mock.call_args.args[1]["url"] == f"/user_dashboard?chat={user.id}"
+    assert push_mock.call_args.args[1]["tag"] == f"message-{user.id}"
+    assert push_mock.call_args.args[1]["renotify"] is True
     socket_client.disconnect()
+
+
+def test_push_payload_adds_kimbela_display_metadata_and_timestamp(monkeypatch):
+    from utils.push_service import prepare_push_payload
+
+    monkeypatch.setattr("utils.push_service.time.time", lambda: 1_700_000_000.125)
+    source = {
+        "title": "New message",
+        "body": "Hello",
+        "url": "/user_dashboard?chat=13",
+        "tag": "message-13",
+        "renotify": True,
+    }
+
+    payload = prepare_push_payload(source)
+
+    assert payload == {
+        **source,
+        "icon": "/static/img/icons/icon-192x192.png",
+        "badge": "/static/img/icons/icon-192x192.png",
+        "timestamp": 1_700_000_000_125,
+    }
+    assert "icon" not in source
+    assert "timestamp" not in source
+
+
+def test_birthday_payload_gets_a_stable_non_renotifying_tag():
+    from utils.push_service import prepare_push_payload
+
+    payload = prepare_push_payload({
+        "title": "🎉 Happy Birthday!",
+        "body": "Have a great day",
+        "url": "/user_dashboard",
+    })
+
+    assert payload["tag"] == "birthday"
+    assert payload["renotify"] is False
+    assert payload["url"] == "/user_dashboard"
 
 
 def test_expired_push_subscription_is_pruned_without_blocking_valid_subscription(
@@ -440,12 +483,23 @@ def test_three_pushes_reuse_all_device_subscriptions(user, db, monkeypatch):
     monkeypatch.setattr("utils.push_service.webpush", webpush_mock)
 
     results = [
-        send_push_notification(user.id, {"title": "Test", "body": f"Message {number}"})
+        send_push_notification(
+            user.id,
+            {
+                "title": "Test",
+                "body": f"Message {number}",
+                "tag": "message-thread",
+                "renotify": True,
+            },
+        )
         for number in (1, 2, 3)
     ]
 
     assert results == [True, True, True]
     assert webpush_mock.call_count == 6
+    sent_payloads = [json.loads(call_.kwargs["data"]) for call_ in webpush_mock.call_args_list]
+    assert all(payload["tag"] == "message-thread" for payload in sent_payloads)
+    assert all(payload["renotify"] is True for payload in sent_payloads)
     assert all(db.session.get(PushSubscription, sub_id) is not None for sub_id in subscription_ids)
 
 

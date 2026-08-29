@@ -2250,6 +2250,8 @@ def _notify_group_post_members(group, post, actor):
                     group_id=group.id,
                     _anchor=f"post-{post.id}",
                 ),
+                "tag": f"social-group-{group.id}-post-{post.id}",
+                "renotify": True,
             },
         )
     except Exception:
@@ -2345,7 +2347,7 @@ def _persist_social_notifications(targets, actor_id):
         current_app.logger.exception("Failed to persist social notifications")
 
 
-def _send_comment_social_pushes(targets, destination):
+def _send_comment_social_pushes(targets, destination, post_id):
     from utils.push_service import send_push_notification
 
     for user_id, target in targets.items():
@@ -2356,6 +2358,8 @@ def _send_comment_social_pushes(targets, destination):
                     "title": target["title"],
                     "body": target["body"],
                     "url": destination,
+                    "tag": f"social-post-{post_id}",
+                    "renotify": True,
                 },
             )
         except Exception:
@@ -2405,7 +2409,7 @@ def add_comment(post_id):
         parent_comment,
     )
     _persist_social_notifications(targets, current_user.id)
-    _send_comment_social_pushes(targets, destination)
+    _send_comment_social_pushes(targets, destination, post.id)
 
     return jsonify(
         success=True,

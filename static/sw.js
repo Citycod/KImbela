@@ -84,13 +84,40 @@ self.addEventListener('push', event => {
       const title = data.title || 'Kimbela Notification';
       const options = {
         body: data.body || 'You have a new notification.',
-        icon: '/static/img/icons/icon-192x192.png',
-        badge: '/static/img/icons/icon-192x192.png',
+        icon: data.icon || '/static/img/icons/icon-192x192.png',
+        badge: data.badge || '/static/img/icons/icon-192x192.png',
+        timestamp: Number.isFinite(data.timestamp) ? data.timestamp : Date.now(),
+        vibrate: [100, 50, 100],
         data: {
           url: data.url || '/'
         }
       };
-      event.waitUntil(self.registration.showNotification(title, options));
+      if (typeof data.tag === 'string' && data.tag) {
+        options.tag = data.tag;
+        options.renotify = data.renotify === true;
+      }
+      const systemNotification = self.registration.showNotification(title, options);
+      const foregroundFeedback = self.clients
+        .matchAll({ type: 'window', includeUncontrolled: true })
+        .then(windowClients => {
+          const visibleClients = windowClients.filter(
+            client => client.visibilityState === 'visible'
+          );
+          const targetClient = visibleClients.find(client => client.focused)
+            || visibleClients[0];
+          if (targetClient && 'postMessage' in targetClient) {
+            targetClient.postMessage({
+              type: 'PUSH_FOREGROUND_NOTIFICATION',
+              notification: {
+                title,
+                body: options.body,
+                url: options.data.url,
+                tag: options.tag || '',
+              },
+            });
+          }
+        });
+      event.waitUntil(Promise.all([systemNotification, foregroundFeedback]));
     } catch (e) {
       console.error('Error parsing push data', e);
     }
@@ -126,7 +153,7 @@ self.addEventListener('pushsubscriptionchange', event => {
 
 self.addEventListener('notificationclick', event => {
   event.notification.close();
-  const urlToOpen = event.notification.data.url;
+  const urlToOpen = event.notification.data?.url || '/';
   
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windowClients => {

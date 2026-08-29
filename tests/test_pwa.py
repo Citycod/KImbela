@@ -55,7 +55,8 @@ def test_dashboard_static_assets_use_reusable_version_urls():
 
     assert "range(1, 1000000) | random" not in source
     assert source.count("v='slow-network-1'") == 2
-    assert source.count("v='network-resilience-1'") == 2
+    assert source.count("v='network-resilience-1'") == 1
+    assert source.count("v='foreground-feedback-1'") == 1
     assert source.count("v='unread-badge-1'") == 1
 
 
@@ -63,6 +64,13 @@ def test_network_resilience_script_is_loaded_by_base_template():
     source = (PROJECT_ROOT / "templates" / "base.html").read_text()
 
     assert "assets/js/network_resilience.js" in source
+
+
+def test_foreground_push_feedback_is_loaded_from_the_shared_base_template():
+    source = (PROJECT_ROOT / "templates" / "base.html").read_text()
+
+    assert "assets/js/foreground_push.js" in source
+    assert "v='foreground-feedback-1'" in source
     assert "v='network-resilience-1'" in source
 
 

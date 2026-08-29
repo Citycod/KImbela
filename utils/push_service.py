@@ -1,12 +1,31 @@
 import os
 import json
 import logging
+import time
 from pywebpush import webpush, WebPushException
 from models import PushSubscription
 from extensions import db
 
 
 logger = logging.getLogger(__name__)
+KIMBELA_NOTIFICATION_ICON = "/static/img/icons/icon-192x192.png"
+KIMBELA_NOTIFICATION_BADGE = "/static/img/icons/icon-192x192.png"
+
+
+def prepare_push_payload(payload_dict):
+    """Apply shared display metadata without changing delivery semantics."""
+    payload = dict(payload_dict or {})
+    payload["icon"] = KIMBELA_NOTIFICATION_ICON
+    payload["badge"] = KIMBELA_NOTIFICATION_BADGE
+    payload.setdefault("timestamp", int(time.time() * 1000))
+
+    # Birthday construction lives with the dedicated scheduler. Preserve that
+    # boundary while giving retries for the same annual event one stable group.
+    if not payload.get("tag") and "birthday" in str(payload.get("title", "")).lower():
+        payload["tag"] = "birthday"
+        payload["renotify"] = False
+
+    return payload
 
 
 def _send_to_subscriptions(subscriptions, payload_dict, vapid_private_key):
@@ -14,7 +33,7 @@ def _send_to_subscriptions(subscriptions, payload_dict, vapid_private_key):
         "sub": "mailto:no-reply@kimbela.com"
     }
     success_count = 0
-    payload = json.dumps(payload_dict)
+    payload = json.dumps(prepare_push_payload(payload_dict))
 
     for sub in subscriptions:
         user_id = sub.user_id

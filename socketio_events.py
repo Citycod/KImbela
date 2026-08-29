@@ -229,7 +229,9 @@ def handle_send_message(data):
             push_payload = {
                 "title": f"New message from {current_user.full_name}",
                 "body": content[:100] + ("..." if len(content) > 100 else ""),
-                "url": url_for("user.user_dashboard", chat=current_user.id)
+                "url": url_for("user.user_dashboard", chat=current_user.id),
+                "tag": f"message-{current_user.id}",
+                "renotify": True,
             }
             send_push_notification(receiver_id, push_payload)
         except Exception:

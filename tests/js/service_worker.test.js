@@ -8,6 +8,10 @@ const workerSource = fs.readFileSync(
   path.resolve(__dirname, '../../static/sw.js'),
   'utf8',
 );
+const messengerSource = fs.readFileSync(
+  path.resolve(__dirname, '../../static/assets/js/messenger.js'),
+  'utf8',
+);
 
 function createResponse(body, options = {}) {
   return {
@@ -246,6 +250,11 @@ test('push and notification-click handlers remain registered', async () => {
         title: 'New message',
         body: 'Hello',
         url: '/user_dashboard?chat=13',
+        icon: '/static/img/icons/icon-192x192.png',
+        badge: '/static/img/icons/icon-192x192.png',
+        tag: 'message-13',
+        renotify: true,
+        timestamp: 1700000000125,
       }),
     },
     waitUntil: (promise) => { pushPromise = promise; },
@@ -258,6 +267,128 @@ test('push and notification-click handlers remain registered', async () => {
     worker.notifications[0].options.data.url,
     '/user_dashboard?chat=13',
   );
+  assert.equal(
+    worker.notifications[0].options.icon,
+    '/static/img/icons/icon-192x192.png',
+  );
+  assert.equal(
+    worker.notifications[0].options.badge,
+    '/static/img/icons/icon-192x192.png',
+  );
+  assert.equal(worker.notifications[0].options.tag, 'message-13');
+  assert.equal(worker.notifications[0].options.renotify, true);
+  assert.equal(worker.notifications[0].options.timestamp, 1700000000125);
+  assert.deepEqual(Array.from(worker.notifications[0].options.vibrate), [100, 50, 100]);
+  assert.equal('requireInteraction' in worker.notifications[0].options, false);
+  assert.equal('silent' in worker.notifications[0].options, false);
+});
+
+test('same tagged thread still shows every repeated message push', async () => {
+  const worker = loadWorker();
+
+  for (const body of ['One', 'Two', 'Three']) {
+    let pushPromise;
+    worker.handlers.push({
+      data: {
+        json: () => ({
+          title: 'New message',
+          body,
+          url: '/user_dashboard?chat=13',
+          tag: 'message-13',
+          renotify: true,
+        }),
+      },
+      waitUntil: promise => { pushPromise = promise; },
+    });
+    await pushPromise;
+  }
+
+  assert.equal(worker.notifications.length, 3);
+  assert.deepEqual(
+    worker.notifications.map(item => item.options.tag),
+    ['message-13', 'message-13', 'message-13'],
+  );
+  assert.equal(worker.notifications.every(item => item.options.renotify), true);
+});
+
+test('closed app still receives the OS-level system notification', async () => {
+  const worker = loadWorker({ windowClients: [] });
+  let pushPromise;
+
+  worker.handlers.push({
+    data: { json: () => ({ title: 'Closed', body: 'Background push', url: '/user_dashboard' }) },
+    waitUntil: promise => { pushPromise = promise; },
+  });
+  await pushPromise;
+
+  assert.equal(worker.notifications.length, 1);
+  assert.equal(worker.notifications[0].title, 'Closed');
+});
+
+test('backgrounded app receives system push without foreground feedback', async () => {
+  const foregroundMessages = [];
+  const worker = loadWorker({
+    windowClients: [{
+      visibilityState: 'hidden',
+      focused: false,
+      postMessage: message => foregroundMessages.push(message),
+    }],
+  });
+  let pushPromise;
+
+  worker.handlers.push({
+    data: { json: () => ({ title: 'Background', body: 'Still delivered', url: '/user_dashboard' }) },
+    waitUntil: promise => { pushPromise = promise; },
+  });
+  await pushPromise;
+
+  assert.equal(worker.notifications.length, 1);
+  assert.deepEqual(foregroundMessages, []);
+});
+
+test('visible app receives one foreground event without disabling system push', async () => {
+  const foregroundMessages = [];
+  const worker = loadWorker({
+    windowClients: [
+      {
+        visibilityState: 'visible',
+        focused: false,
+        postMessage: message => foregroundMessages.push(message),
+      },
+      {
+        visibilityState: 'visible',
+        focused: true,
+        postMessage: message => foregroundMessages.push(message),
+      },
+    ],
+  });
+  let pushPromise;
+
+  worker.handlers.push({
+    data: {
+      json: () => ({
+        title: 'New message',
+        body: 'Foreground body',
+        url: '/user_dashboard?chat=13',
+        tag: 'message-13',
+      }),
+    },
+    waitUntil: promise => { pushPromise = promise; },
+  });
+  await pushPromise;
+
+  assert.equal(worker.notifications.length, 1);
+  assert.equal(foregroundMessages.length, 1);
+  assert.equal(foregroundMessages[0].type, 'PUSH_FOREGROUND_NOTIFICATION');
+  assert.equal(
+    foregroundMessages[0].notification.url,
+    '/user_dashboard?chat=13',
+  );
+});
+
+test('foreground socket handling does not create a second browser notification', () => {
+  assert.match(messengerSource, /socket\.on\('new_message', handleNewMessage\)/);
+  assert.doesNotMatch(messengerSource, /registration\.showNotification|new Notification\s*\(/);
 });
 
 test('notification click focuses an existing app at the destination', async () => {

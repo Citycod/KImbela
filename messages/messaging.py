@@ -445,6 +445,8 @@ def send_message():
                     else f"Sent you a {message_type}"
                 ),
                 "url": url_for("user.user_dashboard", chat=current_user.id),
+                "tag": f"message-{current_user.id}",
+                "renotify": True,
             }
             send_push_notification(friend_id, push_payload)
         except Exception:

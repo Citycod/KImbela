@@ -81,6 +81,29 @@
             }
         }
 
+        function isExactActiveConversation(url) {
+            if (!currentChatUserId || !url) return false;
+
+            let senderId;
+            try {
+                senderId = Number(new URL(url, window.location.origin).searchParams.get('chat'));
+            } catch (error) {
+                return false;
+            }
+            if (!Number.isSafeInteger(senderId) || senderId !== currentChatUserId) {
+                return false;
+            }
+
+            const popup = document.getElementById('messengerPopup');
+            const chatArea = document.getElementById('chatArea');
+            return Boolean(
+                popup
+                && chatArea
+                && !popup.classList.contains('hidden')
+                && !chatArea.classList.contains('hidden')
+            );
+        }
+
         function openRequestedProfileChat(friends) {
             if (initialMessengerNavigationHandled) return;
 
@@ -1366,10 +1389,17 @@
         updateUnreadBadge: updateUnreadBadge,
         renderUnreadBadges: renderUnreadBadges,
         markConversationAsRead: markConversationAsRead,
+        isExactActiveConversation: isExactActiveConversation,
         openGifPicker: openGifPicker,
         closeGifPicker: closeGifPicker,
         selectGif: selectGif
     };
+
+    if (window.KimbelaForegroundPush) {
+        window.KimbelaForegroundPush.setSuppressor(
+            notification => isExactActiveConversation(notification?.url)
+        );
+    }
 
     // ========================================
     // INITIALIZATION

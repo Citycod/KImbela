@@ -93,6 +93,8 @@ def test_feed_comment_pushes_post_owner_with_valid_post_destination(
             "title": "New comment",
             "body": f"{user.full_name} commented on your post.",
             "url": f"/post/{post.public_id}#comment-{comment_id}",
+            "tag": f"social-post-{post.id}",
+            "renotify": True,
         },
     )
     assert client.get(push_mock.call_args.args[1]["url"]).status_code == 200
@@ -148,6 +150,8 @@ def test_feed_reply_notifies_parent_author_and_deduplicates_post_owner(
         "title": "New reply",
         "body": f"{user.full_name} replied to your comment.",
         "url": f"/post/{post.public_id}#comment-{reply_id}",
+        "tag": f"social-post-{post.id}",
+        "renotify": True,
     }
     assert Notification.query.filter_by(
         user_id=owner.id,
@@ -247,6 +251,8 @@ def test_group_post_bulk_push_excludes_actor_left_and_blocked_members(
             "title": "New group post",
             "body": f"{user.full_name} posted in {group.name}.",
             "url": f"/groups/{group.id}#post-{post_id}",
+            "tag": f"social-group-{group.id}-post-{post_id}",
+            "renotify": True,
         },
     )
     assert client.get(bulk_push_mock.call_args.args[1]["url"].split("#", 1)[0]).status_code == 200
@@ -281,6 +287,8 @@ def test_group_comment_only_pushes_post_owner(client, user, db, monkeypatch):
             "title": "New group comment",
             "body": f"{user.full_name} commented on your group post.",
             "url": f"/groups/{group.id}#comment-{comment_id}",
+            "tag": f"social-post-{post.id}",
+            "renotify": True,
         },
     )
     assert client.get(push_mock.call_args.args[1]["url"].split("#", 1)[0]).status_code == 200
@@ -315,6 +323,8 @@ def test_group_reply_deduplicates_owner_and_parent_author(
             "title": "New group reply",
             "body": f"{user.full_name} replied to your group comment.",
             "url": f"/groups/{group.id}#comment-{reply_id}",
+            "tag": f"social-post-{post.id}",
+            "renotify": True,
         },
     )
 
