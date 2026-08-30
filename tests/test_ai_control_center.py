@@ -62,9 +62,10 @@ def save_config(db, persona, **changes):
 
 @pytest.fixture(autouse=True)
 def reset_global_ai_switch(db):
-    from ai_controls import set_global_activity_enabled
+    from ai_controls import set_global_activity_enabled, set_global_post_spacing_hours
 
     set_global_activity_enabled(True)
+    set_global_post_spacing_hours(0)
     db.session.commit()
     yield
     db.session.rollback()

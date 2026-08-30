@@ -163,7 +163,7 @@ def execute_persona_post(
     """
     is_manual = source in {"manual", "approval"}
     allowed, reason = (
-        manual_eligibility(persona)
+        manual_eligibility(persona, "feed")
         if is_manual
         else automation_eligibility(persona, "post")
     )

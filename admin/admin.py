@@ -866,12 +866,18 @@ def admin_ai_users():
         return redirect(url_for("user.user_dashboard"))
 
     from ai_controls import (
+        get_global_post_spacing_hours,
+        get_group_config,
         get_pending_draft,
         get_profile_config,
         is_global_activity_enabled,
-        last_action_at,
+        last_ai_post_at,
         next_eligible_post_at,
+        posts_today_count,
+        post_today_override,
         today_action_count,
+        today_group_action_count,
+        weekly_post_counts,
     )
 
     personas = AIPersona.query.options(joinedload(AIPersona.user)).order_by(AIPersona.name).all()
@@ -883,24 +889,97 @@ def admin_ai_users():
         if selected:
             posts_query = posts_query.filter(Post.author_id == selected.user_id)
     posts = posts_query.order_by(Post.created_at.desc()).limit(100).all()
+    comments_query = Comment.query.filter(Comment.author_id.in_(ai_user_ids or [-1]))
+    if selected_persona_id:
+        selected = next((p for p in personas if p.id == selected_persona_id), None)
+        if selected:
+            comments_query = comments_query.filter(Comment.author_id == selected.user_id)
+    comments = comments_query.order_by(Comment.created_at.desc()).limit(100).all()
 
-    post_logs = {
-        log.target_id: log
-        for log in AILog.query.filter(
-            AILog.action_type.in_(("CREATE_POST", "CREATE_POST_AUTOMATIC", "CREATE_POST_MANUAL", "CREATE_POST_APPROVED")),
-            AILog.target_id.in_([post.id for post in posts] or [-1]),
-        ).all()
-    }
+    all_groups = Group.query.order_by(Group.name).all()
+    groups = [group for group in all_groups if group.is_active]
+    group_by_id = {group.id: group for group in all_groups}
+    group_rows = [
+        {
+            "group": group,
+            "config": get_group_config(group),
+            "ai_members": [
+                member.full_name
+                for member in group.members.filter(User.is_ai_persona.is_(True)).all()
+            ],
+        }
+        for group in groups
+    ]
+
+    content_target_ids = [post.id for post in posts] + [comment.id for comment in comments]
+    content_logs = AILog.query.filter(
+        AILog.action_type.in_(
+            (
+                "CREATE_POST", "CREATE_POST_AUTOMATIC", "CREATE_POST_MANUAL",
+                "CREATE_POST_APPROVED", "GROUP_POST_AUTOMATIC", "GROUP_POST_MANUAL",
+                "REPLY_COMMENT", "REPLY_COMMENT_AUTOMATIC", "REPLY_COMMENT_MANUAL",
+                "GROUP_COMMENT_AUTOMATIC", "GROUP_COMMENT_MANUAL",
+                "GROUP_REPLY_AUTOMATIC", "GROUP_REPLY_MANUAL",
+            )
+        ),
+        AILog.target_id.in_(content_target_ids or [-1]),
+    ).order_by(AILog.timestamp.desc()).limit(400).all()
+    log_by_key = {}
+    for log in content_logs:
+        entity = "comment" if "COMMENT" in log.action_type or "REPLY" in log.action_type else "post"
+        log_by_key.setdefault((entity, log.target_id), log)
+
+    recent_ai_content = []
+    for post in posts:
+        log = log_by_key.get(("post", post.id))
+        recent_ai_content.append(
+            {
+                "entity": "post",
+                "item": post,
+                "persona": next((p for p in personas if p.user_id == post.author_id), None),
+                "type": "Group Post" if post.group_id else "Feed Post",
+                "group": group_by_id.get(post.group_id),
+                "source": (
+                    "Manual" if log and "MANUAL" in log.action_type
+                    else "Approved" if log and "APPROVED" in log.action_type
+                    else "Automatic"
+                ),
+                "created_at": post.created_at,
+            }
+        )
+    post_map = {post.id: post for post in Post.query.filter(Post.id.in_([c.post_id for c in comments] or [-1])).all()}
+    for comment in comments:
+        post = post_map.get(comment.post_id)
+        log = log_by_key.get(("comment", comment.id))
+        recent_ai_content.append(
+            {
+                "entity": "comment",
+                "item": comment,
+                "post": post,
+                "persona": next((p for p in personas if p.user_id == comment.author_id), None),
+                "type": "Reply" if comment.parent_id else "Comment",
+                "group": group_by_id.get(post.group_id) if post else None,
+                "source": "Manual" if log and "MANUAL" in log.action_type else "Automatic",
+                "created_at": comment.created_at,
+            }
+        )
+    recent_ai_content.sort(key=lambda row: row["created_at"], reverse=True)
+    recent_ai_content = recent_ai_content[:100]
     persona_rows = []
     for persona in personas:
+        counts = weekly_post_counts(persona)
         persona_rows.append(
             {
                 "persona": persona,
                 "config": get_profile_config(persona),
                 "pending_draft": get_pending_draft(persona.id),
-                "posts_today": today_action_count(persona, "post"),
+                "posts_today": posts_today_count(persona),
                 "replies_today": today_action_count(persona, "reply"),
-                "last_post_at": last_action_at(persona.id, "post"),
+                "group_comments_today": today_group_action_count(persona, "comment"),
+                "group_replies_today": today_group_action_count(persona, "reply"),
+                "weekly_counts": counts,
+                "post_today_override": post_today_override(persona),
+                "last_post_at": last_ai_post_at(persona.id),
                 "next_post_at": next_eligible_post_at(persona),
             }
         )
@@ -910,7 +989,10 @@ def admin_ai_users():
         "admin_ai_users.html",
         persona_rows=persona_rows,
         posts=posts,
-        post_logs=post_logs,
+        recent_ai_content=recent_ai_content,
+        groups=groups,
+        group_rows=group_rows,
+        global_post_spacing_hours=get_global_post_spacing_hours(),
         logs=logs,
         selected_persona_id=selected_persona_id,
         ai_activity_enabled=is_global_activity_enabled(),
@@ -932,6 +1014,19 @@ def admin_set_ai_activity():
     return _ai_admin_redirect()
 
 
+@admin.route("/admin/ai-users/post-spacing", methods=["POST"])
+@login_required
+def admin_set_ai_post_spacing():
+    if not current_user.is_super_admin:
+        return jsonify({"success": False, "error": "Access denied"}), 403
+    from ai_controls import set_global_post_spacing_hours
+
+    hours = set_global_post_spacing_hours(request.form.get("hours"))
+    db.session.commit()
+    flash(f"Global AI new-post spacing set to {hours} hour(s).", "success")
+    return _ai_admin_redirect()
+
+
 @admin.route("/admin/ai-users/<int:persona_id>/settings", methods=["POST"])
 @login_required
 def admin_update_ai_persona(persona_id):
@@ -942,6 +1037,15 @@ def admin_update_ai_persona(persona_id):
     persona = db.get_or_404(AIPersona, persona_id)
     current_config = get_profile_config(persona)
     active_days = request.form.getlist("active_days")
+    posting_days = request.form.getlist("posting_days")
+    requested_group_ids = {
+        int(value) for value in request.form.getlist("allowed_group_ids")
+        if str(value).isdigit()
+    }
+    allowed_groups = Group.query.filter(
+        Group.id.in_(requested_group_ids or {-1}), Group.is_active.is_(True)
+    ).all()
+    allowed_group_ids = [group.id for group in allowed_groups]
     config = {
         **current_config,
         "enabled": request.form.get("enabled") == "on",
@@ -952,12 +1056,25 @@ def admin_update_ai_persona(persona_id):
         "posting_end_time": request.form.get("posting_end_time"),
         "max_posts_per_day": request.form.get("max_posts_per_day"),
         "minimum_post_interval_minutes": request.form.get("minimum_post_interval_minutes"),
+        "maximum_total_posts_per_week": request.form.get("maximum_total_posts_per_week"),
+        "maximum_feed_posts_per_week": request.form.get("maximum_feed_posts_per_week"),
+        "maximum_group_posts_per_week": request.form.get("maximum_group_posts_per_week"),
+        "posting_days": posting_days,
         "max_replies_per_day": request.form.get("max_replies_per_day"),
         "replies_enabled": request.form.get("replies_enabled") == "on",
         "reply_probability": request.form.get("reply_probability"),
         "minimum_reply_delay_minutes": request.form.get("minimum_reply_delay_minutes"),
         "maximum_reply_delay_minutes": request.form.get("maximum_reply_delay_minutes"),
         "disallowed_topics": request.form.get("disallowed_topics", "").splitlines(),
+        "group_activity_enabled": request.form.get("group_activity_enabled") == "on",
+        "group_can_post": request.form.get("group_can_post") == "on",
+        "group_can_comment": request.form.get("group_can_comment") == "on",
+        "group_can_reply": request.form.get("group_can_reply") == "on",
+        "allowed_group_ids": allowed_group_ids,
+        "max_group_posts_per_day": request.form.get("max_group_posts_per_day"),
+        "max_group_comments_per_day": request.form.get("max_group_comments_per_day"),
+        "max_group_replies_per_day": request.form.get("max_group_replies_per_day"),
+        "minimum_group_activity_interval_minutes": request.form.get("minimum_group_activity_interval_minutes"),
     }
     saved = save_profile_config(persona, config)
     persona.is_active = saved["enabled"]
@@ -967,8 +1084,68 @@ def admin_update_ai_persona(persona_id):
         for topic in request.form.get("allowed_topics", "").splitlines()
         if topic.strip()
     ]
+    for group in allowed_groups:
+        if group.members.filter_by(id=persona.user_id).first() is None:
+            group.members.append(persona.user)
+            group.member_count = group.members.count()
     db.session.commit()
     flash(f"Saved AI controls for {persona.name}.", "success")
+    return _ai_admin_redirect()
+
+
+@admin.route("/admin/ai-users/<int:persona_id>/display-name", methods=["POST"])
+@login_required
+def admin_update_ai_display_name(persona_id):
+    if not current_user.is_super_admin:
+        return jsonify({"success": False, "error": "Access denied"}), 403
+    persona = db.get_or_404(AIPersona, persona_id)
+    first_name = request.form.get("first_name", "").strip()
+    last_name = request.form.get("last_name", "").strip()
+    display_name = " ".join(part for part in (first_name, last_name) if part)
+    if not first_name or not last_name or len(first_name) > 50 or len(last_name) > 50 or len(display_name) > 50:
+        flash("Enter a first and last name with a combined length of 50 characters or fewer.", "danger")
+        return _ai_admin_redirect()
+    persona.user.first_name = first_name
+    persona.user.last_name = last_name
+    persona.name = display_name
+    db.session.commit()
+    flash(f"AI display name updated to {display_name}.", "success")
+    return _ai_admin_redirect()
+
+
+@admin.route("/admin/ai-users/<int:persona_id>/post-today", methods=["POST"])
+@login_required
+def admin_set_ai_post_today(persona_id):
+    if not current_user.is_super_admin:
+        return jsonify({"success": False, "error": "Access denied"}), 403
+    from ai_controls import set_post_today
+
+    persona = db.get_or_404(AIPersona, persona_id)
+    enabled = request.form.get("enabled") == "1"
+    set_post_today(persona, enabled)
+    db.session.commit()
+    flash(f"New posts are {'allowed' if enabled else 'disabled'} for {persona.name} today, subject to all other controls.", "success")
+    return _ai_admin_redirect()
+
+
+@admin.route("/admin/ai-users/groups/<int:group_id>/settings", methods=["POST"])
+@login_required
+def admin_update_ai_group(group_id):
+    if not current_user.is_super_admin:
+        return jsonify({"success": False, "error": "Access denied"}), 403
+    from ai_controls import get_group_config, save_group_config
+
+    group = db.get_or_404(Group, group_id)
+    config = get_group_config(group)
+    config.update(
+        activity_level=request.form.get("activity_level"),
+        quiet_comment_hours=request.form.get("quiet_comment_hours"),
+        quiet_post_hours=request.form.get("quiet_post_hours"),
+        thread_cooldown_minutes=request.form.get("thread_cooldown_minutes"),
+    )
+    save_group_config(group, config)
+    db.session.commit()
+    flash(f"Saved AI activity controls for {group.name}.", "success")
     return _ai_admin_redirect()
 
 
@@ -1088,6 +1265,38 @@ def admin_edit_ai_post(post_id):
     post.content = content
     db.session.commit()
     flash("AI post updated.", "success")
+    return _ai_admin_redirect()
+
+
+@admin.route("/admin/ai-users/comments/<int:comment_id>/delete", methods=["POST"])
+@login_required
+def admin_delete_ai_comment(comment_id):
+    if not current_user.is_super_admin:
+        return jsonify({"success": False, "error": "Access denied"}), 403
+    comment = db.get_or_404(Comment, comment_id)
+    if not getattr(comment.author, "is_ai_persona", False):
+        return jsonify({"success": False, "error": "Not AI content"}), 400
+    db.session.delete(comment)
+    db.session.commit()
+    flash("AI comment deleted.", "success")
+    return _ai_admin_redirect()
+
+
+@admin.route("/admin/ai-users/comments/<int:comment_id>/edit", methods=["POST"])
+@login_required
+def admin_edit_ai_comment(comment_id):
+    if not current_user.is_super_admin:
+        return jsonify({"success": False, "error": "Access denied"}), 403
+    comment = db.get_or_404(Comment, comment_id)
+    if not getattr(comment.author, "is_ai_persona", False):
+        return jsonify({"success": False, "error": "Not AI content"}), 400
+    content = request.form.get("content", "").strip()
+    if not content:
+        flash("A comment cannot be empty.", "danger")
+        return _ai_admin_redirect()
+    comment.content = content
+    db.session.commit()
+    flash("AI comment updated.", "success")
     return _ai_admin_redirect()
 
 

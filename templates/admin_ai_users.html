@@ -29,6 +29,16 @@
       <div class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 font-medium text-rose-800">Emergency stop is active. Automated and manual AI posts/replies are blocked.</div>
     {% endif %}
 
+    <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <form method="post" action="{{ url_for('admin.admin_set_ai_post_spacing') }}" class="flex flex-wrap items-end gap-3">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+        <label class="text-sm font-medium">Global spacing between new AI posts
+          <input type="number" min="0" max="48" name="hours" value="{{ global_post_spacing_hours }}" class="mt-1 w-28 rounded-lg border-slate-300" /> hours
+        </label>
+        <button class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white">Save spacing</button>
+      </form>
+    </section>
+
     <section class="grid gap-5 lg:grid-cols-2">
       {% for row in persona_rows %}
         {% set persona = row.persona %}
@@ -38,7 +48,7 @@
             <div class="flex items-center gap-3">
               <img src="{{ persona.user.profile_pic }}" alt="" class="h-12 w-12 rounded-full object-cover" />
               <div>
-                <h2 class="text-lg font-semibold">{{ persona.name }}</h2>
+                <h2 class="text-lg font-semibold">{{ persona.user.full_name }}</h2>
                 <p class="text-xs text-slate-500">{{ persona.user.email }}</p>
               </div>
             </div>
@@ -48,6 +58,9 @@
           </div>
 
           <div class="mt-4 grid grid-cols-2 gap-2 text-center text-xs sm:grid-cols-4">
+            <div class="rounded-xl bg-slate-50 p-3"><strong class="block text-base">{{ row.weekly_counts.total }} / {{ config.maximum_total_posts_per_week }}</strong>Posts this week</div>
+            <div class="rounded-xl bg-slate-50 p-3"><strong class="block text-base">{{ row.weekly_counts.feed }} / {{ config.maximum_feed_posts_per_week }}</strong>Feed this week</div>
+            <div class="rounded-xl bg-slate-50 p-3"><strong class="block text-base">{{ row.weekly_counts.group }} / {{ config.maximum_group_posts_per_week }}</strong>Group this week</div>
             <div class="rounded-xl bg-slate-50 p-3"><strong class="block text-base">{{ row.posts_today }}</strong>Posts today</div>
             <div class="rounded-xl bg-slate-50 p-3"><strong class="block text-base">{{ row.replies_today }}</strong>Replies today</div>
             <div class="rounded-xl bg-slate-50 p-3"><strong class="block text-sm">{{ row.last_post_at.strftime('%d %b %H:%M') if row.last_post_at else 'Never' }}</strong>Last post</div>
@@ -59,7 +72,23 @@
               <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
               <button class="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold">{{ 'Resume' if config.paused else 'Pause' }}</button>
             </form>
+            <form method="post" action="{{ url_for('admin.admin_set_ai_post_today', persona_id=persona.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}" /><input type="hidden" name="enabled" value="1" />
+              <button class="rounded-lg border border-emerald-300 px-3 py-2 text-xs font-semibold text-emerald-700">Allow Post Today</button>
+            </form>
+            <form method="post" action="{{ url_for('admin.admin_set_ai_post_today', persona_id=persona.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}" /><input type="hidden" name="enabled" value="0" />
+              <button class="rounded-lg border border-rose-300 px-3 py-2 text-xs font-semibold text-rose-700">Disable Posting Today</button>
+            </form>
           </div>
+          <p class="mt-2 text-xs text-slate-500">Posting days: {{ config.posting_days|map('int')|join(', ') }} · Post Today: {{ 'ON' if row.post_today_override is sameas true else ('OFF' if row.post_today_override is sameas false else 'No current override') }}</p>
+
+          <form class="mt-4 grid gap-2 sm:grid-cols-[1fr_1fr_auto]" method="post" action="{{ url_for('admin.admin_update_ai_display_name', persona_id=persona.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+            <input name="first_name" maxlength="50" required value="{{ persona.user.first_name }}" aria-label="AI first name" class="rounded-lg border-slate-300 text-sm" />
+            <input name="last_name" maxlength="50" required value="{{ persona.user.last_name }}" aria-label="AI last name" class="rounded-lg border-slate-300 text-sm" />
+            <button class="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold">Update display name</button>
+          </form>
 
           {% if row.pending_draft %}
             <div class="mt-4 rounded-xl border border-sky-200 bg-sky-50 p-4">
@@ -96,16 +125,46 @@
                   {% endfor %}
                 </div>
               </fieldset>
+              <fieldset>
+                <legend class="text-sm font-medium">Allowed days for new feed/group posts</legend>
+                <div class="mt-2 flex flex-wrap gap-3 text-xs">
+                  {% for value, label in [(0,'Mon'),(1,'Tue'),(2,'Wed'),(3,'Thu'),(4,'Fri'),(5,'Sat'),(6,'Sun')] %}
+                    <label><input type="checkbox" name="posting_days" value="{{ value }}" {% if value in config.posting_days %}checked{% endif %} /> {{ label }}</label>
+                  {% endfor %}
+                </div>
+              </fieldset>
               <div class="grid gap-3 sm:grid-cols-2">
                 <label class="text-sm">Start time<input type="time" name="posting_start_time" value="{{ config.posting_start_time }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
                 <label class="text-sm">End time<input type="time" name="posting_end_time" value="{{ config.posting_end_time }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
                 <label class="text-sm">Max posts/day<input type="number" min="0" max="20" name="max_posts_per_day" value="{{ config.max_posts_per_day }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
                 <label class="text-sm">Min post interval (minutes)<input type="number" min="0" name="minimum_post_interval_minutes" value="{{ config.minimum_post_interval_minutes }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
+                <label class="text-sm">Total posts/week<input type="number" min="0" max="20" name="maximum_total_posts_per_week" value="{{ config.maximum_total_posts_per_week }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
+                <label class="text-sm">Feed posts/week<input type="number" min="0" max="20" name="maximum_feed_posts_per_week" value="{{ config.maximum_feed_posts_per_week }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
+                <label class="text-sm">Group posts/week<input type="number" min="0" max="20" name="maximum_group_posts_per_week" value="{{ config.maximum_group_posts_per_week }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
                 <label class="text-sm">Max replies/day<input type="number" min="0" max="100" name="max_replies_per_day" value="{{ config.max_replies_per_day }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
                 <label class="text-sm">Reply probability (%)<input type="number" min="0" max="100" name="reply_probability" value="{{ config.reply_probability }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
                 <label class="text-sm">Min reply delay (minutes)<input type="number" min="0" name="minimum_reply_delay_minutes" value="{{ config.minimum_reply_delay_minutes }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
                 <label class="text-sm">Max reply delay (minutes)<input type="number" min="0" name="maximum_reply_delay_minutes" value="{{ config.maximum_reply_delay_minutes }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
               </div>
+              <fieldset class="rounded-xl border border-slate-200 p-3">
+                <legend class="px-2 text-sm font-medium">Group activity</legend>
+                <div class="flex flex-wrap gap-4 text-sm">
+                  <label><input type="checkbox" name="group_activity_enabled" {% if config.group_activity_enabled %}checked{% endif %} /> Enabled</label>
+                  <label><input type="checkbox" name="group_can_post" {% if config.group_can_post %}checked{% endif %} /> Posts</label>
+                  <label><input type="checkbox" name="group_can_comment" {% if config.group_can_comment %}checked{% endif %} /> Comments</label>
+                  <label><input type="checkbox" name="group_can_reply" {% if config.group_can_reply %}checked{% endif %} /> Replies</label>
+                </div>
+                <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                  <label class="text-sm">Group posts/day<input type="number" min="0" max="20" name="max_group_posts_per_day" value="{{ config.max_group_posts_per_day }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
+                  <label class="text-sm">Group comments/day<input type="number" min="0" max="50" name="max_group_comments_per_day" value="{{ config.max_group_comments_per_day }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
+                  <label class="text-sm">Group replies/day<input type="number" min="0" max="50" name="max_group_replies_per_day" value="{{ config.max_group_replies_per_day }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
+                  <label class="text-sm">Min group interval (minutes)<input type="number" min="0" max="10080" name="minimum_group_activity_interval_minutes" value="{{ config.minimum_group_activity_interval_minutes }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
+                </div>
+                <p class="mt-3 text-xs font-semibold text-slate-600">Allowed groups (saving also adds this AI user as a real member)</p>
+                <div class="mt-2 grid gap-2 sm:grid-cols-2">
+                  {% for group in groups %}<label class="text-xs"><input type="checkbox" name="allowed_group_ids" value="{{ group.id }}" {% if group.id in config.allowed_group_ids %}checked{% endif %} /> {{ group.name }}</label>{% else %}<span class="text-xs text-slate-500">No active groups.</span>{% endfor %}
+                </div>
+              </fieldset>
               <label class="block text-sm">Personality/style<textarea name="personality" rows="3" class="mt-1 w-full rounded-lg border-slate-300">{{ persona.personality }}</textarea></label>
               <label class="block text-sm">Allowed topics, one per line<textarea name="allowed_topics" rows="3" class="mt-1 w-full rounded-lg border-slate-300">{{ (persona.interests or [])|join('\n') }}</textarea></label>
               <label class="block text-sm">Disallowed topics/keywords, one per line<textarea name="disallowed_topics" rows="3" class="mt-1 w-full rounded-lg border-slate-300">{{ config.disallowed_topics|join('\n') }}</textarea></label>
@@ -130,8 +189,28 @@
     </section>
 
     <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 class="text-lg font-semibold">Group activity levels</h2>
+      <p class="mt-1 text-sm text-slate-500">A group must be assigned to an AI profile, the AI must be a member, and the group level must be enabled.</p>
+      <div class="mt-4 grid gap-3 lg:grid-cols-2">
+        {% for row in group_rows %}
+          <form method="post" action="{{ url_for('admin.admin_update_ai_group', group_id=row.group.id) }}" class="rounded-xl border border-slate-200 p-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+            <div class="flex items-center justify-between gap-3"><strong>{{ row.group.name }}</strong><select name="activity_level" class="rounded-lg border-slate-300 text-sm">{% for level in ['off','low','medium','high'] %}<option value="{{ level }}" {% if row.config.activity_level == level %}selected{% endif %}>{{ level|upper }}</option>{% endfor %}</select></div>
+            <p class="mt-1 text-xs text-slate-500">AI members: {{ row.ai_members|join(', ') if row.ai_members else 'None' }}</p>
+            <div class="mt-3 grid grid-cols-3 gap-2 text-xs">
+              <label>Comment quiet hours<input class="mt-1 w-full rounded-lg border-slate-300" type="number" min="1" max="720" name="quiet_comment_hours" value="{{ row.config.quiet_comment_hours }}" /></label>
+              <label>Post quiet hours<input class="mt-1 w-full rounded-lg border-slate-300" type="number" min="1" max="1440" name="quiet_post_hours" value="{{ row.config.quiet_post_hours }}" /></label>
+              <label>Thread cooldown<input class="mt-1 w-full rounded-lg border-slate-300" type="number" min="0" max="10080" name="thread_cooldown_minutes" value="{{ row.config.thread_cooldown_minutes }}" /></label>
+            </div>
+            <button class="mt-3 rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white">Save group level</button>
+          </form>
+        {% else %}<p class="text-sm text-slate-500">No active groups.</p>{% endfor %}
+      </div>
+    </section>
+
+    <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <div class="flex flex-wrap items-center justify-between gap-3">
-        <h2 class="text-lg font-semibold">AI-generated posts</h2>
+        <h2 class="text-lg font-semibold">Recent AI Content</h2>
         <form method="get">
           <select name="persona_id" onchange="this.form.submit()" class="rounded-lg border-slate-300 text-sm">
             <option value="">All AI profiles</option>
@@ -140,30 +219,35 @@
         </form>
       </div>
       <div class="mt-4 space-y-3">
-        {% for post in posts %}
-          {% set log = post_logs.get(post.id) %}
+        {% for content in recent_ai_content %}
+          {% set item = content.item %}
           <div class="flex flex-col gap-3 rounded-xl border border-slate-200 p-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <p class="text-xs font-semibold text-emerald-700">{{ post.author.full_name }} · {{ 'Manual' if log and log.action_type == 'CREATE_POST_MANUAL' else ('Approved' if log and log.action_type == 'CREATE_POST_APPROVED' else 'Automatic') }}</p>
-              <p class="mt-1 text-sm">{{ post.content or '[Image post]' }}</p>
-              <p class="mt-2 text-xs text-slate-400">{{ post.created_at.strftime('%d %b %Y %H:%M') }}</p>
+              <p class="text-xs font-semibold text-emerald-700">{{ item.author.full_name }} · {{ content.type }} · {{ content.source }}{% if content.group %} · {{ content.group.name }}{% endif %}</p>
+              <p class="mt-1 text-sm">{{ item.content or '[Image post]' }}</p>
+              <p class="mt-2 text-xs text-slate-400">{{ content.created_at.strftime('%d %b %Y %H:%M') }}</p>
             </div>
-            <div class="flex gap-2">
+            <div class="flex flex-wrap gap-2">
+              {% if content.entity == 'post' %}
+                <a href="{{ url_for('user.view_shared_post', post_identifier=item.public_id) }}" class="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold">View</a>
+              {% elif content.post %}
+                <a href="{{ url_for('user.view_shared_post', post_identifier=content.post.public_id) }}" class="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold">View</a>
+              {% endif %}
               <details class="relative">
                 <summary class="cursor-pointer rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold">Edit</summary>
-                <form method="post" action="{{ url_for('admin.admin_edit_ai_post', post_id=post.id) }}" class="absolute right-0 z-10 mt-2 w-72 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
+                <form method="post" action="{{ url_for('admin.admin_edit_ai_post', post_id=item.id) if content.entity == 'post' else url_for('admin.admin_edit_ai_comment', comment_id=item.id) }}" class="absolute right-0 z-10 mt-2 w-72 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
-                  <textarea name="content" rows="4" class="w-full rounded-lg border-slate-300 text-xs">{{ post.content }}</textarea>
+                  <textarea name="content" rows="4" class="w-full rounded-lg border-slate-300 text-xs">{{ item.content }}</textarea>
                   <button class="mt-2 rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white">Save edit</button>
                 </form>
               </details>
-              <form method="post" action="{{ url_for('admin.admin_delete_ai_post', post_id=post.id) }}" onsubmit="return confirm('Delete this AI post?')">
+              <form method="post" action="{{ url_for('admin.admin_delete_ai_post', post_id=item.id) if content.entity == 'post' else url_for('admin.admin_delete_ai_comment', comment_id=item.id) }}" onsubmit="return confirm('Delete this AI content?')">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
                 <button class="rounded-lg border border-rose-200 px-3 py-2 text-xs font-semibold text-rose-700">Delete</button>
               </form>
             </div>
           </div>
-        {% else %}<p class="text-sm text-slate-500">No AI posts found.</p>{% endfor %}
+        {% else %}<p class="text-sm text-slate-500">No AI content found.</p>{% endfor %}
       </div>
     </section>
 
