@@ -22,7 +22,7 @@ from models import (
 )
 from datetime import datetime, timedelta
 import humanize
-from sqlalchemy import event
+from sqlalchemy import and_, event, exists, or_
 from flask_wtf.csrf import generate_csrf
 from werkzeug.security import check_password_hash
 from flask_login import login_user, logout_user, login_required, current_user
@@ -91,6 +91,73 @@ def subtract_years(date_value, years):
         return date_value.replace(month=2, day=28, year=date_value.year - years)
 
 
+def _bounded_int_arg(*names, minimum=None, maximum=None, default=None):
+    """Return the first valid, bounded integer query argument."""
+    for name in names:
+        raw_value = request.args.get(name)
+        if raw_value in (None, ""):
+            continue
+        try:
+            value = int(raw_value)
+        except (TypeError, ValueError):
+            continue
+        if minimum is not None and value < minimum:
+            continue
+        if maximum is not None and value > maximum:
+            continue
+        return value
+    return default
+
+
+def _matchmaking_browse_filters():
+    """Normalize Browse query parameters while retaining legacy API names."""
+    min_age = _bounded_int_arg("age_min", "min_age", minimum=18, maximum=120)
+    max_age = _bounded_int_arg("age_max", "max_age", minimum=18, maximum=120)
+    if min_age is not None and max_age is not None and min_age > max_age:
+        min_age = max_age = None
+
+    gender_aliases = {
+        "male": "Male",
+        "female": "Female",
+        "other": "Other",
+        "non-binary": "Non-binary",
+    }
+    gender = gender_aliases.get(
+        request.args.get("gender", "").strip().lower(), ""
+    )
+
+    requested_sort = request.args.get(
+        "sort", request.args.get("sort_by", "recommended")
+    )
+    sort_aliases = {
+        "recent": "recent",
+        "recently_active": "recent",
+        "recommended": "recommended",
+        "newest": "newest",
+        "age_asc": "age_asc",
+        "age_desc": "age_desc",
+        # Retain the pre-existing API options for external callers.
+        "oldest": "oldest",
+        "popular": "popular",
+        "ending": "ending",
+    }
+
+    return {
+        "page": _bounded_int_arg("page", minimum=1, default=1),
+        "per_page": _bounded_int_arg("per_page", minimum=1, maximum=48, default=12),
+        "search": request.args.get("search", "").strip()[:100],
+        "min_age": min_age,
+        "max_age": max_age,
+        "gender": gender,
+        "country": request.args.get("country", "").strip()[:50],
+        "state": request.args.get("state", "").strip()[:50],
+        "city": request.args.get("city", "").strip()[:50],
+        "sort": sort_aliases.get(
+            (requested_sort or "").strip().lower(), "recommended"
+        ),
+    }
+
+
 def allowed_file(filename, allowed_extensions=None):
     """Check if file extension is allowed"""
     if allowed_extensions is None:
@@ -136,22 +203,13 @@ def create_request():
 def get_requests():
     """API endpoint to get matchmaking requests with filtering and pagination"""
     try:
-        # Get query parameters
-        page = request.args.get("page", 1, type=int)
-        per_page = request.args.get("per_page", 12, type=int)
-        search = request.args.get("search", "").strip()
-        min_age = request.args.get("min_age", type=int)
-        max_age = request.args.get("max_age", type=int)
-        gender = request.args.get("gender", "")
-        country_filter = request.args.get("country", "").strip()
-        state_filter = request.args.get("state", "").strip()
-        city_filter = request.args.get("city", "").strip()
-        sort_by = request.args.get("sort_by", "newest")
+        filters = _matchmaking_browse_filters()
 
         current_app.logger.info(
             f"Fetching requests for user {current_user.id} with filters: "
-            f"search='{search}', age={min_age}-{max_age}, gender='{gender}', "
-            f"location={country_filter}/{state_filter}/{city_filter}, sort='{sort_by}'"
+            f"search='{filters['search']}', age={filters['min_age']}-{filters['max_age']}, "
+            f"gender='{filters['gender']}', location={filters['country']}/"
+            f"{filters['state']}/{filters['city']}, sort='{filters['sort']}'"
         )
 
         # Base query: only active, paid, and non-expired requests
@@ -162,81 +220,124 @@ def get_requests():
         )
 
         # Join with User table to access profile details (age/gender)
-        query = query.join(User, MatchmakingRequest.user_id == User.id)
+        query = query.join(User, MatchmakingRequest.user_id == User.id).options(
+            db.joinedload(MatchmakingRequest.user),
+            db.joinedload(MatchmakingRequest.package),
+        )
+
+        # A block in either direction makes the request ineligible to this viewer.
+        user_blocks = User._blocked_users
+        blocked_pair = exists().where(
+            or_(
+                and_(
+                    user_blocks.c.blocker_id == current_user.id,
+                    user_blocks.c.blocked_id == User.id,
+                ),
+                and_(
+                    user_blocks.c.blocker_id == User.id,
+                    user_blocks.c.blocked_id == current_user.id,
+                ),
+            )
+        )
+        query = query.filter(~blocked_pair)
 
         # Apply text search
-        if search:
+        if filters["search"]:
+            search_pattern = f"%{filters['search']}%"
             query = query.filter(
                 db.or_(
-                    MatchmakingRequest.about_you.ilike(f"%{search}%"),
-                    MatchmakingRequest.ideal_partner.ilike(f"%{search}%"),
-                    MatchmakingRequest.your_interests.ilike(f"%{search}%"),
-                    MatchmakingRequest.partner_interests.ilike(f"%{search}%"),
+                    MatchmakingRequest.about_you.ilike(search_pattern),
+                    MatchmakingRequest.ideal_partner.ilike(search_pattern),
+                    MatchmakingRequest.your_interests.ilike(search_pattern),
+                    MatchmakingRequest.partner_interests.ilike(search_pattern),
                 )
             )
 
         # Age range filter (on user's age, not partner preferences)
-        if min_age is not None or max_age is not None:
+        if filters["min_age"] is not None or filters["max_age"] is not None:
             today = utcnow().date()
-            if min_age is not None:
-                max_dob = subtract_years(today, min_age)
+            if filters["min_age"] is not None:
+                max_dob = subtract_years(today, filters["min_age"])
                 query = query.filter(User.dob <= max_dob)
-            if max_age is not None:
-                min_dob = subtract_years(today, max_age + 1) + timedelta(days=1)
+            if filters["max_age"] is not None:
+                min_dob = subtract_years(
+                    today, filters["max_age"] + 1
+                ) + timedelta(days=1)
                 query = query.filter(User.dob >= min_dob)
 
         # Gender filter - filter by user's gender, not preferences
-        if gender and gender.lower() != "any":
-            query = query.filter(User.gender == gender.lower())
+        if filters["gender"]:
+            query = query.filter(User.gender == filters["gender"])
 
-        # Location filters - filter by request's preferred partner location
-        if country_filter:
-            query = query.filter(
-                MatchmakingRequest.partner_country.ilike(f"%{country_filter}%")
-            )
-        if state_filter:
-            query = query.filter(
-                MatchmakingRequest.partner_state.ilike(f"%{state_filter}%")
-            )
-        if city_filter:
-            query = query.filter(
-                MatchmakingRequest.partner_city.ilike(f"%{city_filter}%")
-            )
+        # Location filters apply to the displayed profile, not its partner wish-list.
+        if filters["country"]:
+            query = query.filter(User.country == filters["country"])
+        if filters["state"]:
+            query = query.filter(User.state == filters["state"])
+        if filters["city"]:
+            query = query.filter(User.city == filters["city"])
 
-        # Sorting
-        if sort_by == "newest":
-            query = query.order_by(MatchmakingRequest.created_at.desc())
+        # Keep the previous newest-first default and add deterministic tie-breakers.
+        sort_by = filters["sort"]
+        if sort_by == "recent":
+            query = query.order_by(User.last_seen.desc(), MatchmakingRequest.id.desc())
         elif sort_by == "oldest":
-            query = query.order_by(MatchmakingRequest.created_at.asc())
+            query = query.order_by(
+                MatchmakingRequest.created_at.asc(), MatchmakingRequest.id.asc()
+            )
         elif sort_by == "popular":
-            query = query.order_by(MatchmakingRequest.likes.desc())
+            query = query.order_by(
+                MatchmakingRequest.likes.desc(), MatchmakingRequest.id.desc()
+            )
         elif sort_by == "ending":
-            query = query.order_by(MatchmakingRequest.end_date.asc())
-        else:
-            query = query.order_by(MatchmakingRequest.created_at.desc())
+            query = query.order_by(
+                MatchmakingRequest.end_date.asc(), MatchmakingRequest.id.desc()
+            )
+        elif sort_by == "age_asc":
+            query = query.order_by(User.dob.desc(), MatchmakingRequest.id.desc())
+        elif sort_by == "age_desc":
+            query = query.order_by(User.dob.asc(), MatchmakingRequest.id.desc())
+        else:  # recommended and newest intentionally preserve the old default order
+            query = query.order_by(
+                MatchmakingRequest.created_at.desc(), MatchmakingRequest.id.desc()
+            )
 
         # Pagination
-        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+        pagination = query.paginate(
+            page=filters["page"], per_page=filters["per_page"], error_out=False
+        )
+
+        request_ids = [item.id for item in pagination.items]
+        liked_request_ids = set()
+        viewed_request_ids = set()
+        if request_ids:
+            liked_request_ids = {
+                request_id
+                for (request_id,) in db.session.query(MatchmakingLike.request_id)
+                .filter(
+                    MatchmakingLike.user_id == current_user.id,
+                    MatchmakingLike.request_id.in_(request_ids),
+                )
+                .all()
+            }
+            viewed_request_ids = {
+                request_id
+                for (request_id,) in db.session.query(MatchmakingView.request_id)
+                .filter(
+                    MatchmakingView.user_id == current_user.id,
+                    MatchmakingView.request_id.in_(request_ids),
+                )
+                .all()
+            }
 
         requests_data = []
         for req in pagination.items:
             # Skip own request for view tracking
-            if req.user_id != current_user.id:
-                view = MatchmakingView.query.filter_by(
-                    user_id=current_user.id, request_id=req.id
-                ).first()
-                if not view:
-                    view = MatchmakingView(user_id=current_user.id, request_id=req.id)
-                    db.session.add(view)
-                    req.views += 1
-
-            # Check if current user liked this request
-            is_liked = (
-                MatchmakingLike.query.filter_by(
-                    user_id=current_user.id, request_id=req.id
-                ).scalar()
-                is not None
-            )
+            if req.user_id != current_user.id and req.id not in viewed_request_ids:
+                db.session.add(
+                    MatchmakingView(user_id=current_user.id, request_id=req.id)
+                )
+                req.views = (req.views or 0) + 1
 
             # Calculate age of the request owner
             age = calculate_age(req.user.dob) if req.user and req.user.dob else "N/A"
@@ -290,7 +391,7 @@ def get_requests():
                     ),
                     "expires_in": days_remaining,
                     "package": req.package.name if req.package else "Basic",
-                    "is_liked": is_liked,
+                    "is_liked": req.id in liked_request_ids,
                     "is_own_request": is_own_request,
                 }
             )
@@ -306,6 +407,8 @@ def get_requests():
                 "pages": pagination.pages,
                 "has_next": pagination.has_next,
                 "has_prev": pagination.has_prev,
+                "page": pagination.page,
+                "sort": sort_by,
             }
         )
 

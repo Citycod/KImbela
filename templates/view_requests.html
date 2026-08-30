@@ -892,6 +892,14 @@
       <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
         <!-- Filters Sidebar -->
         <div class="lg:col-span-1 compact-space">
+          <button id="filterToggle" type="button"
+                  class="btn btn-outline w-full lg:hidden justify-center"
+                  aria-controls="filtersPanel" aria-expanded="false">
+            <i class="bi bi-funnel-fill text-rose-gold"></i>
+            Filters
+            <span id="activeFilterCount" class="hidden rounded-full bg-rose-gold px-1.5 py-0.5 text-xs text-white"></span>
+          </button>
+          <div id="filtersPanel" class="hidden lg:block compact-space">
           <!-- Search Filter -->
           <div class="filter-card">
             <h3 class="font-semibold text-base text-primary mb-3 flex items-center gap-2">
@@ -907,8 +915,8 @@
               <div>
                 <label class="block text-xs font-medium text-text-secondary mb-1">Age Range</label>
                 <div class="flex gap-2">
-                  <input type="number" id="minAgeFilter" placeholder="Min" class="form-input w-1/2">
-                  <input type="number" id="maxAgeFilter" placeholder="Max" class="form-input w-1/2">
+                  <input type="number" id="minAgeFilter" min="18" max="120" placeholder="Min" class="form-input w-1/2">
+                  <input type="number" id="maxAgeFilter" min="18" max="120" placeholder="Max" class="form-input w-1/2">
                 </div>
               </div>
               
@@ -918,7 +926,7 @@
                   <option value="">Any Gender</option>
                   <option value="male">Male</option>
                   <option value="female">Female</option>
-                  <option value="non-binary">Non-binary</option>
+                  <option value="other">Other</option>
                 </select>
               </div>
               
@@ -996,6 +1004,7 @@
               </div>
             </div>
           </div>
+          </div>
         </div>
 
         <!-- Requests Grid -->
@@ -1014,10 +1023,11 @@
             </div>
             <div class="flex items-center gap-2">
               <select id="sortSelect" class="form-select">
+                <option value="recommended">Recommended</option>
+                <option value="recent">Recently Active</option>
                 <option value="newest">Newest First</option>
-                <option value="oldest">Oldest First</option>
-                <option value="popular">Most Popular</option>
-                <option value="ending">Ending Soon</option>
+                <option value="age_asc">Age: Youngest First</option>
+                <option value="age_desc">Age: Oldest First</option>
               </select>
               <div class="flex bg-gradient-to-r from-rose-light to-champagne rounded-lg p-0.5">
                 <button id="gridView" class="p-1 rounded-md bg-white shadow-soft">
@@ -1361,13 +1371,58 @@
       let currentPage = 1;
       let hasMore = true;
       let isLoading = false;
-      let currentFilters = {};
+      let currentFilters = readFiltersFromUrl();
       let userHasActiveRequest = false;
       let currentUserId = null; // This should be set from your backend
 
       function hasActiveFilters() {
         const filterKeys = ['search', 'minAge', 'maxAge', 'gender', 'country', 'state', 'city'];
         return filterKeys.some((key) => currentFilters[key]);
+      }
+
+      function readFiltersFromUrl() {
+        const params = new URLSearchParams(window.location.search);
+        const validSorts = new Set(['recommended', 'recent', 'newest', 'age_asc', 'age_desc']);
+        const requestedSort = params.get('sort') || params.get('sort_by') || 'recommended';
+        return {
+          search: params.get('search') || '',
+          minAge: params.get('age_min') || params.get('min_age') || '',
+          maxAge: params.get('age_max') || params.get('max_age') || '',
+          gender: params.get('gender') || '',
+          country: params.get('country') || '',
+          state: params.get('state') || '',
+          city: params.get('city') || '',
+          sort: validSorts.has(requestedSort) ? requestedSort : 'recommended'
+        };
+      }
+
+      function syncFiltersToUrl() {
+        const params = new URLSearchParams();
+        if (currentFilters.search) params.set('search', currentFilters.search);
+        if (currentFilters.minAge) params.set('age_min', currentFilters.minAge);
+        if (currentFilters.maxAge) params.set('age_max', currentFilters.maxAge);
+        if (currentFilters.gender) params.set('gender', currentFilters.gender);
+        if (currentFilters.country) params.set('country', currentFilters.country);
+        if (currentFilters.state) params.set('state', currentFilters.state);
+        if (currentFilters.city) params.set('city', currentFilters.city);
+        if (currentFilters.sort && currentFilters.sort !== 'recommended') {
+          params.set('sort', currentFilters.sort);
+        }
+        const queryString = params.toString();
+        window.history.replaceState({}, '', `${window.location.pathname}${queryString ? `?${queryString}` : ''}`);
+      }
+
+      function restoreFilterControls() {
+        document.getElementById('searchInput').value = currentFilters.search;
+        document.getElementById('minAgeFilter').value = currentFilters.minAge;
+        document.getElementById('maxAgeFilter').value = currentFilters.maxAge;
+        document.getElementById('genderFilter').value = currentFilters.gender;
+        document.getElementById('sortSelect').value = currentFilters.sort;
+      }
+
+      function activeFilterCount() {
+        return ['search', 'minAge', 'maxAge', 'gender', 'country', 'state', 'city']
+          .filter((key) => currentFilters[key]).length;
       }
 
       function updateFilteredChip(loading = false) {
@@ -1388,9 +1443,17 @@
             spinner.classList.add('hidden');
           }
         }
+
+        const countBadge = document.getElementById('activeFilterCount');
+        if (countBadge) {
+          const count = activeFilterCount();
+          countBadge.textContent = count;
+          countBadge.classList.toggle('hidden', count === 0);
+        }
       }
 
       document.addEventListener('DOMContentLoaded', function() {
+        restoreFilterControls();
         initializeEventListeners();
         checkActiveSubscription();
         loadRequests();
@@ -1428,9 +1491,17 @@
         document.getElementById('gridView').addEventListener('click', () => setView('grid'));
         document.getElementById('listView').addEventListener('click', () => setView('list'));
 
+        document.getElementById('filterToggle').addEventListener('click', function() {
+          const panel = document.getElementById('filtersPanel');
+          const willOpen = panel.classList.contains('hidden');
+          panel.classList.toggle('hidden', !willOpen);
+          this.setAttribute('aria-expanded', String(willOpen));
+        });
+
         // Sort change
         document.getElementById('sortSelect').addEventListener('change', function() {
           currentFilters.sort = this.value;
+          syncFiltersToUrl();
           reloadRequests();
         });
 
@@ -1440,6 +1511,7 @@
           clearTimeout(searchTimeout);
           searchTimeout = setTimeout(() => {
             currentFilters.search = this.value;
+            syncFiltersToUrl();
             reloadRequests();
           }, 500);
         });
@@ -1492,8 +1564,13 @@
           // Remove old location filter
           delete currentFilters.location;
 
+          syncFiltersToUrl();
           updateFilteredChip(true);
           reloadRequests();
+          if (window.matchMedia('(max-width: 1023px)').matches) {
+            document.getElementById('filtersPanel').classList.add('hidden');
+            document.getElementById('filterToggle').setAttribute('aria-expanded', 'false');
+          }
       }
 
       function clearFilters() {
@@ -1510,7 +1587,9 @@
 
           document.getElementById('searchInput').value = '';
 
-          currentFilters = {};
+          currentFilters = { sort: 'recommended' };
+          document.getElementById('sortSelect').value = 'recommended';
+          syncFiltersToUrl();
           updateFilteredChip(false);
           reloadRequests();
       }
@@ -1545,13 +1624,13 @@
           });
 
           if (currentFilters.search) params.append('search', currentFilters.search);
-          if (currentFilters.minAge) params.append('min_age', currentFilters.minAge);
-          if (currentFilters.maxAge) params.append('max_age', currentFilters.maxAge);
+          if (currentFilters.minAge) params.append('age_min', currentFilters.minAge);
+          if (currentFilters.maxAge) params.append('age_max', currentFilters.maxAge);
           if (currentFilters.gender) params.append('gender', currentFilters.gender);
           if (currentFilters.country) params.append('country', currentFilters.country);
           if (currentFilters.state) params.append('state', currentFilters.state);
           if (currentFilters.city) params.append('city', currentFilters.city);
-          if (currentFilters.sort) params.append('sort_by', currentFilters.sort);
+          if (currentFilters.sort) params.append('sort', currentFilters.sort);
 
           const response = await fetch(`/api/requests?${params}`, {
             headers: { 'Content-Type': 'application/json' }
@@ -1560,8 +1639,8 @@
           const data = await response.json();
 
           if (data.success) {
-            renderRequests(data.requests);
             hasMore = data.has_next;
+            renderRequests(data.requests);
 
             if (data.requests.length === 0 && currentPage === 1) {
               document.getElementById('emptyState').classList.remove('hidden');
@@ -2802,6 +2881,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 option.textContent = country.name;
                 countrySelect.appendChild(option);
             });
+
+            if (currentFilters.country) {
+                countrySelect.value = currentFilters.country;
+                const selectedOption = countrySelect.options[countrySelect.selectedIndex];
+                const countryId = selectedOption ? selectedOption.getAttribute('data-country-id') : null;
+                if (countryId) {
+                    loadStatesForFilter(countryId, currentFilters.state, currentFilters.city);
+                }
+            }
         })
         .catch(() => {});
 
@@ -2820,8 +2908,8 @@ document.addEventListener('DOMContentLoaded', function () {
         loadStatesForFilter(countryId);
     });
 
-    function loadStatesForFilter(countryId) {
-        fetch(`{{ url_for("user.get_states") }}?country_id=${countryId}`)
+    function loadStatesForFilter(countryId, selectedState = '', selectedCity = '') {
+        return fetch(`{{ url_for("user.get_states") }}?country_id=${countryId}`)
             .then(response => response.json())
             .then(data => {
                 states = data;
@@ -2836,6 +2924,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
 
                 stateSelect.disabled = states.length === 0;
+                if (selectedState) {
+                    stateSelect.value = selectedState;
+                    const selectedOption = stateSelect.options[stateSelect.selectedIndex];
+                    const stateId = selectedOption ? selectedOption.getAttribute('data-state-id') : null;
+                    if (stateId) return loadCitiesForFilter(stateId, selectedCity);
+                }
             })
             .catch(() => {});
     }
@@ -2853,8 +2947,8 @@ document.addEventListener('DOMContentLoaded', function () {
         loadCitiesForFilter(stateId);
     });
 
-    function loadCitiesForFilter(stateId) {
-        fetch(`{{ url_for("user.get_cities") }}?state_id=${stateId}`)
+    function loadCitiesForFilter(stateId, selectedCity = '') {
+        return fetch(`{{ url_for("user.get_cities") }}?state_id=${stateId}`)
             .then(response => response.json())
             .then(data => {
                 cities = data;
@@ -2868,6 +2962,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
 
                 citySelect.disabled = false;
+                if (selectedCity) citySelect.value = selectedCity;
             })
             .catch(() => {});
     }
