@@ -15,12 +15,16 @@ from extensions import db
 from models import User, AIPersona, AILog, Post, Comment, NotificationType
 import re
 from ai_service import generate_content, LLMResponse
+from ai_controls import (
+    automation_eligibility,
+    content_is_allowed,
+    get_pending_draft,
+    is_duplicate_post,
+    manual_eligibility,
+    save_pending_draft,
+)
 
 logger = logging.getLogger(__name__)
-
-# Daily Limits
-MAX_DAILY_POSTS = 1
-MAX_DAILY_COMMENTS = 5
 
 # Hard Pre-Filter for Financial Requests
 FINANCIAL_PATTERNS = [
@@ -42,14 +46,68 @@ def is_financial_request(text: str) -> bool:
     return False
 
 def get_daily_action_count(persona_id: int, action_type: str) -> int:
-    """Get the number of successful actions taken by a persona today."""
+    """Compatibility helper covering both legacy and source-aware log types."""
     today_start = datetime.combine(date.today(), datetime.min.time())
+    action_types = {
+        "CREATE_POST": (
+            "CREATE_POST",
+            "CREATE_POST_AUTOMATIC",
+            "CREATE_POST_MANUAL",
+            "CREATE_POST_APPROVED",
+        ),
+        "REPLY_COMMENT": ("REPLY_COMMENT", "REPLY_COMMENT_AUTOMATIC", "REPLY_COMMENT_MANUAL"),
+    }.get(action_type, (action_type,))
     return AILog.query.filter(
         AILog.persona_id == persona_id,
-        AILog.action_type == action_type,
+        AILog.action_type.in_(action_types),
         AILog.timestamp >= today_start,
         AILog.is_escalated == False,
     ).count()
+
+
+def prepare_persona_post_draft(persona: AIPersona, prompt_topic: str) -> bool:
+    """Generate one persisted approval draft without publishing content."""
+    allowed, reason = automation_eligibility(
+        persona, "post", posting_modes=("approval",)
+    )
+    if not allowed:
+        logger.info("Persona '%s' approval draft blocked: %s", persona.name, reason)
+        return False
+    if get_pending_draft(persona.id):
+        return False
+
+    persona_config = {
+        "name": persona.name,
+        "personality": persona.personality,
+        "interests": persona.interests,
+        "forbidden_actions": persona.forbidden_actions,
+        "escalation_rule": persona.escalation_rule,
+        "voice_samples": persona.voice_samples,
+    }
+    user_prompt = f"Write a casual short social post for your feed about: {prompt_topic}."
+    try:
+        response = generate_content(persona_config, user_prompt)
+    except Exception as exc:
+        logger.error("Failed approval draft generation for '%s': %s", persona.name, exc)
+        return False
+    if response.is_escalated or not response.content.strip():
+        return False
+    if not content_is_allowed(persona, response.content):
+        return False
+    if is_duplicate_post(persona, response.content):
+        return False
+
+    save_pending_draft(
+        persona.id,
+        {
+            "content": response.content,
+            "topic": prompt_topic,
+            "provider_used": response.provider_used,
+            "created_at": utcnow().isoformat(),
+        },
+    )
+    db.session.commit()
+    return True
 
 
 def handle_escalation(persona: AIPersona, prompt_context: str, generated_content: str, provider_used: str, target_id: int = None):
@@ -90,19 +148,27 @@ def handle_escalation(persona: AIPersona, prompt_context: str, generated_content
     )
 
 
-def execute_persona_post(persona: AIPersona, prompt_topic: str, force: bool = False) -> bool:
+def execute_persona_post(
+    persona: AIPersona,
+    prompt_topic: str,
+    force: bool = False,
+    content: str = None,
+    media_file=None,
+    source: str = "automatic",
+) -> bool:
     """
     Generates and publishes a post for a persona via internal client/route.
-    Set force=True to bypass daily post limit checks during manual testing.
+    ``force`` is retained for compatibility but intentionally does not bypass
+    persisted stop/pause/rate controls.
     """
-    if not force and get_daily_action_count(persona.id, "CREATE_POST") >= MAX_DAILY_POSTS:
-        print(f"🛑 Persona '{persona.name}' reached daily post limit ({MAX_DAILY_POSTS}/day). Use force=True to bypass.")
-        logger.info("Persona '%s' reached daily post limit.", persona.name)
-        return False
-
-    if not persona.is_active:
-        print(f"❌ Persona '{persona.name}' is inactive (AIPersona table). Skipping.")
-        logger.info("Persona '%s' is inactive (AIPersona table). Skipping.", persona.name)
+    is_manual = source in {"manual", "approval"}
+    allowed, reason = (
+        manual_eligibility(persona)
+        if is_manual
+        else automation_eligibility(persona, "post")
+    )
+    if not allowed:
+        logger.info("Persona '%s' post blocked by AI control: %s", persona.name, reason)
         return False
 
     persona_config = {
@@ -131,17 +197,25 @@ def execute_persona_post(persona: AIPersona, prompt_topic: str, force: bool = Fa
 
     import time
     t_start = time.perf_counter()
-    try:
-        t_llm_start = time.perf_counter()
-        response: LLMResponse = generate_content(persona_config, user_prompt)
-        t_llm_end = time.perf_counter()
-        print(f"⏱️  [TIMING] LLM Generation took: {t_llm_end - t_llm_start:.3f}s")
-    except Exception as exc:
-        print(f"❌ Exception during generate_content for '{persona.name}': {exc}")
-        import traceback
-        traceback.print_exc()
-        logger.error("Failed content generation for persona '%s': %s", persona.name, exc)
-        return False
+    if content is None:
+        try:
+            t_llm_start = time.perf_counter()
+            response: LLMResponse = generate_content(persona_config, user_prompt)
+            t_llm_end = time.perf_counter()
+            print(f"⏱️  [TIMING] LLM Generation took: {t_llm_end - t_llm_start:.3f}s")
+        except Exception as exc:
+            print(f"❌ Exception during generate_content for '{persona.name}': {exc}")
+            import traceback
+            traceback.print_exc()
+            logger.error("Failed content generation for persona '%s': %s", persona.name, exc)
+            return False
+    else:
+        response = LLMResponse(
+            content=content.strip(),
+            provider_used="admin",
+            is_escalated=False,
+            latency_ms=0,
+        )
 
     if response.is_escalated:
         print(f"⚠️ Persona '{persona.name}' generated escalated response")
@@ -152,6 +226,17 @@ def execute_persona_post(persona: AIPersona, prompt_topic: str, force: bool = Fa
         print(f"❌ Generated content was empty after stripping think blocks for '{persona.name}'")
         logger.error("Content generation resulted in an empty string for persona '%s'. (Possible max_tokens cutoff). Aborting.", persona.name)
         return False
+
+    if not content_is_allowed(persona, response.content):
+        logger.warning("Persona '%s' content matched a disallowed topic", persona.name)
+        return False
+
+    if not is_manual and is_duplicate_post(persona, response.content):
+        logger.info("Persona '%s' duplicate post suppressed", persona.name)
+        return False
+
+    previous_post = Post.query.filter_by(author_id=persona.user_id).order_by(Post.id.desc()).first()
+    previous_post_id = previous_post.id if previous_post else 0
 
     # Execute post creation via test client (authenticated route call)
     t_route_start = time.perf_counter()
@@ -199,9 +284,13 @@ def execute_persona_post(persona: AIPersona, prompt_topic: str, force: bool = Fa
         with client.session_transaction() as sess:
             print(f"🔍 [DIAGNOSTIC] CSRF Token in test_client session: {sess.get('csrf_token')} | Form token being submitted: {csrf_token}")
 
+        post_data = {"post_content": response.content, "csrf_token": csrf_token}
+        if media_file is not None and getattr(media_file, "filename", ""):
+            post_data["media"] = (media_file.stream, media_file.filename)
+
         res = client.post(
             "/user_dashboard",
-            data={"post_content": response.content, "csrf_token": csrf_token},
+            data=post_data,
             headers={"Referer": "http://localhost/user_dashboard"},
             base_url="http://localhost/",
             follow_redirects=False,
@@ -233,7 +322,11 @@ def execute_persona_post(persona: AIPersona, prompt_topic: str, force: bool = Fa
     print(f"⏱️  [TIMING] DB Query verification took: {t_db_end - t_db_start:.3f}s")
     print(f"⏱️  [TIMING] Total persona execution took: {time.perf_counter() - t_start:.3f}s")
         
-    if not latest_post or latest_post.content != response.content:
+    if (
+        not latest_post
+        or latest_post.id <= previous_post_id
+        or latest_post.content != response.content
+    ):
         actual_content = latest_post.content[:30] if latest_post else "None"
         print(f"❌ Post verification failed! Expected '{response.content[:30]}...', got '{actual_content}...'")
         logger.error("Post creation failed for persona '%s': post not found in DB or content mismatch.", persona_name)
@@ -241,7 +334,11 @@ def execute_persona_post(persona: AIPersona, prompt_topic: str, force: bool = Fa
 
     log_entry = AILog(
         persona_id=persona_pk,
-        action_type="CREATE_POST",
+        action_type=(
+            "CREATE_POST_APPROVED"
+            if source == "approval"
+            else ("CREATE_POST_MANUAL" if is_manual else "CREATE_POST_AUTOMATIC")
+        ),
         target_id=latest_post.id,
         prompt_context=user_prompt,
         generated_content=response.content,
@@ -254,16 +351,39 @@ def execute_persona_post(persona: AIPersona, prompt_topic: str, force: bool = Fa
     print(f"✅ Successfully created post ID {latest_post.id} for '{persona_name}'")
     logger.info("Persona '%s' successfully created post %s", persona_name, latest_post.id)
     return True
-def execute_persona_comment(persona: AIPersona, post: Post) -> bool:
+def execute_persona_comment(
+    persona: AIPersona,
+    post: Post,
+    source_comment: Comment = None,
+    source: str = "automatic",
+) -> bool:
     """
     Generates and posts a reply comment on a post for a persona.
     """
-    if get_daily_action_count(persona.id, "REPLY_COMMENT") >= MAX_DAILY_COMMENTS:
-        logger.info("Persona '%s' reached daily comment limit.", persona.name)
+    allowed, reason = (
+        manual_eligibility(persona)
+        if source == "manual"
+        else automation_eligibility(persona, "reply")
+    )
+    if not allowed:
+        logger.info("Persona '%s' reply blocked by AI control: %s", persona.name, reason)
         return False
+    if source_comment is not None and source_comment.author_id == persona.user_id:
+        logger.info("Persona '%s' self-reply suppressed", persona.name)
+        return False
+    if source_comment is not None:
+        duplicate_marker = f"source_comment_id={source_comment.id}"
+        duplicate = AILog.query.filter(
+            AILog.persona_id == persona.id,
+            AILog.action_type.in_(("REPLY_COMMENT", "REPLY_COMMENT_AUTOMATIC", "REPLY_COMMENT_MANUAL")),
+            AILog.prompt_context.contains(duplicate_marker),
+        ).first()
+        if duplicate:
+            logger.info("Persona '%s' duplicate reply suppressed for comment %s", persona.name, source_comment.id)
+            return False
 
-    if not persona.is_active:
-        logger.info("Persona '%s' is inactive (AIPersona table). Skipping.", persona.name)
+    if post.author_id != persona.user_id and source_comment is not None:
+        logger.info("Persona '%s' reply target is not its own post", persona.name)
         return False
 
     persona_config = {
@@ -284,6 +404,8 @@ def execute_persona_comment(persona: AIPersona, post: Post) -> bool:
         f"Recent comments:\n{comments_summary}\n\n"
         f"Write a short, natural reply comment as yourself."
     )
+    source_marker = f"source_comment_id={source_comment.id}\n" if source_comment else ""
+    log_prompt_context = source_marker + user_prompt
     
     # Hard Pre-Filter Check
     if is_financial_request(post.content) or is_financial_request(comments_summary):
@@ -349,9 +471,12 @@ def execute_persona_comment(persona: AIPersona, post: Post) -> bool:
         persona_pk = persona.id
 
         # 3. Submit the comment via the real route to ensure it passes through all standard logic
+        payload = {"content": response.content}
+        if source_comment is not None:
+            payload["parent_id"] = source_comment.id
         res = client.post(
             f"/add_comment/{post.id}",
-            json={"content": response.content},
+            json=payload,
             headers={"X-CSRFToken": csrf_token, "Referer": f"http://localhost/user_dashboard"},
             base_url="http://localhost/",
         )
@@ -360,9 +485,9 @@ def execute_persona_comment(persona: AIPersona, post: Post) -> bool:
             comment_id = res.json.get("comment", {}).get("id")
             log_entry = AILog(
                 persona_id=persona_pk,
-                action_type="REPLY_COMMENT",
+                action_type="REPLY_COMMENT_MANUAL" if source == "manual" else "REPLY_COMMENT_AUTOMATIC",
                 target_id=comment_id or post.id,
-                prompt_context=user_prompt,
+                prompt_context=log_prompt_context,
                 generated_content=response.content,
                 provider_used=response.provider_used,
                 is_escalated=False,

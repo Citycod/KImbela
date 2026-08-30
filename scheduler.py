@@ -87,34 +87,79 @@ def init_scheduler(app):
         },
     )
 
-    # AI Persona Activity Job - runs every 2 hours
-    @scheduler.scheduled_job("interval", hours=2, id="ai_persona_activity")
+    # AI persona activity remains in the one dedicated scheduler process.
+    @scheduler.scheduled_job(
+        "interval",
+        minutes=15,
+        id="ai_persona_activity",
+        max_instances=1,
+        coalesce=True,
+    )
     def run_ai_persona_activity():
         """Periodically run AI persona posting and commenting tasks"""
         with app.app_context():
             try:
                 import random
-                from models import AIPersona, Post
-                from ai_action_engine import execute_persona_post, execute_persona_comment
+                from models import AIPersona, Comment, Post
+                from ai_action_engine import (
+                    execute_persona_comment,
+                    execute_persona_post,
+                    prepare_persona_post_draft,
+                )
+                from ai_controls import (
+                    automation_eligibility,
+                    get_profile_config,
+                    reply_is_due,
+                )
 
                 personas = AIPersona.query.filter_by(is_active=True).all()
                 if not personas:
                     return
 
-                # Pick a persona randomly to check for actions
-                persona = random.choice(personas)
-                
-                # Try to post if due
-                topics = persona.interests or ["socializing", "daily life"]
-                topic = random.choice(topics)
-                posted = execute_persona_post(persona, topic)
+                # Shuffle once and perform at most one action per scheduler tick.
+                # This prevents restart bursts while still giving every profile a turn.
+                random.shuffle(personas)
+                for persona in personas:
+                    config = get_profile_config(persona)
+                    topics = persona.interests or ["socializing", "daily life"]
+                    topic = random.choice(topics)
 
-                if not posted:
-                    # Try commenting on recent non-persona posts matching interests
-                    recent_posts = Post.query.filter(Post.author_id != persona.user_id).order_by(Post.created_at.desc()).limit(10).all()
-                    if recent_posts:
-                        target_post = random.choice(recent_posts)
-                        execute_persona_comment(persona, target_post)
+                    if config["posting_mode"] == "approval":
+                        if prepare_persona_post_draft(persona, topic):
+                            break
+                    else:
+                        post_allowed, _ = automation_eligibility(persona, "post")
+                        if post_allowed and execute_persona_post(persona, topic):
+                            break
+
+                    reply_allowed, _ = automation_eligibility(persona, "reply")
+                    if not reply_allowed:
+                        continue
+                    if random.randint(1, 100) > config["reply_probability"]:
+                        continue
+
+                    source_comment = (
+                        Comment.query.join(Post, Comment.post_id == Post.id)
+                        .filter(
+                            Post.author_id == persona.user_id,
+                            Comment.author_id != persona.user_id,
+                        )
+                        .order_by(Comment.created_at.desc())
+                        .limit(20)
+                        .all()
+                    )
+                    for comment in source_comment:
+                        if not reply_is_due(persona, comment):
+                            continue
+                        if execute_persona_comment(
+                            persona,
+                            comment.post,
+                            source_comment=comment,
+                        ):
+                            break
+                    else:
+                        continue
+                    break
 
             except Exception as exc:
                 logger.error("Error in run_ai_persona_activity: %s", exc)

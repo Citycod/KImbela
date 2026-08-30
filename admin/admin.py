@@ -29,6 +29,8 @@ from models import (
     MatchmakingPayments,
     ActivityLog,
     SiteSetting,
+    AIPersona,
+    AILog,
 )
 
 from time_utils import utcnow
@@ -850,6 +852,243 @@ def admin_toggle_marketplace_payments():
         db.session.rollback()
         print(f"Marketplace payments toggle error: {e}")
         return jsonify({"success": False, "error": "Failed to update setting"}), 500
+
+
+def _ai_admin_redirect():
+    return redirect(url_for("admin.admin_ai_users"))
+
+
+@admin.route("/admin/ai-users")
+@login_required
+def admin_ai_users():
+    if not current_user.is_super_admin:
+        flash("Access denied. Super admin privileges required.", "danger")
+        return redirect(url_for("user.user_dashboard"))
+
+    from ai_controls import (
+        get_pending_draft,
+        get_profile_config,
+        is_global_activity_enabled,
+        last_action_at,
+        next_eligible_post_at,
+        today_action_count,
+    )
+
+    personas = AIPersona.query.options(joinedload(AIPersona.user)).order_by(AIPersona.name).all()
+    selected_persona_id = request.args.get("persona_id", type=int)
+    ai_user_ids = [persona.user_id for persona in personas]
+    posts_query = Post.query.filter(Post.author_id.in_(ai_user_ids or [-1]))
+    if selected_persona_id:
+        selected = next((p for p in personas if p.id == selected_persona_id), None)
+        if selected:
+            posts_query = posts_query.filter(Post.author_id == selected.user_id)
+    posts = posts_query.order_by(Post.created_at.desc()).limit(100).all()
+
+    post_logs = {
+        log.target_id: log
+        for log in AILog.query.filter(
+            AILog.action_type.in_(("CREATE_POST", "CREATE_POST_AUTOMATIC", "CREATE_POST_MANUAL", "CREATE_POST_APPROVED")),
+            AILog.target_id.in_([post.id for post in posts] or [-1]),
+        ).all()
+    }
+    persona_rows = []
+    for persona in personas:
+        persona_rows.append(
+            {
+                "persona": persona,
+                "config": get_profile_config(persona),
+                "pending_draft": get_pending_draft(persona.id),
+                "posts_today": today_action_count(persona, "post"),
+                "replies_today": today_action_count(persona, "reply"),
+                "last_post_at": last_action_at(persona.id, "post"),
+                "next_post_at": next_eligible_post_at(persona),
+            }
+        )
+
+    logs = AILog.query.order_by(AILog.timestamp.desc()).limit(100).all()
+    return render_template(
+        "admin_ai_users.html",
+        persona_rows=persona_rows,
+        posts=posts,
+        post_logs=post_logs,
+        logs=logs,
+        selected_persona_id=selected_persona_id,
+        ai_activity_enabled=is_global_activity_enabled(),
+        csrf_token=generate_csrf(),
+    )
+
+
+@admin.route("/admin/ai-users/activity", methods=["POST"])
+@login_required
+def admin_set_ai_activity():
+    if not current_user.is_super_admin:
+        return jsonify({"success": False, "error": "Access denied"}), 403
+    from ai_controls import set_global_activity_enabled
+
+    enabled = str(request.form.get("enabled", "0")).lower() in {"1", "true", "on", "yes"}
+    set_global_activity_enabled(enabled)
+    db.session.commit()
+    flash("AI activity resumed." if enabled else "All AI activity stopped.", "success")
+    return _ai_admin_redirect()
+
+
+@admin.route("/admin/ai-users/<int:persona_id>/settings", methods=["POST"])
+@login_required
+def admin_update_ai_persona(persona_id):
+    if not current_user.is_super_admin:
+        return jsonify({"success": False, "error": "Access denied"}), 403
+    from ai_controls import get_profile_config, save_profile_config
+
+    persona = db.get_or_404(AIPersona, persona_id)
+    current_config = get_profile_config(persona)
+    active_days = request.form.getlist("active_days")
+    config = {
+        **current_config,
+        "enabled": request.form.get("enabled") == "on",
+        "paused": request.form.get("paused") == "on",
+        "posting_mode": request.form.get("posting_mode"),
+        "active_days": active_days,
+        "posting_start_time": request.form.get("posting_start_time"),
+        "posting_end_time": request.form.get("posting_end_time"),
+        "max_posts_per_day": request.form.get("max_posts_per_day"),
+        "minimum_post_interval_minutes": request.form.get("minimum_post_interval_minutes"),
+        "max_replies_per_day": request.form.get("max_replies_per_day"),
+        "replies_enabled": request.form.get("replies_enabled") == "on",
+        "reply_probability": request.form.get("reply_probability"),
+        "minimum_reply_delay_minutes": request.form.get("minimum_reply_delay_minutes"),
+        "maximum_reply_delay_minutes": request.form.get("maximum_reply_delay_minutes"),
+        "disallowed_topics": request.form.get("disallowed_topics", "").splitlines(),
+    }
+    saved = save_profile_config(persona, config)
+    persona.is_active = saved["enabled"]
+    persona.personality = request.form.get("personality", persona.personality).strip() or persona.personality
+    persona.interests = [
+        topic.strip()
+        for topic in request.form.get("allowed_topics", "").splitlines()
+        if topic.strip()
+    ]
+    db.session.commit()
+    flash(f"Saved AI controls for {persona.name}.", "success")
+    return _ai_admin_redirect()
+
+
+@admin.route("/admin/ai-users/<int:persona_id>/pause", methods=["POST"])
+@login_required
+def admin_toggle_ai_pause(persona_id):
+    if not current_user.is_super_admin:
+        return jsonify({"success": False, "error": "Access denied"}), 403
+    from ai_controls import get_profile_config, save_profile_config
+
+    persona = db.get_or_404(AIPersona, persona_id)
+    config = get_profile_config(persona)
+    config["paused"] = not config["paused"]
+    save_profile_config(persona, config)
+    db.session.commit()
+    flash(f"{persona.name} {'paused' if config['paused'] else 'resumed'}.", "success")
+    return _ai_admin_redirect()
+
+
+@admin.route("/admin/ai-users/<int:persona_id>/post", methods=["POST"])
+@login_required
+def admin_create_ai_post(persona_id):
+    if not current_user.is_super_admin:
+        return jsonify({"success": False, "error": "Access denied"}), 403
+    from ai_action_engine import execute_persona_post
+
+    persona = db.get_or_404(AIPersona, persona_id)
+    persona_name = persona.name
+    content = request.form.get("content", "").strip()
+    media = request.files.get("media")
+    if not content and not (media and media.filename):
+        flash("Add post text or an image.", "danger")
+        return _ai_admin_redirect()
+    if execute_persona_post(
+        persona,
+        prompt_topic="Admin-authored post",
+        content=content,
+        media_file=media,
+        source="manual",
+    ):
+        flash(f"Published a post as {persona_name} through the normal post pipeline.", "success")
+    else:
+        flash("The AI post was not published. Check stop, pause, profile status, content, and media.", "danger")
+    return _ai_admin_redirect()
+
+
+@admin.route("/admin/ai-users/<int:persona_id>/approve", methods=["POST"])
+@login_required
+def admin_approve_ai_post(persona_id):
+    if not current_user.is_super_admin:
+        return jsonify({"success": False, "error": "Access denied"}), 403
+    from ai_action_engine import execute_persona_post
+    from ai_controls import clear_pending_draft, get_pending_draft
+
+    persona = db.get_or_404(AIPersona, persona_id)
+    persona_pk = persona.id
+    persona_name = persona.name
+    draft = get_pending_draft(persona_pk)
+    if not draft:
+        flash("There is no pending draft for this profile.", "warning")
+        return _ai_admin_redirect()
+    if execute_persona_post(
+        persona,
+        prompt_topic=draft.get("topic", "Approved topic"),
+        content=draft.get("content", ""),
+        source="approval",
+    ):
+        clear_pending_draft(persona_pk)
+        db.session.commit()
+        flash(f"Approved and published {persona_name}'s draft.", "success")
+    else:
+        flash("The approved draft could not be published.", "danger")
+    return _ai_admin_redirect()
+
+
+@admin.route("/admin/ai-users/posts/<int:post_id>/delete", methods=["POST"])
+@login_required
+def admin_delete_ai_post(post_id):
+    if not current_user.is_super_admin:
+        return jsonify({"success": False, "error": "Access denied"}), 403
+    post = db.get_or_404(Post, post_id)
+    if not getattr(post.author, "is_ai_persona", False):
+        return jsonify({"success": False, "error": "Not an AI post"}), 400
+    persona = AIPersona.query.filter_by(user_id=post.author_id).first()
+    deleted_content = post.content
+    db.session.delete(post)
+    if persona:
+        db.session.add(
+            AILog(
+                persona_id=persona.id,
+                action_type="DELETE_POST_MANUAL",
+                target_id=post_id,
+                prompt_context="Deleted by super admin",
+                generated_content=deleted_content,
+                provider_used="admin",
+                is_escalated=False,
+                timestamp=utcnow(),
+            )
+        )
+    db.session.commit()
+    flash("AI post deleted.", "success")
+    return _ai_admin_redirect()
+
+
+@admin.route("/admin/ai-users/posts/<int:post_id>/edit", methods=["POST"])
+@login_required
+def admin_edit_ai_post(post_id):
+    if not current_user.is_super_admin:
+        return jsonify({"success": False, "error": "Access denied"}), 403
+    post = db.get_or_404(Post, post_id)
+    if not getattr(post.author, "is_ai_persona", False):
+        return jsonify({"success": False, "error": "Not an AI post"}), 400
+    content = request.form.get("content", "").strip()
+    if not content and not post.image and not post.gif:
+        flash("A text-only post cannot be empty.", "danger")
+        return _ai_admin_redirect()
+    post.content = content
+    db.session.commit()
+    flash("AI post updated.", "success")
+    return _ai_admin_redirect()
 
 
 # @admin.route('/admin/users')

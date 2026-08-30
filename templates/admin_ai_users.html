@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+
+{% block head %}
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Users - Kimbela Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+{% endblock %}
+
+{% block content %}
+<main class="min-h-screen bg-gradient-to-br from-slate-50 via-sky-50 to-emerald-50 px-4 py-8 text-slate-800">
+  <div class="mx-auto max-w-7xl space-y-6">
+    <header class="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <a href="{{ url_for('admin.admin_dashboard') }}" class="text-sm font-medium text-emerald-700">&larr; Admin dashboard</a>
+        <h1 class="mt-2 text-2xl font-semibold">AI User Control Center</h1>
+        <p class="text-sm text-slate-500">Control the existing AI profiles and review their content activity.</p>
+      </div>
+      <form method="post" action="{{ url_for('admin.admin_set_ai_activity') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+        <input type="hidden" name="enabled" value="{{ '0' if ai_activity_enabled else '1' }}" />
+        <button class="rounded-xl px-5 py-3 text-sm font-semibold text-white {{ 'bg-rose-600 hover:bg-rose-700' if ai_activity_enabled else 'bg-emerald-600 hover:bg-emerald-700' }}">
+          {{ 'STOP ALL AI ACTIVITY' if ai_activity_enabled else 'RESUME ALL AI ACTIVITY' }}
+        </button>
+      </form>
+    </header>
+
+    {% if not ai_activity_enabled %}
+      <div class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 font-medium text-rose-800">Emergency stop is active. Automated and manual AI posts/replies are blocked.</div>
+    {% endif %}
+
+    <section class="grid gap-5 lg:grid-cols-2">
+      {% for row in persona_rows %}
+        {% set persona = row.persona %}
+        {% set config = row.config %}
+        <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div class="flex items-start justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <img src="{{ persona.user.profile_pic }}" alt="" class="h-12 w-12 rounded-full object-cover" />
+              <div>
+                <h2 class="text-lg font-semibold">{{ persona.name }}</h2>
+                <p class="text-xs text-slate-500">{{ persona.user.email }}</p>
+              </div>
+            </div>
+            <span class="rounded-full px-3 py-1 text-xs font-semibold {{ 'bg-amber-100 text-amber-800' if config.paused else ('bg-emerald-100 text-emerald-800' if config.enabled else 'bg-slate-200 text-slate-600') }}">
+              {{ 'Paused' if config.paused else ('Active' if config.enabled else 'Disabled') }}
+            </span>
+          </div>
+
+          <div class="mt-4 grid grid-cols-2 gap-2 text-center text-xs sm:grid-cols-4">
+            <div class="rounded-xl bg-slate-50 p-3"><strong class="block text-base">{{ row.posts_today }}</strong>Posts today</div>
+            <div class="rounded-xl bg-slate-50 p-3"><strong class="block text-base">{{ row.replies_today }}</strong>Replies today</div>
+            <div class="rounded-xl bg-slate-50 p-3"><strong class="block text-sm">{{ row.last_post_at.strftime('%d %b %H:%M') if row.last_post_at else 'Never' }}</strong>Last post</div>
+            <div class="rounded-xl bg-slate-50 p-3"><strong class="block text-sm">{{ row.next_post_at.strftime('%d %b %H:%M') if row.next_post_at else '—' }}</strong>Next eligible</div>
+          </div>
+
+          <div class="mt-4 flex flex-wrap gap-2">
+            <form method="post" action="{{ url_for('admin.admin_toggle_ai_pause', persona_id=persona.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+              <button class="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold">{{ 'Resume' if config.paused else 'Pause' }}</button>
+            </form>
+          </div>
+
+          {% if row.pending_draft %}
+            <div class="mt-4 rounded-xl border border-sky-200 bg-sky-50 p-4">
+              <p class="text-xs font-semibold uppercase tracking-wide text-sky-700">Pending approval</p>
+              <p class="mt-2 text-sm">{{ row.pending_draft.content }}</p>
+              <form class="mt-3" method="post" action="{{ url_for('admin.admin_approve_ai_post', persona_id=persona.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+                <button class="rounded-lg bg-sky-700 px-3 py-2 text-xs font-semibold text-white">Approve and publish</button>
+              </form>
+            </div>
+          {% endif %}
+
+          <details class="mt-5 rounded-xl border border-slate-200 p-4">
+            <summary class="cursor-pointer font-semibold">Profile controls</summary>
+            <form class="mt-4 space-y-4" method="post" action="{{ url_for('admin.admin_update_ai_persona', persona_id=persona.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+              <div class="flex flex-wrap gap-5 text-sm">
+                <label><input type="checkbox" name="enabled" {% if config.enabled %}checked{% endif %} /> Enabled</label>
+                <label><input type="checkbox" name="paused" {% if config.paused %}checked{% endif %} /> Paused</label>
+                <label><input type="checkbox" name="replies_enabled" {% if config.replies_enabled %}checked{% endif %} /> Replies enabled</label>
+              </div>
+              <label class="block text-sm font-medium">Posting mode
+                <select name="posting_mode" class="mt-1 w-full rounded-lg border-slate-300">
+                  {% for value, label in [('manual', 'Manual only'), ('approval', 'Admin approval'), ('automatic', 'Automatic')] %}
+                    <option value="{{ value }}" {% if config.posting_mode == value %}selected{% endif %}>{{ label }}</option>
+                  {% endfor %}
+                </select>
+              </label>
+              <fieldset>
+                <legend class="text-sm font-medium">Active days</legend>
+                <div class="mt-2 flex flex-wrap gap-3 text-xs">
+                  {% for value, label in [(0,'Mon'),(1,'Tue'),(2,'Wed'),(3,'Thu'),(4,'Fri'),(5,'Sat'),(6,'Sun')] %}
+                    <label><input type="checkbox" name="active_days" value="{{ value }}" {% if value in config.active_days %}checked{% endif %} /> {{ label }}</label>
+                  {% endfor %}
+                </div>
+              </fieldset>
+              <div class="grid gap-3 sm:grid-cols-2">
+                <label class="text-sm">Start time<input type="time" name="posting_start_time" value="{{ config.posting_start_time }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
+                <label class="text-sm">End time<input type="time" name="posting_end_time" value="{{ config.posting_end_time }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
+                <label class="text-sm">Max posts/day<input type="number" min="0" max="20" name="max_posts_per_day" value="{{ config.max_posts_per_day }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
+                <label class="text-sm">Min post interval (minutes)<input type="number" min="0" name="minimum_post_interval_minutes" value="{{ config.minimum_post_interval_minutes }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
+                <label class="text-sm">Max replies/day<input type="number" min="0" max="100" name="max_replies_per_day" value="{{ config.max_replies_per_day }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
+                <label class="text-sm">Reply probability (%)<input type="number" min="0" max="100" name="reply_probability" value="{{ config.reply_probability }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
+                <label class="text-sm">Min reply delay (minutes)<input type="number" min="0" name="minimum_reply_delay_minutes" value="{{ config.minimum_reply_delay_minutes }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
+                <label class="text-sm">Max reply delay (minutes)<input type="number" min="0" name="maximum_reply_delay_minutes" value="{{ config.maximum_reply_delay_minutes }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
+              </div>
+              <label class="block text-sm">Personality/style<textarea name="personality" rows="3" class="mt-1 w-full rounded-lg border-slate-300">{{ persona.personality }}</textarea></label>
+              <label class="block text-sm">Allowed topics, one per line<textarea name="allowed_topics" rows="3" class="mt-1 w-full rounded-lg border-slate-300">{{ (persona.interests or [])|join('\n') }}</textarea></label>
+              <label class="block text-sm">Disallowed topics/keywords, one per line<textarea name="disallowed_topics" rows="3" class="mt-1 w-full rounded-lg border-slate-300">{{ config.disallowed_topics|join('\n') }}</textarea></label>
+              <button class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white">Save controls</button>
+            </form>
+          </details>
+
+          <details class="mt-3 rounded-xl border border-slate-200 p-4">
+            <summary class="cursor-pointer font-semibold">Manual post</summary>
+            <form class="mt-4 space-y-3" method="post" enctype="multipart/form-data" action="{{ url_for('admin.admin_create_ai_post', persona_id=persona.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+              <textarea name="content" rows="3" placeholder="Post caption" class="w-full rounded-lg border-slate-300"></textarea>
+              <label class="block text-sm">Optional image<input type="file" name="media" accept="image/png,image/jpeg,image/gif,image/webp,image/bmp" class="ai-media-input mt-1 block w-full text-xs" /></label>
+              <img class="ai-media-preview hidden max-h-48 rounded-lg object-contain" alt="Selected post image preview" />
+              <button class="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white">Publish as {{ persona.name }}</button>
+            </form>
+          </details>
+        </article>
+      {% else %}
+        <p class="rounded-xl bg-white p-6 text-slate-500">No AI persona records exist.</p>
+      {% endfor %}
+    </section>
+
+    <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <h2 class="text-lg font-semibold">AI-generated posts</h2>
+        <form method="get">
+          <select name="persona_id" onchange="this.form.submit()" class="rounded-lg border-slate-300 text-sm">
+            <option value="">All AI profiles</option>
+            {% for row in persona_rows %}<option value="{{ row.persona.id }}" {% if selected_persona_id == row.persona.id %}selected{% endif %}>{{ row.persona.name }}</option>{% endfor %}
+          </select>
+        </form>
+      </div>
+      <div class="mt-4 space-y-3">
+        {% for post in posts %}
+          {% set log = post_logs.get(post.id) %}
+          <div class="flex flex-col gap-3 rounded-xl border border-slate-200 p-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p class="text-xs font-semibold text-emerald-700">{{ post.author.full_name }} · {{ 'Manual' if log and log.action_type == 'CREATE_POST_MANUAL' else ('Approved' if log and log.action_type == 'CREATE_POST_APPROVED' else 'Automatic') }}</p>
+              <p class="mt-1 text-sm">{{ post.content or '[Image post]' }}</p>
+              <p class="mt-2 text-xs text-slate-400">{{ post.created_at.strftime('%d %b %Y %H:%M') }}</p>
+            </div>
+            <div class="flex gap-2">
+              <details class="relative">
+                <summary class="cursor-pointer rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold">Edit</summary>
+                <form method="post" action="{{ url_for('admin.admin_edit_ai_post', post_id=post.id) }}" class="absolute right-0 z-10 mt-2 w-72 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+                  <textarea name="content" rows="4" class="w-full rounded-lg border-slate-300 text-xs">{{ post.content }}</textarea>
+                  <button class="mt-2 rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white">Save edit</button>
+                </form>
+              </details>
+              <form method="post" action="{{ url_for('admin.admin_delete_ai_post', post_id=post.id) }}" onsubmit="return confirm('Delete this AI post?')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+                <button class="rounded-lg border border-rose-200 px-3 py-2 text-xs font-semibold text-rose-700">Delete</button>
+              </form>
+            </div>
+          </div>
+        {% else %}<p class="text-sm text-slate-500">No AI posts found.</p>{% endfor %}
+      </div>
+    </section>
+
+    <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 class="text-lg font-semibold">Recent AI activity</h2>
+      <div class="mt-4 overflow-x-auto">
+        <table class="min-w-full text-left text-xs">
+          <thead><tr class="border-b"><th class="p-2">Profile</th><th class="p-2">Action</th><th class="p-2">Provider</th><th class="p-2">Time</th></tr></thead>
+          <tbody>{% for log in logs %}<tr class="border-b border-slate-100"><td class="p-2">{{ log.persona.name }}</td><td class="p-2">{{ log.action_type }}</td><td class="p-2">{{ log.provider_used or '—' }}</td><td class="p-2">{{ log.timestamp.strftime('%d %b %Y %H:%M') }}</td></tr>{% else %}<tr><td colspan="4" class="p-3 text-slate-500">No activity logged.</td></tr>{% endfor %}</tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</main>
+<script>
+  document.querySelectorAll('.ai-media-input').forEach((input) => {
+    input.addEventListener('change', () => {
+      const preview = input.closest('form').querySelector('.ai-media-preview');
+      const file = input.files && input.files[0];
+      if (!file) {
+        preview.removeAttribute('src');
+        preview.classList.add('hidden');
+        return;
+      }
+      preview.src = URL.createObjectURL(file);
+      preview.classList.remove('hidden');
+    });
+  });
+</script>
+{% endblock %}
