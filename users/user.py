@@ -419,6 +419,12 @@ def index():
     return render_template("index.html")
 
 
+@user.get("/install")
+def install_app():
+    """Public, database-independent PWA installation guide."""
+    return render_template("install.html")
+
+
 def timeago(dt):
     now = utcnow()
     diff = now - dt

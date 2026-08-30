@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0d6efd">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Kimbela">
+  <title>Install Kimbela</title>
+  <meta name="description" content="Install Kimbela on your phone for faster access, notifications, and a better app experience.">
+  <link rel="canonical" href="https://kimbela.com/install">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://kimbela.com/install">
+  <meta property="og:title" content="Install Kimbela">
+  <meta property="og:description" content="Install Kimbela on your phone for faster access, notifications, and a better app experience.">
+  <meta property="og:image" content="https://kimbela.com/static/img/icons/icon-512x512.png">
+  <meta property="og:image:alt" content="Kimbela app icon">
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/icons/icon-192x192.png') }}">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/icons/icon-192x192.png') }}">
+  <script src="{{ url_for('static', filename='pwa_init.js') }}" defer></script>
+  <style>
+    :root { color-scheme: light; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: #f5f7fb; color: #172033; }
+    a { color: inherit; }
+    .page { width: min(100% - 32px, 560px); margin: 0 auto; padding: 28px 0 40px; }
+    .brand { display: inline-flex; align-items: center; gap: 10px; color: #172033; font-weight: 750; text-decoration: none; }
+    .brand img { width: 42px; height: 42px; border-radius: 12px; }
+    .card { margin-top: 26px; padding: clamp(22px, 6vw, 34px); border: 1px solid #dfe4ee; border-radius: 22px; background: #fff; box-shadow: 0 16px 44px rgba(23, 32, 51, .09); }
+    h1 { margin: 0; font-size: clamp(1.8rem, 8vw, 2.55rem); line-height: 1.08; letter-spacing: -.035em; }
+    .lead { margin: 14px 0 24px; color: #526078; font-size: 1rem; line-height: 1.65; }
+    .state[hidden] { display: none; }
+    .state h2 { margin: 0 0 10px; font-size: 1.12rem; }
+    .state p, .steps { color: #526078; line-height: 1.6; }
+    .steps { margin: 14px 0 20px; padding-left: 23px; }
+    .steps li { margin: 8px 0; padding-left: 4px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+    .button { min-height: 46px; display: inline-flex; align-items: center; justify-content: center; padding: 11px 18px; border: 0; border-radius: 12px; background: #e9edf5; color: #26334a; font: inherit; font-weight: 700; text-decoration: none; cursor: pointer; }
+    .button-primary { background: #0d6efd; color: #fff; }
+    .button:focus-visible, .link-field:focus-visible { outline: 3px solid rgba(13, 110, 253, .3); outline-offset: 3px; }
+    .button:disabled { cursor: wait; opacity: .65; }
+    .share { margin-top: 22px; padding-top: 20px; border-top: 1px solid #e5e9f1; }
+    .share p { margin: 0 0 10px; color: #526078; font-size: .92rem; }
+    .link-field { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+    .feedback { min-height: 22px; margin: 12px 0 0; color: #315383; font-size: .9rem; font-weight: 650; }
+    .fine-print { margin: 20px 2px 0; color: #68758b; font-size: .82rem; line-height: 1.55; }
+    @media (max-width: 420px) { .actions .button { width: 100%; } }
+  </style>
+</head>
+<body id="kimbela-install-page">
+  <main class="page">
+    <a class="brand" href="{{ url_for('user.index') }}" aria-label="Kimbela home">
+      <img src="{{ url_for('static', filename='img/icons/icon-192x192.png') }}" alt="" width="42" height="42">
+      <span>Kimbela</span>
+    </a>
+
+    <section class="card" aria-labelledby="install-title">
+      <h1 id="install-title">Install Kimbela</h1>
+      <p class="lead">Add Kimbela to your device for faster access, notifications, and an app-like experience.</p>
+
+      <div id="install-page-checking" class="state" aria-live="polite">
+        <h2>Checking installation options…</h2>
+        <p>You can continue using Kimbela while this page checks your browser.</p>
+        <div class="actions"><a class="button" href="{{ url_for('user.index') }}">Continue to Kimbela</a></div>
+      </div>
+
+      <noscript>
+        <div class="state">
+          <h2>Install from your browser</h2>
+          <p>On iPhone or iPad, open this page in Safari, tap Share, then choose “Add to Home Screen”. On supported Android devices, open this page in Chrome and use the browser’s install option.</p>
+          <div class="actions"><a class="button button-primary" href="{{ url_for('user.index') }}">Continue to Kimbela</a></div>
+        </div>
+      </noscript>
+
+      <div id="install-page-native" class="state" hidden>
+        <h2>Install the Kimbela app</h2>
+        <p>Your browser can install Kimbela directly on this device.</p>
+        <div class="actions">
+          <button id="install-page-install-button" class="button button-primary" type="button">Install Kimbela</button>
+          <a class="button" href="{{ url_for('user.index') }}">Continue to Kimbela</a>
+        </div>
+      </div>
+
+      <div id="install-page-ios" class="state" hidden>
+        <h2>Install Kimbela on iPhone/iPad</h2>
+        <ol class="steps">
+          <li>Tap the Share button in Safari.</li>
+          <li>Choose “Add to Home Screen”.</li>
+          <li>Tap “Add”.</li>
+        </ol>
+        <div class="actions"><a class="button" href="{{ url_for('user.index') }}">Continue to Kimbela</a></div>
+      </div>
+
+      <div id="install-page-installed" class="state" hidden>
+        <h2>Kimbela is already installed</h2>
+        <p>Open Kimbela and continue with the full app experience.</p>
+        <div class="actions"><a class="button button-primary" href="{{ url_for('user.user_dashboard') }}">Open Kimbela</a></div>
+      </div>
+
+      <div id="install-page-installing" class="state" hidden aria-live="polite">
+        <h2>Installing Kimbela…</h2>
+        <p>Follow your browser’s installation steps. This may take a moment on slower connections, and you can continue using Kimbela.</p>
+        <div class="actions"><a class="button" href="{{ url_for('user.index') }}">Continue to Kimbela</a></div>
+      </div>
+
+      <div id="install-page-fallback" class="state" hidden>
+        <h2>You can still use Kimbela in your browser.</h2>
+        <p id="install-page-fallback-message">For installation, open this page in Chrome, Edge, or Safari on a supported device.</p>
+        <div class="actions"><a class="button button-primary" href="{{ url_for('user.index') }}">Continue to Kimbela</a></div>
+      </div>
+
+      <div class="share">
+        <p>Help someone install Kimbela on their device.</p>
+        <button id="install-page-share-button" class="button" type="button">Share Kimbela</button>
+        <input id="install-page-link" class="link-field" value="https://kimbela.com/install" readonly aria-label="Kimbela installation link">
+        <p id="install-page-feedback" class="feedback" role="status" aria-live="polite"></p>
+      </div>
+    </section>
+    <p class="fine-print">Installing Kimbela does not automatically request notification permission. You remain in control of notification access.</p>
+  </main>
+</body>
+</html>

@@ -127,6 +127,10 @@ function getExistingRegistrations() {
 }
 
 async function resynchronizeCanonicalSubscription(registration) {
+  // The public install page has no authenticated push action and stays API-free.
+  // Resynchronization still runs on every normal application page.
+  if (document.getElementById('kimbela-install-page')) return false;
+
   if (!('Notification' in window) || Notification.permission !== 'granted') {
     return false;
   }
@@ -328,6 +332,15 @@ const LEGACY_IOS_DISMISSAL_KEY = 'iosInstallPromptDismissed';
 const INSTALL_DISMISSAL_MS = 14 * 24 * 60 * 60 * 1000;
 const INSTALLING_FEEDBACK_MS = 20 * 1000;
 const INSTALL_SUCCESS_FEEDBACK_MS = 3500;
+const INSTALL_SHARE_URL = 'https://kimbela.com/install';
+const INSTALL_PAGE_STATE_IDS = [
+  'checking',
+  'native',
+  'ios',
+  'installed',
+  'installing',
+  'fallback',
+];
 
 let deferredInstallPrompt = null;
 let installPromptElement = null;
@@ -335,6 +348,7 @@ let installCompleted = false;
 let installDomReady = document.readyState !== 'loading';
 let installFeedbackTimer = null;
 let installReadinessPromise = null;
+let installPageRoot = null;
 
 function readInstallStorage(key) {
   try {
@@ -385,6 +399,12 @@ function dismissInstallPrompt() {
   writeInstallStorage(INSTALL_DISMISSAL_KEY, String(Date.now()));
   deferredInstallPrompt = null;
   hideInstallPrompt();
+  if (getInstallPageRoot()) {
+    setInstallPageState(
+      'fallback',
+      'Installation was dismissed. You can continue in your browser or try again when your browser offers installation.'
+    );
+  }
 }
 
 function clearInstallDismissal() {
@@ -415,6 +435,99 @@ function createInstallElement(tagName, className, textContent) {
   if (className) element.className = className;
   if (textContent) element.textContent = textContent;
   return element;
+}
+
+function getInstallPageRoot() {
+  if (!installPageRoot) {
+    installPageRoot = document.getElementById('kimbela-install-page');
+  }
+  return installPageRoot;
+}
+
+function setInstallPageFeedback(message) {
+  const feedback = document.getElementById('install-page-feedback');
+  if (feedback) feedback.textContent = message || '';
+}
+
+function setInstallPageState(state, fallbackMessage) {
+  const root = getInstallPageRoot();
+  if (!root) return false;
+
+  INSTALL_PAGE_STATE_IDS.forEach(function(stateName) {
+    const section = document.getElementById(`install-page-${stateName}`);
+    if (section) section.hidden = stateName !== state;
+  });
+  root.dataset.installState = state;
+
+  if (fallbackMessage) {
+    const message = document.getElementById('install-page-fallback-message');
+    if (message) message.textContent = fallbackMessage;
+  }
+  return true;
+}
+
+async function copyInstallShareUrl() {
+  if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+    try {
+      await navigator.clipboard.writeText(INSTALL_SHARE_URL);
+      setInstallPageFeedback('Install link copied');
+      return true;
+    } catch (error) {
+      // Fall through to the older selection-based copy path.
+    }
+  }
+
+  const linkField = document.getElementById('install-page-link');
+  if (
+    linkField
+    && typeof linkField.select === 'function'
+    && typeof document.execCommand === 'function'
+  ) {
+    linkField.select();
+    if (document.execCommand('copy')) {
+      setInstallPageFeedback('Install link copied');
+      return true;
+    }
+  }
+
+  setInstallPageFeedback(`Copy this link: ${INSTALL_SHARE_URL}`);
+  return false;
+}
+
+async function shareInstallPage() {
+  if (typeof navigator.share === 'function') {
+    try {
+      await navigator.share({
+        title: 'Install Kimbela',
+        text: 'Install Kimbela for faster access, notifications, and a better app experience.',
+        url: INSTALL_SHARE_URL,
+      });
+      setInstallPageFeedback('Install link shared');
+      return true;
+    } catch (error) {
+      if (error && error.name === 'AbortError') return false;
+    }
+  }
+
+  return copyInstallShareUrl();
+}
+
+function bindInstallPageControls() {
+  const root = getInstallPageRoot();
+  if (!root || root.dataset.installControlsBound === 'true') return Boolean(root);
+
+  const installButton = document.getElementById('install-page-install-button');
+  if (installButton) {
+    installButton.addEventListener('click', function() {
+      return runNativeInstallPrompt(installButton);
+    });
+  }
+
+  const shareButton = document.getElementById('install-page-share-button');
+  if (shareButton) shareButton.addEventListener('click', shareInstallPage);
+
+  root.dataset.installControlsBound = 'true';
+  return true;
 }
 
 function ensureInstallPromptStyles() {
@@ -514,6 +627,9 @@ function hideInstallPrompt() {
 
 function showInstallFeedback(state) {
   hideInstallPrompt();
+  if (getInstallPageRoot()) {
+    return setInstallPageState(state === 'success' ? 'installed' : 'installing');
+  }
   if (isStandaloneDisplayMode()) return false;
 
   ensureInstallPromptStyles();
@@ -574,6 +690,21 @@ function revealInstallPromptWhenReady(mode) {
   });
 }
 
+function revealInstallPageWhenReady() {
+  if (!installDomReady || !getInstallPageRoot()) return;
+
+  waitForInstallReadiness().then(function(ready) {
+    if (!ready || !deferredInstallPrompt) {
+      setInstallPageState(
+        'fallback',
+        'You can continue in your browser. For installation, try Chrome, Edge, or Safari on a supported device.'
+      );
+      return;
+    }
+    setInstallPageState('native');
+  });
+}
+
 async function runNativeInstallPrompt(installButton) {
   const promptEvent = deferredInstallPrompt;
   if (!promptEvent) return;
@@ -594,6 +725,10 @@ async function runNativeInstallPrompt(installButton) {
   } catch (error) {
     console.error('Unable to open the PWA install prompt:', error);
     hideInstallPrompt();
+    setInstallPageState(
+      'fallback',
+      'The installation prompt could not open. You can continue using Kimbela in your browser.'
+    );
   }
 }
 
@@ -686,10 +821,23 @@ function showInstallPrompt(mode) {
 function initializeInstallExperience() {
   installDomReady = true;
   migrateLegacyInstallDismissal();
+  const isInstallPage = bindInstallPageControls();
 
   if (isStandaloneDisplayMode()) {
     installCompleted = true;
     hideInstallPrompt();
+    setInstallPageState('installed');
+    return;
+  }
+
+  if (isInstallPage) {
+    if (isIosOrIpadOs()) {
+      setInstallPageState('ios');
+    } else if (deferredInstallPrompt) {
+      revealInstallPageWhenReady();
+    } else {
+      setInstallPageState('fallback');
+    }
     return;
   }
 
@@ -703,7 +851,11 @@ function initializeInstallExperience() {
 window.addEventListener('beforeinstallprompt', function(event) {
   event.preventDefault();
   deferredInstallPrompt = event;
-  revealInstallPromptWhenReady('native');
+  if (getInstallPageRoot()) {
+    revealInstallPageWhenReady();
+  } else {
+    revealInstallPromptWhenReady('native');
+  }
 });
 
 window.addEventListener('appinstalled', function() {
@@ -726,6 +878,7 @@ if (typeof window.matchMedia === 'function') {
       if (event.matches) {
         installCompleted = true;
         hideInstallPrompt();
+        setInstallPageState('installed');
       }
     });
   }

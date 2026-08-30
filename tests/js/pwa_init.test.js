@@ -113,6 +113,9 @@ class FakeElement {
     this.id = '';
     this.disabled = false;
     this.focused = false;
+    this.hidden = false;
+    this.selected = false;
+    this.value = '';
     this._textContent = '';
   }
 
@@ -167,6 +170,10 @@ class FakeElement {
   focus() {
     this.focused = true;
   }
+
+  select() {
+    this.selected = true;
+  }
 }
 
 function createDocument(readyState = 'loading') {
@@ -191,6 +198,40 @@ function createDocument(readyState = 'loading') {
   };
 }
 
+function addInstallPageMarkup(document) {
+  const root = document.createElement('main');
+  root.id = 'kimbela-install-page';
+  document.body.appendChild(root);
+
+  ['checking', 'native', 'ios', 'installed', 'installing', 'fallback'].forEach(state => {
+    const section = document.createElement('section');
+    section.id = `install-page-${state}`;
+    section.hidden = state !== 'checking';
+    root.appendChild(section);
+  });
+
+  const fallbackMessage = document.createElement('p');
+  fallbackMessage.id = 'install-page-fallback-message';
+  document.getElementById('install-page-fallback').appendChild(fallbackMessage);
+
+  const installButton = document.createElement('button');
+  installButton.id = 'install-page-install-button';
+  root.appendChild(installButton);
+
+  const shareButton = document.createElement('button');
+  shareButton.id = 'install-page-share-button';
+  root.appendChild(shareButton);
+
+  const linkField = document.createElement('input');
+  linkField.id = 'install-page-link';
+  linkField.value = 'https://kimbela.com/install';
+  root.appendChild(linkField);
+
+  const feedback = document.createElement('p');
+  feedback.id = 'install-page-feedback';
+  root.appendChild(feedback);
+}
+
 function loadInitializer({
   registrations = [],
   canonical,
@@ -205,6 +246,9 @@ function loadInitializer({
   storageValues = {},
   storageThrows = false,
   documentReadyState = 'loading',
+  installPage = false,
+  shareImpl,
+  clipboardImpl,
 } = {}) {
   const listeners = {};
   const serviceWorkerListeners = {};
@@ -215,6 +259,7 @@ function loadInitializer({
   const timers = new Map();
   let nextTimerId = 1;
   const document = createDocument(documentReadyState);
+  if (installPage) addInstallPageMarkup(document);
   const canonicalRegistration = canonical || createRegistration('/sw.js');
   const serviceWorker = {
     addEventListener(type, handler) {
@@ -238,6 +283,8 @@ function loadInitializer({
     maxTouchPoints,
     standalone,
   };
+  if (shareImpl) navigator.share = shareImpl;
+  if (clipboardImpl) navigator.clipboard = { writeText: clipboardImpl };
   const standaloneMediaQuery = {
     matches: displayModeStandalone,
     addEventListener(type, handler) {
@@ -306,6 +353,10 @@ function loadInitializer({
     document,
     getNotificationPermissionRequests: () => notificationPermissionRequests,
     getInstallPrompt: () => document.getElementById('kimbela-install-prompt'),
+    getInstallPageState: () => {
+      const root = document.getElementById('kimbela-install-page');
+      return root ? root.dataset.installState : null;
+    },
     getTimers: () => Array.from(timers.values()),
     async runTimers() {
       const pendingTimers = Array.from(timers.entries());
@@ -715,4 +766,114 @@ test('blocked localStorage does not break install discovery or dismissal', async
   await runtime.getInstallPrompt().querySelector('[data-action="dismiss"]').click();
   assert.equal(runtime.getInstallPrompt(), null);
   assert.equal(runtime.getNotificationPermissionRequests(), 0);
+});
+
+test('dedicated install page uses the shared Chromium prompt controller', async () => {
+  const runtime = loadInitializer({ installPage: true });
+  const installEvent = createBeforeInstallPromptEvent('accepted');
+  await runtime.triggerPageLoad();
+
+  assert.equal(runtime.getInstallPageState(), 'fallback');
+  await runtime.triggerWindowEvent('beforeinstallprompt', installEvent);
+  assert.equal(runtime.getInstallPageState(), 'native');
+
+  await runtime.document.getElementById('install-page-install-button').click();
+  assert.equal(installEvent.getPromptCount(), 1);
+  assert.equal(runtime.getInstallPageState(), 'installing');
+  assert.equal(runtime.getNotificationPermissionRequests(), 0);
+
+  await runtime.triggerWindowEvent('appinstalled');
+  assert.equal(runtime.getInstallPageState(), 'installed');
+});
+
+test('dedicated public install page does not make a subscription API request', async () => {
+  const existing = createSubscription('https://push.example/install-page');
+  const canonical = createRegistration('/sw.js', existing);
+  const runtime = loadInitializer({ installPage: true, registrations: [canonical], canonical });
+
+  await runtime.triggerPageLoad();
+
+  assert.deepEqual(runtime.fetchCalls, []);
+});
+
+test('dedicated install page handles a dismissed native prompt', async () => {
+  const runtime = loadInitializer({ installPage: true });
+  const installEvent = createBeforeInstallPromptEvent('dismissed');
+  await runtime.triggerPageLoad();
+  await runtime.triggerWindowEvent('beforeinstallprompt', installEvent);
+
+  await runtime.document.getElementById('install-page-install-button').click();
+
+  assert.equal(runtime.getInstallPageState(), 'fallback');
+  assert.ok(Number(runtime.localStorage.getItem('kimbelaInstallDismissedAt')) > 0);
+});
+
+test('dedicated install page shows iPhone and iPadOS instructions without a fake CTA', async () => {
+  const iphone = loadInitializer({
+    installPage: true,
+    userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)',
+  });
+  await iphone.triggerPageLoad();
+
+  const ipad = loadInitializer({
+    installPage: true,
+    userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15)',
+    platform: 'MacIntel',
+    maxTouchPoints: 5,
+  });
+  await ipad.triggerPageLoad();
+
+  assert.equal(iphone.getInstallPageState(), 'ios');
+  assert.equal(ipad.getInstallPageState(), 'ios');
+  assert.equal(
+    iphone.document.getElementById('install-page-native').hidden,
+    true,
+  );
+});
+
+test('dedicated install page detects standalone and unsupported states', async () => {
+  const installed = loadInitializer({ installPage: true, displayModeStandalone: true });
+  await installed.triggerPageLoad();
+
+  const unsupported = loadInitializer({ installPage: true, matchMediaAvailable: false });
+  await unsupported.triggerPageLoad();
+
+  assert.equal(installed.getInstallPageState(), 'installed');
+  assert.equal(installed.document.getElementById('install-page-native').hidden, true);
+  assert.equal(unsupported.getInstallPageState(), 'fallback');
+});
+
+test('dedicated install page shares with Web Share API when available', async () => {
+  const sharedPayloads = [];
+  const runtime = loadInitializer({
+    installPage: true,
+    shareImpl: async payload => sharedPayloads.push(payload),
+  });
+  await runtime.triggerPageLoad();
+
+  await runtime.document.getElementById('install-page-share-button').click();
+
+  assert.equal(sharedPayloads.length, 1);
+  assert.equal(sharedPayloads[0].url, 'https://kimbela.com/install');
+  assert.match(
+    runtime.document.getElementById('install-page-feedback').textContent,
+    /Install link shared/,
+  );
+});
+
+test('dedicated install page falls back to clipboard sharing', async () => {
+  const copiedValues = [];
+  const runtime = loadInitializer({
+    installPage: true,
+    clipboardImpl: async value => copiedValues.push(value),
+  });
+  await runtime.triggerPageLoad();
+
+  await runtime.document.getElementById('install-page-share-button').click();
+
+  assert.deepEqual(copiedValues, ['https://kimbela.com/install']);
+  assert.match(
+    runtime.document.getElementById('install-page-feedback').textContent,
+    /Install link copied/,
+  );
 });

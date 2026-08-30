@@ -364,6 +364,7 @@ def create_app():
             path.startswith("/static/")
             or path.startswith("/socket.io")
             or path.startswith("/favicon")
+            or path == "/install"
         ):
             return True
         return False
