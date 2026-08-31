@@ -18,6 +18,8 @@ from models import (
     MatchmakingLike,
     MatchmakingView,
     User,
+    FriendRequest,
+    friendship,
     MatchmakingPayments,
 )
 from datetime import datetime, timedelta
@@ -418,6 +420,204 @@ def get_requests():
             f"Error fetching matchmaking requests: {str(e)}", exc_info=True
         )
         return jsonify({"success": False, "error": "Failed to load requests"}), 500
+
+
+def _discovery_interests(user):
+    raw_interests = (user.interests or "").strip()
+    if not raw_interests:
+        return []
+    try:
+        parsed = json.loads(raw_interests)
+        if isinstance(parsed, list):
+            return [str(item).strip() for item in parsed if str(item).strip()][:8]
+    except (TypeError, ValueError):
+        pass
+    return [item.strip() for item in raw_interests.split(",") if item.strip()][:8]
+
+
+@match.route("/api/browse/users", methods=["GET"])
+@login_required
+def browse_users():
+    """Paginated platform discovery, deliberately separate from paid requests."""
+    try:
+        filters = _matchmaking_browse_filters()
+        today = utcnow().date()
+        adult_cutoff = subtract_years(today, 18)
+        blocks = User._blocked_users
+        blocked_pair = exists().where(
+            or_(
+                and_(
+                    blocks.c.blocker_id == current_user.id,
+                    blocks.c.blocked_id == User.id,
+                ),
+                and_(
+                    blocks.c.blocker_id == User.id,
+                    blocks.c.blocked_id == current_user.id,
+                ),
+            )
+        )
+
+        query = User.query.filter(
+            User.id != current_user.id,
+            User.is_active.is_(True),
+            or_(User.is_admin.is_(False), User.is_admin.is_(None)),
+            or_(User.is_super_admin.is_(False), User.is_super_admin.is_(None)),
+            or_(User.is_ai_persona.is_(False), User.is_ai_persona.is_(None)),
+            User.dob.isnot(None),
+            User.dob <= adult_cutoff,
+            User.first_name.isnot(None),
+            User.last_name.isnot(None),
+            User.gender.isnot(None),
+            User.country.isnot(None),
+            User.city.isnot(None),
+            ~blocked_pair,
+        )
+
+        if filters["search"]:
+            search_pattern = f"%{filters['search']}%"
+            query = query.filter(
+                or_(
+                    User.first_name.ilike(search_pattern),
+                    User.last_name.ilike(search_pattern),
+                    User.bio.ilike(search_pattern),
+                    User.about_me.ilike(search_pattern),
+                    User.interests.ilike(search_pattern),
+                )
+            )
+
+        if filters["min_age"] is not None:
+            query = query.filter(User.dob <= subtract_years(today, filters["min_age"]))
+        if filters["max_age"] is not None:
+            minimum_dob = subtract_years(today, filters["max_age"] + 1) + timedelta(days=1)
+            query = query.filter(User.dob >= minimum_dob)
+        if filters["gender"]:
+            query = query.filter(User.gender == filters["gender"])
+        if filters["country"]:
+            query = query.filter(User.country == filters["country"])
+        if filters["state"]:
+            query = query.filter(User.state == filters["state"])
+        if filters["city"]:
+            query = query.filter(User.city == filters["city"])
+
+        if filters["sort"] == "recent":
+            query = query.order_by(User.last_seen.desc(), User.id.desc())
+        elif filters["sort"] == "age_asc":
+            query = query.order_by(User.dob.desc(), User.id.desc())
+        elif filters["sort"] == "age_desc":
+            query = query.order_by(User.dob.asc(), User.id.desc())
+        else:
+            query = query.order_by(User.created_at.desc(), User.id.desc())
+
+        pagination = query.paginate(
+            page=filters["page"],
+            per_page=filters["per_page"],
+            error_out=False,
+        )
+        candidate_ids = [candidate.id for candidate in pagination.items]
+        relationship_states = {candidate_id: "none" for candidate_id in candidate_ids}
+
+        if candidate_ids:
+            friend_rows = (
+                db.session.query(friendship.c.user_id, friendship.c.friend_id)
+                .filter(
+                    or_(
+                        and_(
+                            friendship.c.user_id == current_user.id,
+                            friendship.c.friend_id.in_(candidate_ids),
+                        ),
+                        and_(
+                            friendship.c.friend_id == current_user.id,
+                            friendship.c.user_id.in_(candidate_ids),
+                        ),
+                    )
+                )
+                .all()
+            )
+            for user_id, friend_id in friend_rows:
+                other_id = friend_id if user_id == current_user.id else user_id
+                relationship_states[other_id] = "friends"
+
+            pending_rows = FriendRequest.query.filter(
+                FriendRequest.status == "pending",
+                or_(
+                    and_(
+                        FriendRequest.sender_id == current_user.id,
+                        FriendRequest.receiver_id.in_(candidate_ids),
+                    ),
+                    and_(
+                        FriendRequest.receiver_id == current_user.id,
+                        FriendRequest.sender_id.in_(candidate_ids),
+                    ),
+                ),
+            ).all()
+            for pending in pending_rows:
+                other_id = (
+                    pending.receiver_id
+                    if pending.sender_id == current_user.id
+                    else pending.sender_id
+                )
+                if relationship_states[other_id] == "friends":
+                    continue
+                if pending.sender_id == current_user.id:
+                    relationship_states[pending.receiver_id] = "sent"
+                else:
+                    relationship_states[pending.sender_id] = "received"
+
+        users_data = []
+        for candidate in pagination.items:
+            location = ", ".join(
+                part for part in (candidate.city, candidate.state, candidate.country) if part
+            )
+            relationship = relationship_states[candidate.id]
+            users_data.append(
+                {
+                    "id": candidate.id,
+                    "public_id": candidate.public_id,
+                    "full_name": candidate.full_name,
+                    "age": calculate_age(candidate.dob),
+                    "gender": candidate.gender,
+                    "country": candidate.country,
+                    "state": candidate.state,
+                    "city": candidate.city,
+                    "location": location,
+                    "profile_pic": candidate.profile_pic
+                    or url_for("static", filename="assets/img/default-avatar.png"),
+                    "bio": candidate.bio or candidate.about_me or "",
+                    "interests": _discovery_interests(candidate),
+                    "last_seen": candidate.last_seen.isoformat()
+                    if candidate.last_seen
+                    else None,
+                    "created_at": candidate.created_at.isoformat()
+                    if candidate.created_at
+                    else None,
+                    "relationship": relationship,
+                    "profile_url": url_for(
+                        "user.view_profile", user_identifier=candidate.public_id
+                    ),
+                    "message_url": url_for(
+                        "user.user_dashboard", chat=candidate.id
+                    )
+                    if relationship == "friends"
+                    else None,
+                }
+            )
+
+        return jsonify(
+            {
+                "success": True,
+                "users": users_data,
+                "total": pagination.total,
+                "pages": pagination.pages,
+                "has_next": pagination.has_next,
+                "has_prev": pagination.has_prev,
+                "page": pagination.page,
+                "sort": filters["sort"],
+            }
+        )
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception("Failed to load Browse discovery users")
+        return jsonify({"success": False, "error": "Failed to load matches"}), 500
 
 
 @match.route("/api/requests/<int:request_id>")

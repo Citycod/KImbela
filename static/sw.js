@@ -117,6 +117,7 @@ self.addEventListener('push', event => {
                 tag: options.tag || '',
                 avatar: data.avatar || '',
                 timestamp: options.timestamp,
+                eventType: data.event_type || 'notification',
               },
             });
           }

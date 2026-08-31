@@ -1,4 +1,5 @@
 from datetime import date
+from pathlib import Path
 import uuid
 
 
@@ -79,7 +80,9 @@ def test_dashboard_uses_one_versioned_messenger_asset_url(client, login):
     body = response.get_data(as_text=True)
     versioned_url = "/static/assets/js/messenger.js?v=ux-polish-1"
     assert body.count(versioned_url) == 3
+    assert body.count(f'src="{versioned_url}"') == 1
     assert 'src="/static/assets/js/messenger.js"' not in body
+    assert "assets/js/modules/messenger/index.js" not in body
 
 
 def test_dashboard_renders_header_and_sidebar_unread_message_badges(client, login):
@@ -94,6 +97,19 @@ def test_dashboard_renders_header_and_sidebar_unread_message_badges(client, logi
     assert body.count('id="openMessagingSidebar"') == 1
     assert body.count('id="sidebarMsgBadge"') == 1
     assert body.count('aria-label="Messages, no unread messages"') == 2
+
+    css = (
+        Path(__file__).resolve().parents[1]
+        / "static"
+        / "assets"
+        / "css"
+        / "dashboard_redesign.css"
+    ).read_text()
+    assert ".message-unread-badge {" in css
+    assert "z-index: 20" in css
+    assert "min-width: 18px" in css
+    assert "height: 18px" in css
+    assert ".message-unread-badge.hidden" in css
 
 
 def test_dashboard_always_renders_birthday_shortcut_and_existing_popup(client, login):

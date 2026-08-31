@@ -64,6 +64,57 @@ def test_messaging_upload_missing_file(client, login):
     assert response.status_code == 400
 
 
+def test_unread_count_includes_sent_and_delivered_but_excludes_read(
+    client, login, user, db, monkeypatch
+):
+    from models import Message
+
+    sender = create_recipient(db, user, is_online=True)
+    login_without_sending_alert(monkeypatch, login)
+    db.session.add_all(
+        [
+            Message(sender_id=sender.id, receiver_id=user.id, content="Sent", status="sent"),
+            Message(sender_id=sender.id, receiver_id=user.id, content="Delivered", status="delivered"),
+            Message(sender_id=sender.id, receiver_id=user.id, content="Read", status="read"),
+            Message(sender_id=user.id, receiver_id=sender.id, content="Outgoing", status="sent"),
+        ]
+    )
+    db.session.commit()
+
+    canonical = client.get("/api/messaging/unread-count")
+    legacy = client.get("/api/messaging/unread_count")
+
+    assert canonical.status_code == 200
+    assert canonical.get_json() == {"unread_count": 2}
+    assert legacy.status_code == 200
+    assert legacy.get_json() == {"success": True, "unread_count": 2}
+
+
+def test_mark_conversation_read_marks_sent_and_delivered_messages(
+    client, login, user, db, monkeypatch
+):
+    from models import Message
+
+    sender = create_recipient(db, user, is_online=True)
+    login_without_sending_alert(monkeypatch, login)
+    messages = [
+        Message(sender_id=sender.id, receiver_id=user.id, content="Sent", status="sent"),
+        Message(sender_id=sender.id, receiver_id=user.id, content="Delivered", status="delivered"),
+    ]
+    db.session.add_all(messages)
+    db.session.commit()
+
+    response = client.post(f"/api/messaging/mark-conversation-read/{sender.id}")
+
+    assert response.status_code == 200
+    assert response.get_json() == {"success": True, "marked": 2}
+    assert [db.session.get(Message, message.id).status for message in messages] == [
+        "read",
+        "read",
+    ]
+    assert client.get("/api/messaging/unread-count").get_json() == {"unread_count": 0}
+
+
 def test_http_send_persists_emits_once_and_pushes_offline_recipient(
     client, login, user, db, monkeypatch
 ):
@@ -130,6 +181,7 @@ def test_http_send_pushes_online_recipient_without_device_conversation_mapping(
             "body": "Online message",
             "url": f"/user_dashboard?chat={user.id}",
             "avatar": user.profile_pic,
+            "event_type": "message",
             "tag": f"message-{user.id}",
             "renotify": True,
         },

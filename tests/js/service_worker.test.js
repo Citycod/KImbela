@@ -375,6 +375,7 @@ test('visible app receives one foreground event without disabling system push', 
         body: 'Foreground body',
         url: '/user_dashboard?chat=13',
         tag: 'message-13',
+        event_type: 'message',
       }),
     },
     waitUntil: promise => { pushPromise = promise; },
@@ -388,6 +389,7 @@ test('visible app receives one foreground event without disabling system push', 
     foregroundMessages[0].notification.url,
     '/user_dashboard?chat=13',
   );
+  assert.equal(foregroundMessages[0].notification.eventType, 'message');
 });
 
 test('foreground socket handling does not create a second browser notification', () => {

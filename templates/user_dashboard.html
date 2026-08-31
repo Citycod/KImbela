@@ -295,6 +295,14 @@ placement='dashboard-top') %}
           </a>
         </li>
         <li>
+          <button type="button" role="switch" aria-checked="true"
+            data-notification-sound-toggle title="Notification sounds on">
+            <i class="bi bi-volume-up-fill" data-notification-sound-icon></i>
+            Notification sounds
+            <span class="kb-sidebar-badge" data-notification-sound-status>On</span>
+          </button>
+        </li>
+        <li>
           <a href="{{ url_for('user.install_app') }}">
             <i class="bi bi-phone"></i> Install Kimbela
           </a>
@@ -853,7 +861,7 @@ placement='dashboard-top') %}
               </button>
             </div>
             <button type="button" class="comment-composer-send inline-flex min-h-[40px] min-w-[40px] items-center justify-center gap-1.5 rounded-full bg-blue-600 px-3 text-sm font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              aria-label="Send comment" disabled aria-disabled="true">
+              aria-label="Send Chime" disabled aria-disabled="true">
               <i class="bi bi-send-fill" aria-hidden="true"></i><span class="hidden sm:inline">Send</span>
             </button>
           </div>
@@ -1534,8 +1542,7 @@ placement='dashboard-top') %}
                 color: #10b981;
                 animation: search-sweep 3s ease-in-out infinite;
               "></i>
-        <span class="font-medium group-hover:text-green-700 transition-colors duration-300">Browse Match
-          Requests</span>
+        <span class="font-medium group-hover:text-green-700 transition-colors duration-300">Browse Matches</span>
       </a>
 
       <!-- Partner -->
@@ -1551,6 +1558,14 @@ placement='dashboard-top') %}
         <i class="bi bi-phone mr-3 text-lg" style="color: #0d6efd"></i>
         <span class="font-medium">Install Kimbela</span>
       </a>
+
+      <button type="button" role="switch" aria-checked="true"
+        data-notification-sound-toggle title="Notification sounds on"
+        class="sidebar-item w-full flex items-center p-3 rounded-lg text-fb-text hover:bg-fb-gray transition-colors mb-2">
+        <i class="bi bi-volume-up-fill mr-3 text-lg text-purple-600" data-notification-sound-icon></i>
+        <span class="font-medium">Notification sounds</span>
+        <span class="ml-auto text-xs font-semibold text-purple-700" data-notification-sound-status>On</span>
+      </button>
 
       <a class="dropdown-item block px-4 py-2 text-red-500 hover:bg-red-50 transition-colors"
         href="{{ url_for('user.logout') }}">
@@ -1624,7 +1639,7 @@ placement='dashboard-top') %}
     <a href="{{ url_for('match.view_requests') }}"
       class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 transition-all duration-300 mb-2 group">
       <i class="bi bi-binoculars-fill mr-3 text-lg" style="color: #10b981"></i>
-      <span class="font-medium">Browse Match Requests</span>
+      <span class="font-medium">Browse Matches</span>
     </a>
 
     <!-- Partner -->

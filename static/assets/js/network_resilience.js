@@ -74,12 +74,12 @@
   function commentFeedback(error) {
     const kind = classifyError(error);
     if (kind === 'offline') {
-      return "You're offline. Reconnect to load comments.";
+      return "You're offline. Reconnect to load Chimes.";
     }
     if (kind === 'network') {
-      return 'Connection lost. Reconnect and try loading comments again.';
+      return 'Connection lost. Reconnect and try loading Chimes again.';
     }
-    return 'Failed to load comments';
+    return 'Failed to load Chimes';
   }
 
   function ensureNotice() {

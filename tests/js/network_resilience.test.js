@@ -127,24 +127,24 @@ test('offline state blocks requests and emits each state transition once', async
   assert.equal(onlineEvents, 1);
 });
 
-test('comment feedback distinguishes offline, network, and server failures', () => {
+test('Chime feedback distinguishes offline, network, and server failures', () => {
   const runtime = createRuntime();
 
   assert.equal(
     runtime.network.commentFeedback({ kind: 'offline' }),
-    "You're offline. Reconnect to load comments.",
+    "You're offline. Reconnect to load Chimes.",
   );
   assert.equal(
     runtime.network.commentFeedback({ kind: 'network' }),
-    'Connection lost. Reconnect and try loading comments again.',
+    'Connection lost. Reconnect and try loading Chimes again.',
   );
   assert.equal(
     runtime.network.commentFeedback({ kind: 'server' }),
-    'Failed to load comments',
+    'Failed to load Chimes',
   );
 });
 
-test('transport failure and HTTP failure retain distinct comment behavior', async () => {
+test('transport failure and HTTP failure retain distinct Chime behavior', async () => {
   const networkRuntime = createRuntime({
     fetchImpl: async () => { throw new TypeError('Failed to fetch'); },
   });
@@ -164,6 +164,6 @@ test('transport failure and HTTP failure retain distinct comment behavior', asyn
   await assert.rejects(
     serverRuntime.network.requestJson('comments', '/get_comments/1'),
     error => error.kind === 'server' &&
-      serverRuntime.network.commentFeedback(error) === 'Failed to load comments',
+      serverRuntime.network.commentFeedback(error) === 'Failed to load Chimes',
   );
 });

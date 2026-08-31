@@ -130,6 +130,7 @@ def process_birthday_push(user, year):
         "body": f"Wishing you a great day, {user.first_name or 'friend'}! 🎂",
         "icon": "/static/assets/img/kimbela_icon_512.png",
         "url": "/user_dashboard",
+        "event_type": "birthday",
     }
 
     try:

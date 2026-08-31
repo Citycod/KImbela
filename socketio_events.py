@@ -232,6 +232,7 @@ def handle_send_message(data):
                 "url": url_for("user.user_dashboard", chat=current_user.id),
                 "avatar": current_user.profile_pic
                 or url_for("static", filename="assets/img/default-avatar.png"),
+                "event_type": "message",
                 "tag": f"message-{current_user.id}",
                 "renotify": True,
             }

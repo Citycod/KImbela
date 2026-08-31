@@ -101,16 +101,18 @@ def test_feed_comment_pushes_post_owner_with_valid_post_destination(
     push_mock.assert_called_once_with(
         owner.id,
         {
-            "title": "New comment",
-            "body": f"{user.full_name} commented on your post.",
-            "url": f"/post/{post.public_id}#comment-{comment_id}",
-            "tag": f"social-post-{post.id}",
+            "title": "New Chime",
+            "body": f"{user.full_name} chimed on your post.",
+            "url": f"/post/{post.public_id}?notification=1#comment-{comment_id}",
+            "avatar": user.profile_pic,
+            "event_type": "chime",
+            "tag": f"social-post-{post.id}-chime-{comment_id}",
             "renotify": True,
         },
     )
     assert client.get(push_mock.call_args.args[1]["url"]).status_code == 200
     notification_payload = notification_payload_for(client, owner)
-    assert notification_payload[0]["url"] == f"/post/{post.public_id}#comment-{comment_id}"
+    assert notification_payload[0]["url"] == f"/post/{post.public_id}?notification=1#comment-{comment_id}"
 
 
 def test_deleted_feed_comment_notification_falls_back_to_parent_post(
@@ -135,7 +137,44 @@ def test_deleted_feed_comment_notification_falls_back_to_parent_post(
 
     notification_payload = notification_payload_for(client, owner)
 
-    assert notification_payload[0]["url"] == f"/post/{post.public_id}#post-{post.id}"
+    assert notification_payload[0]["url"] == f"/post/{post.public_id}?notification=1#post-{post.id}"
+
+
+def test_deleted_notification_parent_falls_back_without_changing_normal_404s(
+    client, user, db, monkeypatch
+):
+    owner = create_user(db, "DeletedParentOwner")
+    post = create_post(db, owner)
+    login_user(client, user)
+    push_mock = Mock(return_value=True)
+    monkeypatch.setattr("utils.push_service.send_push_notification", push_mock)
+    response = client.post(
+        f"/add_comment/{post.id}",
+        json={"content": "Parent will be deleted"},
+    )
+    assert response.status_code == 200
+    notification_url = push_mock.call_args.args[1]["url"]
+    db.session.delete(post)
+    db.session.commit()
+
+    fallback = client.get(notification_url.split("#", 1)[0], follow_redirects=False)
+
+    assert fallback.status_code == 302
+    assert fallback.headers["Location"].endswith("/user_dashboard")
+    assert client.get("/post/not-a-real-post").status_code == 404
+
+
+def test_deleted_group_notification_target_falls_back_safely(client, user):
+    login_user(client, user)
+
+    fallback = client.get(
+        "/groups/2147483647?notification=1",
+        follow_redirects=False,
+    )
+
+    assert fallback.status_code == 302
+    assert fallback.headers["Location"].endswith("/user_dashboard")
+    assert client.get("/groups/2147483647").status_code == 404
 
 
 def test_own_feed_comment_does_not_notify_actor(client, user, db, monkeypatch):
@@ -185,10 +224,12 @@ def test_feed_reply_notifies_parent_author_and_deduplicates_post_owner(
     push_mock.assert_called_once()
     assert push_mock.call_args.args[0] == owner.id
     assert push_mock.call_args.args[1] == {
-        "title": "New reply",
-        "body": f"{user.full_name} replied to your comment.",
-        "url": f"/post/{post.public_id}#comment-{reply_id}",
-        "tag": f"social-post-{post.id}",
+        "title": "New Chime reply",
+        "body": f"{user.full_name} replied to your Chime.",
+        "url": f"/post/{post.public_id}?notification=1#comment-{reply_id}",
+        "avatar": user.profile_pic,
+        "event_type": "reply",
+        "tag": f"social-post-{post.id}-chime-{reply_id}",
         "renotify": True,
     }
     assert Notification.query.filter_by(
@@ -290,7 +331,9 @@ def test_group_post_bulk_push_excludes_actor_left_and_blocked_members(
         {
             "title": "New group post",
             "body": f"{user.full_name} posted in {group.name}.",
-            "url": f"/groups/{group.id}#post-{post_id}",
+            "url": f"/groups/{group.id}?notification=1#post-{post_id}",
+            "avatar": user.profile_pic,
+            "event_type": "group_post",
             "tag": f"social-group-{group.id}-post-{post_id}",
             "renotify": True,
         },
@@ -326,10 +369,12 @@ def test_group_comment_only_pushes_post_owner(client, user, db, monkeypatch):
     push_mock.assert_called_once_with(
         owner.id,
         {
-            "title": "New group comment",
-            "body": f"{user.full_name} commented on your group post.",
-            "url": f"/groups/{group.id}#comment-{comment_id}",
-            "tag": f"social-post-{post.id}",
+            "title": "New group Chime",
+            "body": f"{user.full_name} chimed on your group post.",
+            "url": f"/groups/{group.id}?notification=1#comment-{comment_id}",
+            "avatar": user.profile_pic,
+            "event_type": "chime",
+            "tag": f"social-post-{post.id}-chime-{comment_id}",
             "renotify": True,
         },
     )
@@ -341,7 +386,7 @@ def test_group_comment_only_pushes_post_owner(client, user, db, monkeypatch):
         entity_type=f"group_comment:{post.id}",
     ).count() == 1
     notification_payload = notification_payload_for(client, owner)
-    assert notification_payload[0]["url"] == f"/groups/{group.id}#comment-{comment_id}"
+    assert notification_payload[0]["url"] == f"/groups/{group.id}?notification=1#comment-{comment_id}"
 
 
 def test_group_reply_deduplicates_owner_and_parent_author(
@@ -369,10 +414,12 @@ def test_group_reply_deduplicates_owner_and_parent_author(
     push_mock.assert_called_once_with(
         owner.id,
         {
-            "title": "New group reply",
-            "body": f"{user.full_name} replied to your group comment.",
-            "url": f"/groups/{group.id}#comment-{reply_id}",
-            "tag": f"social-post-{post.id}",
+            "title": "New group Chime reply",
+            "body": f"{user.full_name} replied to your group Chime.",
+            "url": f"/groups/{group.id}?notification=1#comment-{reply_id}",
+            "avatar": user.profile_pic,
+            "event_type": "reply",
+            "tag": f"social-post-{post.id}-chime-{reply_id}",
             "renotify": True,
         },
     )
@@ -381,6 +428,143 @@ def test_group_reply_deduplicates_owner_and_parent_author(
         entity_id=reply_id,
         entity_type=f"group_comment:{post.id}",
     ).count() == 1
+
+
+def test_feed_like_creates_one_notification_and_canonical_push(
+    client, user, db, monkeypatch
+):
+    from models import Notification, NotificationType
+
+    owner = create_user(db, "LikeOwner")
+    post = create_post(db, owner)
+    login_user(client, user)
+    push_mock = Mock(return_value=True)
+    monkeypatch.setattr("utils.push_service.send_push_notification", push_mock)
+
+    response = client.post(
+        f"/react_post/{post.id}",
+        json={"reaction_type": "like"},
+    )
+
+    assert response.status_code == 200
+    assert response.get_json()["reacted"] is True
+    notification = Notification.query.filter_by(
+        user_id=owner.id,
+        actor_id=user.id,
+        type=NotificationType.POST_LIKE,
+        entity_id=post.id,
+        entity_type="post",
+    ).one()
+    expected_url = f"/post/{post.public_id}?notification=1"
+    push_mock.assert_called_once_with(
+        owner.id,
+        {
+            "title": "New like",
+            "body": f"{user.full_name} liked your post.",
+            "url": expected_url,
+            "avatar": user.profile_pic,
+            "event_type": "like",
+            "tag": f"social-like-{post.id}-{user.id}",
+            "renotify": True,
+        },
+    )
+    bell_payload = notification_payload_for(client, owner)
+    bell_item = next(item for item in bell_payload if item["id"] == notification.id)
+    assert bell_item["url"] == expected_url
+    login_user(client, owner)
+    routed_bell_payload = client.get("/notifications").get_json()
+    routed_bell_item = next(
+        item for item in routed_bell_payload if item["id"] == notification.id
+    )
+    assert routed_bell_item["url"] == expected_url
+
+
+def test_group_like_uses_group_content_destination(client, user, db, monkeypatch):
+    owner = create_user(db, "GroupLikeOwner")
+    group = create_group(db, owner, user)
+    post = create_post(db, owner, group=group)
+    login_user(client, user)
+    push_mock = Mock(return_value=True)
+    monkeypatch.setattr("utils.push_service.send_push_notification", push_mock)
+
+    response = client.post(
+        f"/react_post/{post.id}",
+        json={"reaction_type": "love"},
+    )
+
+    assert response.status_code == 200
+    expected_url = f"/groups/{group.id}?notification=1#post-{post.id}"
+    assert push_mock.call_args.args[1]["url"] == expected_url
+    assert notification_payload_for(client, owner)[0]["url"] == expected_url
+
+
+def test_own_post_like_does_not_notify(client, user, db, monkeypatch):
+    from models import Notification, NotificationType
+
+    post = create_post(db, user)
+    login_user(client, user)
+    push_mock = Mock()
+    monkeypatch.setattr("utils.push_service.send_push_notification", push_mock)
+
+    response = client.post(
+        f"/react_post/{post.id}",
+        json={"reaction_type": "like"},
+    )
+
+    assert response.status_code == 200
+    assert Notification.query.filter_by(
+        user_id=user.id,
+        actor_id=user.id,
+        type=NotificationType.POST_LIKE,
+        entity_id=post.id,
+    ).count() == 0
+    push_mock.assert_not_called()
+
+
+def test_unlike_and_relike_do_not_spam_notifications(client, user, db, monkeypatch):
+    from models import Notification, NotificationType
+
+    owner = create_user(db, "RelikeOwner")
+    post = create_post(db, owner)
+    login_user(client, user)
+    push_mock = Mock(return_value=True)
+    monkeypatch.setattr("utils.push_service.send_push_notification", push_mock)
+
+    results = [
+        client.post(f"/react_post/{post.id}", json={"reaction_type": "like"})
+        for _ in range(3)
+    ]
+
+    assert [response.get_json()["reacted"] for response in results] == [True, False, True]
+    assert Notification.query.filter_by(
+        user_id=owner.id,
+        actor_id=user.id,
+        type=NotificationType.POST_LIKE,
+        entity_id=post.id,
+    ).count() == 1
+    push_mock.assert_called_once()
+
+
+def test_like_push_failure_does_not_roll_back_reaction(
+    client, user, db, monkeypatch
+):
+    from models import Reaction
+
+    owner = create_user(db, "LikePushFailureOwner")
+    post = create_post(db, owner)
+    login_user(client, user)
+    monkeypatch.setattr(
+        "utils.push_service.send_push_notification",
+        Mock(side_effect=RuntimeError("push unavailable")),
+    )
+
+    response = client.post(
+        f"/react_post/{post.id}",
+        json={"reaction_type": "like"},
+    )
+
+    assert response.status_code == 200
+    assert Reaction.query.filter_by(user_id=user.id, post_id=post.id).count() == 1
 
 
 def test_group_comment_from_nonmember_persists_without_group_push(

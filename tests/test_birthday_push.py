@@ -32,6 +32,7 @@ def test_successful_birthday_push_creates_annual_log(
     assert BirthdayNotificationLog.query.filter_by(user_id=user.id, year=2026).count() == 1
     push_mock.assert_called_once()
     assert push_mock.call_args.args[1]["url"] == "/user_dashboard"
+    assert push_mock.call_args.args[1]["event_type"] == "birthday"
     assert client.get(push_mock.call_args.args[1]["url"]).status_code != 404
     email_mock.assert_called_once_with(user)
 

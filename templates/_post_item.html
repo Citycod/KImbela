@@ -35,9 +35,9 @@
         <span class="like-count">{{ post.likes_count }}</span>
     </button>
     
-    <button onclick="showComments({{ post.id }})">
-        <i class="bi bi-chat"></i>
-        <span>Comment</span>
+    <button onclick="showComments({{ post.id }})" aria-label="View Chimes">
+        <img src="{{ url_for('static', filename='assets/img/microphone2.png') }}" alt="" class="h-5 w-5 object-contain" aria-hidden="true">
+        <span>Chime</span>
     </button>
     
     <button onclick="sharePost({{ post.id }})">

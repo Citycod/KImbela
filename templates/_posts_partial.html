@@ -200,7 +200,7 @@
         {% endif %}
     </div>
     
-    <!-- Likes/Comments/Share -->
+    <!-- Likes/Chimes/Share -->
     {% set current_user_liked = post.id in current_user_liked_post_ids %}
     <div
         class="px-4 py-3 border-t border-fb-border flex justify-between text-fb-text-light font-medium"
@@ -215,9 +215,10 @@
         <button
             class="action-btn view-comments flex items-center space-x-1 px-2 py-1 rounded-lg hover:bg-fb-gray transition-colors"
             data-post-id="{{ post.id }}"
+            aria-label="View Chimes"
         >
-            <i class="bi bi-chat"></i>
-            <span>Comment</span>
+            <img src="{{ url_for('static', filename='assets/img/microphone2.png') }}" alt="" class="h-5 w-5 object-contain" aria-hidden="true" />
+            <span>Chime</span>
         </button>
         <button
             class="action-btn repost-btn flex items-center space-x-1 px-2 py-1 rounded-lg hover:bg-fb-gray transition-colors"
@@ -236,7 +237,7 @@
         </button>
     </div>
     
-    <!-- Comments Section -->
+    <!-- Chimes Section -->
     <div
         class="comments-section px-4 py-3 bg-gray-50 border-t border-fb-border"
     >
@@ -251,7 +252,7 @@
                 <input
                     type="text"
                     id="commentInput-{{ post.id }}"
-                    placeholder="Write a comment..."
+                    placeholder="Write a Chime..."
                     class="comment-composer-input w-full bg-white rounded-full pl-4 pr-11 py-2 border-0 focus:ring-1 focus:ring-blue-500 focus:outline-none"
                 />
                 <button type="button" class="comment-composer-emoji absolute right-1 top-1/2 transform -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -260,7 +261,7 @@
                 </button>
             </div>
             <button type="button" class="comment-composer-send inline-flex min-h-[40px] min-w-[40px] items-center justify-center gap-1.5 rounded-full bg-blue-600 px-3 text-sm font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                aria-label="Send comment" disabled aria-disabled="true">
+                aria-label="Send Chime" disabled aria-disabled="true">
                 <i class="bi bi-send-fill" aria-hidden="true"></i><span class="hidden sm:inline">Send</span>
             </button>
         </div>

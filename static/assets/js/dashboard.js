@@ -106,8 +106,8 @@ function commentFailureMessage(error) {
         return window.KimbelaNetwork.commentFeedback(error);
     }
     return commentFailureKind(error) === 'offline'
-        ? "You're offline. Reconnect to load comments."
-        : 'Failed to load comments';
+        ? "You're offline. Reconnect to load Chimes."
+        : 'Failed to load Chimes';
 }
 
 const MobileFeedAds = {
@@ -911,7 +911,7 @@ const PostSystem = {
             modalBody.innerHTML = `
                 <div class="flex items-center justify-center p-8">
                     <span class="tiny-loader md"></span>
-                    <span class="ml-3 text-gray-500">Loading comments...</span>
+                    <span class="ml-3 text-gray-500">Loading Chimes...</span>
                 </div>
             `;
         }
@@ -947,7 +947,7 @@ const PostSystem = {
         body.innerHTML = '';
 
         if (!comments || comments.length === 0) {
-            body.innerHTML = '<div class="text-center py-8 text-gray-500">No comments yet</div>';
+            body.innerHTML = '<div class="text-center py-8 text-gray-500">No Chimes yet</div>';
             return;
         }
 
@@ -1114,7 +1114,7 @@ const PostSystem = {
             const data = await response.json();
             if (data.success) {
                 inputElement.value = '';
-                Toast.show('Comment added!', 'success');
+                Toast.show('Chime added!', 'success');
 
                 // Reload comments if modal is open
                 const modal = document.getElementById('commentModal');
@@ -1122,10 +1122,10 @@ const PostSystem = {
                     this.viewComments(postId);
                 }
             } else {
-                Toast.show(data.error || 'Failed to add comment', 'danger');
+                Toast.show(data.error || 'Failed to add Chime', 'danger');
             }
         } catch (error) {
-            Toast.show('Failed to add comment', 'danger');
+            Toast.show('Failed to add Chime', 'danger');
         } finally {
             inputElement.disabled = false;
             inputElement.placeholder = originalPlaceholder;
@@ -4442,7 +4442,7 @@ async function addComment(postId, content) {
             updateCommentCount(postId, 1, 'add');
 
             // Show success message
-            Toast.show('Comment added!', 'success');
+            Toast.show('Chime added!', 'success');
 
             // Scroll to the top to show the new comment
             setTimeout(() => {
@@ -4450,22 +4450,22 @@ async function addComment(postId, content) {
             }, 100);
             return true;
         } else {
-            Toast.show(data.error || 'Failed to add comment', 'danger');
+            Toast.show(data.error || 'Failed to add Chime', 'danger');
             return false;
         }
     } catch (error) {
         const kind = commentFailureKind(error);
         if (error.message.includes('401') || error.message.includes('login')) {
-            Toast.show('Please log in again to comment', 'warning');
+            Toast.show('Please log in again to Chime', 'warning');
             setTimeout(() => {
                 window.location.href = '/login';
             }, 2000);
         } else if (kind === 'offline') {
-            Toast.show("You're offline. Reconnect to post your comment.", 'warning');
+            Toast.show("You're offline. Reconnect to post your Chime.", 'warning');
         } else if (kind === 'network') {
             Toast.show('Connection lost. Reconnect and try posting again.', 'warning');
         } else {
-            Toast.show('Failed to add comment', 'danger');
+            Toast.show('Failed to add Chime', 'danger');
         }
         return false;
     }
@@ -4487,7 +4487,7 @@ function updateCommentCount(postId, change, operation = 'add') {
     }
 
     // Update both the text and the data attribute
-    countElement.textContent = `${currentCount} ${currentCount === 1 ? 'comment' : 'comments'}`;
+    countElement.textContent = `${currentCount} ${currentCount === 1 ? 'Chime' : 'Chimes'}`;
     countElement.setAttribute('data-total-comments', currentCount);
 
     // Also update the count animation
@@ -4499,7 +4499,7 @@ function updateCommentCount(postId, change, operation = 'add') {
 
 // Update deleteComment function to accept postId
 async function deleteComment(commentId, postId = null) {
-    if (!confirm('Delete this comment?')) return;
+    if (!confirm('Delete this Chime?')) return;
 
     try {
         const response = await fetch(`/delete_comment/${commentId}`, {
@@ -4519,7 +4519,7 @@ async function deleteComment(commentId, postId = null) {
                 updateCommentCount(postId, 1, 'subtract');
             }
 
-            Toast.show('Comment deleted', 'info');
+            Toast.show('Chime deleted', 'info');
         } else {
             Toast.show(data.error || 'Failed', 'danger');
         }

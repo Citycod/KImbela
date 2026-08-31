@@ -36,6 +36,7 @@ import humanize
 from sqlalchemy import event
 from flask_wtf.csrf import generate_csrf
 from werkzeug.security import check_password_hash
+from werkzeug.exceptions import NotFound
 
 from flask_login import login_user, logout_user, login_required, current_user
 import bleach
@@ -2050,6 +2051,79 @@ def clear_dashboard_cache():
 #     )
 
 
+def _post_content_destination(post, *, anchor=None):
+    if post.group_id:
+        return url_for(
+            "user.group_detail",
+            group_id=post.group_id,
+            notification=1,
+            _anchor=anchor or f"post-{post.id}",
+        )
+    return url_for(
+        "user.view_shared_post",
+        post_identifier=post.public_id,
+        notification=1,
+        _anchor=anchor,
+    )
+
+
+def _notify_post_like(post, actor):
+    """Persist and deliver one lifetime like notification per actor/post pair."""
+    if post.author_id == actor.id:
+        return False
+
+    existing = Notification.query.filter_by(
+        user_id=post.author_id,
+        actor_id=actor.id,
+        type=NotificationType.POST_LIKE,
+        entity_id=post.id,
+    ).first()
+    if existing:
+        return False
+
+    body = f"{actor.full_name} liked your post."
+    try:
+        db.session.add(
+            Notification(
+                user_id=post.author_id,
+                actor_id=actor.id,
+                type=NotificationType.POST_LIKE,
+                entity_id=post.id,
+                entity_type="group_post" if post.group_id else "post",
+                message=body,
+            )
+        )
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception(
+            "Failed to persist like notification for post %s", post.id
+        )
+        return False
+
+    try:
+        from utils.push_service import send_push_notification
+
+        send_push_notification(
+            post.author_id,
+            {
+                "title": "New like",
+                "body": body,
+                "url": _post_content_destination(post),
+                "avatar": actor.profile_pic
+                or url_for("static", filename="assets/img/default-avatar.png"),
+                "event_type": "like",
+                "tag": f"social-like-{post.id}-{actor.id}",
+                "renotify": True,
+            },
+        )
+    except Exception:
+        current_app.logger.exception(
+            "Failed to send like push for post %s", post.id
+        )
+    return True
+
+
 @user.route("/like_post/<int:post_id>", methods=["POST"])
 @login_required
 def like_post(post_id):
@@ -2067,16 +2141,9 @@ def like_post(post_id):
         db.session.add(new_like)
         liked = True
 
-        # Create notification for post owner (if not liking own post)
-        if post.author_id != current_user.id:
-            post.author.create_notification(
-                actor=current_user,
-                notification_type=NotificationType.POST_LIKE,
-                entity_id=post_id,
-                entity_type="post",
-            )
-
     db.session.commit()
+    if liked:
+        _notify_post_like(post, current_user)
     like_count = Like.query.filter_by(post_id=post_id).count()
     return jsonify(likes=like_count, liked=liked)
 
@@ -2254,8 +2321,12 @@ def _notify_group_post_members(group, post, actor):
                 "url": url_for(
                     "user.group_detail",
                     group_id=group.id,
+                    notification=1,
                     _anchor=f"post-{post.id}",
                 ),
+                "avatar": actor.profile_pic
+                or url_for("static", filename="assets/img/default-avatar.png"),
+                "event_type": "group_post",
                 "tag": f"social-group-{group.id}-post-{post.id}",
                 "renotify": True,
             },
@@ -2274,12 +2345,14 @@ def _comment_social_targets(post, comment, actor, parent_comment=None):
         url_for(
             "user.group_detail",
             group_id=post.group_id,
+            notification=1,
             _anchor=f"comment-{comment.id}",
         )
         if is_group_comment
         else url_for(
             "user.view_shared_post",
             post_identifier=post.public_id,
+            notification=1,
             _anchor=f"comment-{comment.id}",
         )
     )
@@ -2293,27 +2366,29 @@ def _comment_social_targets(post, comment, actor, parent_comment=None):
     if post.author_id != actor.id:
         targets[post.author_id] = {
             "user": post.author,
-            "title": "New group comment" if is_group_comment else "New comment",
+            "title": "New group Chime" if is_group_comment else "New Chime",
             "body": (
-                f"{actor.full_name} commented on your group post."
+                f"{actor.full_name} chimed on your group post."
                 if is_group_comment
-                else f"{actor.full_name} commented on your post."
+                else f"{actor.full_name} chimed on your post."
             ),
             "entity_id": comment.id,
             "entity_type": notification_entity_type,
+            "event_type": "chime",
         }
 
     if parent_comment and parent_comment.author_id != actor.id:
         targets[parent_comment.author_id] = {
             "user": parent_comment.author,
-            "title": "New group reply" if is_group_comment else "New reply",
+            "title": "New group Chime reply" if is_group_comment else "New Chime reply",
             "body": (
-                f"{actor.full_name} replied to your group comment."
+                f"{actor.full_name} replied to your group Chime."
                 if is_group_comment
-                else f"{actor.full_name} replied to your comment."
+                else f"{actor.full_name} replied to your Chime."
             ),
             "entity_id": comment.id,
             "entity_type": notification_entity_type,
+            "event_type": "reply",
         }
 
     if is_group_comment:
@@ -2358,7 +2433,7 @@ def _persist_social_notifications(targets, actor_id):
         current_app.logger.exception("Failed to persist social notifications")
 
 
-def _send_comment_social_pushes(targets, destination, post_id):
+def _send_comment_social_pushes(targets, destination, post_id, actor):
     from utils.push_service import send_push_notification
 
     for user_id, target in targets.items():
@@ -2369,7 +2444,10 @@ def _send_comment_social_pushes(targets, destination, post_id):
                     "title": target["title"],
                     "body": target["body"],
                     "url": destination,
-                    "tag": f"social-post-{post_id}",
+                    "avatar": actor.profile_pic
+                    or url_for("static", filename="assets/img/default-avatar.png"),
+                    "event_type": target["event_type"],
+                    "tag": f"social-post-{post_id}-chime-{target['entity_id']}",
                     "renotify": True,
                 },
             )
@@ -2388,7 +2466,7 @@ def add_comment(post_id):
     content = data.get("content", "").strip()
 
     if not content:
-        return jsonify(success=False, error="Comment cannot be empty"), 400
+        return jsonify(success=False, error="Chime cannot be empty"), 400
 
     parent_comment = None
     parent_id = data.get("parent_id")
@@ -2396,13 +2474,13 @@ def add_comment(post_id):
         try:
             parent_id = int(parent_id)
         except (TypeError, ValueError):
-            return jsonify(success=False, error="Invalid parent comment"), 400
+            return jsonify(success=False, error="Invalid parent Chime"), 400
         parent_comment = Comment.query.filter_by(
             id=parent_id,
             post_id=post_id,
         ).first()
         if not parent_comment:
-            return jsonify(success=False, error="Invalid parent comment"), 400
+            return jsonify(success=False, error="Invalid parent Chime"), 400
 
     comment = Comment(
         content=content,
@@ -2420,7 +2498,7 @@ def add_comment(post_id):
         parent_comment,
     )
     _persist_social_notifications(targets, current_user.id)
-    _send_comment_social_pushes(targets, destination, post.id)
+    _send_comment_social_pushes(targets, destination, post.id, current_user)
 
     return jsonify(
         success=True,
@@ -2920,8 +2998,18 @@ def get_notifications():
             if post:
                 anchor = f"comment-{comment.id}" if comment else f"post-{post.id}"
                 if post.group_id:
-                    return url_for("user.group_detail", group_id=post.group_id, _anchor=anchor)
-                return url_for("user.view_shared_post", post_identifier=post.public_id, _anchor=anchor)
+                    return url_for(
+                        "user.group_detail",
+                        group_id=post.group_id,
+                        notification=1,
+                        _anchor=anchor,
+                    )
+                return url_for(
+                    "user.view_shared_post",
+                    post_identifier=post.public_id,
+                    notification=1,
+                    _anchor=anchor,
+                )
         if entity_kind in {"post", "group_post"}:
             post = posts_by_id.get(notification.entity_id)
             if post:
@@ -2929,9 +3017,14 @@ def get_notifications():
                     return url_for(
                         "user.group_detail",
                         group_id=post.group_id,
+                        notification=1,
                         _anchor=f"post-{post.id}",
                     )
-                return url_for("user.view_shared_post", post_identifier=post.public_id)
+                return url_for(
+                    "user.view_shared_post",
+                    post_identifier=post.public_id,
+                    notification=1,
+                )
         if notification.type in {
             NotificationType.FRIEND_REQUEST,
             NotificationType.FRIEND_ACCEPTED,
@@ -3914,7 +4007,11 @@ def user_groups():
 @login_required
 def group_detail(group_id):
     """Get group page HTML"""
-    group = Group.query.get_or_404(group_id)
+    group = db.session.get(Group, group_id)
+    if group is None:
+        if request.args.get("notification") == "1":
+            return redirect(url_for("user.user_dashboard"))
+        abort(404)
 
     # Check membership properly
     is_member = group.members.filter_by(id=current_user.id).first() is not None
@@ -4407,7 +4504,7 @@ def add_group_comment(post_id):
         content = data.get("content", "").strip()
 
         if not content:
-            return jsonify({"success": False, "error": "Comment cannot be empty"})
+            return jsonify({"success": False, "error": "Chime cannot be empty"})
 
         comment = Comment(content=content, author_id=current_user.id, post_id=post_id)
 
@@ -4473,6 +4570,8 @@ def react_to_post(post_id):
             reacted = True
 
         db.session.commit()
+        if reacted:
+            _notify_post_like(post, current_user)
 
         # Get updated reaction count
         reaction_count = Reaction.query.filter_by(post_id=post_id).count()
@@ -4505,7 +4604,12 @@ print(f"Query took {time.time() - start:.2f} seconds")
 
 @user.route("/post/<post_identifier>")
 def view_shared_post(post_identifier):
-    post = resolve_post_by_identifier(post_identifier)
+    try:
+        post = resolve_post_by_identifier(post_identifier)
+    except NotFound:
+        if request.args.get("notification") == "1":
+            return redirect(url_for("user.user_dashboard"))
+        raise
     post = (
         Post.query.options(
             joinedload(Post.author),

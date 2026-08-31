@@ -149,7 +149,7 @@
       return false;
     }
     if (!isOnline()) {
-      showFeedback("You're offline. Reconnect to post your comment.", 'warning');
+      showFeedback("You're offline. Reconnect to post your Chime.", 'warning');
       input.focus();
       return false;
     }

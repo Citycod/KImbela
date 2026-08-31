@@ -266,6 +266,7 @@
                             timestamp: data.timestamp || Date.now(),
                             url: `/user_dashboard?chat=${senderId}`,
                             tag: `message-${senderId}`,
+                            eventType: 'message',
                         });
                     }
                 }

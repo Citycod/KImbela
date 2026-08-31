@@ -896,7 +896,7 @@
                         <div class="px-4 md:px-6 py-2 md:py-3 border-t border-gray-100 text-xs md:text-sm text-gray-500 post-stats">
                             <div class="flex justify-between">
                                 <span id="like-count-{{ post.id }}">{{ post.get_reaction_count() }} reactions</span>
-                                <span id="comment-count-{{ post.id }}">{{ post.comments_list|length }} comments</span>
+                                <span id="comment-count-{{ post.id }}">{{ post.comments_list|length }} Chimes</span>
                             </div>
                         </div>
 
@@ -934,9 +934,10 @@
                                 </div>
 
                                 <button onclick="focusCommentInput({{ post.id }})" 
+                                        aria-label="Add a Chime"
                                         class="flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-1 md:py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 text-gray-600">
-                                    <i class="bi bi-chat text-sm md:text-base"></i>
-                                    <span class="text-xs md:text-sm">Comment</span>
+                                    <img src="{{ url_for('static', filename='assets/img/microphone2.png') }}" alt="" class="h-4 w-4 md:h-5 md:w-5 object-contain" aria-hidden="true">
+                                    <span class="text-xs md:text-sm">Chime</span>
                                 </button>
                                 <button onclick="openShareModal({{ post.id }})" 
                                         class="flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-1 md:py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 text-gray-600">
@@ -956,7 +957,7 @@
                                 <div class="flex-1 relative min-w-0">
                                     <input type="text" 
                                            id="commentInput-{{ post.id }}" 
-                                           placeholder="Write a comment..." 
+                                           placeholder="Write a Chime..."
                                            class="comment-composer-input w-full bg-white rounded-full pl-3 pr-10 py-2 md:pl-4 md:pr-11 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 comment-input">
                                     <button type="button" class="comment-composer-emoji absolute right-1 top-1/2 transform -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                             aria-label="Add emoji" title="Add emoji">
@@ -964,7 +965,7 @@
                                     </button>
                                 </div>
                                 <button type="button" class="comment-composer-send inline-flex min-h-[40px] min-w-[40px] items-center justify-center gap-1.5 rounded-full bg-blue-600 px-3 text-xs md:text-sm font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                        aria-label="Send comment" disabled aria-disabled="true">
+                                        aria-label="Send Chime" disabled aria-disabled="true">
                                     <i class="bi bi-send-fill" aria-hidden="true"></i><span class="hidden sm:inline">Send</span>
                                 </button>
                             </div>
@@ -1014,7 +1015,7 @@
 
                             {% if post.comments_list|length > 3 %}
                             <button onclick="loadAllComments({{ post.id }})" class="text-blue-600 hover:text-blue-700 text-xs md:text-sm font-semibold">
-                                View all {{ post.comments_list|length }} comments
+                                View all {{ post.comments_list|length }} Chimes
                             </button>
                             {% endif %}
                         </div>
@@ -1556,9 +1557,9 @@
                     input.value = '';
                     
                     const current = parseInt(count.textContent) || 0;
-                    count.textContent = `${current + 1} comments`;
+                    count.textContent = `${current + 1} Chimes`;
                     
-                    showToast('Comment added!', 'success');
+                    showToast('Chime added!', 'success');
                     setTimeout(() => div.scrollIntoView({ behavior: 'smooth' }), 100);
                     return true;
                 } else {
@@ -1570,18 +1571,18 @@
                     ? window.KimbelaNetwork.classifyError(error)
                     : (navigator.onLine === false ? 'offline' : 'network');
                 if (kind === 'offline') {
-                    showToast("You're offline. Reconnect to post your comment.", 'warning');
+                    showToast("You're offline. Reconnect to post your Chime.", 'warning');
                 } else if (kind === 'network') {
                     showToast('Connection lost. Reconnect and try posting again.', 'warning');
                 } else {
-                    showToast('Failed to add comment', 'danger');
+                    showToast('Failed to add Chime', 'danger');
                 }
                 return false;
             }
         }
         
         async function deleteComment(commentId) {
-            if (!confirm('Delete this comment?')) return;
+            if (!confirm('Delete this Chime?')) return;
             
             try {
                 const response = await fetch(`/delete_comment/${commentId}`, {
@@ -1595,7 +1596,7 @@
                     el.style.opacity = '0';
                     el.style.transform = 'translateX(-50%)';
                     setTimeout(() => el.remove(), 300);
-                    showToast('Comment deleted', 'info');
+                    showToast('Chime deleted', 'info');
                 } else {
                     showToast(data.error || 'Failed', 'danger');
                 }
@@ -1887,8 +1888,8 @@
                 const message = window.KimbelaNetwork
                     ? window.KimbelaNetwork.commentFeedback(error)
                     : (kind === 'offline'
-                        ? "You're offline. Reconnect to load comments."
-                        : 'Failed to load comments');
+                        ? "You're offline. Reconnect to load Chimes."
+                        : 'Failed to load Chimes');
                 showToast(
                     kind === 'server' ? message : `${message} Tap “View all” to retry.`,
                     kind === 'server' ? 'danger' : 'warning'

@@ -67,11 +67,33 @@
     copy.style.cssText = 'min-width:0;flex:1';
     row.appendChild(copy);
 
+    const titleRow = document.createElement('div');
+    titleRow.style.cssText = 'display:flex;align-items:center;gap:0.35rem';
+    copy.appendChild(titleRow);
+
+    if (notification.eventType === 'chime' || notification.eventType === 'reply') {
+      const chimeIcon = document.createElement('img');
+      chimeIcon.src = '/static/assets/img/microphone2.png';
+      chimeIcon.alt = '';
+      chimeIcon.style.cssText = 'width:1rem;height:1rem;object-fit:contain';
+      titleRow.appendChild(chimeIcon);
+    } else {
+      const indicator = document.createElement('i');
+      indicator.className = notification.eventType === 'like'
+        ? 'bi bi-heart-fill'
+        : 'bi bi-chat-dots-fill';
+      indicator.style.cssText = notification.eventType === 'like'
+        ? 'color:#ec4899'
+        : 'color:#7c3aed';
+      indicator.setAttribute('aria-hidden', 'true');
+      titleRow.appendChild(indicator);
+    }
+
     const title = document.createElement('div');
     title.className = 'font-semibold text-sm';
-    title.style.cssText = 'font-size:0.875rem;font-weight:600';
+    title.style.cssText = 'font-size:0.875rem;font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
     title.textContent = notification.title || 'Kimbela';
-    copy.appendChild(title);
+    titleRow.appendChild(title);
 
     if (notification.body) {
       const body = document.createElement('div');
@@ -92,6 +114,9 @@
     copy.appendChild(timestamp);
 
     document.body.appendChild(toast);
+    if (window.KimbelaNotificationSound) {
+      window.KimbelaNotificationSound.play(notification.eventType);
+    }
     setTimeout(() => toast.remove(), 4000);
     return true;
   }

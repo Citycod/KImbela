@@ -5,11 +5,13 @@ import pytest
 from sqlalchemy import event
 
 from models import (
+    FriendRequest,
     MatchmakingLike,
     MatchmakingPackage,
     MatchmakingRequest,
     MatchmakingView,
     User,
+    friendship,
 )
 from time_utils import utcnow
 
@@ -44,6 +46,20 @@ def clean_browse_test_data(db):
                 MatchmakingRequest.id.in_(request_ids)
             ).delete(synchronize_session=False)
         if browse_user_ids:
+            FriendRequest.query.filter(
+                or_(
+                    FriendRequest.sender_id.in_(browse_user_ids),
+                    FriendRequest.receiver_id.in_(browse_user_ids),
+                )
+            ).delete(synchronize_session=False)
+            db.session.execute(
+                friendship.delete().where(
+                    or_(
+                        friendship.c.user_id.in_(browse_user_ids),
+                        friendship.c.friend_id.in_(browse_user_ids),
+                    )
+                )
+            )
             blocks = User._blocked_users
             db.session.execute(
                 blocks.delete().where(
@@ -168,6 +184,18 @@ def _browse(client, query=""):
 
 def _ids(payload):
     return [item["id"] for item in payload["requests"]]
+
+
+def _discover(client, query=""):
+    response = client.get(f"/api/browse/users{query}")
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload["success"] is True
+    return payload
+
+
+def _user_ids(payload):
+    return [item["id"] for item in payload["users"]]
 
 
 def test_default_browse_keeps_newest_first_and_existing_eligibility(client, user, db):
@@ -396,3 +424,182 @@ def test_browse_template_has_reload_safe_mobile_controls(client, user):
     assert b'Age: Youngest First' not in response.data
     assert b'Age: Oldest First' not in response.data
     assert b'Quick Stats' not in response.data
+    assert b'/api/browse/users?' in response.data
+    assert b'Browse Matches' in response.data
+
+
+def test_discovery_includes_eligible_user_without_matchmaking_request(
+    client, user, db
+):
+    _login(client, user)
+    eligible = _profile(db, name="NoRequest", country="Discoveryland")
+    db.session.commit()
+
+    payload = _discover(client, "?country=Discoveryland")
+
+    assert eligible.id in _user_ids(payload)
+    assert user.id not in _user_ids(payload)
+    assert MatchmakingRequest.query.filter_by(user_id=eligible.id).count() == 0
+
+
+def test_discovery_excludes_inactive_admin_and_ai_accounts(client, user, db):
+    _login(client, user)
+    eligible = _profile(db, name="Eligible", country="Eligibilityland")
+    inactive = _profile(db, name="InactiveProfile", country="Eligibilityland")
+    inactive.is_active = False
+    admin = _profile(db, name="AdminProfile", country="Eligibilityland")
+    admin.is_admin = True
+    ai = _profile(db, name="AiProfile", country="Eligibilityland")
+    ai.is_ai_persona = True
+    db.session.commit()
+
+    result_ids = set(_user_ids(_discover(client, "?country=Eligibilityland")))
+
+    assert eligible.id in result_ids
+    assert inactive.id not in result_ids
+    assert admin.id not in result_ids
+    assert ai.id not in result_ids
+
+
+@pytest.mark.parametrize("direction", ["viewer_blocks", "candidate_blocks"])
+def test_discovery_excludes_blocks_in_both_directions(
+    client, user, db, direction
+):
+    _login(client, user)
+    candidate = _profile(db, name="DiscoveryBlocked", country="Blockland")
+    db.session.commit()
+    if direction == "viewer_blocks":
+        user.block(candidate)
+    else:
+        candidate.block(user)
+
+    assert candidate.id not in _user_ids(_discover(client, "?country=Blockland"))
+
+
+def test_discovery_filters_search_age_gender_and_location(client, user, db):
+    _login(client, user)
+    match = _profile(
+        db,
+        name="Amara",
+        age=31,
+        gender="Female",
+        country="Nigeria",
+        state="Lagos",
+        city="Ikeja",
+    )
+    match.bio = "Enjoys hiking and jazz"
+    excluded = _profile(
+        db,
+        name="Bayo",
+        age=42,
+        gender="Male",
+        country="Nigeria",
+        state="FCT",
+        city="Abuja",
+    )
+    db.session.commit()
+
+    payload = _discover(
+        client,
+        "?search=hiking&age_min=30&age_max=35&gender=female"
+        "&country=Nigeria&state=Lagos&city=Ikeja",
+    )
+
+    assert _user_ids(payload) == [match.id]
+    assert excluded.id not in _user_ids(payload)
+
+
+def test_discovery_recent_newest_and_stable_pagination(client, user, db):
+    _login(client, user)
+    now = utcnow()
+    old_recent = _profile(
+        db,
+        name="OldRecentProfile",
+        country="Sortland",
+        last_seen=now,
+        created_at=now - timedelta(days=10),
+    )
+    new_inactive = _profile(
+        db,
+        name="NewInactiveProfile",
+        country="Sortland",
+        last_seen=now - timedelta(days=2),
+        created_at=now,
+    )
+    for index in range(5):
+        _profile(
+            db,
+            name=f"PagedProfile{index}",
+            country="Pageland",
+            created_at=datetime(2026, 1, 1, 12, 0, 0),
+        )
+    db.session.commit()
+
+    recent_ids = _user_ids(_discover(client, "?country=Sortland&sort=recent"))
+    newest_ids = _user_ids(_discover(client, "?country=Sortland&sort=newest"))
+    page_one = _user_ids(_discover(client, "?country=Pageland&per_page=2&page=1"))
+    page_two = _user_ids(_discover(client, "?country=Pageland&per_page=2&page=2"))
+
+    assert recent_ids.index(old_recent.id) < recent_ids.index(new_inactive.id)
+    assert newest_ids.index(new_inactive.id) < newest_ids.index(old_recent.id)
+    assert not set(page_one).intersection(page_two)
+    assert page_one == sorted(page_one, reverse=True)
+    assert page_two == sorted(page_two, reverse=True)
+
+
+def test_discovery_relationship_state_is_bulk_loaded(client, user, db):
+    _login(client, user)
+    friend = _profile(db, name="FriendProfile", country="Relationland")
+    outgoing = _profile(db, name="OutgoingProfile", country="Relationland")
+    incoming = _profile(db, name="IncomingProfile", country="Relationland")
+    user.friends.append(friend)
+    db.session.add_all(
+        [
+            FriendRequest(sender_id=user.id, receiver_id=friend.id, status="pending"),
+            FriendRequest(sender_id=user.id, receiver_id=outgoing.id, status="pending"),
+            FriendRequest(sender_id=incoming.id, receiver_id=user.id, status="pending"),
+        ]
+    )
+    db.session.commit()
+
+    users_by_id = {
+        item["id"]: item
+        for item in _discover(client, "?country=Relationland")["users"]
+    }
+
+    assert users_by_id[friend.id]["relationship"] == "friends"
+    assert users_by_id[friend.id]["message_url"] == f"/user_dashboard?chat={friend.id}"
+    assert users_by_id[outgoing.id]["relationship"] == "sent"
+    assert users_by_id[incoming.id]["relationship"] == "received"
+
+
+def test_discovery_queries_are_bounded_and_request_api_keeps_its_contract(
+    client, user, db
+):
+    _login(client, user)
+    package = _package(db)
+    request_owner = _profile(db, name="PaidRequestOwner", country="Contractland")
+    paid_request = _request(db, package, request_owner)
+    for index in range(12):
+        _profile(db, name=f"BoundedProfile{index}", country="Boundedland")
+    db.session.commit()
+
+    request_payload = _browse(client, "?country=Contractland")
+    assert _ids(request_payload) == [paid_request.id]
+    assert "requests" in request_payload
+    assert "users" not in request_payload
+
+    select_statements = []
+
+    def record_select(_connection, _cursor, statement, _parameters, _context, _many):
+        if statement.lstrip().upper().startswith("SELECT"):
+            select_statements.append(statement)
+
+    event.listen(db.engine, "before_cursor_execute", record_select)
+    try:
+        discovery_payload = _discover(client, "?country=Boundedland&per_page=12")
+    finally:
+        event.remove(db.engine, "before_cursor_execute", record_select)
+
+    assert len(discovery_payload["users"]) == 12
+    assert len(select_statements) <= 5

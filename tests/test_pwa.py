@@ -91,9 +91,32 @@ def test_network_resilience_script_is_loaded_by_base_template():
 def test_foreground_push_feedback_is_loaded_from_the_shared_base_template():
     source = (PROJECT_ROOT / "templates" / "base.html").read_text()
 
+    assert "assets/js/notification_sound.js" in source
     assert "assets/js/foreground_push.js" in source
-    assert "v='foreground-native-2'" in source
+    assert source.count("v='foreground-native-3'") == 2
     assert "v='network-resilience-1'" in source
+
+
+def test_dashboard_exposes_accessible_persisted_sound_controls():
+    dashboard = (PROJECT_ROOT / "templates" / "user_dashboard.html").read_text()
+    controller = (
+        PROJECT_ROOT / "static" / "assets" / "js" / "notification_sound.js"
+    ).read_text()
+
+    assert dashboard.count('data-notification-sound-toggle') == 2
+    assert dashboard.count('role="switch"') >= 2
+    assert "kimbela_notification_sounds" in controller
+    assert "localStorage" in controller
+    assert "new Audio(SOUND_URL)" in controller
+    assert controller.count("new Audio(") == 1
+
+
+def test_foreground_notification_sound_is_small_and_locally_served(client):
+    response = client.get("/static/assets/audio/kimbela-notification.wav")
+
+    assert response.status_code == 200
+    assert response.data.startswith(b"RIFF")
+    assert len(response.data) < 16 * 1024
 
 
 def test_dashboard_feed_uses_native_lazy_loading_for_appended_content():

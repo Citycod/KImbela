@@ -144,8 +144,8 @@
             {{ post.reactions_count }} reactions
         </span>
         <span id="comment-count-{{ post.id }}" class="flex items-center gap-1">
-            <i class="fas fa-comment text-green-600"></i>
-            {{ post.comments_count }} comments
+            <img src="{{ url_for('static', filename='assets/img/microphone2.png') }}" alt="" class="h-4 w-4 object-contain" aria-hidden="true">
+            {{ post.comments_count }} Chimes
         </span>
     </div>
 
@@ -181,7 +181,7 @@
             </div>
             {% endfor %}
             {% else %}
-            <p class="text-center text-gray-400 text-xs py-3">No comments yet. Be the first to comment!</p>
+            <p class="text-center text-gray-400 text-xs py-3">No Chimes yet. Be the first to Chime!</p>
             {% endif %}
         </div>
 
@@ -192,7 +192,7 @@
         <!--                 class="w-6 h-6 rounded-full object-cover">-->
         <!--            <div class="flex-1 relative">-->
         <!--                <input type="text"-->
-        <!--                       placeholder="Write a comment..."-->
+        <!--                       placeholder="Write a Chime..."-->
         <!--                       class="w-full text-xs px-3 py-2 bg-white rounded-full border border-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"-->
         <!--                       onkeypress="if(event.key === 'Enter') addComment({{ post.id }}, this)">-->
         <!--                <button onclick="addComment({{ post.id }}, this.previousElementSibling)"-->

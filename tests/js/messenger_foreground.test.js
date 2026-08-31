@@ -42,6 +42,7 @@ class FakeElement {
 }
 
 function createRuntime() {
+  const soundCalls = [];
   const body = new FakeElement();
   const elements = {
     chatArea: new FakeElement({ hidden: true }),
@@ -76,6 +77,9 @@ function createRuntime() {
   };
   let assignedUrl = '';
   const window = {
+    KimbelaNotificationSound: {
+      play(eventType) { soundCalls.push(eventType); return Promise.resolve(true); },
+    },
     currentUserId: 1,
     defaultAvatar: '/static/default-avatar.png',
     location: {
@@ -114,27 +118,31 @@ function createRuntime() {
     elements,
     getAssignedUrl: () => assignedUrl,
     serviceWorkerHandlers,
+    soundCalls,
     window,
   };
 }
 
-test('visible app shows lightweight feedback for message, social, or birthday push', () => {
+test('visible app shows lightweight Chime feedback with icon, copy, timestamp, and sound', () => {
   const runtime = createRuntime();
 
   assert.equal(runtime.window.KimbelaForegroundPush.show({
-    title: 'New comment',
-    body: 'Someone commented on your post.',
+    title: 'New Chime',
+    body: 'Someone chimed on your post.',
     url: '/post/example#comment-2',
+    eventType: 'chime',
   }), true);
 
   assert.equal(runtime.body.children.length, 1);
   const copy = runtime.body.children[0].children[0].children[0];
-  assert.equal(copy.children[0].textContent, 'New comment');
+  assert.equal(copy.children[0].children[0].src, '/static/assets/img/microphone2.png');
+  assert.equal(copy.children[0].children[1].textContent, 'New Chime');
   assert.equal(
     copy.children[1].textContent,
-    'Someone commented on your post.',
+    'Someone chimed on your post.',
   );
   assert.ok(copy.children[2].textContent);
+  assert.deepEqual(runtime.soundCalls, ['chime']);
 });
 
 test('duplicate delivery of the same foreground event renders one toast', () => {
@@ -191,6 +199,25 @@ test('exact open conversation suppresses only the extra toast', async () => {
     url: '/user_dashboard?chat=13',
   }), false);
   assert.equal(runtime.body.children.length, 0);
+  assert.deepEqual(runtime.soundCalls, []);
+});
+
+test('foreground message includes sender avatar and one message sound', () => {
+  const runtime = createRuntime();
+
+  assert.equal(runtime.window.KimbelaForegroundPush.show({
+    title: 'New Message from Ada',
+    body: 'Hello',
+    avatar: '/avatar/ada.png',
+    url: '/user_dashboard?chat=13',
+    tag: 'message-13',
+    eventType: 'message',
+  }), true);
+
+  const row = runtime.body.children[0].children[0];
+  assert.equal(row.children[0].src, '/avatar/ada.png');
+  assert.equal(runtime.soundCalls.length, 1);
+  assert.equal(runtime.soundCalls[0], 'message');
 });
 
 test('different conversation still shows foreground feedback', () => {

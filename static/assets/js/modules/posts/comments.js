@@ -116,24 +116,24 @@ class CommentSystem {
                 this.updateCommentCount(postId, 1, 'add');
 
                 // Show success message
-                Toast.show('Comment added!', 'success');
+                Toast.show('Chime added!', 'success');
 
                 // Scroll to the new comment
                 setTimeout(() => {
                     div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 }, 100);
             } else {
-                Toast.show(data.error || 'Failed to add comment', 'danger');
+                Toast.show(data.error || 'Failed to add Chime', 'danger');
             }
         } catch (error) {
 
             if (error.message.includes('log in')) {
-                Toast.show('Please log in again to comment', 'warning');
+                Toast.show('Please log in again to Chime', 'warning');
                 setTimeout(() => {
                     window.location.href = '/login';
                 }, 2000);
             } else {
-                Toast.show('Failed to add comment: ' + error.message, 'danger');
+                Toast.show('Failed to add Chime: ' + error.message, 'danger');
             }
         } finally {
             // Restore input state
@@ -144,7 +144,7 @@ class CommentSystem {
     }
 
     async deleteComment(commentId, postId = null) {
-        if (!confirm('Delete this comment?')) return;
+        if (!confirm('Delete this Chime?')) return;
 
         try {
             const response = await fetch(`/delete_comment/${commentId}`, {
@@ -169,7 +169,7 @@ class CommentSystem {
                     this.updateCommentCount(postId, 1, 'subtract');
                 }
 
-                Toast.show('Comment deleted', 'info');
+                Toast.show('Chime deleted', 'info');
             } else {
                 Toast.show(data.error || 'Failed', 'danger');
             }
@@ -193,7 +193,7 @@ class CommentSystem {
         }
 
         // Update both the text and the data attribute
-        countElement.textContent = `${currentCount} ${currentCount === 1 ? 'comment' : 'comments'}`;
+        countElement.textContent = `${currentCount} ${currentCount === 1 ? 'Chime' : 'Chimes'}`;
         countElement.setAttribute('data-total-comments', currentCount);
     }
 
@@ -250,7 +250,7 @@ class CommentSystem {
                 if (btn && btn.tagName === 'BUTTON') btn.remove();
             }
         } catch (error) {
-            Toast.show('Failed to load comments', 'danger');
+            Toast.show('Failed to load Chimes', 'danger');
         }
     }
 }

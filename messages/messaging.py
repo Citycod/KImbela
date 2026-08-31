@@ -160,7 +160,7 @@ def get_friends_for_messaging():
             unread_count = Message.query.filter(
                 Message.sender_id == friend.id,
                 Message.receiver_id == current_user.id,
-                Message.status == "delivered",
+                Message.status.in_(("sent", "delivered")),
             ).count()
 
             # Get friend's online status
@@ -447,6 +447,7 @@ def send_message():
                 "url": url_for("user.user_dashboard", chat=current_user.id),
                 "avatar": current_user.profile_pic
                 or url_for("static", filename="assets/img/default-avatar.png"),
+                "event_type": "message",
                 "tag": f"message-{current_user.id}",
                 "renotify": True,
             }
@@ -523,8 +524,9 @@ def upload_file():
 def get_unread_message_count():
     """Get total unread message count"""
     try:
-        unread_count = Message.query.filter_by(
-            receiver_id=current_user.id, status="delivered"
+        unread_count = Message.query.filter(
+            Message.receiver_id == current_user.id,
+            Message.status.in_(("sent", "delivered")),
         ).count()
 
         return jsonify({"success": True, "unread_count": unread_count})
@@ -786,9 +788,9 @@ def delete_message(message_id):
 def get_unread_count():
     try:
         # Use receiver_id and status != 'read'
-        unread_count = Message.query.filter_by(
-            receiver_id=current_user.id,
-            status="sent",  # or whatever status indicates "unread"
+        unread_count = Message.query.filter(
+            Message.receiver_id == current_user.id,
+            Message.status.in_(("sent", "delivered")),
         ).count()
         return jsonify({"unread_count": unread_count})
     except Exception as e:
@@ -821,10 +823,10 @@ def mark_message_read(message_id):
 def mark_conversation_read(sender_id):
     try:
         # Mark all unread messages from this sender as read
-        messages = Message.query.filter_by(
-            sender_id=sender_id,
-            receiver_id=current_user.id,
-            status="sent",  # assuming 'sent' means unread
+        messages = Message.query.filter(
+            Message.sender_id == sender_id,
+            Message.receiver_id == current_user.id,
+            Message.status.in_(("sent", "delivered")),
         ).all()
 
         for message in messages:

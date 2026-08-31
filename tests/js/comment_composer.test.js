@@ -85,7 +85,7 @@ test('feed and group composers render emoji and accessible send controls', () =>
     assert.match(template, /comment-composer-emoji/);
     assert.match(template, /aria-label="Add emoji"/);
     assert.match(template, /comment-composer-send/);
-    assert.match(template, /aria-label="Send comment"/);
+    assert.match(template, /aria-label="Send Chime"/);
   }
 });
 
@@ -103,7 +103,7 @@ test('emoji insertion preserves text and uses the current cursor position', () =
   assert.equal(input.focused, true);
 });
 
-test('send is disabled for empty and whitespace-only comments', () => {
+test('send is disabled for empty and whitespace-only Chimes', () => {
   const { api } = makeRuntime();
   const empty = makeComposer('');
   const whitespace = makeComposer('   ');
@@ -126,10 +126,10 @@ test('successful submission uses the post id and clears the input', async () => 
       return true;
     },
   });
-  const state = makeComposer(' A comment ');
+  const state = makeComposer(' A Chime ');
 
   assert.equal(await api.submit(state.composer), true);
-  assert.deepEqual(calls, [{ postId: '42', content: 'A comment' }]);
+  assert.deepEqual(calls, [{ postId: '42', content: 'A Chime' }]);
   assert.equal(state.input.value, '');
   assert.equal(state.composer.dataset.submitting, 'false');
 });
@@ -155,7 +155,7 @@ test('duplicate submission is prevented while the first request is active', asyn
   assert.equal(await first, true);
 });
 
-test('offline submission is blocked and preserves the typed comment', async () => {
+test('offline submission is blocked and preserves the typed Chime', async () => {
   let called = false;
   const { api, feedback } = makeRuntime({
     online: false,
@@ -167,7 +167,7 @@ test('offline submission is blocked and preserves the typed comment', async () =
   assert.equal(called, false);
   assert.equal(state.input.value, 'Keep this');
   assert.deepEqual(feedback, [{
-    message: "You're offline. Reconnect to post your comment.",
+    message: "You're offline. Reconnect to post your Chime.",
     type: 'warning',
   }]);
 });

@@ -233,7 +233,7 @@ class PostSystem {
             modalBody.innerHTML = `
                 <div class="flex items-center justify-center p-8">
                     <span class="tiny-loader md"></span>
-                    <span class="ml-3 text-gray-500">Loading comments...</span>
+                    <span class="ml-3 text-gray-500">Loading Chimes...</span>
                 </div>
             `;
         }
@@ -248,7 +248,7 @@ class PostSystem {
             this.displayCommentsModal(comments);
         } catch (error) {
             if (modalBody) {
-                modalBody.innerHTML = '<div class="text-center py-8 text-red-500">Failed to load comments</div>';
+                modalBody.innerHTML = '<div class="text-center py-8 text-red-500">Failed to load Chimes</div>';
             }
         }
     }
@@ -260,7 +260,7 @@ class PostSystem {
             body.innerHTML = '';
 
             if (!comments || comments.length === 0) {
-                body.innerHTML = '<div class="text-center py-8 text-gray-500">No comments yet</div>';
+                body.innerHTML = '<div class="text-center py-8 text-gray-500">No Chimes yet</div>';
                 return;
             }
 

@@ -3,7 +3,7 @@
 {% block head %}
 <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Matchmaking Requests - Kimbela</title>
+    <title>Browse Matches - Kimbela</title>
     <meta name="csrf-token" content="{{ csrf_token }}">
 
     <!-- Tailwind CSS -->
@@ -880,7 +880,7 @@
       <div class="container mx-auto px-3 py-2">
         <div class="flex justify-between items-center">
           <div class="flex items-center gap-2">
-            <h1 class="text-lg font-bold text-gradient">Kimbela Matchmaking</h1>
+            <h1 class="text-lg font-bold text-gradient">Browse Matches</h1>
           </div>
           <div class="flex items-center gap-2" id="headerButtons">
             <a href="{{ url_for('match.create_request') }}" class="btn btn-rose" id="createButton">
@@ -928,8 +928,8 @@
         <div class="match-toolbar mb-3" aria-label="Browse controls">
           <div class="relative min-w-0">
             <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary"></i>
-            <label class="sr-only" for="searchInput">Search matchmaking requests</label>
-            <input type="search" id="searchInput" placeholder="Search requests..." class="form-input pl-9 w-full">
+            <label class="sr-only" for="searchInput">Search profiles</label>
+          <input type="search" id="searchInput" placeholder="Search profiles..." class="form-input pl-9 w-full">
           </div>
           <button id="filterToggle" type="button"
                   class="btn btn-outline justify-center whitespace-nowrap"
@@ -938,8 +938,8 @@
             Filters
             <span id="activeFilterCount" class="hidden rounded-full bg-rose-gold px-1.5 py-0.5 text-xs text-white"></span>
           </button>
-          <label class="sr-only" for="sortSelect">Sort matchmaking requests</label>
-          <select id="sortSelect" class="form-select match-sort" aria-label="Sort matchmaking requests">
+          <label class="sr-only" for="sortSelect">Sort match profiles</label>
+          <select id="sortSelect" class="form-select match-sort" aria-label="Sort match profiles">
             <option value="recommended">Recommended</option>
             <option value="recent">Recently Active</option>
             <option value="newest">Newest</option>
@@ -1028,9 +1028,9 @@
           <!-- Sort and View Options -->
           <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 compact-space">
             <div>
-              <h2 class="text-lg font-bold elegant-heading">Matchmaking Requests</h2>
+              <h2 class="text-lg font-bold elegant-heading">Find Your Match</h2>
               <div class="flex flex-wrap items-center gap-2 mt-0.5">
-                <p class="text-xs text-text-secondary" id="resultsCount">Loading requests...</p>
+                <p class="text-xs text-text-secondary" id="resultsCount">Loading profiles...</p>
                 <span id="filteredChip" class="hidden items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-xs font-semibold text-rose-700">
                   <span class="filtered-chip-spinner hidden h-3 w-3 rounded-full border border-rose-400 border-t-transparent animate-spin"></span>
                   Filtered results
@@ -1063,7 +1063,7 @@
           <!-- Loading State -->
           <div id="loadingState" class="text-center py-8">
             <div class="loader-spinner mx-auto mb-3"></div>
-            <p class="text-xs text-text-secondary font-medium">Loading matchmaking requests...</p>
+            <p class="text-xs text-text-secondary font-medium">Loading matches...</p>
             <p class="text-xs text-text-secondary/70 mt-1">Finding the perfect connections for you</p>
           </div>
 
@@ -1072,9 +1072,9 @@
             <div class="w-16 h-16 bg-gradient-to-br from-rose-light to-champagne rounded-full flex items-center justify-center mx-auto mb-4 shadow-soft">
               <i class="bi bi-heart text-rose-gold text-xl"></i>
             </div>
-            <h3 class="text-base font-bold elegant-heading mb-2">No requests found</h3>
+            <h3 class="text-base font-bold elegant-heading mb-2">No matches found</h3>
             <p class="text-xs text-text-secondary mb-4 max-w-md mx-auto">
-              Try adjusting your filters or check back later for new matchmaking requests.
+              Try adjusting your filters or check back later for new people to discover.
             </p>
             <button id="clearAllFilters" class="btn btn-rose">
               <i class="bi bi-filter-circle"></i>
@@ -1709,7 +1709,7 @@
           if (currentFilters.city) params.append('city', currentFilters.city);
           if (currentFilters.sort) params.append('sort', currentFilters.sort);
 
-          const response = await fetch(`/api/requests?${params}`, {
+          const response = await fetch(`/api/browse/users?${params}`, {
             headers: { 'Content-Type': 'application/json' }
           });
 
@@ -1717,19 +1717,18 @@
 
           if (data.success) {
             hasMore = data.has_next;
-            renderRequests(data.requests);
+            renderRequests(data.users);
 
-            if (data.requests.length === 0 && currentPage === 1) {
+            if (data.users.length === 0 && currentPage === 1) {
               document.getElementById('emptyState').classList.remove('hidden');
             }
 
-            updateResultsCount(data.requests.length, data.total);
-<!--            populateLocationFilter(data.requests);-->
+            updateResultsCount(data.users.length, data.total);
           } else {
-            showError('Failed to load requests');
+            showError('Failed to load matches');
           }
         } catch (error) {
-          showError('Failed to load requests');
+          showError('Failed to load matches');
         } finally {
           document.getElementById('loadingState').classList.add('hidden');
           isLoading = false;
@@ -1756,12 +1755,60 @@
           return;
         }
         
-        requests.forEach(request => {
-          const requestElement = createRequestElement(request);
-          container.appendChild(requestElement);
+        requests.forEach(profile => {
+          container.appendChild(createProfileElement(profile));
         });
         
         document.getElementById('loadMoreContainer').classList.toggle('hidden', !hasMore);
+      }
+
+      function escapeBrowseValue(value) {
+        const holder = document.createElement('span');
+        holder.textContent = value == null ? '' : String(value);
+        return holder.innerHTML;
+      }
+
+      function createProfileElement(profile) {
+        const div = document.createElement('article');
+        const profileUrl = escapeBrowseValue(profile.profile_url);
+        const messageUrl = profile.message_url ? escapeBrowseValue(profile.message_url) : '';
+        const interests = Array.isArray(profile.interests) ? profile.interests : [];
+        const relationshipAction = profile.relationship === 'friends'
+          ? `<a href="${messageUrl}" class="btn btn-primary flex-1 justify-center" aria-label="Message ${escapeBrowseValue(profile.full_name)}"><i class="bi bi-chat-dots"></i> Message</a>`
+          : profile.relationship === 'sent'
+            ? '<span class="btn btn-outline flex-1 justify-center opacity-70" aria-label="Friend request pending"><i class="bi bi-clock"></i> Request sent</span>'
+            : `<a href="${profileUrl}" class="btn btn-rose flex-1 justify-center"><i class="bi bi-person-plus"></i> ${profile.relationship === 'received' ? 'Respond' : 'Connect'}</a>`;
+
+        div.className = 'floral-card overflow-hidden';
+        div.dataset.profileId = String(profile.id);
+        div.innerHTML = `
+          <div class="matchmaking-header">
+            <div class="flex items-center gap-3">
+              <a href="${profileUrl}" class="profile-image-container relative flex-shrink-0">
+                <img src="${escapeBrowseValue(profile.profile_pic)}" alt="${escapeBrowseValue(profile.full_name)}"
+                  class="w-14 h-14 rounded-full object-cover border-2 border-white shadow-soft" loading="lazy">
+              </a>
+              <div class="min-w-0 flex-1">
+                <h3 class="truncate font-bold text-base text-primary"><a href="${profileUrl}" class="hover:underline">${escapeBrowseValue(profile.full_name)}</a></h3>
+                <p class="text-xs text-text-secondary"><i class="bi bi-geo-alt text-rose-gold"></i> ${escapeBrowseValue(profile.location)}</p>
+                <div class="mt-1 flex flex-wrap gap-1">
+                  <span class="rounded-full bg-rose-50 px-2 py-0.5 text-xs text-rose-700">${escapeBrowseValue(profile.age)} years</span>
+                  <span class="rounded-full bg-purple-50 px-2 py-0.5 text-xs text-purple-700">${escapeBrowseValue(profile.gender)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="matchmaking-body">
+            <p class="mb-3 line-clamp-3 text-xs leading-relaxed text-text-primary">${escapeBrowseValue(profile.bio || 'Open this profile to learn more.')}</p>
+            ${interests.length ? `<div class="flex flex-wrap gap-1">${interests.slice(0, 4).map(interest => `<span class="interest-tag rose">${escapeBrowseValue(interest)}</span>`).join('')}</div>` : ''}
+          </div>
+          <div class="matchmaking-footer">
+            <div class="flex gap-2">
+              <a href="${profileUrl}" class="btn btn-outline flex-1 justify-center"><i class="bi bi-person"></i> View profile</a>
+              ${relationshipAction}
+            </div>
+          </div>`;
+        return div;
       }
 
       function createRequestElement(request) {
@@ -2350,11 +2397,11 @@
         const resultsElement = document.getElementById('resultsCount');
         
         if (currentCount === 0) {
-          resultsElement.textContent = 'No requests found';
+          resultsElement.textContent = 'No matches found';
         } else if (currentCount === totalCount) {
-          resultsElement.textContent = `Showing ${currentCount} requests`;
+          resultsElement.textContent = `Showing ${currentCount} profiles`;
         } else {
-          resultsElement.textContent = `Showing ${currentCount} of ${totalCount} requests`;
+          resultsElement.textContent = `Showing ${currentCount} of ${totalCount} profiles`;
         }
       }
 
