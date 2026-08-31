@@ -129,6 +129,7 @@ def test_http_send_pushes_online_recipient_without_device_conversation_mapping(
             "title": f"New Message from {user.first_name}",
             "body": "Online message",
             "url": f"/user_dashboard?chat={user.id}",
+            "avatar": user.profile_pic,
             "tag": f"message-{user.id}",
             "renotify": True,
         },

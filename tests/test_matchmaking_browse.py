@@ -384,7 +384,15 @@ def test_browse_template_has_reload_safe_mobile_controls(client, user):
     assert response.status_code == 200
     assert b'id="filterToggle"' in response.data
     assert b'id="filtersPanel"' in response.data
+    assert b'id="filterBackdrop"' in response.data
+    assert b'id="activeFilterChips"' in response.data
+    assert response.data.count(b'id="searchInput"') == 1
     assert b"readFiltersFromUrl" in response.data
     assert b"syncFiltersToUrl" in response.data
+    assert b"renderActiveFilterChips" in response.data
     assert b'<option value="recommended">Recommended</option>' in response.data
     assert b'<option value="recent">Recently Active</option>' in response.data
+    assert b'<option value="newest">Newest</option>' in response.data
+    assert b'Age: Youngest First' not in response.data
+    assert b'Age: Oldest First' not in response.data
+    assert b'Quick Stats' not in response.data

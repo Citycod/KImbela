@@ -74,10 +74,11 @@ class NotificationSystem {
             const actorAvatar = actor.avatar || this.defaultAvatar;
             const actorId = actor.id || 0;
             const isFriendRequest = notification.type === 'friend_request';
+            const encodedDestination = encodeURIComponent(notification.url || '');
 
             return `
                 <div class="notification-item p-3 border-b border-gray-100 ${notification.is_read ? '' : 'bg-blue-50 border-l-4 border-l-blue-500'} cursor-pointer"
-                     onclick="NotificationSystem.handleNotificationClick(event, ${notification.id}, '${notification.type}', ${actorId || 0})">
+                     onclick="NotificationSystem.handleNotificationClick(event, ${notification.id}, '${notification.type}', ${actorId || 0}, '${encodedDestination}')">
 
                     <div class="flex items-start space-x-3">
                         <img src="${actorAvatar}" alt="${actorName}" class="w-10 h-10 rounded-full object-cover"
@@ -106,7 +107,7 @@ class NotificationSystem {
         }).join('');
     }
 
-    async handleNotificationClick(event, id, type, actorId) {
+    async handleNotificationClick(event, id, type, actorId, encodedDestination = '') {
         // Prevent action if clicked on Accept/Decline buttons in notification
         if (event.target.closest('.notification-action-btn')) {
             return;
@@ -115,21 +116,23 @@ class NotificationSystem {
         // Mark as read
         await this.markAsRead(id);
 
-        let openFromFriendRequest = false;
-
-        // Special case: if it's a friend request notification, remember that
-        if (type === 'friend_request' && actorId) {
-            openFromFriendRequest = true;
-        }
-
-        // Open profile modal with extra context
-        ProfileSystem.openProfileModal(actorId, openFromFriendRequest);
-
         // Close dropdown
         const dropdownElement = document.getElementById('notificationDropdown');
-        const bsDropdown = bootstrap.Dropdown.getInstance(dropdownElement);
+        const bsDropdown = typeof bootstrap !== 'undefined' && dropdownElement
+            ? bootstrap.Dropdown.getInstance(dropdownElement)
+            : null;
         if (bsDropdown) {
             bsDropdown.hide();
+        }
+
+        const destination = encodedDestination ? decodeURIComponent(encodedDestination) : '';
+        if (destination) {
+            window.location.assign(destination);
+            return;
+        }
+
+        if (type === 'friend_request' && actorId) {
+            ProfileSystem.openProfileModal(actorId, true);
         }
     }
 

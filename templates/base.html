@@ -11,7 +11,20 @@
     <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
     <script src="{{ url_for('static', filename='pwa_init.js') }}" defer></script>
     <script src="{{ url_for('static', filename='assets/js/network_resilience.js', v='network-resilience-1') }}" defer></script>
-    <script src="{{ url_for('static', filename='assets/js/foreground_push.js', v='foreground-feedback-1') }}" defer></script>
+    <script src="{{ url_for('static', filename='assets/js/foreground_push.js', v='foreground-native-2') }}" defer></script>
+    <script src="{{ url_for('static', filename='assets/js/deep_link_focus.js', v='social-deep-link-1') }}" defer></script>
+    <style>
+      .kimbela-deep-link-target {
+        outline: 3px solid rgba(124, 58, 237, 0.55) !important;
+        outline-offset: 4px;
+        border-radius: 12px;
+        background-color: rgba(237, 233, 254, 0.75) !important;
+        transition: outline-color 180ms ease, background-color 180ms ease;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .kimbela-deep-link-target { transition: none; }
+      }
+    </style>
     
     <!-- App Icons -->
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/icons/icon-192x192.png') }}">

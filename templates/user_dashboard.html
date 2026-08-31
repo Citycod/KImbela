@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% set messenger_asset_url = url_for('static', filename='assets/js/messenger.js', v='foreground-feedback-1') %}
+{% set messenger_asset_url = url_for('static', filename='assets/js/messenger.js', v='ux-polish-1') %}
 
 {% block head %}
 <meta charset="UTF-8" />
@@ -19,7 +19,7 @@
   rel="stylesheet" />
 
 <!-- Dashboard Redesign Override -->
-<link href="{{ url_for('static', filename='assets/css/dashboard_redesign.css', v='unread-badge-1') }}"
+<link href="{{ url_for('static', filename='assets/css/dashboard_redesign.css', v='ux-polish-1') }}"
   rel="stylesheet" />
 
 <!-- External CSS -->
@@ -75,7 +75,7 @@
   <div class="flex items-center flex-shrink-0">
     <button
       class="p-2 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors mr-2 md:mr-4 flex items-center justify-center bg-white shadow-sm w-10 h-10"
-      onclick="toggleMobileMenu()">
+      onclick="toggleMobileMenu()" aria-label="Open navigation menu" title="Menu">
       <i class="bi bi-list text-xl"></i>
     </button>
 
@@ -86,10 +86,10 @@
   </div>
 
   <!-- Center: Search bar -->
-  <div id="searchContainer" class="flex justify-center flex-1 min-w-0 mx-4 lg:mx-10 searching mobile-hidden-search">
-    <div class="relative w-full max-w-2xl min-w-0 flex items-center">
+  <div id="searchContainer" class="flex justify-start flex-1 min-w-0 mx-3 lg:ml-6 lg:mr-auto searching mobile-hidden-search">
+    <div class="relative w-full max-w-xl min-w-0 flex items-center">
       <button class="md:hidden p-2 mr-2 text-gray-500 hover:bg-gray-100 rounded-full flex-shrink-0"
-        onclick="toggleMobileSearch()" id="closeMobileSearchBtn" style="display:none;">
+        onclick="toggleMobileSearch()" id="closeMobileSearchBtn" style="display:none;" aria-label="Close search">
         <i class="bi bi-arrow-left text-xl"></i>
       </button>
       <i id="searchIconInner"
@@ -116,21 +116,21 @@
 
     <!-- Mobile Search Toggle -->
     <button class="p-2 rounded-full hover:bg-gray-100 transition-colors md:hidden text-gray-600"
-      onclick="toggleMobileSearch()">
+      onclick="toggleMobileSearch()" aria-label="Open search" title="Search">
       <i class="bi bi-search text-xl"></i>
     </button>
 
     <!-- + Create Button -->
     <button
       class="w-10 h-10 rounded-xl bg-purple-600 hover:bg-purple-700 text-white flex items-center justify-center transition-colors shadow-sm hidden sm:flex"
-      onclick="window.openModal('postModal')">
+      onclick="window.openModal('postModal')" aria-label="Create a post" title="Create post">
       <i class="bi bi-plus-lg text-lg"></i>
     </button>
 
     <!-- Birthdays -->
     <button id="birthdayShortcut" onclick="showBirthdayNotifications()" type="button"
       aria-label="Birthdays, none today" title="Birthdays, none today"
-      class="w-9 h-9 sm:w-10 sm:h-10 rounded-full hover:bg-pink-50 flex items-center justify-center transition-colors relative text-pink-600">
+      class="dashboard-nav-icon w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-pink-50 hover:bg-pink-100 flex items-center justify-center transition-colors relative text-pink-600">
       <i class="bi bi-gift-fill text-xl"></i>
       <span id="birthdayCount"
         class="absolute -top-1 -right-1 bg-pink-600 text-white text-[10px] font-bold rounded-full h-4 min-w-[16px] px-1 hidden items-center justify-center border border-white"
@@ -140,7 +140,7 @@
     <!-- Messenger -->
     <button id="openMessaging" onclick="window.openMessenger()" aria-label="Messages, no unread messages"
       title="Messages, no unread messages"
-      class="w-10 h-10 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors relative text-gray-600">
+      class="dashboard-nav-icon w-10 h-10 rounded-full bg-purple-50 hover:bg-purple-100 flex items-center justify-center transition-colors relative text-gray-600">
       <i class="bi bi-chat-left-dots text-xl text-purple-600"></i>
       <span id="unreadMessagesBadge"
         class="notification-badge message-unread-badge absolute -top-1 -right-1 bg-purple-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center border border-white hidden"
@@ -149,14 +149,14 @@
 
     <!-- Notifications -->
     <div class="dropdown relative">
-      <div
-        class="w-10 h-10 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors cursor-pointer relative text-gray-600"
+      <button type="button" aria-label="Notifications" title="Notifications"
+        class="dashboard-nav-icon w-10 h-10 rounded-full bg-amber-50 hover:bg-amber-100 flex items-center justify-center transition-colors cursor-pointer relative text-gray-600"
         data-kb-toggle="dropdown" id="notificationDropdown">
         <i class="bi bi-bell text-xl text-amber-500"></i>
         <span
           class="notification-badge absolute top-0 -right-1 bg-yellow-400 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center border border-white hidden"
           id="notificationBadge">0</span>
-      </div>
+      </button>
 
       <div
         class="dropdown-menu absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-strong overflow-hidden z-50 hidden"
@@ -2058,7 +2058,7 @@ placement='dashboard-top') %}
 
 <!--  <script src="{{ url_for('static', filename='assets/js/main.js') }}"></script> -->
 {% include 'partials/user_dashboard_pre_scripts.html' %}
-<script src="{{ url_for('static', filename='assets/js/dashboard.js', v='network-resilience-1') }}"></script>
+<script src="{{ url_for('static', filename='assets/js/dashboard.js', v='ux-polish-1') }}"></script>
 <script src="{{ url_for('static', filename='assets/js/comment_composer.js', v='comment-composer-2') }}"></script>
 
 <!-- Floating Corner Widget -->

@@ -138,6 +138,8 @@ test('install successfully precaches every essential offline resource', async ()
     '/static/manifest.json',
     '/static/img/icons/icon-192x192.png',
     '/static/img/icons/icon-512x512.png',
+    '/static/img/icons/icon-maskable-192x192.png',
+    '/static/img/icons/icon-maskable-512x512.png',
   ]]);
 });
 
@@ -181,6 +183,8 @@ test('activation deletes only old Kimbela-owned caches', async () => {
   assert.deepEqual(worker.deletedCaches.sort(), [
     'kimbela-cache-v3',
     'kimbela-precache-v3',
+    'kimbela-precache-v4',
+    'kimbela-static-v4',
   ]);
   assert.equal(worker.getClaimCount(), 1);
 });
@@ -417,6 +421,32 @@ test('notification click focuses an existing app at the destination', async () =
   await clickPromise;
 
   assert.equal(closeCount, 1);
+  assert.equal(focusCount, 1);
+  assert.deepEqual(worker.openedWindows, []);
+});
+
+test('notification click navigates an existing post client to the exact comment anchor', async () => {
+  let navigatedTo = '';
+  let focusCount = 0;
+  const destination = '/post/public-post#comment-42';
+  const client = {
+    url: 'https://kimbela.test/post/public-post',
+    async navigate(url) {
+      navigatedTo = url;
+      return this;
+    },
+    async focus() { focusCount += 1; },
+  };
+  const worker = loadWorker({ windowClients: [client] });
+  let clickPromise;
+
+  worker.handlers.notificationclick({
+    notification: { data: { url: destination }, close() {} },
+    waitUntil: promise => { clickPromise = promise; },
+  });
+  await clickPromise;
+
+  assert.equal(navigatedTo, `https://kimbela.test${destination}`);
   assert.equal(focusCount, 1);
   assert.deepEqual(worker.openedWindows, []);
 });

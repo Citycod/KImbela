@@ -23,12 +23,13 @@ class FakeClassList {
 class FakeElement {
   constructor({ hidden = false } = {}) {
     this.children = [];
+    this.handlers = new Map();
     this.classList = new FakeClassList(hidden ? ['hidden'] : []);
     this.className = '';
     this.style = {};
     this.textContent = '';
   }
-  addEventListener() {}
+  addEventListener(type, handler) { this.handlers.set(type, handler); }
   appendChild(child) { this.children.push(child); child.parent = this; return child; }
   focus() {}
   querySelector() { return null; }
@@ -37,6 +38,7 @@ class FakeElement {
     if (this.parent) this.parent.children = this.parent.children.filter(child => child !== this);
   }
   setAttribute() {}
+  trigger(type) { this.handlers.get(type)?.(); }
 }
 
 function createRuntime() {
@@ -72,10 +74,15 @@ function createRuntime() {
       addEventListener(type, callback) { serviceWorkerHandlers.set(type, callback); },
     },
   };
+  let assignedUrl = '';
   const window = {
     currentUserId: 1,
     defaultAvatar: '/static/default-avatar.png',
-    location: { origin: 'https://kimbela.test', search: '' },
+    location: {
+      origin: 'https://kimbela.test',
+      search: '',
+      assign(url) { assignedUrl = url; },
+    },
   };
   const context = {
     URL,
@@ -101,7 +108,14 @@ function createRuntime() {
     filename: 'static/assets/js/messenger.js',
   });
 
-  return { body, document, elements, serviceWorkerHandlers, window };
+  return {
+    body,
+    document,
+    elements,
+    getAssignedUrl: () => assignedUrl,
+    serviceWorkerHandlers,
+    window,
+  };
 }
 
 test('visible app shows lightweight feedback for message, social, or birthday push', () => {
@@ -114,11 +128,41 @@ test('visible app shows lightweight feedback for message, social, or birthday pu
   }), true);
 
   assert.equal(runtime.body.children.length, 1);
-  assert.equal(runtime.body.children[0].children[0].textContent, 'New comment');
+  const copy = runtime.body.children[0].children[0].children[0];
+  assert.equal(copy.children[0].textContent, 'New comment');
   assert.equal(
-    runtime.body.children[0].children[1].textContent,
+    copy.children[1].textContent,
     'Someone commented on your post.',
   );
+  assert.ok(copy.children[2].textContent);
+});
+
+test('duplicate delivery of the same foreground event renders one toast', () => {
+  const runtime = createRuntime();
+  const notification = {
+    title: 'New message',
+    body: 'Same delivery',
+    url: '/user_dashboard?chat=13',
+    tag: 'message-13',
+  };
+
+  assert.equal(runtime.window.KimbelaForegroundPush.show(notification), true);
+  assert.equal(runtime.window.KimbelaForegroundPush.show(notification), false);
+  assert.equal(runtime.body.children.length, 1);
+});
+
+test('foreground message toast opens the intended conversation', () => {
+  const runtime = createRuntime();
+  runtime.window.KimbelaForegroundPush.show({
+    title: 'New message from Ada',
+    body: 'Hello',
+    url: '/user_dashboard?chat=13',
+    tag: 'message-13',
+  });
+
+  runtime.body.children[0].trigger('click');
+
+  assert.equal(runtime.getAssignedUrl(), '/user_dashboard?chat=13');
 });
 
 test('backgrounded document does not show extra foreground feedback', () => {

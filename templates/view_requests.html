@@ -836,6 +836,41 @@
       h1{
         font-size: 2rem;
       }
+
+      .match-toolbar {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto minmax(150px, 190px);
+        gap: 0.65rem;
+        align-items: center;
+      }
+
+      .match-filter-panel {
+        margin-top: 0.75rem;
+        max-width: 720px;
+      }
+
+      @media (max-width: 767px) {
+        .match-toolbar {
+          grid-template-columns: minmax(0, 1fr) auto;
+        }
+
+        .match-toolbar .match-sort {
+          grid-column: 1 / -1;
+        }
+
+        .match-filter-panel:not(.hidden) {
+          position: fixed;
+          inset: auto 0 0;
+          z-index: 61;
+          max-width: none;
+          max-height: 82vh;
+          overflow-y: auto;
+          padding: 0.75rem;
+          border-radius: 1.25rem 1.25rem 0 0;
+          background: #fff;
+          box-shadow: 0 -14px 40px rgba(31, 41, 55, 0.22);
+        }
+      }
     </style>
 {% endblock %}
 
@@ -889,29 +924,42 @@
 
     <!-- Main Content -->
     <div class="container mx-auto px-3 py-4">
-      <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
-        <!-- Filters Sidebar -->
-        <div class="lg:col-span-1 compact-space">
+      <div>
+        <div class="match-toolbar mb-3" aria-label="Browse controls">
+          <div class="relative min-w-0">
+            <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary"></i>
+            <label class="sr-only" for="searchInput">Search matchmaking requests</label>
+            <input type="search" id="searchInput" placeholder="Search requests..." class="form-input pl-9 w-full">
+          </div>
           <button id="filterToggle" type="button"
-                  class="btn btn-outline w-full lg:hidden justify-center"
+                  class="btn btn-outline justify-center whitespace-nowrap"
                   aria-controls="filtersPanel" aria-expanded="false">
             <i class="bi bi-funnel-fill text-rose-gold"></i>
             Filters
             <span id="activeFilterCount" class="hidden rounded-full bg-rose-gold px-1.5 py-0.5 text-xs text-white"></span>
           </button>
-          <div id="filtersPanel" class="hidden lg:block compact-space">
+          <label class="sr-only" for="sortSelect">Sort matchmaking requests</label>
+          <select id="sortSelect" class="form-select match-sort" aria-label="Sort matchmaking requests">
+            <option value="recommended">Recommended</option>
+            <option value="recent">Recently Active</option>
+            <option value="newest">Newest</option>
+          </select>
+        </div>
+
+        <div id="filterBackdrop" class="hidden fixed inset-0 bg-black/40 md:hidden" style="z-index:60" aria-hidden="true"></div>
+        <div id="filtersPanel" class="match-filter-panel hidden compact-space">
           <!-- Search Filter -->
           <div class="filter-card">
-            <h3 class="font-semibold text-base text-primary mb-3 flex items-center gap-2">
-              <i class="bi bi-funnel-fill text-rose-gold text-sm"></i>
-              Search & Filter
-            </h3>
+            <div class="mb-3 flex items-center justify-between">
+              <h3 class="font-semibold text-base text-primary flex items-center gap-2">
+                <i class="bi bi-funnel-fill text-rose-gold text-sm"></i>
+                Filters
+              </h3>
+              <button id="closeFilters" type="button" class="btn btn-outline px-2 py-1 md:hidden" aria-label="Close filters">
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
             <div class="compact-space">
-              <div>
-                <label class="block text-xs font-medium text-text-secondary mb-1">Search</label>
-                <input type="text" id="searchInput" placeholder="Search requests..." class="form-input">
-              </div>
-              
               <div>
                 <label class="block text-xs font-medium text-text-secondary mb-1">Age Range</label>
                 <div class="flex gap-2">
@@ -973,42 +1021,10 @@
               </div>
             </div>
           </div>
-
-          <!-- Quick Stats -->
-          <div class="filter-card">
-            <h3 class="font-semibold text-base text-primary mb-3 flex items-center gap-2">
-              <i class="bi bi-graph-up text-rose-gold text-sm"></i>
-              Quick Stats
-            </h3>
-            <div class="compact-space text-xs">
-              <div class="flex justify-between items-center py-1 border-b border-border-color/50">
-                <span class="text-text-secondary flex items-center gap-2">
-                  <i class="bi bi-heart text-rose-gold text-xs"></i>
-                  Active Requests
-                </span>
-                <span class="font-bold text-primary text-base" id="activeCount">-</span>
-              </div>
-              <div class="flex justify-between items-center py-1 border-b border-border-color/50">
-                <span class="text-text-secondary flex items-center gap-2">
-                  <i class="bi bi-chat-heart text-sage text-xs"></i>
-                  Total Matches
-                </span>
-                <span class="font-bold text-primary text-base" id="totalMatches">-</span>
-              </div>
-              <div class="flex justify-between items-center py-1">
-                <span class="text-text-secondary flex items-center gap-2">
-                  <i class="bi bi-star text-champagne text-xs"></i>
-                  New This Week
-                </span>
-                <span class="font-bold text-primary text-base" id="newThisWeek">-</span>
-              </div>
-            </div>
-          </div>
-          </div>
         </div>
 
         <!-- Requests Grid -->
-        <div class="lg:col-span-3">
+        <div>
           <!-- Sort and View Options -->
           <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 compact-space">
             <div>
@@ -1020,15 +1036,9 @@
                   Filtered results
                 </span>
               </div>
+              <div id="activeFilterChips" class="mt-2 flex flex-wrap gap-1.5" aria-live="polite"></div>
             </div>
             <div class="flex items-center gap-2">
-              <select id="sortSelect" class="form-select">
-                <option value="recommended">Recommended</option>
-                <option value="recent">Recently Active</option>
-                <option value="newest">Newest First</option>
-                <option value="age_asc">Age: Youngest First</option>
-                <option value="age_desc">Age: Oldest First</option>
-              </select>
               <div class="flex bg-gradient-to-r from-rose-light to-champagne rounded-lg p-0.5">
                 <button id="gridView" class="p-1 rounded-md bg-white shadow-soft">
                   <i class="bi bi-grid-3x3-gap text-rose-gold text-xs"></i>
@@ -1417,7 +1427,9 @@
         document.getElementById('minAgeFilter').value = currentFilters.minAge;
         document.getElementById('maxAgeFilter').value = currentFilters.maxAge;
         document.getElementById('genderFilter').value = currentFilters.gender;
-        document.getElementById('sortSelect').value = currentFilters.sort;
+        document.getElementById('sortSelect').value = ['recommended', 'recent', 'newest'].includes(currentFilters.sort)
+          ? currentFilters.sort
+          : 'recommended';
       }
 
       function activeFilterCount() {
@@ -1450,6 +1462,59 @@
           countBadge.textContent = count;
           countBadge.classList.toggle('hidden', count === 0);
         }
+        renderActiveFilterChips();
+      }
+
+      function renderActiveFilterChips() {
+        const container = document.getElementById('activeFilterChips');
+        if (!container) return;
+        container.replaceChildren();
+
+        const filters = [];
+        if (currentFilters.search) filters.push({ label: `Search: ${currentFilters.search}`, keys: ['search'] });
+        if (currentFilters.minAge || currentFilters.maxAge) {
+          const ageLabel = currentFilters.minAge && currentFilters.maxAge
+            ? `Age ${currentFilters.minAge}-${currentFilters.maxAge}`
+            : currentFilters.minAge ? `Age ${currentFilters.minAge}+` : `Age up to ${currentFilters.maxAge}`;
+          filters.push({ label: ageLabel, keys: ['minAge', 'maxAge'] });
+        }
+        if (currentFilters.gender) filters.push({ label: `Gender: ${currentFilters.gender}`, keys: ['gender'] });
+        if (currentFilters.country) filters.push({ label: `Country: ${currentFilters.country}`, keys: ['country', 'state', 'city'] });
+        if (currentFilters.state) filters.push({ label: `State: ${currentFilters.state}`, keys: ['state', 'city'] });
+        if (currentFilters.city) filters.push({ label: `City: ${currentFilters.city}`, keys: ['city'] });
+
+        filters.forEach((filter) => {
+          const chip = document.createElement('span');
+          chip.className = 'inline-flex items-center gap-1 rounded-full border border-rose-200 bg-white px-2 py-1 text-xs font-medium text-rose-700';
+          chip.append(document.createTextNode(filter.label));
+          const remove = document.createElement('button');
+          remove.type = 'button';
+          remove.className = 'rounded-full px-1 hover:bg-rose-100';
+          remove.setAttribute('aria-label', `Remove ${filter.label} filter`);
+          remove.textContent = '×';
+          remove.addEventListener('click', () => {
+            filter.keys.forEach((key) => { currentFilters[key] = ''; });
+            if (filter.keys.includes('search')) document.getElementById('searchInput').value = '';
+            if (filter.keys.includes('minAge')) document.getElementById('minAgeFilter').value = '';
+            if (filter.keys.includes('maxAge')) document.getElementById('maxAgeFilter').value = '';
+            if (filter.keys.includes('gender')) document.getElementById('genderFilter').value = '';
+            if (filter.keys.includes('country')) document.getElementById('filter_country_select').value = '';
+            if (filter.keys.includes('state')) {
+              const stateSelect = document.getElementById('filter_state_select');
+              stateSelect.innerHTML = '<option value="">Any State</option>';
+              stateSelect.disabled = true;
+            }
+            if (filter.keys.includes('city')) {
+              const citySelect = document.getElementById('filter_city_select');
+              citySelect.innerHTML = '<option value="">Any City</option>';
+              citySelect.disabled = true;
+            }
+            syncFiltersToUrl();
+            reloadRequests();
+          });
+          chip.appendChild(remove);
+          container.appendChild(chip);
+        });
       }
 
       document.addEventListener('DOMContentLoaded', function() {
@@ -1457,7 +1522,6 @@
         initializeEventListeners();
         checkActiveSubscription();
         loadRequests();
-        updateStats();
       });
 
       async function checkActiveSubscription() {
@@ -1491,11 +1555,23 @@
         document.getElementById('gridView').addEventListener('click', () => setView('grid'));
         document.getElementById('listView').addEventListener('click', () => setView('list'));
 
+        const closeFilterPanel = () => {
+          const panel = document.getElementById('filtersPanel');
+          panel.classList.add('hidden');
+          document.getElementById('filterBackdrop').classList.add('hidden');
+          document.getElementById('filterToggle').setAttribute('aria-expanded', 'false');
+        };
         document.getElementById('filterToggle').addEventListener('click', function() {
           const panel = document.getElementById('filtersPanel');
           const willOpen = panel.classList.contains('hidden');
           panel.classList.toggle('hidden', !willOpen);
+          document.getElementById('filterBackdrop').classList.toggle('hidden', !willOpen);
           this.setAttribute('aria-expanded', String(willOpen));
+        });
+        document.getElementById('closeFilters').addEventListener('click', closeFilterPanel);
+        document.getElementById('filterBackdrop').addEventListener('click', closeFilterPanel);
+        document.addEventListener('keydown', (event) => {
+          if (event.key === 'Escape') closeFilterPanel();
         });
 
         // Sort change
@@ -1569,6 +1645,7 @@
           reloadRequests();
           if (window.matchMedia('(max-width: 1023px)').matches) {
             document.getElementById('filtersPanel').classList.add('hidden');
+            document.getElementById('filterBackdrop').classList.add('hidden');
             document.getElementById('filterToggle').setAttribute('aria-expanded', 'false');
           }
       }
@@ -2266,20 +2343,6 @@
           }
         } catch (error) {
           showError('Failed to save profile');
-        }
-      }
-
-      async function updateStats() {
-        try {
-          const response = await fetch('/stats');
-          const data = await response.json();
-          
-          if (data.success) {
-            document.getElementById('activeCount').textContent = data.stats.total_requests;
-            document.getElementById('totalMatches').textContent = data.stats.total_matches;
-            document.getElementById('newThisWeek').textContent = data.stats.new_this_week;
-          }
-        } catch (error) {
         }
       }
 

@@ -1,12 +1,14 @@
 const KIMBELA_CACHE_PREFIX = 'kimbela-';
-const PRECACHE_NAME = 'kimbela-precache-v4';
-const STATIC_CACHE_NAME = 'kimbela-static-v4';
+const PRECACHE_NAME = 'kimbela-precache-v5';
+const STATIC_CACHE_NAME = 'kimbela-static-v5';
 const OFFLINE_URL = '/offline';
 const ESSENTIAL_PRECACHE_URLS = [
   OFFLINE_URL,
   '/static/manifest.json',
   '/static/img/icons/icon-192x192.png',
   '/static/img/icons/icon-512x512.png',
+  '/static/img/icons/icon-maskable-192x192.png',
+  '/static/img/icons/icon-maskable-512x512.png',
 ];
 
 self.addEventListener('install', event => {
@@ -113,6 +115,8 @@ self.addEventListener('push', event => {
                 body: options.body,
                 url: options.data.url,
                 tag: options.tag || '',
+                avatar: data.avatar || '',
+                timestamp: options.timestamp,
               },
             });
           }
@@ -154,17 +158,27 @@ self.addEventListener('pushsubscriptionchange', event => {
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   const urlToOpen = event.notification.data?.url || '/';
+  const targetUrl = new URL(urlToOpen, self.location.origin);
   
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windowClients => {
-      // Check if there is already a window/tab open with the target URL
       for (let i = 0; i < windowClients.length; i++) {
         const client = windowClients[i];
-        if (client.url.includes(urlToOpen) && 'focus' in client) {
+        const clientUrl = new URL(client.url);
+        const sameDestination = clientUrl.origin === targetUrl.origin
+          && clientUrl.pathname === targetUrl.pathname
+          && clientUrl.search === targetUrl.search;
+        if (sameDestination && 'focus' in client) {
+          if ('navigate' in client && client.url !== targetUrl.href) {
+            return client.navigate(targetUrl.href).then(navigatedClient => (
+              navigatedClient && 'focus' in navigatedClient
+                ? navigatedClient.focus()
+                : client.focus()
+            ));
+          }
           return client.focus();
         }
       }
-      // If not, open a new window/tab
       if (clients.openWindow) {
         return clients.openWindow(urlToOpen);
       }

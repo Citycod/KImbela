@@ -904,6 +904,60 @@ body.has-top-banner .hero-ad-wrap {
   display: none !important;
 }
 
+/* ── FINAL FEED POLISH ── */
+.dashboard-nav-icon {
+  border: 1px solid rgba(124, 58, 237, 0.08);
+}
+
+.dashboard-nav-icon:focus-visible,
+.kb-composer-input:focus-visible,
+.post-card button:focus-visible,
+.post-card a:focus-visible {
+  outline: 3px solid rgba(124, 58, 237, 0.35);
+  outline-offset: 2px;
+}
+
+.kb-composer {
+  box-shadow: 0 3px 12px rgba(31, 24, 54, 0.05);
+}
+
+.kb-composer-input:focus-visible {
+  background: #fff;
+  border-color: var(--kb-primary-200);
+}
+
+.post-card {
+  border-radius: 18px !important;
+  box-shadow: 0 2px 10px rgba(31, 24, 54, 0.055) !important;
+}
+
+.post-card:hover {
+  box-shadow: 0 6px 18px rgba(31, 24, 54, 0.085) !important;
+}
+
+.post-card img,
+.post-card video {
+  max-width: 100%;
+}
+
+@media (max-width: 640px) {
+  .kb-main-content,
+  .post-card,
+  .kb-composer {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .post-card,
+  .kb-composer {
+    border-radius: 14px !important;
+  }
+
+  .dashboard-nav-icon {
+    flex: 0 0 auto;
+  }
+}
+
 /* ── SMOOTH TRANSITIONS ── */
 .kb-left-sidebar *,
 .kb-right-sidebar * {

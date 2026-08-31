@@ -28,8 +28,18 @@ def create_user(db, label):
 
 def login_user(client, user):
     with client.session_transaction() as session:
+        session.clear()
         session["_user_id"] = str(user.id)
         session["_fresh"] = True
+
+
+def notification_payload_for(client, user):
+    from flask_login import login_user as flask_login_user
+    from users.user import get_notifications
+
+    with client.application.test_request_context("/notifications"):
+        flask_login_user(user)
+        return get_notifications().get_json()
 
 
 def create_post(db, author, *, group=None, content="Social post"):
@@ -85,7 +95,8 @@ def test_feed_comment_pushes_post_owner_with_valid_post_destination(
     assert Notification.query.filter_by(
         user_id=owner.id,
         actor_id=user.id,
-        entity_id=post.id,
+        entity_id=comment_id,
+        entity_type=f"comment:{post.id}",
     ).count() == 1
     push_mock.assert_called_once_with(
         owner.id,
@@ -98,6 +109,33 @@ def test_feed_comment_pushes_post_owner_with_valid_post_destination(
         },
     )
     assert client.get(push_mock.call_args.args[1]["url"]).status_code == 200
+    notification_payload = notification_payload_for(client, owner)
+    assert notification_payload[0]["url"] == f"/post/{post.public_id}#comment-{comment_id}"
+
+
+def test_deleted_feed_comment_notification_falls_back_to_parent_post(
+    client, user, db, monkeypatch
+):
+    from models import Comment
+
+    owner = create_user(db, "DeletedCommentOwner")
+    post = create_post(db, owner)
+    login_user(client, user)
+    monkeypatch.setattr(
+        "utils.push_service.send_push_notification",
+        Mock(return_value=True),
+    )
+    response = client.post(
+        f"/add_comment/{post.id}",
+        json={"content": "Soon deleted"},
+    )
+    comment_id = response.get_json()["comment"]["id"]
+    db.session.delete(db.session.get(Comment, comment_id))
+    db.session.commit()
+
+    notification_payload = notification_payload_for(client, owner)
+
+    assert notification_payload[0]["url"] == f"/post/{post.public_id}#post-{post.id}"
 
 
 def test_own_feed_comment_does_not_notify_actor(client, user, db, monkeypatch):
@@ -156,6 +194,8 @@ def test_feed_reply_notifies_parent_author_and_deduplicates_post_owner(
     assert Notification.query.filter_by(
         user_id=owner.id,
         actor_id=user.id,
+        entity_id=reply_id,
+        entity_type=f"comment:{post.id}",
     ).count() == 1
 
 
@@ -210,7 +250,7 @@ def test_blocked_feed_recipient_gets_no_social_notification(
     assert Notification.query.filter_by(
         user_id=owner.id,
         actor_id=user.id,
-        entity_id=post.id,
+        entity_type=f"comment:{post.id}",
     ).count() == 0
 
 
@@ -264,6 +304,8 @@ def test_group_post_bulk_push_excludes_actor_left_and_blocked_members(
 
 
 def test_group_comment_only_pushes_post_owner(client, user, db, monkeypatch):
+    from models import Notification
+
     owner = create_user(db, "GroupOwner")
     other_member = create_user(db, "OtherMember")
     group = create_group(db, owner, user, other_member)
@@ -293,12 +335,19 @@ def test_group_comment_only_pushes_post_owner(client, user, db, monkeypatch):
     )
     assert client.get(push_mock.call_args.args[1]["url"].split("#", 1)[0]).status_code == 200
     bulk_push_mock.assert_not_called()
+    assert Notification.query.filter_by(
+        user_id=owner.id,
+        entity_id=comment_id,
+        entity_type=f"group_comment:{post.id}",
+    ).count() == 1
+    notification_payload = notification_payload_for(client, owner)
+    assert notification_payload[0]["url"] == f"/groups/{group.id}#comment-{comment_id}"
 
 
 def test_group_reply_deduplicates_owner_and_parent_author(
     client, user, db, monkeypatch
 ):
-    from models import Comment
+    from models import Comment, Notification
 
     owner = create_user(db, "GroupReplyOwner")
     group = create_group(db, owner, user)
@@ -327,6 +376,11 @@ def test_group_reply_deduplicates_owner_and_parent_author(
             "renotify": True,
         },
     )
+    assert Notification.query.filter_by(
+        user_id=owner.id,
+        entity_id=reply_id,
+        entity_type=f"group_comment:{post.id}",
+    ).count() == 1
 
 
 def test_group_comment_from_nonmember_persists_without_group_push(

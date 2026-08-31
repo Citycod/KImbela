@@ -2285,6 +2285,11 @@ def _comment_social_targets(post, comment, actor, parent_comment=None):
     )
 
     targets = {}
+    notification_entity_type = (
+        f"group_comment:{post.id}"
+        if is_group_comment
+        else f"comment:{post.id}"
+    )
     if post.author_id != actor.id:
         targets[post.author_id] = {
             "user": post.author,
@@ -2294,8 +2299,8 @@ def _comment_social_targets(post, comment, actor, parent_comment=None):
                 if is_group_comment
                 else f"{actor.full_name} commented on your post."
             ),
-            "entity_id": post.id,
-            "entity_type": "post",
+            "entity_id": comment.id,
+            "entity_type": notification_entity_type,
         }
 
     if parent_comment and parent_comment.author_id != actor.id:
@@ -2308,7 +2313,7 @@ def _comment_social_targets(post, comment, actor, parent_comment=None):
                 else f"{actor.full_name} replied to your comment."
             ),
             "entity_id": comment.id,
-            "entity_type": "comment",
+            "entity_type": notification_entity_type,
         }
 
     if is_group_comment:
@@ -2876,9 +2881,67 @@ def get_notifications():
     notifications = (
         Notification.query.filter_by(user_id=current_user.id)
         .order_by(Notification.created_at.desc())
+        .options(joinedload(Notification.actor))
         .limit(10)
         .all()
     )
+
+    comment_ids = [
+        n.entity_id
+        for n in notifications
+        if n.entity_id and (n.entity_type or "").split(":", 1)[0] in {"comment", "group_comment"}
+    ]
+    comments_by_id = {
+        comment.id: comment
+        for comment in Comment.query.filter(Comment.id.in_(comment_ids or [-1])).all()
+    }
+    fallback_post_ids = []
+    for n in notifications:
+        entity_type = n.entity_type or ""
+        if ":" in entity_type:
+            _, raw_post_id = entity_type.split(":", 1)
+            if raw_post_id.isdigit():
+                fallback_post_ids.append(int(raw_post_id))
+        elif entity_type in {"post", "group_post"} and n.entity_id:
+            fallback_post_ids.append(n.entity_id)
+    fallback_post_ids.extend(comment.post_id for comment in comments_by_id.values())
+    posts_by_id = {
+        post.id: post
+        for post in Post.query.filter(Post.id.in_(fallback_post_ids or [-1])).all()
+    }
+
+    def destination_for(notification):
+        entity_type = notification.entity_type or ""
+        entity_kind, _, raw_fallback_id = entity_type.partition(":")
+        if entity_kind in {"comment", "group_comment"}:
+            comment = comments_by_id.get(notification.entity_id)
+            fallback_id = int(raw_fallback_id) if raw_fallback_id.isdigit() else None
+            post = posts_by_id.get(comment.post_id if comment else fallback_id)
+            if post:
+                anchor = f"comment-{comment.id}" if comment else f"post-{post.id}"
+                if post.group_id:
+                    return url_for("user.group_detail", group_id=post.group_id, _anchor=anchor)
+                return url_for("user.view_shared_post", post_identifier=post.public_id, _anchor=anchor)
+        if entity_kind in {"post", "group_post"}:
+            post = posts_by_id.get(notification.entity_id)
+            if post:
+                if post.group_id:
+                    return url_for(
+                        "user.group_detail",
+                        group_id=post.group_id,
+                        _anchor=f"post-{post.id}",
+                    )
+                return url_for("user.view_shared_post", post_identifier=post.public_id)
+        if notification.type in {
+            NotificationType.FRIEND_REQUEST,
+            NotificationType.FRIEND_ACCEPTED,
+            NotificationType.PROFILE_UPDATE,
+        } and notification.actor:
+            return url_for(
+                "user.view_profile",
+                user_identifier=notification.actor.public_id,
+            )
+        return url_for("user.user_dashboard")
 
     result = []
     for n in notifications:
@@ -2890,11 +2953,12 @@ def get_notifications():
             "created_at": n.created_at.isoformat(),
             "entity_id": n.entity_id,
             "actor_id": n.actor_id,  # Add actor_id (the sender's ID)
+            "url": destination_for(n),
         }
 
         # Add actor information if it exists
-        if n.actor_id:
-            actor = User.query.get(n.actor_id)
+        if n.actor:
+            actor = n.actor
             if actor:
                 notification_data["actor"] = {
                     "id": actor.id,

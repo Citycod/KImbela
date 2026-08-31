@@ -41,13 +41,36 @@ def test_install_readiness_manifest_and_icons_are_available(client):
     manifest_response = client.get("/static/manifest.json")
     icon_192_response = client.get("/static/img/icons/icon-192x192.png")
     icon_512_response = client.get("/static/img/icons/icon-512x512.png")
+    maskable_192_response = client.get("/static/img/icons/icon-maskable-192x192.png")
+    maskable_512_response = client.get("/static/img/icons/icon-maskable-512x512.png")
 
     assert manifest_response.status_code == 200
-    assert manifest_response.get_json()["display"] == "standalone"
+    manifest = manifest_response.get_json()
+    assert manifest["display"] == "standalone"
+    assert {icon["purpose"] for icon in manifest["icons"]} == {"any", "maskable"}
     assert icon_192_response.status_code == 200
     assert icon_192_response.mimetype == "image/png"
     assert icon_512_response.status_code == 200
     assert icon_512_response.mimetype == "image/png"
+    assert maskable_192_response.status_code == 200
+    assert maskable_192_response.mimetype == "image/png"
+    assert maskable_512_response.status_code == 200
+    assert maskable_512_response.mimetype == "image/png"
+    assert manifest["background_color"] == "#fffdfb"
+    assert manifest["theme_color"] == "#7c3aed"
+
+
+def test_android_icons_are_opaque_pngs_with_dedicated_maskable_assets():
+    icon_root = PROJECT_ROOT / "static" / "img" / "icons"
+    for name in (
+        "icon-192x192.png",
+        "icon-512x512.png",
+        "icon-maskable-192x192.png",
+        "icon-maskable-512x512.png",
+    ):
+        png = (icon_root / name).read_bytes()
+        assert png[:8] == b"\x89PNG\r\n\x1a\n"
+        assert png[25] == 2  # PNG truecolor RGB, with no alpha channel.
 
 
 def test_dashboard_static_assets_use_reusable_version_urls():
@@ -55,9 +78,8 @@ def test_dashboard_static_assets_use_reusable_version_urls():
 
     assert "range(1, 1000000) | random" not in source
     assert source.count("v='slow-network-1'") == 2
-    assert source.count("v='network-resilience-1'") == 1
-    assert source.count("v='foreground-feedback-1'") == 1
-    assert source.count("v='unread-badge-1'") == 1
+    assert source.count("v='network-resilience-1'") == 0
+    assert source.count("v='ux-polish-1'") == 3
 
 
 def test_network_resilience_script_is_loaded_by_base_template():
@@ -70,7 +92,7 @@ def test_foreground_push_feedback_is_loaded_from_the_shared_base_template():
     source = (PROJECT_ROOT / "templates" / "base.html").read_text()
 
     assert "assets/js/foreground_push.js" in source
-    assert "v='foreground-feedback-1'" in source
+    assert "v='foreground-native-2'" in source
     assert "v='network-resilience-1'" in source
 
 

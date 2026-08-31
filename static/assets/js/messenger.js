@@ -258,6 +258,16 @@
                 if (!isMine) {
                     updateFriendsListUnreadCount(senderId);
                     renderUnreadBadges(lastKnownUnreadCount + 1);
+                    if (window.KimbelaForegroundPush) {
+                        window.KimbelaForegroundPush.show({
+                            title: data.sender_name || 'New message',
+                            body: String(data.content || '').slice(0, 120),
+                            avatar: data.sender_avatar || window.defaultAvatar,
+                            timestamp: data.timestamp || Date.now(),
+                            url: `/user_dashboard?chat=${senderId}`,
+                            tag: `message-${senderId}`,
+                        });
+                    }
                 }
                 updateUnreadBadge(true);
             }
