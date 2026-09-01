@@ -2,6 +2,7 @@ import os
 import json
 import logging
 import time
+from urllib.parse import urlparse
 from pywebpush import webpush, WebPushException
 from models import PushSubscription
 from extensions import db
@@ -28,15 +29,32 @@ def prepare_push_payload(payload_dict):
     return payload
 
 
+def _push_log_context(subscription, event_type):
+    """Return non-secret identifiers suitable for production diagnostics."""
+    try:
+        endpoint_host = urlparse(subscription.endpoint).hostname or "unknown"
+    except (TypeError, ValueError):
+        endpoint_host = "invalid"
+
+    return {
+        "user_id": subscription.user_id,
+        "subscription_id": subscription.id,
+        "endpoint_host": endpoint_host,
+        "event_type": event_type,
+    }
+
+
 def _send_to_subscriptions(subscriptions, payload_dict, vapid_private_key):
     vapid_claims = {
         "sub": "mailto:no-reply@kimbela.com"
     }
     success_count = 0
-    payload = json.dumps(prepare_push_payload(payload_dict))
+    prepared_payload = prepare_push_payload(payload_dict)
+    payload = json.dumps(prepared_payload)
+    event_type = prepared_payload.get("event_type", "notification")
 
     for sub in subscriptions:
-        user_id = sub.user_id
+        context = _push_log_context(sub, event_type)
         try:
             subscription_info = {
                 "endpoint": sub.endpoint,
@@ -45,7 +63,7 @@ def _send_to_subscriptions(subscriptions, payload_dict, vapid_private_key):
                     "auth": sub.auth
                 }
             }
-            webpush(
+            provider_response = webpush(
                 subscription_info=subscription_info,
                 data=payload,
                 vapid_private_key=vapid_private_key,
@@ -54,27 +72,61 @@ def _send_to_subscriptions(subscriptions, payload_dict, vapid_private_key):
             sub.last_seen_at = db.func.now()
             db.session.commit()
             success_count += 1
+            logger.info(
+                "Push delivery succeeded user_id=%s subscription_id=%s "
+                "endpoint_host=%s event_type=%s provider_status=%s",
+                context["user_id"],
+                context["subscription_id"],
+                context["endpoint_host"],
+                context["event_type"],
+                getattr(provider_response, "status_code", "unknown"),
+            )
         except WebPushException as ex:
             # If the subscription is expired or the user revoked permission, the server returns 410 or 404
-            if ex.response is not None and ex.response.status_code in [404, 410]:
+            provider_status = (
+                ex.response.status_code if ex.response is not None else "unknown"
+            )
+            if provider_status in [404, 410]:
                 try:
                     db.session.delete(sub)
                     db.session.commit()
+                    logger.info(
+                        "Expired push subscription pruned user_id=%s subscription_id=%s "
+                        "endpoint_host=%s event_type=%s provider_status=%s",
+                        context["user_id"],
+                        context["subscription_id"],
+                        context["endpoint_host"],
+                        context["event_type"],
+                        provider_status,
+                    )
                 except Exception:
                     db.session.rollback()
                     logger.exception(
                         "Failed to remove expired push subscription for user %s",
-                        user_id,
+                        context["user_id"],
                     )
             else:
                 logger.warning(
-                    "Push provider rejected a subscription for user %s: %s",
-                    user_id,
-                    ex,
+                    "Push delivery failed user_id=%s subscription_id=%s "
+                    "endpoint_host=%s event_type=%s provider_status=%s exception=%s",
+                    context["user_id"],
+                    context["subscription_id"],
+                    context["endpoint_host"],
+                    context["event_type"],
+                    provider_status,
+                    type(ex).__name__,
                 )
-        except Exception:
+        except Exception as ex:
             db.session.rollback()
-            logger.exception("Failed to send push notification for user %s", user_id)
+            logger.error(
+                "Push delivery failed user_id=%s subscription_id=%s "
+                "endpoint_host=%s event_type=%s provider_status=unknown exception=%s",
+                context["user_id"],
+                context["subscription_id"],
+                context["endpoint_host"],
+                context["event_type"],
+                type(ex).__name__,
+            )
 
     return success_count > 0
 

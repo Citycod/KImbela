@@ -29,6 +29,32 @@ def test_registration_uses_one_canonical_worker_path():
     assert "navigator.serviceWorker.register('/static/sw.js')" not in source
 
 
+def test_subscription_endpoint_upsert_does_not_create_duplicates(
+    client, login, user, db, monkeypatch
+):
+    from models import PushSubscription
+
+    monkeypatch.setattr("authentication.authenticate.send_login_alert_email", lambda *args: None)
+    assert login().status_code in (200, 302)
+    payload = {
+        "endpoint": "https://push.example/current-device",
+        "keys": {"p256dh": "first-key", "auth": "first-auth"},
+        "isStandalone": True,
+    }
+
+    first = client.post("/api/pwa/subscribe", json=payload)
+    payload["keys"] = {"p256dh": "replacement-key", "auth": "replacement-auth"}
+    second = client.post("/api/pwa/subscribe", json=payload)
+
+    assert first.status_code == 200
+    assert second.status_code == 200
+    assert PushSubscription.query.filter_by(endpoint=payload["endpoint"]).count() == 1
+    subscription = PushSubscription.query.filter_by(endpoint=payload["endpoint"]).one()
+    assert subscription.user_id == user.id
+    assert subscription.p256dh == "replacement-key"
+    assert subscription.auth == "replacement-auth"
+
+
 def test_worker_does_not_reference_removed_precache_asset():
     source = (PROJECT_ROOT / "static" / "sw.js").read_text()
 

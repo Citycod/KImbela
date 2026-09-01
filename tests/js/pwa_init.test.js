@@ -249,6 +249,7 @@ function loadInitializer({
   installPage = false,
   shareImpl,
   clipboardImpl,
+  notificationPermission = 'granted',
 } = {}) {
   const listeners = {};
   const serviceWorkerListeners = {};
@@ -313,7 +314,7 @@ function loadInitializer({
   if (matchMediaAvailable) window.matchMedia = () => standaloneMediaQuery;
   let notificationPermissionRequests = 0;
   const notification = {
-    permission: 'granted',
+    permission: notificationPermission,
     async requestPermission() {
       notificationPermissionRequests += 1;
       return 'granted';
@@ -497,6 +498,37 @@ test('existing canonical subscription is resynchronized on page load', async () 
   assert.equal(runtime.fetchCalls.length, 1);
   assert.equal(runtime.fetchCalls[0].url, '/api/pwa/subscribe');
   assert.equal(JSON.parse(runtime.fetchCalls[0].options.body).endpoint, existing.endpoint);
+});
+
+test('missing canonical subscription is recovered when permission is already granted', async () => {
+  const canonical = createRegistration('/sw.js');
+  const runtime = loadInitializer({ registrations: [canonical], canonical });
+
+  await runtime.triggerLoad();
+
+  assert.equal(canonical.getSubscribeCount(), 1);
+  assert.equal(runtime.fetchCalls.length, 1);
+  assert.equal(runtime.fetchCalls[0].url, '/api/pwa/subscribe');
+  assert.equal(
+    JSON.parse(runtime.fetchCalls[0].options.body).endpoint,
+    'https://push.example/canonical',
+  );
+  assert.equal(runtime.getNotificationPermissionRequests(), 0);
+});
+
+test('denied push permission does not subscribe, save, or request permission', async () => {
+  const canonical = createRegistration('/sw.js');
+  const runtime = loadInitializer({
+    registrations: [canonical],
+    canonical,
+    notificationPermission: 'denied',
+  });
+
+  await runtime.triggerLoad();
+
+  assert.equal(canonical.getSubscribeCount(), 0);
+  assert.equal(runtime.fetchCalls.length, 0);
+  assert.equal(runtime.getNotificationPermissionRequests(), 0);
 });
 
 test('subscription-change message resynchronizes replacement subscription', async () => {

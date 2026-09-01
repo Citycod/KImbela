@@ -135,10 +135,23 @@ async function resynchronizeCanonicalSubscription(registration) {
     return false;
   }
 
-  const subscription = await registration.pushManager.getSubscription();
-  if (!subscription) return false;
+  if (!registration.pushManager) return false;
 
-  return savePushSubscription(subscription);
+  try {
+    let subscription = await registration.pushManager.getSubscription();
+    if (!subscription) {
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+      });
+    }
+
+    return savePushSubscription(subscription);
+  } catch (error) {
+    // Registration remains usable; the next app launch can retry recovery.
+    console.error('Unable to resynchronize push subscription:', error);
+    return false;
+  }
 }
 
 async function initializeCanonicalServiceWorker() {

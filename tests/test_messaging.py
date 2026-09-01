@@ -583,6 +583,66 @@ def test_transient_provider_failure_does_not_delete_valid_subscription(
     assert db.session.get(PushSubscription, subscription_id) is not None
 
 
+def test_missing_vapid_configuration_fails_safely_without_provider_call(
+    user, db, monkeypatch
+):
+    from models import PushSubscription
+    from utils.push_service import send_push_notification
+
+    db.session.add(
+        PushSubscription(
+            user_id=user.id,
+            endpoint=f"https://push.example/{uuid.uuid4().hex}",
+            p256dh="configured-p256dh",
+            auth="configured-auth",
+        )
+    )
+    db.session.commit()
+    monkeypatch.delenv("VAPID_PRIVATE_KEY", raising=False)
+    webpush_mock = Mock()
+    monkeypatch.setattr("utils.push_service.webpush", webpush_mock)
+
+    assert send_push_notification(user.id, {"title": "Test"}) is False
+    webpush_mock.assert_not_called()
+
+
+def test_push_provider_diagnostics_do_not_log_secret_endpoint_or_keys(
+    user, db, monkeypatch, caplog
+):
+    from models import PushSubscription
+    from utils.push_service import send_push_notification
+
+    endpoint = f"https://push.example/private/{uuid.uuid4().hex}"
+    subscription = PushSubscription(
+        user_id=user.id,
+        endpoint=endpoint,
+        p256dh="secret-p256dh",
+        auth="secret-auth",
+    )
+    db.session.add(subscription)
+    db.session.commit()
+    monkeypatch.setenv("VAPID_PRIVATE_KEY", "test-private-key")
+    response = SimpleNamespace(status_code=403)
+    monkeypatch.setattr(
+        "utils.push_service.webpush",
+        Mock(side_effect=WebPushException("contains provider details", response=response)),
+    )
+
+    with caplog.at_level("WARNING", logger="utils.push_service"):
+        assert send_push_notification(
+            user.id,
+            {"title": "Test", "event_type": "message"},
+        ) is False
+
+    log_output = caplog.text
+    assert "endpoint_host=push.example" in log_output
+    assert "event_type=message" in log_output
+    assert "provider_status=403" in log_output
+    assert endpoint not in log_output
+    assert "secret-p256dh" not in log_output
+    assert "secret-auth" not in log_output
+
+
 def test_message_push_sources_do_not_generate_stale_page_routes():
     from pathlib import Path
 

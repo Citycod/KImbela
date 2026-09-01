@@ -34,6 +34,8 @@ function loadWorker(overrides = {}) {
   const openedWindows = [];
   const subscriptionCalls = [];
   let claimCount = 0;
+  let skipWaitingCount = 0;
+  let notificationAttemptCount = 0;
 
   const runtimeCache = {
     addAll: async (urls) => {
@@ -60,6 +62,9 @@ function loadWorker(overrides = {}) {
 
   const self = {
     location: { origin: 'https://kimbela.test' },
+    skipWaiting: async () => {
+      skipWaitingCount += 1;
+    },
     clients: {
       claim: async () => {
         claimCount += 1;
@@ -78,6 +83,13 @@ function loadWorker(overrides = {}) {
         },
       },
       showNotification: async (title, options) => {
+        notificationAttemptCount += 1;
+        if (
+          overrides.showNotificationError
+          && notificationAttemptCount === 1
+        ) {
+          throw overrides.showNotificationError;
+        }
         notifications.push({ title, options });
       },
     },
@@ -112,6 +124,8 @@ function loadWorker(overrides = {}) {
     openedWindows,
     subscriptionCalls,
     getClaimCount: () => claimCount,
+    getNotificationAttemptCount: () => notificationAttemptCount,
+    getSkipWaitingCount: () => skipWaitingCount,
   };
 }
 
@@ -141,6 +155,7 @@ test('install successfully precaches every essential offline resource', async ()
     '/static/img/icons/icon-maskable-192x192.png',
     '/static/img/icons/icon-maskable-512x512.png',
   ]]);
+  assert.equal(worker.getSkipWaitingCount(), 1);
 });
 
 test('precache excludes dashboard, authenticated API, and large content', async () => {
@@ -163,6 +178,7 @@ test('install rejects when an essential precache resource is missing', async () 
   worker.handlers.install({ waitUntil: (promise) => { installPromise = promise; } });
 
   await assert.rejects(installPromise, /missing asset/);
+  assert.equal(worker.getSkipWaitingCount(), 0);
 });
 
 test('activation deletes only old Kimbela-owned caches', async () => {
@@ -285,6 +301,97 @@ test('push and notification-click handlers remain registered', async () => {
   assert.deepEqual(Array.from(worker.notifications[0].options.vibrate), [100, 50, 100]);
   assert.equal('requireInteraction' in worker.notifications[0].options, false);
   assert.equal('silent' in worker.notifications[0].options, false);
+});
+
+test('malformed JSON push falls back to text and always extends event lifetime', async () => {
+  const worker = loadWorker({ windowClients: [] });
+  let pushPromise;
+  let waitUntilCount = 0;
+
+  worker.handlers.push({
+    data: {
+      json: () => { throw new SyntaxError('malformed JSON'); },
+      text: () => 'Plain text notification',
+    },
+    waitUntil: promise => {
+      waitUntilCount += 1;
+      pushPromise = promise;
+    },
+  });
+  await pushPromise;
+
+  assert.equal(waitUntilCount, 1);
+  assert.equal(worker.notifications.length, 1);
+  assert.equal(worker.notifications[0].title, 'Kimbela Notification');
+  assert.equal(worker.notifications[0].options.body, 'Plain text notification');
+  assert.equal(worker.notifications[0].options.data.url, '/');
+});
+
+test('empty push still displays a notification with valid defaults', async () => {
+  const worker = loadWorker({ windowClients: [] });
+  let pushPromise;
+
+  worker.handlers.push({
+    data: null,
+    waitUntil: promise => { pushPromise = promise; },
+  });
+  await pushPromise;
+
+  assert.equal(worker.notifications.length, 1);
+  assert.equal(worker.notifications[0].title, 'Kimbela Notification');
+  assert.equal(worker.notifications[0].options.body, 'You have a new notification.');
+  assert.equal(
+    worker.notifications[0].options.icon,
+    '/static/img/icons/icon-192x192.png',
+  );
+});
+
+test('invalid optional notification fields use safe local defaults', async () => {
+  const worker = loadWorker({ windowClients: [] });
+  let pushPromise;
+
+  worker.handlers.push({
+    data: {
+      json: () => ({
+        title: 'Safe notification',
+        icon: 'javascript:alert(1)',
+        badge: 'javascript:alert(1)',
+        url: 'https://other.example/private',
+      }),
+    },
+    waitUntil: promise => { pushPromise = promise; },
+  });
+  await pushPromise;
+
+  const options = worker.notifications[0].options;
+  assert.equal(options.icon, '/static/img/icons/icon-192x192.png');
+  assert.equal(options.badge, '/static/img/icons/icon-192x192.png');
+  assert.equal(options.data.url, '/');
+});
+
+test('rejected optional notification options retry with a minimal notification', async () => {
+  const worker = loadWorker({
+    windowClients: [],
+    showNotificationError: new TypeError('unsupported notification option'),
+  });
+  let pushPromise;
+
+  worker.handlers.push({
+    data: { json: () => ({ title: 'Original', body: 'Still visible' }) },
+    waitUntil: promise => { pushPromise = promise; },
+  });
+  await pushPromise;
+
+  assert.equal(worker.getNotificationAttemptCount(), 2);
+  assert.equal(worker.notifications.length, 1);
+  assert.equal(worker.notifications[0].title, 'Kimbela Notification');
+  assert.equal(worker.notifications[0].options.body, 'Still visible');
+  assert.equal(worker.notifications[0].options.data.url, '/');
+});
+
+test('worker source registers exactly one push event listener', () => {
+  const listeners = workerSource.match(/addEventListener\(['"]push['"]/g) || [];
+  assert.equal(listeners.length, 1);
 });
 
 test('same tagged thread still shows every repeated message push', async () => {

@@ -15,6 +15,7 @@ self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(PRECACHE_NAME)
       .then(cache => cache.addAll(ESSENTIAL_PRECACHE_URLS))
+      .then(() => self.skipWaiting())
   );
 });
 
@@ -79,54 +80,125 @@ self.addEventListener('fetch', event => {
   }
 });
 
-self.addEventListener('push', event => {
-  if (event.data) {
+const DEFAULT_NOTIFICATION_TITLE = 'Kimbela Notification';
+const DEFAULT_NOTIFICATION_BODY = 'You have a new notification.';
+const DEFAULT_NOTIFICATION_ICON = '/static/img/icons/icon-192x192.png';
+
+function readPushPayload(event) {
+  if (!event.data) return {};
+
+  try {
+    const parsed = event.data.json();
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return parsed;
+    }
+    if (parsed !== undefined && parsed !== null) {
+      return { body: String(parsed) };
+    }
+  } catch (error) {
     try {
-      const data = event.data.json();
-      const title = data.title || 'Kimbela Notification';
-      const options = {
-        body: data.body || 'You have a new notification.',
-        icon: data.icon || '/static/img/icons/icon-192x192.png',
-        badge: data.badge || '/static/img/icons/icon-192x192.png',
-        timestamp: Number.isFinite(data.timestamp) ? data.timestamp : Date.now(),
-        vibrate: [100, 50, 100],
-        data: {
-          url: data.url || '/'
-        }
-      };
-      if (typeof data.tag === 'string' && data.tag) {
-        options.tag = data.tag;
-        options.renotify = data.renotify === true;
-      }
-      const systemNotification = self.registration.showNotification(title, options);
-      const foregroundFeedback = self.clients
-        .matchAll({ type: 'window', includeUncontrolled: true })
-        .then(windowClients => {
-          const visibleClients = windowClients.filter(
-            client => client.visibilityState === 'visible'
-          );
-          const targetClient = visibleClients.find(client => client.focused)
-            || visibleClients[0];
-          if (targetClient && 'postMessage' in targetClient) {
-            targetClient.postMessage({
-              type: 'PUSH_FOREGROUND_NOTIFICATION',
-              notification: {
-                title,
-                body: options.body,
-                url: options.data.url,
-                tag: options.tag || '',
-                avatar: data.avatar || '',
-                timestamp: options.timestamp,
-                eventType: data.event_type || 'notification',
-              },
-            });
-          }
-        });
-      event.waitUntil(Promise.all([systemNotification, foregroundFeedback]));
-    } catch (e) {
-      console.error('Error parsing push data', e);
+      const textPayload = event.data.text();
+      return textPayload ? { body: textPayload } : {};
+    } catch (textError) {
+      console.error('Unable to read push payload', textError);
     }
   }
+
+  return {};
+}
+
+function safeNotificationAsset(value) {
+  if (typeof value !== 'string' || !value.trim()) return DEFAULT_NOTIFICATION_ICON;
+
+  try {
+    const assetUrl = new URL(value, self.location.origin);
+    if (assetUrl.protocol === 'https:' || assetUrl.protocol === 'http:') return value;
+  } catch (error) {
+    // Use the known local icon when a payload contains an invalid asset URL.
+  }
+  return DEFAULT_NOTIFICATION_ICON;
+}
+
+function safeNotificationDestination(value) {
+  if (typeof value !== 'string' || !value.trim()) return '/';
+
+  try {
+    const destination = new URL(value, self.location.origin);
+    return destination.origin === self.location.origin ? value : '/';
+  } catch (error) {
+    return '/';
+  }
+}
+
+function showPushNotification(data) {
+  const title = typeof data.title === 'string' && data.title.trim()
+    ? data.title
+    : DEFAULT_NOTIFICATION_TITLE;
+  const body = typeof data.body === 'string' && data.body.trim()
+    ? data.body
+    : DEFAULT_NOTIFICATION_BODY;
+  const options = {
+    body,
+    icon: safeNotificationAsset(data.icon),
+    badge: safeNotificationAsset(data.badge),
+    timestamp: Number.isFinite(data.timestamp) ? data.timestamp : Date.now(),
+    vibrate: [100, 50, 100],
+    data: {
+      url: safeNotificationDestination(data.url),
+    },
+  };
+  if (typeof data.tag === 'string' && data.tag) {
+    options.tag = data.tag;
+    options.renotify = data.renotify === true;
+  }
+
+  const systemNotification = Promise.resolve()
+    .then(() => self.registration.showNotification(title, options))
+    .catch(error => {
+      console.error('Notification options rejected; retrying with safe defaults', error);
+      return self.registration.showNotification(DEFAULT_NOTIFICATION_TITLE, {
+        body,
+        data: { url: options.data.url },
+      });
+    });
+
+  const foregroundFeedback = Promise.resolve()
+    .then(() => self.clients.matchAll({ type: 'window', includeUncontrolled: true }))
+    .then(windowClients => {
+      const visibleClients = windowClients.filter(
+        client => client.visibilityState === 'visible'
+      );
+      const targetClient = visibleClients.find(client => client.focused)
+        || visibleClients[0];
+      if (targetClient && 'postMessage' in targetClient) {
+        targetClient.postMessage({
+          type: 'PUSH_FOREGROUND_NOTIFICATION',
+          notification: {
+            title,
+            body,
+            url: options.data.url,
+            tag: options.tag || '',
+            avatar: typeof data.avatar === 'string' ? data.avatar : '',
+            timestamp: options.timestamp,
+            eventType: typeof data.event_type === 'string'
+              ? data.event_type
+              : 'notification',
+          },
+        });
+      }
+    })
+    .catch(error => {
+      // Foreground feedback is best-effort and must never block OS delivery.
+      console.error('Unable to deliver foreground push feedback', error);
+    });
+
+  return Promise.all([systemNotification, foregroundFeedback]);
+}
+
+self.addEventListener('push', event => {
+  event.waitUntil(
+    Promise.resolve().then(() => showPushNotification(readPushPayload(event)))
+  );
 });
 
 self.addEventListener('pushsubscriptionchange', event => {
