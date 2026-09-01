@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify, request, url_for, current_app
+import logging
 from flask_login import login_required, current_user
 from flask_socketio import emit, join_room, leave_room
 from models import Message, User
@@ -437,6 +438,20 @@ def send_message():
         try:
             from utils.push_service import send_push_notification
 
+            push_logger = logging.getLogger("utils.push_service")
+            push_logger.info(
+                "Message persisted message_id=%s recipient_user_id=%s "
+                "push_event_type=message transport=http",
+                message.id,
+                friend_id,
+            )
+            push_logger.info(
+                "Push decision evaluated message_id=%s recipient_user_id=%s "
+                "push_event_type=message decision=send",
+                message.id,
+                friend_id,
+            )
+
             push_payload = {
                 "title": f"New Message from {current_user.first_name}",
                 "body": (
@@ -451,6 +466,12 @@ def send_message():
                 "tag": f"message-{current_user.id}",
                 "renotify": True,
             }
+            push_logger.info(
+                "Push helper invoked message_id=%s recipient_user_id=%s "
+                "push_event_type=message transport=http",
+                message.id,
+                friend_id,
+            )
             send_push_notification(friend_id, push_payload)
         except Exception:
             current_app.logger.exception(

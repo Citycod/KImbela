@@ -116,7 +116,7 @@ def test_mark_conversation_read_marks_sent_and_delivered_messages(
 
 
 def test_http_send_persists_emits_once_and_pushes_offline_recipient(
-    client, login, user, db, monkeypatch
+    client, login, user, db, monkeypatch, caplog
 ):
     from models import Message
 
@@ -128,15 +128,16 @@ def test_http_send_persists_emits_once_and_pushes_offline_recipient(
     monkeypatch.setattr("messages.messaging.socketio.emit", emit_mock)
     monkeypatch.setattr("utils.push_service.send_push_notification", push_mock)
 
-    response = client.post(
-        "/api/messaging/send",
-        json={
-            "receiver_id": recipient.id,
-            "content": "HTTP message",
-            "type": "text",
-            "metadata": {"source": "test"},
-        },
-    )
+    with caplog.at_level("INFO", logger="utils.push_service"):
+        response = client.post(
+            "/api/messaging/send",
+            json={
+                "receiver_id": recipient.id,
+                "content": "HTTP message",
+                "type": "text",
+                "metadata": {"source": "test"},
+            },
+        )
 
     assert response.status_code == 200
     payload = response.get_json()
@@ -153,6 +154,11 @@ def test_http_send_persists_emits_once_and_pushes_offline_recipient(
     ]
     push_mock.assert_called_once()
     assert push_mock.call_args.args[0] == recipient.id
+    assert "Message persisted message_id=" in caplog.text
+    assert f"recipient_user_id={recipient.id}" in caplog.text
+    assert "decision=send" in caplog.text
+    assert "Push helper invoked" in caplog.text
+    assert "transport=http" in caplog.text
 
 
 def test_http_send_pushes_online_recipient_without_device_conversation_mapping(
@@ -303,7 +309,7 @@ def test_http_persistence_failure_does_not_emit_or_push(
 
 
 def test_socketio_send_persists_emits_once_and_pushes_offline_recipient(
-    app, client, login, user, db, monkeypatch
+    app, client, login, user, db, monkeypatch, caplog
 ):
     from extensions import socketio
     from models import Message
@@ -319,16 +325,17 @@ def test_socketio_send_persists_emits_once_and_pushes_offline_recipient(
     monkeypatch.setattr("socketio_events.socketio.emit", emit_mock)
     monkeypatch.setattr("utils.push_service.send_push_notification", push_mock)
 
-    socket_client.emit(
-        "send_message",
-        {
-            "receiver_id": recipient.id,
-            "content": "Socket message",
-            "type": "text",
-            "metadata": {"source": "socket-test"},
-            "temp_id": "temp-1",
-        },
-    )
+    with caplog.at_level("INFO", logger="utils.push_service"):
+        socket_client.emit(
+            "send_message",
+            {
+                "receiver_id": recipient.id,
+                "content": "Socket message",
+                "type": "text",
+                "metadata": {"source": "socket-test"},
+                "temp_id": "temp-1",
+            },
+        )
 
     message = Message.query.filter_by(content="Socket message").one()
     assert message.message_data == {"source": "socket-test"}
@@ -340,6 +347,11 @@ def test_socketio_send_persists_emits_once_and_pushes_offline_recipient(
     ]
     push_mock.assert_called_once()
     assert push_mock.call_args.args[0] == recipient.id
+    assert "Message persisted message_id=" in caplog.text
+    assert f"recipient_user_id={recipient.id}" in caplog.text
+    assert "decision=send" in caplog.text
+    assert "Push helper invoked" in caplog.text
+    assert "transport=socketio" in caplog.text
     assert push_mock.call_args.args[1]["url"] == f"/user_dashboard?chat={user.id}"
 
     socket_client.disconnect()
@@ -641,6 +653,57 @@ def test_push_provider_diagnostics_do_not_log_secret_endpoint_or_keys(
     assert endpoint not in log_output
     assert "secret-p256dh" not in log_output
     assert "secret-auth" not in log_output
+
+
+def test_push_pipeline_logs_lookup_attempt_and_provider_success(
+    user, db, monkeypatch, caplog
+):
+    from models import PushSubscription
+    from utils.push_service import send_push_notification
+
+    subscription = PushSubscription(
+        user_id=user.id,
+        endpoint=f"https://push.example/{uuid.uuid4().hex}",
+        p256dh="diagnostic-p256dh",
+        auth="diagnostic-auth",
+    )
+    db.session.add(subscription)
+    db.session.commit()
+    monkeypatch.setenv("VAPID_PRIVATE_KEY", "test-private-key")
+    monkeypatch.setattr(
+        "utils.push_service.webpush",
+        Mock(return_value=SimpleNamespace(status_code=201)),
+    )
+
+    with caplog.at_level("INFO", logger="utils.push_service"):
+        assert send_push_notification(
+            user.id,
+            {"title": "Test", "event_type": "message"},
+        ) is True
+
+    log_output = caplog.text
+    assert f"user_id={user.id} subscription_count=1 event_type=message" in log_output
+    assert f"subscription_id={subscription.id} event_type=message" in log_output
+    assert "provider_status=201" in log_output
+    assert subscription.endpoint not in log_output
+
+
+def test_push_pipeline_logs_zero_subscription_skip(user, monkeypatch, caplog):
+    from utils.push_service import send_push_notification
+
+    monkeypatch.setenv("VAPID_PRIVATE_KEY", "test-private-key")
+    webpush_mock = Mock()
+    monkeypatch.setattr("utils.push_service.webpush", webpush_mock)
+
+    with caplog.at_level("INFO", logger="utils.push_service"):
+        assert send_push_notification(
+            user.id,
+            {"title": "Test", "event_type": "message"},
+        ) is False
+
+    assert "subscription_count=0" in caplog.text
+    assert "reason=no_subscriptions" in caplog.text
+    webpush_mock.assert_not_called()
 
 
 def test_message_push_sources_do_not_generate_stale_page_routes():

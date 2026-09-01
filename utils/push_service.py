@@ -9,6 +9,9 @@ from extensions import db
 
 
 logger = logging.getLogger(__name__)
+# Keep push delivery diagnostics visible under production's WARNING root logger
+# without changing logging verbosity for the rest of the application.
+logger.setLevel(logging.INFO)
 KIMBELA_NOTIFICATION_ICON = "/static/img/icons/icon-192x192.png"
 KIMBELA_NOTIFICATION_BADGE = "/static/img/icons/icon-192x192.png"
 
@@ -63,6 +66,13 @@ def _send_to_subscriptions(subscriptions, payload_dict, vapid_private_key):
                     "auth": sub.auth
                 }
             }
+            logger.info(
+                "Push provider send attempted user_id=%s subscription_id=%s "
+                "event_type=%s",
+                context["user_id"],
+                context["subscription_id"],
+                context["event_type"],
+            )
             provider_response = webpush(
                 subscription_info=subscription_info,
                 data=payload,
@@ -147,7 +157,20 @@ def send_push_notification(user_id, payload_dict):
         logger.exception("Failed to load push subscriptions for user %s", user_id)
         return False
 
+    event_type = (payload_dict or {}).get("event_type", "notification")
+    logger.info(
+        "Push subscription lookup user_id=%s subscription_count=%s event_type=%s",
+        user_id,
+        len(subscriptions),
+        event_type,
+    )
     if not subscriptions:
+        logger.warning(
+            "Push delivery skipped user_id=%s subscription_count=0 "
+            "event_type=%s reason=no_subscriptions",
+            user_id,
+            event_type,
+        )
         return False
 
     return _send_to_subscriptions(subscriptions, payload_dict, vapid_private_key)

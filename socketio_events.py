@@ -1,4 +1,5 @@
 import json
+import logging
 from flask import url_for
 from time_utils import utcnow
 # socketio_events.py - IMPROVED with better error handling
@@ -226,6 +227,20 @@ def handle_send_message(data):
         # conversation, so it is not safe as a push-suppression signal.
         try:
             from utils.push_service import send_push_notification
+
+            push_logger = logging.getLogger("utils.push_service")
+            push_logger.info(
+                "Message persisted message_id=%s recipient_user_id=%s "
+                "push_event_type=message transport=socketio",
+                message.id,
+                receiver_id,
+            )
+            push_logger.info(
+                "Push decision evaluated message_id=%s recipient_user_id=%s "
+                "push_event_type=message decision=send",
+                message.id,
+                receiver_id,
+            )
             push_payload = {
                 "title": f"New message from {current_user.full_name}",
                 "body": content[:100] + ("..." if len(content) > 100 else ""),
@@ -236,6 +251,12 @@ def handle_send_message(data):
                 "tag": f"message-{current_user.id}",
                 "renotify": True,
             }
+            push_logger.info(
+                "Push helper invoked message_id=%s recipient_user_id=%s "
+                "push_event_type=message transport=socketio",
+                message.id,
+                receiver_id,
+            )
             send_push_notification(receiver_id, push_payload)
         except Exception:
             traceback.print_exc()
