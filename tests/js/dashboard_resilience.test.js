@@ -35,6 +35,8 @@ function loadNotificationSystem() {
   let online = false;
   let onlineHandler = null;
   let offlineHandler = null;
+  let leadershipHandler = null;
+  let leader = true;
   const elements = {
     notificationBadge: {
       classList: { add() {}, remove() {} },
@@ -48,6 +50,9 @@ function loadNotificationSystem() {
     bootstrap: {},
     clearInterval(id) { clearedIntervals.push(id); },
     document: {
+      hidden: false,
+      visibilityState: 'visible',
+      addEventListener() {},
       getElementById(id) { return elements[id] || null; },
     },
     navigator: { onLine: false },
@@ -60,6 +65,16 @@ function loadNotificationSystem() {
     TimeUtils: { formatNotificationTime() { return ''; } },
     Toast: {},
     window: {
+      KimbelaPassivePolling: {
+        isLeader() { return leader; },
+        onLeadershipChange(callback) {
+          leadershipHandler = callback;
+          callback(leader);
+          return () => {};
+        },
+        publish() {},
+        subscribe() { return () => {}; },
+      },
       KimbelaNetwork: {
         isOnline() { return online; },
         requestJson(key, url) {
@@ -99,7 +114,65 @@ function loadNotificationSystem() {
       context.navigator.onLine = false;
       offlineHandler();
     },
+    async setLeader(value) {
+      leader = value;
+      leadershipHandler(value);
+      await new Promise(resolve => setImmediate(resolve));
+    },
   };
+}
+
+function loadAdSystem() {
+  const helpers = dashboardSource.slice(
+    dashboardSource.indexOf('function isDashboardOnline()'),
+    dashboardSource.indexOf('const MobileFeedAds ='),
+  );
+  const adCode = dashboardSource.slice(
+    dashboardSource.indexOf('const AdSystem ='),
+    dashboardSource.indexOf('// GROUPS SYSTEM'),
+  );
+  const requests = [];
+  const timeouts = [];
+  let claimAvailable = true;
+  const document = {
+    hidden: false,
+    visibilityState: 'visible',
+    addEventListener() {},
+    cookie: '',
+    getElementById() { return null; },
+    querySelector() { return null; },
+  };
+  const context = {
+    clearInterval() {},
+    clearTimeout() {},
+    document,
+    fetch(url) {
+      requests.push(url);
+      return Promise.resolve({ ok: true, json: async () => ({}) });
+    },
+    navigator: { onLine: true },
+    setInterval() { return 1; },
+    setTimeout(callback, delay) {
+      const timer = { callback, delay };
+      timeouts.push(timer);
+      return timer;
+    },
+    window: {
+      KimbelaPassivePolling: {
+        claimOnce() {
+          if (!claimAvailable) return false;
+          claimAvailable = false;
+          return true;
+        },
+        isLeader() { return true; },
+      },
+    },
+  };
+  vm.runInNewContext(
+    `${helpers}\nconst csrfToken = 'token';\n${adCode}\nglobalThis.system = AdSystem;`,
+    context,
+  );
+  return { document, requests, system: context.system, timeouts };
 }
 
 test('notification polling is gated, deduplicated, and has one recovery hook', () => {
@@ -132,7 +205,22 @@ test('notification polling pauses offline and refreshes once after recovery', as
   await runtime.restoreOnline();
   runtime.system.init();
   assert.ok(runtime.clearedIntervals.length >= 2);
-  assert.equal(runtime.intervals.length, 3);
+  assert.equal(runtime.intervals.length, 2);
+});
+
+test('notification polling stops for a non-leader and refreshes once on takeover', async () => {
+  const runtime = loadNotificationSystem();
+  runtime.system.init();
+  await runtime.restoreOnline();
+  const requestsBeforeHandoff = runtime.requests.length;
+
+  await runtime.setLeader(false);
+  assert.ok(runtime.clearedIntervals.length >= 1);
+  assert.equal(runtime.requests.length, requestsBeforeHandoff);
+
+  await runtime.setLeader(true);
+  assert.equal(runtime.requests.length, requestsBeforeHandoff + 1);
+  assert.equal(runtime.intervals.length, 2);
 });
 
 test('dashboard comments use offline-aware requests and retry feedback', () => {
@@ -152,8 +240,35 @@ test('birthday bootstrap stays deduplicated and pauses while offline', () => {
   assert.match(birthdaySource, /this\.checkInFlight = null;/);
   assert.match(birthdaySource, /if \(this\.checkInFlight\) return this\.checkInFlight;/);
   assert.match(birthdaySource, /"birthdays-today",\s*"\/api\/birthdays\/today"/);
-  assert.match(
-    birthdaySource,
-    /if \(!window\.KimbelaNetwork \|\| window\.KimbelaNetwork\.isOnline\(\)\)/,
-  );
+  assert.match(birthdaySource, /this\.checkBirthdays\(\{ passive: true \}\)/);
+  assert.match(birthdaySource, /window\.KimbelaPassivePolling\.isLeader\(\)/);
+  assert.match(birthdaySource, /this\.stopPolling\(\)/);
+});
+
+test('ad cycling and impressions are visibility-aware and cross-tab deduplicated', () => {
+  assert.match(dashboardSource, /if \(!isDashboardVisible\(\)\) return;/);
+  assert.match(dashboardSource, /claimAdImpression\(adId\)/);
+  assert.match(dashboardSource, /30 \* 60 \* 1000/);
+  assert.match(dashboardSource, /document\.addEventListener\('visibilitychange'/);
+});
+
+test('hidden ad system schedules no cycle and duplicate impression writes are suppressed', async () => {
+  const runtime = loadAdSystem();
+  runtime.system.state.activeAds = [{ id: 5 }];
+
+  runtime.system.scheduleNextAd();
+  assert.equal(runtime.timeouts.length, 1);
+
+  runtime.document.hidden = true;
+  runtime.document.visibilityState = 'hidden';
+  runtime.system.scheduleNextAd();
+  runtime.system.displayNextAd();
+  await runtime.system.trackAdImpression(5);
+  assert.deepEqual(runtime.requests, []);
+
+  runtime.document.hidden = false;
+  runtime.document.visibilityState = 'visible';
+  await runtime.system.trackAdImpression(5);
+  await runtime.system.trackAdImpression(5);
+  assert.deepEqual(runtime.requests, ['/api/ads/5/impression']);
 });

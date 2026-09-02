@@ -4,7 +4,7 @@ from flask_login import login_required, current_user
 from flask_socketio import emit, join_room, leave_room
 from models import Message, User
 from extensions import db, socketio
-from sqlalchemy import or_, and_, desc, func
+from sqlalchemy import or_, and_, desc, func, case
 from datetime import datetime, timedelta
 import os, json, pytz, uuid
 from werkzeug.utils import secure_filename
@@ -134,50 +134,95 @@ def process_image(file_path):
 def get_friends_for_messaging():
     """Get friends list for messaging with last message and unread count"""
     try:
-        friends = []
-        for friend in current_user.friends:
-            if not current_user.can_interact_with(friend):
-                continue
+        friend_models = current_user.friends.all()
+        friend_ids = [friend.id for friend in friend_models]
+        if not friend_ids:
+            return jsonify({"success": True, "friends": []})
 
-            # Get last message
-            last_message = (
-                Message.query.filter(
-                    or_(
-                        and_(
-                            Message.sender_id == current_user.id,
-                            Message.receiver_id == friend.id,
-                        ),
-                        and_(
-                            Message.sender_id == friend.id,
-                            Message.receiver_id == current_user.id,
-                        ),
-                    )
+        block_table = User._blocked_users
+        block_rows = (
+            db.session.query(block_table.c.blocker_id, block_table.c.blocked_id)
+            .filter(
+                or_(
+                    and_(
+                        block_table.c.blocker_id == current_user.id,
+                        block_table.c.blocked_id.in_(friend_ids),
+                    ),
+                    and_(
+                        block_table.c.blocked_id == current_user.id,
+                        block_table.c.blocker_id.in_(friend_ids),
+                    ),
                 )
-                .order_by(Message.timestamp.desc())
-                .first()
             )
+            .all()
+        )
+        blocked_friend_ids = {
+            blocked_id if blocker_id == current_user.id else blocker_id
+            for blocker_id, blocked_id in block_rows
+        }
+        visible_friends = [
+            friend for friend in friend_models if friend.id not in blocked_friend_ids
+        ]
+        visible_friend_ids = [friend.id for friend in visible_friends]
+        if not visible_friend_ids:
+            return jsonify({"success": True, "friends": []})
 
-            # Get unread message count
-            unread_count = Message.query.filter(
-                Message.sender_id == friend.id,
-                Message.receiver_id == current_user.id,
-                Message.status.in_(("sent", "delivered")),
-            ).count()
-
-            # Get friend's online status
-            is_online = friend.is_online
-
-            # Get last seen
-            last_seen = friend.last_seen.isoformat() if friend.last_seen else None
-
-            # Get last message time
-            last_message_time = (
-                last_message.timestamp.isoformat() if last_message else None
+        counterpart_id = case(
+            (Message.sender_id == current_user.id, Message.receiver_id),
+            else_=Message.sender_id,
+        ).label("friend_id")
+        unread_value = case(
+            (
+                and_(
+                    Message.sender_id != current_user.id,
+                    Message.status.in_(("sent", "delivered")),
+                ),
+                1,
+            ),
+            else_=0,
+        )
+        ranked_messages = (
+            db.session.query(
+                counterpart_id,
+                Message.content.label("content"),
+                Message.timestamp.label("timestamp"),
+                func.row_number().over(
+                    partition_by=counterpart_id,
+                    order_by=(Message.timestamp.desc(), Message.id.desc()),
+                ).label("message_rank"),
+                func.sum(unread_value).over(
+                    partition_by=counterpart_id
+                ).label("unread_count"),
             )
+            .filter(
+                or_(
+                    and_(
+                        Message.sender_id == current_user.id,
+                        Message.receiver_id.in_(visible_friend_ids),
+                    ),
+                    and_(
+                        Message.receiver_id == current_user.id,
+                        Message.sender_id.in_(visible_friend_ids),
+                    ),
+                )
+            )
+            .subquery()
+        )
+        latest_rows = (
+            db.session.query(ranked_messages)
+            .filter(ranked_messages.c.message_rank == 1)
+            .all()
+        )
+        latest_by_friend_id = {row.friend_id: row for row in latest_rows}
+
+        friends = []
+        for friend in visible_friends:
+            summary = latest_by_friend_id.get(friend.id)
+            last_message_time = summary.timestamp.isoformat() if summary else None
             last_message_text = (
-                last_message.content[:50] + "..."
-                if last_message and len(last_message.content) > 50
-                else last_message.content if last_message else None
+                summary.content[:50] + "..."
+                if summary and len(summary.content) > 50
+                else summary.content if summary else None
             )
 
             friends.append(
@@ -186,11 +231,11 @@ def get_friends_for_messaging():
                     "name": friend.full_name,
                     "avatar": friend.profile_pic
                     or url_for("static", filename="assets/img/default-avatar.png"),
-                    "online": is_online,
-                    "last_seen": last_seen,
+                    "online": friend.is_online,
+                    "last_seen": friend.last_seen.isoformat() if friend.last_seen else None,
                     "last_message": last_message_text,
                     "last_message_time": last_message_time,
-                    "unread_count": unread_count,
+                    "unread_count": int(summary.unread_count or 0) if summary else 0,
                 }
             )
 

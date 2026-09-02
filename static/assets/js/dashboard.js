@@ -74,6 +74,24 @@ function isDashboardOnline() {
         : (typeof navigator === 'undefined' || navigator.onLine !== false);
 }
 
+function isDashboardVisible() {
+    return document.visibilityState !== 'hidden' && document.hidden !== true;
+}
+
+function isPassivePollingLeader() {
+    return isDashboardVisible()
+        && (!window.KimbelaPassivePolling || window.KimbelaPassivePolling.isLeader());
+}
+
+function claimAdImpression(adId, placement = 'dashboard-cycle') {
+    if (!adId || !isDashboardVisible()) return false;
+    if (!window.KimbelaPassivePolling) return true;
+    return window.KimbelaPassivePolling.claimOnce(
+        `ad-impression:${placement}:${adId}`,
+        30 * 60 * 1000
+    );
+}
+
 function dashboardRequestJson(key, url, options) {
     if (window.KimbelaNetwork) {
         return window.KimbelaNetwork.requestJson(key, url, options);
@@ -231,6 +249,7 @@ const MobileFeedAds = {
     async trackImpression(adId) {
         if (!adId || this.trackedImpressions.has(adId)) return;
         this.trackedImpressions.add(adId);
+        if (!claimAdImpression(adId, 'mobile-feed')) return;
 
         try {
             await fetch(`/api/ads/${adId}/impression`, {
@@ -277,6 +296,7 @@ const MobileFeedAds = {
     },
 
     refresh() {
+        if (!isDashboardVisible()) return;
         const feed = document.getElementById('posts-feed');
         if (!feed) return;
 
@@ -2068,6 +2088,26 @@ const NotificationSystem = {
     badgeRequest: null,
     onlineUnsubscribe: null,
     offlineUnsubscribe: null,
+    leadershipUnsubscribe: null,
+    sharedStateUnsubscribe: null,
+
+    canPollPassively() {
+        return isDashboardOnline() && isPassivePollingLeader();
+    },
+
+    applyBadge(data) {
+        const badge = document.getElementById('notificationBadge');
+        if (!badge || !data) return false;
+
+        const count = Math.max(0, Number(data.count) || 0);
+        if (count > 0) {
+            badge.textContent = count > 99 ? '99+' : count;
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+        return true;
+    },
 
     stopPolling() {
         if (appState.notificationCheckInterval) {
@@ -2078,15 +2118,16 @@ const NotificationSystem = {
 
     startPolling() {
         this.stopPolling();
-        if (!isDashboardOnline()) return;
+        if (!this.canPollPassively()) return;
         appState.notificationCheckInterval = setInterval(
-            () => this.updateBadge(),
+            () => this.updateBadge({ passive: true }),
             30000
         );
     },
 
-    async updateBadge() {
+    async updateBadge({ passive = false } = {}) {
         if (!isDashboardOnline()) return false;
+        if (passive && !this.canPollPassively()) return false;
         if (this.badgeRequest) return this.badgeRequest;
 
         this.badgeRequest = (async () => {
@@ -2095,14 +2136,11 @@ const NotificationSystem = {
                     'notification-count',
                     '/notifications/count'
                 );
-                const badge = document.getElementById('notificationBadge');
-                if (!badge) return false;
-
-                if (data.count > 0) {
-                    badge.textContent = data.count > 99 ? '99+' : data.count;
-                    badge.classList.remove('hidden');
-                } else {
-                    badge.classList.add('hidden');
+                this.applyBadge(data);
+                if (window.KimbelaPassivePolling) {
+                    window.KimbelaPassivePolling.publish('notification-count', {
+                        count: Math.max(0, Number(data.count) || 0)
+                    });
                 }
                 return true;
             } catch (error) {
@@ -2323,13 +2361,32 @@ const NotificationSystem = {
 
     init() {
         this.stopPolling();
-        this.load();
-        this.updateBadge();
-        this.startPolling();
+
+        if (!this.sharedStateUnsubscribe && window.KimbelaPassivePolling) {
+            this.sharedStateUnsubscribe = window.KimbelaPassivePolling.subscribe(
+                'notification-count',
+                data => this.applyBadge(data)
+            );
+        }
+        if (!this.leadershipUnsubscribe && window.KimbelaPassivePolling) {
+            this.leadershipUnsubscribe = window.KimbelaPassivePolling.onLeadershipChange(
+                isLeader => {
+                    if (!isLeader || !isDashboardOnline()) {
+                        this.stopPolling();
+                        return;
+                    }
+                    this.updateBadge({ passive: true });
+                    this.startPolling();
+                }
+            );
+        } else if (!window.KimbelaPassivePolling && isDashboardVisible()) {
+            this.updateBadge({ passive: true });
+            this.startPolling();
+        }
 
         if (!this.onlineUnsubscribe && window.KimbelaNetwork) {
             this.onlineUnsubscribe = window.KimbelaNetwork.onOnline(() => {
-                this.updateBadge();
+                this.updateBadge({ passive: true });
                 this.startPolling();
             });
         }
@@ -2337,6 +2394,18 @@ const NotificationSystem = {
             this.offlineUnsubscribe = window.KimbelaNetwork.onOffline(() => {
                 this.stopPolling();
             });
+        }
+
+        if (!window.KimbelaPassivePolling && !this.visibilityHandler) {
+            this.visibilityHandler = () => {
+                if (isDashboardVisible()) {
+                    this.updateBadge({ passive: true });
+                    this.startPolling();
+                } else {
+                    this.stopPolling();
+                }
+            };
+            document.addEventListener('visibilitychange', this.visibilityHandler);
         }
 
         const dropdown = document.getElementById('notificationDropdown');
@@ -2617,16 +2686,23 @@ const AdSystem = {
         rotationTimer: null,
         modalTimer: null,
         intervalTimer: null,
+        initialTimer: null,
+        displayTimer: null,
         adQueue: [],
         nextAdTime: null,
         initialized: false,
         retryCount: 0,
+        hasLoadedAds: false,
         csrfToken: null,
         isShowingAd: false
     },
 
     // Initialize ad system
     async init() {
+        if (this.state.initialized) {
+            if (isDashboardVisible()) this.resume();
+            return this;
+        }
 
         try {
             // Cache DOM elements
@@ -2638,15 +2714,29 @@ const AdSystem = {
             // Show containers if they exist
             this.showContainers();
 
+            this.state.initialized = true;
+            if (!this.state.visibilityHandler) {
+                this.state.visibilityHandler = () => {
+                    if (isDashboardVisible()) {
+                        this.resume();
+                    } else {
+                        this.pause();
+                    }
+                };
+                document.addEventListener('visibilitychange', this.state.visibilityHandler);
+            }
+
+            if (!isDashboardVisible()) return this;
+
             // Load ads but don't display immediately
             await this.loadAds();
 
             // Wait initial delay before showing first ad
-            setTimeout(() => {
+            this.state.initialTimer = setTimeout(() => {
+                this.state.initialTimer = null;
                 this.startAdCycle();
             }, this.config.initialDelay);
 
-            this.state.initialized = true;
             return this;
 
         } catch (error) {
@@ -2657,6 +2747,7 @@ const AdSystem = {
 
     // Start the ad display cycle
     startAdCycle() {
+        if (!isDashboardVisible()) return;
         if (this.state.activeAds.length === 0) {
             this.showNoAdsMessage();
             return;
@@ -2678,6 +2769,8 @@ const AdSystem = {
             this.state.intervalTimer = null;
         }
 
+        if (!isDashboardVisible()) return;
+
         // Calculate next interval (with optional randomness)
         let interval = this.config.adInterval;
         if (this.config.randomizeInterval) {
@@ -2698,6 +2791,10 @@ const AdSystem = {
 
     // Display the next ad
     displayNextAd() {
+        if (!isDashboardVisible()) {
+            this.state.isShowingAd = false;
+            return;
+        }
         if (this.state.activeAds.length === 0 || this.state.isShowingAd) {
             this.scheduleNextAd();
             return;
@@ -2723,7 +2820,8 @@ const AdSystem = {
         this.trackAdImpression(ad.id);
 
         // Hide the ad after modal display time
-        setTimeout(() => {
+        this.state.displayTimer = setTimeout(() => {
+            this.state.displayTimer = null;
             this.state.isShowingAd = false;
             // Schedule next ad
             this.scheduleNextAd();
@@ -2834,6 +2932,7 @@ const AdSystem = {
 
     // Load ads from server with retry logic
     async loadAds() {
+        if (!isDashboardVisible()) return;
         if (this.state.retryCount >= this.config.maxRetries) {
             this.showErrorState('Failed to load ads after multiple attempts');
             return;
@@ -2856,6 +2955,7 @@ const AdSystem = {
             }
 
             const data = await response.json();
+            this.state.hasLoadedAds = true;
 
             if (data.success && data.ads && Array.isArray(data.ads) && data.ads.length > 0) {
                 this.state.activeAds = data.ads;
@@ -3052,6 +3152,32 @@ const AdSystem = {
             clearTimeout(this.state.intervalTimer);
             this.state.intervalTimer = null;
         }
+
+        if (this.state.initialTimer) {
+            clearTimeout(this.state.initialTimer);
+            this.state.initialTimer = null;
+        }
+
+        if (this.state.displayTimer) {
+            clearTimeout(this.state.displayTimer);
+            this.state.displayTimer = null;
+        }
+    },
+
+    pause() {
+        this.clearAllTimers();
+        this.state.isShowingAd = false;
+    },
+
+    async resume() {
+        if (!this.state.initialized || !isDashboardVisible()) return;
+        this.clearAllTimers();
+        if (!this.state.hasLoadedAds) {
+            await this.loadAds();
+        }
+        if (this.state.activeAds.length > 0) {
+            this.scheduleNextAd();
+        }
     },
 
     // Track ad click
@@ -3081,6 +3207,7 @@ const AdSystem = {
 
     // Track ad impression
     async trackAdImpression(adId) {
+        if (!claimAdImpression(adId)) return;
 
         // Analytics
         if (typeof gtag === 'function') {
@@ -4773,6 +4900,10 @@ document.addEventListener('DOMContentLoaded', () => {
         window.__mobileFeedAdsResizeTimer = setTimeout(() => {
             MobileFeedAds.refresh();
         }, 150);
+    });
+
+    document.addEventListener('visibilitychange', () => {
+        if (isDashboardVisible()) MobileFeedAds.refresh();
     });
 
     // Initialize groups dropdown

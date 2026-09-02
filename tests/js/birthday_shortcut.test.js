@@ -54,8 +54,12 @@ function birthday(id, name = `Friend ${id}`) {
   };
 }
 
-function createRuntime(todayBirthdays, { online = true } = {}) {
+function createRuntime(todayBirthdays, { online = true, coordinated = false } = {}) {
   const requests = [];
+  const intervals = [];
+  const clearedIntervals = [];
+  let leader = true;
+  let leadershipCallback = null;
   const elements = {
     birthdayCount: new FakeElement(['hidden']),
     birthdayNotificationBadge: new FakeElement(),
@@ -66,6 +70,8 @@ function createRuntime(todayBirthdays, { online = true } = {}) {
   elements.birthdayCount.style.display = 'none';
   const document = {
     body: { style: {} },
+    hidden: false,
+    visibilityState: 'visible',
     addEventListener() {},
     getElementById(id) { return elements[id] || null; },
   };
@@ -82,13 +88,29 @@ function createRuntime(todayBirthdays, { online = true } = {}) {
       },
     },
   };
+  if (coordinated) {
+    window.KimbelaPassivePolling = {
+      isLeader() { return leader; },
+      onLeadershipChange(callback) {
+        leadershipCallback = callback;
+        callback(leader);
+        return () => {};
+      },
+      publish() {},
+      subscribe() { return () => {}; },
+    };
+  }
   const context = {
     alert() {},
-    clearInterval() {},
+    clearInterval(timer) { clearedIntervals.push(timer); },
     clearTimeout() {},
     document,
     fetch: async () => { throw new Error('Unexpected duplicate fetch'); },
-    setInterval() { return 1; },
+    setInterval(callback) {
+      const timer = { callback };
+      intervals.push(timer);
+      return timer;
+    },
     setTimeout(callback) { callback(); return 1; },
     window,
   };
@@ -101,8 +123,15 @@ function createRuntime(todayBirthdays, { online = true } = {}) {
 
   return {
     elements,
+    clearedIntervals,
+    intervals,
     requests,
     system: new context.BirthdayCelebrationForTest(),
+    async setLeader(value) {
+      leader = value;
+      leadershipCallback(value);
+      await new Promise(resolve => setImmediate(resolve));
+    },
   };
 }
 
@@ -194,4 +223,24 @@ test('offline friend selection does not fetch or recursively retry', async () =>
   await new Promise(resolve => setImmediate(resolve));
 
   assert.deepEqual(runtime.requests, []);
+});
+
+test('birthday polling follows visible leader handoff without catch-up requests', async () => {
+  const runtime = createRuntime([birthday(1)], { coordinated: true });
+  runtime.system.init();
+  await new Promise(resolve => setImmediate(resolve));
+
+  assert.deepEqual(runtime.requests, ['/api/birthdays/today']);
+  assert.equal(runtime.intervals.length, 1);
+
+  await runtime.setLeader(false);
+  assert.equal(runtime.clearedIntervals.length, 1);
+  assert.deepEqual(runtime.requests, ['/api/birthdays/today']);
+
+  await runtime.setLeader(true);
+  assert.deepEqual(runtime.requests, [
+    '/api/birthdays/today',
+    '/api/birthdays/today',
+  ]);
+  assert.equal(runtime.intervals.length, 2);
 });

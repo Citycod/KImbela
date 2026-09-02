@@ -8,17 +8,103 @@
           this.checkInFlight = null;
           this.todayBirthdays = [];
           this.hasLoadedTodayBirthdays = false;
+          this.pollTimer = null;
+          this.leadershipUnsubscribe = null;
+          this.sharedStateUnsubscribe = null;
+          this.onlineUnsubscribe = null;
         }
 
         // Initialize birthday system
         init() {
-          this.checkBirthdays();
           this.setupEventListeners();
+          if (window.KimbelaPassivePolling) {
+            this.sharedStateUnsubscribe = window.KimbelaPassivePolling.subscribe(
+              "birthdays-today",
+              (data) => this.applyBirthdayData(data),
+            );
+            this.leadershipUnsubscribe =
+              window.KimbelaPassivePolling.onLeadershipChange((isLeader) => {
+                if (isLeader && this.isOnline()) {
+                  this.checkBirthdays({ passive: true });
+                  this.startPolling();
+                } else {
+                  this.stopPolling();
+                }
+              });
+          } else if (this.isVisible()) {
+            this.checkBirthdays({ passive: true });
+            this.startPolling();
+            document.addEventListener("visibilitychange", () => {
+              if (this.isVisible()) {
+                this.checkBirthdays({ passive: true });
+                this.startPolling();
+              } else {
+                this.stopPolling();
+              }
+            });
+          }
+
+          if (
+            window.KimbelaNetwork &&
+            typeof window.KimbelaNetwork.onOnline === "function"
+          ) {
+            this.onlineUnsubscribe = window.KimbelaNetwork.onOnline(() => {
+              if (this.canPollPassively()) {
+                this.checkBirthdays({ passive: true });
+                this.startPolling();
+              }
+            });
+          }
+        }
+
+        isVisible() {
+          return document.visibilityState !== "hidden" && document.hidden !== true;
+        }
+
+        isOnline() {
+          return !window.KimbelaNetwork || window.KimbelaNetwork.isOnline();
+        }
+
+        canPollPassively() {
+          return (
+            this.isVisible() &&
+            this.isOnline() &&
+            (!window.KimbelaPassivePolling ||
+              window.KimbelaPassivePolling.isLeader())
+          );
+        }
+
+        startPolling() {
+          this.stopPolling();
+          if (!this.canPollPassively()) return;
+          this.pollTimer = setInterval(() => {
+            this.checkBirthdays({ passive: true });
+          }, 3600000);
+        }
+
+        stopPolling() {
+          if (!this.pollTimer) return;
+          clearInterval(this.pollTimer);
+          this.pollTimer = null;
+        }
+
+        applyBirthdayData(data) {
+          if (!data || !data.success) return false;
+          this.todayBirthdays = Array.isArray(data.birthdays)
+            ? data.birthdays
+            : [];
+          this.hasLoadedTodayBirthdays = true;
+          this.showBirthdayNotification(this.todayBirthdays);
+          this.updateBirthdayBadge(data);
+          return true;
         }
 
         // Check for birthdays and show notifications
-        async checkBirthdays() {
-          if (window.KimbelaNetwork && !window.KimbelaNetwork.isOnline()) {
+        async checkBirthdays({ passive = false } = {}) {
+          if (!this.isVisible() || !this.isOnline()) {
+            return false;
+          }
+          if (passive && !this.canPollPassively()) {
             return false;
           }
           if (this.checkInFlight) return this.checkInFlight;
@@ -35,15 +121,11 @@
                   );
 
               if (data.success) {
-                this.todayBirthdays = Array.isArray(data.birthdays)
-                  ? data.birthdays
-                  : [];
-                this.hasLoadedTodayBirthdays = true;
-                this.showBirthdayNotification(this.todayBirthdays);
+                this.applyBirthdayData(data);
+                if (window.KimbelaPassivePolling) {
+                  window.KimbelaPassivePolling.publish("birthdays-today", data);
+                }
               }
-
-              // Reuse the bootstrap response instead of requesting the same data twice.
-              this.updateBirthdayBadge(data);
               return true;
             } catch (error) {
               return false;
@@ -660,12 +742,6 @@
         birthdaySystem.sendBirthdayWish();
       }
 
-      // Auto-check birthdays every hour
-      setInterval(() => {
-        if (!window.KimbelaNetwork || window.KimbelaNetwork.isOnline()) {
-          birthdaySystem.checkBirthdays();
-        }
-      }, 3600000); // 1 hour
     </script>
 
 <script>

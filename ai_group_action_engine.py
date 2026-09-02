@@ -6,9 +6,7 @@ does not create a second group-content or notification path.
 """
 
 from contextlib import contextmanager
-from datetime import datetime
 import logging
-import random
 import re
 
 from flask import current_app
@@ -18,8 +16,6 @@ from ai_controls import (
     get_profile_config,
     group_automation_eligibility,
     group_is_quiet_enough,
-    last_ai_post_at,
-    posts_today_count,
     thread_in_group_cooldown,
 )
 from ai_service import LLMResponse, generate_content
@@ -348,13 +344,6 @@ def execute_next_group_action(personas, actions=None) -> bool:
     """Try priorities in order and stop immediately after one successful action."""
     actions = set(actions or ("reply", "comment", "post"))
     personas = list(personas)
-    random.shuffle(personas)
-    personas.sort(
-        key=lambda persona: (
-            posts_today_count(persona),
-            last_ai_post_at(persona.id) or datetime.min,
-        )
-    )
 
     # 1. Human comments on an AI profile's own group post.
     if "reply" in actions:

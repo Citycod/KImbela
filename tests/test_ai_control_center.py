@@ -63,6 +63,13 @@ def save_config(db, persona, **changes):
 @pytest.fixture(autouse=True)
 def reset_global_ai_switch(db):
     from ai_controls import set_global_activity_enabled, set_global_post_spacing_hours
+    from models import AILog, Post, User
+
+    ai_user_ids = db.session.query(User.id).filter(User.is_ai_persona.is_(True))
+    Post.query.filter(Post.author_id.in_(ai_user_ids)).delete(
+        synchronize_session=False
+    )
+    AILog.query.delete()
 
     set_global_activity_enabled(True)
     set_global_post_spacing_hours(0)
@@ -407,6 +414,7 @@ def test_ai_job_uses_the_existing_dedicated_scheduler(app, monkeypatch):
         assert job is not None
         assert job.max_instances == 1
         assert job.coalesce is True
+        assert job.trigger.interval == timedelta(hours=48)
     finally:
         scheduler_instance.shutdown(wait=True)
         scheduler_module.scheduler = None

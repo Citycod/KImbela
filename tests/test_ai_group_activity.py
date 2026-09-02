@@ -1,6 +1,6 @@
 from datetime import date, datetime, timedelta
 import uuid
-from unittest.mock import Mock
+from unittest.mock import Mock, call
 from types import SimpleNamespace
 
 import pytest
@@ -103,6 +103,13 @@ def add_published_post(db, persona, when, *, group_id=None):
 @pytest.fixture(autouse=True)
 def reset_ai_globals(db):
     from ai_controls import set_global_activity_enabled, set_global_post_spacing_hours
+    from models import AILog, Post, User
+
+    ai_user_ids = db.session.query(User.id).filter(User.is_ai_persona.is_(True))
+    Post.query.filter(Post.author_id.in_(ai_user_ids)).delete(
+        synchronize_session=False
+    )
+    AILog.query.delete()
 
     set_global_activity_enabled(True)
     set_global_post_spacing_hours(0)
@@ -136,29 +143,44 @@ def test_conservative_weekly_defaults_are_two_total_one_per_channel(db):
     assert config["maximum_group_posts_per_week"] == 1
 
 
-def test_weekly_total_and_channel_budgets_are_combined(db):
+def test_feed_and_group_share_the_same_fourteen_day_budget(db):
     from ai_controls import new_post_eligibility, weekly_post_counts
+    from models import Post
 
     persona = make_persona(db)
     now = datetime(2026, 8, 31, 12, 0)
     open_weekly_policy(db, persona)
     add_published_post(db, persona, now - timedelta(hours=2))
-    assert new_post_eligibility(persona, "feed", now) == (False, "weekly_feed_limit")
-    assert new_post_eligibility(persona, "group", now)[0] is True
+    assert new_post_eligibility(persona, "feed", now) == (
+        False,
+        "fourteen_day_post_limit",
+    )
+    assert new_post_eligibility(persona, "group", now) == (
+        False,
+        "fourteen_day_post_limit",
+    )
+    assert weekly_post_counts(persona, now) == {"total": 1, "feed": 1, "group": 0}
+
+    db.session.query(Post).filter(Post.author_id == persona.user_id).delete()
     add_published_post(db, persona, now - timedelta(hours=1), group_id=1)
-    assert weekly_post_counts(persona, now) == {"total": 2, "feed": 1, "group": 1}
-    assert new_post_eligibility(persona, "feed", now) == (False, "weekly_total_limit")
-    assert new_post_eligibility(persona, "group", now) == (False, "weekly_total_limit")
+    assert new_post_eligibility(persona, "feed", now) == (
+        False,
+        "fourteen_day_post_limit",
+    )
+    assert new_post_eligibility(persona, "group", now) == (
+        False,
+        "fourteen_day_post_limit",
+    )
 
 
-def test_group_weekly_limit_is_independently_enforced(db):
+def test_persona_is_eligible_again_after_fourteen_days(db):
     from ai_controls import new_post_eligibility
 
     persona = make_persona(db)
     now = datetime(2026, 8, 31, 12, 0)
     open_weekly_policy(db, persona, maximum_total_posts_per_week=5)
-    add_published_post(db, persona, now - timedelta(hours=1), group_id=1)
-    assert new_post_eligibility(persona, "group", now) == (False, "weekly_group_limit")
+    add_published_post(db, persona, now - timedelta(days=14), group_id=1)
+    assert new_post_eligibility(persona, "group", now)[0] is True
     assert new_post_eligibility(persona, "feed", now)[0] is True
 
 
@@ -231,14 +253,44 @@ def test_scheduler_runs_at_most_one_action_and_prioritizes_group_reply(monkeypat
     feed.assert_not_called()
 
 
-def test_feed_selection_prefers_profile_that_has_not_posted_today(monkeypatch):
+def test_scheduler_prefers_quiet_group_post_before_feed_post(monkeypatch):
+    import scheduler
+
+    persona = object()
+    group = Mock(side_effect=[False, False, True])
+    feed = Mock(return_value=False)
+    monkeypatch.setattr("ai_group_action_engine.execute_next_group_action", group)
+    monkeypatch.setattr(scheduler, "execute_one_feed_ai_action", feed)
+
+    assert scheduler.run_one_ai_action([persona]) is True
+    assert group.call_args_list == [
+        call([persona], actions=("reply",)),
+        call([persona], actions=("comment",)),
+        call([persona], actions=("post",)),
+    ]
+    feed.assert_called_once_with([persona], actions=("reply",))
+
+
+def test_scheduler_does_nothing_when_no_action_is_eligible(monkeypatch):
+    import scheduler
+
+    personas = [object(), object()]
+    group = Mock(return_value=False)
+    feed = Mock(return_value=False)
+    monkeypatch.setattr("ai_group_action_engine.execute_next_group_action", group)
+    monkeypatch.setattr(scheduler, "execute_one_feed_ai_action", feed)
+
+    assert scheduler.run_one_ai_action(personas) is False
+    assert group.call_count == 3
+    assert feed.call_count == 2
+
+
+def test_feed_selection_preserves_oldest_post_first_scheduler_order(monkeypatch):
     import scheduler
 
     posted = SimpleNamespace(id=1, interests=["community"])
     quiet = SimpleNamespace(id=2, interests=["community"])
     selected = []
-    monkeypatch.setattr("ai_controls.posts_today_count", lambda persona: 1 if persona.id == 1 else 0)
-    monkeypatch.setattr("ai_controls.last_ai_post_at", lambda _persona_id: None)
     monkeypatch.setattr(
         "ai_controls.get_profile_config",
         lambda _persona: {"reply_probability": 0, "posting_mode": "automatic"},
@@ -248,9 +300,48 @@ def test_feed_selection_prefers_profile_that_has_not_posted_today(monkeypatch):
         "ai_action_engine.execute_persona_post",
         lambda persona, _topic: selected.append(persona.id) or True,
     )
-    monkeypatch.setattr("random.shuffle", lambda values: None)
-    assert scheduler.execute_one_feed_ai_action([posted, quiet]) is True
+    assert scheduler.execute_one_feed_ai_action([quiet, posted], actions=("post",)) is True
     assert selected == [quiet.id]
+
+
+def test_feed_executor_publishes_at_most_one_profile_per_run(monkeypatch):
+    import scheduler
+
+    first = SimpleNamespace(id=1, interests=["community"])
+    second = SimpleNamespace(id=2, interests=["community"])
+    selected = []
+    monkeypatch.setattr(
+        "ai_controls.get_profile_config",
+        lambda _persona: {"reply_probability": 0, "posting_mode": "automatic"},
+    )
+    monkeypatch.setattr(
+        "ai_controls.automation_eligibility",
+        lambda *_args, **_kwargs: (True, "eligible"),
+    )
+    monkeypatch.setattr(
+        "ai_action_engine.execute_persona_post",
+        lambda persona, _topic: selected.append(persona.id) or True,
+    )
+
+    assert scheduler.execute_one_feed_ai_action(
+        [first, second], actions=("post",)
+    ) is True
+    assert selected == [first.id]
+
+
+def test_bulk_persona_order_prefers_never_then_longest_without_posting(db):
+    from ai_controls import order_personas_by_last_post
+
+    oldest = make_persona(db, "Oldest")
+    recent = make_persona(db, "Recent")
+    never = make_persona(db, "Never")
+    now = datetime(2026, 8, 31, 12, 0)
+    add_published_post(db, oldest, now - timedelta(days=30))
+    add_published_post(db, recent, now - timedelta(days=15))
+
+    ordered = order_personas_by_last_post([recent, oldest, never])
+
+    assert [persona.id for persona in ordered] == [never.id, oldest.id, recent.id]
 
 
 def test_ai_to_ai_group_comment_chain_is_rejected_before_generation(db, monkeypatch):

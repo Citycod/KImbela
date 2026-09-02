@@ -358,14 +358,45 @@ def create_app():
             return "action"
         return "page"
 
-    def should_skip_activity_log():
+    passive_request_paths = {
+        "/notifications/count",
+        "/api/messaging/unread-count",
+        "/api/messaging/unread_count",
+        "/api/messaging/friends",
+        "/api/birthdays/today",
+        "/api/ads/sponsored",
+        "/api/user/timezone",
+        "/api/pwa/subscribe",
+        "/api/pwa/unsubscribe",
+        "/sw.js",
+        "/offline",
+    }
+
+    def is_passive_request():
+        path = request.path or ""
+        if (
+            path.startswith("/static/")
+            or path.startswith("/socket.io")
+            or path.startswith("/favicon")
+        ):
+            return True
+        if path in passive_request_paths:
+            return True
+        if path.startswith("/api/ads/") and path.endswith("/impression"):
+            return True
+        return False
+
+    def should_skip_activity_log(response=None):
         path = request.path or ""
         if (
             path.startswith("/static/")
             or path.startswith("/socket.io")
             or path.startswith("/favicon")
             or path == "/install"
+            or is_passive_request()
         ):
+            return True
+        if response is not None and response.status_code == 404 and not current_user.is_authenticated:
             return True
         return False
 
@@ -379,7 +410,7 @@ def create_app():
                     f"took {diff:.2f} seconds"
                 )
 
-            if not should_skip_activity_log():
+            if not should_skip_activity_log(response):
                 try:
                     from models import ActivityLog
 
@@ -431,10 +462,10 @@ def create_app():
         from flask_login import current_user
 
         try:
-            if current_user.is_authenticated:
+            if current_user.is_authenticated and not is_passive_request():
                 if (
                     not current_user.last_seen
-                    or (utcnow() - current_user.last_seen).seconds > 300
+                    or (utcnow() - current_user.last_seen).total_seconds() > 300
                 ):
                     current_user.last_seen = utcnow()
                     try:

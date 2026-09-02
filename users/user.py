@@ -3580,18 +3580,6 @@ def get_post(post_id):
     )
 
 
-# Update last_seen on every request
-@user.before_request
-def update_last_seen():
-    if current_user.is_authenticated:
-        current_user.last_seen = utcnow()
-        # Consider user online if seen < 5 min ago
-        current_user.is_online = (
-            utcnow() - current_user.last_seen
-        ) < timedelta(minutes=5)
-        db.session.commit()
-
-
 @user.route("/<int:user_id>", methods=["GET", "POST"])
 @login_required
 def profile(user_id):
@@ -4795,14 +4783,28 @@ def pwa_subscribe():
     # Check if subscription already exists for this endpoint
     existing = PushSubscription.query.filter_by(endpoint=endpoint).first()
     if existing:
-        # Upsert: update user_id and last_seen_at
-        existing.user_id = current_user.id
-        existing.p256dh = p256dh
-        existing.auth = auth
-        existing.user_agent = ua
-        existing.last_seen_at = utcnow()
-        db.session.commit()
-        return jsonify({'message': 'Subscription updated'})
+        now = utcnow()
+        refresh_due = (
+            not existing.last_seen_at
+            or now - existing.last_seen_at >= timedelta(days=7)
+        )
+        changed = any(
+            (
+                existing.user_id != current_user.id,
+                existing.p256dh != p256dh,
+                existing.auth != auth,
+                existing.user_agent != ua,
+            )
+        )
+        if changed or refresh_due:
+            existing.user_id = current_user.id
+            existing.p256dh = p256dh
+            existing.auth = auth
+            existing.user_agent = ua
+            existing.last_seen_at = now
+            db.session.commit()
+            return jsonify({'message': 'Subscription updated'})
+        return jsonify({'message': 'Subscription already current'})
 
     new_sub = PushSubscription(
         user_id=current_user.id,

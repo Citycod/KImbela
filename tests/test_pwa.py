@@ -1,4 +1,5 @@
 from pathlib import Path
+from datetime import timedelta
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -53,6 +54,33 @@ def test_subscription_endpoint_upsert_does_not_create_duplicates(
     assert subscription.user_id == user.id
     assert subscription.p256dh == "replacement-key"
     assert subscription.auth == "replacement-auth"
+
+
+def test_unchanged_subscription_resync_does_not_refresh_database_timestamp(
+    client, login, user, db, monkeypatch
+):
+    from models import PushSubscription
+    from time_utils import utcnow
+
+    monkeypatch.setattr("authentication.authenticate.send_login_alert_email", lambda *args: None)
+    assert login().status_code in (200, 302)
+    payload = {
+        "endpoint": "https://push.example/unchanged-device",
+        "keys": {"p256dh": "same-key", "auth": "same-auth"},
+        "isStandalone": True,
+    }
+    assert client.post("/api/pwa/subscribe", json=payload).status_code == 200
+    subscription = PushSubscription.query.filter_by(endpoint=payload["endpoint"]).one()
+    subscription.last_seen_at = utcnow() - timedelta(days=1)
+    db.session.commit()
+    unchanged_timestamp = subscription.last_seen_at
+
+    response = client.post("/api/pwa/subscribe", json=payload)
+
+    assert response.status_code == 200
+    assert response.get_json()["message"] == "Subscription already current"
+    db.session.refresh(subscription)
+    assert subscription.last_seen_at == unchanged_timestamp
 
 
 def test_worker_does_not_reference_removed_precache_asset():
@@ -159,3 +187,10 @@ def test_dashboard_birthday_bootstrap_reuses_its_initial_response():
 
     assert "this.updateBirthdayBadge(data);" in source
     assert "async updateBirthdayBadge(existingData = null)" in source
+
+
+def test_dashboard_timezone_sync_only_posts_when_browser_value_changed():
+    source = (PROJECT_ROOT / "templates" / "user_dashboard.html").read_text()
+
+    assert "const storedTimezone = {{ current_user.timezone|tojson }};" in source
+    assert "if (tz && tz !== storedTimezone)" in source

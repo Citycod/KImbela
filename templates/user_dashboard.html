@@ -2073,6 +2073,7 @@ placement='dashboard-top') %}
 
 <!--  <script src="{{ url_for('static', filename='assets/js/main.js') }}"></script> -->
 {% include 'partials/user_dashboard_pre_scripts.html' %}
+<script src="{{ url_for('static', filename='assets/js/passive_polling.js', v='neon-cost-1') }}"></script>
 <script src="{{ url_for('static', filename='assets/js/dashboard.js', v='ux-polish-1') }}"></script>
 <script src="{{ url_for('static', filename='assets/js/comment_composer.js', v='comment-composer-2') }}"></script>
 
@@ -5209,7 +5210,8 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
   document.addEventListener("DOMContentLoaded", function () {
     if (typeof Intl !== 'undefined' && Intl.DateTimeFormat) {
       const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      if (tz) {
+      const storedTimezone = {{ current_user.timezone|tojson }};
+      if (tz && tz !== storedTimezone) {
         fetch('/api/user/timezone', {
           method: 'POST',
           headers: {

@@ -19,8 +19,8 @@ logger = logging.getLogger(__name__)
 scheduler = None
 
 
-def execute_one_feed_ai_action(personas):
-    """Run at most one existing feed AI action."""
+def execute_one_feed_ai_action(personas, actions=None):
+    """Run at most one requested feed AI action in the supplied persona order."""
     import random
 
     from ai_action_engine import (
@@ -31,86 +31,76 @@ def execute_one_feed_ai_action(personas):
     from ai_controls import (
         automation_eligibility,
         get_profile_config,
-        last_ai_post_at,
-        posts_today_count,
         reply_is_due,
     )
     from models import Comment, Post, User
-    from datetime import datetime
 
+    actions = set(actions or ("reply", "post"))
     personas = list(personas)
-    random.shuffle(personas)
-    personas.sort(
-        key=lambda persona: (
-            posts_today_count(persona),
-            last_ai_post_at(persona.id) or datetime.min,
-        )
-    )
 
     # Human replies take priority over creating a new feed post.
-    for persona in personas:
-        config = get_profile_config(persona)
-        reply_allowed, _ = automation_eligibility(persona, "reply")
-        if not reply_allowed:
-            continue
-        if random.randint(1, 100) > config["reply_probability"]:
-            continue
-        source_comments = (
-            Comment.query.join(Post, Comment.post_id == Post.id)
-            .join(User, Comment.author_id == User.id)
-            .filter(
-                Post.group_id.is_(None),
-                Post.author_id == persona.user_id,
-                Comment.author_id != persona.user_id,
-                User.is_ai_persona.is_(False),
-            )
-            .order_by(Comment.created_at.desc())
-            .limit(20)
-            .all()
-        )
-        for comment in source_comments:
-            if not reply_is_due(persona, comment):
+    if "reply" in actions:
+        for persona in personas:
+            config = get_profile_config(persona)
+            reply_allowed, _ = automation_eligibility(persona, "reply")
+            if not reply_allowed:
                 continue
-            if execute_persona_comment(
-                persona,
-                comment.post,
-                source_comment=comment,
-            ):
-                return True
+            if random.randint(1, 100) > config["reply_probability"]:
+                continue
+            source_comments = (
+                Comment.query.join(Post, Comment.post_id == Post.id)
+                .join(User, Comment.author_id == User.id)
+                .filter(
+                    Post.group_id.is_(None),
+                    Post.author_id == persona.user_id,
+                    Comment.author_id != persona.user_id,
+                    User.is_ai_persona.is_(False),
+                )
+                .order_by(Comment.created_at.desc())
+                .limit(20)
+                .all()
+            )
+            for comment in source_comments:
+                if not reply_is_due(persona, comment):
+                    continue
+                if execute_persona_comment(
+                    persona,
+                    comment.post,
+                    source_comment=comment,
+                ):
+                    return True
 
-    for persona in personas:
-        config = get_profile_config(persona)
-        topics = persona.interests or ["socializing", "daily life"]
-        topic = random.choice(topics)
+    if "post" in actions:
+        for persona in personas:
+            config = get_profile_config(persona)
+            topics = persona.interests or ["socializing", "daily life"]
+            topic = random.choice(topics)
 
-        if config["posting_mode"] == "approval":
-            if prepare_persona_post_draft(persona, topic):
-                return True
-        else:
-            post_allowed, _ = automation_eligibility(persona, "post")
-            if post_allowed and execute_persona_post(persona, topic):
-                return True
+            if config["posting_mode"] == "approval":
+                if prepare_persona_post_draft(persona, topic):
+                    return True
+            else:
+                post_allowed, _ = automation_eligibility(persona, "post")
+                if post_allowed and execute_persona_post(persona, topic):
+                    return True
 
     return False
 
 
 def run_one_ai_action(personas, feed_first=None):
-    """Choose one feed or group action while keeping one global action bound."""
-    from ai_controls import prefer_feed_this_tick
+    """Run one human-priority action, preferring quiet-group posts over feed posts."""
     from ai_group_action_engine import execute_next_group_action
 
     personas = list(personas)
-    if feed_first is None:
-        feed_first = prefer_feed_this_tick()
     if execute_next_group_action(personas, actions=("reply",)):
         return True
-    if feed_first:
-        return execute_one_feed_ai_action(personas) or execute_next_group_action(
-            personas, actions=("comment", "post")
-        )
-    return execute_next_group_action(
-        personas, actions=("comment", "post")
-    ) or execute_one_feed_ai_action(personas)
+    if execute_one_feed_ai_action(personas, actions=("reply",)):
+        return True
+    if execute_next_group_action(personas, actions=("comment",)):
+        return True
+    if execute_next_group_action(personas, actions=("post",)):
+        return True
+    return execute_one_feed_ai_action(personas, actions=("post",))
 
 
 def process_birthday_push(user, year):
@@ -185,7 +175,7 @@ def init_scheduler(app):
     # AI persona activity remains in the one dedicated scheduler process.
     @scheduler.scheduled_job(
         "interval",
-        minutes=15,
+        hours=48,
         id="ai_persona_activity",
         max_instances=1,
         coalesce=True,
@@ -194,12 +184,13 @@ def init_scheduler(app):
         """Periodically run AI persona posting and commenting tasks"""
         with app.app_context():
             try:
+                from ai_controls import order_personas_by_last_post
                 from models import AIPersona
 
                 personas = AIPersona.query.filter_by(is_active=True).all()
                 if not personas:
                     return
-                run_one_ai_action(personas)
+                run_one_ai_action(order_personas_by_last_post(personas))
 
             except Exception as exc:
                 logger.error("Error in run_ai_persona_activity: %s", exc)

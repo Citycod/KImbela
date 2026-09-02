@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 import json
 from types import SimpleNamespace
 from unittest.mock import Mock, call
@@ -56,6 +56,67 @@ def test_messaging_friends_empty_after_login(client, login):
     data = response.get_json()
     assert data["success"] is True
     assert data["friends"] == []
+
+
+def test_messaging_friends_bulk_loads_last_message_unread_and_block_state(
+    client, login, user, db, monkeypatch
+):
+    from models import Message
+    from sqlalchemy import event
+    from time_utils import utcnow
+
+    friends = [create_recipient(db, user, is_online=index % 2 == 0) for index in range(6)]
+    blocked = friends[-1]
+    user.blocked_users.append(blocked)
+    now = utcnow()
+    db.session.add_all(
+        [
+            Message(
+                sender_id=friends[0].id,
+                receiver_id=user.id,
+                content="Newest unread message",
+                status="delivered",
+                timestamp=now,
+            ),
+            Message(
+                sender_id=user.id,
+                receiver_id=friends[0].id,
+                content="Older outgoing message",
+                status="read",
+                timestamp=now - timedelta(minutes=5),
+            ),
+            Message(
+                sender_id=friends[1].id,
+                receiver_id=user.id,
+                content="Read message",
+                status="read",
+                timestamp=now - timedelta(minutes=10),
+            ),
+        ]
+    )
+    user.last_seen = now
+    db.session.commit()
+    login_without_sending_alert(monkeypatch, login)
+    statements = []
+
+    def capture_statement(*_args):
+        statements.append(_args[2])
+
+    event.listen(db.engine, "before_cursor_execute", capture_statement)
+    try:
+        response = client.get("/api/messaging/friends")
+    finally:
+        event.remove(db.engine, "before_cursor_execute", capture_statement)
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload["success"] is True
+    assert len(payload["friends"]) == 5
+    assert blocked.id not in {friend["id"] for friend in payload["friends"]}
+    first = next(friend for friend in payload["friends"] if friend["id"] == friends[0].id)
+    assert first["last_message"] == "Newest unread message"
+    assert first["unread_count"] == 1
+    assert len(statements) <= 6
 
 
 def test_messaging_upload_missing_file(client, login):
