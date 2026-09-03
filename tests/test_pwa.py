@@ -30,6 +30,45 @@ def test_registration_uses_one_canonical_worker_path():
     assert "navigator.serviceWorker.register('/static/sw.js')" not in source
 
 
+def test_dashboard_push_cta_is_rendered_with_or_without_backend_subscription(
+    client, login, user, db
+):
+    from models import PushSubscription
+
+    assert login().status_code in (200, 302)
+
+    without_subscription = client.get("/user_dashboard")
+    assert without_subscription.status_code == 200
+    without_body = without_subscription.get_data(as_text=True)
+    assert without_body.count('id="push-prompt-banner"') == 1
+    assert 'id="push-prompt-banner"' in without_body
+    assert 'aria-hidden="true" hidden' in without_body
+
+    db.session.add(
+        PushSubscription(
+            user_id=user.id,
+            endpoint="https://push.example/stale-ios-installation",
+            p256dh="stale-ios-p256dh",
+            auth="stale-ios-auth",
+        )
+    )
+    db.session.commit()
+
+    with_subscription = client.get("/user_dashboard")
+    assert with_subscription.status_code == 200
+    with_body = with_subscription.get_data(as_text=True)
+    assert with_body.count('id="push-prompt-banner"') == 1
+
+    source = (PROJECT_ROOT / "templates" / "user_dashboard.html").read_text()
+    assert "{% if not current_user.push_subscriptions %}" not in source
+
+
+def test_shared_pages_load_versioned_push_cta_controller():
+    source = (PROJECT_ROOT / "templates" / "base.html").read_text()
+
+    assert "filename='pwa_init.js', v='push-cta-state-1'" in source
+
+
 def test_subscription_endpoint_upsert_does_not_create_duplicates(
     client, login, user, db, monkeypatch
 ):

@@ -8,6 +8,10 @@ const initSource = fs.readFileSync(
   path.resolve(__dirname, '../../static/pwa_init.js'),
   'utf8',
 );
+const dashboardSource = fs.readFileSync(
+  path.resolve(__dirname, '../../templates/user_dashboard.html'),
+  'utf8',
+);
 
 function createSubscription(endpoint) {
   let unsubscribeCount = 0;
@@ -232,6 +236,15 @@ function addInstallPageMarkup(document) {
   root.appendChild(feedback);
 }
 
+function addPushPromptMarkup(document) {
+  const banner = document.createElement('div');
+  banner.id = 'push-prompt-banner';
+  banner.hidden = true;
+  banner.style.display = 'none';
+  banner.setAttribute('aria-hidden', 'true');
+  document.body.appendChild(banner);
+}
+
 function loadInitializer({
   registrations = [],
   canonical,
@@ -247,9 +260,12 @@ function loadInitializer({
   storageThrows = false,
   documentReadyState = 'loading',
   installPage = false,
+  pushPrompt = false,
   shareImpl,
   clipboardImpl,
   notificationPermission = 'granted',
+  notificationRequestResult = 'granted',
+  pushManagerSupported = true,
 } = {}) {
   const listeners = {};
   const serviceWorkerListeners = {};
@@ -261,6 +277,7 @@ function loadInitializer({
   let nextTimerId = 1;
   const document = createDocument(documentReadyState);
   if (installPage) addInstallPageMarkup(document);
+  if (pushPrompt) addPushPromptMarkup(document);
   const canonicalRegistration = canonical || createRegistration('/sw.js');
   const serviceWorker = {
     addEventListener(type, handler) {
@@ -317,11 +334,12 @@ function loadInitializer({
     permission: notificationPermission,
     async requestPermission() {
       notificationPermissionRequests += 1;
-      return 'granted';
+      this.permission = notificationRequestResult;
+      return notificationRequestResult;
     },
   };
   window.Notification = notification;
-  window.PushManager = function PushManager() {};
+  if (pushManagerSupported) window.PushManager = function PushManager() {};
   const context = {
     Buffer,
     Error,
@@ -353,6 +371,7 @@ function loadInitializer({
     window,
     document,
     getNotificationPermissionRequests: () => notificationPermissionRequests,
+    getPushPrompt: () => document.getElementById('push-prompt-banner'),
     getInstallPrompt: () => document.getElementById('kimbela-install-prompt'),
     getInstallPageState: () => {
       const root = document.getElementById('kimbela-install-page');
@@ -491,13 +510,19 @@ test('normal push enablement reuses an existing canonical subscription', async (
 test('existing canonical subscription is resynchronized on page load', async () => {
   const existing = createSubscription('https://push.example/resynchronize');
   const canonical = createRegistration('/sw.js', existing);
-  const runtime = loadInitializer({ registrations: [canonical], canonical });
+  const runtime = loadInitializer({
+    registrations: [canonical],
+    canonical,
+    pushPrompt: true,
+  });
 
-  await runtime.triggerLoad();
+  await runtime.triggerPageLoad();
 
   assert.equal(runtime.fetchCalls.length, 1);
   assert.equal(runtime.fetchCalls[0].url, '/api/pwa/subscribe');
   assert.equal(JSON.parse(runtime.fetchCalls[0].options.body).endpoint, existing.endpoint);
+  assert.equal(runtime.getPushPrompt().hidden, true);
+  assert.equal(runtime.getPushPrompt().style.display, 'none');
 });
 
 test('missing canonical subscription is recovered when permission is already granted', async () => {
@@ -522,13 +547,110 @@ test('denied push permission does not subscribe, save, or request permission', a
     registrations: [canonical],
     canonical,
     notificationPermission: 'denied',
+    pushPrompt: true,
   });
 
-  await runtime.triggerLoad();
+  await runtime.triggerPageLoad();
+  await runtime.window.enablePushNotifications();
+  await runtime.window.enablePushNotifications();
 
   assert.equal(canonical.getSubscribeCount(), 0);
   assert.equal(runtime.fetchCalls.length, 0);
   assert.equal(runtime.getNotificationPermissionRequests(), 0);
+  assert.equal(runtime.getPushPrompt().hidden, true);
+  assert.equal(runtime.getPushPrompt().style.display, 'none');
+});
+
+test('default push permission shows the dashboard CTA despite an old dismissal key', async () => {
+  const runtime = loadInitializer({
+    notificationPermission: 'default',
+    pushPrompt: true,
+    storageValues: { pushPromptDismissed: 'true' },
+  });
+
+  assert.equal(runtime.getPushPrompt().hidden, true);
+  await runtime.triggerDOMContentLoaded();
+
+  assert.equal(runtime.getPushPrompt().hidden, false);
+  assert.equal(runtime.getPushPrompt().style.display, '');
+  assert.equal(runtime.getPushPrompt().getAttribute('aria-hidden'), 'false');
+  assert.equal(runtime.getNotificationPermissionRequests(), 0);
+});
+
+test('unsupported push environment keeps the dashboard CTA hidden', async () => {
+  const runtime = loadInitializer({
+    notificationPermission: 'default',
+    pushManagerSupported: false,
+    pushPrompt: true,
+  });
+
+  await runtime.triggerDOMContentLoaded();
+
+  assert.equal(runtime.getPushPrompt().hidden, true);
+  assert.equal(runtime.getPushPrompt().style.display, 'none');
+  assert.equal(runtime.getNotificationPermissionRequests(), 0);
+});
+
+test('default permission prompts only on enable and successful subscription hides CTA', async () => {
+  const canonical = createRegistration('/sw.js');
+  const runtime = loadInitializer({
+    registrations: [canonical],
+    canonical,
+    notificationPermission: 'default',
+    notificationRequestResult: 'granted',
+    pushPrompt: true,
+  });
+
+  await runtime.triggerPageLoad();
+  assert.equal(runtime.getPushPrompt().hidden, false);
+  assert.equal(runtime.getNotificationPermissionRequests(), 0);
+
+  const enabled = await runtime.window.enablePushNotifications();
+
+  assert.equal(enabled, true);
+  assert.equal(runtime.getNotificationPermissionRequests(), 1);
+  assert.equal(canonical.getSubscribeCount(), 1);
+  assert.deepEqual(runtime.fetchCalls.map(call => call.url), ['/api/pwa/subscribe']);
+  assert.equal(runtime.getPushPrompt().hidden, true);
+  assert.equal(runtime.getPushPrompt().style.display, 'none');
+});
+
+test('dashboard Turn On control calls the existing enable function and hides on success', async () => {
+  const handlerStart = dashboardSource.indexOf('function handlePushEnableClick(btn)');
+  const handlerEnd = dashboardSource.indexOf('</script>', handlerStart);
+  assert.ok(handlerStart >= 0);
+  assert.ok(handlerEnd > handlerStart);
+  assert.match(
+    dashboardSource,
+    /onclick="handlePushEnableClick\(this\)">Turn On<\/button>/,
+  );
+
+  const banner = { style: { display: '' } };
+  const button = { disabled: false, innerHTML: 'Turn On' };
+  let enableCalls = 0;
+  const context = {
+    alert() {},
+    document: {
+      getElementById(id) {
+        return id === 'push-prompt-banner' ? banner : null;
+      },
+    },
+    enablePushNotifications() {
+      enableCalls += 1;
+      return Promise.resolve(true);
+    },
+  };
+  vm.runInNewContext(
+    dashboardSource.slice(handlerStart, handlerEnd),
+    context,
+    { filename: 'templates/user_dashboard.html' },
+  );
+
+  context.handlePushEnableClick(button);
+  await new Promise(resolve => setImmediate(resolve));
+
+  assert.equal(enableCalls, 1);
+  assert.equal(banner.style.display, 'none');
 });
 
 test('subscription-change message resynchronizes replacement subscription', async () => {

@@ -3,6 +3,7 @@ const VAPID_PUBLIC_KEY = 'BDaLggC0hKS5i9uXjY9Yt_Bucoo0S9ciHIJ5xZ2tvfcs9ZMpfFnPS_
 const CANONICAL_SERVICE_WORKER_PATH = '/sw.js';
 const CANONICAL_SERVICE_WORKER_SCOPE = '/';
 const LEGACY_SERVICE_WORKER_PATH = '/static/sw.js';
+const PUSH_PROMPT_BANNER_ID = 'push-prompt-banner';
 
 function urlBase64ToUint8Array(base64String) {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -35,6 +36,42 @@ function isStandaloneDisplayMode() {
       && window.matchMedia('(display-mode: standalone)').matches
     )
   );
+}
+
+function browserSupportsPushNotifications() {
+  return (
+    'Notification' in window
+    && 'serviceWorker' in navigator
+    && 'PushManager' in window
+  );
+}
+
+function setPushNotificationPromptVisible(visible) {
+  const banner = document.getElementById(PUSH_PROMPT_BANNER_ID);
+  if (!banner) return false;
+
+  banner.hidden = !visible;
+  banner.style.display = visible ? '' : 'none';
+  banner.setAttribute('aria-hidden', visible ? 'false' : 'true');
+  return visible;
+}
+
+function syncPushNotificationPromptState() {
+  const shouldShow = (
+    browserSupportsPushNotifications()
+    && Notification.permission === 'default'
+  );
+  return setPushNotificationPromptVisible(shouldShow);
+}
+
+window.syncPushNotificationPromptState = syncPushNotificationPromptState;
+
+if (document.readyState === 'loading') {
+  window.addEventListener('DOMContentLoaded', syncPushNotificationPromptState, {
+    once: true
+  });
+} else {
+  syncPushNotificationPromptState();
 }
 
 function getRegistrationScriptPath(registration) {
@@ -283,8 +320,15 @@ if ('serviceWorker' in navigator) {
  */
 window.enablePushNotifications = function() {
   // Check browser support
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+  if (!browserSupportsPushNotifications()) {
+    setPushNotificationPromptVisible(false);
     alert('Push notifications are not supported in this browser. For the best experience, use Chrome or add Kimbela to your home screen.');
+    return Promise.resolve(false);
+  }
+
+  if (Notification.permission === 'denied') {
+    setPushNotificationPromptVisible(false);
+    console.log('Push notification permission denied.');
     return Promise.resolve(false);
   }
 
@@ -295,15 +339,28 @@ window.enablePushNotifications = function() {
       : navigator.serviceWorker.ready);
 
   return regPromise.then(function(registration) {
+    if (Notification.permission === 'granted') {
+      return subscribeUser(registration);
+    }
+
     return Notification.requestPermission().then(function(permission) {
       if (permission !== 'granted') {
+        syncPushNotificationPromptState();
         console.log('Push notification permission denied.');
         return false;
       }
       return subscribeUser(registration);
     });
+  }).then(function(success) {
+    if (success) {
+      setPushNotificationPromptVisible(false);
+    } else {
+      syncPushNotificationPromptState();
+    }
+    return success;
   }).catch(function(err) {
     console.error('Error enabling push notifications:', err);
+    syncPushNotificationPromptState();
     return false;
   });
 };
