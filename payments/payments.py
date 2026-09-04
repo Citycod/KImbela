@@ -1020,6 +1020,27 @@ def flutterwave_webhook():
                     verification_data
                     or {"status": verified_status or "failed", "message": verification.get("error")},
                 )
+        elif tx_ref.startswith("KIMBELA_BROWSE_"):
+            from .browse_access import (
+                complete_browse_payment,
+                find_browse_payment,
+                record_browse_payment_status,
+            )
+
+            transaction = find_browse_payment(tx_ref)
+            if not transaction:
+                return jsonify({"status": "error", "message": "Payment not found"}), 404
+
+            if verified_status in {"successful", "completed"}:
+                handled = bool(verification.get("success")) and complete_browse_payment(
+                    transaction, verification_data
+                )
+            else:
+                handled = record_browse_payment_status(
+                    transaction,
+                    verification_data,
+                    verified_status or "failed",
+                )
         elif tx_ref.startswith("KIMBELA_MATCH_"):
             matchmaking_service = MatchmakingPaymentService()
             matchmaking_payment = matchmaking_service.get_payment_by_reference(tx_ref)

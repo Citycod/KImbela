@@ -10,6 +10,7 @@ from models import (
     MatchmakingPackage,
     MatchmakingRequest,
     MatchmakingView,
+    PaymentTransaction,
     User,
     friendship,
 )
@@ -75,6 +76,9 @@ def clean_browse_test_data(db):
         MatchmakingPackage.query.filter(
             MatchmakingPackage.name.like("Browse %")
         ).delete(synchronize_session=False)
+        PaymentTransaction.query.filter_by(
+            transaction_type="matchmaking_browse"
+        ).delete(synchronize_session=False)
         db.session.commit()
 
     from sqlalchemy import or_
@@ -82,6 +86,27 @@ def clean_browse_test_data(db):
     clean()
     yield
     clean()
+
+
+@pytest.fixture(autouse=True)
+def grant_browse_access(db, user, clean_browse_test_data):
+    """Existing Browse behavior tests run with the new entitlement active."""
+    transaction = PaymentTransaction(
+        user_id=user.id,
+        amount=2,
+        currency="USD",
+        gateway="flutterwave",
+        gateway_reference=f"KIMBELA_BROWSE_TEST_{uuid.uuid4().hex}",
+        gateway_status="successful",
+        status="completed",
+        transaction_type="matchmaking_browse",
+        description="Browse test access",
+        created_at=utcnow(),
+        updated_at=utcnow(),
+    )
+    db.session.add(transaction)
+    db.session.commit()
+    yield transaction
 
 
 def _birth_date(age):
@@ -602,4 +627,5 @@ def test_discovery_queries_are_bounded_and_request_api_keeps_its_contract(
         event.remove(db.engine, "before_cursor_execute", record_select)
 
     assert len(discovery_payload["users"]) == 12
-    assert len(select_statements) <= 5
+    # Includes one bounded entitlement lookup before the discovery query.
+    assert len(select_statements) <= 6

@@ -43,6 +43,15 @@ from time_utils import utcnow
 # )
 import logging, secrets, re
 from payments.payment_service import MatchmakingPaymentService
+from payments.browse_access import (
+    BROWSE_ACCESS_DAYS,
+    BROWSE_ACCESS_PRICE_USD,
+    BrowseAccessPaymentService,
+    complete_browse_payment,
+    find_browse_payment,
+    get_browse_access_status,
+    record_browse_payment_status,
+)
 from resend_mail import Message
 from extensions import mail
 
@@ -186,7 +195,18 @@ def requests():
 @login_required
 def view_requests():
     """Main page to browse matchmaking requests"""
-    return render_template("view_requests.html")
+    access = get_browse_access_status(current_user.id)
+    if not access["active"]:
+        return render_template(
+            "matchmaking_browse_paywall.html",
+            browse_price_usd=BROWSE_ACCESS_PRICE_USD,
+            browse_access_days=BROWSE_ACCESS_DAYS,
+        )
+
+    return render_template(
+        "view_requests.html",
+        browse_access_expires_at=access["expires_at"],
+    )
 
 
 @match.route("/create")
@@ -440,6 +460,22 @@ def _discovery_interests(user):
 def browse_users():
     """Paginated platform discovery, deliberately separate from paid requests."""
     try:
+        access = get_browse_access_status(current_user.id)
+        if not access["active"]:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Browse Match access is required",
+                        "code": "browse_access_required",
+                        "price_usd": str(BROWSE_ACCESS_PRICE_USD),
+                        "duration_days": BROWSE_ACCESS_DAYS,
+                        "payment_url": url_for("match.start_browse_access_payment"),
+                    }
+                ),
+                402,
+            )
+
         filters = _matchmaking_browse_filters()
         today = utcnow().date()
         adult_cutoff = subtract_years(today, 18)
@@ -618,6 +654,71 @@ def browse_users():
         db.session.rollback()
         current_app.logger.exception("Failed to load Browse discovery users")
         return jsonify({"success": False, "error": "Failed to load matches"}), 500
+
+
+@match.route("/api/browse/access/payment", methods=["POST"])
+@login_required
+def start_browse_access_payment():
+    """Create the fixed-price checkout for one 30-day Browse entitlement."""
+    result = BrowseAccessPaymentService().create_payment(current_user)
+    if result.get("success"):
+        return jsonify(result)
+    return jsonify(result), 502
+
+
+@match.route("/browse/payment-callback", methods=["GET"])
+@login_required
+def browse_payment_callback():
+    """Verify a Browse payment before granting its 30-day entitlement."""
+    callback_status = (request.args.get("status") or "").strip().lower()
+    tx_ref = request.args.get("tx_ref")
+    transaction_id = request.args.get("transaction_id")
+    transaction = find_browse_payment(tx_ref)
+
+    if not transaction or transaction.user_id != current_user.id:
+        flash("Browse payment transaction not found.", "error")
+        return redirect(url_for("match.view_requests"))
+    if transaction.status == "completed":
+        flash("Browse Match is already unlocked.", "success")
+        return redirect(url_for("match.view_requests"))
+
+    service = BrowseAccessPaymentService()
+    verification = service.resolve_flutterwave_verification(
+        tx_ref=tx_ref,
+        transaction_id=transaction_id,
+    )
+    verification_data = verification.get("data", {}) or {"status": callback_status}
+    verified_status = (
+        verification.get("verified_status") or callback_status or ""
+    ).strip().lower()
+
+    if verification.get("success") and verified_status in {
+        "successful",
+        "completed",
+    }:
+        if complete_browse_payment(transaction, verification_data):
+            flash("Browse Match is unlocked for 30 days.", "success")
+        else:
+            flash("Your payment could not be verified. Please contact support.", "error")
+    elif callback_status in {"successful", "completed"}:
+        record_browse_payment_status(transaction, verification_data, "pending")
+        flash("Your Browse payment is awaiting verification.", "info")
+    elif verified_status in {"pending", "processing"}:
+        record_browse_payment_status(
+            transaction,
+            verification_data,
+            verified_status,
+        )
+        flash("Your Browse payment is still pending.", "info")
+    else:
+        record_browse_payment_status(
+            transaction,
+            verification_data,
+            verified_status or "failed",
+        )
+        flash("Browse payment was not completed.", "error")
+
+    return redirect(url_for("match.view_requests"))
 
 
 @match.route("/api/requests/<int:request_id>")
