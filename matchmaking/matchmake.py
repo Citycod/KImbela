@@ -24,7 +24,7 @@ from models import (
 )
 from datetime import datetime, timedelta
 import humanize
-from sqlalchemy import and_, event, exists, or_
+from sqlalchemy import and_, event, exists, func, or_
 from flask_wtf.csrf import generate_csrf
 from werkzeug.security import check_password_hash
 from flask_login import login_user, logout_user, login_required, current_user
@@ -44,12 +44,14 @@ from time_utils import utcnow
 import logging, secrets, re
 from payments.payment_service import MatchmakingPaymentService
 from payments.browse_access import (
-    BROWSE_ACCESS_DAYS,
-    BROWSE_ACCESS_PRICE_USD,
+    MATCHMAKING_ACCESS_DAYS,
+    MATCHMAKING_ACCESS_PRICE_USD,
     BrowseAccessPaymentService,
     complete_browse_payment,
     find_browse_payment,
-    get_browse_access_status,
+    get_matchmaking_access_map,
+    get_matchmaking_access_status,
+    has_matchmaking_access,
     record_browse_payment_status,
 )
 from resend_mail import Message
@@ -194,18 +196,14 @@ def requests():
 @match.route("/view_requests", methods=["GET"])
 @login_required
 def view_requests():
-    """Main page to browse matchmaking requests"""
-    access = get_browse_access_status(current_user.id)
-    if not access["active"]:
-        return render_template(
-            "matchmaking_browse_paywall.html",
-            browse_price_usd=BROWSE_ACCESS_PRICE_USD,
-            browse_access_days=BROWSE_ACCESS_DAYS,
-        )
-
+    """Show the Find Your Match experience before or after payment."""
+    access = get_matchmaking_access_status(current_user.id)
     return render_template(
         "view_requests.html",
-        browse_access_expires_at=access["expires_at"],
+        has_matchmaking_access=access["active"],
+        matchmaking_access_expires_at=access["expires_at"],
+        matchmaking_access_price_usd=MATCHMAKING_ACCESS_PRICE_USD,
+        matchmaking_access_days=MATCHMAKING_ACCESS_DAYS,
     )
 
 
@@ -460,16 +458,15 @@ def _discovery_interests(user):
 def browse_users():
     """Paginated platform discovery, deliberately separate from paid requests."""
     try:
-        access = get_browse_access_status(current_user.id)
-        if not access["active"]:
+        if not has_matchmaking_access(current_user):
             return (
                 jsonify(
                     {
                         "success": False,
-                        "error": "Browse Match access is required",
+                        "error": "Find Your Match access is required",
                         "code": "browse_access_required",
-                        "price_usd": str(BROWSE_ACCESS_PRICE_USD),
-                        "duration_days": BROWSE_ACCESS_DAYS,
+                        "price_usd": str(MATCHMAKING_ACCESS_PRICE_USD),
+                        "duration_days": MATCHMAKING_ACCESS_DAYS,
                         "payment_url": url_for("match.start_browse_access_payment"),
                     }
                 ),
@@ -656,10 +653,167 @@ def browse_users():
         return jsonify({"success": False, "error": "Failed to load matches"}), 500
 
 
+@match.route("/api/admin/matchmaking/users", methods=["GET"])
+@login_required
+def admin_matchmaking_users():
+    """Bounded, non-sensitive directory for matchmaking administration."""
+    if not (current_user.is_admin or current_user.is_super_admin):
+        return jsonify({"success": False, "error": "Access denied"}), 403
+
+    page = _bounded_int_arg("page", minimum=1, default=1)
+    per_page = _bounded_int_arg("per_page", minimum=1, maximum=100, default=25)
+    search = request.args.get("search", "").strip()[:100]
+    status = request.args.get("status", "all").strip().lower()
+    role = request.args.get("role", "all").strip().lower()
+    gender = request.args.get("gender", "").strip()[:20]
+    country = request.args.get("country", "").strip()[:50]
+    state = request.args.get("state", "").strip()[:50]
+    city = request.args.get("city", "").strip()[:50]
+    sort = request.args.get("sort", "newest").strip().lower()
+    eligible_only = request.args.get("eligible", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+    }
+
+    query = User.query
+    if search:
+        pattern = f"%{search}%"
+        query = query.filter(
+            or_(
+                User.first_name.ilike(pattern),
+                User.last_name.ilike(pattern),
+                User.email.ilike(pattern),
+            )
+        )
+    if status == "active":
+        query = query.filter(User.is_active.is_(True))
+    elif status == "inactive":
+        query = query.filter(or_(User.is_active.is_(False), User.is_active.is_(None)))
+    if role == "admin":
+        query = query.filter(or_(User.is_admin.is_(True), User.is_super_admin.is_(True)))
+    elif role == "ai":
+        query = query.filter(User.is_ai_persona.is_(True))
+    elif role == "user":
+        query = query.filter(
+            or_(User.is_admin.is_(False), User.is_admin.is_(None)),
+            or_(User.is_super_admin.is_(False), User.is_super_admin.is_(None)),
+            or_(User.is_ai_persona.is_(False), User.is_ai_persona.is_(None)),
+        )
+    if gender:
+        query = query.filter(func.lower(User.gender) == gender.lower())
+    if country:
+        query = query.filter(User.country == country)
+    if state:
+        query = query.filter(User.state == state)
+    if city:
+        query = query.filter(User.city == city)
+
+    adult_cutoff = subtract_years(utcnow().date(), 18)
+    if eligible_only:
+        query = query.filter(
+            User.is_active.is_(True),
+            or_(User.is_admin.is_(False), User.is_admin.is_(None)),
+            or_(User.is_super_admin.is_(False), User.is_super_admin.is_(None)),
+            or_(User.is_ai_persona.is_(False), User.is_ai_persona.is_(None)),
+            User.dob.isnot(None),
+            User.dob <= adult_cutoff,
+            User.first_name.isnot(None),
+            User.last_name.isnot(None),
+            User.gender.isnot(None),
+            User.country.isnot(None),
+            User.city.isnot(None),
+        )
+
+    if sort == "recent":
+        query = query.order_by(User.last_seen.desc().nullslast(), User.id.desc())
+    elif sort == "name":
+        query = query.order_by(
+            func.lower(User.last_name).asc(),
+            func.lower(User.first_name).asc(),
+            User.id.asc(),
+        )
+    else:
+        sort = "newest"
+        query = query.order_by(User.created_at.desc().nullslast(), User.id.desc())
+
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+    user_ids = [candidate.id for candidate in pagination.items]
+    access_by_user = get_matchmaking_access_map(user_ids)
+    active_boosts = {}
+    if user_ids:
+        active_boosts = dict(
+            db.session.query(MatchmakingRequest.user_id, func.count(MatchmakingRequest.id))
+            .filter(
+                MatchmakingRequest.user_id.in_(user_ids),
+                MatchmakingRequest.status == "active",
+                MatchmakingRequest.payment_status == "completed",
+                MatchmakingRequest.end_date > utcnow(),
+            )
+            .group_by(MatchmakingRequest.user_id)
+            .all()
+        )
+
+    users = []
+    for candidate in pagination.items:
+        access = access_by_user[candidate.id]
+        profile_complete = all(
+            (
+                candidate.dob,
+                candidate.first_name,
+                candidate.last_name,
+                candidate.gender,
+                candidate.country,
+                candidate.city,
+            )
+        )
+        users.append(
+            {
+                "id": candidate.id,
+                "public_id": candidate.public_id,
+                "full_name": candidate.full_name,
+                "email": candidate.email,
+                "age": calculate_age(candidate.dob) if candidate.dob else None,
+                "gender": candidate.gender,
+                "city": candidate.city,
+                "state": candidate.state,
+                "country": candidate.country,
+                "profile_pic": candidate.profile_pic,
+                "is_active": bool(candidate.is_active),
+                "is_admin": bool(candidate.is_admin),
+                "is_super_admin": bool(candidate.is_super_admin),
+                "is_ai_persona": bool(candidate.is_ai_persona),
+                "profile_complete": profile_complete,
+                "matchmaking_access_active": access["active"],
+                "matchmaking_access_expires_at": (
+                    access["expires_at"].isoformat() if access["expires_at"] else None
+                ),
+                "active_profile_boosts": active_boosts.get(candidate.id, 0),
+                "created_at": (
+                    candidate.created_at.isoformat() if candidate.created_at else None
+                ),
+                "last_seen": candidate.last_seen.isoformat() if candidate.last_seen else None,
+            }
+        )
+
+    return jsonify(
+        {
+            "success": True,
+            "users": users,
+            "total": pagination.total,
+            "pages": pagination.pages,
+            "page": pagination.page,
+            "has_next": pagination.has_next,
+            "has_prev": pagination.has_prev,
+            "sort": sort,
+        }
+    )
+
+
 @match.route("/api/browse/access/payment", methods=["POST"])
 @login_required
 def start_browse_access_payment():
-    """Create the fixed-price checkout for one 30-day Browse entitlement."""
+    """Create the fixed-price checkout for shared matchmaking access."""
     result = BrowseAccessPaymentService().create_payment(current_user)
     if result.get("success"):
         return jsonify(result)
@@ -669,17 +823,17 @@ def start_browse_access_payment():
 @match.route("/browse/payment-callback", methods=["GET"])
 @login_required
 def browse_payment_callback():
-    """Verify a Browse payment before granting its 30-day entitlement."""
+    """Verify payment before granting the shared matchmaking entitlement."""
     callback_status = (request.args.get("status") or "").strip().lower()
     tx_ref = request.args.get("tx_ref")
     transaction_id = request.args.get("transaction_id")
     transaction = find_browse_payment(tx_ref)
 
     if not transaction or transaction.user_id != current_user.id:
-        flash("Browse payment transaction not found.", "error")
+        flash("Matchmaking access payment was not found.", "error")
         return redirect(url_for("match.view_requests"))
     if transaction.status == "completed":
-        flash("Browse Match is already unlocked.", "success")
+        flash("Find Your Match is already unlocked.", "success")
         return redirect(url_for("match.view_requests"))
 
     service = BrowseAccessPaymentService()
@@ -697,26 +851,26 @@ def browse_payment_callback():
         "completed",
     }:
         if complete_browse_payment(transaction, verification_data):
-            flash("Browse Match is unlocked for 30 days.", "success")
+            flash("Find Your Match is unlocked for 30 days.", "success")
         else:
             flash("Your payment could not be verified. Please contact support.", "error")
     elif callback_status in {"successful", "completed"}:
         record_browse_payment_status(transaction, verification_data, "pending")
-        flash("Your Browse payment is awaiting verification.", "info")
+        flash("Your matchmaking access payment is awaiting verification.", "info")
     elif verified_status in {"pending", "processing"}:
         record_browse_payment_status(
             transaction,
             verification_data,
             verified_status,
         )
-        flash("Your Browse payment is still pending.", "info")
+        flash("Your matchmaking access payment is still pending.", "info")
     else:
         record_browse_payment_status(
             transaction,
             verification_data,
             verified_status or "failed",
         )
-        flash("Browse payment was not completed.", "error")
+        flash("Matchmaking access payment was not completed.", "error")
 
     return redirect(url_for("match.view_requests"))
 

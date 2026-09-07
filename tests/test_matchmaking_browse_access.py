@@ -43,10 +43,10 @@ def _browse_transaction(db, user, *, status="completed", completed_at=None):
         gateway_status="successful" if status == "completed" else "initiated",
         status=status,
         transaction_type=BROWSE_TRANSACTION_TYPE,
-        description="$2 Browse Match access for 30 days",
+        description="$3 Find Your Match access for 30 days",
         gateway_metadata=json.dumps(
             {
-                "expected_checkout_amount": "3200.00",
+                "expected_checkout_amount": "4800.00",
                 "expected_checkout_currency": "NGN",
                 "access_days": BROWSE_ACCESS_DAYS,
             }
@@ -67,14 +67,14 @@ def _successful_verification(transaction, user, provider_id="provider-123"):
             "id": provider_id,
             "status": "successful",
             "tx_ref": transaction.gateway_reference,
-            "amount": 3200,
+            "amount": 4800,
             "currency": "NGN",
             "meta": {"user_id": user.id},
         },
     }
 
 
-def test_browse_page_and_discovery_api_require_access_but_requests_api_does_not(
+def test_unpaid_find_page_shows_filters_but_discovery_api_requires_access(
     client, user
 ):
     _login(client, user)
@@ -84,12 +84,19 @@ def test_browse_page_and_discovery_api_require_access_but_requests_api_does_not(
     requests_response = client.get("/api/requests")
 
     assert page_response.status_code == 200
-    assert b"Unlock Browse Match" in page_response.data
-    assert b"$2.00 USD" in page_response.data
-    assert b"30 days of access" in page_response.data
-    assert b"/api/browse/users?" not in page_response.data
+    assert b"Find Your Match" in page_response.data
+    assert b'id="filterToggle"' in page_response.data
+    assert b'id="minAgeFilter"' in page_response.data
+    assert b'id="genderFilter"' in page_response.data
+    assert b'id="seeEveryoneButton"' in page_response.data
+    assert b"Unlock Find Your Match" in page_response.data
+    assert b"$3.00 USD" in page_response.data
+    assert b"for 30 days" in page_response.data
+    assert b"if (hasMatchmakingAccess)" in page_response.data
+    assert b"showMatchmakingAccessGate(false)" in page_response.data
     assert discovery_response.status_code == 402
     assert discovery_response.get_json()["code"] == "browse_access_required"
+    assert discovery_response.get_json()["price_usd"] == "3.00"
     assert discovery_response.get_json()["duration_days"] == 30
     assert requests_response.status_code == 200
     assert requests_response.get_json()["success"] is True
@@ -116,7 +123,8 @@ def test_active_access_opens_browse_and_expires_at_exactly_30_days(
     assert at_expiry["active"] is False
     assert page_response.status_code == 200
     assert b'id="filterToggle"' in page_response.data
-    assert b"Unlock Browse Match" not in page_response.data
+    assert b'id="matchmakingAccessGate"' in page_response.data
+    assert b"text-center hidden" in page_response.data
 
 
 def test_expired_access_returns_to_paywall(client, user, db):
@@ -126,7 +134,7 @@ def test_expired_access_returns_to_paywall(client, user, db):
     page_response = client.get("/view_requests")
     api_response = client.get("/api/browse/users")
 
-    assert b"Unlock Browse Match" in page_response.data
+    assert b"Unlock Find Your Match" in page_response.data
     assert api_response.status_code == 402
 
 
@@ -155,13 +163,13 @@ def test_checkout_uses_server_fixed_price_and_ignores_client_amount(
 
     assert response.status_code == 200
     assert response.get_json()["payment_url"] == "https://checkout.example/browse"
-    assert provider_payloads[0]["amount"] == "3200.00"
+    assert provider_payloads[0]["amount"] == "4800.00"
     assert provider_payloads[0]["currency"] == "NGN"
     assert provider_payloads[0]["meta"]["access_days"] == 30
     transaction = PaymentTransaction.query.filter_by(
         gateway_reference=response.get_json()["gateway_reference"]
     ).one()
-    assert transaction.amount == Decimal("2.00")
+    assert transaction.amount == Decimal("3.00")
     assert transaction.currency == "USD"
     assert transaction.status == "pending"
     assert transaction.transaction_type == BROWSE_TRANSACTION_TYPE
@@ -230,7 +238,7 @@ def test_callback_rejects_underpayment_without_granting_access(
     _login(client, user)
     transaction = _browse_transaction(db, user, status="pending")
     verification = _successful_verification(transaction, user)
-    verification["data"]["amount"] = 3199.99
+    verification["data"]["amount"] = 4799.99
     monkeypatch.setattr(
         BasePaymentService,
         "resolve_flutterwave_verification",
@@ -308,7 +316,7 @@ def test_webhook_provider_verification_failure_does_not_grant_access(
                 "id": "unverified-provider-id",
                 "status": "successful",
                 "tx_ref": transaction.gateway_reference,
-                "amount": 3200,
+                "amount": 4800,
                 "currency": "NGN",
             },
         },

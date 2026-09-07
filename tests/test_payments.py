@@ -305,7 +305,7 @@ def test_flutterwave_webhook_processes_ad_payment(client, db, user, app, monkeyp
         amount=campaign.budget,
         currency="USD",
         gateway="flutterwave",
-        gateway_reference="KIMBELA_AD_1_999999",
+        gateway_reference="KIMBELA_AD_WEBHOOK_1_999999",
         gateway_payment_id="",
         status="pending",
         transaction_type="ad_campaign",
@@ -316,7 +316,7 @@ def test_flutterwave_webhook_processes_ad_payment(client, db, user, app, monkeyp
     app.config["FLUTTERWAVE_WEBHOOK_HASH"] = "shared-secret"
 
     def fake_resolve(self, tx_ref=None, transaction_id=None):
-        assert tx_ref == "KIMBELA_AD_1_999999"
+        assert tx_ref == "KIMBELA_AD_WEBHOOK_1_999999"
         assert transaction_id == 50101
         return {
             "success": True,
@@ -343,7 +343,7 @@ def test_flutterwave_webhook_processes_ad_payment(client, db, user, app, monkeyp
         "/flutterwave/webhook",
         json={
             "event": "charge.completed",
-            "data": {"tx_ref": "KIMBELA_AD_1_999999", "id": 50101},
+            "data": {"tx_ref": "KIMBELA_AD_WEBHOOK_1_999999", "id": 50101},
         },
         headers={"verif-hash": "shared-secret"},
     )
@@ -388,7 +388,7 @@ def test_flutterwave_webhook_processes_matchmaking_payment(
         package_id=package.id,
         amount=2756.59,
         currency="USD",
-        gateway_reference="KIMBELA_MATCH_1_999999",
+        gateway_reference="KIMBELA_MATCH_WEBHOOK_1_999999",
         status="pending",
         payment_status="pending",
     )
@@ -398,7 +398,7 @@ def test_flutterwave_webhook_processes_matchmaking_payment(
     app.config["FLUTTERWAVE_WEBHOOK_HASH"] = "shared-secret"
 
     def fake_resolve(self, tx_ref=None, transaction_id=None):
-        assert tx_ref == "KIMBELA_MATCH_1_999999"
+        assert tx_ref == "KIMBELA_MATCH_WEBHOOK_1_999999"
         return {
             "success": True,
             "verified_status": "successful",
@@ -425,7 +425,7 @@ def test_flutterwave_webhook_processes_matchmaking_payment(
         "/flutterwave/webhook",
         json={
             "event": "charge.completed",
-            "data": {"tx_ref": "KIMBELA_MATCH_1_999999", "id": 20202},
+            "data": {"tx_ref": "KIMBELA_MATCH_WEBHOOK_1_999999", "id": 20202},
         },
         headers={"verif-hash": "shared-secret"},
     )

@@ -1112,7 +1112,7 @@ class MatchmakingPaymentService(BasePaymentService):
                 else 30
             )
 
-            subject = "💖 Your Kimbela Matchmaking Request is Active!"
+            subject = "💖 Your Kimbela Profile Boost is Active!"
 
             html_body = f"""
             <!DOCTYPE html>
@@ -1131,15 +1131,15 @@ class MatchmakingPaymentService(BasePaymentService):
             <body>
                 <div class="container">
                     <div class="header">
-                        <h1>💖 Matchmaking Request Activated!</h1>
+                        <h1>💖 Profile Boost Activated!</h1>
                         <p>Your journey to find meaningful connections begins now</p>
                     </div>
                     <div class="content">
                         <p>Hello {user.full_name},</p>
-                        <p>Wonderful news! Your matchmaking request has been successfully activated and is now visible to potential matches on Kimbela.</p>
+                        <p>Wonderful news! Your profile boost has been successfully activated and is increasing your visibility to potential matches on Kimbela.</p>
                         
                         <div class="details">
-                            <h3>📋 Request Details</h3>
+                            <h3>📋 Profile Boost Details</h3>
                             <p><strong>Package:</strong> {package_name}</p>
                             <p><strong>Total Amount:</strong> {payment.amount:.2f} {payment.currency}</p>
                             <p><strong>Duration:</strong> {duration_days} days</p>
@@ -1151,7 +1151,7 @@ class MatchmakingPaymentService(BasePaymentService):
                             <h3>✨ What's Next?</h3>
                             <p><span class="heart">❤️</span> Your profile is now visible to compatible matches</p>
                             <p><span class="heart">❤️</span> Receive likes and messages from interested users</p>
-                            <p><span class="heart">❤️</span> Browse through potential matches in your criteria</p>
+                            <p><span class="heart">❤️</span> Find potential matches in your criteria</p>
                             <p><span class="heart">❤️</span> Build meaningful connections with like-minded people</p>
                         </div>
                         
@@ -1163,7 +1163,7 @@ class MatchmakingPaymentService(BasePaymentService):
                             <p>• Don't hesitate to make the first move!</p>
                         </div>
                         
-                        <p>Ready to start connecting? <a href="{current_app.config.get('BASE_URL', 'http://localhost:5000')}/view_requests" style="color: #B76E79; font-weight: bold;">View your matches now</a></p>
+                        <p>Ready to start connecting? <a href="{current_app.config.get('BASE_URL', 'http://localhost:5000')}/view_requests" style="color: #B76E79; font-weight: bold;">Find Your Match</a></p>
                         
                         <p>Wishing you the best in your journey to find love,<br>The Kimbela Matchmaking Team</p>
                     </div>
@@ -1190,7 +1190,7 @@ class MatchmakingPaymentService(BasePaymentService):
             if not user:
                 return False
 
-            subject = "❌ Payment Failed - Kimbela Matchmaking Request"
+            subject = "❌ Payment Failed - Kimbela Profile Boost"
 
             html_body = f"""
             <!DOCTYPE html>
@@ -1208,11 +1208,11 @@ class MatchmakingPaymentService(BasePaymentService):
                 <div class="container">
                     <div class="header">
                         <h1>❌ Matchmaking Payment Failed</h1>
-                        <p>We couldn't process your matchmaking request payment</p>
+                        <p>We couldn't process your profile boost payment</p>
                     </div>
                     <div class="content">
                         <p>Hello {user.full_name},</p>
-                        <p>We were unable to process the payment for your matchmaking request. Your request has been saved but will not be activated until payment is completed.</p>
+                        <p>We were unable to process the payment for your profile boost. Your profile boost has been saved but will not be activated until payment is completed.</p>
                         
                         <p><strong>Package:</strong> {matchmaking_request.package.name if matchmaking_request.package else 'Standard'}</p>
                         <p><strong>Amount:</strong> {payment.amount:.2f} {payment.currency}</p>

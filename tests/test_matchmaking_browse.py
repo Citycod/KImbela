@@ -93,7 +93,7 @@ def grant_browse_access(db, user, clean_browse_test_data):
     """Existing Browse behavior tests run with the new entitlement active."""
     transaction = PaymentTransaction(
         user_id=user.id,
-        amount=2,
+        amount=3,
         currency="USD",
         gateway="flutterwave",
         gateway_reference=f"KIMBELA_BROWSE_TEST_{uuid.uuid4().hex}",
@@ -450,7 +450,7 @@ def test_browse_template_has_reload_safe_mobile_controls(client, user):
     assert b'Age: Oldest First' not in response.data
     assert b'Quick Stats' not in response.data
     assert b'/api/browse/users?' in response.data
-    assert b'Browse Matches' in response.data
+    assert b'Find Your Match' in response.data
 
 
 def test_discovery_includes_eligible_user_without_matchmaking_request(

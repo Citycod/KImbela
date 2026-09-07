@@ -740,7 +740,7 @@
                     {% if group.description %}
                     <div class="mt-4 md:mt-6 max-w-3xl">
                         <div class="text-gray-700 text-sm md:text-lg leading-relaxed group-description prose prose-sm md:prose-base max-w-none">
-                            {{ group.description }}
+                            {{ group_description_html|safe }}
                         </div>
                     </div>
                     {% endif %}

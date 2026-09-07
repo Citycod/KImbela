@@ -171,7 +171,7 @@
             {% if type == 'ad_campaign' %}
             Your payment has been processed successfully. Your ad campaign is now active and running.
             {% elif type == 'matchmaking' %}
-            Your payment has been processed successfully. Your matchmaking request is now active.
+            Your payment has been processed successfully. Your profile boost is now active.
             {% else %}
             Your payment has been processed successfully.
             {% endif %}
@@ -270,7 +270,7 @@
             <a href="{{ url_for('match.create_matchmaking_request') }}" 
                class="w-full border-2 border-gray-300 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-50 transition-all duration-300 flex items-center justify-center space-x-2 hover:translate-y-[-2px]">
                 <i class="bi bi-heart"></i>
-                <span>Create Another Request</span>
+                <span>Create Another Profile Boost</span>
             </a>
             {% endif %}
         </div>
@@ -283,7 +283,7 @@
                     {% if type == 'ad_campaign' %}
                     Your campaign is now active and will start receiving impressions shortly.
                     {% elif type == 'matchmaking' %}
-                    Your matchmaking request is now active and visible to potential matches.
+                    Your profile boost is now active and increasing your visibility to potential matches.
                     {% else %}
                     Your purchase is now active.
                     {% endif %}

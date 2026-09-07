@@ -4,6 +4,7 @@ from datetime import timedelta
 from decimal import Decimal, InvalidOperation
 
 from flask import current_app, url_for
+from sqlalchemy import func
 
 from extensions import db
 from models import PaymentTransaction
@@ -12,10 +13,20 @@ from time_utils import utcnow
 from .payment_service import BasePaymentService
 
 
-BROWSE_ACCESS_PRICE_USD = Decimal("2.00")
-BROWSE_ACCESS_DAYS = 30
-BROWSE_TRANSACTION_TYPE = "matchmaking_browse"
-BROWSE_REFERENCE_PREFIX = "KIMBELA_BROWSE_"
+MATCHMAKING_ACCESS_PRICE_USD = Decimal("3.00")
+MATCHMAKING_ACCESS_DAYS = 30
+
+# These persisted identifiers deliberately retain their existing values so
+# already-paid Browse users keep the rest of their entitlement after the UX
+# rename to Find Your Match.
+MATCHMAKING_ACCESS_TRANSACTION_TYPE = "matchmaking_browse"
+MATCHMAKING_ACCESS_REFERENCE_PREFIX = "KIMBELA_BROWSE_"
+
+# Backwards-compatible imports for existing payment and test call sites.
+BROWSE_ACCESS_PRICE_USD = MATCHMAKING_ACCESS_PRICE_USD
+BROWSE_ACCESS_DAYS = MATCHMAKING_ACCESS_DAYS
+BROWSE_TRANSACTION_TYPE = MATCHMAKING_ACCESS_TRANSACTION_TYPE
+BROWSE_REFERENCE_PREFIX = MATCHMAKING_ACCESS_REFERENCE_PREFIX
 
 
 def find_browse_payment(tx_ref):
@@ -27,7 +38,7 @@ def find_browse_payment(tx_ref):
     ).first()
 
 
-def get_browse_access_status(user_id, now=None):
+def get_matchmaking_access_status(user_id, now=None):
     now = now or utcnow()
     transaction = (
         PaymentTransaction.query.filter(
@@ -48,6 +59,50 @@ def get_browse_access_status(user_id, now=None):
         "expires_at": expires_at,
         "transaction": transaction,
     }
+
+
+def has_matchmaking_access(user_or_id, now=None):
+    """Canonical access check shared by Find Your Match and See Everyone."""
+    user_id = getattr(user_or_id, "id", user_or_id)
+    return get_matchmaking_access_status(user_id, now=now)["active"]
+
+
+def get_matchmaking_access_map(user_ids, now=None):
+    """Return bounded access state for an admin page of users in one query."""
+    now = now or utcnow()
+    user_ids = list(dict.fromkeys(int(user_id) for user_id in user_ids))
+    states = {
+        user_id: {"active": False, "expires_at": None}
+        for user_id in user_ids
+    }
+    if not user_ids:
+        return states
+
+    completed_at = func.max(
+        func.coalesce(PaymentTransaction.updated_at, PaymentTransaction.created_at)
+    )
+    rows = (
+        db.session.query(PaymentTransaction.user_id, completed_at.label("completed_at"))
+        .filter(
+            PaymentTransaction.user_id.in_(user_ids),
+            PaymentTransaction.transaction_type == MATCHMAKING_ACCESS_TRANSACTION_TYPE,
+            PaymentTransaction.status == "completed",
+        )
+        .group_by(PaymentTransaction.user_id)
+        .all()
+    )
+    for user_id, paid_at in rows:
+        expires_at = paid_at + timedelta(days=MATCHMAKING_ACCESS_DAYS)
+        states[user_id] = {
+            "active": expires_at > now,
+            "expires_at": expires_at,
+        }
+    return states
+
+
+def get_browse_access_status(user_id, now=None):
+    """Compatibility wrapper for the original Browse entitlement name."""
+    return get_matchmaking_access_status(user_id, now=now)
 
 
 def complete_browse_payment(transaction, verification_data):
@@ -141,7 +196,7 @@ def record_browse_payment_status(transaction, verification_data, status):
 
 class BrowseAccessPaymentService(BasePaymentService):
     def create_payment(self, user):
-        access = get_browse_access_status(user.id)
+        access = get_matchmaking_access_status(user.id)
         if access["active"]:
             return {
                 "success": True,
@@ -177,8 +232,8 @@ class BrowseAccessPaymentService(BasePaymentService):
                 "access_days": BROWSE_ACCESS_DAYS,
             },
             "customizations": {
-                "title": "Kimbela Browse Match",
-                "description": "$2 USD for 30 days of Browse Match access",
+                "title": "Kimbela Find Your Match",
+                "description": "$3 USD for 30 days of Find Your Match access",
             },
         }
         if getattr(user, "phone_number", None):
@@ -212,7 +267,7 @@ class BrowseAccessPaymentService(BasePaymentService):
                 gateway_status="initiated",
                 status="pending",
                 transaction_type=BROWSE_TRANSACTION_TYPE,
-                description="$2 Browse Match access for 30 days",
+                description="$3 Find Your Match access for 30 days",
                 gateway_metadata=json.dumps(
                     {
                         "expected_checkout_amount": str(checkout_amount),

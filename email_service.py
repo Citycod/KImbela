@@ -177,7 +177,7 @@ class EmailService:
             duration_days = package.duration_days if package else 30
 
             msg = Message(
-                subject="💖 Your Kimbela Matchmaking Request is Active!",
+                subject="💖 Your Kimbela Profile Boost is Active!",
                 sender=current_app.config["MAIL_DEFAULT_SENDER"],
                 recipients=[user.email],
             )
@@ -227,7 +227,7 @@ class EmailService:
         """Send email for failed matchmaking purchase"""
         try:
             msg = Message(
-                subject="❌ Payment Failed - Kimbela Matchmaking Request",
+                subject="❌ Payment Failed - Kimbela Profile Boost",
                 sender=current_app.config["MAIL_DEFAULT_SENDER"],
                 recipients=[user.email],
             )
@@ -273,7 +273,7 @@ class EmailService:
             )
 
             msg = Message(
-                subject=f"⏰ Your Matchmaking Request Expires in {days_remaining} Days",
+                subject=f"⏰ Your Profile Boost Expires in {days_remaining} Days",
                 sender=current_app.config["MAIL_DEFAULT_SENDER"],
                 recipients=[user.email],
             )
@@ -336,9 +336,9 @@ class EmailService:
     ):
         """Generate HTML for matchmaking success email"""
         body_html = f"""
-        <p class="lead">Hello {user.full_name}, your matchmaking request is now active and visible to potential matches on Kimbela.</p>
+        <p class="lead">Hello {user.full_name}, your profile boost is now active and increasing your visibility to potential matches on Kimbela.</p>
         <div class="panel">
-            <strong>Request details</strong><br>
+            <strong>Profile boost details</strong><br>
             Package: {package.name}<br>
             Amount: {transaction.amount:.2f} {transaction.currency}<br>
             Duration: {duration_days} days<br>
@@ -346,11 +346,11 @@ class EmailService:
             Expiry date: {expiry_date}
         </div>
         <p class="lead">You can now receive interest from compatible users, review potential matches, and start meaningful conversations.</p>
-        <a href="{current_app.config.get('BASE_URL', 'http://localhost:5000')}/view_requests" class="button">View Matches</a>
+        <a href="{current_app.config.get('BASE_URL', 'http://localhost:5000')}/view_requests" class="button">Find Your Match</a>
         """
         return EmailService._render_matchmaking_shell(
             "Matchmaking",
-            "Your request is active",
+            "Your profile boost is active",
             "Your journey to meaningful connections begins now.",
             body_html,
             accent="linear-gradient(135deg, #7a3047 0%, #b76e79 55%, #d2a164 100%)",
@@ -364,7 +364,7 @@ class EmailService:
         amount = transaction.amount if transaction else package.price
         currency = transaction.currency if transaction else "USD"
         body_html = f"""
-        <p class="lead">Hello {user.full_name}, we could not process the payment for your matchmaking request, so it has not been activated yet.</p>
+        <p class="lead">Hello {user.full_name}, we could not process the payment for your profile boost, so it has not been activated yet.</p>
         <div class="panel">
             <strong>Payment details</strong><br>
             Package: {package.name if package else 'Standard'}<br>
@@ -377,7 +377,7 @@ class EmailService:
         return EmailService._render_matchmaking_shell(
             "Matchmaking",
             "Payment was not completed",
-            "Your matchmaking request is saved, but it is waiting for successful payment.",
+            "Your profile boost is saved, but it is waiting for successful payment.",
             body_html,
             accent="linear-gradient(135deg, #5d2028 0%, #9a3d38 55%, #b37b37 100%)",
         )
@@ -388,15 +388,15 @@ class EmailService:
     ):
         """Generate HTML for matchmaking expiry reminder email"""
         urgent_html = (
-            "<div class='panel'><strong>Action recommended</strong><br>Your request expires very soon. Extend it now if you want to keep receiving matches without interruption.</div>"
+            "<div class='panel'><strong>Action recommended</strong><br>Your profile boost expires very soon. Extend it now if you want to keep receiving matches without interruption.</div>"
             if days_remaining <= 3
             else ""
         )
 
         body_html = f"""
-        <p class="lead">Hello {user.full_name}, this is a reminder that your matchmaking request will expire soon.</p>
+        <p class="lead">Hello {user.full_name}, this is a reminder that your profile boost will expire soon.</p>
         <div class="panel">
-            <strong>Request details</strong><br>
+            <strong>Profile boost details</strong><br>
             Package: {package_name}<br>
             Expiry date: {matchmaking_request.end_date.strftime('%B %d, %Y')}<br>
             Days remaining: {days_remaining}
@@ -407,8 +407,8 @@ class EmailService:
         """
         return EmailService._render_matchmaking_shell(
             "Matchmaking",
-            "Your request expires soon",
-            f"You have {days_remaining} days remaining on your active matchmaking request.",
+            "Your profile boost expires soon",
+            f"You have {days_remaining} days remaining on your active profile boost.",
             body_html,
             accent="linear-gradient(135deg, #6b2f67 0%, #b24a76 55%, #d39b43 100%)",
         )

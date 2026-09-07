@@ -3,7 +3,7 @@
 {% block head %}
 <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Matchmaking Requests - Kimbela</title>
+    <title>Boost Your Profile - Kimbela</title>
     <meta name="csrf-token" content="{{ csrf_token }}">
 
     <!-- Tailwind CSS -->
@@ -586,7 +586,7 @@
                     <i class="bi bi-heart text-white text-sm"></i>
                 </div>
                 <div>
-                    <div class="font-semibold text-sm">Active matchmaking request</div>
+                    <div class="font-semibold text-sm">Active profile boost</div>
                     <div class="text-white/80 text-xs" id="bannerRequestDetails">
                         <!-- Details will be populated by JavaScript -->
                     </div>
@@ -631,10 +631,10 @@
             
             <div class="container mx-auto px-3 sm:px-4 text-center relative z-10">
                 <h1 class="text-2xl md:text-4xl font-playfair font-bold mb-4 animate-fade-in bg-gradient-to-r from-white to-ivory bg-clip-text text-transparent">
-                    Find Your Perfect Match
+                    Boost Your Profile
                 </h1>
                 <p class="text-base md:text-lg mb-6 max-w-2xl mx-auto text-ivory leading-relaxed">
-                    Share your preferences and let us help you find the perfect partner.
+                    Increase your visibility and discoverability in Kimbela matchmaking.
                 </p>
                 <div class="flex justify-center space-x-3 animate-slide-up">
                     <a href="#packages" class="bg-white text-primary px-4 py-2.5 rounded-lg btn hover:bg-ivory font-semibold transition-all duration-300 flex items-center space-x-1.5 text-sm">
@@ -652,7 +652,7 @@
         <section id="packages" class="py-12 bg-transparent">
             <div class="container mx-auto px-3 sm:px-4">
                 <div class="text-center mb-8 animate-fade-in">
-                    <h2 class="text-2xl md:text-3xl font-playfair font-bold text-primary mb-2">Matchmaking Package</h2>
+                    <h2 class="text-2xl md:text-3xl font-playfair font-bold text-primary mb-2">Profile Visibility Boost</h2>
                     <p class="text-base text-text-secondary max-w-2xl mx-auto leading-relaxed">
                         Get started with our simple, affordable matchmaking service.
                     </p>
@@ -683,7 +683,7 @@
                             </ul>
                             <button class="w-full gradient-rose text-white py-3 rounded-lg btn hover:opacity-90 transition-all duration-300 font-semibold text-base btn-select-package" 
                                     data-package-id="1" data-package-name="Matchmaking" data-package-price="{{ (packages[0].price if packages else 10)|round|int }}" data-duration-days="30">
-                                Start Matchmaking - ${{ "{:,.0f}".format((packages[0].price if packages else 10)|round|int) }}/month
+                                Boost Your Profile - ${{ "{:,.0f}".format((packages[0].price if packages else 10)|round|int) }}/month
                             </button>
                             <p class="text-xs text-text-secondary mt-3">Only one plan available - Simple, affordable, effective</p>
                         </div>
@@ -746,8 +746,8 @@
         <div class="modal-dialog bg-white rounded-lg shadow-strong w-full max-w-2xl mx-3 max-h-[90vh] overflow-y-auto animate-fade-in">
             <div class="modal-header p-4 border-b border-border-color flex justify-between items-center bg-gradient-to-r from-primary to-secondary text-white rounded-t-lg">
                 <div>
-                    <h3 class="text-lg font-playfair font-bold">Create Matchmaking Request</h3>
-                    <p class="text-white/80 text-xs mt-1">Share your preferences to find your perfect match - $10/month</p>
+                    <h3 class="text-lg font-playfair font-bold">Boost Your Profile</h3>
+                    <p class="text-white/80 text-xs mt-1">Share your preferences and increase your matchmaking visibility - $10/month</p>
                 </div>
                 <button type="button" class="p-2 rounded hover:bg-white/10 transition-all duration-300 close-modal">
                     <i class="bi bi-x-lg"></i>
@@ -1048,7 +1048,7 @@
                             <input type="hidden" id="currency" value="USD">
                             
                             <div class="bg-gradient-to-br from-primary/5 to-rose-gold/5 rounded-lg p-4 border border-primary/10">
-                                <h5 class="font-playfair font-bold text-base mb-3 text-primary">Request Summary</h5>
+                                <h5 class="font-playfair font-bold text-base mb-3 text-primary">Profile Boost Summary</h5>
                                 <div class="space-y-2 text-sm">
                                     <div class="flex justify-between items-center py-1.5 border-b border-border-color/50">
                                         <span class="text-text-secondary font-medium">Package:</span>
@@ -1068,7 +1068,7 @@
                         </div>
                         <div class="space-y-4">
                             <div>
-                                <h4 class="text-lg font-playfair font-bold mb-3 text-primary">Request Preview</h4>
+                                <h4 class="text-lg font-playfair font-bold mb-3 text-primary">Profile Boost Preview</h4>
                                 <div class="matchmaking-card">
                                     <div class="matchmaking-header">
                                         <div class="flex items-center justify-center space-x-2">
@@ -1076,7 +1076,7 @@
                                                 <i class="bi bi-heart text-rose-gold"></i>
                                             </div>
                                             <div>
-                                                <h5 class="font-playfair font-bold text-base text-primary">Matchmaking Request</h5>
+                                                <h5 class="font-playfair font-bold text-base text-primary">Profile Boost</h5>
                                 <p class="text-text-secondary text-xs">${{ "{:,.0f}".format((packages[0].price if packages else 10)|round|int) }}/month - 30 days duration</p>
                                             </div>
                                         </div>
@@ -1168,8 +1168,8 @@
                 <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
                 <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
             </svg>
-            <h3 class="text-lg font-playfair font-bold mb-1.5 text-primary">Request Submitted!</h3>
-            <p class="text-text-secondary mb-4 text-sm">Your matchmaking request is now active for $10/month.</p>
+            <h3 class="text-lg font-playfair font-bold mb-1.5 text-primary">Profile Boost Submitted!</h3>
+            <p class="text-text-secondary mb-4 text-sm">Your matchmaking profile boost is now active for $10/month.</p>
             <button class="px-4 py-2 gradient-rose text-white rounded btn hover:opacity-90 transition-all duration-300 font-semibold flex items-center space-x-1.5 text-sm mx-auto" id="successBtn">
                 <i class="bi bi-grid-1x2"></i>
                 <span>Go to Dashboard</span>
@@ -1182,8 +1182,8 @@
         <div class="modal-dialog bg-white rounded-lg shadow-strong w-full max-w-sm mx-3 animate-fade-in">
             <div class="modal-header p-4 border-b border-border-color flex justify-between items-center bg-gradient-to-r from-primary to-secondary text-white rounded-t-lg">
                 <div>
-                    <h3 class="text-base font-playfair font-bold">Active Request Found</h3>
-                    <p class="text-white/80 text-xs mt-0.5">You already have an active matchmaking request</p>
+                    <h3 class="text-base font-playfair font-bold">Active Profile Boost Found</h3>
+                    <p class="text-white/80 text-xs mt-0.5">You already have an active profile boost</p>
                 </div>
                 <button type="button" class="p-1.5 rounded hover:bg-white/10 transition-all duration-300 close-existing-modal">
                     <i class="bi bi-x-lg"></i>
@@ -1211,7 +1211,7 @@
                 <div class="space-y-2">
                     <button onclick="viewMyActiveRequest()" class="w-full bg-primary text-white py-2 px-3 rounded hover:bg-secondary transition-colors flex items-center justify-center space-x-1.5 text-sm">
                         <i class="bi bi-eye"></i>
-                        <span>View My Active Request</span>
+                        <span>View My Profile Boost</span>
                     </button>
                     
                     <button onclick="deactivateAndCreateNew()" class="w-full bg-rose-gold text-white py-2 px-3 rounded hover:bg-rose-700 transition-colors flex items-center justify-center space-x-1.5 text-sm">
@@ -1674,8 +1674,8 @@
             modal.innerHTML = `
                 <div class="modal-dialog bg-white rounded-lg shadow-strong w-full max-w-sm mx-3 text-center p-6">
                     <div class="loader-spinner mx-auto mb-3"></div>
-                    <h3 class="text-base font-playfair font-bold text-primary mb-1.5">Deactivating Request</h3>
-                    <p class="text-text-secondary text-sm">Please wait while we deactivate your current request...</p>
+                    <h3 class="text-base font-playfair font-bold text-primary mb-1.5">Deactivating Profile Boost</h3>
+                    <p class="text-text-secondary text-sm">Please wait while we deactivate your current profile boost...</p>
                 </div>
             `;
 
@@ -1694,10 +1694,10 @@
                             <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
                                 <i class="bi bi-check-lg text-green-600"></i>
                             </div>
-                            <h3 class="text-base font-playfair font-bold text-primary mb-1.5">Request Deactivated!</h3>
-                            <p class="text-text-secondary text-sm mb-3">Your previous request has been deactivated.</p>
+                            <h3 class="text-base font-playfair font-bold text-primary mb-1.5">Profile Boost Deactivated!</h3>
+                            <p class="text-text-secondary text-sm mb-3">Your previous profile boost has been deactivated.</p>
                             <button onclick="reopenCreateModal()" class="px-4 py-2 bg-primary text-white rounded hover:bg-secondary transition-all duration-300 font-semibold text-sm">
-                                Create New Request
+                                Create New Profile Boost
                             </button>
                         </div>
                     `;
@@ -1793,7 +1793,7 @@
                     } else {
                         throw new Error(JSON.stringify({
                             type: 'REQUEST_ERROR',
-                            message: data.error || 'Failed to create matchmaking request'
+                            message: getUserFriendlyError(data.error)
                         }));
                     }
                 }
@@ -1876,7 +1876,7 @@
                             showNotification('An unexpected error occurred. Please try again.', 'error');
                     }
                 } catch (parseError) {
-                    showNotification('An error occurred while processing your request. Please try again.', 'error');
+                    showNotification('An error occurred while processing your profile boost. Please try again.', 'error');
                 }
                 
                 if (!error.message.includes('ACTIVE_REQUEST_EXISTS')) {
@@ -1888,7 +1888,7 @@
         function getUserFriendlyPaymentError(backendError) {
             const paymentErrorMap = {
                 'Request ID is required': 'Missing request information. Please try creating the request again.',
-                'Matchmaking request not found': 'Request not found. Please try creating a new request.',
+                'Matchmaking request not found': 'Profile boost not found. Please try again.',
                 'Request already paid': 'This request has already been paid for.',
                 'Package not found': 'Package configuration error. Please contact support.',
                 'Payment gateway error': 'Temporary payment service issue. Please try again in a few minutes.',
@@ -1905,10 +1905,10 @@
 
         function getUserFriendlyError(backendError) {
             const errorMap = {
-                'You already have an active matchmaking request': 'You already have an active matchmaking request.',
+                'You already have an active matchmaking request': 'You already have an active profile boost.',
                 'Invalid package selected': 'The selected package is not available.',
                 'Missing required field': 'Please fill in all required fields.',
-                'Failed to create matchmaking request': 'Unable to create request. Please try again.'
+                'Failed to create matchmaking request': 'Unable to create your profile boost. Please try again.'
             };
             
             return errorMap[backendError] || backendError || 'An error occurred. Please try again.';

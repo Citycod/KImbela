@@ -43,7 +43,7 @@ from sqlalchemy import func, desc
 from decimal import Decimal
 
 
-import bleach, os
+import os
 from dotenv import load_dotenv
 from extensions import mail
 from email_utils import EmailService
@@ -95,6 +95,7 @@ from flask import render_template
 import re
 from cloudinary.uploader import upload
 import cloudinary
+from utils.group_description import sanitize_group_description
 
 
 load_dotenv()
@@ -112,48 +113,6 @@ cloudinary.config(
 
 
 admin = Blueprint("admin", __name__)
-
-
-def sanitize_group_description(raw_description):
-    allowed_tags = [
-        "p",
-        "br",
-        "strong",
-        "b",
-        "em",
-        "i",
-        "u",
-        "ul",
-        "ol",
-        "li",
-        "blockquote",
-        "h2",
-        "h3",
-        "h4",
-        "a",
-        "table",
-        "thead",
-        "tbody",
-        "tr",
-        "th",
-        "td",
-    ]
-    allowed_attributes = {
-        "a": ["href", "target", "rel"],
-        "table": ["border", "cellpadding", "cellspacing"],
-        "th": ["colspan", "rowspan"],
-        "td": ["colspan", "rowspan"],
-    }
-
-    cleaned = bleach.clean(
-        raw_description or "",
-        tags=allowed_tags,
-        attributes=allowed_attributes,
-        strip=True,
-    ).strip()
-
-    plain_text = bleach.clean(cleaned, tags=[], strip=True).strip()
-    return cleaned if plain_text else ""
 
 
 def allowed_file(filename):

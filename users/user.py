@@ -51,6 +51,7 @@ import cloudinary.uploader
 import cloudinary.utils
 
 from time_utils import utcnow
+from utils.group_description import sanitize_group_description
 # from scheduler import (
 #     manual_trigger_matchmaking_expiry_check,
 #     manual_trigger_expired_matchmaking_check,
@@ -4020,6 +4021,7 @@ def group_detail(group_id):
     return render_template(
         "group_detail.html",
         group=group,
+        group_description_html=sanitize_group_description(group.description),
         is_member=is_member,
         posts=posts,
         current_user=current_user,

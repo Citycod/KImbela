@@ -17,6 +17,20 @@ PROFILE_PICS = {
     "Emeka": "https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg",
 }
 
+# Character-sheet names remain stable persona identifiers and email keys. Only
+# these two source-managed display names change; no new persona accounts are made.
+DISPLAY_NAME_OVERRIDES = {
+    "Amara": ("Emily", "Carter"),
+    "Tunde": ("Daniel", "Brooks"),
+}
+
+SURNAMES = {
+    "Amara": "Okafor",
+    "Tunde": "Balogun",
+    "Ngozi": "Eze",
+    "Emeka": "Obi",
+}
+
 
 def seed():
     with app.app_context():
@@ -25,22 +39,20 @@ def seed():
 
         personas_spec = data.get("personas", [])
 
-        surnames = {
-            "Amara": "Okafor",
-            "Tunde": "Balogun",
-            "Ngozi": "Eze",
-            "Emeka": "Obi"
-        }
-
         for p_data in personas_spec:
             name = p_data["name"]
+            first_name, last_name = DISPLAY_NAME_OVERRIDES.get(
+                name,
+                (name, SURNAMES.get(name, "User")),
+            )
+            display_name = f"{first_name} {last_name}"
             email = f"ai.{name.lower()}@kimbela.com"
             
             user = User.query.filter_by(email=email).first()
             if not user:
                 user = User(
-                    first_name=name,
-                    last_name=surnames.get(name, "User"),
+                    first_name=first_name,
+                    last_name=last_name,
                     email=email,
                     password_hash=generate_password_hash("PersonaPass123!"),
                     is_active=True,
@@ -57,6 +69,8 @@ def seed():
                 db.session.commit()
                 print(f"✓ Created User account for {name} (ID: {user.id})")
             else:
+                user.first_name = first_name
+                user.last_name = last_name
                 user.is_active = True
                 user.is_ai_persona = True
                 user.bio = p_data["bio_disclosure"]
@@ -68,7 +82,7 @@ def seed():
             if not persona_rec:
                 persona_rec = AIPersona(
                     user_id=user.id,
-                    name=name,
+                    name=display_name,
                     bio_disclosure=p_data["bio_disclosure"],
                     personality=p_data["personality"],
                     interests=p_data["interests"],
@@ -82,6 +96,7 @@ def seed():
                 )
                 db.session.add(persona_rec)
             else:
+                persona_rec.name = display_name
                 persona_rec.personality = p_data["personality"]
                 persona_rec.bio_disclosure = p_data["bio_disclosure"]
                 persona_rec.interests = p_data["interests"]
@@ -89,7 +104,7 @@ def seed():
                 persona_rec.forbidden_actions = p_data["forbidden_actions"]
 
             db.session.commit()
-            print(f"✓ Seeded AIPersona config for {name}")
+            print(f"✓ Seeded AIPersona config for {display_name}")
 
         print("\n✅ All 4 AI Personas seeded successfully.")
 
