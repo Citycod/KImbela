@@ -3861,8 +3861,8 @@ def faq():
 @user.route("/explore_users")
 @login_required
 def explore_users():
-    users = User.query.filter(User.id != current_user.id).order_by(db.func.random()).limit(50).all()
-    return render_template("explore.html", users=users)
+    """Retire the legacy unfiltered directory in favor of paid discovery."""
+    return redirect(url_for("match.view_requests"))
 
 @user.route("/get_user_groups")
 @login_required

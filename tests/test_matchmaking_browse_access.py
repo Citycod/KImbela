@@ -1,9 +1,9 @@
 import json
 import uuid
-from datetime import timedelta
+from datetime import date, timedelta
 from decimal import Decimal
 
-from models import PaymentTransaction
+from models import PaymentTransaction, User
 from payments.browse_access import (
     BROWSE_ACCESS_DAYS,
     BROWSE_ACCESS_PRICE_USD,
@@ -29,6 +29,27 @@ def _login(client, user):
     with client.session_transaction() as session:
         session["_user_id"] = str(user.id)
         session["_fresh"] = True
+
+
+def _eligible_discovery_user(db):
+    suffix = uuid.uuid4().hex[:10]
+    candidate = User(
+        first_name="Explore",
+        last_name="Candidate",
+        email=f"explore-{suffix}@example.com",
+        phone_number=f"+2347{uuid.uuid4().int % 10**9:09d}",
+        dob=date(1992, 4, 12),
+        gender="Female",
+        city="Explore City",
+        state="Explore State",
+        country=f"Explore-{suffix}",
+        marital_status="Single",
+        is_active=True,
+    )
+    candidate.set_password("StrongPassw0rd!")
+    db.session.add(candidate)
+    db.session.commit()
+    return candidate
 
 
 def _browse_transaction(db, user, *, status="completed", completed_at=None):
@@ -100,6 +121,79 @@ def test_unpaid_find_page_shows_filters_but_discovery_api_requires_access(
     assert discovery_response.get_json()["duration_days"] == 30
     assert requests_response.status_code == 200
     assert requests_response.get_json()["success"] is True
+
+
+def test_unpaid_explore_users_redirects_without_rendering_legacy_directory(
+    client, user, db
+):
+    candidate = _eligible_discovery_user(db)
+    _login(client, user)
+
+    response = client.get("/explore_users", follow_redirects=False)
+    destination = client.get("/explore_users", follow_redirects=True)
+
+    assert response.status_code == 302
+    assert response.headers["Location"].endswith("/view_requests")
+    assert candidate.full_name.encode() not in response.data
+    assert destination.status_code == 200
+    assert b"Unlock Find Your Match" in destination.data
+    assert client.get("/api/browse/users").status_code == 402
+
+
+def test_paid_explore_users_uses_protected_discovery_and_safe_serialization(
+    client, user, db
+):
+    candidate = _eligible_discovery_user(db)
+    _browse_transaction(db, user)
+    _login(client, user)
+
+    redirect_response = client.get("/explore_users", follow_redirects=False)
+    api_response = client.get(
+        "/api/browse/users",
+        query_string={"country": candidate.country},
+    )
+
+    assert redirect_response.status_code == 302
+    assert redirect_response.headers["Location"].endswith("/view_requests")
+    assert api_response.status_code == 200
+    payload = api_response.get_json()
+    assert [entry["id"] for entry in payload["users"]] == [candidate.id]
+    assert {
+        "email",
+        "password",
+        "password_hash",
+        "phone_number",
+        "authentication_token",
+        "push_subscriptions",
+    }.isdisjoint(payload["users"][0])
+
+
+def test_expired_access_cannot_use_explore_discovery(client, user, db):
+    _browse_transaction(db, user, completed_at=utcnow() - timedelta(days=31))
+    _login(client, user)
+
+    response = client.get("/explore_users", follow_redirects=True)
+
+    assert response.status_code == 200
+    assert b"Unlock Find Your Match" in response.data
+    assert client.get("/api/browse/users").status_code == 402
+
+
+def test_valid_legacy_two_dollar_access_still_unlocks_explore_discovery(
+    client, user, db
+):
+    transaction = _browse_transaction(db, user)
+    transaction.amount = Decimal("2.00")
+    transaction.description = "$2 Browse Match access for 30 days"
+    db.session.commit()
+    _login(client, user)
+
+    response = client.get("/explore_users", follow_redirects=True)
+    api_response = client.get("/api/browse/users")
+
+    assert response.status_code == 200
+    assert b"let hasMatchmakingAccess = true;" in response.data
+    assert api_response.status_code == 200
 
 
 def test_active_access_opens_browse_and_expires_at_exactly_30_days(
