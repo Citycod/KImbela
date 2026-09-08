@@ -7,7 +7,7 @@
             <a href="{{ url_for('user.view_profile', user_identifier=post.author.id) }}" class="flex-shrink-0">
                 <img
                     src="{{ post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-                    class="w-10 h-10 rounded-full object-cover hover:opacity-90 transition-opacity"
+                    class="post-author-avatar w-10 h-10 rounded-full object-cover hover:opacity-90 transition-opacity"
                     width="40" height="40" loading="lazy"
                 />
             </a>
@@ -203,7 +203,7 @@
     <!-- Likes/Chimes/Share -->
     {% set current_user_liked = post.id in current_user_liked_post_ids %}
     <div
-        class="px-4 py-3 border-t border-fb-border flex justify-between text-fb-text-light font-medium"
+        class="px-4 py-3 border-t border-fb-border flex flex-wrap justify-between gap-1 text-fb-text-light font-medium"
     >
         <button
             class="action-btn like-btn flex items-center space-x-1 px-2 py-1 rounded-lg hover:bg-fb-gray transition-colors {% if current_user_liked %}text-blue-600{% endif %}"
@@ -213,7 +213,7 @@
             <span class="like-count">{{ post.likes_count }}</span>
         </button>
         <button
-            class="action-btn view-comments flex items-center space-x-1 px-2 py-1 rounded-lg hover:bg-fb-gray transition-colors"
+            class="action-btn view-comments chime-btn flex items-center space-x-1 px-2 py-1 rounded-lg hover:bg-fb-gray transition-colors"
             data-post-id="{{ post.id }}"
             aria-label="View Chimes"
         >

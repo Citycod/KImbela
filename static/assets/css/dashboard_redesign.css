@@ -886,9 +886,63 @@ body.has-top-banner .hero-ad-wrap {
   }
 }
 
-/* ── NOTIFICATION BADGES (purple theme) ── */
-.notification-badge {
-  background: var(--kb-primary) !important;
+/* ── HEADER ACTIONS AND BADGES ── */
+nav .dashboard-nav-icon {
+  background: #ffffff !important;
+  border: 1px solid #ece9f3 !important;
+  box-shadow: 0 3px 10px rgba(31, 24, 54, 0.08);
+  transition: transform 0.18s ease, box-shadow 0.18s ease,
+    background-color 0.18s ease !important;
+}
+
+nav .dashboard-nav-icon:hover {
+  transform: scale(1.04);
+  box-shadow: 0 5px 14px rgba(31, 24, 54, 0.13);
+}
+
+nav #birthdayShortcut:hover {
+  background: #fff1f4 !important;
+}
+
+nav #birthdayShortcut > i {
+  color: #f43f5e !important;
+}
+
+nav #openMessaging:hover {
+  background: #f5f3ff !important;
+}
+
+nav #openMessaging > i {
+  color: #7c3aed !important;
+}
+
+nav #notificationDropdown:hover {
+  background: #f1f5f9 !important;
+}
+
+nav #notificationDropdown > i {
+  color: #52627a !important;
+}
+
+.notification-badge,
+#birthdayCount {
+  background: #f43f5e !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 6px rgba(244, 63, 94, 0.28);
+}
+
+nav #birthdayCount,
+nav #unreadMessagesBadge,
+nav #notificationBadge {
+  top: -4px !important;
+  right: -4px !important;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border: 2px solid #ffffff !important;
+  border-radius: 999px;
+  font-size: 10px;
+  line-height: 1;
 }
 
 .message-unread-badge {
@@ -906,7 +960,7 @@ body.has-top-banner .hero-ad-wrap {
 
 /* ── FINAL FEED POLISH ── */
 .dashboard-nav-icon {
-  border: 1px solid rgba(124, 58, 237, 0.08);
+  border-radius: 999px;
 }
 
 .dashboard-nav-icon:focus-visible,
@@ -918,7 +972,50 @@ body.has-top-banner .hero-ad-wrap {
 }
 
 .kb-composer {
-  box-shadow: 0 3px 12px rgba(31, 24, 54, 0.05);
+  border-color: #e4def2;
+  box-shadow: 0 5px 18px rgba(57, 42, 91, 0.08);
+}
+
+.kb-composer-input {
+  background: #f7f4ff;
+  border-color: #e7e0f5;
+}
+
+.kb-composer-btn {
+  border-radius: 999px;
+}
+
+.kb-composer-btn.photo {
+  color: #047857;
+  background: #ecfdf5;
+}
+
+.kb-composer-btn.video {
+  color: #e11d48;
+  background: #fff1f2;
+}
+
+.kb-composer-btn.poll {
+  color: #c2410c;
+  background: #fff7ed;
+}
+
+.kb-composer-btn.feeling {
+  color: #db2777;
+  background: #fdf2f8;
+}
+
+.kb-composer-btn:hover {
+  filter: saturate(1.08);
+  transform: translateY(-1px);
+}
+
+.kb-post-btn {
+  background: linear-gradient(135deg, #7c3aed, #ec4899);
+}
+
+.kb-post-btn:hover {
+  background: linear-gradient(135deg, #6d28d9, #db2777);
 }
 
 .kb-composer-input:focus-visible {
@@ -933,6 +1030,92 @@ body.has-top-banner .hero-ad-wrap {
 
 .post-card:hover {
   box-shadow: 0 6px 18px rgba(31, 24, 54, 0.085) !important;
+}
+
+.post-author-avatar {
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 0 2px #ddd6fe, 0 3px 8px rgba(124, 58, 237, 0.12);
+}
+
+.post-card .shared-meta {
+  display: inline-flex;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  color: #6d28d9;
+  background: #f5f3ff;
+}
+
+.post-card .post-media > img,
+.post-card .post-media > video {
+  border: 1px solid #e8e5f0;
+  box-shadow: 0 4px 14px rgba(31, 24, 54, 0.07);
+}
+
+.post-card .like-btn,
+.post-card .chime-btn,
+.post-card .repost-btn,
+.post-card .share-btn {
+  min-height: 36px;
+  border-radius: 999px;
+  transition: color 0.18s ease, background-color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.post-card .like-btn:not([class*="active-"]) {
+  color: #2563eb;
+}
+
+.post-card .like-btn:hover,
+.post-card .like-btn.active-like {
+  background: #eff6ff;
+}
+
+.post-card .like-btn.active-love,
+.post-card .like-btn.active-angry {
+  background: #fff1f2;
+}
+
+.post-card .like-btn.active-care,
+.post-card .like-btn.active-haha,
+.post-card .like-btn.active-wow,
+.post-card .like-btn.active-sad {
+  background: #fffbeb;
+}
+
+.post-card .chime-btn {
+  color: #e11d48;
+}
+
+.post-card .chime-btn:hover {
+  background: #fff1f2;
+}
+
+.post-card .repost-btn {
+  color: #059669;
+}
+
+.post-card .repost-btn:hover {
+  background: #ecfdf5;
+}
+
+.post-card .share-btn {
+  color: #7c3aed;
+}
+
+.post-card .share-btn:hover {
+  background: #f5f3ff;
+}
+
+.post-card .like-btn:hover,
+.post-card .chime-btn:hover,
+.post-card .repost-btn:hover,
+.post-card .share-btn:hover {
+  transform: translateY(-1px);
+}
+
+.post-card .comments-section {
+  background: linear-gradient(135deg, #faf8ff 0%, #fff8f7 100%);
+  border-color: #ede9f5;
 }
 
 .post-card img,

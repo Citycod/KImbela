@@ -19,7 +19,7 @@
   rel="stylesheet" />
 
 <!-- Dashboard Redesign Override -->
-<link href="{{ url_for('static', filename='assets/css/dashboard_redesign.css', v='ux-polish-1') }}"
+<link href="{{ url_for('static', filename='assets/css/dashboard_redesign.css', v='feed-color-polish-1') }}"
   rel="stylesheet" />
 
 <!-- External CSS -->
@@ -566,7 +566,7 @@ placement='dashboard-top') %}
           <div class="flex items-start space-x-3">
             <a href="{{ url_for('user.view_profile', user_identifier=post.author.id) }}" class="flex-shrink-0">
               <img src="{{ post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
-                class="w-10 h-10 rounded-full object-cover hover:opacity-90 transition-opacity"
+                class="post-author-avatar w-10 h-10 rounded-full object-cover hover:opacity-90 transition-opacity"
                 width="40" height="40" loading="lazy" />
             </a>
             <div>
@@ -824,7 +824,7 @@ placement='dashboard-top') %}
             </div>
 
             <button onclick="focusCommentInput({{ post.id }})"
-              class="flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-1 md:py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 text-gray-600">
+              class="chime-btn flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-1 md:py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 text-gray-600">
               <img src="{{ url_for('static', filename='assets/img/microphone2.png') }}" alt="Chime" class="w-4 h-4" />
               <span class="text-xs md:text-sm">Chime</span>
             </button>
