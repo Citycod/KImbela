@@ -331,21 +331,15 @@ def test_dashboard_sidebar_priority_and_banner_order_are_preserved(client, user)
     assert "window.openMessenger(); toggleMobileMenu();" in mobile_sidebar
     assert "document.getElementById('notificationDropdown').click()" in mobile_sidebar
 
-    legacy_sidebar = dashboard.split("<!-- DASHBOARD CONTAINER -->", 1)[1].split(
-        "<!-- MAIN CONTENT -->", 1
-    )[0]
-    assert "sidebar-ad-banner" in legacy_sidebar
-    for duplicate_label in (
-        "Find Your Match",
-        "Boost Your Profile",
-        "Install Kimbela",
-        "Sponsored Ads",
-        "Marketplace",
-        "Market Place",
-        "Partner",
-        "Logout",
-    ):
-        assert duplicate_label not in legacy_sidebar
+    assert "<!-- DASHBOARD CONTAINER -->" not in dashboard
+    assert 'class="pt-16 flex"' not in dashboard
+    assert "w-85 h-screen sticky top-16" not in dashboard
+    assert "w-96 h-screen sticky top-16" not in dashboard
+    assert dashboard.count('id="mobileFeedAdCandidates"') == 1
+    assert dashboard.count('<aside class="kb-left-sidebar">') == 1
+    assert dashboard.count('<aside class="kb-right-sidebar">') == 1
+    assert dashboard.count('class="marketplace-banner mb-4"') == 1
+    assert dashboard.count('class="matchmaking-banner mt-4"') == 1
 
     right_sidebar = dashboard.split('<aside class="kb-right-sidebar">', 1)[1].split(
         "</aside>", 1
