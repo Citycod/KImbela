@@ -96,3 +96,13 @@ def test_desktop_header_actions_render_once_in_the_required_order():
     assert "nav .header-actions" in css
     assert "nav #openMessaging," in css
     assert "nav #notificationDropdown" in css
+
+
+def test_messenger_close_icon_is_black_without_changing_its_handler():
+    dashboard = (PROJECT_ROOT / "templates" / "user_dashboard.html").read_text()
+    messenger = dashboard.split('id="messengerPopup"', 1)[1].split(
+        "<!-- Friends List -->", 1
+    )[0]
+
+    assert messenger.count('onclick="closeMessenger()"') == 1
+    assert '<i class="bi bi-x-lg" style="color: #111827;"></i>' in messenger
