@@ -123,12 +123,17 @@ def test_report_other_reason_requires_details(client, db, user, login):
     assert response.get_json()["error"] == "Please provide additional details"
 
 
-def test_report_modal_has_explicit_guarded_send_action():
-    shared = (REPO_ROOT / "templates/partials/report_modal.html").read_text()
+def test_report_modal_has_explicit_guarded_send_action(app):
+    shared = app.jinja_env.get_template("partials/report_modal.html").render(
+        csrf_token=lambda: "test-csrf"
+    )
     group = (REPO_ROOT / "templates/group_detail.html").read_text()
 
     for markup in (shared, group):
         assert "Send Report" in markup
+        assert markup.count('id="sendReportBtn"') == 1
+        assert "background-color: #ea580c" in markup
+        assert "color: #ffffff" in markup
         assert "function openReportModal()" in markup
         assert "reportForm').addEventListener('submit'" in markup
         assert 'id="otherReason"' in markup
@@ -150,6 +155,8 @@ def test_group_member_count_uses_authoritative_membership_and_hides_member_list(
     assert b"2 members" in detail.data
     assert b"999 members" not in detail.data
     assert b"Recent Members" not in detail.data
+    assert b"Cancel" in detail.data
+    assert b"Send Report" in detail.data
 
     groups_page = client.get("/groups")
     assert groups_page.status_code == 200
@@ -252,42 +259,93 @@ def test_group_member_count_compact_formatting():
     assert format_group_member_count(1999) == "1.9K+ members"
 
 
-def test_dashboard_sidebar_priority_and_banner_order_are_preserved():
-    dashboard = (REPO_ROOT / "templates/user_dashboard.html").read_text()
+def test_dashboard_sidebar_priority_and_banner_order_are_preserved(client, user):
+    with client.session_transaction() as session:
+        session["_user_id"] = str(user.id)
+        session["_fresh"] = True
+    response = client.get("/user_dashboard")
+    assert response.status_code == 200
+    dashboard = response.get_data(as_text=True)
     primary_sidebar = dashboard.split('<aside class="kb-left-sidebar">', 1)[1].split(
         "</aside>", 1
     )[0]
-    assert primary_sidebar.index("Home") < primary_sidebar.index("Find Your Match")
+    assert primary_sidebar.index("Home") < primary_sidebar.index("Sponsored Ads")
+    assert primary_sidebar.index("Sponsored Ads") < primary_sidebar.index(
+        "Find Your Match"
+    )
     assert primary_sidebar.index("Find Your Match") < primary_sidebar.index(
         "Boost Your Profile"
     )
     assert primary_sidebar.index("Boost Your Profile") < primary_sidebar.index(
         "Install Kimbela"
     )
+    assert primary_sidebar.index("Install Kimbela") < primary_sidebar.index("Messages")
     assert primary_sidebar.count("Find Your Match") == 1
     assert primary_sidebar.count("Boost Your Profile") == 1
     assert primary_sidebar.count("Install Kimbela") == 1
+    assert primary_sidebar.count("Sponsored Ads") == 1
+    assert primary_sidebar.count("Marketplace") == 1
+    assert primary_sidebar.index("Partner") < primary_sidebar.index(
+        "vertical-ad-banner"
+    )
+    assert primary_sidebar.index("Logout") < primary_sidebar.index(
+        "vertical-ad-banner"
+    )
 
     mobile_sidebar = dashboard.split("<!-- MOBILE SIDEBAR -->", 1)[1].split(
         "<!-- DASHBOARD CONTAINER -->", 1
     )[0]
-    assert mobile_sidebar.index("Home") < mobile_sidebar.index("Find Your Match")
+    assert mobile_sidebar.index("Home") < mobile_sidebar.index("Sponsored Ads")
+    assert mobile_sidebar.index("Sponsored Ads") < mobile_sidebar.index(
+        "Find Your Match"
+    )
     assert mobile_sidebar.index("Find Your Match") < mobile_sidebar.index(
         "Boost Your Profile"
     )
     assert mobile_sidebar.index("Boost Your Profile") < mobile_sidebar.index(
         "Install Kimbela"
     )
+    assert mobile_sidebar.index("Install Kimbela") < mobile_sidebar.index("Messages")
+    assert mobile_sidebar.index("Messages") < mobile_sidebar.index("Notifications")
+    assert mobile_sidebar.index("Notifications") < mobile_sidebar.index(
+        "bi-person mr-3"
+    )
+    assert mobile_sidebar.index("bi-person mr-3") < mobile_sidebar.index(
+        "bi-people mr-3"
+    )
+    assert mobile_sidebar.index("bi-people mr-3") < mobile_sidebar.index("Marketplace")
+    assert mobile_sidebar.index("Marketplace") < mobile_sidebar.index("Partner")
+    assert mobile_sidebar.index("Partner") < mobile_sidebar.index(
+        "Notification sounds"
+    )
+    assert mobile_sidebar.index("Notification sounds") < mobile_sidebar.index(
+        "Logout"
+    )
+    assert mobile_sidebar.count("Sponsored Ads") == 1
+    assert mobile_sidebar.count("Find Your Match") == 1
+    assert mobile_sidebar.count("Boost Your Profile") == 1
+    assert mobile_sidebar.count("Install Kimbela") == 1
+    assert mobile_sidebar.count("Marketplace") == 1
+    assert mobile_sidebar.count('>Messages</span>') == 1
+    assert mobile_sidebar.count('>Notifications</span>') == 1
+    assert "window.openMessenger(); toggleMobileMenu();" in mobile_sidebar
+    assert "document.getElementById('notificationDropdown').click()" in mobile_sidebar
 
     legacy_sidebar = dashboard.split("<!-- DASHBOARD CONTAINER -->", 1)[1].split(
         "<!-- MAIN CONTENT -->", 1
     )[0]
-    assert legacy_sidebar.index("Find Your Match") < legacy_sidebar.index(
-        "Boost Your Profile"
-    )
-    assert legacy_sidebar.index("Boost Your Profile") < legacy_sidebar.index(
-        "Install Kimbela"
-    )
+    assert "sidebar-ad-banner" in legacy_sidebar
+    for duplicate_label in (
+        "Find Your Match",
+        "Boost Your Profile",
+        "Install Kimbela",
+        "Sponsored Ads",
+        "Marketplace",
+        "Market Place",
+        "Partner",
+        "Logout",
+    ):
+        assert duplicate_label not in legacy_sidebar
 
     right_sidebar = dashboard.split('<aside class="kb-right-sidebar">', 1)[1].split(
         "</aside>", 1
@@ -301,6 +359,10 @@ def test_dashboard_sidebar_priority_and_banner_order_are_preserved():
     assert right_sidebar.index("right-ad-banner-2") < right_sidebar.index(
         "Trending Groups"
     )
-    assert "spotlight_banner.target_url" in right_sidebar
-    assert "dashboard-spotlight" in right_sidebar
-    assert 'class="dashboard-ad-link"' in right_sidebar
+    dashboard_source = (REPO_ROOT / "templates/user_dashboard.html").read_text()
+    right_sidebar_source = dashboard_source.split(
+        '<aside class="kb-right-sidebar">', 1
+    )[1].split("</aside>", 1)[0]
+    assert "spotlight_banner.target_url" in right_sidebar_source
+    assert "dashboard-spotlight" in right_sidebar_source
+    assert 'class="dashboard-ad-link"' in right_sidebar_source

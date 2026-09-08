@@ -241,6 +241,11 @@ placement='dashboard-top') %}
           </a>
         </li>
         <li>
+          <a href="{{ url_for('payments.ad_packages') }}">
+            <i class="bi bi-megaphone"></i> Sponsored Ads
+          </a>
+        </li>
+        <li>
           <a href="{{ url_for('match.view_requests') }}">
             <i class="bi bi-binoculars-fill"></i> Find Your Match
           </a>
@@ -281,12 +286,7 @@ placement='dashboard-top') %}
         </li>
         <li>
           <a href="{{ url_for('market.main_market') }}">
-            <i class="bi bi-shop"></i> Market Place
-          </a>
-        </li>
-        <li>
-          <a href="{{ url_for('payments.ad_packages') }}">
-            <i class="bi bi-megaphone"></i> Ads
+            <i class="bi bi-shop"></i> Marketplace
           </a>
         </li>
         <li>
@@ -1504,6 +1504,13 @@ placement='dashboard-top') %}
       <div class="sidebar-item flex items-center p-3 rounded-lg bg-blue-50 text-blue-600 font-medium mb-2">
         <i class="bi bi-house-door mr-3 text-lg"></i> Home
       </div>
+      <a href="{{ url_for('payments.ad_packages') }}"
+        class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 transition-all duration-300 mb-2 group border border-transparent hover:border-indigo-200 shadow-sm hover:shadow-md">
+        <i class="bi bi-megaphone-fill mr-3 text-lg group-hover:scale-110 group-hover:rotate-12 transition-all duration-300"
+          style="color: #f59e0b"></i>
+        <span class="font-medium group-hover:text-indigo-700 transition-colors duration-300">Sponsored Ads</span>
+      </a>
+
       <!-- View Match Requests -->
       <a href="{{ url_for('match.view_requests') }}"
         class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 transition-all duration-300 mb-2 group border border-transparent hover:border-green-200 shadow-sm hover:shadow-md">
@@ -1526,6 +1533,21 @@ placement='dashboard-top') %}
         <span class="font-medium">Install Kimbela</span>
       </a>
 
+      <button type="button" onclick="window.openMessenger(); toggleMobileMenu();"
+        aria-label="Messages" title="Messages"
+        class="sidebar-item w-full flex items-center p-3 rounded-lg text-fb-text hover:bg-fb-gray transition-colors mb-2">
+        <i class="bi bi-chat-dots mr-3 text-lg"></i>
+        <span class="font-medium">Messages</span>
+      </button>
+
+      <button type="button"
+        onclick="document.getElementById('notificationDropdown').click(); toggleMobileMenu();"
+        aria-label="Notifications" title="Notifications"
+        class="sidebar-item w-full flex items-center p-3 rounded-lg text-fb-text hover:bg-fb-gray transition-colors mb-2">
+        <i class="bi bi-bell mr-3 text-lg"></i>
+        <span class="font-medium">Notifications</span>
+      </button>
+
       <a href="{{ url_for('user.profile', user_id=current_user.id) }}"
         class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-fb-gray transition-colors mb-2">
         <i class="bi bi-person mr-3 text-lg"></i> Profile
@@ -1539,15 +1561,7 @@ placement='dashboard-top') %}
         class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 transition-all duration-300 mb-2 group border border-transparent hover:border-indigo-200 shadow-sm hover:shadow-md">
         <i class="bi bi-shop mr-3 text-lg group-hover:scale-110 group-hover:rotate-12 transition-all duration-300"
           style="color: #f5260bff"></i>
-        <span class="font-medium group-hover:text-indigo-700 transition-colors duration-300">Market Place</span>
-      </a>
-
-      <a href="{{ url_for('payments.ad_packages') }}"
-        class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 transition-all duration-300 mb-2 group border border-transparent hover:border-indigo-200 shadow-sm hover:shadow-md">
-        <i class="bi bi-megaphone-fill mr-3 text-lg group-hover:scale-110 group-hover:rotate-12 transition-all duration-300"
-          style="color: #f59e0b"></i>
-        <span class="font-medium group-hover:text-indigo-700 transition-colors duration-300">Create Sponsored
-          Ad</span>
+        <span class="font-medium group-hover:text-indigo-700 transition-colors duration-300">Marketplace</span>
       </a>
 
       <!-- Partner -->
@@ -1584,40 +1598,6 @@ placement='dashboard-top') %}
     <!-- In your LEFT SIDEBAR section, replace the current Groups item with: -->
     <!-- Desktop Groups Dropdown -->
 
-    <!-- View Match Requests -->
-    <a href="{{ url_for('match.view_requests') }}"
-      class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 transition-all duration-300 mb-2 group">
-      <i class="bi bi-binoculars-fill mr-3 text-lg" style="color: #10b981"></i>
-      <span class="font-medium">Find Your Match</span>
-    </a>
-
-    <!-- Match Making Request Form -->
-    <a href="{{ url_for('match.requests') }}"
-      class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-pink-50 hover:to-rose-50 transition-all duration-300 mb-2 group">
-      <i class="bi bi-heart-fill mr-3 text-lg" style="color: #ec4899"></i>
-      <span class="font-medium">Boost Your Profile</span>
-    </a>
-
-    <a href="{{ url_for('user.install_app') }}"
-      class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-fb-gray transition-colors mb-2">
-      <i class="bi bi-phone mr-3 text-lg" style="color: #0d6efd"></i>
-      <span class="font-medium">Install Kimbela</span>
-    </a>
-
-    <a href="{{ url_for('market.main_market') }}"
-      class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 transition-all duration-300 mb-2 group border border-transparent hover:border-indigo-200 shadow-sm hover:shadow-md">
-      <i class="bi bi-shop mr-3 text-lg group-hover:scale-110 group-hover:rotate-12 transition-all duration-300"
-        style="color: #f5260bff"></i>
-      <span class="font-medium group-hover:text-indigo-700 transition-colors duration-300">Market Place</span>
-    </a>
-
-    <!-- ADD THIS SPONSORED ADS LINK -->
-    <a href="{{ url_for('payments.ad_packages') }}"
-      class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 transition-all duration-300 mb-2 group">
-      <i class="bi bi-megaphone-fill mr-3 text-lg" style="color: #4F46E5"></i>
-      <span class="font-medium">Create Sponsored Ad</span>
-    </a>
-
     {% set sidebar_banner = dashboard_ads.get('sidebar_banner') if dashboard_ads else None %}
     <div class="sidebar-ad-banner {% if sidebar_banner %}has-dashboard-ad{% endif %} ">
       {% if sidebar_banner %}
@@ -1643,21 +1623,6 @@ placement='dashboard-top') %}
         href="{{ url_for('payments.dashboard_ad_package', placement='dashboard-sidebar') }}">Start advertising</a>
       {% endif %}
     </div>
-
-
-
-    <!-- Partner -->
-    <a href="{{ url_for('payments.donate') }}"
-      class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-yellow-50 hover:to-orange-50 transition-all duration-300 mb-2 group">
-      <i class="bi bi-gift-fill mr-3 text-lg" style="color: #f59e0b"></i>
-      <span class="font-medium">Partner</span>
-    </a>
-
-    <a class="dropdown-item block px-4 py-2 text-red-500 hover:bg-red-50 transition-colors"
-      href="{{ url_for('user.logout') }}">
-      <i class="bi bi-box-arrow-right mr-2"></i> Logout
-    </a>
-
     <br>
     <br>
     <br>
