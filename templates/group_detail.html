@@ -685,7 +685,7 @@
                                 <div class="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm group-stats">
                                     <span class="bg-white/20 px-2 md:px-3 py-1 rounded-full backdrop-blur-sm">
                                         <i class="bi bi-people mr-1"></i>
-                                        {{ group.member_count }} members
+                                        {{ member_count_label }}
                                     </span>
                                     <span class="bg-white/20 px-2 md:px-3 py-1 rounded-full backdrop-blur-sm">
                                         <i class="bi bi-grid-3x3-gap mr-1"></i>
@@ -707,7 +707,7 @@
                         <!-- Action Buttons -->
                         <br>
                         <div class="flex space-x-2 md:space-x-3 mt-4 md:mt-0 mb-4 md:mb-0" style="margin-bottom: -1rem;">
-                            {% if is_member %}
+                            {% if can_create_group_post %}
                             <!-- Create Post Button -->
                             <button onclick="openPostModal()" 
                                     class="px-3 md:px-4 py-1.5 md:py-2 rounded-lg bg-indigo-500 text-white hover:bg-indigo-600 transition font-medium flex items-center text-xs md:text-sm shadow-sm action-button">
@@ -760,7 +760,7 @@
                     <div class="space-y-2 md:space-y-3">
                         <div class="flex justify-between items-center">
                             <span class="text-gray-600">Members</span>
-                            <span class="font-semibold">{{ group.member_count }}</span>
+                            <span class="font-semibold">{{ member_count_label }}</span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-gray-600">Category</span>
@@ -780,6 +780,7 @@
                 </div>
 
                 <!-- Group Members Preview -->
+                {% if can_view_group_members %}
                 <div class="bg-white rounded-xl md:rounded-2xl shadow-lg p-4 md:p-6 sidebar-card">
                     <h3 class="font-semibold text-gray-900 mb-3 md:mb-4">Recent Members</h3>
                     <div class="space-y-2 md:space-y-3">
@@ -794,17 +795,18 @@
                         </div>
                         {% endfor %}
                     </div>
-                    {% if group.member_count > 5 %}
+                    {% if member_count > 5 %}
                     <button class="w-full mt-3 md:mt-4 text-blue-600 hover:text-blue-700 text-xs md:text-sm font-semibold">
                         View All Members
                     </button>
                     {% endif %}
                 </div>
+                {% endif %}
             </div>
 
             <!-- Posts Feed -->
             <div class="lg:col-span-3">
-                {% if is_member %}
+                {% if can_create_group_post %}
                 <!-- Create Post Card -->
                 <div class="bg-white rounded-xl md:rounded-2xl shadow-lg p-4 md:p-6 mb-4 md:mb-6 card-hover">
                     <div class="flex items-center space-x-3 md:space-x-4">
@@ -1028,11 +1030,13 @@
                         </div>
                         <h3 class="text-lg md:text-xl font-semibold text-gray-900 mb-2 empty-state-title">No posts yet</h3>
                         <p class="text-gray-600 mb-4 md:mb-6 text-sm md:text-base empty-state-text">Be the first to share something in this group!</p>
-                        {% if is_member %}
+                        {% if can_create_group_post %}
                         <button onclick="openPostModal()" 
                                 class="bg-blue-600 text-white px-4 py-2 md:px-6 md:py-3 rounded-lg md:rounded-xl hover:bg-blue-700 transition-colors duration-300 font-semibold inline-flex items-center text-sm md:text-base">
                             <i class="bi bi-plus-circle mr-1 md:mr-2"></i>Create First Post
                         </button>
+                        {% elif is_member %}
+                        <p class="text-gray-500 text-sm md:text-base">Only administrators can post in this group</p>
                         {% else %}
                         <p class="text-gray-500 text-sm md:text-base">Join the group to start posting</p>
                         {% endif %}
@@ -1053,6 +1057,7 @@
         </div>
     </div>
 
+    {% if can_create_group_post %}
     <!-- Create Post Modal -->
     <div id="postModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
         <div class="bg-white rounded-xl md:rounded-2xl shadow-2xl w-full max-w-lg md:max-w-2xl mx-2 md:mx-4 max-h-[90vh] overflow-hidden flex flex-col modal-content">
@@ -1109,6 +1114,7 @@
             </form>
         </div>
     </div>
+    {% endif %}
 
     <!-- Share Modal -->
     <div id="shareModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
@@ -1235,9 +1241,9 @@
                             class="flex-1 bg-gray-100 text-gray-700 py-2 md:py-3 rounded-lg md:rounded-xl hover:bg-gray-200 transition-colors duration-300 font-semibold text-sm md:text-base modal-button">
                         Cancel
                     </button>
-                    <button type="submit" 
+                    <button type="submit" id="sendReportBtn"
                             class="flex-1 bg-orange-600 text-white py-2 md:py-3 rounded-lg md:rounded-xl hover:bg-orange-700 transition-colors duration-300 font-semibold text-sm md:text-base modal-button">
-                        Submit Report
+                        Send Report
                     </button>
                 </div>
             </form>
@@ -1400,12 +1406,16 @@
         
         // ==================== MODALS ====================
         function openPostModal() {
-            document.getElementById('postModal').classList.remove('hidden');
+            const postModal = document.getElementById('postModal');
+            if (!postModal) return;
+            postModal.classList.remove('hidden');
             document.body.style.overflow = 'hidden';
         }
         
         function closePostModal() {
-            document.getElementById('postModal').classList.add('hidden');
+            const postModal = document.getElementById('postModal');
+            if (!postModal) return;
+            postModal.classList.add('hidden');
             document.body.style.overflow = '';
             document.getElementById('mediaPreview').innerHTML = '';
             document.getElementById('postContent').value = '';
@@ -1435,10 +1445,13 @@
             document.getElementById('reportModal').classList.add('hidden');
             document.getElementById('reportForm').reset();
             document.getElementById('otherReasonContainer').classList.add('hidden');
+            const sendButton = document.getElementById('sendReportBtn');
+            sendButton.disabled = false;
+            sendButton.textContent = 'Send Report';
         }
         
         // ==================== POST CREATION ====================
-        document.getElementById('createPostForm').addEventListener('submit', async function(e) {
+        document.getElementById('createPostForm')?.addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const submitBtn = document.getElementById('submitPostBtn');
@@ -1738,7 +1751,22 @@
         document.getElementById('reportForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const reason = document.querySelector('input[name="reportReason"]:checked')?.value;
-            const info = document.getElementById('otherReason').value;
+            const info = document.getElementById('otherReason').value.trim();
+            const sendButton = document.getElementById('sendReportBtn');
+
+            if (sendButton.disabled) return;
+            if (!reason) {
+                showToast('Please select a reason', 'danger');
+                return;
+            }
+            if (reason === 'Other' && !info) {
+                showToast('Please provide additional details', 'danger');
+                return;
+            }
+
+            const originalText = sendButton.textContent;
+            sendButton.disabled = true;
+            sendButton.textContent = 'Sending...';
             
             try {
                 const res = await fetch('/report_content', {
@@ -1760,9 +1788,13 @@
                     closeReportModal();
                 } else {
                     showToast(data.error || 'Failed', 'danger');
+                    sendButton.disabled = false;
+                    sendButton.textContent = originalText;
                 }
             } catch (error) {
                 showToast('Network error', 'danger');
+                sendButton.disabled = false;
+                sendButton.textContent = originalText;
             }
         });
         

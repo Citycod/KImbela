@@ -283,7 +283,7 @@
                                     <div class="flex items-center justify-between text-sm text-gray-500 mb-4">
                                         <div class="flex items-center">
                                             <i class="bi bi-people mr-1"></i>
-                                            <span>${group.member_count} members</span>
+                                            <span>${group.member_count_label || ((group.member_count || 0) + ' members')}</span>
                                         </div>
                                         <div class="flex items-center">
                                             <i class="bi bi-grid-3x3-gap mr-1"></i>

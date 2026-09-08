@@ -242,7 +242,7 @@ def get_groups_data_for_user(user_id):
     cache_key = f"user_groups_v2:{user_id}"
     cached = safe_cache_get(cache_key)
     if cached is not None:
-        return cached
+        return _with_authoritative_group_counts(cached)
 
     def is_alumni_married_group(name):
         normalized = (name or "").strip().lower()
@@ -260,6 +260,8 @@ def get_groups_data_for_user(user_id):
         safe_cache_set(cache_key, [], timeout=60)
         return []
 
+    member_counts = _group_member_counts(group.id for group in groups)
+
     member_group_ids = {
         row[0]
         for row in db.session.query(group_members.c.group_id)
@@ -275,7 +277,10 @@ def get_groups_data_for_user(user_id):
                 "name": group.name,
                 "cover_pic": group.image
                 or "https://via.placeholder.com/100x100/3B82F6/FFFFFF?text=Group",
-                "member_count": group.member_count or 0,
+                "member_count": member_counts.get(group.id, 0),
+                "member_count_label": format_group_member_count(
+                    member_counts.get(group.id, 0)
+                ),
                 "is_member": group.id in member_group_ids,
                 "unread_count": 0,
             }
@@ -283,6 +288,69 @@ def get_groups_data_for_user(user_id):
 
     safe_cache_set(cache_key, groups_data, timeout=60)
     return groups_data
+
+
+def _group_member_counts(group_ids):
+    """Return authoritative membership counts for a bounded set of groups."""
+    group_ids = list(group_ids)
+    if not group_ids:
+        return {}
+
+    return {
+        group_id: count
+        for group_id, count in (
+            db.session.query(
+                group_members.c.group_id,
+                func.count(group_members.c.user_id),
+            )
+            .filter(group_members.c.group_id.in_(group_ids))
+            .group_by(group_members.c.group_id)
+            .all()
+        )
+    }
+
+
+def _with_authoritative_group_counts(groups_data):
+    member_counts = _group_member_counts(group["id"] for group in groups_data)
+    return [
+        {
+            **group,
+            "member_count": member_counts.get(group["id"], 0),
+            "member_count_label": format_group_member_count(
+                member_counts.get(group["id"], 0)
+            ),
+        }
+        for group in groups_data
+    ]
+
+
+def format_group_member_count(count):
+    """Format a real group membership count without implying false precision."""
+    count = max(int(count or 0), 0)
+    if count < 100:
+        display = str(count)
+    elif count < 1000:
+        display = f"{(count // 100) * 100}+"
+    else:
+        thousands = (count // 100) / 10
+        display = f"{thousands:.1f}".rstrip("0").rstrip(".") + "K+"
+    return f"{display} {'member' if count == 1 else 'members'}"
+
+
+def _is_matchmaking_group(group):
+    """Identify the protected group solely by its configured immutable row ID."""
+    configured_id = current_app.config.get("MATCHMAKING_GROUP_ID")
+    try:
+        protected_group_id = int(configured_id)
+    except (TypeError, ValueError):
+        return False
+    return group.id == protected_group_id
+
+
+def _can_create_group_post(group, user_account):
+    return not _is_matchmaking_group(group) or bool(
+        user_account.is_admin or user_account.is_super_admin
+    )
 
 
 load_dotenv()
@@ -3971,6 +4039,8 @@ def user_groups():
         # Get user's groups using the relationship
         groups = current_user.user_groups.filter_by(is_active=True).limit(10).all()
 
+        member_counts = _group_member_counts(group.id for group in groups)
+
         return jsonify(
             [
                 {
@@ -3978,7 +4048,10 @@ def user_groups():
                     "name": group.name,
                     "image": group.image
                     or "https://images.unsplash.com/photo-1611262588024-d12430b98920?w=100&h=100&fit=crop",
-                    "member_count": group.member_count,
+                    "member_count": member_counts.get(group.id, 0),
+                    "member_count_label": format_group_member_count(
+                        member_counts.get(group.id, 0)
+                    ),
                     "is_member": True,
                 }
                 for group in groups
@@ -4004,6 +4077,11 @@ def group_detail(group_id):
 
     # Check membership properly
     is_member = group.members.filter_by(id=current_user.id).first() is not None
+    member_count = group.members.count()
+    can_view_group_members = bool(
+        current_user.is_admin or current_user.is_super_admin
+    )
+    can_create_group_post = is_member and _can_create_group_post(group, current_user)
 
     default_avatar = url_for("static", filename="assets/img/default-avatar.png")
 
@@ -4023,6 +4101,10 @@ def group_detail(group_id):
         group=group,
         group_description_html=sanitize_group_description(group.description),
         is_member=is_member,
+        member_count=member_count,
+        member_count_label=format_group_member_count(member_count),
+        can_view_group_members=can_view_group_members,
+        can_create_group_post=can_create_group_post,
         posts=posts,
         current_user=current_user,
         default_avatar=default_avatar,
@@ -4164,6 +4246,17 @@ def create_group_post(group_id):
     if current_user not in group.members:
         return jsonify({"success": False, "error": "Must be a member to post"})
 
+    if not _can_create_group_post(group, current_user):
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": "Only administrators can post in this group",
+                }
+            ),
+            403,
+        )
+
     post_content = request.form.get("post_content", "").strip()
     media_file = request.files.get("media")
 
@@ -4284,26 +4377,59 @@ def get_group_posts(group_id):
 @login_required
 def report_content():
     """Report a post or comment"""
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
+    allowed_reasons = {
+        "Spam",
+        "Harassment",
+        "Hate speech",
+        "Inappropriate content",
+        "False information",
+        "Other",
+    }
 
-    content_type = data.get("content_type")  # 'post' or 'comment'
-    content_id = data.get("content_id")
-    reason = data.get("reason")
-    additional_info = data.get("additional_info", "")
+    content_type = str(data.get("content_type") or "").strip().lower()
+    reason = str(data.get("reason") or "").strip()
+    additional_info = str(data.get("additional_info") or "").strip()
 
-    if not all([content_type, content_id, reason]):
-        return jsonify({"success": False, "error": "Missing required fields"})
+    try:
+        content_id = int(data.get("content_id"))
+    except (TypeError, ValueError):
+        content_id = None
+
+    if (
+        content_type not in {"post", "comment"}
+        or not content_id
+        or reason not in allowed_reasons
+    ):
+        return jsonify({"success": False, "error": "Please select a valid reason"}), 400
+
+    if reason == "Other" and not additional_info:
+        return jsonify({"success": False, "error": "Please provide additional details"}), 400
 
     # Determine the reported user based on content type
     reported_user_id = None
     if content_type == "post":
-        post = Post.query.get(content_id)
+        post = db.session.get(Post, content_id)
         if post:
             reported_user_id = post.author_id
     elif content_type == "comment":
-        comment = Comment.query.get(content_id)
+        comment = db.session.get(Comment, content_id)
         if comment:
             reported_user_id = comment.author_id
+
+    if reported_user_id is None:
+        return jsonify({"success": False, "error": "Content not found"}), 404
+
+    existing_report = ReportedContent.query.filter_by(
+        reporter_id=current_user.id,
+        content_type=content_type,
+        content_id=content_id,
+        status="pending",
+    ).first()
+    if existing_report:
+        return jsonify(
+            {"success": True, "message": "Content reported successfully"}
+        )
 
     report = ReportedContent(
         reporter_id=current_user.id,
@@ -4329,7 +4455,7 @@ def get_all_groups():
     category = request.args.get("category", "")
     privacy = request.args.get("privacy", "")
 
-    query = Group.query.filter_by(is_active=True)
+    query = Group.query.filter(Group.is_active.is_(True))
 
     if search:
         query = query.filter(
@@ -4339,19 +4465,33 @@ def get_all_groups():
         )
 
     if category and category != "all":
-        query = query.filter_by(category=category)
+        query = query.filter(Group.category == category)
 
     if privacy == "public":
-        query = query.filter_by(is_private=False)
+        query = query.filter(Group.is_private.is_(False))
     elif privacy == "private":
-        query = query.filter_by(is_private=True)
+        query = query.filter(Group.is_private.is_(True))
 
-    groups = query.order_by(Group.member_count.desc()).paginate(
+    groups = query.order_by(Group.member_count.desc(), Group.id.asc()).paginate(
         page=page, per_page=20, error_out=False
     )
 
     groups_data = []
+    group_ids = [group.id for group in groups.items]
+    member_counts = _group_member_counts(group_ids)
+    member_group_ids = {
+        group_id
+        for (group_id,) in (
+            db.session.query(group_members.c.group_id)
+            .filter(
+                group_members.c.user_id == current_user.id,
+                group_members.c.group_id.in_(group_ids),
+            )
+            .all()
+        )
+    }
     for group in groups.items:
+        member_count = member_counts.get(group.id, 0)
         groups_data.append(
             {
                 "id": group.id,
@@ -4360,9 +4500,10 @@ def get_all_groups():
                 "image": group.image,
                 "category": group.category,
                 "is_private": group.is_private,
-                "member_count": group.member_count,
+                "member_count": member_count,
+                "member_count_label": format_group_member_count(member_count),
                 "created_at": group.created_at.isoformat(),
-                "is_member": current_user in group.members,
+                "is_member": group.id in member_group_ids,
             }
         )
 
@@ -4374,6 +4515,8 @@ def get_all_groups():
 def get_group_members(group_id):
     """Get group members"""
     group = Group.query.get_or_404(group_id)
+    if not (current_user.is_admin or current_user.is_super_admin):
+        return jsonify({"error": "Administrator access required"}), 403
     page = request.args.get("page", 1, type=int)
 
     members = group.members.paginate(page=page, per_page=50, error_out=False)

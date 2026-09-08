@@ -138,6 +138,7 @@ def create_app():
 
     app.config["UPLOAD_FOLDER"] = os.path.join(BASE_DIR, "uploads")
     app.config["ALLOWED_EXTENSIONS"] = {"jpg", "jpeg", "png", "gif", "mp4", "mov"}
+    app.config["MATCHMAKING_GROUP_ID"] = os.environ.get("MATCHMAKING_GROUP_ID")
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
     # ========== SECURITY & SESSION ==========

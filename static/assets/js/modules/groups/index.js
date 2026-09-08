@@ -225,7 +225,7 @@ class Groups {
                     <div class="flex items-center mt-0.5">
                         <span class="text-xs text-gray-500 flex items-center">
                             <i class="bi bi-people mr-1"></i>
-                            ${group.member_count || 0} members
+                            ${group.member_count_label || ((group.member_count || 0) + ' members')}
                         </span>
                     </div>
                 </div>

@@ -241,6 +241,35 @@ placement='dashboard-top') %}
           </a>
         </li>
         <li>
+          <a href="{{ url_for('match.view_requests') }}">
+            <i class="bi bi-binoculars-fill"></i> Find Your Match
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('match.requests') }}">
+            <i class="bi bi-heart-fill"></i> Boost Your Profile
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('user.install_app') }}">
+            <i class="bi bi-phone"></i> Install Kimbela
+          </a>
+        </li>
+        <div class="kb-sidebar-divider"></div>
+        <li>
+          <button id="openMessagingSidebar" onclick="window.openMessenger()" type="button"
+            aria-label="Messages, no unread messages" title="Messages, no unread messages">
+            <i class="bi bi-chat-dots"></i> Messages
+            <span class="kb-sidebar-badge" id="sidebarMsgBadge" style="display:none" aria-hidden="true">0</span>
+          </button>
+        </li>
+        <li>
+          <a href="#" onclick="event.preventDefault(); document.getElementById('notificationDropdown').click();">
+            <i class="bi bi-bell"></i> Notifications
+            <span class="kb-sidebar-badge" id="sidebarNotifBadge" style="display:none">0</span>
+          </a>
+        </li>
+        <li>
           <a href="{{ url_for('user.profile', user_id=current_user.id) }}">
             <i class="bi bi-person"></i> Profile
           </a>
@@ -261,27 +290,8 @@ placement='dashboard-top') %}
           </a>
         </li>
         <li>
-          <a href="{{ url_for('match.requests') }}">
-            <i class="bi bi-heart"></i> Matchmaking
-          </a>
-        </li>
-        <li>
           <a href="{{ url_for('payments.donate') }}">
             <i class="bi bi-heart-fill" style="color: #8e44ad;"></i> Partner
-          </a>
-        </li>
-        <div class="kb-sidebar-divider"></div>
-        <li>
-          <button id="openMessagingSidebar" onclick="window.openMessenger()" type="button"
-            aria-label="Messages, no unread messages" title="Messages, no unread messages">
-            <i class="bi bi-chat-dots"></i> Messages
-            <span class="kb-sidebar-badge" id="sidebarMsgBadge" style="display:none" aria-hidden="true">0</span>
-          </button>
-        </li>
-        <li>
-          <a href="#" onclick="event.preventDefault(); document.getElementById('notificationDropdown').click();">
-            <i class="bi bi-bell"></i> Notifications
-            <span class="kb-sidebar-badge" id="sidebarNotifBadge" style="display:none">0</span>
           </a>
         </li>
         <li>
@@ -301,11 +311,6 @@ placement='dashboard-top') %}
             Notification sounds
             <span class="kb-sidebar-badge" data-notification-sound-status>On</span>
           </button>
-        </li>
-        <li>
-          <a href="{{ url_for('user.install_app') }}">
-            <i class="bi bi-phone"></i> Install Kimbela
-          </a>
         </li>
         <li>
           <a href="{{ url_for('user.logout') }}" style="color: #ef4444;">
@@ -1081,7 +1086,66 @@ placement='dashboard-top') %}
       <h3>Shop the Kimbela market</h3>
       <p>Trending items, verified sellers, and deals made for you.</p>
       <a class="marketplace-cta" href="{{ url_for('market.main_market') }}">Explore the market</a>
-    </div> <!-- Trending Groups -->
+    </div>
+
+    <div class="matchmaking-banner mt-4">
+      <div class="banner-image-layer matchmaking-image-layer" aria-hidden="true">
+        <span class="banner-image-core"
+          style="background-image: url('{{ url_for('static', filename='assets/img/love.jpg') }}');"></span>
+      </div>
+      <div class="matchmaking-glow"></div>
+      <div class="matchmaking-badge">Matchmaking</div>
+      <div class="matchmaking-title">
+        <span>Find your</span>
+        <span class="matchmaking-highlight">perfect</span>
+        <span>match on Kimbela</span>
+      </div>
+      <p class="matchmaking-copy">
+        Find compatible people, or boost your profile to increase your matchmaking visibility.
+      </p>
+      <div class="matchmaking-actions">
+        <a class="matchmaking-cta primary" href="{{ url_for('match.requests') }}">Boost Your Profile</a>
+        <a class="matchmaking-cta ghost" href="{{ url_for('match.view_requests') }}">Find Your Match</a>
+      </div>
+      <div class="matchmaking-orbits" aria-hidden="true">
+        <span class="orbit orbit-1"></span>
+        <span class="orbit orbit-2"></span>
+        <span class="orbit orbit-3"></span>
+      </div>
+    </div>
+
+    {% set spotlight_banner = dashboard_ads.get('spotlight_banner') if dashboard_ads else None %}
+    <div class="right-ad-banner-2 mt-4 {% if spotlight_banner %}has-dashboard-ad{% endif %}">
+      {% if spotlight_banner %}
+      <a class="dashboard-ad-link" href="{{ spotlight_banner.target_url }}" target="_blank" rel="noopener">
+        {% if spotlight_banner.media_type == 'video' %}
+        <video class="dashboard-ad-video" autoplay muted loop playsinline preload="metadata">
+          <source src="{{ spotlight_banner.image_url }}" {% if spotlight_banner.video_mime
+            %}type="{{ spotlight_banner.video_mime }}" {% endif %} />
+        </video>
+        {% else %}
+        <img src="{{ spotlight_banner.image_url }}" alt="{{ spotlight_banner.title }}" class="dashboard-ad-image"
+          loading="lazy" />
+        {% endif %}
+      </a>
+      {% else %}
+      <div class="right-ad-2-badge">Promote</div>
+      <div class="sidebar-ad-icon" aria-hidden="true">
+        <i class="bi bi-megaphone-fill"></i>
+      </div>
+      <h2>Boost your product today</h2>
+      <p>Get your brand seen by active Kimbela shoppers and creators.</p>
+      <a class="right-ad-2-cta"
+        href="{{ url_for('payments.dashboard_ad_package', placement='dashboard-spotlight') }}">Start advertising</a>
+      <div class="right-ad-2-sparkles" aria-hidden="true">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Trending Groups -->
     <div class="kb-right-card">
       <div class="kb-right-card-header">
         <h3>Trending Groups</h3>
@@ -1094,7 +1158,7 @@ placement='dashboard-top') %}
           width="40" height="40" loading="lazy" />
         <div class="kb-right-item-info">
           <div class="kb-right-item-name">{{ group.name }}</div>
-          <div class="kb-right-item-meta">{{ group.member_count }} members</div>
+          <div class="kb-right-item-meta">{{ group.member_count_label }}</div>
         </div>
         {% if not group.is_member %}
         <button class="kb-join-btn" onclick="joinGroup('{{ group.id }}', this)">Join</button>
@@ -1158,63 +1222,6 @@ placement='dashboard-top') %}
           <div class="kb-hashtag-count">3.1K posts</div>
         </div>
       </div>
-    </div>
-
-    <div class="matchmaking-banner mt-4">
-      <div class="banner-image-layer matchmaking-image-layer" aria-hidden="true">
-        <span class="banner-image-core"
-          style="background-image: url('{{ url_for('static', filename='assets/img/love.jpg') }}');"></span>
-      </div>
-      <div class="matchmaking-glow"></div>
-      <div class="matchmaking-badge">Matchmaking</div>
-      <div class="matchmaking-title">
-        <span>Find your</span>
-        <span class="matchmaking-highlight">perfect</span>
-        <span>match on Kimbela</span>
-      </div>
-      <p class="matchmaking-copy">
-        Find compatible people, or boost your profile to increase your matchmaking visibility.
-      </p>
-      <div class="matchmaking-actions">
-        <a class="matchmaking-cta primary" href="{{ url_for('match.requests') }}">Boost Your Profile</a>
-        <a class="matchmaking-cta ghost" href="{{ url_for('match.view_requests') }}">Find Your Match</a>
-      </div>
-      <div class="matchmaking-orbits" aria-hidden="true">
-        <span class="orbit orbit-1"></span>
-        <span class="orbit orbit-2"></span>
-        <span class="orbit orbit-3"></span>
-      </div>
-    </div>
-
-    {% set spotlight_banner = dashboard_ads.get('spotlight_banner') if dashboard_ads else None %}
-    <div class="right-ad-banner-2 mt-4 {% if spotlight_banner %}has-dashboard-ad{% endif %}">
-      {% if spotlight_banner %}
-      <a class="dashboard-ad-link" href="{{ spotlight_banner.target_url }}" target="_blank" rel="noopener">
-        {% if spotlight_banner.media_type == 'video' %}
-        <video class="dashboard-ad-video" autoplay muted loop playsinline preload="metadata">
-          <source src="{{ spotlight_banner.image_url }}" {% if spotlight_banner.video_mime
-            %}type="{{ spotlight_banner.video_mime }}" {% endif %} />
-        </video>
-        {% else %}
-        <img src="{{ spotlight_banner.image_url }}" alt="{{ spotlight_banner.title }}" class="dashboard-ad-image"
-          loading="lazy" />
-        {% endif %}
-      </a>
-      {% else %}
-      <div class="right-ad-2-badge">Promote</div>
-      <div class="sidebar-ad-icon" aria-hidden="true">
-        <i class="bi bi-megaphone-fill"></i>
-      </div>
-      <h2>Boost your product today</h2>
-      <p>Get your brand seen by active Kimbela shoppers and creators.</p>
-      <a class="right-ad-2-cta"
-        href="{{ url_for('payments.dashboard_ad_package', placement='dashboard-spotlight') }}">Start advertising</a>
-      <div class="right-ad-2-sparkles" aria-hidden="true">
-        <span></span>
-        <span></span>
-        <span></span>
-      </div>
-      {% endif %}
     </div>
   </aside>
 </div>
@@ -1497,6 +1504,28 @@ placement='dashboard-top') %}
       <div class="sidebar-item flex items-center p-3 rounded-lg bg-blue-50 text-blue-600 font-medium mb-2">
         <i class="bi bi-house-door mr-3 text-lg"></i> Home
       </div>
+      <!-- View Match Requests -->
+      <a href="{{ url_for('match.view_requests') }}"
+        class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 transition-all duration-300 mb-2 group border border-transparent hover:border-green-200 shadow-sm hover:shadow-md">
+        <i class="bi bi-binoculars-fill mr-3 text-lg group-hover:scale-110 group-hover:rotate-45 transition-all duration-300"
+          style="color: #10b981; animation: search-sweep 3s ease-in-out infinite;"></i>
+        <span class="font-medium group-hover:text-green-700 transition-colors duration-300">Find Your Match</span>
+      </a>
+
+      <!-- Match Making Request Form -->
+      <a href="{{ url_for('match.requests') }}"
+        class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-pink-50 hover:to-rose-50 transition-all duration-300 mb-2 group border border-transparent hover:border-pink-200 shadow-sm hover:shadow-md">
+        <i class="bi bi-heart-fill mr-3 text-lg group-hover:scale-110 group-hover:animate-bounce transition-all duration-300"
+          style="color: #ec4899; animation: heartbeat 1.5s ease-in-out infinite;"></i>
+        <span class="font-medium group-hover:text-pink-700 transition-colors duration-300">Boost Your Profile</span>
+      </a>
+
+      <a href="{{ url_for('user.install_app') }}"
+        class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-fb-gray transition-colors mb-2">
+        <i class="bi bi-phone mr-3 text-lg" style="color: #0d6efd"></i>
+        <span class="font-medium">Install Kimbela</span>
+      </a>
+
       <a href="{{ url_for('user.profile', user_id=current_user.id) }}"
         class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-fb-gray transition-colors mb-2">
         <i class="bi bi-person mr-3 text-lg"></i> Profile
@@ -1521,40 +1550,12 @@ placement='dashboard-top') %}
           Ad</span>
       </a>
 
-      <!-- Match Making Request Form -->
-      <a href="{{ url_for('match.requests') }}"
-        class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-pink-50 hover:to-rose-50 transition-all duration-300 mb-2 group border border-transparent hover:border-pink-200 shadow-sm hover:shadow-md">
-        <i class="bi bi-heart-fill mr-3 text-lg group-hover:scale-110 group-hover:animate-bounce transition-all duration-300"
-          style="
-                color: #ec4899;
-                animation: heartbeat 1.5s ease-in-out infinite;
-              "></i>
-        <span class="font-medium group-hover:text-pink-700 transition-colors duration-300">Boost Your Profile</span>
-      </a>
-
-      <!-- View Match Requests -->
-      <a href="{{ url_for('match.view_requests') }}"
-        class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 transition-all duration-300 mb-2 group border border-transparent hover:border-green-200 shadow-sm hover:shadow-md">
-        <i class="bi bi-binoculars-fill mr-3 text-lg group-hover:scale-110 group-hover:rotate-45 transition-all duration-300"
-          style="
-                color: #10b981;
-                animation: search-sweep 3s ease-in-out infinite;
-              "></i>
-        <span class="font-medium group-hover:text-green-700 transition-colors duration-300">Find Your Match</span>
-      </a>
-
       <!-- Partner -->
       <a href="{{ url_for('payments.donate') }}"
         class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-yellow-50 hover:to-orange-50 transition-all duration-300 mb-2 group border border-transparent hover:border-yellow-200 shadow-sm hover:shadow-md">
         <i class="bi bi-gift-fill mr-3 text-lg group-hover:scale-110 group-hover:rotate-12 transition-all duration-300"
           style="color: #f59e0b"></i>
         <span class="font-medium group-hover:text-yellow-700 transition-colors duration-300">Partner</span>
-      </a>
-
-      <a href="{{ url_for('user.install_app') }}"
-        class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-fb-gray transition-colors mb-2">
-        <i class="bi bi-phone mr-3 text-lg" style="color: #0d6efd"></i>
-        <span class="font-medium">Install Kimbela</span>
       </a>
 
       <button type="button" role="switch" aria-checked="true"
@@ -1583,6 +1584,25 @@ placement='dashboard-top') %}
     <!-- In your LEFT SIDEBAR section, replace the current Groups item with: -->
     <!-- Desktop Groups Dropdown -->
 
+    <!-- View Match Requests -->
+    <a href="{{ url_for('match.view_requests') }}"
+      class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 transition-all duration-300 mb-2 group">
+      <i class="bi bi-binoculars-fill mr-3 text-lg" style="color: #10b981"></i>
+      <span class="font-medium">Find Your Match</span>
+    </a>
+
+    <!-- Match Making Request Form -->
+    <a href="{{ url_for('match.requests') }}"
+      class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-pink-50 hover:to-rose-50 transition-all duration-300 mb-2 group">
+      <i class="bi bi-heart-fill mr-3 text-lg" style="color: #ec4899"></i>
+      <span class="font-medium">Boost Your Profile</span>
+    </a>
+
+    <a href="{{ url_for('user.install_app') }}"
+      class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-fb-gray transition-colors mb-2">
+      <i class="bi bi-phone mr-3 text-lg" style="color: #0d6efd"></i>
+      <span class="font-medium">Install Kimbela</span>
+    </a>
 
     <a href="{{ url_for('market.main_market') }}"
       class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 transition-all duration-300 mb-2 group border border-transparent hover:border-indigo-200 shadow-sm hover:shadow-md">
@@ -1625,20 +1645,6 @@ placement='dashboard-top') %}
     </div>
 
 
-
-    <!-- Match Making Request Form -->
-    <a href="{{ url_for('match.requests') }}"
-      class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-pink-50 hover:to-rose-50 transition-all duration-300 mb-2 group">
-      <i class="bi bi-heart-fill mr-3 text-lg" style="color: #ec4899"></i>
-      <span class="font-medium">Boost Your Profile</span>
-    </a>
-
-    <!-- View Match Requests -->
-    <a href="{{ url_for('match.view_requests') }}"
-      class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 transition-all duration-300 mb-2 group">
-      <i class="bi bi-binoculars-fill mr-3 text-lg" style="color: #10b981"></i>
-      <span class="font-medium">Find Your Match</span>
-    </a>
 
     <!-- Partner -->
     <a href="{{ url_for('payments.donate') }}"
