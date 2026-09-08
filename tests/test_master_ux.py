@@ -69,3 +69,30 @@ def test_dashboard_header_and_feed_use_shared_color_polish_hooks():
     assert ".post-card .repost-btn" in css
     assert ".post-card .share-btn" in css
     assert "linear-gradient(135deg, #7c3aed, #ec4899)" in css
+
+
+def test_desktop_header_actions_render_once_in_the_required_order():
+    dashboard = (PROJECT_ROOT / "templates" / "user_dashboard.html").read_text()
+    header = dashboard.split("<nav", 1)[1].split("</nav>", 1)[0]
+
+    gift = header.index('id="birthdayShortcut"')
+    messages = header.index('id="openMessaging"')
+    notifications = header.index('id="notificationDropdown"')
+    profile = header.index("data-header-profile")
+    assert gift < messages < notifications < profile
+
+    assert header.count('id="birthdayShortcut"') == 1
+    assert header.count('id="openMessaging"') == 1
+    assert header.count('id="notificationDropdown"') == 1
+    assert header.count('id="unreadMessagesBadge"') == 1
+    assert header.count('id="notificationBadge"') == 1
+    assert 'onclick="window.openMessenger()"' in header
+    assert 'data-kb-toggle="dropdown"' in header
+
+    css = (
+        PROJECT_ROOT / "static" / "assets" / "css" / "dashboard_redesign.css"
+    ).read_text()
+    assert "@media (min-width: 769px)" in css
+    assert "nav .header-actions" in css
+    assert "nav #openMessaging," in css
+    assert "nav #notificationDropdown" in css

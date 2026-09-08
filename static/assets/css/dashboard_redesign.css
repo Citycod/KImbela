@@ -924,6 +924,33 @@ nav #notificationDropdown > i {
   color: #52627a !important;
 }
 
+@media (min-width: 769px) {
+  nav .header-actions {
+    display: flex !important;
+    flex-wrap: nowrap;
+    min-width: max-content;
+    overflow: visible;
+  }
+
+  nav #birthdayShortcut,
+  nav #openMessaging,
+  nav #notificationDropdown {
+    display: inline-flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    flex: 0 0 40px;
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  nav .header-notification-action {
+    display: block !important;
+    flex: 0 0 40px;
+    width: 40px;
+    overflow: visible;
+  }
+}
+
 .notification-badge,
 #birthdayCount {
   background: #f43f5e !important;
