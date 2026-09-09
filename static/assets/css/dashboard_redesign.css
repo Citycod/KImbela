@@ -1168,6 +1168,37 @@ nav #notificationBadge {
   }
 }
 
+/* ── INSTALL SHORTCUT ── */
+.kb-sidebar-nav .kb-install-nav,
+.kb-install-mobile-nav {
+  background: linear-gradient(135deg, #eef2ff 0%, #faf5ff 100%);
+  border: 1px solid #c7d2fe;
+  color: #3730a3;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.08);
+}
+
+.kb-sidebar-nav .kb-install-nav:hover,
+.kb-install-mobile-nav:hover {
+  background: linear-gradient(135deg, #e0e7ff 0%, #f3e8ff 100%);
+  color: #312e81;
+}
+
+.kb-sidebar-nav .kb-install-nav .bi {
+  color: #4f46e5;
+}
+
+.kb-install-nav-badge {
+  margin-left: auto;
+  border-radius: 999px;
+  background: #4f46e5;
+  color: #fff;
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  padding: 0.3rem 0.42rem;
+}
+
 /* ── SMOOTH TRANSITIONS ── */
 .kb-left-sidebar *,
 .kb-right-sidebar * {

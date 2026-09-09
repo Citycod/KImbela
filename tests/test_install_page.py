@@ -71,6 +71,25 @@ def test_existing_site_surfaces_link_to_install_page():
     assert dashboard.count("url_for('user.install_app')") >= 2
 
 
+def test_dashboard_install_links_are_prominent_once_per_navigation_context():
+    dashboard = (PROJECT_ROOT / "templates" / "user_dashboard.html").read_text()
+    desktop = dashboard.split('<aside class="kb-left-sidebar">', 1)[1].split(
+        "</aside>", 1
+    )[0]
+    mobile = dashboard.split("<!-- MOBILE SIDEBAR -->", 1)[1].split(
+        "<!-- DASHBOARD CONTAINER -->", 1
+    )[0]
+
+    assert desktop.count("url_for('user.install_app')") == 1
+    assert desktop.count('class="kb-install-nav"') == 1
+    assert desktop.count("kb-install-nav-badge") == 1
+    assert "bi-phone-fill" in desktop
+    assert mobile.count("url_for('user.install_app')") == 1
+    assert mobile.count("kb-install-mobile-nav") == 1
+    assert mobile.count("kb-install-nav-badge") == 1
+    assert "bi-phone-fill" in mobile
+
+
 def test_install_page_reuses_single_existing_install_controller():
     template = (PROJECT_ROOT / "templates" / "install.html").read_text()
     initializer = (PROJECT_ROOT / "static" / "pwa_init.js").read_text()

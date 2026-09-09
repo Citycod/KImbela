@@ -3520,7 +3520,7 @@ const Groups = {
                     <div class="flex items-center mt-0.5">
                         <span class="text-xs text-gray-500 flex items-center">
                             <i class="bi bi-people mr-1"></i>
-                            ${group.member_count_label || ((group.member_count || 0) + ' members')}
+                            ${group.member_count_label || 'Community'}
                         </span>
                     </div>
                 </div>
@@ -3640,8 +3640,6 @@ const Groups = {
                     const groupIndex = this.cache.groups.findIndex(g => g.id === groupId);
                     if (groupIndex !== -1) {
                         this.cache.groups[groupIndex].is_member = true;
-                        this.cache.groups[groupIndex].member_count =
-                            (this.cache.groups[groupIndex].member_count || 0) + 1;
                     }
                 }
 
@@ -3697,8 +3695,6 @@ const Groups = {
                     const groupIndex = this.cache.groups.findIndex(g => g.id === groupId);
                     if (groupIndex !== -1) {
                         this.cache.groups[groupIndex].is_member = false;
-                        this.cache.groups[groupIndex].member_count =
-                            Math.max((this.cache.groups[groupIndex].member_count || 1) - 1, 0);
                     }
                 }
 

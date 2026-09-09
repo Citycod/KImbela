@@ -1090,6 +1090,7 @@ class Group(db.Model):
     )
     created_at = db.Column(db.DateTime, default=utcnow)
     member_count = db.Column(db.Integer, default=0)
+    display_member_count = db.Column(db.String(32), nullable=True)
 
     creator = db.relationship(
         "User", foreign_keys=[created_by], backref="created_groups"
@@ -1103,8 +1104,20 @@ class Group(db.Model):
         self.member_count = self.members.count()
         db.session.commit()
 
-    def to_dict(self):
-        return {
+    @property
+    def public_member_count_label(self):
+        return self.format_public_member_count(self.display_member_count)
+
+    @staticmethod
+    def format_public_member_count(value):
+        display_count = (value or "").strip()
+        if not display_count:
+            return "Community"
+        suffix = "member" if display_count == "1" else "members"
+        return f"{display_count} {suffix}"
+
+    def to_dict(self, include_actual_member_count=False):
+        data = {
             "id": self.id,
             "name": self.name,
             "description": self.description,
@@ -1114,8 +1127,11 @@ class Group(db.Model):
             "is_active": self.is_active,
             "created_by": self.created_by,
             "created_at": self.created_at.isoformat(),
-            "member_count": self.member_count,
+            "member_count_label": self.public_member_count_label,
         }
+        if include_actual_member_count:
+            data["member_count"] = self.member_count
+        return data
 
 
 class SponsoredAd(db.Model):
@@ -2441,5 +2457,3 @@ class AILog(db.Model):
     
     # Relationship to persona
     persona = db.relationship("AIPersona", backref=db.backref("logs", lazy="dynamic", cascade="all, delete-orphan"))
-
-

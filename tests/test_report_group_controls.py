@@ -4,6 +4,7 @@ import uuid
 
 from models import Group, Post, ReportedContent, User
 from users.user import format_group_member_count
+import users.user as user_routes
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -41,13 +42,16 @@ def _login(client, account):
     assert response.status_code in {302, 303}
 
 
-def _make_group(db, owner, name="Community", *members):
+def _make_group(
+    db, owner, name="Community", *members, display_member_count=None
+):
     group = Group(
         name=name,
         description="A test group",
         category="social",
         created_by=owner.id,
         member_count=999,
+        display_member_count=display_member_count,
         is_active=True,
     )
     group.members.append(owner)
@@ -143,16 +147,19 @@ def test_report_modal_has_explicit_guarded_send_action(app):
         assert "X-CSRFToken" in markup
 
 
-def test_group_member_count_uses_authoritative_membership_and_hides_member_list(
+def test_public_group_surfaces_use_configured_count_and_hide_actual_membership(
     client, db, user, login
 ):
     second_member = _make_user(db)
-    group = _make_group(db, user, "Community", second_member)
+    group = _make_group(
+        db, user, "Community", second_member, display_member_count="500+"
+    )
     login()
 
     detail = client.get(f"/groups/{group.id}")
     assert detail.status_code == 200
-    assert b"2 members" in detail.data
+    assert b"500+ members" in detail.data
+    assert b"2 members" not in detail.data
     assert b"999 members" not in detail.data
     assert b"Recent Members" not in detail.data
     assert b"Cancel" in detail.data
@@ -167,8 +174,15 @@ def test_group_member_count_uses_authoritative_membership_and_hides_member_list(
 
     groups_api = client.get("/groups/all")
     item = next(item for item in groups_api.get_json() if item["id"] == group.id)
-    assert item["member_count"] == 2
-    assert item["member_count_label"] == "2 members"
+    assert "member_count" not in item
+    assert item["member_count_label"] == "500+ members"
+
+    user_groups_api = client.get("/groups/user_groups")
+    user_group = next(
+        item for item in user_groups_api.get_json() if item["id"] == group.id
+    )
+    assert "member_count" not in user_group
+    assert user_group["member_count_label"] == "500+ members"
 
     filtered = client.get("/groups/all?category=social&privacy=public")
     assert any(item["id"] == group.id for item in filtered.get_json())
@@ -198,7 +212,109 @@ def test_group_page_still_works_for_non_member(client, db):
 
     response = client.get(f"/groups/{group.id}")
     assert response.status_code == 200
-    assert b"1 member" in response.data
+    assert b"Community" in response.data
+    assert b"1 member" not in response.data
+    public_item = next(
+        item
+        for item in client.get("/groups/all").get_json()
+        if item["id"] == group.id
+    )
+    assert public_item["member_count_label"] == "Community"
+    assert "member_count" not in public_item
+
+
+def test_admin_can_create_group_with_public_count(client, db):
+    admin = _make_user(db, super_admin=True)
+    _login(client, admin)
+
+    response = client.post(
+        "/admin/groups/create",
+        data={
+            "name": "New Public Count Group",
+            "description": "Created from group management",
+            "category": "social",
+            "is_private": "false",
+            "display_member_count": "5k+",
+        },
+    )
+
+    assert response.status_code == 200
+    group = db.session.get(Group, response.get_json()["group_id"])
+    assert group.display_member_count == "5K+"
+    assert group.public_member_count_label == "5K+ members"
+
+
+def test_admin_can_change_public_count_without_changing_real_membership(client, db):
+    admin = _make_user(db, super_admin=True)
+    member = _make_user(db)
+    group = _make_group(
+        db, admin, "Managed Group", member, display_member_count="300+"
+    )
+    actual_member_ids = {account.id for account in group.members.all()}
+    _login(client, admin)
+
+    management_page = client.get("/admin/groups")
+    assert management_page.status_code == 200
+    assert b"Public member count" in management_page.data
+    assert b"300+" in management_page.data
+
+    edit = client.get(f"/admin/groups/{group.id}/edit")
+    assert edit.status_code == 200
+    assert edit.get_json()["group"]["display_member_count"] == "300+"
+
+    updated = client.post(
+        f"/admin/groups/{group.id}/update",
+        data={
+            "name": group.name,
+            "description": group.description,
+            "category": group.category,
+            "is_private": "false",
+            "display_member_count": "1.5k+",
+        },
+    )
+    assert updated.status_code == 200
+    db.session.refresh(group)
+    assert group.display_member_count == "1.5K+"
+    assert {account.id for account in group.members.all()} == actual_member_ids
+
+    public_item = next(
+        item
+        for item in client.get("/groups/all").get_json()
+        if item["id"] == group.id
+    )
+    assert public_item["member_count_label"] == "1.5K+ members"
+    assert "member_count" not in public_item
+
+
+def test_normal_user_cannot_edit_group_public_count(client, db):
+    owner = _make_user(db)
+    group = _make_group(db, owner, display_member_count="300+")
+    _login(client, owner)
+
+    response = client.post(
+        f"/admin/groups/{group.id}/update",
+        data={"display_member_count": "900+"},
+    )
+    assert response.status_code == 403
+    db.session.refresh(group)
+    assert group.display_member_count == "300+"
+
+
+def test_invalid_public_count_is_rejected(client, db):
+    admin = _make_user(db, super_admin=True)
+    group = _make_group(db, admin)
+    _login(client, admin)
+
+    response = client.post(
+        f"/admin/groups/{group.id}/update",
+        data={
+            "name": group.name,
+            "category": group.category,
+            "display_member_count": "about five hundred",
+        },
+    )
+    assert response.status_code == 400
+    assert "must look like" in response.get_json()["error"]
 
 
 def test_matchmaking_group_posting_is_admin_only(client, db, app, monkeypatch):
@@ -259,6 +375,37 @@ def test_group_member_count_compact_formatting():
     assert format_group_member_count(1999) == "1.9K+ members"
 
 
+def test_group_serialization_hides_actual_count_by_default(db, user):
+    group = _make_group(db, user, display_member_count="2K+")
+
+    public_data = group.to_dict()
+    assert public_data["member_count_label"] == "2K+ members"
+    assert "member_count" not in public_data
+    assert group.to_dict(include_actual_member_count=True)["member_count"] == 999
+
+
+def test_cached_group_metadata_drops_legacy_actual_count(db, user, monkeypatch):
+    group = _make_group(db, user, display_member_count="700+")
+    monkeypatch.setattr(
+        user_routes,
+        "safe_cache_get",
+        lambda _key: [
+            {
+                "id": group.id,
+                "name": group.name,
+                "member_count": 999,
+                "member_count_label": "999 members",
+                "is_member": True,
+            }
+        ],
+    )
+
+    result = user_routes.get_groups_data_for_user(user.id)
+
+    assert result[0]["member_count_label"] == "700+ members"
+    assert "member_count" not in result[0]
+
+
 def test_dashboard_sidebar_priority_and_banner_order_are_preserved(client, user):
     with client.session_transaction() as session:
         session["_user_id"] = str(user.id)
@@ -283,6 +430,9 @@ def test_dashboard_sidebar_priority_and_banner_order_are_preserved(client, user)
     assert primary_sidebar.count("Find Your Match") == 1
     assert primary_sidebar.count("Boost Your Profile") == 1
     assert primary_sidebar.count("Install Kimbela") == 1
+    assert primary_sidebar.count('class="kb-install-nav"') == 1
+    assert primary_sidebar.count("kb-install-nav-badge") == 1
+    assert "bi-phone-fill" in primary_sidebar
     assert primary_sidebar.count("Sponsored Ads") == 1
     assert primary_sidebar.count("Marketplace") == 1
     assert primary_sidebar.index("Partner") < primary_sidebar.index(
@@ -325,6 +475,7 @@ def test_dashboard_sidebar_priority_and_banner_order_are_preserved(client, user)
     assert mobile_sidebar.count("Find Your Match") == 1
     assert mobile_sidebar.count("Boost Your Profile") == 1
     assert mobile_sidebar.count("Install Kimbela") == 1
+    assert mobile_sidebar.count("kb-install-mobile-nav") == 1
     assert mobile_sidebar.count("Marketplace") == 1
     assert mobile_sidebar.count('>Messages</span>') == 1
     assert mobile_sidebar.count('>Notifications</span>') == 1

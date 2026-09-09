@@ -174,6 +174,16 @@ def _require_admin_permission(permission):
     return True
 
 
+def _normalize_group_display_member_count(raw_value):
+    """Validate the optional administrator-authored public membership label."""
+    value = (raw_value or "").strip()
+    if not value:
+        return None
+    if len(value) > 32 or not re.fullmatch(r"\d+(?:\.\d+)?[KkMm]?\+?", value):
+        raise ValueError("Public member count must look like 300+, 1.5K+, or 1")
+    return re.sub(r"[km]", lambda match: match.group(0).upper(), value)
+
+
 def _ensure_site_settings_table():
     SiteSetting.__table__.create(bind=db.engine, checkfirst=True)
 
@@ -1433,6 +1443,13 @@ def admin_create_group():
     is_private_str = request.form.get("is_private", "false")
     is_private = is_private_str == "true" or is_private_str == "True"
 
+    try:
+        display_member_count = _normalize_group_display_member_count(
+            request.form.get("display_member_count")
+        )
+    except ValueError as error:
+        return jsonify({"success": False, "error": str(error)}), 400
+
     if not name:
         return jsonify({"success": False, "error": "Group name is required"}), 400
 
@@ -1441,6 +1458,7 @@ def admin_create_group():
         description=description or None,
         category=category,
         is_private=is_private,
+        display_member_count=display_member_count,
         created_by=current_user.id,
     )
 
@@ -1484,6 +1502,7 @@ def admin_get_group_for_edit(group_id):
                 "description": group.description,
                 "category": group.category,
                 "is_private": group.is_private,
+                "display_member_count": group.display_member_count,
             },
         }
     )
@@ -1497,6 +1516,17 @@ def admin_update_group(group_id):
 
     group = Group.query.get_or_404(group_id)
 
+    raw_display_member_count = request.form.get("display_member_count")
+    if raw_display_member_count is None:
+        display_member_count = group.display_member_count
+    else:
+        try:
+            display_member_count = _normalize_group_display_member_count(
+                raw_display_member_count
+            )
+        except ValueError as error:
+            return jsonify({"success": False, "error": str(error)}), 400
+
     group.name = request.form.get("name", group.name)
     description = sanitize_group_description(
         request.form.get("description", group.description or "")
@@ -1504,6 +1534,7 @@ def admin_update_group(group_id):
     group.description = description or None
     group.category = request.form.get("category", group.category)
     group.is_private = request.form.get("is_private") == "true"
+    group.display_member_count = display_member_count
 
     # Handle group image update
     if "image" in request.files:

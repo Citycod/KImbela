@@ -19,7 +19,7 @@
   rel="stylesheet" />
 
 <!-- Dashboard Redesign Override -->
-<link href="{{ url_for('static', filename='assets/css/dashboard_redesign.css', v='feed-color-polish-1') }}"
+<link href="{{ url_for('static', filename='assets/css/dashboard_redesign.css', v='install-cta-1') }}"
   rel="stylesheet" />
 
 <!-- External CSS -->
@@ -257,8 +257,10 @@ placement='dashboard-top') %}
           </a>
         </li>
         <li>
-          <a href="{{ url_for('user.install_app') }}">
-            <i class="bi bi-phone"></i> Install Kimbela
+          <a href="{{ url_for('user.install_app') }}" class="kb-install-nav">
+            <i class="bi bi-phone-fill"></i>
+            <span>Install Kimbela</span>
+            <span class="kb-install-nav-badge" aria-hidden="true">APP</span>
           </a>
         </li>
         <div class="kb-sidebar-divider"></div>
@@ -1529,9 +1531,10 @@ placement='dashboard-top') %}
       </a>
 
       <a href="{{ url_for('user.install_app') }}"
-        class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-fb-gray transition-colors mb-2">
-        <i class="bi bi-phone mr-3 text-lg" style="color: #0d6efd"></i>
+        class="sidebar-item kb-install-mobile-nav flex items-center p-3 rounded-lg text-fb-text transition-colors mb-2">
+        <i class="bi bi-phone-fill mr-3 text-lg" style="color: #4f46e5"></i>
         <span class="font-medium">Install Kimbela</span>
+        <span class="kb-install-nav-badge ml-auto" aria-hidden="true">APP</span>
       </a>
 
       <button type="button" onclick="window.openMessenger(); toggleMobileMenu();"

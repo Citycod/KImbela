@@ -173,7 +173,7 @@ def test_dashboard_static_assets_use_reusable_version_urls():
     assert source.count("v='slow-network-1'") == 2
     assert source.count("v='network-resilience-1'") == 0
     assert source.count("v='ux-polish-1'") == 2
-    assert source.count("v='feed-color-polish-1'") == 1
+    assert source.count("v='install-cta-1'") == 1
 
 
 def test_network_resilience_script_is_loaded_by_base_template():

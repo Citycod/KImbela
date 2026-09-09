@@ -239,10 +239,10 @@ def build_post_share_meta(post):
 
 
 def get_groups_data_for_user(user_id):
-    cache_key = f"user_groups_v2:{user_id}"
+    cache_key = f"user_groups_public_v1:{user_id}"
     cached = safe_cache_get(cache_key)
     if cached is not None:
-        return _with_authoritative_group_counts(cached)
+        return _with_current_public_group_counts(cached)
 
     def is_alumni_married_group(name):
         normalized = (name or "").strip().lower()
@@ -260,8 +260,6 @@ def get_groups_data_for_user(user_id):
         safe_cache_set(cache_key, [], timeout=60)
         return []
 
-    member_counts = _group_member_counts(group.id for group in groups)
-
     member_group_ids = {
         row[0]
         for row in db.session.query(group_members.c.group_id)
@@ -277,10 +275,7 @@ def get_groups_data_for_user(user_id):
                 "name": group.name,
                 "cover_pic": group.image
                 or "https://via.placeholder.com/100x100/3B82F6/FFFFFF?text=Group",
-                "member_count": member_counts.get(group.id, 0),
-                "member_count_label": format_group_member_count(
-                    member_counts.get(group.id, 0)
-                ),
+                "member_count_label": group.public_member_count_label,
                 "is_member": group.id in member_group_ids,
                 "unread_count": 0,
             }
@@ -310,18 +305,27 @@ def _group_member_counts(group_ids):
     }
 
 
-def _with_authoritative_group_counts(groups_data):
-    member_counts = _group_member_counts(group["id"] for group in groups_data)
-    return [
-        {
-            **group,
-            "member_count": member_counts.get(group["id"], 0),
-            "member_count_label": format_group_member_count(
-                member_counts.get(group["id"], 0)
-            ),
+def _with_current_public_group_counts(groups_data):
+    """Refresh administrator-controlled public labels without exposing totals."""
+    group_ids = [group["id"] for group in groups_data]
+    display_counts = {
+        group_id: display_count
+        for group_id, display_count in (
+            db.session.query(Group.id, Group.display_member_count)
+            .filter(Group.id.in_(group_ids))
+            .all()
+        )
+    }
+    refreshed = []
+    for group_data in groups_data:
+        safe_group_data = {
+            key: value for key, value in group_data.items() if key != "member_count"
         }
-        for group in groups_data
-    ]
+        safe_group_data["member_count_label"] = Group.format_public_member_count(
+            display_counts.get(group_data["id"])
+        )
+        refreshed.append(safe_group_data)
+    return refreshed
 
 
 def format_group_member_count(count):
@@ -4036,10 +4040,15 @@ def get_messages_api(friend_id):
 def user_groups():
     """Get user's groups for sidebar - alternative approach"""
     try:
-        # Get user's groups using the relationship
-        groups = current_user.user_groups.filter_by(is_active=True).limit(10).all()
-
-        member_counts = _group_member_counts(group.id for group in groups)
+        groups = (
+            Group.query.join(group_members, group_members.c.group_id == Group.id)
+            .filter(
+                group_members.c.user_id == current_user.id,
+                Group.is_active.is_(True),
+            )
+            .limit(10)
+            .all()
+        )
 
         return jsonify(
             [
@@ -4048,10 +4057,7 @@ def user_groups():
                     "name": group.name,
                     "image": group.image
                     or "https://images.unsplash.com/photo-1611262588024-d12430b98920?w=100&h=100&fit=crop",
-                    "member_count": member_counts.get(group.id, 0),
-                    "member_count_label": format_group_member_count(
-                        member_counts.get(group.id, 0)
-                    ),
+                    "member_count_label": group.public_member_count_label,
                     "is_member": True,
                 }
                 for group in groups
@@ -4077,10 +4083,10 @@ def group_detail(group_id):
 
     # Check membership properly
     is_member = group.members.filter_by(id=current_user.id).first() is not None
-    member_count = group.members.count()
     can_view_group_members = bool(
         current_user.is_admin or current_user.is_super_admin
     )
+    member_count = group.members.count() if can_view_group_members else None
     can_create_group_post = is_member and _can_create_group_post(group, current_user)
 
     default_avatar = url_for("static", filename="assets/img/default-avatar.png")
@@ -4102,7 +4108,7 @@ def group_detail(group_id):
         group_description_html=sanitize_group_description(group.description),
         is_member=is_member,
         member_count=member_count,
-        member_count_label=format_group_member_count(member_count),
+        member_count_label=group.public_member_count_label,
         can_view_group_members=can_view_group_members,
         can_create_group_post=can_create_group_post,
         posts=posts,
@@ -4478,7 +4484,6 @@ def get_all_groups():
 
     groups_data = []
     group_ids = [group.id for group in groups.items]
-    member_counts = _group_member_counts(group_ids)
     member_group_ids = {
         group_id
         for (group_id,) in (
@@ -4491,7 +4496,6 @@ def get_all_groups():
         )
     }
     for group in groups.items:
-        member_count = member_counts.get(group.id, 0)
         groups_data.append(
             {
                 "id": group.id,
@@ -4500,8 +4504,7 @@ def get_all_groups():
                 "image": group.image,
                 "category": group.category,
                 "is_private": group.is_private,
-                "member_count": member_count,
-                "member_count_label": format_group_member_count(member_count),
+                "member_count_label": group.public_member_count_label,
                 "created_at": group.created_at.isoformat(),
                 "is_member": group.id in member_group_ids,
             }

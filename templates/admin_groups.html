@@ -420,6 +420,19 @@
                     class="mt-1 w-full rounded-xl border border-slate-200 px-4 py-2"
                   />
                 </div>
+                <div>
+                  <label class="text-sm text-slate-600" for="createGroupDisplayMemberCount">Public member count</label>
+                  <input
+                    type="text"
+                    id="createGroupDisplayMemberCount"
+                    name="display_member_count"
+                    maxlength="32"
+                    placeholder="e.g. 300+ or 1.5K+"
+                    pattern="[0-9]+(\.[0-9]+)?[KkMm]?\+?"
+                    class="mt-1 w-full rounded-xl border border-slate-200 px-4 py-2"
+                  />
+                  <p class="mt-1 text-xs text-slate-500">Shown publicly instead of the real membership total.</p>
+                </div>
                 <div class="flex items-center gap-2">
                   <input type="checkbox" id="isPrivate" name="is_private" />
                   <label for="isPrivate" class="text-sm text-slate-600"
@@ -467,6 +480,7 @@
                     >
                       <th class="py-2">Group</th>
                       <th class="py-2">Category</th>
+                      <th class="py-2">Public count</th>
                       <th class="py-2">Private</th>
                       <th class="py-2">Actions</th>
                     </tr>
@@ -492,6 +506,7 @@
                         </div>
                       </td>
                       <td class="py-3 text-slate-600">{{ group.category }}</td>
+                      <td class="py-3 text-slate-600">{{ group.display_member_count or "Community" }}</td>
                       <td class="py-3 text-slate-600">
                         {{ "Yes" if group.is_private else "No" }}
                       </td>
@@ -580,6 +595,19 @@
               id="editGroupCategory"
               class="mt-1 w-full rounded-xl border border-slate-200 px-4 py-2"
             />
+          </div>
+          <div>
+            <label class="text-sm text-slate-600" for="editGroupDisplayMemberCount">Public member count</label>
+            <input
+              type="text"
+              name="display_member_count"
+              id="editGroupDisplayMemberCount"
+              maxlength="32"
+              placeholder="e.g. 300+ or 1.5K+"
+              pattern="[0-9]+(\.[0-9]+)?[KkMm]?\+?"
+              class="mt-1 w-full rounded-xl border border-slate-200 px-4 py-2"
+            />
+            <p class="mt-1 text-xs text-slate-500">Leave blank to show “Community”.</p>
           </div>
           <div class="flex items-center gap-2">
             <input type="checkbox" id="editGroupPrivate" name="is_private" />
@@ -745,6 +773,8 @@
         document.getElementById("editGroupName").value = json.group.name || "";
         document.getElementById("editGroupCategory").value =
           json.group.category || "";
+        document.getElementById("editGroupDisplayMemberCount").value =
+          json.group.display_member_count || "";
         document.getElementById("editGroupPrivate").checked =
           !!json.group.is_private;
         if (editGroupEditor) {
