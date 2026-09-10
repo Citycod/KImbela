@@ -263,6 +263,16 @@ placement='dashboard-top') %}
             <span class="kb-install-nav-badge" aria-hidden="true">APP</span>
           </a>
         </li>
+        <li>
+          <a href="{{ url_for('market.main_market') }}">
+            <i class="bi bi-shop"></i> Marketplace
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('payments.donate') }}">
+            <i class="bi bi-heart-fill" style="color: #8e44ad;"></i> Partner
+          </a>
+        </li>
         <div class="kb-sidebar-divider"></div>
         <li>
           <button id="openMessagingSidebar" onclick="window.openMessenger()" type="button"
@@ -285,16 +295,6 @@ placement='dashboard-top') %}
         <li>
           <a href="{{ url_for('user.groups_page') }}">
             <i class="bi bi-people"></i> Groups
-          </a>
-        </li>
-        <li>
-          <a href="{{ url_for('market.main_market') }}">
-            <i class="bi bi-shop"></i> Marketplace
-          </a>
-        </li>
-        <li>
-          <a href="{{ url_for('payments.donate') }}">
-            <i class="bi bi-heart-fill" style="color: #8e44ad;"></i> Partner
           </a>
         </li>
         <li>
@@ -1537,6 +1537,20 @@ placement='dashboard-top') %}
         <span class="kb-install-nav-badge ml-auto" aria-hidden="true">APP</span>
       </a>
 
+      <a href="{{ url_for('market.main_market') }}"
+        class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 transition-all duration-300 mb-2 group border border-transparent hover:border-indigo-200 shadow-sm hover:shadow-md">
+        <i class="bi bi-shop mr-3 text-lg group-hover:scale-110 group-hover:rotate-12 transition-all duration-300"
+          style="color: #f5260bff"></i>
+        <span class="font-medium group-hover:text-indigo-700 transition-colors duration-300">Marketplace</span>
+      </a>
+
+      <a href="{{ url_for('payments.donate') }}"
+        class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-yellow-50 hover:to-orange-50 transition-all duration-300 mb-2 group border border-transparent hover:border-yellow-200 shadow-sm hover:shadow-md">
+        <i class="bi bi-gift-fill mr-3 text-lg group-hover:scale-110 group-hover:rotate-12 transition-all duration-300"
+          style="color: #f59e0b"></i>
+        <span class="font-medium group-hover:text-yellow-700 transition-colors duration-300">Partner</span>
+      </a>
+
       <button type="button" onclick="window.openMessenger(); toggleMobileMenu();"
         aria-label="Messages" title="Messages"
         class="sidebar-item w-full flex items-center p-3 rounded-lg text-fb-text hover:bg-fb-gray transition-colors mb-2">
@@ -1559,21 +1573,6 @@ placement='dashboard-top') %}
       <a href="{{ url_for('user.groups_page') }}"
         class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-fb-gray transition-colors mb-2">
         <i class="bi bi-people mr-3 text-lg"></i> Groups
-      </a>
-
-      <a href="{{ url_for('market.main_market') }}"
-        class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 transition-all duration-300 mb-2 group border border-transparent hover:border-indigo-200 shadow-sm hover:shadow-md">
-        <i class="bi bi-shop mr-3 text-lg group-hover:scale-110 group-hover:rotate-12 transition-all duration-300"
-          style="color: #f5260bff"></i>
-        <span class="font-medium group-hover:text-indigo-700 transition-colors duration-300">Marketplace</span>
-      </a>
-
-      <!-- Partner -->
-      <a href="{{ url_for('payments.donate') }}"
-        class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-gradient-to-r hover:from-yellow-50 hover:to-orange-50 transition-all duration-300 mb-2 group border border-transparent hover:border-yellow-200 shadow-sm hover:shadow-md">
-        <i class="bi bi-gift-fill mr-3 text-lg group-hover:scale-110 group-hover:rotate-12 transition-all duration-300"
-          style="color: #f59e0b"></i>
-        <span class="font-medium group-hover:text-yellow-700 transition-colors duration-300">Partner</span>
       </a>
 
       <button type="button" role="switch" aria-checked="true"

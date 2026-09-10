@@ -71,14 +71,14 @@ def test_existing_site_surfaces_link_to_install_page():
     assert dashboard.count("url_for('user.install_app')") >= 2
 
 
-def test_homepage_navbar_contains_one_prominent_responsive_install_link(client):
+def test_homepage_navbar_ends_with_one_standard_install_link(client):
     page = client.get("/").get_data(as_text=True)
     navbar = page.split('<nav id="navmenu"', 1)[1].split("</nav>", 1)[0]
 
     assert navbar.count("Install Kimbela") == 1
     assert navbar.count('href="/install"') == 1
-    assert navbar.count("homepage-install-nav") == 1
-    assert "bi-phone-fill" in navbar
+    assert "homepage-install-nav" not in navbar
+    assert navbar.rfind("Install Kimbela") > navbar.rfind("Login")
 
 
 def test_dashboard_install_links_are_prominent_once_per_navigation_context():

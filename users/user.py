@@ -573,6 +573,19 @@ def get_today_birthdays():
         User.id != current_user.id
     ).all()
 
+    wished_user_ids = {
+        birthday_user_id
+        for (birthday_user_id,) in (
+            db.session.query(BirthdayNotification.birthday_user_id)
+            .filter(
+                BirthdayNotification.user_id == current_user.id,
+                BirthdayNotification.birthday_date == today,
+                BirthdayNotification.is_wished.is_(True),
+            )
+            .all()
+        )
+    }
+
     birthday_friends = []
     for friend in birthday_users:
         birthday_friends.append(
@@ -582,6 +595,7 @@ def get_today_birthdays():
                     "avatar": friend.profile_pic
                     or url_for("static", filename="assets/img/default-avatar.png"),
                     "age": today.year - friend.dob.year,
+                    "is_wished": friend.id in wished_user_ids,
                 }
             )
 
@@ -793,6 +807,7 @@ def send_birthday_wish():
                 "notification_id": notification.id,
                 "timestamp": utcnow().isoformat(),
                 "friend_name": friend.full_name,
+                "is_wished": True,
             }
         )
 

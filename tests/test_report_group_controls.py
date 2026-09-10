@@ -426,7 +426,9 @@ def test_dashboard_sidebar_priority_and_banner_order_are_preserved(client, user)
     assert primary_sidebar.index("Boost Your Profile") < primary_sidebar.index(
         "Install Kimbela"
     )
-    assert primary_sidebar.index("Install Kimbela") < primary_sidebar.index("Messages")
+    assert primary_sidebar.index("Install Kimbela") < primary_sidebar.index("Marketplace")
+    assert primary_sidebar.index("Marketplace") < primary_sidebar.index("Partner")
+    assert primary_sidebar.index("Partner") < primary_sidebar.index("Messages")
     assert primary_sidebar.count("Find Your Match") == 1
     assert primary_sidebar.count("Boost Your Profile") == 1
     assert primary_sidebar.count("Install Kimbela") == 1
@@ -435,6 +437,7 @@ def test_dashboard_sidebar_priority_and_banner_order_are_preserved(client, user)
     assert "bi-phone-fill" in primary_sidebar
     assert primary_sidebar.count("Sponsored Ads") == 1
     assert primary_sidebar.count("Marketplace") == 1
+    assert primary_sidebar.count("Partner") == 1
     assert primary_sidebar.index("Partner") < primary_sidebar.index(
         "vertical-ad-banner"
     )
@@ -455,18 +458,15 @@ def test_dashboard_sidebar_priority_and_banner_order_are_preserved(client, user)
     assert mobile_sidebar.index("Boost Your Profile") < mobile_sidebar.index(
         "Install Kimbela"
     )
-    assert mobile_sidebar.index("Install Kimbela") < mobile_sidebar.index("Messages")
+    assert mobile_sidebar.index("Install Kimbela") < mobile_sidebar.index("Marketplace")
+    assert mobile_sidebar.index("Marketplace") < mobile_sidebar.index("Partner")
+    assert mobile_sidebar.index("Partner") < mobile_sidebar.index("Messages")
     assert mobile_sidebar.index("Messages") < mobile_sidebar.index("Notifications")
     assert mobile_sidebar.index("Notifications") < mobile_sidebar.index(
         "bi-person mr-3"
     )
     assert mobile_sidebar.index("bi-person mr-3") < mobile_sidebar.index(
         "bi-people mr-3"
-    )
-    assert mobile_sidebar.index("bi-people mr-3") < mobile_sidebar.index("Marketplace")
-    assert mobile_sidebar.index("Marketplace") < mobile_sidebar.index("Partner")
-    assert mobile_sidebar.index("Partner") < mobile_sidebar.index(
-        "Notification sounds"
     )
     assert mobile_sidebar.index("Notification sounds") < mobile_sidebar.index(
         "Logout"
@@ -477,6 +477,7 @@ def test_dashboard_sidebar_priority_and_banner_order_are_preserved(client, user)
     assert mobile_sidebar.count("Install Kimbela") == 1
     assert mobile_sidebar.count("kb-install-mobile-nav") == 1
     assert mobile_sidebar.count("Marketplace") == 1
+    assert mobile_sidebar.count("Partner") == 1
     assert mobile_sidebar.count('>Messages</span>') == 1
     assert mobile_sidebar.count('>Notifications</span>') == 1
     assert "window.openMessenger(); toggleMobileMenu();" in mobile_sidebar

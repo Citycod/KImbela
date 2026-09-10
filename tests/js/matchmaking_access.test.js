@@ -12,10 +12,10 @@ const gateSource = fs.readFileSync(
   'utf8',
 );
 
-test('unpaid initialization shows the preview gate without loading people', () => {
+test('unpaid initialization leaves filters usable without opening checkout', () => {
   assert.match(
     findSource,
-    /if \(hasMatchmakingAccess\) \{\s*loadRequests\(\);\s*\} else \{\s*showMatchmakingAccessGate\(false\);/,
+    /if \(hasMatchmakingAccess\) \{\s*loadRequests\(\);\s*\} else \{\s*prepareUnpaidBrowse\(\);/,
   );
   assert.match(
     findSource,
@@ -24,12 +24,18 @@ test('unpaid initialization shows the preview gate without loading people', () =
   assert.match(findSource, /response\.status === 402/);
   assert.match(gateSource, /Unlock Find Your Match/);
   assert.match(gateSource, /\$\{\{ matchmaking_access_price_usd \}\} USD/);
+  assert.match(gateSource, /class="floral-card mb-5 overflow-hidden text-center hidden/);
 });
 
-test('Find Matches and See Everyone share one protected result and payment path', () => {
+test('filter submission starts the existing protected payment path when unpaid', () => {
   assert.match(findSource, /id="applyFilters"[\s\S]*?Find Matches/);
   assert.match(findSource, /id="seeEveryoneButton"[\s\S]*?See Everyone/);
-  assert.match(findSource, /function seeEveryone\(\) \{\s*clearFilters\(\);\s*\}/);
+  assert.match(
+    findSource,
+    /function applyFilters\(\)[\s\S]*?if \(!hasMatchmakingAccess\) \{[\s\S]*?startMatchmakingCheckout\(\);[\s\S]*?return;/,
+  );
+  assert.match(findSource, /pendingMatchFiltersKey/);
+  assert.match(findSource, /sessionStorage\.setItem\(pendingMatchFiltersKey/);
   assert.equal((findSource.match(/\/api\/browse\/users\?/g) || []).length, 1);
   assert.equal((findSource.match(/start_browse_access_payment/g) || []).length, 1);
   assert.match(gateSource, /Find Your Match and See Everyone included/);

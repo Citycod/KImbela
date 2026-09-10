@@ -1390,6 +1390,7 @@
       let currentPage = 1;
       let hasMore = true;
       let isLoading = false;
+      const pendingMatchFiltersKey = 'kimbela-pending-match-filters';
       let currentFilters = readFiltersFromUrl();
       let userHasActiveRequest = false;
       let currentUserId = null; // This should be set from your backend
@@ -1402,17 +1403,34 @@
       function readFiltersFromUrl() {
         const params = new URLSearchParams(window.location.search);
         const validSorts = new Set(['recommended', 'recent', 'newest', 'age_asc', 'age_desc']);
-        const requestedSort = params.get('sort') || params.get('sort_by') || 'recommended';
-        return {
-          search: params.get('search') || '',
-          minAge: params.get('age_min') || params.get('min_age') || '',
-          maxAge: params.get('age_max') || params.get('max_age') || '',
-          gender: params.get('gender') || '',
-          country: params.get('country') || '',
-          state: params.get('state') || '',
-          city: params.get('city') || '',
-          sort: validSorts.has(requestedSort) ? requestedSort : 'recommended'
+        let pendingFilters = {};
+        if (!params.toString()) {
+          try {
+            pendingFilters = JSON.parse(sessionStorage.getItem(pendingMatchFiltersKey) || '{}');
+          } catch (_error) {
+            pendingFilters = {};
+          }
+        }
+        const requestedSort = params.get('sort') || params.get('sort_by') || pendingFilters.sort || 'recommended';
+        const filters = {
+          search: params.get('search') || pendingFilters.search || '',
+          minAge: params.get('age_min') || params.get('min_age') || pendingFilters.minAge || '',
+          maxAge: params.get('age_max') || params.get('max_age') || pendingFilters.maxAge || '',
+          gender: params.get('gender') || pendingFilters.gender || '',
+          country: params.get('country') || pendingFilters.country || '',
+          state: params.get('state') || pendingFilters.state || '',
+          city: params.get('city') || pendingFilters.city || '',
+          sort: validSorts.has(requestedSort)
+            ? requestedSort
+            : (validSorts.has(pendingFilters.sort) ? pendingFilters.sort : 'recommended')
         };
+        if (hasMatchmakingAccess) {
+          try {
+            sessionStorage.removeItem(pendingMatchFiltersKey);
+          } catch (_error) {
+          }
+        }
+        return filters;
       }
 
       function syncFiltersToUrl() {
@@ -1533,9 +1551,17 @@
         if (hasMatchmakingAccess) {
           loadRequests();
         } else {
-          showMatchmakingAccessGate(false);
+          prepareUnpaidBrowse();
         }
       });
+
+      function prepareUnpaidBrowse() {
+        document.getElementById('matchmakingAccessGate')?.classList.add('hidden');
+        document.getElementById('loadingState').classList.add('hidden');
+        document.getElementById('loadMoreContainer').classList.add('hidden');
+        document.getElementById('emptyState').classList.add('hidden');
+        document.getElementById('resultsCount').textContent = 'Choose your preferences, then select Find Matches.';
+      }
 
       function showMatchmakingAccessGate(focusGate = true) {
         const gate = document.getElementById('matchmakingAccessGate');
@@ -1554,6 +1580,10 @@
       async function startMatchmakingCheckout() {
         const button = document.getElementById('unlockMatchmakingButton');
         const status = document.getElementById('matchmakingPaymentStatus');
+        try {
+          sessionStorage.setItem(pendingMatchFiltersKey, JSON.stringify(currentFilters));
+        } catch (_error) {
+        }
         button.disabled = true;
         button.textContent = 'Opening secure checkout...';
         status.textContent = '';
@@ -1699,12 +1729,18 @@
 
           syncFiltersToUrl();
           updateFilteredChip(true);
-          reloadRequests();
           if (window.matchMedia('(max-width: 1023px)').matches) {
             document.getElementById('filtersPanel').classList.add('hidden');
             document.getElementById('filterBackdrop').classList.add('hidden');
             document.getElementById('filterToggle').setAttribute('aria-expanded', 'false');
           }
+          if (!hasMatchmakingAccess) {
+            updateFilteredChip(false);
+            showMatchmakingAccessGate(false);
+            startMatchmakingCheckout();
+            return;
+          }
+          reloadRequests();
       }
 
       function clearFilters() {
@@ -1735,6 +1771,10 @@
 
       function seeEveryone() {
         clearFilters();
+        if (!hasMatchmakingAccess) {
+          showMatchmakingAccessGate(false);
+          startMatchmakingCheckout();
+        }
       }
 
       function reloadRequests() {
@@ -1746,7 +1786,7 @@
         updateFilteredChip(true);
         if (!hasMatchmakingAccess) {
           updateFilteredChip(false);
-          showMatchmakingAccessGate(true);
+          prepareUnpaidBrowse();
           return;
         }
         loadRequests();

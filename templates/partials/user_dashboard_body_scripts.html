@@ -148,21 +148,25 @@
           if (notificationList) {
             notificationList.innerHTML = birthdays.length
               ? birthdays
-              .map(
-                (friend) => `
-                <div class="birthday-notification-item p-3 hover:bg-pink-50 rounded-xl cursor-pointer transition-colors" onclick="openBirthdayForFriend(${friend.id})">
+              .map((friend) => {
+                const wished = friend.is_wished === true;
+                return `
+                <div class="birthday-notification-item p-3 rounded-xl transition-colors ${wished ? "bg-green-50" : "hover:bg-pink-50 cursor-pointer"}"
+                     data-birthday-user-id="${friend.id}"
+                     data-birthday-state="${wished ? "wished" : "pending"}"
+                     ${wished ? "" : `onclick="openBirthdayForFriend(${friend.id})"`}>
                     <div class="flex items-center space-x-3">
                         <img src="${friend.avatar}" alt="${friend.name}" class="w-12 h-12 rounded-full object-cover border-2 border-yellow-300">
                         <div class="flex-1">
                             <h4 class="font-semibold text-gray-800">${friend.name}</h4>
                             <p class="text-sm text-gray-600">🎂 Birthday Today!</p>
-                            <p class="text-xs text-gray-500">Click to send wishes</p>
+                            <p class="text-xs ${wished ? "font-semibold text-green-700" : "text-gray-500"}">${wished ? "Wish sent" : "Click to send wishes"}</p>
                         </div>
-                        <i class="bi bi-arrow-right text-gray-400"></i>
+                        <i class="bi ${wished ? "bi-check-circle-fill text-green-600" : "bi-arrow-right text-gray-400"}"></i>
                     </div>
                 </div>
-            `,
-              )
+            `;
+              })
               .join("")
               : `
                 <div class="p-6 text-center text-gray-500">
@@ -171,6 +175,21 @@
                 </div>
               `;
           }
+        }
+
+        markBirthdayWished(friendId) {
+          const friend = this.todayBirthdays.find(
+            (birthday) => Number(birthday.id) === Number(friendId),
+          );
+          if (!friend) return false;
+          friend.is_wished = true;
+          this.showBirthdayNotification(this.todayBirthdays);
+          this.updateBirthdayBadge({
+            success: true,
+            birthdays: this.todayBirthdays,
+            count: this.todayBirthdays.length,
+          });
+          return true;
         }
 
         // Update birthday badge count
@@ -464,6 +483,7 @@
             const data = await response.json();
 
             if (data.success) {
+              this.markBirthdayWished(this.currentFriend.id);
               // Show success animation
               this.showSuccessAnimation();
 

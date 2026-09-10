@@ -45,12 +45,13 @@ class FakeElement {
   getAttribute(name) { return this.attributes.get(name) || null; }
 }
 
-function birthday(id, name = `Friend ${id}`) {
+function birthday(id, name = `Friend ${id}`, isWished = false) {
   return {
     id,
     name,
     avatar: `/avatar-${id}.png`,
     age: 30,
+    is_wished: isWished,
   };
 }
 
@@ -203,6 +204,21 @@ test('friend selection reuses already-fetched birthday data', async () => {
 
   assert.equal(selected.name, 'Cached Friend');
   assert.deepEqual(runtime.requests, ['/api/birthdays/today']);
+});
+
+test('successful birthday action changes the existing notification state', async () => {
+  const friend = birthday(8, 'Wished Friend');
+  const runtime = createRuntime([friend]);
+  await runtime.system.checkBirthdays();
+
+  assert.match(runtime.elements.birthdayNotificationList.innerHTML, /data-birthday-state="pending"/);
+  assert.match(runtime.elements.birthdayNotificationList.innerHTML, /Click to send wishes/);
+
+  assert.equal(runtime.system.markBirthdayWished(friend.id), true);
+  assert.equal(friend.is_wished, true);
+  assert.match(runtime.elements.birthdayNotificationList.innerHTML, /data-birthday-state="wished"/);
+  assert.match(runtime.elements.birthdayNotificationList.innerHTML, /Wish sent/);
+  assert.doesNotMatch(runtime.elements.birthdayNotificationList.innerHTML, /onclick="openBirthdayForFriend\(8\)"/);
 });
 
 test('concurrent birthday startup checks share one request', async () => {
