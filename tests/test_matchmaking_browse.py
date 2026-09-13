@@ -441,6 +441,11 @@ def test_browse_template_has_reload_safe_mobile_controls(client, user):
     assert b'aria-controls="filtersPanel" aria-expanded="true"' in response.data
     assert b'id="filtersPanel" class="match-filter-panel compact-space"' in response.data
     assert b'id="activeFilterChips"' in response.data
+    assert b'class="match-hero-copy text-ivory' in response.data
+    assert b'class="match-page-footer ' in response.data
+    assert b'class="footer-primary mb-1"' in response.data
+    assert b'class="footer-secondary mb-2"' in response.data
+    assert b'class="footer-credit font-medium"' in response.data
     assert response.data.count(b'id="searchInput"') == 1
     assert b"readFiltersFromUrl" in response.data
     assert b"syncFiltersToUrl" in response.data
