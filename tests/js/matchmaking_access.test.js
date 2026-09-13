@@ -40,3 +40,21 @@ test('filter submission starts the existing protected payment path when unpaid',
   assert.equal((findSource.match(/start_browse_access_payment/g) || []).length, 1);
   assert.match(gateSource, /Find Your Match and See Everyone included/);
 });
+
+test('match filters are open on entry with readable controls', () => {
+  assert.match(
+    findSource,
+    /id="filterToggle"[\s\S]*?aria-controls="filtersPanel" aria-expanded="true"/,
+  );
+  assert.match(
+    findSource,
+    /id="filtersPanel" class="match-filter-panel compact-space"/,
+  );
+  assert.match(
+    findSource,
+    /initializeEventListeners\(\);\s*openFilterPanelOnEntry\(\);/,
+  );
+  assert.match(findSource, /\.match-filter-panel \.form-input,[\s\S]*?min-height: 44px;[\s\S]*?font-size: 1rem;/);
+  assert.match(findSource, /\.match-filter-panel label \{[\s\S]*?font-size: 0\.875rem;[\s\S]*?font-weight: 600;/);
+  assert.match(findSource, /showBackdrop = window\.matchMedia\('\(max-width: 767px\)'\)\.matches/);
+});

@@ -849,6 +849,35 @@
         max-width: 720px;
       }
 
+      .match-filter-panel label {
+        font-size: 0.875rem;
+        line-height: 1.4;
+        font-weight: 600;
+      }
+
+      .match-filter-panel .form-input,
+      .match-filter-panel .form-select {
+        min-height: 44px;
+        font-size: 1rem;
+        line-height: 1.4;
+      }
+
+      .match-filter-panel .form-input::placeholder {
+        opacity: 1;
+      }
+
+      .match-filter-panel .filter-help {
+        font-size: 0.875rem;
+        line-height: 1.5;
+        font-weight: 500;
+      }
+
+      .match-filter-panel .btn {
+        min-height: 44px;
+        font-size: 0.875rem;
+        font-weight: 600;
+      }
+
       @media (max-width: 767px) {
         .match-toolbar {
           grid-template-columns: minmax(0, 1fr) auto;
@@ -933,7 +962,7 @@
           </div>
           <button id="filterToggle" type="button"
                   class="btn btn-outline justify-center whitespace-nowrap"
-                  aria-controls="filtersPanel" aria-expanded="false">
+                  aria-controls="filtersPanel" aria-expanded="true">
             <i class="bi bi-funnel-fill text-rose-gold"></i>
             Filters
             <span id="activeFilterCount" class="hidden rounded-full bg-rose-gold px-1.5 py-0.5 text-xs text-white"></span>
@@ -947,7 +976,7 @@
         </div>
 
         <div id="filterBackdrop" class="hidden fixed inset-0 bg-black/40 md:hidden" style="z-index:60" aria-hidden="true"></div>
-        <div id="filtersPanel" class="match-filter-panel hidden compact-space">
+        <div id="filtersPanel" class="match-filter-panel compact-space">
           <!-- Search Filter -->
           <div class="filter-card">
             <div class="mb-3 flex items-center justify-between">
@@ -961,7 +990,7 @@
             </div>
             <div class="compact-space">
               <div>
-                <label class="block text-xs font-medium text-text-secondary mb-1">Age Range</label>
+                <label class="block text-text-secondary mb-1">Age Range</label>
                 <div class="flex gap-2">
                   <input type="number" id="minAgeFilter" min="18" max="120" placeholder="Min" class="form-input w-1/2">
                   <input type="number" id="maxAgeFilter" min="18" max="120" placeholder="Max" class="form-input w-1/2">
@@ -969,7 +998,7 @@
               </div>
               
               <div>
-                <label class="block text-xs font-medium text-text-secondary mb-1">Gender</label>
+                <label class="block text-text-secondary mb-1">Gender</label>
                 <select id="genderFilter" class="form-select">
                   <option value="">Any Gender</option>
                   <option value="male">Male</option>
@@ -979,32 +1008,32 @@
               </div>
               
               <div>
-                  <label class="block text-xs font-medium text-text-secondary mb-1">Location Filter</label>
+                  <label class="block text-text-secondary mb-1">Location Filter</label>
 
                   <div class="space-y-2">
                       <!-- Country Filter -->
                       <div>
-                          <select id="filter_country_select" class="form-select text-xs">
+                          <select id="filter_country_select" class="form-select">
                               <option value="">Any Country</option>
                           </select>
                       </div>
 
                       <!-- State Filter -->
                       <div>
-                          <select id="filter_state_select" class="form-select text-xs" disabled>
+                          <select id="filter_state_select" class="form-select" disabled>
                               <option value="">Any State</option>
                           </select>
                       </div>
 
                       <!-- City Filter -->
                       <div>
-                          <select id="filter_city_select" class="form-select text-xs" disabled>
+                          <select id="filter_city_select" class="form-select" disabled>
                               <option value="">Any City</option>
                           </select>
                       </div>
                   </div>
 
-                  <p class="text-xs text-text-secondary/70 mt-1">
+                  <p class="filter-help text-text-secondary mt-1">
                       Filter by country, state, or city
                   </p>
               </div>
@@ -1547,6 +1576,7 @@
       document.addEventListener('DOMContentLoaded', function() {
         restoreFilterControls();
         initializeEventListeners();
+        openFilterPanelOnEntry();
         checkActiveSubscription();
         if (hasMatchmakingAccess) {
           loadRequests();
@@ -1642,15 +1672,20 @@
 
         const closeFilterPanel = () => {
           const panel = document.getElementById('filtersPanel');
+          const backdrop = document.getElementById('filterBackdrop');
           panel.classList.add('hidden');
-          document.getElementById('filterBackdrop').classList.add('hidden');
+          backdrop.classList.add('hidden');
+          backdrop.setAttribute('aria-hidden', 'true');
           document.getElementById('filterToggle').setAttribute('aria-expanded', 'false');
         };
         document.getElementById('filterToggle').addEventListener('click', function() {
           const panel = document.getElementById('filtersPanel');
+          const backdrop = document.getElementById('filterBackdrop');
           const willOpen = panel.classList.contains('hidden');
           panel.classList.toggle('hidden', !willOpen);
-          document.getElementById('filterBackdrop').classList.toggle('hidden', !willOpen);
+          const showBackdrop = willOpen && window.matchMedia('(max-width: 767px)').matches;
+          backdrop.classList.toggle('hidden', !showBackdrop);
+          backdrop.setAttribute('aria-hidden', String(!showBackdrop));
           this.setAttribute('aria-expanded', String(willOpen));
         });
         document.getElementById('closeFilters').addEventListener('click', closeFilterPanel);
@@ -1686,6 +1721,18 @@
 
         // Load more
         document.getElementById('loadMoreBtn').addEventListener('click', loadMoreRequests);
+      }
+
+      function openFilterPanelOnEntry() {
+        const panel = document.getElementById('filtersPanel');
+        const backdrop = document.getElementById('filterBackdrop');
+        const toggle = document.getElementById('filterToggle');
+        const showBackdrop = window.matchMedia('(max-width: 767px)').matches;
+
+        panel.classList.remove('hidden');
+        backdrop.classList.toggle('hidden', !showBackdrop);
+        backdrop.setAttribute('aria-hidden', String(!showBackdrop));
+        toggle.setAttribute('aria-expanded', 'true');
       }
 
       function setView(view) {

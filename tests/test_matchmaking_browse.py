@@ -438,6 +438,8 @@ def test_browse_template_has_reload_safe_mobile_controls(client, user):
     assert b'id="filterToggle"' in response.data
     assert b'id="filtersPanel"' in response.data
     assert b'id="filterBackdrop"' in response.data
+    assert b'aria-controls="filtersPanel" aria-expanded="true"' in response.data
+    assert b'id="filtersPanel" class="match-filter-panel compact-space"' in response.data
     assert b'id="activeFilterChips"' in response.data
     assert response.data.count(b'id="searchInput"') == 1
     assert b"readFiltersFromUrl" in response.data
