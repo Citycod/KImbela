@@ -48,7 +48,7 @@
             <div class="flex items-center gap-3">
               <img src="{{ persona.user.profile_pic }}" alt="" class="h-12 w-12 rounded-full object-cover" />
               <div>
-                <h2 class="text-lg font-semibold">{{ persona.user.full_name }}</h2>
+                <h2 class="text-lg font-semibold">{{ persona.user.full_name }} <span class="ml-1 rounded-full bg-violet-100 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-violet-700">AI · Automated</span></h2>
                 <p class="text-xs text-slate-500">{{ persona.user.email }}</p>
               </div>
             </div>
@@ -89,15 +89,28 @@
             <input name="last_name" maxlength="50" required value="{{ persona.user.last_name }}" aria-label="AI last name" class="rounded-lg border-slate-300 text-sm" />
             <button class="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold">Update display name</button>
           </form>
+          <form class="mt-3 flex flex-wrap items-end gap-2" method="post" enctype="multipart/form-data" action="{{ url_for('admin.admin_update_ai_avatar', persona_id=persona.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+            <label class="text-xs font-semibold text-slate-600">Profile picture
+              <input type="file" name="profile_pic" required accept="image/png,image/jpeg,image/gif,image/webp" class="mt-1 block text-xs" />
+            </label>
+            <button class="rounded-lg border border-violet-200 px-3 py-2 text-xs font-semibold text-violet-700">Update picture</button>
+          </form>
 
           {% if row.pending_draft %}
             <div class="mt-4 rounded-xl border border-sky-200 bg-sky-50 p-4">
               <p class="text-xs font-semibold uppercase tracking-wide text-sky-700">Pending approval</p>
               <p class="mt-2 text-sm">{{ row.pending_draft.content }}</p>
-              <form class="mt-3" method="post" action="{{ url_for('admin.admin_approve_ai_post', persona_id=persona.id) }}">
+              <div class="mt-3 flex flex-wrap gap-2">
+              <form method="post" action="{{ url_for('admin.admin_approve_ai_post', persona_id=persona.id) }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
                 <button class="rounded-lg bg-sky-700 px-3 py-2 text-xs font-semibold text-white">Approve and publish</button>
               </form>
+              <form method="post" action="{{ url_for('admin.admin_reject_ai_draft', persona_id=persona.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+                <button class="rounded-lg border border-rose-300 bg-white px-3 py-2 text-xs font-semibold text-rose-700">Reject / discard</button>
+              </form>
+              </div>
             </div>
           {% endif %}
 
@@ -110,6 +123,14 @@
                 <label><input type="checkbox" name="paused" {% if config.paused %}checked{% endif %} /> Paused</label>
                 <label><input type="checkbox" name="replies_enabled" {% if config.replies_enabled %}checked{% endif %} /> Replies enabled</label>
               </div>
+              <fieldset class="rounded-xl border border-slate-200 p-3">
+                <legend class="px-2 text-sm font-medium">Post destinations</legend>
+                <div class="flex flex-wrap gap-5 text-sm">
+                  <label><input type="checkbox" name="allow_general_feed_posts" {% if config.allow_general_feed_posts %}checked{% endif %} /> General Feed Posting</label>
+                  <label><input type="checkbox" name="group_activity_enabled" {% if config.group_activity_enabled %}checked{% endif %} /> Group Posting / Activity</label>
+                </div>
+                <p class="mt-2 text-xs text-slate-500">If Feed is off and no allowed group action is eligible, this AI does nothing. It never falls back to the feed.</p>
+              </fieldset>
               <label class="block text-sm font-medium">Posting mode
                 <select name="posting_mode" class="mt-1 w-full rounded-lg border-slate-300">
                   {% for value, label in [('manual', 'Manual only'), ('approval', 'Admin approval'), ('automatic', 'Automatic')] %}
@@ -149,7 +170,6 @@
               <fieldset class="rounded-xl border border-slate-200 p-3">
                 <legend class="px-2 text-sm font-medium">Group activity</legend>
                 <div class="flex flex-wrap gap-4 text-sm">
-                  <label><input type="checkbox" name="group_activity_enabled" {% if config.group_activity_enabled %}checked{% endif %} /> Enabled</label>
                   <label><input type="checkbox" name="group_can_post" {% if config.group_can_post %}checked{% endif %} /> Posts</label>
                   <label><input type="checkbox" name="group_can_comment" {% if config.group_can_comment %}checked{% endif %} /> Comments</label>
                   <label><input type="checkbox" name="group_can_reply" {% if config.group_can_reply %}checked{% endif %} /> Replies</label>
@@ -160,9 +180,9 @@
                   <label class="text-sm">Group replies/day<input type="number" min="0" max="50" name="max_group_replies_per_day" value="{{ config.max_group_replies_per_day }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
                   <label class="text-sm">Min group interval (minutes)<input type="number" min="0" max="10080" name="minimum_group_activity_interval_minutes" value="{{ config.minimum_group_activity_interval_minutes }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
                 </div>
-                <p class="mt-3 text-xs font-semibold text-slate-600">Allowed groups (saving also adds this AI user as a real member)</p>
+                <p class="mt-3 text-xs font-semibold text-slate-600">Allowed groups (selecting also adds membership; removing permission never removes membership)</p>
                 <div class="mt-2 grid gap-2 sm:grid-cols-2">
-                  {% for group in groups %}<label class="text-xs"><input type="checkbox" name="allowed_group_ids" value="{{ group.id }}" {% if group.id in config.allowed_group_ids %}checked{% endif %} /> {{ group.name }}</label>{% else %}<span class="text-xs text-slate-500">No active groups.</span>{% endfor %}
+                  {% for group in groups %}<label class="text-xs"><input type="checkbox" name="allowed_group_ids" value="{{ group.id }}" {% if group.id in config.allowed_group_ids %}checked{% endif %} /> {{ group.name }} <span class="text-slate-400">({{ 'Member' if group.id in row.membership_group_ids else 'Not a member' }})</span></label>{% else %}<span class="text-xs text-slate-500">No active groups.</span>{% endfor %}
                 </div>
               </fieldset>
               <label class="block text-sm">Personality/style<textarea name="personality" rows="3" class="mt-1 w-full rounded-lg border-slate-300">{{ persona.personality }}</textarea></label>
@@ -173,6 +193,22 @@
           </details>
 
           <details class="mt-3 rounded-xl border border-slate-200 p-4">
+            <summary class="cursor-pointer font-semibold">Actual group membership</summary>
+            <p class="mt-2 text-xs text-slate-500">Membership is separate from permission. Removing permission does not remove membership.</p>
+            <div class="mt-3 grid gap-2 sm:grid-cols-2">
+              {% for group in groups %}
+              <form method="post" action="{{ url_for('admin.admin_update_ai_group_membership', persona_id=persona.id) }}" class="flex items-center justify-between gap-2 rounded-lg border border-slate-200 p-2">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+                <input type="hidden" name="group_id" value="{{ group.id }}" />
+                <input type="hidden" name="action" value="{{ 'remove' if group.id in row.membership_group_ids else 'add' }}" />
+                <span class="text-xs"><strong>{{ group.name }}</strong><br><span class="text-slate-500">{{ 'Member' if group.id in row.membership_group_ids else 'Not a member' }}</span></span>
+                <button class="rounded-lg px-2 py-1 text-xs font-semibold {{ 'border border-rose-200 text-rose-700' if group.id in row.membership_group_ids else 'border border-emerald-200 text-emerald-700' }}">{{ 'Remove' if group.id in row.membership_group_ids else 'Add' }}</button>
+              </form>
+              {% endfor %}
+            </div>
+          </details>
+
+          <details class="mt-3 rounded-xl border border-slate-200 p-4">
             <summary class="cursor-pointer font-semibold">Manual post</summary>
             <form class="mt-4 space-y-3" method="post" enctype="multipart/form-data" action="{{ url_for('admin.admin_create_ai_post', persona_id=persona.id) }}">
               <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
@@ -180,6 +216,25 @@
               <label class="block text-sm">Optional image<input type="file" name="media" accept="image/png,image/jpeg,image/gif,image/webp,image/bmp" class="ai-media-input mt-1 block w-full text-xs" /></label>
               <img class="ai-media-preview hidden max-h-48 rounded-lg object-contain" alt="Selected post image preview" />
               <button class="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white">Publish as {{ persona.name }}</button>
+            </form>
+          </details>
+
+          <details class="mt-3 rounded-xl border border-slate-200 p-4">
+            <summary class="cursor-pointer font-semibold">Manual group post</summary>
+            <form class="mt-4 space-y-3" method="post" enctype="multipart/form-data" action="{{ url_for('admin.admin_create_ai_group_post', persona_id=persona.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+              <label class="block text-sm">Explicit destination
+                <select name="group_id" required class="mt-1 w-full rounded-lg border-slate-300">
+                  <option value="">Select an allowed group</option>
+                  {% for group in groups if group.id in config.allowed_group_ids %}
+                    <option value="{{ group.id }}">{{ group.name }} — {{ 'Member' if group.id in row.membership_group_ids else 'Not a member' }}</option>
+                  {% endfor %}
+                </select>
+              </label>
+              <textarea name="content" rows="3" placeholder="Group post caption" class="w-full rounded-lg border-slate-300"></textarea>
+              <label class="block text-sm">Optional image<input type="file" name="media" accept="image/png,image/jpeg,image/gif,image/webp,image/bmp" class="ai-media-input mt-1 block w-full text-xs" /></label>
+              <img class="ai-media-preview hidden max-h-48 rounded-lg object-contain" alt="Selected group post image preview" />
+              <button class="rounded-lg bg-violet-700 px-4 py-2 text-sm font-semibold text-white">Post to Group</button>
             </form>
           </details>
         </article>
@@ -259,6 +314,13 @@
           <tbody>{% for log in logs %}<tr class="border-b border-slate-100"><td class="p-2">{{ log.persona.name }}</td><td class="p-2">{{ log.action_type }}</td><td class="p-2">{{ log.provider_used or '—' }}</td><td class="p-2">{{ log.timestamp.strftime('%d %b %Y %H:%M') }}</td></tr>{% else %}<tr><td colspan="4" class="p-3 text-slate-500">No activity logged.</td></tr>{% endfor %}</tbody>
         </table>
       </div>
+      {% if log_pagination.pages > 1 %}
+      <nav class="mt-4 flex justify-end gap-3 text-xs">
+        {% if log_pagination.has_prev %}<a class="font-semibold text-emerald-700" href="{{ url_for('admin.admin_ai_users', history_page=log_pagination.prev_num, persona_id=selected_persona_id) }}">Previous</a>{% endif %}
+        <span>Page {{ log_pagination.page }} of {{ log_pagination.pages }}</span>
+        {% if log_pagination.has_next %}<a class="font-semibold text-emerald-700" href="{{ url_for('admin.admin_ai_users', history_page=log_pagination.next_num, persona_id=selected_persona_id) }}">Next</a>{% endif %}
+      </nav>
+      {% endif %}
     </section>
   </div>
 </main>

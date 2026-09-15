@@ -73,6 +73,8 @@ def execute_one_feed_ai_action(personas, actions=None):
     if "post" in actions:
         for persona in personas:
             config = get_profile_config(persona)
+            if not config.get("allow_general_feed_posts", True):
+                continue
             topics = persona.interests or ["socializing", "daily life"]
             topic = random.choice(topics)
 

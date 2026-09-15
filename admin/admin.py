@@ -9,6 +9,7 @@ from flask import (
     jsonify,
     Blueprint,
     make_response,
+    abort,
 )
 from flask_wtf.csrf import generate_csrf
 import uuid
@@ -31,15 +32,17 @@ from models import (
     SiteSetting,
     AIPersona,
     AILog,
+    group_members,
 )
 
 from time_utils import utcnow
 # from sendgrid import SendGridAPIClient
 # from sendgrid.helpers.mail import Mail, Content
-from datetime import datetime, timedelta
+from calendar import isleap
+from datetime import date, datetime, timedelta
 
 from sqlalchemy.orm import joinedload
-from sqlalchemy import func, desc
+from sqlalchemy import case, extract, func, desc, or_
 from decimal import Decimal
 
 
@@ -225,6 +228,7 @@ def admin_dashboard():
     analytics_start = (now - timedelta(days=analytics_days - 1)).replace(
         hour=0, minute=0, second=0, microsecond=0
     )
+
 
     def sum_completed_payment_transactions(start_date):
         total = (
@@ -797,6 +801,102 @@ def admin_dashboard():
     )
 
 
+def _next_birthday_date(dob, today):
+    def occurrence(year):
+        try:
+            return date(year, dob.month, dob.day)
+        except ValueError:
+            return date(year, 2, 28)
+
+    upcoming = occurrence(today.year)
+    return occurrence(today.year + 1) if upcoming < today else upcoming
+
+
+@admin.route("/admin/birthdays")
+@login_required
+def admin_birthdays():
+    if not _admin_has_permission("birthdays_view"):
+        abort(403)
+
+    today = utcnow().date()
+    selected_filter = request.args.get("filter", "30").strip().lower()
+    if selected_filter not in {"7", "30", "month", "all"}:
+        selected_filter = "30"
+    search = request.args.get("search", "").strip()[:100]
+    page = max(1, request.args.get("page", 1, type=int))
+    requested_per_page = request.args.get("per_page", 25, type=int)
+    per_page = requested_per_page if requested_per_page in {25, 50} else 25
+
+    birthday_month = extract("month", User.dob)
+    raw_birthday_day = extract("day", User.dob)
+    birthday_day = (
+        raw_birthday_day
+        if isleap(today.year)
+        else case(
+            (
+                (birthday_month == 2) & (raw_birthday_day == 29),
+                28,
+            ),
+            else_=raw_birthday_day,
+        )
+    )
+    birthday_key = birthday_month * 100 + birthday_day
+    today_key = today.month * 100 + today.day
+    cyclic_key = case(
+        (birthday_key >= today_key, birthday_key),
+        else_=birthday_key + 1200,
+    )
+    query = User.query.filter(User.is_active.is_(True), User.dob.isnot(None))
+    if search:
+        pattern = f"%{search}%"
+        query = query.filter(
+            or_(
+                User.first_name.ilike(pattern),
+                User.last_name.ilike(pattern),
+                User.email.ilike(pattern),
+            )
+        )
+    if selected_filter in {"7", "30"}:
+        window_days = {
+            ((today + timedelta(days=offset)).month, (today + timedelta(days=offset)).day)
+            for offset in range(int(selected_filter) + 1)
+        }
+        query = query.filter(
+            or_(
+                *(
+                    (birthday_month == month) & (birthday_day == day)
+                    for month, day in sorted(window_days)
+                )
+            )
+        )
+    elif selected_filter == "month":
+        query = query.filter(birthday_month == today.month)
+
+    pagination = query.order_by(cyclic_key.asc(), User.id.asc()).paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+    birthday_rows = []
+    for birthday_user in pagination.items:
+        next_date = _next_birthday_date(birthday_user.dob, today)
+        birthday_rows.append(
+            {
+                "user": birthday_user,
+                "next_date": next_date,
+                "days_remaining": (next_date - today).days,
+                "age_turning": next_date.year - birthday_user.dob.year,
+            }
+        )
+    return render_template(
+        "admin_birthdays.html",
+        birthday_rows=birthday_rows,
+        pagination=pagination,
+        selected_filter=selected_filter,
+        search=search,
+        per_page=per_page,
+        today=today,
+    )
+
+
 @admin.route("/admin/settings/marketplace-payments", methods=["POST"])
 @login_required
 def admin_toggle_marketplace_payments():
@@ -835,18 +935,12 @@ def admin_ai_users():
         return redirect(url_for("user.user_dashboard"))
 
     from ai_controls import (
+        admin_persona_metrics,
         get_global_post_spacing_hours,
-        get_group_config,
-        get_pending_draft,
-        get_profile_config,
+        get_group_configs,
+        get_pending_drafts,
+        get_profile_configs,
         is_global_activity_enabled,
-        last_ai_post_at,
-        next_eligible_post_at,
-        posts_today_count,
-        post_today_override,
-        today_action_count,
-        today_group_action_count,
-        weekly_post_counts,
     )
 
     personas = AIPersona.query.options(joinedload(AIPersona.user)).order_by(AIPersona.name).all()
@@ -868,14 +962,35 @@ def admin_ai_users():
     all_groups = Group.query.order_by(Group.name).all()
     groups = [group for group in all_groups if group.is_active]
     group_by_id = {group.id: group for group in all_groups}
+    profile_configs = get_profile_configs(personas)
+    pending_drafts = get_pending_drafts(personas)
+    group_configs = get_group_configs(groups)
+    membership_rows = (
+        db.session.query(
+            group_members.c.group_id,
+            User.id,
+            User.first_name,
+            User.last_name,
+        )
+        .join(User, User.id == group_members.c.user_id)
+        .filter(
+            group_members.c.group_id.in_([group.id for group in groups] or [-1]),
+            User.is_ai_persona.is_(True),
+        )
+        .all()
+    )
+    ai_members_by_group = {group.id: [] for group in groups}
+    memberships_by_user = {persona.user_id: set() for persona in personas}
+    for group_id, user_id, first_name, last_name in membership_rows:
+        ai_members_by_group.setdefault(group_id, []).append(
+            " ".join(part for part in (first_name, last_name) if part)
+        )
+        memberships_by_user.setdefault(user_id, set()).add(group_id)
     group_rows = [
         {
             "group": group,
-            "config": get_group_config(group),
-            "ai_members": [
-                member.full_name
-                for member in group.members.filter(User.is_ai_persona.is_(True)).all()
-            ],
+            "config": group_configs[group.id],
+            "ai_members": ai_members_by_group.get(group.id, []),
         }
         for group in groups
     ]
@@ -934,26 +1049,24 @@ def admin_ai_users():
         )
     recent_ai_content.sort(key=lambda row: row["created_at"], reverse=True)
     recent_ai_content = recent_ai_content[:100]
+    persona_metrics = admin_persona_metrics(personas, profile_configs)
     persona_rows = []
     for persona in personas:
-        counts = weekly_post_counts(persona)
+        metrics = persona_metrics[persona.id]
         persona_rows.append(
             {
                 "persona": persona,
-                "config": get_profile_config(persona),
-                "pending_draft": get_pending_draft(persona.id),
-                "posts_today": posts_today_count(persona),
-                "replies_today": today_action_count(persona, "reply"),
-                "group_comments_today": today_group_action_count(persona, "comment"),
-                "group_replies_today": today_group_action_count(persona, "reply"),
-                "weekly_counts": counts,
-                "post_today_override": post_today_override(persona),
-                "last_post_at": last_ai_post_at(persona.id),
-                "next_post_at": next_eligible_post_at(persona),
+                "config": profile_configs[persona.id],
+                "pending_draft": pending_drafts[persona.id],
+                "membership_group_ids": memberships_by_user.get(persona.user_id, set()),
+                **metrics,
             }
         )
 
-    logs = AILog.query.order_by(AILog.timestamp.desc()).limit(100).all()
+    history_page = max(1, request.args.get("history_page", 1, type=int))
+    log_pagination = AILog.query.order_by(AILog.timestamp.desc()).paginate(
+        page=history_page, per_page=50, error_out=False
+    )
     return render_template(
         "admin_ai_users.html",
         persona_rows=persona_rows,
@@ -962,7 +1075,8 @@ def admin_ai_users():
         groups=groups,
         group_rows=group_rows,
         global_post_spacing_hours=get_global_post_spacing_hours(),
-        logs=logs,
+        logs=log_pagination.items,
+        log_pagination=log_pagination,
         selected_persona_id=selected_persona_id,
         ai_activity_enabled=is_global_activity_enabled(),
         csrf_token=generate_csrf(),
@@ -1035,6 +1149,7 @@ def admin_update_ai_persona(persona_id):
         "minimum_reply_delay_minutes": request.form.get("minimum_reply_delay_minutes"),
         "maximum_reply_delay_minutes": request.form.get("maximum_reply_delay_minutes"),
         "disallowed_topics": request.form.get("disallowed_topics", "").splitlines(),
+        "allow_general_feed_posts": request.form.get("allow_general_feed_posts") == "on",
         "group_activity_enabled": request.form.get("group_activity_enabled") == "on",
         "group_can_post": request.form.get("group_can_post") == "on",
         "group_can_comment": request.form.get("group_can_comment") == "on",
@@ -1053,9 +1168,12 @@ def admin_update_ai_persona(persona_id):
         for topic in request.form.get("allowed_topics", "").splitlines()
         if topic.strip()
     ]
+    # Preserve the established convenience: selecting an allowed group also
+    # adds membership. Removing permission never removes membership implicitly.
     for group in allowed_groups:
         if group.members.filter_by(id=persona.user_id).first() is None:
             group.members.append(persona.user)
+            db.session.flush()
             group.member_count = group.members.count()
     db.session.commit()
     flash(f"Saved AI controls for {persona.name}.", "success")
@@ -1067,18 +1185,76 @@ def admin_update_ai_persona(persona_id):
 def admin_update_ai_display_name(persona_id):
     if not current_user.is_super_admin:
         return jsonify({"success": False, "error": "Access denied"}), 403
+    from utils.ai_identity import update_ai_display_name
+
     persona = db.get_or_404(AIPersona, persona_id)
-    first_name = request.form.get("first_name", "").strip()
-    last_name = request.form.get("last_name", "").strip()
-    display_name = " ".join(part for part in (first_name, last_name) if part)
-    if not first_name or not last_name or len(first_name) > 50 or len(last_name) > 50 or len(display_name) > 50:
-        flash("Enter a first and last name with a combined length of 50 characters or fewer.", "danger")
+    try:
+        display_name = update_ai_display_name(
+            persona,
+            request.form.get("first_name"),
+            request.form.get("last_name"),
+        )
+        db.session.commit()
+    except ValueError as error:
+        db.session.rollback()
+        flash(str(error), "danger")
         return _ai_admin_redirect()
-    persona.user.first_name = first_name
-    persona.user.last_name = last_name
-    persona.name = display_name
-    db.session.commit()
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception("Failed to update AI identity %s", persona_id)
+        flash("AI identity was not changed.", "danger")
+        return _ai_admin_redirect()
     flash(f"AI display name updated to {display_name}.", "success")
+    return _ai_admin_redirect()
+
+
+@admin.route("/admin/ai-users/<int:persona_id>/avatar", methods=["POST"])
+@login_required
+def admin_update_ai_avatar(persona_id):
+    if not current_user.is_super_admin:
+        return jsonify({"success": False, "error": "Access denied"}), 403
+    from utils.ai_identity import upload_ai_avatar
+
+    persona = db.get_or_404(AIPersona, persona_id)
+    image = request.files.get("profile_pic")
+    if not image or not image.filename:
+        flash("Choose a profile picture.", "danger")
+        return _ai_admin_redirect()
+    try:
+        upload_ai_avatar(persona, image)
+        db.session.commit()
+    except ValueError as error:
+        db.session.rollback()
+        flash(str(error), "danger")
+        return _ai_admin_redirect()
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception("Failed to update AI avatar %s", persona_id)
+        flash("Profile picture upload failed; the previous picture was kept.", "danger")
+        return _ai_admin_redirect()
+    flash(f"Updated {persona.name}'s profile picture.", "success")
+    return _ai_admin_redirect()
+
+
+@admin.route("/admin/ai-users/<int:persona_id>/group-membership", methods=["POST"])
+@login_required
+def admin_update_ai_group_membership(persona_id):
+    if not current_user.is_super_admin:
+        return jsonify({"success": False, "error": "Access denied"}), 403
+    persona = db.get_or_404(AIPersona, persona_id)
+    group = db.get_or_404(Group, request.form.get("group_id", type=int))
+    action = request.form.get("action")
+    is_member = group.members.filter_by(id=persona.user_id).first() is not None
+    if action == "add" and not is_member:
+        group.members.append(persona.user)
+    elif action == "remove" and is_member:
+        group.members.remove(persona.user)
+    elif action not in {"add", "remove"}:
+        return jsonify({"success": False, "error": "Invalid membership action"}), 400
+    db.session.flush()
+    group.member_count = group.members.count()
+    db.session.commit()
+    flash(f"Updated {persona.name}'s membership in {group.name}.", "success")
     return _ai_admin_redirect()
 
 
@@ -1161,6 +1337,37 @@ def admin_create_ai_post(persona_id):
     return _ai_admin_redirect()
 
 
+@admin.route("/admin/ai-users/<int:persona_id>/group-post", methods=["POST"])
+@login_required
+def admin_create_ai_group_post(persona_id):
+    if not current_user.is_super_admin:
+        return jsonify({"success": False, "error": "Access denied"}), 403
+    from ai_group_action_engine import execute_persona_group_post
+
+    persona = db.get_or_404(AIPersona, persona_id)
+    group = db.get_or_404(Group, request.form.get("group_id", type=int))
+    content = request.form.get("content", "").strip()
+    media = request.files.get("media")
+    if not content and not (media and media.filename):
+        flash("Add post text or an image.", "danger")
+        return _ai_admin_redirect()
+    if execute_persona_group_post(
+        persona,
+        group,
+        content=content,
+        media_file=media,
+        source="manual",
+    ):
+        flash(f"Published a group post as {persona.name} in {group.name}.", "success")
+    else:
+        flash(
+            "The group post was blocked. Check persona status, action policy, "
+            "allowlist, membership, group controls, and group authorization.",
+            "danger",
+        )
+    return _ai_admin_redirect()
+
+
 @admin.route("/admin/ai-users/<int:persona_id>/approve", methods=["POST"])
 @login_required
 def admin_approve_ai_post(persona_id):
@@ -1190,6 +1397,35 @@ def admin_approve_ai_post(persona_id):
     return _ai_admin_redirect()
 
 
+@admin.route("/admin/ai-users/<int:persona_id>/draft/reject", methods=["POST"])
+@login_required
+def admin_reject_ai_draft(persona_id):
+    if not current_user.is_super_admin:
+        return jsonify({"success": False, "error": "Access denied"}), 403
+    from ai_controls import clear_pending_draft, get_pending_draft
+
+    persona = db.get_or_404(AIPersona, persona_id)
+    draft = get_pending_draft(persona.id)
+    if not draft:
+        flash("There is no pending draft for this profile.", "warning")
+        return _ai_admin_redirect()
+    clear_pending_draft(persona.id)
+    db.session.add(
+        AILog(
+            persona_id=persona.id,
+            action_type="DRAFT_REJECTED_MANUAL",
+            prompt_context="Rejected by super admin",
+            generated_content=draft.get("content", ""),
+            provider_used="admin",
+            is_escalated=False,
+            timestamp=utcnow(),
+        )
+    )
+    db.session.commit()
+    flash(f"Discarded {persona.name}'s draft without publishing it.", "success")
+    return _ai_admin_redirect()
+
+
 @admin.route("/admin/ai-users/posts/<int:post_id>/delete", methods=["POST"])
 @login_required
 def admin_delete_ai_post(post_id):
@@ -1199,22 +1435,20 @@ def admin_delete_ai_post(post_id):
     if not getattr(post.author, "is_ai_persona", False):
         return jsonify({"success": False, "error": "Not an AI post"}), 400
     persona = AIPersona.query.filter_by(user_id=post.author_id).first()
-    deleted_content = post.content
-    db.session.delete(post)
-    if persona:
-        db.session.add(
-            AILog(
-                persona_id=persona.id,
-                action_type="DELETE_POST_MANUAL",
-                target_id=post_id,
-                prompt_context="Deleted by super admin",
-                generated_content=deleted_content,
-                provider_used="admin",
-                is_escalated=False,
-                timestamp=utcnow(),
-            )
+    if not persona:
+        return jsonify({"success": False, "error": "AI persona not found"}), 400
+    try:
+        from utils.post_deletion import delete_post_safely
+
+        delete_post_safely(
+            post,
+            current_user,
+            ai_admin_persona=persona,
         )
-    db.session.commit()
+    except Exception:
+        current_app.logger.exception("AI post deletion failed for post %s", post_id)
+        flash("AI post could not be deleted.", "danger")
+        return _ai_admin_redirect()
     flash("AI post deleted.", "success")
     return _ai_admin_redirect()
 
@@ -1493,6 +1727,8 @@ def admin_get_group_for_edit(group_id):
 
     group = Group.query.get_or_404(group_id)
 
+    from utils.matchmaking_group import is_matchmaking_group
+
     return jsonify(
         {
             "success": True,
@@ -1501,7 +1737,8 @@ def admin_get_group_for_edit(group_id):
                 "name": group.name,
                 "description": group.description,
                 "category": group.category,
-                "is_private": group.is_private,
+                "is_private": group.is_private or is_matchmaking_group(group),
+                "privacy_locked": is_matchmaking_group(group),
                 "display_member_count": group.display_member_count,
             },
         }
@@ -1533,7 +1770,13 @@ def admin_update_group(group_id):
     )
     group.description = description or None
     group.category = request.form.get("category", group.category)
-    group.is_private = request.form.get("is_private") == "true"
+    from utils.matchmaking_group import is_matchmaking_group
+
+    group.is_private = (
+        True
+        if is_matchmaking_group(group)
+        else request.form.get("is_private") == "true"
+    )
     group.display_member_count = display_member_count
 
     # Handle group image update

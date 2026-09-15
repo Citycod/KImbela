@@ -24,6 +24,7 @@ PENDING_DRAFT_KEY_PREFIX = "ai_pending_draft:"
 GROUP_CONTROL_KEY_PREFIX = "ai_group_control:"
 AUTOMATIC_POST_COOLDOWN = timedelta(days=14)
 AUTOMATIC_GLOBAL_POST_SPACING = timedelta(hours=24)
+_UNSET = object()
 
 DEFAULT_PROFILE_CONFIG = {
     "enabled": True,
@@ -46,6 +47,7 @@ DEFAULT_PROFILE_CONFIG = {
     "minimum_reply_delay_minutes": 0,
     "maximum_reply_delay_minutes": 0,
     "disallowed_topics": [],
+    "allow_general_feed_posts": True,
     "group_activity_enabled": False,
     "group_can_post": False,
     "group_can_comment": False,
@@ -181,6 +183,11 @@ def normalize_profile_config(raw_config):
     config["disallowed_topics"] = [
         str(topic).strip() for topic in topics if str(topic).strip()
     ][:100]
+    config["allow_general_feed_posts"] = bool(
+        raw_config.get(
+            "allow_general_feed_posts", config["allow_general_feed_posts"]
+        )
+    )
     config["group_activity_enabled"] = bool(
         raw_config.get("group_activity_enabled", config["group_activity_enabled"])
     )
@@ -231,6 +238,38 @@ def get_profile_config(persona):
     )
 
 
+def get_profile_configs(personas):
+    """Load all per-persona JSON controls in one query for admin rendering."""
+    personas = list(personas)
+    keys = {_profile_key(persona.id): persona.id for persona in personas}
+    rows = SiteSetting.query.filter(SiteSetting.key.in_(keys or {""})).all()
+    raw_by_id = {}
+    for row in rows:
+        try:
+            raw_by_id[keys[row.key]] = json.loads(row.value or "{}")
+        except (TypeError, ValueError):
+            raw_by_id[keys[row.key]] = {}
+    return {
+        persona.id: normalize_profile_config(raw_by_id.get(persona.id, {}))
+        for persona in personas
+    }
+
+
+def get_pending_drafts(personas):
+    """Load pending approval drafts for an admin page in one query."""
+    personas = list(personas)
+    keys = {_draft_key(persona.id): persona.id for persona in personas}
+    rows = SiteSetting.query.filter(SiteSetting.key.in_(keys or {""})).all()
+    drafts = {persona.id: {} for persona in personas}
+    for row in rows:
+        try:
+            parsed = json.loads(row.value or "{}")
+        except (TypeError, ValueError):
+            parsed = {}
+        drafts[keys[row.key]] = parsed if isinstance(parsed, dict) else {}
+    return drafts
+
+
 def save_profile_config(persona, raw_config):
     config = normalize_profile_config(raw_config)
     SiteSetting.set_value(_profile_key(persona.id), json.dumps(config, sort_keys=True))
@@ -242,6 +281,22 @@ def get_group_config(group_or_id):
     return normalize_group_config(
         _load_json_setting(_group_key(group_id), DEFAULT_GROUP_CONFIG)
     )
+
+
+def get_group_configs(groups):
+    groups = list(groups)
+    keys = {_group_key(group.id): group.id for group in groups}
+    rows = SiteSetting.query.filter(SiteSetting.key.in_(keys or {""})).all()
+    raw_by_id = {}
+    for row in rows:
+        try:
+            raw_by_id[keys[row.key]] = json.loads(row.value or "{}")
+        except (TypeError, ValueError):
+            raw_by_id[keys[row.key]] = {}
+    return {
+        group.id: normalize_group_config(raw_by_id.get(group.id, {}))
+        for group in groups
+    }
 
 
 def save_group_config(group_or_id, raw_config):
@@ -277,9 +332,9 @@ def set_post_today(persona, enabled, now=None):
     return save_profile_config(persona, config)
 
 
-def post_today_override(persona, now=None):
+def post_today_override(persona, now=None, config=None):
     """Return today's explicit override, or ``None`` for stale/unset values."""
-    config = get_profile_config(persona)
+    config = config or get_profile_config(persona)
     if config["post_today_date"] != _local_now(persona, now).date().isoformat():
         return None
     return config["post_today_enabled"]
@@ -377,6 +432,127 @@ def weekly_post_counts(persona, now=None):
     return {"total": feed + group, "feed": feed, "group": group}
 
 
+def admin_persona_metrics(personas, configs, now=None):
+    """Build control-center counters with bounded bulk queries."""
+    personas = list(personas)
+    if not personas:
+        return {}
+    now = now or utcnow()
+    week_starts = {
+        persona.id: _local_week_start_utc(persona, now) for persona in personas
+    }
+    day_starts = {}
+    for persona in personas:
+        local_now = _local_now(persona, now)
+        day_starts[persona.id] = local_now.replace(
+            hour=0, minute=0, second=0, microsecond=0
+        ).astimezone(ZoneInfo("UTC")).replace(tzinfo=None)
+
+    user_to_persona = {persona.user_id: persona.id for persona in personas}
+    recent_posts = (
+        db.session.query(Post.author_id, Post.created_at, Post.group_id)
+        .filter(
+            Post.author_id.in_(user_to_persona),
+            Post.created_at >= min(week_starts.values()),
+        )
+        .all()
+    )
+    last_post_rows = (
+        db.session.query(Post.author_id, db.func.max(Post.created_at))
+        .filter(Post.author_id.in_(user_to_persona))
+        .group_by(Post.author_id)
+        .all()
+    )
+    last_post_by_persona = {
+        user_to_persona[user_id]: timestamp for user_id, timestamp in last_post_rows
+    }
+    global_last = max(last_post_by_persona.values(), default=None)
+
+    tracked_log_types = (
+        _action_types("post")
+        + _action_types("reply")
+        + _group_action_types("comment")
+        + _group_action_types("reply")
+    )
+    recent_logs = (
+        db.session.query(AILog.persona_id, AILog.action_type, AILog.timestamp)
+        .filter(
+            AILog.persona_id.in_([persona.id for persona in personas]),
+            AILog.action_type.in_(tracked_log_types),
+            AILog.timestamp >= min(day_starts.values()),
+            AILog.is_escalated.is_(False),
+        )
+        .all()
+    )
+    last_action_rows = (
+        db.session.query(AILog.persona_id, db.func.max(AILog.timestamp))
+        .filter(
+            AILog.persona_id.in_([persona.id for persona in personas]),
+            AILog.action_type.in_(_action_types("post")),
+            AILog.is_escalated.is_(False),
+        )
+        .group_by(AILog.persona_id)
+        .all()
+    )
+    last_post_action_by_persona = dict(last_action_rows)
+
+    metrics = {}
+    for persona in personas:
+        week_start = week_starts[persona.id]
+        day_start = day_starts[persona.id]
+        persona_posts = [
+            row
+            for row in recent_posts
+            if row.author_id == persona.user_id and row.created_at >= week_start
+        ]
+        feed_count = sum(row.group_id is None for row in persona_posts)
+        group_count = len(persona_posts) - feed_count
+        today_posts = sum(row.created_at >= day_start for row in persona_posts)
+        persona_logs = [
+            row
+            for row in recent_logs
+            if row.persona_id == persona.id and row.timestamp >= day_start
+        ]
+        replies_today = sum(row.action_type in _action_types("reply") for row in persona_logs)
+        group_comments_today = sum(
+            row.action_type in _group_action_types("comment") for row in persona_logs
+        )
+        group_replies_today = sum(
+            row.action_type in _group_action_types("reply") for row in persona_logs
+        )
+        post_actions_today = sum(
+            row.action_type in _action_types("post") for row in persona_logs
+        )
+        counts = {
+            "total": feed_count + group_count,
+            "feed": feed_count,
+            "group": group_count,
+        }
+        config = configs[persona.id]
+        metrics[persona.id] = {
+            "posts_today": today_posts,
+            "replies_today": replies_today,
+            "group_comments_today": group_comments_today,
+            "group_replies_today": group_replies_today,
+            "weekly_counts": counts,
+            "post_today_override": post_today_override(
+                persona, now, config=config
+            ),
+            "last_post_at": last_post_by_persona.get(persona.id),
+            "next_post_at": next_eligible_post_at(
+                persona,
+                now,
+                config=config,
+                counts=counts,
+                last_post_at_value=last_post_by_persona.get(persona.id),
+                global_last_post_at=global_last,
+                today_post_actions=post_actions_today,
+                last_post_action_at=last_post_action_by_persona.get(persona.id),
+            ),
+        }
+    return metrics
+
+
 def posts_today_count(persona, now=None):
     local_now = _local_now(persona, now)
     local_start = local_now.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -431,6 +607,10 @@ def new_post_eligibility(
 ):
     """Shared 14-day/weekly/stagger policy for feed and group NEW posts."""
     config = get_profile_config(persona)
+    if channel == "feed" and not config["allow_general_feed_posts"]:
+        return False, "feed_posting_disabled"
+    if not action_is_allowed(persona, "post"):
+        return False, "action_forbidden"
     local_now = _local_now(persona, now)
     if local_now.weekday() not in config["posting_days"]:
         return False, "posting_day_disabled"
@@ -499,11 +679,21 @@ def last_group_action_at(persona_id, group_id=None):
     return row.timestamp if row else None
 
 
-def next_eligible_post_at(persona, now=None):
+def next_eligible_post_at(
+    persona,
+    now=None,
+    *,
+    config=None,
+    counts=None,
+    last_post_at_value=_UNSET,
+    global_last_post_at=_UNSET,
+    today_post_actions=None,
+    last_post_action_at=_UNSET,
+):
     """Calculate the next ordinary posting-window opportunity when possible."""
     if not is_global_activity_enabled() or not persona.is_active:
         return None
-    config = get_profile_config(persona)
+    config = config or get_profile_config(persona)
     if (
         not config["enabled"]
         or config["paused"]
@@ -512,16 +702,34 @@ def next_eligible_post_at(persona, now=None):
         or not config["posting_days"]
         or config["max_posts_per_day"] == 0
         or config["maximum_total_posts_per_week"] == 0
-        or config["maximum_feed_posts_per_week"] == 0
     ):
+        return None
+    feed_destination_enabled = bool(
+        config["allow_general_feed_posts"]
+        and config["maximum_feed_posts_per_week"] > 0
+    )
+    group_destination_enabled = bool(
+        config["group_activity_enabled"]
+        and config["group_can_post"]
+        and config["maximum_group_posts_per_week"] > 0
+        and config["allowed_group_ids"]
+    )
+    if not feed_destination_enabled and not group_destination_enabled:
         return None
 
     local_now = _local_now(persona, now)
     candidate = local_now
-    counts = weekly_post_counts(persona, now)
-    if (
-        counts["total"] >= config["maximum_total_posts_per_week"]
+    counts = counts or weekly_post_counts(persona, now)
+    feed_exhausted = (
+        not feed_destination_enabled
         or counts["feed"] >= config["maximum_feed_posts_per_week"]
+    )
+    group_exhausted = (
+        not group_destination_enabled
+        or counts["group"] >= config["maximum_group_posts_per_week"]
+    )
+    if counts["total"] >= config["maximum_total_posts_per_week"] or (
+        feed_exhausted and group_exhausted
     ):
         candidate = (local_now + timedelta(days=7 - local_now.weekday())).replace(
             hour=0, minute=0, second=0, microsecond=0
@@ -536,7 +744,11 @@ def next_eligible_post_at(persona, now=None):
                 hour=0, minute=0, second=0, microsecond=0
             ),
         )
-    global_last = last_ai_post_at()
+    global_last = (
+        global_last_post_at
+        if global_last_post_at is not _UNSET
+        else last_ai_post_at()
+    )
     if global_last:
         global_candidate = global_last.replace(tzinfo=ZoneInfo("UTC")).astimezone(
             local_now.tzinfo
@@ -545,20 +757,33 @@ def next_eligible_post_at(persona, now=None):
             timedelta(hours=get_global_post_spacing_hours()),
         )
         candidate = max(candidate, global_candidate)
-    persona_last = last_ai_post_at(persona.id)
+    persona_last = (
+        last_post_at_value
+        if last_post_at_value is not _UNSET
+        else last_ai_post_at(persona.id)
+    )
     if persona_last:
         persona_candidate = persona_last.replace(tzinfo=ZoneInfo("UTC")).astimezone(
             local_now.tzinfo
         ) + AUTOMATIC_POST_COOLDOWN
         candidate = max(candidate, persona_candidate)
-    last_post = last_action_at(persona.id, "post")
+    last_post = (
+        last_post_action_at
+        if last_post_action_at is not _UNSET
+        else last_action_at(persona.id, "post")
+    )
     if last_post:
         last_post = last_post.replace(tzinfo=ZoneInfo("UTC")).astimezone(local_now.tzinfo)
         candidate = max(
             candidate,
             last_post + timedelta(minutes=config["minimum_post_interval_minutes"]),
         )
-    if today_action_count(persona, "post", now) >= config["max_posts_per_day"]:
+    current_today_actions = (
+        today_post_actions
+        if today_post_actions is not None
+        else today_action_count(persona, "post", now)
+    )
+    if current_today_actions >= config["max_posts_per_day"]:
         candidate = (local_now + timedelta(days=1)).replace(
             hour=0, minute=0, second=0, microsecond=0
         )
@@ -599,6 +824,8 @@ def automation_eligibility(persona, action, now=None, posting_modes=None):
         return False, "disabled"
     if config["paused"]:
         return False, "paused"
+    if not action_is_allowed(persona, action):
+        return False, "action_forbidden"
     permitted_modes = set(posting_modes or ("automatic",))
     if config["posting_mode"] not in permitted_modes and action == "post":
         return False, config["posting_mode"]
@@ -648,6 +875,8 @@ def manual_eligibility(persona, channel=None, now=None):
         return False, "disabled"
     if config["paused"]:
         return False, "paused"
+    if not action_is_allowed(persona, "post" if channel else "comment"):
+        return False, "action_forbidden"
     if channel:
         return new_post_eligibility(
             persona,
@@ -672,6 +901,8 @@ def group_automation_eligibility(persona, group, action, now=None):
         return False, "disabled"
     if config["paused"]:
         return False, "paused"
+    if not action_is_allowed(persona, action):
+        return False, "action_forbidden"
     if config["posting_mode"] != "automatic":
         return False, config["posting_mode"]
     if not config["group_activity_enabled"]:
@@ -728,6 +959,25 @@ def group_automation_eligibility(persona, group, action, now=None):
         post_allowed, post_reason = new_post_eligibility(persona, "group", now)
         if not post_allowed:
             return False, post_reason
+    return True, "eligible"
+
+
+def manual_group_post_eligibility(persona, group, now=None):
+    """Validate an explicit admin-selected group destination without automation cadence."""
+    allowed, reason = manual_eligibility(persona, "group", now)
+    if not allowed:
+        return allowed, reason
+    if not getattr(group, "is_active", False):
+        return False, "inactive_group"
+    config = get_profile_config(persona)
+    if not config["group_activity_enabled"] or not config["group_can_post"]:
+        return False, "group_posting_disabled"
+    if group.id not in config["allowed_group_ids"]:
+        return False, "group_not_allowed"
+    if group.members.filter_by(id=persona.user_id).first() is None:
+        return False, "not_member"
+    if not action_is_allowed(persona, "post"):
+        return False, "action_forbidden"
     return True, "eligible"
 
 
@@ -808,6 +1058,33 @@ def content_is_allowed(persona, content):
         topic.casefold() in normalized
         for topic in get_profile_config(persona)["disallowed_topics"]
     )
+
+
+def _normalized_action_values(values):
+    return {
+        str(value).strip().casefold().replace("-", "_").replace(" ", "_")
+        for value in (values or [])
+        if str(value).strip()
+    }
+
+
+def action_is_allowed(persona, action):
+    """Enforce persisted action policy as an execution boundary.
+
+    Historic persona records use ``comment`` to cover comments and replies, so
+    reply retains that backwards-compatible alias.
+    """
+    action = str(action or "").strip().casefold().replace("-", "_")
+    aliases = {
+        "post": {"post", "create_post", "feed_post", "group_post"},
+        "comment": {"comment", "create_comment", "group_comment"},
+        "reply": {"reply", "comment", "create_comment", "group_reply"},
+    }.get(action, {action})
+    forbidden = _normalized_action_values(persona.forbidden_actions)
+    if aliases & forbidden:
+        return False
+    allowed = _normalized_action_values(persona.allowed_actions)
+    return not allowed or bool(aliases & allowed)
 
 
 def reply_is_due(persona, comment, now=None):

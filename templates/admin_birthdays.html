@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block head %}
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Upcoming Birthdays - Kimbela Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+{% endblock %}
+
+{% block content %}
+<main class="min-h-screen bg-gradient-to-br from-slate-50 via-sky-50 to-emerald-50 px-4 py-8 text-slate-800">
+  <div class="mx-auto max-w-6xl space-y-5">
+    <header class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <a href="{{ url_for('admin.admin_dashboard') }}" class="text-sm font-semibold text-emerald-700">&larr; Admin dashboard</a>
+      <div class="mt-3 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 class="text-2xl font-semibold">Upcoming birthdays</h1>
+          <p class="text-sm text-slate-500">Active Kimbela accounts, loaded only when this admin page is opened.</p>
+        </div>
+        <p class="text-xs text-slate-500">Today: {{ today.strftime('%d %b %Y') }}</p>
+      </div>
+    </header>
+
+    <form method="get" class="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-[1fr_auto_auto_auto]">
+      <label class="text-sm font-medium">Search name or email
+        <input type="search" name="search" maxlength="100" value="{{ search }}" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
+      </label>
+      <label class="text-sm font-medium">Window
+        <select name="filter" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2">
+          {% for value, label in [('7','Next 7 days'),('30','Next 30 days'),('month','This month'),('all','All upcoming')] %}
+            <option value="{{ value }}" {% if selected_filter == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="text-sm font-medium">Rows
+        <select name="per_page" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2">
+          <option value="25" {% if per_page == 25 %}selected{% endif %}>25</option>
+          <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
+        </select>
+      </label>
+      <button class="self-end rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white">Apply</button>
+    </form>
+
+    <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-left text-sm">
+          <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+            <tr><th class="p-3">User</th><th class="p-3">Date of birth</th><th class="p-3">Next birthday</th><th class="p-3">Remaining</th><th class="p-3">Turning</th></tr>
+          </thead>
+          <tbody>
+            {% for row in birthday_rows %}
+              <tr class="border-t border-slate-100">
+                <td class="p-3">
+                  <div class="flex items-center gap-3">
+                    <img src="{{ row.user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" alt="" class="h-10 w-10 rounded-full object-cover" />
+                    <div><div class="font-semibold">{{ row.user.full_name }}</div><div class="text-xs text-slate-500">{{ row.user.email }}</div></div>
+                  </div>
+                </td>
+                <td class="p-3">{{ row.user.dob.strftime('%d %b %Y') }}</td>
+                <td class="p-3 font-medium">{{ row.next_date.strftime('%d %b %Y') }}</td>
+                <td class="p-3">{{ row.days_remaining }} day{{ '' if row.days_remaining == 1 else 's' }}</td>
+                <td class="p-3">{{ row.age_turning }}</td>
+              </tr>
+            {% else %}
+              <tr><td colspan="5" class="p-8 text-center text-slate-500">No birthdays match these filters.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if pagination.pages > 1 %}
+        <nav class="flex items-center justify-between border-t border-slate-200 p-4 text-sm" aria-label="Birthday pages">
+          {% if pagination.has_prev %}<a class="font-semibold text-emerald-700" href="{{ url_for('admin.admin_birthdays', page=pagination.prev_num, filter=selected_filter, search=search, per_page=per_page) }}">Previous</a>{% else %}<span></span>{% endif %}
+          <span>Page {{ pagination.page }} of {{ pagination.pages }}</span>
+          {% if pagination.has_next %}<a class="font-semibold text-emerald-700" href="{{ url_for('admin.admin_birthdays', page=pagination.next_num, filter=selected_filter, search=search, per_page=per_page) }}">Next</a>{% else %}<span></span>{% endif %}
+        </nav>
+      {% endif %}
+    </section>
+  </div>
+</main>
+{% endblock %}

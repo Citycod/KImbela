@@ -9,6 +9,7 @@ from time_utils import utcnow
 from app_config import app
 from extensions import db
 from models import User, AIPersona
+from utils.ai_identity import is_ai_identity_customized
 
 PROFILE_PICS = {
     "Amara": "https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg", # Or generated avatar URL
@@ -49,6 +50,12 @@ def seed():
             email = f"ai.{name.lower()}@kimbela.com"
             
             user = User.query.filter_by(email=email).first()
+            persona_rec = (
+                AIPersona.query.filter_by(user_id=user.id).first() if user else None
+            )
+            identity_is_customized = bool(
+                persona_rec and is_ai_identity_customized(persona_rec.id)
+            )
             if not user:
                 user = User(
                     first_name=first_name,
@@ -69,8 +76,9 @@ def seed():
                 db.session.commit()
                 print(f"✓ Created User account for {name} (ID: {user.id})")
             else:
-                user.first_name = first_name
-                user.last_name = last_name
+                if not identity_is_customized:
+                    user.first_name = first_name
+                    user.last_name = last_name
                 user.is_active = True
                 user.is_ai_persona = True
                 user.bio = p_data["bio_disclosure"]
@@ -78,7 +86,7 @@ def seed():
                 print(f"✓ Updated existing User account for {name} (ID: {user.id}, Active: {user.is_active})")
 
             # Create or update AIPersona config
-            persona_rec = AIPersona.query.filter_by(user_id=user.id).first()
+            persona_rec = persona_rec or AIPersona.query.filter_by(user_id=user.id).first()
             if not persona_rec:
                 persona_rec = AIPersona(
                     user_id=user.id,
@@ -96,7 +104,8 @@ def seed():
                 )
                 db.session.add(persona_rec)
             else:
-                persona_rec.name = display_name
+                if not identity_is_customized:
+                    persona_rec.name = display_name
                 persona_rec.personality = p_data["personality"]
                 persona_rec.bio_disclosure = p_data["bio_disclosure"]
                 persona_rec.interests = p_data["interests"]
@@ -104,7 +113,7 @@ def seed():
                 persona_rec.forbidden_actions = p_data["forbidden_actions"]
 
             db.session.commit()
-            print(f"✓ Seeded AIPersona config for {display_name}")
+            print(f"✓ Seeded AIPersona config for {persona_rec.name}")
 
         print("\n✅ All 4 AI Personas seeded successfully.")
 

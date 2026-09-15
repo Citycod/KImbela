@@ -1118,6 +1118,15 @@
                                 </div>
                                 <p class="text-xs text-text-secondary">Fixed price: ${{ "{:,.0f}".format((packages[0].price if packages else 10)|round|int) }} per month. Cancel anytime.</p>
                             </div>
+                            <label class="flex items-start gap-3 rounded-lg border border-rose-gold/30 bg-white p-4 text-sm text-primary">
+                                <input id="featureInMatchmakingGroup" type="checkbox" class="mt-1" />
+                                <span>
+                                    <strong class="block">Feature my Boost in the private Matchmaking group</strong>
+                                    <span class="mt-1 block text-xs text-text-secondary">
+                                        If selected, authorized group members may see this Boost as a system-rendered Featured Match while the paid Boost is active. This does not make you a group member or create a post in your name.
+                                    </span>
+                                </span>
+                            </label>
                         </div>
                     </div>
                 </div>
@@ -1522,6 +1531,7 @@
                 your_interests: AppState.selectedYourInterests,
                 lifestyles: lifestyles,
                 image: AppState.uploadedImageUrl,
+                feature_in_matchmaking_group: document.getElementById('featureInMatchmakingGroup').checked,
                 currency: document.getElementById('currency').value
             };
         }

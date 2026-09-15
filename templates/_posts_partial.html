@@ -14,7 +14,7 @@
             <div>
                 <a href="{{ url_for('user.view_profile', user_identifier=post.author.id) }}" class="hover:underline text-gray-900 block">
                     <div class="font-semibold">
-                        {{ post.author.first_name }} {{ post.author.last_name }}
+                        {{ post.author.first_name }} {{ post.author.last_name }}{% if post.author.is_ai_persona %} <span class="ml-1 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold uppercase text-violet-700">AI</span>{% endif %}
                     </div>
                 </a>
                 <div class="text-sm text-fb-text-light">
@@ -102,7 +102,7 @@
                     <div>
                         <a href="{{ url_for('user.view_profile', user_identifier=post.shared_post.author.id) }}" class="hover:underline text-gray-900 block">
                             <div class="font-semibold text-sm">
-                                {{ post.shared_post.author.first_name }} {{ post.shared_post.author.last_name }}
+                                {{ post.shared_post.author.first_name }} {{ post.shared_post.author.last_name }}{% if post.shared_post.author.is_ai_persona %} <span class="ml-1 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold uppercase text-violet-700">AI</span>{% endif %}
                             </div>
                         </a>
                         <div class="text-xs text-gray-500">

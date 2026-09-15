@@ -16,6 +16,7 @@ from ai_controls import (
     get_profile_config,
     group_automation_eligibility,
     group_is_quiet_enough,
+    manual_group_post_eligibility,
     thread_in_group_cooldown,
 )
 from ai_service import LLMResponse, generate_content
@@ -109,12 +110,18 @@ def execute_persona_group_post(
     group: Group,
     content=None,
     media_file=None,
+    source="automatic",
 ) -> bool:
-    allowed, reason = group_automation_eligibility(persona, group, "post")
+    is_manual = source == "manual"
+    allowed, reason = (
+        manual_group_post_eligibility(persona, group)
+        if is_manual
+        else group_automation_eligibility(persona, group, "post")
+    )
     if not allowed:
         logger.info("AI group post blocked: persona=%s reason=%s", persona.id, reason)
         return False
-    if not group_is_quiet_enough(group, "post"):
+    if not is_manual and not group_is_quiet_enough(group, "post"):
         return False
 
     prompt = (
@@ -137,7 +144,7 @@ def execute_persona_group_post(
         return False
     if not content_is_allowed(persona, response.content):
         return False
-    if _duplicate_group_post(persona, group, response.content):
+    if not is_manual and _duplicate_group_post(persona, group, response.content):
         return False
 
     persona_id = persona.id
@@ -181,7 +188,7 @@ def execute_persona_group_post(
     db.session.add(
         AILog(
             persona_id=persona_id,
-            action_type="GROUP_POST_AUTOMATIC",
+            action_type=("GROUP_POST_MANUAL" if is_manual else "GROUP_POST_AUTOMATIC"),
             target_id=created.id,
             prompt_context=f"group_id={group_id}\ngroup_post_id={created.id}\n{prompt}",
             generated_content=response.content,

@@ -1120,6 +1120,13 @@ def create_matchmaking_request():
         )
 
         db.session.add(new_request)
+        db.session.flush()
+        from utils.matchmaking_boosts import set_boost_group_consent
+
+        set_boost_group_consent(
+            new_request.id,
+            request_data.get("feature_in_matchmaking_group") is True,
+        )
         db.session.commit()
 
         current_app.logger.info(

@@ -13,7 +13,7 @@ from flask import (
 from datetime import date
 from urllib.parse import urlparse, urljoin
 from sqlalchemy.orm import joinedload
-from sqlalchemy import and_, func, or_
+from sqlalchemy import and_, exists, func, or_
 
 from models import (
     MatchmakingPackage,
@@ -52,6 +52,16 @@ import cloudinary.utils
 
 from time_utils import utcnow
 from utils.group_description import sanitize_group_description
+from utils.matchmaking_group import (
+    can_create_group_post as group_post_allowed,
+    can_join_group as group_join_allowed,
+    can_view_group,
+    can_view_post,
+    configured_matchmaking_group_id,
+    is_group_member,
+    is_matchmaking_group,
+    is_matchmaking_post,
+)
 # from scheduler import (
 #     manual_trigger_matchmaking_expiry_check,
 #     manual_trigger_expired_matchmaking_check,
@@ -342,19 +352,12 @@ def format_group_member_count(count):
 
 
 def _is_matchmaking_group(group):
-    """Identify the protected group solely by its configured immutable row ID."""
-    configured_id = current_app.config.get("MATCHMAKING_GROUP_ID")
-    try:
-        protected_group_id = int(configured_id)
-    except (TypeError, ValueError):
-        return False
-    return group.id == protected_group_id
+    """Compatibility wrapper around the centralized stable-ID policy."""
+    return is_matchmaking_group(group)
 
 
 def _can_create_group_post(group, user_account):
-    return not _is_matchmaking_group(group) or bool(
-        user_account.is_admin or user_account.is_super_admin
-    )
+    return group_post_allowed(group, user_account)
 
 
 load_dotenv()
@@ -2216,6 +2219,8 @@ def _notify_post_like(post, actor):
 @login_required
 def like_post(post_id):
     post = Post.query.get_or_404(post_id)
+    if not can_view_post(post, current_user):
+        return jsonify({"error": "Group access required"}), 403
 
     existing_like = Like.query.filter_by(
         user_id=current_user.id, post_id=post_id
@@ -2240,6 +2245,10 @@ def like_post(post_id):
 @login_required
 def repost_post(post_identifier):
     original_post = resolve_post_by_identifier(post_identifier)
+    if not can_view_post(original_post, current_user):
+        return jsonify(success=False, error="Group access required"), 403
+    if is_matchmaking_post(original_post):
+        return jsonify(success=False, error="Private group posts cannot be reposted"), 403
 
     existing_repost = Post.query.filter_by(
         author_id=current_user.id,
@@ -2275,6 +2284,10 @@ def repost_post(post_identifier):
 @login_required
 def share_post(post_identifier):
     original_post = resolve_post_by_identifier(post_identifier)
+    if not can_view_post(original_post, current_user):
+        return jsonify(success=False, error="Group access required"), 403
+    if is_matchmaking_post(original_post):
+        return jsonify(success=False, error="Private group posts cannot be shared"), 403
     payload = request.get_json(silent=True) or request.form
     content = (payload.get("content") or "").strip()
 
@@ -2315,8 +2328,13 @@ def delete_post(post_id):
     post = Post.query.get_or_404(post_id)
     if post.author_id != current_user.id:
         return jsonify(error="Unauthorized"), 403
-    db.session.delete(post)
-    db.session.commit()
+    try:
+        from utils.post_deletion import delete_post_safely
+
+        delete_post_safely(post, current_user)
+    except Exception:
+        current_app.logger.exception("Post deletion failed for post %s", post_id)
+        return jsonify(error="Unable to delete post"), 500
     return jsonify(success=True)
 
 
@@ -2550,6 +2568,8 @@ def _send_comment_social_pushes(targets, destination, post_id, actor):
 @login_required
 def add_comment(post_id):
     post = Post.query.get_or_404(post_id)
+    if not can_view_post(post, current_user):
+        return jsonify(success=False, error="Group access required"), 403
     data = request.get_json(silent=True) or {}
     content = data.get("content", "").strip()
 
@@ -2610,6 +2630,9 @@ def add_comment(post_id):
 @login_required
 def get_comments(post_id):
     try:
+        post = Post.query.get_or_404(post_id)
+        if not can_view_post(post, current_user):
+            return jsonify({"error": "Group access required"}), 403
         limit = request.args.get("limit", 20, type=int)
 
         # Get all comments or limit based on request
@@ -3615,9 +3638,26 @@ def search():
             ~Post.author_id.in_(list(blocked_ids)),
         )
         .join(User)
-        .limit(10)
-        .all()
     )
+    protected_group_id = configured_matchmaking_group_id()
+    if protected_group_id is not None and not (
+        current_user.is_admin or current_user.is_super_admin
+    ):
+        protected_member = db.session.execute(
+            db.select(
+                exists().where(
+                    and_(
+                        group_members.c.group_id == protected_group_id,
+                        group_members.c.user_id == current_user.id,
+                    )
+                )
+            )
+        ).scalar()
+        if not protected_member:
+            posts = posts.filter(
+                or_(Post.group_id.is_(None), Post.group_id != protected_group_id)
+            )
+    posts = posts.limit(10).all()
 
     users_data = [
         {
@@ -3650,6 +3690,8 @@ def search():
 @user.route("/get_post/<int:post_id>")
 def get_post(post_id):
     post = Post.query.get_or_404(post_id)
+    if not can_view_post(post, current_user):
+        return jsonify({"error": "Group access required"}), 403
     return jsonify(
         {
             "id": post.id,
@@ -4096,13 +4138,28 @@ def group_detail(group_id):
             return redirect(url_for("user.user_dashboard"))
         abort(404)
 
+    if not can_view_group(group, current_user):
+        abort(403)
+
     # Check membership properly
-    is_member = group.members.filter_by(id=current_user.id).first() is not None
+    is_member = is_group_member(group, current_user)
     can_view_group_members = bool(
         current_user.is_admin or current_user.is_super_admin
     )
     member_count = group.members.count() if can_view_group_members else None
-    can_create_group_post = is_member and _can_create_group_post(group, current_user)
+    can_create_group_post = _can_create_group_post(group, current_user)
+    can_join_current_group = not is_member and group_join_allowed(group, current_user)
+
+    featured_boosts = None
+    protected_matchmaking_group = _is_matchmaking_group(group)
+    if protected_matchmaking_group:
+        from utils.matchmaking_boosts import featured_boosts_for_viewer
+
+        featured_boosts = featured_boosts_for_viewer(
+            current_user,
+            page=request.args.get("boost_page", 1, type=int),
+            per_page=12,
+        )
 
     default_avatar = url_for("static", filename="assets/img/default-avatar.png")
 
@@ -4126,6 +4183,9 @@ def group_detail(group_id):
         member_count_label=group.public_member_count_label,
         can_view_group_members=can_view_group_members,
         can_create_group_post=can_create_group_post,
+        can_join_group=can_join_current_group,
+        is_matchmaking_group=protected_matchmaking_group,
+        featured_boosts=featured_boosts,
         posts=posts,
         current_user=current_user,
         default_avatar=default_avatar,
@@ -4137,6 +4197,8 @@ def group_detail(group_id):
 def report_comment(comment_id):
     """Report a comment"""
     comment = Comment.query.get_or_404(comment_id)
+    if not can_view_post(comment.post, current_user):
+        return jsonify({"success": False, "error": "Group access required"}), 403
     reason = request.form.get("report_reason")
     other_reason = request.form.get("other_reason", "")
 
@@ -4231,8 +4293,19 @@ def join_group(group_id):
     """Join a group"""
     group = Group.query.get_or_404(group_id)
 
-    if current_user in group.members.all():  # Use .all() to check membership
+    if is_group_member(group, current_user):
         return jsonify({"success": False, "error": "Already a member"})
+
+    if not group_join_allowed(group, current_user):
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": "This private group requires an invitation",
+                }
+            ),
+            403,
+        )
 
     group.members.append(current_user)
     group.member_count = group.members.count()  # Use .count() instead of len()
@@ -4264,7 +4337,7 @@ def create_group_post(group_id):
     """Create a post in a group"""
     group = Group.query.get_or_404(group_id)
 
-    if current_user not in group.members:
+    if not is_group_member(group, current_user):
         return jsonify({"success": False, "error": "Must be a member to post"})
 
     if not _can_create_group_post(group, current_user):
@@ -4351,6 +4424,9 @@ def create_group_post(group_id):
 @login_required
 def get_group_posts(group_id):
     """Get posts for a group with pagination"""
+    group = Group.query.get_or_404(group_id)
+    if not can_view_group(group, current_user):
+        return jsonify({"error": "Group access required"}), 403
     page = request.args.get("page", 1, type=int)
     per_page = 10
 
@@ -4432,10 +4508,14 @@ def report_content():
     if content_type == "post":
         post = db.session.get(Post, content_id)
         if post:
+            if not can_view_post(post, current_user):
+                return jsonify({"success": False, "error": "Group access required"}), 403
             reported_user_id = post.author_id
     elif content_type == "comment":
         comment = db.session.get(Comment, content_id)
         if comment:
+            if not can_view_post(comment.post, current_user):
+                return jsonify({"success": False, "error": "Group access required"}), 403
             reported_user_id = comment.author_id
 
     if reported_user_id is None:
@@ -4477,6 +4557,20 @@ def get_all_groups():
     privacy = request.args.get("privacy", "")
 
     query = Group.query.filter(Group.is_active.is_(True))
+
+    protected_group_id = configured_matchmaking_group_id()
+    if protected_group_id is not None and not (
+        current_user.is_admin or current_user.is_super_admin
+    ):
+        is_protected_member = exists().where(
+            and_(
+                group_members.c.group_id == protected_group_id,
+                group_members.c.user_id == current_user.id,
+            )
+        )
+        query = query.filter(
+            or_(Group.id != protected_group_id, is_protected_member)
+        )
 
     if search:
         query = query.filter(
@@ -4592,6 +4686,9 @@ def delete_group_comment(comment_id):
     try:
         comment = Comment.query.get_or_404(comment_id)
 
+        if not can_view_post(comment.post, current_user):
+            return jsonify({"success": False, "error": "Group access required"}), 403
+
         # Check if the current user is the author
         if comment.author_id != current_user.id:
             return jsonify({"success": False, "error": "Unauthorized"}), 403
@@ -4610,6 +4707,8 @@ def delete_group_comment(comment_id):
 def get_group_comments(post_id):
     try:
         post = Post.query.get_or_404(post_id)
+        if not can_view_post(post, current_user):
+            return jsonify({"error": "Group access required"}), 403
         comments = []
 
         for comment in post.comments_list:
@@ -4636,6 +4735,8 @@ def get_group_comments(post_id):
 def like_group_post(post_id):
     try:
         post = Post.query.get_or_404(post_id)
+        if not can_view_post(post, current_user):
+            return jsonify({"success": False, "error": "Group access required"}), 403
         liked = post.toggle_like(current_user.id)
         db.session.commit()
 
@@ -4651,6 +4752,9 @@ def like_group_post(post_id):
 @login_required
 def add_group_comment(post_id):
     try:
+        post = Post.query.get_or_404(post_id)
+        if not can_view_post(post, current_user):
+            return jsonify({"success": False, "error": "Group access required"}), 403
         data = request.get_json()
         content = data.get("content", "").strip()
 
@@ -4688,6 +4792,9 @@ from models import Reaction
 def react_to_post(post_id):
     """Handle post reactions"""
     try:
+        post = Post.query.get_or_404(post_id)
+        if not can_view_post(post, current_user):
+            return jsonify({"success": False, "error": "Group access required"}), 403
         data = request.get_json()
         reaction_type = data.get("reaction_type", "like")
 
@@ -4695,8 +4802,6 @@ def react_to_post(post_id):
         valid_reactions = ["like", "love", "care", "haha", "wow", "sad", "angry"]
         if reaction_type not in valid_reactions:
             return jsonify({"success": False, "error": "Invalid reaction type"}), 400
-
-        post = Post.query.get_or_404(post_id)
 
         # Check for existing reaction
         existing_reaction = Reaction.query.filter_by(
@@ -4771,6 +4876,8 @@ def view_shared_post(post_identifier):
         .filter_by(id=post.id)
         .first_or_404()
     )
+    if not can_view_post(post, current_user):
+        abort(403)
     return render_template("post_detail.html", post=post, share_meta=build_post_share_meta(post))
 
 
