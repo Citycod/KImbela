@@ -60,4 +60,4 @@ if __name__ == "__main__":
     print("[INFO] Socket.IO: Ready")
     print("=" * 50)
 
-    socketio.run(app, host="0.0.0.0", port=5001, debug=True)
+    socketio.run(app, host="0.0.0.0", port=5001, debug=False, use_reloader=False)
