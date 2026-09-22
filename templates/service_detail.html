@@ -39,14 +39,18 @@
         /* Service detail specific styles */
         .service-image {
             width: 100%;
-            height: 500px;
-            object-fit: cover;
+            height: min(62vh, 560px);
+            min-height: 280px;
+            object-fit: contain;
+            object-position: center;
+            background: #f3f4f6;
             border-radius: 10px;
         }
         
         @media (max-width: 768px) {
             .service-image {
-                height: 200px;
+                height: min(52vh, 420px);
+                min-height: 220px;
             }
         }
         
@@ -117,7 +121,8 @@
         /* Responsive adjustments */
         @media (max-width: 640px) {
             .service-image {
-                height: 180px;
+                height: 300px;
+                min-height: 200px;
             }
             
             .gallery-image {
@@ -377,7 +382,12 @@
     
     <!-- PRICING BADGE -->
     <div class="mb-4">
-        {% if service.price and service.price > 0 and not service.is_free %}
+        {% if service.is_contact_for_price %}
+        <div class="inline-flex items-center px-3 py-1.5 bg-violet-50 border border-violet-200 rounded-full">
+            <i class="bi bi-chat-dots text-violet-600 mr-1.5 text-sm"></i>
+            <span class="text-sm font-semibold text-violet-800">Contact for Price</span>
+        </div>
+        {% elif service.price and service.price > 0 and not service.is_free %}
         <!-- PAID SERVICE -->
         <div class="inline-flex items-center px-3 py-1.5 bg-yellow-50 border border-yellow-200 rounded-full">
             <i class="bi bi-tag text-yellow-600 mr-1.5 text-sm"></i>
@@ -404,7 +414,7 @@
     </div>
     
     <!-- DOWNLOAD AREA -->
-    {% if service.price and service.price > 0 and not service.is_free %}
+    {% if service.is_contact_for_price or (service.price and service.price > 0 and not service.is_free) %}
     <!-- ===== PAID SERVICE ===== -->
     <div class="space-y-3">
         <!-- Locked State -->
@@ -698,7 +708,9 @@ button:not(:disabled):hover {
                         
                         <!-- Price Box -->
                         <div class="text-right">
-                            {% if service.price is none or service.price == 0 %}
+                            {% if service.is_contact_for_price %}
+                            <div class="text-base font-bold text-violet-700">Contact for Price</div>
+                            {% elif service.price is none or service.price == 0 %}
                             <div class="text-lg font-bold text-green-600 formatted-amount">Free</div>
                             {% else %}
                             <div class="text-lg font-bold text-primary formatted-amount">
@@ -812,7 +824,9 @@ button:not(:disabled):hover {
                             <h4 class="font-bold text-xs text-gray-600 mb-1">Digital Content</h4>
                             <p class="text-gray-800 text-sm flex items-center">
                                 <i class="bi bi-file-earmark-text text-primary mr-1"></i>
-                                {% if service.price is none or service.price == 0 or service.is_free %}
+                                {% if service.is_contact_for_price %}
+                                <span class="text-violet-700">Contact seller for access</span>
+                                {% elif service.price is none or service.price == 0 or service.is_free %}
                                 <span class="text-green-600">Free Download Available</span>
                                 {% else %}
                                 <span class="text-primary">File Available After Purchase</span>
@@ -972,7 +986,9 @@ button:not(:disabled):hover {
                     <div class="mb-4 p-3 bg-gray-50 rounded-lg">
                         <div class="flex items-center justify-between mb-1">
                             <span class="text-gray-600 text-xs">Price</span>
-                            {% if service.price is none or service.price == 0 %}
+                            {% if service.is_contact_for_price %}
+                            <span class="text-base font-bold text-violet-700">Contact for Price</span>
+                            {% elif service.price is none or service.price == 0 %}
                             <span class="text-lg font-bold text-green-600 formatted-amount">Free</span>
                             {% else %}
                             <span class="text-lg font-bold text-primary formatted-amount">
@@ -994,6 +1010,16 @@ button:not(:disabled):hover {
                         
                         {% endif %}
                     </div>
+
+                    {% if service.is_contact_for_price and contact_price_action %}
+                    <a href="{{ contact_price_action.url }}"
+                       {% if contact_price_action.external %}target="_blank" rel="noopener noreferrer"{% endif %}
+                       class="mb-4 flex w-full items-center justify-center rounded-lg bg-violet-700 px-4 py-3 text-sm font-semibold text-white hover:bg-violet-800"
+                       data-service-id="{{ service.id }}" data-click-type="{{ contact_price_action.kind }}">
+                        <i class="bi bi-chat-dots mr-2"></i>{{ contact_price_action.label }}
+                    </a>
+                    {% if contact_price_action.kind == 'messenger' %}<p class="mb-4 text-xs text-gray-500">Opens Kimbela Messages with the seller. Nothing is sent automatically.</p>{% endif %}
+                    {% endif %}
                     
                     <!-- Contact Methods -->
                     <div class="space-y-2 mb-4">
@@ -1092,7 +1118,7 @@ button:not(:disabled):hover {
                     
                     <!-- If service has file but is paid, show reminder -->
                     <!-- If service has file but is paid, show reminder -->
-                    {% if service.digital_file and service.price and service.price > 0 and not service.is_free %}
+                    {% if service.digital_file and service.pricing_mode == 'fixed' and service.price and service.price > 0 and not service.is_free %}
                     <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg mb-3">
                         <h4 class="font-bold text-xs text-blue-800 mb-1 flex items-center">
                             <i class="bi bi-info-circle mr-1 text-xs"></i> File Access
@@ -1145,7 +1171,9 @@ button:not(:disabled):hover {
                                     <span class="text-xs text-gray-500">({{ related.review_count or 0 }})</span>
                                 </div>
                                 <div class="font-bold text-primary text-xs mt-1 formatted-amount">
-                                    {% if related.price is none or related.price == 0 %}
+                                    {% if related.is_contact_for_price %}
+                                    Contact for Price
+                                    {% elif related.price is none or related.price == 0 %}
                                     Free
                                     {% else %}
                                     {% set currency_symbols = {
@@ -1196,7 +1224,9 @@ button:not(:disabled):hover {
                                     <span class="text-xs text-gray-500">({{ seller_service.review_count or 0 }})</span>
                                 </div>
                                 <div class="font-bold text-primary text-xs mt-1 formatted-amount">
-                                    {% if seller_service.price is none or seller_service.price == 0 %}
+                                    {% if seller_service.is_contact_for_price %}
+                                    Contact for Price
+                                    {% elif seller_service.price is none or seller_service.price == 0 %}
                                     Free
                                     {% else %}
                                     {% set currency_symbols = {

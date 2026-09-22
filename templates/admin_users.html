@@ -25,6 +25,7 @@
               <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
               <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
               <option value="admins" {% if status_filter == 'admins' %}selected{% endif %}>Admins</option>
+              <option value="tests" {% if status_filter == 'tests' %}selected{% endif %}>Test Users</option>
               <option value="suspended" {% if status_filter == 'suspended' %}selected{% endif %}>Suspended</option>
           </select>
           <button
@@ -75,6 +76,7 @@
                                alt="{{ user.first_name }}" class="w-10 h-10 rounded-full object-cover">
                           <div>
                               <p class="font-medium text-gray-800">{{ user.first_name }} {{ user.last_name }}</p>
+                              {% if user.is_test_user %}<span class="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-800">Test Account</span>{% else %}<span class="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-slate-600">Real User</span>{% endif %}
                               <p class="text-sm text-gray-500">ID: {{ user.id }}</p>
                           </div>
                       </div>
@@ -155,6 +157,17 @@
                               <i class="bi bi-eye"></i>
                               View Profile
                           </button>
+                          {% if current_user.is_super_admin and user.is_test_user and not user.is_admin and not user.is_super_admin and not user.is_ai_persona %}
+                          <button
+                                  onclick="deleteTestUser({{ user.id }})"
+                                  class="flex items-center gap-2 rounded-lg bg-rose-100 px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-200 transition-colors"
+                                  title="Delete this explicitly marked test account"
+                                  aria-label="Delete test account"
+                          >
+                              <i class="bi bi-trash"></i>
+                              Delete Test User
+                          </button>
+                          {% endif %}
                       </div>
                   </td>
               </tr>
@@ -530,6 +543,21 @@ window.deleteAdmin = async function(userId) {
         }
     } catch (error) {
         showToast('Error deleting sub admin', 'error');
+    }
+};
+
+window.deleteTestUser = async function(userId) {
+    if (!confirm('Delete this TEST ACCOUNT? Accounts with dependent history will be anonymized and disabled instead of hard-deleted.')) return;
+    try {
+        const response = await apiCall(`/admin/users/${userId}/delete-test`, { method: 'POST' });
+        if (response.success) {
+            showToast(response.message || 'Test account removed', 'success');
+            loadUsersWithFilters();
+        } else {
+            showToast(response.error || 'Test account could not be removed', 'error');
+        }
+    } catch (error) {
+        showToast('Error removing test account', 'error');
     }
 };
 

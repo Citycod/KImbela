@@ -48,7 +48,7 @@ import cloudinary.api
 import cloudinary.utils
 import requests
 from io import BytesIO
-from urllib.parse import urlparse, unquote
+from urllib.parse import quote, urlparse, unquote
 import mimetypes
 from payments.payment_service import PaymentService
 from models import (
@@ -109,6 +109,32 @@ def get_listing_access_type(service):
     if service.subscription_status == "free":
         return "free"
     return "paid"
+
+
+def parse_listing_pricing(form):
+    """Return validated (mode, price, is_free) for listing mutations."""
+    mode = (form.get("pricing_mode") or form.get("pricing_type") or "fixed").strip().lower()
+    if mode == "paid":
+        mode = "fixed"
+    if mode not in {"fixed", "contact"}:
+        raise ValueError("Choose Fixed Price or Contact for Price.")
+    if mode == "contact":
+        return mode, None, False
+
+    raw_price = (form.get("price") or "").replace(",", "").strip()
+    try:
+        price = float(raw_price)
+    except (TypeError, ValueError):
+        raise ValueError("Enter a valid fixed price.")
+    if price <= 0:
+        raise ValueError("Fixed Price listings require a price greater than zero.")
+    return mode, price, False
+
+
+def format_listing_price(service):
+    if service.pricing_mode == "contact":
+        return "Contact for Price"
+    return format_price(service.price, service.currency or "USD")
 
 
 NIGERIA_COUNTRY_ALIASES = {"nigeria", "ng", "nga", "federal republic of nigeria"}
@@ -802,13 +828,19 @@ def main_market():
 
     if min_price and min_price.isdigit():
         min_price = int(min_price)
-        services_query = services_query.filter(MarketplaceService.price >= min_price)
+        services_query = services_query.filter(
+            MarketplaceService.pricing_mode == "fixed",
+            MarketplaceService.price >= min_price,
+        )
     else:
         min_price = None
 
     if max_price and max_price.isdigit():
         max_price = int(max_price)
-        services_query = services_query.filter(MarketplaceService.price <= max_price)
+        services_query = services_query.filter(
+            MarketplaceService.pricing_mode == "fixed",
+            MarketplaceService.price <= max_price,
+        )
     else:
         max_price = None
 
@@ -834,9 +866,15 @@ def main_market():
     elif sort_by == "rating":
         services_query = services_query.order_by(MarketplaceService.average_rating.desc())
     elif sort_by == "price_low":
-        services_query = services_query.order_by(MarketplaceService.price.asc())
+        services_query = services_query.order_by(
+            MarketplaceService.price.asc().nullslast(),
+            MarketplaceService.created_at.desc(),
+        )
     elif sort_by == "price_high":
-        services_query = services_query.order_by(MarketplaceService.price.desc())
+        services_query = services_query.order_by(
+            MarketplaceService.price.desc().nullslast(),
+            MarketplaceService.created_at.desc(),
+        )
     else:
         services_query = services_query.order_by(MarketplaceService.created_at.desc())
 
@@ -897,9 +935,9 @@ def main_market():
 
     # Get price statistics from currently visible marketplace listings
     price_cache_key = (
-        "marketplace:price_stats:paid"
+        "marketplace:price_stats:v2:paid"
         if marketplace_payments_enabled()
-        else "marketplace:price_stats:free"
+        else "marketplace:price_stats:v2:free"
     )
     price_stats = cache.get(price_cache_key)
     if not price_stats:
@@ -909,7 +947,7 @@ def main_market():
                 func.max(MarketplaceService.price).label("max_price"),
                 func.avg(MarketplaceService.price).label("avg_price"),
             )
-            .filter_by(status="active")
+            .filter_by(status="active", pricing_mode="fixed")
         )
         if marketplace_payments_enabled():
             price_query = price_query.join(User, MarketplaceService.seller_id == User.id)
@@ -1124,6 +1162,55 @@ def service_detail(slug):
         print(f"  Generated URL: {whatsapp_url}")
     # ========== END FIX ==========
 
+    message_url = url_for("user.user_dashboard", chat=service.seller_id)
+    contact_price_action = None
+    if service.is_contact_for_price and service.seller:
+        can_message_seller = False
+        if (
+            current_user.is_authenticated
+            and current_user.id != service.seller_id
+            and "messenger" in contact_methods
+            and current_user.can_interact_with(service.seller)
+        ):
+            can_message_seller = current_user.is_friend_with(service.seller)
+
+        if can_message_seller:
+            contact_price_action = {
+                "url": message_url,
+                "label": "Contact Seller for Price",
+                "kind": "messenger",
+                "external": False,
+            }
+        elif "whatsapp" in contact_methods and whatsapp_url:
+            contact_price_action = {
+                "url": whatsapp_url,
+                "label": "Contact Seller on WhatsApp",
+                "kind": "whatsapp",
+                "external": True,
+            }
+        elif "email" in contact_methods and service.email:
+            subject = quote(f"Inquiry about: {service.title}")
+            contact_price_action = {
+                "url": f"mailto:{service.email}?subject={subject}",
+                "label": "Email Seller for Price",
+                "kind": "email",
+                "external": False,
+            }
+        elif "phone" in contact_methods and service.phone_number:
+            contact_price_action = {
+                "url": f"tel:{service.phone_number}",
+                "label": "Call Seller for Price",
+                "kind": "phone",
+                "external": False,
+            }
+        else:
+            contact_price_action = {
+                "url": url_for("market.seller_profile", seller_id=service.seller_id),
+                "label": "View Seller Profile",
+                "kind": "profile",
+                "external": False,
+            }
+
     return render_template(
         "service_detail.html",
         service=service,
@@ -1136,6 +1223,9 @@ def service_detail(slug):
         currency_symbols=currency_symbols,
         now=utcnow(),
         whatsapp_url=whatsapp_url,  # Pass the generated URL to template
+        message_url=message_url,
+        contact_price_action=contact_price_action,
+        format_listing_price=format_listing_price,
     )
 
 
@@ -1322,23 +1412,15 @@ def create_service():
         state = normalize_marketplace_location(request.form.get("state"))
         city = normalize_marketplace_location(request.form.get("city"))
 
-        # FIX: Handle price input with commas
-        price_str = request.form.get("price", "0")
-
-        # Remove commas and convert to float
         try:
-            price = float(price_str.replace(",", "").strip())
-        except (ValueError, AttributeError):
-            price = 0.0
+            pricing_mode, price, is_free_value = parse_listing_pricing(request.form)
+        except ValueError as error:
+            flash(str(error), "danger")
+            return redirect(url_for("market.create_service"))
 
         currency = request.form.get("currency", "USD")
         service_type = request.form.get("service_type", "service")
         subscription_id = request.form.get("subscription_id")
-
-        # Debug logging
-        print(
-            f"Price from form: {price_str}, After conversion: {price}, Type: {type(price)}"
-        )
 
         if not all([title, category_id, description, country, state, city]):
             flash(
@@ -1361,12 +1443,6 @@ def create_service():
             if not subscription:
                 flash("Invalid subscription plan", "danger")
                 return redirect(url_for("market.create_service"))
-
-        # Determine if service is free
-        is_free_value = False
-        if price is None or price == 0:
-            is_free_value = True
-            price = 0.0  # Ensure price is set to 0
 
         # Debug form data
         print(f"Form data: {dict(request.form)}")
@@ -1398,7 +1474,8 @@ def create_service():
             description=description,
             short_description=request.form.get("short_description", "")[:500],
             service_type=service_type,
-            price=price,  # Already converted to float
+            price=price,
+            pricing_mode=pricing_mode,
             currency=currency,
             is_free=is_free_value,
             phone_number=request.form.get("phone_number"),
@@ -1537,17 +1614,14 @@ def edit_service(service_id):
             "short_description", service.short_description
         )[:500]
 
-        # FIX: Handle price input with commas
-        price_str = request.form.get("price")
-        if price_str is not None:
-            try:
-                # Remove commas and convert to float
-                price = float(price_str.replace(",", "").strip())
-                service.price = price
-                service.is_free = price == 0
-            except (ValueError, AttributeError):
-                flash("Invalid price format. Please enter a valid number.", "danger")
-                return redirect(url_for("market.edit_service", service_id=service_id))
+        try:
+            pricing_mode, price, is_free_value = parse_listing_pricing(request.form)
+        except ValueError as error:
+            flash(str(error), "danger")
+            return redirect(url_for("market.edit_service", service_id=service_id))
+        service.pricing_mode = pricing_mode
+        service.price = price
+        service.is_free = is_free_value
 
         service.phone_number = request.form.get("phone_number")
         service.whatsapp_number = request.form.get("whatsapp_number")
@@ -1658,7 +1732,7 @@ def fix_existing_services():
 @market.route("/delete_service/<int:service_id>", methods=["DELETE", "POST"])
 @login_required
 def delete_service(service_id):
-    """Delete a service - Accepts both DELETE and POST"""
+    """Delete an unreferenced service, or archive it when payment history exists."""
     try:
         service = MarketplaceService.query.get(service_id)
 
@@ -1669,6 +1743,20 @@ def delete_service(service_id):
         # Check ownership
         if service.seller_id != current_user.id:
             return jsonify({"success": False, "error": "Permission denied"}), 403
+
+        if MarketplacePayment.query.filter_by(service_id=service_id).first() is not None:
+            service.status = "archived"
+            service.rejection_reason = "Archived by seller; payment history preserved."
+            db.session.commit()
+            invalidate_cache(f"dashboard_stats_{current_user.id}_*")
+            invalidate_cache(f"dashboard_services_{current_user.id}_*")
+            return jsonify(
+                {
+                    "success": True,
+                    "archived": True,
+                    "message": "Listing archived because payment history depends on it.",
+                }
+            )
 
         # Delete related clicks first
         MarketplaceClick.query.filter_by(service_id=service_id).delete()
@@ -2037,8 +2125,9 @@ def api_services():
                     "title": service.title,
                     "slug": service.slug,
                     "short_description": service.short_description,
-                    "price": service.price,
-                    "formatted_price": format_price(service.price),
+                    "price": float(service.price) if service.price is not None else None,
+                    "pricing_mode": service.pricing_mode,
+                    "formatted_price": format_listing_price(service),
                     "is_free": service.is_free,
                     "is_featured": service.is_featured,
                     "cover_image": service.cover_image
@@ -3202,8 +3291,9 @@ def api_service_detail(slug):
             "slug": service.slug,
             "description": service.description,
             "short_description": service.short_description,
-            "price": service.price,
-            "formatted_price": format_price(service.price),
+            "price": float(service.price) if service.price is not None else None,
+            "pricing_mode": service.pricing_mode,
+            "formatted_price": format_listing_price(service),
             "is_free": service.is_free,
             "is_featured": service.is_featured,
             "cover_image": service.cover_image
@@ -3303,8 +3393,9 @@ def api_seller_detail(seller_id):
                     or url_for("static", filename="assets/img/default-service.jpg"),
                     "average_rating": float(service.average_rating),
                     "review_count": service.review_count,
-                    "price": service.price,
-                    "formatted_price": format_price(service.price),
+                    "price": float(service.price) if service.price is not None else None,
+                    "pricing_mode": service.pricing_mode,
+                    "formatted_price": format_listing_price(service),
                     "is_free": service.is_free,
                 }
             )
@@ -3833,7 +3924,9 @@ def get_dashboard_services():
                     "title": service.title,
                     "slug": service.slug,
                     "short_description": service.short_description,
-                    "price": float(service.price) if service.price else 0,
+                    "price": float(service.price) if service.price is not None else None,
+                    "pricing_mode": service.pricing_mode,
+                    "formatted_price": format_listing_price(service),
                     "currency": service.currency or "USD",
                     "is_free": service.is_free,
                     "listing_access": get_listing_access_type(service),
@@ -4013,6 +4106,10 @@ def download_file(service_id):
             return redirect(url_for("market.service_detail", slug=service.slug))
 
         # Check if service is free
+        if service.is_contact_for_price:
+            flash("Contact the seller to arrange access to this file.", "warning")
+            return redirect(url_for("market.service_detail", slug=service.slug))
+
         if service.price and service.price > 0 and not service.is_free:
             # Paid service - check if user has purchased
             if not current_user.is_authenticated:

@@ -12,10 +12,10 @@ from models import User, AIPersona
 from utils.ai_identity import is_ai_identity_customized
 
 PROFILE_PICS = {
-    "Amara": "https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg", # Or generated avatar URL
-    "Tunde": "https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg",
-    "Ngozi": "https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg",
-    "Emeka": "https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg",
+    "Amara": "/static/assets/img/ai-personas/emily-carter-v1.webp",
+    "Tunde": "/static/assets/img/ai-personas/daniel-brooks-v1.webp",
+    "Ngozi": "/static/assets/img/ai-personas/ngozi-eze-v1.webp",
+    "Emeka": "/static/assets/img/ai-personas/emeka-obi-v1.webp",
 }
 
 # Character-sheet names remain stable persona identifiers and email keys. Only
@@ -79,6 +79,7 @@ def seed():
                 if not identity_is_customized:
                     user.first_name = first_name
                     user.last_name = last_name
+                    user.profile_pic = PROFILE_PICS.get(name)
                 user.is_active = True
                 user.is_ai_persona = True
                 user.bio = p_data["bio_disclosure"]

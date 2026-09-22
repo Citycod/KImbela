@@ -455,7 +455,9 @@
                                 
                                 <div class="flex items-center justify-between">
                                     <div class="font-bold text-primary">
-                                        {% if service.is_free %}
+                                        {% if service.is_contact_for_price %}
+                                        Contact for Price
+                                        {% elif service.is_free %}
                                         Free
                                         {% else %}
                                         {% set currency_symbols = {

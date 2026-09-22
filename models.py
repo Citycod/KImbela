@@ -82,6 +82,9 @@ class User(db.Model, UserMixin):
     is_admin = db.Column(db.Boolean, default=False)
     is_active = db.Column(db.Boolean, default=False)
     is_ai_persona = db.Column(db.Boolean, default=False)
+    is_test_user = db.Column(
+        db.Boolean, default=False, server_default=db.false(), nullable=False
+    )
     city = db.Column(db.String(50), nullable=False)
     country = db.Column(db.String(50), nullable=False)
     state = db.Column(db.String(50), nullable=True)
@@ -1723,6 +1726,10 @@ class MarketplaceService(db.Model):
     __tablename__ = "marketplace_services"
 
     __table_args__ = (
+        db.CheckConstraint(
+            "pricing_mode IN ('fixed', 'contact')",
+            name="ck_marketplace_services_pricing_mode",
+        ),
         # Foreign key indexes
         db.Index("idx_services_seller_id", "seller_id"),
         db.Index("idx_services_category_id", "category_id"),
@@ -1765,7 +1772,10 @@ class MarketplaceService(db.Model):
     currency = db.Column(db.String(10), default="USD")
 
     # Pricing
-    price = db.Column(db.Numeric(10, 2), default=0)
+    price = db.Column(db.Numeric(10, 2), nullable=True)
+    pricing_mode = db.Column(
+        db.String(20), default="fixed", server_default="fixed", nullable=False
+    )
     is_free = db.Column(db.Boolean, default=False)
     is_featured = db.Column(db.Boolean, default=False)
 
@@ -1858,6 +1868,10 @@ class MarketplaceService(db.Model):
 
     def __repr__(self):
         return f"<MarketplaceService {self.title}>"
+
+    @property
+    def is_contact_for_price(self):
+        return self.pricing_mode == "contact"
 
     @property
     def contact_methods_list(self):

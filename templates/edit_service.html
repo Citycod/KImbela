@@ -587,28 +587,34 @@
                                   required>{{ service.description }}</textarea>
                     </div>
                     
+                    <!-- Pricing mode -->
+                    <div class="mb-4 rounded-lg border border-gray-200 p-3">
+                        <p class="mb-2 text-xs font-medium">Pricing</p>
+                        <label class="mr-4 text-xs"><input type="radio" name="pricing_mode" value="fixed" {% if not service.is_contact_for_price %}checked{% endif %} onchange="syncPricingMode()"> Fixed Price</label>
+                        <label class="text-xs"><input type="radio" name="pricing_mode" value="contact" {% if service.is_contact_for_price %}checked{% endif %} onchange="syncPricingMode()"> Contact for Price</label>
+                    </div>
                     <!-- Price -->
-                    <div class="mb-4">
+                    <div class="mb-4" id="priceFields">
                         <label for="price" class="block text-xs font-medium mb-1">
                             Price *
-                            <span class="text-xs text-gray-500">(Enter 0 for a free listing)</span>
+                            <span class="text-xs text-gray-500">(Must be greater than zero)</span>
                         </label>
                         <div class="relative">
                             <input type="text" 
                                    id="price"
                                    name="price"
-                                   value="{{ service.price or 0 }}"
+                                   value="{{ service.price if service.pricing_mode == 'fixed' and service.price else '' }}"
                                    class="w-full text-sm pl-8"
                                    placeholder="0"
-                                   required>
+                                   {% if not service.is_contact_for_price %}required{% endif %}>
                             <div class="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
                                 <span class="text-gray-500 text-xs">$</span>
                             </div>
                         </div>
                         <div class="mt-1 text-xs text-gray-600">
-                            {% if service.price == 0 %}
-                            <span class="text-green-600">Free listing</span>
-                            {% else %}
+                            {% if service.is_contact_for_price %}
+                            <span class="text-violet-600">Customers will contact you for the price.</span>
+                            {% elif service.price %}
                             <span>Current price: ${{ service.price|default(0) }}</span>
                             {% endif %}
                         </div>
@@ -945,7 +951,9 @@
                                             {% endfor %}
                                         </span></div>
                                         <div><span class="text-gray-600">Price:</span> <span class="font-medium">
-                                            {% if service.price == 0 %}
+                                            {% if service.is_contact_for_price %}
+                                                Contact for Price
+                                            {% elif service.price == 0 %}
                                                 Free
                                             {% else %}
                                                 ${{ service.price }}
@@ -1173,6 +1181,7 @@
 
         function validateStep2() {
             const description = document.getElementById('description').value.trim();
+            const pricingMode = document.querySelector('input[name="pricing_mode"]:checked').value;
             const price = document.getElementById('price').value.replace(/,/g, '');
             const country = document.getElementById('listing_country').value;
             const state = document.getElementById('listing_state').value;
@@ -1184,7 +1193,7 @@
                 return false;
             }
             
-            if (!price || isNaN(price) || parseFloat(price) < 0) {
+            if (pricingMode === 'fixed' && (!price || isNaN(price) || parseFloat(price) <= 0)) {
                 alert('Please enter a valid price');
                 document.getElementById('price').focus();
                 return false;
@@ -1198,6 +1207,17 @@
             
             return true;
         }
+
+        function syncPricingMode() {
+            const isFixed = document.querySelector('input[name="pricing_mode"]:checked').value === 'fixed';
+            const fields = document.getElementById('priceFields');
+            const input = document.getElementById('price');
+            fields.classList.toggle('hidden', !isFixed);
+            input.required = isFixed;
+            if (!isFixed) input.value = '';
+        }
+
+        document.addEventListener('DOMContentLoaded', syncPricingMode);
 
         function validateStep3() {
             const mainImageFile = document.getElementById('cover_image').files[0];

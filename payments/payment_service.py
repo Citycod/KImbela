@@ -75,15 +75,6 @@ class BasePaymentService:
             f"[INFO] [BASE PAYMENT INIT] Secret Key configured: {self.flutterwave_secret_key is not None}"
         )
 
-        if self.flutterwave_public_key:
-            print(
-                f"[INFO] [BASE PAYMENT INIT] Public Key: {self.flutterwave_public_key[:20]}..."
-            )
-        if self.flutterwave_secret_key:
-            print(
-                f"[INFO] [BASE PAYMENT INIT] Secret Key: {self.flutterwave_secret_key[:20]}..."
-            )
-
     def normalize_currency(self, currency=None):
         return (currency or self.default_currency or "USD").upper()
 

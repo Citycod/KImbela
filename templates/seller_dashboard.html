@@ -731,7 +731,9 @@
                                                     {% endif %}
                                                 </td>
                                                 <td class="font-bold text-sm">
-    {% if service.price is none or service.price == 0 %}
+    {% if service.is_contact_for_price %}
+        Contact for Price
+    {% elif service.price is none or service.price == 0 %}
         Free
     {% else %}
         {% set currency_symbol = currency_symbols.get(service.currency, '') %}
@@ -1066,8 +1068,9 @@
             let html = '';
             services.forEach(service => {
                 const statusBadge = getStatusBadge(service.status);
-                const price = service.is_free ? 'Free' : 
-                    `${getCurrencySymbol(service.currency)}${service.price.toFixed(2)}`;
+                const price = service.pricing_mode === 'contact'
+                    ? 'Contact for Price'
+                    : (service.is_free ? 'Free' : service.formatted_price);
                 const listingAccess = service.listing_access === 'free'
                     ? 'Free'
                     : (service.listing_access === 'paid' ? 'Paid' : 'Not Free');

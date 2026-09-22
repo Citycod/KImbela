@@ -1435,7 +1435,11 @@
     </div>
     
     <div class="text-right">
-        {% if not service.price or service.price == 0 %}
+        {% if service.is_contact_for_price %}
+        <div class="px-2 py-1 bg-violet-100 text-violet-700 font-bold rounded text-xs">
+            Contact for Price
+        </div>
+        {% elif not service.price or service.price == 0 %}
         <div class="px-2 py-1 bg-green-100 text-green-700 font-bold rounded text-xs">
             Free
         </div>

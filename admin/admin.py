@@ -26,6 +26,7 @@ from models import (
     AdPackage,
     PaymentTransaction,
     MarketplacePayment,
+    MarketplaceService,
     MatchmakingRequest,
     MatchmakingPayments,
     ActivityLog,
@@ -99,6 +100,7 @@ import re
 from cloudinary.uploader import upload
 import cloudinary
 from utils.group_description import sanitize_group_description
+from utils.user_deletion import delete_or_anonymize_test_user
 
 
 load_dotenv()
@@ -198,6 +200,12 @@ def _marketplace_payments_enabled():
     if stored_value is None:
         return default_enabled
     return str(stored_value).lower() in {"1", "true", "yes", "on"}
+
+
+def _require_super_admin_json():
+    if current_user.is_super_admin:
+        return None
+    return jsonify({"success": False, "error": "Super admin required"}), 403
 
 
 @admin.route("/admin_dashboard")
@@ -1607,6 +1615,47 @@ def admin_delete_user(user_id):
     return jsonify({"success": True})
 
 
+@admin.route("/admin/users/<int:user_id>/delete-test", methods=["POST"])
+@login_required
+def admin_delete_test_user(user_id):
+    denied = _require_super_admin_json()
+    if denied:
+        return denied
+
+    user = User.query.get_or_404(user_id)
+    if user.id == current_user.id:
+        return jsonify({"success": False, "error": "Cannot delete yourself"}), 403
+
+    original_email = user.email
+    try:
+        outcome, dependencies = delete_or_anonymize_test_user(user)
+        db.session.commit()
+    except ValueError as error:
+        db.session.rollback()
+        return jsonify({"success": False, "error": str(error)}), 403
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception(
+            "Super admin %s failed to delete test user %s", current_user.id, user_id
+        )
+        return jsonify({"success": False, "error": "Test user could not be deleted"}), 500
+
+    current_app.logger.info(
+        "Super admin %s %s test user %s (%s); dependencies=%s",
+        current_user.id,
+        outcome,
+        user_id,
+        original_email,
+        ",".join(dependencies) if dependencies else "none",
+    )
+    message = (
+        "Test user deleted."
+        if outcome == "deleted"
+        else "Test user anonymized and disabled because historical records depend on it."
+    )
+    return jsonify({"success": True, "outcome": outcome, "message": message})
+
+
 @admin.route("/admin/change_password", methods=["POST"])
 @login_required
 def admin_change_password():
@@ -2408,6 +2457,8 @@ def admin_users():
         query = query.filter_by(is_active=False)
     elif status_filter == "admins":
         query = query.filter(db.or_(User.is_admin == True, User.is_super_admin == True))
+    elif status_filter == "tests":
+        query = query.filter(User.is_test_user.is_(True))
     elif status_filter == "suspended":
         query = query.filter_by(is_active=False)
 
@@ -2432,6 +2483,91 @@ def admin_users():
         status_filter=status_filter,
         current_user=current_user,
     )
+
+
+@admin.route("/admin/marketplace")
+@login_required
+def admin_marketplace():
+    if not current_user.is_super_admin:
+        return jsonify({"error": "Access denied"}), 403
+
+    page = request.args.get("page", 1, type=int)
+    search = (request.args.get("search") or "").strip()
+    status_filter = (request.args.get("status") or "all").strip().lower()
+    pricing_filter = (request.args.get("pricing_mode") or "all").strip().lower()
+
+    query = MarketplaceService.query.options(
+        joinedload(MarketplaceService.seller),
+        joinedload(MarketplaceService.category),
+    )
+    if search:
+        wildcard = f"%{search}%"
+        query = query.filter(
+            or_(
+                MarketplaceService.title.ilike(wildcard),
+                MarketplaceService.description.ilike(wildcard),
+                MarketplaceService.seller.has(
+                    or_(
+                        User.first_name.ilike(wildcard),
+                        User.last_name.ilike(wildcard),
+                        User.email.ilike(wildcard),
+                    )
+                ),
+            )
+        )
+    allowed_statuses = {
+        "active",
+        "pending",
+        "rejected",
+        "paused",
+        "sold_out",
+        "awaiting_subscription",
+        "archived",
+    }
+    if status_filter in allowed_statuses:
+        query = query.filter(MarketplaceService.status == status_filter)
+    else:
+        status_filter = "all"
+    if pricing_filter in {"fixed", "contact"}:
+        query = query.filter(MarketplaceService.pricing_mode == pricing_filter)
+    else:
+        pricing_filter = "all"
+
+    listings = query.order_by(MarketplaceService.created_at.desc()).paginate(
+        page=page, per_page=25, error_out=False
+    )
+    return render_template(
+        "admin_marketplace.html",
+        listings=listings,
+        search=search,
+        status_filter=status_filter,
+        pricing_filter=pricing_filter,
+    )
+
+
+@admin.route("/admin/marketplace/<int:service_id>/archive", methods=["POST"])
+@login_required
+def admin_archive_marketplace_listing(service_id):
+    denied = _require_super_admin_json()
+    if denied:
+        return denied
+
+    service = MarketplaceService.query.get_or_404(service_id)
+    previous_status = service.status
+    service.status = "archived"
+    service.rejection_reason = (
+        (request.form.get("reason") or "Archived by super admin moderation.").strip()[:500]
+        or "Archived by super admin moderation."
+    )
+    db.session.commit()
+    current_app.logger.info(
+        "Super admin %s archived marketplace listing %s; previous_status=%s",
+        current_user.id,
+        service.id,
+        previous_status,
+    )
+    flash("Marketplace listing archived. Payment and order history was preserved.", "success")
+    return redirect(url_for("admin.admin_marketplace"))
 
 
 @admin.route("/admin/users/bulk_email", methods=["POST"])
@@ -2468,6 +2604,8 @@ def admin_bulk_email():
         query = query.filter_by(is_active=False)
     elif status_filter == "admins":
         query = query.filter(db.or_(User.is_admin == True, User.is_super_admin == True))
+    elif status_filter == "tests":
+        query = query.filter(User.is_test_user.is_(True))
     elif status_filter == "suspended":
         query = query.filter_by(is_active=False)
 
