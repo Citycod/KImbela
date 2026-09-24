@@ -1360,10 +1360,14 @@
     // ===== Modal Functions =====
     function openModal(modalId) {
         const modal = document.getElementById(modalId);
+        if (!modal) return;
+
         modal.classList.remove('hidden');
-        setTimeout(() => {
-            modal.querySelector('.transform').classList.remove('scale-95', 'opacity-0');
-        }, 10);
+        const panel = modal.querySelector('.transform');
+        if (panel) {
+            panel.classList.remove('scale-95', 'opacity-0');
+            panel.classList.add('scale-100', 'opacity-100');
+        }
 
         if (modalId === 'blockedUsersModal') {
             loadBlockedUsers();
@@ -1372,10 +1376,14 @@
 
     function closeModal(modalId) {
         const modal = document.getElementById(modalId);
-        modal.querySelector('.transform').classList.add('scale-95', 'opacity-0');
-        setTimeout(() => {
-            modal.classList.add('hidden');
-        }, 200);
+        if (!modal) return;
+
+        const panel = modal.querySelector('.transform');
+        if (panel) {
+            panel.classList.remove('scale-100', 'opacity-100');
+            panel.classList.add('scale-95', 'opacity-0');
+        }
+        modal.classList.add('hidden');
     }
 
     // ===== Image Preview =====
