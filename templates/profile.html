@@ -1281,6 +1281,27 @@
 </div>
 
 <!-- ======================= SCRIPTS ======================= -->
+<div class="modal fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden" id="editPostModal">
+    <div class="modal-dialog mx-4 w-full max-w-lg rounded-2xl bg-white shadow-strong">
+        <div class="flex items-center justify-between border-b border-gray-200 p-4">
+            <h3 class="text-lg font-semibold">Edit Post</h3>
+            <button type="button" class="rounded-full p-2 hover:bg-gray-100" onclick="closeModal('editPostModal')" aria-label="Close edit post">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="editPostForm">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <div class="p-4">
+                <textarea id="editPostContent" name="content" rows="5" required
+                          class="w-full resize-y rounded-xl border border-gray-300 p-3 text-sm focus:border-purple-500 focus:outline-none"></textarea>
+            </div>
+            <div class="border-t border-gray-200 p-4">
+                <button type="submit" class="w-full rounded-lg bg-purple-600 px-4 py-2.5 font-semibold text-white hover:bg-purple-700">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
     // ===== Tab Switching =====
     function switchTab(tabName) {
@@ -1526,6 +1547,10 @@
 
     // ===== Form Submission =====
     document.addEventListener('DOMContentLoaded', function() {
+        {% if request.args.get('edit') == '1' %}
+        openModal('editProfileModal');
+        {% endif %}
+
         // Profile Form
         document.getElementById('profileForm')?.addEventListener('submit', function(e) {
             e.preventDefault();

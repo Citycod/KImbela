@@ -1354,7 +1354,7 @@
                     {% for service in services.items %}
                     <div class="service-card bg-white rounded-xl shadow-soft overflow-hidden hover-lift fade-in">
                         <div class="relative">
-                            <a href="{{ url_for('market.service_detail', slug=service.slug) }}">
+                            <a href="{{ url_for('market.service_detail', listing_ref=service.id) }}">
                                 <img src="{{ service.cover_image or url_for('static', filename='assets/img/default-service.jpg') }}" 
                                      alt="{{ service.title }}" 
                                      class="w-full h-40 object-contain bg-black/5 max-h-96"
@@ -1370,7 +1370,7 @@
                         </div>
                         
                         <div class="p-3">
-                            <a href="{{ url_for('market.service_detail', slug=service.slug) }}">
+                            <a href="{{ url_for('market.service_detail', listing_ref=service.id) }}">
                                 <h3 class="font-bold mb-1 line-clamp-1 text-sm hover:text-primary transition-colors">
                                     {{ service.title }}
                                 </h3>
@@ -1452,7 +1452,7 @@
 </div>
                             
                             <!-- View Button -->
-                            <a href="{{ url_for('market.service_detail', slug=service.slug) }}" 
+                            <a href="{{ url_for('market.service_detail', listing_ref=service.id) }}"
                                class="block w-full py-2 gradient-primary text-white rounded-lg font-medium hover:opacity-90 transition-opacity text-sm text-center">
                                 <i class="bi bi-eye mr-1"></i> View Details
                             </a>

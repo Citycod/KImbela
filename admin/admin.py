@@ -213,7 +213,7 @@ def _require_super_admin_json():
 def admin_dashboard():
     if not current_user.is_super_admin:
         flash("Access denied. Super admin privileges required.", "danger")
-        return redirect(url_for("auth.user_dashboard"))
+        return redirect(url_for("user.user_dashboard"))
 
     # Get statistics for dashboard
     total_users = User.query.count()

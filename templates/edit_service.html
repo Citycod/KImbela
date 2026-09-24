@@ -994,8 +994,11 @@
                                                 class="w-full text-xs">
                                             <option value="draft" {% if service.status == 'draft' %}selected{% endif %}>Draft</option>
                                             <option value="pending" {% if service.status == 'pending' %}selected{% endif %}>Submit for Review</option>
-                                            {% if service.status == 'active' %}
-                                            <option value="active" selected>Active</option>
+                                            {% if service.status in ['active', 'paused'] %}
+                                            <option value="active" {% if service.status == 'active' %}selected{% endif %}>Active</option>
+                                            <option value="paused" {% if service.status == 'paused' %}selected{% endif %}>Paused</option>
+                                            {% elif service.status not in ['draft', 'pending', 'rejected'] %}
+                                            <option value="{{ service.status }}" selected>{{ service.status|replace('_', ' ')|title }}</option>
                                             {% endif %}
                                         </select>
                                     </div>

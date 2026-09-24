@@ -39,6 +39,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import or_, desc, func
 from werkzeug.utils import secure_filename
 import time
+import re
 from cache_utils import cache_response, invalidate_cache
 import requests
 from flask import send_file, make_response, jsonify
@@ -72,6 +73,64 @@ env_path = os.path.join(os.path.dirname(__file__), ".env")
 load_dotenv(dotenv_path=env_path)
 
 market = Blueprint("market", __name__)
+
+
+def normalize_marketplace_phone(phone_number):
+    """Return an E.164-like digit string for deliberate listing contact data."""
+    if not phone_number:
+        return None
+
+    raw = str(phone_number).strip()
+    digits = re.sub(r"\D", "", raw)
+    if digits.startswith("00"):
+        digits = digits[2:]
+    elif digits.startswith("0") and len(digits) == 11:
+        # Existing Marketplace forms and examples use Nigerian local numbers.
+        digits = "234" + digits[1:]
+    elif not raw.startswith("+") and len(digits) == 10:
+        digits = "234" + digits
+
+    if not 7 <= len(digits) <= 15 or digits.startswith("0"):
+        return None
+    return digits
+
+
+def marketplace_seller_contact(service):
+    """Resolve listing contact data with the public seller phone as fallback."""
+    listing_phone = normalize_marketplace_phone(service.phone_number)
+    listing_whatsapp = normalize_marketplace_phone(service.whatsapp_number)
+    public_seller_phone = normalize_marketplace_phone(
+        service.seller.phone_number if service.seller else None
+    )
+    contact_methods = set(service.contact_methods_list)
+
+    call_digits = listing_phone or listing_whatsapp or public_seller_phone
+    whatsapp_digits = listing_whatsapp
+    if not whatsapp_digits and "whatsapp" in contact_methods:
+        whatsapp_digits = listing_phone or public_seller_phone
+    message = quote(f"Hi! I'm interested in your listing: {service.title}")
+    return {
+        "display_number": (
+            f"+{call_digits or whatsapp_digits}"
+            if (call_digits or whatsapp_digits)
+            else None
+        ),
+        "call_url": f"tel:+{call_digits}" if call_digits else None,
+        "whatsapp_url": (
+            f"https://wa.me/{whatsapp_digits}?text={message}"
+            if whatsapp_digits
+            else None
+        ),
+    }
+
+
+def seller_status_options(service):
+    """Statuses a seller may select without granting moderation powers."""
+    if service.status in {"active", "paused"}:
+        return {"active", "paused", "draft", "pending"}
+    if service.status in {"draft", "pending", "rejected"}:
+        return {"draft", "pending"}
+    return {service.status}
 
 
 def marketplace_payments_enabled():
@@ -1026,10 +1085,18 @@ def get_marketplace_category_maps():
     return slug_to_ids, slug_to_name
 
 
-@market.route("/service/<slug>", methods=["GET"])
-def service_detail(slug):
+@market.route("/service/<path:listing_ref>", methods=["GET"])
+def service_detail(listing_ref):
     """View service details"""
-    service = MarketplaceService.query.filter_by(slug=slug).first_or_404()
+    service = None
+    if listing_ref.isdigit():
+        service = db.session.get(MarketplaceService, int(listing_ref))
+    if service is None:
+        # Preserve old shared/bookmarked slug URLs, including unsafe legacy slugs.
+        # All newly rendered links use the stable numeric ID.
+        service = MarketplaceService.query.filter_by(slug=listing_ref).first()
+    if service is None:
+        abort(404)
 
     # Check if service is active or user is seller/admin
     if service.status != "active" and (
@@ -1112,55 +1179,8 @@ def service_detail(slug):
         "ZAR": "R",
     }
 
-    # ========== FIXED WHATSAPP URL GENERATION ==========
-    def generate_whatsapp_url(phone_number, message):
-        """Generate a properly formatted WhatsApp URL with country code"""
-        if not phone_number:
-            return None
-
-        import re
-        from urllib.parse import quote
-
-        # Clean phone number - remove all non-digit characters
-        digits = re.sub(r"\D", "", str(phone_number))
-
-        if not digits:
-            return None
-
-        # Convert to WhatsApp format
-        if digits.startswith("0") and len(digits) == 11:
-            # Format: 08012345678 → 2348012345678
-            whatsapp_number = "234" + digits[1:]
-        elif len(digits) == 10:
-            # Format: 8012345678 → 2348012345678
-            whatsapp_number = "234" + digits
-        elif digits.startswith("234") and len(digits) == 13:
-            # Already correct: 2348012345678
-            whatsapp_number = digits
-        else:
-            # Try to use as-is
-            whatsapp_number = digits
-
-        # Remove any remaining non-digits (just in case)
-        whatsapp_number = re.sub(r"\D", "", whatsapp_number)
-
-        # Encode message
-        encoded_message = quote(message)
-
-        # Generate URL
-        return f"https://wa.me/{whatsapp_number}?text={encoded_message}"
-
-    # Generate WhatsApp URL for the service
-    whatsapp_url = None
-    if service.whatsapp_number:
-        message = f"Hi! I'm interested in your service: {service.title}"
-        whatsapp_url = generate_whatsapp_url(service.whatsapp_number, message)
-
-        # Debug logging
-        print(f"📱 WhatsApp Debug for service {service.id}:")
-        print(f"  Raw number: {service.whatsapp_number}")
-        print(f"  Generated URL: {whatsapp_url}")
-    # ========== END FIX ==========
+    seller_contact = marketplace_seller_contact(service)
+    whatsapp_url = seller_contact["whatsapp_url"]
 
     message_url = url_for("user.user_dashboard", chat=service.seller_id)
     contact_price_action = None
@@ -1181,13 +1201,6 @@ def service_detail(slug):
                 "kind": "messenger",
                 "external": False,
             }
-        elif "whatsapp" in contact_methods and whatsapp_url:
-            contact_price_action = {
-                "url": whatsapp_url,
-                "label": "Contact Seller on WhatsApp",
-                "kind": "whatsapp",
-                "external": True,
-            }
         elif "email" in contact_methods and service.email:
             subject = quote(f"Inquiry about: {service.title}")
             contact_price_action = {
@@ -1196,14 +1209,7 @@ def service_detail(slug):
                 "kind": "email",
                 "external": False,
             }
-        elif "phone" in contact_methods and service.phone_number:
-            contact_price_action = {
-                "url": f"tel:{service.phone_number}",
-                "label": "Call Seller for Price",
-                "kind": "phone",
-                "external": False,
-            }
-        else:
+        elif not (seller_contact["call_url"] or seller_contact["whatsapp_url"]):
             contact_price_action = {
                 "url": url_for("market.seller_profile", seller_id=service.seller_id),
                 "label": "View Seller Profile",
@@ -1225,6 +1231,7 @@ def service_detail(slug):
         whatsapp_url=whatsapp_url,  # Pass the generated URL to template
         message_url=message_url,
         contact_price_action=contact_price_action,
+        seller_contact=seller_contact,
         format_listing_price=format_listing_price,
     )
 
@@ -1582,8 +1589,7 @@ def edit_service(service_id):
 
     # Check ownership
     if service.seller_id != current_user.id:
-        flash("You don't have permission to edit this service", "danger")
-        return redirect(url_for("market.seller_dashboard"))
+        return jsonify({"success": False, "error": "Permission denied"}), 403
 
     if request.method == "GET":
         ensure_marketplace_categories()
@@ -1607,6 +1613,10 @@ def edit_service(service_id):
 
     # POST: Update service
     try:
+        requested_status = request.form.get("status", service.status)
+        if requested_status not in seller_status_options(service):
+            return jsonify({"success": False, "error": "Invalid listing status"}), 400
+
         service.title = request.form.get("title", service.title)
         service.category_id = request.form.get("category_id", service.category_id)
         service.description = bleach.clean(request.form.get("description", service.description), strip=True)
@@ -1631,6 +1641,7 @@ def edit_service(service_id):
         service.country = normalize_marketplace_location(request.form.get("country"))
         service.state = normalize_marketplace_location(request.form.get("state"))
         service.city = normalize_marketplace_location(request.form.get("city"))
+        service.status = requested_status
 
         if not all([service.country, service.state, service.city]):
             flash("Country, state, and city are required for every listing.", "danger")
@@ -2124,6 +2135,9 @@ def api_services():
                     "id": service.id,
                     "title": service.title,
                     "slug": service.slug,
+                    "detail_url": url_for(
+                        "market.service_detail", listing_ref=service.id
+                    ),
                     "short_description": service.short_description,
                     "price": float(service.price) if service.price is not None else None,
                     "pricing_mode": service.pricing_mode,
@@ -3389,6 +3403,9 @@ def api_seller_detail(seller_id):
                     "id": service.id,
                     "title": service.title,
                     "slug": service.slug,
+                    "detail_url": url_for(
+                        "market.service_detail", listing_ref=service.id
+                    ),
                     "cover_image": service.cover_image
                     or url_for("static", filename="assets/img/default-service.jpg"),
                     "average_rating": float(service.average_rating),
@@ -3923,6 +3940,9 @@ def get_dashboard_services():
                     "id": service.id,
                     "title": service.title,
                     "slug": service.slug,
+                    "detail_url": url_for(
+                        "market.service_detail", listing_ref=service.id
+                    ),
                     "short_description": service.short_description,
                     "price": float(service.price) if service.price is not None else None,
                     "pricing_mode": service.pricing_mode,
@@ -4012,6 +4032,13 @@ def get_dashboard_reviews():
                         review.service.title if review.service else "Unknown Service"
                     ),
                     "service_slug": review.service.slug if review.service else "",
+                    "service_detail_url": (
+                        url_for(
+                            "market.service_detail", listing_ref=review.service.id
+                        )
+                        if review.service
+                        else ""
+                    ),
                 }
             )
 
@@ -4040,7 +4067,7 @@ def download_service_file(service_id):
 
         if not service.digital_file:
             flash("No digital file available", "warning")
-            return redirect(url_for("market.service_detail", slug=service.slug))
+            return redirect(url_for("market.service_detail", listing_ref=service.id))
 
         # Check if it's a preview request
         is_preview = request.args.get("preview") == "true"
@@ -4057,7 +4084,7 @@ def download_service_file(service_id):
     except Exception as e:
         print(f"Download error: {str(e)}")
         flash("Error downloading file", "error")
-        return redirect(url_for("market.service_detail", slug=service.slug))
+        return redirect(url_for("market.service_detail", listing_ref=service.id))
 
 
 import cloudinary.uploader
@@ -4103,12 +4130,12 @@ def download_file(service_id):
 
         if not service.digital_file:
             flash("No file available for download", "warning")
-            return redirect(url_for("market.service_detail", slug=service.slug))
+            return redirect(url_for("market.service_detail", listing_ref=service.id))
 
         # Check if service is free
         if service.is_contact_for_price:
             flash("Contact the seller to arrange access to this file.", "warning")
-            return redirect(url_for("market.service_detail", slug=service.slug))
+            return redirect(url_for("market.service_detail", listing_ref=service.id))
 
         if service.price and service.price > 0 and not service.is_free:
             # Paid service - check if user has purchased
@@ -4193,7 +4220,7 @@ def download_file(service_id):
         print(f"Download error: {str(e)}")
         traceback.print_exc()
         flash("Error downloading file. Please try again.", "error")
-        return redirect(url_for("market.service_detail", slug=service.slug))
+        return redirect(url_for("market.service_detail", listing_ref=service.id))
 
 
 # Add these routes to market.py

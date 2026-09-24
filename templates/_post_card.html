@@ -3,6 +3,7 @@
 
 <div
     id="post-{{ post.id }}"
+    data-post-id="{{ post.id }}"
     class="bg-white rounded-xl shadow-medium p-6 mb-6 hover-lift transition-all duration-300 border border-gray-100 fade-in card-hover">
     <!-- Header -->
     <div class="flex items-center justify-between mb-4">
@@ -27,7 +28,7 @@
                 <i class="fas fa-ellipsis-h"></i>
             </button>
             <div class="dropdown-menu absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-strong overflow-hidden z-10 hidden">
-                {% if post.author.id == current_user.id %}
+                {% if post.author.id == current_user.id and not post.author.is_ai_persona %}
                 <a class="dropdown-item block px-4 py-2 hover:bg-gray-50 transition-colors text-blue-600 edit-post"
                   href="#" data-post-id="{{ post.id }}">
                   Edit
@@ -59,7 +60,7 @@
         {% endif %}
 
         {% if post.content %}
-        <p class="text-gray-800 leading-relaxed text-sm whitespace-pre-wrap break-words">{{ post.content }}</p>
+        <p class="post-text text-gray-800 leading-relaxed text-sm whitespace-pre-wrap break-words">{{ post.content }}</p>
         {% endif %}
 
         {% if post.shared_post %}

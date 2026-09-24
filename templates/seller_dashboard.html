@@ -773,7 +773,7 @@
                                                            title="Edit">
                                                             <i class="bi bi-pencil"></i>
                                                         </a>
-                                                        <a href="{{ url_for('market.service_detail', slug=service.slug) }}" 
+                                                        <a href="{{ url_for('market.service_detail', listing_ref=service.id) }}"
                                                            class="w-7 h-7 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 flex items-center justify-center text-sm"
                                                            title="View">
                                                             <i class="bi bi-eye"></i>
@@ -1100,7 +1100,7 @@
                                    title="Edit">
                                     <i class="bi bi-pencil"></i>
                                 </a>
-                                <a href="/service/${service.slug}" 
+                                <a href="${service.detail_url}"
                                    class="w-7 h-7 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 flex items-center justify-center text-sm"
                                    title="View">
                                     <i class="bi bi-eye"></i>
@@ -1311,7 +1311,7 @@
                                 <p class="text-sm mb-2">${review.comment || 'No comment provided'}</p>
                                 <div class="flex items-center justify-between">
                                     <p class="text-xs text-gray-600">- ${review.customer_name}</p>
-                                    <a href="/service/${review.service_slug}" class="text-xs text-primary hover:underline">View Listing</a>
+                                    <a href="${review.service_detail_url}" class="text-xs text-primary hover:underline">View Listing</a>
                                 </div>
                             </div>
                         `;

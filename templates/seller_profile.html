@@ -183,7 +183,7 @@
                         </div>
                     </div>
                     {% else %}
-                    <a href="{{ url_for('user.login') }}" class="btn btn-primary btn-sm">
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-sm">
                         <i class="bi bi-box-arrow-in-right text-xs"></i> Login
                     </a>
                     {% endif %}
@@ -418,7 +418,7 @@
                     <!-- Services Grid -->
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {% for service in services.items %}
-                        <a href="{{ url_for('market.service_detail', slug=service.slug) }}" 
+                        <a href="{{ url_for('market.service_detail', listing_ref=service.id) }}"
                            class="service-card block">
                             <div class="relative">
                                 <img src="{{ service.cover_image or url_for('static', filename='assets/img/default-service.jpg') }}" 
@@ -587,7 +587,7 @@
                                 </div>
                                 
                                 {% if review.service %}
-                                <a href="{{ url_for('market.service_detail', slug=review.service.slug) }}" 
+                                <a href="{{ url_for('market.service_detail', listing_ref=review.service.id) }}"
                                    class="text-sm text-primary hover:underline">
                                     View Service
                                 </a>

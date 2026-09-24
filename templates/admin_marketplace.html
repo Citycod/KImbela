@@ -58,7 +58,7 @@
             <td class="p-4 text-slate-600">{{ service.created_at.strftime('%b %d, %Y') if service.created_at else 'Unknown' }}</td>
             <td class="p-4">
               <div class="flex gap-2">
-                <a href="{{ url_for('market.service_detail', slug=service.slug) }}" class="rounded-lg bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700">Inspect</a>
+                <a href="{{ url_for('market.service_detail', listing_ref=service.id) }}" class="rounded-lg bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700">Inspect</a>
                 {% if service.status != 'archived' %}
                 <form method="post" action="{{ url_for('admin.admin_archive_marketplace_listing', service_id=service.id) }}" onsubmit="return confirm('Archive this product? It will be hidden while payment and order history remains intact.')">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token }}">

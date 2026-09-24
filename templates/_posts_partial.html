@@ -32,7 +32,7 @@
             <div
                 class="dropdown-menu absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-strong overflow-hidden z-10 hidden"
             >
-                {% if post.author.id == current_user.id %}
+                {% if post.author.id == current_user.id and not post.author.is_ai_persona %}
                 <a
                     class="dropdown-item block px-4 py-2 hover:bg-fb-gray transition-colors text-blue-600 edit-post"
                     href="#"

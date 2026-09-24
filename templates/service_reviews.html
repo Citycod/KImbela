@@ -102,7 +102,7 @@
             <ol class="flex items-center space-x-2 text-sm">
                 <li><a href="{{ url_for('market.main_market') }}" class="text-blue-600 hover:underline">Marketplace</a></li>
                 <li><i class="bi bi-chevron-right text-gray-400"></i></li>
-                <li><a href="{{ url_for('market.service_detail', slug=service.slug) }}" class="text-blue-600 hover:underline">{{ service.title[:30] }}{{ '...' if service.title|length > 30 }}</a></li>
+                <li><a href="{{ url_for('market.service_detail', listing_ref=service.id) }}" class="text-blue-600 hover:underline">{{ service.title[:30] }}{{ '...' if service.title|length > 30 }}</a></li>
                 <li><i class="bi bi-chevron-right text-gray-400"></i></li>
                 <li class="text-gray-600">Reviews</li>
             </ol>

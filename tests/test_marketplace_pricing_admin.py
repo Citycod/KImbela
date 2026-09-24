@@ -34,6 +34,9 @@ def _login(client, user):
     with client.session_transaction() as session:
         session["_user_id"] = str(user.id)
         session["_fresh"] = True
+    from flask import g
+
+    g._login_user = user
 
 
 def _category(db):
@@ -191,7 +194,7 @@ def test_edit_pricing_mode_transitions_and_owner_authorization(db, client):
     client.get("/logout")
     _login(client, stranger)
     denied = client.post(f"/edit/{service.id}", data=_listing_form(category))
-    assert denied.status_code == 302
+    assert denied.status_code == 403
     db.session.refresh(service)
     assert float(service.price) == 44
 
@@ -335,7 +338,7 @@ def test_contact_price_digital_download_is_not_treated_as_free(db, client):
     )
     response = client.get(f"/download/{service.id}")
     assert response.status_code == 302
-    assert response.location.endswith(f"/service/{service.slug}")
+    assert response.location.endswith(f"/service/{service.id}")
 
 
 def test_test_user_deletion_is_marker_gated_and_dependency_safe(db, client):

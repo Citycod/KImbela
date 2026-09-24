@@ -360,6 +360,28 @@ def _can_create_group_post(group, user_account):
     return group_post_allowed(group, user_account)
 
 
+def _can_owner_manage_post(post, user_account):
+    """Central owner policy for feed and group edit/delete endpoints."""
+    if post is None or post.author_id != user_account.id:
+        return False
+    if post.author and post.author.is_ai_persona:
+        # AI moderation has a separate, super-admin-only route.
+        return False
+    if post.group_id is None:
+        return True
+
+    group = db.session.get(Group, post.group_id)
+    if group is None or not group.is_active:
+        return False
+    if not can_view_group(group, user_account) or not is_group_member(
+        group, user_account
+    ):
+        return False
+    if is_matchmaking_post(post):
+        return bool(user_account.is_admin or user_account.is_super_admin)
+    return True
+
+
 load_dotenv()
 
 env_path = os.path.join(os.path.dirname(__file__), ".env")
@@ -2326,7 +2348,7 @@ def share_post(post_identifier):
 @login_required
 def delete_post(post_id):
     post = Post.query.get_or_404(post_id)
-    if post.author_id != current_user.id:
+    if not _can_owner_manage_post(post, current_user):
         return jsonify(error="Unauthorized"), 403
     try:
         from utils.post_deletion import delete_post_safely
@@ -2344,9 +2366,12 @@ def delete_post(post_id):
 def edit_post():
     post_id = request.form.get("post_id")
     post = Post.query.get_or_404(post_id)
-    if post.author_id != current_user.id:
+    if not _can_owner_manage_post(post, current_user):
         return jsonify(error="Unauthorized"), 403
-    post.content = request.form.get("content", "").strip()
+    content = request.form.get("content", "").strip()
+    if not content:
+        return jsonify(error="Content cannot be empty"), 400
+    post.content = content
     db.session.commit()
     return jsonify(success=True)
 
@@ -4662,8 +4687,7 @@ def edit_group_post(post_id):
     try:
         post = Post.query.get_or_404(post_id)
 
-        # Check if the current user is the author
-        if post.author_id != current_user.id:
+        if not _can_owner_manage_post(post, current_user):
             return jsonify({"success": False, "error": "Unauthorized"}), 403
 
         new_content = request.form.get("post_content")

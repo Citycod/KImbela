@@ -1021,100 +1021,41 @@ button:not(:disabled):hover {
                     {% if contact_price_action.kind == 'messenger' %}<p class="mb-4 text-xs text-gray-500">Opens Kimbela Messages with the seller. Nothing is sent automatically.</p>{% endif %}
                     {% endif %}
                     
-                    <!-- Contact Methods -->
-                    <div class="space-y-2 mb-4">
-                        {% if contact_methods %}
-                           <!-- WhatsApp Link (with data attributes) -->
-<!-- Replace the entire WhatsApp section with: -->
-<!-- WhatsApp Link - USING THE FIXED URL -->
-
-
-{% if 'whatsapp' in contact_methods and whatsapp_url %}
-    <a href="{{ whatsapp_url }}" 
-       target="_blank"
-       class="contact-method flex items-center justify-between bg-green-50 border-green-200 hover:bg-green-100 transition-colors"
-       data-service-id="{{ service.id }}"
-       data-click-type="whatsapp">
-        <div class="flex items-center">
-            <i class="bi bi-whatsapp text-green-600 mr-2 text-sm"></i>
-            <span class="font-medium text-xs">WhatsApp</span>
-        </div>
-        <i class="bi bi-arrow-right text-green-600 text-xs"></i>
-    </a>
-{% elif service.whatsapp_number %}
-    <!-- Fallback if no URL generated -->
-    <a href="https://wa.me/{{ service.whatsapp_number|replace('+', '')|replace(' ', '')|replace('-', '')|replace('(', '')|replace(')', '')|replace('.', '') }}?text=Hi!%20I'm%20interested%20in%20your%20service:%20{{ service.title|urlencode }}" 
-       target="_blank"
-       class="contact-method flex items-center justify-between bg-green-50 border-green-200 hover:bg-green-100 transition-colors"
-       data-service-id="{{ service.id }}"
-       data-click-type="whatsapp">
-        <div class="flex items-center">
-            <i class="bi bi-whatsapp text-green-600 mr-2 text-sm"></i>
-            <span class="font-medium text-xs">WhatsApp (Fallback)</span>
-        </div>
-        <i class="bi bi-arrow-right text-green-600 text-xs"></i>
-    </a>
-{% endif %}
-
-                            
-                            {% if 'phone' in contact_methods and service.phone_number %}
-                            <a href="tel:{{ service.phone_number }}" 
-                               class="contact-method flex items-center justify-between bg-blue-50 border-blue-200 hover:bg-blue-100 transition-colors">
-                                <div class="flex items-center">
-                                    <i class="bi bi-telephone text-blue-600 mr-2 text-sm"></i>
-                                    <span class="font-medium text-xs">Call</span>
-                                </div>
-                                <i class="bi bi-arrow-right text-blue-600 text-xs"></i>
+                    <!-- Deliberate public Marketplace contact actions. Pricing mode
+                         changes price presentation only, never contact visibility. -->
+                    <section class="mb-4 rounded-xl border border-gray-200 bg-gray-50 p-4" aria-labelledby="seller-contact-heading">
+                        <h3 id="seller-contact-heading" class="mb-1 text-sm font-bold text-gray-900">Seller Contact</h3>
+                        <p class="text-sm font-medium text-gray-800">{{ service.seller.full_name }}</p>
+                        {% if seller_contact.display_number %}
+                        <p class="mb-3 text-xs text-gray-600">{{ seller_contact.display_number }}</p>
+                        <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                            {% if seller_contact.call_url %}
+                            <a href="{{ seller_contact.call_url }}"
+                               class="contact-method flex items-center justify-center border-blue-200 bg-blue-50 font-semibold text-blue-700 hover:bg-blue-100"
+                               data-service-id="{{ service.id }}" data-click-type="phone">
+                                <i class="bi bi-telephone-fill mr-2"></i>Call Seller
                             </a>
                             {% endif %}
-                            
-                            {% if 'email' in contact_methods and service.email %}
-                            <a href="mailto:{{ service.email }}?subject=Inquiry about: {{ service.title }}" 
-                               class="contact-method flex items-center justify-between bg-red-50 border-red-200 hover:bg-red-100 transition-colors">
-                                <div class="flex items-center">
-                                    <i class="bi bi-envelope text-red-600 mr-2 text-sm"></i>
-                                    <span class="font-medium text-xs">Email</span>
-                                </div>
-                                <i class="bi bi-arrow-right text-red-600 text-xs"></i>
+                            {% if seller_contact.whatsapp_url %}
+                            <a href="{{ seller_contact.whatsapp_url }}" target="_blank" rel="noopener noreferrer"
+                               class="contact-method flex items-center justify-center border-green-200 bg-green-50 font-semibold text-green-700 hover:bg-green-100"
+                               data-service-id="{{ service.id }}" data-click-type="whatsapp">
+                                <i class="bi bi-whatsapp mr-2"></i>WhatsApp Seller
                             </a>
                             {% endif %}
+                        </div>
                         {% else %}
-                            <!-- Default contact methods -->
-                            {% if service.whatsapp_number %}
-                            <a href="https://wa.me/{{ service.whatsapp_number|replace('+', '')|replace(' ', '') }}?text=Hi! I'm interested in your service: {{ service.title }}" 
-                               target="_blank"
-                               class="contact-method flex items-center justify-between bg-green-50 border-green-200 hover:bg-green-100 transition-colors">
-                                <div class="flex items-center">
-                                    <i class="bi bi-whatsapp text-green-600 mr-2 text-sm"></i>
-                                    <span class="font-medium text-xs">WhatsApp</span>
-                                </div>
-                                <i class="bi bi-arrow-right text-green-600 text-xs"></i>
-                            </a>
-                            {% endif %}
-                            
-                            {% if service.phone_number %}
-                            <a href="tel:{{ service.phone_number }}" 
-                               class="contact-method flex items-center justify-between bg-blue-50 border-blue-200 hover:bg-blue-100 transition-colors">
-                                <div class="flex items-center">
-                                    <i class="bi bi-telephone text-blue-600 mr-2 text-sm"></i>
-                                    <span class="font-medium text-xs">Call</span>
-                                </div>
-                                <i class="bi bi-arrow-right text-blue-600 text-xs"></i>
-                            </a>
-                            {% endif %}
-                            
-                            {% if service.email %}
-                            <a href="mailto:{{ service.email }}?subject=Inquiry about: {{ service.title }}" 
-                               class="contact-method flex items-center justify-between bg-red-50 border-red-200 hover:bg-red-100 transition-colors">
-                                <div class="flex items-center">
-                                    <i class="bi bi-envelope text-red-600 mr-2 text-sm"></i>
-                                    <span class="font-medium text-xs">Email</span>
-                                </div>
-                                <i class="bi bi-arrow-right text-red-600 text-xs"></i>
-                            </a>
-                            {% endif %}
+                        <p class="mb-3 text-xs text-gray-600">This seller has not added a valid Marketplace phone number.</p>
+                        <a href="{{ url_for('market.seller_profile', seller_id=service.seller_id) }}"
+                           class="inline-flex items-center text-sm font-semibold text-violet-700 hover:underline">View Seller Profile</a>
                         {% endif %}
-                    </div>
+                        {% if 'email' in contact_methods and service.email %}
+                        <a href="mailto:{{ service.email }}?subject={{ ('Inquiry about: ' ~ service.title)|urlencode }}"
+                           class="contact-method mt-2 flex items-center justify-center border-red-200 bg-red-50 font-semibold text-red-700 hover:bg-red-100">
+                            <i class="bi bi-envelope-fill mr-2"></i>Email Seller
+                        </a>
+                        {% endif %}
+                    </section>
                     
                     <!-- If service has file but is paid, show reminder -->
                     <!-- If service has file but is paid, show reminder -->
@@ -1149,7 +1090,7 @@ button:not(:disabled):hover {
                     <h3 class="text-sm font-bold mb-3">Related Services</h3>
                     <div class="space-y-3">
                         {% for related in related_services %}
-                        <a href="{{ url_for('market.service_detail', slug=related.slug) }}" 
+                        <a href="{{ url_for('market.service_detail', listing_ref=related.id) }}"
                            class="flex items-center gap-2 p-2 border border-gray-200 rounded-lg hover:border-primary hover:shadow-sm transition-all">
                             <div class="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
                                 <img src="{{ related.cover_image or url_for('static', filename='assets/img/default-service.jpg') }}" 
@@ -1202,7 +1143,7 @@ button:not(:disabled):hover {
                     <h3 class="text-sm font-bold mb-3">More from this Seller</h3>
                     <div class="space-y-3">
                         {% for seller_service in seller_services %}
-                        <a href="{{ url_for('market.service_detail', slug=seller_service.slug) }}" 
+                        <a href="{{ url_for('market.service_detail', listing_ref=seller_service.id) }}"
                            class="flex items-center gap-2 p-2 border border-gray-200 rounded-lg hover:border-primary hover:shadow-sm transition-all">
                             <div class="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
                                 <img src="{{ seller_service.cover_image or url_for('static', filename='assets/img/default-service.jpg') }}" 
