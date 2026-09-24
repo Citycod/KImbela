@@ -399,7 +399,7 @@ def test_group_post_owner_management_preserves_membership_privacy_and_matchmakin
     assert client.post(f"/delete_post/{group_post.id}").status_code == 200
 
 
-def test_admin_profile_link_opens_existing_editor_and_cannot_change_privileges(db, client, monkeypatch):
+def test_admin_profile_link_uses_dedicated_editor_and_cannot_change_privileges(db, client, monkeypatch):
     import importlib
 
     admin = _user(db, admin=True, super_admin=True)
@@ -408,10 +408,15 @@ def test_admin_profile_link_opens_existing_editor_and_cannot_change_privileges(d
     _login(client, admin)
 
     dashboard = client.get("/admin_dashboard")
-    assert f'/{admin.id}?edit=1'.encode() in dashboard.data
-    profile = client.get(f"/{admin.id}?edit=1")
+    assert f'href="/{admin.id}"'.encode() in dashboard.data
+    profile = client.get(f"/{admin.id}")
     assert profile.status_code == 200
-    assert b"openModal('editProfileModal')" in profile.data
+    assert f'href="/{admin.id}/edit"'.encode() in profile.data
+    assert b'id="editProfileModal"' not in profile.data
+
+    editor = client.get(f"/{admin.id}/edit")
+    assert editor.status_code == 200
+    assert b'id="profileForm"' in editor.data
 
     user_module = importlib.import_module("users.user")
     monkeypatch.setattr(
@@ -420,7 +425,7 @@ def test_admin_profile_link_opens_existing_editor_and_cannot_change_privileges(d
         lambda *_args, **_kwargs: {"secure_url": "https://cdn.example/admin.webp"},
     )
     response = client.post(
-        f"/{admin.id}",
+        f"/{admin.id}/edit",
         data={
             "first_name": "Updated",
             "last_name": "Admin",

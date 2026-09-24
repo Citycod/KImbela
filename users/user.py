@@ -3735,166 +3735,14 @@ def get_post(post_id):
     )
 
 
-@user.route("/<int:user_id>", methods=["GET", "POST"])
+@user.get("/<int:user_id>")
 @login_required
 def profile(user_id):
     user = User.query.get_or_404(user_id)
 
-    # Only allow users to edit their own profile
+    # This profile page is currently the signed-in user's private profile view.
     if user.id != current_user.id:
         flash("You can only edit your own profile.", "warning")
-        return redirect(url_for("user.profile", user_id=current_user.id))
-
-    # Define options for dropdowns
-    EDUCATIONAL_LEVELS = [
-        "Primary or Elementary School",
-        "Middle School or Junior High School",
-        "High School",
-        "Vocational College",
-        "Associate Degree",
-        "Bachelor's Degree",
-        "Master's Degree",
-        "PhD or Doctorate",
-        "No Formal Education",
-        "Other",
-    ]
-
-    RELIGIONS = [
-        "Islam",
-        "Roman Catholic",
-        "No religion / Atheist / Agnostic",
-        "Hinduism",
-        "Buddhism",
-        "Pentecostal",
-        "Traditional / Indigenous beliefs",
-        "Orthodox Christian",
-        "Charismatic",
-        "Non-denominational churches",
-        "Anglican",
-        "Baptist",
-        "Methodist",
-        "Seventh-day Adventist",
-        "Jehovah's Witness",
-        "Latter-day Saints (Mormons)",
-        "Sikhism",
-        "Judaism",
-        "Bahá'í Faith",
-        "Jainism",
-        "White Garment Churches",
-        "Other",
-    ]
-
-    ETHNICITIES = [
-        "African",
-        "African American",
-        "Asian",
-        "Caucasian",
-        "Hispanic/Latino",
-        "Native American",
-        "Pacific Islander",
-        "Middle Eastern",
-        "Mixed Race",
-        "Caribbean",
-        "European",
-        "South Asian",
-        "East Asian",
-        "Southeast Asian",
-        "Indigenous Australian",
-        "Maori",
-        "Other",
-    ]
-
-    if request.method == "POST":
-        try:
-            # Handle profile fields from registration form
-            current_user.first_name = request.form.get(
-                "first_name", current_user.first_name
-            )
-            current_user.last_name = request.form.get(
-                "last_name", current_user.last_name
-            )
-            current_user.email = request.form.get("email", current_user.email)
-            current_user.phone_number = request.form.get(
-                "phone_number", current_user.phone_number
-            )
-            current_user.city = request.form.get("city", current_user.city)
-            current_user.country = request.form.get("country", current_user.country)
-            current_user.state = request.form.get("state", current_user.state)
-            current_user.gender = request.form.get("gender", current_user.gender)
-            current_user.marital_status = request.form.get(
-                "marital_status", current_user.marital_status
-            )
-            current_user.interests = request.form.get(
-                "interests", current_user.interests
-            )
-            current_user.bio = request.form.get("bio", current_user.bio)
-            current_user.religion = request.form.get("religion", current_user.religion)
-            current_user.educational_level = request.form.get(
-                "educational_level", current_user.educational_level
-            )
-            current_user.ethnicity = request.form.get(
-                "ethnicity", current_user.ethnicity
-            )
-
-            # Handle date of birth
-            dob_str = request.form.get("dob")
-            if dob_str:
-                try:
-                    current_user.dob = datetime.strptime(dob_str, "%Y-%m-%d").date()
-                except ValueError:
-                    flash("Invalid date format for date of birth.", "warning")
-
-            # Handle profile picture
-            if "profile_pic" in request.files:
-                file = request.files["profile_pic"]
-                if file and file.filename != "" and allowed_file(file.filename):
-                    try:
-                        result = cloudinary.uploader.upload(
-                            file,
-                            folder="kimbela/profiles",
-                            transformation=[
-                                {
-                                    "width": 400,
-                                    "height": 400,
-                                    "crop": "fill",
-                                    "gravity": "face",
-                                },
-                                {"quality": "auto", "fetch_format": "auto"},
-                            ],
-                        )
-                        current_user.profile_pic = result["secure_url"]
-                        flash("Profile picture updated successfully!", "success")
-                    except Exception as e:
-                        print(f"Profile picture upload error: {e}")
-                        flash("Failed to upload profile picture.", "danger")
-
-            # Handle cover photo
-            if "cover_pic" in request.files:
-                file = request.files["cover_pic"]
-                if file and file.filename != "" and allowed_file(file.filename):
-                    try:
-                        result = cloudinary.uploader.upload(
-                            file,
-                            folder="kimbela/covers",
-                            transformation=[
-                                {"width": 1200, "height": 400, "crop": "fill"},
-                                {"quality": "auto", "fetch_format": "auto"},
-                            ],
-                        )
-                        current_user.cover_pic = result["secure_url"]
-                        flash("Cover photo updated successfully!", "success")
-                    except Exception as e:
-                        print(f"Cover photo upload error: {e}")
-                        flash("Failed to upload cover photo.", "danger")
-
-            db.session.commit()
-            flash("Profile updated successfully!", "success")
-
-        except Exception as e:
-            db.session.rollback()
-            flash("An error occurred while updating your profile.", "danger")
-            print(f"Profile update error: {e}")
-
         return redirect(url_for("user.profile", user_id=current_user.id))
 
     # GET request - load profile data
@@ -3924,9 +3772,170 @@ def profile(user_id):
         friends=friends,
         blocked_users=blocked_users,
         datetime=datetime,
-        educational_levels=EDUCATIONAL_LEVELS,
-        religions=RELIGIONS,
-        ethnicities=ETHNICITIES,
+    )
+
+
+@user.route("/<int:user_id>/edit", methods=["GET", "POST"])
+@login_required
+def edit_profile(user_id):
+    profile_user = User.query.get_or_404(user_id)
+    if profile_user.id != current_user.id:
+        abort(403)
+
+    educational_levels = [
+        "Primary or Elementary School",
+        "Middle School or Junior High School",
+        "High School",
+        "Vocational College",
+        "Associate Degree",
+        "Bachelor's Degree",
+        "Master's Degree",
+        "PhD or Doctorate",
+        "No Formal Education",
+        "Other",
+    ]
+    religions = [
+        "Islam",
+        "Roman Catholic",
+        "No religion / Atheist / Agnostic",
+        "Hinduism",
+        "Buddhism",
+        "Pentecostal",
+        "Traditional / Indigenous beliefs",
+        "Orthodox Christian",
+        "Charismatic",
+        "Non-denominational churches",
+        "Anglican",
+        "Baptist",
+        "Methodist",
+        "Seventh-day Adventist",
+        "Jehovah's Witness",
+        "Latter-day Saints (Mormons)",
+        "Sikhism",
+        "Judaism",
+        "Bahá'í Faith",
+        "Jainism",
+        "White Garment Churches",
+        "Other",
+    ]
+    ethnicities = [
+        "African",
+        "African American",
+        "Asian",
+        "Caucasian",
+        "Hispanic/Latino",
+        "Native American",
+        "Pacific Islander",
+        "Middle Eastern",
+        "Mixed Race",
+        "Caribbean",
+        "European",
+        "South Asian",
+        "East Asian",
+        "Southeast Asian",
+        "Indigenous Australian",
+        "Maori",
+        "Other",
+    ]
+
+    if request.method == "POST":
+        try:
+            profile_user.first_name = request.form.get(
+                "first_name", profile_user.first_name
+            )
+            profile_user.last_name = request.form.get(
+                "last_name", profile_user.last_name
+            )
+            profile_user.email = request.form.get("email", profile_user.email)
+            profile_user.phone_number = request.form.get(
+                "phone_number", profile_user.phone_number
+            )
+            profile_user.city = request.form.get("city", profile_user.city)
+            profile_user.country = request.form.get("country", profile_user.country)
+            profile_user.state = request.form.get("state", profile_user.state)
+            profile_user.gender = request.form.get("gender", profile_user.gender)
+            profile_user.marital_status = request.form.get(
+                "marital_status", profile_user.marital_status
+            )
+            profile_user.interests = request.form.get(
+                "interests", profile_user.interests
+            )
+            profile_user.bio = request.form.get("bio", profile_user.bio)
+            profile_user.religion = request.form.get(
+                "religion", profile_user.religion
+            )
+            profile_user.educational_level = request.form.get(
+                "educational_level", profile_user.educational_level
+            )
+            profile_user.ethnicity = request.form.get(
+                "ethnicity", profile_user.ethnicity
+            )
+
+            dob_str = request.form.get("dob")
+            if dob_str:
+                try:
+                    profile_user.dob = datetime.strptime(
+                        dob_str, "%Y-%m-%d"
+                    ).date()
+                except ValueError:
+                    flash("Invalid date format for date of birth.", "warning")
+
+            if "profile_pic" in request.files:
+                file = request.files["profile_pic"]
+                if file and file.filename != "" and allowed_file(file.filename):
+                    try:
+                        result = cloudinary.uploader.upload(
+                            file,
+                            folder="kimbela/profiles",
+                            transformation=[
+                                {
+                                    "width": 400,
+                                    "height": 400,
+                                    "crop": "fill",
+                                    "gravity": "face",
+                                },
+                                {"quality": "auto", "fetch_format": "auto"},
+                            ],
+                        )
+                        profile_user.profile_pic = result["secure_url"]
+                        flash("Profile picture updated successfully!", "success")
+                    except Exception as e:
+                        print(f"Profile picture upload error: {e}")
+                        flash("Failed to upload profile picture.", "danger")
+
+            if "cover_pic" in request.files:
+                file = request.files["cover_pic"]
+                if file and file.filename != "" and allowed_file(file.filename):
+                    try:
+                        result = cloudinary.uploader.upload(
+                            file,
+                            folder="kimbela/covers",
+                            transformation=[
+                                {"width": 1200, "height": 400, "crop": "fill"},
+                                {"quality": "auto", "fetch_format": "auto"},
+                            ],
+                        )
+                        profile_user.cover_pic = result["secure_url"]
+                        flash("Cover photo updated successfully!", "success")
+                    except Exception as e:
+                        print(f"Cover photo upload error: {e}")
+                        flash("Failed to upload cover photo.", "danger")
+
+            db.session.commit()
+            flash("Profile updated successfully!", "success")
+        except Exception as e:
+            db.session.rollback()
+            flash("An error occurred while updating your profile.", "danger")
+            print(f"Profile update error: {e}")
+
+        return redirect(url_for("user.profile", user_id=profile_user.id))
+
+    return render_template(
+        "edit_profile.html",
+        user=profile_user,
+        educational_levels=educational_levels,
+        religions=religions,
+        ethnicities=ethnicities,
     )
 
 

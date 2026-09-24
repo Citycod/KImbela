@@ -169,7 +169,7 @@ def test_admin_profile_link_and_public_ai_labels_render(db, client):
     login(client, admin)
     dashboard = client.get("/admin_dashboard").get_data(as_text=True)
     assert "My Profile" in dashboard
-    assert f'href="/{admin.id}?edit=1"' in dashboard
+    assert f'href="/{admin.id}"' in dashboard
 
     profile = client.get(f"/profile/{persona.user.public_id}").get_data(as_text=True)
     assert "AI · Automated" in profile
