@@ -379,7 +379,7 @@ def test_test_user_deletion_denies_non_super_admin(db, client):
     assert client.post(f"/admin/users/{target.id}/delete-test").status_code == 403
 
 
-def test_generated_ai_portraits_are_local_and_disclosure_remains():
+def test_generated_ai_portraits_are_local_and_ai_identity_stays_admin_only():
     seed_source = Path("seed_ai_personas.py").read_text()
     for filename in (
         "emily-carter-v1.webp",
@@ -391,7 +391,7 @@ def test_generated_ai_portraits_are_local_and_disclosure_remains():
         assert Path("static/assets/img/ai-personas", filename).is_file()
     assert "res.cloudinary.com/demo" not in seed_source
     assert "AI · Automated" in Path("templates/admin_ai_users.html").read_text()
-    assert "AI · Automated" in Path("templates/public_profile.html").read_text()
+    assert "AI · Automated" not in Path("templates/public_profile.html").read_text()
 
 
 def test_new_migration_extends_the_single_previous_head():

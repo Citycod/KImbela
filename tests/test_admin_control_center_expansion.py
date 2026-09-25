@@ -163,7 +163,7 @@ def test_similar_group_and_malformed_config_do_not_lock_unrelated_group(app, db,
         app.config["MATCHMAKING_GROUP_ID"] = original
 
 
-def test_admin_profile_link_and_public_ai_labels_render(db, client):
+def test_admin_profile_link_and_public_ai_profile_uses_plain_name(db, client):
     admin = make_user(db, super_admin=True)
     persona = make_persona(db)
     login(client, admin)
@@ -172,7 +172,8 @@ def test_admin_profile_link_and_public_ai_labels_render(db, client):
     assert f'href="/{admin.id}"' in dashboard
 
     profile = client.get(f"/profile/{persona.user.public_id}").get_data(as_text=True)
-    assert "AI · Automated" in profile
+    assert persona.user.full_name in profile
+    assert "AI · Automated" not in profile
 
 
 def test_ai_identity_name_and_avatar_share_canonical_user_fields(db, client, monkeypatch):

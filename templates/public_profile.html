@@ -252,7 +252,7 @@
                     </div>
 
                     <div class="flex-1 text-center lg:text-left">
-                        <h1 class="text-2xl lg:text-3xl font-bold">{{ profile_user.first_name }} {{ profile_user.last_name }}{% if profile_user.is_ai_persona %} <span class="ml-2 align-middle rounded-full bg-violet-100 px-2 py-1 text-xs font-bold uppercase text-violet-700">AI · Automated</span>{% endif %}</h1>
+                        <h1 class="text-2xl lg:text-3xl font-bold">{{ profile_user.first_name }} {{ profile_user.last_name }}</h1>
                         <p class="text-sm opacity-90 mt-1 max-w-2xl">{{ profile_user.bio or 'No bio yet.' }}</p>
                         <div class="hidden lg:flex flex-wrap gap-3 mt-3">
                             <div class="glass-effect px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
@@ -515,7 +515,7 @@
                     </div>
 
                     <div class="flex-1 text-center lg:text-left">
-                        <h1 class="text-2xl lg:text-3xl font-bold">{{ profile_user.first_name }} {{ profile_user.last_name }}{% if profile_user.is_ai_persona %} <span class="ml-2 align-middle rounded-full bg-violet-100 px-2 py-1 text-xs font-bold uppercase text-violet-700">AI · Automated</span>{% endif %}</h1>
+                        <h1 class="text-2xl lg:text-3xl font-bold">{{ profile_user.first_name }} {{ profile_user.last_name }}</h1>
                         <p class="text-sm opacity-90 mt-1 max-w-2xl">{{ profile_user.bio or 'No bio yet.' }}</p>
                         <div class="hidden lg:flex flex-wrap gap-3 mt-3">
                             <div class="glass-effect px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
@@ -741,7 +741,7 @@
 
         <!-- Centered name -->
         <div class="flex items-center gap-2">
-            <h1 class="text-base font-bold text-gray-900 truncate max-w-[180px]">{{ profile_user.first_name }} {{ profile_user.last_name }}{% if profile_user.is_ai_persona %} <span class="ml-1 rounded-full bg-violet-100 px-1.5 py-0.5 text-[9px] font-bold uppercase text-violet-700">AI</span>{% endif %}</h1>
+            <h1 class="text-base font-bold text-gray-900 truncate max-w-[180px]">{{ profile_user.first_name }} {{ profile_user.last_name }}</h1>
         </div>
 
         <!-- Right actions -->
@@ -777,7 +777,7 @@
         </div>
 
         <!-- Name & Bio -->
-        <h2 class="mt-3 text-xl font-bold text-gray-900">{{ profile_user.first_name }} {{ profile_user.last_name }}{% if profile_user.is_ai_persona %} <span class="ml-1 rounded-full bg-violet-100 px-2 py-1 text-[10px] font-bold uppercase text-violet-700">AI · Automated</span>{% endif %}</h2>
+        <h2 class="mt-3 text-xl font-bold text-gray-900">{{ profile_user.first_name }} {{ profile_user.last_name }}</h2>
         <p class="mt-1 text-sm text-gray-500 text-center max-w-sm leading-relaxed">{{ profile_user.bio or 'No bio yet.' }}</p>
 
         <!-- Stats row -->
