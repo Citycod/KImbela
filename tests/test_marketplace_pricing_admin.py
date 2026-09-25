@@ -1,4 +1,5 @@
 from datetime import date
+from io import BytesIO
 from pathlib import Path
 import uuid
 
@@ -198,6 +199,129 @@ def test_edit_pricing_mode_transitions_and_owner_authorization(db, client):
     db.session.refresh(service)
     assert float(service.price) == 44
 
+
+def test_seller_can_edit_all_owner_managed_listing_fields(db, client, monkeypatch):
+    import importlib
+
+    seller = _make_user(db)
+    category = _category(db)
+    service = _listing(
+        db,
+        seller,
+        category,
+        service_type="service",
+        features='["Original feature"]',
+        contact_methods='["messenger"]',
+        country="Legacy Country",
+        state="Legacy State",
+        city="Legacy City",
+    )
+    _login(client, seller)
+
+    edit_page = client.get(f"/edit/{service.id}")
+    assert edit_page.status_code == 200
+    body = edit_page.get_data(as_text=True)
+    assert 'name="service_type" value="service"' in body
+    assert 'name="service_type" value="digital"' in body
+    assert 'name="currency"' in body
+    assert 'name="digital_file"' in body
+    assert 'name="contact_messenger"' in body
+    assert '<option value="Legacy Country" selected>' in body
+    assert '<option value="Legacy State" selected>' in body
+    assert '<option value="Legacy City" selected>' in body
+    assert body.index('id="editServiceForm"') < body.index('id="updateBtn"') < body.index("</form>")
+
+    market_module = importlib.import_module("marketplace.market")
+    monkeypatch.setattr(
+        market_module,
+        "upload_to_cloudinary",
+        lambda _file, folder="marketplace": f"https://cdn.example/{folder}.pdf",
+    )
+
+    response = client.post(
+        f"/edit/{service.id}",
+        data={
+            "title": "Updated Digital Product",
+            "category_id": str(category.id),
+            "description": "Updated complete description",
+            "short_description": "Updated short description",
+            "service_type": "digital",
+            "pricing_mode": "fixed",
+            "price": "79.50",
+            "currency": "EUR",
+            "features": '["Downloadable", "Lifetime access"]',
+            "feature_count": "2",
+            "duration": "Should be ignored for products",
+            "availability": "Always available",
+            "country": "Ghana",
+            "state": "Greater Accra",
+            "city": "Accra",
+            "contact_phone": "on",
+            "contact_whatsapp": "on",
+            "contact_messenger": "on",
+            "phone_number": "+233200000000",
+            "whatsapp_number": "+233200000001",
+            "email": "seller-listing@example.com",
+            "status": "paused",
+            "digital_file": (BytesIO(b"digital product"), "guide.pdf"),
+            # Seller-controlled editing must never include moderation fields.
+            "seller_id": "999999",
+            "is_featured": "true",
+            "subscription_status": "active",
+            "earnings": "999999",
+        },
+        content_type="multipart/form-data",
+    )
+
+    assert response.status_code == 302
+    assert response.headers["Location"].endswith("/seller_dashboard")
+    db.session.refresh(service)
+    assert service.title == "Updated Digital Product"
+    assert service.description == "Updated complete description"
+    assert service.short_description == "Updated short description"
+    assert service.service_type == "digital"
+    assert service.pricing_mode == "fixed"
+    assert float(service.price) == 79.50
+    assert service.currency == "EUR"
+    assert service.features_list == ["Downloadable", "Lifetime access"]
+    assert service.availability == "Always available"
+    assert service.country == "Ghana"
+    assert service.state == "Greater Accra"
+    assert service.city == "Accra"
+    assert set(service.contact_methods_list) == {"phone", "whatsapp", "messenger"}
+    assert service.phone_number == "+233200000000"
+    assert service.whatsapp_number == "+233200000001"
+    assert service.email == "seller-listing@example.com"
+    assert service.status == "paused"
+    assert service.digital_file == "https://cdn.example/services/digital.pdf"
+    assert service.file_name == "guide.pdf"
+    assert service.file_type == "pdf"
+    assert service.seller_id == seller.id
+    assert service.is_featured is False
+    assert service.subscription_status == "free"
+    assert float(service.earnings or 0) == 0
+
+
+def test_seller_edit_rejects_unrecognized_type_and_currency(db, client):
+    seller = _make_user(db)
+    category = _category(db)
+    service = _listing(db, seller, category)
+    _login(client, seller)
+
+    invalid_type = client.post(
+        f"/edit/{service.id}",
+        data=_listing_form(category, service_type="admin-only"),
+    )
+    assert invalid_type.status_code == 400
+
+    invalid_currency = client.post(
+        f"/edit/{service.id}",
+        data=_listing_form(category, currency="INVALID"),
+    )
+    assert invalid_currency.status_code == 400
+    db.session.refresh(service)
+    assert service.service_type == "service"
+    assert service.currency == "USD"
 
 def test_contact_price_nonfriend_uses_enabled_seller_contact_method(db, client):
     seller = _make_user(db)

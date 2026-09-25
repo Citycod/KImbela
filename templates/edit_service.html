@@ -535,6 +535,43 @@
                             {% endfor %}
                         </select>
                     </div>
+
+                    <!-- Listing Type -->
+                    <div class="mb-4">
+                        <label class="block text-xs font-medium mb-2">Listing Type *</label>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div class="option-card {% if service.service_type != 'digital' %}selected{% endif %}"
+                                 onclick="selectServiceType('service')">
+                                <input type="radio" name="service_type" value="service" class="hidden"
+                                       {% if service.service_type != 'digital' %}checked{% endif %}>
+                                <div class="flex items-start gap-3">
+                                    <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                                        <i class="bi bi-person-workspace text-blue-600 text-lg"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <h4 class="font-bold text-sm mb-1">Service</h4>
+                                        <p class="text-gray-600 text-xs">Coaching, consulting, repairs, and other services.</p>
+                                    </div>
+                                    <div class="option-check text-blue-600"><i class="bi bi-check-circle-fill text-lg"></i></div>
+                                </div>
+                            </div>
+                            <div class="option-card {% if service.service_type == 'digital' %}selected{% endif %}"
+                                 onclick="selectServiceType('digital')">
+                                <input type="radio" name="service_type" value="digital" class="hidden"
+                                       {% if service.service_type == 'digital' %}checked{% endif %}>
+                                <div class="flex items-start gap-3">
+                                    <div class="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
+                                        <i class="bi bi-bag text-purple-600 text-lg"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <h4 class="font-bold text-sm mb-1">Product</h4>
+                                        <p class="text-gray-600 text-xs">Physical or digital products.</p>
+                                    </div>
+                                    <div class="option-check text-purple-600"><i class="bi bi-check-circle-fill text-lg"></i></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     
                     <!-- Short Description -->
                     <div class="mb-4">
@@ -599,17 +636,24 @@
                             Price *
                             <span class="text-xs text-gray-500">(Must be greater than zero)</span>
                         </label>
-                        <div class="relative">
-                            <input type="text" 
-                                   id="price"
-                                   name="price"
-                                   value="{{ service.price if service.pricing_mode == 'fixed' and service.price else '' }}"
-                                   class="w-full text-sm pl-8"
-                                   placeholder="0"
-                                   {% if not service.is_contact_for_price %}required{% endif %}>
-                            <div class="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
-                                <span class="text-gray-500 text-xs">$</span>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div class="relative">
+                                <input type="text"
+                                       id="price"
+                                       name="price"
+                                       value="{{ service.price if service.pricing_mode == 'fixed' and service.price else '' }}"
+                                       class="w-full text-sm pl-8"
+                                       placeholder="0"
+                                       {% if not service.is_contact_for_price %}required{% endif %}>
+                                <div class="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
+                                    <span class="text-gray-500 text-xs">$</span>
+                                </div>
                             </div>
+                            <select id="currency" name="currency" class="w-full text-sm">
+                                {% for code, label in [('USD', 'US Dollar'), ('EUR', 'Euro'), ('GBP', 'British Pound'), ('KES', 'Kenyan Shilling'), ('NGN', 'Nigerian Naira'), ('GHS', 'Ghanaian Cedi'), ('ZAR', 'South African Rand')] %}
+                                <option value="{{ code }}" {% if (service.currency or 'USD') == code %}selected{% endif %}>{{ code }} - {{ label }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
                         <div class="mt-1 text-xs text-gray-600">
                             {% if service.is_contact_for_price %}
@@ -648,12 +692,12 @@
                                 Add
                             </button>
                         </div>
-                        <input type="hidden" name="features" id="featuresInput" value="{{ service.features|tojson|safe }}">
+                        <input type="hidden" name="features" id="featuresInput" value="{{ service.features_list|tojson|forceescape }}">
                     </div>
                     
                     <!-- Duration & Availability -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div>
+                        <div id="serviceDurationField">
                             <label for="duration" class="block text-xs font-medium mb-1">
                                 Duration
                             </label>
@@ -678,6 +722,20 @@
                         </div>
                     </div>
 
+                    <div id="digitalProductFields" class="mb-4 {% if service.service_type != 'digital' %}hidden{% endif %}">
+                        <label for="digitalFile" class="block text-xs font-medium mb-1">Digital File</label>
+                        {% if service.digital_file %}
+                        <p class="mb-2 rounded-lg border border-green-200 bg-green-50 p-2 text-xs text-green-800">
+                            A digital file is currently attached. Uploading a new file will replace it.
+                        </p>
+                        {% endif %}
+                        <input type="file"
+                               id="digitalFile"
+                               name="digital_file"
+                               accept=".pdf,.doc,.docx"
+                               class="w-full text-sm">
+                    </div>
+
                     <div class="mb-4">
                         <label class="block text-xs font-medium mb-2">Listing Location *</label>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -688,7 +746,11 @@
                                         class="w-full text-sm"
                                         data-selected="{{ service.country or '' }}"
                                         required>
+                                    {% if service.country %}
+                                    <option value="{{ service.country }}" selected>{{ service.country }}</option>
+                                    {% else %}
                                     <option value="">Select country</option>
+                                    {% endif %}
                                 </select>
                             </div>
                             <div>
@@ -698,7 +760,11 @@
                                         class="w-full text-sm"
                                         data-selected="{{ service.state or '' }}"
                                         required>
+                                    {% if service.state %}
+                                    <option value="{{ service.state }}" selected>{{ service.state }}</option>
+                                    {% else %}
                                     <option value="">Select state</option>
+                                    {% endif %}
                                 </select>
                             </div>
                             <div>
@@ -708,7 +774,11 @@
                                         class="w-full text-sm"
                                         data-selected="{{ service.city or '' }}"
                                         required>
+                                    {% if service.city %}
+                                    <option value="{{ service.city }}" selected>{{ service.city }}</option>
+                                    {% else %}
                                     <option value="">Select city</option>
+                                    {% endif %}
                                 </select>
                             </div>
                         </div>
@@ -749,6 +819,17 @@
                                 <label for="contact_email" class="flex items-center text-xs">
                                     <i class="bi bi-envelope text-red-500 mr-1 text-xs"></i>
                                     Email
+                                </label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox"
+                                       id="contact_messenger"
+                                       name="contact_messenger"
+                                       class="w-3 h-3 mr-2"
+                                       {% if 'messenger' in service.contact_methods_list %}checked{% endif %}>
+                                <label for="contact_messenger" class="flex items-center text-xs">
+                                    <i class="bi bi-chat-dots text-violet-500 mr-1 text-xs"></i>
+                                    Kimbela Messages
                                 </label>
                             </div>
                         </div>
@@ -1036,20 +1117,16 @@
         const formState = {
             currentStep: 1,
             totalSteps: 4,
+            serviceType: {{ (service.service_type or 'service')|tojson }},
             features: {{ service.features_list|tojson|safe }},
             newGalleryImages: []
         };
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
-            setupCharacterCounters();
-            updateProgress();
-            setupSelectionCards();
-            initializeLocationSelectors();
-            
             // Form submission
             const form = document.getElementById('editServiceForm');
-            form.addEventListener('submit', function(event) {
+            form?.addEventListener('submit', function(event) {
                 // Prevent double submission
                 if (this.classList.contains('submitting')) {
                     event.preventDefault();
@@ -1071,6 +1148,12 @@
                 // Mark as submitting
                 this.classList.add('submitting');
             });
+
+            setupCharacterCounters();
+            updateProgress();
+            setupSelectionCards();
+            syncServiceType();
+            initializeLocationSelectors().catch(() => preserveSelectedLocations());
 
             // Initialize price formatting
             const priceInput = document.getElementById('price');
@@ -1222,6 +1305,31 @@
 
         document.addEventListener('DOMContentLoaded', syncPricingMode);
 
+        window.selectServiceType = function(type) {
+            const input = document.querySelector(`input[name="service_type"][value="${type}"]`);
+            if (!input) return;
+            input.checked = true;
+            formState.serviceType = type;
+            syncServiceType();
+        };
+
+        function syncServiceType() {
+            const selected = document.querySelector('input[name="service_type"]:checked');
+            const type = selected ? selected.value : 'service';
+            formState.serviceType = type;
+
+            document.querySelectorAll('input[name="service_type"]').forEach(input => {
+                input.closest('.option-card')?.classList.toggle('selected', input.checked);
+            });
+
+            const digitalFields = document.getElementById('digitalProductFields');
+            const durationField = document.getElementById('serviceDurationField');
+            const durationInput = document.getElementById('duration');
+            digitalFields?.classList.toggle('hidden', type !== 'digital');
+            durationField?.classList.toggle('hidden', type !== 'service');
+            if (durationInput) durationInput.disabled = type !== 'service';
+        }
+
         function validateStep3() {
             const mainImageFile = document.getElementById('cover_image').files[0];
             const hasExistingImage = {{ 'true' if service.cover_image else 'false' }};
@@ -1279,14 +1387,40 @@
 
         async function populateSelectOptions(selectElement, items, placeholder, selectedValue = '') {
             selectElement.innerHTML = `<option value="">${placeholder}</option>`;
+            let selectedValueFound = false;
             items.forEach(item => {
                 const option = document.createElement('option');
                 option.value = item.name;
                 option.textContent = item.name;
                 if (selectedValue && item.name.toLowerCase() === selectedValue.toLowerCase()) {
                     option.selected = true;
+                    selectedValueFound = true;
                 }
                 selectElement.appendChild(option);
+            });
+
+            if (selectedValue && !selectedValueFound) {
+                const existingOption = document.createElement('option');
+                existingOption.value = selectedValue;
+                existingOption.textContent = selectedValue;
+                existingOption.selected = true;
+                selectElement.appendChild(existingOption);
+            }
+        }
+
+        function preserveSelectedLocations() {
+            const locationFields = [
+                ['listing_country', 'Select country'],
+                ['listing_state', 'Select state'],
+                ['listing_city', 'Select city']
+            ];
+            locationFields.forEach(([id, placeholder]) => {
+                const select = document.getElementById(id);
+                if (!select) return;
+                const selectedValue = select.dataset.selected || select.value;
+                if (selectedValue) {
+                    populateSelectOptions(select, [], placeholder, selectedValue);
+                }
             });
         }
 
@@ -1338,6 +1472,8 @@
             const countries = await fetch('{{ url_for("user.get_countries") }}').then(response => response.json());
             const country = countries.find(item => item.name === countryName);
             if (!country) {
+                await populateSelectOptions(stateSelect, [], 'Select state', selectedState);
+                await populateSelectOptions(citySelect, [], 'Select city', citySelect.dataset.selected || '');
                 return;
             }
 
@@ -1358,12 +1494,14 @@
             const countries = await fetch('{{ url_for("user.get_countries") }}').then(response => response.json());
             const country = countries.find(item => item.name === countrySelect.value);
             if (!country) {
+                await populateSelectOptions(citySelect, [], 'Select city', selectedCity);
                 return;
             }
 
             const states = await fetch(`{{ url_for("user.get_states") }}?country_id=${country.id}`).then(response => response.json());
             const state = states.find(item => item.name === stateName);
             if (!state) {
+                await populateSelectOptions(citySelect, [], 'Select city', selectedCity);
                 return;
             }
 

@@ -190,6 +190,18 @@ def parse_listing_pricing(form):
     return mode, price, False
 
 
+SELLER_EDITABLE_LISTING_TYPES = {"service", "digital"}
+SELLER_EDITABLE_LISTING_CURRENCIES = {
+    "USD",
+    "EUR",
+    "GBP",
+    "KES",
+    "NGN",
+    "GHS",
+    "ZAR",
+}
+
+
 def format_listing_price(service):
     if service.pricing_mode == "contact":
         return "Contact for Price"
@@ -1617,6 +1629,20 @@ def edit_service(service_id):
         if requested_status not in seller_status_options(service):
             return jsonify({"success": False, "error": "Invalid listing status"}), 400
 
+        requested_service_type = (
+            request.form.get("service_type", service.service_type or "service")
+            .strip()
+            .lower()
+        )
+        if requested_service_type not in SELLER_EDITABLE_LISTING_TYPES:
+            return jsonify({"success": False, "error": "Invalid listing type"}), 400
+
+        requested_currency = (
+            request.form.get("currency", service.currency or "USD").strip().upper()
+        )
+        if requested_currency not in SELLER_EDITABLE_LISTING_CURRENCIES:
+            return jsonify({"success": False, "error": "Invalid listing currency"}), 400
+
         service.title = request.form.get("title", service.title)
         service.category_id = request.form.get("category_id", service.category_id)
         service.description = bleach.clean(request.form.get("description", service.description), strip=True)
@@ -1632,6 +1658,8 @@ def edit_service(service_id):
         service.pricing_mode = pricing_mode
         service.price = price
         service.is_free = is_free_value
+        service.service_type = requested_service_type
+        service.currency = requested_currency
 
         service.phone_number = request.form.get("phone_number")
         service.whatsapp_number = request.form.get("whatsapp_number")
@@ -1685,7 +1713,23 @@ def edit_service(service_id):
         else:
             service.gallery_images = None
 
+        if requested_service_type == "digital" and "digital_file" in request.files:
+            file = request.files["digital_file"]
+            if file and file.filename and allowed_file(file.filename):
+                file_url = upload_to_cloudinary(file, "services/digital")
+                if file_url:
+                    service.digital_file = file_url
+                    service.file_name = secure_filename(file.filename)
+                    service.file_type = (
+                        file.filename.rsplit(".", 1)[1].lower()
+                        if "." in file.filename
+                        else ""
+                    )
+
         db.session.commit()
+
+        invalidate_cache(f"dashboard_stats_{current_user.id}_*")
+        invalidate_cache(f"dashboard_services_{current_user.id}_*")
 
         flash("Listing updated successfully!", "success")
         return redirect(url_for("market.seller_dashboard"))
