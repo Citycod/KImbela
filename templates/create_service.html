@@ -492,7 +492,7 @@
                         <label class="block text-sm font-medium mb-2">Choose Your Listing Type *</label>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div class="option-card" onclick="selectServiceType('service')">
-                                <input type="radio" name="service_type" value="service" class="hidden" checked>
+                                <input type="radio" name="service_type" value="service" class="hidden" required>
                                 <div class="flex items-start gap-3">
                                     <div
                                         class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
@@ -1183,7 +1183,7 @@
             totalSteps: 4,
             features: [],
             galleryImages: [],
-            serviceType: 'service',
+            serviceType: null,
             pricingType: 'fixed'
         };
 
@@ -1195,8 +1195,7 @@
             initializeLocationSelectors();
 
             // Initialize selections
-            selectServiceType('service');
-            selectPricingType('paid');
+            selectPricingType('fixed');
 
             // Currency change handler
             const currencySelect = document.getElementById('currency');
@@ -1354,6 +1353,12 @@
             const title = document.getElementById('title').value.trim();
             const category = document.getElementById('category').value;
             const shortDescription = document.getElementById('short_description').value.trim();
+            const listingType = document.querySelector('input[name="service_type"]:checked');
+
+            if (!listingType) {
+                alert('Please choose Service or Product');
+                return false;
+            }
 
             if (!title) {
                 alert('Please enter a listing title');
@@ -1476,18 +1481,15 @@
 
         // Service Type Selection
         function selectServiceType(type) {
+            const selectedInput = document.querySelector(`input[name="service_type"][value="${type}"]`);
+            if (!selectedInput) return;
+
             formState.serviceType = type;
 
-            // Update radio button
-            document.querySelector(`input[name="service_type"][value="${type}"]`).checked = true;
-
-            // Update visual selection
-            document.querySelectorAll('.option-card').forEach(card => {
-                card.classList.remove('selected');
+            document.querySelectorAll('input[name="service_type"]').forEach(input => {
+                input.checked = input === selectedInput;
+                input.closest('.option-card')?.classList.toggle('selected', input.checked);
             });
-
-            const selectedCard = document.querySelector(`input[name="service_type"][value="${type}"]`).closest('.option-card');
-            selectedCard.classList.add('selected');
 
             // Toggle digital product fields
             const digitalFields = document.getElementById('digitalProductFields');
@@ -1514,25 +1516,22 @@
 
         // Pricing Type Selection
         function selectPricingType(type) {
+            const selectedInput = document.querySelector(`input[name="pricing_mode"][value="${type}"]`);
+            if (!selectedInput) return;
+
             formState.pricingType = type;
 
-            // Update radio button
-            document.querySelector(`input[name="pricing_mode"][value="${type}"]`).checked = true;
-
-            // Update visual selection
-            document.querySelectorAll('.option-card').forEach(card => {
-                card.classList.remove('selected');
+            document.querySelectorAll('input[name="pricing_mode"]').forEach(input => {
+                input.checked = input === selectedInput;
+                input.closest('.option-card')?.classList.toggle('selected', input.checked);
             });
-
-            const selectedCard = document.querySelector(`input[name="pricing_mode"][value="${type}"]`).closest('.option-card');
-            selectedCard.classList.add('selected');
 
             const typeName = type === 'fixed' ? 'Fixed Price' : 'Contact for Price';
             document.getElementById('selectedPricingType').textContent = typeName;
 
             // Toggle price fields
             const priceFields = document.getElementById('priceFields');
-            if (type === 'paid') {
+            if (type === 'fixed') {
                 priceFields.classList.remove('hidden');
             } else {
                 priceFields.classList.add('hidden');
@@ -2046,10 +2045,16 @@
                         <p class="text-sm text-gray-600">${document.getElementById('short_description').value || 'No description'}</p>
                     </div>
                     
-                    <div class="grid grid-cols-2 gap-3">
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
                         <div class="bg-gray-100 p-3 rounded-lg">
                             <p class="text-xs text-gray-600">Listing Type</p>
-                            <p class="text-sm font-medium">${formState.serviceType === 'service' ? 'Listing' : 'Digital Product'}</p>
+                            <p class="text-sm font-medium">${formState.serviceType === 'service' ? 'Service' : 'Product'}</p>
+                        </div>
+                        <div class="bg-gray-100 p-3 rounded-lg">
+                            <p class="text-xs text-gray-600">Fulfilment</p>
+                            <p class="text-sm font-medium">${formState.serviceType === 'service'
+                                ? 'Not applicable'
+                                : (document.getElementById('digitalFile')?.files?.length ? 'Digital' : 'Physical')}</p>
                         </div>
                         <div class="bg-gray-100 p-3 rounded-lg">
                             <p class="text-xs text-gray-600">Pricing</p>

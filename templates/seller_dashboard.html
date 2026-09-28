@@ -444,6 +444,18 @@
         </div>
     </nav>
 
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="container mx-auto px-3 pt-4" aria-live="polite">
+            {% for category, message in messages %}
+            <div class="mb-2 rounded-xl border px-4 py-3 text-sm font-medium {% if category in ['danger', 'error'] %}border-red-200 bg-red-50 text-red-700{% elif category == 'success' %}border-green-200 bg-green-50 text-green-700{% else %}border-blue-200 bg-blue-50 text-blue-700{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% endwith %}
+
     <div class="container mx-auto px-3 py-4">
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
             <!-- Sidebar -->
@@ -720,7 +732,13 @@
                                                         <img src="{{ service.cover_image or url_for('static', filename='assets/img/default-service.jpg') }}" 
                                                              alt="{{ service.title }}" 
                                                              class="w-10 h-10 rounded-lg object-cover mr-2">
-                                                        
+                                                        <div>
+                                                            <h4 class="font-bold text-sm">{{ service.title }}</h4>
+                                                            <div class="flex gap-1 text-xs">
+                                                                <span data-listing-type-label>{{ service.listing_type_label }}</span>
+                                                                {% if service.fulfilment_type_label %}<span data-fulfilment-type-label>{{ service.fulfilment_type_label }}</span>{% endif %}
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </td>
                                                 <td class="text-sm">
@@ -750,19 +768,42 @@
                                                     {% endif %}
                                                 </td>
                                                 <td>
-                                                    {% if service.status == 'active' %}
-                                                    <span class="status-badge status-published">Active</span>
-                                                    {% elif service.status == 'awaiting_subscription' %}
-                                                    <span class="status-badge status-awaiting-subscription">Awaiting Subscription</span>
-                                                    {% elif service.status == 'pending' %}
-                                                    <span class="status-badge status-pending">Pending</span>
-                                                    {% elif service.status == 'draft' %}
-                                                    <span class="status-badge status-draft">Draft</span>
-                                                    {% elif service.status == 'paused' %}
-                                                    <span class="status-badge status-paused">Paused</span>
-                                                    {% else %}
-                                                    <span class="status-badge status-pending">{{ service.status|title if service.status else 'Unknown' }}</span>
-                                                    {% endif %}
+                                                    <div class="space-y-2">
+                                                        {% if service.status == 'active' %}
+                                                        <span class="status-badge status-published">Active</span>
+                                                        {% elif service.status == 'awaiting_subscription' %}
+                                                        <span class="status-badge status-awaiting-subscription">Awaiting Subscription</span>
+                                                        {% elif service.status == 'pending' %}
+                                                        <span class="status-badge status-pending">Pending</span>
+                                                        {% elif service.status == 'draft' %}
+                                                        <span class="status-badge status-draft">Draft</span>
+                                                        {% elif service.status == 'paused' %}
+                                                        <span class="status-badge status-paused">Paused</span>
+                                                        {% else %}
+                                                        <span class="status-badge status-pending">{{ service.status|title if service.status else 'Unknown' }}</span>
+                                                        {% endif %}
+                                                        {% set allowed_statuses = seller_status_options(service) %}
+                                                        <form method="POST"
+                                                              action="{{ url_for('market.toggle_service_status', service_id=service.id) }}"
+                                                              class="listing-status-form flex min-w-[12rem] items-center gap-1"
+                                                              data-listing-status-form="{{ service.id }}">
+                                                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                                            <input type="hidden" name="dashboard_form" value="1">
+                                                            <label for="listing-status-{{ service.id }}" class="sr-only">Status for {{ service.title }}</label>
+                                                            <select id="listing-status-{{ service.id }}"
+                                                                    name="status"
+                                                                    class="min-w-0 flex-1 rounded-lg border border-gray-300 px-2 py-1 text-xs">
+                                                                {% for status_option in allowed_statuses %}
+                                                                <option value="{{ status_option }}" {% if status_option == service.status %}selected{% endif %}>{{ status_option|replace('_', ' ')|title }}</option>
+                                                                {% endfor %}
+                                                            </select>
+                                                            <button type="submit"
+                                                                    class="rounded-lg bg-primary px-2 py-1 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                                                                    {% if allowed_statuses|length == 1 %}disabled title="This status cannot be changed here"{% endif %}>
+                                                                Update Status
+                                                            </button>
+                                                        </form>
+                                                    </div>
                                                 </td>
                                                 <td class="text-center text-sm">{{ service.views or 0 }}</td>
                                                 
@@ -1084,14 +1125,17 @@
                                      class="w-10 h-10 rounded-lg object-cover mr-2">
                                 <div>
                                     <h4 class="font-bold text-sm">${service.title.substring(0, 30)}${service.title.length > 30 ? '...' : ''}</h4>
-                                    <p class="text-xs text-gray-600">${(service.short_description || 'No description').substring(0, 30)}${service.short_description && service.short_description.length > 30 ? '...' : ''}</p>
+                                    <div class="flex gap-1 text-xs text-gray-600">
+                                        <span data-listing-type-label>${service.listing_type_label}</span>
+                                        ${service.fulfilment_type_label ? `<span data-fulfilment-type-label>${service.fulfilment_type_label}</span>` : ''}
+                                    </div>
                                 </div>
                             </div>
                         </td>
                         <td class="text-sm">${service.category || 'Uncategorized'}</td>
                         <td class="font-bold text-sm">${price}</td>
                         <td class="text-sm font-medium">${listingAccess}</td>
-                        <td>${statusBadge}</td>
+                        <td>${statusBadge}${getStatusControl(service)}</td>
                         <td class="text-center text-sm">${service.views}</td>
                         <td>
                             <div class="flex gap-1">
@@ -1200,6 +1244,39 @@
                 'paused': '<span class="status-badge status-paused">Paused</span>'
             };
             return badges[status] || `<span class="status-badge status-pending">${status.charAt(0).toUpperCase() + status.slice(1)}</span>`;
+        }
+
+        function getStatusControl(service) {
+            const allowedStatuses = service.allowed_statuses || [service.status];
+            const options = allowedStatuses.map(status => {
+                const selected = status === service.status ? ' selected' : '';
+                const label = status.replaceAll('_', ' ').replace(/\b\w/g, character => character.toUpperCase());
+                return `<option value="${status}"${selected}>${label}</option>`;
+            }).join('');
+            const disabled = allowedStatuses.length === 1
+                ? ' disabled title="This status cannot be changed here"'
+                : '';
+            const csrfToken = getCSRFToken() || '';
+
+            return `
+                <form method="POST"
+                      action="${service.status_update_url}"
+                      class="listing-status-form mt-2 flex min-w-[12rem] items-center gap-1"
+                      data-listing-status-form="${service.id}">
+                    <input type="hidden" name="csrf_token" value="${csrfToken}">
+                    <input type="hidden" name="dashboard_form" value="1">
+                    <label for="listing-status-${service.id}" class="sr-only">Status for this listing</label>
+                    <select id="listing-status-${service.id}"
+                            name="status"
+                            class="min-w-0 flex-1 rounded-lg border border-gray-300 px-2 py-1 text-xs">
+                        ${options}
+                    </select>
+                    <button type="submit"
+                            class="rounded-lg bg-primary px-2 py-1 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"${disabled}>
+                        Update Status
+                    </button>
+                </form>
+            `;
         }
         
         // Get currency symbol

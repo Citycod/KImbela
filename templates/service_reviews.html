@@ -103,6 +103,8 @@
                 <li><a href="{{ url_for('market.main_market') }}" class="text-blue-600 hover:underline">Marketplace</a></li>
                 <li><i class="bi bi-chevron-right text-gray-400"></i></li>
                 <li><a href="{{ url_for('market.service_detail', listing_ref=service.id) }}" class="text-blue-600 hover:underline">{{ service.title[:30] }}{{ '...' if service.title|length > 30 }}</a></li>
+                <li><span class="rounded bg-gray-100 px-2 py-1 text-xs text-gray-600" data-listing-type-label>{{ service.listing_type_label }}</span></li>
+                {% if service.fulfilment_type_label %}<li><span class="rounded bg-purple-50 px-2 py-1 text-xs text-purple-700" data-fulfilment-type-label>{{ service.fulfilment_type_label }}</span></li>{% endif %}
                 <li><i class="bi bi-chevron-right text-gray-400"></i></li>
                 <li class="text-gray-600">Reviews</li>
             </ol>

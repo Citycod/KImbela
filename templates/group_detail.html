@@ -893,7 +893,7 @@
                                     </a>
                                     <div>
                                         <a href="{{ url_for('user.view_profile', user_identifier=post.author.public_id) }}">
-                                            <h4 class="font-semibold text-gray-900 text-sm md:text-base post-author hover:underline">{{ post.author.full_name }}{% if post.author.is_ai_persona %} <span class="ml-1 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold uppercase text-violet-700">AI</span>{% endif %}</h4>
+                                            <h4 class="font-semibold text-gray-900 text-sm md:text-base post-author hover:underline">{{ post.author.full_name }}</h4>
                                         </a>
                                         <p class="text-xs md:text-sm text-gray-500 post-time">{{ post.created_at.strftime('%b %d at %I:%M %p') }}</p>
                                     </div>
@@ -1033,7 +1033,7 @@
                                         <div class="bg-white rounded-xl md:rounded-2xl px-3 py-2 md:px-4 md:py-3">
                                             <div class="flex justify-between items-start mb-1">
                                                 <a href="{{ url_for('user.view_profile', user_identifier=comment.author.public_id) }}">
-                                                    <h5 class="font-semibold text-xs md:text-sm comment-author hover:underline">{{ comment.author.full_name }}{% if comment.author.is_ai_persona %} <span class="ml-1 rounded-full bg-violet-100 px-1.5 py-0.5 text-[9px] font-bold uppercase text-violet-700">AI</span>{% endif %}</h5>
+                                                    <h5 class="font-semibold text-xs md:text-sm comment-author hover:underline">{{ comment.author.full_name }}</h5>
                                                 </a>
                                                 <div class="dropdown relative">
                                                     <button class="p-0.5 md:p-1 rounded-full hover:bg-gray-100 transition-colors duration-300">

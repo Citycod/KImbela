@@ -127,10 +127,16 @@ def marketplace_seller_contact(service):
 def seller_status_options(service):
     """Statuses a seller may select without granting moderation powers."""
     if service.status in {"active", "paused"}:
-        return {"active", "paused", "draft", "pending"}
-    if service.status in {"draft", "pending", "rejected"}:
-        return {"draft", "pending"}
-    return {service.status}
+        allowed = {"active", "paused", "draft", "pending"}
+    elif service.status in {"draft", "pending", "rejected"}:
+        allowed = {"draft", "pending"}
+    else:
+        allowed = {service.status}
+
+    ordered_statuses = ("active", "paused", "draft", "pending")
+    return [status for status in ordered_statuses if status in allowed] + [
+        status for status in allowed if status not in ordered_statuses
+    ]
 
 
 def marketplace_payments_enabled():
@@ -1400,6 +1406,7 @@ def seller_dashboard():
         currency_symbols=currency_symbols,
         format_price=format_price_with_currency,
         service_stats=service_stats,
+        seller_status_options=seller_status_options,
         now=utcnow(),
     )
 
@@ -1438,7 +1445,10 @@ def create_service():
             return redirect(url_for("market.create_service"))
 
         currency = request.form.get("currency", "USD")
-        service_type = request.form.get("service_type", "service")
+        service_type = (request.form.get("service_type") or "").strip().lower()
+        if service_type not in SELLER_EDITABLE_LISTING_TYPES:
+            flash("Choose Service or Product before publishing your listing.", "danger")
+            return redirect(url_for("market.create_service"))
         subscription_id = request.form.get("subscription_id")
 
         if not all([title, category_id, description, country, state, city]):
@@ -1837,24 +1847,45 @@ def delete_service(service_id):
 @market.route("/toggle-status/<int:service_id>", methods=["POST"])
 @login_required
 def toggle_service_status(service_id):
-    """Toggle service active status"""
+    """Apply an allowed seller-selected listing status."""
     service = MarketplaceService.query.get_or_404(service_id)
+    dashboard_form = request.form.get("dashboard_form") == "1"
 
     # Check ownership
     if service.seller_id != current_user.id:
         return jsonify({"success": False, "error": "Permission denied"}), 403
 
     try:
-        if service.status == "active":
-            service.status = "paused"
-        elif service.status == "paused":
-            service.status = "active"
+        requested_status = (request.form.get("status") or "").strip().lower()
+        if not requested_status:
+            requested_status = {
+                "active": "paused",
+                "paused": "active",
+            }.get(service.status, "")
+
+        if requested_status not in seller_status_options(service):
+            message = "That status change is not allowed for this listing."
+            if dashboard_form:
+                flash(message, "danger")
+                return redirect(url_for("market.seller_dashboard") + "#services")
+            return jsonify({"success": False, "error": message}), 400
+
+        service.status = requested_status
 
         db.session.commit()
+        invalidate_cache(f"dashboard_stats_{current_user.id}_*")
+        invalidate_cache(f"dashboard_services_{current_user.id}_*")
+
+        if dashboard_form:
+            flash("Listing status updated successfully!", "success")
+            return redirect(url_for("market.seller_dashboard") + "#services")
         return jsonify({"success": True, "status": service.status})
     except Exception as e:
         db.session.rollback()
         print(f"Error toggling service status: {e}")
+        if dashboard_form:
+            flash("Unable to update the listing status. Please try again.", "danger")
+            return redirect(url_for("market.seller_dashboard") + "#services")
         return jsonify({"success": False, "error": str(e)}), 500
 
 
@@ -2191,6 +2222,10 @@ def api_services():
                     "cover_image": service.cover_image
                     or url_for("static", filename="assets/img/default-service.jpg"),
                     "service_type": service.service_type,
+                    "listing_type": service.listing_type,
+                    "listing_type_label": service.listing_type_label,
+                    "fulfilment_type": service.fulfilment_type,
+                    "fulfilment_type_label": service.fulfilment_type_label,
                     "duration": service.duration,
                     "country": service.country,
                     "state": service.state,
@@ -3357,6 +3392,10 @@ def api_service_detail(slug):
             "cover_image": service.cover_image
             or url_for("static", filename="assets/img/default-service.jpg"),
             "service_type": service.service_type,
+            "listing_type": service.listing_type,
+            "listing_type_label": service.listing_type_label,
+            "fulfilment_type": service.fulfilment_type,
+            "fulfilment_type_label": service.fulfilment_type_label,
             "duration": service.duration,
             "availability": service.availability,
             "average_rating": float(service.average_rating),
@@ -3995,6 +4034,10 @@ def get_dashboard_services():
                     "is_free": service.is_free,
                     "listing_access": get_listing_access_type(service),
                     "status": service.status,
+                    "allowed_statuses": seller_status_options(service),
+                    "status_update_url": url_for(
+                        "market.toggle_service_status", service_id=service.id
+                    ),
                     "views": service.views or 0,
                     "clicks": service.clicks or 0,
                     "earnings": float(service.earnings) if service.earnings else 0,
@@ -4004,6 +4047,11 @@ def get_dashboard_services():
                     "review_count": service.review_count or 0,
                     "cover_image": service.cover_image
                     or url_for("static", filename="assets/img/default-service.jpg"),
+                    "service_type": service.service_type,
+                    "listing_type": service.listing_type,
+                    "listing_type_label": service.listing_type_label,
+                    "fulfilment_type": service.fulfilment_type,
+                    "fulfilment_type_label": service.fulfilment_type_label,
                     "created_at": service.created_at.strftime("%Y-%m-%d"),
                     "updated_at": (
                         service.updated_at.strftime("%Y-%m-%d")

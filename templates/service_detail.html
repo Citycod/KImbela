@@ -695,9 +695,14 @@ button:not(:disabled):hover {
                                     {{ service.category.name }}
                                 </span>
                                 {% endif %}
-                                <span class="badge bg-blue-100 text-blue-700">
-                                    {{ service.service_type|title if service.service_type else 'Service' }}
+                                <span class="badge bg-blue-100 text-blue-700" data-primary-listing-type-label>
+                                    {{ service.listing_type_label }}
                                 </span>
+                                {% if service.fulfilment_type_label %}
+                                <span class="badge bg-purple-100 text-purple-700" data-primary-fulfilment-type-label>
+                                    {{ service.fulfilment_type_label }}
+                                </span>
+                                {% endif %}
                                 {% if service.is_featured %}
                                 <span class="badge bg-yellow-100 text-yellow-700">
                                     <i class="bi bi-star-fill mr-1 text-xs"></i> Featured
@@ -815,9 +820,16 @@ button:not(:disabled):hover {
                         {% endif %}
                         
                         <div>
-                            <h4 class="font-bold text-xs text-gray-600 mb-1">Service Type</h4>
-                            <p class="text-gray-800 text-sm">{{ service.service_type|title if service.service_type else 'Service' }}</p>
+                            <h4 class="font-bold text-xs text-gray-600 mb-1">Listing Type</h4>
+                            <p class="text-gray-800 text-sm" data-primary-listing-type-label>{{ service.listing_type_label }}</p>
                         </div>
+
+                        {% if service.fulfilment_type_label %}
+                        <div>
+                            <h4 class="font-bold text-xs text-gray-600 mb-1">Fulfilment</h4>
+                            <p class="text-gray-800 text-sm" data-primary-fulfilment-type-label>{{ service.fulfilment_type_label }}</p>
+                        </div>
+                        {% endif %}
                         
                         {% if service.digital_file %}
                         <div>
@@ -1099,6 +1111,10 @@ button:not(:disabled):hover {
                             </div>
                             <div class="flex-1 min-w-0">
                                 <h4 class="font-bold text-xs truncate">{{ related.title }}</h4>
+                                <div class="flex gap-1 text-xs text-gray-500">
+                                    <span data-listing-type-label>{{ related.listing_type_label }}</span>
+                                    {% if related.fulfilment_type_label %}<span data-fulfilment-type-label>{{ related.fulfilment_type_label }}</span>{% endif %}
+                                </div>
                                 <div class="flex items-center gap-1 mt-1">
                                     <div class="star-rating text-xs">
                                         {% for i in range(1, 6) %}
@@ -1152,6 +1168,10 @@ button:not(:disabled):hover {
                             </div>
                             <div class="flex-1 min-w-0">
                                 <h4 class="font-bold text-xs truncate">{{ seller_service.title }}</h4>
+                                <div class="flex gap-1 text-xs text-gray-500">
+                                    <span data-listing-type-label>{{ seller_service.listing_type_label }}</span>
+                                    {% if seller_service.fulfilment_type_label %}<span data-fulfilment-type-label>{{ seller_service.fulfilment_type_label }}</span>{% endif %}
+                                </div>
                                 <div class="flex items-center gap-1 mt-1">
                                     <div class="star-rating text-xs">
                                         {% for i in range(1, 6) %}

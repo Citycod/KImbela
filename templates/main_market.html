@@ -1367,6 +1367,16 @@
                                 </span>
                             </div>
                             {% endif %}
+                            <div class="absolute top-2 right-2 flex gap-1">
+                                <span class="rounded bg-white/90 px-2 py-1 text-xs font-medium text-gray-700" data-listing-type-label>
+                                    {{ service.listing_type_label }}
+                                </span>
+                                {% if service.fulfilment_type_label %}
+                                <span class="rounded bg-purple-100/95 px-2 py-1 text-xs font-medium text-purple-700" data-fulfilment-type-label>
+                                    {{ service.fulfilment_type_label }}
+                                </span>
+                                {% endif %}
+                            </div>
                         </div>
                         
                         <div class="p-3">

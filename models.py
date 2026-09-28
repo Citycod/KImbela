@@ -1874,6 +1874,31 @@ class MarketplaceService(db.Model):
         return self.pricing_mode == "contact"
 
     @property
+    def listing_type(self):
+        """Return the product/service concept without changing legacy storage."""
+        stored_type = (self.service_type or "service").strip().lower()
+        return "service" if stored_type == "service" else "product"
+
+    @property
+    def listing_type_label(self):
+        return "Service" if self.listing_type == "service" else "Product"
+
+    @property
+    def fulfilment_type(self):
+        """Return product fulfilment only when the listing is a product."""
+        if self.listing_type != "product":
+            return None
+        return "digital" if self.digital_file else "physical"
+
+    @property
+    def fulfilment_type_label(self):
+        if self.fulfilment_type == "digital":
+            return "Digital"
+        if self.fulfilment_type == "physical":
+            return "Physical"
+        return None
+
+    @property
     def contact_methods_list(self):
         """Get contact methods as list"""
         try:

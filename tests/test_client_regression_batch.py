@@ -1,5 +1,6 @@
-from datetime import date
+from datetime import date, timedelta
 from io import BytesIO
+from pathlib import Path
 import uuid
 
 
@@ -77,20 +78,20 @@ def _listing(db, seller, category, **overrides):
     return listing
 
 
-def _listing_form(category, listing, **overrides):
+def _listing_form(category, listing=None, **overrides):
     values = {
-        "title": listing.title,
+        "title": listing.title if listing else "Regression Listing Form",
         "category_id": str(category.id),
-        "description": listing.description,
-        "short_description": listing.short_description,
+        "description": listing.description if listing else "Regression description",
+        "short_description": listing.short_description if listing else "Regression listing",
         "service_type": "service",
-        "pricing_mode": listing.pricing_mode,
-        "price": str(listing.price or ""),
-        "currency": listing.currency,
-        "country": listing.country,
-        "state": listing.state,
-        "city": listing.city,
-        "status": listing.status,
+        "pricing_mode": listing.pricing_mode if listing else "fixed",
+        "price": str(listing.price or "") if listing else "25",
+        "currency": listing.currency if listing else "USD",
+        "country": listing.country if listing else "Nigeria",
+        "state": listing.state if listing else "Lagos",
+        "city": listing.city if listing else "Lagos",
+        "status": listing.status if listing else "active",
     }
     values.update(overrides)
     return values
@@ -297,27 +298,351 @@ def test_listing_status_update_is_owned_and_validated(db, client):
     listing = _listing(db, seller, category)
 
     _login(client, seller)
-    updated = client.post(
-        f"/edit/{listing.id}",
-        data=_listing_form(category, listing, status="paused"),
+    dashboard = client.get("/seller_dashboard")
+    body = dashboard.get_data(as_text=True)
+    assert dashboard.status_code == 200
+    assert f'action="/toggle-status/{listing.id}"' in body
+    assert 'method="POST"' in body
+    assert 'name="status"' in body
+    assert "Update Status" in body
+    dashboard_api = client.get("/api/dashboard/services?page=1").get_json()
+    api_listing = next(
+        item for item in dashboard_api["services"] if item["id"] == listing.id
     )
-    assert updated.status_code == 302
+    assert api_listing["status_update_url"] == f"/toggle-status/{listing.id}"
+    assert api_listing["allowed_statuses"] == ["active", "paused", "draft", "pending"]
+
+    updated = client.post(
+        f"/toggle-status/{listing.id}",
+        data={"status": "paused", "dashboard_form": "1"},
+        follow_redirects=True,
+    )
+    assert updated.status_code == 200
+    assert b"Listing status updated successfully!" in updated.data
     db.session.refresh(listing)
     assert listing.status == "paused"
 
     invalid = client.post(
-        f"/edit/{listing.id}",
-        data=_listing_form(category, listing, status="approved-by-seller"),
+        f"/toggle-status/{listing.id}",
+        data={"status": "approved-by-seller"},
     )
     assert invalid.status_code == 400
     db.session.refresh(listing)
     assert listing.status == "paused"
+    invalid_form = client.post(
+        f"/toggle-status/{listing.id}",
+        data={"status": "approved-by-seller", "dashboard_form": "1"},
+        follow_redirects=True,
+    )
+    assert invalid_form.status_code == 200
+    assert b"That status change is not allowed for this listing." in invalid_form.data
+    db.session.refresh(listing)
+    assert listing.status == "paused"
+
+    awaiting_subscription = _listing(
+        db,
+        seller,
+        category,
+        status="awaiting_subscription",
+        subscription_status="pending",
+    )
+    blocked_transition = client.post(
+        f"/toggle-status/{awaiting_subscription.id}",
+        data={"status": "active"},
+    )
+    assert blocked_transition.status_code == 400
+    db.session.refresh(awaiting_subscription)
+    assert awaiting_subscription.status == "awaiting_subscription"
 
     _login(client, stranger)
     denied = client.post(
-        f"/edit/{listing.id}", data=_listing_form(category, listing)
+        f"/toggle-status/{listing.id}", data={"status": "active"}
     )
     assert denied.status_code == 403
+
+
+def test_listing_type_is_explicit_mutually_exclusive_and_pricing_independent(db, client):
+    from models import MarketplaceService
+
+    seller = _user(db)
+    category = _category(db)
+    _login(client, seller)
+
+    create_page = client.get("/create_service")
+    body = create_page.get_data(as_text=True)
+    assert create_page.status_code == 200
+    assert 'name="service_type" value="service" class="hidden" required' in body
+    assert 'name="service_type" value="service" class="hidden" checked' not in body
+    assert body.count('<input type="radio" name="service_type"') == 2
+
+    missing_type = client.post(
+        "/create_service",
+        data=_listing_form(category, service_type="", title="Missing Type"),
+    )
+    assert missing_type.status_code == 302
+    assert MarketplaceService.query.filter_by(
+        seller_id=seller.id, title="Missing Type"
+    ).count() == 0
+
+    service_fixed = client.post(
+        "/create_service",
+        data=_listing_form(
+            category,
+            title="Fixed Service",
+            service_type="service",
+            pricing_mode="fixed",
+            price="35",
+        ),
+    )
+    assert service_fixed.status_code == 302
+    stored_service = MarketplaceService.query.filter_by(
+        seller_id=seller.id, title="Fixed Service"
+    ).one()
+    assert stored_service.service_type == "service"
+    assert stored_service.listing_type == "service"
+    assert stored_service.listing_type_label == "Service"
+    assert stored_service.fulfilment_type is None
+    assert stored_service.pricing_mode == "fixed"
+
+    product_contact = client.post(
+        "/create_service",
+        data=_listing_form(
+            category,
+            title="Contact Product",
+            service_type="digital",
+            pricing_mode="contact",
+            price="",
+        ),
+    )
+    assert product_contact.status_code == 302
+    stored_product = MarketplaceService.query.filter_by(
+        seller_id=seller.id, title="Contact Product"
+    ).one()
+    assert stored_product.service_type == "digital"
+    assert stored_product.listing_type == "product"
+    assert stored_product.listing_type_label == "Product"
+    assert stored_product.fulfilment_type == "physical"
+    assert stored_product.fulfilment_type_label == "Physical"
+    assert stored_product.pricing_mode == "contact"
+    assert stored_product.price is None
+
+    edited = client.post(
+        f"/edit/{stored_product.id}",
+        data=_listing_form(
+            category,
+            stored_product,
+            title=stored_product.title,
+            service_type="service",
+            pricing_mode="contact",
+            price="",
+        ),
+    )
+    assert edited.status_code == 302
+    db.session.refresh(stored_product)
+    assert stored_product.service_type == "service"
+    assert stored_product.listing_type_label == "Service"
+    assert stored_product.fulfilment_type is None
+    assert stored_product.pricing_mode == "contact"
+
+    switched_back = client.post(
+        f"/edit/{stored_product.id}",
+        data=_listing_form(
+            category,
+            stored_product,
+            title=stored_product.title,
+            service_type="digital",
+            pricing_mode="contact",
+            price="",
+        ),
+    )
+    assert switched_back.status_code == 302
+    db.session.refresh(stored_product)
+    assert stored_product.listing_type_label == "Product"
+    assert stored_product.fulfilment_type_label == "Physical"
+    assert stored_product.pricing_mode == "contact"
+
+
+def test_marketplace_listing_and_fulfilment_labels_are_distinct_on_all_surfaces(
+    db, client, monkeypatch
+):
+    import importlib
+
+    market_module = importlib.import_module("marketplace.market")
+    monkeypatch.setattr(market_module.cache, "get", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(market_module.cache, "set", lambda *_args, **_kwargs: True)
+
+    seller = _user(db)
+    super_admin = _user(db, super_admin=True)
+    category = _category(db)
+    service = _listing(
+        db,
+        seller,
+        category,
+        title="Ordinary Service Offering",
+        service_type="service",
+        digital_file=None,
+    )
+    physical = _listing(
+        db,
+        seller,
+        category,
+        title="Physical Product Offering",
+        service_type="digital",
+        digital_file=None,
+    )
+    digital = _listing(
+        db,
+        seller,
+        category,
+        title="Downloadable Product Offering",
+        service_type="digital",
+        digital_file="https://cdn.example/downloadable-guide.pdf",
+    )
+
+    assert (service.listing_type_label, service.fulfilment_type_label) == (
+        "Service",
+        None,
+    )
+    assert (physical.listing_type_label, physical.fulfilment_type_label) == (
+        "Product",
+        "Physical",
+    )
+    assert (digital.listing_type_label, digital.fulfilment_type_label) == (
+        "Product",
+        "Digital",
+    )
+
+    service_detail = client.get(f"/service/{service.id}").get_data(as_text=True)
+    assert 'data-primary-listing-type-label>\n                                    Service' in service_detail
+    assert "data-primary-fulfilment-type-label" not in service_detail
+
+    physical_detail = client.get(f"/service/{physical.id}").get_data(as_text=True)
+    assert 'data-primary-listing-type-label>\n                                    Product' in physical_detail
+    assert 'data-primary-fulfilment-type-label>\n                                    Physical' in physical_detail
+
+    digital_detail = client.get(f"/service/{digital.id}").get_data(as_text=True)
+    assert 'data-primary-listing-type-label>\n                                    Product' in digital_detail
+    assert 'data-primary-fulfilment-type-label>\n                                    Digital' in digital_detail
+
+    market = client.get("/main_market").get_data(as_text=True)
+    assert market.count("data-listing-type-label") >= 3
+    assert "Ordinary Service Offering" in market
+    assert "Physical Product Offering" in market
+    assert "Downloadable Product Offering" in market
+
+    seller_page = client.get(f"/seller/{seller.id}").get_data(as_text=True)
+    assert seller_page.count("data-listing-type-label") >= 3
+    reviews = client.get(f"/service/{service.slug}/reviews").get_data(as_text=True)
+    assert 'data-listing-type-label>Service</span>' in reviews
+
+    _login(client, seller)
+    dashboard = client.get("/seller_dashboard").get_data(as_text=True)
+    assert "data-listing-type-label" in dashboard
+    dashboard_api = client.get("/api/dashboard/services?page=1").get_json()
+    labels = {
+        item["id"]: (
+            item["service_type"],
+            item["listing_type_label"],
+            item["fulfilment_type_label"],
+        )
+        for item in dashboard_api["services"]
+    }
+    assert labels[service.id] == ("service", "Service", None)
+    assert labels[physical.id] == ("digital", "Product", "Physical")
+    assert labels[digital.id] == ("digital", "Product", "Digital")
+
+    _login(client, super_admin)
+    moderation = client.get("/admin/marketplace").get_data(as_text=True)
+    assert moderation.count("data-listing-type-label") >= 3
+    assert moderation.count("data-fulfilment-type-label") >= 2
+
+
+def test_templates_do_not_title_case_legacy_service_type_as_display_label():
+    template_names = (
+        "service_detail.html",
+        "seller_profile.html",
+        "main_market.html",
+        "seller_dashboard.html",
+        "admin_marketplace.html",
+        "service_reviews.html",
+    )
+    for template_name in template_names:
+        source = Path("templates", template_name).read_text()
+        assert "service.service_type|title" not in source
+
+
+def test_public_post_surfaces_hide_ai_labels_and_keep_internal_identity(db, client):
+    from models import AIPersona, Comment, Group, Post
+    from time_utils import utcnow
+
+    viewer = _user(db)
+    ai_user = _user(db, ai=True)
+    normal_user = _user(db)
+    historical = Post(
+        content="Historical managed post",
+        author_id=ai_user.id,
+        created_at=utcnow() - timedelta(days=30),
+    )
+    current = Post(content="Current managed post", author_id=ai_user.id)
+    normal = Post(content="Normal public post", author_id=normal_user.id)
+    group = Group(
+        name=f"AI display group {uuid.uuid4().hex[:8]}",
+        is_active=True,
+        created_by=viewer.id,
+    )
+    db.session.add_all((historical, current, normal, group))
+    db.session.flush()
+    group.members.append(viewer)
+    group_post = Post(
+        content="Managed group post", author_id=ai_user.id, group_id=group.id
+    )
+    db.session.add(group_post)
+    db.session.flush()
+    db.session.add(
+        Comment(content="Managed group reply", author_id=ai_user.id, post_id=group_post.id)
+    )
+    persona = AIPersona(
+        user_id=ai_user.id,
+        name=ai_user.full_name,
+        bio_disclosure="Internal managed persona",
+        personality="Friendly",
+        interests=["community"],
+        forbidden_actions=[],
+        escalation_rule="Escalate unsafe requests",
+        is_active=True,
+    )
+    db.session.add(persona)
+    db.session.commit()
+    _login(client, viewer)
+
+    feed = client.get("/user_dashboard?limit=50")
+    profile = client.get(f"/profile/{ai_user.public_id}")
+    group_page = client.get(f"/groups/{group.id}")
+    detail = client.get(f"/post/{current.public_id}")
+
+    assert feed.status_code == profile.status_code == group_page.status_code == detail.status_code == 200
+    assert b"Historical managed post" in feed.data
+    assert b"Current managed post" in feed.data
+    assert b"Normal public post" in feed.data
+    assert b"Current managed post" in profile.data
+    assert b"Managed group post" in group_page.data
+    assert b"Managed group reply" in group_page.data
+    assert b"Current managed post" in detail.data
+
+    public_templates = (
+        "templates/_post_card.html",
+        "templates/_posts_partial.html",
+        "templates/user_dashboard.html",
+        "templates/group_detail.html",
+    )
+    for template_name in public_templates:
+        source = Path(template_name).read_text()
+        assert ">AI</span>" not in source
+        assert "AI · Automated" not in source
+
+    assert ai_user.is_ai_persona is True
+    assert db.session.get(AIPersona, persona.id).user_id == ai_user.id
+    assert "AI · Automated" in Path("templates/admin_ai_users.html").read_text()
 
 
 def test_feed_post_owner_actions_and_server_authorization(db, client):

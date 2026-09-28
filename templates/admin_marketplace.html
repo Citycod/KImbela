@@ -45,7 +45,14 @@
                 <div class="h-14 w-14 flex-none overflow-hidden rounded-lg bg-slate-100">
                   <img src="{{ service.cover_image or url_for('static', filename='assets/img/default-service.jpg') }}" alt="" class="h-full w-full object-contain">
                 </div>
-                <div><p class="font-semibold text-slate-900">{{ service.title }}</p><p class="text-xs text-slate-500">{{ service.category.name if service.category else 'Uncategorized' }}</p></div>
+                <div>
+                  <p class="font-semibold text-slate-900">{{ service.title }}</p>
+                  <p class="text-xs text-slate-500">{{ service.category.name if service.category else 'Uncategorized' }}</p>
+                  <div class="mt-1 flex gap-1 text-xs font-medium">
+                    <span class="rounded bg-slate-100 px-1.5 py-0.5 text-slate-600" data-listing-type-label>{{ service.listing_type_label }}</span>
+                    {% if service.fulfilment_type_label %}<span class="rounded bg-violet-50 px-1.5 py-0.5 text-violet-700" data-fulfilment-type-label>{{ service.fulfilment_type_label }}</span>{% endif %}
+                  </div>
+                </div>
               </div>
             </td>
             <td class="p-4"><p class="font-medium">{{ service.seller.full_name if service.seller else 'Unknown seller' }}</p><p class="text-xs text-slate-500">{{ service.seller.email if service.seller else '' }}</p></td>
