@@ -104,6 +104,13 @@
                   <td class="py-4">
                       <div class="flex flex-wrap items-center gap-2">
                           {% if user.is_admin and not user.is_super_admin %}
+                          <label class="inline-flex items-center gap-2 rounded-lg bg-violet-50 px-3 py-2 text-xs font-semibold text-violet-700" title="Allow this sub admin to send broadcasts">
+                              <input type="checkbox"
+                                     class="rounded border-violet-300"
+                                     {% if user.has_admin_permission('broadcast_messages') %}checked{% endif %}
+                                     onchange="setBroadcastPermission({{ user.id }}, this.checked)">
+                              Broadcast
+                          </label>
                           <button
                                   onclick="toggleUserStatus({{ user.id }})"
                                   class="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold {{ 'bg-green-100 text-green-700 hover:bg-green-200' if not user.is_active else 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200' }} transition-colors"
@@ -503,6 +510,24 @@ window.makeAdmin = async function(userId) {
         }
     } catch (error) {
         showToast('Error promoting user to admin', 'error');
+    }
+};
+
+window.setBroadcastPermission = async function(userId, enabled) {
+    try {
+        const response = await apiCall(`/admin/users/${userId}/permissions/broadcast`, {
+            method: 'POST',
+            body: JSON.stringify({ enabled })
+        });
+        if (response.success) {
+            showToast(`Broadcast permission ${response.enabled ? 'enabled' : 'disabled'}`, 'success');
+        } else {
+            showToast(response.error || 'Failed to update permission', 'error');
+            loadUsersWithFilters();
+        }
+    } catch (error) {
+        showToast('Error updating broadcast permission', 'error');
+        loadUsersWithFilters();
     }
 };
 

@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Broadcast Message - Kimbela Admin</title>
+<script src="https://cdn.tailwindcss.com"></script>
+{% endblock %}
+
+{% block content %}
+<main class="min-h-screen bg-slate-50 px-4 py-8 sm:px-6">
+  <div class="mx-auto max-w-2xl">
+    <div class="mb-6 flex items-center justify-between gap-4">
+      <div>
+        <p class="text-xs font-bold uppercase tracking-widest text-violet-600">Admin communication</p>
+        <h1 class="text-2xl font-bold text-slate-900">Broadcast Message</h1>
+        <p class="mt-1 text-sm text-slate-600">Send one plain-text announcement by email and PWA push.</p>
+      </div>
+      {% if current_user.is_super_admin %}
+      <a href="{{ url_for('admin.admin_dashboard') }}" class="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700">Back to Admin</a>
+      {% else %}
+      <a href="{{ url_for('user.user_dashboard') }}" class="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700">Back to Dashboard</a>
+      {% endif %}
+    </div>
+
+    <section class="rounded-2xl bg-white p-6 shadow-sm">
+      <div class="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+        This targets {{ active_recipient_count }} active, non-automated accounts. Email opt-outs are respected. Push is sent only to existing subscriptions.
+      </div>
+      <form method="post" action="{{ url_for('admin.admin_broadcast') }}" class="space-y-5" onsubmit="return confirm('Send this broadcast to all eligible active Kimbela users?');">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <div>
+          <label for="broadcastSubject" class="mb-1 block text-sm font-semibold text-slate-700">Subject / title</label>
+          <input id="broadcastSubject" name="subject" type="text" maxlength="120" required class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm" placeholder="Kimbela announcement">
+        </div>
+        <div>
+          <label for="broadcastMessage" class="mb-1 block text-sm font-semibold text-slate-700">Message</label>
+          <textarea id="broadcastMessage" name="message" rows="8" maxlength="4000" required class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm" placeholder="Write a concise plain-text message..."></textarea>
+          <p class="mt-1 text-xs text-slate-500">HTML and scripts are not accepted. Push previews use the first 180 characters.</p>
+        </div>
+        <button type="submit" class="w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-bold text-white hover:bg-slate-800">Send Email + Push Broadcast</button>
+      </form>
+    </section>
+  </div>
+</main>
+{% endblock %}

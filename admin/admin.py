@@ -33,6 +33,7 @@ from models import (
     SiteSetting,
     AIPersona,
     AILog,
+    PushSubscription,
     group_members,
 )
 
@@ -73,6 +74,7 @@ from flask_login import (
 from extensions import db
 from flask_bcrypt import bcrypt
 from werkzeug.security import generate_password_hash, check_password_hash
+from markupsafe import escape
 import os, re
 import cloudinary.uploader
 from dotenv import load_dotenv
@@ -118,6 +120,8 @@ cloudinary.config(
 
 
 admin = Blueprint("admin", __name__)
+BROADCAST_PERMISSION = "broadcast_messages"
+BROADCAST_PUSH_BATCH_SIZE = 500
 
 
 def allowed_file(filename):
@@ -177,6 +181,13 @@ def _require_admin_permission(permission):
         flash("Access denied. Insufficient permissions.", "danger")
         return False
     return True
+
+
+def _admin_permission_set(user):
+    try:
+        return set(json.loads(user.admin_permissions or "[]"))
+    except (TypeError, ValueError):
+        return set()
 
 
 def _normalize_group_display_member_count(raw_value):
@@ -1578,6 +1589,40 @@ def admin_make_admin(user_id):
     return jsonify({"success": True})
 
 
+@admin.route("/admin/users/<int:user_id>/permissions/broadcast", methods=["POST"])
+@login_required
+def admin_set_broadcast_permission(user_id):
+    if not current_user.is_super_admin:
+        return jsonify({"success": False, "error": "Super admin required"}), 403
+
+    user = User.query.get_or_404(user_id)
+    if not user.is_admin or user.is_super_admin:
+        return jsonify({"success": False, "error": "Sub admin required"}), 400
+
+    payload = request.get_json(silent=True) or request.form
+    raw_enabled = payload.get("enabled")
+    enabled = raw_enabled is True or str(raw_enabled).strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+    permissions = _admin_permission_set(user)
+    if enabled:
+        permissions.add(BROADCAST_PERMISSION)
+    else:
+        permissions.discard(BROADCAST_PERMISSION)
+    user.admin_permissions = json.dumps(sorted(permissions)) or None
+    db.session.commit()
+    current_app.logger.info(
+        "Super admin %s changed broadcast permission for admin %s enabled=%s",
+        current_user.id,
+        user.id,
+        enabled,
+    )
+    return jsonify({"success": True, "enabled": enabled})
+
+
 @admin.route("/admin/users/<int:user_id>/remove_admin", methods=["POST"])
 @login_required
 def admin_remove_admin(user_id):
@@ -2568,6 +2613,141 @@ def admin_archive_marketplace_listing(service_id):
     )
     flash("Marketplace listing archived. Payment and order history was preserved.", "success")
     return redirect(url_for("admin.admin_marketplace"))
+
+
+@admin.route("/admin/broadcast", methods=["GET", "POST"])
+@login_required
+def admin_broadcast():
+    if not _admin_has_permission(BROADCAST_PERMISSION):
+        abort(403)
+
+    if request.method == "GET":
+        active_recipient_count = User.query.filter(
+            User.is_active.is_(True),
+            User.is_ai_persona.isnot(True),
+        ).count()
+        return render_template(
+            "admin_broadcast.html",
+            active_recipient_count=active_recipient_count,
+        )
+
+    subject = (request.form.get("subject") or "").strip()[:120]
+    message = (request.form.get("message") or "").strip()[:4000]
+    if not subject or not message:
+        flash("Subject and message are required.", "danger")
+        return redirect(url_for("admin.admin_broadcast"))
+
+    recipient_query = (
+        db.session.query(
+            User.id,
+            User.email,
+            User.receive_promotional_emails,
+        )
+        .filter(
+            User.is_active.is_(True),
+            User.is_ai_persona.isnot(True),
+        )
+        .order_by(User.id.asc())
+    )
+    recipient_count = recipient_query.count()
+    current_app.logger.info(
+        "Admin broadcast created sender_admin_id=%s recipient_count=%s",
+        current_user.id,
+        recipient_count,
+    )
+    recipient_ids = []
+    email_attempted = 0
+    email_succeeded = 0
+    email_failed = 0
+    email_opted_out = 0
+    safe_html = "<p>" + str(escape(message)).replace("\n", "<br>") + "</p>"
+
+    for recipient in recipient_query.yield_per(100):
+        recipient_ids.append(recipient.id)
+        if recipient.receive_promotional_emails is False:
+            email_opted_out += 1
+            continue
+        if not recipient.email:
+            email_failed += 1
+            continue
+        email_attempted += 1
+        try:
+            delivered = EmailService.send_email(
+                to_email=recipient.email,
+                subject=subject,
+                html_content=safe_html,
+                text_content=message,
+            )
+        except Exception:
+            delivered = False
+            current_app.logger.exception(
+                "Broadcast email raised for recipient user_id=%s", recipient.id
+            )
+        if delivered:
+            email_succeeded += 1
+        else:
+            email_failed += 1
+
+    from utils.push_service import send_push_notifications
+
+    push_payload = {
+        "title": subject,
+        "body": message[:180],
+        "url": "/user_dashboard",
+        "event_type": "admin_broadcast",
+        "tag": f"admin-broadcast-{uuid.uuid4().hex}",
+        "renotify": True,
+    }
+    push_eligible = 0
+    push_batches_succeeded = 0
+    push_batches_failed = 0
+    for offset in range(0, len(recipient_ids), BROADCAST_PUSH_BATCH_SIZE):
+        recipient_batch = recipient_ids[offset : offset + BROADCAST_PUSH_BATCH_SIZE]
+        eligible_in_batch = (
+            db.session.query(func.count(func.distinct(PushSubscription.user_id)))
+            .filter(PushSubscription.user_id.in_(recipient_batch))
+            .scalar()
+            or 0
+        )
+        if not eligible_in_batch:
+            continue
+        push_eligible += eligible_in_batch
+        try:
+            if send_push_notifications(recipient_batch, push_payload):
+                push_batches_succeeded += 1
+            else:
+                push_batches_failed += 1
+        except Exception:
+            push_batches_failed += 1
+            db.session.rollback()
+            current_app.logger.exception(
+                "Broadcast push batch failed sender_admin_id=%s batch_offset=%s",
+                current_user.id,
+                offset,
+            )
+
+    current_app.logger.info(
+        "Admin broadcast completed sender_admin_id=%s recipient_count=%s "
+        "email_attempted=%s email_succeeded=%s email_failed=%s "
+        "email_opted_out=%s push_eligible=%s push_batches_succeeded=%s "
+        "push_batches_failed=%s",
+        current_user.id,
+        len(recipient_ids),
+        email_attempted,
+        email_succeeded,
+        email_failed,
+        email_opted_out,
+        push_eligible,
+        push_batches_succeeded,
+        push_batches_failed,
+    )
+    flash(
+        f"Broadcast processed for {len(recipient_ids)} active users: "
+        f"{email_succeeded} emails sent, {email_failed} email failures, "
+        f"{push_eligible} push recipients targeted.",
+        "success" if not email_failed and not push_batches_failed else "warning",
+    )
+    return redirect(url_for("admin.admin_broadcast"))
 
 
 @admin.route("/admin/users/bulk_email", methods=["POST"])

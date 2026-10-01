@@ -3,6 +3,7 @@ from time_utils import utcnow
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
+from contextlib import contextmanager
 from datetime import datetime, timedelta
 import logging
 import signal
@@ -107,6 +108,45 @@ def run_one_ai_action(personas, feed_first=None):
 
 def process_birthday_push(user, year):
     """Attempt one user's annual birthday push and record completed outcomes."""
+    with birthday_delivery_lock(user.id, year) as acquired:
+        if not acquired:
+            return "already_processing"
+        return _process_birthday_push_locked(user, year)
+
+
+@contextmanager
+def birthday_delivery_lock(user_id, year):
+    """Serialize one user/year delivery across dedicated PostgreSQL schedulers."""
+    if db.engine.dialect.name != "postgresql":
+        yield True
+        return
+
+    from sqlalchemy import text
+
+    delivery_key = f"{user_id}:{year}"
+    with db.engine.connect() as lock_conn:
+        acquired = lock_conn.execute(
+            text(
+                "SELECT pg_try_advisory_lock("
+                "hashtext('kimbela:birthday'), hashtext(:delivery_key))"
+            ),
+            {"delivery_key": delivery_key},
+        ).scalar()
+        try:
+            yield bool(acquired)
+        finally:
+            if acquired:
+                lock_conn.execute(
+                    text(
+                        "SELECT pg_advisory_unlock("
+                        "hashtext('kimbela:birthday'), hashtext(:delivery_key))"
+                    ),
+                    {"delivery_key": delivery_key},
+                )
+
+
+def _process_birthday_push_locked(user, year):
+    """Deliver birthday channels while a production advisory lock is held."""
     from models import BirthdayNotificationLog, PushSubscription
     from utils.push_service import send_push_notification
 
@@ -125,34 +165,90 @@ def process_birthday_push(user, year):
         "event_type": "birthday",
     }
 
-    try:
-        push_succeeded = send_push_notification(user.id, payload)
-    except Exception:
-        db.session.rollback()
-        logger.exception("Birthday push raised unexpectedly for user %s", user.id)
-        return "retry"
+    push_state = "unavailable"
+    has_push_subscription = (
+        PushSubscription.query.filter_by(user_id=user.id).first() is not None
+    )
+    if has_push_subscription:
+        try:
+            push_succeeded = bool(send_push_notification(user.id, payload))
+        except Exception:
+            db.session.rollback()
+            push_succeeded = False
+            logger.exception("Birthday push raised unexpectedly for user %s", user.id)
 
-    if not push_succeeded:
-        remaining_subscriptions = PushSubscription.query.filter_by(user_id=user.id).count()
-        if remaining_subscriptions:
-            logger.warning(
-                "Birthday push failed transiently for user %s; leaving it eligible for retry",
-                user.id,
-            )
-            return "retry"
+        if push_succeeded:
+            push_state = "sent"
+        else:
+            remaining_subscriptions = PushSubscription.query.filter_by(
+                user_id=user.id
+            ).count()
+            if remaining_subscriptions:
+                push_state = "retry"
+                logger.warning(
+                    "Birthday push failed transiently for user %s; leaving it "
+                    "eligible for retry",
+                    user.id,
+                )
 
-    # No subscription before the attempt, or only permanently expired 404/410
-    # subscriptions, keeps the existing email-fallback/annual-completion behavior.
+    email_succeeded = False
     try:
         from email_service import EmailService
 
-        EmailService.send_birthday_email(user)
+        email_succeeded = bool(EmailService.send_birthday_email(user))
     except Exception:
-        logger.exception("Birthday fallback email failed for user %s", user.id)
+        logger.exception("Birthday email raised unexpectedly for user %s", user.id)
+
+    # The existing schema has only one annual event-level completion row. Keep
+    # the user/year retryable after either channel fails instead of allowing one
+    # successful channel to permanently suppress the other. No subscription (or
+    # only subscriptions pruned as 404/410) is an unavailable push channel, not
+    # a delivery failure.
+    if not email_succeeded or push_state == "retry":
+        logger.warning(
+            "Birthday delivery incomplete for user %s: email_succeeded=%s "
+            "push_state=%s",
+            user.id,
+            email_succeeded,
+            push_state,
+        )
+        return "retry"
 
     db.session.add(BirthdayNotificationLog(user_id=user.id, year=year))
     db.session.commit()
     return "completed"
+
+
+def birthday_delivery_due(user, now_utc=None):
+    """Return the user's local birthday year when the hourly delivery is due."""
+    if not user or not user.is_active or not user.dob:
+        return None
+
+    import pytz
+
+    now_utc = now_utc or datetime.now(pytz.utc)
+    if now_utc.tzinfo is None:
+        now_utc = pytz.utc.localize(now_utc)
+    try:
+        local_tz = pytz.timezone(user.timezone or "UTC")
+    except (pytz.UnknownTimeZoneError, AttributeError):
+        local_tz = pytz.UTC
+    local_now = now_utc.astimezone(local_tz)
+    if (
+        local_now.month == user.dob.month
+        and local_now.day == user.dob.day
+        and local_now.hour >= 9
+    ):
+        return local_now.year
+    return None
+
+
+def process_due_birthday_delivery(user, now_utc=None):
+    """Process a birthday only when the user's local delivery window is due."""
+    delivery_year = birthday_delivery_due(user, now_utc=now_utc)
+    if delivery_year is None:
+        return "not_due"
+    return process_birthday_push(user, delivery_year)
 
 
 def init_scheduler(app):
@@ -354,26 +450,16 @@ def init_scheduler(app):
         """Hourly check to send birthday pushes to users in their local timezone"""
         with app.app_context():
             from models import User
-            import pytz
 
             try:
-                users = User.query.filter(User.dob != None).all()
+                users = User.query.filter(
+                    User.dob.isnot(None),
+                    User.is_active.is_(True),
+                ).all()
                 for user in users:
-                    # 1. Get user's local time
-                    tz_name = user.timezone or 'UTC'
-                    try:
-                        local_tz = pytz.timezone(tz_name)
-                    except:
-                        local_tz = pytz.UTC
-                    
-                    local_now = datetime.now(pytz.utc).astimezone(local_tz)
-                    
-                    # Send if it's their birthday today (local time) and hour >= 9 AM
-                    if local_now.month == user.dob.month and local_now.day == user.dob.day:
-                        if local_now.hour >= 9:
-                            result = process_birthday_push(user, local_now.year)
-                            if result == "completed":
-                                time.sleep(0.5) # Prevent blasting the CPU/network
+                    result = process_due_birthday_delivery(user)
+                    if result == "completed":
+                        time.sleep(0.5) # Prevent blasting the CPU/network
             except Exception as e:
                 logger.error(f"Error in send_birthday_pushes: {str(e)}")
                 db.session.rollback()

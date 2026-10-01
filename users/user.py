@@ -12,8 +12,8 @@ from flask import (
 )
 from datetime import date
 from urllib.parse import urlparse, urljoin
-from sqlalchemy.orm import joinedload
-from sqlalchemy import and_, exists, func, or_
+from sqlalchemy.orm import aliased, joinedload
+from sqlalchemy import and_, exists, false, func, or_
 
 from models import (
     MatchmakingPackage,
@@ -59,6 +59,7 @@ from utils.matchmaking_group import (
     can_view_post,
     configured_matchmaking_group_id,
     is_group_member,
+    is_private_group_post,
     is_matchmaking_group,
     is_matchmaking_post,
 )
@@ -249,7 +250,7 @@ def build_post_share_meta(post):
 
 
 def get_groups_data_for_user(user_id):
-    cache_key = f"user_groups_public_v1:{user_id}"
+    cache_key = f"user_groups_public_v2:{user_id}"
     cached = safe_cache_get(cache_key)
     if cached is not None:
         return _with_current_public_group_counts(cached)
@@ -258,9 +259,33 @@ def get_groups_data_for_user(user_id):
         normalized = (name or "").strip().lower()
         return "alumni" in normalized and "married" in normalized
 
-    groups = Group.query.filter_by(is_active=True).all()
+    member_group_ids = {
+        row[0]
+        for row in db.session.query(group_members.c.group_id)
+        .filter(group_members.c.user_id == user_id)
+        .all()
+    }
+    viewer = db.session.get(User, user_id)
+    groups_query = Group.query.filter(Group.is_active.is_(True))
+    if not (
+        viewer
+        and (viewer.is_admin or viewer.is_super_admin)
+    ):
+        protected_group_id = configured_matchmaking_group_id()
+        public_group_clause = Group.is_private.is_(False)
+        if protected_group_id is not None:
+            public_group_clause = and_(
+                public_group_clause,
+                Group.id != protected_group_id,
+            )
+        groups_query = groups_query.filter(
+            or_(
+                public_group_clause,
+                Group.id.in_(member_group_ids),
+            )
+        )
     groups = sorted(
-        groups,
+        groups_query.all(),
         key=lambda group: (
             is_alumni_married_group(group.name),
             group.name.lower(),
@@ -269,13 +294,6 @@ def get_groups_data_for_user(user_id):
     if not groups:
         safe_cache_set(cache_key, [], timeout=60)
         return []
-
-    member_group_ids = {
-        row[0]
-        for row in db.session.query(group_members.c.group_id)
-        .filter(group_members.c.user_id == user_id)
-        .all()
-    }
 
     groups_data = []
     for group in groups:
@@ -377,9 +395,26 @@ def _can_owner_manage_post(post, user_account):
         group, user_account
     ):
         return False
-    if is_matchmaking_post(post):
-        return bool(user_account.is_admin or user_account.is_super_admin)
+    if group.is_private or is_matchmaking_post(post):
+        return group_post_allowed(group, user_account)
     return True
+
+
+def _exclude_protected_shared_sources(query):
+    """Exclude legacy wrappers whose shared source belongs to a protected group."""
+    source_post = aliased(Post)
+    protected_conditions = [Group.is_private.is_(True)]
+    protected_group_id = configured_matchmaking_group_id()
+    if protected_group_id is not None:
+        protected_conditions.append(Group.id == protected_group_id)
+    protected_source_exists = exists().where(
+        and_(
+            source_post.id == Post.shared_post_id,
+            source_post.group_id == Group.id,
+            or_(*protected_conditions),
+        )
+    )
+    return query.filter(~protected_source_exists)
 
 
 load_dotenv()
@@ -1804,6 +1839,19 @@ def get_visible_posts_optimized(user_id, cursor=None, limit=10):
             WHERE blocked_id = :user_id
         )
         AND p.group_id IS NULL
+        AND NOT EXISTS (
+            SELECT 1
+            FROM posts source_post
+            JOIN groups source_group ON source_group.id = source_post.group_id
+            WHERE source_post.id = p.shared_post_id
+              AND (
+                  source_group.is_private = TRUE
+                  OR (
+                      :protected_group_id IS NOT NULL
+                      AND source_group.id = :protected_group_id
+                  )
+              )
+        )
         {cursor_clause}
         ORDER BY p.created_at DESC
         LIMIT :limit + 1  -- Get one extra to check if there are more
@@ -1812,7 +1860,11 @@ def get_visible_posts_optimized(user_id, cursor=None, limit=10):
         )
     )
 
-    params = {"user_id": user_id, "limit": limit}
+    params = {
+        "user_id": user_id,
+        "limit": limit,
+        "protected_group_id": configured_matchmaking_group_id(),
+    }
     if cursor:
         params["cursor"] = cursor
 
@@ -1842,6 +1894,8 @@ def get_visible_posts_optimized(user_id, cursor=None, limit=10):
             .order_by(Post.created_at.desc())
             .all()
         )
+        viewer = db.session.get(User, user_id)
+        posts = [post for post in posts if can_view_post(post, viewer)]
 
     return posts, next_cursor, has_more
 
@@ -1871,12 +1925,14 @@ def get_posts_with_pagination(user_id, cursor=None, limit=10):
         ~Post.author_id.in_(list(blocked_ids)),
         Post.group_id.is_(None)
     )  # Convert to list for IN clause
+    query = _exclude_protected_shared_sources(query)
 
     if cursor:
         query = query.filter(Post.id < cursor)
 
     # Get posts and count likes efficiently
     posts = query.order_by(Post.created_at.desc()).limit(limit + 1).all()
+    posts = [post for post in posts if can_view_post(post, user)]
 
     # Prefetch likes count in batch
     if posts:
@@ -2269,7 +2325,7 @@ def repost_post(post_identifier):
     original_post = resolve_post_by_identifier(post_identifier)
     if not can_view_post(original_post, current_user):
         return jsonify(success=False, error="Group access required"), 403
-    if is_matchmaking_post(original_post):
+    if is_private_group_post(original_post):
         return jsonify(success=False, error="Private group posts cannot be reposted"), 403
 
     existing_repost = Post.query.filter_by(
@@ -2308,7 +2364,7 @@ def share_post(post_identifier):
     original_post = resolve_post_by_identifier(post_identifier)
     if not can_view_post(original_post, current_user):
         return jsonify(success=False, error="Group access required"), 403
-    if is_matchmaking_post(original_post):
+    if is_private_group_post(original_post):
         return jsonify(success=False, error="Private group posts cannot be shared"), 403
     payload = request.get_json(silent=True) or request.form
     content = (payload.get("content") or "").strip()
@@ -3124,14 +3180,24 @@ def get_notifications():
         for post in Post.query.filter(Post.id.in_(fallback_post_ids or [-1])).all()
     }
 
-    def destination_for(notification):
+    def post_for_notification(notification):
         entity_type = notification.entity_type or ""
         entity_kind, _, raw_fallback_id = entity_type.partition(":")
         if entity_kind in {"comment", "group_comment"}:
             comment = comments_by_id.get(notification.entity_id)
             fallback_id = int(raw_fallback_id) if raw_fallback_id.isdigit() else None
-            post = posts_by_id.get(comment.post_id if comment else fallback_id)
-            if post:
+            return posts_by_id.get(comment.post_id if comment else fallback_id)
+        if entity_kind in {"post", "group_post"}:
+            return posts_by_id.get(notification.entity_id)
+        return None
+
+    def destination_for(notification):
+        entity_type = notification.entity_type or ""
+        entity_kind, _, _ = entity_type.partition(":")
+        post = post_for_notification(notification)
+        if post:
+            if entity_kind in {"comment", "group_comment"}:
+                comment = comments_by_id.get(notification.entity_id)
                 anchor = f"comment-{comment.id}" if comment else f"post-{post.id}"
                 if post.group_id:
                     return url_for(
@@ -3146,9 +3212,7 @@ def get_notifications():
                     notification=1,
                     _anchor=anchor,
                 )
-        if entity_kind in {"post", "group_post"}:
-            post = posts_by_id.get(notification.entity_id)
-            if post:
+            if entity_kind in {"post", "group_post"}:
                 if post.group_id:
                     return url_for(
                         "user.group_detail",
@@ -3174,6 +3238,9 @@ def get_notifications():
 
     result = []
     for n in notifications:
+        related_post = post_for_notification(n)
+        if related_post and not can_view_post(related_post, current_user):
+            continue
         notification_data = {
             "id": n.id,
             "type": n.type,
@@ -3664,25 +3731,34 @@ def search():
         )
         .join(User)
     )
-    protected_group_id = configured_matchmaking_group_id()
-    if protected_group_id is not None and not (
-        current_user.is_admin or current_user.is_super_admin
-    ):
-        protected_member = db.session.execute(
-            db.select(
-                exists().where(
-                    and_(
-                        group_members.c.group_id == protected_group_id,
-                        group_members.c.user_id == current_user.id,
-                    )
-                )
+    if not (current_user.is_admin or current_user.is_super_admin):
+        protected_group_id = configured_matchmaking_group_id()
+        viewer_is_member = exists().where(
+            and_(
+                group_members.c.group_id == Post.group_id,
+                group_members.c.user_id == current_user.id,
             )
-        ).scalar()
-        if not protected_member:
-            posts = posts.filter(
-                or_(Post.group_id.is_(None), Post.group_id != protected_group_id)
+        )
+        group_requires_membership = exists().where(
+            and_(
+                Group.id == Post.group_id,
+                or_(
+                    Group.is_private.is_(True),
+                    Group.id == protected_group_id
+                    if protected_group_id is not None
+                    else false(),
+                ),
             )
-    posts = posts.limit(10).all()
+        )
+        posts = posts.filter(
+            or_(
+                Post.group_id.is_(None),
+                ~group_requires_membership,
+                viewer_is_member,
+            )
+        )
+    posts = _exclude_protected_shared_sources(posts).limit(10).all()
+    posts = [post for post in posts if can_view_post(post, current_user)]
 
     users_data = [
         {
@@ -3758,6 +3834,7 @@ def profile(user_id):
         .order_by(Post.created_at.desc())
         .all()
     )
+    posts = [post for post in posts if can_view_post(post, current_user)]
 
     # Get friends (excluding blocked users)
     friends = [f for f in current_user.friends if not current_user.is_blocking(f)]
@@ -4199,7 +4276,7 @@ def group_detail(group_id):
 
     # Get group posts
     posts = (
-        Post.query.filter_by(group_id=group_id)
+        _exclude_protected_shared_sources(Post.query.filter_by(group_id=group_id))
         .options(
             db.joinedload(Post.author),
             db.joinedload(Post.comments).joinedload(Comment.author),
@@ -4207,6 +4284,7 @@ def group_detail(group_id):
         .order_by(Post.created_at.desc())
         .all()
     )
+    posts = [post for post in posts if can_view_post(post, current_user)]
 
     return render_template(
         "group_detail.html",
@@ -4310,6 +4388,7 @@ def create_group():
             # Add creator as first member
             group.members.append(current_user)
             db.session.commit()
+            safe_cache_delete(f"user_groups_public_v2:{current_user.id}")
 
             return jsonify({"success": True, "group_id": group.id})
 
@@ -4344,6 +4423,7 @@ def join_group(group_id):
     group.members.append(current_user)
     group.member_count = group.members.count()  # Use .count() instead of len()
     db.session.commit()
+    safe_cache_delete(f"user_groups_public_v2:{current_user.id}")
 
     return jsonify({"success": True})
 
@@ -4361,6 +4441,7 @@ def leave_group(group_id):
     group.members.remove(current_user)
     group.member_count = group.members.count()  # Use .count() instead of len()
     db.session.commit()
+    safe_cache_delete(f"user_groups_public_v2:{current_user.id}")
 
     return jsonify({"success": True})
 
@@ -4465,10 +4546,13 @@ def get_group_posts(group_id):
     per_page = 10
 
     posts = (
-        Post.query.filter_by(group_id=group_id)
+        _exclude_protected_shared_sources(Post.query.filter_by(group_id=group_id))
         .order_by(Post.created_at.desc())
         .paginate(page=page, per_page=per_page, error_out=False)
     )
+    posts.items = [
+        post for post in posts.items if can_view_post(post, current_user)
+    ]
 
     posts_data = []
     for post in posts.items:
@@ -4592,18 +4676,22 @@ def get_all_groups():
 
     query = Group.query.filter(Group.is_active.is_(True))
 
-    protected_group_id = configured_matchmaking_group_id()
-    if protected_group_id is not None and not (
-        current_user.is_admin or current_user.is_super_admin
-    ):
-        is_protected_member = exists().where(
+    if not (current_user.is_admin or current_user.is_super_admin):
+        protected_group_id = configured_matchmaking_group_id()
+        is_group_member_clause = exists().where(
             and_(
-                group_members.c.group_id == protected_group_id,
+                group_members.c.group_id == Group.id,
                 group_members.c.user_id == current_user.id,
             )
         )
+        public_group_clause = Group.is_private.is_(False)
+        if protected_group_id is not None:
+            public_group_clause = and_(
+                public_group_clause,
+                Group.id != protected_group_id,
+            )
         query = query.filter(
-            or_(Group.id != protected_group_id, is_protected_member)
+            or_(public_group_clause, is_group_member_clause)
         )
 
     if search:
@@ -4932,18 +5020,19 @@ def view_profile(user_identifier):
 
     # Get the user's recent posts (visible to the viewer)
     posts = (
-        Post.query.options(
+        _exclude_protected_shared_sources(Post.query.options(
             joinedload(Post.author),
             joinedload(Post.shared_post).joinedload(Post.author),
             joinedload(Post.comments).joinedload(Comment.author),
             joinedload(Post.likes),
-        )
+        ))
         .filter_by(author_id=target_user.id)
         .filter(Post.group_id.is_(None))
         .order_by(Post.created_at.desc())
         .limit(20)  # Adjust as needed
         .all()
     )
+    posts = [post for post in posts if can_view_post(post, current_user)]
 
     # Get friends count (excluding blocked users)
     friends_count = target_user.friends.count()

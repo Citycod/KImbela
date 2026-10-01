@@ -70,8 +70,15 @@ def is_group_member(group, user):
     )
 
 
+def group_requires_private_access(group):
+    """Return whether group contents require explicit membership or admin access."""
+    return bool(group and (group.is_private or is_matchmaking_group(group)))
+
+
 def can_view_group(group, user):
-    if not is_matchmaking_group(group):
+    if group is None:
+        return False
+    if not group_requires_private_access(group):
         return True
     return bool(
         getattr(user, "is_admin", False)
@@ -81,7 +88,7 @@ def can_view_group(group, user):
 
 
 def can_join_group(group, user):
-    if not is_matchmaking_group(group):
+    if not group_requires_private_access(group):
         return True
     return bool(
         getattr(user, "is_admin", False)
@@ -92,16 +99,54 @@ def can_join_group(group, user):
 def can_create_group_post(group, user):
     if not is_group_member(group, user):
         return False
-    if not is_matchmaking_group(group):
+    if is_matchmaking_group(group):
+        return bool(
+            getattr(user, "is_admin", False)
+            or getattr(user, "is_super_admin", False)
+        )
+    if not group.is_private:
         return True
     return bool(
         getattr(user, "is_admin", False)
         or getattr(user, "is_super_admin", False)
+        or group.created_by == getattr(user, "id", None)
     )
 
 
 def can_view_post(post, user):
-    if not post or post.group_id is None:
-        return True
-    group = db.session.get(Group, post.group_id)
-    return can_view_group(group, user)
+    """Authorize a post and every shared source so wrappers cannot leak content."""
+    current_post = post
+    visited_post_ids = set()
+    while current_post is not None:
+        if current_post.id in visited_post_ids:
+            return False
+        visited_post_ids.add(current_post.id)
+        if current_post.group_id is not None:
+            group = db.session.get(Group, current_post.group_id)
+            if not can_view_group(group, user):
+                return False
+        if current_post.shared_post_id is None:
+            break
+        current_post = current_post.shared_post or db.session.get(
+            type(current_post), current_post.shared_post_id
+        )
+    return True
+
+
+def is_private_group_post(post):
+    current_post = post
+    visited_post_ids = set()
+    while current_post is not None:
+        if current_post.id in visited_post_ids:
+            return True
+        visited_post_ids.add(current_post.id)
+        if current_post.group_id is not None and group_requires_private_access(
+            db.session.get(Group, current_post.group_id)
+        ):
+            return True
+        if current_post.shared_post_id is None:
+            break
+        current_post = current_post.shared_post or db.session.get(
+            type(current_post), current_post.shared_post_id
+        )
+    return False
