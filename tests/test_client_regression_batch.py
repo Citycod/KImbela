@@ -712,9 +712,11 @@ def test_group_post_owner_management_preserves_membership_privacy_and_matchmakin
     db.session.refresh(group_post)
     assert group_post.content == "Group after"
     assert client.post(f"/edit_post/{protected_user_post.id}", data={"post_content": "No"}).status_code == 403
-    assert client.post(f"/delete_post/{protected_user_post.id}").status_code == 403
     page = client.get(f"/groups/{matchmaking.id}")
     assert f"editPost({protected_user_post.id})".encode() not in page.data
+    assert f"deletePost({protected_user_post.id})".encode() in page.data
+    assert client.post(f"/delete_post/{protected_user_post.id}").status_code == 200
+    assert db.session.get(Post, protected_user_post.id) is None
 
     _login(client, admin)
     assert client.post(f"/edit_post/{protected_admin_post.id}", data={"post_content": "Admin after"}).status_code == 200

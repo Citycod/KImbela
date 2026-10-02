@@ -347,7 +347,10 @@ def test_private_group_access_posting_and_data_leak_guards(app, db, client):
         f"/edit_post/{private_post.id}",
         data={"post_content": "member edit bypass"},
     ).status_code == 403
-    assert client.post(f"/delete_post/{private_post.id}").status_code == 403
+    private_page = client.get(f"/groups/{private_group.id}")
+    assert f"deletePost({private_post.id})".encode() in private_page.data
+    assert client.post(f"/delete_post/{private_post.id}").status_code == 200
+    assert db.session.get(Post, private_post.id) is None
     assert client.post(
         f"/groups/{public_group.id}/post",
         data={"post_content": "public group member post"},

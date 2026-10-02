@@ -400,6 +400,25 @@ def _can_owner_manage_post(post, user_account):
     return True
 
 
+def _can_owner_delete_post(post, user_account):
+    """Allow an owner to remove their group content without granting post creation."""
+    if post is None or post.author_id != user_account.id:
+        return False
+    if post.author and post.author.is_ai_persona:
+        # AI moderation has a separate, super-admin-only route.
+        return False
+    if post.group_id is None:
+        return True
+
+    group = db.session.get(Group, post.group_id)
+    return bool(
+        group
+        and group.is_active
+        and can_view_group(group, user_account)
+        and is_group_member(group, user_account)
+    )
+
+
 def _exclude_protected_shared_sources(query):
     """Exclude legacy wrappers whose shared source belongs to a protected group."""
     source_post = aliased(Post)
@@ -2404,7 +2423,7 @@ def share_post(post_identifier):
 @login_required
 def delete_post(post_id):
     post = Post.query.get_or_404(post_id)
-    if not _can_owner_manage_post(post, current_user):
+    if not _can_owner_delete_post(post, current_user):
         return jsonify(error="Unauthorized"), 403
     try:
         from utils.post_deletion import delete_post_safely
