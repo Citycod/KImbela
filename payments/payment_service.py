@@ -950,6 +950,38 @@ class MatchmakingPaymentService(BasePaymentService):
                 f"🟡 [PAYMENT SUCCESS] Starting to handle successful payment for payment ID: {matchmaking_payment.id}"
             )
 
+            matchmaking_request = matchmaking_payment.matchmaking_request
+            if not matchmaking_request:
+                print(
+                    f"🔴 [PAYMENT SUCCESS] No matchmaking request found for payment {matchmaking_payment.id}"
+                )
+                return False
+            if (
+                matchmaking_request.user_id != matchmaking_payment.user_id
+                or matchmaking_request.package_id != matchmaking_payment.package_id
+                or (
+                    matchmaking_request.user
+                    and matchmaking_request.user.is_ai_persona
+                )
+            ):
+                print(
+                    f"🔴 [PAYMENT SUCCESS] Ownership/package policy mismatch for payment {matchmaking_payment.id}"
+                )
+                return False
+
+            from utils.matchmaking_boosts import set_boost_group_consent
+
+            already_completed = (
+                matchmaking_payment.status == "completed"
+                and matchmaking_payment.payment_status == "paid"
+            )
+            if already_completed:
+                # Replayed verified callbacks repair visibility state only. They do
+                # not extend entitlement or send another success email.
+                set_boost_group_consent(matchmaking_request.id, True)
+                db.session.commit()
+                return True
+
             # Update matchmaking payment record
             matchmaking_payment.status = "completed"
             matchmaking_payment.payment_status = "paid"
@@ -958,20 +990,12 @@ class MatchmakingPaymentService(BasePaymentService):
             )
             matchmaking_payment.gateway_payment_id = flutterwave_data.get("id")
             matchmaking_payment.gateway_metadata = json.dumps(flutterwave_data)
-            matchmaking_payment.paid_at = utcnow()
+            matchmaking_payment.paid_at = matchmaking_payment.paid_at or utcnow()
             matchmaking_payment.updated_at = utcnow()
 
             print(
                 f"🟡 [PAYMENT SUCCESS] Updated payment record: {matchmaking_payment.to_dict()}"
             )
-
-            # Get matchmaking request
-            matchmaking_request = matchmaking_payment.matchmaking_request
-            if not matchmaking_request:
-                print(
-                    f"🔴 [PAYMENT SUCCESS] No matchmaking request found for payment {matchmaking_payment.id}"
-                )
-                return False
 
             print(
                 f"🟡 [PAYMENT SUCCESS] Found matchmaking request: {matchmaking_request.id}"
@@ -985,7 +1009,7 @@ class MatchmakingPaymentService(BasePaymentService):
             # Calculate end date based on package duration
             if matchmaking_request.package:
                 duration_days = matchmaking_request.package.duration_days
-                matchmaking_request.end_date = utcnow() + timedelta(
+                matchmaking_request.end_date = matchmaking_payment.paid_at + timedelta(
                     days=duration_days
                 )
                 print(
@@ -993,6 +1017,7 @@ class MatchmakingPaymentService(BasePaymentService):
                 )
 
             matchmaking_request.updated_at = utcnow()
+            set_boost_group_consent(matchmaking_request.id, True)
 
             db.session.commit()
             print(f"✅ [PAYMENT SUCCESS] Database committed successfully")

@@ -213,6 +213,70 @@ def normalize_profile_config(raw_config):
     return config
 
 
+def validate_profile_config_input(raw_config):
+    """Return a user-facing error for malformed Admin control values."""
+    raw_config = raw_config if isinstance(raw_config, dict) else {}
+    mode = raw_config.get("posting_mode")
+    if mode is not None and mode not in {"manual", "approval", "automatic"}:
+        return "Invalid posting mode"
+
+    for field in ("active_days", "posting_days"):
+        values = raw_config.get(field)
+        if values is None:
+            continue
+        if not isinstance(values, list) or any(
+            not str(value).isdigit() or not 0 <= int(value) <= 6
+            for value in values
+        ):
+            return f"Invalid {field.replace('_', ' ')}"
+
+    for field in ("posting_start_time", "posting_end_time"):
+        value = raw_config.get(field)
+        if value is None:
+            continue
+        try:
+            datetime.strptime(str(value), "%H:%M")
+        except (TypeError, ValueError):
+            return f"Invalid {field.replace('_', ' ')}"
+
+    integer_ranges = {
+        "max_posts_per_day": (0, 20),
+        "minimum_post_interval_minutes": (0, 10080),
+        "maximum_total_posts_per_week": (0, 20),
+        "maximum_feed_posts_per_week": (0, 20),
+        "maximum_group_posts_per_week": (0, 20),
+        "max_replies_per_day": (0, 100),
+        "reply_probability": (0, 100),
+        "minimum_reply_delay_minutes": (0, 10080),
+        "maximum_reply_delay_minutes": (0, 10080),
+        "max_group_posts_per_day": (0, 20),
+        "max_group_comments_per_day": (0, 50),
+        "max_group_replies_per_day": (0, 50),
+        "minimum_group_activity_interval_minutes": (0, 10080),
+    }
+    parsed = {}
+    for field, (minimum, maximum) in integer_ranges.items():
+        value = raw_config.get(field)
+        if value is None:
+            continue
+        try:
+            parsed[field] = int(value)
+        except (TypeError, ValueError):
+            return f"Invalid {field.replace('_', ' ')}"
+        if not minimum <= parsed[field] <= maximum:
+            return f"{field.replace('_', ' ').title()} must be between {minimum} and {maximum}"
+
+    minimum_delay = parsed.get("minimum_reply_delay_minutes")
+    maximum_delay = parsed.get("maximum_reply_delay_minutes")
+    if (
+        minimum_delay is not None
+        and maximum_delay is not None
+        and maximum_delay < minimum_delay
+    ):
+        return "Maximum reply delay must not be less than minimum reply delay"
+    return None
+
+
 def normalize_group_config(raw_config):
     raw_config = raw_config if isinstance(raw_config, dict) else {}
     config = deepcopy(DEFAULT_GROUP_CONFIG)
@@ -230,6 +294,28 @@ def normalize_group_config(raw_config):
         raw_config.get("thread_cooldown_minutes"), 1440, 0, 10080
     )
     return config
+
+
+def validate_group_config_input(raw_config):
+    raw_config = raw_config if isinstance(raw_config, dict) else {}
+    if raw_config.get("activity_level") not in GROUP_LEVEL_RULES:
+        return "Invalid group activity level"
+    ranges = {
+        "quiet_comment_hours": (1, 720),
+        "quiet_post_hours": (1, 1440),
+        "thread_cooldown_minutes": (0, 10080),
+    }
+    parsed = {}
+    for field, (minimum, maximum) in ranges.items():
+        try:
+            parsed[field] = int(raw_config.get(field))
+        except (TypeError, ValueError):
+            return f"Invalid {field.replace('_', ' ')}"
+        if not minimum <= parsed[field] <= maximum:
+            return f"{field.replace('_', ' ').title()} must be between {minimum} and {maximum}"
+    if parsed["quiet_post_hours"] < parsed["quiet_comment_hours"]:
+        return "Post quiet hours must not be less than comment quiet hours"
+    return None
 
 
 def get_profile_config(persona):
@@ -912,6 +998,13 @@ def group_automation_eligibility(persona, group, action, now=None):
     if group.members.filter_by(id=persona.user_id).first() is None:
         return False, "not_member"
 
+    from utils.matchmaking_group import can_create_group_post, can_view_group
+
+    if action == "post" and not can_create_group_post(group, persona.user):
+        return False, "group_post_forbidden"
+    if action in {"comment", "reply"} and not can_view_group(group, persona.user):
+        return False, "group_view_forbidden"
+
     capability = {
         "post": "group_can_post",
         "comment": "group_can_comment",
@@ -976,6 +1069,10 @@ def manual_group_post_eligibility(persona, group, now=None):
         return False, "group_not_allowed"
     if group.members.filter_by(id=persona.user_id).first() is None:
         return False, "not_member"
+    from utils.matchmaking_group import can_create_group_post
+
+    if not can_create_group_post(group, persona.user):
+        return False, "group_post_forbidden"
     if not action_is_allowed(persona, "post"):
         return False, "action_forbidden"
     return True, "eligible"

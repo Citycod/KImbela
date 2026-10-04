@@ -320,7 +320,7 @@ def test_private_group_access_posting_and_data_leak_guards(app, db, client):
     ).data
     assert not any(
         group["id"] == private_group.id
-        for group in client.get("/groups/all").get_json()
+        for group in client.get("/groups/all?per_page=100").get_json()
     )
     assert not any(
         group["id"] == private_group.id
@@ -337,7 +337,7 @@ def test_private_group_access_posting_and_data_leak_guards(app, db, client):
     assert client.post(f"/share_post/{legacy_public_share.public_id}").status_code == 403
     assert any(
         group["id"] == private_group.id
-        for group in client.get("/groups/all").get_json()
+        for group in client.get("/groups/all?per_page=100").get_json()
     )
     assert client.post(
         f"/groups/{private_group.id}/post",
@@ -382,6 +382,7 @@ def test_matchmaking_group_stable_id_remains_stricter_than_private_group(
     creator = make_user(db)
     normal_member = make_user(db)
     admin = make_user(db, admin=True)
+    ai_member = make_user(db, ai=True)
     protected = make_group(
         db,
         creator,
@@ -389,7 +390,7 @@ def test_matchmaking_group_stable_id_remains_stricter_than_private_group(
         name=f"Renamed protected {uuid.uuid4().hex[:6]}",
     )
     protected.members.append(normal_member)
-    protected.members.append(admin)
+    protected.members.append(ai_member)
     db.session.commit()
     monkeypatch.setitem(app.config, "MATCHMAKING_GROUP_ID", protected.id)
 
@@ -403,6 +404,12 @@ def test_matchmaking_group_stable_id_remains_stricter_than_private_group(
     assert client.post(
         f"/groups/{protected.id}/post",
         data={"post_content": "ordinary bypass"},
+    ).status_code == 403
+
+    login(client, ai_member)
+    assert client.post(
+        f"/groups/{protected.id}/post",
+        data={"post_content": "AI bypass"},
     ).status_code == 403
 
     login(client, admin)
@@ -420,14 +427,27 @@ def test_matchmaking_group_stable_id_remains_stricter_than_private_group(
     assert client.post(f"/repost/{protected_post.public_id}").status_code == 403
 
 
+def test_ai_profile_cannot_create_or_pay_for_matchmaking_boost(db, client):
+    ai_user = make_user(db, ai=True)
+    db.session.commit()
+    login(client, ai_user)
+    assert client.post("/create-request", json={}).status_code == 403
+    assert client.post("/initiate-matchmaking-payment", json={}).status_code == 403
+
+
 def test_matchmaking_payment_success_activates_entitlement_without_public_post(
     db,
     monkeypatch,
 ):
     from models import MatchmakingPackage, MatchmakingPayments, MatchmakingRequest, Post
     from payments.payment_service import MatchmakingPaymentService
+    from utils.matchmaking_boosts import (
+        featured_boosts_for_viewer,
+        has_boost_group_consent,
+    )
 
     account = make_user(db)
+    viewer = make_user(db)
     package = MatchmakingPackage(
         name=f"Package {uuid.uuid4().hex[:8]}",
         price=2,
@@ -463,10 +483,11 @@ def test_matchmaking_payment_success_activates_entitlement_without_public_post(
     monkeypatch.setenv("FLW_SECRET_KEY", "FLWSECK_TEST-local")
     monkeypatch.setenv("FLW_PUBLIC_KEY", "FLWPUBK_TEST-local")
     service = MatchmakingPaymentService()
+    emails = []
     monkeypatch.setattr(
         service,
         "send_matchmaking_payment_success_email",
-        lambda *_args, **_kwargs: True,
+        lambda *_args, **_kwargs: emails.append("sent") or True,
     )
 
     assert service.handle_matchmaking_payment_success(
@@ -477,4 +498,18 @@ def test_matchmaking_payment_success_activates_entitlement_without_public_post(
     assert request_row.status == "active"
     assert request_row.payment_status == "completed"
     assert request_row.end_date is not None
+    assert has_boost_group_consent(request_row.id) is True
+    assert request_row.id in {
+        item.id for item in featured_boosts_for_viewer(viewer).items
+    }
+    assert Post.query.count() == post_count
+
+    first_end_date = request_row.end_date
+    assert service.handle_matchmaking_payment_success(
+        payment,
+        {"status": "successful", "id": f"gateway-{uuid.uuid4().hex}"},
+    )
+    db.session.refresh(request_row)
+    assert request_row.end_date == first_end_date
+    assert emails == ["sent"]
     assert Post.query.count() == post_count

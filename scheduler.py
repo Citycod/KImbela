@@ -270,6 +270,25 @@ def init_scheduler(app):
         },
     )
 
+    @scheduler.scheduled_job(
+        "date",
+        id="ai_group_membership_sync",
+        max_instances=1,
+        coalesce=True,
+    )
+    def synchronize_ai_group_memberships():
+        """Repair existing memberships once when the dedicated process starts."""
+        with app.app_context():
+            try:
+                from utils.ai_group_membership import sync_ai_group_memberships
+
+                inserted = sync_ai_group_memberships()
+                db.session.commit()
+                logger.info("AI group membership sync inserted %s memberships", inserted)
+            except Exception as exc:
+                db.session.rollback()
+                logger.error("AI group membership sync failed: %s", exc)
+
     # AI persona activity remains in the one dedicated scheduler process.
     @scheduler.scheduled_job(
         "interval",
@@ -283,12 +302,18 @@ def init_scheduler(app):
         with app.app_context():
             try:
                 from ai_controls import order_personas_by_last_post
+                from ai_group_action_engine import run_scheduled_group_sessions
                 from models import AIPersona
+                from utils.ai_group_membership import sync_ai_group_memberships
 
                 personas = AIPersona.query.filter_by(is_active=True).all()
                 if not personas:
                     return
-                run_one_ai_action(order_personas_by_last_post(personas))
+                sync_ai_group_memberships()
+                db.session.commit()
+                ordered = order_personas_by_last_post(personas)
+                run_scheduled_group_sessions(ordered)
+                execute_one_feed_ai_action(ordered, actions=("reply", "post"))
 
             except Exception as exc:
                 logger.error("Error in run_ai_persona_activity: %s", exc)

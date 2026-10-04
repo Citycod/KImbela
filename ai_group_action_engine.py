@@ -6,6 +6,7 @@ does not create a second group-content or notification path.
 """
 
 from contextlib import contextmanager
+from datetime import datetime, timedelta
 import logging
 import re
 
@@ -22,11 +23,13 @@ from ai_controls import (
 from ai_service import LLMResponse, generate_content
 from ai_action_engine import is_financial_request
 from extensions import db
-from models import AILog, AIPersona, Comment, Group, Post, User
+from models import AILog, AIPersona, Comment, Group, Post, SiteSetting, User
 from time_utils import utcnow
 
 
 logger = logging.getLogger(__name__)
+GROUP_ACTIVITY_SESSION = "GROUP_ACTIVITY_SESSION"
+GROUP_SESSION_CURSOR_KEY = "ai_group_session_cursor"
 
 
 def _persona_prompt_config(persona):
@@ -409,3 +412,218 @@ def execute_next_group_action(personas, actions=None) -> bool:
             if execute_persona_group_post(persona, group):
                 return True
     return False
+
+
+def _calendar_week_slot(now=None):
+    current = now or utcnow()
+    monday = (current - timedelta(days=current.weekday())).date()
+    # A 48-hour scheduler can satisfy one session in each broad half of a week.
+    slot = 0 if current.weekday() <= 2 else 1
+    return monday.isoformat(), slot
+
+
+def _session_marker(group_id, now=None):
+    week_start, slot = _calendar_week_slot(now)
+    return f"group_session={int(group_id)}:{week_start}:{slot}"
+
+
+def group_session_completed(group_id, now=None):
+    return (
+        AILog.query.filter(
+            AILog.action_type == GROUP_ACTIVITY_SESSION,
+            AILog.prompt_context.contains(_session_marker(group_id, now)),
+            AILog.is_escalated.is_(False),
+        ).first()
+        is not None
+    )
+
+
+def _personas_by_group_rotation(personas, group_id):
+    personas = [
+        persona
+        for persona in personas
+        if persona.is_active
+        and persona.user
+        and persona.user.is_active
+        and persona.user.is_ai_persona
+    ]
+    if not personas:
+        return []
+    rows = (
+        db.session.query(AILog.persona_id, db.func.max(AILog.timestamp))
+        .filter(
+            AILog.persona_id.in_([persona.id for persona in personas]),
+            AILog.action_type.in_(
+                (
+                    "GROUP_POST_AUTOMATIC",
+                    "GROUP_COMMENT_AUTOMATIC",
+                    "GROUP_REPLY_AUTOMATIC",
+                )
+            ),
+            AILog.prompt_context.contains(f"group_id={int(group_id)}"),
+            AILog.is_escalated.is_(False),
+        )
+        .group_by(AILog.persona_id)
+        .all()
+    )
+    last_by_persona = dict(rows)
+    return sorted(
+        personas,
+        key=lambda persona: (last_by_persona.get(persona.id) or datetime.min, persona.id),
+    )
+
+
+def execute_group_activity_session(group, personas, now=None):
+    """Complete one normal-group slot only after an original AI post succeeds."""
+    from utils.matchmaking_group import is_matchmaking_group
+
+    group_id = group.id
+    if group_session_completed(group_id, now):
+        return False
+    if is_matchmaking_group(group):
+        logger.info(
+            "AI required group-post slot excluded for Matchmaking group=%s",
+            group_id,
+        )
+        return False
+
+    ordered = _personas_by_group_rotation(personas, group_id)
+    if not ordered:
+        logger.info(
+            "AI required group-post slot remains due: group=%s reason=no_active_persona",
+            group_id,
+        )
+        return False
+    failure_reasons = []
+    post_persona_id = None
+    persona_ids = [persona.id for persona in ordered]
+    for persona in ordered:
+        persona_id = persona.id
+        allowed, reason = group_automation_eligibility(persona, group, "post", now)
+        if not allowed:
+            failure_reasons.append(f"persona_{persona_id}:{reason}")
+            continue
+        if not group_is_quiet_enough(group, "post", now):
+            failure_reasons.append(f"persona_{persona_id}:group_not_quiet")
+            continue
+        if execute_persona_group_post(persona, group):
+            post_persona_id = persona_id
+            break
+        failure_reasons.append(f"persona_{persona_id}:post_execution_failed")
+
+    if post_persona_id is None:
+        logger.info(
+            "AI required group-post slot remains due: group=%s reasons=%s",
+            group_id,
+            ",".join(failure_reasons) or "no_eligible_poster",
+        )
+        return False
+
+    # The content route commits the original post first. Persist the slot marker
+    # immediately afterward so optional engagement can never define completion.
+    db.session.add(
+        AILog(
+            persona_id=post_persona_id,
+            action_type=GROUP_ACTIVITY_SESSION,
+            target_id=group_id,
+            prompt_context=(
+                f"{_session_marker(group_id, now)}\n"
+                f"group_id={group_id}\nrequired_original_post=1"
+            ),
+            generated_content="post",
+            provider_used="scheduler",
+            is_escalated=False,
+            timestamp=now or utcnow(),
+        )
+    )
+    db.session.commit()
+
+    # Comments/replies are additional engagement only. Reload after the normal
+    # posting route removed its request-scoped SQLAlchemy session.
+    refreshed_group = db.session.get(Group, group_id)
+    refreshed_personas = AIPersona.query.filter(
+        AIPersona.id.in_(persona_ids),
+        AIPersona.is_active.is_(True),
+    ).all()
+    refreshed_personas.sort(
+        key=lambda persona: (persona.id == post_persona_id, persona_ids.index(persona.id))
+    )
+    _execute_optional_group_engagement(refreshed_group, refreshed_personas, now)
+    return True
+
+
+def _execute_optional_group_engagement(group, personas, now=None):
+    """Attempt one extra reply/comment without affecting required-slot state."""
+    if group is None:
+        return False
+
+    for persona in personas:
+        allowed, _ = group_automation_eligibility(persona, group, "reply", now)
+        if not allowed:
+            continue
+        candidates = (
+            Comment.query.join(Post, Comment.post_id == Post.id)
+            .join(User, Comment.author_id == User.id)
+            .filter(
+                Post.group_id == group.id,
+                Post.author_id == persona.user_id,
+                Comment.author_id != persona.user_id,
+                User.is_ai_persona.is_(False),
+            )
+            .order_by(Comment.created_at.desc())
+            .limit(20)
+            .all()
+        )
+        for comment in candidates:
+            if execute_persona_group_comment(persona, group, comment.post, comment):
+                return True
+
+    for persona in personas:
+        allowed, _ = group_automation_eligibility(persona, group, "comment", now)
+        if not allowed or not group_is_quiet_enough(group, "comment", now):
+            continue
+        candidates = (
+            Post.query.join(User, Post.author_id == User.id)
+            .filter(
+                Post.group_id == group.id,
+                User.is_ai_persona.is_(False),
+            )
+            .order_by(Post.created_at.desc())
+            .limit(20)
+            .all()
+        )
+        for post in candidates:
+            if execute_persona_group_comment(persona, group, post):
+                return True
+    return False
+
+
+def run_scheduled_group_sessions(personas, now=None, max_groups=25):
+    """Process one missing calendar-week slot per group in a bounded pass."""
+    groups = Group.query.filter(Group.is_active.is_(True)).order_by(Group.id.asc()).all()
+    if not groups or max_groups <= 0:
+        return 0
+    try:
+        start = int(SiteSetting.get_value(GROUP_SESSION_CURSOR_KEY, "0")) % len(groups)
+    except (TypeError, ValueError):
+        start = 0
+    rotated_groups = groups[start:] + groups[:start]
+    completed = 0
+    processed = 0
+    scanned = 0
+    for group in rotated_groups:
+        if group_session_completed(group.id, now):
+            scanned += 1
+            continue
+        if processed >= max_groups:
+            break
+        scanned += 1
+        processed += 1
+        if execute_group_activity_session(group, personas, now):
+            completed += 1
+    SiteSetting.set_value(
+        GROUP_SESSION_CURSOR_KEY,
+        str((start + scanned) % len(groups)),
+    )
+    db.session.commit()
+    return completed

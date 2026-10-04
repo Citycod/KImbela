@@ -106,3 +106,11 @@ def test_messenger_close_icon_is_black_without_changing_its_handler():
 
     assert messenger.count('onclick="closeMessenger()"') == 1
     assert '<i class="bi bi-x-lg" style="color: #111827;"></i>' in messenger
+
+
+def test_upcoming_birthday_control_is_removed_without_removing_birthday_ui():
+    dashboard = (PROJECT_ROOT / "templates" / "user_dashboard.html").read_text()
+    assert "View All Upcoming Birthdays" not in dashboard
+    assert "View Upcoming Birthday" not in dashboard
+    assert 'id="birthdayNotificationPopup"' in dashboard
+    assert 'id="birthdayCalendarModal"' in dashboard

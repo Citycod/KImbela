@@ -83,6 +83,7 @@ def test_matchmaking_group_privacy_and_posting_are_server_enforced(app, db, clie
     admin = make_user(db, admin=True, permissions=["groups_manage"])
     member = make_user(db)
     outsider = make_user(db)
+    unaffiliated = make_user(db)
     group = make_group(db, admin, name="Renamed protected community", private=False)
     group.members.append(member)
     db.session.commit()
@@ -90,9 +91,15 @@ def test_matchmaking_group_privacy_and_posting_are_server_enforced(app, db, clie
     app.config["MATCHMAKING_GROUP_ID"] = str(group.id)
     try:
         login(client, outsider)
-        assert client.get(f"/groups/{group.id}").status_code == 403
+        landing = client.get(f"/groups/{group.id}")
+        assert landing.status_code == 200
+        assert b"Join to view Matchmaking content" in landing.data
+        assert group.id in {
+            item["id"] for item in client.get("/groups/all").get_json()
+        }
         assert client.get(f"/groups/{group.id}/posts").status_code == 403
-        assert client.post(f"/groups/{group.id}/join").status_code == 403
+        assert client.post(f"/groups/{group.id}/join").status_code == 200
+        assert client.get(f"/groups/{group.id}").status_code == 200
 
         login(client, member)
         assert client.get(f"/groups/{group.id}").status_code == 200
@@ -115,7 +122,7 @@ def test_matchmaking_group_privacy_and_posting_are_server_enforced(app, db, clie
         db.session.add(protected_comment)
         db.session.commit()
 
-        login(client, outsider)
+        login(client, unaffiliated)
         assert protected_post.public_id not in client.get(
             "/search?q=classified"
         ).get_data(as_text=True)
@@ -148,6 +155,9 @@ def test_matchmaking_group_privacy_and_posting_are_server_enforced(app, db, clie
 
 
 def test_similar_group_and_malformed_config_do_not_lock_unrelated_group(app, db, client, caplog):
+    from utils.matchmaking_group import _logged_config_errors
+
+    _logged_config_errors.clear()
     user = make_user(db)
     group = make_group(db, user, name="Matchmaking lookalike")
     original = app.config.get("MATCHMAKING_GROUP_ID")
@@ -313,8 +323,8 @@ def test_allowlist_membership_and_manual_group_destination_are_explicit(db, clie
         f"/admin/ai-users/{persona.id}/group-membership",
         data={"group_id": group.id, "action": "remove"},
     )
-    assert response.status_code == 302
-    assert group.members.filter_by(id=persona.user_id).first() is None
+    assert response.status_code == 409
+    assert group.members.filter_by(id=persona.user_id).first() is not None
     assert group.id in get_profile_config(persona)["allowed_group_ids"]
 
 
@@ -454,7 +464,7 @@ def test_admin_birthdays_non_leap_filter_includes_february_29_user(
     assert "1 day" in html
 
 
-def test_only_consented_verified_active_boosts_are_featured(db):
+def test_only_verified_active_boosts_are_featured(db):
     from models import MatchmakingPackage, MatchmakingPayments, MatchmakingRequest
     from time_utils import utcnow
     from utils.matchmaking_boosts import featured_boosts_for_viewer, set_boost_group_consent
@@ -468,7 +478,7 @@ def test_only_consented_verified_active_boosts_are_featured(db):
     db.session.add(package)
     db.session.flush()
 
-    def request_for(user, *, expired=False, consent=False):
+    def request_for(user, *, expired=False, consent=False, verified=True):
         request_row = MatchmakingRequest(
             user_id=user.id,
             package_id=package.id,
@@ -486,8 +496,8 @@ def test_only_consented_verified_active_boosts_are_featured(db):
                 matchmaking_request_id=request_row.id,
                 package_id=package.id,
                 amount=10,
-                status="completed",
-                payment_status="paid",
+                status="completed" if verified else "pending",
+                payment_status="paid" if verified else "pending",
                 gateway_reference=f"boost-{uuid.uuid4().hex}",
             )
         )
@@ -496,14 +506,35 @@ def test_only_consented_verified_active_boosts_are_featured(db):
 
     request_for(featured, consent=True)
     featured_request = request_for(featured, consent=True)
-    request_for(legacy, consent=False)
+    legacy_request = request_for(legacy, consent=False)
     request_for(make_user(db), expired=True, consent=True)
+    request_for(make_user(db), consent=True, verified=False)
     db.session.commit()
 
     page = featured_boosts_for_viewer(viewer)
-    assert [row.id for row in page.items] == [featured_request.id]
+    assert {row.id for row in page.items} == {
+        featured_request.id,
+        legacy_request.id,
+    }
 
     blocks = viewer._blocked_users
     db.session.execute(blocks.insert().values(blocker_id=viewer.id, blocked_id=featured.id))
     db.session.commit()
-    assert featured_boosts_for_viewer(viewer).items == []
+    assert [row.id for row in featured_boosts_for_viewer(viewer).items] == [
+        legacy_request.id
+    ]
+
+
+def test_invalid_ai_admin_settings_are_rejected_without_overwriting(db, client):
+    from ai_controls import get_profile_config
+
+    admin = make_user(db, super_admin=True)
+    persona = make_persona(db)
+    before = get_profile_config(persona)
+    login(client, admin)
+    response = client.post(
+        f"/admin/ai-users/{persona.id}/settings",
+        data={"enabled": "on", "posting_mode": "run-every-second"},
+    )
+    assert response.status_code == 400
+    assert get_profile_config(persona) == before

@@ -116,6 +116,11 @@ def seed():
             db.session.commit()
             print(f"✓ Seeded AIPersona config for {persona_rec.name}")
 
+        from utils.ai_group_membership import sync_ai_group_memberships
+
+        sync_ai_group_memberships()
+        db.session.commit()
+
         print("\n✅ All 4 AI Personas seeded successfully.")
 
 

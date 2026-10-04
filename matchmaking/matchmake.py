@@ -957,6 +957,8 @@ def get_request_detail(request_id):
 def create_matchmaking_request():
     """Create a new matchmaking request with payment integration"""
     try:
+        if current_user.is_ai_persona:
+            return jsonify({"success": False, "error": "AI profiles cannot create matchmaking requests"}), 403
         data = request.get_json()
         if not data:
             current_app.logger.warning(
@@ -1125,7 +1127,7 @@ def create_matchmaking_request():
 
         set_boost_group_consent(
             new_request.id,
-            request_data.get("feature_in_matchmaking_group") is True,
+            False,
         )
         db.session.commit()
 
@@ -1171,6 +1173,8 @@ def create_matchmaking_request():
 def initiate_matchmaking_payment():
     """Initiate payment for a matchmaking request using dedicated service"""
     try:
+        if current_user.is_ai_persona:
+            return jsonify({"success": False, "error": "AI profiles cannot purchase matchmaking boosts"}), 403
         data = request.get_json()
         print(f"🟡 [INITIATE MATCHMAKING PAYMENT] Received data: {data}")
 

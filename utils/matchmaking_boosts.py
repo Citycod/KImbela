@@ -1,8 +1,8 @@
-"""Consent and bounded featured-Boost queries for the private Matchmaking group."""
+"""Bounded verified-Boost queries for the private Matchmaking group."""
 
 from __future__ import annotations
 
-from sqlalchemy import String, and_, cast, exists, literal, or_
+from sqlalchemy import and_, exists, or_
 
 from extensions import db
 from models import MatchmakingPayments, MatchmakingRequest, SiteSetting, User
@@ -64,9 +64,6 @@ def featured_boosts_for_viewer(viewer, *, page=1, per_page=12, now=None):
             ),
         )
     )
-    consent_key = literal(BOOST_GROUP_CONSENT_PREFIX) + cast(
-        MatchmakingRequest.id, String
-    )
     today = now.date()
     try:
         adult_cutoff = today.replace(year=today.year - 18)
@@ -79,9 +76,7 @@ def featured_boosts_for_viewer(viewer, *, page=1, per_page=12, now=None):
             active_request_ids.c.request_id == MatchmakingRequest.id,
         )
         .join(User, User.id == MatchmakingRequest.user_id)
-        .join(SiteSetting, SiteSetting.key == consent_key)
         .filter(
-            SiteSetting.value == "1",
             payment_verified,
             User.id != viewer.id,
             User.is_active.is_(True),

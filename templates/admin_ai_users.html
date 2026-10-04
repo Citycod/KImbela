@@ -180,7 +180,7 @@
                   <label class="text-sm">Group replies/day<input type="number" min="0" max="50" name="max_group_replies_per_day" value="{{ config.max_group_replies_per_day }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
                   <label class="text-sm">Min group interval (minutes)<input type="number" min="0" max="10080" name="minimum_group_activity_interval_minutes" value="{{ config.minimum_group_activity_interval_minutes }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
                 </div>
-                <p class="mt-3 text-xs font-semibold text-slate-600">Allowed groups (selecting also adds membership; removing permission never removes membership)</p>
+                <p class="mt-3 text-xs font-semibold text-slate-600">Allowed activity destinations (all AI profiles are members of every active group)</p>
                 <div class="mt-2 grid gap-2 sm:grid-cols-2">
                   {% for group in groups %}<label class="text-xs"><input type="checkbox" name="allowed_group_ids" value="{{ group.id }}" {% if group.id in config.allowed_group_ids %}checked{% endif %} /> {{ group.name }} <span class="text-slate-400">({{ 'Member' if group.id in row.membership_group_ids else 'Not a member' }})</span></label>{% else %}<span class="text-xs text-slate-500">No active groups.</span>{% endfor %}
                 </div>
@@ -194,16 +194,13 @@
 
           <details class="mt-3 rounded-xl border border-slate-200 p-4">
             <summary class="cursor-pointer font-semibold">Actual group membership</summary>
-            <p class="mt-2 text-xs text-slate-500">Membership is separate from permission. Removing permission does not remove membership.</p>
+            <p class="mt-2 text-xs text-slate-500">All AI profiles are synchronized into every active group. Disabled profiles remain members but cannot perform automated activity.</p>
             <div class="mt-3 grid gap-2 sm:grid-cols-2">
               {% for group in groups %}
-              <form method="post" action="{{ url_for('admin.admin_update_ai_group_membership', persona_id=persona.id) }}" class="flex items-center justify-between gap-2 rounded-lg border border-slate-200 p-2">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
-                <input type="hidden" name="group_id" value="{{ group.id }}" />
-                <input type="hidden" name="action" value="{{ 'remove' if group.id in row.membership_group_ids else 'add' }}" />
+              <div class="flex items-center justify-between gap-2 rounded-lg border border-slate-200 p-2">
                 <span class="text-xs"><strong>{{ group.name }}</strong><br><span class="text-slate-500">{{ 'Member' if group.id in row.membership_group_ids else 'Not a member' }}</span></span>
-                <button class="rounded-lg px-2 py-1 text-xs font-semibold {{ 'border border-rose-200 text-rose-700' if group.id in row.membership_group_ids else 'border border-emerald-200 text-emerald-700' }}">{{ 'Remove' if group.id in row.membership_group_ids else 'Add' }}</button>
-              </form>
+                <span class="rounded-lg border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-600">Required</span>
+              </div>
               {% endfor %}
             </div>
           </details>

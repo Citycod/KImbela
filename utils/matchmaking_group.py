@@ -87,7 +87,18 @@ def can_view_group(group, user):
     )
 
 
+def can_open_group_landing(group, user):
+    """Allow authenticated users to discover Matchmaking without leaking content."""
+    if group is None:
+        return False
+    if is_matchmaking_group(group):
+        return bool(user and getattr(user, "is_authenticated", False))
+    return can_view_group(group, user)
+
+
 def can_join_group(group, user):
+    if is_matchmaking_group(group):
+        return bool(user and getattr(user, "is_authenticated", False))
     if not group_requires_private_access(group):
         return True
     return bool(
@@ -97,13 +108,15 @@ def can_join_group(group, user):
 
 
 def can_create_group_post(group, user):
-    if not is_group_member(group, user):
-        return False
     if is_matchmaking_group(group):
+        if getattr(user, "is_ai_persona", False):
+            return False
         return bool(
             getattr(user, "is_admin", False)
             or getattr(user, "is_super_admin", False)
         )
+    if not is_group_member(group, user):
+        return False
     if not group.is_private:
         return True
     return bool(

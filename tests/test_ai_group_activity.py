@@ -532,3 +532,420 @@ def test_human_group_content_is_not_mutated_by_ai_admin_delete(db, client):
         session["_fresh"] = True
     assert client.post(f"/admin/ai-users/posts/{post.id}/delete").status_code == 400
     assert db.session.get(Post, post.id) is not None
+
+
+def test_all_ai_membership_sync_is_idempotent_for_existing_and_new_groups(db):
+    from models import group_members
+    from utils.ai_group_membership import (
+        add_ai_users_to_group,
+        add_ai_user_to_active_groups,
+        sync_ai_group_memberships,
+    )
+
+    first = make_persona(db, "First member")
+    disabled = make_persona(db, "Disabled member")
+    disabled.is_active = False
+    disabled.user.is_active = False
+    owner = make_user(db)
+    existing = make_group(db, owner, "Existing group")
+    assert sync_ai_group_memberships() >= 2
+    db.session.commit()
+    assert sync_ai_group_memberships() == 0
+
+    new_group = make_group(db, owner, "New group")
+    assert add_ai_users_to_group(new_group) >= 2
+    db.session.commit()
+    second = make_persona(db, "New persona")
+    second.is_active = False
+    second.user.is_active = False
+    assert add_ai_user_to_active_groups(second) >= 2
+    db.session.commit()
+
+    pairs = db.session.execute(
+        db.select(group_members.c.user_id, group_members.c.group_id).where(
+            group_members.c.user_id.in_(
+                [first.user_id, disabled.user_id, second.user_id]
+            ),
+            group_members.c.group_id.in_([existing.id, new_group.id]),
+        )
+    ).all()
+    assert len(pairs) == 6
+    assert len(set(pairs)) == 6
+
+
+def test_user_created_group_receives_enabled_and_disabled_ai_membership(db, client):
+    from models import Group
+
+    persona = make_persona(db, "New group member")
+    disabled = make_persona(db, "Disabled new group member")
+    disabled.is_active = False
+    disabled.user.is_active = False
+    db.session.commit()
+    owner = make_user(db)
+    with client.session_transaction() as session:
+        session["_user_id"] = str(owner.id)
+        session["_fresh"] = True
+    name = f"Created {uuid.uuid4().hex}"
+    response = client.post(
+        "/groups/create",
+        data={
+            "name": name,
+            "description": "A new active group",
+            "category": "social",
+            "is_private": "false",
+        },
+    )
+    assert response.status_code == 200
+    group = Group.query.filter_by(name=name).one()
+    assert group.members.filter_by(id=persona.user_id).first() is not None
+    assert group.members.filter_by(id=disabled.user_id).first() is not None
+
+
+def test_admin_reactivation_synchronizes_ai_into_existing_groups(db, client):
+    from ai_controls import get_profile_config, save_profile_config
+
+    persona = make_persona(db, "Reactivated")
+    owner = make_user(db)
+    admin = make_user(db, super_admin=True)
+    group = make_group(db, owner, "Existing before activation")
+    persona.is_active = False
+    config = get_profile_config(persona)
+    config["enabled"] = False
+    save_profile_config(persona, config)
+    db.session.commit()
+    with client.session_transaction() as session:
+        session["_user_id"] = str(admin.id)
+        session["_fresh"] = True
+    response = client.post(
+        f"/admin/ai-users/{persona.id}/settings",
+        data={"enabled": "on", "posting_mode": "automatic"},
+    )
+    assert response.status_code == 302
+    assert group.members.filter_by(id=persona.user_id).first() is not None
+
+
+def test_group_sessions_use_two_calendar_slots_and_rotate_personas(db, monkeypatch):
+    from ai_group_action_engine import execute_group_activity_session
+    from models import AILog
+
+    first = make_persona(db, "First rotation")
+    second = make_persona(db, "Second rotation")
+    owner = make_user(db)
+    group = make_group(db, owner, "Rotation group")
+    group.members.append(first.user)
+    group.members.append(second.user)
+    db.session.commit()
+    selected = []
+    monkeypatch.setattr(
+        "ai_group_action_engine.group_automation_eligibility",
+        lambda *_args, **_kwargs: (True, "eligible"),
+    )
+    monkeypatch.setattr(
+        "ai_group_action_engine.group_is_quiet_enough",
+        lambda *_args, **_kwargs: True,
+    )
+
+    def publish(persona, destination):
+        selected.append(persona.id)
+        db.session.add(
+            AILog(
+                persona_id=persona.id,
+                action_type="GROUP_POST_AUTOMATIC",
+                target_id=destination.id,
+                prompt_context=f"group_id={destination.id}",
+                generated_content="rotation",
+                provider_used="test",
+                is_escalated=False,
+            )
+        )
+        db.session.commit()
+        return True
+
+    monkeypatch.setattr("ai_group_action_engine.execute_persona_group_post", publish)
+    monday = datetime(2026, 10, 5, 12, 0)
+    thursday = datetime(2026, 10, 8, 12, 0)
+    assert execute_group_activity_session(group, [first, second], monday) is True
+    assert execute_group_activity_session(group, [first, second], monday) is False
+    assert execute_group_activity_session(group, [first, second], thursday) is True
+    assert selected == [first.id, second.id]
+    assert AILog.query.filter_by(action_type="GROUP_ACTIVITY_SESSION").count() == 2
+
+
+def test_comment_only_activity_does_not_complete_required_post_slot(db, monkeypatch):
+    from ai_group_action_engine import execute_group_activity_session
+    from models import AILog, Post
+
+    persona = make_persona(db, "Commenter")
+    owner = make_user(db)
+    group = make_group(db, owner, "Comment group")
+    group.members.append(persona.user)
+    human_post = Post(content="Human topic", author_id=owner.id, group_id=group.id)
+    db.session.add(human_post)
+    db.session.commit()
+    comments = []
+    monkeypatch.setattr(
+        "ai_group_action_engine.group_automation_eligibility",
+        lambda _persona, _group, action, *_args, **_kwargs: (
+            (False, "not available")
+            if action in {"post", "reply"}
+            else (True, "eligible")
+        ),
+    )
+    monkeypatch.setattr(
+        "ai_group_action_engine.group_is_quiet_enough",
+        lambda *_args, **_kwargs: True,
+    )
+    monkeypatch.setattr(
+        "ai_group_action_engine.execute_persona_group_comment",
+        lambda selected, destination, post, *_args: comments.append(
+            (selected.id, destination.id, post.id)
+        )
+        or True,
+    )
+    assert execute_group_activity_session(
+        group, [persona], datetime(2026, 10, 5, 12, 0)
+    ) is False
+    assert comments == []
+    assert AILog.query.filter_by(action_type="GROUP_ACTIVITY_SESSION").count() == 0
+
+
+def test_comment_may_run_in_addition_to_required_original_post(db, monkeypatch):
+    from ai_group_action_engine import execute_group_activity_session
+    from models import AILog, Post
+
+    poster = make_persona(db, "Required poster")
+    commenter = make_persona(db, "Optional commenter")
+    owner = make_user(db)
+    group = make_group(db, owner, "Post plus comment group")
+    group.members.append(poster.user)
+    group.members.append(commenter.user)
+    human_post = Post(content="Human discussion", author_id=owner.id, group_id=group.id)
+    db.session.add(human_post)
+    db.session.commit()
+    comments = []
+    monkeypatch.setattr(
+        "ai_group_action_engine.group_automation_eligibility",
+        lambda _persona, _group, action, *_args, **_kwargs: (
+            (False, "no reply") if action == "reply" else (True, "eligible")
+        ),
+    )
+    monkeypatch.setattr(
+        "ai_group_action_engine.group_is_quiet_enough",
+        lambda *_args, **_kwargs: True,
+    )
+    monkeypatch.setattr(
+        "ai_group_action_engine.execute_persona_group_post",
+        lambda selected, _group: selected.id == poster.id,
+    )
+    monkeypatch.setattr(
+        "ai_group_action_engine.execute_persona_group_comment",
+        lambda selected, destination, post, *_args: comments.append(
+            (selected.id, destination.id, post.id)
+        )
+        or True,
+    )
+    assert execute_group_activity_session(
+        group, [poster, commenter], datetime(2026, 10, 5, 12, 0)
+    ) is True
+    assert comments == [(commenter.id, group.id, human_post.id)]
+    marker = AILog.query.filter_by(action_type="GROUP_ACTIVITY_SESSION").one()
+    assert marker.generated_content == "post"
+    assert "required_original_post=1" in marker.prompt_context
+
+
+def test_failed_original_post_leaves_required_slot_due(db, monkeypatch, caplog):
+    import logging
+
+    from ai_group_action_engine import execute_group_activity_session
+    from models import AILog
+
+    persona = make_persona(db, "Failed poster")
+    owner = make_user(db)
+    group = make_group(db, owner, "Failed post group")
+    group.members.append(persona.user)
+    db.session.commit()
+    monkeypatch.setattr(
+        "ai_group_action_engine.group_automation_eligibility",
+        lambda *_args, **_kwargs: (True, "eligible"),
+    )
+    monkeypatch.setattr(
+        "ai_group_action_engine.group_is_quiet_enough",
+        lambda *_args, **_kwargs: True,
+    )
+    monkeypatch.setattr(
+        "ai_group_action_engine.execute_persona_group_post",
+        lambda *_args, **_kwargs: False,
+    )
+    with caplog.at_level(logging.INFO, logger="ai_group_action_engine"):
+        assert execute_group_activity_session(
+            group, [persona], datetime(2026, 10, 5, 12, 0)
+        ) is False
+    assert AILog.query.filter_by(action_type="GROUP_ACTIVITY_SESSION").count() == 0
+    assert "post_execution_failed" in caplog.text
+
+
+
+def test_disabled_persona_remains_member_but_cannot_complete_slot(db, monkeypatch):
+    from ai_group_action_engine import execute_group_activity_session
+    from utils.ai_group_membership import sync_ai_group_memberships
+
+    persona = make_persona(db, "Disabled activity")
+    owner = make_user(db)
+    group = make_group(db, owner, "Disabled activity group")
+    persona.is_active = False
+    persona.user.is_active = False
+    sync_ai_group_memberships()
+    db.session.commit()
+    publish = Mock(side_effect=AssertionError("disabled persona must not publish"))
+    monkeypatch.setattr("ai_group_action_engine.execute_persona_group_post", publish)
+    assert group.members.filter_by(id=persona.user_id).first() is not None
+    assert execute_group_activity_session(
+        group, [persona], datetime(2026, 10, 5, 12, 0)
+    ) is False
+    publish.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    ("group_level", "can_post"),
+    [("off", True), ("high", False)],
+)
+def test_group_or_post_setting_blocks_slot_completion(
+    db, monkeypatch, group_level, can_post
+):
+    from ai_controls import save_group_config
+    from ai_group_action_engine import execute_group_activity_session
+    from models import AILog
+
+    persona = make_persona(db, f"Settings {group_level} {can_post}")
+    owner = make_user(db)
+    group = make_group(db, owner, f"Settings group {group_level} {can_post}")
+    group.members.append(persona.user)
+    open_weekly_policy(
+        db,
+        persona,
+        group_activity_enabled=True,
+        group_can_post=can_post,
+        allowed_group_ids=[group.id],
+        minimum_group_activity_interval_minutes=0,
+        maximum_group_posts_per_week=5,
+        maximum_total_posts_per_week=5,
+    )
+    save_group_config(group, {"activity_level": group_level})
+    db.session.commit()
+    publish = Mock(side_effect=AssertionError("blocked settings must prevent post"))
+    monkeypatch.setattr("ai_group_action_engine.execute_persona_group_post", publish)
+    assert execute_group_activity_session(group, [persona]) is False
+    assert AILog.query.filter_by(action_type="GROUP_ACTIVITY_SESSION").count() == 0
+    publish.assert_not_called()
+
+
+def test_bounded_group_session_pass_rotates_without_starving_later_groups(db, monkeypatch):
+    from ai_group_action_engine import GROUP_SESSION_CURSOR_KEY, run_scheduled_group_sessions
+    from models import Group, SiteSetting
+
+    owner = make_user(db)
+    groups = [make_group(db, owner, f"Fair group {index}") for index in range(3)]
+    ordered_ids = [
+        group.id
+        for group in Group.query.filter(Group.is_active.is_(True))
+        .order_by(Group.id.asc())
+        .all()
+    ]
+    SiteSetting.set_value(GROUP_SESSION_CURSOR_KEY, str(ordered_ids.index(groups[0].id)))
+    db.session.commit()
+    visited = []
+    monkeypatch.setattr(
+        "ai_group_action_engine.group_session_completed",
+        lambda *_args, **_kwargs: False,
+    )
+    monkeypatch.setattr(
+        "ai_group_action_engine.execute_group_activity_session",
+        lambda group, *_args, **_kwargs: visited.append(group.id) or False,
+    )
+    run_scheduled_group_sessions([], max_groups=2)
+    first_pass = list(visited)
+    visited.clear()
+    run_scheduled_group_sessions([], max_groups=2)
+    assert len(first_pass) == 2
+    assert groups[-1].id in visited
+
+
+def test_ai_cannot_create_original_matchmaking_group_post(app, db, monkeypatch):
+    from ai_controls import save_group_config
+    from ai_group_action_engine import (
+        execute_group_activity_session,
+        execute_persona_group_post,
+    )
+    from models import AILog
+
+    persona = make_persona(db, "Matchmaking AI")
+    owner = make_user(db)
+    group = make_group(db, owner, "Renamed protected group")
+    group.members.append(persona.user)
+    db.session.commit()
+    monkeypatch.setitem(app.config, "MATCHMAKING_GROUP_ID", str(group.id))
+    open_weekly_policy(
+        db,
+        persona,
+        group_activity_enabled=True,
+        group_can_post=True,
+        allowed_group_ids=[group.id],
+        minimum_group_activity_interval_minutes=0,
+        maximum_group_posts_per_week=5,
+        maximum_total_posts_per_week=5,
+    )
+    save_group_config(group, {"activity_level": "high"})
+    db.session.commit()
+    generation = Mock(side_effect=AssertionError("generation must not run"))
+    monkeypatch.setattr("ai_group_action_engine.generate_content", generation)
+    assert execute_persona_group_post(persona, group) is False
+    assert execute_group_activity_session(
+        group, [persona], datetime(2026, 10, 5, 12, 0)
+    ) is False
+    assert AILog.query.filter_by(action_type="GROUP_ACTIVITY_SESSION").count() == 0
+    generation.assert_not_called()
+
+
+def test_ai_membership_in_matchmaking_group_is_allowed(app, db, monkeypatch):
+    """Test 13: AI persona accounts may be members of the Matchmaking group."""
+    from utils.ai_group_membership import add_ai_users_to_group, sync_ai_group_memberships
+
+    persona = make_persona(db, "Matchmaking member")
+    disabled = make_persona(db, "Disabled matchmaking member")
+    disabled.is_active = False
+    disabled.user.is_active = False
+    owner = make_user(db)
+    group = make_group(db, owner, "Protected matchmaking group")
+    db.session.commit()
+    monkeypatch.setitem(app.config, "MATCHMAKING_GROUP_ID", str(group.id))
+    inserted = sync_ai_group_memberships()
+    db.session.commit()
+    assert group.members.filter_by(id=persona.user_id).first() is not None
+    assert group.members.filter_by(id=disabled.user_id).first() is not None
+
+    # Idempotent — a second sync adds zero rows.
+    assert add_ai_users_to_group(group) == 0
+
+
+def test_admin_can_post_in_matchmaking_but_ai_cannot(app, db, monkeypatch):
+    """Test 14: Admin/system Matchmaking posting remains allowed; AI is blocked."""
+    from utils.matchmaking_group import can_create_group_post
+
+    persona = make_persona(db, "Matchmaking blocked AI")
+    admin = make_user(db, super_admin=True)
+    regular_human = make_user(db)
+    owner = make_user(db)
+    group = make_group(db, owner, "Matchmaking posting test")
+    group.members.append(persona.user)
+    group.members.append(admin)
+    group.members.append(regular_human)
+    db.session.commit()
+    monkeypatch.setitem(app.config, "MATCHMAKING_GROUP_ID", str(group.id))
+    # AI persona is blocked from posting in Matchmaking.
+    assert can_create_group_post(group, persona.user) is False
+
+    # Admin/super-admin can still post.
+    assert can_create_group_post(group, admin) is True
+
+    # Regular human cannot post either (Matchmaking is admin-only).
+    assert can_create_group_post(group, regular_human) is False

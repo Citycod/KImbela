@@ -715,12 +715,14 @@
                                 Create Post
                             </button>
                         
+                            {% if is_member %}
                             <!-- Leave Group -->
                             <button onclick="leaveGroup({{ group.id }})" 
                                     class="px-3 md:px-4 py-1.5 md:py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 transition font-medium flex items-center text-xs md:text-sm shadow-sm action-button">
                                 <i class="bi bi-box-arrow-right mr-1 text-sm md:text-base"></i>
                                 Leave
                             </button>
+                            {% endif %}
                         
                             {% elif is_member %}
                             <button onclick="leaveGroup({{ group.id }})"
@@ -811,13 +813,25 @@
 
             <!-- Posts Feed -->
             <div class="lg:col-span-3">
+                {% if not can_view_group_content %}
+                <section class="rounded-xl border border-indigo-100 bg-white p-6 text-center shadow-lg md:rounded-2xl md:p-10" aria-labelledby="join-matchmaking-title">
+                    <i class="bi bi-lock-fill text-3xl text-indigo-600" aria-hidden="true"></i>
+                    <h2 id="join-matchmaking-title" class="mt-3 text-xl font-bold text-gray-900">Join to view Matchmaking content</h2>
+                    <p class="mx-auto mt-2 max-w-xl text-sm text-gray-600">This is a private member space. Join the group to view active Featured Matches and official updates.</p>
+                    {% if can_join_group %}
+                    <button onclick="joinGroup({{ group.id }})" class="mt-5 inline-flex items-center rounded-lg bg-green-600 px-4 py-2 font-semibold text-white hover:bg-green-700">
+                        <i class="bi bi-person-plus mr-2" aria-hidden="true"></i>Join Group
+                    </button>
+                    {% endif %}
+                </section>
+                {% else %}
                 {% if is_matchmaking_group %}
                 <section class="mb-4 rounded-xl border border-rose-100 bg-white p-4 shadow-lg md:mb-6 md:rounded-2xl md:p-6" aria-labelledby="featured-matches-title">
                     <div class="mb-4 flex items-start justify-between gap-3">
                         <div>
                             <p class="text-xs font-bold uppercase tracking-wider text-rose-500">System-curated visibility</p>
                             <h2 id="featured-matches-title" class="mt-1 text-xl font-bold text-gray-900">Featured / Boosted Profiles</h2>
-                            <p class="mt-1 text-sm text-gray-600">Active paid profile boosts shared here with the member's consent. These cards are not user-created group posts.</p>
+                            <p class="mt-1 text-sm text-gray-600">Verified active paid profile boosts. These cards are not user-created group posts.</p>
                         </div>
                         <i class="bi bi-stars text-2xl text-rose-500" aria-hidden="true"></i>
                     </div>
@@ -836,7 +850,7 @@
                             <a href="{{ url_for('user.view_profile', user_identifier=boost.user.public_id) }}" class="mt-3 inline-flex items-center text-sm font-semibold text-indigo-700 hover:underline">View profile <span aria-hidden="true">&nbsp;&rarr;</span></a>
                         </article>
                         {% else %}
-                        <p class="col-span-full rounded-xl bg-gray-50 p-4 text-sm text-gray-600">No consented active Boost profiles are available right now.</p>
+                        <p class="col-span-full rounded-xl bg-gray-50 p-4 text-sm text-gray-600">No active Boost profiles are available right now.</p>
                         {% endfor %}
                     </div>
                     {% if featured_boosts.pages > 1 %}
@@ -1100,6 +1114,7 @@
                         Load More Posts
                     </button>
                 </div>
+                {% endif %}
                 {% endif %}
             </div>
         </div>

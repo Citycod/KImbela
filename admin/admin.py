@@ -1134,19 +1134,25 @@ def admin_set_ai_post_spacing():
 def admin_update_ai_persona(persona_id):
     if not current_user.is_super_admin:
         return jsonify({"success": False, "error": "Access denied"}), 403
-    from ai_controls import get_profile_config, save_profile_config
+    from ai_controls import (
+        get_profile_config,
+        save_profile_config,
+        validate_profile_config_input,
+    )
 
     persona = db.get_or_404(AIPersona, persona_id)
     current_config = get_profile_config(persona)
     active_days = request.form.getlist("active_days")
     posting_days = request.form.getlist("posting_days")
-    requested_group_ids = {
-        int(value) for value in request.form.getlist("allowed_group_ids")
-        if str(value).isdigit()
-    }
+    requested_group_values = request.form.getlist("allowed_group_ids")
+    if any(not str(value).isdigit() for value in requested_group_values):
+        return jsonify({"success": False, "error": "Invalid allowed group"}), 400
+    requested_group_ids = {int(value) for value in requested_group_values}
     allowed_groups = Group.query.filter(
         Group.id.in_(requested_group_ids or {-1}), Group.is_active.is_(True)
     ).all()
+    if len(allowed_groups) != len(requested_group_ids):
+        return jsonify({"success": False, "error": "Invalid or inactive allowed group"}), 400
     allowed_group_ids = [group.id for group in allowed_groups]
     config = {
         **current_config,
@@ -1179,6 +1185,9 @@ def admin_update_ai_persona(persona_id):
         "max_group_replies_per_day": request.form.get("max_group_replies_per_day"),
         "minimum_group_activity_interval_minutes": request.form.get("minimum_group_activity_interval_minutes"),
     }
+    validation_error = validate_profile_config_input(config)
+    if validation_error:
+        return jsonify({"success": False, "error": validation_error}), 400
     saved = save_profile_config(persona, config)
     persona.is_active = saved["enabled"]
     persona.personality = request.form.get("personality", persona.personality).strip() or persona.personality
@@ -1187,13 +1196,9 @@ def admin_update_ai_persona(persona_id):
         for topic in request.form.get("allowed_topics", "").splitlines()
         if topic.strip()
     ]
-    # Preserve the established convenience: selecting an allowed group also
-    # adds membership. Removing permission never removes membership implicitly.
-    for group in allowed_groups:
-        if group.members.filter_by(id=persona.user_id).first() is None:
-            group.members.append(persona.user)
-            db.session.flush()
-            group.member_count = group.members.count()
+    from utils.ai_group_membership import add_ai_user_to_active_groups
+
+    add_ai_user_to_active_groups(persona)
     db.session.commit()
     flash(f"Saved AI controls for {persona.name}.", "success")
     return _ai_admin_redirect()
@@ -1267,6 +1272,13 @@ def admin_update_ai_group_membership(persona_id):
     if action == "add" and not is_member:
         group.members.append(persona.user)
     elif action == "remove" and is_member:
+        if group.is_active:
+            return jsonify(
+                {
+                    "success": False,
+                    "error": "AI profiles must remain members of active groups",
+                }
+            ), 409
         group.members.remove(persona.user)
     elif action not in {"add", "remove"}:
         return jsonify({"success": False, "error": "Invalid membership action"}), 400
@@ -1297,7 +1309,11 @@ def admin_set_ai_post_today(persona_id):
 def admin_update_ai_group(group_id):
     if not current_user.is_super_admin:
         return jsonify({"success": False, "error": "Access denied"}), 403
-    from ai_controls import get_group_config, save_group_config
+    from ai_controls import (
+        get_group_config,
+        save_group_config,
+        validate_group_config_input,
+    )
 
     group = db.get_or_404(Group, group_id)
     config = get_group_config(group)
@@ -1307,6 +1323,9 @@ def admin_update_ai_group(group_id):
         quiet_post_hours=request.form.get("quiet_post_hours"),
         thread_cooldown_minutes=request.form.get("thread_cooldown_minutes"),
     )
+    validation_error = validate_group_config_input(config)
+    if validation_error:
+        return jsonify({"success": False, "error": validation_error}), 400
     save_group_config(group, config)
     db.session.commit()
     flash(f"Saved AI activity controls for {group.name}.", "success")
@@ -1808,6 +1827,10 @@ def admin_create_group():
                 print("Image upload failed:", e)
 
     db.session.add(group)
+    db.session.flush()
+    from utils.ai_group_membership import add_ai_users_to_group
+
+    add_ai_users_to_group(group)
     db.session.commit()
 
     return jsonify({"success": True, "group_id": group.id})

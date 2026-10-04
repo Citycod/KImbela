@@ -53,6 +53,7 @@ import cloudinary.utils
 from time_utils import utcnow
 from utils.group_description import sanitize_group_description
 from utils.matchmaking_group import (
+    can_open_group_landing,
     can_create_group_post as group_post_allowed,
     can_join_group as group_join_allowed,
     can_view_group,
@@ -278,12 +279,10 @@ def get_groups_data_for_user(user_id):
                 public_group_clause,
                 Group.id != protected_group_id,
             )
-        groups_query = groups_query.filter(
-            or_(
-                public_group_clause,
-                Group.id.in_(member_group_ids),
-            )
-        )
+        discovery_clauses = [public_group_clause, Group.id.in_(member_group_ids)]
+        if protected_group_id is not None:
+            discovery_clauses.append(Group.id == protected_group_id)
+        groups_query = groups_query.filter(or_(*discovery_clauses))
     groups = sorted(
         groups_query.all(),
         key=lambda group: (
@@ -4268,11 +4267,12 @@ def group_detail(group_id):
             return redirect(url_for("user.user_dashboard"))
         abort(404)
 
-    if not can_view_group(group, current_user):
+    if not can_open_group_landing(group, current_user):
         abort(403)
 
     # Check membership properly
     is_member = is_group_member(group, current_user)
+    can_view_group_content = can_view_group(group, current_user)
     can_view_group_members = bool(
         current_user.is_admin or current_user.is_super_admin
     )
@@ -4282,7 +4282,7 @@ def group_detail(group_id):
 
     featured_boosts = None
     protected_matchmaking_group = _is_matchmaking_group(group)
-    if protected_matchmaking_group:
+    if protected_matchmaking_group and can_view_group_content:
         from utils.matchmaking_boosts import featured_boosts_for_viewer
 
         featured_boosts = featured_boosts_for_viewer(
@@ -4294,16 +4294,18 @@ def group_detail(group_id):
     default_avatar = url_for("static", filename="assets/img/default-avatar.png")
 
     # Get group posts
-    posts = (
-        _exclude_protected_shared_sources(Post.query.filter_by(group_id=group_id))
-        .options(
-            db.joinedload(Post.author),
-            db.joinedload(Post.comments).joinedload(Comment.author),
+    posts = []
+    if can_view_group_content:
+        posts = (
+            _exclude_protected_shared_sources(Post.query.filter_by(group_id=group_id))
+            .options(
+                db.joinedload(Post.author),
+                db.joinedload(Post.comments).joinedload(Comment.author),
+            )
+            .order_by(Post.created_at.desc())
+            .all()
         )
-        .order_by(Post.created_at.desc())
-        .all()
-    )
-    posts = [post for post in posts if can_view_post(post, current_user)]
+        posts = [post for post in posts if can_view_post(post, current_user)]
 
     return render_template(
         "group_detail.html",
@@ -4315,6 +4317,7 @@ def group_detail(group_id):
         can_view_group_members=can_view_group_members,
         can_create_group_post=can_create_group_post,
         can_join_group=can_join_current_group,
+        can_view_group_content=can_view_group_content,
         is_matchmaking_group=protected_matchmaking_group,
         featured_boosts=featured_boosts,
         posts=posts,
@@ -4406,6 +4409,10 @@ def create_group():
 
             # Add creator as first member
             group.members.append(current_user)
+            db.session.flush()
+            from utils.ai_group_membership import add_ai_users_to_group
+
+            add_ai_users_to_group(group)
             db.session.commit()
             safe_cache_delete(f"user_groups_public_v2:{current_user.id}")
 
@@ -4471,7 +4478,9 @@ def create_group_post(group_id):
     """Create a post in a group"""
     group = Group.query.get_or_404(group_id)
 
-    if not is_group_member(group, current_user):
+    if not is_group_member(group, current_user) and not _can_create_group_post(
+        group, current_user
+    ):
         return jsonify({"success": False, "error": "Must be a member to post"})
 
     if not _can_create_group_post(group, current_user):
@@ -4689,29 +4698,31 @@ def report_content():
 def get_all_groups():
     """API endpoint to get all groups with filtering"""
     page = request.args.get("page", 1, type=int)
+    per_page = min(request.args.get("per_page", 20, type=int), 100)
     search = request.args.get("search", "")
     category = request.args.get("category", "")
     privacy = request.args.get("privacy", "")
 
     query = Group.query.filter(Group.is_active.is_(True))
+    protected_group_id = configured_matchmaking_group_id()
 
     if not (current_user.is_admin or current_user.is_super_admin):
-        protected_group_id = configured_matchmaking_group_id()
-        is_group_member_clause = exists().where(
-            and_(
-                group_members.c.group_id == Group.id,
-                group_members.c.user_id == current_user.id,
-            )
-        )
+        member_group_ids = [
+            row[0]
+            for row in db.session.query(group_members.c.group_id)
+            .filter(group_members.c.user_id == current_user.id)
+            .all()
+        ]
         public_group_clause = Group.is_private.is_(False)
         if protected_group_id is not None:
             public_group_clause = and_(
                 public_group_clause,
                 Group.id != protected_group_id,
             )
-        query = query.filter(
-            or_(public_group_clause, is_group_member_clause)
-        )
+        discovery_clauses = [public_group_clause, Group.id.in_(member_group_ids)]
+        if protected_group_id is not None:
+            discovery_clauses.append(Group.id == protected_group_id)
+        query = query.filter(or_(*discovery_clauses))
 
     if search:
         query = query.filter(
@@ -4724,12 +4735,18 @@ def get_all_groups():
         query = query.filter(Group.category == category)
 
     if privacy == "public":
-        query = query.filter(Group.is_private.is_(False))
+        public_filter = Group.is_private.is_(False)
+        if protected_group_id is not None:
+            public_filter = and_(public_filter, Group.id != protected_group_id)
+        query = query.filter(public_filter)
     elif privacy == "private":
-        query = query.filter(Group.is_private.is_(True))
+        private_filters = [Group.is_private.is_(True)]
+        if protected_group_id is not None:
+            private_filters.append(Group.id == protected_group_id)
+        query = query.filter(or_(*private_filters))
 
     groups = query.order_by(Group.member_count.desc(), Group.id.asc()).paginate(
-        page=page, per_page=20, error_out=False
+        page=page, per_page=per_page, error_out=False
     )
 
     groups_data = []
@@ -4753,7 +4770,13 @@ def get_all_groups():
                 "description": group.description,
                 "image": group.image,
                 "category": group.category,
-                "is_private": group.is_private,
+                "is_private": bool(
+                    group.is_private
+                    or (
+                        protected_group_id is not None
+                        and group.id == protected_group_id
+                    )
+                ),
                 "member_count_label": group.public_member_count_label,
                 "created_at": group.created_at.isoformat(),
                 "is_member": group.id in member_group_ids,
