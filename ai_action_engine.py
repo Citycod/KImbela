@@ -1,16 +1,14 @@
 """
 ai_action_engine.py — Action Engine for Kimbela AI Personas.
 
-Enforces rate limits, safety rails, escalation handling, and dispatches actions
-through Flask's test client / authenticated context to existing backend routes.
-No direct database writes for content creation.
+Enforces rate limits and safety rails, then dispatches content creation through
+shared application services with the AI persona supplied as the explicit author.
 """
 
 import logging
 from datetime import datetime, date, timedelta
 from time_utils import utcnow
 from flask import current_app
-from flask_login import login_user, logout_user
 from extensions import db
 from models import User, AIPersona, AILog, Post, Comment, NotificationType
 import re
@@ -157,7 +155,7 @@ def execute_persona_post(
     source: str = "automatic",
 ) -> bool:
     """
-    Generates and publishes a post for a persona via internal client/route.
+    Generate and publish a post through the explicit-author feed service.
     ``force`` is retained for compatibility but intentionally does not bypass
     persisted stop/pause/rate controls.
     """
@@ -235,102 +233,43 @@ def execute_persona_post(
         logger.info("Persona '%s' duplicate post suppressed", persona.name)
         return False
 
-    previous_post = Post.query.filter_by(author_id=persona.user_id).order_by(Post.id.desc()).first()
-    previous_post_id = previous_post.id if previous_post else 0
-
-    # Execute post creation via test client (authenticated route call)
-    t_route_start = time.perf_counter()
-    with current_app.test_client() as client:
-        user_obj = db.session.get(User, persona.user_id)
-        print(f"🔍 [DIAGNOSTIC] user_obj Python ID: {id(user_obj)} | DB ID: {user_obj.id if user_obj else 'None'}")
-        if not user_obj:
-            print(f"❌ User ID {persona.user_id} for persona '{persona.name}' does not exist in DB!")
-            return False
-            
-        if not getattr(user_obj, "is_ai_persona", False):
-            print(f"❌ Security violation: User ID {persona.user_id} is NOT an AI persona account!")
-            logger.error("Security violation: User ID %d is NOT an AI persona account.", persona.user_id)
-            return False
-
-        if not user_obj.is_active:
-            print(f"❌ User ID {persona.user_id} for persona '{persona.name}' is inactive! Run seed script to activate.")
-            logger.error("User ID %d for persona '%s' is inactive.", persona.user_id, persona.name)
-            return False
-
-        # Step 1: Log the user in natively via session_transaction
-        with client.session_transaction() as sess:
-            sess["_user_id"] = str(user_obj.id)
-            sess["_fresh"] = True
-            
-        # Step 2: Do a GET to fetch the page and establish CSRF token natively
-        get_res = client.get("/user_dashboard", base_url="http://localhost/")
-        
-        # Step 3: Parse the CSRF token out of the HTML form
-        import re
-        html_str = get_res.data.decode('utf-8', errors='ignore')
-        match = re.search(r'name="csrf_token"\s+value="([^"]+)"', html_str)
-        if not match:
-            print("❌ Failed to find csrf_token in the GET response HTML.")
-            logger.error("Failed to find csrf_token in the GET response HTML for persona '%s'.", persona.name)
-            return False
-        csrf_token = match.group(1)
-
-        # Capture scalar values before DB session tears down during request
-        persona_user_id = persona.user_id
-        persona_name = persona.name
-        persona_pk = persona.id
-
-        # Step 4: Execute the POST using the exact same client and session
-        with client.session_transaction() as sess:
-            print(f"🔍 [DIAGNOSTIC] CSRF Token in test_client session: {sess.get('csrf_token')} | Form token being submitted: {csrf_token}")
-
-        post_data = {"post_content": response.content, "csrf_token": csrf_token}
-        if media_file is not None and getattr(media_file, "filename", ""):
-            post_data["media"] = (media_file.stream, media_file.filename)
-
-        res = client.post(
-            "/user_dashboard",
-            data=post_data,
-            headers={"Referer": "http://localhost/user_dashboard"},
-            base_url="http://localhost/",
-            follow_redirects=False,
+    user_obj = db.session.get(User, persona.user_id)
+    if not user_obj:
+        logger.error(
+            "User ID %d for persona '%s' does not exist.",
+            persona.user_id,
+            persona.name,
         )
-
-    t_route_end = time.perf_counter()
-    print(f"⏱️  [TIMING] Route HTTP POST /user_dashboard took: {t_route_end - t_route_start:.3f}s")
-    print(f"📄 Route Response Status: {res.status_code}")
-    print(f"📄 Route Response Location: {res.location}")
-    if res.status_code not in (200, 302):
-        print(f"📄 Route Response Body: {res.data.decode('utf-8', errors='ignore')[:400]}")
-
-    if res.status_code == 302 and "/login" in (res.location or ""):
-        print(f"❌ Authentication failed! @login_required redirected to: {res.location}")
+        return False
+    if not getattr(user_obj, "is_ai_persona", False):
+        logger.error(
+            "Security violation: User ID %d is not an AI persona account.",
+            persona.user_id,
+        )
+        return False
+    if not user_obj.is_active:
+        logger.error(
+            "User ID %d for persona '%s' is inactive.",
+            persona.user_id,
+            persona.name,
+        )
         return False
 
-    if res.status_code == 302 and "/user_dashboard" not in (res.location or "") and res.location != "http://localhost/user_dashboard":
-        pass  # Just in case
+    persona_name = persona.name
+    persona_pk = persona.id
+    try:
+        from utils.feed_post_service import create_feed_post
 
-    if res.status_code == 302 and (res.location or "") == "http://localhost/user_dashboard":
-        with client.session_transaction() as sess:
-            flashes = sess.get("_flashes", [])
-            print(f"⚠️  [DIAGNOSTIC] Redirected to absolute URL. Flashed messages: {flashes}")
+        latest_post = create_feed_post(
+            author=user_obj,
+            content=response.content,
+            media_file=media_file,
+        )
+    except Exception as exc:
+        logger.error("Post creation failed for persona '%s': %s", persona_name, exc)
+        return False
 
-    t_db_start = time.perf_counter()
-    db.session.remove()
-    latest_post = Post.query.filter_by(author_id=persona_user_id).order_by(Post.id.desc()).first()
-    t_db_end = time.perf_counter()
-    print(f"⏱️  [TIMING] DB Query verification took: {t_db_end - t_db_start:.3f}s")
     print(f"⏱️  [TIMING] Total persona execution took: {time.perf_counter() - t_start:.3f}s")
-        
-    if (
-        not latest_post
-        or latest_post.id <= previous_post_id
-        or latest_post.content != response.content
-    ):
-        actual_content = latest_post.content[:30] if latest_post else "None"
-        print(f"❌ Post verification failed! Expected '{response.content[:30]}...', got '{actual_content}...'")
-        logger.error("Post creation failed for persona '%s': post not found in DB or content mismatch.", persona_name)
-        return False
 
     log_entry = AILog(
         persona_id=persona_pk,

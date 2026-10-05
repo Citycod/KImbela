@@ -1,6 +1,6 @@
 from datetime import date, datetime, timedelta
 from io import BytesIO
-from types import SimpleNamespace
+import inspect
 from unittest.mock import Mock
 import uuid
 
@@ -292,49 +292,47 @@ def test_manual_admin_post_receives_image_and_normal_action_engine(db, client, m
     assert kwargs["media_file"].filename == "photo.jpg"
 
 
-def test_action_engine_sends_manual_image_post_through_user_dashboard(db, monkeypatch):
+def test_manual_ai_post_inside_authenticated_admin_request_uses_persona_author(
+    db, app
+):
+    from ai_action_engine import execute_persona_post
+    from flask_login import login_user
+    from models import AILog, Post
+
+    persona = make_persona(db)
+    admin = make_user(db, super_admin=True)
+    db.session.commit()
+
+    content = "Testing AI user posting from the admin panel."
+    with app.test_request_context(f"/admin/ai-users/{persona.id}/post"):
+        login_user(admin)
+        published = execute_persona_post(
+            persona,
+            prompt_topic="Admin-authored post",
+            content=content,
+            source="manual",
+        )
+
+    assert published is True
+    post = Post.query.filter_by(content=content).one()
+    assert post.author_id == persona.user_id
+    assert Post.query.filter_by(content=content, author_id=admin.id).first() is None
+    log = AILog.query.filter_by(
+        persona_id=persona.id,
+        action_type="CREATE_POST_MANUAL",
+    ).one()
+    assert log.target_id == post.id
+
+
+def test_action_engine_sends_manual_image_through_explicit_author_service(db, monkeypatch):
     from ai_action_engine import execute_persona_post
     from models import AILog, Post
     from werkzeug.datastructures import FileStorage
 
     persona = make_persona(db)
-    calls = []
-
-    class SessionContext:
-        def __enter__(self):
-            return {}
-
-        def __exit__(self, *_args):
-            return False
-
-    class FakeClient:
-        def __enter__(self):
-            return self
-
-        def __exit__(self, *_args):
-            return False
-
-        def session_transaction(self):
-            return SessionContext()
-
-        def get(self, path, **_kwargs):
-            assert path == "/user_dashboard"
-            return SimpleNamespace(data=b'<input name="csrf_token" value="token">')
-
-        def post(self, path, data=None, **_kwargs):
-            calls.append((path, data))
-            post = Post(content=data["post_content"], image="uploaded.jpg", author_id=persona.user_id)
-            db.session.add(post)
-            db.session.commit()
-            return SimpleNamespace(
-                status_code=302,
-                location="http://localhost/user_dashboard",
-                data=b"",
-            )
-
     monkeypatch.setattr(
-        "ai_action_engine.current_app",
-        SimpleNamespace(test_client=lambda: FakeClient()),
+        "utils.feed_post_service.cloudinary.uploader.upload",
+        Mock(return_value={"secure_url": "https://cdn.example/uploaded.jpg"}),
     )
     media = FileStorage(stream=BytesIO(b"image"), filename="photo.jpg", content_type="image/jpeg")
     assert execute_persona_post(
@@ -344,9 +342,192 @@ def test_action_engine_sends_manual_image_post_through_user_dashboard(db, monkey
         media_file=media,
         source="manual",
     ) is True
-    assert calls[0][0] == "/user_dashboard"
-    assert calls[0][1]["media"][1] == "photo.jpg"
-    assert AILog.query.filter_by(action_type="CREATE_POST_MANUAL").count() == 1
+    post = Post.query.filter_by(content="Caption").one()
+    assert post.author_id == persona.user_id
+    assert post.image == "https://cdn.example/uploaded.jpg"
+    assert AILog.query.filter_by(
+        action_type="CREATE_POST_MANUAL", target_id=post.id
+    ).count() == 1
+
+
+def test_automatic_ai_post_uses_persona_author(db, monkeypatch):
+    from ai_action_engine import execute_persona_post
+    from models import AILog, Post
+
+    persona = make_persona(db)
+    save_config(
+        db,
+        persona,
+        posting_mode="automatic",
+        active_days=list(range(7)),
+        posting_start_time="00:00",
+        posting_end_time="23:59",
+        minimum_post_interval_minutes=0,
+    )
+
+    assert execute_persona_post(
+        persona,
+        "community",
+        content="Automatic explicit-author post",
+        source="automatic",
+    ) is True
+    post = Post.query.filter_by(content="Automatic explicit-author post").one()
+    assert post.author_id == persona.user_id
+    assert AILog.query.filter_by(
+        action_type="CREATE_POST_AUTOMATIC", target_id=post.id
+    ).count() == 1
+
+
+def test_failed_shared_feed_post_creation_returns_false_without_ai_log(db, monkeypatch):
+    from ai_action_engine import execute_persona_post
+    from models import AILog, Post
+
+    persona = make_persona(db)
+
+    def fail_creation(**_kwargs):
+        raise RuntimeError("database unavailable")
+
+    monkeypatch.setattr(
+        "utils.feed_post_service.create_feed_post",
+        fail_creation,
+    )
+    assert execute_persona_post(
+        persona,
+        "Admin-authored post",
+        content="Must not persist",
+        source="manual",
+    ) is False
+    assert Post.query.filter_by(content="Must not persist").count() == 0
+    assert AILog.query.filter_by(persona_id=persona.id).count() == 0
+
+
+def test_approved_ai_post_preserves_approved_log_source(db):
+    from ai_action_engine import execute_persona_post
+    from models import AILog, Post
+
+    persona = make_persona(db)
+    assert execute_persona_post(
+        persona,
+        "Approved topic",
+        content="Approved explicit-author post",
+        source="approval",
+    ) is True
+    post = Post.query.filter_by(content="Approved explicit-author post").one()
+    assert post.author_id == persona.user_id
+    assert AILog.query.filter_by(
+        action_type="CREATE_POST_APPROVED", target_id=post.id
+    ).count() == 1
+
+
+def test_execute_persona_post_has_no_nested_client_or_csrf_scraping():
+    from ai_action_engine import execute_persona_post
+
+    source = inspect.getsource(execute_persona_post)
+    assert ".test_client(" not in source
+    assert "csrf_token" not in source
+
+
+def test_human_dashboard_text_post_uses_current_user_and_invalidates_cache(
+    db, client, monkeypatch
+):
+    from models import Post
+
+    human = make_user(db)
+    db.session.commit()
+    with client.session_transaction() as session:
+        session["_user_id"] = str(human.id)
+        session["_fresh"] = True
+    cache_delete = Mock()
+    monkeypatch.setattr("utils.feed_post_service.cache.delete", cache_delete)
+
+    response = client.post(
+        "/user_dashboard",
+        data={"post_content": "Human dashboard post", "post_location": "Lagos"},
+    )
+
+    assert response.status_code == 302
+    post = Post.query.filter_by(content="Human dashboard post").one()
+    assert post.author_id == human.id
+    assert post.location == "Lagos"
+    assert {call.args[0] for call in cache_delete.call_args_list} == {
+        f"user_dashboard_{human.id}",
+        f"posts_feed_{human.id}",
+    }
+
+
+def test_human_dashboard_image_and_giphy_paths_remain_intact(db, client, monkeypatch):
+    from models import Post
+
+    human = make_user(db)
+    db.session.commit()
+    with client.session_transaction() as session:
+        session["_user_id"] = str(human.id)
+        session["_fresh"] = True
+    upload = Mock(return_value={"secure_url": "https://cdn.example/photo.jpg"})
+    monkeypatch.setattr("utils.feed_post_service.cloudinary.uploader.upload", upload)
+
+    image_response = client.post(
+        "/user_dashboard",
+        data={
+            "post_content": "Human image post",
+            "media": (BytesIO(b"image"), "photo.jpg"),
+        },
+        content_type="multipart/form-data",
+    )
+    gif_response = client.post(
+        "/user_dashboard",
+        data={
+            "post_content": "Human GIF post",
+            "gif_url": "https://media.giphy.com/media/example/giphy.gif",
+        },
+    )
+
+    assert image_response.status_code == 302
+    assert gif_response.status_code == 302
+    image_post = Post.query.filter_by(content="Human image post").one()
+    gif_post = Post.query.filter_by(content="Human GIF post").one()
+    assert image_post.author_id == human.id
+    assert image_post.image == "https://cdn.example/photo.jpg"
+    assert gif_post.author_id == human.id
+    assert gif_post.gif == "https://media.giphy.com/media/example/giphy.gif"
+    assert upload.call_args.kwargs["folder"] == "kimbela/posts"
+    assert upload.call_args.kwargs["transformation"][0]["width"] == 1000
+
+
+def test_human_dashboard_ajax_upload_uses_shared_explicit_author_service(
+    db, client, monkeypatch
+):
+    from models import Post
+
+    human = make_user(db)
+    db.session.commit()
+    with client.session_transaction() as session:
+        session["_user_id"] = str(human.id)
+        session["_fresh"] = True
+    upload = Mock(return_value={"secure_url": "https://cdn.example/ajax.jpg"})
+    monkeypatch.setattr("utils.feed_post_service.cloudinary.uploader.upload", upload)
+
+    response = client.post(
+        "/user_dashboard",
+        data={
+            "post_content": "Human AJAX post",
+            "emoji_data": '{"emojis": [{"name": "wave", "value": "👋"}]}',
+            "media": (BytesIO(b"image"), "ajax.jpg"),
+        },
+        headers={
+            "X-Requested-With": "XMLHttpRequest",
+            "X-File-Upload": "true",
+        },
+        content_type="multipart/form-data",
+    )
+
+    assert response.status_code == 200
+    assert response.get_json()["success"] is True
+    post = Post.query.filter_by(content="Human AJAX post").one()
+    assert post.author_id == human.id
+    assert post.image == "https://cdn.example/ajax.jpg"
+    assert post.emoji_data["emojis"][0]["name"] == "wave"
+    assert upload.call_args.kwargs["transformation"][0]["width"] == 800
 
 
 def test_admin_can_delete_ai_post_but_not_normal_post(db, client):

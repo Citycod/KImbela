@@ -1086,122 +1086,30 @@ def user_dashboard():
             media_file = request.files.get("media")
             gif_url = request.form.get("gif_url", "").strip()  # From hidden input
             post_location = request.form.get("post_location", "").strip()
-
-            image_url = None
-            video_url = None
-            gif_url_saved = None
-
-            # Validation: require at least one of text, media, or GIF
-            has_content = bool(post_content)
-            has_media = bool(media_file and media_file.filename)
-            has_gif = bool(gif_url)
-
-            if not (has_content or has_media or has_gif):
-                flash(
-                    "Please add text, a photo, or a GIF to your post.", "warning"
-                )
-                return redirect(url_for("user.user_dashboard"))
-
-            if has_media:
-                filename_lower = media_file.filename.lower()
-                if media_file.content_type.startswith("video/") or filename_lower.endswith(
-                    (".mp4", ".mov", ".avi", ".mkv", ".webm")
-                ):
-                    flash("Video uploads are not allowed.", "danger")
-                    return redirect(url_for("user.user_dashboard"))
-
-                if not allowed_file(media_file.filename):
-                    flash("Unsupported file type. Please upload an image or GIF.", "danger")
-                    return redirect(url_for("user.user_dashboard"))
-
-            # === HANDLE UPLOADED MEDIA (Photo / Video / Uploaded GIF) ===
-            if has_media and allowed_file(media_file.filename):
-                try:
-                    # Check file size
-                    media_file.seek(0, 2)
-                    file_size = media_file.tell()
-                    media_file.seek(0)
-
-                    MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB
-                    if file_size > MAX_FILE_SIZE:
-                        flash("File too large! Maximum size is 100MB.", "danger")
-                        return redirect(url_for("user.user_dashboard"))
-
-                    # Determine resource type (images only)
-                    filename_lower = media_file.filename.lower()
-                    if filename_lower.endswith((".gif", ".png", ".jpg", ".jpeg", ".webp", ".bmp")):
-                        resource_type = "image"
-                    else:
-                        resource_type = "auto"
-
-                    upload_options = {
-                        "folder": "kimbela/posts",
-                        "resource_type": resource_type,
-                        "transformation": [
-                            {"width": 1000, "crop": "limit"},
-                            {"quality": "auto", "fetch_format": "auto"},
-                        ],
-                    }
-
-                    # Preserve animation for uploaded GIFs
-                    if filename_lower.endswith(".gif"):
-                        upload_options["transformation"] = [
-                            {"quality": "auto", "fetch_format": "gif"}
-                        ]
-
-                    result = cloudinary.uploader.upload(media_file, **upload_options)
-
-                    image_url = result["secure_url"]
-
-                except Exception as e:
-                    print(f"Media upload error: {e}")
-                    flash("Failed to upload media. Please try again.", "danger")
-                    return redirect(url_for("user.user_dashboard"))
-
-            # === HANDLE GIPHY GIF (only if no uploaded media was processed) ===
-            elif has_gif:
-                gif_url = gif_url.strip()
-
-                if not gif_url.startswith("https://"):
-                    flash("GIF URL must use HTTPS.", "danger")
-                    return redirect(url_for("user.user_dashboard"))
-
-                if ".giphy.com/" not in gif_url:
-                    print(f"Blocked non-GIPHY URL: {gif_url}")
-                    flash("Only GIPHY GIFs are allowed.", "danger")
-                    return redirect(url_for("user.user_dashboard"))
-
-                # It's a valid GIPHY URL
-                gif_url_saved = gif_url
-
-            # === CREATE THE POST ===
-            new_post = Post(
-                content=post_content or "",  # Allow empty text if media/GIF present
-                image=image_url,
-                video=video_url,
-                gif=gif_url_saved,
-                location=post_location or None,
-                author_id=current_user.id,
-                created_at=utcnow(),
+            from utils.feed_post_service import (
+                FeedPostCreationError,
+                create_feed_post,
             )
 
-            db.session.add(new_post)
-            db.session.commit()
+            try:
+                new_post = create_feed_post(
+                    author=current_user,
+                    content=post_content,
+                    media_file=media_file,
+                    gif_url=gif_url,
+                    location=post_location,
+                )
+            except FeedPostCreationError as exc:
+                flash(exc.user_message, exc.category)
+                return redirect(url_for("user.user_dashboard"))
 
             print(f"Post created successfully! ID: {new_post.id}")
-            if image_url:
-                print(f"→ Image: {image_url}")
-            if video_url:
-                print(f"→ Video: {video_url}")
-            if gif_url_saved:
-                print(f"→ GIF: {gif_url_saved}")
-
-            # Clear any relevant cache
-            try:
-                safe_cache_delete(f"user_dashboard_{current_user.id}")
-                safe_cache_delete(f"posts_feed_{current_user.id}")
-            except:
-                pass
+            if new_post.image:
+                print(f"→ Image: {new_post.image}")
+            if new_post.video:
+                print(f"→ Video: {new_post.video}")
+            if new_post.gif:
+                print(f"→ GIF: {new_post.gif}")
 
             flash("Your post was created successfully!", "success")
             return redirect(url_for("user.user_dashboard"))
@@ -1469,131 +1377,49 @@ def handle_ajax_post_upload():
         media_file = request.files.get("media")
         emoji_data = request.form.get("emoji_data", "{}")
 
-        # Validate content
-        if not post_content and not (media_file and media_file.filename):
-            return jsonify(
-                {
-                    "success": False,
-                    "error": "Please add some content or media to your post.",
-                }
-            )
-
-        image_url = None
-        video_url = None
-        gif_url = None
-
-        if media_file and media_file.filename:
-            filename = media_file.filename.lower()
-            if media_file.content_type.lower().startswith("video") or filename.endswith(
-                (".mp4", ".mov", ".avi", ".mkv", ".webm")
-            ):
-                return jsonify(
-                    {"success": False, "error": "Video uploads are not allowed."}
-                )
-            if not allowed_file(media_file.filename):
-                return jsonify(
-                    {
-                        "success": False,
-                        "error": "Unsupported file type. Please upload an image or GIF.",
-                    }
-                )
-
-        # Upload media if present
-        if (
-            media_file
-            and media_file.filename != ""
-            and allowed_file(media_file.filename)
-        ):
-            # Check file size
-            media_file.seek(0, 2)
-            file_size = media_file.tell()
-            media_file.seek(0)
-
-            MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB
-
-            if file_size > MAX_FILE_SIZE:
-                return jsonify(
-                    {
-                        "success": False,
-                        "error": f"File too large! Maximum size is {MAX_FILE_SIZE // (1024 * 1024)}MB",
-                    }
-                )
-
-            try:
-                # Determine resource type (images only)
-                resource_type = "auto"
-                content_type = media_file.content_type.lower()
-                filename = media_file.filename.lower()
-
-                if content_type.startswith("image") or filename.endswith(
-                    (".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp")
-                ):
-                    resource_type = "image"
-
-                # Special handling for GIFs
-                is_gif = filename.endswith(".gif")
-
-                upload_options = {
-                    "folder": "kimbela/posts",
-                    "resource_type": resource_type,
-                    "transformation": [
-                        {"width": 800, "crop": "limit"},
-                        {"quality": "auto", "fetch_format": "auto"},
-                    ],
-                }
-
-                if is_gif:
-                    upload_options["transformation"] = [
-                        {"width": 800, "crop": "limit"},
-                        {"quality": "auto", "fetch_format": "gif"},
-                    ]
-
-                # Upload to Cloudinary
-                result = cloudinary.uploader.upload(media_file, **upload_options)
-
-                # Store URL
-                image_url = result["secure_url"]
-
-                if is_gif:
-                    gif_url = result["secure_url"]
-                    image_url = gif_url  # Store GIF as image URL
-
-            except Exception as e:
-                print(f"Media upload error: {e}")
-                return jsonify(
-                    {
-                        "success": False,
-                        "error": "Failed to upload media. The file might be corrupted.",
-                    }
-                )
-
         # Parse emoji data
         try:
             emoji_info = json.loads(emoji_data)
         except:
             emoji_info = {}
 
-        # Create the post
-        new_post = Post(
-            content=post_content,
-            image=image_url,
-            video=video_url,
-            author_id=current_user.id,
-            created_at=utcnow(),
-            emoji_data=emoji_info,
-            # likes_count=0,
-            # comments_count=0
+        from utils.feed_post_service import (
+            FeedPostCreationError,
+            create_feed_post,
         )
 
-        db.session.add(new_post)
-        db.session.commit()
-
-        # Clear cache
         try:
-            safe_cache_delete(f"user_dashboard_{current_user.id}")
-            safe_cache_delete(f"posts_feed_{current_user.id}")
-        except:
-            pass
+            new_post = create_feed_post(
+                author=current_user,
+                content=post_content,
+                media_file=media_file,
+                emoji_data=emoji_info,
+                image_transformations=[
+                    {"width": 800, "crop": "limit"},
+                    {"quality": "auto", "fetch_format": "auto"},
+                ],
+                gif_transformations=[
+                    {"width": 800, "crop": "limit"},
+                    {"quality": "auto", "fetch_format": "gif"},
+                ],
+            )
+        except FeedPostCreationError as exc:
+            legacy_messages = {
+                "empty_post": "Please add some content or media to your post.",
+                "file_too_large": "File too large! Maximum size is 100MB",
+                "media_upload_failed": (
+                    "Failed to upload media. The file might be corrupted."
+                ),
+            }
+            return jsonify(
+                {
+                    "success": False,
+                    "error": legacy_messages.get(exc.code, exc.user_message),
+                }
+            )
+
+        image_url = new_post.image
+        video_url = new_post.video
 
         # Process content for display
         processed_content = process_emoji_content(post_content, emoji_data)
