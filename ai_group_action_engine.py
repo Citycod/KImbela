@@ -125,6 +125,11 @@ def execute_persona_group_post(
         logger.info("AI group post blocked: persona=%s reason=%s", persona.id, reason)
         return False
     if not is_manual and not group_is_quiet_enough(group, "post"):
+        logger.info(
+            "AI group post blocked: persona=%s group=%s reason=group_not_quiet",
+            persona.id,
+            group.id,
+        )
         return False
 
     prompt = (
@@ -132,22 +137,59 @@ def execute_persona_group_post(
         "Keep it relevant and invite genuine human discussion in this disclosed AI profile's voice."
     )
     if is_financial_request(prompt):
+        logger.warning(
+            "AI group post blocked by financial prefilter: persona=%s group=%s",
+            persona.id,
+            group.id,
+        )
         return False
     if content is None:
         try:
             response = generate_content(_persona_prompt_config(persona), prompt)
         except Exception as exc:
-            logger.error("Group post generation failed for persona %s: %s", persona.id, exc)
+            logger.error(
+                "Group post generation failed: persona=%s group=%s error=%s",
+                persona.id,
+                group.id,
+                exc,
+            )
             return False
     else:
         response = LLMResponse(content.strip(), "admin", False, 0)
-    if response.is_escalated or not response.content.strip():
+    if response.is_escalated:
+        logger.warning(
+            "AI group post blocked: persona=%s group=%s reason=escalated",
+            persona.id,
+            group.id,
+        )
+        return False
+    if not response.content.strip():
+        logger.warning(
+            "AI group post blocked: persona=%s group=%s reason=empty_content",
+            persona.id,
+            group.id,
+        )
         return False
     if is_financial_request(response.content):
+        logger.warning(
+            "AI group post blocked: persona=%s group=%s reason=financial_content",
+            persona.id,
+            group.id,
+        )
         return False
     if not content_is_allowed(persona, response.content):
+        logger.warning(
+            "AI group post blocked: persona=%s group=%s reason=disallowed_content",
+            persona.id,
+            group.id,
+        )
         return False
     if not is_manual and _duplicate_group_post(persona, group, response.content):
+        logger.info(
+            "AI group post blocked: persona=%s group=%s reason=duplicate_content",
+            persona.id,
+            group.id,
+        )
         return False
 
     persona_id = persona.id
@@ -178,14 +220,30 @@ def execute_persona_group_post(
         .order_by(Post.id.desc())
         .first()
     )
-    if (
-        route_response.status_code != 200
-        or not route_response.is_json
-        or not route_response.get_json().get("success")
-        or not created
-        or created.id <= previous_id
-        or created.content != response.content
+    route_payload = route_response.get_json(silent=True) if route_response.is_json else {}
+    route_succeeded = bool(route_payload and route_payload.get("success"))
+    created_is_new = bool(created and created.id > previous_id)
+    content_matches = bool(created and created.content == response.content)
+    if not (
+        route_response.status_code == 200
+        and route_succeeded
+        and created_is_new
+        and content_matches
     ):
+        logger.error(
+            "AI group post publish verification failed: persona=%s group=%s "
+            "status=%s json=%s route_success=%s post_found=%s "
+            "post_is_new=%s content_matches=%s route_error=%s",
+            persona_id,
+            group_id,
+            route_response.status_code,
+            route_response.is_json,
+            route_succeeded,
+            bool(created),
+            created_is_new,
+            content_matches,
+            route_payload.get("error") if route_payload else None,
+        )
         return False
 
     db.session.add(
@@ -201,6 +259,14 @@ def execute_persona_group_post(
         )
     )
     db.session.commit()
+    logger.info(
+        "AI group post persisted: persona=%s user=%s group=%s post=%s source=%s",
+        persona_id,
+        persona_user_id,
+        group_id,
+        created.id,
+        source,
+    )
     return True
 
 
@@ -417,7 +483,7 @@ def execute_next_group_action(personas, actions=None) -> bool:
 def _calendar_week_slot(now=None):
     current = now or utcnow()
     monday = (current - timedelta(days=current.weekday())).date()
-    # A 48-hour scheduler can satisfy one session in each broad half of a week.
+    # Daily retries target one required original post in each half of the week.
     slot = 0 if current.weekday() <= 2 else 1
     return monday.isoformat(), slot
 
@@ -512,7 +578,7 @@ def execute_group_activity_session(group, personas, now=None):
         failure_reasons.append(f"persona_{persona_id}:post_execution_failed")
 
     if post_persona_id is None:
-        logger.info(
+        logger.warning(
             "AI required group-post slot remains due: group=%s reasons=%s",
             group_id,
             ",".join(failure_reasons) or "no_eligible_poster",
@@ -600,14 +666,31 @@ def _execute_optional_group_engagement(group, personas, now=None):
 
 def run_scheduled_group_sessions(personas, now=None, max_groups=25):
     """Process one missing calendar-week slot per group in a bounded pass."""
+    personas = list(personas)
     groups = Group.query.filter(Group.is_active.is_(True)).order_by(Group.id.asc()).all()
     if not groups or max_groups <= 0:
+        logger.info(
+            "AI group slot pass skipped: active_groups=%s max_groups=%s",
+            len(groups),
+            max_groups,
+        )
         return 0
     try:
         start = int(SiteSetting.get_value(GROUP_SESSION_CURSOR_KEY, "0")) % len(groups)
     except (TypeError, ValueError):
         start = 0
     rotated_groups = groups[start:] + groups[:start]
+    week_start, slot = _calendar_week_slot(now)
+    logger.info(
+        "AI group slot pass started: week_start=%s slot=%s active_groups=%s "
+        "max_groups=%s cursor=%s active_personas=%s",
+        week_start,
+        slot,
+        len(groups),
+        max_groups,
+        start,
+        len(personas),
+    )
     completed = 0
     processed = 0
     scanned = 0
@@ -626,4 +709,14 @@ def run_scheduled_group_sessions(personas, now=None, max_groups=25):
         str((start + scanned) % len(groups)),
     )
     db.session.commit()
+    logger.info(
+        "AI group slot pass completed: week_start=%s slot=%s scanned=%s "
+        "processed=%s completed=%s next_cursor=%s",
+        week_start,
+        slot,
+        scanned,
+        processed,
+        completed,
+        (start + scanned) % len(groups),
+    )
     return completed

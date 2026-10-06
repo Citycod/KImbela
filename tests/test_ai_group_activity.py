@@ -451,6 +451,46 @@ def test_group_post_uses_existing_group_route_and_logs_only_after_success(db, mo
     ).count() == 1
 
 
+def test_group_provider_failure_is_logged_and_leaves_slot_due(
+    db, monkeypatch, caplog
+):
+    import logging
+
+    from ai_controls import save_group_config
+    from ai_group_action_engine import execute_group_activity_session
+    from models import AILog, Post
+
+    persona = make_persona(db, "Provider failure")
+    owner = make_user(db)
+    group = make_group(db, owner, "Provider failure group")
+    group.members.append(persona.user)
+    open_weekly_policy(
+        db,
+        persona,
+        group_activity_enabled=True,
+        group_can_post=True,
+        allowed_group_ids=[group.id],
+        minimum_group_activity_interval_minutes=0,
+        maximum_group_posts_per_week=5,
+        maximum_total_posts_per_week=5,
+    )
+    save_group_config(group, {"activity_level": "high", "quiet_post_hours": 1})
+    db.session.commit()
+    monkeypatch.setattr(
+        "ai_group_action_engine.generate_content",
+        Mock(side_effect=RuntimeError("configured provider model is unavailable")),
+    )
+
+    with caplog.at_level(logging.INFO, logger="ai_group_action_engine"):
+        assert execute_group_activity_session(group, [persona]) is False
+
+    assert Post.query.filter_by(group_id=group.id, author_id=persona.user_id).count() == 0
+    assert AILog.query.filter_by(action_type="GROUP_POST_AUTOMATIC").count() == 0
+    assert AILog.query.filter_by(action_type="GROUP_ACTIVITY_SESSION").count() == 0
+    assert "Group post generation failed" in caplog.text
+    assert "configured provider model is unavailable" in caplog.text
+
+
 def test_admin_can_rename_ai_and_assignment_adds_real_group_membership(db, client):
     from ai_controls import get_profile_config
 
@@ -868,6 +908,87 @@ def test_bounded_group_session_pass_rotates_without_starving_later_groups(db, mo
     run_scheduled_group_sessions([], max_groups=2)
     assert len(first_pass) == 2
     assert groups[-1].id in visited
+
+
+def test_successive_bounded_passes_complete_due_slots_across_multiple_groups(
+    db, monkeypatch
+):
+    from ai_group_action_engine import (
+        GROUP_ACTIVITY_SESSION,
+        GROUP_SESSION_CURSOR_KEY,
+        _session_marker,
+        run_scheduled_group_sessions,
+    )
+    from models import AILog, Group, SiteSetting
+
+    first = make_persona(db, "Bounded first")
+    second = make_persona(db, "Bounded second")
+    owner = make_user(db)
+    groups = [make_group(db, owner, f"Bounded group {index}") for index in range(3)]
+    for group in groups:
+        group.members.append(first.user)
+        group.members.append(second.user)
+    db.session.commit()
+    ordered_ids = [
+        group_id
+        for (group_id,) in db.session.query(Group.id)
+        .filter(Group.is_active.is_(True))
+        .order_by(Group.id.asc())
+        .all()
+    ]
+    SiteSetting.set_value(
+        GROUP_SESSION_CURSOR_KEY, str(ordered_ids.index(groups[0].id))
+    )
+    target_ids = {group.id for group in groups}
+    for group_id in ordered_ids:
+        if group_id in target_ids:
+            continue
+        db.session.add(
+            AILog(
+                persona_id=first.id,
+                action_type=GROUP_ACTIVITY_SESSION,
+                target_id=group_id,
+                prompt_context=_session_marker(group_id, datetime(2026, 10, 5, 12, 0)),
+                generated_content="preexisting completion",
+                provider_used="test",
+                is_escalated=False,
+            )
+        )
+    db.session.commit()
+    monkeypatch.setattr(
+        "ai_group_action_engine.group_automation_eligibility",
+        lambda *_args, **_kwargs: (True, "eligible"),
+    )
+    monkeypatch.setattr(
+        "ai_group_action_engine.group_is_quiet_enough",
+        lambda *_args, **_kwargs: True,
+    )
+
+    def publish(persona, group):
+        db.session.add(
+            AILog(
+                persona_id=persona.id,
+                action_type="GROUP_POST_AUTOMATIC",
+                target_id=group.id,
+                prompt_context=f"group_id={group.id}",
+                generated_content="bounded post",
+                provider_used="test",
+                is_escalated=False,
+            )
+        )
+        db.session.commit()
+        return True
+
+    monkeypatch.setattr("ai_group_action_engine.execute_persona_group_post", publish)
+    now = datetime(2026, 10, 5, 12, 0)
+
+    assert run_scheduled_group_sessions([first, second], now, max_groups=2) == 2
+    assert run_scheduled_group_sessions([first, second], now, max_groups=2) == 1
+    completed_group_ids = {
+        row.target_id
+        for row in AILog.query.filter_by(action_type="GROUP_ACTIVITY_SESSION").all()
+    }
+    assert target_ids.issubset(completed_group_ids)
 
 
 def test_ai_cannot_create_original_matchmaking_group_post(app, db, monkeypatch):

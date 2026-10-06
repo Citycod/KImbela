@@ -18,6 +18,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 logger = logging.getLogger(__name__)
 scheduler = None
+AI_PERSONA_ACTIVITY_INTERVAL_HOURS = 24
 
 
 def execute_one_feed_ai_action(personas, actions=None):
@@ -104,6 +105,58 @@ def run_one_ai_action(personas, feed_first=None):
     if execute_next_group_action(personas, actions=("post",)):
         return True
     return execute_one_feed_ai_action(personas, actions=("post",))
+
+
+def run_ai_persona_activity_once(app):
+    """Run one bounded, observable AI activity pass in the dedicated process."""
+    with app.app_context():
+        try:
+            from ai_controls import order_personas_by_last_post
+            from ai_group_action_engine import run_scheduled_group_sessions
+            from ai_service import provider_runtime_summary
+            from models import AIPersona
+            from utils.ai_group_membership import sync_ai_group_memberships
+
+            inserted = sync_ai_group_memberships()
+            db.session.commit()
+            personas = AIPersona.query.filter_by(is_active=True).all()
+            provider_config = provider_runtime_summary()
+            logger.info(
+                "AI persona activity pass started: active_personas=%s "
+                "memberships_inserted=%s providers=%s groq_model=%s",
+                len(personas),
+                inserted,
+                ",".join(provider_config["fallback_chain"]),
+                provider_config["groq_model"],
+            )
+            if not personas:
+                logger.warning(
+                    "AI persona activity pass stopped: reason=no_active_personas"
+                )
+                return {
+                    "active_personas": 0,
+                    "memberships_inserted": inserted,
+                    "group_slots_completed": 0,
+                    "feed_action_completed": False,
+                }
+
+            ordered = order_personas_by_last_post(personas)
+            completed_slots = run_scheduled_group_sessions(ordered)
+            feed_completed = execute_one_feed_ai_action(
+                ordered, actions=("reply", "post")
+            )
+            result = {
+                "active_personas": len(personas),
+                "memberships_inserted": inserted,
+                "group_slots_completed": completed_slots,
+                "feed_action_completed": bool(feed_completed),
+            }
+            logger.info("AI persona activity pass completed: %s", result)
+            return result
+        except Exception:
+            db.session.rollback()
+            logger.exception("AI persona activity pass failed")
+            return None
 
 
 def process_birthday_push(user, year):
@@ -289,34 +342,28 @@ def init_scheduler(app):
                 db.session.rollback()
                 logger.error("AI group membership sync failed: %s", exc)
 
-    # AI persona activity remains in the one dedicated scheduler process.
+    # AI persona activity remains in the one dedicated scheduler process. A
+    # daily bounded pass gives each half-week slot retry opportunities after a
+    # provider/configuration failure. Production also runs once at startup.
+    ai_activity_schedule_options = {}
+    if not app.config.get("TESTING"):
+        # Let the one-time membership repair finish before the first activity
+        # pass so both jobs cannot race to insert the same membership rows.
+        ai_activity_schedule_options["next_run_time"] = utcnow() + timedelta(
+            minutes=1
+        )
+
     @scheduler.scheduled_job(
         "interval",
-        hours=48,
+        hours=AI_PERSONA_ACTIVITY_INTERVAL_HOURS,
         id="ai_persona_activity",
         max_instances=1,
         coalesce=True,
+        **ai_activity_schedule_options,
     )
     def run_ai_persona_activity():
-        """Periodically run AI persona posting and commenting tasks"""
-        with app.app_context():
-            try:
-                from ai_controls import order_personas_by_last_post
-                from ai_group_action_engine import run_scheduled_group_sessions
-                from models import AIPersona
-                from utils.ai_group_membership import sync_ai_group_memberships
-
-                personas = AIPersona.query.filter_by(is_active=True).all()
-                if not personas:
-                    return
-                sync_ai_group_memberships()
-                db.session.commit()
-                ordered = order_personas_by_last_post(personas)
-                run_scheduled_group_sessions(ordered)
-                execute_one_feed_ai_action(ordered, actions=("reply", "post"))
-
-            except Exception as exc:
-                logger.error("Error in run_ai_persona_activity: %s", exc)
+        """Run the bounded AI activity pass and retain due slots on failure."""
+        return run_ai_persona_activity_once(app)
 
     # Campaign expiry check - every 6 hours (was every hour)
     @scheduler.scheduled_job("interval", hours=6, id="campaign_expiry_check")

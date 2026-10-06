@@ -595,7 +595,39 @@ def test_ai_job_uses_the_existing_dedicated_scheduler(app, monkeypatch):
         assert job is not None
         assert job.max_instances == 1
         assert job.coalesce is True
-        assert job.trigger.interval == timedelta(hours=48)
+        assert job.trigger.interval == timedelta(hours=24)
     finally:
         scheduler_instance.shutdown(wait=True)
         scheduler_module.scheduler = None
+
+
+def test_ai_activity_pass_reports_bounded_group_and_feed_outcomes(
+    app, db, monkeypatch
+):
+    import scheduler as scheduler_module
+
+    persona = make_persona(db)
+    persona_id = persona.id
+    monkeypatch.setattr(
+        "utils.ai_group_membership.sync_ai_group_memberships", lambda: 2
+    )
+    monkeypatch.setattr(
+        "ai_controls.order_personas_by_last_post", lambda personas: list(personas)
+    )
+    group_sessions = Mock(return_value=3)
+    feed_action = Mock(return_value=True)
+    monkeypatch.setattr(
+        "ai_group_action_engine.run_scheduled_group_sessions", group_sessions
+    )
+    monkeypatch.setattr(scheduler_module, "execute_one_feed_ai_action", feed_action)
+
+    result = scheduler_module.run_ai_persona_activity_once(app)
+
+    assert result["active_personas"] >= 1
+    assert result["memberships_inserted"] == 2
+    assert result["group_slots_completed"] == 3
+    assert result["feed_action_completed"] is True
+    assert persona_id in {
+        selected.id for selected in group_sessions.call_args.args[0]
+    }
+    feed_action.assert_called_once()

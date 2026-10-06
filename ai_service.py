@@ -23,12 +23,29 @@ PROVIDER_GROQ = "groq"
 PROVIDER_GEMINI = "gemini"
 PROVIDER_OPENAI = "openai"
 
+# Keep the production model overrideable without exposing credentials or
+# requiring a code change when Groq rotates its hosted catalogue.
+DEFAULT_GROQ_MODEL = "qwen/qwen3.8-27b"
+
 # Fallback chain order
 # Temporarily restricted to GROQ-only pending Gemini/OpenAI key availability and testing
 FALLBACK_CHAIN = [PROVIDER_GROQ]
 
 # Timeout per provider call (seconds)
 PROVIDER_TIMEOUT = 60
+
+
+def get_groq_model() -> str:
+    """Return the configured Groq model ID, falling back to a supported default."""
+    return (os.environ.get("GROQ_MODEL") or "").strip() or DEFAULT_GROQ_MODEL
+
+
+def provider_runtime_summary() -> dict:
+    """Return non-secret provider settings suitable for scheduler diagnostics."""
+    return {
+        "fallback_chain": list(FALLBACK_CHAIN),
+        "groq_model": get_groq_model(),
+    }
 
 
 @dataclass
@@ -93,8 +110,10 @@ def _call_groq(system_prompt: str, user_prompt: str) -> str:
 
     from groq import Groq
     client = Groq(api_key=api_key, timeout=PROVIDER_TIMEOUT)
+    model = get_groq_model()
+    logger.info("AI provider request: provider=groq model=%s", model)
     response = client.chat.completions.create(
-        model="qwen/qwen3.6-27b",
+        model=model,
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
