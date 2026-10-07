@@ -14,11 +14,22 @@ from extensions import db
 from datetime import datetime, date
 from models import User, BirthdayNotification, db
 from apscheduler.schedulers.background import BackgroundScheduler
+from tzlocal import get_localzone
 
 
 logger = logging.getLogger(__name__)
 scheduler = None
 AI_PERSONA_ACTIVITY_INTERVAL_HOURS = 24
+AI_ACTIVITY_STARTUP_DELAY = timedelta(minutes=1)
+AI_MEMBERSHIP_ACTIVITY_LOCK = threading.Lock()
+
+
+def ai_activity_startup_time(scheduler_timezone, now=None):
+    """Return the aware scheduler-local time for the first AI activity pass."""
+    current_time = now or datetime.now(scheduler_timezone)
+    if current_time.tzinfo is None or current_time.utcoffset() is None:
+        raise ValueError("AI activity scheduler time must be timezone-aware")
+    return current_time.astimezone(scheduler_timezone) + AI_ACTIVITY_STARTUP_DELAY
 
 
 def execute_one_feed_ai_action(personas, actions=None):
@@ -314,8 +325,10 @@ def init_scheduler(app):
         return scheduler
 
     # Create scheduler with optimized settings
+    scheduler_timezone = get_localzone()
     scheduler = BackgroundScheduler(
         daemon=True,
+        timezone=scheduler_timezone,
         job_defaults={
             "coalesce": True,  # Combine multiple pending jobs
             "max_instances": 3,  # Limit concurrent jobs
@@ -331,16 +344,19 @@ def init_scheduler(app):
     )
     def synchronize_ai_group_memberships():
         """Repair existing memberships once when the dedicated process starts."""
-        with app.app_context():
-            try:
-                from utils.ai_group_membership import sync_ai_group_memberships
+        with AI_MEMBERSHIP_ACTIVITY_LOCK:
+            with app.app_context():
+                try:
+                    from utils.ai_group_membership import sync_ai_group_memberships
 
-                inserted = sync_ai_group_memberships()
-                db.session.commit()
-                logger.info("AI group membership sync inserted %s memberships", inserted)
-            except Exception as exc:
-                db.session.rollback()
-                logger.error("AI group membership sync failed: %s", exc)
+                    inserted = sync_ai_group_memberships()
+                    db.session.commit()
+                    logger.info(
+                        "AI group membership sync inserted %s memberships", inserted
+                    )
+                except Exception as exc:
+                    db.session.rollback()
+                    logger.error("AI group membership sync failed: %s", exc)
 
     # AI persona activity remains in the one dedicated scheduler process. A
     # daily bounded pass gives each half-week slot retry opportunities after a
@@ -348,9 +364,11 @@ def init_scheduler(app):
     ai_activity_schedule_options = {}
     if not app.config.get("TESTING"):
         # Let the one-time membership repair finish before the first activity
-        # pass so both jobs cannot race to insert the same membership rows.
-        ai_activity_schedule_options["next_run_time"] = utcnow() + timedelta(
-            minutes=1
+        # pass. The shared lock also serializes them if repair takes longer
+        # than the delay. APScheduler requires an aware scheduler-local value;
+        # time_utils.utcnow() is intentionally naive for database columns.
+        ai_activity_schedule_options["next_run_time"] = ai_activity_startup_time(
+            scheduler.timezone
         )
 
     @scheduler.scheduled_job(
@@ -363,7 +381,8 @@ def init_scheduler(app):
     )
     def run_ai_persona_activity():
         """Run the bounded AI activity pass and retain due slots on failure."""
-        return run_ai_persona_activity_once(app)
+        with AI_MEMBERSHIP_ACTIVITY_LOCK:
+            return run_ai_persona_activity_once(app)
 
     # Campaign expiry check - every 6 hours (was every hour)
     @scheduler.scheduled_job("interval", hours=6, id="campaign_expiry_check")
