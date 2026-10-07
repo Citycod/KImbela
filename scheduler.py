@@ -167,7 +167,9 @@ def run_ai_persona_activity_once(app):
         except Exception:
             db.session.rollback()
             logger.exception("AI persona activity pass failed")
-            return None
+            # Let APScheduler record a failed execution instead of reporting
+            # success after application-level failure logging.
+            raise
 
 
 def process_birthday_push(user, year):

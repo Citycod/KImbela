@@ -1,4 +1,5 @@
 from datetime import date, datetime, timedelta
+import inspect
 import uuid
 from unittest.mock import Mock, call
 from types import SimpleNamespace
@@ -738,7 +739,7 @@ def test_comment_only_activity_does_not_complete_required_post_slot(db, monkeypa
     monkeypatch.setattr(
         "ai_group_action_engine.execute_persona_group_comment",
         lambda selected, destination, post, *_args: comments.append(
-            (selected.id, destination.id, post.id)
+            (selected, destination, post)
         )
         or True,
     )
@@ -780,7 +781,7 @@ def test_comment_may_run_in_addition_to_required_original_post(db, monkeypatch):
     monkeypatch.setattr(
         "ai_group_action_engine.execute_persona_group_comment",
         lambda selected, destination, post, *_args: comments.append(
-            (selected.id, destination.id, post.id)
+            (selected, destination, post)
         )
         or True,
     )
@@ -791,6 +792,241 @@ def test_comment_may_run_in_addition_to_required_original_post(db, monkeypatch):
     marker = AILog.query.filter_by(action_type="GROUP_ACTIVITY_SESSION").one()
     assert marker.generated_content == "post"
     assert "required_original_post=1" in marker.prompt_context
+
+
+def test_group_comment_uses_explicit_persona_author_without_http_impersonation(
+    db, monkeypatch
+):
+    from ai_controls import save_group_config
+    from ai_group_action_engine import execute_persona_group_comment
+    from ai_service import LLMResponse
+    from models import AILog, Comment, Post
+
+    persona = make_persona(db, "Explicit commenter")
+    admin = make_user(db, super_admin=True, first_name="Current admin")
+    owner = make_user(db, first_name="Human author")
+    group = make_group(db, owner, "Explicit comment group")
+    group.members.append(persona.user)
+    group.members.append(admin)
+    post = Post(content="Human topic", author_id=owner.id, group_id=group.id)
+    db.session.add(post)
+    db.session.commit()
+    open_weekly_policy(
+        db,
+        persona,
+        group_activity_enabled=True,
+        group_can_comment=True,
+        allowed_group_ids=[group.id],
+        minimum_group_activity_interval_minutes=0,
+    )
+    save_group_config(group, {"activity_level": "high"})
+    db.session.commit()
+    monkeypatch.setattr(
+        "ai_group_action_engine.group_is_quiet_enough",
+        lambda *_args, **_kwargs: True,
+    )
+    monkeypatch.setattr(
+        "ai_group_action_engine.generate_content",
+        Mock(return_value=LLMResponse("Helpful AI comment", "test", False, 1)),
+    )
+    monkeypatch.setattr(
+        "ai_group_action_engine._send_optional_group_engagement_notifications",
+        lambda **_kwargs: None,
+    )
+
+    assert execute_persona_group_comment(persona.id, group.id, post.id) is True
+
+    comment = Comment.query.filter_by(post_id=post.id).one()
+    assert comment.author_id == persona.user_id
+    assert comment.author_id != admin.id
+    assert AILog.query.filter_by(
+        action_type="GROUP_COMMENT_AUTOMATIC", target_id=comment.id
+    ).count() == 1
+    source = inspect.getsource(execute_persona_group_comment)
+    assert ".test_client(" not in source
+    assert "current_user" not in source
+    assert "create_comment_for_author" in source
+
+
+def test_detached_group_persona_and_post_are_reloaded_for_group_comment(
+    db, monkeypatch
+):
+    from ai_controls import save_group_config
+    from ai_group_action_engine import execute_persona_group_comment
+    from ai_service import LLMResponse
+    from models import Comment, Post
+
+    persona = make_persona(db, "Detached commenter")
+    owner = make_user(db)
+    group = make_group(db, owner, "Detached comment group")
+    group.members.append(persona.user)
+    post = Post(content="Detached human topic", author_id=owner.id, group_id=group.id)
+    db.session.add(post)
+    db.session.commit()
+    open_weekly_policy(
+        db,
+        persona,
+        group_activity_enabled=True,
+        group_can_comment=True,
+        allowed_group_ids=[group.id],
+        minimum_group_activity_interval_minutes=0,
+    )
+    save_group_config(group, {"activity_level": "high"})
+    db.session.commit()
+    persona_id, group_id, post_id = persona.id, group.id, post.id
+    db.session.expunge_all()
+    monkeypatch.setattr(
+        "ai_group_action_engine.group_is_quiet_enough",
+        lambda *_args, **_kwargs: True,
+    )
+    monkeypatch.setattr(
+        "ai_group_action_engine.generate_content",
+        Mock(return_value=LLMResponse("Fresh session comment", "test", False, 1)),
+    )
+    monkeypatch.setattr(
+        "ai_group_action_engine._send_optional_group_engagement_notifications",
+        lambda **_kwargs: None,
+    )
+
+    assert execute_persona_group_comment(persona, group, post) is True
+    created = Comment.query.filter_by(post_id=post_id).one()
+    assert created.author_id == db.session.get(type(persona), persona_id).user_id
+    assert created.post_id == post_id
+    assert db.session.get(type(group), group_id) is not None
+
+
+def test_optional_comment_failure_preserves_slots_and_continues_bounded_pass(
+    db, monkeypatch, caplog
+):
+    import logging
+
+    from ai_group_action_engine import (
+        GROUP_ACTIVITY_SESSION,
+        GROUP_SESSION_CURSOR_KEY,
+        _session_marker,
+        run_scheduled_group_sessions,
+    )
+    from models import AILog, Group, Post, SiteSetting
+
+    persona = make_persona(db, "Failure isolated")
+    owner = make_user(db)
+    groups = [make_group(db, owner, f"Isolation group {index}") for index in range(2)]
+    for group in groups:
+        group.members.append(persona.user)
+        db.session.add(
+            Post(content=f"Human topic {group.id}", author_id=owner.id, group_id=group.id)
+        )
+    db.session.commit()
+    now = datetime(2026, 10, 5, 12, 0)
+    ordered_ids = [
+        group_id
+        for (group_id,) in db.session.query(Group.id)
+        .filter(Group.is_active.is_(True))
+        .order_by(Group.id.asc())
+        .all()
+    ]
+    target_ids = {group.id for group in groups}
+    for group_id in ordered_ids:
+        if group_id not in target_ids:
+            db.session.add(
+                AILog(
+                    persona_id=persona.id,
+                    action_type=GROUP_ACTIVITY_SESSION,
+                    target_id=group_id,
+                    prompt_context=_session_marker(group_id, now),
+                    generated_content="preexisting",
+                    provider_used="test",
+                    is_escalated=False,
+                )
+            )
+    SiteSetting.set_value(
+        GROUP_SESSION_CURSOR_KEY, str(ordered_ids.index(groups[0].id))
+    )
+    db.session.commit()
+    persona_id = persona.id
+    persona_user_id = persona.user_id
+
+    monkeypatch.setattr(
+        "ai_group_action_engine.group_automation_eligibility",
+        lambda _persona, _group, action, *_args, **_kwargs: (
+            (False, "no reply") if action == "reply" else (True, "eligible")
+        ),
+    )
+    monkeypatch.setattr(
+        "ai_group_action_engine.group_is_quiet_enough",
+        lambda *_args, **_kwargs: True,
+    )
+
+    def publish(_persona, selected_group):
+        selected_group_id = selected_group.id
+        db.session.add(
+            Post(
+                content=f"Required AI post {selected_group_id}",
+                author_id=persona_user_id,
+                group_id=selected_group_id,
+            )
+        )
+        db.session.commit()
+        db.session.remove()
+        return True
+
+    monkeypatch.setattr("ai_group_action_engine.execute_persona_group_post", publish)
+    monkeypatch.setattr(
+        "ai_group_action_engine.execute_persona_group_comment",
+        Mock(side_effect=RuntimeError("optional comment failed")),
+    )
+
+    with caplog.at_level(logging.ERROR, logger="ai_group_action_engine"):
+        assert run_scheduled_group_sessions([persona], now, max_groups=2) == 2
+
+    completed = {
+        row.target_id
+        for row in AILog.query.filter_by(
+            persona_id=persona_id, action_type=GROUP_ACTIVITY_SESSION
+        ).all()
+    }
+    assert target_ids.issubset(completed)
+    assert Post.query.filter(
+        Post.group_id.in_(target_ids),
+        Post.author_id == persona_user_id,
+    ).count() == 2
+    assert caplog.text.count("AI optional group engagement failed") >= 2
+    assert "action=comment" in caplog.text
+
+
+def test_optional_reply_failure_is_isolated_and_logged(db, monkeypatch, caplog):
+    import logging
+
+    from ai_group_action_engine import _execute_optional_group_engagement
+    from models import Comment, Post
+
+    persona = make_persona(db, "Reply failure")
+    owner = make_user(db)
+    group = make_group(db, owner, "Reply failure group")
+    group.members.append(persona.user)
+    post = Post(content="AI-owned topic", author_id=persona.user_id, group_id=group.id)
+    db.session.add(post)
+    db.session.flush()
+    source = Comment(content="Human reply", author_id=owner.id, post_id=post.id)
+    db.session.add(source)
+    db.session.commit()
+    monkeypatch.setattr(
+        "ai_group_action_engine.group_automation_eligibility",
+        lambda *_args, **_kwargs: (True, "eligible"),
+    )
+    monkeypatch.setattr(
+        "ai_group_action_engine.execute_persona_group_comment",
+        Mock(side_effect=RuntimeError("optional reply failed")),
+    )
+
+    with caplog.at_level(logging.ERROR, logger="ai_group_action_engine"):
+        assert _execute_optional_group_engagement(
+            group.id, [persona.id], datetime(2026, 10, 5, 12, 0)
+        ) is False
+
+    assert "AI optional group engagement failed" in caplog.text
+    assert "action=reply" in caplog.text
+    assert f"comment={source.id}" in caplog.text
 
 
 def test_failed_original_post_leaves_required_slot_due(db, monkeypatch, caplog):

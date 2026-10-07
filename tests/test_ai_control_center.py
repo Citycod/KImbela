@@ -631,3 +631,22 @@ def test_ai_activity_pass_reports_bounded_group_and_feed_outcomes(
         selected.id for selected in group_sessions.call_args.args[0]
     }
     feed_action.assert_called_once()
+
+
+def test_ai_activity_pass_propagates_unexpected_failure_to_scheduler(
+    app, monkeypatch, caplog
+):
+    import logging
+
+    import scheduler as scheduler_module
+
+    monkeypatch.setattr(
+        "utils.ai_group_membership.sync_ai_group_memberships",
+        Mock(side_effect=RuntimeError("unexpected pass failure")),
+    )
+
+    with caplog.at_level(logging.ERROR, logger="scheduler"):
+        with pytest.raises(RuntimeError, match="unexpected pass failure"):
+            scheduler_module.run_ai_persona_activity_once(app)
+
+    assert "AI persona activity pass failed" in caplog.text

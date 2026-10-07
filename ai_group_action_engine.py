@@ -1,8 +1,8 @@
 """Bounded AI activity for existing Kimbela groups.
 
-All persisted content is submitted through the same authenticated Flask routes
-used by human group members.  This module adds policy and selection only; it
-does not create a second group-content or notification path.
+Required group posts retain the existing group route. Optional AI comments and
+replies use explicit-author persistence so scheduler work never depends on an
+HTTP login session or CSRF token.
 """
 
 from contextlib import contextmanager
@@ -271,17 +271,57 @@ def execute_persona_group_post(
 
 
 def execute_persona_group_comment(
-    persona: AIPersona,
-    group: Group,
-    post: Post,
-    source_comment: Comment = None,
+    persona,
+    group,
+    post,
+    source_comment=None,
 ) -> bool:
+    """Persist one AI group comment/reply using fresh, session-bound entities."""
+    persona_id = persona if isinstance(persona, int) else persona.id
+    group_id = group if isinstance(group, int) else group.id
+    post_id = post if isinstance(post, int) else post.id
+    source_comment_id = (
+        source_comment
+        if isinstance(source_comment, int)
+        else (source_comment.id if source_comment is not None else None)
+    )
+
+    persona = db.session.get(AIPersona, persona_id)
+    group = db.session.get(Group, group_id)
+    post = db.session.get(Post, post_id)
+    source_comment = (
+        db.session.get(Comment, source_comment_id)
+        if source_comment_id is not None
+        else None
+    )
+    if (
+        persona is None
+        or group is None
+        or post is None
+        or (source_comment_id is not None and source_comment is None)
+    ):
+        logger.error(
+            "AI group engagement target missing: persona=%s group=%s post=%s "
+            "comment=%s",
+            persona_id,
+            group_id,
+            post_id,
+            source_comment_id,
+        )
+        return False
+
     action = "reply" if source_comment is not None else "comment"
     allowed, reason = group_automation_eligibility(persona, group, action)
     if not allowed:
-        logger.info("AI group %s blocked: persona=%s reason=%s", action, persona.id, reason)
+        logger.info(
+            "AI group %s blocked: persona=%s group=%s reason=%s",
+            action,
+            persona_id,
+            group_id,
+            reason,
+        )
         return False
-    if post.group_id != group.id or not _valid_persona_member(persona, group):
+    if post.group_id != group_id or not _valid_persona_member(persona, group):
         return False
     if source_comment is None:
         if post.author_id == persona.user_id or post.author.is_ai_persona:
@@ -289,7 +329,7 @@ def execute_persona_group_comment(
         if not group_is_quiet_enough(group, "comment"):
             return False
     else:
-        if source_comment.post_id != post.id:
+        if source_comment.post_id != post_id:
             return False
         if source_comment.author_id == persona.user_id or source_comment.author.is_ai_persona:
             return False
@@ -301,11 +341,11 @@ def execute_persona_group_comment(
         ).first()
         if duplicate:
             return False
-    if thread_in_group_cooldown(persona, group, post.id):
+    if thread_in_group_cooldown(persona, group, post_id):
         return False
 
     recent_comments = (
-        Comment.query.filter_by(post_id=post.id)
+        Comment.query.filter_by(post_id=post_id)
         .order_by(Comment.created_at.desc())
         .limit(3)
         .all()
@@ -337,41 +377,28 @@ def execute_persona_group_comment(
     if not content_is_allowed(persona, response.content):
         return False
 
-    persona_id = persona.id
     persona_user_id = persona.user_id
-    group_id = group.id
-    post_id = post.id
-    source_comment_id = source_comment.id if source_comment is not None else None
-    previous = Comment.query.order_by(Comment.id.desc()).first()
-    previous_id = previous.id if previous else 0
-    with _authenticated_group_client(persona, group) as (client, csrf_token):
-        if client is None:
-            return False
-        payload = {"content": response.content}
-        if source_comment_id is not None:
-            payload["parent_id"] = source_comment_id
-        route_response = client.post(
-            f"/add_comment/{post_id}",
-            json=payload,
-            headers={
-                "X-CSRFToken": csrf_token,
-                "Referer": f"http://localhost/groups/{group_id}",
-            },
-            base_url="http://localhost/",
-        )
+    try:
+        from utils.comment_service import create_comment_for_author
 
-    db.session.remove()
-    created = Comment.query.order_by(Comment.id.desc()).first()
-    response_json = route_response.get_json(silent=True) if route_response.is_json else {}
-    if (
-        route_response.status_code != 200
-        or not response_json.get("success")
-        or not created
-        or created.id <= previous_id
-        or created.post_id != post_id
-        or created.author_id != persona_user_id
-        or created.parent_id != source_comment_id
-    ):
+        created = create_comment_for_author(
+            author_id=persona_user_id,
+            post_id=post_id,
+            content=response.content,
+            parent_comment_id=source_comment_id,
+        )
+    except Exception as exc:
+        db.session.rollback()
+        logger.error(
+            "AI optional group engagement persistence failed: action=%s "
+            "persona=%s group=%s post=%s comment=%s failure=%s",
+            action,
+            persona_id,
+            group_id,
+            post_id,
+            source_comment_id,
+            type(exc).__name__,
+        )
         return False
 
     source_marker = (
@@ -397,8 +424,79 @@ def execute_persona_group_comment(
             timestamp=utcnow(),
         )
     )
-    db.session.commit()
+    try:
+        db.session.commit()
+    except Exception as exc:
+        db.session.rollback()
+        logger.error(
+            "AI optional group engagement commit failed: action=%s persona=%s "
+            "group=%s post=%s comment=%s failure=%s",
+            action,
+            persona_id,
+            group_id,
+            post_id,
+            source_comment_id,
+            type(exc).__name__,
+        )
+        return False
+
+    created_id = created.id
+    _send_optional_group_engagement_notifications(
+        post_id=post_id,
+        comment_id=created_id,
+        actor_id=persona_user_id,
+        parent_comment_id=source_comment_id,
+    )
+    logger.info(
+        "AI optional group engagement persisted: action=%s persona=%s user=%s "
+        "group=%s post=%s comment=%s",
+        action,
+        persona_id,
+        persona_user_id,
+        group_id,
+        post_id,
+        created_id,
+    )
     return True
+
+
+def _send_optional_group_engagement_notifications(
+    *, post_id, comment_id, actor_id, parent_comment_id=None
+):
+    """Preserve existing comment notifications without coupling persistence to them."""
+    try:
+        post = db.session.get(Post, post_id)
+        comment = db.session.get(Comment, comment_id)
+        actor = db.session.get(User, actor_id)
+        parent_comment = (
+            db.session.get(Comment, parent_comment_id)
+            if parent_comment_id is not None
+            else None
+        )
+        if post is None or comment is None or actor is None:
+            return
+        from users.user import (
+            _comment_social_targets,
+            _persist_social_notifications,
+            _send_comment_social_pushes,
+        )
+
+        with current_app.test_request_context("/"):
+            targets, destination = _comment_social_targets(
+                post, comment, actor, parent_comment
+            )
+            _persist_social_notifications(targets, actor.id)
+            _send_comment_social_pushes(targets, destination, post.id, actor)
+    except Exception as exc:
+        db.session.rollback()
+        logger.error(
+            "AI optional group engagement notifications failed: post=%s "
+            "comment=%s actor=%s failure=%s",
+            post_id,
+            comment_id,
+            actor_id,
+            type(exc).__name__,
+        )
 
 
 def eligible_groups_for_persona(persona):
@@ -553,8 +651,10 @@ def execute_group_activity_session(group, personas, now=None):
         )
         return False
 
-    ordered = _personas_by_group_rotation(personas, group_id)
-    if not ordered:
+    ordered_persona_ids = [
+        persona.id for persona in _personas_by_group_rotation(personas, group_id)
+    ]
+    if not ordered_persona_ids:
         logger.info(
             "AI required group-post slot remains due: group=%s reason=no_active_persona",
             group_id,
@@ -562,17 +662,25 @@ def execute_group_activity_session(group, personas, now=None):
         return False
     failure_reasons = []
     post_persona_id = None
-    persona_ids = [persona.id for persona in ordered]
-    for persona in ordered:
-        persona_id = persona.id
-        allowed, reason = group_automation_eligibility(persona, group, "post", now)
+    for persona_id in ordered_persona_ids:
+        # The group-post route removes its request-scoped SQLAlchemy session.
+        # Reload both entities before every attempt instead of retaining ORM
+        # objects across that boundary.
+        current_persona = db.session.get(AIPersona, persona_id)
+        current_group = db.session.get(Group, group_id)
+        if current_persona is None or current_group is None:
+            failure_reasons.append(f"persona_{persona_id}:missing_context")
+            continue
+        allowed, reason = group_automation_eligibility(
+            current_persona, current_group, "post", now
+        )
         if not allowed:
             failure_reasons.append(f"persona_{persona_id}:{reason}")
             continue
-        if not group_is_quiet_enough(group, "post", now):
+        if not group_is_quiet_enough(current_group, "post", now):
             failure_reasons.append(f"persona_{persona_id}:group_not_quiet")
             continue
-        if execute_persona_group_post(persona, group):
+        if execute_persona_group_post(current_persona, current_group):
             post_persona_id = persona_id
             break
         failure_reasons.append(f"persona_{persona_id}:post_execution_failed")
@@ -606,32 +714,71 @@ def execute_group_activity_session(group, personas, now=None):
 
     # Comments/replies are additional engagement only. Reload after the normal
     # posting route removed its request-scoped SQLAlchemy session.
-    refreshed_group = db.session.get(Group, group_id)
-    refreshed_personas = AIPersona.query.filter(
-        AIPersona.id.in_(persona_ids),
-        AIPersona.is_active.is_(True),
-    ).all()
-    refreshed_personas.sort(
-        key=lambda persona: (persona.id == post_persona_id, persona_ids.index(persona.id))
+    engagement_persona_ids = sorted(
+        ordered_persona_ids,
+        key=lambda persona_id: (
+            persona_id == post_persona_id,
+            ordered_persona_ids.index(persona_id),
+        ),
     )
-    _execute_optional_group_engagement(refreshed_group, refreshed_personas, now)
+    _execute_optional_group_engagement(group_id, engagement_persona_ids, now)
     return True
 
 
-def _execute_optional_group_engagement(group, personas, now=None):
+def _attempt_optional_group_engagement(
+    *, action, persona_id, group_id, post_id, source_comment_id=None
+):
+    """Isolate one optional attempt from required-slot and pass state."""
+    try:
+        return execute_persona_group_comment(
+            persona_id,
+            group_id,
+            post_id,
+            source_comment_id,
+        )
+    except Exception as exc:
+        db.session.rollback()
+        logger.error(
+            "AI optional group engagement failed: action=%s persona=%s group=%s "
+            "post=%s comment=%s failure=%s",
+            action,
+            persona_id,
+            group_id,
+            post_id,
+            source_comment_id,
+            type(exc).__name__,
+        )
+        return False
+
+
+def _fresh_engagement_context(persona_id, group_id, action, now=None):
+    """Load fresh entities before an optional-engagement eligibility check."""
+    persona = db.session.get(AIPersona, persona_id)
+    group = db.session.get(Group, group_id)
+    if persona is None or group is None:
+        return None, None, False
+    allowed, _ = group_automation_eligibility(persona, group, action, now)
+    return persona, group, allowed
+
+
+def _execute_optional_group_engagement(group_id, persona_ids, now=None):
     """Attempt one extra reply/comment without affecting required-slot state."""
+    group = db.session.get(Group, group_id)
     if group is None:
         return False
 
-    for persona in personas:
-        allowed, _ = group_automation_eligibility(persona, group, "reply", now)
+    for persona_id in persona_ids:
+        persona, group, allowed = _fresh_engagement_context(
+            persona_id, group_id, "reply", now
+        )
         if not allowed:
             continue
         candidates = (
-            Comment.query.join(Post, Comment.post_id == Post.id)
+            db.session.query(Comment.id, Comment.post_id)
+            .join(Post, Comment.post_id == Post.id)
             .join(User, Comment.author_id == User.id)
             .filter(
-                Post.group_id == group.id,
+                Post.group_id == group_id,
                 Post.author_id == persona.user_id,
                 Comment.author_id != persona.user_id,
                 User.is_ai_persona.is_(False),
@@ -640,73 +787,103 @@ def _execute_optional_group_engagement(group, personas, now=None):
             .limit(20)
             .all()
         )
-        for comment in candidates:
-            if execute_persona_group_comment(persona, group, comment.post, comment):
+        for comment_id, post_id in candidates:
+            if _attempt_optional_group_engagement(
+                action="reply",
+                persona_id=persona_id,
+                group_id=group_id,
+                post_id=post_id,
+                source_comment_id=comment_id,
+            ):
                 return True
 
-    for persona in personas:
-        allowed, _ = group_automation_eligibility(persona, group, "comment", now)
+    for persona_id in persona_ids:
+        persona, group, allowed = _fresh_engagement_context(
+            persona_id, group_id, "comment", now
+        )
         if not allowed or not group_is_quiet_enough(group, "comment", now):
             continue
-        candidates = (
-            Post.query.join(User, Post.author_id == User.id)
+        candidate_ids = (
+            db.session.query(Post.id)
+            .join(User, Post.author_id == User.id)
             .filter(
-                Post.group_id == group.id,
+                Post.group_id == group_id,
                 User.is_ai_persona.is_(False),
             )
             .order_by(Post.created_at.desc())
             .limit(20)
             .all()
         )
-        for post in candidates:
-            if execute_persona_group_comment(persona, group, post):
+        for (post_id,) in candidate_ids:
+            if _attempt_optional_group_engagement(
+                action="comment",
+                persona_id=persona_id,
+                group_id=group_id,
+                post_id=post_id,
+            ):
                 return True
     return False
 
 
 def run_scheduled_group_sessions(personas, now=None, max_groups=25):
     """Process one missing calendar-week slot per group in a bounded pass."""
-    personas = list(personas)
-    groups = Group.query.filter(Group.is_active.is_(True)).order_by(Group.id.asc()).all()
-    if not groups or max_groups <= 0:
+    persona_ids = [persona.id for persona in personas]
+    group_ids = [
+        group_id
+        for (group_id,) in db.session.query(Group.id)
+        .filter(Group.is_active.is_(True))
+        .order_by(Group.id.asc())
+        .all()
+    ]
+    if not group_ids or max_groups <= 0:
         logger.info(
             "AI group slot pass skipped: active_groups=%s max_groups=%s",
-            len(groups),
+            len(group_ids),
             max_groups,
         )
         return 0
     try:
-        start = int(SiteSetting.get_value(GROUP_SESSION_CURSOR_KEY, "0")) % len(groups)
+        start = int(SiteSetting.get_value(GROUP_SESSION_CURSOR_KEY, "0")) % len(
+            group_ids
+        )
     except (TypeError, ValueError):
         start = 0
-    rotated_groups = groups[start:] + groups[:start]
+    rotated_group_ids = group_ids[start:] + group_ids[:start]
     week_start, slot = _calendar_week_slot(now)
     logger.info(
         "AI group slot pass started: week_start=%s slot=%s active_groups=%s "
         "max_groups=%s cursor=%s active_personas=%s",
         week_start,
         slot,
-        len(groups),
+        len(group_ids),
         max_groups,
         start,
-        len(personas),
+        len(persona_ids),
     )
     completed = 0
     processed = 0
     scanned = 0
-    for group in rotated_groups:
-        if group_session_completed(group.id, now):
+    for group_id in rotated_group_ids:
+        if group_session_completed(group_id, now):
             scanned += 1
             continue
         if processed >= max_groups:
             break
         scanned += 1
         processed += 1
-        if execute_group_activity_session(group, personas, now):
+        group = db.session.get(Group, group_id)
+        fresh_personas = AIPersona.query.filter(
+            AIPersona.id.in_(persona_ids),
+            AIPersona.is_active.is_(True),
+        ).all()
+        fresh_personas.sort(key=lambda persona: persona_ids.index(persona.id))
+        if group is not None and execute_group_activity_session(
+            group, fresh_personas, now
+        ):
             completed += 1
     SiteSetting.set_value(
         GROUP_SESSION_CURSOR_KEY,
-        str((start + scanned) % len(groups)),
+        str((start + scanned) % len(group_ids)),
     )
     db.session.commit()
     logger.info(
@@ -717,6 +894,6 @@ def run_scheduled_group_sessions(personas, now=None, max_groups=25):
         scanned,
         processed,
         completed,
-        (start + scanned) % len(groups),
+        (start + scanned) % len(group_ids),
     )
     return completed
