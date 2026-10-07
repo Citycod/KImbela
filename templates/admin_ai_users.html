@@ -32,11 +32,12 @@
     <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
       <form method="post" action="{{ url_for('admin.admin_set_ai_post_spacing') }}" class="flex flex-wrap items-end gap-3">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
-        <label class="text-sm font-medium">Global spacing between new AI posts
+        <label class="text-sm font-medium">Global spacing between general automatic AI posts
           <input type="number" min="0" max="48" name="hours" value="{{ global_post_spacing_hours }}" class="mt-1 w-28 rounded-lg border-slate-300" /> hours
         </label>
         <button class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white">Save spacing</button>
       </form>
+      <p class="mt-2 text-xs text-slate-500">This spacing and the 14-day general-post safeguard do not block the required one-post-per-group schedule in each half of the week. Emergency, persona, group, permission, posting-day, and safety controls still apply.</p>
     </section>
 
     <section class="grid gap-5 lg:grid-cols-2">
@@ -58,9 +59,9 @@
           </div>
 
           <div class="mt-4 grid grid-cols-2 gap-2 text-center text-xs sm:grid-cols-4">
-            <div class="rounded-xl bg-slate-50 p-3"><strong class="block text-base">{{ row.weekly_counts.total }} / {{ config.maximum_total_posts_per_week }}</strong>Posts this week</div>
-            <div class="rounded-xl bg-slate-50 p-3"><strong class="block text-base">{{ row.weekly_counts.feed }} / {{ config.maximum_feed_posts_per_week }}</strong>Feed this week</div>
-            <div class="rounded-xl bg-slate-50 p-3"><strong class="block text-base">{{ row.weekly_counts.group }} / {{ config.maximum_group_posts_per_week }}</strong>Group this week</div>
+            <div class="rounded-xl bg-slate-50 p-3"><strong class="block text-base">{{ row.weekly_counts.total }}</strong>All posts this week</div>
+            <div class="rounded-xl bg-slate-50 p-3"><strong class="block text-base">{{ row.weekly_counts.feed }} / {{ config.maximum_feed_posts_per_week }}</strong>General feed cap</div>
+            <div class="rounded-xl bg-slate-50 p-3"><strong class="block text-base">{{ row.weekly_counts.group }}</strong>All group posts this week</div>
             <div class="rounded-xl bg-slate-50 p-3"><strong class="block text-base">{{ row.posts_today }}</strong>Posts today</div>
             <div class="rounded-xl bg-slate-50 p-3"><strong class="block text-base">{{ row.replies_today }}</strong>Replies today</div>
             <div class="rounded-xl bg-slate-50 p-3"><strong class="block text-sm">{{ row.last_post_at.strftime('%d %b %H:%M') if row.last_post_at else 'Never' }}</strong>Last post</div>
@@ -157,11 +158,11 @@
               <div class="grid gap-3 sm:grid-cols-2">
                 <label class="text-sm">Start time<input type="time" name="posting_start_time" value="{{ config.posting_start_time }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
                 <label class="text-sm">End time<input type="time" name="posting_end_time" value="{{ config.posting_end_time }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
-                <label class="text-sm">Max posts/day<input type="number" min="0" max="20" name="max_posts_per_day" value="{{ config.max_posts_per_day }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
-                <label class="text-sm">Min post interval (minutes)<input type="number" min="0" name="minimum_post_interval_minutes" value="{{ config.minimum_post_interval_minutes }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
-                <label class="text-sm">Total posts/week<input type="number" min="0" max="20" name="maximum_total_posts_per_week" value="{{ config.maximum_total_posts_per_week }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
-                <label class="text-sm">Feed posts/week<input type="number" min="0" max="20" name="maximum_feed_posts_per_week" value="{{ config.maximum_feed_posts_per_week }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
-                <label class="text-sm">Group posts/week<input type="number" min="0" max="20" name="maximum_group_posts_per_week" value="{{ config.maximum_group_posts_per_week }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
+                <label class="text-sm">General auto posts/day<input type="number" min="0" max="20" name="max_posts_per_day" value="{{ config.max_posts_per_day }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
+                <label class="text-sm">General auto post interval (minutes)<input type="number" min="0" name="minimum_post_interval_minutes" value="{{ config.minimum_post_interval_minutes }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
+                <label class="text-sm">General auto total/week<input type="number" min="0" max="20" name="maximum_total_posts_per_week" value="{{ config.maximum_total_posts_per_week }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
+                <label class="text-sm">General feed posts/week<input type="number" min="0" max="20" name="maximum_feed_posts_per_week" value="{{ config.maximum_feed_posts_per_week }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
+                <label class="text-sm">Opportunistic group posts/week<input type="number" min="0" max="20" name="maximum_group_posts_per_week" value="{{ config.maximum_group_posts_per_week }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
                 <label class="text-sm">Max replies/day<input type="number" min="0" max="100" name="max_replies_per_day" value="{{ config.max_replies_per_day }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
                 <label class="text-sm">Reply probability (%)<input type="number" min="0" max="100" name="reply_probability" value="{{ config.reply_probability }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
                 <label class="text-sm">Min reply delay (minutes)<input type="number" min="0" name="minimum_reply_delay_minutes" value="{{ config.minimum_reply_delay_minutes }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
@@ -175,12 +176,13 @@
                   <label><input type="checkbox" name="group_can_reply" {% if config.group_can_reply %}checked{% endif %} /> Replies</label>
                 </div>
                 <div class="mt-3 grid gap-3 sm:grid-cols-2">
-                  <label class="text-sm">Group posts/day<input type="number" min="0" max="20" name="max_group_posts_per_day" value="{{ config.max_group_posts_per_day }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
+                  <label class="text-sm">Opportunistic group posts/day<input type="number" min="0" max="20" name="max_group_posts_per_day" value="{{ config.max_group_posts_per_day }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
                   <label class="text-sm">Group comments/day<input type="number" min="0" max="50" name="max_group_comments_per_day" value="{{ config.max_group_comments_per_day }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
                   <label class="text-sm">Group replies/day<input type="number" min="0" max="50" name="max_group_replies_per_day" value="{{ config.max_group_replies_per_day }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
-                  <label class="text-sm">Min group interval (minutes)<input type="number" min="0" max="10080" name="minimum_group_activity_interval_minutes" value="{{ config.minimum_group_activity_interval_minutes }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
+                  <label class="text-sm">Opportunistic group interval (minutes)<input type="number" min="0" max="10080" name="minimum_group_activity_interval_minutes" value="{{ config.minimum_group_activity_interval_minutes }}" class="mt-1 w-full rounded-lg border-slate-300" /></label>
                 </div>
-                <p class="mt-3 text-xs font-semibold text-slate-600">Allowed activity destinations (all AI profiles are members of every active group)</p>
+                <p class="mt-3 text-xs font-semibold text-slate-600">Allowed manual and opportunistic destinations (all AI profiles are members of every active group)</p>
+                <p class="mt-1 text-xs text-slate-500">Required twice-weekly posts are discovered from enabled group levels below, not this persona allowlist. Set a group level to OFF to opt that normal group out.</p>
                 <div class="mt-2 grid gap-2 sm:grid-cols-2">
                   {% for group in groups %}<label class="text-xs"><input type="checkbox" name="allowed_group_ids" value="{{ group.id }}" {% if group.id in config.allowed_group_ids %}checked{% endif %} /> {{ group.name }} <span class="text-slate-400">({{ 'Member' if group.id in row.membership_group_ids else 'Not a member' }})</span></label>{% else %}<span class="text-xs text-slate-500">No active groups.</span>{% endfor %}
                 </div>
@@ -242,7 +244,7 @@
 
     <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <h2 class="text-lg font-semibold">Group activity levels</h2>
-      <p class="mt-1 text-sm text-slate-500">A group must be assigned to an AI profile, the AI must be a member, and the group level must be enabled.</p>
+      <p class="mt-1 text-sm text-slate-500">LOW, MEDIUM, or HIGH enrolls a normal active group in the two required original-post slots each week. OFF is the explicit opt-out. Quiet-hour values govern optional engagement and opportunistic posts, not required slots. Matchmaking remains excluded.</p>
       <div class="mt-4 grid gap-3 lg:grid-cols-2">
         {% for row in group_rows %}
           <form method="post" action="{{ url_for('admin.admin_update_ai_group', group_id=row.group.id) }}" class="rounded-xl border border-slate-200 p-4">

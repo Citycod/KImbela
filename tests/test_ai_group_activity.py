@@ -241,6 +241,35 @@ def test_group_eligibility_requires_level_allowlist_and_real_membership(db):
     assert group_automation_eligibility(persona, group, "post", now)[0] is True
 
 
+def test_opportunistic_group_post_remains_daily_rate_limited(db):
+    from ai_controls import group_automation_eligibility, save_group_config
+
+    persona = make_persona(db, "Opportunistic cadence")
+    owner = make_user(db)
+    group = make_group(db, owner, "Opportunistic cadence group")
+    group.members.append(persona.user)
+    now = datetime(2026, 10, 5, 12, 0)
+    open_weekly_policy(
+        db,
+        persona,
+        group_activity_enabled=True,
+        group_can_post=True,
+        allowed_group_ids=[group.id],
+        max_group_posts_per_day=1,
+        minimum_group_activity_interval_minutes=0,
+    )
+    save_group_config(group, {"activity_level": "medium"})
+    add_log(db, persona, "GROUP_POST_AUTOMATIC", now - timedelta(hours=1))
+
+    assert group_automation_eligibility(persona, group, "post", now) == (
+        False,
+        "daily_limit",
+    )
+    assert group_automation_eligibility(
+        persona, group, "post", now, required_slot=True
+    ) == (True, "eligible")
+
+
 def test_scheduler_runs_at_most_one_action_and_prioritizes_group_reply(monkeypatch):
     import scheduler
 
@@ -452,6 +481,28 @@ def test_group_post_uses_existing_group_route_and_logs_only_after_success(db, mo
     ).count() == 1
 
 
+def test_required_group_post_source_uses_required_slot_eligibility(db, monkeypatch):
+    from ai_group_action_engine import execute_persona_group_post
+
+    persona = make_persona(db, "Required source")
+    owner = make_user(db)
+    group = make_group(db, owner, "Required source group")
+    eligibility = Mock(return_value=(False, "test_boundary"))
+    monkeypatch.setattr(
+        "ai_group_action_engine.group_automation_eligibility", eligibility
+    )
+
+    assert execute_persona_group_post(
+        persona, group, source="required_slot"
+    ) is False
+    eligibility.assert_called_once_with(
+        persona,
+        group,
+        "post",
+        required_slot=True,
+    )
+
+
 def test_group_provider_failure_is_logged_and_leaves_slot_due(
     db, monkeypatch, caplog
 ):
@@ -490,6 +541,87 @@ def test_group_provider_failure_is_logged_and_leaves_slot_due(
     assert AILog.query.filter_by(action_type="GROUP_ACTIVITY_SESSION").count() == 0
     assert "Group post generation failed" in caplog.text
     assert "configured provider model is unavailable" in caplog.text
+
+
+def test_unpersisted_group_route_result_leaves_required_slot_due(
+    app, db, monkeypatch, caplog
+):
+    import logging
+
+    from ai_controls import save_group_config
+    from ai_group_action_engine import execute_group_activity_session
+    from ai_service import LLMResponse
+    from models import AILog, Post
+
+    persona = make_persona(db, "Persistence failure")
+    owner = make_user(db)
+    group = make_group(db, owner, "Persistence failure group")
+    monkeypatch.setitem(app.config, "MATCHMAKING_GROUP_ID", str(group.id + 1000000))
+    group.members.append(persona.user)
+    open_weekly_policy(
+        db,
+        persona,
+        group_activity_enabled=True,
+        group_can_post=True,
+        allowed_group_ids=[],
+    )
+    save_group_config(group, {"activity_level": "medium"})
+    db.session.commit()
+    group_id = group.id
+
+    class SessionContext:
+        def __enter__(self):
+            return {}
+
+        def __exit__(self, *_args):
+            return False
+
+    class Response:
+        status_code = 200
+        is_json = True
+        data = b'<input name="csrf_token" value="token">'
+
+        @staticmethod
+        def get_json(*_args, **_kwargs):
+            return {"success": True}
+
+    class FakeClient:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def session_transaction(self):
+            return SessionContext()
+
+        def get(self, path, **_kwargs):
+            assert path == f"/groups/{group_id}"
+            return Response()
+
+        def post(self, path, **_kwargs):
+            assert path == f"/groups/{group_id}/post"
+            # Simulate a route response that claims success but did not persist.
+            return Response()
+
+    monkeypatch.setattr(
+        "ai_group_action_engine.current_app",
+        SimpleNamespace(test_client=lambda: FakeClient()),
+    )
+    monkeypatch.setattr(
+        "ai_group_action_engine.generate_content",
+        Mock(return_value=LLMResponse("Unpersisted discussion", "test", False, 1)),
+    )
+
+    with caplog.at_level(logging.ERROR, logger="ai_group_action_engine"):
+        assert execute_group_activity_session(
+            group, [persona], datetime(2026, 10, 5, 12, 0)
+        ) is False
+
+    assert Post.query.filter_by(group_id=group_id).count() == 0
+    assert AILog.query.filter_by(action_type="GROUP_POST_AUTOMATIC").count() == 0
+    assert AILog.query.filter_by(action_type="GROUP_ACTIVITY_SESSION").count() == 0
+    assert "publish verification failed" in caplog.text
 
 
 def test_admin_can_rename_ai_and_assignment_adds_real_group_membership(db, client):
@@ -686,7 +818,7 @@ def test_group_sessions_use_two_calendar_slots_and_rotate_personas(db, monkeypat
         lambda *_args, **_kwargs: True,
     )
 
-    def publish(persona, destination):
+    def publish(persona, destination, **_kwargs):
         selected.append(persona.id)
         db.session.add(
             AILog(
@@ -710,6 +842,218 @@ def test_group_sessions_use_two_calendar_slots_and_rotate_personas(db, monkeypat
     assert execute_group_activity_session(group, [first, second], thursday) is True
     assert selected == [first.id, second.id]
     assert AILog.query.filter_by(action_type="GROUP_ACTIVITY_SESSION").count() == 2
+
+
+def test_required_slots_can_service_five_groups_twice_under_production_limits(
+    app, db, monkeypatch
+):
+    from ai_controls import (
+        group_automation_eligibility,
+        new_post_eligibility,
+        save_group_config,
+        set_global_post_spacing_hours,
+    )
+    from ai_group_action_engine import execute_group_activity_session
+    from models import AILog, Post
+
+    personas = [make_persona(db, f"Capacity persona {index}") for index in range(4)]
+    owner = make_user(db)
+    groups = [make_group(db, owner, f"Capacity group {index}") for index in range(5)]
+    matchmaking = make_group(db, owner, "Capacity matchmaking")
+    monkeypatch.setitem(app.config, "MATCHMAKING_GROUP_ID", str(matchmaking.id))
+    all_groups = [*groups, matchmaking]
+    for group in all_groups:
+        for persona in personas:
+            group.members.append(persona.user)
+        save_group_config(group, {"activity_level": "medium"})
+    for persona in personas:
+        save_profile(
+            db,
+            persona,
+            enabled=True,
+            paused=False,
+            posting_mode="automatic",
+            active_days=list(range(7)),
+            posting_days=list(range(7)),
+            posting_start_time="00:00",
+            posting_end_time="23:59",
+            group_activity_enabled=True,
+            group_can_post=True,
+            group_can_comment=False,
+            group_can_reply=False,
+            allowed_group_ids=[],
+            max_posts_per_day=1,
+            max_group_posts_per_day=1,
+            maximum_total_posts_per_week=2,
+            maximum_feed_posts_per_week=1,
+            maximum_group_posts_per_week=1,
+            minimum_post_interval_minutes=720,
+            minimum_group_activity_interval_minutes=360,
+        )
+
+    monday = datetime(2026, 10, 5, 12, 0)
+    thursday = datetime(2026, 10, 8, 12, 0)
+    for persona in personas:
+        add_published_post(db, persona, monday - timedelta(hours=1))
+    set_global_post_spacing_hours(48)
+    db.session.commit()
+
+    # The ordinary feed path remains blocked by the existing generic cadence.
+    assert new_post_eligibility(personas[0], "feed", monday) == (
+        False,
+        "fourteen_day_post_limit",
+    )
+    # A new normal group does not need to appear in every persona allowlist for
+    # its required slot, while the same allowlist still governs opportunistic work.
+    assert group_automation_eligibility(
+        personas[0], groups[0], "post", monday, required_slot=True
+    ) == (True, "eligible")
+    assert group_automation_eligibility(
+        personas[0], groups[0], "post", monday
+    ) == (False, "group_not_allowed")
+
+    selected = []
+    slot_now = monday
+
+    def publish(persona, destination, *, source="automatic", **_kwargs):
+        selected.append((persona.id, destination.id, source))
+        post = Post(
+            content=f"Required {destination.id} at {slot_now.isoformat()}",
+            author_id=persona.user_id,
+            group_id=destination.id,
+            created_at=slot_now,
+        )
+        db.session.add(post)
+        db.session.flush()
+        db.session.add(
+            AILog(
+                persona_id=persona.id,
+                action_type="GROUP_POST_AUTOMATIC",
+                target_id=post.id,
+                prompt_context=f"group_id={destination.id}",
+                generated_content=post.content,
+                provider_used="test",
+                is_escalated=False,
+                timestamp=slot_now,
+            )
+        )
+        db.session.commit()
+        return True
+
+    monkeypatch.setattr("ai_group_action_engine.execute_persona_group_post", publish)
+
+    for group in groups:
+        assert execute_group_activity_session(group, personas, monday) is True
+        assert execute_group_activity_session(group, personas, monday) is False
+    assert execute_group_activity_session(matchmaking, personas, monday) is False
+
+    slot_now = thursday
+    for group in groups:
+        assert execute_group_activity_session(group, personas, thursday) is True
+        assert execute_group_activity_session(group, personas, thursday) is False
+    assert execute_group_activity_session(matchmaking, personas, thursday) is False
+
+    assert len(selected) == 10
+    assert {source for _persona_id, _group_id, source in selected} == {"required_slot"}
+    assert {group_id for _persona_id, group_id, _source in selected} == {
+        group.id for group in groups
+    }
+    marker_counts = {
+        persona.id: AILog.query.filter_by(
+            persona_id=persona.id, action_type="GROUP_ACTIVITY_SESSION"
+        ).count()
+        for persona in personas
+    }
+    assert sum(marker_counts.values()) == 10
+    assert max(marker_counts.values()) - min(marker_counts.values()) <= 1
+    assert (
+        Post.query.filter(Post.group_id.in_([group.id for group in groups])).count()
+        == 10
+    )
+    assert Post.query.filter_by(group_id=matchmaking.id).count() == 0
+    # Required posts may exceed generic weekly totals, but do not weaken the
+    # ordinary feed/general limits.
+    assert new_post_eligibility(personas[0], "feed", thursday)[0] is False
+
+
+def test_new_normal_group_defaults_into_required_schedule_but_admin_off_opts_out(db):
+    from ai_controls import (
+        get_group_config,
+        group_automation_eligibility,
+        save_group_config,
+    )
+
+    persona = make_persona(db, "New group discovery")
+    owner = make_user(db)
+    group = make_group(db, owner, "Newly discovered normal group")
+    group.members.append(persona.user)
+    open_weekly_policy(
+        db,
+        persona,
+        group_activity_enabled=True,
+        group_can_post=True,
+        allowed_group_ids=[],
+    )
+    db.session.commit()
+    monday = datetime(2026, 10, 5, 12, 0)
+
+    assert get_group_config(group)["activity_level"] == "medium"
+    assert group_automation_eligibility(
+        persona, group, "post", monday, required_slot=True
+    ) == (True, "eligible")
+    assert group_automation_eligibility(persona, group, "post", monday) == (
+        False,
+        "group_not_allowed",
+    )
+
+    save_group_config(group, {"activity_level": "off"})
+    db.session.commit()
+    assert group_automation_eligibility(
+        persona, group, "post", monday, required_slot=True
+    ) == (False, "group_level_off")
+
+
+def test_required_slot_still_respects_global_stop_and_persona_pause(db, monkeypatch):
+    from ai_controls import set_global_activity_enabled
+    from ai_group_action_engine import execute_group_activity_session
+
+    persona = make_persona(db, "Required hard controls")
+    owner = make_user(db)
+    group = make_group(db, owner, "Required hard-control group")
+    group.members.append(persona.user)
+    open_weekly_policy(
+        db,
+        persona,
+        group_activity_enabled=True,
+        group_can_post=True,
+        allowed_group_ids=[],
+    )
+    db.session.commit()
+    publish = Mock(side_effect=AssertionError("hard controls must block publishing"))
+    monkeypatch.setattr("ai_group_action_engine.execute_persona_group_post", publish)
+    monday = datetime(2026, 10, 5, 12, 0)
+
+    set_global_activity_enabled(False)
+    db.session.commit()
+    assert execute_group_activity_session(group, [persona], monday) is False
+
+    set_global_activity_enabled(True)
+    save_profile(db, persona, paused=True)
+    assert execute_group_activity_session(group, [persona], monday) is False
+    publish.assert_not_called()
+
+
+def test_admin_ui_distinguishes_required_slots_from_general_cadence():
+    from pathlib import Path
+
+    source = Path("templates/admin_ai_users.html").read_text()
+    assert "Global spacing between general automatic AI posts" in source
+    assert "do not block the required one-post-per-group schedule" in source
+    assert (
+        "Required twice-weekly posts are discovered from enabled group levels"
+        in source
+    )
+    assert "OFF is the explicit opt-out" in source
 
 
 def test_comment_only_activity_does_not_complete_required_post_slot(db, monkeypatch):
@@ -776,7 +1120,7 @@ def test_comment_may_run_in_addition_to_required_original_post(db, monkeypatch):
     )
     monkeypatch.setattr(
         "ai_group_action_engine.execute_persona_group_post",
-        lambda selected, _group: selected.id == poster.id,
+        lambda selected, _group, **_kwargs: selected.id == poster.id,
     )
     monkeypatch.setattr(
         "ai_group_action_engine.execute_persona_group_comment",
@@ -957,7 +1301,7 @@ def test_optional_comment_failure_preserves_slots_and_continues_bounded_pass(
         lambda *_args, **_kwargs: True,
     )
 
-    def publish(_persona, selected_group):
+    def publish(_persona, selected_group, **_kwargs):
         selected_group_id = selected_group.id
         db.session.add(
             Post(
@@ -1029,7 +1373,9 @@ def test_optional_reply_failure_is_isolated_and_logged(db, monkeypatch, caplog):
     assert f"comment={source.id}" in caplog.text
 
 
-def test_failed_original_post_leaves_required_slot_due(db, monkeypatch, caplog):
+def test_failed_original_post_persistence_leaves_required_slot_due(
+    db, monkeypatch, caplog
+):
     import logging
 
     from ai_group_action_engine import execute_group_activity_session
@@ -1200,7 +1546,7 @@ def test_successive_bounded_passes_complete_due_slots_across_multiple_groups(
         lambda *_args, **_kwargs: True,
     )
 
-    def publish(persona, group):
+    def publish(persona, group, **_kwargs):
         db.session.add(
             AILog(
                 persona_id=persona.id,

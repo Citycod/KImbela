@@ -116,15 +116,23 @@ def execute_persona_group_post(
     source="automatic",
 ) -> bool:
     is_manual = source == "manual"
+    is_required_slot = source == "required_slot"
     allowed, reason = (
         manual_group_post_eligibility(persona, group)
         if is_manual
-        else group_automation_eligibility(persona, group, "post")
+        else group_automation_eligibility(
+            persona,
+            group,
+            "post",
+            required_slot=is_required_slot,
+        )
     )
     if not allowed:
         logger.info("AI group post blocked: persona=%s reason=%s", persona.id, reason)
         return False
-    if not is_manual and not group_is_quiet_enough(group, "post"):
+    if not is_manual and not is_required_slot and not group_is_quiet_enough(
+        group, "post"
+    ):
         logger.info(
             "AI group post blocked: persona=%s group=%s reason=group_not_quiet",
             persona.id,
@@ -602,7 +610,8 @@ def group_session_completed(group_id, now=None):
     )
 
 
-def _personas_by_group_rotation(personas, group_id):
+def _personas_by_group_rotation(personas, now=None):
+    """Prefer the least-used required-slot author in the current week."""
     personas = [
         persona
         for persona in personas
@@ -613,27 +622,33 @@ def _personas_by_group_rotation(personas, group_id):
     ]
     if not personas:
         return []
+    week_start, _slot = _calendar_week_slot(now)
     rows = (
-        db.session.query(AILog.persona_id, db.func.max(AILog.timestamp))
+        db.session.query(
+            AILog.persona_id,
+            db.func.count(AILog.id),
+            db.func.max(AILog.id),
+        )
         .filter(
             AILog.persona_id.in_([persona.id for persona in personas]),
-            AILog.action_type.in_(
-                (
-                    "GROUP_POST_AUTOMATIC",
-                    "GROUP_COMMENT_AUTOMATIC",
-                    "GROUP_REPLY_AUTOMATIC",
-                )
-            ),
-            AILog.prompt_context.contains(f"group_id={int(group_id)}"),
+            AILog.action_type == GROUP_ACTIVITY_SESSION,
+            AILog.prompt_context.contains(f":{week_start}:"),
             AILog.is_escalated.is_(False),
         )
         .group_by(AILog.persona_id)
         .all()
     )
-    last_by_persona = dict(rows)
+    rotation_by_persona = {
+        persona_id: (completed_count, last_log_id)
+        for persona_id, completed_count, last_log_id in rows
+    }
+    input_position = {persona.id: index for index, persona in enumerate(personas)}
     return sorted(
         personas,
-        key=lambda persona: (last_by_persona.get(persona.id) or datetime.min, persona.id),
+        key=lambda persona: (
+            rotation_by_persona.get(persona.id, (0, 0)),
+            input_position[persona.id],
+        ),
     )
 
 
@@ -652,7 +667,8 @@ def execute_group_activity_session(group, personas, now=None):
         return False
 
     ordered_persona_ids = [
-        persona.id for persona in _personas_by_group_rotation(personas, group_id)
+        persona.id
+        for persona in _personas_by_group_rotation(personas, now)
     ]
     if not ordered_persona_ids:
         logger.info(
@@ -672,15 +688,18 @@ def execute_group_activity_session(group, personas, now=None):
             failure_reasons.append(f"persona_{persona_id}:missing_context")
             continue
         allowed, reason = group_automation_eligibility(
-            current_persona, current_group, "post", now
+            current_persona,
+            current_group,
+            "post",
+            now,
+            required_slot=True,
         )
         if not allowed:
             failure_reasons.append(f"persona_{persona_id}:{reason}")
             continue
-        if not group_is_quiet_enough(current_group, "post", now):
-            failure_reasons.append(f"persona_{persona_id}:group_not_quiet")
-            continue
-        if execute_persona_group_post(current_persona, current_group):
+        if execute_persona_group_post(
+            current_persona, current_group, source="required_slot"
+        ):
             post_persona_id = persona_id
             break
         failure_reasons.append(f"persona_{persona_id}:post_execution_failed")

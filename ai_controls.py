@@ -60,7 +60,9 @@ DEFAULT_PROFILE_CONFIG = {
 }
 
 DEFAULT_GROUP_CONFIG = {
-    "activity_level": "off",
+    # Normal active groups participate in the required twice-weekly schedule
+    # by default. Persisting ``off`` remains the explicit administrator opt-out.
+    "activity_level": "medium",
     "quiet_comment_hours": 24,
     "quiet_post_hours": 72,
     "thread_cooldown_minutes": 1440,
@@ -280,7 +282,9 @@ def validate_profile_config_input(raw_config):
 def normalize_group_config(raw_config):
     raw_config = raw_config if isinstance(raw_config, dict) else {}
     config = deepcopy(DEFAULT_GROUP_CONFIG)
-    level = str(raw_config.get("activity_level", "off")).lower()
+    level = str(
+        raw_config.get("activity_level", DEFAULT_GROUP_CONFIG["activity_level"])
+    ).lower()
     config["activity_level"] = level if level in GROUP_LEVEL_RULES else "off"
     config["quiet_comment_hours"] = _bounded_int(
         raw_config.get("quiet_comment_hours"), 24, 1, 720
@@ -973,8 +977,15 @@ def manual_eligibility(persona, channel=None, now=None):
     return True, "eligible"
 
 
-def group_automation_eligibility(persona, group, action, now=None):
-    """Return eligibility for one automated group post/comment/reply."""
+def group_automation_eligibility(
+    persona, group, action, now=None, *, required_slot=False
+):
+    """Return eligibility for automated group activity.
+
+    Required group-post slots use their persisted group/week marker as the
+    cadence boundary. General and opportunistic actions retain the per-persona
+    daily, interval, weekly, 14-day, and global-spacing controls below.
+    """
     if not is_global_activity_enabled():
         return False, "global_stop"
     if not persona.is_active or not getattr(persona.user, "is_active", False):
@@ -993,12 +1004,21 @@ def group_automation_eligibility(persona, group, action, now=None):
         return False, config["posting_mode"]
     if not config["group_activity_enabled"]:
         return False, "group_activity_disabled"
-    if group.id not in config["allowed_group_ids"]:
+    if not required_slot and group.id not in config["allowed_group_ids"]:
         return False, "group_not_allowed"
     if group.members.filter_by(id=persona.user_id).first() is None:
         return False, "not_member"
 
-    from utils.matchmaking_group import can_create_group_post, can_view_group
+    from utils.matchmaking_group import (
+        can_create_group_post,
+        can_view_group,
+        is_matchmaking_group,
+    )
+
+    if required_slot and action != "post":
+        return False, "required_slot_post_only"
+    if required_slot and is_matchmaking_group(group):
+        return False, "matchmaking_excluded"
 
     if action == "post" and not can_create_group_post(group, persona.user):
         return False, "group_post_forbidden"
@@ -1022,10 +1042,16 @@ def group_automation_eligibility(persona, group, action, now=None):
     local_now = _local_now(persona, now)
     if local_now.weekday() not in config["active_days"]:
         return False, "inactive_day"
+    if required_slot and local_now.weekday() not in config["posting_days"]:
+        return False, "posting_day_disabled"
     if not _inside_window(
         local_now, config["posting_start_time"], config["posting_end_time"]
     ):
         return False, "outside_window"
+    if required_slot:
+        if post_today_override(persona, now) is False:
+            return False, "post_today_disabled"
+        return True, "eligible"
 
     limit_key = {
         "post": "max_group_posts_per_day",
