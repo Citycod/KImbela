@@ -1,4 +1,5 @@
 from datetime import date, datetime, timedelta
+from io import BytesIO
 import inspect
 import uuid
 from unittest.mock import Mock, call
@@ -404,7 +405,11 @@ def test_ai_to_ai_group_comment_chain_is_rejected_before_generation(db, monkeypa
     generate.assert_not_called()
 
 
-def test_group_post_uses_existing_group_route_and_logs_only_after_success(db, monkeypatch):
+def test_ai_group_post_uses_explicit_author_without_http_impersonation(
+    app, db, monkeypatch
+):
+    from flask_login import login_user
+
     from ai_controls import save_group_config
     from ai_group_action_engine import execute_persona_group_post
     from ai_service import LLMResponse
@@ -412,9 +417,11 @@ def test_group_post_uses_existing_group_route_and_logs_only_after_success(db, mo
 
     persona = make_persona(db)
     owner = make_user(db)
+    logged_in_admin = make_user(db, super_admin=True, first_name="Logged in admin")
     group = make_group(db, owner)
     group.members.append(persona.user)
     db.session.commit()
+    monkeypatch.setitem(app.config, "MATCHMAKING_GROUP_ID", str(group.id + 1000000))
     open_weekly_policy(
         db,
         persona,
@@ -427,58 +434,31 @@ def test_group_post_uses_existing_group_route_and_logs_only_after_success(db, mo
     db.session.commit()
     group_id = group.id
     persona_user_id = persona.user_id
-    calls = []
-
-    class SessionContext:
-        def __enter__(self):
-            return {}
-
-        def __exit__(self, *_args):
-            return False
-
-    class Response:
-        status_code = 200
-        is_json = True
-        data = b'<input name="csrf_token" value="token">'
-
-        @staticmethod
-        def get_json(*_args, **_kwargs):
-            return {"success": True}
-
-    class FakeClient:
-        def __enter__(self):
-            return self
-
-        def __exit__(self, *_args):
-            return False
-
-        def session_transaction(self):
-            return SessionContext()
-
-        def get(self, path, **_kwargs):
-            assert path == f"/groups/{group_id}"
-            return Response()
-
-        def post(self, path, data=None, **_kwargs):
-            calls.append(path)
-            db.session.add(Post(content=data["post_content"], author_id=persona_user_id, group_id=group_id))
-            db.session.commit()
-            return Response()
-
-    monkeypatch.setattr(
-        "ai_group_action_engine.current_app",
-        SimpleNamespace(test_client=lambda: FakeClient()),
-    )
+    monkeypatch.setattr("users.user._notify_group_post_members", lambda *_args: None)
     monkeypatch.setattr(
         "ai_group_action_engine.generate_content",
         Mock(return_value=LLMResponse("A group discussion", "test", False, 1)),
     )
-    assert execute_persona_group_post(persona, group) is True
-    assert calls == [f"/groups/{group_id}/post"]
+
+    with app.test_request_context("/"):
+        login_user(logged_in_admin)
+        assert execute_persona_group_post(
+            persona, group, source="required_slot"
+        ) is True
+
     created = Post.query.filter_by(author_id=persona_user_id, group_id=group_id).one()
+    assert created.author_id == persona_user_id
+    assert created.author_id != logged_in_admin.id
+    assert created.group_id == group_id
     assert AILog.query.filter_by(
         action_type="GROUP_POST_AUTOMATIC", target_id=created.id
     ).count() == 1
+    source = inspect.getsource(execute_persona_group_post)
+    assert ".test_client(" not in source
+    assert "session_transaction" not in source
+    assert "csrf_token" not in source
+    assert "current_user" not in source
+    assert 'f"/groups/' not in source
 
 
 def test_required_group_post_source_uses_required_slot_eligibility(db, monkeypatch):
@@ -501,6 +481,95 @@ def test_required_group_post_source_uses_required_slot_eligibility(db, monkeypat
         "post",
         required_slot=True,
     )
+
+
+def test_ai_group_post_module_has_no_browser_impersonation_path():
+    from pathlib import Path
+
+    source = Path("ai_group_action_engine.py").read_text()
+    assert ".test_client(" not in source
+    assert "session_transaction" not in source
+    assert "csrf_token" not in source
+    assert 'client.post(f"/groups/' not in source
+
+
+def test_human_group_post_route_retains_csrf_and_explicit_author(
+    app, db, client, monkeypatch
+):
+    from models import Post
+    from users.user import create_group_post as human_group_post_route
+
+    author = make_user(db, first_name="Human route author")
+    group = make_group(db, author, "Human CSRF group")
+    db.session.commit()
+    monkeypatch.setitem(app.config, "MATCHMAKING_GROUP_ID", str(group.id + 1000000))
+    monkeypatch.setattr("users.user._notify_group_post_members", lambda *_args: None)
+    with client.session_transaction() as session:
+        session["_user_id"] = str(author.id)
+        session["_fresh"] = True
+
+    previous_csrf_setting = app.config.get("WTF_CSRF_ENABLED", False)
+    app.config["WTF_CSRF_ENABLED"] = True
+    try:
+        missing_token = client.post(
+            f"/groups/{group.id}/post",
+            data={"post_content": "Missing CSRF"},
+            headers={"Accept": "application/json"},
+        )
+        assert missing_token.status_code == 400
+    finally:
+        app.config["WTF_CSRF_ENABLED"] = previous_csrf_setting
+
+    response = client.post(
+        f"/groups/{group.id}/post",
+        data={"post_content": "Human CSRF-protected group post"},
+    )
+    assert response.status_code == 200
+    post = Post.query.filter_by(
+        content="Human CSRF-protected group post", group_id=group.id
+    ).one()
+    assert post.author_id == author.id
+    route_source = inspect.getsource(human_group_post_route)
+    assert "create_group_post_for_author" in route_source
+    assert "author=current_user" in route_source
+
+
+def test_human_group_post_image_upload_preserves_existing_cloudinary_contract(
+    app, db, client, monkeypatch
+):
+    from models import Post
+
+    author = make_user(db, first_name="Image route author")
+    group = make_group(db, author, "Image upload group")
+    db.session.commit()
+    monkeypatch.setitem(app.config, "MATCHMAKING_GROUP_ID", str(group.id + 1000000))
+    monkeypatch.setattr("users.user._notify_group_post_members", lambda *_args: None)
+    upload = Mock(return_value={"secure_url": "https://cdn.example/group-photo.jpg"})
+    monkeypatch.setattr("utils.group_post_service.cloudinary.uploader.upload", upload)
+    with client.session_transaction() as session:
+        session["_user_id"] = str(author.id)
+        session["_fresh"] = True
+
+    response = client.post(
+        f"/groups/{group.id}/post",
+        data={
+            "post_content": "Photo update",
+            "media": (BytesIO(b"group image"), "photo.jpg"),
+        },
+        content_type="multipart/form-data",
+    )
+
+    assert response.status_code == 200
+    post = Post.query.filter_by(group_id=group.id, author_id=author.id).one()
+    assert post.image == "https://cdn.example/group-photo.jpg"
+    assert post.video is None
+    upload.assert_called_once()
+    assert upload.call_args.kwargs["folder"] == "kimbela/groups/posts"
+    assert upload.call_args.kwargs["resource_type"] == "image"
+    assert upload.call_args.kwargs["transformation"] == [
+        {"width": 800, "crop": "limit"},
+        {"quality": "auto", "fetch_format": "auto"},
+    ]
 
 
 def test_group_provider_failure_is_logged_and_leaves_slot_due(
@@ -543,7 +612,7 @@ def test_group_provider_failure_is_logged_and_leaves_slot_due(
     assert "configured provider model is unavailable" in caplog.text
 
 
-def test_unpersisted_group_route_result_leaves_required_slot_due(
+def test_group_post_service_failure_leaves_required_slot_due(
     app, db, monkeypatch, caplog
 ):
     import logging
@@ -552,6 +621,7 @@ def test_unpersisted_group_route_result_leaves_required_slot_due(
     from ai_group_action_engine import execute_group_activity_session
     from ai_service import LLMResponse
     from models import AILog, Post
+    from utils.group_post_service import GroupPostCreationError
 
     persona = make_persona(db, "Persistence failure")
     owner = make_user(db)
@@ -568,45 +638,13 @@ def test_unpersisted_group_route_result_leaves_required_slot_due(
     save_group_config(group, {"activity_level": "medium"})
     db.session.commit()
     group_id = group.id
-
-    class SessionContext:
-        def __enter__(self):
-            return {}
-
-        def __exit__(self, *_args):
-            return False
-
-    class Response:
-        status_code = 200
-        is_json = True
-        data = b'<input name="csrf_token" value="token">'
-
-        @staticmethod
-        def get_json(*_args, **_kwargs):
-            return {"success": True}
-
-    class FakeClient:
-        def __enter__(self):
-            return self
-
-        def __exit__(self, *_args):
-            return False
-
-        def session_transaction(self):
-            return SessionContext()
-
-        def get(self, path, **_kwargs):
-            assert path == f"/groups/{group_id}"
-            return Response()
-
-        def post(self, path, **_kwargs):
-            assert path == f"/groups/{group_id}/post"
-            # Simulate a route response that claims success but did not persist.
-            return Response()
-
+    persist = Mock(
+        side_effect=GroupPostCreationError(
+            "persistence_failed", "Failed to create post"
+        )
+    )
     monkeypatch.setattr(
-        "ai_group_action_engine.current_app",
-        SimpleNamespace(test_client=lambda: FakeClient()),
+        "ai_group_action_engine.create_group_post_for_author", persist
     )
     monkeypatch.setattr(
         "ai_group_action_engine.generate_content",
@@ -621,7 +659,12 @@ def test_unpersisted_group_route_result_leaves_required_slot_due(
     assert Post.query.filter_by(group_id=group_id).count() == 0
     assert AILog.query.filter_by(action_type="GROUP_POST_AUTOMATIC").count() == 0
     assert AILog.query.filter_by(action_type="GROUP_ACTIVITY_SESSION").count() == 0
-    assert "publish verification failed" in caplog.text
+    assert "AI group post persistence failed" in caplog.text
+    assert "code=persistence_failed" in caplog.text
+    persist.assert_called_once()
+    assert persist.call_args.kwargs["author"].id == persona.user_id
+    assert persist.call_args.kwargs["group"].id == group_id
+    assert persist.call_args.kwargs["content"] == "Unpersisted discussion"
 
 
 def test_admin_can_rename_ai_and_assignment_adds_real_group_membership(db, client):
@@ -1490,6 +1533,73 @@ def test_bounded_group_session_pass_rotates_without_starving_later_groups(db, mo
     run_scheduled_group_sessions([], max_groups=2)
     assert len(first_pass) == 2
     assert groups[-1].id in visited
+
+
+def test_group_session_pass_continues_after_one_group_persistence_failure(
+    db, monkeypatch
+):
+    from ai_group_action_engine import GROUP_SESSION_CURSOR_KEY, run_scheduled_group_sessions
+    from models import Group, SiteSetting
+
+    owner = make_user(db)
+    failed_group = make_group(db, owner, "First persistence failure")
+    successful_group = make_group(db, owner, "Second persistence success")
+    target_ids = {failed_group.id, successful_group.id}
+    ordered_ids = [
+        group_id
+        for (group_id,) in db.session.query(Group.id)
+        .filter(Group.is_active.is_(True))
+        .order_by(Group.id.asc())
+        .all()
+    ]
+    SiteSetting.set_value(
+        GROUP_SESSION_CURSOR_KEY, str(ordered_ids.index(failed_group.id))
+    )
+    db.session.commit()
+    visited = []
+    monkeypatch.setattr(
+        "ai_group_action_engine.group_session_completed",
+        lambda group_id, *_args, **_kwargs: group_id not in target_ids,
+    )
+
+    def execute(group, *_args, **_kwargs):
+        visited.append(group.id)
+        return group.id == successful_group.id
+
+    monkeypatch.setattr("ai_group_action_engine.execute_group_activity_session", execute)
+
+    assert run_scheduled_group_sessions([], max_groups=2) == 1
+    assert visited == [failed_group.id, successful_group.id]
+
+
+def test_one_group_session_pass_can_complete_five_due_normal_groups(db, monkeypatch):
+    from ai_group_action_engine import GROUP_SESSION_CURSOR_KEY, run_scheduled_group_sessions
+    from models import Group, SiteSetting
+
+    owner = make_user(db)
+    groups = [make_group(db, owner, f"One-pass group {index}") for index in range(5)]
+    target_ids = {group.id for group in groups}
+    ordered_ids = [
+        group_id
+        for (group_id,) in db.session.query(Group.id)
+        .filter(Group.is_active.is_(True))
+        .order_by(Group.id.asc())
+        .all()
+    ]
+    SiteSetting.set_value(GROUP_SESSION_CURSOR_KEY, str(ordered_ids.index(groups[0].id)))
+    db.session.commit()
+    visited = []
+    monkeypatch.setattr(
+        "ai_group_action_engine.group_session_completed",
+        lambda group_id, *_args, **_kwargs: group_id not in target_ids,
+    )
+    monkeypatch.setattr(
+        "ai_group_action_engine.execute_group_activity_session",
+        lambda group, *_args, **_kwargs: visited.append(group.id) or True,
+    )
+
+    assert run_scheduled_group_sessions([], max_groups=5) == 5
+    assert visited == [group.id for group in groups]
 
 
 def test_successive_bounded_passes_complete_due_slots_across_multiple_groups(

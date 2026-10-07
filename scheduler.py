@@ -130,17 +130,23 @@ def run_ai_persona_activity_once(app):
 
             inserted = sync_ai_group_memberships()
             db.session.commit()
-            personas = AIPersona.query.filter_by(is_active=True).all()
+            persona_ids = [
+                persona_id
+                for (persona_id,) in db.session.query(AIPersona.id)
+                .filter(AIPersona.is_active.is_(True))
+                .order_by(AIPersona.id.asc())
+                .all()
+            ]
             provider_config = provider_runtime_summary()
             logger.info(
                 "AI persona activity pass started: active_personas=%s "
                 "memberships_inserted=%s providers=%s groq_model=%s",
-                len(personas),
+                len(persona_ids),
                 inserted,
                 ",".join(provider_config["fallback_chain"]),
                 provider_config["groq_model"],
             )
-            if not personas:
+            if not persona_ids:
                 logger.warning(
                     "AI persona activity pass stopped: reason=no_active_personas"
                 )
@@ -151,13 +157,26 @@ def run_ai_persona_activity_once(app):
                     "feed_action_completed": False,
                 }
 
-            ordered = order_personas_by_last_post(personas)
-            completed_slots = run_scheduled_group_sessions(ordered)
+            group_personas = AIPersona.query.filter(
+                AIPersona.id.in_(persona_ids),
+                AIPersona.is_active.is_(True),
+            ).all()
+            ordered_group_personas = order_personas_by_last_post(group_personas)
+            completed_slots = run_scheduled_group_sessions(ordered_group_personas)
+
+            # Group activity may commit, roll back, or remove its scoped session.
+            # Keep only stable IDs across the phase boundary and bind fresh ORM
+            # instances before opportunistic feed/reply processing.
+            feed_personas = AIPersona.query.filter(
+                AIPersona.id.in_(persona_ids),
+                AIPersona.is_active.is_(True),
+            ).all()
+            ordered_feed_personas = order_personas_by_last_post(feed_personas)
             feed_completed = execute_one_feed_ai_action(
-                ordered, actions=("reply", "post")
+                ordered_feed_personas, actions=("reply", "post")
             )
             result = {
-                "active_personas": len(personas),
+                "active_personas": len(persona_ids),
                 "memberships_inserted": inserted,
                 "group_slots_completed": completed_slots,
                 "feed_action_completed": bool(feed_completed),

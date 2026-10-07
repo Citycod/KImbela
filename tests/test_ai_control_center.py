@@ -633,6 +633,100 @@ def test_ai_activity_pass_reports_bounded_group_and_feed_outcomes(
     feed_action.assert_called_once()
 
 
+def test_ai_activity_requeries_personas_after_group_phase_removes_session(
+    app, db, monkeypatch
+):
+    from sqlalchemy import inspect as sqlalchemy_inspect
+
+    import scheduler as scheduler_module
+
+    persona = make_persona(db)
+    persona_id = persona.id
+    monkeypatch.setattr(
+        "utils.ai_group_membership.sync_ai_group_memberships", lambda: 0
+    )
+    order_calls = []
+
+    def order_personas(personas):
+        ordered = list(personas)
+        order_calls.append(ordered)
+        return ordered
+
+    monkeypatch.setattr("ai_controls.order_personas_by_last_post", order_personas)
+    group_phase_instances = {}
+
+    def group_phase(personas):
+        group_phase_instances.update({item.id: item for item in personas})
+        db.session.remove()
+        return 1
+
+    def feed_phase(personas, *, actions):
+        rebound = {item.id: item for item in personas}
+        assert persona_id in rebound
+        assert rebound[persona_id] is not group_phase_instances[persona_id]
+        assert sqlalchemy_inspect(rebound[persona_id]).detached is False
+        assert actions == ("reply", "post")
+        return False
+
+    monkeypatch.setattr(
+        "ai_group_action_engine.run_scheduled_group_sessions", group_phase
+    )
+    monkeypatch.setattr(scheduler_module, "execute_one_feed_ai_action", feed_phase)
+
+    result = scheduler_module.run_ai_persona_activity_once(app)
+
+    assert result["group_slots_completed"] == 1
+    assert result["feed_action_completed"] is False
+    assert len(order_calls) == 2
+
+
+def test_feed_phase_failure_propagates_without_losing_completed_group_state(
+    app, db, monkeypatch
+):
+    import scheduler as scheduler_module
+    from models import AILog
+
+    persona = make_persona(db)
+    persona_id = persona.id
+    monkeypatch.setattr(
+        "utils.ai_group_membership.sync_ai_group_memberships", lambda: 0
+    )
+    monkeypatch.setattr(
+        "ai_controls.order_personas_by_last_post", lambda personas: list(personas)
+    )
+
+    def group_phase(_personas):
+        db.session.add(
+            AILog(
+                persona_id=persona_id,
+                action_type="GROUP_ACTIVITY_SESSION",
+                prompt_context="committed-before-feed",
+                generated_content="post",
+                provider_used="test",
+                is_escalated=False,
+            )
+        )
+        db.session.commit()
+        return 1
+
+    monkeypatch.setattr(
+        "ai_group_action_engine.run_scheduled_group_sessions", group_phase
+    )
+    monkeypatch.setattr(
+        scheduler_module,
+        "execute_one_feed_ai_action",
+        Mock(side_effect=RuntimeError("unexpected feed failure")),
+    )
+
+    with pytest.raises(RuntimeError, match="unexpected feed failure"):
+        scheduler_module.run_ai_persona_activity_once(app)
+
+    assert AILog.query.filter_by(
+        action_type="GROUP_ACTIVITY_SESSION",
+        prompt_context="committed-before-feed",
+    ).count() == 1
+
+
 def test_ai_activity_pass_propagates_unexpected_failure_to_scheduler(
     app, monkeypatch, caplog
 ):

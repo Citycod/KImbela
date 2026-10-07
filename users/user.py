@@ -64,6 +64,10 @@ from utils.matchmaking_group import (
     is_matchmaking_group,
     is_matchmaking_post,
 )
+from utils.group_post_service import (
+    GroupPostCreationError,
+    create_group_post as create_group_post_for_author,
+)
 # from scheduler import (
 #     manual_trigger_matchmaking_expiry_check,
 #     manual_trigger_expired_matchmaking_check,
@@ -4323,56 +4327,13 @@ def create_group_post(group_id):
     post_content = request.form.get("post_content", "").strip()
     media_file = request.files.get("media")
 
-    if not post_content and not (media_file and media_file.filename):
-        return jsonify({"success": False, "error": "Post content or media is required"})
-
-    if media_file and media_file.filename and not allowed_file(media_file.filename):
-        return jsonify(
-            {
-                "success": False,
-                "error": "Unsupported file type. Please upload an image or GIF.",
-            }
-        )
-
     try:
-        image_url = None
-        video_url = None
-
-        if media_file and media_file.filename and allowed_file(media_file.filename):
-            filename = media_file.filename.lower()
-            if media_file.content_type.startswith("video") or filename.endswith(
-                (".mp4", ".mov", ".avi", ".mkv", ".webm")
-            ):
-                return jsonify(
-                    {"success": False, "error": "Video uploads are not allowed."}
-                )
-
-            resource_type = "image"
-
-            result = cloudinary.uploader.upload(
-                media_file,
-                folder="kimbela/groups/posts",
-                resource_type=resource_type,
-                transformation=[
-                    {"width": 800, "crop": "limit"},
-                    {"quality": "auto", "fetch_format": "auto"},
-                ],
-            )
-
-            image_url = result["secure_url"]
-
-        post = Post(
+        post = create_group_post_for_author(
+            author=current_user,
+            group=group,
             content=post_content,
-            image=image_url,
-            video=video_url,
-            author_id=current_user.id,
-            group_id=group_id,  # Now this will work!
-            created_at=utcnow(),
+            media_file=media_file,
         )
-
-        db.session.add(post)
-        db.session.commit()
-
         _notify_group_post_members(group, post, current_user)
 
         return jsonify(
@@ -4382,10 +4343,15 @@ def create_group_post(group_id):
                 "message": "Post created successfully!",
             }
         )
-
-    except Exception as e:
+    except GroupPostCreationError as error:
         db.session.rollback()
-        print("Group post creation error:", e)
+        return (
+            jsonify({"success": False, "error": error.user_message}),
+            error.status_code,
+        )
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception("Group post creation failed for group %s", group_id)
         return jsonify({"success": False, "error": "Failed to create post"})
 
 

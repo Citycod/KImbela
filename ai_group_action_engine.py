@@ -1,14 +1,11 @@
 """Bounded AI activity for existing Kimbela groups.
 
-Required group posts retain the existing group route. Optional AI comments and
-replies use explicit-author persistence so scheduler work never depends on an
-HTTP login session or CSRF token.
+Original group posts, comments, and replies use explicit-author persistence so
+scheduler work never depends on an HTTP login session or CSRF token.
 """
 
-from contextlib import contextmanager
-from datetime import datetime, timedelta
+from datetime import timedelta
 import logging
-import re
 
 from flask import current_app
 
@@ -25,6 +22,10 @@ from ai_action_engine import is_financial_request
 from extensions import db
 from models import AILog, AIPersona, Comment, Group, Post, SiteSetting, User
 from time_utils import utcnow
+from utils.group_post_service import (
+    GroupPostCreationError,
+    create_group_post as create_group_post_for_author,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -75,37 +76,6 @@ def _valid_persona_member(persona, group):
         and group.is_active
         and group.members.filter_by(id=user.id).first() is not None
     )
-
-
-@contextmanager
-def _authenticated_group_client(persona, group):
-    if not _valid_persona_member(persona, group):
-        yield None, None
-        return
-
-    with current_app.test_client() as client:
-        with client.session_transaction() as session:
-            session["_user_id"] = str(persona.user_id)
-            session["_fresh"] = True
-        response = client.get(
-            f"/groups/{group.id}",
-            base_url="http://localhost/",
-        )
-        html = response.data.decode("utf-8", errors="ignore")
-        token_match = re.search(r'name="csrf_token"\s+value="([^"]+)"', html)
-        if not token_match:
-            token_match = re.search(
-                r'<meta\s+name="csrf-token"\s+content="([^"]+)"', html
-            )
-        if response.status_code != 200 or not token_match:
-            logger.error(
-                "Could not establish group route session for persona %s and group %s",
-                persona.id,
-                group.id,
-            )
-            yield None, None
-            return
-        yield client, token_match.group(1)
 
 
 def execute_persona_group_post(
@@ -203,63 +173,38 @@ def execute_persona_group_post(
     persona_id = persona.id
     persona_user_id = persona.user_id
     group_id = group.id
-    previous = (
-        Post.query.filter_by(author_id=persona_user_id, group_id=group_id)
-        .order_by(Post.id.desc())
-        .first()
-    )
-    previous_id = previous.id if previous else 0
-    with _authenticated_group_client(persona, group) as (client, csrf_token):
-        if client is None:
-            return False
-        data = {"post_content": response.content, "csrf_token": csrf_token}
-        if media_file is not None and getattr(media_file, "filename", ""):
-            data["media"] = (media_file.stream, media_file.filename)
-        route_response = client.post(
-            f"/groups/{group_id}/post",
-            data=data,
-            headers={"Referer": f"http://localhost/groups/{group_id}"},
-            base_url="http://localhost/",
+    author = db.session.get(User, persona_user_id)
+    try:
+        created = create_group_post_for_author(
+            author=author,
+            group=group,
+            content=response.content,
+            media_file=media_file,
         )
-
-    db.session.remove()
-    created = (
-        Post.query.filter_by(author_id=persona_user_id, group_id=group_id)
-        .order_by(Post.id.desc())
-        .first()
-    )
-    route_payload = route_response.get_json(silent=True) if route_response.is_json else {}
-    route_succeeded = bool(route_payload and route_payload.get("success"))
-    created_is_new = bool(created and created.id > previous_id)
-    content_matches = bool(created and created.content == response.content)
-    if not (
-        route_response.status_code == 200
-        and route_succeeded
-        and created_is_new
-        and content_matches
-    ):
+    except GroupPostCreationError as exc:
         logger.error(
-            "AI group post publish verification failed: persona=%s group=%s "
-            "status=%s json=%s route_success=%s post_found=%s "
-            "post_is_new=%s content_matches=%s route_error=%s",
+            "AI group post persistence failed: persona=%s group=%s "
+            "code=%s failure=%s",
             persona_id,
             group_id,
-            route_response.status_code,
-            route_response.is_json,
-            route_succeeded,
-            bool(created),
-            created_is_new,
-            content_matches,
-            route_payload.get("error") if route_payload else None,
+            exc.code,
+            type(exc).__name__,
         )
         return False
+
+    created_id = created.id
+    _send_group_post_notifications(
+        group_id=group_id,
+        post_id=created_id,
+        actor_id=persona_user_id,
+    )
 
     db.session.add(
         AILog(
             persona_id=persona_id,
             action_type=("GROUP_POST_MANUAL" if is_manual else "GROUP_POST_AUTOMATIC"),
-            target_id=created.id,
-            prompt_context=f"group_id={group_id}\ngroup_post_id={created.id}\n{prompt}",
+            target_id=created_id,
+            prompt_context=f"group_id={group_id}\ngroup_post_id={created_id}\n{prompt}",
             generated_content=response.content,
             provider_used=response.provider_used,
             is_escalated=False,
@@ -272,10 +217,34 @@ def execute_persona_group_post(
         persona_id,
         persona_user_id,
         group_id,
-        created.id,
+        created_id,
         source,
     )
     return True
+
+
+def _send_group_post_notifications(*, group_id, post_id, actor_id):
+    """Preserve group social notifications without coupling them to persistence."""
+    try:
+        group = db.session.get(Group, group_id)
+        post = db.session.get(Post, post_id)
+        actor = db.session.get(User, actor_id)
+        if group is None or post is None or actor is None:
+            return
+        from users.user import _notify_group_post_members
+
+        with current_app.test_request_context("/"):
+            _notify_group_post_members(group, post, actor)
+    except Exception as exc:
+        db.session.rollback()
+        logger.error(
+            "AI group post notifications failed: group=%s post=%s actor=%s "
+            "failure=%s",
+            group_id,
+            post_id,
+            actor_id,
+            type(exc).__name__,
+        )
 
 
 def execute_persona_group_comment(
@@ -679,9 +648,9 @@ def execute_group_activity_session(group, personas, now=None):
     failure_reasons = []
     post_persona_id = None
     for persona_id in ordered_persona_ids:
-        # The group-post route removes its request-scoped SQLAlchemy session.
-        # Reload both entities before every attempt instead of retaining ORM
-        # objects across that boundary.
+        # Reload both entities before every attempt so a commit or rollback in
+        # one persona's activity cannot leave the next attempt with stale ORM
+        # state.
         current_persona = db.session.get(AIPersona, persona_id)
         current_group = db.session.get(Group, group_id)
         if current_persona is None or current_group is None:
@@ -712,8 +681,9 @@ def execute_group_activity_session(group, personas, now=None):
         )
         return False
 
-    # The content route commits the original post first. Persist the slot marker
-    # immediately afterward so optional engagement can never define completion.
+    # The shared service commits the original post first. Persist the slot
+    # marker immediately afterward so optional engagement can never define
+    # completion.
     db.session.add(
         AILog(
             persona_id=post_persona_id,
@@ -731,8 +701,8 @@ def execute_group_activity_session(group, personas, now=None):
     )
     db.session.commit()
 
-    # Comments/replies are additional engagement only. Reload after the normal
-    # posting route removed its request-scoped SQLAlchemy session.
+    # Comments/replies are additional engagement only. Pass stable IDs so each
+    # optional action can load its own current session-bound entities.
     engagement_persona_ids = sorted(
         ordered_persona_ids,
         key=lambda persona_id: (
