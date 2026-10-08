@@ -102,7 +102,7 @@
             </button>
             <button onclick="openShareModal(this.dataset.postId, this.dataset.url)"
                     data-post-id="{{ post.public_id }}"
-                    data-url="{{ url_for('user.view_shared_post', post_identifier=post.public_id) }}"
+                    data-url="{{ url_for('user.view_shared_post', post_identifier=post.public_id, preview=private_group_share_preview_version) if (group.is_private or is_matchmaking_group) else url_for('user.view_shared_post', post_identifier=post.public_id) }}"
                     class="flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-1 md:py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 text-gray-600">
                 <i class="bi bi-share text-sm md:text-base"></i>
                 <span class="text-xs md:text-sm">Share</span>

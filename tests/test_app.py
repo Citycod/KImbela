@@ -221,7 +221,7 @@ def test_private_group_share_exposes_only_author_text_and_image(
     group_page = client.get(f"/groups/{group.id}")
     assert group_page.status_code == 200
     assert f'data-post-id="{post.public_id}"'.encode() in group_page.data
-    assert f'data-url="/post/{post.public_id}"'.encode() in group_page.data
+    assert f'data-url="/post/{post.public_id}?preview=private-v1"'.encode() in group_page.data
 
     authorized_preview = client.get(f"/post/{post.public_id}")
     assert authorized_preview.status_code == 200
@@ -231,17 +231,67 @@ def test_private_group_share_exposes_only_author_text_and_image(
     client.get("/logout")
     anonymous = app.test_client()
     preview = anonymous.get(
-        f"/post/{post.public_id}", base_url="https://www.kimbela.com"
+        f"/post/{post.public_id}?preview=private-v1",
+        base_url="https://www.kimbela.com",
     )
     assert preview.status_code == 200
     assert b'<meta property="og:title" content="Post by PrivatePreviewAuthor User - Kimbela">' in preview.data
     assert b'<meta property="og:description" content="private-preview-secret-marker">' in preview.data
     assert b'<meta property="og:image" content="https://cdn.example.com/private-secret.jpg">' in preview.data
+    assert f'<meta property="og:url" content="https://www.kimbela.com/post/{post.public_id}?preview=private-v1">'.encode() in preview.data
     assert b"PrivatePreviewAuthor" in preview.data
     assert b"private-preview-secret-marker" in preview.data
     assert b"https://cdn.example.com/private-secret.jpg" in preview.data
     assert b"Confidential preview group" not in preview.data
     assert b"private-comment-must-not-appear" not in preview.data
+
+
+def test_matchmaking_group_copy_link_renders_anonymous_social_preview(
+    app, client, db, user, monkeypatch
+):
+    from models import Group, Post
+
+    user.first_name = "MatchPreviewAuthor"
+    group = Group(
+        name="Configured Matchmaking",
+        created_by=user.id,
+        is_active=True,
+        is_private=True,
+    )
+    db.session.add(group)
+    db.session.flush()
+    group.members.append(user)
+    monkeypatch.setitem(app.config, "MATCHMAKING_GROUP_ID", str(group.id))
+    post = Post(
+        content="matchmaking-preview-marker",
+        author_id=user.id,
+        group_id=group.id,
+        image="https://cdn.example.com/matchmaking-preview.jpg",
+    )
+    db.session.add(post)
+    db.session.commit()
+
+    with client.session_transaction() as session:
+        session["_user_id"] = str(user.id)
+        session["_fresh"] = True
+
+    group_page = client.get(f"/groups/{group.id}")
+    assert group_page.status_code == 200
+    assert f'data-url="/post/{post.public_id}?preview=private-v1"'.encode() in group_page.data
+
+    client.get("/logout")
+    anonymous = app.test_client()
+    preview = anonymous.get(
+        f"/post/{post.public_id}?preview=private-v1",
+        base_url="https://www.kimbela.com",
+        headers={"User-Agent": "WhatsApp/2.26.1"},
+    )
+    assert preview.status_code == 200
+    assert b'<meta property="og:title" content="Post by MatchPreviewAuthor User - Kimbela">' in preview.data
+    assert b'<meta property="og:description" content="matchmaking-preview-marker">' in preview.data
+    assert b'<meta property="og:image" content="https://cdn.example.com/matchmaking-preview.jpg">' in preview.data
+    assert f'<meta property="og:url" content="https://www.kimbela.com/post/{post.public_id}?preview=private-v1">'.encode() in preview.data
+    assert b"Configured Matchmaking" not in preview.data
 
 
 def test_subscription_callback_recovers_success_via_reference_verification(
