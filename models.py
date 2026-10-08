@@ -1137,6 +1137,43 @@ class Group(db.Model):
         return data
 
 
+class GroupNotificationPreference(db.Model):
+    __tablename__ = "group_notification_preferences"
+
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    group_id = db.Column(
+        db.Integer,
+        db.ForeignKey("groups.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    level = db.Column(db.String(20), nullable=False, default="highlights")
+    updated_at = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=utcnow,
+        onupdate=utcnow,
+    )
+
+    __table_args__ = (
+        db.CheckConstraint(
+            "level IN ('all', 'highlights', 'muted')",
+            name="ck_group_notification_preference_level",
+        ),
+        db.Index(
+            "ix_group_notification_preferences_group_id_user_id",
+            "group_id",
+            "user_id",
+        ),
+    )
+
+    user = db.relationship("User", backref="group_notification_preferences")
+    group = db.relationship("Group", backref="notification_preferences")
+
+
 class SponsoredAd(db.Model):
     __tablename__ = "sponsored_ads"
     id = db.Column(db.Integer, primary_key=True)

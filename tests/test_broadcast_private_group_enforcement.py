@@ -427,6 +427,12 @@ def test_group_feed_uses_bounded_automatic_infinite_scroll(db, client):
     db.session.add(
         Comment(content="bounded comment", author_id=viewer.id, post_id=newest_post.id)
     )
+    focus_comment = Comment(
+        content="notification target comment",
+        author_id=viewer.id,
+        post_id=created_posts[0].id,
+    )
+    db.session.add(focus_comment)
     small_group = Group(
         name=f"Small {uuid.uuid4().hex[:8]}",
         created_by=creator.id,
@@ -459,6 +465,17 @@ def test_group_feed_uses_bounded_automatic_infinite_scroll(db, client):
     assert b"1 Chimes" in initial.data
     assert len(initial_statements) <= 20
     assert len(initial_statements) <= len(small_group_statements) + 2
+
+    focused = client.get(
+        f"/groups/{group.id}?notification=1"
+        f"&focus_post={created_posts[0].id}"
+        f"&focus_comment={focus_comment.id}"
+        f"#comment-{focus_comment.id}"
+    )
+    assert focused.status_code == 200
+    assert b"group-batch-marker-00" in focused.data
+    assert f'id="post-{created_posts[0].id}"'.encode() in focused.data
+    assert f'id="comment-{focus_comment.id}"'.encode() in focused.data
 
     first_cursor = newest_post.id - 9
     with count_sql_statements(db) as next_statements:

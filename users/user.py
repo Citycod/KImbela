@@ -95,6 +95,7 @@ from models import (
     Notification,
     NotificationType,
     Group,
+    GroupNotificationPreference,
     SponsoredAd,
     ReportedContent,
     group_members,
@@ -1007,32 +1008,7 @@ def get_dashboard_reaction_data(post_ids, user_id):
 GROUP_POSTS_BATCH_SIZE = 10
 
 
-def get_group_post_batch(
-    group,
-    viewer,
-    cursor=None,
-    limit=GROUP_POSTS_BATCH_SIZE,
-    page=1,
-):
-    """Load one bounded group-post batch and its template data."""
-    limit = max(1, min(int(limit or GROUP_POSTS_BATCH_SIZE), 20))
-    query = _exclude_protected_shared_sources(
-        Post.query.filter(Post.group_id == group.id)
-    )
-    if cursor:
-        query = query.filter(Post.id < cursor)
-
-    query = (
-        query.options(
-            joinedload(Post.author),
-        )
-        .order_by(Post.created_at.desc(), Post.id.desc())
-    )
-    if not cursor and page and page > 1:
-        query = query.offset((page - 1) * limit)
-    rows = query.limit(limit + 1).all()
-    has_more = len(rows) > limit
-    posts = [post for post in rows[:limit] if can_view_post(post, viewer)]
+def _group_post_template_data(posts, viewer):
     post_ids = [post.id for post in posts]
     (
         reaction_counts_by_post_id,
@@ -1074,13 +1050,45 @@ def get_group_post_batch(
         for comment in visible_comments:
             comments_by_post_id[comment.post_id].append(comment)
     return {
-        "posts": posts,
-        "has_more": has_more,
-        "next_cursor": posts[-1].id if posts and has_more else None,
         "reaction_counts_by_post_id": reaction_counts_by_post_id,
         "current_user_reaction_by_post_id": current_user_reaction_by_post_id,
         "comments_by_post_id": comments_by_post_id,
         "comment_counts_by_post_id": comment_counts_by_post_id,
+    }
+
+
+def get_group_post_batch(
+    group,
+    viewer,
+    cursor=None,
+    limit=GROUP_POSTS_BATCH_SIZE,
+    page=1,
+):
+    """Load one bounded group-post batch and its template data."""
+    limit = max(1, min(int(limit or GROUP_POSTS_BATCH_SIZE), 20))
+    query = _exclude_protected_shared_sources(
+        Post.query.filter(Post.group_id == group.id)
+    )
+    if cursor:
+        query = query.filter(Post.id < cursor)
+
+    query = (
+        query.options(
+            joinedload(Post.author),
+        )
+        .order_by(Post.created_at.desc(), Post.id.desc())
+    )
+    if not cursor and page and page > 1:
+        query = query.offset((page - 1) * limit)
+    rows = query.limit(limit + 1).all()
+    has_more = len(rows) > limit
+    posts = [post for post in rows[:limit] if can_view_post(post, viewer)]
+    template_data = _group_post_template_data(posts, viewer)
+    return {
+        "posts": posts,
+        "has_more": has_more,
+        "next_cursor": posts[-1].id if posts and has_more else None,
+        **template_data,
     }
 
 
@@ -2159,6 +2167,7 @@ def _post_content_destination(post, *, anchor=None):
             "user.group_detail",
             group_id=post.group_id,
             notification=1,
+            focus_post=post.id,
             _anchor=anchor or f"post-{post.id}",
         )
     return url_for(
@@ -2404,58 +2413,118 @@ def _eligible_group_social_recipient_ids(group, actor_id):
     return member_ids - blocked_member_ids
 
 
+GROUP_NOTIFICATION_LEVELS = {"all", "highlights", "muted"}
+DEFAULT_GROUP_NOTIFICATION_LEVEL = "highlights"
+
+
+def _group_notification_levels(group_id, recipient_ids):
+    levels = {
+        user_id: DEFAULT_GROUP_NOTIFICATION_LEVEL for user_id in recipient_ids
+    }
+    if not recipient_ids:
+        return levels
+    rows = (
+        db.session.query(
+            GroupNotificationPreference.user_id,
+            GroupNotificationPreference.level,
+        )
+        .filter(
+            GroupNotificationPreference.group_id == group_id,
+            GroupNotificationPreference.user_id.in_(recipient_ids),
+        )
+        .all()
+    )
+    for user_id, level in rows:
+        if level in GROUP_NOTIFICATION_LEVELS:
+            levels[user_id] = level
+    return levels
+
+
+def _group_notification_level(group_id, user_id):
+    level = (
+        db.session.query(GroupNotificationPreference.level)
+        .filter_by(group_id=group_id, user_id=user_id)
+        .scalar()
+    )
+    return level if level in GROUP_NOTIFICATION_LEVELS else DEFAULT_GROUP_NOTIFICATION_LEVEL
+
+
+def _is_highlight_group_post(group, actor):
+    return bool(
+        actor.is_admin
+        or actor.is_super_admin
+        or group.created_by == actor.id
+    )
+
+
 def _notify_group_post_members(group, post, actor):
     recipient_ids = _eligible_group_social_recipient_ids(group, actor.id)
     if not recipient_ids:
         return
 
+    notification_levels = _group_notification_levels(group.id, recipient_ids)
+    in_app_recipient_ids = {
+        user_id
+        for user_id, level in notification_levels.items()
+        if level != "muted"
+    }
+    is_highlight = _is_highlight_group_post(group, actor)
+    push_recipient_ids = {
+        user_id
+        for user_id, level in notification_levels.items()
+        if level == "all" or (is_highlight and level == "highlights")
+    }
+
     body = f"{actor.full_name} posted in {group.name}."
-    try:
-        db.session.add_all(
-            Notification(
-                user_id=user_id,
-                actor_id=actor.id,
-                type=NotificationType.NEW_POST,
-                entity_id=post.id,
-                entity_type="group_post",
-                message=body,
+    if in_app_recipient_ids:
+        try:
+            db.session.add_all(
+                Notification(
+                    user_id=user_id,
+                    actor_id=actor.id,
+                    type=NotificationType.NEW_POST,
+                    entity_id=post.id,
+                    entity_type="group_post",
+                    message=body,
+                )
+                for user_id in in_app_recipient_ids
             )
-            for user_id in recipient_ids
-        )
-        db.session.commit()
-    except Exception:
-        db.session.rollback()
-        current_app.logger.exception(
-            "Failed to persist group post notifications for post %s",
-            post.id,
-        )
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            current_app.logger.exception(
+                "Failed to persist group post notifications for post %s",
+                post.id,
+            )
 
-    try:
-        from utils.push_service import send_push_notifications
+    if push_recipient_ids:
+        try:
+            from utils.push_service import send_push_notifications
 
-        send_push_notifications(
-            recipient_ids,
-            {
-                "title": "New group post",
-                "body": body,
-                "url": url_for(
-                    "user.group_detail",
-                    group_id=group.id,
-                    notification=1,
-                    _anchor=f"post-{post.id}",
-                ),
-                "avatar": actor.profile_pic
-                or url_for("static", filename="assets/img/default-avatar.png"),
-                "event_type": "group_post",
-                "tag": f"social-group-{group.id}-post-{post.id}",
-                "renotify": True,
-            },
-        )
-    except Exception:
-        current_app.logger.exception(
-            "Failed to send group post push for post %s",
-            post.id,
-        )
+            send_push_notifications(
+                push_recipient_ids,
+                {
+                    "title": "New group post",
+                    "body": body,
+                    "url": url_for(
+                        "user.group_detail",
+                        group_id=group.id,
+                        notification=1,
+                        focus_post=post.id,
+                        _anchor=f"post-{post.id}",
+                    ),
+                    "avatar": actor.profile_pic
+                    or url_for("static", filename="assets/img/default-avatar.png"),
+                    "event_type": "group_post",
+                    "tag": f"social-group-{group.id}-post-{post.id}",
+                    "renotify": True,
+                },
+            )
+        except Exception:
+            current_app.logger.exception(
+                "Failed to send group post push for post %s",
+                post.id,
+            )
 
 
 def _comment_social_targets(post, comment, actor, parent_comment=None):
@@ -2466,6 +2535,8 @@ def _comment_social_targets(post, comment, actor, parent_comment=None):
             "user.group_detail",
             group_id=post.group_id,
             notification=1,
+            focus_post=post.id,
+            focus_comment=comment.id,
             _anchor=f"comment-{comment.id}",
         )
         if is_group_comment
@@ -3133,12 +3204,15 @@ def get_notifications():
                 comment = comments_by_id.get(notification.entity_id)
                 anchor = f"comment-{comment.id}" if comment else f"post-{post.id}"
                 if post.group_id:
-                    return url_for(
-                        "user.group_detail",
-                        group_id=post.group_id,
-                        notification=1,
-                        _anchor=anchor,
-                    )
+                    destination_kwargs = {
+                        "group_id": post.group_id,
+                        "notification": 1,
+                        "focus_post": post.id,
+                        "_anchor": anchor,
+                    }
+                    if comment:
+                        destination_kwargs["focus_comment"] = comment.id
+                    return url_for("user.group_detail", **destination_kwargs)
                 return url_for(
                     "user.view_shared_post",
                     post_identifier=post.public_id,
@@ -3151,6 +3225,7 @@ def get_notifications():
                         "user.group_detail",
                         group_id=post.group_id,
                         notification=1,
+                        focus_post=post.id,
                         _anchor=f"post-{post.id}",
                     )
                 return url_for(
@@ -4194,6 +4269,11 @@ def group_detail(group_id):
     member_count = group.members.count() if can_view_group_members else None
     can_create_group_post = _can_create_group_post(group, current_user)
     can_join_current_group = not is_member and group_join_allowed(group, current_user)
+    group_notification_level = (
+        _group_notification_level(group.id, current_user.id)
+        if is_member
+        else DEFAULT_GROUP_NOTIFICATION_LEVEL
+    )
 
     featured_boosts = None
     protected_matchmaking_group = _is_matchmaking_group(group)
@@ -4224,6 +4304,44 @@ def group_detail(group_id):
             current_user,
             limit=GROUP_POSTS_BATCH_SIZE,
         )
+        focus_post_id = request.args.get("focus_post", type=int)
+        if focus_post_id and all(
+            post.id != focus_post_id for post in post_batch["posts"]
+        ):
+            focus_post = (
+                _exclude_protected_shared_sources(
+                    Post.query.filter(
+                        Post.id == focus_post_id,
+                        Post.group_id == group.id,
+                    )
+                )
+                .options(joinedload(Post.author))
+                .first()
+            )
+            if focus_post and can_view_post(focus_post, current_user):
+                focus_data = _group_post_template_data([focus_post], current_user)
+                post_batch["posts"].insert(0, focus_post)
+                for key, values in focus_data.items():
+                    post_batch[key].update(values)
+
+        focus_comment_id = request.args.get("focus_comment", type=int)
+        rendered_post_ids = {post.id for post in post_batch["posts"]}
+        if focus_comment_id and rendered_post_ids:
+            focus_comment = (
+                Comment.query.options(joinedload(Comment.author))
+                .filter(
+                    Comment.id == focus_comment_id,
+                    Comment.post_id.in_(rendered_post_ids),
+                )
+                .first()
+            )
+            if focus_comment:
+                visible_comments = post_batch["comments_by_post_id"].setdefault(
+                    focus_comment.post_id,
+                    [],
+                )
+                if all(comment.id != focus_comment.id for comment in visible_comments):
+                    visible_comments.insert(0, focus_comment)
 
     return render_template(
         "group_detail.html",
@@ -4235,6 +4353,7 @@ def group_detail(group_id):
         can_view_group_members=can_view_group_members,
         can_create_group_post=can_create_group_post,
         can_join_group=can_join_current_group,
+        group_notification_level=group_notification_level,
         can_view_group_content=can_view_group_content,
         is_matchmaking_group=protected_matchmaking_group,
         featured_boosts=featured_boosts,
@@ -4370,6 +4489,40 @@ def join_group(group_id):
     safe_cache_delete(f"user_groups_public_v2:{current_user.id}")
 
     return jsonify({"success": True})
+
+
+@user.route("/groups/<int:group_id>/notification-preference", methods=["POST"])
+@login_required
+def update_group_notification_preference(group_id):
+    group = Group.query.get_or_404(group_id)
+    if not is_group_member(group, current_user):
+        return jsonify({"success": False, "error": "Group membership required"}), 403
+
+    payload = request.get_json(silent=True) or request.form
+    level = str(payload.get("level") or "").strip().lower()
+    if level not in GROUP_NOTIFICATION_LEVELS:
+        return jsonify({"success": False, "error": "Invalid notification level"}), 400
+
+    preference = db.session.get(
+        GroupNotificationPreference,
+        (current_user.id, group.id),
+    )
+    if level == DEFAULT_GROUP_NOTIFICATION_LEVEL:
+        if preference is not None:
+            db.session.delete(preference)
+    elif preference is None:
+        db.session.add(
+            GroupNotificationPreference(
+                user_id=current_user.id,
+                group_id=group.id,
+                level=level,
+            )
+        )
+    else:
+        preference.level = level
+    db.session.commit()
+
+    return jsonify({"success": True, "level": level})
 
 
 # Fix the leave_group rout

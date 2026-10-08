@@ -538,8 +538,11 @@ def test_new_migration_extends_the_single_previous_head():
                 parents.update(parent)
             elif parent:
                 parents.add(parent)
-    assert set(revisions) - parents == {"e8f1a2b3c4d5"}
+    assert set(revisions) - parents == {"f4a1c2d3e4b5"}
     migration = revisions["e8f1a2b3c4d5"].read_text()
     assert 'down_revision = "c7e8f9a0b1c2"' in migration
     assert '"pricing_mode"' in migration
     assert '"is_test_user"' in migration
+    group_notification_migration = revisions["f4a1c2d3e4b5"].read_text()
+    assert 'down_revision = "e8f1a2b3c4d5"' in group_notification_migration
+    assert '"group_notification_preferences"' in group_notification_migration
