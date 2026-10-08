@@ -254,6 +254,11 @@ def build_post_share_meta(post):
     }
 
 
+def build_private_post_share_meta(post):
+    """Expose only the shared author, text, and image for a private post."""
+    return build_post_share_meta(post)
+
+
 def get_groups_data_for_user(user_id):
     cache_key = f"user_groups_public_v2:{user_id}"
     cached = safe_cache_get(cache_key)
@@ -997,6 +1002,86 @@ def get_dashboard_reaction_data(post_ids, user_id):
         reaction_types_by_post_id,
         current_user_reaction_by_post_id,
     )
+
+
+GROUP_POSTS_BATCH_SIZE = 10
+
+
+def get_group_post_batch(
+    group,
+    viewer,
+    cursor=None,
+    limit=GROUP_POSTS_BATCH_SIZE,
+    page=1,
+):
+    """Load one bounded group-post batch and its template data."""
+    limit = max(1, min(int(limit or GROUP_POSTS_BATCH_SIZE), 20))
+    query = _exclude_protected_shared_sources(
+        Post.query.filter(Post.group_id == group.id)
+    )
+    if cursor:
+        query = query.filter(Post.id < cursor)
+
+    query = (
+        query.options(
+            joinedload(Post.author),
+        )
+        .order_by(Post.created_at.desc(), Post.id.desc())
+    )
+    if not cursor and page and page > 1:
+        query = query.offset((page - 1) * limit)
+    rows = query.limit(limit + 1).all()
+    has_more = len(rows) > limit
+    posts = [post for post in rows[:limit] if can_view_post(post, viewer)]
+    post_ids = [post.id for post in posts]
+    (
+        reaction_counts_by_post_id,
+        _,
+        current_user_reaction_by_post_id,
+    ) = get_dashboard_reaction_data(post_ids, viewer.id)
+    comment_counts_by_post_id = {}
+    comments_by_post_id = {post_id: [] for post_id in post_ids}
+    if post_ids:
+        comment_counts_by_post_id = dict(
+            db.session.query(Comment.post_id, func.count(Comment.id))
+            .filter(Comment.post_id.in_(post_ids))
+            .group_by(Comment.post_id)
+            .all()
+        )
+        ranked_comments = (
+            db.session.query(
+                Comment.id.label("comment_id"),
+                func.row_number()
+                .over(
+                    partition_by=Comment.post_id,
+                    order_by=(Comment.created_at.asc(), Comment.id.asc()),
+                )
+                .label("position"),
+            )
+            .filter(Comment.post_id.in_(post_ids))
+            .subquery()
+        )
+        visible_comments = (
+            Comment.query.join(
+                ranked_comments,
+                ranked_comments.c.comment_id == Comment.id,
+            )
+            .options(joinedload(Comment.author))
+            .filter(ranked_comments.c.position <= 100)
+            .order_by(Comment.post_id.asc(), Comment.created_at.asc(), Comment.id.asc())
+            .all()
+        )
+        for comment in visible_comments:
+            comments_by_post_id[comment.post_id].append(comment)
+    return {
+        "posts": posts,
+        "has_more": has_more,
+        "next_cursor": posts[-1].id if posts and has_more else None,
+        "reaction_counts_by_post_id": reaction_counts_by_post_id,
+        "current_user_reaction_by_post_id": current_user_reaction_by_post_id,
+        "comments_by_post_id": comments_by_post_id,
+        "comment_counts_by_post_id": comment_counts_by_post_id,
+    }
 
 
 def get_dashboard_friend_request_states(user_id, suggestion_ids, friend_ids):
@@ -4123,19 +4208,22 @@ def group_detail(group_id):
 
     default_avatar = url_for("static", filename="assets/img/default-avatar.png")
 
-    # Get group posts
-    posts = []
+    # Load the same bounded first batch used by the dashboard feed pattern.
+    post_batch = {
+        "posts": [],
+        "has_more": False,
+        "next_cursor": None,
+        "reaction_counts_by_post_id": {},
+        "current_user_reaction_by_post_id": {},
+        "comments_by_post_id": {},
+        "comment_counts_by_post_id": {},
+    }
     if can_view_group_content:
-        posts = (
-            _exclude_protected_shared_sources(Post.query.filter_by(group_id=group_id))
-            .options(
-                db.joinedload(Post.author),
-                db.joinedload(Post.comments).joinedload(Comment.author),
-            )
-            .order_by(Post.created_at.desc())
-            .all()
+        post_batch = get_group_post_batch(
+            group,
+            current_user,
+            limit=GROUP_POSTS_BATCH_SIZE,
         )
-        posts = [post for post in posts if can_view_post(post, current_user)]
 
     return render_template(
         "group_detail.html",
@@ -4150,7 +4238,7 @@ def group_detail(group_id):
         can_view_group_content=can_view_group_content,
         is_matchmaking_group=protected_matchmaking_group,
         featured_boosts=featured_boosts,
-        posts=posts,
+        **post_batch,
         current_user=current_user,
         default_avatar=default_avatar,
     )
@@ -4358,24 +4446,51 @@ def create_group_post(group_id):
 @user.route("/groups/<int:group_id>/posts")
 @login_required
 def get_group_posts(group_id):
-    """Get posts for a group with pagination"""
+    """Get the next bounded group-post batch for automatic infinite scroll."""
     group = Group.query.get_or_404(group_id)
     if not can_view_group(group, current_user):
         return jsonify({"error": "Group access required"}), 403
-    page = request.args.get("page", 1, type=int)
-    per_page = 10
-
-    posts = (
-        _exclude_protected_shared_sources(Post.query.filter_by(group_id=group_id))
-        .order_by(Post.created_at.desc())
-        .paginate(page=page, per_page=per_page, error_out=False)
+    cursor = request.args.get("cursor", type=int)
+    limit = request.args.get("limit", GROUP_POSTS_BATCH_SIZE, type=int)
+    page = max(request.args.get("page", 1, type=int) or 1, 1)
+    batch = get_group_post_batch(
+        group,
+        current_user,
+        cursor=cursor,
+        limit=limit,
+        page=page,
     )
-    posts.items = [
-        post for post in posts.items if can_view_post(post, current_user)
-    ]
+    posts = batch["posts"]
+
+    post_ids = [post.id for post in posts]
+    like_counts = (
+        dict(
+            db.session.query(Like.post_id, func.count(Like.id))
+            .filter(Like.post_id.in_(post_ids))
+            .group_by(Like.post_id)
+            .all()
+        )
+        if post_ids
+        else {}
+    )
+    liked_post_ids = (
+        {
+            post_id
+            for (post_id,) in (
+                db.session.query(Like.post_id)
+                .filter(
+                    Like.user_id == current_user.id,
+                    Like.post_id.in_(post_ids),
+                )
+                .all()
+            )
+        }
+        if post_ids
+        else set()
+    )
 
     posts_data = []
-    for post in posts.items:
+    for post in posts:
         posts_data.append(
             {
                 "id": post.id,
@@ -4389,21 +4504,31 @@ def get_group_posts(group_id):
                     "avatar": post.author.profile_pic
                     or url_for("static", filename="assets/img/default-avatar.png"),
                 },
-                "likes_count": post.likes.count(),
-                "comments_count": post.comments.count(),
-                "user_has_liked": (
-                    current_user.has_liked_post(post.id)
-                    if current_user.is_authenticated
-                    else False
-                ),
+                "likes_count": like_counts.get(post.id, 0),
+                "comments_count": batch["comment_counts_by_post_id"].get(post.id, 0),
+                "user_has_liked": post.id in liked_post_ids,
             }
         )
+
+    posts_html = render_template(
+        "_group_posts_partial.html",
+        group=group,
+        is_member=is_group_member(group, current_user),
+        is_matchmaking_group=is_matchmaking_group(group),
+        current_user=current_user,
+        default_avatar=url_for("static", filename="assets/img/default-avatar.png"),
+        **batch,
+    )
 
     return jsonify(
         {
             "posts": posts_data,
-            "has_next": posts.has_next,
-            "next_page": posts.next_num if posts.has_next else None,
+            "posts_html": posts_html,
+            "has_more": batch["has_more"],
+            "next_cursor": batch["next_cursor"],
+            # Preserve legacy keys for any existing callers.
+            "has_next": batch["has_more"],
+            "next_page": page + 1 if batch["has_more"] else None,
         }
     )
 
@@ -4498,24 +4623,6 @@ def get_all_groups():
     query = Group.query.filter(Group.is_active.is_(True))
     protected_group_id = configured_matchmaking_group_id()
 
-    if not (current_user.is_admin or current_user.is_super_admin):
-        member_group_ids = [
-            row[0]
-            for row in db.session.query(group_members.c.group_id)
-            .filter(group_members.c.user_id == current_user.id)
-            .all()
-        ]
-        public_group_clause = Group.is_private.is_(False)
-        if protected_group_id is not None:
-            public_group_clause = and_(
-                public_group_clause,
-                Group.id != protected_group_id,
-            )
-        discovery_clauses = [public_group_clause, Group.id.in_(member_group_ids)]
-        if protected_group_id is not None:
-            discovery_clauses.append(Group.id == protected_group_id)
-        query = query.filter(or_(*discovery_clauses))
-
     if search:
         query = query.filter(
             db.or_(
@@ -4572,6 +4679,10 @@ def get_all_groups():
                 "member_count_label": group.public_member_count_label,
                 "created_at": group.created_at.isoformat(),
                 "is_member": group.id in member_group_ids,
+                "can_join": (
+                    group.id not in member_group_ids
+                    and group_join_allowed(group, current_user)
+                ),
             }
         )
 
@@ -4832,8 +4943,20 @@ def view_shared_post(post_identifier):
         .first_or_404()
     )
     if not can_view_post(post, current_user):
+        if not current_user.is_authenticated and is_private_group_post(post):
+            return render_template(
+                "post_detail.html",
+                post=post,
+                share_meta=build_private_post_share_meta(post),
+                private_preview=True,
+            )
         abort(403)
-    return render_template("post_detail.html", post=post, share_meta=build_post_share_meta(post))
+    return render_template(
+        "post_detail.html",
+        post=post,
+        share_meta=build_post_share_meta(post),
+        private_preview=False,
+    )
 
 
 @user.route("/profile/<user_identifier>")

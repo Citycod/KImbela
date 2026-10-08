@@ -133,6 +133,117 @@ def test_shared_post_page_does_not_use_profile_picture_as_preview(client, db, us
     assert b'https://cdn.example.com/profile.jpg' not in head_html
 
 
+def test_public_group_share_uses_public_uuid_and_renders_full_preview(
+    app, client, db, user
+):
+    from models import Group, Post
+
+    group = Group(
+        name="Public preview group",
+        created_by=user.id,
+        is_active=True,
+        is_private=False,
+    )
+    db.session.add(group)
+    db.session.flush()
+    group.members.append(user)
+    post = Post(
+        content="Public group preview content",
+        author_id=user.id,
+        group_id=group.id,
+        image="https://cdn.example.com/public-group.jpg",
+    )
+    db.session.add(post)
+    db.session.commit()
+    with client.session_transaction() as session:
+        session["_user_id"] = str(user.id)
+        session["_fresh"] = True
+
+    group_page = client.get(f"/groups/{group.id}")
+    assert group_page.status_code == 200
+    assert f'data-post-id="{post.public_id}"'.encode() in group_page.data
+    assert f'data-url="/post/{post.public_id}"'.encode() in group_page.data
+    assert f"openShareModal({post.id})".encode() not in group_page.data
+    assert b"const { url } = getSharePayload();" in group_page.data
+    assert group_page.data.count(b"const { url, text } = getSharePayload();") == 2
+    assert b"navigator.share({ title: 'Kimbela Post', text, url })" in group_page.data
+    assert b"navigator.clipboard.writeText(url)" in group_page.data
+    assert b"facebook.com/sharer/sharer.php?u=${encodedUrl}" in group_page.data
+    assert b"twitter.com/intent/tweet?url=${encodedUrl}" in group_page.data
+    assert b"wa.me/?text=${encodedText}%20${encodedUrl}" in group_page.data
+    assert b"linkedin.com/sharing/share-offsite/?url=${encodedUrl}" in group_page.data
+
+    anonymous = app.test_client()
+    preview = anonymous.get(
+        f"/post/{post.public_id}", base_url="https://www.kimbela.com"
+    )
+    assert preview.status_code == 200
+    assert b'<meta property="og:description" content="Public group preview content">' in preview.data
+    assert b'<meta property="og:image" content="https://cdn.example.com/public-group.jpg">' in preview.data
+    assert f'<meta property="og:url" content="https://www.kimbela.com/post/{post.public_id}">'.encode() in preview.data
+
+
+def test_private_group_share_exposes_only_author_text_and_image(
+    app, client, db, user
+):
+    from models import Comment, Group, Post
+
+    user.first_name = "PrivatePreviewAuthor"
+    group = Group(
+        name="Confidential preview group",
+        created_by=user.id,
+        is_active=True,
+        is_private=True,
+    )
+    db.session.add(group)
+    db.session.flush()
+    group.members.append(user)
+    post = Post(
+        content="private-preview-secret-marker",
+        author_id=user.id,
+        group_id=group.id,
+        image="https://cdn.example.com/private-secret.jpg",
+    )
+    db.session.add(post)
+    db.session.flush()
+    db.session.add(
+        Comment(
+            content="private-comment-must-not-appear",
+            author_id=user.id,
+            post_id=post.id,
+        )
+    )
+    db.session.commit()
+    with client.session_transaction() as session:
+        session["_user_id"] = str(user.id)
+        session["_fresh"] = True
+
+    group_page = client.get(f"/groups/{group.id}")
+    assert group_page.status_code == 200
+    assert f'data-post-id="{post.public_id}"'.encode() in group_page.data
+    assert f'data-url="/post/{post.public_id}"'.encode() in group_page.data
+
+    authorized_preview = client.get(f"/post/{post.public_id}")
+    assert authorized_preview.status_code == 200
+    assert b"private-preview-secret-marker" in authorized_preview.data
+    assert b"https://cdn.example.com/private-secret.jpg" in authorized_preview.data
+
+    client.get("/logout")
+    anonymous = app.test_client()
+    preview = anonymous.get(
+        f"/post/{post.public_id}", base_url="https://www.kimbela.com"
+    )
+    assert preview.status_code == 200
+    assert b'<meta property="og:title" content="Post by PrivatePreviewAuthor User - Kimbela">' in preview.data
+    assert b'<meta property="og:description" content="private-preview-secret-marker">' in preview.data
+    assert b'<meta property="og:image" content="https://cdn.example.com/private-secret.jpg">' in preview.data
+    assert b"PrivatePreviewAuthor" in preview.data
+    assert b"private-preview-secret-marker" in preview.data
+    assert b"https://cdn.example.com/private-secret.jpg" in preview.data
+    assert b"Confidential preview group" not in preview.data
+    assert b"private-comment-must-not-appear" not in preview.data
+
+
 def test_subscription_callback_recovers_success_via_reference_verification(
     client, db, user, login, monkeypatch
 ):

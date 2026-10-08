@@ -1,6 +1,23 @@
 import json
 import uuid
+from contextlib import contextmanager
 from datetime import date
+
+from sqlalchemy import event
+
+
+@contextmanager
+def count_sql_statements(db):
+    statements = []
+
+    def record_statement(conn, cursor, statement, parameters, context, executemany):
+        statements.append(statement)
+
+    event.listen(db.engine, "before_cursor_execute", record_statement)
+    try:
+        yield statements
+    finally:
+        event.remove(db.engine, "before_cursor_execute", record_statement)
 
 
 def make_user(
@@ -293,7 +310,10 @@ def test_private_group_access_posting_and_data_leak_guards(app, db, client):
     assert anonymous.get(f"/groups/{private_group.id}").status_code in {302, 401, 403}
 
     login(client, outsider)
-    assert client.get(f"/groups/{private_group.id}").status_code == 403
+    private_landing = client.get(f"/groups/{private_group.id}")
+    assert private_landing.status_code == 200
+    assert b"Private group content" in private_landing.data
+    assert private_post.content.encode() not in private_landing.data
     assert client.get(f"/groups/{private_group.id}/posts").status_code == 403
     assert client.post(f"/groups/{private_group.id}/join").status_code == 403
     assert client.get(f"/get_post/{private_post.id}").status_code == 403
@@ -318,10 +338,13 @@ def test_private_group_access_posting_and_data_leak_guards(app, db, client):
     assert legacy_public_share.content.encode() not in client.get(
         f"/search?q={legacy_public_share.content}"
     ).data
-    assert not any(
-        group["id"] == private_group.id
+    outsider_private_group = next(
+        group
         for group in client.get("/groups/all?per_page=100").get_json()
+        if group["id"] == private_group.id
     )
+    assert outsider_private_group["is_member"] is False
+    assert outsider_private_group["can_join"] is False
     assert not any(
         group["id"] == private_group.id
         for group in get_groups_data_for_user(outsider.id)
@@ -369,6 +392,94 @@ def test_private_group_access_posting_and_data_leak_guards(app, db, client):
         f"/groups/{private_group.id}/post",
         data={"post_content": "global admin post"},
     ).status_code == 200
+
+
+def test_group_feed_uses_bounded_automatic_infinite_scroll(db, client):
+    from models import Comment, Group, Post, Reaction
+
+    creator = make_user(db)
+    viewer = make_user(db)
+    group = Group(
+        name=f"Paged {uuid.uuid4().hex[:8]}",
+        created_by=creator.id,
+        is_private=False,
+        is_active=True,
+    )
+    db.session.add(group)
+    db.session.flush()
+    group.members.extend([creator, viewer])
+
+    created_posts = []
+    for index in range(23):
+        post = Post(
+            content=f"group-batch-marker-{index:02d}",
+            author_id=creator.id,
+            group_id=group.id,
+        )
+        db.session.add(post)
+        db.session.flush()
+        created_posts.append(post)
+
+    newest_post = created_posts[-1]
+    db.session.add(
+        Reaction(user_id=viewer.id, post_id=newest_post.id, reaction_type="love")
+    )
+    db.session.add(
+        Comment(content="bounded comment", author_id=viewer.id, post_id=newest_post.id)
+    )
+    small_group = Group(
+        name=f"Small {uuid.uuid4().hex[:8]}",
+        created_by=creator.id,
+        is_private=False,
+        is_active=True,
+    )
+    db.session.add(small_group)
+    db.session.flush()
+    small_group.members.extend([creator, viewer])
+    db.session.add(
+        Post(content="single-group-post", author_id=creator.id, group_id=small_group.id)
+    )
+    db.session.commit()
+    login(client, viewer)
+
+    with count_sql_statements(db) as small_group_statements:
+        small_response = client.get(f"/groups/{small_group.id}")
+    with count_sql_statements(db) as initial_statements:
+        initial = client.get(f"/groups/{group.id}")
+
+    assert small_response.status_code == 200
+    assert initial.status_code == 200
+    assert initial.data.count(b'data-post-id="') >= 10
+    assert b"group-batch-marker-22" in initial.data
+    assert b"group-batch-marker-12" not in initial.data
+    assert b'id="loadMorePosts"' not in initial.data
+    assert b'id="group-posts-sentinel"' in initial.data
+    assert b"IntersectionObserver" in initial.data
+    assert b"1 reactions" in initial.data
+    assert b"1 Chimes" in initial.data
+    assert len(initial_statements) <= 20
+    assert len(initial_statements) <= len(small_group_statements) + 2
+
+    first_cursor = newest_post.id - 9
+    with count_sql_statements(db) as next_statements:
+        next_batch = client.get(
+            f"/groups/{group.id}/posts?cursor={first_cursor}&limit=10"
+        )
+
+    assert next_batch.status_code == 200
+    payload = next_batch.get_json()
+    assert payload["has_more"] is True
+    assert payload["next_cursor"] is not None
+    assert len(payload["posts"]) == 10
+    assert "group-batch-marker-12" in payload["posts_html"]
+    assert "group-batch-marker-22" not in payload["posts_html"]
+    assert len(next_statements) <= 16
+
+    legacy_page = client.get(f"/groups/{group.id}/posts?page=2&limit=10")
+    assert legacy_page.status_code == 200
+    legacy_payload = legacy_page.get_json()
+    assert legacy_payload["next_page"] == 3
+    assert "group-batch-marker-12" in legacy_payload["posts_html"]
 
 
 def test_matchmaking_group_stable_id_remains_stricter_than_private_group(

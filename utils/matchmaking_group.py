@@ -88,12 +88,10 @@ def can_view_group(group, user):
 
 
 def can_open_group_landing(group, user):
-    """Allow authenticated users to discover Matchmaking without leaking content."""
+    """Allow authenticated discovery without granting access to private posts."""
     if group is None:
         return False
-    if is_matchmaking_group(group):
-        return bool(user and getattr(user, "is_authenticated", False))
-    return can_view_group(group, user)
+    return bool(user and getattr(user, "is_authenticated", False))
 
 
 def can_join_group(group, user):

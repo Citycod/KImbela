@@ -11,8 +11,6 @@
     <link href="{{ url_for('static', filename='assets/img/favy.png') }}" rel="apple-touch-icon" />
     
 
-    <script src="https://cdn.tailwindcss.com"></script>
-
     <script>
         window.publicBaseUrl = '{{ (config.get("BASE_URL") or request.url_root).rstrip("/") }}';
     </script>
@@ -814,10 +812,15 @@
             <!-- Posts Feed -->
             <div class="lg:col-span-3">
                 {% if not can_view_group_content %}
-                <section class="rounded-xl border border-indigo-100 bg-white p-6 text-center shadow-lg md:rounded-2xl md:p-10" aria-labelledby="join-matchmaking-title">
+                <section class="rounded-xl border border-indigo-100 bg-white p-6 text-center shadow-lg md:rounded-2xl md:p-10" aria-labelledby="private-group-title">
                     <i class="bi bi-lock-fill text-3xl text-indigo-600" aria-hidden="true"></i>
-                    <h2 id="join-matchmaking-title" class="mt-3 text-xl font-bold text-gray-900">Join to view Matchmaking content</h2>
+                    {% if is_matchmaking_group %}
+                    <h2 id="private-group-title" class="mt-3 text-xl font-bold text-gray-900">Join to view Matchmaking content</h2>
                     <p class="mx-auto mt-2 max-w-xl text-sm text-gray-600">This is a private member space. Join the group to view active Featured Matches and official updates.</p>
+                    {% else %}
+                    <h2 id="private-group-title" class="mt-3 text-xl font-bold text-gray-900">Private group content</h2>
+                    <p class="mx-auto mt-2 max-w-xl text-sm text-gray-600">You can view this group's landing page, but posts and discussions are available only to members.</p>
+                    {% endif %}
                     {% if can_join_group %}
                     <button onclick="joinGroup({{ group.id }})" class="mt-5 inline-flex items-center rounded-lg bg-green-600 px-4 py-2 font-semibold text-white hover:bg-green-700">
                         <i class="bi bi-person-plus mr-2" aria-hidden="true"></i>Join Group
@@ -894,198 +897,8 @@
 
                 <!-- Posts Container -->
                 <div id="postsContainer">
-                    {% for post in posts %}
-                    <div id="post-{{ post.id }}" class="bg-white rounded-xl md:rounded-2xl shadow-lg mb-4 md:mb-6 card-hover post-card" data-post-id="{{ post.id }}">
-                        <!-- Post Header -->
-                        <div class="p-4 md:p-6 pb-3 md:pb-4">
-                            <div class="flex justify-between items-start">
-                                <div class="flex items-center space-x-2 md:space-x-3">
-                                    <a href="{{ url_for('user.view_profile', user_identifier=post.author.public_id) }}">
-                                        <img src="{{ post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
-                                             alt="{{ post.author.full_name }}" 
-                                             class="w-8 h-8 md:w-10 md:h-10 rounded-full object-cover post-avatar">
-                                    </a>
-                                    <div>
-                                        <a href="{{ url_for('user.view_profile', user_identifier=post.author.public_id) }}">
-                                            <h4 class="font-semibold text-gray-900 text-sm md:text-base post-author hover:underline">{{ post.author.full_name }}</h4>
-                                        </a>
-                                        <p class="text-xs md:text-sm text-gray-500 post-time">{{ post.created_at.strftime('%b %d at %I:%M %p') }}</p>
-                                    </div>
-                                </div>
-                                <div class="dropdown relative">
-                                    <button class="p-1 md:p-2 rounded-full hover:bg-gray-100 transition-colors duration-300">
-                                        <i class="bi bi-three-dots text-gray-500 text-sm md:text-base"></i>
-                                    </button>
-                                    <div class="dropdown-menu absolute right-0 mt-1 w-40 md:w-48 bg-white rounded-lg md:rounded-xl shadow-2xl border border-gray-200 hidden z-10">
-                                        {% if post.author.id == current_user.id and not post.author.is_ai_persona and is_member %}
-                                        {% if not is_matchmaking_group or current_user.is_admin or current_user.is_super_admin %}
-                                        <button onclick="editPost({{ post.id }})" class="w-full text-left px-3 py-2 hover:bg-gray-50 rounded-t-lg md:rounded-t-xl text-blue-600 text-xs md:text-sm">
-                                            <i class="bi bi-pencil mr-1 md:mr-2 text-xs md:text-sm"></i>Edit Post
-                                        </button>
-                                        {% endif %}
-                                        <button onclick="deletePost({{ post.id }})" class="w-full text-left px-3 py-2 hover:bg-gray-50 text-red-600 text-xs md:text-sm">
-                                            <i class="bi bi-trash mr-1 md:mr-2 text-xs md:text-sm"></i>Delete Post
-                                        </button>
-                                        {% endif %}
-                                        <button onclick="reportContent('post', {{ post.id }})" class="w-full text-left px-3 py-2 hover:bg-gray-50 rounded-b-lg md:rounded-b-xl text-indigo-600 text-xs md:text-sm">
-                                            <i class="bi bi-flag mr-1 md:mr-2 text-xs md:text-sm"></i>Report Post
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Post Content -->
-                            <div class="mt-3 md:mt-4">
-                                <p class="text-gray-800 whitespace-pre-wrap text-sm md:text-base post-content">{{ post.content }}</p>
-                            </div>
-                        </div>
-
-                        <!-- Post Media -->
-                        {% if post.image %}
-                        <div class="post-media">
-                            <img src="{{ post.image }}" alt="Post image" class="w-full object-cover">
-                        </div>
-                        {% endif %}
-                        
-                        {% if post.video %}
-                        <div class="post-media">
-                            <video controls class="w-full">
-                                <source src="{{ post.video }}" type="video/mp4">
-                                Your browser does not support the video tag.
-                            </video>
-                        </div>
-                        {% endif %}
-
-                        <!-- Post Stats -->
-                        <div class="px-4 md:px-6 py-2 md:py-3 border-t border-gray-100 text-xs md:text-sm text-gray-500 post-stats">
-                            <div class="flex justify-between">
-                                <span id="like-count-{{ post.id }}">{{ post.get_reaction_count() }} reactions</span>
-                                <span id="comment-count-{{ post.id }}">{{ post.comments_list|length }} Chimes</span>
-                            </div>
-                        </div>
-
-                        <!-- Post Actions -->
-                        <div class="px-4 md:px-6 py-2 md:py-3 border-t border-gray-100">
-                            <div class="flex justify-around">
-                                <!-- Like Button with Reactions -->
-                                <div class="reactions-container">
-                                    {% set user_reaction = current_user.get_user_reaction(post.id) %}
-                                    <button onclick="likePost({{ post.id }})" 
-                                            class="flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-1 md:py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 like-btn {% if user_reaction %}active-{{ user_reaction }} text-{% if user_reaction == 'like' %}blue{% elif user_reaction == 'love' %}red{% elif user_reaction in ['care', 'haha', 'wow', 'sad'] %}yellow{% elif user_reaction == 'angry' %}red{% endif %}-600{% else %}text-gray-600{% endif %}"
-                                            id="like-btn-{{ post.id }}"
-                                            onmouseenter="showReactions({{ post.id }})"
-                                            onmouseleave="hideReactions({{ post.id }})">
-                                        <i class="bi {% if user_reaction %}{% if user_reaction == 'like' %}bi-hand-thumbs-up-fill{% elif user_reaction == 'love' %}bi-heart-fill{% elif user_reaction == 'care' %}bi-emoji-heart-eyes{% elif user_reaction == 'haha' %}bi-emoji-laughing{% elif user_reaction == 'wow' %}bi-emoji-surprise{% elif user_reaction == 'sad' %}bi-emoji-frown{% elif user_reaction == 'angry' %}bi-emoji-angry{% endif %}{% else %}bi-hand-thumbs-up{% endif %}" id="like-icon-{{ post.id }}"></i>
-                                        <span id="like-text-{{ post.id }}" class="text-xs md:text-sm">
-                                            {% if user_reaction %}
-                                                {% if user_reaction == 'like' %}Liked{% elif user_reaction == 'love' %}Loved{% elif user_reaction == 'care' %}Cared{% elif user_reaction == 'haha' %}Haha{% elif user_reaction == 'wow' %}Wow{% elif user_reaction == 'sad' %}Sad{% elif user_reaction == 'angry' %}Angry{% endif %}
-                                            {% else %}
-                                                Like
-                                            {% endif %}
-                                        </span>
-                                    </button>
-                                    
-                                    <!-- Reactions Tooltip -->
-                                    <div class="reactions-tooltip" id="reactions-{{ post.id }}">
-                                        <div class="reaction-option like text-lg md:text-xl" onclick="reactToPost({{ post.id }}, 'like')" title="Like">👍</div>
-                                        <div class="reaction-option love text-lg md:text-xl" onclick="reactToPost({{ post.id }}, 'love')" title="Love">❤️</div>
-                                        <div class="reaction-option care text-lg md:text-xl" onclick="reactToPost({{ post.id }}, 'care')" title="Care">🥰</div>
-                                        <div class="reaction-option haha text-lg md:text-xl" onclick="reactToPost({{ post.id }}, 'haha')" title="Haha">😂</div>
-                                        <div class="reaction-option wow text-lg md:text-xl" onclick="reactToPost({{ post.id }}, 'wow')" title="Wow">😮</div>
-                                        <div class="reaction-option sad text-lg md:text-xl" onclick="reactToPost({{ post.id }}, 'sad')" title="Sad">😢</div>
-                                        <div class="reaction-option angry text-lg md:text-xl" onclick="reactToPost({{ post.id }}, 'angry')" title="Angry">😠</div>
-                                    </div>
-                                </div>
-
-                                <button onclick="focusCommentInput({{ post.id }})" 
-                                        aria-label="Add a Chime"
-                                        class="flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-1 md:py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 text-gray-600">
-                                    <img src="{{ url_for('static', filename='assets/img/microphone2.png') }}" alt="" class="h-4 w-4 md:h-5 md:w-5 object-contain" aria-hidden="true">
-                                    <span class="text-xs md:text-sm">Chime</span>
-                                </button>
-                                <button onclick="openShareModal({{ post.id }})" 
-                                        class="flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-1 md:py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 text-gray-600">
-                                    <i class="bi bi-share text-sm md:text-base"></i>
-                                    <span class="text-xs md:text-sm">Share</span>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Comments Section -->
-                        <div class="comments-section px-4 md:px-6 py-3 md:py-4 border-t border-gray-100 bg-gray-50">
-                            <!-- Comment Input -->
-                            <div class="comment-composer flex items-center space-x-2 md:space-x-3 mb-3 md:mb-4 relative" data-post-id="{{ post.id }}">
-                                <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
-                                     alt="{{ current_user.full_name }}" 
-                                     class="w-7 h-7 md:w-8 md:h-8 rounded-full object-cover comment-input-avatar">
-                                <div class="flex-1 relative min-w-0">
-                                    <input type="text" 
-                                           id="commentInput-{{ post.id }}" 
-                                           placeholder="Write a Chime..."
-                                           class="comment-composer-input w-full bg-white rounded-full pl-3 pr-10 py-2 md:pl-4 md:pr-11 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 comment-input">
-                                    <button type="button" class="comment-composer-emoji absolute right-1 top-1/2 transform -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            aria-label="Add emoji" title="Add emoji">
-                                        <i class="bi bi-emoji-smile" aria-hidden="true"></i>
-                                    </button>
-                                </div>
-                                <button type="button" class="comment-composer-send inline-flex min-h-[40px] min-w-[40px] items-center justify-center gap-1.5 rounded-full bg-blue-600 px-3 text-xs md:text-sm font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                        aria-label="Send Chime" disabled aria-disabled="true">
-                                    <i class="bi bi-send-fill" aria-hidden="true"></i><span class="hidden sm:inline">Send</span>
-                                </button>
-                            </div>
-
-                            <!-- Comments List -->
-                            <div id="comments-{{ post.id }}">
-                                {% for comment in post.comments[:100]|reverse %}
-                                <div class="flex space-x-2 md:space-x-3 mb-3 md:mb-4 comment-item comment-fade-in" id="comment-{{ comment.id }}">
-                                    
-       
-                                    <a href="{{ url_for('user.view_profile', user_identifier=comment.author.public_id) }}">
-                                        <img src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
-                                             alt="{{ comment.author.full_name }}" 
-                                             class="w-6 h-6 md:w-8 md:h-8 rounded-full object-cover flex-shrink-0 comment-avatar">
-                                    </a>
-                                    <div class="flex-1">
-                                        <div class="bg-white rounded-xl md:rounded-2xl px-3 py-2 md:px-4 md:py-3">
-                                            <div class="flex justify-between items-start mb-1">
-                                                <a href="{{ url_for('user.view_profile', user_identifier=comment.author.public_id) }}">
-                                                    <h5 class="font-semibold text-xs md:text-sm comment-author hover:underline">{{ comment.author.full_name }}</h5>
-                                                </a>
-                                                <div class="dropdown relative">
-                                                    <button class="p-0.5 md:p-1 rounded-full hover:bg-gray-100 transition-colors duration-300">
-                                                        <i class="bi bi-three-dots text-gray-400 text-xs md:text-xs"></i>
-                                                    </button>
-                                                    <div class="dropdown-menu absolute right-0 mt-1 w-28 md:w-32 bg-white rounded-lg md:rounded-xl shadow-2xl border border-gray-200 hidden z-10">
-                                                        {% if comment.author.id == current_user.id %}
-                                                        <button onclick="deleteComment({{ comment.id }})" class="w-full text-left px-2 py-1.5 md:px-3 md:py-2 hover:bg-gray-50 rounded-t-lg md:rounded-t-xl text-red-600 text-xs md:text-sm">
-                                                            <i class="bi bi-trash mr-1 text-xs md:text-sm"></i>Delete
-                                                        </button>
-                                                        {% endif %}
-                                                        <button onclick="reportContent('comment', {{ comment.id }})" class="w-full text-left px-2 py-1.5 md:px-3 md:py-2 hover:bg-gray-50 rounded-b-lg md:rounded-b-xl text-indigo-600 text-xs md:text-sm">
-                                                            <i class="bi bi-flag mr-1 text-xs md:text-sm"></i>Report
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <p class="text-gray-800 text-xs md:text-sm comment-content">{{ comment.content }}</p>
-                                            <div class="flex items-center space-x-2 md:space-x-3 mt-1 md:mt-2">
-                                                <span class="text-xs text-gray-400 comment-time">{{ comment.created_at.strftime('%I:%M %p') }}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                {% endfor %}
-                            </div>
-
-                            {% if post.comments_list|length > 3 %}
-                            <button onclick="loadAllComments({{ post.id }})" class="text-blue-600 hover:text-blue-700 text-xs md:text-sm font-semibold">
-                                View all {{ post.comments_list|length }} Chimes
-                            </button>
-                            {% endif %}
-                        </div>
-                    </div>
-                    {% else %}
-                    <!-- Empty State -->
+{% include '_group_posts_partial.html' %}
+                    {% if not posts %}
                     <div class="bg-white rounded-xl md:rounded-2xl shadow-lg p-6 md:p-12 text-center">
                         <div class="w-16 h-16 md:w-24 md:h-24 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-4 md:mb-6 empty-state-icon">
                             <i class="bi bi-chat-square-text text-xl md:text-3xl text-blue-600"></i>
@@ -1093,7 +906,7 @@
                         <h3 class="text-lg md:text-xl font-semibold text-gray-900 mb-2 empty-state-title">No posts yet</h3>
                         <p class="text-gray-600 mb-4 md:mb-6 text-sm md:text-base empty-state-text">Be the first to share something in this group!</p>
                         {% if can_create_group_post %}
-                        <button onclick="openPostModal()" 
+                        <button onclick="openPostModal()"
                                 class="bg-blue-600 text-white px-4 py-2 md:px-6 md:py-3 rounded-lg md:rounded-xl hover:bg-blue-700 transition-colors duration-300 font-semibold inline-flex items-center text-sm md:text-base">
                             <i class="bi bi-plus-circle mr-1 md:mr-2"></i>Create First Post
                         </button>
@@ -1103,18 +916,21 @@
                         <p class="text-gray-500 text-sm md:text-base">Join the group to start posting</p>
                         {% endif %}
                     </div>
-                    {% endfor %}
+                    {% endif %}
                 </div>
 
-                <!-- Load More Button -->
-                {% if posts|length >= 10 %}
-                <div class="text-center mt-4 md:mt-8">
-                    <button id="loadMorePosts" 
-                            class="bg-white text-blue-600 px-6 py-2 md:px-8 md:py-3 rounded-lg md:rounded-xl hover:bg-blue-50 transition-all duration-300 transform hover:scale-105 shadow-lg border border-blue-200 font-semibold text-sm md:text-base load-more-button">
-                        Load More Posts
-                    </button>
+                <div id="group-posts-loading" class="hidden py-6 text-center" role="status" aria-live="polite">
+                    <span class="inline-block h-8 w-8 animate-spin rounded-full border-2 border-indigo-200 border-t-indigo-600" aria-hidden="true"></span>
+                    <p class="mt-2 text-sm text-gray-600">Loading more posts...</p>
                 </div>
-                {% endif %}
+                <div id="group-posts-end" class="{% if has_more or not posts %}hidden {% endif %}py-6 text-center text-sm text-gray-500">
+                    You've reached the end
+                </div>
+                <div id="group-posts-sentinel"
+                     aria-hidden="true"
+                     data-group-id="{{ group.id }}"
+                     data-next-cursor="{{ next_cursor or '' }}"
+                     data-has-more="{{ 'true' if has_more else 'false' }}"></div>
                 {% endif %}
             </div>
         </div>
@@ -1323,6 +1139,7 @@
         const groupId = {{ group.id }};
         const currentUserId = {{ current_user.id }};
         let currentSharePostId = null;
+        let currentSharePostUrl = '';
         let currentReactionPostId = null;
         let reactionTimeout = null;
         
@@ -1489,8 +1306,16 @@
             btn.innerHTML = `Post to {{ group.name }}`;
         }
         
-        function openShareModal(postId) {
+        function normalizeShareUrl(postId, shareUrl = '') {
+            if (shareUrl) {
+                return new URL(shareUrl, `${getPublicBaseUrl()}/`).toString();
+            }
+            return postId ? `${getPublicBaseUrl()}/post/${postId}` : '';
+        }
+
+        function openShareModal(postId, shareUrl = '') {
             currentSharePostId = postId;
+            currentSharePostUrl = normalizeShareUrl(postId, shareUrl);
             document.getElementById('shareModal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
         }
@@ -1499,6 +1324,7 @@
             document.getElementById('shareModal').classList.add('hidden');
             document.body.style.overflow = '';
             currentSharePostId = null;
+            currentSharePostUrl = '';
         }
         
         function openReportModal() {
@@ -1692,7 +1518,7 @@
         }
 
         function getSharePayload() {
-            const url = `${getPublicBaseUrl()}/post/${currentSharePostId}`;
+            const url = currentSharePostUrl || `${getPublicBaseUrl()}/post/${currentSharePostId}`;
             return { url, text: 'Check this out on Kimbela' };
         }
         
@@ -2009,9 +1835,81 @@
                 preview.appendChild(img);
             }
         }
+
+        // ==================== GROUP POST INFINITE SCROLL ====================
+        const GroupInfiniteScroll = {
+            loading: false,
+            observer: null,
+
+            async loadMore() {
+                const sentinel = document.getElementById('group-posts-sentinel');
+                if (!sentinel || this.loading || sentinel.dataset.hasMore !== 'true') return;
+                if (navigator.onLine === false) return;
+
+                const cursor = sentinel.dataset.nextCursor;
+                if (!cursor) return;
+
+                this.loading = true;
+                document.getElementById('group-posts-loading')?.classList.remove('hidden');
+
+                try {
+                    const response = await fetch(
+                        `/groups/${sentinel.dataset.groupId}/posts?cursor=${encodeURIComponent(cursor)}&limit=10`,
+                        {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json'
+                            }
+                        }
+                    );
+                    if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
+
+                    const data = await response.json();
+                    if (data.posts_html) {
+                        document.getElementById('postsContainer')?.insertAdjacentHTML(
+                            'beforeend',
+                            data.posts_html
+                        );
+                    }
+
+                    sentinel.dataset.hasMore = String(Boolean(data.has_more));
+                    sentinel.dataset.nextCursor = data.next_cursor || '';
+                    if (!data.has_more) {
+                        document.getElementById('group-posts-end')?.classList.remove('hidden');
+                        this.observer?.disconnect();
+                    }
+                } catch (error) {
+                    showToast('Could not load more posts. Scroll again to retry.', 'warning');
+                } finally {
+                    this.loading = false;
+                    document.getElementById('group-posts-loading')?.classList.add('hidden');
+                }
+            },
+
+            init() {
+                const sentinel = document.getElementById('group-posts-sentinel');
+                if (!sentinel || sentinel.dataset.hasMore !== 'true') return;
+
+                if ('IntersectionObserver' in window) {
+                    this.observer = new IntersectionObserver((entries) => {
+                        if (entries.some(entry => entry.isIntersecting)) this.loadMore();
+                    }, { rootMargin: '500px 0px' });
+                    this.observer.observe(sentinel);
+                    return;
+                }
+
+                window.addEventListener('scroll', () => {
+                    const nearBottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 500;
+                    if (nearBottom) this.loadMore();
+                }, { passive: true });
+            }
+        };
         
         // ==================== EVENT LISTENERS ====================
         document.addEventListener('DOMContentLoaded', () => {
+            GroupInfiniteScroll.init();
+            window.addEventListener('online', () => GroupInfiniteScroll.loadMore());
+
             // Close modals on outside click
             document.addEventListener('click', e => {
                 if (e.target.id === 'postModal') closePostModal();
