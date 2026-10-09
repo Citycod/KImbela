@@ -473,8 +473,13 @@ function openPostComposer() {
     const postModal = document.getElementById('postModal');
     if (!postModal) return null;
 
-    postModal.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
+    if (typeof window.openModal === 'function') {
+        window.openModal('postModal');
+    } else {
+        postModal.classList.remove('hidden');
+        postModal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
 
     return postModal;
 }
@@ -490,6 +495,17 @@ function focusPostComposer(postModal) {
         }
     }, 50);
 }
+
+function openPostComposerMediaPicker() {
+    const postModal = openPostComposer();
+    const mediaInput = document.getElementById('mediaInput');
+    if (!postModal || !mediaInput) return;
+    mediaInput.click();
+}
+
+window.openPostComposer = openPostComposer;
+window.focusPostComposer = focusPostComposer;
+window.openPostComposerMediaPicker = openPostComposerMediaPicker;
 
 function syncComposerMediaInput(sourceInput) {
     const modalInput = document.getElementById('mediaInput');
@@ -4777,23 +4793,18 @@ async function shareToFeed() {
     }
 }
 
-function copyPostLink() {
+async function copyPostLink() {
     if (!currentSharePostId) {
         Toast.show('Select a post to share first.', 'warning');
         return;
     }
     const url = currentSharePostUrl || buildPublicPostUrl(currentSharePostId);
-    navigator.clipboard.writeText(url).then(() => {
+    try {
+        await window.KimbelaShare.copyText(url);
         Toast.show('Link copied!', 'success');
-    }).catch(() => {
-        const textarea = document.createElement('textarea');
-        textarea.value = url;
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textarea);
-        Toast.show('Link copied!', 'success');
-    });
+    } catch (error) {
+        Toast.show(error.message || 'Unable to copy this link.', 'warning');
+    }
 }
 
 function getSharePayload() {
@@ -4811,7 +4822,9 @@ function shareNativeShare() {
     }
     const { url, text } = getSharePayload();
     if (navigator.share) {
-        navigator.share({ title: 'Kimbela Post', text, url }).catch(() => {});
+        navigator.share({ title: 'Kimbela Post', text, url }).catch(error => {
+            if (!error || error.name !== 'AbortError') copyPostLink();
+        });
     } else {
         copyPostLink();
     }
@@ -4831,7 +4844,7 @@ function shareExternally(platform) {
             return;
         }
 
-        navigator.clipboard.writeText(url).then(() => {
+        window.KimbelaShare.copyText(url).then(() => {
             Toast.show('Link copied. Paste it into Instagram.', 'success');
         }).catch(() => {
             Toast.show('Copy the link and paste it into Instagram.', 'info');

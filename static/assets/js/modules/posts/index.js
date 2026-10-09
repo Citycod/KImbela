@@ -61,8 +61,12 @@ class PostSystem {
                 if (postId && typeof window.openShareModal === 'function') {
                     window.openShareModal(postId, shareUrl);
                 } else {
-                    navigator.clipboard.writeText(shareUrl);
-                    Toast.show('Post link copied!', 'success');
+                    window.KimbelaShare.copyText(shareUrl)
+                        .then(() => Toast.show('Post link copied!', 'success'))
+                        .catch(error => Toast.show(
+                            error.message || 'Unable to copy this link.',
+                            'warning',
+                        ));
                 }
             }
 

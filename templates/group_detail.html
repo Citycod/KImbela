@@ -1548,7 +1548,9 @@
             if (!currentSharePostId) return;
             const { url, text } = getSharePayload();
             if (navigator.share) {
-                navigator.share({ title: 'Kimbela Post', text, url }).catch(() => {});
+                navigator.share({ title: 'Kimbela Post', text, url }).catch(error => {
+                    if (!error || error.name !== 'AbortError') copyPostLink();
+                });
             } else {
                 copyPostLink();
             }
@@ -1565,7 +1567,7 @@
                     return;
                 }
 
-                navigator.clipboard.writeText(url).then(() => {
+                window.KimbelaShare.copyText(url).then(() => {
                     showToast('Link copied. Paste it into Instagram.', 'success');
                 }).catch(() => {
                     showToast('Copy the link and paste it into Instagram.', 'info');
@@ -1594,20 +1596,15 @@
             }
         }
         
-        function copyPostLink() {
+        async function copyPostLink() {
             const { url } = getSharePayload();
-            navigator.clipboard.writeText(url).then(() => {
+            try {
+                await window.KimbelaShare.copyText(url);
                 showToast('Link copied!', 'success');
-            }).catch(() => {
-                const textarea = document.createElement('textarea');
-                textarea.value = url;
-                document.body.appendChild(textarea);
-                textarea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textarea);
-                showToast('Link copied!', 'success');
-            });
-            closeShareModal();
+                closeShareModal();
+            } catch (error) {
+                showToast(error.message || 'Unable to copy this link.', 'warning');
+            }
         }
         
         // ==================== GROUP ACTIONS ====================

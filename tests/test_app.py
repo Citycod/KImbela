@@ -167,7 +167,7 @@ def test_public_group_share_uses_public_uuid_and_renders_full_preview(
     assert b"const { url } = getSharePayload();" in group_page.data
     assert group_page.data.count(b"const { url, text } = getSharePayload();") == 2
     assert b"navigator.share({ title: 'Kimbela Post', text, url })" in group_page.data
-    assert b"navigator.clipboard.writeText(url)" in group_page.data
+    assert b"window.KimbelaShare.copyText(url)" in group_page.data
     assert b"facebook.com/sharer/sharer.php?u=${encodedUrl}" in group_page.data
     assert b"twitter.com/intent/tweet?url=${encodedUrl}" in group_page.data
     assert b"wa.me/?text=${encodedText}%20${encodedUrl}" in group_page.data
@@ -292,6 +292,54 @@ def test_matchmaking_group_copy_link_renders_anonymous_social_preview(
     assert b'<meta property="og:image" content="https://cdn.example.com/matchmaking-preview.jpg">' in preview.data
     assert f'<meta property="og:url" content="https://www.kimbela.com/post/{post.public_id}?preview=private-v1">'.encode() in preview.data
     assert b"Configured Matchmaking" not in preview.data
+
+
+def test_android_user_can_list_and_open_public_and_private_group_landings(
+    client, db, user
+):
+    from models import Group
+
+    public_group = Group(
+        name="Android public group",
+        created_by=user.id,
+        is_active=True,
+        is_private=False,
+    )
+    private_group = Group(
+        name="Android private group",
+        created_by=user.id,
+        is_active=True,
+        is_private=True,
+    )
+    db.session.add_all([public_group, private_group])
+    db.session.commit()
+    with client.session_transaction() as session:
+        session["_user_id"] = str(user.id)
+        session["_fresh"] = True
+
+    android_headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Linux; Android 14; Pixel 8) "
+            "AppleWebKit/537.36 Chrome/130.0 Mobile Safari/537.36"
+        )
+    }
+    discovery = client.get("/groups", headers=android_headers)
+    assert discovery.status_code == 200
+
+    groups = client.get(
+        "/groups/all?per_page=100",
+        headers={**android_headers, "Accept": "application/json"},
+    ).get_json()
+    listed_ids = {group["id"] for group in groups}
+    assert {public_group.id, private_group.id} <= listed_ids
+    assert client.get(
+        f"/groups/{public_group.id}", headers=android_headers
+    ).status_code == 200
+    private_landing = client.get(
+        f"/groups/{private_group.id}", headers=android_headers
+    )
+    assert private_landing.status_code == 200
+    assert b"Private group content" in private_landing.data
 
 
 def test_subscription_callback_recovers_success_via_reference_verification(

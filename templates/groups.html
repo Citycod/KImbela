@@ -232,8 +232,15 @@
 
         // Load groups function
         function loadGroups() {
-            fetch('/groups/all')
-                .then(response => response.json())
+            fetch('/groups/all?per_page=100', {
+                credentials: 'same-origin',
+                cache: 'no-cache',
+                headers: { 'Accept': 'application/json' }
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error(`Request failed (${response.status})`);
+                    return response.json();
+                })
                 .then(groups => {
                     const container = document.getElementById('groupsContainer');
                     
@@ -292,10 +299,10 @@
                                     </div>
                                     
                                     <div class="flex space-x-3">
-                                        <button onclick="viewGroup(${group.id})" 
-                                                class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-300 font-semibold text-sm">
+                                        <a href="/groups/${encodeURIComponent(group.id)}"
+                                                class="flex-1 text-center bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-300 font-semibold text-sm">
                                             View Group
-                                        </button>
+                                        </a>
                                         
                                         ${group.is_member ? `
                                             <button onclick="leaveGroup(${group.id})" 
@@ -319,16 +326,16 @@
                         <div class="col-span-full text-center py-12 text-red-600">
                             <i class="bi bi-exclamation-triangle text-4xl mb-4"></i>
                             <p>Failed to load groups. Please try again.</p>
+                            <button type="button" onclick="loadGroups()"
+                                    class="mt-4 rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white">
+                                Try Again
+                            </button>
                         </div>
                     `;
                 });
         }
 
         // Group actions
-        function viewGroup(groupId) {
-            window.location.href = `/groups/${groupId}`;
-        }
-
         async function joinGroup(groupId) {
             try {
                 const response = await fetch(`/groups/${groupId}/join`, {

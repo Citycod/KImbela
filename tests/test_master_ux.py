@@ -71,6 +71,29 @@ def test_dashboard_header_and_feed_use_shared_color_polish_hooks():
     assert "linear-gradient(135deg, #7c3aed, #ec4899)" in css
 
 
+def test_dashboard_photo_shortcut_opens_real_composer_media_picker():
+    dashboard = (PROJECT_ROOT / "templates" / "user_dashboard.html").read_text()
+    dashboard_js = (
+        PROJECT_ROOT / "static" / "assets" / "js" / "dashboard.js"
+    ).read_text()
+
+    assert 'onclick="openPostComposerMediaPicker()"' in dashboard
+    assert "document.getElementById('photoInput').click()" not in dashboard
+    assert "function openPostComposerMediaPicker()" in dashboard_js
+    assert "window.openModal('postModal');" in dashboard_js
+    assert "const mediaInput = document.getElementById('mediaInput');" in dashboard_js
+    assert "mediaInput.click();" in dashboard_js
+
+
+def test_group_discovery_uses_direct_links_and_bounded_full_page_load():
+    groups = (PROJECT_ROOT / "templates" / "groups.html").read_text()
+
+    assert "fetch('/groups/all?per_page=100'" in groups
+    assert 'href="/groups/${encodeURIComponent(group.id)}"' in groups
+    assert 'onclick="viewGroup(${group.id})"' not in groups
+    assert 'onclick="loadGroups()"' in groups
+
+
 def test_desktop_header_actions_render_once_in_the_required_order():
     dashboard = (PROJECT_ROOT / "templates" / "user_dashboard.html").read_text()
     header = dashboard.split("<nav", 1)[1].split("</nav>", 1)[0]
