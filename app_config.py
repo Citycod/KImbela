@@ -403,6 +403,11 @@ def create_app():
 
     @app.after_request
     def after_request(response):
+        if response.mimetype == "text/html" and request.path != "/offline":
+            response.headers["Cache-Control"] = "private, no-store, max-age=0"
+            response.headers["Pragma"] = "no-cache"
+            response.vary.add("Cookie")
+
         if hasattr(g, "start_time"):
             diff = time.time() - g.start_time
             if diff > 1.0:

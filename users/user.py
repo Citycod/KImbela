@@ -223,10 +223,7 @@ def _social_preview_image_url(raw_url):
     return absolute_url
 
 
-PRIVATE_GROUP_SHARE_PREVIEW_VERSION = "private-v1"
-
-
-def build_post_share_meta(post, *, preview_version=None):
+def build_post_share_meta(post):
     preview_post = post.shared_post or post
     fallback_image = url_for("static", filename="assets/img/kim.png")
     image_url = (
@@ -247,15 +244,11 @@ def build_post_share_meta(post, *, preview_version=None):
     absolute_image_url = _social_preview_image_url(image_url)
     image_type, _ = mimetypes.guess_type(absolute_image_url or "")
 
-    share_url_kwargs = {"post_identifier": post.public_id}
-    if preview_version:
-        share_url_kwargs["preview"] = preview_version
-
     return {
         "title": f"Post by {title_author.full_name} - Kimbela",
         "description": description,
         "url": _absolute_share_url(
-            url_for("user.view_shared_post", **share_url_kwargs)
+            url_for("user.view_shared_post", post_identifier=post.public_id)
         ),
         "image": absolute_image_url,
         "image_type": image_type or "image/jpeg",
@@ -265,13 +258,24 @@ def build_post_share_meta(post, *, preview_version=None):
 
 
 def build_private_post_share_meta(post):
-    """Expose only the shared author, text, and image for a private post."""
-    preview_version = (
-        PRIVATE_GROUP_SHARE_PREVIEW_VERSION
-        if request.args.get("preview") == PRIVATE_GROUP_SHARE_PREVIEW_VERSION
-        else None
+    """Return generic crawler metadata without exposing private group content."""
+    fallback_image = _social_preview_image_url(
+        url_for("static", filename="assets/img/kim.png")
     )
-    return build_post_share_meta(post, preview_version=preview_version)
+    return {
+        "title": "Private Kimbela Group Post",
+        "description": (
+            "Sign in to Kimbela with an account that has access to view this "
+            "private group post."
+        ),
+        "url": _absolute_share_url(
+            url_for("user.view_shared_post", post_identifier=post.public_id)
+        ),
+        "image": fallback_image,
+        "image_type": "image/png",
+        "image_width": "1200",
+        "image_height": "630",
+    }
 
 
 def get_groups_data_for_user(user_id):
@@ -4370,7 +4374,6 @@ def group_detail(group_id):
         group_notification_level=group_notification_level,
         can_view_group_content=can_view_group_content,
         is_matchmaking_group=protected_matchmaking_group,
-        private_group_share_preview_version=PRIVATE_GROUP_SHARE_PREVIEW_VERSION,
         featured_boosts=featured_boosts,
         **post_batch,
         current_user=current_user,
@@ -4683,7 +4686,6 @@ def get_group_posts(group_id):
         group=group,
         is_member=is_group_member(group, current_user),
         is_matchmaking_group=is_matchmaking_group(group),
-        private_group_share_preview_version=PRIVATE_GROUP_SHARE_PREVIEW_VERSION,
         current_user=current_user,
         default_avatar=url_for("static", filename="assets/img/default-avatar.png"),
         **batch,

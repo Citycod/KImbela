@@ -185,7 +185,11 @@
                     <li><a href="{{ url_for('user.about') }}">About Us</a></li>
                     <li><a href="{{ url_for('user.features') }}">Features</a></li>
                     <li><a href="{{ url_for('payments.donate') }}">Partner</a></li>
-                    <li><a href="{{ url_for('auth.login') }}">Login</a></li>
+                    {% if current_user.is_authenticated %}
+                    <li><a href="{{ url_for('user.user_dashboard') }}" data-auth-nav="authenticated">Dashboard</a></li>
+                    {% else %}
+                    <li><a href="{{ url_for('auth.login') }}" data-auth-nav="anonymous">Login</a></li>
+                    {% endif %}
                     <li><a href="{{ url_for('user.install_app') }}">Install Kimbela</a></li>
 
                 </ul>
@@ -559,7 +563,11 @@
                         <li><a href="{{ url_for('user.about') }}">About Us</a></li>
                         <li><a href="{{ url_for('user.features') }}">Features</a></li>
                         <li><a href="{{ url_for('user.install_app') }}">Install Kimbela</a></li>
-                        <li><a href="{{ url_for('auth.login') }}">Login</a></li>
+                        {% if current_user.is_authenticated %}
+                        <li><a href="{{ url_for('user.user_dashboard') }}" data-auth-nav="authenticated">Dashboard</a></li>
+                        {% else %}
+                        <li><a href="{{ url_for('auth.login') }}" data-auth-nav="anonymous">Login</a></li>
+                        {% endif %}
                     </ul>
                 </div>
 

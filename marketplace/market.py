@@ -31,6 +31,7 @@ from models import (
     MarketplaceSubscription,
     SellerRating,
     SiteSetting,
+    LoginHistory,
 )
 import cloudinary.uploader
 import bleach
@@ -3543,11 +3544,13 @@ def seller_settings():
         # Get current subscription
         current_subscription = None
         subscription_expires = None
-        for service in current_user.marketplace_services:
-            if service.subscription:
-                current_subscription = service.subscription
-                subscription_expires = service.subscription_expires
-                break
+        subscribed_service = MarketplaceService.query.filter(
+            MarketplaceService.seller_id == current_user.id,
+            MarketplaceService.subscription_id.isnot(None),
+        ).first()
+        if subscribed_service:
+            current_subscription = subscribed_service.subscription
+            subscription_expires = subscribed_service.subscription_expires
 
         # Get payment history (last 10 payments)
         payment_history = (
@@ -3583,8 +3586,17 @@ def seller_settings():
             now=utcnow(),
         )
 
-    # POST: Handle settings updates
-    # (Implement based on which form was submitted)
+    # These legacy panels render controls for settings that are not represented
+    # by the current schema. Keep submissions safe and explicit instead of
+    # raising a 500 or pretending unsupported values were persisted.
+    settings_section = request.form.get("settings_section", "profile")
+    if settings_section not in {"account", "notifications", "payments"}:
+        settings_section = "profile"
+    flash(
+        "These settings are not available yet. No changes were made.",
+        "info",
+    )
+    return redirect(url_for("market.seller_settings") + f"#{settings_section}")
 
 
 @market.route("/update-profile", methods=["POST"])

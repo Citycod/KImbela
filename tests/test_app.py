@@ -183,7 +183,7 @@ def test_public_group_share_uses_public_uuid_and_renders_full_preview(
     assert f'<meta property="og:url" content="https://www.kimbela.com/post/{post.public_id}">'.encode() in preview.data
 
 
-def test_private_group_share_exposes_only_author_text_and_image(
+def test_private_group_share_uses_generic_metadata_for_anonymous_viewers(
     app, client, db, user
 ):
     from models import Comment, Group, Post
@@ -221,7 +221,7 @@ def test_private_group_share_exposes_only_author_text_and_image(
     group_page = client.get(f"/groups/{group.id}")
     assert group_page.status_code == 200
     assert f'data-post-id="{post.public_id}"'.encode() in group_page.data
-    assert f'data-url="/post/{post.public_id}?preview=private-v1"'.encode() in group_page.data
+    assert f'data-url="/post/{post.public_id}"'.encode() in group_page.data
 
     authorized_preview = client.get(f"/post/{post.public_id}")
     assert authorized_preview.status_code == 200
@@ -235,13 +235,13 @@ def test_private_group_share_exposes_only_author_text_and_image(
         base_url="https://www.kimbela.com",
     )
     assert preview.status_code == 200
-    assert b'<meta property="og:title" content="Post by PrivatePreviewAuthor User - Kimbela">' in preview.data
-    assert b'<meta property="og:description" content="private-preview-secret-marker">' in preview.data
-    assert b'<meta property="og:image" content="https://cdn.example.com/private-secret.jpg">' in preview.data
-    assert f'<meta property="og:url" content="https://www.kimbela.com/post/{post.public_id}?preview=private-v1">'.encode() in preview.data
-    assert b"PrivatePreviewAuthor" in preview.data
-    assert b"private-preview-secret-marker" in preview.data
-    assert b"https://cdn.example.com/private-secret.jpg" in preview.data
+    assert b'<meta property="og:title" content="Private Kimbela Group Post">' in preview.data
+    assert b"Sign in to Kimbela with an account that has access" in preview.data
+    assert b'<meta property="og:image" content="https://www.kimbela.com/static/assets/img/kim.png">' in preview.data
+    assert f'<meta property="og:url" content="https://www.kimbela.com/post/{post.public_id}">'.encode() in preview.data
+    assert b"PrivatePreviewAuthor" not in preview.data
+    assert b"private-preview-secret-marker" not in preview.data
+    assert b"https://cdn.example.com/private-secret.jpg" not in preview.data
     assert b"Confidential preview group" not in preview.data
     assert b"private-comment-must-not-appear" not in preview.data
 
@@ -277,7 +277,7 @@ def test_matchmaking_group_copy_link_renders_anonymous_social_preview(
 
     group_page = client.get(f"/groups/{group.id}")
     assert group_page.status_code == 200
-    assert f'data-url="/post/{post.public_id}?preview=private-v1"'.encode() in group_page.data
+    assert f'data-url="/post/{post.public_id}"'.encode() in group_page.data
 
     client.get("/logout")
     anonymous = app.test_client()
@@ -287,10 +287,11 @@ def test_matchmaking_group_copy_link_renders_anonymous_social_preview(
         headers={"User-Agent": "WhatsApp/2.26.1"},
     )
     assert preview.status_code == 200
-    assert b'<meta property="og:title" content="Post by MatchPreviewAuthor User - Kimbela">' in preview.data
-    assert b'<meta property="og:description" content="matchmaking-preview-marker">' in preview.data
-    assert b'<meta property="og:image" content="https://cdn.example.com/matchmaking-preview.jpg">' in preview.data
-    assert f'<meta property="og:url" content="https://www.kimbela.com/post/{post.public_id}?preview=private-v1">'.encode() in preview.data
+    assert b'<meta property="og:title" content="Private Kimbela Group Post">' in preview.data
+    assert b"matchmaking-preview-marker" not in preview.data
+    assert b"MatchPreviewAuthor" not in preview.data
+    assert b"https://cdn.example.com/matchmaking-preview.jpg" not in preview.data
+    assert f'<meta property="og:url" content="https://www.kimbela.com/post/{post.public_id}">'.encode() in preview.data
     assert b"Configured Matchmaking" not in preview.data
 
 

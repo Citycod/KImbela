@@ -440,20 +440,25 @@ placement='dashboard-top') %}
       </div>
       <div class="kb-composer-actions">
         <div class="kb-composer-btns">
-          <button type="button" class="kb-composer-btn photo" onclick="openPostComposerMediaPicker()">
+          <button type="button" class="kb-composer-btn photo" data-composer-action="photo"
+            aria-controls="postModal">
             <i class="bi bi-image"></i> <span>Photo</span>
           </button>
-          <button class="kb-composer-btn video" onclick="window.openModal('postModal')">
+          <button type="button" class="kb-composer-btn video" data-composer-action="video"
+            aria-controls="postModal">
             <i class="bi bi-camera-video"></i> <span>Video</span>
           </button>
-          <button class="kb-composer-btn poll" onclick="window.openModal('postModal')">
+          <button type="button" class="kb-composer-btn poll" data-composer-action="poll"
+            aria-controls="postModal">
             <i class="bi bi-bar-chart"></i> <span>Poll</span>
           </button>
-          <button class="kb-composer-btn feeling" onclick="window.openModal('postModal')">
+          <button type="button" class="kb-composer-btn feeling" data-composer-action="feeling"
+            aria-controls="emojiModal">
             <i class="bi bi-emoji-smile"></i> <span>Feeling</span>
           </button>
         </div>
-        <button class="kb-post-btn" onclick="window.openModal('postModal')">Post</button>
+        <button type="button" class="kb-post-btn" data-composer-action="post"
+          aria-controls="postModal">Post</button>
       </div>
     </div>
 
@@ -1620,6 +1625,9 @@ placement='dashboard-top') %}
       <input type="hidden" name="post_location" id="postLocationInput" value="" />
 
       <div class="modal-body p-3 sm:p-4 overflow-y-auto custom-scrollbar flex-1 min-h-0">
+        <div id="composerActionNotice" class="hidden mb-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900"
+          role="status" aria-live="polite"></div>
+
         <!-- Author info -->
         <div class="flex items-center space-x-3 mb-3">
           <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
@@ -1856,7 +1864,7 @@ placement='dashboard-top') %}
 <!--  <script src="{{ url_for('static', filename='assets/js/main.js') }}"></script> -->
 {% include 'partials/user_dashboard_pre_scripts.html' %}
 <script src="{{ url_for('static', filename='assets/js/passive_polling.js', v='neon-cost-1') }}"></script>
-<script src="{{ url_for('static', filename='assets/js/dashboard.js', v='ux-polish-1') }}"></script>
+<script src="{{ url_for('static', filename='assets/js/dashboard.js', v='composer-actions-1') }}"></script>
 <script src="{{ url_for('static', filename='assets/js/comment_composer.js', v='comment-composer-2') }}"></script>
 
 <!-- Floating Corner Widget -->
@@ -1964,7 +1972,7 @@ placement='dashboard-top') %}
 </div>
 
 <!-- Emoji Modal for Post Creation -->
-<div id="emojiModal" class="modal fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
+<div id="emojiModal" class="modal fixed inset-0 z-[10050] flex items-center justify-center bg-black bg-opacity-50 hidden">
   <div class="modal-dialog bg-white rounded-2xl shadow-strong w-full max-w-sm mx-4">
     <div class="modal-header p-4 border-b border-fb-border flex justify-between items-center">
       <h3 class="text-lg font-semibold">Choose an Emoji</h3>

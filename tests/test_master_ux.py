@@ -71,18 +71,30 @@ def test_dashboard_header_and_feed_use_shared_color_polish_hooks():
     assert "linear-gradient(135deg, #7c3aed, #ec4899)" in css
 
 
-def test_dashboard_photo_shortcut_opens_real_composer_media_picker():
+def test_dashboard_composer_actions_use_one_safe_initialization_path():
     dashboard = (PROJECT_ROOT / "templates" / "user_dashboard.html").read_text()
     dashboard_js = (
         PROJECT_ROOT / "static" / "assets" / "js" / "dashboard.js"
     ).read_text()
 
-    assert 'onclick="openPostComposerMediaPicker()"' in dashboard
+    for action in ("photo", "video", "poll", "feeling", "post"):
+        assert dashboard.count(f'data-composer-action="{action}"') == 1
+    assert dashboard.count('id="composerActionNotice"') == 1
+    assert 'data-composer-action="photo"' in dashboard
     assert "document.getElementById('photoInput').click()" not in dashboard
-    assert "function openPostComposerMediaPicker()" in dashboard_js
-    assert "window.openModal('postModal');" in dashboard_js
+    assert "function openPostComposerAction(action = 'post')" in dashboard_js
+    assert "event.target.closest('[data-composer-action]')" in dashboard_js
+    assert "openPostComposerAction(trigger.dataset.composerAction);" in dashboard_js
     assert "const mediaInput = document.getElementById('mediaInput');" in dashboard_js
+    assert "mediaInput.accept = 'image/*';" in dashboard_js
     assert "mediaInput.click();" in dashboard_js
+    assert "window.openEmojiPicker();" in dashboard_js
+    assert "Video uploads are not currently supported." in dashboard_js
+    assert "Poll posts are not currently supported." in dashboard_js
+    assert 'type="button" class="kb-composer-btn video"' in dashboard
+    assert 'type="button" class="kb-composer-btn poll"' in dashboard
+    assert 'type="button" class="kb-composer-btn feeling"' in dashboard
+    assert 'type="button" class="kb-post-btn"' in dashboard
 
 
 def test_group_discovery_uses_direct_links_and_bounded_full_page_load():

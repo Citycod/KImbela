@@ -315,7 +315,7 @@
                             </li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
-                                <a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}">
+                                <a class="dropdown-item text-danger" href="{{ url_for('user.logout') }}">
                                     <i class="bi bi-box-arrow-right"></i> Logout
                                 </a>
                             </li>
@@ -328,6 +328,11 @@
 
     <!-- Main Content -->
     <div class="container py-5">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}" role="status">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
         <div class="row">
             <!-- Sidebar Navigation -->
             <div class="col-lg-3 mb-4">
@@ -521,7 +526,9 @@
                         </div>
                         
                         <!-- Currency Preferences -->
-                        <form id="accountForm" method="POST" action="{{ url_for('market.update_account_settings') }}">
+                        <form id="accountForm" method="POST" action="{{ url_for('market.seller_settings') }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                            <input type="hidden" name="settings_section" value="account">
                             <div class="mb-4">
                                 <h5 class="fw-bold mb-3">Currency Preferences</h5>
                                 <div class="row g-3">
@@ -605,7 +612,9 @@
                     <div class="tab-pane fade settings-content" id="notifications">
                         <h4 class="fw-bold mb-4">Notification Settings</h4>
                         
-                        <form id="notificationForm" method="POST" action="{{ url_for('market.update_notification_settings') }}">
+                        <form id="notificationForm" method="POST" action="{{ url_for('market.seller_settings') }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                            <input type="hidden" name="settings_section" value="notifications">
                             <!-- Email Notifications -->
                             <div class="mb-4">
                                 <h5 class="fw-bold mb-3">Email Notifications</h5>
@@ -1067,7 +1076,9 @@
                         <!-- Payout Settings -->
                         <div class="mt-5">
                             <h5 class="fw-bold mb-3">Payout Settings</h5>
-                            <form id="payoutForm" method="POST" action="{{ url_for('market.update_payout_settings') }}">
+                            <form id="payoutForm" method="POST" action="{{ url_for('market.seller_settings') }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                <input type="hidden" name="settings_section" value="payments">
                                 <div class="row g-3">
                                     <div class="col-md-6">
                                         <label class="form-label">Minimum Payout Amount</label>
@@ -1505,9 +1516,9 @@
                 <div class="col-md-4 mb-3">
                     <h6 class="fw-bold">Support</h6>
                     <ul class="list-unstyled">
-                        <li><a href="#" class="text-decoration-none text-muted">Help Center</a></li>
-                        <li><a href="#" class="text-decoration-none text-muted">Contact Support</a></li>
-                        <li><a href="#" class="text-decoration-none text-muted">Community</a></li>
+                        <li><a href="{{ url_for('user.faq') }}" class="text-decoration-none text-muted">Help Center</a></li>
+                        <li><a href="{{ url_for('user.contact') }}" class="text-decoration-none text-muted">Contact Support</a></li>
+                        <li><a href="{{ url_for('user.community_guidelines') }}" class="text-decoration-none text-muted">Community</a></li>
                     </ul>
                 </div>
                 <div class="col-md-4 mb-3">

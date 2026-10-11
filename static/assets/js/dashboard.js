@@ -496,15 +496,78 @@ function focusPostComposer(postModal) {
     }, 50);
 }
 
+function setPostComposerActionNotice(message = '') {
+    const notice = document.getElementById('composerActionNotice');
+    if (!notice) return;
+
+    notice.textContent = message;
+    notice.classList.toggle('hidden', !message);
+}
+
+function openPostComposerAction(action = 'post') {
+    const postModal = openPostComposer();
+    if (!postModal) return false;
+
+    setPostComposerActionNotice();
+
+    if (action === 'photo') {
+        const mediaInput = document.getElementById('mediaInput');
+        if (!mediaInput) return false;
+        mediaInput.accept = 'image/*';
+        mediaInput.click();
+        return true;
+    }
+
+    if (action === 'feeling') {
+        if (typeof window.openEmojiPicker === 'function') {
+            window.openEmojiPicker();
+            return true;
+        }
+        setPostComposerActionNotice('The feeling selector could not be loaded. Please try again.');
+        focusPostComposer(postModal);
+        return false;
+    }
+
+    if (action === 'video') {
+        setPostComposerActionNotice('Video uploads are not currently supported. You can add a photo or GIF instead.');
+        focusPostComposer(postModal);
+        return true;
+    }
+
+    if (action === 'poll') {
+        setPostComposerActionNotice('Poll posts are not currently supported. You can share your question as a regular post.');
+        focusPostComposer(postModal);
+        return true;
+    }
+
+    focusPostComposer(postModal);
+    return true;
+}
+
 function openPostComposerMediaPicker() {
+    return openPostComposerAction('photo');
+}
+
+document.addEventListener('click', (event) => {
+    const trigger = event.target.closest('[data-composer-action]');
+    if (!trigger) return;
+
+    event.preventDefault();
+    openPostComposerAction(trigger.dataset.composerAction);
+});
+
+function validateAndOpenFilePicker() {
     const postModal = openPostComposer();
     const mediaInput = document.getElementById('mediaInput');
     if (!postModal || !mediaInput) return;
+    setPostComposerActionNotice();
+    mediaInput.accept = 'image/*';
     mediaInput.click();
 }
 
 window.openPostComposer = openPostComposer;
 window.focusPostComposer = focusPostComposer;
+window.openPostComposerAction = openPostComposerAction;
 window.openPostComposerMediaPicker = openPostComposerMediaPicker;
 
 function syncComposerMediaInput(sourceInput) {
@@ -3875,17 +3938,6 @@ const InfiniteScroll = {
         });
     }
 };
-
-// ========================================
-// MEDIA UPLOAD
-// ========================================
-
-function validateAndOpenFilePicker() {
-    const fileInput = document.getElementById('mediaInput');
-    if (fileInput) {
-        fileInput.click();
-    }
-}
 
 // ========================================
 // FILE UPLOAD HANDLING
