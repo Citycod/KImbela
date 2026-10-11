@@ -1,6 +1,7 @@
 import requests as http_requests
 import json
 import socket
+from decimal import Decimal, InvalidOperation
 from flask import current_app, url_for
 from requests.exceptions import (
     ConnectionError as RequestsConnectionError,
@@ -32,6 +33,7 @@ from models import (
     MarketplaceService,
 )
 from .email_service import MarketplaceEmailService
+from .pricing import PROFILE_BOOST_PRICE_USD, format_usd
 
 
 from time_utils import utcnow
@@ -589,6 +591,10 @@ class BasePaymentService:
 class MatchmakingPaymentService(BasePaymentService):
     """Payment service specifically for matchmaking requests"""
 
+    PRODUCT_KEY = "profile_boost"
+    PRODUCT_CURRENCY = "USD"
+    CHECKOUT_CURRENCY = "NGN"
+
     def __init__(self):
         super().__init__()
         self._validate_keys()
@@ -621,16 +627,28 @@ class MatchmakingPaymentService(BasePaymentService):
     def create_matchmaking_payment(
         self, user, matchmaking_request, package, currency="USD", amount=None, gateway="flutterwave"
     ):
-        """Create payment for matchmaking request using Flutterwave or Paystack"""
+        """Create a server-priced profile boost payment using Flutterwave."""
         try:
             print(f"🟡 [MATCHMAKING PAYMENT] Starting payment process")
             print(
                 f"🟡 [MATCHMAKING PAYMENT] User: {user.id}, Request: {matchmaking_request.id}, Package: {package.name}, Gateway: {gateway}"
             )
 
-            # Use provided amount or fallback to package price
-            currency = self.normalize_currency(currency)
-            payment_amount = float(amount) if amount is not None else float(package.price)
+            if (gateway or "flutterwave").lower() != "flutterwave":
+                return {"success": False, "error": "Unsupported payment gateway"}
+
+            # The browser and legacy package row are deliberately not price
+            # authorities. They continue to identify the request and its
+            # existing duration/features only.
+            currency = self.PRODUCT_CURRENCY
+            payment_amount = PROFILE_BOOST_PRICE_USD
+            try:
+                rate = Decimal(str(self.get_ngn_rate()))
+            except (InvalidOperation, TypeError, ValueError):
+                return {"success": False, "error": "Payment exchange rate is unavailable"}
+            if not rate.is_finite() or rate <= 0:
+                return {"success": False, "error": "Payment exchange rate is unavailable"}
+            checkout_amount = (payment_amount * rate).quantize(Decimal("0.01"))
 
             # Generate unique transaction reference
             tx_ref = f"KIMBELA_MATCH_{matchmaking_request.id}_{int(time.time())}"
@@ -822,12 +840,7 @@ class MatchmakingPaymentService(BasePaymentService):
 #                    return {"success": False, "error": f"Stripe error: {str(e)}"}
 
             # Convert USD to NGN for Flutterwave checkout — all payments in Naira
-            checkout_currency = "NGN"
-            checkout_amount = float(payment_amount)
-            if currency.upper() == "USD":
-                rate = float(self.get_ngn_rate())
-                checkout_amount = round(checkout_amount * rate, 2)
-                print(f"🟡 [MATCHMAKING PAYMENT] Converted USD {payment_amount} to NGN {checkout_amount} at rate {rate}")
+            checkout_currency = self.CHECKOUT_CURRENCY
 
             # Prepare payment data for matchmaking (Flutterwave)
             payment_data = {
@@ -847,10 +860,13 @@ class MatchmakingPaymentService(BasePaymentService):
                     "matchmaking_request_id": matchmaking_request.id,
                     "package_id": package.id,
                     "transaction_type": "matchmaking",
+                    "product": self.PRODUCT_KEY,
                 },
                 "customizations": {
                     "title": "Kimbela Matchmaking",
-                    "description": f"Matchmaking Package: {package.name}",
+                    "description": (
+                        f"${format_usd(PROFILE_BOOST_PRICE_USD)} USD Profile Boost"
+                    ),
                 },
             }
 
@@ -886,7 +902,7 @@ class MatchmakingPaymentService(BasePaymentService):
                         user_id=user.id,
                         matchmaking_request_id=matchmaking_request.id,
                         package_id=package.id,
-                        amount=payment_amount,
+                        amount=float(payment_amount),
                         currency=currency,
                         gateway="flutterwave",
                         gateway_reference=tx_ref,
@@ -894,7 +910,18 @@ class MatchmakingPaymentService(BasePaymentService):
                         gateway_status="initiated",
                         status="pending",
                         payment_status="pending",
-                        description=f"Matchmaking Package: {package.name}",
+                        description=(
+                            f"${format_usd(PROFILE_BOOST_PRICE_USD)} USD "
+                            f"Profile Boost: {package.name}"
+                        ),
+                        gateway_metadata=json.dumps(
+                            {
+                                "expected_checkout_amount": str(checkout_amount),
+                                "expected_checkout_currency": checkout_currency,
+                                "expected_product": self.PRODUCT_KEY,
+                                "expected_transaction_type": "matchmaking",
+                            }
+                        ),
                     )
                     db.session.add(matchmaking_payment)
                     db.session.commit()
@@ -943,6 +970,73 @@ class MatchmakingPaymentService(BasePaymentService):
             print(f"🔴 [MATCHMAKING PAYMENT] Traceback: {traceback.format_exc()}")
             return {"success": False, "error": f"Payment processing error: {str(e)}"}
 
+    @staticmethod
+    def _gateway_metadata(payment):
+        try:
+            metadata = json.loads(payment.gateway_metadata or "{}")
+        except (TypeError, ValueError):
+            return {}
+        return metadata if isinstance(metadata, dict) else {}
+
+    def merge_matchmaking_gateway_metadata(self, payment, verification_data):
+        """Preserve the immutable initiation snapshot alongside provider updates."""
+        metadata = self._gateway_metadata(payment)
+        metadata["verification"] = verification_data
+        return json.dumps(metadata, default=str)
+
+    def validate_matchmaking_payment(self, payment, provider_data):
+        """Validate provider proof against the server-authored boost checkout."""
+        metadata = self._gateway_metadata(payment)
+        try:
+            recorded_amount = Decimal(str(payment.amount)).quantize(Decimal("0.01"))
+            expected_checkout_amount = Decimal(
+                str(metadata.get("expected_checkout_amount"))
+            ).quantize(Decimal("0.01"))
+            provider_amount = Decimal(str(provider_data.get("amount"))).quantize(
+                Decimal("0.01")
+            )
+        except (InvalidOperation, TypeError, ValueError):
+            logger.error("Profile boost payment %s lacks valid amount proof", payment.id)
+            return False
+
+        provider_meta = provider_data.get("meta")
+        if not isinstance(provider_meta, dict):
+            return False
+
+        expected_reference = str(payment.gateway_reference or "")
+        provider_reference = str(provider_data.get("tx_ref") or "")
+        expected_currency = str(
+            metadata.get("expected_checkout_currency") or ""
+        ).upper()
+        provider_currency = str(provider_data.get("currency") or "").upper()
+        expected_product = metadata.get("expected_product")
+        expected_transaction_type = metadata.get("expected_transaction_type")
+
+        identifiers_match = all(
+            (
+                str(provider_meta.get("user_id")) == str(payment.user_id),
+                str(provider_meta.get("matchmaking_request_id"))
+                == str(payment.matchmaking_request_id),
+                str(provider_meta.get("package_id")) == str(payment.package_id),
+                provider_meta.get("product") == expected_product == self.PRODUCT_KEY,
+                provider_meta.get("transaction_type") == expected_transaction_type,
+            )
+        )
+        return all(
+            (
+                self.is_success_status(provider_data.get("status")),
+                recorded_amount == PROFILE_BOOST_PRICE_USD,
+                str(payment.currency or "").upper() == self.PRODUCT_CURRENCY,
+                bool(expected_reference),
+                provider_reference == expected_reference,
+                expected_checkout_amount > 0,
+                provider_amount == expected_checkout_amount,
+                expected_currency == self.CHECKOUT_CURRENCY,
+                provider_currency == expected_currency,
+                identifiers_match,
+            )
+        )
+
     def handle_matchmaking_payment_success(self, matchmaking_payment, flutterwave_data):
         """Handle successful matchmaking payment"""
         try:
@@ -982,6 +1076,15 @@ class MatchmakingPaymentService(BasePaymentService):
                 db.session.commit()
                 return True
 
+            if not self.validate_matchmaking_payment(
+                matchmaking_payment, flutterwave_data
+            ):
+                logger.error(
+                    "Rejected profile boost payment verification for payment %s",
+                    matchmaking_payment.id,
+                )
+                return False
+
             # Update matchmaking payment record
             matchmaking_payment.status = "completed"
             matchmaking_payment.payment_status = "paid"
@@ -989,7 +1092,11 @@ class MatchmakingPaymentService(BasePaymentService):
                 "status", "successful"
             )
             matchmaking_payment.gateway_payment_id = flutterwave_data.get("id")
-            matchmaking_payment.gateway_metadata = json.dumps(flutterwave_data)
+            matchmaking_payment.gateway_metadata = (
+                self.merge_matchmaking_gateway_metadata(
+                    matchmaking_payment, flutterwave_data
+                )
+            )
             matchmaking_payment.paid_at = matchmaking_payment.paid_at or utcnow()
             matchmaking_payment.updated_at = utcnow()
 
@@ -1047,7 +1154,11 @@ class MatchmakingPaymentService(BasePaymentService):
                 gateway_status
             ):
                 matchmaking_payment.gateway_status = gateway_status
-                matchmaking_payment.gateway_metadata = json.dumps(flutterwave_data)
+                matchmaking_payment.gateway_metadata = (
+                    self.merge_matchmaking_gateway_metadata(
+                        matchmaking_payment, flutterwave_data
+                    )
+                )
                 matchmaking_payment.updated_at = utcnow()
                 db.session.commit()
                 return True
@@ -1056,7 +1167,11 @@ class MatchmakingPaymentService(BasePaymentService):
             matchmaking_payment.status = "failed"
             matchmaking_payment.payment_status = "failed"
             matchmaking_payment.gateway_status = gateway_status
-            matchmaking_payment.gateway_metadata = json.dumps(flutterwave_data)
+            matchmaking_payment.gateway_metadata = (
+                self.merge_matchmaking_gateway_metadata(
+                    matchmaking_payment, flutterwave_data
+                )
+            )
             matchmaking_payment.updated_at = utcnow()
 
             # Update matchmaking request
@@ -1267,10 +1382,14 @@ class MatchmakingPaymentService(BasePaymentService):
     def retry_payment(self, payment_id, currency="USD"):
         """Retry a failed matchmaking payment"""
         try:
-            currency = self.normalize_currency(currency)
             matchmaking_payment = self.get_payment_by_id(payment_id)
             if not matchmaking_payment:
                 return {"success": False, "error": "Payment not found"}
+            if matchmaking_payment.status not in {"failed", "cancelled"}:
+                return {
+                    "success": False,
+                    "error": "Only failed payments can be retried",
+                }
 
             # Get related objects
             user = User.query.get(matchmaking_payment.user_id)
@@ -1285,13 +1404,16 @@ class MatchmakingPaymentService(BasePaymentService):
             # Generate new transaction reference
             tx_ref = f"KIMBELA_MATCH_RETRY_{matchmaking_request.id}_{int(time.time())}"
 
-            # Convert USD to NGN for Flutterwave checkout — all payments in Naira
-            checkout_currency = "NGN"
-            checkout_amount = float(package.price)
-            if currency.upper() == "USD":
-                rate = float(self.get_ngn_rate())
-                checkout_amount = round(checkout_amount * rate, 2)
-                print(f"🟡 [MATCHMAKING RETRY] Converted USD {package.price} to NGN {checkout_amount} at rate {rate}")
+            try:
+                rate = Decimal(str(self.get_ngn_rate()))
+            except (InvalidOperation, TypeError, ValueError):
+                return {"success": False, "error": "Payment exchange rate is unavailable"}
+            if not rate.is_finite() or rate <= 0:
+                return {"success": False, "error": "Payment exchange rate is unavailable"}
+            checkout_currency = self.CHECKOUT_CURRENCY
+            checkout_amount = (PROFILE_BOOST_PRICE_USD * rate).quantize(
+                Decimal("0.01")
+            )
 
             # Prepare payment data
             payment_data = {
@@ -1311,10 +1433,14 @@ class MatchmakingPaymentService(BasePaymentService):
                     "matchmaking_request_id": matchmaking_request.id,
                     "package_id": package.id,
                     "transaction_type": "matchmaking_retry",
+                    "product": self.PRODUCT_KEY,
                 },
                 "customizations": {
                     "title": "Kimbela Matchmaking",
-                    "description": f"Matchmaking Package: {package.name} (Retry)",
+                    "description": (
+                        f"${format_usd(PROFILE_BOOST_PRICE_USD)} USD "
+                        "Profile Boost (Retry)"
+                    ),
                 },
             }
 
@@ -1337,20 +1463,42 @@ class MatchmakingPaymentService(BasePaymentService):
                 if result.get("status") == "success":
                     payment_url = result["data"]["link"]
 
-                    # Update the existing payment record for retry
-                    matchmaking_payment.gateway_reference = tx_ref
-                    matchmaking_payment.gateway_payment_id = result["data"].get("id")
-                    matchmaking_payment.gateway_status = "retry_initiated"
-                    matchmaking_payment.status = "pending"
-                    matchmaking_payment.payment_status = "pending"
-                    matchmaking_payment.updated_at = utcnow()
+                    # Keep the failed historical transaction unchanged. A retry
+                    # is a new provider checkout at the current product price.
+                    retry_payment = MatchmakingPayments(
+                        user_id=user.id,
+                        matchmaking_request_id=matchmaking_request.id,
+                        package_id=package.id,
+                        amount=float(PROFILE_BOOST_PRICE_USD),
+                        currency=self.PRODUCT_CURRENCY,
+                        gateway="flutterwave",
+                        gateway_reference=tx_ref,
+                        gateway_payment_id=result["data"].get("id"),
+                        gateway_status="retry_initiated",
+                        status="pending",
+                        payment_status="pending",
+                        description=(
+                            f"${format_usd(PROFILE_BOOST_PRICE_USD)} USD "
+                            f"Profile Boost Retry: {package.name}"
+                        ),
+                        gateway_metadata=json.dumps(
+                            {
+                                "expected_checkout_amount": str(checkout_amount),
+                                "expected_checkout_currency": checkout_currency,
+                                "expected_product": self.PRODUCT_KEY,
+                                "expected_transaction_type": "matchmaking_retry",
+                                "retry_of_payment_id": matchmaking_payment.id,
+                            }
+                        ),
+                    )
+                    db.session.add(retry_payment)
 
                     db.session.commit()
 
                     return {
                         "success": True,
                         "payment_url": payment_url,
-                        "payment_id": matchmaking_payment.id,
+                        "payment_id": retry_payment.id,
                         "gateway_reference": tx_ref,
                         "message": "Payment retry initiated successfully",
                     }

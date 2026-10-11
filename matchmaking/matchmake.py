@@ -54,6 +54,7 @@ from payments.browse_access import (
     has_matchmaking_access,
     record_browse_payment_status,
 )
+from payments.pricing import PROFILE_BOOST_PRICE_USD, format_usd
 from resend_mail import Message
 from extensions import mail
 
@@ -189,7 +190,10 @@ def requests():
     """Main matchmaking requests page"""
     packages = MatchmakingPackage.query.filter_by(is_active=True).all()
     return render_template(
-        "requests.html", packages=packages, matchmaking_ngn_rate=get_matchmaking_ngn_rate()
+        "requests.html",
+        packages=packages,
+        matchmaking_ngn_rate=get_matchmaking_ngn_rate(),
+        profile_boost_price_usd=format_usd(PROFILE_BOOST_PRICE_USD),
     )
 
 
@@ -213,7 +217,10 @@ def create_request():
     """Page to create a new matchmaking request"""
     packages = MatchmakingPackage.query.filter_by(is_active=True).all()
     return render_template(
-        "requests.html", packages=packages, matchmaking_ngn_rate=get_matchmaking_ngn_rate()
+        "requests.html",
+        packages=packages,
+        matchmaking_ngn_rate=get_matchmaking_ngn_rate(),
+        profile_boost_price_usd=format_usd(PROFILE_BOOST_PRICE_USD),
     )
 
 
@@ -959,7 +966,7 @@ def create_matchmaking_request():
     try:
         if current_user.is_ai_persona:
             return jsonify({"success": False, "error": "AI profiles cannot create matchmaking requests"}), 403
-        data = request.get_json()
+        data = request.get_json(silent=True) or {}
         if not data:
             current_app.logger.warning(
                 "⚠️ [MATCH CREATE] Empty request body for user %s",
@@ -1238,7 +1245,8 @@ def initiate_matchmaking_payment():
             )
             return jsonify({"success": False, "error": "Package mismatch"}), 400
 
-        # Ensure package exists and has a valid price
+        # The package controls the existing boost duration/features, but its
+        # legacy database price is not authoritative for new checkouts.
         package = matchmaking_request.package
         if not package:
             print(
@@ -1246,14 +1254,8 @@ def initiate_matchmaking_payment():
             )
             return jsonify({"success": False, "error": "Package not found"}), 404
 
-        if package.price is None or package.price <= 0:
-            print(
-                f"🔴 [INITIATE MATCHMAKING PAYMENT] Invalid package price for request {request_id}: {package.price}"
-            )
-            return jsonify({"success": False, "error": "Package price is invalid"}), 400
-
         print(
-            f"🟡 [INITIATE MATCHMAKING PAYMENT] Found package: {package.name}, price: {package.price}"
+            f"🟡 [INITIATE MATCHMAKING PAYMENT] Found package: {package.name}"
         )
 
         # Use dedicated MatchmakingPaymentService
@@ -1335,7 +1337,10 @@ def payment_callback():
         ).strip().lower()
 
         # Handle payment status
-        if verified_status in {"successful", "completed"}:
+        if verification_result.get("success") and verified_status in {
+            "successful",
+            "completed",
+        }:
             # Successful payment
             print(f"🟡 [PAYMENT CALLBACK] Processing successful payment...")
             success = payment_service.handle_matchmaking_payment_success(
@@ -1363,7 +1368,11 @@ def payment_callback():
             "processing",
         }:
             matchmaking_payment.gateway_status = verified_status or status
-            matchmaking_payment.gateway_metadata = json.dumps(flutterwave_data)
+            matchmaking_payment.gateway_metadata = (
+                payment_service.merge_matchmaking_gateway_metadata(
+                    matchmaking_payment, flutterwave_data
+                )
+            )
             matchmaking_payment.updated_at = utcnow()
             db.session.commit()
             flash(
@@ -1813,7 +1822,7 @@ def get_packages():
                     "id": package.id,
                     "name": package.name,
                     "description": package.description,
-                    "price": package.price,
+                    "price": float(PROFILE_BOOST_PRICE_USD),
                     "duration_days": package.duration_days,
                     "features": package.features.split(",") if package.features else [],
                 }

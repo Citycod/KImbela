@@ -11,10 +11,11 @@ from models import PaymentTransaction
 from time_utils import utcnow
 
 from .payment_service import BasePaymentService
+from .pricing import MATCHMAKING_ACCESS_PRICE_USD, format_usd
 
 
-MATCHMAKING_ACCESS_PRICE_USD = Decimal("3.00")
 MATCHMAKING_ACCESS_DAYS = 30
+MATCHMAKING_ACCESS_PRODUCT_KEY = "find_your_match"
 
 # These persisted identifiers deliberately retain their existing values so
 # already-paid Browse users keep the rest of their entitlement after the UX
@@ -118,6 +119,7 @@ def complete_browse_payment(transaction, verification_data):
 
     expected_currency = initiation.get("expected_checkout_currency")
     expected_amount = initiation.get("expected_checkout_amount")
+    expected_product = initiation.get("expected_product")
     actual_currency = str(verification_data.get("currency") or "").upper()
     actual_reference = verification_data.get("tx_ref")
 
@@ -137,21 +139,25 @@ def complete_browse_payment(transaction, verification_data):
         or not actual_amount.is_finite()
     ):
         return False
-    if actual_reference and actual_reference != transaction.gateway_reference:
+    if not actual_reference or actual_reference != transaction.gateway_reference:
         return False
     if not expected_currency or actual_currency != expected_currency:
         return False
-    if actual_amount < expected_amount:
+    if actual_amount != expected_amount:
         return False
 
     provider_meta = verification_data.get("meta") or {}
     if not isinstance(provider_meta, dict):
         return False
-    if provider_meta.get("user_id") not in (
-        None,
-        transaction.user_id,
-        str(transaction.user_id),
-    ):
+    if str(provider_meta.get("user_id")) != str(transaction.user_id):
+        return False
+    if provider_meta.get("transaction_type") != BROWSE_TRANSACTION_TYPE:
+        return False
+    if provider_meta.get("product") != expected_product:
+        return False
+    if expected_product != MATCHMAKING_ACCESS_PRODUCT_KEY:
+        return False
+    if str(provider_meta.get("access_days")) != str(BROWSE_ACCESS_DAYS):
         return False
 
     transaction.status = "completed"
@@ -230,10 +236,14 @@ class BrowseAccessPaymentService(BasePaymentService):
                 "user_id": user.id,
                 "transaction_type": BROWSE_TRANSACTION_TYPE,
                 "access_days": BROWSE_ACCESS_DAYS,
+                "product": MATCHMAKING_ACCESS_PRODUCT_KEY,
             },
             "customizations": {
                 "title": "Kimbela Find Your Match",
-                "description": "$3 USD for 30 days of Find Your Match access",
+                "description": (
+                    f"${format_usd(MATCHMAKING_ACCESS_PRICE_USD)} USD for "
+                    "30 days of Find Your Match access"
+                ),
             },
         }
         if getattr(user, "phone_number", None):
@@ -267,11 +277,15 @@ class BrowseAccessPaymentService(BasePaymentService):
                 gateway_status="initiated",
                 status="pending",
                 transaction_type=BROWSE_TRANSACTION_TYPE,
-                description="$3 Find Your Match access for 30 days",
+                description=(
+                    f"${format_usd(MATCHMAKING_ACCESS_PRICE_USD)} "
+                    "Find Your Match access for 30 days"
+                ),
                 gateway_metadata=json.dumps(
                     {
                         "expected_checkout_amount": str(checkout_amount),
                         "expected_checkout_currency": checkout_currency,
+                        "expected_product": MATCHMAKING_ACCESS_PRODUCT_KEY,
                         "access_days": BROWSE_ACCESS_DAYS,
                     }
                 ),

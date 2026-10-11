@@ -26,6 +26,7 @@ from models import (
     AdCampaign,
     BirthdayNotification,
 )
+from payments.pricing import PROFILE_BOOST_PRICE_USD
 
 from datetime import datetime
 import humanize
@@ -625,28 +626,28 @@ def create_sample_packages():
         MatchmakingPackage(
             name="Basic",
             description="Perfect for casual matchmaking",
-            price=9.99,
+            price=float(PROFILE_BOOST_PRICE_USD),
             duration_days=7,
             features="Basic Profile Listing,7 Days Duration,Basic Matching,Limited Visibility",
         ),
         MatchmakingPackage(
             name="Standard",
             description="Great for serious connections",
-            price=24.99,
+            price=float(PROFILE_BOOST_PRICE_USD),
             duration_days=14,
             features="Enhanced Profile Listing,14 Days Duration,Advanced Matching,Priority Placement,Message Responses",
         ),
         MatchmakingPackage(
             name="Premium",
             description="Maximum visibility and matches",
-            price=49.99,
+            price=float(PROFILE_BOOST_PRICE_USD),
             duration_days=30,
             features="Premium Profile Listing,30 Days Duration,Advanced Matching,Top Placement,Unlimited Messages,Personal Matchmaker",
         ),
         MatchmakingPackage(
             name="Elite",
             description="For exclusive matchmaking",
-            price=99.99,
+            price=float(PROFILE_BOOST_PRICE_USD),
             duration_days=60,
             features="Elite Profile Listing,60 Days Duration,VIP Matching,Featured Placement,Unlimited Messages,Dedicated Matchmaker,Background Verification",
         ),

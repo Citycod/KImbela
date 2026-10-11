@@ -14,6 +14,7 @@ from flask_migrate import Migrate
 from app_config import app, socketio
 from extensions import db
 from models import AIPersona, AILog # Imported so Alembic detects them
+from payments.pricing import PROFILE_BOOST_PRICE_USD
 
 
 print(">>> MIGRATE REGISTERING <<<")
@@ -34,15 +35,15 @@ def init_background_tasks():
                 package = MatchmakingPackage(
                     name="Matchmaking",
                     description="Premium matchmaking service to find your perfect partner",
-                    price=10.00,
+                    price=float(PROFILE_BOOST_PRICE_USD),
                     duration_days=30,
                     features="Enhanced Profile Listing,30 Days Duration,Advanced Matching Algorithm,Priority Placement,Message Responses,Personalized Recommendations",
                 )
                 db.session.add(package)
                 db.session.commit()
                 print("✓ Matchmaking package initialized")
-            elif existing.price != 10.00:
-                existing.price = 10.00
+            elif existing.price != float(PROFILE_BOOST_PRICE_USD):
+                existing.price = float(PROFILE_BOOST_PRICE_USD)
                 db.session.commit()
                 print("✓ Matchmaking package price updated")
         except Exception as exc:

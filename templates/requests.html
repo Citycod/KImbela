@@ -670,7 +670,7 @@
                             <h3 class="text-xl font-playfair font-bold text-primary mb-2">Matchmaking Service</h3>
                             <p class="text-text-secondary mb-4">Premium matchmaking to find your perfect partner</p>
                             <div class="mb-6">
-                                <span class="text-3xl font-bold text-primary">${{ "{:,.0f}".format((packages[0].price if packages else 10)|round|int) }}</span>
+                                <span class="text-3xl font-bold text-primary">${{ profile_boost_price_usd }} USD</span>
                                 <span class="text-text-secondary text-base">/month</span>
                             </div>
                             <ul class="feature-list mb-6 text-text-secondary text-left mx-auto max-w-xs">
@@ -682,8 +682,8 @@
                                 <li>Personalized Recommendations</li>
                             </ul>
                             <button class="w-full gradient-rose text-white py-3 rounded-lg btn hover:opacity-90 transition-all duration-300 font-semibold text-base btn-select-package" 
-                                    data-package-id="1" data-package-name="Matchmaking" data-package-price="{{ (packages[0].price if packages else 10)|round|int }}" data-duration-days="30">
-                                Boost Your Profile - ${{ "{:,.0f}".format((packages[0].price if packages else 10)|round|int) }}/month
+                                    data-package-id="1" data-package-name="Matchmaking" data-package-price="{{ profile_boost_price_usd }}" data-duration-days="30">
+                                Boost Your Profile - ${{ profile_boost_price_usd }} USD/month
                             </button>
                             <p class="text-xs text-text-secondary mt-3">Only one plan available - Simple, affordable, effective</p>
                         </div>
@@ -1060,10 +1060,10 @@
                                     </div>
                                     <div class="flex justify-between items-center py-1.5">
                                         <span class="text-text-secondary font-medium">Total Amount:</span>
-                                        <span id="summaryTotal" class="text-xl font-bold text-rose-gold">${{ "{:,.0f}".format((packages[0].price if packages else 10)|round|int) }}</span>
+                                        <span id="summaryTotal" class="text-xl font-bold text-rose-gold">${{ profile_boost_price_usd }} USD</span>
                                     </div>
                                 </div>
-                                <p class="text-xs text-text-secondary mt-2 text-center">Fixed price - ${{ "{:,.0f}".format((packages[0].price if packages else 10)|round|int) }}/month</p>
+                                <p class="text-xs text-text-secondary mt-2 text-center">Fixed price - ${{ profile_boost_price_usd }} USD/month</p>
                             </div>
                         </div>
                         <div class="space-y-4">
@@ -1077,7 +1077,7 @@
                                             </div>
                                             <div>
                                                 <h5 class="font-playfair font-bold text-base text-primary">Profile Boost</h5>
-                                <p class="text-text-secondary text-xs">${{ "{:,.0f}".format((packages[0].price if packages else 10)|round|int) }}/month - 30 days duration</p>
+                                <p class="text-text-secondary text-xs">${{ profile_boost_price_usd }} USD/month - 30 days duration</p>
                                             </div>
                                         </div>
                                     </div>
@@ -1116,7 +1116,7 @@
                                         <div class="text-xs text-text-secondary">Your payment information is encrypted</div>
                                     </div>
                                 </div>
-                                <p class="text-xs text-text-secondary">Fixed price: ${{ "{:,.0f}".format((packages[0].price if packages else 10)|round|int) }} per month. Cancel anytime.</p>
+                                <p class="text-xs text-text-secondary">Fixed price: ${{ profile_boost_price_usd }} USD per month. Cancel anytime.</p>
                             </div>
                             <div class="flex items-start gap-3 rounded-lg border border-rose-gold/30 bg-white p-4 text-sm text-primary">
                                 <i class="bi bi-people-fill mt-0.5 text-rose-gold" aria-hidden="true"></i>
@@ -1240,7 +1240,7 @@
         const DEFAULT_MATCHMAKING_PACKAGE_ID = {{ packages[0].id if packages else 1 }};
         const DEFAULT_MATCHMAKING_PACKAGE_NAME = {{ (packages[0].name if packages else 'Matchmaking')|tojson }};
         const DEFAULT_MATCHMAKING_DURATION_DAYS = {{ packages[0].duration_days if packages else 30 }};
-        const MATCHMAKING_PRICE_USD = {{ (packages[0].price if packages else 10)|round|int }};
+        const MATCHMAKING_PRICE_USD = {{ profile_boost_price_usd|tojson }};
         // Application State - Updated for single price
         const AppState = {
             currentStep: 1,
@@ -1778,7 +1778,6 @@
                     const paymentPayload = {
                         request_id: data.request_id,
                         currency: 'USD',
-                        amount: String(MATCHMAKING_PRICE_USD),
                         campaign_id: AppState.selectedPackageId,
                         campaign_title: 'Matchmaking Service',
                         campaign_description: `Premium matchmaking service - $${MATCHMAKING_PRICE_USD}/month`,
@@ -1987,10 +1986,10 @@
                     const activePrice = document.querySelector('.bg-rose-gold\\/10 p.text-xs');
 
                     const usdPrice = MATCHMAKING_PRICE_USD;
-                    if (priceElement) priceElement.textContent = `$${usdPrice}`;
-                    if (priceDescription) priceDescription.textContent = `Fixed price - $${usdPrice}/month`;
-                    if (previewPrice) previewPrice.textContent = `$${usdPrice}/month - 30 days duration`;
-                    if (activePrice) activePrice.textContent = `Fixed price: $${usdPrice} per month. Cancel anytime.`;
+                    if (priceElement) priceElement.textContent = `$${usdPrice} USD`;
+                    if (priceDescription) priceDescription.textContent = `Fixed price - $${usdPrice} USD/month`;
+                    if (previewPrice) previewPrice.textContent = `$${usdPrice} USD/month - 30 days duration`;
+                    if (activePrice) activePrice.textContent = `Fixed price: $${usdPrice} USD per month. Cancel anytime.`;
                 }
 
                 const minAgeInput = document.getElementById('minAge');

@@ -804,7 +804,10 @@ def payment_callback():
             verification_data = verification.get("data", {}) or {}
             verified_status = (verification.get("verified_status") or "").strip().lower()
 
-            if verified_status in {"successful", "completed"}:
+            if verification.get("success") and verified_status in {
+                "successful",
+                "completed",
+            }:
                     # Update matchmaking payment and request
                     success = matchmaking_service.handle_matchmaking_payment_success(
                         matchmaking_payment, verification_data
@@ -1048,8 +1051,10 @@ def flutterwave_webhook():
                 return jsonify({"status": "error", "message": "Payment not found"}), 404
 
             if verified_status in {"successful", "completed"}:
-                handled = matchmaking_service.handle_matchmaking_payment_success(
-                    matchmaking_payment, verification_data
+                handled = bool(verification.get("success")) and (
+                    matchmaking_service.handle_matchmaking_payment_success(
+                        matchmaking_payment, verification_data
+                    )
                 )
             else:
                 handled = matchmaking_service.handle_matchmaking_payment_failure(

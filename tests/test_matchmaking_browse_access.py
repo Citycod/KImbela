@@ -69,6 +69,7 @@ def _browse_transaction(db, user, *, status="completed", completed_at=None):
             {
                 "expected_checkout_amount": "4800.00",
                 "expected_checkout_currency": "NGN",
+                "expected_product": "find_your_match",
                 "access_days": BROWSE_ACCESS_DAYS,
             }
         ),
@@ -90,7 +91,12 @@ def _successful_verification(transaction, user, provider_id="provider-123"):
             "tx_ref": transaction.gateway_reference,
             "amount": 4800,
             "currency": "NGN",
-            "meta": {"user_id": user.id},
+            "meta": {
+                "user_id": user.id,
+                "transaction_type": BROWSE_TRANSACTION_TYPE,
+                "access_days": BROWSE_ACCESS_DAYS,
+                "product": "find_your_match",
+            },
         },
     }
 
@@ -333,6 +339,34 @@ def test_callback_rejects_underpayment_without_granting_access(
     transaction = _browse_transaction(db, user, status="pending")
     verification = _successful_verification(transaction, user)
     verification["data"]["amount"] = 4799.99
+    monkeypatch.setattr(
+        BasePaymentService,
+        "resolve_flutterwave_verification",
+        lambda self, **_kwargs: verification,
+    )
+
+    response = client.get(
+        "/browse/payment-callback",
+        query_string={
+            "status": "successful",
+            "tx_ref": transaction.gateway_reference,
+            "transaction_id": "provider-123",
+        },
+    )
+
+    assert response.status_code == 302
+    db.session.refresh(transaction)
+    assert transaction.status == "pending"
+    assert get_browse_access_status(user.id)["active"] is False
+
+
+def test_callback_rejects_overpayment_without_granting_access(
+    client, user, db, monkeypatch
+):
+    _login(client, user)
+    transaction = _browse_transaction(db, user, status="pending")
+    verification = _successful_verification(transaction, user)
+    verification["data"]["amount"] = 4800.01
     monkeypatch.setattr(
         BasePaymentService,
         "resolve_flutterwave_verification",

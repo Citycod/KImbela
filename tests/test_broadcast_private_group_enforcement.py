@@ -598,12 +598,20 @@ def test_matchmaking_payment_success_activates_entitlement_without_public_post(
         user_id=account.id,
         matchmaking_request_id=request_row.id,
         package_id=package.id,
-        amount=2,
+        amount=3,
         currency="USD",
         status="pending",
         payment_status="pending",
         gateway="flutterwave",
         gateway_reference=f"MM-{uuid.uuid4().hex}",
+        gateway_metadata=json.dumps(
+            {
+                "expected_checkout_amount": "4800.00",
+                "expected_checkout_currency": "NGN",
+                "expected_product": "profile_boost",
+                "expected_transaction_type": "matchmaking",
+            }
+        ),
     )
     db.session.add(payment)
     db.session.commit()
@@ -618,10 +626,21 @@ def test_matchmaking_payment_success_activates_entitlement_without_public_post(
         lambda *_args, **_kwargs: emails.append("sent") or True,
     )
 
-    assert service.handle_matchmaking_payment_success(
-        payment,
-        {"status": "successful", "id": f"gateway-{uuid.uuid4().hex}"},
-    )
+    provider_data = {
+        "status": "successful",
+        "id": f"gateway-{uuid.uuid4().hex}",
+        "tx_ref": payment.gateway_reference,
+        "amount": 4800,
+        "currency": "NGN",
+        "meta": {
+            "user_id": account.id,
+            "matchmaking_request_id": request_row.id,
+            "package_id": package.id,
+            "transaction_type": "matchmaking",
+            "product": "profile_boost",
+        },
+    }
+    assert service.handle_matchmaking_payment_success(payment, provider_data)
     db.session.refresh(request_row)
     assert request_row.status == "active"
     assert request_row.payment_status == "completed"
@@ -633,10 +652,7 @@ def test_matchmaking_payment_success_activates_entitlement_without_public_post(
     assert Post.query.count() == post_count
 
     first_end_date = request_row.end_date
-    assert service.handle_matchmaking_payment_success(
-        payment,
-        {"status": "successful", "id": f"gateway-{uuid.uuid4().hex}"},
-    )
+    assert service.handle_matchmaking_payment_success(payment, provider_data)
     db.session.refresh(request_row)
     assert request_row.end_date == first_end_date
     assert emails == ["sent"]
