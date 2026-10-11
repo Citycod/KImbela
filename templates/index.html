@@ -42,8 +42,6 @@
         rel="stylesheet" />
     <link href="{{ url_for('static', filename='assets/vendor/aos/aos.css') }}" rel="stylesheet" />
     <link href="{{ url_for('static', filename='assets/vendor/swiper/swiper-bundle.min.css') }}" rel="stylesheet" />
-    <link href="{{ url_for('static', filename='assets/vendor/glightbox/css/glightbox.min.css') }}" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 
 
     <!-- Main CSS File -->
@@ -176,7 +174,7 @@
                 style="background: none">
                 <!-- Uncomment the line below if you also wish to use an image logo -->
                 <img src="{{ url_for('static', filename='assets/img/kim.png') }}" alt=""
-                    style="width: 10rem; height: 5rem" />
+                    width="687" height="363" style="width: 10rem; height: 5rem" />
             </a>
 
             <nav id="navmenu" class="navmenu">
@@ -230,7 +228,8 @@
                         </div>
                         <div class="col-lg-6 hero-media" data-aos="zoom-in" data-aos-delay="200">
                             <img src="{{ url_for('static', filename='assets/img/wwe.webp') }}"
-                                alt="Community Connection" class="img-fluid main-image" />
+                                alt="Community Connection" class="img-fluid main-image"
+                                width="1200" height="675" fetchpriority="high" />
                             <div class="image-overlay">
                                 <div class="badge-accredited">
                                     <i class="bi bi-patch-check-fill"></i>
@@ -314,7 +313,8 @@
                         <div class="portfolio-item">
                             <div class="portfolio-img">
                                 <img src="{{ url_for('static', filename='assets/img/conn.jpeg') }}"
-                                    class="img-fluid balanced" alt="Connection Management" style="height: 15.6rem" />
+                                    class="img-fluid balanced" alt="Connection Management" style="height: 15.6rem"
+                                    width="6000" height="4000" loading="lazy" decoding="async" />
                                 <div class="portfolio-overlay">
                                     <div class="portfolio-info">
                                         <h4>Balanced Connections</h4>
@@ -331,7 +331,8 @@
                         <div class="portfolio-item">
                             <div class="portfolio-img">
                                 <img src="{{ url_for('static', filename='assets/img/diss.webp') }}"
-                                    class="img-fluid group" alt="Group Discussions" style="height: 15.6rem" />
+                                    class="img-fluid group" alt="Group Discussions" style="height: 15.6rem"
+                                    width="2880" height="1620" loading="lazy" decoding="async" />
                                 <div class="portfolio-overlay">
                                     <div class="portfolio-info">
                                         <h4>Group Discussions</h4>
@@ -348,7 +349,8 @@
                         <div class="portfolio-item">
                             <div class="portfolio-img">
                                 <img src="{{ url_for('static', filename='assets/img/stu.jpg') }}"
-                                    class="img-fluid premium" alt="Premium Services" style="height: 15.6rem" />
+                                    class="img-fluid premium" alt="Premium Services" style="height: 15.6rem"
+                                    width="1068" height="612" loading="lazy" decoding="async" />
                                 <div class="portfolio-overlay">
                                     <div class="portfolio-info">
                                         <h4>Premium Services</h4>
@@ -407,7 +409,7 @@
                             <div class="testimonial-item" data-aos="zoom-in" data-aos-delay="200">
                                 <div class="testimonial-header">
                                     <img src="{{ url_for('static', filename='assets/img/woman2.jpg') }}" alt="Client"
-                                        class="img-fluid" loading="lazy" />
+                                        class="img-fluid" width="838" height="1280" loading="lazy" decoding="async" />
                                     <div class="rating">
                                         <i class="bi bi-star-fill"></i>
                                         <i class="bi bi-star-fill"></i>
@@ -437,7 +439,7 @@
                             <div class="testimonial-item" data-aos="zoom-in" data-aos-delay="300">
                                 <div class="testimonial-header">
                                     <img src="{{ url_for('static', filename='assets/img/man1.jpg') }}" alt="Client"
-                                        class="img-fluid" loading="lazy" />
+                                        class="img-fluid" width="1442" height="1920" loading="lazy" decoding="async" />
                                     <div class="rating">
                                         <i class="bi bi-star-fill"></i>
                                         <i class="bi bi-star-fill"></i>
@@ -467,7 +469,7 @@
                             <div class="testimonial-item" data-aos="zoom-in" data-aos-delay="400">
                                 <div class="testimonial-header">
                                     <img src="{{ url_for('static', filename='assets/img/woman3.webp') }}" alt="Client"
-                                        class="img-fluid" loading="lazy" />
+                                        class="img-fluid" width="605" height="328" loading="lazy" decoding="async" />
                                     <div class="rating">
                                         <i class="bi bi-star-fill"></i>
                                         <i class="bi bi-star-fill"></i>
@@ -622,15 +624,10 @@
     <div id="preloader"></div>
 
     <!-- Vendor JS Files -->
-    <script src="{{ url_for('static', filename='assets/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='assets/vendor/php-email-form/validate.js') }}"></script>
-    <script src="{{ url_for('static', filename='assets/vendor/aos/aos.js') }}"></script>
-    <script src="{{ url_for('static', filename='assets/vendor/swiper/swiper-bundle.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='assets/vendor/purecounter/purecounter_vanilla.js') }}"></script>
-    <script src="{{ url_for('static', filename='assets/vendor/imagesloaded/imagesloaded.pkgd.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='assets/vendor/isotope-layout/isotope.pkgd.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='assets/vendor/glightbox/js/glightbox.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='assets/vendor/bootstrap/js/bootstrap.bundle.min.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='assets/vendor/aos/aos.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='assets/vendor/swiper/swiper-bundle.min.js') }}" defer></script>
 
     <!-- Main JS File -->
-    <script src="{{ url_for('static', filename='assets/js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='assets/js/main.js', v='landing-performance-1') }}" defer></script>
 {% endblock %}

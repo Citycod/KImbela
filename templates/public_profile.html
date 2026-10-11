@@ -256,7 +256,7 @@
                         <p class="text-sm opacity-90 mt-1 max-w-2xl">{{ profile_user.bio or 'No bio yet.' }}</p>
                         <div class="hidden lg:flex flex-wrap gap-3 mt-3">
                             <div class="glass-effect px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
-                                <i class="fas fa-newspaper"></i> {{ posts|length }} Posts
+                                <i class="fas fa-newspaper"></i> {{ post_count }} Posts
                             </div>
                             <div class="glass-effect px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
                                 <i class="fas fa-users"></i> {{ friends_count }} Friends
@@ -384,6 +384,7 @@
                     {% for post in posts %}
                         {% include "_post_card.html" %}
                     {% endfor %}
+                    {% include "_profile_post_pagination.html" %}
                 {% else %}
                     <div class="bg-white rounded-xl shadow-medium p-12 text-center border border-gray-100">
                         <i class="fas fa-newspaper text-5xl text-gray-300 mb-4"></i>
@@ -519,7 +520,7 @@
                         <p class="text-sm opacity-90 mt-1 max-w-2xl">{{ profile_user.bio or 'No bio yet.' }}</p>
                         <div class="hidden lg:flex flex-wrap gap-3 mt-3">
                             <div class="glass-effect px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
-                                <i class="fas fa-newspaper"></i> {{ posts|length }} Posts
+                                <i class="fas fa-newspaper"></i> {{ post_count }} Posts
                             </div>
                             <div class="glass-effect px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
                                 <i class="fas fa-users"></i> {{ friends_count }} Friends
@@ -647,6 +648,7 @@
                     {% for post in posts %}
                         {% include "_post_card.html" %}
                     {% endfor %}
+                    {% include "_profile_post_pagination.html" %}
                 {% else %}
                     <div class="bg-white rounded-xl shadow-medium p-12 text-center border border-gray-100">
                         <i class="fas fa-newspaper text-5xl text-gray-300 mb-4"></i>
@@ -783,7 +785,7 @@
         <!-- Stats row -->
         <div class="flex gap-6 mt-3">
             <div class="text-center">
-                <span class="text-lg font-bold text-gray-900">{{ posts|length }}</span>
+                <span class="text-lg font-bold text-gray-900">{{ post_count }}</span>
                 <p class="text-xs text-gray-500">Posts</p>
             </div>
             <div class="text-center">
@@ -853,6 +855,7 @@
             {% for post in posts %}
                 {% include "_post_card.html" %}
             {% endfor %}
+            {% include "_profile_post_pagination.html" %}
         {% else %}
             <div class="bg-white rounded-2xl shadow-medium p-12 text-center border border-gray-100">
                 <i class="fas fa-newspaper text-5xl text-gray-300 mb-4"></i>

@@ -1,0 +1,19 @@
+{% if post_pagination and (post_pagination.has_prev or post_pagination.has_next) %}
+<nav class="mt-5 flex items-center justify-between gap-3" aria-label="Profile posts pagination">
+    {% if previous_posts_url %}
+    <a href="{{ previous_posts_url }}"
+       class="inline-flex items-center justify-center rounded-lg bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200">
+        Previous
+    </a>
+    {% else %}
+    <span></span>
+    {% endif %}
+    <span class="text-xs text-gray-500">Page {{ post_pagination.page }} of {{ post_pagination.pages }}</span>
+    {% if next_posts_url %}
+    <a href="{{ next_posts_url }}"
+       class="inline-flex items-center justify-center rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700">
+        Next
+    </a>
+    {% endif %}
+</nav>
+{% endif %}

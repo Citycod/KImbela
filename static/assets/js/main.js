@@ -156,9 +156,9 @@
     /**
      * Initiate glightbox
      */
-    const glightbox = GLightbox({
-        selector: '.glightbox'
-    });
+    if (typeof GLightbox === 'function' && document.querySelector('.glightbox')) {
+        GLightbox({ selector: '.glightbox' });
+    }
 
     /**
      * Navbar glass dropdowns (Groups / Match)

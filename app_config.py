@@ -403,7 +403,16 @@ def create_app():
 
     @app.after_request
     def after_request(response):
-        if response.mimetype == "text/html" and request.path != "/offline":
+        if request.path.startswith("/static/") and response.status_code == 200:
+            if request.args.get("v"):
+                response.headers["Cache-Control"] = (
+                    "public, max-age=31536000, immutable"
+                )
+            else:
+                response.headers["Cache-Control"] = (
+                    "public, max-age=3600, stale-while-revalidate=86400"
+                )
+        elif response.mimetype == "text/html" and request.path != "/offline":
             response.headers["Cache-Control"] = "private, no-store, max-age=0"
             response.headers["Pragma"] = "no-cache"
             response.vary.add("Cookie")

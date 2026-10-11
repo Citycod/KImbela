@@ -1,6 +1,6 @@
 const KIMBELA_CACHE_PREFIX = 'kimbela-';
-const PRECACHE_NAME = 'kimbela-precache-v5';
-const STATIC_CACHE_NAME = 'kimbela-static-v5';
+const PRECACHE_NAME = 'kimbela-precache-v6';
+const STATIC_CACHE_NAME = 'kimbela-static-v6';
 const OFFLINE_URL = '/offline';
 const ESSENTIAL_PRECACHE_URLS = [
   OFFLINE_URL,
@@ -33,6 +33,42 @@ self.addEventListener('activate', event => {
   );
 });
 
+function cacheStaticResponse(request, response) {
+  if (response.status !== 200 || response.type === 'opaque') {
+    return Promise.resolve();
+  }
+  return caches.open(STATIC_CACHE_NAME).then(cache => (
+    cache.put(request, response.clone())
+  ));
+}
+
+function fetchAndCacheStatic(request) {
+  return fetch(request).then(response => (
+    cacheStaticResponse(request, response)
+      .catch(error => console.error('Static asset cache write failed', error))
+      .then(() => response)
+  ));
+}
+
+function cacheFirstStatic(request) {
+  return caches.match(request).then(cachedResponse => (
+    cachedResponse || fetchAndCacheStatic(request)
+  ));
+}
+
+function staleWhileRevalidateStatic(event) {
+  return caches.match(event.request).then(cachedResponse => {
+    const networkResponse = fetchAndCacheStatic(event.request);
+    if (cachedResponse) {
+      if (typeof event.waitUntil === 'function') {
+        event.waitUntil(networkResponse.catch(() => undefined));
+      }
+      return cachedResponse;
+    }
+    return networkResponse;
+  });
+}
+
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') {
     return;
@@ -60,22 +96,11 @@ self.addEventListener('fetch', event => {
   );
 
   if (isPublicStaticAsset) {
+    const isVersionedAsset = requestUrl.searchParams.has('v');
     event.respondWith(
-      caches.match(event.request).then(cachedResponse => {
-        if (cachedResponse) {
-          return cachedResponse;
-        }
-
-        return fetch(event.request).then(networkResponse => {
-          if (networkResponse.status === 200 && networkResponse.type !== 'opaque') {
-            const responseToCache = networkResponse.clone();
-            caches.open(STATIC_CACHE_NAME)
-              .then(cache => cache.put(event.request, responseToCache))
-              .catch(error => console.error('Static asset cache write failed', error));
-          }
-          return networkResponse;
-        });
-      })
+      isVersionedAsset
+        ? cacheFirstStatic(event.request)
+        : staleWhileRevalidateStatic(event)
     );
   }
 });

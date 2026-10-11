@@ -171,13 +171,13 @@
                         <p class="text-sm opacity-90 mb-4 max-w-3xl">{{ user.bio or 'Welcome to my profile! Let’s connect and share amazing moments together.' }}</p>
                         <div class="flex flex-wrap gap-3 text-xs">
                             <div class="glass-effect px-3 py-1.5 rounded-xl flex items-center gap-2">
-                                <i class="fas fa-newspaper"></i> {{ posts|length }} Posts
+                                <i class="fas fa-newspaper"></i> {{ post_count }} Posts
                             </div>
                             <div class="glass-effect px-3 py-1.5 rounded-xl flex items-center gap-2">
                                 <i class="fas fa-users"></i> {{ friends|length }} Friends
                             </div>
                             <div class="glass-effect px-3 py-1.5 rounded-xl flex items-center gap-2">
-                                <i class="fas fa-user-slash"></i> {{ user.get_blocked_users()|length }} Blocked
+                                <i class="fas fa-user-slash"></i> {{ blocked_users|length }} Blocked
                             </div>
                         </div>
                     </div>
@@ -277,6 +277,7 @@
                     {% for post in posts %}
                         {% include "_post_card.html" %}
                     {% endfor %}
+                    {% include "_profile_post_pagination.html" %}
                 {% else %}
                     <div class="bg-white rounded-2xl shadow-medium p-16 text-center border border-gray-100">
                         <i class="fas fa-newspaper text-5xl text-gray-300 mb-5"></i>
@@ -407,13 +408,13 @@
                         <p class="text-sm opacity-90 mb-4 max-w-3xl">{{ user.bio or 'Welcome to my profile! Let’s connect and share amazing moments together.' }}</p>
                         <div class="flex flex-wrap gap-3 text-xs">
                             <div class="glass-effect px-3 py-1.5 rounded-xl flex items-center gap-2">
-                                <i class="fas fa-newspaper"></i> {{ posts|length }} Posts
+                                <i class="fas fa-newspaper"></i> {{ post_count }} Posts
                             </div>
                             <div class="glass-effect px-3 py-1.5 rounded-xl flex items-center gap-2">
                                 <i class="fas fa-users"></i> {{ friends|length }} Friends
                             </div>
                             <div class="glass-effect px-3 py-1.5 rounded-xl flex items-center gap-2">
-                                <i class="fas fa-user-slash"></i> {{ user.get_blocked_users()|length }} Blocked
+                                <i class="fas fa-user-slash"></i> {{ blocked_users|length }} Blocked
                             </div>
                         </div>
                     </div>
@@ -513,6 +514,7 @@
                     {% for post in posts %}
                         {% include "_post_card.html" %}
                     {% endfor %}
+                    {% include "_profile_post_pagination.html" %}
                 {% else %}
                     <div class="bg-white rounded-2xl shadow-medium p-16 text-center border border-gray-100">
                         <i class="fas fa-newspaper text-5xl text-gray-300 mb-5"></i>
@@ -642,7 +644,7 @@
         <!-- Stats row -->
         <div class="flex gap-6 mt-3">
             <div class="text-center">
-                <span class="text-lg font-bold text-gray-900">{{ posts|length }}</span>
+                <span class="text-lg font-bold text-gray-900">{{ post_count }}</span>
                 <p class="text-xs text-gray-500">Posts</p>
             </div>
             <div class="text-center">
@@ -650,7 +652,7 @@
                 <p class="text-xs text-gray-500">Friends</p>
             </div>
             <div class="text-center">
-                <span class="text-lg font-bold text-gray-900">{{ user.get_blocked_users()|length }}</span>
+                <span class="text-lg font-bold text-gray-900">{{ blocked_users|length }}</span>
                 <p class="text-xs text-gray-500">Blocked</p>
             </div>
         </div>
@@ -690,6 +692,7 @@
             {% for post in posts %}
                 {% include "_post_card.html" %}
             {% endfor %}
+            {% include "_profile_post_pagination.html" %}
         {% else %}
             <div class="bg-white rounded-2xl shadow-medium p-12 text-center border border-gray-100">
                 <i class="fas fa-newspaper text-5xl text-gray-300 mb-5"></i>

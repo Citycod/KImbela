@@ -131,12 +131,17 @@ function loadWorker(overrides = {}) {
 
 function createFetchEvent(request) {
   let responsePromise;
+  const lifetimePromises = [];
   return {
     request,
     respondWith(promise) {
       responsePromise = Promise.resolve(promise);
     },
+    waitUntil(promise) {
+      lifetimePromises.push(Promise.resolve(promise));
+    },
     getResponse: () => responsePromise,
+    settleLifetime: () => Promise.all(lifetimePromises),
   };
 }
 
@@ -240,6 +245,54 @@ test('same-origin public static assets are cached after a network miss', async (
 
   assert.equal(worker.cachePuts.length, 1);
   assert.equal(worker.cachePuts[0].request, request);
+});
+
+test('versioned static assets use cache-first without a redundant fetch', async () => {
+  const cachedResponse = createResponse('cached versioned asset');
+  let fetchCount = 0;
+  const worker = loadWorker({
+    cacheMatch: async () => cachedResponse,
+    fetch: async () => {
+      fetchCount += 1;
+      return createResponse('network asset');
+    },
+  });
+  const event = createFetchEvent({
+    method: 'GET',
+    mode: 'cors',
+    url: 'https://kimbela.test/static/app.js?v=release-1',
+    headers: { has: () => false },
+  });
+
+  worker.handlers.fetch(event);
+
+  assert.equal(await event.getResponse(), cachedResponse);
+  assert.equal(fetchCount, 0);
+});
+
+test('unversioned static assets revalidate a cached response in the background', async () => {
+  const cachedResponse = createResponse('cached unversioned asset');
+  let fetchCount = 0;
+  const worker = loadWorker({
+    cacheMatch: async () => cachedResponse,
+    fetch: async () => {
+      fetchCount += 1;
+      return createResponse('fresh network asset');
+    },
+  });
+  const event = createFetchEvent({
+    method: 'GET',
+    mode: 'cors',
+    url: 'https://kimbela.test/static/app.js',
+    headers: { has: () => false },
+  });
+
+  worker.handlers.fetch(event);
+
+  assert.equal(await event.getResponse(), cachedResponse);
+  await event.settleLifetime();
+  assert.equal(fetchCount, 1);
+  assert.equal(worker.cachePuts.length, 1);
 });
 
 test('authenticated API requests are not intercepted or cached', () => {

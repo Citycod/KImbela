@@ -1260,24 +1260,6 @@ def user_dashboard():
     )
     timings['sponsored_ads_query'] = time.time() - t0
     
-    # Log the timings
-    from flask import current_app
-    current_app.logger.info("=== DASHBOARD ROUTE TIMINGS ===")
-    longest_segment = ""
-    max_time = 0
-    for name, t in timings.items():
-        current_app.logger.info(f"{name}: {t:.4f}s")
-        if t > max_time and name != 'suggestions_full_block':  # avoid overlapping segments
-            max_time = t
-            longest_segment = name
-    if timings.get('suggestions_full_block', 0) > max_time:
-         max_time = timings['suggestions_full_block']
-         longest_segment = 'suggestions_full_block'
-         
-    current_app.logger.info(f"*** LONGEST SEGMENT: {longest_segment} took {max_time:.4f}s ***")
-    current_app.logger.info("===============================")
-
-
     def get_video_mime(url):
         if not url:
             return ""
@@ -2911,8 +2893,6 @@ def get_sponsored_ads():
 
         current_time = utcnow()
 
-        print(f"🔍 [DEBUG] Loading sponsored ads at: {current_time}")
-
         # Query for active ads within date range
         active_ads = (
             AdCampaign.query.filter(
@@ -2928,16 +2908,6 @@ def get_sponsored_ads():
             )
             .all()
         )
-
-        print(f"🔍 [DEBUG] Found {len(active_ads)} active ads")
-
-        # Log each ad for debugging
-        for ad in active_ads:
-            print(f"  - ID: {ad.id}, Title: '{ad.title}'")
-            print(f"    Status: {ad.status}, Budget: {ad.budget}")
-            print(f"    Start: {ad.start_date}, End: {ad.end_date}")
-            print(f"    Image field exists: {hasattr(ad, 'image')}")
-            print(f"    User ID: {ad.user_id}")
 
         ads_data = []
         for ad in active_ads:
@@ -2990,8 +2960,6 @@ def get_sponsored_ads():
                     "end_date": ad.end_date.isoformat() if ad.end_date else None,
                 }
             )
-
-        print(f"✅ [DEBUG] Returning {len(ads_data)} ads")
 
         return jsonify(
             {
@@ -3809,8 +3777,9 @@ def profile(user_id):
         flash("You can only edit your own profile.", "warning")
         return redirect(url_for("user.profile", user_id=current_user.id))
 
-    # GET request - load profile data
-    posts = (
+    # Keep profile history bounded while preserving access to older posts.
+    page = max(request.args.get("page", 1, type=int) or 1, 1)
+    posts_query = _exclude_protected_shared_sources(
         Post.query.options(
             joinedload(Post.author),
             joinedload(Post.shared_post).joinedload(Post.author),
@@ -3820,15 +3789,21 @@ def profile(user_id):
         .filter_by(author_id=current_user.id)
         .filter(Post.group_id.is_(None))
         .order_by(Post.created_at.desc())
-        .all()
     )
+    post_pagination = posts_query.paginate(page=page, per_page=20, error_out=False)
+    posts = post_pagination.items
     posts = [post for post in posts if can_view_post(post, current_user)]
+    reaction_counts_by_post_id, _, _ = get_dashboard_reaction_data(
+        [post.id for post in posts], current_user.id
+    )
 
-    # Get friends (excluding blocked users)
-    friends = [f for f in current_user.friends if not current_user.is_blocking(f)]
-
-    # Get blocked users
+    # Load blocked users once, then filter the dynamic friends query in SQL.
     blocked_users = current_user.get_blocked_users()
+    blocked_ids = [blocked_user.id for blocked_user in blocked_users]
+    friends_query = current_user.friends
+    if blocked_ids:
+        friends_query = friends_query.filter(~User.id.in_(blocked_ids))
+    friends = friends_query.all()
 
     return render_template(
         "profile.html",
@@ -3836,6 +3811,19 @@ def profile(user_id):
         posts=posts,
         friends=friends,
         blocked_users=blocked_users,
+        post_count=post_pagination.total,
+        post_pagination=post_pagination,
+        previous_posts_url=(
+            url_for("user.profile", user_id=current_user.id, page=post_pagination.prev_num)
+            if post_pagination.has_prev
+            else None
+        ),
+        next_posts_url=(
+            url_for("user.profile", user_id=current_user.id, page=post_pagination.next_num)
+            if post_pagination.has_next
+            else None
+        ),
+        reaction_counts_by_post_id=reaction_counts_by_post_id,
         datetime=datetime,
     )
 
@@ -4097,9 +4085,7 @@ def explore_users():
 def get_user_groups():
     """Get all groups for the dropdown with membership status"""
     try:
-        print(f"🔍 Fetching groups for user: {current_user.id}")
         groups_data = get_groups_data_for_user(current_user.id)
-        print(f"🔍 Returning {len(groups_data)} groups")
         return jsonify(groups_data)
 
     except Exception as e:
@@ -5166,13 +5152,6 @@ def react_to_post(post_id):
         return jsonify({"success": False, "error": "Failed to react to post"}), 500
 
 
-import time
-
-start = time.time()
-# result = db.session.query(...).all()
-print(f"Query took {time.time() - start:.2f} seconds")
-
-
 @user.route("/post/<post_identifier>")
 def view_shared_post(post_identifier):
     try:
@@ -5224,8 +5203,9 @@ def view_profile(user_identifier):
         flash("You cannot view this profile.", "danger")
         return redirect(url_for("user.user_dashboard"))
 
-    # Get the user's recent posts (visible to the viewer)
-    posts = (
+    # Get one bounded page of the user's posts (visible to the viewer).
+    page = max(request.args.get("page", 1, type=int) or 1, 1)
+    posts_query = (
         _exclude_protected_shared_sources(Post.query.options(
             joinedload(Post.author),
             joinedload(Post.shared_post).joinedload(Post.author),
@@ -5235,10 +5215,13 @@ def view_profile(user_identifier):
         .filter_by(author_id=target_user.id)
         .filter(Post.group_id.is_(None))
         .order_by(Post.created_at.desc())
-        .limit(20)  # Adjust as needed
-        .all()
     )
+    post_pagination = posts_query.paginate(page=page, per_page=20, error_out=False)
+    posts = post_pagination.items
     posts = [post for post in posts if can_view_post(post, current_user)]
+    reaction_counts_by_post_id, _, _ = get_dashboard_reaction_data(
+        [post.id for post in posts], current_user.id
+    )
 
     # Get friends count (excluding blocked users)
     friends_count = target_user.friends.count()
@@ -5253,6 +5236,27 @@ def view_profile(user_identifier):
         current_user=current_user,
         friend_status=friend_status,
         posts=posts,
+        post_count=post_pagination.total,
+        post_pagination=post_pagination,
+        previous_posts_url=(
+            url_for(
+                "user.view_profile",
+                user_identifier=target_user.public_id,
+                page=post_pagination.prev_num,
+            )
+            if post_pagination.has_prev
+            else None
+        ),
+        next_posts_url=(
+            url_for(
+                "user.view_profile",
+                user_identifier=target_user.public_id,
+                page=post_pagination.next_num,
+            )
+            if post_pagination.has_next
+            else None
+        ),
+        reaction_counts_by_post_id=reaction_counts_by_post_id,
         friends_count=friends_count,
         age=age,
         is_own_profile=(target_user.id == current_user.id),
