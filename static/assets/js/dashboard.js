@@ -2267,6 +2267,7 @@ const NotificationSystem = {
                 '/notifications'
             );
             this.display(notifications, list);
+            await this.updateBadge();
             return true;
         } catch (error) {
             list.innerHTML = '<div class="text-center p-4 text-red-500"><i class="bi bi-exclamation-triangle"></i><p>Error loading notifications</p></div>';
@@ -2300,7 +2301,7 @@ const NotificationSystem = {
                         <div class="notification-time text-xs text-gray-500 mt-1">${TimeUtils.formatNotificationTime(notification.created_at)}</div>
                         ${isFriendRequest ? `
                         <div class="notification-actions flex space-x-2 mt-2">
-                            ${!notification.is_read && actorId ? `
+                            ${notification.actionable !== false && actorId ? `
                                 <button class="notification-action-btn px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors"
                                         onclick="event.stopPropagation(); NotificationSystem.acceptFriendRequest(${actorId}, ${notification.id})">
                                         Accept

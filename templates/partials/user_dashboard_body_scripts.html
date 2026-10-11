@@ -7,6 +7,7 @@
           this.confettiInterval = null;
           this.checkInFlight = null;
           this.todayBirthdays = [];
+          this.unreadBirthdayCount = 0;
           this.hasLoadedTodayBirthdays = false;
           this.pollTimer = null;
           this.leadershipUnsubscribe = null;
@@ -183,11 +184,17 @@
           );
           if (!friend) return false;
           friend.is_wished = true;
+          friend.is_seen = true;
+          friend.is_pending = false;
           this.showBirthdayNotification(this.todayBirthdays);
+          const unreadCount = this.todayBirthdays.filter(
+            (birthday) => birthday.is_pending && !birthday.is_seen,
+          ).length;
           this.updateBirthdayBadge({
             success: true,
             birthdays: this.todayBirthdays,
-            count: this.todayBirthdays.length,
+            count: unreadCount,
+            unread_count: unreadCount,
           });
           return true;
         }
@@ -201,7 +208,9 @@
                 data = {
                   success: true,
                   birthdays: this.todayBirthdays,
-                  count: this.todayBirthdays.length,
+                  count: this.todayBirthdays.filter(
+                    (birthday) => birthday.is_pending && !birthday.is_seen,
+                  ).length,
                 };
               } else {
                 await this.checkBirthdays();
@@ -213,9 +222,11 @@
             const shortcut = document.getElementById("birthdayShortcut");
 
             if (data.success) {
-              const birthdayCount = Array.isArray(data.birthdays)
-                ? data.birthdays.length
-                : Math.max(0, Number(data.count) || 0);
+              const birthdayCount = Math.max(
+                0,
+                Number(data.unread_count ?? data.count) || 0,
+              );
+              this.unreadBirthdayCount = birthdayCount;
               if (count && birthdayCount > 0) {
                 count.textContent = birthdayCount > 9 ? "9+" : birthdayCount;
                 count.classList.remove("hidden");
@@ -226,8 +237,8 @@
               }
               if (shortcut) {
                 const label = birthdayCount > 0
-                  ? `Birthdays, ${birthdayCount} today`
-                  : "Birthdays, none today";
+                  ? `Birthdays, ${birthdayCount} unread`
+                  : "Birthdays, no unread alerts";
                 shortcut.setAttribute("aria-label", label);
                 shortcut.setAttribute("title", label);
               }
@@ -595,6 +606,9 @@
             if (!popup.classList.contains("hidden")) {
               popup.classList.remove("scale-95", "opacity-0");
               popup.classList.add("scale-100", "opacity-100");
+              if (this.unreadBirthdayCount > 0) {
+                this.markBirthdaysSeen({ closePopup: false });
+              }
             }
           }
         }
@@ -609,19 +623,29 @@
         }
 
         // Mark all birthdays as seen
-        async markBirthdaysSeen() {
+        async markBirthdaysSeen({ closePopup = true } = {}) {
           try {
-            await fetch("/api/birthday/notifications/mark_seen", {
+            const response = await fetch("/api/birthday/notifications/mark_seen", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
                 "X-CSRFToken": window.csrfToken || "",
               },
             });
-
-            this.closeBirthdayPopup();
-            this.updateBirthdayBadge();
+            if (!response.ok) return false;
+            this.todayBirthdays.forEach((birthday) => {
+              birthday.is_seen = true;
+            });
+            if (closePopup) this.closeBirthdayPopup();
+            this.updateBirthdayBadge({
+              success: true,
+              birthdays: this.todayBirthdays,
+              count: 0,
+              unread_count: 0,
+            });
+            return true;
           } catch (error) {
+            return false;
           }
         }
 

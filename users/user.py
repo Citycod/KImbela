@@ -679,21 +679,17 @@ def get_today_birthdays():
         User.id != current_user.id
     ).all()
 
-    wished_user_ids = {
-        birthday_user_id
-        for (birthday_user_id,) in (
-            db.session.query(BirthdayNotification.birthday_user_id)
-            .filter(
-                BirthdayNotification.user_id == current_user.id,
-                BirthdayNotification.birthday_date == today,
-                BirthdayNotification.is_wished.is_(True),
-            )
-            .all()
-        )
+    notification_by_user_id = {
+        notification.birthday_user_id: notification
+        for notification in BirthdayNotification.query.filter_by(
+            user_id=current_user.id,
+            birthday_date=today,
+        ).all()
     }
 
     birthday_friends = []
     for friend in birthday_users:
+        notification = notification_by_user_id.get(friend.id)
         birthday_friends.append(
                 {
                     "id": friend.id,
@@ -701,12 +697,27 @@ def get_today_birthdays():
                     "avatar": friend.profile_pic
                     or url_for("static", filename="assets/img/default-avatar.png"),
                     "age": today.year - friend.dob.year,
-                    "is_wished": friend.id in wished_user_ids,
+                    "is_seen": bool(notification and notification.is_seen),
+                    "is_wished": bool(notification and notification.is_wished),
+                    "is_pending": bool(notification and not notification.is_wished),
                 }
             )
 
+    visible_birthday_user_ids = {friend.id for friend in birthday_users}
+    unread_count = sum(
+        1
+        for birthday_user_id, notification in notification_by_user_id.items()
+        if birthday_user_id in visible_birthday_user_ids
+        and not notification.is_seen
+        and not notification.is_wished
+    )
     return jsonify(
-        {"success": True, "birthdays": birthday_friends, "count": len(birthday_friends)}
+        {
+            "success": True,
+            "birthdays": birthday_friends,
+            "count": unread_count,
+            "unread_count": unread_count,
+        }
     )
 
 
@@ -736,20 +747,9 @@ def get_upcoming_birthdays_api():
 @user.route("/api/birthday/wish", methods=["POST"])
 @login_required
 def send_birthday_wish():
-    """Send a birthday wish with comprehensive error logging"""
-    import traceback
-    import sys
-
-    # Log start of request
-    print(
-        f"\n🎂 [BIRTHDAY WISH] Request received from user {current_user.id} ({current_user.full_name})"
-    )
-    print(f"📦 Request method: {request.method}")
-
+    """Resolve one birthday action and send at most one birthday message."""
     try:
-        # Get and validate JSON data
         if not request.is_json:
-            print("❌ [ERROR] Request is not JSON")
             return (
                 jsonify(
                     {"success": False, "error": "Content-Type must be application/json"}
@@ -758,152 +758,80 @@ def send_birthday_wish():
             )
 
         data = request.get_json()
-        print(f"📦 Raw request data: {data}")
-
         if not data:
-            print("❌ [ERROR] No data provided in request")
             return jsonify({"success": False, "error": "No data provided"}), 400
 
-        # Extract and validate parameters
         friend_id = data.get("friend_id")
         message = data.get("message", "Happy Birthday! 🎉").strip()
 
-        print(f"🎯 Processing birthday wish:")
-        print(f"   → Friend ID: {friend_id}")
-        print(f"   → Message: '{message}'")
-        print(f"   → Current user ID: {current_user.id}")
-
         if not friend_id:
-            print("❌ [ERROR] Friend ID is required")
             return jsonify({"success": False, "error": "Friend ID is required"}), 400
 
         try:
             friend_id = int(friend_id)
         except (ValueError, TypeError):
-            print(f"❌ [ERROR] Invalid friend ID type: {type(friend_id)}")
             return jsonify({"success": False, "error": "Invalid friend ID format"}), 400
 
-        # Find friend
-        print(f"🔍 Looking up friend with ID: {friend_id}")
-        friend = User.query.get(friend_id)
+        friend = db.session.get(User, friend_id)
 
         if not friend:
-            print(f"❌ [ERROR] Friend not found with ID: {friend_id}")
             return jsonify({"success": False, "error": "Friend not found"}), 404
 
-        print(f"✅ Friend found: {friend.full_name} (ID: {friend.id})")
-
-        # Friendship check removed for birthday wishes
-
-        # Check if friend has birthday today
         today = date.today()
-        print(f"📅 Today's date: {today}")
+        if not friend.dob or (
+            friend.dob.month != today.month or friend.dob.day != today.day
+        ):
+            return jsonify({"success": False, "error": "This birthday is not today"}), 400
 
-        if friend.dob:
-            friend_birthday = friend.dob.replace(year=today.year)
-            is_birthday = (
-                friend.dob.month == today.month and friend.dob.day == today.day
-            )
-            print(f"🎁 Friend's DOB: {friend.dob}")
-            print(f"🎁 Birthday this year: {friend_birthday}")
-            print(f"🎁 Is birthday today: {is_birthday}")
-
-            if not is_birthday:
-                print("⚠️ [WARNING] Friend's birthday is not today")
-                # We'll still allow sending the wish, but log it
-        else:
-            print("⚠️ [WARNING] Friend does not have DOB set")
-
-        # Start database transaction
-        print(f"💾 Starting database transaction...")
-
-        # Create or update birthday notification
         notification = BirthdayNotification.query.filter_by(
             user_id=current_user.id, birthday_user_id=friend.id, birthday_date=today
         ).first()
 
-        if notification:
-            print(f"📝 Updating existing birthday notification ID: {notification.id}")
-            notification.is_wished = True
-            notification.wish_message = message
-            notification.wished_at = utcnow()
-            print(f"   → Updated wish status to: {notification.is_wished}")
-            print(f"   → Wish message: {notification.wish_message[:50]}...")
-        else:
-            print(f"📝 Creating new birthday notification")
+        if notification and notification.is_wished:
+            notification.is_seen = True
+            db.session.commit()
+            return jsonify(
+                {
+                    "success": True,
+                    "message": "Birthday wish already sent.",
+                    "notification_id": notification.id,
+                    "friend_name": friend.full_name,
+                    "is_wished": True,
+                    "duplicate": True,
+                }
+            )
+
+        if notification is None:
             notification = BirthdayNotification(
                 user_id=current_user.id,
                 birthday_user_id=friend.id,
                 birthday_date=today,
-                is_wished=True,
-                wish_message=message,
-                wished_at=utcnow(),
             )
             db.session.add(notification)
-            print(f"   → Created notification with wished_at: {notification.wished_at}")
 
-        # Mark notification as seen
+        notification.is_wished = True
         notification.is_seen = True
-        print(f"   → Marked notification as seen: {notification.is_seen}")
+        notification.wish_message = message
+        notification.wished_at = utcnow()
 
-        # Create birthday message - FIXED: Use sender and receiver objects, not IDs
-
-        birthday_message = ChatMessage()
-
-        birthday_message.sender_id = current_user.id
-        birthday_message.receiver_id = friend.id
-        birthday_message.content = f"🎂 {message}"
-        birthday_message.timestamp = utcnow()
-        birthday_message.status = "sent"
-        birthday_message.message_type = "birthday_wish"
-        birthday_message.message_data = {
-            "is_birthday_wish": True,
-            "original_message": message,
-            "wish_sent_at": utcnow().isoformat(),
-            "friend_name": friend.full_name,
-            "wisher_name": current_user.full_name,
-        }
-
+        birthday_message = ChatMessage(
+            sender_id=current_user.id,
+            receiver_id=friend.id,
+            content=f"🎂 {message}",
+            timestamp=utcnow(),
+            status="sent",
+            message_type="birthday_wish",
+            message_data={
+                "is_birthday_wish": True,
+                "original_message": message,
+                "wish_sent_at": utcnow().isoformat(),
+                "friend_name": friend.full_name,
+                "wisher_name": current_user.full_name,
+            },
+        )
         db.session.add(birthday_message)
-        db.session.flush()  # ensures birthday_message.id exists
-        print(f"✅ ChatMessage created with ID: {birthday_message.id}")
-        # so birthday_message.id exists BEFORE commit
-        print(f"✅ ChatMessage created with ID: {birthday_message.id}")
-
-        print(f"✅ ChatMessage created with ID: {birthday_message.id}")
-        print(f"   → Sender: {current_user.full_name} (ID: {current_user.id})")
-        print(f"   → Receiver: {friend.full_name} (ID: {friend.id})")
-        print(f"   → Content preview: {birthday_message.content[:50]}...")
-
-        # Debug: Print all ChatMessage object attributes
-        print(f"🔍 ChatMessage object attributes:")
-        for attr in ["sender_id", "receiver_id", "sender", "receiver"]:
-            if hasattr(birthday_message, attr):
-                value = getattr(birthday_message, attr)
-                print(f"   → {attr}: {value} (type: {type(value).__name__})")
-            else:
-                print(f"   → {attr}: Not found")
-
-        # Commit all changes
-        print(f"💾 Committing database changes...")
+        db.session.flush()
         db.session.commit()
-        print(f"✅ Database commit successful!")
-
-        # Verify the message was saved correctly
-        saved_message = ChatMessage.query.get(birthday_message.id)
-        if saved_message:
-            print(f"✅ Message saved successfully in database")
-            print(f"   → Saved sender_id: {saved_message.sender_id}")
-            print(f"   → Saved receiver_id: {saved_message.receiver_id}")
-            print(f"   → Saved content: {saved_message.content[:50]}...")
-        else:
-            print(f"⚠️ Could not retrieve saved message from database")
-
-        # Log success
-        print(f"🎉 Birthday wish sent successfully!")
-        print(f"   → Message ID: {birthday_message.id}")
-        print(f"   → Notification ID: {notification.id}")
-        print(f"   → Sent at: {utcnow().isoformat()}")
 
         return jsonify(
             {
@@ -914,43 +842,22 @@ def send_birthday_wish():
                 "timestamp": utcnow().isoformat(),
                 "friend_name": friend.full_name,
                 "is_wished": True,
+                "duplicate": False,
             }
         )
 
-    except Exception as e:
-        # Rollback on error
-        print(f"\n❌ [ERROR] Exception occurred:")
-        print(f"   → Error type: {type(e).__name__}")
-        print(f"   → Error message: {str(e)}")
-        print(f"\n🔍 Stack trace:")
-        traceback.print_exc(file=sys.stdout)
-
-        # Attempt to get more context about the error
-        print(f"\n📊 Error context:")
-        print(f"   → Current user: {current_user.id if current_user else 'None'}")
-        print(f"   → Request method: {request.method}")
-        print(f"   → Request path: {request.path}")
-
-        # Database rollback
-        try:
-            db.session.rollback()
-            print(f"   → Database rollback completed")
-        except Exception as rollback_error:
-            print(f"   → Failed to rollback: {rollback_error}")
-
-        # Check for specific common errors
-        error_msg = str(e)
-        if "sender" in error_msg.lower() or "receiver" in error_msg.lower():
-            print(f"   → Detected sender/receiver related error")
-            print(f"   → Message model expects sender and receiver objects")
-
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception(
+            "Birthday wish failed for user %s and birthday user %s",
+            current_user.id,
+            friend_id if "friend_id" in locals() else None,
+        )
         return (
             jsonify(
                 {
                     "success": False,
                     "error": "Failed to send birthday wish",
-                    "details": str(e),
-                    "error_type": type(e).__name__,
                 }
             ),
             500,
@@ -963,7 +870,9 @@ def mark_birthday_notifications_seen():
     """Mark birthday notifications as seen"""
     try:
         BirthdayNotification.query.filter_by(
-            user_id=current_user.id, is_seen=False
+            user_id=current_user.id,
+            birthday_date=date.today(),
+            is_seen=False,
         ).update({"is_seen": True})
 
         db.session.commit()
@@ -2179,21 +2088,54 @@ def clear_dashboard_cache():
 #     )
 
 
-def _post_content_destination(post, *, anchor=None):
+def _with_notification_id(destination, notification_id):
+    """Attach an owned notification id without disturbing an anchor."""
+    if not notification_id:
+        return destination
+    base, separator, fragment = destination.partition("#")
+    delimiter = "&" if "?" in base else "?"
+    marked = f"{base}{delimiter}notification_id={int(notification_id)}"
+    return f"{marked}{separator}{fragment}" if separator else marked
+
+
+@user.before_request
+def mark_linked_notification_read():
+    """Resolve a notification when its authenticated deep link is followed."""
+    if request.method != "GET" or not current_user.is_authenticated:
+        return None
+    notification_id = request.args.get("notification_id", type=int)
+    if not notification_id:
+        return None
+    updated = (
+        Notification.query.filter_by(
+            id=notification_id,
+            user_id=current_user.id,
+            is_read=False,
+        )
+        .update({"is_read": True}, synchronize_session=False)
+    )
+    if updated:
+        db.session.commit()
+    return None
+
+
+def _post_content_destination(post, *, anchor=None, notification_id=None):
     if post.group_id:
-        return url_for(
+        destination = url_for(
             "user.group_detail",
             group_id=post.group_id,
             notification=1,
             focus_post=post.id,
             _anchor=anchor or f"post-{post.id}",
         )
-    return url_for(
-        "user.view_shared_post",
-        post_identifier=post.public_id,
-        notification=1,
-        _anchor=anchor,
-    )
+    else:
+        destination = url_for(
+            "user.view_shared_post",
+            post_identifier=post.public_id,
+            notification=1,
+            _anchor=anchor,
+        )
+    return _with_notification_id(destination, notification_id)
 
 
 def _notify_post_like(post, actor):
@@ -2212,16 +2154,15 @@ def _notify_post_like(post, actor):
 
     body = f"{actor.full_name} liked your post."
     try:
-        db.session.add(
-            Notification(
-                user_id=post.author_id,
-                actor_id=actor.id,
-                type=NotificationType.POST_LIKE,
-                entity_id=post.id,
-                entity_type="group_post" if post.group_id else "post",
-                message=body,
-            )
+        notification = Notification(
+            user_id=post.author_id,
+            actor_id=actor.id,
+            type=NotificationType.POST_LIKE,
+            entity_id=post.id,
+            entity_type="group_post" if post.group_id else "post",
+            message=body,
         )
+        db.session.add(notification)
         db.session.commit()
     except Exception:
         db.session.rollback()
@@ -2238,7 +2179,10 @@ def _notify_post_like(post, actor):
             {
                 "title": "New like",
                 "body": body,
-                "url": _post_content_destination(post),
+                "url": _post_content_destination(
+                    post,
+                    notification_id=notification.id,
+                ),
                 "avatar": actor.profile_pic
                 or url_for("static", filename="assets/img/default-avatar.png"),
                 "event_type": "like",
@@ -2481,13 +2425,8 @@ def _notify_group_post_members(group, post, actor):
         return
 
     notification_levels = _group_notification_levels(group.id, recipient_ids)
-    in_app_recipient_ids = {
-        user_id
-        for user_id, level in notification_levels.items()
-        if level != "muted"
-    }
     is_highlight = _is_highlight_group_post(group, actor)
-    push_recipient_ids = {
+    in_app_recipient_ids = {
         user_id
         for user_id, level in notification_levels.items()
         if level == "all" or (is_highlight and level == "highlights")
@@ -2514,36 +2453,6 @@ def _notify_group_post_members(group, post, actor):
                 "Failed to persist group post notifications for post %s",
                 post.id,
             )
-
-    if push_recipient_ids:
-        try:
-            from utils.push_service import send_push_notifications
-
-            send_push_notifications(
-                push_recipient_ids,
-                {
-                    "title": "New group post",
-                    "body": body,
-                    "url": url_for(
-                        "user.group_detail",
-                        group_id=group.id,
-                        notification=1,
-                        focus_post=post.id,
-                        _anchor=f"post-{post.id}",
-                    ),
-                    "avatar": actor.profile_pic
-                    or url_for("static", filename="assets/img/default-avatar.png"),
-                    "event_type": "group_post",
-                    "tag": f"social-group-{group.id}-post-{post.id}",
-                    "renotify": True,
-                },
-            )
-        except Exception:
-            current_app.logger.exception(
-                "Failed to send group post push for post %s",
-                post.id,
-            )
-
 
 def _comment_social_targets(post, comment, actor, parent_comment=None):
     """Return one notification plan per eligible recipient for this comment."""
@@ -2622,11 +2531,11 @@ def _comment_social_targets(post, comment, actor, parent_comment=None):
 
 def _persist_social_notifications(targets, actor_id):
     if not targets:
-        return
+        return {}
 
     try:
-        db.session.add_all(
-            Notification(
+        notifications = {
+            user_id: Notification(
                 user_id=user_id,
                 actor_id=actor_id,
                 type=NotificationType.NEW_COMMENT,
@@ -2635,24 +2544,39 @@ def _persist_social_notifications(targets, actor_id):
                 message=target["body"],
             )
             for user_id, target in targets.items()
-        )
+        }
+        db.session.add_all(notifications.values())
         db.session.commit()
+        return {
+            user_id: notification.id
+            for user_id, notification in notifications.items()
+        }
     except Exception:
         db.session.rollback()
         current_app.logger.exception("Failed to persist social notifications")
+        return {}
 
 
-def _send_comment_social_pushes(targets, destination, post_id, actor):
+def _send_comment_social_pushes(
+    targets,
+    destination,
+    post_id,
+    actor,
+    notification_ids,
+):
     from utils.push_service import send_push_notification
 
     for user_id, target in targets.items():
+        notification_id = notification_ids.get(user_id)
+        if not notification_id:
+            continue
         try:
             send_push_notification(
                 user_id,
                 {
                     "title": target["title"],
                     "body": target["body"],
-                    "url": destination,
+                    "url": _with_notification_id(destination, notification_id),
                     "avatar": actor.profile_pic
                     or url_for("static", filename="assets/img/default-avatar.png"),
                     "event_type": target["event_type"],
@@ -2708,8 +2632,14 @@ def add_comment(post_id):
         current_user,
         parent_comment,
     )
-    _persist_social_notifications(targets, current_user.id)
-    _send_comment_social_pushes(targets, destination, post.id, current_user)
+    notification_ids = _persist_social_notifications(targets, current_user.id)
+    _send_comment_social_pushes(
+        targets,
+        destination,
+        post.id,
+        current_user,
+        notification_ids,
+    )
 
     return jsonify(
         success=True,
@@ -3262,11 +3192,33 @@ def get_notifications():
             )
         return url_for("user.user_dashboard")
 
+    friend_request_actor_ids = {
+        notification.actor_id
+        for notification in notifications
+        if notification.type == NotificationType.FRIEND_REQUEST
+    }
+    pending_friend_request_actor_ids = set()
+    if friend_request_actor_ids:
+        pending_friend_request_actor_ids = {
+            sender_id
+            for (sender_id,) in (
+                db.session.query(FriendRequest.sender_id)
+                .filter(
+                    FriendRequest.receiver_id == current_user.id,
+                    FriendRequest.sender_id.in_(friend_request_actor_ids),
+                    FriendRequest.status == "pending",
+                )
+                .all()
+            )
+        }
+
     result = []
+    displayed_notification_ids = []
     for n in notifications:
         related_post = post_for_notification(n)
         if related_post and not can_view_post(related_post, current_user):
             continue
+        displayed_notification_ids.append(n.id)
         notification_data = {
             "id": n.id,
             "type": n.type,
@@ -3275,7 +3227,12 @@ def get_notifications():
             "created_at": n.created_at.isoformat(),
             "entity_id": n.entity_id,
             "actor_id": n.actor_id,  # Add actor_id (the sender's ID)
-            "url": destination_for(n),
+            "url": _with_notification_id(destination_for(n), n.id),
+            "actionable": (
+                n.actor_id in pending_friend_request_actor_ids
+                if n.type == NotificationType.FRIEND_REQUEST
+                else False
+            ),
         }
 
         # Add actor information if it exists
@@ -3290,6 +3247,17 @@ def get_notifications():
                 }
 
         result.append(notification_data)
+
+    if displayed_notification_ids:
+        Notification.query.filter(
+            Notification.user_id == current_user.id,
+            Notification.id.in_(displayed_notification_ids),
+            Notification.is_read.is_(False),
+        ).update(
+            {"is_read": True},
+            synchronize_session=False,
+        )
+        db.session.commit()
 
     return jsonify(result)
 
@@ -3335,24 +3303,17 @@ cache = Cache()
 @user.route("/notifications/count")
 @login_required
 def get_unread_count():
-    """Get unread notification count - OPTIMIZED"""
+    """Return the current user's unread normal-notification count."""
     try:
-        # Use raw SQL for maximum performance
-        from sqlalchemy import text
-
-        query = text(
-            """
-            SELECT COUNT(*) as count 
-            FROM notifications 
-            WHERE user_id = :user_id 
-            AND is_read = FALSE
-            AND created_at > NOW() - INTERVAL '30 days'
-        """
+        count = (
+            db.session.query(func.count(Notification.id))
+            .filter(
+                Notification.user_id == current_user.id,
+                Notification.is_read.is_(False),
+            )
+            .scalar()
+            or 0
         )
-
-        result = db.session.execute(query, {"user_id": current_user.id})
-        count = result.fetchone()[0] or 0
-
         return jsonify({"count": count})
 
     except Exception as e:
@@ -4378,6 +4339,122 @@ def group_detail(group_id):
         **post_batch,
         current_user=current_user,
         default_avatar=default_avatar,
+    )
+
+
+def _group_notification_query(group_id, user_id):
+    post_ids = select(Post.id).where(Post.group_id == group_id)
+    comment_ids = select(Comment.id).where(Comment.post_id.in_(post_ids))
+    return Notification.query.filter(
+        Notification.user_id == user_id,
+        or_(
+            and_(
+                Notification.entity_type.in_(("post", "group_post")),
+                Notification.entity_id.in_(post_ids),
+            ),
+            and_(
+                Notification.entity_type.like("group_comment:%"),
+                Notification.entity_id.in_(comment_ids),
+            ),
+        ),
+    )
+
+
+def _group_notification_items(notifications):
+    comment_ids = [
+        notification.entity_id
+        for notification in notifications
+        if (notification.entity_type or "").startswith("group_comment:")
+    ]
+    comments_by_id = {
+        comment.id: comment
+        for comment in Comment.query.filter(Comment.id.in_(comment_ids or [-1])).all()
+    }
+    post_ids = {
+        notification.entity_id
+        for notification in notifications
+        if notification.entity_type in {"post", "group_post"}
+    }
+    post_ids.update(
+        comment.post_id for comment in comments_by_id.values()
+    )
+    posts_by_id = {
+        post.id: post
+        for post in Post.query.filter(Post.id.in_(post_ids or {-1})).all()
+    }
+
+    items = []
+    for notification in notifications:
+        comment = comments_by_id.get(notification.entity_id)
+        post = (
+            posts_by_id.get(comment.post_id)
+            if comment
+            else posts_by_id.get(notification.entity_id)
+        )
+        if not post:
+            continue
+        destination = _post_content_destination(
+            post,
+            anchor=(
+                f"comment-{comment.id}"
+                if comment
+                else f"post-{post.id}"
+            ),
+            notification_id=notification.id,
+        )
+        if comment:
+            destination = url_for(
+                "user.group_detail",
+                group_id=post.group_id,
+                notification=1,
+                focus_post=post.id,
+                focus_comment=comment.id,
+                notification_id=notification.id,
+                _anchor=f"comment-{comment.id}",
+            )
+        items.append(
+            {
+                "id": notification.id,
+                "message": notification.message,
+                "created_at": notification.created_at,
+                "actor": notification.actor,
+                "url": destination,
+            }
+        )
+    return items
+
+
+@user.route("/groups/<int:group_id>/notifications")
+@login_required
+def group_notifications(group_id):
+    group = Group.query.get_or_404(group_id)
+    if not group.is_active or not is_group_member(group, current_user):
+        abort(403)
+    if not can_view_group(group, current_user):
+        abort(403)
+
+    page = max(request.args.get("page", 1, type=int) or 1, 1)
+    pagination = (
+        _group_notification_query(group.id, current_user.id)
+        .options(joinedload(Notification.actor))
+        .order_by(Notification.created_at.desc(), Notification.id.desc())
+        .paginate(page=page, per_page=20, error_out=False)
+    )
+    notification_items = _group_notification_items(pagination.items)
+    displayed_ids = [item["id"] for item in notification_items]
+    if displayed_ids:
+        Notification.query.filter(
+            Notification.user_id == current_user.id,
+            Notification.id.in_(displayed_ids),
+            Notification.is_read.is_(False),
+        ).update({"is_read": True}, synchronize_session=False)
+        db.session.commit()
+
+    return render_template(
+        "group_notifications.html",
+        group=group,
+        notifications=notification_items,
+        pagination=pagination,
     )
 
 

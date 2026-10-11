@@ -95,18 +95,21 @@ def test_feed_comment_pushes_post_owner_with_valid_post_destination(
     assert response.status_code == 200
     comment_id = response.get_json()["comment"]["id"]
     assert db.session.get(Comment, comment_id) is not None
-    assert Notification.query.filter_by(
+    notification = Notification.query.filter_by(
         user_id=owner.id,
         actor_id=user.id,
         entity_id=comment_id,
         entity_type=f"comment:{post.id}",
-    ).count() == 1
+    ).one()
     push_mock.assert_called_once_with(
         owner.id,
         {
             "title": "New Chime",
             "body": f"{user.full_name} chimed on your post.",
-            "url": f"/post/{post.public_id}?notification=1#comment-{comment_id}",
+            "url": (
+                f"/post/{post.public_id}?notification=1"
+                f"&notification_id={notification.id}#comment-{comment_id}"
+            ),
             "avatar": user.profile_pic,
             "event_type": "chime",
             "tag": f"social-post-{post.id}-chime-{comment_id}",
@@ -115,7 +118,10 @@ def test_feed_comment_pushes_post_owner_with_valid_post_destination(
     )
     assert client.get(push_mock.call_args.args[1]["url"]).status_code == 200
     notification_payload = notification_payload_for(client, owner)
-    assert notification_payload[0]["url"] == f"/post/{post.public_id}?notification=1#comment-{comment_id}"
+    assert notification_payload[0]["url"] == (
+        f"/post/{post.public_id}?notification=1"
+        f"&notification_id={notification.id}#comment-{comment_id}"
+    )
 
 
 def test_deleted_feed_comment_notification_falls_back_to_parent_post(
@@ -140,7 +146,10 @@ def test_deleted_feed_comment_notification_falls_back_to_parent_post(
 
     notification_payload = notification_payload_for(client, owner)
 
-    assert notification_payload[0]["url"] == f"/post/{post.public_id}?notification=1#post-{post.id}"
+    assert notification_payload[0]["url"] == (
+        f"/post/{post.public_id}?notification=1"
+        f"&notification_id={notification_payload[0]['id']}#post-{post.id}"
+    )
 
 
 def test_deleted_notification_parent_falls_back_without_changing_normal_404s(
@@ -224,12 +233,21 @@ def test_feed_reply_notifies_parent_author_and_deduplicates_post_owner(
     assert response.status_code == 200
     reply_id = response.get_json()["comment"]["id"]
     assert response.get_json()["comment"]["parent_id"] == parent.id
+    notification = Notification.query.filter_by(
+        user_id=owner.id,
+        actor_id=user.id,
+        entity_id=reply_id,
+        entity_type=f"comment:{post.id}",
+    ).one()
     push_mock.assert_called_once()
     assert push_mock.call_args.args[0] == owner.id
     assert push_mock.call_args.args[1] == {
         "title": "New Chime reply",
         "body": f"{user.full_name} replied to your Chime.",
-        "url": f"/post/{post.public_id}?notification=1#comment-{reply_id}",
+        "url": (
+            f"/post/{post.public_id}?notification=1"
+            f"&notification_id={notification.id}#comment-{reply_id}"
+        ),
         "avatar": user.profile_pic,
         "event_type": "reply",
         "tag": f"social-post-{post.id}-chime-{reply_id}",
@@ -344,19 +362,7 @@ def test_group_post_bulk_push_excludes_actor_left_and_blocked_members(
 
     assert response.status_code == 200
     post_id = response.get_json()["post_id"]
-    bulk_push_mock.assert_called_once_with(
-        {eligible.id},
-        {
-            "title": "New group post",
-            "body": f"{user.full_name} posted in {group.name}.",
-            "url": f"/groups/{group.id}?notification=1&focus_post={post_id}#post-{post_id}",
-            "avatar": user.profile_pic,
-            "event_type": "group_post",
-            "tag": f"social-group-{group.id}-post-{post_id}",
-            "renotify": True,
-        },
-    )
-    assert client.get(bulk_push_mock.call_args.args[1]["url"].split("#", 1)[0]).status_code == 200
+    bulk_push_mock.assert_not_called()
     assert Notification.query.filter_by(entity_id=post_id, entity_type="group_post").count() == 1
     assert Notification.query.filter_by(
         user_id=eligible.id,
@@ -415,8 +421,7 @@ def test_normal_group_post_uses_member_notification_preferences(
 
     assert response.status_code == 200
     post_id = response.get_json()["post_id"]
-    bulk_push_mock.assert_called_once()
-    assert bulk_push_mock.call_args.args[0] == {all_posts_member.id}
+    bulk_push_mock.assert_not_called()
     notified_user_ids = {
         user_id
         for (user_id,) in (
@@ -425,11 +430,7 @@ def test_normal_group_post_uses_member_notification_preferences(
             .all()
         )
     }
-    assert notified_user_ids == {
-        owner.id,
-        default_member.id,
-        all_posts_member.id,
-    }
+    assert notified_user_ids == {all_posts_member.id}
     assert actor.id not in notified_user_ids
     assert muted_member.id not in notified_user_ids
 
@@ -516,6 +517,11 @@ def test_group_comment_only_pushes_post_owner(client, user, db, monkeypatch):
 
     assert response.status_code == 200
     comment_id = response.get_json()["comment"]["id"]
+    notification = Notification.query.filter_by(
+        user_id=owner.id,
+        entity_id=comment_id,
+        entity_type=f"group_comment:{post.id}",
+    ).one()
     push_mock.assert_called_once_with(
         owner.id,
         {
@@ -523,7 +529,8 @@ def test_group_comment_only_pushes_post_owner(client, user, db, monkeypatch):
             "body": f"{user.full_name} chimed on your group post.",
             "url": (
                 f"/groups/{group.id}?notification=1&focus_post={post.id}"
-                f"&focus_comment={comment_id}#comment-{comment_id}"
+                f"&focus_comment={comment_id}&notification_id={notification.id}"
+                f"#comment-{comment_id}"
             ),
             "avatar": user.profile_pic,
             "event_type": "chime",
@@ -533,15 +540,11 @@ def test_group_comment_only_pushes_post_owner(client, user, db, monkeypatch):
     )
     assert client.get(push_mock.call_args.args[1]["url"].split("#", 1)[0]).status_code == 200
     bulk_push_mock.assert_not_called()
-    assert Notification.query.filter_by(
-        user_id=owner.id,
-        entity_id=comment_id,
-        entity_type=f"group_comment:{post.id}",
-    ).count() == 1
     notification_payload = notification_payload_for(client, owner)
     assert notification_payload[0]["url"] == (
         f"/groups/{group.id}?notification=1&focus_post={post.id}"
-        f"&focus_comment={comment_id}#comment-{comment_id}"
+        f"&focus_comment={comment_id}&notification_id={notification.id}"
+        f"#comment-{comment_id}"
     )
 
 
@@ -567,6 +570,12 @@ def test_group_reply_deduplicates_owner_and_parent_author(
 
     assert response.status_code == 200
     reply_id = response.get_json()["comment"]["id"]
+    notification = Notification.query.filter_by(
+        user_id=owner.id,
+        actor_id=user.id,
+        entity_id=reply_id,
+        entity_type=f"group_comment:{post.id}",
+    ).one()
     push_mock.assert_called_once_with(
         owner.id,
         {
@@ -574,7 +583,8 @@ def test_group_reply_deduplicates_owner_and_parent_author(
             "body": f"{user.full_name} replied to your group Chime.",
             "url": (
                 f"/groups/{group.id}?notification=1&focus_post={post.id}"
-                f"&focus_comment={reply_id}#comment-{reply_id}"
+                f"&focus_comment={reply_id}&notification_id={notification.id}"
+                f"#comment-{reply_id}"
             ),
             "avatar": user.profile_pic,
             "event_type": "reply",
@@ -614,7 +624,9 @@ def test_feed_like_creates_one_notification_and_canonical_push(
         entity_id=post.id,
         entity_type="post",
     ).one()
-    expected_url = f"/post/{post.public_id}?notification=1"
+    expected_url = (
+        f"/post/{post.public_id}?notification=1&notification_id={notification.id}"
+    )
     push_mock.assert_called_once_with(
         owner.id,
         {
@@ -652,8 +664,17 @@ def test_group_like_uses_group_content_destination(client, user, db, monkeypatch
     )
 
     assert response.status_code == 200
+    from models import Notification
+
+    notification = Notification.query.filter_by(
+        user_id=owner.id,
+        actor_id=user.id,
+        entity_id=post.id,
+        entity_type="group_post",
+    ).one()
     expected_url = (
-        f"/groups/{group.id}?notification=1&focus_post={post.id}#post-{post.id}"
+        f"/groups/{group.id}?notification=1&focus_post={post.id}"
+        f"&notification_id={notification.id}#post-{post.id}"
     )
     assert push_mock.call_args.args[1]["url"] == expected_url
     assert notification_payload_for(client, owner)[0]["url"] == expected_url

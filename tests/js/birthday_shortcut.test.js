@@ -51,7 +51,9 @@ function birthday(id, name = `Friend ${id}`, isWished = false) {
     name,
     avatar: `/avatar-${id}.png`,
     age: 30,
+    is_seen: false,
     is_wished: isWished,
+    is_pending: !isWished,
   };
 }
 
@@ -59,6 +61,7 @@ function createRuntime(todayBirthdays, { online = true, coordinated = false } = 
   const requests = [];
   const intervals = [];
   const clearedIntervals = [];
+  const markSeenRequests = [];
   let leader = true;
   let leadershipCallback = null;
   const elements = {
@@ -81,10 +84,14 @@ function createRuntime(todayBirthdays, { online = true, coordinated = false } = 
       isOnline() { return online; },
       requestJson(key, url) {
         requests.push(url);
+        const unreadCount = todayBirthdays.filter(
+          birthdayItem => birthdayItem.is_pending && !birthdayItem.is_seen,
+        ).length;
         return Promise.resolve({
           success: true,
           birthdays: todayBirthdays,
-          count: todayBirthdays.length,
+          count: unreadCount,
+          unread_count: unreadCount,
         });
       },
     },
@@ -106,7 +113,13 @@ function createRuntime(todayBirthdays, { online = true, coordinated = false } = 
     clearInterval(timer) { clearedIntervals.push(timer); },
     clearTimeout() {},
     document,
-    fetch: async () => { throw new Error('Unexpected duplicate fetch'); },
+    fetch: async (url) => {
+      if (url === '/api/birthday/notifications/mark_seen') {
+        markSeenRequests.push(url);
+        return { ok: true };
+      }
+      throw new Error('Unexpected duplicate fetch');
+    },
     setInterval(callback) {
       const timer = { callback };
       intervals.push(timer);
@@ -126,6 +139,7 @@ function createRuntime(todayBirthdays, { online = true, coordinated = false } = 
     elements,
     clearedIntervals,
     intervals,
+    markSeenRequests,
     requests,
     system: new context.BirthdayCelebrationForTest(),
     async setLeader(value) {
@@ -146,7 +160,7 @@ test('zero birthdays keeps shortcut available and hides only its count', async (
   assert.match(runtime.elements.birthdayNotificationList.innerHTML, /No birthdays today/);
   assert.equal(
     runtime.elements.birthdayShortcut.getAttribute('aria-label'),
-    'Birthdays, none today',
+    'Birthdays, no unread alerts',
   );
 });
 
@@ -160,7 +174,7 @@ test('one birthday displays an exact badge count', async () => {
   assert.equal(runtime.elements.birthdayCount.classList.contains('hidden'), false);
   assert.equal(
     runtime.elements.birthdayShortcut.getAttribute('aria-label'),
-    'Birthdays, 1 today',
+    'Birthdays, 1 unread',
   );
 });
 
@@ -174,16 +188,17 @@ test('multiple birthday badge counts are exact through nine and compact after', 
   assert.equal(ten.elements.birthdayCount.textContent, '9+');
   assert.equal(
     ten.elements.birthdayShortcut.getAttribute('aria-label'),
-    'Birthdays, 10 today',
+    'Birthdays, 10 unread',
   );
 });
 
 test('shortcut opens the existing birthday popup without another request', async () => {
-  const runtime = createRuntime([]);
+  const runtime = createRuntime([birthday(1)]);
   await runtime.system.checkBirthdays();
   const requestCount = runtime.requests.length;
 
   runtime.system.showBirthdayNotifications();
+  await new Promise(resolve => setImmediate(resolve));
   await runtime.system.updateBirthdayBadge();
 
   assert.equal(
@@ -191,6 +206,8 @@ test('shortcut opens the existing birthday popup without another request', async
     false,
   );
   assert.equal(runtime.requests.length, requestCount);
+  assert.deepEqual(runtime.markSeenRequests, ['/api/birthday/notifications/mark_seen']);
+  assert.equal(runtime.elements.birthdayCount.style.display, 'none');
 });
 
 test('friend selection reuses already-fetched birthday data', async () => {

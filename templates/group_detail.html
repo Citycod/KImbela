@@ -739,8 +739,15 @@
                             {% endif %}
 
                             {% if is_member %}
+                            <a href="{{ url_for('user.group_notifications', group_id=group.id) }}"
+                               class="inline-flex items-center gap-2 rounded-lg bg-white/95 px-3 py-1.5 text-xs font-semibold text-indigo-700 shadow-sm transition hover:bg-indigo-50 md:py-2 md:text-sm"
+                               title="View notifications for {{ group.name }}"
+                               aria-label="View notifications for {{ group.name }}">
+                                <i class="bi bi-bell-fill" aria-hidden="true"></i>
+                                <span>Notifications</span>
+                            </a>
                             <label class="inline-flex items-center gap-2 rounded-lg bg-white/95 px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-sm md:py-2 md:text-sm"
-                                   title="Choose which new group posts can send notifications">
+                                   title="Choose which group posts appear in your in-app notifications">
                                 <i class="bi bi-bell text-indigo-600" aria-hidden="true"></i>
                                 <span class="sr-only">Group notifications</span>
                                 <select id="groupNotificationLevel"
