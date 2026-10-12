@@ -592,7 +592,7 @@ window.deleteTestUser = async function(userId) {
 
 window.viewUserProfile = async function(userId) {
   try {
-      const response = await fetch(`/get_user_profile/${userId}`);
+      const response = await fetch(`/admin/users/${userId}/profile-data`);
       if (!response.ok) throw new Error('Failed to fetch profile');
 
       const data = await response.json();

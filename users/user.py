@@ -3230,11 +3230,12 @@ def check_friend_status(user_id):
 @user.route("/notifications/read", methods=["POST"])
 @login_required
 def mark_notifications_read():
-    Notification.query.filter_by(user_id=current_user.id, is_read=False).update(
-        {"is_read": True}
-    )
-    db.session.commit()
-    return jsonify(success=True)
+    updated = Notification.query.filter_by(
+        user_id=current_user.id, is_read=False
+    ).update({"is_read": True}, synchronize_session=False)
+    if updated:
+        db.session.commit()
+    return jsonify(success=True, unread_count=0)
 
 
 @user.route("/notifications/<int:notification_id>/read", methods=["POST"])
@@ -3243,9 +3244,20 @@ def mark_notification_read(notification_id):
     notification = Notification.query.filter_by(
         id=notification_id, user_id=current_user.id
     ).first_or_404()
-    notification.is_read = True
-    db.session.commit()
-    return jsonify(success=True)
+    if not notification.is_read:
+        notification.is_read = True
+        db.session.commit()
+
+    unread_count = (
+        db.session.query(func.count(Notification.id))
+        .filter(
+            Notification.user_id == current_user.id,
+            Notification.is_read.is_(False),
+        )
+        .scalar()
+        or 0
+    )
+    return jsonify(success=True, unread_count=unread_count)
 
 
 from flask_caching import Cache
@@ -3589,15 +3601,17 @@ def create_notification(user_id, message, type="info"):
 @user.route("/notifications/mark_all_read", methods=["POST"])
 @login_required
 def mark_all_read():
-    updated = Notification.query.filter_by(user_id=current_user.id, read=False).update(
-        {"read": True}, synchronize_session=False
+    updated = Notification.query.filter_by(
+        user_id=current_user.id, is_read=False
+    ).update(
+        {"is_read": True}, synchronize_session=False
     )
 
     if updated:
         db.session.commit()
         invalidate_notification_cache(current_user.id)
 
-    return jsonify({"success": True, "marked_read": updated})
+    return jsonify({"success": True, "marked_read": updated, "unread_count": 0})
 
 
 @user.route("/accept_friend_request/<int:user_id>", methods=["POST"])

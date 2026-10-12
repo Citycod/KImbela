@@ -72,6 +72,7 @@ from flask_login import (
     current_user,
 )
 from extensions import db
+from utils.profile_privacy import build_profile_viewer_context, serialize_profile
 from flask_bcrypt import bcrypt
 from werkzeug.security import generate_password_hash, check_password_hash
 from markupsafe import escape
@@ -2342,6 +2343,31 @@ def admin_users():
         status_filter=status_filter,
         current_user=current_user,
     )
+
+
+@admin.route("/admin/users/<int:user_id>/profile-data")
+@login_required
+def admin_user_profile_data(user_id):
+    """Return account details only inside the authorized user-management UI."""
+    if not current_user.is_super_admin:
+        return jsonify({"error": "Access denied"}), 403
+
+    profile_user = User.query.get_or_404(user_id)
+    viewer_context = build_profile_viewer_context(
+        profile_user,
+        current_user,
+        authorized_admin=True,
+    )
+    profile_data = serialize_profile(profile_user, viewer_context)
+    profile_data.update(
+        {
+            "email": profile_user.email,
+            "phone_number": profile_user.phone_number,
+            "dob": profile_user.dob.isoformat() if profile_user.dob else None,
+            "friends_count": profile_user.friends.count(),
+        }
+    )
+    return jsonify(profile_data)
 
 
 @admin.route("/admin/marketplace")
