@@ -57,6 +57,11 @@ from payments.browse_access import (
 from payments.pricing import PROFILE_BOOST_PRICE_USD, format_usd
 from resend_mail import Message
 from extensions import mail
+from utils.profile_privacy import (
+    build_profile_viewer_context,
+    build_profile_viewer_contexts,
+    serialize_profile,
+)
 
 load_dotenv()
 
@@ -333,6 +338,9 @@ def get_requests():
         pagination = query.paginate(
             page=filters["page"], per_page=filters["per_page"], error_out=False
         )
+        profile_contexts = build_profile_viewer_contexts(
+            (item.user for item in pagination.items if item.user), current_user
+        )
 
         request_ids = [item.id for item in pagination.items]
         liked_request_ids = set()
@@ -366,8 +374,9 @@ def get_requests():
                 )
                 req.views = (req.views or 0) + 1
 
-            # Calculate age of the request owner
-            age = calculate_age(req.user.dob) if req.user and req.user.dob else "N/A"
+            profile_view = serialize_profile(
+                req.user, profile_contexts[req.user.id]
+            )
 
             # Days remaining
             days_remaining = max(0, (req.end_date - utcnow()).days)
@@ -384,16 +393,22 @@ def get_requests():
                     "user": {
                         "id": req.user.id,
                         "full_name": req.user.full_name,
-                        "age": age,
-                        "location": f"{req.user.city or ''}, {req.user.state or ''}, {req.user.country or ''}".strip(
-                            ", "
+                        "age": profile_view["age"],
+                        "location": ", ".join(
+                            part
+                            for part in (
+                                profile_view["city"],
+                                profile_view["state"],
+                                profile_view["country"],
+                            )
+                            if part
                         ),
                         "profile_pic": req.user.profile_pic
                         or url_for("static", filename="assets/img/default-avatar.png"),
-                        "country": req.user.country,
-                        "state": req.user.state,
-                        "city": req.user.city,
-                        "gender": req.user.gender,
+                        "country": profile_view["country"],
+                        "state": profile_view["state"],
+                        "city": profile_view["city"],
+                        "gender": profile_view["gender"],
                     },
                     "about_you": req.about_you or "",
                     "ideal_partner": req.ideal_partner or "",
@@ -553,6 +568,9 @@ def browse_users():
             per_page=filters["per_page"],
             error_out=False,
         )
+        profile_contexts = build_profile_viewer_contexts(
+            pagination.items, current_user
+        )
         candidate_ids = [candidate.id for candidate in pagination.items]
         relationship_states = {candidate_id: "none" for candidate_id in candidate_ids}
 
@@ -605,8 +623,17 @@ def browse_users():
 
         users_data = []
         for candidate in pagination.items:
+            profile_view = serialize_profile(
+                candidate, profile_contexts[candidate.id]
+            )
             location = ", ".join(
-                part for part in (candidate.city, candidate.state, candidate.country) if part
+                part
+                for part in (
+                    profile_view["city"],
+                    profile_view["state"],
+                    profile_view["country"],
+                )
+                if part
             )
             relationship = relationship_states[candidate.id]
             users_data.append(
@@ -614,19 +641,21 @@ def browse_users():
                     "id": candidate.id,
                     "public_id": candidate.public_id,
                     "full_name": candidate.full_name,
-                    "age": calculate_age(candidate.dob),
-                    "gender": candidate.gender,
-                    "country": candidate.country,
-                    "state": candidate.state,
-                    "city": candidate.city,
+                    "age": profile_view["age"],
+                    "gender": profile_view["gender"],
+                    "country": profile_view["country"],
+                    "state": profile_view["state"],
+                    "city": profile_view["city"],
                     "location": location,
                     "profile_pic": candidate.profile_pic
                     or url_for("static", filename="assets/img/default-avatar.png"),
-                    "bio": candidate.bio or candidate.about_me or "",
-                    "interests": _discovery_interests(candidate),
-                    "last_seen": candidate.last_seen.isoformat()
-                    if candidate.last_seen
-                    else None,
+                    "bio": profile_view["bio"] or "",
+                    "interests": (
+                        _discovery_interests(candidate)
+                        if profile_view["interests"] is not None
+                        else []
+                    ),
+                    "last_seen": profile_view["last_seen"],
                     "created_at": candidate.created_at.isoformat()
                     if candidate.created_at
                     else None,
@@ -888,6 +917,10 @@ def get_request_detail(request_id):
     """Get detailed information for a specific matchmaking request"""
     try:
         req = MatchmakingRequest.query.get_or_404(request_id)
+        viewer_context = build_profile_viewer_context(req.user, current_user)
+        if viewer_context.is_blocked:
+            return jsonify({"success": False, "error": "Request not found"}), 404
+        profile_view = serialize_profile(req.user, viewer_context)
 
         # Track view
         view = MatchmakingView.query.filter_by(
@@ -913,12 +946,20 @@ def get_request_detail(request_id):
             "user": {
                 "id": req.user.id,
                 "full_name": req.user.full_name,
-                "age": calculate_age(req.user.dob),
-                "location": f"{req.user.city}, {req.user.country}",
+                "age": profile_view["age"],
+                "location": ", ".join(
+                    part
+                    for part in (
+                        profile_view["city"],
+                        profile_view["state"],
+                        profile_view["country"],
+                    )
+                    if part
+                ),
                 "profile_pic": req.user.profile_pic,
-                "about_me": req.user.about_me,
-                "occupation": req.user.occupation,
-                "education": req.user.educational_level,
+                "about_me": profile_view["bio"],
+                "occupation": profile_view["occupation"],
+                "education": profile_view["educational_level"],
             },
             "about_you": req.about_you,
             "ideal_partner": req.ideal_partner,

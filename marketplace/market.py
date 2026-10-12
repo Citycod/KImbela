@@ -97,18 +97,15 @@ def normalize_marketplace_phone(phone_number):
 
 
 def marketplace_seller_contact(service):
-    """Resolve listing contact data with the public seller phone as fallback."""
+    """Resolve only contact data explicitly saved on this public listing."""
     listing_phone = normalize_marketplace_phone(service.phone_number)
     listing_whatsapp = normalize_marketplace_phone(service.whatsapp_number)
-    public_seller_phone = normalize_marketplace_phone(
-        service.seller.phone_number if service.seller else None
-    )
     contact_methods = set(service.contact_methods_list)
 
-    call_digits = listing_phone or listing_whatsapp or public_seller_phone
+    call_digits = listing_phone or listing_whatsapp
     whatsapp_digits = listing_whatsapp
     if not whatsapp_digits and "whatsapp" in contact_methods:
-        whatsapp_digits = listing_phone or public_seller_phone
+        whatsapp_digits = listing_phone
     message = quote(f"Hi! I'm interested in your listing: {service.title}")
     return {
         "display_number": (
@@ -3427,7 +3424,7 @@ def api_service_detail(slug):
                 "service_count": MarketplaceService.query.filter_by(
                     seller_id=seller.id, status="active"
                 ).count(),
-                "phone": seller.phone_number,
+                "phone": service.phone_number,
             },
         }
 
@@ -3514,8 +3511,6 @@ def api_seller_detail(seller_id):
             "total_services": total_services,
             "total_views": total_views,
             "member_since": seller.created_at.strftime("%b %Y"),
-            "phone": seller.phone_number,
-            "email": seller.email,
             "services": services_data,
         }
 

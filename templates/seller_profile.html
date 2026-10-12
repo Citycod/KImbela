@@ -295,22 +295,9 @@
                     <p class="text-gray-500 mb-6">No bio provided yet.</p>
                     {% endif %}
                     
-                    <!-- Contact Info -->
+                    <!-- Marketplace-specific public links only. Account email
+                         and phone remain private unless copied to a listing. -->
                     <div class="space-y-4">
-                        {% if seller.email %}
-                        <div class="flex items-center text-gray-700">
-                            <i class="bi bi-envelope mr-3 text-gray-500"></i>
-                            <span>{{ seller.email }}</span>
-                        </div>
-                        {% endif %}
-                        
-                        {% if seller.phone_number %}
-                        <div class="flex items-center text-gray-700">
-                            <i class="bi bi-telephone mr-3 text-gray-500"></i>
-                            <span>{{ seller.phone_number }}</span>
-                        </div>
-                        {% endif %}
-                        
                         {% if seller.website %}
                         <div class="flex items-center text-gray-700">
                             <i class="bi bi-globe mr-3 text-gray-500"></i>

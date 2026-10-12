@@ -1,5 +1,17 @@
 {% extends 'base.html' %}
 
+{% macro privacy_select(field, label='Who can see this?') %}
+<div class="mt-2">
+    <label for="{{ field }}_visibility" class="mb-1 block text-[11px] font-semibold text-gray-600">{{ label }}</label>
+    <select id="{{ field }}_visibility" name="{{ field }}_visibility"
+            class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs text-gray-800 focus:border-transparent focus:outline-none focus:ring-1 focus:ring-purple-500">
+        <option value="public" {{ 'selected' if privacy_values[field] == 'public' }}>Everyone on Kimbela</option>
+        <option value="friends" {{ 'selected' if privacy_values[field] == 'friends' }}>Friends</option>
+        <option value="private" {{ 'selected' if privacy_values[field] == 'private' }}>Only me</option>
+    </select>
+</div>
+{% endmacro %}
+
 {% block head %}
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -142,6 +154,7 @@
                                 <option value="{{ religion }}" {% if user.religion == religion %}selected{% endif %}>{{ religion }}</option>
                                 {% endfor %}
                             </select>
+                            {{ privacy_select('religion') }}
                         </div>
                         <div>
                             <label for="ethnicity" class="mb-1 block text-xs font-bold text-gray-700">Ethnicity</label>
@@ -152,6 +165,7 @@
                                 <option value="{{ ethnicity }}" {% if user.ethnicity == ethnicity %}selected{% endif %}>{{ ethnicity }}</option>
                                 {% endfor %}
                             </select>
+                            {{ privacy_select('ethnicity') }}
                         </div>
                         <div>
                             <label for="educational_level" class="mb-1 block text-xs font-bold text-gray-700">Educational Level</label>
@@ -162,11 +176,14 @@
                                 <option value="{{ level }}" {% if user.educational_level == level %}selected{% endif %}>{{ level }}</option>
                                 {% endfor %}
                             </select>
+                            {{ privacy_select('education') }}
                         </div>
                         <div>
                             <label for="dob" class="mb-1 block text-xs font-bold text-gray-700">Date of Birth</label>
                             <input id="dob" type="date" name="dob" value="{{ user.dob.strftime('%Y-%m-%d') if user.dob else '' }}"
                                    class="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-1 focus:ring-purple-500">
+                            {{ privacy_select('age', 'Who can see your age?') }}
+                            {{ privacy_select('birthday', 'Who can see your birthday (month and day only)?') }}
                         </div>
                         <div>
                             <label for="gender" class="mb-1 block text-xs font-bold text-gray-700">Gender</label>
@@ -177,6 +194,7 @@
                                 <option value="Female" {{ 'selected' if user.gender == 'Female' }}>Female</option>
                                 <option value="Other" {{ 'selected' if user.gender == 'Other' }}>Other</option>
                             </select>
+                            {{ privacy_select('gender') }}
                         </div>
                     </div>
                 </section>
@@ -190,6 +208,9 @@
                                     class="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-1 focus:ring-purple-500">
                                 <option value="">Select Country</option>
                             </select>
+                        </div>
+                        <div class="md:col-span-3">
+                            {{ privacy_select('location', 'Who can see your location?') }}
                         </div>
                         <div>
                             <label for="profile_state_select" class="mb-1 block text-xs font-bold text-gray-700">State / Province</label>
@@ -221,16 +242,28 @@
                             <option value="Alumni" {{ 'selected' if user.marital_status == 'Alumni' }}>Alumni (Now Married)</option>
                             <option value="In a relationship" {{ 'selected' if user.marital_status == 'In a relationship' }}>In a relationship</option>
                         </select>
+                        {{ privacy_select('relationship') }}
+                    </div>
+                    <div>
+                        <label for="occupation" class="mb-1 block text-xs font-bold text-gray-700">Occupation</label>
+                        <input id="occupation" type="text" name="occupation" value="{{ user.occupation or '' }}"
+                               class="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-1 focus:ring-purple-500">
+                        {{ privacy_select('occupation') }}
                     </div>
                     <div>
                         <label for="bio" class="mb-1 block text-xs font-bold text-gray-700">Bio</label>
                         <textarea id="bio" name="bio" rows="3" placeholder="Tell us about yourself..."
                                   class="w-full resize-none rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-1 focus:ring-purple-500">{{ user.bio or '' }}</textarea>
+                        {{ privacy_select('bio') }}
                     </div>
                     <div>
                         <label for="interests" class="mb-1 block text-xs font-bold text-gray-700">Interests &amp; Hobbies</label>
                         <textarea id="interests" name="interests" rows="3" placeholder="Your interests, hobbies, passions..."
                                   class="w-full resize-none rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-1 focus:ring-purple-500">{{ user.interests or '' }}</textarea>
+                        {{ privacy_select('interests') }}
+                    </div>
+                    <div>
+                        {{ privacy_select('activity', 'Who can see when you are online or last active?') }}
                     </div>
                 </section>
 

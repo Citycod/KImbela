@@ -69,6 +69,14 @@ from utils.group_post_service import (
     GroupPostCreationError,
     create_group_post as create_group_post_for_author,
 )
+from utils.profile_privacy import (
+    apply_privacy_values,
+    build_profile_viewer_context,
+    ensure_owner_privacy,
+    parse_privacy_form,
+    privacy_form_values,
+    serialize_profile,
+)
 # from scheduler import (
 #     manual_trigger_matchmaking_expiry_check,
 #     manual_trigger_expired_matchmaking_check,
@@ -3017,51 +3025,31 @@ def track_ad_click(ad_id):
 @user.route("/get_user_profile/<int:user_id>")
 @login_required
 def get_user_profile(user_id):
-    user = User.query.get_or_404(user_id)
+    profile_user = User.query.get_or_404(user_id)
+    viewer_context = build_profile_viewer_context(profile_user, current_user)
+    if viewer_context.is_blocked:
+        abort(403)
 
-    # DEBUG: Print everything about religion
-    print(f"=== DEBUG for user_id: {user_id} ===")
-    print(f"User religion value from DB: {user.religion}")
-    print(f"User religion type: {type(user.religion)}")
-    print(f"Religion is None: {user.religion is None}")
-    print(f"Religion == '': {user.religion == ''}")
-
-    # FIXED: Use the User model's existing method
-    friend_status = current_user.get_friend_request_status(
-        user_id
-    )  # 'none', 'sent', 'received', or 'friends'
-
-    # Create the response dictionary
-    response_data = {
-        "first_name": user.first_name,
-        "last_name": user.last_name,
-        # "email": user.email,
-        "profile_pic": user.profile_pic
-        or url_for("static", filename="assets/img/default-avatar.png"),
-        "cover_pic": user.cover_pic,
-        "bio": user.bio,
-        "city": user.city,
-        "country": user.country,
-        "state": user.state,
-        "gender": user.gender,
-        "religion": user.religion,  # This should be included even if None
-        "dob": user.dob.isoformat() if user.dob else None,
-        # "phone_number": user.phone_number,
-        "marital_status": user.marital_status,
-        "occupation": user.occupation,
-        "educational_level": user.educational_level,
-        "ethnicity": user.ethnicity,
-        "interests": user.interests,
-        "profile_url": url_for("user.view_profile", user_identifier=user.public_id),
-        "friends_count": user.friends.count(),
-        "friend_status": friend_status,  # 'none', 'sent', 'received', or 'friends'
-    }
-
-    # DEBUG: Print the response data
-    print(f"Response data keys: {response_data.keys()}")
-    print(f"Response data religion value: {response_data.get('religion')}")
-    print("=== END DEBUG ===\n")
-
+    response_data = serialize_profile(profile_user, viewer_context)
+    response_data.update(
+        {
+            "profile_pic": response_data["profile_pic"]
+            or url_for("static", filename="assets/img/default-avatar.png"),
+            "profile_url": url_for(
+                "user.view_profile", user_identifier=profile_user.public_id
+            ),
+            "friends_count": profile_user.friends.count(),
+            "friend_status": current_user.get_friend_request_status(user_id),
+        }
+    )
+    if viewer_context.is_owner:
+        response_data.update(
+            {
+                "email": profile_user.email,
+                "phone_number": profile_user.phone_number,
+                "dob": profile_user.dob.isoformat() if profile_user.dob else None,
+            }
+        )
     return jsonify(response_data)
 
 
@@ -3723,7 +3711,6 @@ def search():
             "first_name": user.first_name,
             "last_name": user.last_name,
             "profile_pic": user.profile_pic,
-            "email": user.email,
         }
         for user in users
     ]
@@ -3891,7 +3878,29 @@ def edit_profile(user_id):
         "Other",
     ]
 
+    privacy = ensure_owner_privacy(profile_user)
+    privacy_values = privacy_form_values(privacy)
+
     if request.method == "POST":
+        submitted_privacy, privacy_errors = parse_privacy_form(
+            request.form, privacy_values
+        )
+        if privacy_errors:
+            flash("Please select a valid privacy option for every field.", "danger")
+            return (
+                render_template(
+                    "edit_profile.html",
+                    user=profile_user,
+                    educational_levels=educational_levels,
+                    religions=religions,
+                    ethnicities=ethnicities,
+                    privacy_values={
+                        field: request.form.get(f"{field}_visibility", "")
+                        for field in privacy_values
+                    },
+                ),
+                400,
+            )
         try:
             profile_user.first_name = request.form.get(
                 "first_name", profile_user.first_name
@@ -3919,6 +3928,9 @@ def edit_profile(user_id):
             )
             profile_user.educational_level = request.form.get(
                 "educational_level", profile_user.educational_level
+            )
+            profile_user.occupation = request.form.get(
+                "occupation", profile_user.occupation
             )
             profile_user.ethnicity = request.form.get(
                 "ethnicity", profile_user.ethnicity
@@ -3972,8 +3984,9 @@ def edit_profile(user_id):
                         flash("Cover photo updated successfully!", "success")
                     except Exception as e:
                         print(f"Cover photo upload error: {e}")
-                        flash("Failed to upload cover photo.", "danger")
+                    flash("Failed to upload cover photo.", "danger")
 
+            apply_privacy_values(privacy, submitted_privacy)
             db.session.commit()
             flash("Profile updated successfully!", "success")
         except Exception as e:
@@ -3989,6 +4002,7 @@ def edit_profile(user_id):
         educational_levels=educational_levels,
         religions=religions,
         ethnicities=ethnicities,
+        privacy_values=privacy_values,
     )
 
 
@@ -5192,16 +5206,12 @@ def view_shared_post(post_identifier):
 def view_profile(user_identifier):
     target_user = resolve_user_by_identifier(user_identifier)
 
-    friend_status = current_user.get_friend_request_status(target_user.id)
-
-    # Check if current user has blocked or is blocked by target user
-    is_blocked = current_user.is_blocked_by(target_user) or current_user.is_blocking(
-        target_user
-    )
-
-    if is_blocked:
+    viewer_context = build_profile_viewer_context(target_user, current_user)
+    if viewer_context.is_blocked:
         flash("You cannot view this profile.", "danger")
         return redirect(url_for("user.user_dashboard"))
+    friend_status = current_user.get_friend_request_status(target_user.id)
+    profile_view = serialize_profile(target_user, viewer_context)
 
     # Get one bounded page of the user's posts (visible to the viewer).
     page = max(request.args.get("page", 1, type=int) or 1, 1)
@@ -5226,13 +5236,9 @@ def view_profile(user_identifier):
     # Get friends count (excluding blocked users)
     friends_count = target_user.friends.count()
 
-    # Calculate age if DOB is set
-    age = calculate_age(target_user.dob) if target_user.dob else None
-
-    # Pass everything to the template
     return render_template(
         "public_profile.html",
-        profile_user=target_user,
+        profile_user=profile_view,
         current_user=current_user,
         friend_status=friend_status,
         posts=posts,
@@ -5258,7 +5264,7 @@ def view_profile(user_identifier):
         ),
         reaction_counts_by_post_id=reaction_counts_by_post_id,
         friends_count=friends_count,
-        age=age,
+        age=profile_view["age"],
         is_own_profile=(target_user.id == current_user.id),
     )
 

@@ -70,6 +70,14 @@ class User(db.Model, UserMixin):
         db.Index("idx_users_gender_country", "gender", "country"),
     )
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # New accounts receive fail-safe profile privacy settings in the same
+        # transaction as the user. Existing accounts are backfilled by the
+        # migration; a missing row is never interpreted as public.
+        if self.profile_privacy is None:
+            self.profile_privacy = UserProfilePrivacy()
+
     id = db.Column(db.Integer, primary_key=True)
     public_id = db.Column(
         db.String(36), unique=True, nullable=False, default=lambda: str(uuid.uuid4())
@@ -187,6 +195,15 @@ class User(db.Model, UserMixin):
         secondaryjoin=(friendship.c.friend_id == id),
         backref=db.backref("friend_of", lazy="dynamic"),
         lazy="dynamic",
+    )
+
+    profile_privacy = db.relationship(
+        "UserProfilePrivacy",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan",
+        single_parent=True,
+        lazy="selectin",
     )
 
     comments = db.relationship(
@@ -720,6 +737,96 @@ class User(db.Model, UserMixin):
         except Exception as e:
             current_app.logger.error(f"Error in recent_notifications: {e}")
             return []
+
+
+PROFILE_VISIBILITY_VALUES = ("public", "friends", "private")
+PROFILE_VISIBILITY_FIELDS = (
+    "age",
+    "birthday",
+    "gender",
+    "location",
+    "relationship",
+    "bio",
+    "occupation",
+    "education",
+    "religion",
+    "ethnicity",
+    "interests",
+    "activity",
+)
+
+
+class UserProfilePrivacy(db.Model):
+    __tablename__ = "user_profile_privacy"
+
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    age_visibility = db.Column(
+        db.String(10), nullable=False, default="friends", server_default="friends"
+    )
+    birthday_visibility = db.Column(
+        db.String(10), nullable=False, default="private", server_default="private"
+    )
+    gender_visibility = db.Column(
+        db.String(10), nullable=False, default="friends", server_default="friends"
+    )
+    location_visibility = db.Column(
+        db.String(10), nullable=False, default="friends", server_default="friends"
+    )
+    relationship_visibility = db.Column(
+        db.String(10), nullable=False, default="friends", server_default="friends"
+    )
+    bio_visibility = db.Column(
+        db.String(10), nullable=False, default="friends", server_default="friends"
+    )
+    occupation_visibility = db.Column(
+        db.String(10), nullable=False, default="friends", server_default="friends"
+    )
+    education_visibility = db.Column(
+        db.String(10), nullable=False, default="friends", server_default="friends"
+    )
+    religion_visibility = db.Column(
+        db.String(10), nullable=False, default="friends", server_default="friends"
+    )
+    ethnicity_visibility = db.Column(
+        db.String(10), nullable=False, default="private", server_default="private"
+    )
+    interests_visibility = db.Column(
+        db.String(10), nullable=False, default="friends", server_default="friends"
+    )
+    activity_visibility = db.Column(
+        db.String(10), nullable=False, default="friends", server_default="friends"
+    )
+    created_at = db.Column(
+        db.DateTime, nullable=False, default=utcnow, server_default=db.func.now()
+    )
+    updated_at = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=utcnow,
+        onupdate=utcnow,
+        server_default=db.func.now(),
+    )
+
+    user = db.relationship("User", back_populates="profile_privacy")
+
+    __table_args__ = tuple(
+        db.CheckConstraint(
+            f"{field}_visibility IN ('public', 'friends', 'private')",
+            name=f"ck_user_profile_privacy_{field}",
+        )
+        for field in PROFILE_VISIBILITY_FIELDS
+    )
+
+    def set_visibility(self, field, value):
+        if field not in PROFILE_VISIBILITY_FIELDS:
+            raise ValueError(f"Unknown profile privacy field: {field}")
+        if value not in PROFILE_VISIBILITY_VALUES:
+            raise ValueError(f"Invalid profile visibility: {value}")
+        setattr(self, f"{field}_visibility", value)
 
 
 # Friend request statuses

@@ -295,9 +295,11 @@ def get_messages_with_friend(friend_id):
 
         # Mark unread messages as read
         if page == 1:  # Only mark as read when viewing latest messages
-            Message.query.filter_by(
-                sender_id=friend_id, receiver_id=current_user.id, status="delivered"
-            ).update({"status": "read"})
+            Message.query.filter(
+                Message.sender_id == friend_id,
+                Message.receiver_id == current_user.id,
+                Message.status.in_(("sent", "delivered")),
+            ).update({"status": "read"}, synchronize_session=False)
             db.session.commit()
 
         # Prepare response - FIXED: Handle metadata properly
@@ -360,8 +362,10 @@ def mark_messages_as_read(friend_id):
     """Mark all messages from friend as read"""
     try:
         updated = Message.query.filter_by(
-            sender_id=friend_id, receiver_id=current_user.id, status="delivered"
-        ).update({"status": "read"})
+            sender_id=friend_id, receiver_id=current_user.id
+        ).filter(Message.status.in_(("sent", "delivered"))).update(
+            {"status": "read"}, synchronize_session=False
+        )
 
         db.session.commit()
 
@@ -899,7 +903,17 @@ def mark_conversation_read(sender_id):
             message.status = "read"
 
         db.session.commit()
-        return jsonify({"success": True, "marked": len(messages)})
+        unread_count = Message.query.filter(
+            Message.receiver_id == current_user.id,
+            Message.status.in_(("sent", "delivered")),
+        ).count()
+        return jsonify(
+            {
+                "success": True,
+                "marked": len(messages),
+                "unread_count": unread_count,
+            }
+        )
     except Exception as e:
         print(f"Error marking conversation as read: {str(e)}")
         return jsonify({"error": str(e)}), 500

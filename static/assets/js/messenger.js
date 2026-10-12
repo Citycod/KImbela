@@ -898,7 +898,12 @@
             }
             }
         )
-            .then(() => updateUnreadBadge(true))
+            .then(data => {
+                if (data && Number.isFinite(Number(data.unread_count))) {
+                    renderUnreadBadges(data.unread_count);
+                }
+                return updateUnreadBadge(true);
+            })
             .catch(() => false);
     }
 
