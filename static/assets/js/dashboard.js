@@ -2175,15 +2175,28 @@ const NotificationSystem = {
     },
 
     applyBadge(data) {
-        const badge = document.getElementById('notificationBadge');
-        if (!badge || !data) return false;
+        const headerBadge = document.getElementById('notificationBadge');
+        const sidebarBadge = document.getElementById('sidebarNotifBadge');
+        if ((!headerBadge && !sidebarBadge) || !data) return false;
 
         const count = Math.max(0, Number(data.count) || 0);
-        if (count > 0) {
-            badge.textContent = count > 99 ? '99+' : count;
-            badge.classList.remove('hidden');
-        } else {
-            badge.classList.add('hidden');
+        const displayCount = count > 99 ? '99+' : String(count);
+
+        [headerBadge, sidebarBadge].forEach(badge => {
+            if (!badge) return;
+            badge.textContent = displayCount;
+            badge.classList.toggle('hidden', count === 0);
+            badge.style.display = count > 0 ? 'inline-flex' : 'none';
+            badge.setAttribute('aria-hidden', count > 0 ? 'false' : 'true');
+        });
+
+        const notificationButton = document.getElementById('notificationDropdown');
+        if (notificationButton) {
+            const label = count > 0
+                ? `Notifications, ${count} unread`
+                : 'Notifications, no unread notifications';
+            notificationButton.setAttribute('aria-label', label);
+            notificationButton.setAttribute('title', label);
         }
         return true;
     },
@@ -2351,16 +2364,25 @@ const NotificationSystem = {
 
     async markAsRead(id) {
         try {
-            await fetch(`/notifications/${id}/read`, {
+            const response = await fetch(`/notifications/${id}/read`, {
                 method: 'POST',
                 headers: {
                     'X-CSRFToken': csrfToken,
                     'Content-Type': 'application/json'
                 }
             });
-            this.updateBadge();
-            this.load();
+            if (!response.ok) return false;
+
+            const data = await response.json();
+            if (Number.isFinite(Number(data.unread_count))) {
+                this.applyBadge({ count: data.unread_count });
+            } else {
+                await this.updateBadge();
+            }
+            await this.load();
+            return true;
         } catch (error) {
+            return false;
         }
     },
 
