@@ -3182,12 +3182,10 @@ def get_notifications():
         }
 
     result = []
-    displayed_notification_ids = []
     for n in notifications:
         related_post = post_for_notification(n)
         if related_post and not can_view_post(related_post, current_user):
             continue
-        displayed_notification_ids.append(n.id)
         notification_data = {
             "id": n.id,
             "type": n.type,
@@ -3217,15 +3215,14 @@ def get_notifications():
 
         result.append(notification_data)
 
-    if displayed_notification_ids:
-        Notification.query.filter(
-            Notification.user_id == current_user.id,
-            Notification.id.in_(displayed_notification_ids),
-            Notification.is_read.is_(False),
-        ).update(
-            {"is_read": True},
-            synchronize_session=False,
-        )
+    updated = Notification.query.filter_by(
+        user_id=current_user.id,
+        is_read=False,
+    ).update(
+        {"is_read": True},
+        synchronize_session=False,
+    )
+    if updated:
         db.session.commit()
 
     return jsonify(result)
@@ -3506,45 +3503,90 @@ def compute_notification_count(user_id):
 
 
 # ===== REAL-TIME UPDATES WITH SOCKET.IO =====
-@user.route("/notifications")
+@user.route("/notifications/all")
 @login_required
-def notifications():
-    """
-    Get actual notifications (not just count) with pagination
-    """
+def notifications_page():
+    """Show the authenticated user's complete notification history."""
     page = request.args.get("page", 1, type=int)
-    per_page = request.args.get("per_page", 20, type=int)
+    per_page = 20
 
-    notifications = (
+    pagination = (
         Notification.query.filter_by(user_id=current_user.id)
         .order_by(Notification.created_at.desc())
+        .options(joinedload(Notification.actor))
         .paginate(page=page, per_page=per_page, error_out=False)
     )
 
-    # Mark as read when viewed (optional)
-    if page == 1:  # Only mark as read when viewing first page
-        unread_ids = [n.id for n in notifications.items if not n.read]
-        if unread_ids:
-            Notification.query.filter(Notification.id.in_(unread_ids)).update(
-                {"read": True}, synchronize_session=False
+    updated = Notification.query.filter_by(
+        user_id=current_user.id,
+        is_read=False,
+    ).update(
+        {"is_read": True},
+        synchronize_session=False,
+    )
+    if updated:
+        db.session.commit()
+        invalidate_notification_cache(current_user.id)
+
+    return render_template(
+        "notifications.html",
+        notifications=pagination.items,
+        pagination=pagination,
+    )
+
+
+@user.route("/notifications/<int:notification_id>/open")
+@login_required
+def open_notification(notification_id):
+    """Resolve one owned notification to its current authorized destination."""
+    notification = Notification.query.filter_by(
+        id=notification_id,
+        user_id=current_user.id,
+    ).first_or_404()
+
+    if not notification.is_read:
+        notification.is_read = True
+        db.session.commit()
+
+    entity_kind, _, raw_fallback_id = (notification.entity_type or "").partition(":")
+    post = None
+    anchor = None
+
+    if entity_kind in {"comment", "group_comment"}:
+        comment = db.session.get(Comment, notification.entity_id)
+        fallback_id = int(raw_fallback_id) if raw_fallback_id.isdigit() else None
+        post_id = comment.post_id if comment else fallback_id
+        post = db.session.get(Post, post_id) if post_id else None
+        anchor = f"comment-{comment.id}" if comment else None
+    elif entity_kind in {"post", "group_post"} and notification.entity_id:
+        post = db.session.get(Post, notification.entity_id)
+
+    if post and can_view_post(post, current_user):
+        return redirect(
+            _post_content_destination(
+                post,
+                anchor=anchor or f"post-{post.id}",
+                notification_id=notification.id,
             )
-            db.session.commit()
-
-            # Clear the cached count
-            safe_cache_delete(f"notification_count_{current_user.id}")
-
-    # Return HTML or JSON based on request
-    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-        return jsonify(
-            {
-                "notifications": [n.to_dict() for n in notifications.items],
-                "total": notifications.total,
-                "pages": notifications.pages,
-                "current_page": page,
-            }
         )
 
-    return render_template("notifications.html", notifications=notifications)
+    if (
+        notification.type
+        in {
+            NotificationType.FRIEND_REQUEST,
+            NotificationType.FRIEND_ACCEPTED,
+            NotificationType.PROFILE_UPDATE,
+        }
+        and notification.actor
+    ):
+        return redirect(
+            url_for(
+                "user.view_profile",
+                user_identifier=notification.actor.public_id,
+            )
+        )
+
+    return redirect(url_for("user.user_dashboard"))
 
 
 # ===== SOCKET.IO EVENT FOR REAL-TIME UPDATES =====
