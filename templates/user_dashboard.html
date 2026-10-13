@@ -163,6 +163,8 @@
         id="notificationDropdownMenu">
         <div class="p-3 border-b border-fb-border flex justify-between items-center">
           <h3 class="font-semibold">Notifications</h3>
+          <a href="{{ url_for('user.notifications_page') }}"
+            class="text-xs font-semibold text-purple-700 hover:text-purple-900">View all</a>
         </div>
         <div class="max-h-96 overflow-y-auto custom-scrollbar" id="notificationsList">
           <div class="flex justify-center items-center p-4 text-fb-text-light">
@@ -282,7 +284,7 @@ placement='dashboard-top') %}
           </button>
         </li>
         <li>
-          <a href="#" onclick="event.preventDefault(); document.getElementById('notificationDropdown').click();">
+          <a href="{{ url_for('user.notifications_page') }}">
             <i class="bi bi-bell"></i> Notifications
             <span class="kb-sidebar-badge" id="sidebarNotifBadge" style="display:none">0</span>
           </a>
@@ -1563,13 +1565,13 @@ placement='dashboard-top') %}
         <span class="font-medium">Messages</span>
       </button>
 
-      <button type="button"
-        onclick="document.getElementById('notificationDropdown').click(); toggleMobileMenu();"
+      <a href="{{ url_for('user.notifications_page') }}"
+        onclick="toggleMobileMenu();"
         aria-label="Notifications" title="Notifications"
         class="sidebar-item w-full flex items-center p-3 rounded-lg text-fb-text hover:bg-fb-gray transition-colors mb-2">
         <i class="bi bi-bell mr-3 text-lg"></i>
         <span class="font-medium">Notifications</span>
-      </button>
+      </a>
 
       <a href="{{ url_for('user.profile', user_id=current_user.id) }}"
         class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-fb-gray transition-colors mb-2">
@@ -1864,7 +1866,7 @@ placement='dashboard-top') %}
 <!--  <script src="{{ url_for('static', filename='assets/js/main.js') }}"></script> -->
 {% include 'partials/user_dashboard_pre_scripts.html' %}
 <script src="{{ url_for('static', filename='assets/js/passive_polling.js', v='neon-cost-1') }}"></script>
-<script src="{{ url_for('static', filename='assets/js/dashboard.js', v='composer-actions-1') }}"></script>
+<script src="{{ url_for('static', filename='assets/js/dashboard.js', v='notification-badge-2') }}"></script>
 <script src="{{ url_for('static', filename='assets/js/comment_composer.js', v='comment-composer-2') }}"></script>
 
 <!-- Floating Corner Widget -->
