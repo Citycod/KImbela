@@ -387,29 +387,36 @@ def get_requests():
             # Is this the current user's own request?
             is_own_request = req.user_id == current_user.id
 
+            user_data = {
+                "id": req.user.id,
+                "full_name": req.user.full_name,
+                "profile_pic": req.user.profile_pic
+                or url_for("static", filename="assets/img/default-avatar.png"),
+            }
+            if "age" in profile_view:
+                user_data["age"] = profile_view["age"]
+            if "city" in profile_view:
+                user_data.update(
+                    location=", ".join(
+                        part
+                        for part in (
+                            profile_view["city"],
+                            profile_view["state"],
+                            profile_view["country"],
+                        )
+                        if part
+                    ),
+                    country=profile_view["country"],
+                    state=profile_view["state"],
+                    city=profile_view["city"],
+                )
+            if "gender" in profile_view:
+                user_data["gender"] = profile_view["gender"]
+
             requests_data.append(
                 {
                     "id": req.id,
-                    "user": {
-                        "id": req.user.id,
-                        "full_name": req.user.full_name,
-                        "age": profile_view["age"],
-                        "location": ", ".join(
-                            part
-                            for part in (
-                                profile_view["city"],
-                                profile_view["state"],
-                                profile_view["country"],
-                            )
-                            if part
-                        ),
-                        "profile_pic": req.user.profile_pic
-                        or url_for("static", filename="assets/img/default-avatar.png"),
-                        "country": profile_view["country"],
-                        "state": profile_view["state"],
-                        "city": profile_view["city"],
-                        "gender": profile_view["gender"],
-                    },
+                    "user": user_data,
                     "about_you": req.about_you or "",
                     "ideal_partner": req.ideal_partner or "",
                     "partner_preferences": {
@@ -629,47 +636,50 @@ def browse_users():
             location = ", ".join(
                 part
                 for part in (
-                    profile_view["city"],
-                    profile_view["state"],
-                    profile_view["country"],
+                    profile_view.get("city"),
+                    profile_view.get("state"),
+                    profile_view.get("country"),
                 )
                 if part
             )
             relationship = relationship_states[candidate.id]
-            users_data.append(
-                {
-                    "id": candidate.id,
-                    "public_id": candidate.public_id,
-                    "full_name": candidate.full_name,
-                    "age": profile_view["age"],
-                    "gender": profile_view["gender"],
-                    "country": profile_view["country"],
-                    "state": profile_view["state"],
-                    "city": profile_view["city"],
-                    "location": location,
-                    "profile_pic": candidate.profile_pic
-                    or url_for("static", filename="assets/img/default-avatar.png"),
-                    "bio": profile_view["bio"] or "",
-                    "interests": (
-                        _discovery_interests(candidate)
-                        if profile_view["interests"] is not None
-                        else []
-                    ),
-                    "last_seen": profile_view["last_seen"],
-                    "created_at": candidate.created_at.isoformat()
-                    if candidate.created_at
-                    else None,
-                    "relationship": relationship,
-                    "profile_url": url_for(
-                        "user.view_profile", user_identifier=candidate.public_id
-                    ),
-                    "message_url": url_for(
-                        "user.user_dashboard", chat=candidate.id
-                    )
-                    if relationship == "friends"
-                    else None,
-                }
-            )
+            user_data = {
+                "id": candidate.id,
+                "public_id": candidate.public_id,
+                "full_name": candidate.full_name,
+                "profile_pic": candidate.profile_pic
+                or url_for("static", filename="assets/img/default-avatar.png"),
+                "created_at": candidate.created_at.isoformat()
+                if candidate.created_at
+                else None,
+                "relationship": relationship,
+                "profile_url": url_for(
+                    "user.view_profile", user_identifier=candidate.public_id
+                ),
+                "message_url": url_for(
+                    "user.user_dashboard", chat=candidate.id
+                )
+                if relationship == "friends"
+                else None,
+            }
+            if "age" in profile_view:
+                user_data["age"] = profile_view["age"]
+            if "gender" in profile_view:
+                user_data["gender"] = profile_view["gender"]
+            if "city" in profile_view:
+                user_data.update(
+                    country=profile_view["country"],
+                    state=profile_view["state"],
+                    city=profile_view["city"],
+                    location=location,
+                )
+            if "bio" in profile_view:
+                user_data["bio"] = profile_view["bio"] or ""
+            if "interests" in profile_view:
+                user_data["interests"] = _discovery_interests(candidate)
+            if "last_seen" in profile_view:
+                user_data["last_seen"] = profile_view["last_seen"]
+            users_data.append(user_data)
 
         return jsonify(
             {
@@ -941,26 +951,33 @@ def get_request_detail(request_id):
             is not None
         )
 
+        request_user_data = {
+            "id": req.user.id,
+            "full_name": req.user.full_name,
+            "profile_pic": req.user.profile_pic,
+        }
+        if "age" in profile_view:
+            request_user_data["age"] = profile_view["age"]
+        if "city" in profile_view:
+            request_user_data["location"] = ", ".join(
+                part
+                for part in (
+                    profile_view["city"],
+                    profile_view["state"],
+                    profile_view["country"],
+                )
+                if part
+            )
+        if "bio" in profile_view:
+            request_user_data["about_me"] = profile_view["bio"]
+        if "occupation" in profile_view:
+            request_user_data["occupation"] = profile_view["occupation"]
+        if "educational_level" in profile_view:
+            request_user_data["education"] = profile_view["educational_level"]
+
         request_data = {
             "id": req.id,
-            "user": {
-                "id": req.user.id,
-                "full_name": req.user.full_name,
-                "age": profile_view["age"],
-                "location": ", ".join(
-                    part
-                    for part in (
-                        profile_view["city"],
-                        profile_view["state"],
-                        profile_view["country"],
-                    )
-                    if part
-                ),
-                "profile_pic": req.user.profile_pic,
-                "about_me": profile_view["bio"],
-                "occupation": profile_view["occupation"],
-                "education": profile_view["educational_level"],
-            },
+            "user": request_user_data,
             "about_you": req.about_you,
             "ideal_partner": req.ideal_partner,
             "partner_preferences": {

@@ -20,6 +20,7 @@ from PIL import Image
 
 
 from time_utils import utcnow
+from utils.profile_privacy import ProfileViewerContext, serialize_profile
 messaging = Blueprint("messaging", __name__)
 
 # Configuration
@@ -214,9 +215,21 @@ def get_friends_for_messaging():
             .all()
         )
         latest_by_friend_id = {row.friend_id: row for row in latest_rows}
+        profile_contexts = {
+            friend.id: ProfileViewerContext(
+                subject_id=friend.id,
+                viewer_id=current_user.id,
+                is_friend=True,
+            )
+            for friend in visible_friends
+        }
 
         friends = []
         for friend in visible_friends:
+            profile_view = serialize_profile(
+                friend,
+                profile_contexts[friend.id],
+            )
             summary = latest_by_friend_id.get(friend.id)
             last_message_time = summary.timestamp.isoformat() if summary else None
             last_message_text = (
@@ -225,19 +238,21 @@ def get_friends_for_messaging():
                 else summary.content if summary else None
             )
 
-            friends.append(
-                {
-                    "id": friend.id,
-                    "name": friend.full_name,
-                    "avatar": friend.profile_pic
-                    or url_for("static", filename="assets/img/default-avatar.png"),
-                    "online": friend.is_online,
-                    "last_seen": friend.last_seen.isoformat() if friend.last_seen else None,
-                    "last_message": last_message_text,
-                    "last_message_time": last_message_time,
-                    "unread_count": int(summary.unread_count or 0) if summary else 0,
-                }
-            )
+            friend_data = {
+                "id": friend.id,
+                "name": friend.full_name,
+                "avatar": friend.profile_pic
+                or url_for("static", filename="assets/img/default-avatar.png"),
+                "last_message": last_message_text,
+                "last_message_time": last_message_time,
+                "unread_count": int(summary.unread_count or 0) if summary else 0,
+            }
+            if "is_online" in profile_view:
+                friend_data.update(
+                    online=profile_view["is_online"],
+                    last_seen=profile_view["last_seen"],
+                )
+            friends.append(friend_data)
 
         # Sort by last message time (most recent first)
         friends.sort(key=lambda x: x["last_message_time"] or "", reverse=True)

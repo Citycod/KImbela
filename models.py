@@ -425,7 +425,6 @@ class User(db.Model, UserMixin):
                     "last_name": user.last_name,
                     "profile_pic": user.profile_pic
                     or url_for("static", filename="assets/img/default-avatar.png"),
-                    "email": user.email,
                     "created_at": user.created_at,
                 }
             )

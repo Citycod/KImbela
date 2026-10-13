@@ -864,12 +864,14 @@
                     </div>
                     <div class="grid gap-4 sm:grid-cols-2">
                         {% for boost in featured_boosts.items %}
+                        {% set boost_profile = featured_boost_profile_views.get(boost.user.id, {}) %}
                         <article class="rounded-xl border border-rose-100 bg-gradient-to-br from-white to-rose-50 p-4">
                             <div class="flex items-center gap-3">
                                 <img src="{{ boost.image or boost.user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" alt="{{ boost.user.full_name }}" class="h-14 w-14 rounded-full object-cover" />
                                 <div class="min-w-0">
                                     <h3 class="truncate font-bold text-gray-900">{{ boost.user.full_name }}</h3>
-                                    <p class="truncate text-xs text-gray-600">{{ [boost.user.city, boost.user.state, boost.user.country]|select|join(', ') }}</p>
+                                    {% set boost_location = [boost_profile.get('city'), boost_profile.get('state'), boost_profile.get('country')]|select|join(', ') %}
+                                    {% if boost_location %}<p class="truncate text-xs text-gray-600">{{ boost_location }}</p>{% endif %}
                                     <span class="mt-1 inline-flex rounded-full bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-700">Featured Match</span>
                                 </div>
                             </div>

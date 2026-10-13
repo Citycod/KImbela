@@ -192,10 +192,7 @@ def calculate_age(dob):
 
 def serialize_profile(subject, context):
     can = lambda field: context.can_view(subject, field)
-    location_visible = can("location")
-    activity_visible = can("activity")
-    birthday_visible = can("birthday")
-    return {
+    profile = {
         "id": subject.id,
         "public_id": subject.public_id,
         "first_name": subject.first_name,
@@ -203,35 +200,45 @@ def serialize_profile(subject, context):
         "full_name": subject.full_name,
         "profile_pic": subject.profile_pic,
         "cover_pic": subject.cover_pic,
-        "show_bio": can("bio"),
-        "bio": subject.bio if can("bio") else None,
-        "age": calculate_age(subject.dob) if can("age") else None,
-        "birthday": (
-            subject.dob.strftime("%B %d")
-            if birthday_visible and subject.dob
-            else None
-        ),
-        "gender": subject.gender if can("gender") else None,
-        "city": subject.city if location_visible else None,
-        "state": subject.state if location_visible else None,
-        "country": subject.country if location_visible else None,
-        "marital_status": (
-            subject.marital_status if can("relationship") else None
-        ),
-        "occupation": subject.occupation if can("occupation") else None,
-        "educational_level": (
-            subject.educational_level if can("education") else None
-        ),
-        "religion": subject.religion if can("religion") else None,
-        "ethnicity": subject.ethnicity if can("ethnicity") else None,
-        "interests": subject.interests if can("interests") else None,
-        "is_online": bool(subject.is_online) if activity_visible else False,
-        "last_seen": (
-            subject.last_seen.isoformat()
-            if activity_visible and subject.last_seen
-            else None
-        ),
     }
+    if can("bio"):
+        profile.update(show_bio=True, bio=subject.bio)
+    if can("age"):
+        profile["age"] = calculate_age(subject.dob)
+    if can("birthday"):
+        profile["birthday"] = (
+            subject.dob.strftime("%B %d") if subject.dob else None
+        )
+    if can("gender"):
+        profile["gender"] = subject.gender
+    if can("location"):
+        location = ", ".join(
+            part for part in (subject.city, subject.state, subject.country) if part
+        )
+        profile.update(
+            city=subject.city,
+            state=subject.state,
+            country=subject.country,
+            location=location,
+        )
+    if can("relationship"):
+        profile["marital_status"] = subject.marital_status
+    if can("occupation"):
+        profile["occupation"] = subject.occupation
+    if can("education"):
+        profile["educational_level"] = subject.educational_level
+    if can("religion"):
+        profile["religion"] = subject.religion
+    if can("ethnicity"):
+        profile["ethnicity"] = subject.ethnicity
+    if can("interests"):
+        profile["interests"] = subject.interests
+    if can("activity"):
+        profile["is_online"] = bool(subject.is_online)
+        profile["last_seen"] = (
+            subject.last_seen.isoformat() if subject.last_seen else None
+        )
+    return profile
 
 
 def privacy_form_values(privacy):

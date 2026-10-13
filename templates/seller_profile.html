@@ -213,13 +213,13 @@
                 <div class="flex-1 text-center md:text-left">
                     <h1 class="text-3xl font-bold mb-2">{{ seller.full_name or seller.username }}</h1>
                     
-                    {% if seller.occupation %}
-                    <p class="text-lg opacity-90 mb-3">{{ seller.occupation }}</p>
+                    {% if seller_profile_view.occupation %}
+                    <p class="text-lg opacity-90 mb-3">{{ seller_profile_view.occupation }}</p>
                     {% endif %}
                     
-                    {% if seller.location %}
+                    {% if seller_profile_view.location %}
                     <p class="mb-4">
-                        <i class="bi bi-geo-alt mr-2"></i>{{ seller.location }}
+                        <i class="bi bi-geo-alt mr-2"></i>{{ seller_profile_view.location }}
                         {% if seller.created_at %}
                         <span class="ml-4">
                             <i class="bi bi-calendar mr-2"></i>Member since {{ seller.created_at.strftime('%Y') }}
@@ -289,8 +289,8 @@
                 <div class="bg-white rounded-2xl p-6 shadow-sm mb-6">
                     <h3 class="text-lg font-bold mb-4">About</h3>
                     
-                    {% if seller.bio %}
-                    <p class="text-gray-700 mb-6">{{ seller.bio }}</p>
+                    {% if seller_profile_view.bio %}
+                    <p class="text-gray-700 mb-6">{{ seller_profile_view.bio }}</p>
                     {% else %}
                     <p class="text-gray-500 mb-6">No bio provided yet.</p>
                     {% endif %}

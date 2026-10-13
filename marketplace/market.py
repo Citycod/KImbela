@@ -53,6 +53,11 @@ from io import BytesIO
 from urllib.parse import quote, urlparse, unquote
 import mimetypes
 from payments.payment_service import PaymentService
+from utils.profile_privacy import (
+    build_profile_viewer_context,
+    build_profile_viewer_contexts,
+    serialize_profile,
+)
 from models import (
     MarketplacePayment,
     MarketplaceSubscriptionPlan,
@@ -1197,6 +1202,10 @@ def service_detail(listing_ref):
 
     seller_contact = marketplace_seller_contact(service)
     whatsapp_url = seller_contact["whatsapp_url"]
+    seller_profile_view = serialize_profile(
+        service.seller,
+        build_profile_viewer_context(service.seller, current_user),
+    )
 
     message_url = url_for("user.user_dashboard", chat=service.seller_id)
     contact_price_action = None
@@ -1248,6 +1257,7 @@ def service_detail(listing_ref):
         message_url=message_url,
         contact_price_action=contact_price_action,
         seller_contact=seller_contact,
+        seller_profile_view=seller_profile_view,
         format_listing_price=format_listing_price,
     )
 
@@ -3306,8 +3316,16 @@ def api_featured_sellers():
         # Get sellers with featured services
         featured_sellers = get_featured_sellers(6)
 
+        profile_contexts = build_profile_viewer_contexts(
+            featured_sellers,
+            current_user,
+        )
         result = []
         for seller in featured_sellers:
+            profile_view = serialize_profile(
+                seller,
+                profile_contexts[seller.id],
+            )
             # Get seller stats
             total_services = MarketplaceService.query.filter_by(
                 seller_id=seller.id, status="active"
@@ -3329,25 +3347,23 @@ def api_featured_sellers():
                 or 0
             )
 
-            result.append(
-                {
-                    "id": seller.id,
-                    "name": seller.full_name,
-                    "first_name": seller.first_name,
-                    "avatar": seller.profile_pic
-                    or url_for("static", filename="assets/img/default-avatar.png"),
-                    "title": seller.occupation or "Professional Seller",
-                    "rating": float(avg_rating),
-                    "review_count": total_reviews,
-                    "total_services": total_services,
-                    "is_online": seller.is_online,
-                    "bio": (
-                        seller.bio[:100] + "..."
-                        if seller.bio and len(seller.bio) > 100
-                        else seller.bio
-                    ),
-                }
-            )
+            seller_data = {
+                "id": seller.id,
+                "name": seller.full_name,
+                "first_name": seller.first_name,
+                "avatar": seller.profile_pic
+                or url_for("static", filename="assets/img/default-avatar.png"),
+                "title": profile_view.get("occupation") or "Professional Seller",
+                "rating": float(avg_rating),
+                "review_count": total_reviews,
+                "total_services": total_services,
+            }
+            if "is_online" in profile_view:
+                seller_data["is_online"] = profile_view["is_online"]
+            if "bio" in profile_view:
+                bio = profile_view["bio"] or ""
+                seller_data["bio"] = bio[:100] + "..." if len(bio) > 100 else bio
+            result.append(seller_data)
 
         return jsonify({"success": True, "sellers": result})
 
@@ -3374,6 +3390,10 @@ def api_service_detail(slug):
 
         # Get seller info
         seller = service.seller
+        profile_view = serialize_profile(
+            seller,
+            build_profile_viewer_context(seller, current_user),
+        )
 
         # Format data
         result = {
@@ -3416,7 +3436,7 @@ def api_service_detail(slug):
                 "first_name": seller.first_name,
                 "avatar": seller.profile_pic
                 or url_for("static", filename="assets/img/default-avatar.png"),
-                "description": seller.bio
+                "description": profile_view.get("bio")
                 or f"Professional seller on Kimbela Marketplace",
                 "rating": (
                     float(seller.avg_rating) if hasattr(seller, "avg_rating") else 4.5
@@ -3440,6 +3460,10 @@ def api_seller_detail(seller_id):
     """Get seller details"""
     try:
         seller = User.query.get_or_404(seller_id)
+        profile_view = serialize_profile(
+            seller,
+            build_profile_viewer_context(seller, current_user),
+        )
 
         # Get seller stats
         total_services = MarketplaceService.query.filter_by(
@@ -3504,8 +3528,7 @@ def api_seller_detail(seller_id):
             "first_name": seller.first_name,
             "avatar": seller.profile_pic
             or url_for("static", filename="assets/img/default-avatar.png"),
-            "title": seller.occupation or "Professional Seller",
-            "bio": seller.bio,
+            "title": profile_view.get("occupation") or "Professional Seller",
             "rating": float(avg_rating),
             "review_count": total_reviews,
             "total_services": total_services,
@@ -3513,6 +3536,8 @@ def api_seller_detail(seller_id):
             "member_since": seller.created_at.strftime("%b %Y"),
             "services": services_data,
         }
+        if "bio" in profile_view:
+            result["bio"] = profile_view["bio"]
 
         return jsonify({"success": True, "seller": result})
 
@@ -3710,6 +3735,10 @@ def edit_seller_profile():
 def seller_profile(seller_id):
     """View seller profile"""
     seller = User.query.get_or_404(seller_id)
+    seller_profile_view = serialize_profile(
+        seller,
+        build_profile_viewer_context(seller, current_user),
+    )
 
     # Get seller's services with pagination
     page = request.args.get("page", 1, type=int)
@@ -3779,6 +3808,7 @@ def seller_profile(seller_id):
     return render_template(
         "seller_profile.html",
         seller=seller,
+        seller_profile_view=seller_profile_view,
         services=services,
         total_services=total_services,
         total_reviews=total_reviews,

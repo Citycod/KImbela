@@ -72,6 +72,7 @@ from utils.group_post_service import (
 from utils.profile_privacy import (
     apply_privacy_values,
     build_profile_viewer_context,
+    build_profile_viewer_contexts,
     ensure_owner_privacy,
     parse_privacy_form,
     privacy_form_values,
@@ -267,24 +268,8 @@ def build_post_share_meta(post):
 
 
 def build_private_post_share_meta(post):
-    """Return generic crawler metadata without exposing private group content."""
-    fallback_image = _social_preview_image_url(
-        url_for("static", filename="assets/img/kim.png")
-    )
-    return {
-        "title": "Private Kimbela Group Post",
-        "description": (
-            "Sign in to Kimbela with an account that has access to view this "
-            "private group post."
-        ),
-        "url": _absolute_share_url(
-            url_for("user.view_shared_post", post_identifier=post.public_id)
-        ),
-        "image": fallback_image,
-        "image_type": "image/png",
-        "image_width": "1200",
-        "image_height": "630",
-    }
+    """Expose only the intentional post share excerpt for restricted groups."""
+    return build_post_share_meta(post)
 
 
 def get_groups_data_for_user(user_id):
@@ -696,21 +681,26 @@ def get_today_birthdays():
         ).all()
     }
 
+    profile_contexts = build_profile_viewer_contexts(
+        birthday_users,
+        current_user,
+    )
     birthday_friends = []
     for friend in birthday_users:
         notification = notification_by_user_id.get(friend.id)
-        birthday_friends.append(
-                {
-                    "id": friend.id,
-                    "name": friend.full_name,
-                    "avatar": friend.profile_pic
-                    or url_for("static", filename="assets/img/default-avatar.png"),
-                    "age": today.year - friend.dob.year,
-                    "is_seen": bool(notification and notification.is_seen),
-                    "is_wished": bool(notification and notification.is_wished),
-                    "is_pending": bool(notification and not notification.is_wished),
-                }
-            )
+        profile_view = serialize_profile(friend, profile_contexts[friend.id])
+        birthday_data = {
+            "id": friend.id,
+            "name": friend.full_name,
+            "avatar": friend.profile_pic
+            or url_for("static", filename="assets/img/default-avatar.png"),
+            "is_seen": bool(notification and notification.is_seen),
+            "is_wished": bool(notification and notification.is_wished),
+            "is_pending": bool(notification and not notification.is_wished),
+        }
+        if "age" in profile_view:
+            birthday_data["age"] = profile_view["age"]
+        birthday_friends.append(birthday_data)
 
     visible_birthday_user_ids = {friend.id for friend in birthday_users}
     unread_count = sum(
@@ -736,19 +726,25 @@ def get_upcoming_birthdays_api():
     """Get upcoming birthdays (next 7 days)"""
     upcoming = get_upcoming_birthdays(current_user.id, days_ahead=7)
 
+    profile_contexts = build_profile_viewer_contexts(
+        (item["friend"] for item in upcoming),
+        current_user,
+    )
     birthdays_data = []
     for item in upcoming:
-        birthdays_data.append(
-            {
-                "id": item["friend"].id,
-                "name": item["friend"].full_name,
-                "avatar": item["friend"].profile_pic
-                or url_for("static", filename="assets/img/default-avatar.png"),
-                "days_until": item["days_until"],
-                "birthday_date": item["birthday_date"].isoformat(),
-                "age": item["age"],
-            }
-        )
+        friend = item["friend"]
+        profile_view = serialize_profile(friend, profile_contexts[friend.id])
+        birthday_data = {
+            "id": friend.id,
+            "name": friend.full_name,
+            "avatar": friend.profile_pic
+            or url_for("static", filename="assets/img/default-avatar.png"),
+            "days_until": item["days_until"],
+            "birthday_date": item["birthday_date"].isoformat(),
+        }
+        if "age" in profile_view:
+            birthday_data["age"] = profile_view["age"]
+        birthdays_data.append(birthday_data)
 
     return jsonify({"success": True, "birthdays": birthdays_data})
 
@@ -4040,7 +4036,7 @@ def edit_profile(user_id):
                         flash("Cover photo updated successfully!", "success")
                     except Exception as e:
                         print(f"Cover photo upload error: {e}")
-                    flash("Failed to upload cover photo.", "danger")
+                        flash("Failed to upload cover photo.", "danger")
 
             apply_privacy_values(privacy, submitted_privacy)
             db.session.commit()
@@ -4174,19 +4170,31 @@ def get_user_groups():
 def get_friends_api():
     """Get friends list for messaging"""
     try:
+        visible_friends = [
+            friend
+            for friend in current_user.friends
+            if current_user.can_interact_with(friend)
+        ]
+        profile_contexts = build_profile_viewer_contexts(
+            visible_friends,
+            current_user,
+        )
         friends = []
-        for friend in current_user.friends:
-            if current_user.can_interact_with(friend):
-                friends.append(
-                    {
-                        "id": friend.id,
-                        "name": friend.full_name,
-                        "avatar": friend.profile_pic
-                        or url_for("static", filename="assets/img/default-avatar.png"),
-                        "online": friend.is_online,
-                        "unread_count": 0,  # You can implement this later
-                    }
-                )
+        for friend in visible_friends:
+            profile_view = serialize_profile(
+                friend,
+                profile_contexts[friend.id],
+            )
+            friend_data = {
+                "id": friend.id,
+                "name": friend.full_name,
+                "avatar": friend.profile_pic
+                or url_for("static", filename="assets/img/default-avatar.png"),
+                "unread_count": 0,  # You can implement this later
+            }
+            if "is_online" in profile_view:
+                friend_data["online"] = profile_view["is_online"]
+            friends.append(friend_data)
 
         return jsonify(friends)
     except Exception as e:
@@ -4322,6 +4330,18 @@ def group_detail(group_id):
             per_page=12,
         )
 
+    featured_boost_profile_views = {}
+    if featured_boosts:
+        boost_users = [boost.user for boost in featured_boosts.items if boost.user]
+        boost_contexts = build_profile_viewer_contexts(boost_users, current_user)
+        featured_boost_profile_views = {
+            boost_user.id: serialize_profile(
+                boost_user,
+                boost_contexts[boost_user.id],
+            )
+            for boost_user in boost_users
+        }
+
     default_avatar = url_for("static", filename="assets/img/default-avatar.png")
 
     # Load the same bounded first batch used by the dashboard feed pattern.
@@ -4393,6 +4413,7 @@ def group_detail(group_id):
         can_view_group_content=can_view_group_content,
         is_matchmaking_group=protected_matchmaking_group,
         featured_boosts=featured_boosts,
+        featured_boost_profile_views=featured_boost_profile_views,
         **post_batch,
         current_user=current_user,
         default_avatar=default_avatar,
@@ -5320,7 +5341,7 @@ def view_profile(user_identifier):
         ),
         reaction_counts_by_post_id=reaction_counts_by_post_id,
         friends_count=friends_count,
-        age=profile_view["age"],
+        age=profile_view.get("age"),
         is_own_profile=(target_user.id == current_user.id),
     )
 

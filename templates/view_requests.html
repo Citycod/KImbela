@@ -1966,6 +1966,15 @@
         const profileUrl = escapeBrowseValue(profile.profile_url);
         const messageUrl = profile.message_url ? escapeBrowseValue(profile.message_url) : '';
         const interests = Array.isArray(profile.interests) ? profile.interests : [];
+        const locationLine = profile.location
+          ? `<p class="text-xs text-text-secondary"><i class="bi bi-geo-alt text-rose-gold"></i> ${escapeBrowseValue(profile.location)}</p>`
+          : '';
+        const ageBadge = profile.age != null
+          ? `<span class="rounded-full bg-rose-50 px-2 py-0.5 text-xs text-rose-700">${escapeBrowseValue(profile.age)} years</span>`
+          : '';
+        const genderBadge = profile.gender
+          ? `<span class="rounded-full bg-purple-50 px-2 py-0.5 text-xs text-purple-700">${escapeBrowseValue(profile.gender)}</span>`
+          : '';
         const relationshipAction = profile.relationship === 'friends'
           ? `<a href="${messageUrl}" class="btn btn-primary flex-1 justify-center" aria-label="Message ${escapeBrowseValue(profile.full_name)}"><i class="bi bi-chat-dots"></i> Message</a>`
           : profile.relationship === 'sent'
@@ -1983,10 +1992,10 @@
               </a>
               <div class="min-w-0 flex-1">
                 <h3 class="truncate font-bold text-base text-primary"><a href="${profileUrl}" class="hover:underline">${escapeBrowseValue(profile.full_name)}</a></h3>
-                <p class="text-xs text-text-secondary"><i class="bi bi-geo-alt text-rose-gold"></i> ${escapeBrowseValue(profile.location)}</p>
+                ${locationLine}
                 <div class="mt-1 flex flex-wrap gap-1">
-                  <span class="rounded-full bg-rose-50 px-2 py-0.5 text-xs text-rose-700">${escapeBrowseValue(profile.age)} years</span>
-                  <span class="rounded-full bg-purple-50 px-2 py-0.5 text-xs text-purple-700">${escapeBrowseValue(profile.gender)}</span>
+                  ${ageBadge}
+                  ${genderBadge}
                 </div>
               </div>
             </div>
@@ -2011,6 +2020,10 @@
         
         const tagColors = ['rose', 'sage', 'champagne'];
         const interests = request.interests || [];
+        const requestAge = request.user.age != null ? `, ${request.user.age}` : '';
+        const requestLocation = request.user.location
+          ? `<p class="text-xs text-text-secondary flex items-center gap-1"><i class="bi bi-geo-alt text-rose-gold text-xs"></i><span>${request.user.location}</span></p>`
+          : '';
         
         div.innerHTML = `
             ${request.is_own_request ? `
@@ -2028,11 +2041,8 @@
                              class="w-10 h-10 rounded-full object-cover border-2 ${request.is_own_request ? 'border-rose-gold' : 'border-white'} shadow-soft">
                     </div>
                     <div class="flex-1">
-                        <h4 class="font-bold text-sm text-primary mb-0.5"><a href="/profile/${request.user.id}" target="_blank" class="hover:underline">${request.user.full_name}</a>, ${request.user.age}</h4>
-                        <p class="text-xs text-text-secondary flex items-center gap-1">
-                            <i class="bi bi-geo-alt text-rose-gold text-xs"></i>
-                            <span>${request.user.location}</span>
-                        </p>
+                        <h4 class="font-bold text-sm text-primary mb-0.5"><a href="/profile/${request.user.id}" target="_blank" class="hover:underline">${request.user.full_name}</a>${requestAge}</h4>
+                        ${requestLocation}
                         <div class="flex items-center gap-1 mt-1">
                             <span class="px-1.5 py-0.5 bg-gradient-to-r from-rose-100 to-rose-50 text-rose-700 text-xs font-semibold rounded-full border border-rose-200">
                                 ${request.package}
@@ -2161,6 +2171,12 @@
         const interests = request.interests || [];
         const lifestyles = request.lifestyles || [];
         const partnerInterests = request.partner_interests || [];
+        const ageBadge = request.user.age != null
+          ? `<span class="px-2 py-0.5 bg-gradient-to-r from-primary/10 to-rose-gold/10 text-primary rounded-full text-xs font-semibold border border-primary/20">${request.user.age} years</span>`
+          : '';
+        const locationBadge = request.user.location
+          ? `<span class="px-2 py-0.5 bg-gradient-to-r from-sage/10 to-green-400/10 text-sage-dark rounded-full text-xs font-semibold border border-sage/20"><i class="bi bi-geo-alt mr-0.5 text-xs"></i>${request.user.location}</span>`
+          : '';
         
         // Calculate compatibility
         const compatibilityScore = calculateCompatibility(request);
@@ -2190,12 +2206,8 @@
                                 <div class="mb-2">
                                     <h4 class="font-bold text-base text-primary mb-1"><a href="/profile/${request.user.id}" target="_blank" class="hover:underline">${request.user.full_name}</a></h4>
                                     <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-2">
-                                        <span class="px-2 py-0.5 bg-gradient-to-r from-primary/10 to-rose-gold/10 text-primary rounded-full text-xs font-semibold border border-primary/20">
-                                            ${request.user.age} years
-                                        </span>
-                                        <span class="px-2 py-0.5 bg-gradient-to-r from-sage/10 to-green-400/10 text-sage-dark rounded-full text-xs font-semibold border border-sage/20">
-                                            <i class="bi bi-geo-alt mr-0.5 text-xs"></i>${request.user.location}
-                                        </span>
+                                        ${ageBadge}
+                                        ${locationBadge}
                                         ${request.user.occupation ? `
                                         <span class="px-2 py-0.5 bg-gradient-to-r from-blue-100 to-blue-50 text-blue-700 rounded-full text-xs font-semibold border border-blue-200">
                                             <i class="bi bi-briefcase mr-0.5 text-xs"></i>${request.user.occupation}
