@@ -259,24 +259,8 @@ def build_post_share_meta(post):
 
 
 def build_private_post_share_meta(post):
-    """Return generic crawler metadata without exposing private group content."""
-    fallback_image = _social_preview_image_url(
-        url_for("static", filename="assets/img/kim.png")
-    )
-    return {
-        "title": "Private Kimbela Group Post",
-        "description": (
-            "Sign in to Kimbela with an account that has access to view this "
-            "private group post."
-        ),
-        "url": _absolute_share_url(
-            url_for("user.view_shared_post", post_identifier=post.public_id)
-        ),
-        "image": fallback_image,
-        "image_type": "image/png",
-        "image_width": "1200",
-        "image_height": "630",
-    }
+    """Expose only the intentional post share excerpt for restricted groups."""
+    return build_post_share_meta(post)
 
 
 def get_groups_data_for_user(user_id):
