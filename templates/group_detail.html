@@ -1331,10 +1331,7 @@
         }
         
         function normalizeShareUrl(postId, shareUrl = '') {
-            if (shareUrl) {
-                return new URL(shareUrl, `${getPublicBaseUrl()}/`).toString();
-            }
-            return postId ? `${getPublicBaseUrl()}/post/${postId}` : '';
+            return window.KimbelaShare.postUrl(postId, shareUrl, getPublicBaseUrl());
         }
 
         function openShareModal(postId, shareUrl = '') {
@@ -1542,7 +1539,8 @@
         }
 
         function getSharePayload() {
-            const url = currentSharePostUrl || `${getPublicBaseUrl()}/post/${currentSharePostId}`;
+            const url = currentSharePostUrl
+                || window.KimbelaShare.postUrl(currentSharePostId, '', getPublicBaseUrl());
             return { url, text: 'Check this out on Kimbela' };
         }
         

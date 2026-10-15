@@ -4812,15 +4812,11 @@ function getPublicBaseUrl() {
 }
 
 function buildPublicPostUrl(postId) {
-    return `${getPublicBaseUrl()}/post/${postId}`;
+    return window.KimbelaShare.postUrl(postId, '', getPublicBaseUrl());
 }
 
 function normalizeShareUrl(postId, shareUrl = '') {
-    if (shareUrl) {
-        return new URL(shareUrl, `${getPublicBaseUrl()}/`).toString();
-    }
-
-    return postId ? buildPublicPostUrl(postId) : '';
+    return window.KimbelaShare.postUrl(postId, shareUrl, getPublicBaseUrl());
 }
 
 function openShareModal(postId, shareUrl = '') {

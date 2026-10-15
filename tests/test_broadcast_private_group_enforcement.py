@@ -317,7 +317,9 @@ def test_private_group_access_posting_and_data_leak_guards(app, db, client):
     assert client.get(f"/groups/{private_group.id}/posts").status_code == 403
     assert client.post(f"/groups/{private_group.id}/join").status_code == 403
     assert client.get(f"/get_post/{private_post.id}").status_code == 403
-    assert client.get(f"/post/{private_post.public_id}").status_code == 403
+    assert client.get(
+        f"/post/{private_post.public_id}?share_v=2"
+    ).status_code == 403
     assert private_post.content.encode() not in client.get(
         f"/search?q={private_post.content}"
     ).data

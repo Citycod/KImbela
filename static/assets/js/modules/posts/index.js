@@ -54,9 +54,11 @@ class PostSystem {
             if (shareBtn) {
                 const postId = shareBtn.dataset.postId;
                 const publicBaseUrl = (window.publicBaseUrl || window.location.origin || '').replace(/\/$/, '');
-                const shareUrl = shareBtn.dataset.url
-                    ? new URL(shareBtn.dataset.url, `${publicBaseUrl}/`).toString()
-                    : `${publicBaseUrl}/post/${postId}`;
+                const shareUrl = window.KimbelaShare.postUrl(
+                    postId,
+                    shareBtn.dataset.url || '',
+                    publicBaseUrl,
+                );
 
                 if (postId && typeof window.openShareModal === 'function') {
                     window.openShareModal(postId, shareUrl);
