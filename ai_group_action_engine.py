@@ -6,6 +6,7 @@ scheduler work never depends on an HTTP login session or CSRF token.
 
 from datetime import timedelta
 import logging
+import threading
 
 from flask import current_app
 
@@ -31,6 +32,7 @@ from utils.group_post_service import (
 logger = logging.getLogger(__name__)
 GROUP_ACTIVITY_SESSION = "GROUP_ACTIVITY_SESSION"
 GROUP_SESSION_CURSOR_KEY = "ai_group_session_cursor"
+MANUAL_ALL_PERSONA_POST_LOCK = threading.Lock()
 
 
 def _persona_prompt_config(persona):
@@ -489,6 +491,161 @@ def eligible_groups_for_persona(persona):
         for group in groups
         if group.members.filter_by(id=persona.user_id).first() is not None
     ]
+
+
+def _manual_post_group_for_persona(persona):
+    """Select one allowed normal group without bypassing manual-post policy."""
+    from ai_controls import get_group_config
+    from utils.matchmaking_group import is_matchmaking_group
+
+    blocked_reasons = []
+    for group in sorted(eligible_groups_for_persona(persona), key=lambda item: item.id):
+        if is_matchmaking_group(group):
+            blocked_reasons.append("matchmaking_excluded")
+            continue
+        if get_group_config(group)["activity_level"] == "off":
+            blocked_reasons.append("group_level_off")
+            continue
+        allowed, reason = manual_group_post_eligibility(persona, group)
+        if allowed:
+            return group, "eligible"
+        blocked_reasons.append(reason)
+
+    return None, blocked_reasons[-1] if blocked_reasons else "no_allowed_group"
+
+
+def run_manual_all_persona_group_posts():
+    """Attempt one immediate normal-group post for each active AI persona."""
+    if not MANUAL_ALL_PERSONA_POST_LOCK.acquire(blocking=False):
+        return {
+            "busy": True,
+            "total": 0,
+            "posted": 0,
+            "skipped": 0,
+            "failed": 0,
+            "results": [],
+        }
+
+    try:
+        persona_ids = [
+            persona_id
+            for (persona_id,) in db.session.query(AIPersona.id)
+            .join(User, User.id == AIPersona.user_id)
+            .filter(
+                AIPersona.is_active.is_(True),
+                User.is_active.is_(True),
+                User.is_ai_persona.is_(True),
+            )
+            .order_by(AIPersona.id.asc())
+            .all()
+        ]
+        result = {
+            "busy": False,
+            "total": len(persona_ids),
+            "posted": 0,
+            "skipped": 0,
+            "failed": 0,
+            "results": [],
+        }
+
+        for persona_id in persona_ids:
+            # Every attempt starts with a fresh ORM instance because the
+            # existing posting service may commit or roll back its session.
+            persona = db.session.get(AIPersona, persona_id)
+            if persona is None:
+                result["skipped"] += 1
+                result["results"].append(
+                    {
+                        "persona_id": persona_id,
+                        "name": f"AI persona {persona_id}",
+                        "status": "skipped",
+                        "reason": "persona_missing",
+                    }
+                )
+                continue
+
+            persona_name = persona.name
+            try:
+                group, reason = _manual_post_group_for_persona(persona)
+                if group is None:
+                    result["skipped"] += 1
+                    result["results"].append(
+                        {
+                            "persona_id": persona_id,
+                            "name": persona_name,
+                            "status": "skipped",
+                            "reason": reason,
+                        }
+                    )
+                    continue
+
+                group_id = group.id
+                persona_user_id = persona.user_id
+                posted = execute_persona_group_post(
+                    persona,
+                    group,
+                    source="manual",
+                )
+                if not posted:
+                    result["failed"] += 1
+                    result["results"].append(
+                        {
+                            "persona_id": persona_id,
+                            "name": persona_name,
+                            "status": "failed",
+                            "reason": "generation_or_posting_failed",
+                            "group_id": group_id,
+                        }
+                    )
+                    continue
+
+                created_post = (
+                    Post.query.filter_by(
+                        author_id=persona_user_id,
+                        group_id=group_id,
+                    )
+                    .order_by(Post.id.desc())
+                    .first()
+                )
+                result["posted"] += 1
+                result["results"].append(
+                    {
+                        "persona_id": persona_id,
+                        "name": persona_name,
+                        "status": "posted",
+                        "reason": "posted",
+                        "group_id": group_id,
+                        "post_id": created_post.id if created_post else None,
+                    }
+                )
+            except Exception as exc:
+                db.session.rollback()
+                result["failed"] += 1
+                result["results"].append(
+                    {
+                        "persona_id": persona_id,
+                        "name": persona_name,
+                        "status": "failed",
+                        "reason": "unexpected_error",
+                    }
+                )
+                logger.error(
+                    "Manual all-persona group post failed: persona=%s failure=%s",
+                    persona_id,
+                    type(exc).__name__,
+                )
+
+        logger.info(
+            "Manual all-persona group post run completed: total=%s posted=%s "
+            "skipped=%s failed=%s",
+            result["total"],
+            result["posted"],
+            result["skipped"],
+            result["failed"],
+        )
+        return result
+    finally:
+        MANUAL_ALL_PERSONA_POST_LOCK.release()
 
 
 def execute_next_group_action(personas, actions=None) -> bool:

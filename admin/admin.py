@@ -920,6 +920,26 @@ def admin_set_ai_post_spacing():
     return _ai_admin_redirect()
 
 
+@admin.route("/admin/ai-users/post-now-all", methods=["POST"])
+@login_required
+def admin_post_now_all_ai_users():
+    if not current_user.is_super_admin:
+        return jsonify({"success": False, "error": "Access denied"}), 403
+
+    from ai_group_action_engine import run_manual_all_persona_group_posts
+
+    result = run_manual_all_persona_group_posts()
+    if result["busy"]:
+        return jsonify(
+            {
+                "success": False,
+                "error": "An AI posting run is already in progress.",
+                **result,
+            }
+        ), 409
+    return jsonify({"success": True, **result})
+
+
 @admin.route("/admin/ai-users/<int:persona_id>/settings", methods=["POST"])
 @login_required
 def admin_update_ai_persona(persona_id):

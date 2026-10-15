@@ -583,6 +583,246 @@ def test_ai_admin_page_is_super_admin_only_and_renders_controls(app, db, client)
     assert response.status_code == 200
     assert b"STOP ALL AI ACTIVITY" in response.data
     assert b"Manual only" in response.data
+    assert b"Post Now \xe2\x80\x94 All AI Users" in response.data
+    assert b"Trigger all active AI users to post now?" in response.data
+    assert b'name="csrf_token"' in response.data
+
+
+def test_post_now_all_ai_users_route_is_super_admin_only(app, db, client, monkeypatch):
+    from flask import g
+
+    human = make_user(db)
+    admin = make_user(db, super_admin=True)
+    db.session.commit()
+    run = Mock(
+        return_value={
+            "busy": False,
+            "total": 2,
+            "posted": 1,
+            "skipped": 1,
+            "failed": 0,
+            "results": [],
+        }
+    )
+    monkeypatch.setattr(
+        "ai_group_action_engine.run_manual_all_persona_group_posts",
+        run,
+    )
+
+    with client.session_transaction() as session:
+        session["_user_id"] = str(human.id)
+        session["_fresh"] = True
+    denied = client.post("/admin/ai-users/post-now-all")
+    assert denied.status_code == 403
+    run.assert_not_called()
+    g.pop("_login_user", None)
+
+    admin_client = app.test_client()
+    with admin_client.session_transaction() as session:
+        session["_user_id"] = str(admin.id)
+        session["_fresh"] = True
+    allowed = admin_client.post("/admin/ai-users/post-now-all")
+    assert allowed.status_code == 200
+    assert allowed.get_json()["posted"] == 1
+    run.assert_called_once_with()
+
+
+def test_manual_all_persona_group_posts_attempts_each_active_persona_once(
+    app, db, monkeypatch
+):
+    import ai_group_action_engine
+    from ai_group_action_engine import run_manual_all_persona_group_posts
+    from models import AILog, AIPersona, Group, User
+
+    preexisting_active_ids = {
+        persona_id
+        for (persona_id,) in db.session.query(AIPersona.id)
+        .join(User, User.id == AIPersona.user_id)
+        .filter(
+            AIPersona.is_active.is_(True),
+            User.is_active.is_(True),
+            User.is_ai_persona.is_(True),
+        )
+        .all()
+    }
+    owner = make_user(db)
+    normal_group = Group(
+        name="Normal AI destination",
+        created_by=owner.id,
+        is_active=True,
+        is_private=False,
+    )
+    matchmaking_group = Group(
+        name="Protected Matchmaking",
+        created_by=owner.id,
+        is_active=True,
+        is_private=True,
+    )
+    db.session.add_all([normal_group, matchmaking_group])
+    db.session.flush()
+    monkeypatch.setitem(app.config, "MATCHMAKING_GROUP_ID", str(matchmaking_group.id))
+
+    failed = make_persona(db)
+    successful = make_persona(db)
+    inactive = make_persona(db)
+    inactive.is_active = False
+    inactive_account = make_persona(db)
+    inactive_account.user.is_active = False
+    non_ai = make_persona(db)
+    non_ai.user.is_ai_persona = False
+    for persona in (failed, successful, inactive, inactive_account, non_ai):
+        normal_group.members.append(persona.user)
+        matchmaking_group.members.append(persona.user)
+        save_config(
+            db,
+            persona,
+            group_activity_enabled=True,
+            group_can_post=True,
+            allowed_group_ids=[matchmaking_group.id, normal_group.id],
+        )
+    db.session.commit()
+    failed_id = failed.id
+    successful_id = successful.id
+    normal_group_id = normal_group.id
+    select_group = ai_group_action_engine._manual_post_group_for_persona
+
+    def select_test_group(persona):
+        if persona.id in preexisting_active_ids:
+            return None, "preexisting_test_persona"
+        return select_group(persona)
+
+    monkeypatch.setattr(
+        "ai_group_action_engine._manual_post_group_for_persona",
+        select_test_group,
+    )
+
+    attempts = []
+
+    def execute(persona, group, *, source):
+        attempts.append((persona.id, group.id, source))
+        if persona.id == failed_id:
+            db.session.remove()
+            return False
+        return persona.id == successful_id
+
+    monkeypatch.setattr("ai_group_action_engine.execute_persona_group_post", execute)
+    scheduled_before = AILog.query.filter_by(
+        action_type="GROUP_ACTIVITY_SESSION"
+    ).count()
+
+    result = run_manual_all_persona_group_posts()
+
+    assert result["busy"] is False
+    assert result["total"] == len(preexisting_active_ids) + 2
+    assert result["posted"] == 1
+    assert result["skipped"] == len(preexisting_active_ids)
+    assert result["failed"] == 1
+    assert [persona_id for persona_id, _group_id, _source in attempts] == [
+        failed_id,
+        successful_id,
+    ]
+    assert all(group_id == normal_group_id for _persona_id, group_id, _source in attempts)
+    assert all(source == "manual" for _persona_id, _group_id, source in attempts)
+    assert len(attempts) == len({persona_id for persona_id, _group_id, _source in attempts})
+    created_results = [
+        item
+        for item in result["results"]
+        if item["persona_id"] in {failed_id, successful_id}
+    ]
+    assert {item["status"] for item in created_results} == {"posted", "failed"}
+    assert AILog.query.filter_by(action_type="GROUP_ACTIVITY_SESSION").count() == scheduled_before
+
+
+def test_manual_all_persona_group_posts_skips_matchmaking_and_disabled_groups(
+    app, db, monkeypatch
+):
+    import ai_group_action_engine
+    from ai_controls import get_group_config, save_group_config
+    from ai_group_action_engine import run_manual_all_persona_group_posts
+    from models import AIPersona, Group, User
+
+    preexisting_active_ids = {
+        persona_id
+        for (persona_id,) in db.session.query(AIPersona.id)
+        .join(User, User.id == AIPersona.user_id)
+        .filter(
+            AIPersona.is_active.is_(True),
+            User.is_active.is_(True),
+            User.is_ai_persona.is_(True),
+        )
+        .all()
+    }
+    owner = make_user(db)
+    matchmaking_group = Group(
+        name="Matchmaking",
+        created_by=owner.id,
+        is_active=True,
+        is_private=False,
+    )
+    disabled_group = Group(
+        name="AI disabled group",
+        created_by=owner.id,
+        is_active=True,
+        is_private=False,
+    )
+    db.session.add_all([matchmaking_group, disabled_group])
+    db.session.flush()
+    monkeypatch.setitem(app.config, "MATCHMAKING_GROUP_ID", str(matchmaking_group.id))
+    persona = make_persona(db)
+    matchmaking_group.members.append(persona.user)
+    disabled_group.members.append(persona.user)
+    save_config(
+        db,
+        persona,
+        group_activity_enabled=True,
+        group_can_post=True,
+        allowed_group_ids=[matchmaking_group.id, disabled_group.id],
+    )
+    group_config = get_group_config(disabled_group)
+    group_config["activity_level"] = "off"
+    save_group_config(disabled_group, group_config)
+    db.session.commit()
+    persona_id = persona.id
+    select_group = ai_group_action_engine._manual_post_group_for_persona
+
+    def select_test_group(current_persona):
+        if current_persona.id != persona_id:
+            return None, "preexisting_test_persona"
+        return select_group(current_persona)
+
+    monkeypatch.setattr(
+        "ai_group_action_engine._manual_post_group_for_persona",
+        select_test_group,
+    )
+
+    execute = Mock(side_effect=AssertionError("no protected group may be selected"))
+    monkeypatch.setattr("ai_group_action_engine.execute_persona_group_post", execute)
+
+    result = run_manual_all_persona_group_posts()
+
+    assert result["total"] == len(preexisting_active_ids) + 1
+    assert result["skipped"] == len(preexisting_active_ids) + 1
+    assert result["posted"] == 0
+    assert result["failed"] == 0
+    execute.assert_not_called()
+
+
+def test_manual_all_persona_group_posts_rejects_overlapping_runs(monkeypatch):
+    from ai_group_action_engine import (
+        MANUAL_ALL_PERSONA_POST_LOCK,
+        run_manual_all_persona_group_posts,
+    )
+
+    execute = Mock()
+    monkeypatch.setattr("ai_group_action_engine.execute_persona_group_post", execute)
+    assert MANUAL_ALL_PERSONA_POST_LOCK.acquire(blocking=False) is True
+    try:
+        result = run_manual_all_persona_group_posts()
+    finally:
+        MANUAL_ALL_PERSONA_POST_LOCK.release()
+
+    assert result["busy"] is True
+    execute.assert_not_called()
 
 
 def test_ai_job_uses_the_existing_dedicated_scheduler(app, monkeypatch):

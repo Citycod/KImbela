@@ -16,14 +16,27 @@
         <h1 class="mt-2 text-2xl font-semibold">AI User Control Center</h1>
         <p class="text-sm text-slate-500">Control the existing AI profiles and review their content activity.</p>
       </div>
-      <form method="post" action="{{ url_for('admin.admin_set_ai_activity') }}">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
-        <input type="hidden" name="enabled" value="{{ '0' if ai_activity_enabled else '1' }}" />
-        <button class="rounded-xl px-5 py-3 text-sm font-semibold text-white {{ 'bg-rose-600 hover:bg-rose-700' if ai_activity_enabled else 'bg-emerald-600 hover:bg-emerald-700' }}">
-          {{ 'STOP ALL AI ACTIVITY' if ai_activity_enabled else 'RESUME ALL AI ACTIVITY' }}
-        </button>
-      </form>
+      <div class="flex flex-wrap gap-2">
+        <form id="postNowAllAiForm" method="post" action="{{ url_for('admin.admin_post_now_all_ai_users') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+          <button id="postNowAllAiButton" type="submit" class="rounded-xl bg-violet-700 px-5 py-3 text-sm font-semibold text-white hover:bg-violet-800 disabled:cursor-wait disabled:opacity-60">
+            Post Now — All AI Users
+          </button>
+        </form>
+        <form method="post" action="{{ url_for('admin.admin_set_ai_activity') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+          <input type="hidden" name="enabled" value="{{ '0' if ai_activity_enabled else '1' }}" />
+          <button class="rounded-xl px-5 py-3 text-sm font-semibold text-white {{ 'bg-rose-600 hover:bg-rose-700' if ai_activity_enabled else 'bg-emerald-600 hover:bg-emerald-700' }}">
+            {{ 'STOP ALL AI ACTIVITY' if ai_activity_enabled else 'RESUME ALL AI ACTIVITY' }}
+          </button>
+        </form>
+      </div>
     </header>
+
+    <section id="postNowAllAiResult" class="hidden rounded-2xl border border-slate-200 bg-white p-4 text-sm shadow-sm" role="status" aria-live="polite">
+      <p id="postNowAllAiSummary" class="font-semibold"></p>
+      <pre id="postNowAllAiDetails" class="mt-2 whitespace-pre-wrap font-sans text-xs text-slate-600"></pre>
+    </section>
 
     {% if not ai_activity_enabled %}
       <div class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 font-medium text-rose-800">Emergency stop is active. Automated and manual AI posts/replies are blocked.</div>
@@ -324,6 +337,61 @@
   </div>
 </main>
 <script>
+  const postNowAllAiForm = document.getElementById('postNowAllAiForm');
+  const postNowAllAiButton = document.getElementById('postNowAllAiButton');
+  const postNowAllAiResult = document.getElementById('postNowAllAiResult');
+  const postNowAllAiSummary = document.getElementById('postNowAllAiSummary');
+  const postNowAllAiDetails = document.getElementById('postNowAllAiDetails');
+
+  postNowAllAiForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (postNowAllAiButton.disabled) return;
+    if (!window.confirm('Trigger all active AI users to post now?')) return;
+
+    const originalLabel = postNowAllAiButton.textContent;
+    postNowAllAiButton.disabled = true;
+    postNowAllAiButton.setAttribute('aria-busy', 'true');
+    postNowAllAiButton.textContent = 'Posting…';
+    postNowAllAiResult.classList.remove('hidden');
+    postNowAllAiSummary.textContent = 'AI posting run is in progress. This may take several minutes.';
+    postNowAllAiDetails.textContent = '';
+
+    try {
+      const response = await fetch(postNowAllAiForm.action, {
+        method: 'POST',
+        body: new FormData(postNowAllAiForm),
+        headers: { Accept: 'application/json' },
+      });
+      const data = await response.json().catch(() => ({
+        success: false,
+        error: `The AI posting request failed with status ${response.status}.`,
+      }));
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'The AI posting run failed.');
+      }
+
+      postNowAllAiSummary.textContent = [
+        'AI posting run completed',
+        `${data.total} AI users found`,
+        `${data.posted} posted`,
+        `${data.skipped} skipped`,
+        `${data.failed} failed`,
+      ].join(' · ');
+      postNowAllAiDetails.textContent = (data.results || []).map((item) => {
+        const destination = item.group_id ? ` · group ${item.group_id}` : '';
+        const post = item.post_id ? ` · post ${item.post_id}` : '';
+        return `${item.name}: ${item.status} (${item.reason})${destination}${post}`;
+      }).join('\n');
+    } catch (error) {
+      postNowAllAiSummary.textContent = error.message || 'The AI posting run failed.';
+      postNowAllAiDetails.textContent = '';
+    } finally {
+      postNowAllAiButton.disabled = false;
+      postNowAllAiButton.removeAttribute('aria-busy');
+      postNowAllAiButton.textContent = originalLabel;
+    }
+  });
+
   document.querySelectorAll('.ai-media-input').forEach((input) => {
     input.addEventListener('change', () => {
       const preview = input.closest('form').querySelector('.ai-media-preview');
