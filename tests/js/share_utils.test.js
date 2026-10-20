@@ -23,6 +23,7 @@ const modularPostsSource = fs.readFileSync(
 
 function runtime(clipboard) {
   const calls = [];
+  let clickHandler = null;
   const textarea = {
     style: {},
     value: '',
@@ -35,6 +36,10 @@ function runtime(clipboard) {
   const document = {
     body: { appendChild() { calls.push('append'); } },
     createElement() { return textarea; },
+    getElementById() { return null; },
+    addEventListener(name, handler) {
+      if (name === 'click') clickHandler = handler;
+    },
     execCommand(command) {
       calls.push(command);
       return true;
@@ -43,10 +48,15 @@ function runtime(clipboard) {
   const window = {
     isSecureContext: true,
     location: { origin: 'https://www.kimbela.com' },
+    setTimeout(callback) { callback(); },
   };
   const navigator = clipboard ? { clipboard } : {};
-  vm.runInNewContext(source, { document, navigator, URL, window });
-  return { calls, share: window.KimbelaShare };
+  function CustomEvent(name, options) {
+    this.type = name;
+    this.detail = options.detail;
+  }
+  vm.runInNewContext(source, { CustomEvent, document, navigator, URL, window });
+  return { calls, clickHandler, share: window.KimbelaShare };
 }
 
 test('builds one stable versioned URL for feed and group share actions', () => {
@@ -109,4 +119,53 @@ test('falls back when an Android webview rejects or omits the Clipboard API', as
   const missing = runtime(null);
   await missing.share.copyText('https://kimbela.com/post/missing');
   assert.ok(missing.calls.includes('copy'));
+});
+
+test('desktop copy trigger reports success only after clipboard resolves', async () => {
+  let resolveClipboard;
+  const result = runtime({
+    writeText() {
+      return new Promise(resolve => { resolveClipboard = resolve; });
+    },
+  });
+  const label = { textContent: 'Copy link' };
+  const events = [];
+  const trigger = {
+    dataset: {
+      postId: 'profile-post-uuid',
+      url: '/post/profile-post-uuid',
+    },
+    disabled: false,
+    querySelector() { return label; },
+    dispatchEvent(event) { events.push(event); },
+  };
+
+  const pending = result.share.copyFromTrigger(trigger);
+  assert.equal(label.textContent, 'Copy link');
+  assert.equal(events.length, 0);
+  resolveClipboard();
+  assert.equal(await pending, true);
+  assert.equal(events[0].type, 'kimbela:copy-success');
+  assert.equal(
+    events[0].detail.url,
+    'https://www.kimbela.com/post/profile-post-uuid?share_v=2',
+  );
+});
+
+test('desktop copy trigger uses fallback before showing success', async () => {
+  const result = runtime({
+    async writeText() { throw new Error('NotAllowedError'); },
+  });
+  const label = { textContent: 'Copy link' };
+  const events = [];
+  const trigger = {
+    dataset: { postId: 'fallback-uuid', url: '/post/fallback-uuid' },
+    disabled: false,
+    querySelector() { return label; },
+    dispatchEvent(event) { events.push(event); },
+  };
+
+  assert.equal(await result.share.copyFromTrigger(trigger), true);
+  assert.ok(result.calls.includes('copy'));
+  assert.equal(events[0].type, 'kimbela:copy-success');
 });

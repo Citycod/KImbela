@@ -17,8 +17,8 @@
     <link href="{{ url_for('static', filename='assets/img/favy.png') }}" rel="icon" />
     <link href="{{ url_for('static', filename='assets/img/favy.png') }}" rel="apple-touch-icon" />
 
-    <!-- Flutterwave -->
-    <script src="https://checkout.flutterwave.com/v3.js"></script>
+    <!-- This flow redirects to the hosted checkout; no inline payment SDK is required. -->
+    <script src="{{ url_for('static', filename='assets/js/boost_checkout.js', v='boost-checkout-1') }}" defer></script>
 
     <script>
         tailwind.config = {
@@ -562,6 +562,25 @@
         .radio-label input[type="radio"] {
             margin-right: 6px;
         }
+
+        .preference-section {
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            background: #ffffff;
+            padding: 1rem;
+        }
+
+        .radio-label:has(input:checked) {
+            border-color: #8b5cf6;
+            background: #f5f3ff;
+            box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.12);
+        }
+
+        .radio-label input:focus-visible,
+        .interest-tag:focus-visible {
+            outline: 2px solid #7c3aed;
+            outline-offset: 2px;
+        }
         
         .modal {
             backdrop-filter: blur(4px);
@@ -667,8 +686,8 @@
                                     <i class="bi bi-heart text-rose-gold text-2xl"></i>
                                 </div>
                             </div>
-                            <h3 class="text-xl font-playfair font-bold text-primary mb-2">Matchmaking Service</h3>
-                            <p class="text-text-secondary mb-4">Premium matchmaking to find your perfect partner</p>
+                            <h3 class="text-xl font-playfair font-bold text-primary mb-2">30-Day Profile Boost</h3>
+                            <p class="text-text-secondary mb-4">Boost your profile visibility for ${{ profile_boost_price_usd }} USD.</p>
                             <div class="mb-6">
                                 <span class="text-3xl font-bold text-primary">${{ profile_boost_price_usd }} USD</span>
                                 <span class="text-text-secondary text-base">/month</span>
@@ -676,10 +695,8 @@
                             <ul class="feature-list mb-6 text-text-secondary text-left mx-auto max-w-xs">
                                 <li>Enhanced Profile Listing</li>
                                 <li>30 Days Duration</li>
-                                <li>Advanced Matching Algorithm</li>
                                 <li>Priority Placement</li>
-                                <li>Message Responses</li>
-                                <li>Personalized Recommendations</li>
+                                <li>Your Existing Profile Details</li>
                             </ul>
                             <button class="w-full gradient-rose text-white py-3 rounded-lg btn hover:opacity-90 transition-all duration-300 font-semibold text-base btn-select-package" 
                                     data-package-id="1" data-package-name="Matchmaking" data-package-price="{{ profile_boost_price_usd }}" data-duration-days="30">
@@ -698,7 +715,7 @@
                 <div class="text-center mb-8">
                     <h2 class="text-2xl md:text-3xl font-playfair font-bold text-primary mb-2">How It Works</h2>
                     <p class="text-base text-text-secondary max-w-2xl mx-auto leading-relaxed">
-                        Our simple process helps you find meaningful connections
+                        Increase your profile visibility without changing Find Your Match access.
                     </p>
                 </div>
 
@@ -707,24 +724,24 @@
                         <div class="w-16 h-16 bg-gradient-rose rounded-full flex items-center justify-center mx-auto mb-4">
                             <i class="bi bi-pencil-square text-white"></i>
                         </div>
-                        <h3 class="text-base font-semibold text-primary mb-2">1. Create Your Profile</h3>
-                        <p class="text-text-secondary text-sm">Share your preferences and what you're looking for.</p>
+                        <h3 class="text-base font-semibold text-primary mb-2">1. Complete Your Boost</h3>
+                        <p class="text-text-secondary text-sm">Choose the profile details and preferences shown in your boost.</p>
                     </div>
 
                     <div class="text-center p-4">
                         <div class="w-16 h-16 bg-gradient-sage rounded-full flex items-center justify-center mx-auto mb-4">
                             <i class="bi bi-heart text-white"></i>
                         </div>
-                        <h3 class="text-base font-semibold text-primary mb-2">2. Get Matched</h3>
-                        <p class="text-text-secondary text-sm">Our algorithm connects you with compatible individuals.</p>
+                        <h3 class="text-base font-semibold text-primary mb-2">2. Increase Visibility</h3>
+                        <p class="text-text-secondary text-sm">Your active boost receives priority placement for 30 days.</p>
                     </div>
 
                     <div class="text-center p-4">
                         <div class="w-16 h-16 bg-gradient-champagne rounded-full flex items-center justify-center mx-auto mb-4">
                             <i class="bi bi-chat-dots text-primary"></i>
                         </div>
-                        <h3 class="text-base font-semibold text-primary mb-2">3. Connect & Chat</h3>
-                        <p class="text-text-secondary text-sm">Start conversations with your matches.</p>
+                        <h3 class="text-base font-semibold text-primary mb-2">3. Connect Normally</h3>
+                        <p class="text-text-secondary text-sm">People can view your profile and use the existing Kimbela connection tools.</p>
                     </div>
                 </div>
             </div>
@@ -747,7 +764,7 @@
             <div class="modal-header p-4 border-b border-border-color flex justify-between items-center bg-gradient-to-r from-primary to-secondary text-white rounded-t-lg">
                 <div>
                     <h3 class="text-lg font-playfair font-bold">Boost Your Profile</h3>
-                    <p class="text-white/80 text-xs mt-1">Share your preferences and increase your matchmaking visibility - $10/month</p>
+                    <p class="text-white/80 text-xs mt-1">Share your preferences and increase your matchmaking visibility - ${{ profile_boost_price_usd }} USD/month</p>
                 </div>
                 <button type="button" class="p-2 rounded hover:bg-white/10 transition-all duration-300 close-modal">
                     <i class="bi bi-x-lg"></i>
@@ -777,50 +794,62 @@
                 <div class="step-content active animate-fade-in" id="step1-content">
                     <form id="matchmakingForm">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <div class="mb-4 flex flex-col gap-2 rounded-lg bg-violet-50 p-3 sm:flex-row sm:items-center sm:justify-between">
+                            <p class="text-sm text-slate-700">Choose the preferences that matter to you. Optional fields can be left as Any.</p>
+                            <button type="button" id="clearPreferencesBtn" class="self-start rounded-md border border-violet-300 bg-white px-3 py-2 text-sm font-semibold text-violet-700 hover:bg-violet-100 sm:self-auto">
+                                Clear preferences
+                            </button>
+                        </div>
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                             <div class="space-y-4">
-                                <div>
+                                <div class="preference-section">
                                       <label class="block text-base font-semibold mb-2 text-primary">
-                                        Preferred Friend Age *
+                                        Preferred Match Age *
                                       </label>
 
-                                      <div class="flex items-center space-x-3">
+                                      <div class="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto_1fr] sm:items-end">
                                         <!-- Min Age -->
-                                        <input
-                                          type="number"
-                                          class="text-input"
-                                          id="minAge"
-                                          name="min_age"
-                                          placeholder="Min age (31+)"
-                                          min="31"
-                                          max="74"
-                                          inputmode="numeric"
-                                          required
-                                        />
+                                        <div>
+                                            <label for="minAge" class="mb-1 block text-sm font-medium text-slate-700">Minimum age</label>
+                                            <input
+                                              type="number"
+                                              class="text-input"
+                                              id="minAge"
+                                              name="min_age"
+                                              placeholder="31 or older"
+                                              min="31"
+                                              max="74"
+                                              inputmode="numeric"
+                                              required
+                                            />
+                                        </div>
 
-                                        <span class="text-text-secondary">to</span>
+                                        <span class="hidden pb-2 text-text-secondary sm:block">to</span>
 
                                         <!-- Max Age -->
-                                        <input
-                                          type="number"
-                                          class="text-input"
-                                          id="maxAge"
-                                          name="max_age"
-                                          placeholder="Max age (up to 75)"
-                                          min="32"
-                                          max="75"
-                                          inputmode="numeric"
-                                          required
-                                        />
+                                        <div>
+                                            <label for="maxAge" class="mb-1 block text-sm font-medium text-slate-700">Maximum age</label>
+                                            <input
+                                              type="number"
+                                              class="text-input"
+                                              id="maxAge"
+                                              name="max_age"
+                                              placeholder="Up to 75"
+                                              min="32"
+                                              max="75"
+                                              inputmode="numeric"
+                                              required
+                                            />
+                                        </div>
                                       </div>
 
                                       <p class="text-xs text-text-secondary mt-1">
                                         Minimum age must be 31 or older.
                                       </p>
                                 </div>
-                                <div>
+                                <div class="preference-section">
                                     <label for="partnerGender" class="block text-base font-semibold mb-2 text-primary">Preferred Gender *</label>
-                                    <div class="grid grid-cols-2 gap-2">
+                                    <div class="grid grid-cols-1 gap-2 sm:grid-cols-3">
                                         <label class="radio-label p-2 border border-border-color rounded hover:bg-light-bg transition-all duration-300">
                                             <input type="radio" name="partnerGender" value="male" class="mr-2">
                                             <span class="font-semibold text-primary">Male</span>
@@ -837,7 +866,7 @@
                                     </div>
                                 </div>
                                 
-                                <div>
+                                <div class="preference-section">
                                     <label class="block text-base font-semibold mb-2 text-primary">Preferred Location</label>
 
                                     <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -871,17 +900,17 @@
                             </div>
                             
                             <div class="space-y-4">
-                                <div>
+                                <div class="preference-section">
                                     <label class="block text-base font-semibold mb-3 text-primary">Partner Interests</label>
-                                    <div class="interests-container max-h-48 overflow-y-auto bg-gray-50 p-3 rounded-lg">
-                                        <div class="grid grid-cols-2 gap-2" id="interestsList">
+                                    <div class="interests-container max-h-48 overflow-y-auto bg-gray-50 p-3 rounded-lg" role="group" aria-label="Partner interests">
+                                        <div class="grid grid-cols-1 gap-2 sm:grid-cols-2" id="interestsList">
                                             <!-- Interests will be populated by JavaScript -->
                                         </div>
                                     </div>
                                     <p class="text-xs text-text-secondary mt-1">Select up to 10 interests</p>
                                 </div>
                                 
-                                <div>
+                                <div class="preference-section">
                                     <label for="partnerEthnicity" class="block text-base font-semibold mb-2 text-primary">Preferred Ethnicity</label>
                                     <select class="select-input" id="partnerEthnicity">
                                         <option value="">Any Ethnicity</option>
@@ -905,7 +934,7 @@
                                     </select>
                                 </div>
                                 
-                                <div>
+                                <div class="preference-section">
                                     <label for="partnerReligion" class="block text-base font-semibold mb-2 text-primary">Preferred Religion</label>
                                     <select class="select-input" id="partnerReligion">
                                         <option value="">Any Religion</option>
@@ -1149,7 +1178,7 @@
                         </button>
                         <button type="button" class="px-4 py-2 gradient-rose text-white rounded btn hover:opacity-90 transition-all duration-300 font-semibold flex items-center space-x-1.5 text-sm hidden" id="createRequestBtn">
                             <i class="bi bi-credit-card"></i>
-                            <span>Pay $10 Now</span>
+                            <span>Pay ${{ profile_boost_price_usd }} USD Now</span>
                         </button>
                     </div>
                 </div>
@@ -1164,7 +1193,7 @@
                 <i class="bi bi-credit-card-2-front text-rose-gold"></i>
             </div>
             <h3 class="text-lg font-playfair font-bold mb-1.5 text-primary">Processing Payment</h3>
-            <p class="text-text-secondary mb-4 text-sm">Processing your $10 payment...</p>
+            <p class="text-text-secondary mb-4 text-sm">Processing your ${{ profile_boost_price_usd }} USD payment...</p>
             <div class="loader-spinner mx-auto mb-3"></div>
             <p class="text-xs text-text-secondary">Please do not close this window</p>
         </div>
@@ -1178,7 +1207,7 @@
                 <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
             </svg>
             <h3 class="text-lg font-playfair font-bold mb-1.5 text-primary">Profile Boost Submitted!</h3>
-            <p class="text-text-secondary mb-4 text-sm">Your matchmaking profile boost is now active for $10/month.</p>
+            <p class="text-text-secondary mb-4 text-sm">Your profile boost is now active for ${{ profile_boost_price_usd }} USD/month.</p>
             <button class="px-4 py-2 gradient-rose text-white rounded btn hover:opacity-90 transition-all duration-300 font-semibold flex items-center space-x-1.5 text-sm mx-auto" id="successBtn">
                 <i class="bi bi-grid-1x2"></i>
                 <span>Go to Dashboard</span>
@@ -1241,6 +1270,17 @@
         const DEFAULT_MATCHMAKING_PACKAGE_NAME = {{ (packages[0].name if packages else 'Matchmaking')|tojson }};
         const DEFAULT_MATCHMAKING_DURATION_DAYS = {{ packages[0].duration_days if packages else 30 }};
         const MATCHMAKING_PRICE_USD = {{ profile_boost_price_usd|tojson }};
+        let boostCheckoutController = null;
+
+        function getBoostCheckoutController() {
+            if (!boostCheckoutController) {
+                boostCheckoutController = window.KimbelaBoostCheckout.createController({
+                    notify: showNotification
+                });
+            }
+            return boostCheckoutController;
+        }
+
         // Application State - Updated for single price
         const AppState = {
             currentStep: 1,
@@ -1293,17 +1333,6 @@
             "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"
         ];
 
-        // Single package configuration
-        const PACKAGE_CONFIGURATIONS = {
-            1: {
-                id: "MATCHMAKING",
-                name: "Matchmaking",
-                price: MATCHMAKING_PRICE_USD,
-                description: "Premium matchmaking service",
-                flutterwave_id: "MATCH_10"
-            }
-        };
-
         // Utility Functions
         function getCSRFToken() {
             const metaTag = document.querySelector('meta[name="csrf-token"]');
@@ -1354,9 +1383,11 @@
             container.innerHTML = '';
             
             INTERESTS_LIST.forEach(interest => {
-                const element = document.createElement('div');
+                const element = document.createElement('button');
+                element.type = 'button';
                 element.className = 'interest-tag';
                 element.textContent = interest;
+                element.setAttribute('aria-pressed', 'false');
                 element.addEventListener('click', () => toggleInterest(interest, element));
                 container.appendChild(element);
             });
@@ -1367,23 +1398,12 @@
             container.innerHTML = '';
             
             INTERESTS_LIST.forEach(interest => {
-                const element = document.createElement('div');
+                const element = document.createElement('button');
+                element.type = 'button';
                 element.className = 'interest-tag';
                 element.textContent = interest;
+                element.setAttribute('aria-pressed', 'false');
                 element.addEventListener('click', () => toggleYourInterest(interest, element));
-                container.appendChild(element);
-            });
-        }
-
-        function populateCountries() {
-            const container = document.getElementById('countrySelect');
-            container.innerHTML = '';
-            
-            COUNTRIES_LIST.forEach(country => {
-                const element = document.createElement('div');
-                element.className = 'country-option';
-                element.textContent = country;
-                element.addEventListener('click', () => toggleCountry(country, element));
                 container.appendChild(element);
             });
         }
@@ -1395,12 +1415,14 @@
                 if (AppState.selectedInterests.length < 10) {
                     AppState.selectedInterests.push(interest);
                     element.classList.add('selected');
+                    element.setAttribute('aria-pressed', 'true');
                 } else {
                     showNotification('You can only select up to 10 interests', 'warning');
                 }
             } else {
                 AppState.selectedInterests.splice(index, 1);
                 element.classList.remove('selected');
+                element.setAttribute('aria-pressed', 'false');
             }
         }
 
@@ -1410,12 +1432,14 @@
                 if (AppState.selectedYourInterests.length < 10) {
                     AppState.selectedYourInterests.push(interest);
                     element.classList.add('selected');
+                    element.setAttribute('aria-pressed', 'true');
                 } else {
                     showNotification('You can only select up to 10 interests', 'warning');
                 }
             } else {
                 AppState.selectedYourInterests.splice(index, 1);
                 element.classList.remove('selected');
+                element.setAttribute('aria-pressed', 'false');
             }
         }
 
@@ -1728,170 +1752,84 @@
             }, 300);
         }
 
-        // Payment Processing - Updated for fixed USD price
-        function createRequestAndProcessPayment(requestData) {
-            // Add this debug line at the beginning of your function
-            
+        // Payment Processing - fixed USD price with bounded, recoverable UI.
+        async function createRequestAndProcessPayment(requestData) {
             const createBtn = document.getElementById('createRequestBtn');
-            const originalText = createBtn.innerHTML;
+            const checkout = getBoostCheckoutController();
+            checkout.begin(createBtn);
             createBtn.innerHTML = `
                 <div class="flex items-center space-x-1.5">
                     <div class="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                     <span>Processing...</span>
                 </div>
             `;
-            createBtn.disabled = true;
 
-            fetch('/create-request', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCSRFToken()
-                },
-                body: JSON.stringify({
-                    package_id: AppState.selectedPackageId,
-                    request_data: requestData
-                })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(errorData => {
-                        throw new Error(JSON.stringify({
-                            type: 'API_ERROR',
-                            data: errorData,
-                            status: response.status
-                        }));
-                    }).catch(() => {
-                        throw new Error(JSON.stringify({
-                            type: 'NETWORK_ERROR',
-                            message: 'Network error occurred'
-                        }));
-                    });
+            try {
+                const data = await checkout.requestJson('/create-request', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCSRFToken()
+                    },
+                    body: JSON.stringify({
+                        package_id: AppState.selectedPackageId,
+                        request_data: requestData
+                    })
+                });
+
+                if (!data.success) {
+                    if (data.error && data.error.includes('already have an active matchmaking request')) {
+                        checkout.finish();
+                        showExistingRequestModal(data);
+                        return;
+                    }
+                    throw new Error(getUserFriendlyError(data.error));
                 }
-                return response.json();
-            })
-            .then(data => {
-                
-                if (data.success) {
-                    
-                    const selectedGateway = document.querySelector('input[name="paymentMethod"]:checked')?.value || 'flutterwave';
-                    const paymentPayload = {
+
+                const selectedGateway = document.querySelector('input[name="paymentMethod"]:checked')?.value || 'flutterwave';
+                const paymentData = await checkout.requestJson('/initiate-matchmaking-payment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCSRFToken()
+                    },
+                    body: JSON.stringify({
                         request_id: data.request_id,
                         currency: 'USD',
                         campaign_id: AppState.selectedPackageId,
-                        campaign_title: 'Matchmaking Service',
-                        campaign_description: `Premium matchmaking service - $${MATCHMAKING_PRICE_USD}/month`,
+                        campaign_title: 'Profile Boost',
+                        campaign_description: `Profile boost - $${MATCHMAKING_PRICE_USD} USD/month`,
                         gateway: selectedGateway
-                    };
+                    })
+                });
 
-                    
-                    return fetch('/initiate-matchmaking-payment', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': getCSRFToken()
-                        },
-                        body: JSON.stringify(paymentPayload)
-                    });
-                } else {
-                    if (data.error && data.error.includes('already have an active matchmaking request')) {
-                        throw new Error(JSON.stringify({
-                            type: 'ACTIVE_REQUEST_EXISTS',
-                            data: data
-                        }));
-                    } else {
-                        throw new Error(JSON.stringify({
-                            type: 'REQUEST_ERROR',
-                            message: getUserFriendlyError(data.error)
-                        }));
-                    }
+                if (!paymentData.success || !paymentData.payment_url) {
+                    throw new Error(
+                        getUserFriendlyPaymentError(
+                            paymentData.error || 'No payment URL received'
+                        )
+                    );
                 }
-            })
-            .then(response => {
-                
-                if (!response.ok) {
-                    return response.text().then(text => {
-                        let errorData;
-                        try {
-                            errorData = JSON.parse(text);
-                        } catch (e) {
-                            errorData = { error: text || 'Unknown error' };
-                        }
-                        throw new Error(JSON.stringify({
-                            type: 'PAYMENT_ERROR',
-                            data: errorData,
-                            status: response.status
-                        }));
-                    });
+
+                if (paymentData.payment_id) {
+                    localStorage.setItem('current_matchmaking_payment_id', paymentData.payment_id);
                 }
-                return response.json();
-            })
-            .then(paymentData => {
-                
-                if (paymentData.success) {
-                    if (paymentData.payment_url) {
-                        if (paymentData.payment_id) {
-                            localStorage.setItem('current_matchmaking_payment_id', paymentData.payment_id);
-                        }
-                        if (paymentData.gateway_reference) {
-                            localStorage.setItem('current_gateway_reference', paymentData.gateway_reference);
-                        }
-                        
-                        document.getElementById('paymentModal').classList.add('hidden');
-                        
-                        setTimeout(() => {
-                            window.location.href = paymentData.payment_url;
-                        }, 300);
-                    } else {
-                        throw new Error(JSON.stringify({
-                            type: 'PAYMENT_ERROR',
-                            message: 'No payment URL received from payment gateway'
-                        }));
-                    }
-                } else {
-                    throw new Error(JSON.stringify({
-                        type: 'PAYMENT_ERROR',
-                        message: paymentData.error || 'Payment initiation failed'
-                    }));
+                if (paymentData.gateway_reference) {
+                    localStorage.setItem('current_gateway_reference', paymentData.gateway_reference);
                 }
-            })
-            .catch(error => {
-                
-                createBtn.innerHTML = originalText;
-                createBtn.disabled = false;
-                document.getElementById('paymentModal').classList.add('hidden');
-                
-                try {
-                    const errorObj = JSON.parse(error.message);
-                    
-                    switch(errorObj.type) {
-                        case 'ACTIVE_REQUEST_EXISTS':
-                            showExistingRequestModal(errorObj.data);
-                            break;
-                        case 'PAYMENT_ERROR':
-                            const paymentError = errorObj.data?.error || errorObj.message;
-                            showNotification(getUserFriendlyPaymentError(paymentError), 'error');
-                            break;
-                        case 'API_ERROR':
-                            showNotification(getUserFriendlyError(errorObj.data?.error || 'An error occurred'), 'error');
-                            break;
-                        case 'REQUEST_ERROR':
-                            showNotification(getUserFriendlyError(errorObj.message), 'error');
-                            break;
-                        case 'NETWORK_ERROR':
-                            showNotification('Network error. Please check your connection and try again.', 'error');
-                            break;
-                        default:
-                            showNotification('An unexpected error occurred. Please try again.', 'error');
-                    }
-                } catch (parseError) {
-                    showNotification('An error occurred while processing your profile boost. Please try again.', 'error');
-                }
-                
-                if (!error.message.includes('ACTIVE_REQUEST_EXISTS')) {
-                    closeAllModals();
-                }
-            });
+
+                checkout.finish();
+                window.location.assign(paymentData.payment_url);
+            } catch (error) {
+                closeAllModals();
+                const paymentMessage = error.message && (
+                    error.message.includes('timed out')
+                    || error.message.includes('invalid response')
+                )
+                    ? error.message
+                    : getUserFriendlyPaymentError(error.message);
+                checkout.fail(paymentMessage || 'Unable to start payment. Please try again.');
+            }
         }
 
         function getUserFriendlyPaymentError(backendError) {
@@ -1926,6 +1864,7 @@
         // Modal Management
         function closeAllModals() {
             document.querySelectorAll('.modal').forEach(modal => modal.classList.add('hidden'));
+            document.body.style.overflow = '';
         }
 
         function resetForm() {
@@ -1946,6 +1885,27 @@
             
             AppState.currentStep = 1;
             updatePreview();
+        }
+
+        function clearPreferenceFilters() {
+            document.getElementById('minAge').value = '';
+            document.getElementById('maxAge').value = '';
+            const anyGender = document.querySelector('input[name="partnerGender"][value="any"]');
+            if (anyGender) anyGender.checked = true;
+            document.getElementById('partnerEthnicity').value = '';
+            document.getElementById('partnerReligion').value = '';
+            AppState.selectedInterests = [];
+            document.querySelectorAll('#interestsList .interest-tag').forEach(tag => {
+                tag.classList.remove('selected');
+                tag.setAttribute('aria-pressed', 'false');
+            });
+
+            const country = document.getElementById('match_country_select');
+            if (country) {
+                country.value = '';
+                country.dispatchEvent(new Event('change'));
+            }
+            showNotification('Match preferences cleared.', 'info');
         }
 
         // Event Listeners
@@ -2042,6 +2002,8 @@
                 }
             });
 
+            document.getElementById('clearPreferencesBtn').addEventListener('click', clearPreferenceFilters);
+
             // Create Request with Payment
             document.getElementById('createRequestBtn').addEventListener('click', function() {
                 const requestData = getRequestData();
@@ -2055,7 +2017,6 @@
                 requestData.currency = currency;
 
                 document.getElementById('matchmakingModal').classList.add('hidden');
-                document.getElementById('paymentModal').classList.remove('hidden');
 
                 createRequestAndProcessPayment(requestData);
             });
@@ -2132,45 +2093,49 @@
             initializeEventListeners();
             populateInterests();
             populateYourInterests();
-            populateCountries();
         });
 
         // Handle Flutterwave callback
-        window.addEventListener('load', function() {
+        window.addEventListener('load', async function() {
             const urlParams = new URLSearchParams(window.location.search);
             const status = urlParams.get('status');
             const tx_ref = urlParams.get('tx_ref');
             const transaction_id = urlParams.get('transaction_id');
-            
+
+            if (status && status !== 'successful' && status !== 'completed') {
+                getBoostCheckoutController().recover();
+                showNotification('Payment was cancelled or not completed.', 'warning');
+                return;
+            }
+
             if (status && tx_ref && transaction_id) {
-                document.getElementById('paymentModal').classList.remove('hidden');
-                
-                fetch('/verify-payment', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': getCSRFToken()
-                    },
-                    body: JSON.stringify({
-                        reference: transaction_id
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('paymentModal').classList.add('hidden');
-                    
+                const checkout = getBoostCheckoutController();
+                checkout.begin(null);
+                try {
+                    const data = await checkout.requestJson('/verify-payment', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCSRFToken()
+                        },
+                        body: JSON.stringify({ reference: transaction_id })
+                    });
+                    checkout.finish();
                     if (data.success) {
                         document.getElementById('successModal').classList.remove('hidden');
                         updatePaymentStatus(data.transaction_id, 'completed');
                     } else {
                         showNotification('Payment verification failed', 'error');
                     }
-                })
-                .catch(error => {
-                    document.getElementById('paymentModal').classList.add('hidden');
-                    showNotification('Error verifying payment', 'error');
-                });
+                } catch (error) {
+                    checkout.fail(error.message || 'Error verifying payment');
+                }
             }
+        });
+
+        // Browsers may restore the page from bfcache after hosted checkout closes.
+        window.addEventListener('pageshow', function() {
+            getBoostCheckoutController().recover();
         });
 
         function updatePaymentStatus(transactionId, status) {

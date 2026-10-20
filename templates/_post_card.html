@@ -34,11 +34,12 @@
                   href="#" data-post-id="{{ post.id }}">
                   Edit
                 </a>
-                <a class="dropdown-item block px-4 py-2 hover:bg-gray-50 transition-colors text-red-600 delete-post"
-                  href="#" data-post-id="{{ post.id }}">
+                <button type="button"
+                  class="dropdown-item block w-full px-4 py-2 text-left hover:bg-gray-50 transition-colors text-red-600"
+                  data-profile-delete-post data-post-id="{{ post.id }}">
                   Delete
                   <span class="loader inline-block ml-1" style="display: none"></span>
-                </a>
+                </button>
                 {% else %}
                 <button
                     onclick="reportContent('post', {{ post.id }})"
@@ -152,6 +153,21 @@
             <img src="{{ url_for('static', filename='assets/img/microphone2.png') }}" alt="" class="h-4 w-4 object-contain" aria-hidden="true">
             {{ post.comments_count }} Chimes
         </span>
+    </div>
+
+    <div class="flex justify-end mb-3">
+        <button
+            type="button"
+            class="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-purple-700 hover:bg-purple-50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+            data-copy-post-link
+            data-post-id="{{ post.public_id }}"
+            data-url="{{ url_for('user.view_shared_post', post_identifier=post.public_id) }}"
+            aria-label="Copy link to this post"
+            title="Copy link"
+        >
+            <i class="fas fa-link" aria-hidden="true"></i>
+            <span data-copy-label>Copy link</span>
+        </button>
     </div>
 
     <!-- Comments Section - Scrollable with Smaller Fonts -->

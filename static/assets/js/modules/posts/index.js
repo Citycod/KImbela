@@ -52,6 +52,7 @@ class PostSystem {
             // Share buttons
             const shareBtn = e.target.closest('.share-btn');
             if (shareBtn) {
+                e.preventDefault();
                 const postId = shareBtn.dataset.postId;
                 const publicBaseUrl = (window.publicBaseUrl || window.location.origin || '').replace(/\/$/, '');
                 const shareUrl = window.KimbelaShare.postUrl(
@@ -60,7 +61,11 @@ class PostSystem {
                     publicBaseUrl,
                 );
 
-                if (postId && typeof window.openShareModal === 'function') {
+                if (
+                    postId
+                    && typeof window.openShareModal === 'function'
+                    && document.getElementById('shareModal')
+                ) {
                     window.openShareModal(postId, shareUrl);
                 } else {
                     window.KimbelaShare.copyText(shareUrl)
@@ -136,7 +141,6 @@ class PostSystem {
             });
 
             if (!response.ok) throw new Error('Network error');
-
             const data = await response.json();
 
             // Update UI
@@ -175,7 +179,14 @@ class PostSystem {
                 headers: { 'X-CSRFToken': this.csrfToken }
             });
 
-            if (!response.ok) throw new Error('Network error');
+            const contentType = response.headers.get('content-type') || '';
+            if (!contentType.includes('application/json')) {
+                throw new Error('Your session may have expired. Refresh and try again.');
+            }
+            const data = await response.json();
+            if (!response.ok || data.success !== true) {
+                throw new Error(data.error || 'Unable to delete post');
+            }
 
             const postElement = document.querySelector(`[data-post-id="${postId}"]`);
             if (postElement) {
@@ -188,7 +199,7 @@ class PostSystem {
         } catch (error) {
             deleteBtn.innerHTML = originalContent;
             deleteBtn.disabled = false;
-            Toast.show('Failed to delete post', 'danger');
+            Toast.show(error.message || 'Failed to delete post', 'danger');
         }
     }
 

@@ -173,7 +173,7 @@ def test_dashboard_static_assets_use_reusable_version_urls():
     assert source.count("v='slow-network-1'") == 2
     assert source.count("v='network-resilience-1'") == 0
     assert source.count("v='ux-polish-1'") == 1
-    assert source.count("v='composer-actions-1'") == 1
+    assert source.count("v='post-actions-3'") == 1
     assert source.count("v='install-cta-1'") == 1
 
 

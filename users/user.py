@@ -2284,7 +2284,9 @@ def delete_post(post_id):
     except Exception:
         current_app.logger.exception("Post deletion failed for post %s", post_id)
         return jsonify(error="Unable to delete post"), 500
-    return jsonify(success=True)
+    safe_cache_delete(f"user_dashboard_{current_user.id}")
+    safe_cache_delete(f"posts_feed_{current_user.id}")
+    return jsonify(success=True, post_id=post_id)
 
 
 # Edit Post
@@ -4281,13 +4283,14 @@ def group_detail(group_id):
         else DEFAULT_GROUP_NOTIFICATION_LEVEL
     )
 
-    featured_boosts = None
+    paid_matchmaking_profiles = None
     protected_matchmaking_group = _is_matchmaking_group(group)
     if protected_matchmaking_group and can_view_group_content:
-        from utils.matchmaking_boosts import featured_boosts_for_viewer
+        from utils.matchmaking_boosts import visible_paid_matchmaking_profiles
 
-        featured_boosts = featured_boosts_for_viewer(
+        paid_matchmaking_profiles = visible_paid_matchmaking_profiles(
             current_user,
+            group,
             page=request.args.get("boost_page", 1, type=int),
             per_page=12,
         )
@@ -4362,7 +4365,7 @@ def group_detail(group_id):
         group_notification_level=group_notification_level,
         can_view_group_content=can_view_group_content,
         is_matchmaking_group=protected_matchmaking_group,
-        featured_boosts=featured_boosts,
+        paid_matchmaking_profiles=paid_matchmaking_profiles,
         **post_batch,
         current_user=current_user,
         default_avatar=default_avatar,

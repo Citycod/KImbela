@@ -1113,9 +1113,20 @@ const PostSystem = {
             // Share buttons
             const shareBtn = e.target.closest('.share-btn');
             if (shareBtn) {
+                e.preventDefault();
                 const postId = shareBtn.dataset.postId;
                 const shareUrl = shareBtn.dataset.url || '';
-                openShareModal(postId, shareUrl);
+                if (document.getElementById('shareModal')) {
+                    openShareModal(postId, shareUrl);
+                } else {
+                    const url = normalizeShareUrl(postId, shareUrl);
+                    window.KimbelaShare.copyText(url)
+                        .then(() => Toast.show('Post link copied!', 'success'))
+                        .catch(error => Toast.show(
+                            error.message || 'Unable to copy this link.',
+                            'warning'
+                        ));
+                }
             }
 
             // Repost buttons
@@ -1149,7 +1160,14 @@ const PostSystem = {
                 headers: { 'X-CSRFToken': csrfToken }
             });
 
-            if (!response.ok) throw new Error('Network error');
+            const contentType = response.headers.get('content-type') || '';
+            if (!contentType.includes('application/json')) {
+                throw new Error('Your session may have expired. Refresh and try again.');
+            }
+            const data = await response.json();
+            if (!response.ok || data.success !== true) {
+                throw new Error(data.error || 'Unable to delete post');
+            }
 
             const postElement = document.querySelector(`[data-post-id="${postId}"]`);
             if (postElement) {
@@ -1162,7 +1180,7 @@ const PostSystem = {
         } catch (error) {
             deleteBtn.innerHTML = originalContent;
             deleteBtn.disabled = false;
-            Toast.show('Failed to delete post', 'danger');
+            Toast.show(error.message || 'Failed to delete post', 'danger');
         }
     },
 

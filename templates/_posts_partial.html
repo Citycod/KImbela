@@ -228,6 +228,7 @@
             <span>Repost</span>
         </button>
         <button
+            type="button"
             class="action-btn share-btn flex items-center space-x-1 px-2 py-1 rounded-lg hover:bg-fb-gray transition-colors"
             data-post-id="{{ post.public_id }}"
             data-url="{{ url_for('user.view_shared_post', post_identifier=post.public_id) }}"

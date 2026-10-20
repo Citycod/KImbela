@@ -852,39 +852,41 @@
                     {% endif %}
                 </section>
                 {% else %}
-                {% if is_matchmaking_group %}
+                {% if is_matchmaking_group and paid_matchmaking_profiles and paid_matchmaking_profiles.items %}
                 <section class="mb-4 rounded-xl border border-rose-100 bg-white p-4 shadow-lg md:mb-6 md:rounded-2xl md:p-6" aria-labelledby="featured-matches-title">
                     <div class="mb-4 flex items-start justify-between gap-3">
                         <div>
                             <p class="text-xs font-bold uppercase tracking-wider text-rose-500">System-curated visibility</p>
-                            <h2 id="featured-matches-title" class="mt-1 text-xl font-bold text-gray-900">Featured / Boosted Profiles</h2>
-                            <p class="mt-1 text-sm text-gray-600">Verified active paid profile boosts. These cards are not user-created group posts.</p>
+                            <h2 id="featured-matches-title" class="mt-1 text-xl font-bold text-gray-900">Featured Matchmaking Profiles</h2>
+                            <p class="mt-1 text-sm text-gray-600">Active verified Boost and Find Your Match profiles. These cards are not group posts.</p>
                         </div>
                         <i class="bi bi-stars text-2xl text-rose-500" aria-hidden="true"></i>
                     </div>
                     <div class="grid gap-4 sm:grid-cols-2">
-                        {% for boost in featured_boosts.items %}
+                        {% for profile in paid_matchmaking_profiles.items %}
                         <article class="rounded-xl border border-rose-100 bg-gradient-to-br from-white to-rose-50 p-4">
                             <div class="flex items-center gap-3">
-                                <img src="{{ boost.image or boost.user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" alt="{{ boost.user.full_name }}" class="h-14 w-14 rounded-full object-cover" />
+                                <img src="{{ profile.image or url_for('static', filename='assets/img/default-avatar.png') }}" alt="{{ profile.user.full_name }}" class="h-14 w-14 rounded-full object-cover" />
                                 <div class="min-w-0">
-                                    <h3 class="truncate font-bold text-gray-900">{{ boost.user.full_name }}</h3>
-                                    <p class="truncate text-xs text-gray-600">{{ [boost.user.city, boost.user.state, boost.user.country]|select|join(', ') }}</p>
-                                    <span class="mt-1 inline-flex rounded-full bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-700">Featured Match</span>
+                                    <h3 class="truncate font-bold text-gray-900">{{ profile.user.full_name }}</h3>
+                                    <p class="truncate text-xs text-gray-600">
+                                        {% if profile.age %}{{ profile.age }}{% if profile.user.gender %} · {{ profile.user.gender }}{% endif %}{% endif %}
+                                        {% if profile.location %}{% if profile.age %} · {% endif %}{{ profile.location }}{% endif %}
+                                    </p>
+                                    <span class="mt-1 inline-flex rounded-full bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-700">{{ profile.badge }}</span>
                                 </div>
                             </div>
-                            <p class="mt-3 line-clamp-3 text-sm text-gray-700">{{ boost.about_you }}</p>
-                            <a href="{{ url_for('user.view_profile', user_identifier=boost.user.public_id) }}" class="mt-3 inline-flex items-center text-sm font-semibold text-indigo-700 hover:underline">View profile <span aria-hidden="true">&nbsp;&rarr;</span></a>
+                            {% if profile.about %}<p class="mt-3 line-clamp-3 text-sm text-gray-700">{{ profile.about }}</p>{% endif %}
+                            {% if profile.interests %}<p class="mt-2 line-clamp-2 text-xs text-gray-600">Interests: {{ profile.interests|join(', ') }}</p>{% endif %}
+                            <a href="{{ url_for('user.view_profile', user_identifier=profile.user.public_id) }}" class="mt-3 inline-flex items-center text-sm font-semibold text-indigo-700 hover:underline">View profile <span aria-hidden="true">&nbsp;&rarr;</span></a>
                         </article>
-                        {% else %}
-                        <p class="col-span-full rounded-xl bg-gray-50 p-4 text-sm text-gray-600">No active Boost profiles are available right now.</p>
                         {% endfor %}
                     </div>
-                    {% if featured_boosts.pages > 1 %}
+                    {% if paid_matchmaking_profiles.pages > 1 %}
                     <nav class="mt-4 flex justify-end gap-3 text-sm" aria-label="Featured profile pages">
-                        {% if featured_boosts.has_prev %}<a class="font-semibold text-indigo-700" href="{{ url_for('user.group_detail', group_id=group.id, boost_page=featured_boosts.prev_num) }}#featured-matches-title">Previous</a>{% endif %}
-                        <span>Page {{ featured_boosts.page }} of {{ featured_boosts.pages }}</span>
-                        {% if featured_boosts.has_next %}<a class="font-semibold text-indigo-700" href="{{ url_for('user.group_detail', group_id=group.id, boost_page=featured_boosts.next_num) }}#featured-matches-title">Next</a>{% endif %}
+                        {% if paid_matchmaking_profiles.has_prev %}<a class="font-semibold text-indigo-700" href="{{ url_for('user.group_detail', group_id=group.id, boost_page=paid_matchmaking_profiles.prev_num) }}#featured-matches-title">Previous</a>{% endif %}
+                        <span>Page {{ paid_matchmaking_profiles.page }} of {{ paid_matchmaking_profiles.pages }}</span>
+                        {% if paid_matchmaking_profiles.has_next %}<a class="font-semibold text-indigo-700" href="{{ url_for('user.group_detail', group_id=group.id, boost_page=paid_matchmaking_profiles.next_num) }}#featured-matches-title">Next</a>{% endif %}
                     </nav>
                     {% endif %}
                 </section>
@@ -1028,7 +1030,7 @@
             
             <div class="p-4 md:p-6">
                 <div class="space-y-2 md:space-y-3 mb-4 md:mb-6">
-                    <button onclick="shareToFeed()" class="w-full flex items-center space-x-3 p-2.5 md:p-3 rounded-lg hover:bg-gray-50 transition-colors duration-300 share-option">
+                    <button type="button" onclick="shareToFeed()" class="w-full flex items-center space-x-3 p-2.5 md:p-3 rounded-lg hover:bg-gray-50 transition-colors duration-300 share-option">
                         <div class="w-8 h-8 md:w-10 md:h-10 bg-blue-100 rounded-full flex items-center justify-center">
                             <i class="bi bi-newspaper text-blue-600 text-sm md:text-base"></i>
                         </div>
@@ -1038,7 +1040,7 @@
                         </div>
                     </button>
                     
-                    <button onclick="copyPostLink()" class="w-full flex items-center space-x-3 p-2.5 md:p-3 rounded-lg hover:bg-gray-50 transition-colors duration-300 share-option">
+                    <button type="button" onclick="copyPostLink()" class="w-full flex items-center space-x-3 p-2.5 md:p-3 rounded-lg hover:bg-gray-50 transition-colors duration-300 share-option">
                         <div class="w-8 h-8 md:w-10 md:h-10 bg-green-100 rounded-full flex items-center justify-center">
                             <i class="bi bi-link-45deg text-green-600 text-sm md:text-base"></i>
                         </div>
@@ -1047,7 +1049,7 @@
                             <p class="text-xs md:text-sm text-gray-500">Copy link to this post</p>
                         </div>
                     </button>
-                    <button onclick="shareNativeShare()" class="w-full flex items-center space-x-3 p-2.5 md:p-3 rounded-lg hover:bg-gray-50 transition-colors duration-300 share-option">
+                    <button type="button" onclick="shareNativeShare()" class="w-full flex items-center space-x-3 p-2.5 md:p-3 rounded-lg hover:bg-gray-50 transition-colors duration-300 share-option">
                         <div class="w-8 h-8 md:w-10 md:h-10 bg-slate-100 rounded-full flex items-center justify-center">
                             <i class="bi bi-share text-slate-600 text-sm md:text-base"></i>
                         </div>

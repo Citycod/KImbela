@@ -136,6 +136,7 @@ def test_find_match_and_profile_boost_display_authoritative_price(client, user, 
     assert b"Boost Your Profile - $3.00 USD/month" in boost_page.data
     assert b"Fixed price - $3.00 USD/month" in boost_page.data
     assert b"$99.99" not in boost_page.data
+    assert b"$10" not in boost_page.data
 
 
 def test_boost_checkout_ignores_browser_and_package_prices(
@@ -393,10 +394,14 @@ def test_boost_frontend_has_no_independent_or_submitted_price():
 
     assert "packages[0].price" not in source
     assert "profile_boost_price_usd" in source
-    payment_payload = source[source.index("const paymentPayload"):source.index(
-        "return fetch('/initiate-matchmaking-payment'"
-    )]
+    payment_payload = source[source.index(
+        "checkout.requestJson('/initiate-matchmaking-payment'"
+    ):source.index("if (!paymentData.success")]
     assert "amount:" not in payment_payload
+    assert "$10" not in source
+    assert "id=\"clearPreferencesBtn\"" in source
+    assert "Preferred Match Age" in source
+    assert "boost_checkout.js" in source
 
 
 def test_unrelated_marketplace_price_model_is_unchanged():

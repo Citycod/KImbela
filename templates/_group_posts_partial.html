@@ -100,7 +100,7 @@
                 <img src="{{ url_for('static', filename='assets/img/microphone2.png') }}" alt="" class="h-4 w-4 md:h-5 md:w-5 object-contain" aria-hidden="true">
                 <span class="text-xs md:text-sm">Chime</span>
             </button>
-            <button onclick="openShareModal(this.dataset.postId, this.dataset.url)"
+            <button type="button" onclick="openShareModal(this.dataset.postId, this.dataset.url)"
                     data-post-id="{{ post.public_id }}"
                     data-url="{{ url_for('user.view_shared_post', post_identifier=post.public_id) }}"
                     class="flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-1 md:py-2 rounded-lg hover:bg-gray-100 transition-colors duration-300 text-gray-600">
