@@ -98,6 +98,11 @@ test('copy, native share, and WhatsApp all consume the same versioned payload UR
   }
 });
 
+test('feed copy success toast renders above the share modal', () => {
+  assert.match(dashboardSource, /toast\.style\.zIndex = '12000'/);
+  assert.match(dashboardSource, /Toast\.show\('Link copied!', 'success'\)/);
+});
+
 test('uses the modern Clipboard API when Android exposes a working implementation', async () => {
   const values = [];
   const result = runtime({

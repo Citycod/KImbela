@@ -767,6 +767,7 @@ const Toast = {
         }`;
         toast.textContent = message;
         toast.setAttribute('role', 'alert');
+        toast.style.zIndex = '12000';
         document.body.appendChild(toast);
 
         setTimeout(() => {
