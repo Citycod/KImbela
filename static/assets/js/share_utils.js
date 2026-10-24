@@ -1,7 +1,7 @@
 (function (global) {
   'use strict';
 
-  const POST_SHARE_REVISION = '3';
+  const POST_SHARE_REVISION = '4';
 
   function publicBaseUrl(baseUrl) {
     return String(

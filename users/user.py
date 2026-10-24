@@ -269,8 +269,18 @@ def build_post_share_meta(post):
     if using_fallback_image:
         absolute_image_url = _social_preview_image_url(fallback_image)
     image_type, _ = mimetypes.guess_type(absolute_image_url or "")
-    if absolute_image_url and "res.cloudinary.com" in absolute_image_url:
+    using_cloudinary_image = bool(
+        absolute_image_url and "res.cloudinary.com" in absolute_image_url
+    )
+    if using_cloudinary_image:
         image_type = "image/jpeg"
+
+    image_width = None
+    image_height = None
+    if using_fallback_image and absolute_image_url:
+        image_width, image_height = "687", "363"
+    elif using_cloudinary_image:
+        image_width, image_height = "1200", "630"
 
     return {
         "title": f"Post by {title_author.full_name} - Kimbela",
@@ -280,8 +290,8 @@ def build_post_share_meta(post):
         ),
         "image": absolute_image_url,
         "image_type": image_type,
-        "image_width": "687" if using_fallback_image and absolute_image_url else None,
-        "image_height": "363" if using_fallback_image and absolute_image_url else None,
+        "image_width": image_width,
+        "image_height": image_height,
     }
 
 

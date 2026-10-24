@@ -104,15 +104,17 @@ def test_shared_post_page_rewrites_cloudinary_images_for_social_preview(client, 
     post = Post(
         content="Cloudinary preview",
         author_id=user.id,
-        image="https://res.cloudinary.com/demo/image/upload/v123456/kimbela/posts/example.webp",
+        image="https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg",
     )
     db.session.add(post)
     db.session.commit()
 
     response = client.get(f"/post/{post.public_id}", base_url="https://www.kimbela.com")
     assert response.status_code == 200
-    assert b'https://res.cloudinary.com/demo/image/upload/f_jpg,q_auto,w_1200,h_630,c_fill,g_auto/v123456/kimbela/posts/example.webp' in response.data
+    assert b'https://res.cloudinary.com/demo/image/upload/f_jpg,q_auto,w_1200,h_630,c_fill,g_auto/v1312461204/sample.jpg' in response.data
     assert b'<meta property="og:image:type" content="image/jpeg">' in response.data
+    assert b'<meta property="og:image:width" content="1200">' in response.data
+    assert b'<meta property="og:image:height" content="630">' in response.data
 
 
 def test_shared_post_page_rejects_insecure_preview_image_and_uses_public_fallback(
@@ -129,7 +131,7 @@ def test_shared_post_page_rejects_insecure_preview_image_and_uses_public_fallbac
     db.session.commit()
 
     response = client.get(
-        f"/post/{post.public_id}?share_v=3",
+        f"/post/{post.public_id}?share_v=4",
         base_url="https://www.kimbela.com",
     )
     assert response.status_code == 200
@@ -163,7 +165,7 @@ def test_social_crawler_user_agents_receive_initial_server_rendered_post_metadat
     )
     for user_agent in user_agents:
         response = client.get(
-            f"/post/{post.public_id}?share_v=3",
+            f"/post/{post.public_id}?share_v=4",
             base_url="https://www.kimbela.com",
             headers={"User-Agent": user_agent},
         )
@@ -176,7 +178,7 @@ def test_social_crawler_user_agents_receive_initial_server_rendered_post_metadat
         assert b'<meta property="og:description" content="Crawler-specific preview marker">' in head_html
         assert b"Crawler-specific preview marker" in head_html
         assert b'<meta name="twitter:card" content="summary_large_image">' in head_html
-        assert b"share_v=3" not in head_html
+        assert b"share_v=4" not in head_html
 
 
 def test_shared_post_page_returns_404_for_malformed_or_unknown_identifier(client):
@@ -245,7 +247,7 @@ def test_public_group_share_uses_public_uuid_and_renders_full_preview(
 
     anonymous = app.test_client()
     preview = anonymous.get(
-        f"/post/{post.public_id}?share_v=3", base_url="https://www.kimbela.com"
+        f"/post/{post.public_id}?share_v=4", base_url="https://www.kimbela.com"
     )
     assert preview.status_code == 200
     assert b'<meta property="og:description" content="Public group preview content">' in preview.data
@@ -302,7 +304,7 @@ def test_private_group_share_uses_post_metadata_without_group_or_comments(
     client.get("/logout")
     anonymous = app.test_client()
     preview = anonymous.get(
-        f"/post/{post.public_id}?share_v=3",
+        f"/post/{post.public_id}?share_v=4",
         base_url="https://www.kimbela.com",
     )
     assert preview.status_code == 200
@@ -313,7 +315,7 @@ def test_private_group_share_uses_post_metadata_without_group_or_comments(
     assert b'<meta property="og:image" content="https://cdn.example.com/private-secret.jpg">' in head_html
     assert f'<link rel="canonical" href="https://www.kimbela.com/post/{post.public_id}">'.encode() in head_html
     assert f'<meta property="og:url" content="https://www.kimbela.com/post/{post.public_id}">'.encode() in head_html
-    assert b"share_v=3" not in head_html
+    assert b"share_v=4" not in head_html
     assert b"Confidential preview group" not in preview.data
     assert b"private-comment-must-not-appear" not in preview.data
     assert user.email.encode() not in preview.data
@@ -356,7 +358,7 @@ def test_matchmaking_group_copy_link_renders_anonymous_social_preview(
     client.get("/logout")
     anonymous = app.test_client()
     preview = anonymous.get(
-        f"/post/{post.public_id}?share_v=3",
+        f"/post/{post.public_id}?share_v=4",
         base_url="https://www.kimbela.com",
         headers={"User-Agent": "WhatsApp/2.26.1"},
     )
@@ -367,7 +369,7 @@ def test_matchmaking_group_copy_link_renders_anonymous_social_preview(
     assert b'<meta property="og:image" content="https://cdn.example.com/matchmaking-preview.jpg">' in head_html
     assert f'<link rel="canonical" href="https://www.kimbela.com/post/{post.public_id}">'.encode() in head_html
     assert f'<meta property="og:url" content="https://www.kimbela.com/post/{post.public_id}">'.encode() in head_html
-    assert b"share_v=3" not in head_html
+    assert b"share_v=4" not in head_html
     assert b"Configured Matchmaking" not in preview.data
 
 
