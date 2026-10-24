@@ -33,6 +33,18 @@ def test_shared_post_page_uses_public_uuid(client, db, user):
     response = client.get(f"/post/{post.public_id}")
     assert response.status_code == 200
     assert b"Shared link test" in response.data
+    assert response.headers["Cache-Control"] == "private, no-store, max-age=0"
+    assert "Cookie" in response.headers.get("Vary", "")
+
+    with client.session_transaction() as browser_session:
+        browser_session["_user_id"] = str(user.id)
+        browser_session["_fresh"] = True
+    authenticated_response = client.get(f"/post/{post.public_id}")
+    assert authenticated_response.status_code == 200
+    assert authenticated_response.headers["Cache-Control"] == (
+        "private, no-store, max-age=0"
+    )
+    assert "Cookie" in authenticated_response.headers.get("Vary", "")
 
 
 def test_shared_post_page_uses_post_image_for_social_preview(client, db, user):
@@ -161,24 +173,52 @@ def test_social_crawler_user_agents_receive_initial_server_rendered_post_metadat
         "WhatsApp/2.26.1",
         "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)",
         "Facebot",
-        "Mozilla/5.0",
     )
     for user_agent in user_agents:
-        response = client.get(
-            f"/post/{post.public_id}?share_v=4",
-            base_url="https://www.kimbela.com",
-            headers={"User-Agent": user_agent},
-        )
-        assert response.status_code == 200
-        assert not response.location
-        head_html = response.data.split(b"</head>", 1)[0]
-        assert b'<meta property="og:type" content="article">' in head_html
-        assert b'<meta property="og:site_name" content="Kimbela">' in head_html
-        assert b'<meta property="og:title" content="Post by Test User - Kimbela">' in head_html
-        assert b'<meta property="og:description" content="Crawler-specific preview marker">' in head_html
-        assert b"Crawler-specific preview marker" in head_html
-        assert b'<meta name="twitter:card" content="summary_large_image">' in head_html
-        assert b"share_v=4" not in head_html
+        for method in ("GET", "HEAD"):
+            response = client.open(
+                f"/post/{post.public_id}?share_v=4",
+                method=method,
+                base_url="https://www.kimbela.com",
+                headers={"User-Agent": user_agent},
+            )
+            assert response.status_code == 200
+            assert not response.location
+            assert response.content_type == "text/html; charset=utf-8"
+            assert response.headers["Cache-Control"] == (
+                "public, max-age=300, stale-while-revalidate=600"
+            )
+            assert "Pragma" not in response.headers
+            assert "Set-Cookie" not in response.headers
+            assert "Cookie" not in response.headers.get("Vary", "")
+
+            if method == "GET":
+                head_html = response.data.split(b"</head>", 1)[0]
+                assert b'<meta property="og:type" content="article">' in head_html
+                assert b'<meta property="og:site_name" content="Kimbela">' in head_html
+                assert b'<meta property="og:title" content="Post by Test User - Kimbela">' in head_html
+                assert b'<meta property="og:description" content="Crawler-specific preview marker">' in head_html
+                assert b"Crawler-specific preview marker" in head_html
+                assert b'<meta name="twitter:card" content="summary_large_image">' in head_html
+                assert b"share_v=4" not in head_html
+
+    normal_response = client.get(
+        f"/post/{post.public_id}?share_v=4",
+        base_url="https://www.kimbela.com",
+        headers={"User-Agent": "Mozilla/5.0"},
+    )
+    assert normal_response.status_code == 200
+    assert normal_response.headers["Cache-Control"] == "private, no-store, max-age=0"
+    assert "Cookie" in normal_response.headers.get("Vary", "")
+    assert "Set-Cookie" in normal_response.headers
+
+    non_post_response = client.get(
+        "/login",
+        headers={"User-Agent": "WhatsApp"},
+    )
+    assert non_post_response.headers["Cache-Control"] == (
+        "private, no-store, max-age=0"
+    )
 
 
 def test_shared_post_page_returns_404_for_malformed_or_unknown_identifier(client):
@@ -250,6 +290,8 @@ def test_public_group_share_uses_public_uuid_and_renders_full_preview(
         f"/post/{post.public_id}?share_v=4", base_url="https://www.kimbela.com"
     )
     assert preview.status_code == 200
+    assert preview.headers["Cache-Control"] == "private, no-store, max-age=0"
+    assert "Cookie" in preview.headers.get("Vary", "")
     assert b'<meta property="og:description" content="Public group preview content">' in preview.data
     assert b'<meta property="og:image" content="https://cdn.example.com/public-group.jpg">' in preview.data
     assert f'<link rel="canonical" href="https://www.kimbela.com/post/{post.public_id}">'.encode() in preview.data
@@ -320,6 +362,23 @@ def test_private_group_share_uses_post_metadata_without_group_or_comments(
     assert b"private-comment-must-not-appear" not in preview.data
     assert user.email.encode() not in preview.data
     assert user.phone_number.encode() not in preview.data
+
+    crawler_preview = anonymous.get(
+        f"/post/{post.public_id}?share_v=4",
+        base_url="https://www.kimbela.com",
+        headers={"User-Agent": "WhatsApp"},
+    )
+    assert crawler_preview.status_code == 200
+    assert crawler_preview.headers["Cache-Control"] == (
+        "public, max-age=300, stale-while-revalidate=600"
+    )
+    assert "Set-Cookie" not in crawler_preview.headers
+    assert "Cookie" not in crawler_preview.headers.get("Vary", "")
+    assert b"private-preview-secret-marker" in crawler_preview.data
+    assert b"Confidential preview group" not in crawler_preview.data
+    assert b"private-comment-must-not-appear" not in crawler_preview.data
+    assert user.email.encode() not in crawler_preview.data
+    assert user.phone_number.encode() not in crawler_preview.data
 
 
 def test_matchmaking_group_copy_link_renders_anonymous_social_preview(

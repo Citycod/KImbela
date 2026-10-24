@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ share_meta.title }}</title>
+    <meta name="description" content="{{ share_meta.description }}">
+    <link rel="canonical" href="{{ share_meta.url }}">
+    <meta property="og:site_name" content="Kimbela">
+    <meta property="og:title" content="{{ share_meta.title }}">
+    <meta property="og:description" content="{{ share_meta.description }}">
+    <meta property="og:image" content="{{ share_meta.image }}">
+    <meta property="og:image:secure_url" content="{{ share_meta.image }}">
+    {% if share_meta.image_type %}
+    <meta property="og:image:type" content="{{ share_meta.image_type }}">
+    {% endif %}
+    {% if share_meta.image_width and share_meta.image_height %}
+    <meta property="og:image:width" content="{{ share_meta.image_width }}">
+    <meta property="og:image:height" content="{{ share_meta.image_height }}">
+    {% endif %}
+    <meta property="og:image:alt" content="{{ share_meta.title }}">
+    <meta property="og:url" content="{{ share_meta.url }}">
+    <meta property="og:type" content="article">
+    <meta property="og:locale" content="en_US">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ share_meta.title }}">
+    <meta name="twitter:description" content="{{ share_meta.description }}">
+    <meta name="twitter:image" content="{{ share_meta.image }}">
+    <meta name="twitter:image:alt" content="{{ share_meta.title }}">
+    <meta name="twitter:url" content="{{ share_meta.url }}">
+</head>
+<body>
+    <p>Open this post on Kimbela.</p>
+</body>
+</html>

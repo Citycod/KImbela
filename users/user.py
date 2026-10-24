@@ -8,6 +8,7 @@ from flask import (
     Blueprint,
     session,
     current_app,
+    g,
     abort,
 )
 from datetime import date
@@ -70,6 +71,7 @@ from utils.group_post_service import (
     GroupPostCreationError,
     create_group_post as create_group_post_for_author,
 )
+from utils.social_preview import is_social_post_preview_request
 # from scheduler import (
 #     manual_trigger_matchmaking_expiry_check,
 #     manual_trigger_expired_matchmaking_check,
@@ -2105,6 +2107,8 @@ def _with_notification_id(destination, notification_id):
 @user.before_request
 def mark_linked_notification_read():
     """Resolve a notification when its authenticated deep link is followed."""
+    if is_social_post_preview_request(request):
+        return None
     if request.method != "GET" or not current_user.is_authenticated:
         return None
     notification_id = request.args.get("notification_id", type=int)
@@ -5240,6 +5244,31 @@ def view_shared_post(post_identifier):
         if request.args.get("notification") == "1":
             return redirect(url_for("user.user_dashboard"))
         raise
+    if is_social_post_preview_request(request):
+        post = (
+            Post.query.options(
+                joinedload(Post.author),
+                joinedload(Post.shared_post).joinedload(Post.author),
+            )
+            .filter_by(id=post.id)
+            .first_or_404()
+        )
+        share_meta = (
+            build_private_post_share_meta(post)
+            if is_private_group_post(post)
+            else build_post_share_meta(post)
+        )
+        template = current_app.jinja_env.get_template("post_preview.html")
+        response = current_app.make_response(template.render(share_meta=share_meta))
+        response.headers["Content-Type"] = "text/html; charset=utf-8"
+        # The metadata representation never depends on browser session state.
+        # Suppress Flask's cookie/Vary handling even if an extension inspected
+        # the session earlier in request processing.
+        session.modified = False
+        session.accessed = False
+        g.social_post_preview = True
+        return response
+
     post = (
         Post.query.options(
             joinedload(Post.author),

@@ -12,6 +12,7 @@ from werkzeug.exceptions import BadRequest, RequestEntityTooLarge
 import time
 from flask import send_from_directory, abort
 from werkzeug.utils import safe_join
+from utils.social_preview import is_social_post_preview_request
 
 # Import extensions (make sure socketio is initialized with threading)
 from extensions import db, bcrypt, login_manager, mail, csrf, cache, socketio
@@ -294,6 +295,7 @@ def create_app():
     @app.before_request
     def before_request():
         g.start_time = time.time()
+        g.social_post_preview = False
 
     def resolve_client_ip():
         forwarded_for = request.headers.get("X-Forwarded-For", "")
@@ -375,6 +377,8 @@ def create_app():
 
     def is_passive_request():
         path = request.path or ""
+        if is_social_post_preview_request(request):
+            return True
         if (
             path.startswith("/static/")
             or path.startswith("/socket.io")
@@ -403,7 +407,16 @@ def create_app():
 
     @app.after_request
     def after_request(response):
-        if request.path.startswith("/static/") and response.status_code == 200:
+        if getattr(g, "social_post_preview", False):
+            response.headers["Cache-Control"] = (
+                "public, max-age=300, stale-while-revalidate=600"
+            )
+            response.headers.pop("Pragma", None)
+            response.headers.pop("Expires", None)
+            response.vary.discard("Cookie")
+            if not response.vary:
+                response.headers.pop("Vary", None)
+        elif request.path.startswith("/static/") and response.status_code == 200:
             if request.args.get("v"):
                 response.headers["Cache-Control"] = (
                     "public, max-age=31536000, immutable"
@@ -475,6 +488,9 @@ def create_app():
     @app.before_request
     def update_last_seen():
         from flask_login import current_user
+
+        if is_social_post_preview_request(request):
+            return None
 
         try:
             if current_user.is_authenticated and not is_passive_request():
