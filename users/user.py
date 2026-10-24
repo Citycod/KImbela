@@ -11,6 +11,7 @@ from flask import (
     abort,
 )
 from datetime import date
+import ipaddress
 from urllib.parse import urlparse, urljoin
 from sqlalchemy.orm import aliased, joinedload
 from sqlalchemy import and_, exists, false, func, or_
@@ -213,11 +214,27 @@ def _social_preview_image_url(raw_url):
     if not absolute_url:
         return None
 
+    parsed_url = urlparse(absolute_url)
+    hostname = (parsed_url.hostname or "").strip().lower()
+    if parsed_url.scheme != "https" or not hostname:
+        return None
+    if (
+        hostname == "localhost"
+        or "." not in hostname
+        or hostname.endswith((".localhost", ".local", ".internal", ".lan"))
+    ):
+        return None
+    try:
+        if not ipaddress.ip_address(hostname).is_global:
+            return None
+    except ValueError:
+        pass
+
     cloudinary_marker = "/image/upload/"
     if "res.cloudinary.com" in absolute_url and cloudinary_marker in absolute_url:
         return absolute_url.replace(
             cloudinary_marker,
-            "/image/upload/f_jpg,q_auto,w_1200,c_limit/",
+            "/image/upload/f_jpg,q_auto,w_1200,h_630,c_fill,g_auto/",
             1,
         )
 
@@ -227,23 +244,33 @@ def _social_preview_image_url(raw_url):
 def build_post_share_meta(post):
     preview_post = post.shared_post or post
     fallback_image = url_for("static", filename="assets/img/kim.png")
-    image_url = (
-        preview_post.image
-        or preview_post.gif
-        or post.image
-        or post.gif
-        or fallback_image
-    )
+    candidate_image = preview_post.image or preview_post.gif or post.image or post.gif
 
     title_author = preview_post.author if preview_post.author else post.author
-    description_source = (
-        post.content
-        or preview_post.content
-        or f"See {title_author.full_name}'s post on Kimbela."
-    ).strip()
-    description = description_source[:197].rstrip() + "..." if len(description_source) > 200 else description_source
-    absolute_image_url = _social_preview_image_url(image_url)
+    description_source = bleach.clean(
+        (
+            post.content
+            or preview_post.content
+            or f"See {title_author.full_name}'s post on Kimbela."
+        ),
+        tags=[],
+        strip=True,
+    )
+    description_source = " ".join(description_source.split())
+    if not description_source:
+        description_source = f"See {title_author.full_name}'s post on Kimbela."
+    description = (
+        description_source[:197].rstrip() + "..."
+        if len(description_source) > 200
+        else description_source
+    )
+    absolute_image_url = _social_preview_image_url(candidate_image)
+    using_fallback_image = absolute_image_url is None
+    if using_fallback_image:
+        absolute_image_url = _social_preview_image_url(fallback_image)
     image_type, _ = mimetypes.guess_type(absolute_image_url or "")
+    if absolute_image_url and "res.cloudinary.com" in absolute_image_url:
+        image_type = "image/jpeg"
 
     return {
         "title": f"Post by {title_author.full_name} - Kimbela",
@@ -252,9 +279,9 @@ def build_post_share_meta(post):
             url_for("user.view_shared_post", post_identifier=post.public_id)
         ),
         "image": absolute_image_url,
-        "image_type": image_type or "image/jpeg",
-        "image_width": "1200",
-        "image_height": "630",
+        "image_type": image_type,
+        "image_width": "687" if using_fallback_image and absolute_image_url else None,
+        "image_height": "363" if using_fallback_image and absolute_image_url else None,
     }
 
 
