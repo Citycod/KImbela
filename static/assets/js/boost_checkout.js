@@ -15,18 +15,29 @@
       return documentRef.getElementById('paymentModal');
     }
 
+    function continueLink() {
+      return documentRef.getElementById('continueBoostPayment');
+    }
+
     function begin(button) {
       activeButton = button || null;
       originalButtonHtml = activeButton ? activeButton.innerHTML : '';
       if (activeButton) activeButton.disabled = true;
       const modal = paymentModal();
       if (modal) modal.classList.remove('hidden');
+      const link = continueLink();
+      if (link) link.classList.add('hidden');
       if (documentRef.body) documentRef.body.style.overflow = 'hidden';
     }
 
     function finish() {
       const modal = paymentModal();
       if (modal) modal.classList.add('hidden');
+      const link = continueLink();
+      if (link) {
+        link.classList.add('hidden');
+        link.removeAttribute('href');
+      }
       if (documentRef.body) documentRef.body.style.overflow = '';
       if (activeButton) {
         activeButton.innerHTML = originalButtonHtml;
@@ -39,6 +50,20 @@
     function fail(message) {
       finish();
       notify(message || 'Unable to start payment. Please try again.', 'error');
+    }
+
+    function showContinue(paymentUrl) {
+      if (typeof paymentUrl !== 'string' || !/^https:\/\//i.test(paymentUrl)) {
+        throw new Error('Payment service returned an invalid checkout URL.');
+      }
+      const link = continueLink();
+      if (link) {
+        link.setAttribute('href', paymentUrl);
+        link.classList.remove('hidden');
+      }
+      if (documentRef.body) documentRef.body.style.overflow = '';
+      if (activeButton) activeButton.disabled = false;
+      return paymentUrl;
     }
 
     async function requestJson(url, requestOptions = {}) {
@@ -88,7 +113,14 @@
       }
     }
 
-    return Object.freeze({ begin, fail, finish, recover: finish, requestJson });
+    return Object.freeze({
+      begin,
+      fail,
+      finish,
+      recover: finish,
+      requestJson,
+      showContinue,
+    });
   }
 
   global.KimbelaBoostCheckout = Object.freeze({

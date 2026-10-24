@@ -184,6 +184,41 @@ def test_boost_checkout_ignores_browser_and_package_prices(
     assert metadata["expected_checkout_currency"] == "NGN"
 
 
+def test_boost_checkout_rejects_invalid_hosted_payment_url(
+    app, db, user, monkeypatch
+):
+    package, request_row = _boost_rows(db, user)
+    _configure_service(monkeypatch)
+
+    class InvalidUrlResponse:
+        status_code = 200
+        text = ""
+
+        def json(self):
+            return {
+                "status": "success",
+                "data": {"id": "unsafe", "link": "javascript:alert(1)"},
+            }
+
+    monkeypatch.setattr(
+        MatchmakingPaymentService,
+        "_http_request",
+        lambda *_args, **_kwargs: InvalidUrlResponse(),
+    )
+    with app.test_request_context():
+        result = MatchmakingPaymentService().create_matchmaking_payment(
+            user, request_row, package
+        )
+
+    assert result == {
+        "success": False,
+        "error": "Payment gateway did not return a valid checkout URL",
+    }
+    assert MatchmakingPayments.query.filter_by(
+        matchmaking_request_id=request_row.id
+    ).count() == 0
+
+
 @pytest.mark.parametrize(
     ("change", "value"),
     [
@@ -270,11 +305,51 @@ def test_boost_callback_does_not_trust_success_query_parameter(
         },
     )
 
-    assert response.status_code == 302
+    assert response.status_code == 202
+    assert b"Payment processing" in response.data
     db.session.refresh(payment)
     db.session.refresh(request_row)
     assert payment.status == "pending"
     assert request_row.status == "pending"
+
+
+def test_pageshow_reconciliation_activates_only_verified_owned_payment(
+    client, db, user, monkeypatch
+):
+    package, request_row = _boost_rows(db, user)
+    payment = _payment(db, user, package, request_row)
+    _login(client, user)
+    _configure_service(monkeypatch)
+    provider_data = _provider_data(payment)
+    monkeypatch.setattr(
+        MatchmakingPaymentService,
+        "resolve_flutterwave_verification",
+        lambda self, **_kwargs: {
+            "success": True,
+            "verified_status": "successful",
+            "data": provider_data,
+        },
+    )
+    monkeypatch.setattr(
+        MatchmakingPaymentService,
+        "send_matchmaking_payment_success_email",
+        lambda *_args, **_kwargs: True,
+    )
+
+    response = client.get(f"/api/matchmaking/payments/{payment.id}/status")
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload["state"] == "successful"
+    assert payload["active"] is True
+    assert payload["expires_at"]
+    db.session.refresh(request_row)
+    first_end_date = request_row.end_date
+
+    replay = client.get(f"/api/matchmaking/payments/{payment.id}/status")
+    assert replay.status_code == 200
+    db.session.refresh(request_row)
+    assert request_row.end_date == first_end_date
 
 
 def test_legacy_failed_payment_retry_keeps_history_and_creates_three_dollar_row(

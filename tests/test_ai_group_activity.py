@@ -145,7 +145,7 @@ def test_conservative_weekly_defaults_are_two_total_one_per_channel(db):
     assert config["maximum_group_posts_per_week"] == 1
 
 
-def test_feed_and_group_share_the_same_fourteen_day_budget(db):
+def test_feed_and_group_have_independent_fourteen_day_cooldowns(db):
     from ai_controls import new_post_eligibility, weekly_post_counts
     from models import Post
 
@@ -157,18 +157,12 @@ def test_feed_and_group_share_the_same_fourteen_day_budget(db):
         False,
         "fourteen_day_post_limit",
     )
-    assert new_post_eligibility(persona, "group", now) == (
-        False,
-        "fourteen_day_post_limit",
-    )
+    assert new_post_eligibility(persona, "group", now)[0] is True
     assert weekly_post_counts(persona, now) == {"total": 1, "feed": 1, "group": 0}
 
     db.session.query(Post).filter(Post.author_id == persona.user_id).delete()
     add_published_post(db, persona, now - timedelta(hours=1), group_id=1)
-    assert new_post_eligibility(persona, "feed", now) == (
-        False,
-        "fourteen_day_post_limit",
-    )
+    assert new_post_eligibility(persona, "feed", now)[0] is True
     assert new_post_eligibility(persona, "group", now) == (
         False,
         "fourteen_day_post_limit",
@@ -633,7 +627,7 @@ def test_group_post_service_failure_leaves_required_slot_due(
         persona,
         group_activity_enabled=True,
         group_can_post=True,
-        allowed_group_ids=[],
+        allowed_group_ids=[group.id],
     )
     save_group_config(group, {"activity_level": "medium"})
     db.session.commit()
@@ -924,7 +918,7 @@ def test_required_slots_can_service_five_groups_twice_under_production_limits(
             group_can_post=True,
             group_can_comment=False,
             group_can_reply=False,
-            allowed_group_ids=[],
+            allowed_group_ids=[group.id for group in groups],
             max_posts_per_day=1,
             max_group_posts_per_day=1,
             maximum_total_posts_per_week=2,
@@ -946,14 +940,13 @@ def test_required_slots_can_service_five_groups_twice_under_production_limits(
         False,
         "fourteen_day_post_limit",
     )
-    # A new normal group does not need to appear in every persona allowlist for
-    # its required slot, while the same allowlist still governs opportunistic work.
+    # Required cadence bypasses generic post limits but not explicit assignment.
     assert group_automation_eligibility(
         personas[0], groups[0], "post", monday, required_slot=True
     ) == (True, "eligible")
     assert group_automation_eligibility(
         personas[0], groups[0], "post", monday
-    ) == (False, "group_not_allowed")
+    ) == (True, "eligible")
 
     selected = []
     slot_now = monday
@@ -1019,7 +1012,7 @@ def test_required_slots_can_service_five_groups_twice_under_production_limits(
     assert new_post_eligibility(personas[0], "feed", thursday)[0] is False
 
 
-def test_new_normal_group_defaults_into_required_schedule_but_admin_off_opts_out(db):
+def test_required_schedule_preserves_assignment_and_admin_off_controls(db):
     from ai_controls import (
         get_group_config,
         group_automation_eligibility,
@@ -1043,12 +1036,22 @@ def test_new_normal_group_defaults_into_required_schedule_but_admin_off_opts_out
     assert get_group_config(group)["activity_level"] == "medium"
     assert group_automation_eligibility(
         persona, group, "post", monday, required_slot=True
-    ) == (True, "eligible")
+    ) == (False, "group_not_allowed")
     assert group_automation_eligibility(persona, group, "post", monday) == (
         False,
         "group_not_allowed",
     )
 
+    open_weekly_policy(
+        db,
+        persona,
+        group_activity_enabled=True,
+        group_can_post=True,
+        allowed_group_ids=[group.id],
+    )
+    assert group_automation_eligibility(
+        persona, group, "post", monday, required_slot=True
+    ) == (True, "eligible")
     save_group_config(group, {"activity_level": "off"})
     db.session.commit()
     assert group_automation_eligibility(
@@ -1069,7 +1072,7 @@ def test_required_slot_still_respects_global_stop_and_persona_pause(db, monkeypa
         persona,
         group_activity_enabled=True,
         group_can_post=True,
-        allowed_group_ids=[],
+        allowed_group_ids=[group.id],
     )
     db.session.commit()
     publish = Mock(side_effect=AssertionError("hard controls must block publishing"))
@@ -1570,6 +1573,53 @@ def test_group_session_pass_continues_after_one_group_persistence_failure(
 
     assert run_scheduled_group_sessions([], max_groups=2) == 1
     assert visited == [failed_group.id, successful_group.id]
+
+
+def test_matchmaking_exclusion_does_not_consume_group_pass_budget(
+    app, db, monkeypatch, caplog
+):
+    import logging
+
+    from ai_group_action_engine import run_scheduled_group_sessions
+
+    owner = make_user(db)
+    matchmaking = make_group(db, owner, "Protected Matchmaking")
+    normal = make_group(db, owner, "Normal group after Matchmaking")
+    monkeypatch.setitem(app.config, "MATCHMAKING_GROUP_ID", matchmaking.id)
+    visited = []
+    monkeypatch.setattr(
+        "ai_group_action_engine.group_session_completed",
+        lambda group_id, *_args, **_kwargs: group_id != normal.id,
+    )
+    monkeypatch.setattr(
+        "ai_group_action_engine.execute_group_activity_session",
+        lambda group, *_args, **_kwargs: visited.append(group.id) or True,
+    )
+
+    with caplog.at_level(logging.INFO, logger="ai_group_action_engine"):
+        assert run_scheduled_group_sessions([], max_groups=1) == 1
+
+    assert visited == [normal.id]
+    assert "reason=matchmaking_excluded" in caplog.text
+
+
+def test_missing_matchmaking_config_uses_production_protected_group_fallback(
+    app, monkeypatch
+):
+    from types import SimpleNamespace
+
+    from utils.matchmaking_group import (
+        DEFAULT_MATCHMAKING_GROUP_ID,
+        can_create_group_post,
+        is_matchmaking_group,
+    )
+
+    monkeypatch.delitem(app.config, "MATCHMAKING_GROUP_ID", raising=False)
+    group = SimpleNamespace(id=DEFAULT_MATCHMAKING_GROUP_ID)
+    ai_user = SimpleNamespace(is_ai_persona=True)
+    assert DEFAULT_MATCHMAKING_GROUP_ID == 29
+    assert is_matchmaking_group(group) is True
+    assert can_create_group_post(group, ai_user) is False
 
 
 def test_one_group_session_pass_can_complete_five_due_normal_groups(db, monkeypatch):

@@ -816,10 +816,12 @@
                                               class="text-input"
                                               id="minAge"
                                               name="min_age"
-                                              placeholder="31 or older"
-                                              min="31"
-                                              max="74"
+                                              placeholder="18"
+                                              min="18"
+                                              max="99"
+                                              step="1"
                                               inputmode="numeric"
+                                              aria-describedby="preferredAgeError"
                                               required
                                             />
                                         </div>
@@ -834,17 +836,21 @@
                                               class="text-input"
                                               id="maxAge"
                                               name="max_age"
-                                              placeholder="Up to 75"
-                                              min="32"
-                                              max="75"
+                                              placeholder="99"
+                                              min="18"
+                                              max="99"
+                                              step="1"
                                               inputmode="numeric"
+                                              aria-describedby="preferredAgeError"
                                               required
                                             />
                                         </div>
                                       </div>
 
-                                      <p class="text-xs text-text-secondary mt-1">
-                                        Minimum age must be 31 or older.
+                                      <p id="preferredAgeHelp" class="text-xs text-text-secondary mt-1">
+                                        Enter your preferred match age range from 18 to 99.
+                                      </p>
+                                      <p id="preferredAgeError" class="mt-1 hidden text-xs font-medium text-red-600" role="alert" aria-live="polite">
                                       </p>
                                 </div>
                                 <div class="preference-section">
@@ -1196,6 +1202,11 @@
             <p class="text-text-secondary mb-4 text-sm">Processing your ${{ profile_boost_price_usd }} USD payment...</p>
             <div class="loader-spinner mx-auto mb-3"></div>
             <p class="text-xs text-text-secondary">Please do not close this window</p>
+            <a id="continueBoostPayment"
+               class="mt-4 hidden rounded-lg bg-primary px-4 py-2 font-semibold text-white hover:bg-secondary"
+               rel="noopener noreferrer">
+                Continue to payment
+            </a>
         </div>
     </div>
 
@@ -1495,24 +1506,35 @@
                     const maxAgeRaw = document.getElementById('maxAge').value;
                     const gender = document.querySelector('input[name="partnerGender"]:checked');
 
-                    const minAge = parseInt(minAgeRaw, 10);
-                    const maxAge = parseInt(maxAgeRaw, 10);
+                    const minAge = Number(minAgeRaw);
+                    const maxAge = Number(maxAgeRaw);
+                    const ageError = document.getElementById('preferredAgeError');
+                    const showAgeError = message => {
+                        ageError.textContent = message;
+                        ageError.classList.toggle('hidden', !message);
+                    };
 
                     if (!minAgeRaw || !maxAgeRaw || !gender) {
-                        showNotification('Please enter valid age preferences and select gender.', 'error');
+                        showAgeError('Enter both preferred ages and select a gender preference.');
                         return false;
                     }
 
-                    if (isNaN(minAge) || minAge < 31) {
-                        showNotification('Minimum age must be 31 or older.', 'error');
+                    if (!Number.isInteger(minAge) || !Number.isInteger(maxAge)) {
+                        showAgeError('Minimum and maximum age must be whole numbers.');
                         return false;
                     }
 
-                    if (isNaN(maxAge) || maxAge <= minAge || maxAge > 120) {
-                        showNotification('Maximum age must be higher than minimum age and not above 120.', 'error');
+                    if (minAge < 18 || maxAge > 99 || maxAge < 18) {
+                        showAgeError('Preferred ages must be between 18 and 99.');
                         return false;
                     }
 
+                    if (maxAge < minAge) {
+                        showAgeError('Maximum age must be greater than or equal to minimum age.');
+                        return false;
+                    }
+
+                    showAgeError('');
                     return true;
 
                 case 2:
@@ -1814,12 +1836,12 @@
                 if (paymentData.payment_id) {
                     localStorage.setItem('current_matchmaking_payment_id', paymentData.payment_id);
                 }
-                if (paymentData.gateway_reference) {
-                    localStorage.setItem('current_gateway_reference', paymentData.gateway_reference);
+                checkout.showContinue(paymentData.payment_url);
+                try {
+                    window.location.assign(paymentData.payment_url);
+                } catch (_navigationError) {
+                    showNotification('Use Continue to payment to open the secure checkout.', 'warning');
                 }
-
-                checkout.finish();
-                window.location.assign(paymentData.payment_url);
             } catch (error) {
                 closeAllModals();
                 const paymentMessage = error.message && (
@@ -2095,69 +2117,33 @@
             populateYourInterests();
         });
 
-        // Handle Flutterwave callback
-        window.addEventListener('load', async function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const status = urlParams.get('status');
-            const tx_ref = urlParams.get('tx_ref');
-            const transaction_id = urlParams.get('transaction_id');
-
-            if (status && status !== 'successful' && status !== 'completed') {
-                getBoostCheckoutController().recover();
-                showNotification('Payment was cancelled or not completed.', 'warning');
-                return;
-            }
-
-            if (status && tx_ref && transaction_id) {
-                const checkout = getBoostCheckoutController();
-                checkout.begin(null);
-                try {
-                    const data = await checkout.requestJson('/verify-payment', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': getCSRFToken()
-                        },
-                        body: JSON.stringify({ reference: transaction_id })
-                    });
-                    checkout.finish();
-                    if (data.success) {
-                        document.getElementById('successModal').classList.remove('hidden');
-                        updatePaymentStatus(data.transaction_id, 'completed');
-                    } else {
-                        showNotification('Payment verification failed', 'error');
-                    }
-                } catch (error) {
-                    checkout.fail(error.message || 'Error verifying payment');
+        async function reconcileStoredBoostPayment() {
+            const paymentId = localStorage.getItem('current_matchmaking_payment_id');
+            if (!paymentId || !/^\d+$/.test(paymentId)) return;
+            try {
+                const data = await getBoostCheckoutController().requestJson(
+                    `/api/matchmaking/payments/${paymentId}/status`
+                );
+                if (data.state === 'successful') {
+                    localStorage.removeItem('current_matchmaking_payment_id');
+                    showNotification('Your Profile Boost is active.', 'success');
+                    checkActiveRequests();
+                } else if (data.state === 'failed') {
+                    localStorage.removeItem('current_matchmaking_payment_id');
+                    showNotification('Payment was not completed. You can safely retry.', 'warning');
+                } else {
+                    showNotification('Payment is still processing. We will activate the Boost after verification.', 'info');
                 }
+            } catch (_error) {
+                showNotification('Payment status could not be checked yet. You can retry safely.', 'warning');
             }
-        });
+        }
 
         // Browsers may restore the page from bfcache after hosted checkout closes.
         window.addEventListener('pageshow', function() {
             getBoostCheckoutController().recover();
+            reconcileStoredBoostPayment();
         });
-
-        function updatePaymentStatus(transactionId, status) {
-            fetch('/update-payment-status', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCSRFToken()
-                },
-                body: JSON.stringify({
-                    transaction_id: transactionId,
-                    status: status
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (!data.success) {
-                }
-            })
-            .catch(error => {
-            });
-        }
     </script>
 
 <script>

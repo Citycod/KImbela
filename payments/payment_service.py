@@ -18,6 +18,7 @@ from models import (
 )
 import logging
 import os, time
+from urllib.parse import urlparse
 from .payment_service_ad import AdCampaignPaymentService
 from datetime import datetime, timedelta
 from extensions import mail
@@ -637,6 +638,19 @@ class MatchmakingPaymentService(BasePaymentService):
             if (gateway or "flutterwave").lower() != "flutterwave":
                 return {"success": False, "error": "Unsupported payment gateway"}
 
+            if (
+                not user
+                or not matchmaking_request
+                or not package
+                or matchmaking_request.user_id != user.id
+                or matchmaking_request.package_id != package.id
+                or getattr(user, "is_ai_persona", False)
+            ):
+                return {
+                    "success": False,
+                    "error": "Payment ownership or package validation failed",
+                }
+
             # The browser and legacy package row are deliberately not price
             # authorities. They continue to identify the request and its
             # existing duration/features only.
@@ -895,7 +909,19 @@ class MatchmakingPaymentService(BasePaymentService):
                 result = response.json()
 
                 if result.get("status") == "success":
-                    payment_url = result["data"]["link"]
+                    payment_url = (result.get("data", {}).get("link") or "").strip()
+                    parsed_payment_url = urlparse(payment_url)
+                    if (
+                        parsed_payment_url.scheme != "https"
+                        or not parsed_payment_url.netloc
+                    ):
+                        logger.error(
+                            "Flutterwave returned an invalid profile boost checkout URL"
+                        )
+                        return {
+                            "success": False,
+                            "error": "Payment gateway did not return a valid checkout URL",
+                        }
 
                     # Create matchmaking payment record
                     matchmaking_payment = MatchmakingPayments(

@@ -173,7 +173,8 @@ def test_matchmaking_payment_callback_recovers_success_via_reference_verificatio
         follow_redirects=False,
     )
 
-    assert response.status_code == 302
+    assert response.status_code == 200
+    assert b"Payment successful" in response.data
     db.session.refresh(matchmaking_payment)
     db.session.refresh(matchmaking_request)
     assert matchmaking_payment.status == "completed"

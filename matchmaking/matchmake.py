@@ -123,6 +123,36 @@ def _bounded_int_arg(*names, minimum=None, maximum=None, default=None):
     return default
 
 
+def _preferred_age_range(data):
+    """Return a validated, user-selected adult preferred age range."""
+    if not isinstance(data, dict):
+        return None, None, "Preferred age values are required."
+
+    values = []
+    for key, label in (("min_age", "Minimum age"), ("max_age", "Maximum age")):
+        raw_value = data.get(key)
+        if isinstance(raw_value, bool) or raw_value in (None, ""):
+            return None, None, f"{label} is required."
+        if isinstance(raw_value, int):
+            value = raw_value
+        elif isinstance(raw_value, str) and raw_value.strip().isdigit():
+            value = int(raw_value.strip())
+        else:
+            return None, None, f"{label} must be a whole number."
+        values.append(value)
+
+    min_age, max_age = values
+    if min_age < 18:
+        return None, None, "Minimum age must be at least 18."
+    if min_age > 99 or max_age > 99:
+        return None, None, "Preferred ages cannot be above 99."
+    if max_age < 18:
+        return None, None, "Maximum age must be at least 18."
+    if max_age < min_age:
+        return None, None, "Maximum age must be greater than or equal to minimum age."
+    return min_age, max_age, None
+
+
 def _matchmaking_browse_filters():
     """Normalize Browse query parameters while retaining legacy API names."""
     min_age = _bounded_int_arg("age_min", "min_age", minimum=18, maximum=120)
@@ -982,6 +1012,10 @@ def create_matchmaking_request():
             request_data = data
             package_id = data.get("package_id")
 
+        min_age, max_age, age_error = _preferred_age_range(request_data)
+        if age_error:
+            return jsonify({"success": False, "error": age_error}), 400
+
         current_app.logger.info(
             "🟡 [MATCH CREATE] User %s payload summary: package_id=%s, has_about=%s, has_ideal=%s, partner_country=%r, partner_state=%r, partner_city=%r, has_image=%s",
             current_user.id,
@@ -1102,8 +1136,8 @@ def create_matchmaking_request():
             user_id=current_user.id,
             package_id=package.id,
             # Basic preferences
-            min_age=request_data.get("min_age"),
-            max_age=request_data.get("max_age"),
+            min_age=min_age,
+            max_age=max_age,
             partner_gender=request_data.get("partner_gender", "any"),
             partner_ethnicity=request_data.get("partner_ethnicity", ""),
             partner_religion=request_data.get("partner_religion", ""),
@@ -1182,18 +1216,13 @@ def initiate_matchmaking_payment():
     try:
         if current_user.is_ai_persona:
             return jsonify({"success": False, "error": "AI profiles cannot purchase matchmaking boosts"}), 403
-        data = request.get_json()
-        print(f"🟡 [INITIATE MATCHMAKING PAYMENT] Received data: {data}")
+        data = request.get_json(silent=True) or {}
 
         # Required fields for matchmaking
         request_id = data.get("request_id")
         currency = data.get("currency", "USD").upper()
         gateway = (data.get("gateway") or "flutterwave").lower()
         package_id = data.get("campaign_id")  # This comes from frontend as campaign_id
-
-        print(
-            f"🟡 [INITIATE MATCHMAKING PAYMENT] request_id: {request_id}, currency: {currency}, gateway: {gateway}, package_id: {package_id}"
-        )
 
         if not request_id or not package_id:
             print(
@@ -1272,9 +1301,18 @@ def initiate_matchmaking_payment():
             gateway=gateway,
         )
 
-        print(f"🟡 [INITIATE MATCHMAKING PAYMENT] Payment service result: {result}")
-
         if result.get("success"):
+            payment_url = result.get("payment_url")
+            payment_id = result.get("payment_id")
+            gateway_reference = result.get("gateway_reference")
+            if not payment_url or not payment_id or not gateway_reference:
+                current_app.logger.error(
+                    "Profile boost checkout initialization returned incomplete persisted state"
+                )
+                return jsonify({
+                    "success": False,
+                    "error": "Payment checkout could not be initialized safely",
+                }), 502
             print(
                 f"✅ [INITIATE MATCHMAKING PAYMENT] Payment initiated successfully for request {request_id}"
             )
@@ -1291,81 +1329,73 @@ def initiate_matchmaking_payment():
         import traceback
 
         print(f"🔴 [INITIATE MATCHMAKING PAYMENT] Traceback: {traceback.format_exc()}")
-        return (
-            jsonify({"success": False, "error": f"Internal server error: {str(e)}"}),
-            500,
-        )
+        return jsonify({
+            "success": False,
+            "error": "Payment checkout is temporarily unavailable",
+        }), 500
 
 
 @match.route("/matchmaking/payment-callback")
 @login_required
 def payment_callback():
-    """Handle Flutterwave payment callback for matchmaking"""
+    """Verify Flutterwave server-side and present the resulting Boost state."""
     try:
-        # Get parameters from Flutterwave callback
         status = (request.args.get("status") or "").strip().lower()
-        tx_ref = request.args.get("tx_ref")
+        tx_ref = (request.args.get("tx_ref") or "").strip()
         transaction_id = request.args.get("transaction_id")
+        if not tx_ref:
+            return render_template(
+                "matchmaking_payment_result.html",
+                payment_state="failed",
+                message="The payment reference is missing, so this payment could not be verified.",
+                expires_at=None,
+            ), 400
 
-        print(
-            f"🟡 [PAYMENT CALLBACK] Received callback - Status: {status}, TX_REF: {tx_ref}, Transaction ID: {transaction_id}"
-        )
-
-        if not status:
-            flash("Invalid payment callback parameters", "error")
-            return redirect(url_for("match.requests"))
-
-        # Verify payment with Flutterwave using MatchmakingPaymentService
         payment_service = MatchmakingPaymentService()
-        # Find the matchmaking payment
         matchmaking_payment = payment_service.get_payment_by_reference(tx_ref)
-
-        print(f"🟡 [PAYMENT CALLBACK] Found payment: {matchmaking_payment}")
-
         if not matchmaking_payment or matchmaking_payment.user_id != current_user.id:
-            flash("Payment transaction not found", "error")
-            return redirect(url_for("match.requests"))
+            return render_template(
+                "matchmaking_payment_result.html",
+                payment_state="failed",
+                message="This payment could not be found for your account.",
+                expires_at=None,
+            ), 404
 
         verification_result = payment_service.resolve_flutterwave_verification(
             tx_ref=tx_ref, transaction_id=transaction_id
         )
-        print(f"🟡 [PAYMENT CALLBACK] Verification result: {verification_result}")
-
-        flutterwave_data = verification_result.get("data", {}) or {"status": status}
+        flutterwave_data = verification_result.get("data", {}) or {}
         verified_status = (
-            verification_result.get("verified_status") or status or ""
+            verification_result.get("verified_status") or ""
         ).strip().lower()
 
-        # Handle payment status
         if verification_result.get("success") and verified_status in {
             "successful",
             "completed",
         }:
-            # Successful payment
-            print(f"🟡 [PAYMENT CALLBACK] Processing successful payment...")
             success = payment_service.handle_matchmaking_payment_success(
                 matchmaking_payment, flutterwave_data
             )
-
             if success:
-                print(f"✅ [PAYMENT CALLBACK] Payment processed successfully")
-                flash(
-                    "Payment successful! Your matchmaking request is now active.",
-                    "success",
+                return render_template(
+                    "matchmaking_payment_result.html",
+                    payment_state="successful",
+                    message="Your Profile Boost is active.",
+                    expires_at=matchmaking_payment.matchmaking_request.end_date,
                 )
-                return redirect(url_for("match.view_requests"))
-            else:
-                print(f"🔴 [PAYMENT CALLBACK] Failed to process successful payment")
-                flash(
-                    "Error activating your matchmaking request. Please contact support.",
-                    "error",
-                )
-                return redirect(url_for("match.requests"))
-        elif verified_status in {"pending", "processing"} or status in {
-            "successful",
-            "completed",
-            "pending",
-            "processing",
+            current_app.logger.error(
+                "Verified profile boost could not be activated: payment_id=%s",
+                matchmaking_payment.id,
+            )
+            return render_template(
+                "matchmaking_payment_result.html",
+                payment_state="failed",
+                message="The payment was verified, but the Profile Boost could not be activated safely.",
+                expires_at=None,
+            ), 409
+
+        if verification_result.get("success") and verified_status in {
+            "pending", "processing"
         }:
             matchmaking_payment.gateway_status = verified_status or status
             matchmaking_payment.gateway_metadata = (
@@ -1375,29 +1405,110 @@ def payment_callback():
             )
             matchmaking_payment.updated_at = utcnow()
             db.session.commit()
-            flash(
-                "Payment received and is still being confirmed. Your matchmaking request will activate once Flutterwave completes verification.",
-                "info",
+            return render_template(
+                "matchmaking_payment_result.html",
+                payment_state="pending",
+                message="Flutterwave is still processing this payment. The Boost will activate only after verification succeeds.",
+                expires_at=None,
             )
-            return redirect(url_for("match.requests"))
-        else:
-            # Failed payment
-            print(f"🟡 [PAYMENT CALLBACK] Processing failed payment...")
+
+        if verification_result.get("success"):
             payment_service.handle_matchmaking_payment_failure(
                 matchmaking_payment, flutterwave_data
             )
-            flash("Payment failed. Please try again.", "error")
-            return redirect(url_for("match.requests"))
+            cancelled = status in {"cancelled", "canceled", "session_expired"}
+            return render_template(
+                "matchmaking_payment_result.html",
+                payment_state="cancelled" if cancelled else "failed",
+                message=(
+                    "No payment was completed. You can safely try again."
+                    if cancelled
+                    else "Flutterwave did not verify this payment as successful. You can safely retry."
+                ),
+                expires_at=None,
+            )
+
+        # A provider/network verification failure is not proof of payment
+        # failure. Keep the record pending for webhook or later reconciliation.
+        current_app.logger.warning(
+            "Profile boost verification is pending: payment_id=%s category=%s",
+            matchmaking_payment.id,
+            type(verification_result.get("error")).__name__,
+        )
+        return render_template(
+            "matchmaking_payment_result.html",
+            payment_state="pending",
+            message="The payment could not be confirmed yet. It remains pending and can be checked again safely.",
+            expires_at=None,
+        ), 202
 
     except Exception as e:
-        current_app.logger.error(f"Payment callback error: {str(e)}")
-        import traceback
+        db.session.rollback()
+        current_app.logger.exception("Profile boost payment callback failed")
+        return render_template(
+            "matchmaking_payment_result.html",
+            payment_state="pending",
+            message="The payment status could not be checked yet. Please return to Boost and try the status check again.",
+            expires_at=None,
+        ), 503
 
-        current_app.logger.error(
-            f"Payment callback traceback: {traceback.format_exc()}"
+
+@match.route("/api/matchmaking/payments/<int:payment_id>/status")
+@login_required
+def matchmaking_payment_status(payment_id):
+    """Reconcile one owned Boost payment with verified server state."""
+    if current_user.is_ai_persona:
+        return jsonify({"success": False, "error": "Forbidden"}), 403
+
+    payment_service = MatchmakingPaymentService()
+    payment = payment_service.get_payment_by_id(payment_id)
+    if payment is None or payment.user_id != current_user.id:
+        return jsonify({"success": False, "error": "Payment not found"}), 404
+
+    if payment.status != "completed" or payment.payment_status != "paid":
+        verification = payment_service.resolve_flutterwave_verification(
+            tx_ref=payment.gateway_reference
         )
-        flash("Error processing payment callback", "error")
-        return redirect(url_for("match.requests"))
+        verified_status = (verification.get("verified_status") or "").lower()
+        provider_data = verification.get("data", {}) or {}
+        if verification.get("success") and payment_service.is_success_status(
+            verified_status
+        ):
+            payment_service.handle_matchmaking_payment_success(payment, provider_data)
+        elif verification.get("success") and payment_service.is_failure_status(
+            verified_status
+        ):
+            payment_service.handle_matchmaking_payment_failure(payment, provider_data)
+        elif verification.get("success") and payment_service.is_pending_status(
+            verified_status
+        ):
+            payment.gateway_status = verified_status
+            payment.gateway_metadata = payment_service.merge_matchmaking_gateway_metadata(
+                payment, provider_data
+            )
+            payment.updated_at = utcnow()
+            db.session.commit()
+
+    db.session.refresh(payment)
+    request_row = payment.matchmaking_request
+    active = bool(
+        payment.status == "completed"
+        and payment.payment_status == "paid"
+        and request_row
+        and request_row.status == "active"
+    )
+    return jsonify({
+        "success": True,
+        "state": "successful" if active else (
+            "failed" if payment.status == "failed" else "pending"
+        ),
+        "active": active,
+        "expires_at": (
+            request_row.end_date.isoformat()
+            if active and request_row.end_date
+            else None
+        ),
+    })
 
 
 # Interaction Routes
@@ -1725,10 +1836,16 @@ def edit_matchmaking_request(request_id):
             req.lifestyles = json.dumps(data["lifestyles"] if isinstance(data["lifestyles"], list) else [])
 
         # ── Partner preferences ──
-        if "min_age" in data:
-            req.min_age = data["min_age"]
-        if "max_age" in data:
-            req.max_age = data["max_age"]
+        if "min_age" in data or "max_age" in data:
+            age_data = {
+                "min_age": data.get("min_age", req.min_age),
+                "max_age": data.get("max_age", req.max_age),
+            }
+            min_age, max_age, age_error = _preferred_age_range(age_data)
+            if age_error:
+                return jsonify({"success": False, "error": age_error}), 400
+            req.min_age = min_age
+            req.max_age = max_age
         if "partner_gender" in data:
             req.partner_gender = data["partner_gender"]
         if "partner_ethnicity" in data:

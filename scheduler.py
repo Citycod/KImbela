@@ -87,6 +87,10 @@ def execute_one_feed_ai_action(personas, actions=None):
         for persona in personas:
             config = get_profile_config(persona)
             if not config.get("allow_general_feed_posts", True):
+                logger.info(
+                    "AI feed post skipped: persona=%s reason=feed_posting_disabled",
+                    persona.id,
+                )
                 continue
             topics = persona.interests or ["socializing", "daily life"]
             topic = random.choice(topics)
@@ -95,9 +99,14 @@ def execute_one_feed_ai_action(personas, actions=None):
                 if prepare_persona_post_draft(persona, topic):
                     return True
             else:
-                post_allowed, _ = automation_eligibility(persona, "post")
+                post_allowed, reason = automation_eligibility(persona, "post")
                 if post_allowed and execute_persona_post(persona, topic):
                     return True
+                logger.info(
+                    "AI feed post skipped: persona=%s reason=%s",
+                    persona.id,
+                    "post_execution_failed" if post_allowed else reason,
+                )
 
     return False
 

@@ -1,7 +1,8 @@
-"""Authorization policy for Kimbela's configured Matchmaking group.
+"""Authorization policy for Kimbela's protected Matchmaking group.
 
-The group is deliberately identified only by ``MATCHMAKING_GROUP_ID``.  This
-module must never fall back to a mutable display name.
+Production's stable Matchmaking group id is 29.  A configured id may override
+that value for tests or another deployment, but a missing environment setting
+must never turn off Matchmaking protections.
 """
 
 from __future__ import annotations
@@ -13,6 +14,7 @@ from models import Group
 
 
 _logged_config_errors = set()
+DEFAULT_MATCHMAKING_GROUP_ID = 29
 
 
 def _log_config_error_once(message, *args):
@@ -24,15 +26,19 @@ def _log_config_error_once(message, *args):
 
 
 def configured_matchmaking_group_id(*, validate_exists=False):
-    raw_value = current_app.config.get("MATCHMAKING_GROUP_ID")
+    raw_value = current_app.config.get(
+        "MATCHMAKING_GROUP_ID", DEFAULT_MATCHMAKING_GROUP_ID
+    )
+    if raw_value in (None, ""):
+        raw_value = DEFAULT_MATCHMAKING_GROUP_ID
     try:
         group_id = int(raw_value)
         if group_id <= 0:
             raise ValueError
     except (TypeError, ValueError):
         _log_config_error_once(
-            "MATCHMAKING_GROUP_ID is missing or malformed; protected "
-            "Matchmaking features are unavailable"
+            "MATCHMAKING_GROUP_ID is malformed; protected Matchmaking "
+            "features are unavailable"
         )
         return None
 

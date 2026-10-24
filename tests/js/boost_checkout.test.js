@@ -20,10 +20,21 @@ function classList(initial = []) {
 
 function runtime() {
   const modal = { classList: classList(['hidden']) };
+  const attributes = new Map();
+  const continueLink = {
+    classList: classList(['hidden']),
+    setAttribute(name, value) { attributes.set(name, value); },
+    removeAttribute(name) { attributes.delete(name); },
+    getAttribute(name) { return attributes.get(name); },
+  };
   const body = { style: { overflow: '' } };
   const document = {
     body,
-    getElementById(id) { return id === 'paymentModal' ? modal : null; },
+    getElementById(id) {
+      if (id === 'paymentModal') return modal;
+      if (id === 'continueBoostPayment') return continueLink;
+      return null;
+    },
   };
   const window = {
     document,
@@ -31,7 +42,7 @@ function runtime() {
     clearTimeout,
   };
   vm.runInNewContext(source, { window });
-  return { body, document, modal, checkout: window.KimbelaBoostCheckout };
+  return { body, continueLink, document, modal, checkout: window.KimbelaBoostCheckout };
 }
 
 function response(payload, ok = true, status = 200) {
@@ -102,13 +113,38 @@ test('a stalled payment request times out and can be cleaned up', async () => {
   assert.equal(button.disabled, false);
 });
 
+test('hosted checkout fallback exposes only a validated HTTPS continuation URL', () => {
+  const state = runtime();
+  const button = { innerHTML: 'Pay', disabled: false };
+  const controller = state.checkout.createController({
+    document: state.document,
+    fetch: async () => response({}),
+  });
+
+  controller.begin(button);
+  controller.showContinue('https://checkout.flutterwave.com/example');
+  assert.equal(state.continueLink.classList.contains('hidden'), false);
+  assert.equal(
+    state.continueLink.getAttribute('href'),
+    'https://checkout.flutterwave.com/example',
+  );
+  assert.equal(state.body.style.overflow, '');
+  assert.equal(button.disabled, false);
+  assert.throws(() => controller.showContinue('javascript:alert(1)'), /invalid checkout URL/);
+  controller.recover();
+  assert.equal(state.continueLink.classList.contains('hidden'), true);
+  assert.equal(state.continueLink.getAttribute('href'), undefined);
+});
+
 test('boost template handles hosted-checkout cancel, callback error, and bfcache return', () => {
   const template = fs.readFileSync(
     path.resolve(__dirname, '../../templates/requests.html'),
     'utf8',
   );
-  assert.match(template, /status !== 'successful' && status !== 'completed'/);
   assert.match(template, /window\.addEventListener\('pageshow'/);
-  assert.match(template, /checkout\.fail\(error\.message \|\| 'Error verifying payment'\)/);
+  assert.match(template, /reconcileStoredBoostPayment\(\)/);
+  assert.match(template, /\/api\/matchmaking\/payments\/\$\{paymentId\}\/status/);
+  assert.match(template, /checkout\.showContinue\(paymentData\.payment_url\)/);
+  assert.match(template, /id="continueBoostPayment"/);
   assert.match(template, /window\.location\.assign\(paymentData\.payment_url\)/);
 });

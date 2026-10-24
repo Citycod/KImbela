@@ -973,6 +973,8 @@ def _execute_optional_group_engagement(group_id, persona_ids, now=None):
 
 def run_scheduled_group_sessions(personas, now=None, max_groups=25):
     """Process one missing calendar-week slot per group in a bounded pass."""
+    from utils.matchmaking_group import is_matchmaking_group
+
     persona_ids = [persona.id for persona in personas]
     group_ids = [
         group_id
@@ -1010,6 +1012,14 @@ def run_scheduled_group_sessions(personas, now=None, max_groups=25):
     processed = 0
     scanned = 0
     for group_id in rotated_group_ids:
+        group = db.session.get(Group, group_id)
+        if is_matchmaking_group(group):
+            logger.info(
+                "AI required group-post slot excluded: group=%s reason=matchmaking_excluded",
+                group_id,
+            )
+            scanned += 1
+            continue
         if group_session_completed(group_id, now):
             scanned += 1
             continue
@@ -1017,7 +1027,6 @@ def run_scheduled_group_sessions(personas, now=None, max_groups=25):
             break
         scanned += 1
         processed += 1
-        group = db.session.get(Group, group_id)
         fresh_personas = AIPersona.query.filter(
             AIPersona.id.in_(persona_ids),
             AIPersona.is_active.is_(True),

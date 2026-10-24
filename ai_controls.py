@@ -23,7 +23,6 @@ PROFILE_KEY_PREFIX = "ai_profile_control:"
 PENDING_DRAFT_KEY_PREFIX = "ai_pending_draft:"
 GROUP_CONTROL_KEY_PREFIX = "ai_group_control:"
 AUTOMATIC_POST_COOLDOWN = timedelta(days=14)
-AUTOMATIC_GLOBAL_POST_SPACING = timedelta(hours=24)
 _UNSET = object()
 
 DEFAULT_PROFILE_CONFIG = {
@@ -653,7 +652,7 @@ def posts_today_count(persona, now=None):
     ).count()
 
 
-def last_ai_post_at(persona_id=None):
+def last_ai_post_at(persona_id=None, channel=None):
     query = db.session.query(Post.created_at).join(User, Post.author_id == User.id).filter(
         User.is_ai_persona.is_(True)
     )
@@ -661,6 +660,10 @@ def last_ai_post_at(persona_id=None):
         query = query.join(AIPersona, AIPersona.user_id == User.id).filter(
             AIPersona.id == persona_id
         )
+    if channel == "feed":
+        query = query.filter(Post.group_id.is_(None))
+    elif channel == "group":
+        query = query.filter(Post.group_id.is_not(None))
     row = query.order_by(Post.created_at.desc()).first()
     return row[0] if row else None
 
@@ -695,7 +698,7 @@ def new_post_eligibility(
     *,
     enforce_automatic_cadence=True,
 ):
-    """Shared 14-day/weekly/stagger policy for feed and group NEW posts."""
+    """Per-channel cooldown, weekly limits, and feed spacing for new posts."""
     config = get_profile_config(persona)
     if channel == "feed" and not config["allow_general_feed_posts"]:
         return False, "feed_posting_disabled"
@@ -713,8 +716,9 @@ def new_post_eligibility(
         comparable_now = comparable_now.astimezone(ZoneInfo("UTC")).replace(tzinfo=None)
 
     if enforce_automatic_cadence:
-        # A successful feed or group Post consumes the same persisted 14-day budget.
-        persona_last = last_ai_post_at(persona.id)
+        # Feed and group cadence are independent. A post in one surface must
+        # not suppress an otherwise eligible post in the other for 14 days.
+        persona_last = last_ai_post_at(persona.id, channel)
         if persona_last:
             elapsed = comparable_now - persona_last
             if timedelta(0) <= elapsed < AUTOMATIC_POST_COOLDOWN:
@@ -732,14 +736,11 @@ def new_post_eligibility(
         return False, f"weekly_{channel}_limit"
 
     if enforce_automatic_cadence:
-        global_last = last_ai_post_at()
-        if global_last:
+        global_last = last_ai_post_at(channel="feed") if channel == "feed" else None
+        configured_spacing = timedelta(hours=get_global_post_spacing_hours())
+        if global_last and configured_spacing > timedelta(0):
             elapsed = comparable_now - global_last
-            configured_spacing = timedelta(hours=get_global_post_spacing_hours())
-            if timedelta(0) <= elapsed < max(
-                AUTOMATIC_GLOBAL_POST_SPACING,
-                configured_spacing,
-            ):
+            if timedelta(0) <= elapsed < configured_spacing:
                 return False, "global_post_spacing"
     return True, "eligible"
 
@@ -834,29 +835,36 @@ def next_eligible_post_at(
                 hour=0, minute=0, second=0, microsecond=0
             ),
         )
+    configured_spacing = timedelta(hours=get_global_post_spacing_hours())
     global_last = (
         global_last_post_at
         if global_last_post_at is not _UNSET
-        else last_ai_post_at()
+        else last_ai_post_at(channel="feed")
     )
-    if global_last:
+    if feed_destination_enabled and global_last and configured_spacing > timedelta(0):
         global_candidate = global_last.replace(tzinfo=ZoneInfo("UTC")).astimezone(
             local_now.tzinfo
-        ) + max(
-            AUTOMATIC_GLOBAL_POST_SPACING,
-            timedelta(hours=get_global_post_spacing_hours()),
-        )
+        ) + configured_spacing
         candidate = max(candidate, global_candidate)
-    persona_last = (
-        last_post_at_value
-        if last_post_at_value is not _UNSET
-        else last_ai_post_at(persona.id)
-    )
-    if persona_last:
-        persona_candidate = persona_last.replace(tzinfo=ZoneInfo("UTC")).astimezone(
-            local_now.tzinfo
-        ) + AUTOMATIC_POST_COOLDOWN
-        candidate = max(candidate, persona_candidate)
+    channel_candidates = []
+    for channel, enabled in (
+        ("feed", feed_destination_enabled),
+        ("group", group_destination_enabled),
+    ):
+        if not enabled:
+            continue
+        persona_last = last_ai_post_at(persona.id, channel)
+        if persona_last:
+            channel_candidates.append(
+                persona_last.replace(tzinfo=ZoneInfo("UTC")).astimezone(
+                    local_now.tzinfo
+                )
+                + AUTOMATIC_POST_COOLDOWN
+            )
+        else:
+            channel_candidates.append(local_now)
+    if channel_candidates:
+        candidate = max(candidate, min(channel_candidates))
     last_post = (
         last_post_action_at
         if last_post_action_at is not _UNSET
@@ -1004,7 +1012,7 @@ def group_automation_eligibility(
         return False, config["posting_mode"]
     if not config["group_activity_enabled"]:
         return False, "group_activity_disabled"
-    if not required_slot and group.id not in config["allowed_group_ids"]:
+    if group.id not in config["allowed_group_ids"]:
         return False, "group_not_allowed"
     if group.members.filter_by(id=persona.user_id).first() is None:
         return False, "not_member"
