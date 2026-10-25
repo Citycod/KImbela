@@ -182,7 +182,7 @@ def test_network_resilience_script_is_loaded_by_base_template():
 
     assert "assets/js/network_resilience.js" in source
     assert "assets/js/share_utils.js" in source
-    assert "v='share-preview-5'" in source
+    assert "v='share-preview-6'" in source
 
 
 def test_foreground_push_feedback_is_loaded_from_the_shared_base_template():

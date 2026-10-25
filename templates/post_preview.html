@@ -30,6 +30,12 @@
     <meta name="twitter:url" content="{{ share_meta.url }}">
 </head>
 <body>
-    <p>Open this post on Kimbela.</p>
+    <main>
+        <p>This is a shared Kimbela post.</p>
+        <p><a href="{{ destination_path }}">Open post on Kimbela</a></p>
+    </main>
+    <script>
+        window.location.replace({{ destination_path|tojson }});
+    </script>
 </body>
 </html>

@@ -820,6 +820,7 @@
                                               min="18"
                                               max="99"
                                               step="1"
+                                              value="18"
                                               inputmode="numeric"
                                               aria-describedby="preferredAgeError"
                                               required
@@ -840,6 +841,7 @@
                                               min="18"
                                               max="99"
                                               step="1"
+                                              value="99"
                                               inputmode="numeric"
                                               aria-describedby="preferredAgeError"
                                               required
@@ -1499,43 +1501,37 @@
             AppState.currentStep = step;
         }
 
+        function validatePreferredAgeRange() {
+            const minAgeRaw = document.getElementById('minAge').value.trim();
+            const maxAgeRaw = document.getElementById('maxAge').value.trim();
+            const ageError = document.getElementById('preferredAgeError');
+            const wholeNumberPattern = /^[+-]?\d+$/;
+            let message = '';
+
+            if (!wholeNumberPattern.test(minAgeRaw) || !wholeNumberPattern.test(maxAgeRaw)) {
+                message = 'Please enter a valid whole-number age.';
+            } else {
+                const minAge = Number(minAgeRaw);
+                const maxAge = Number(maxAgeRaw);
+                if (minAge < 18) {
+                    message = 'Minimum age must be at least 18.';
+                } else if (maxAge > 99 || minAge > 99) {
+                    message = 'Maximum age cannot be greater than 99.';
+                } else if (maxAge < minAge) {
+                    message = 'Maximum age must be greater than or equal to minimum age.';
+                }
+            }
+
+            ageError.textContent = message;
+            ageError.classList.toggle('hidden', !message);
+            return !message;
+        }
+
         function validateStep(step) {
             switch(step) {
                 case 1:
-                    const minAgeRaw = document.getElementById('minAge').value;
-                    const maxAgeRaw = document.getElementById('maxAge').value;
                     const gender = document.querySelector('input[name="partnerGender"]:checked');
-
-                    const minAge = Number(minAgeRaw);
-                    const maxAge = Number(maxAgeRaw);
-                    const ageError = document.getElementById('preferredAgeError');
-                    const showAgeError = message => {
-                        ageError.textContent = message;
-                        ageError.classList.toggle('hidden', !message);
-                    };
-
-                    if (!minAgeRaw || !maxAgeRaw || !gender) {
-                        showAgeError('Enter both preferred ages and select a gender preference.');
-                        return false;
-                    }
-
-                    if (!Number.isInteger(minAge) || !Number.isInteger(maxAge)) {
-                        showAgeError('Minimum and maximum age must be whole numbers.');
-                        return false;
-                    }
-
-                    if (minAge < 18 || maxAge > 99 || maxAge < 18) {
-                        showAgeError('Preferred ages must be between 18 and 99.');
-                        return false;
-                    }
-
-                    if (maxAge < minAge) {
-                        showAgeError('Maximum age must be greater than or equal to minimum age.');
-                        return false;
-                    }
-
-                    showAgeError('');
-                    return true;
+                    return Boolean(gender) && validatePreferredAgeRange();
 
                 case 2:
                     const aboutYou = document.getElementById('aboutYou').value;
@@ -1974,40 +1970,12 @@
                     if (activePrice) activePrice.textContent = `Fixed price: $${usdPrice} USD per month. Cancel anytime.`;
                 }
 
-                const minAgeInput = document.getElementById('minAge');
-                    const maxAgeInput = document.getElementById('maxAge');
-
-                    function syncAgeConstraints() {
-                        const minVal = parseInt(minAgeInput.value, 10);
-                        const maxVal = parseInt(maxAgeInput.value, 10);
-
-                        // Enforce minimum min age
-                        if (!isNaN(minVal) && minVal < 31) {
-                            minAgeInput.value = 31;
-                        }
-
-                        // Max age must always be at least min + 1
-                        if (!isNaN(minVal)) {
-                            maxAgeInput.min = String(minVal + 1);
-
-                            // Auto-fix max age if it becomes invalid
-                            if (!isNaN(maxVal) && maxVal <= minVal) {
-                                maxAgeInput.value = minVal + 1;
-                            }
-                        } else {
-                            maxAgeInput.min = "32";
-                        }
-
-                        // Absolute cap
-                        if (!isNaN(maxVal) && maxVal > 120) {
-                            maxAgeInput.value = 120;
-                        }
-                    }
-
-                    minAgeInput.addEventListener('input', syncAgeConstraints);
-                    maxAgeInput.addEventListener('input', syncAgeConstraints);
-
             });
+
+            const minAgeInput = document.getElementById('minAge');
+            const maxAgeInput = document.getElementById('maxAge');
+            minAgeInput.addEventListener('blur', validatePreferredAgeRange);
+            maxAgeInput.addEventListener('blur', validatePreferredAgeRange);
 
             // Step Navigation
             document.getElementById('nextStepBtn').addEventListener('click', function() {
@@ -2028,6 +1996,10 @@
 
             // Create Request with Payment
             document.getElementById('createRequestBtn').addEventListener('click', function() {
+                if (!validatePreferredAgeRange()) {
+                    showStep(1);
+                    return;
+                }
                 const requestData = getRequestData();
                 const currency = document.getElementById('currency').value;
 

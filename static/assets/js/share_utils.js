@@ -1,7 +1,8 @@
 (function (global) {
   'use strict';
 
-  const POST_SHARE_REVISION = '4';
+  const POST_SHARE_REVISION = '1';
+  const POST_SHARE_ORIGIN = 'https://kimbela.com';
 
   function publicBaseUrl(baseUrl) {
     return String(
@@ -14,13 +15,21 @@
 
   function postUrl(postId, shareUrl = '', baseUrl = '') {
     const base = publicBaseUrl(baseUrl);
-    const rawUrl = shareUrl || (postId ? `/post/${encodeURIComponent(String(postId))}` : '');
-    if (!rawUrl) return '';
+    let identifier = postId ? String(postId) : '';
+    if (!identifier && shareUrl) {
+      const sourceUrl = /^https?:\/\//i.test(shareUrl)
+        ? new URL(shareUrl)
+        : new URL(shareUrl, `${base}/`);
+      const match = sourceUrl.pathname.match(/^\/(?:share\/)?post\/([^/]+)\/?$/);
+      identifier = match ? decodeURIComponent(match[1]) : '';
+    }
+    if (!identifier) return '';
 
-    const url = /^https?:\/\//i.test(rawUrl)
-      ? new URL(rawUrl)
-      : new URL(rawUrl, `${base}/`);
-    url.searchParams.set('share_v', POST_SHARE_REVISION);
+    const url = new URL(
+      `/share/post/${encodeURIComponent(identifier)}`,
+      `${POST_SHARE_ORIGIN}/`,
+    );
+    url.searchParams.set('v', POST_SHARE_REVISION);
     return url.toString();
   }
 
@@ -139,6 +148,7 @@
 
   global.KimbelaShare = Object.freeze({
     POST_SHARE_REVISION,
+    POST_SHARE_ORIGIN,
     copyFromTrigger,
     copyText,
     postUrl,

@@ -64,13 +64,14 @@ test('builds one stable versioned URL for feed and group share actions', () => {
 
   assert.equal(
     share.postUrl('post-uuid'),
-    'https://www.kimbela.com/post/post-uuid?share_v=4',
+    'https://kimbela.com/share/post/post-uuid?v=1',
   );
   assert.equal(
     share.postUrl('post-uuid', '/post/post-uuid'),
-    'https://www.kimbela.com/post/post-uuid?share_v=4',
+    'https://kimbela.com/share/post/post-uuid?v=1',
   );
-  assert.equal(share.POST_SHARE_REVISION, '4');
+  assert.equal(share.POST_SHARE_REVISION, '1');
+  assert.equal(share.POST_SHARE_ORIGIN, 'https://kimbela.com');
 });
 
 test('replaces an old revision without adding duplicate or random parameters', () => {
@@ -80,7 +81,7 @@ test('replaces an old revision without adding duplicate or random parameters', (
       'post-uuid',
       'https://www.kimbela.com/post/post-uuid?share_v=1',
     ),
-    'https://www.kimbela.com/post/post-uuid?share_v=4',
+    'https://kimbela.com/share/post/post-uuid?v=1',
   );
 });
 
@@ -153,7 +154,7 @@ test('desktop copy trigger reports success only after clipboard resolves', async
   assert.equal(events[0].type, 'kimbela:copy-success');
   assert.equal(
     events[0].detail.url,
-    'https://www.kimbela.com/post/profile-post-uuid?share_v=4',
+    'https://kimbela.com/share/post/profile-post-uuid?v=1',
   );
 });
 

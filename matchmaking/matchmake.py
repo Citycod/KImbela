@@ -129,25 +129,26 @@ def _preferred_age_range(data):
         return None, None, "Preferred age values are required."
 
     values = []
-    for key, label in (("min_age", "Minimum age"), ("max_age", "Maximum age")):
+    for key in ("min_age", "max_age"):
         raw_value = data.get(key)
         if isinstance(raw_value, bool) or raw_value in (None, ""):
-            return None, None, f"{label} is required."
+            return None, None, "Please enter a valid whole-number age."
         if isinstance(raw_value, int):
             value = raw_value
-        elif isinstance(raw_value, str) and raw_value.strip().isdigit():
+        elif (
+            isinstance(raw_value, str)
+            and re.fullmatch(r"[+-]?\d+", raw_value.strip())
+        ):
             value = int(raw_value.strip())
         else:
-            return None, None, f"{label} must be a whole number."
+            return None, None, "Please enter a valid whole-number age."
         values.append(value)
 
     min_age, max_age = values
     if min_age < 18:
         return None, None, "Minimum age must be at least 18."
     if min_age > 99 or max_age > 99:
-        return None, None, "Preferred ages cannot be above 99."
-    if max_age < 18:
-        return None, None, "Maximum age must be at least 18."
+        return None, None, "Maximum age cannot be greater than 99."
     if max_age < min_age:
         return None, None, "Maximum age must be greater than or equal to minimum age."
     return min_age, max_age, None

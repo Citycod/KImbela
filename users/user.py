@@ -71,7 +71,7 @@ from utils.group_post_service import (
     GroupPostCreationError,
     create_group_post as create_group_post_for_author,
 )
-from utils.social_preview import is_social_post_preview_request
+from utils.social_preview import is_public_post_share_request
 # from scheduler import (
 #     manual_trigger_matchmaking_expiry_check,
 #     manual_trigger_expired_matchmaking_check,
@@ -195,11 +195,14 @@ def resolve_post_by_identifier(post_identifier):
     abort(404)
 
 
-def _absolute_share_url(raw_url):
+def _absolute_share_url(raw_url, base_url=None):
     if not raw_url:
         return None
 
-    base_url = (current_app.config.get("BASE_URL") or "").rstrip("/")
+    base_url = (
+        base_url if base_url is not None else current_app.config.get("BASE_URL")
+    )
+    base_url = (base_url or "").rstrip("/")
 
     if raw_url.startswith(("http://", "https://")):
         return raw_url
@@ -211,8 +214,8 @@ def _absolute_share_url(raw_url):
     return urljoin(root_url, raw_url.lstrip("/"))
 
 
-def _social_preview_image_url(raw_url):
-    absolute_url = _absolute_share_url(raw_url)
+def _social_preview_image_url(raw_url, base_url=None):
+    absolute_url = _absolute_share_url(raw_url, base_url=base_url)
     if not absolute_url:
         return None
 
@@ -243,7 +246,7 @@ def _social_preview_image_url(raw_url):
     return absolute_url
 
 
-def build_post_share_meta(post):
+def build_post_share_meta(post, base_url=None):
     preview_post = post.shared_post or post
     fallback_image = url_for("static", filename="assets/img/kim.png")
     candidate_image = preview_post.image or preview_post.gif or post.image or post.gif
@@ -266,10 +269,12 @@ def build_post_share_meta(post):
         if len(description_source) > 200
         else description_source
     )
-    absolute_image_url = _social_preview_image_url(candidate_image)
+    absolute_image_url = _social_preview_image_url(candidate_image, base_url=base_url)
     using_fallback_image = absolute_image_url is None
     if using_fallback_image:
-        absolute_image_url = _social_preview_image_url(fallback_image)
+        absolute_image_url = _social_preview_image_url(
+            fallback_image, base_url=base_url
+        )
     image_type, _ = mimetypes.guess_type(absolute_image_url or "")
     using_cloudinary_image = bool(
         absolute_image_url and "res.cloudinary.com" in absolute_image_url
@@ -288,7 +293,8 @@ def build_post_share_meta(post):
         "title": f"Post by {title_author.full_name} - Kimbela",
         "description": description,
         "url": _absolute_share_url(
-            url_for("user.view_shared_post", post_identifier=post.public_id)
+            url_for("user.view_shared_post", post_identifier=post.public_id),
+            base_url=base_url,
         ),
         "image": absolute_image_url,
         "image_type": image_type,
@@ -297,9 +303,9 @@ def build_post_share_meta(post):
     }
 
 
-def build_private_post_share_meta(post):
+def build_private_post_share_meta(post, base_url=None):
     """Expose only the intentional post share excerpt for restricted groups."""
-    return build_post_share_meta(post)
+    return build_post_share_meta(post, base_url=base_url)
 
 
 def get_groups_data_for_user(user_id):
@@ -2107,7 +2113,7 @@ def _with_notification_id(destination, notification_id):
 @user.before_request
 def mark_linked_notification_read():
     """Resolve a notification when its authenticated deep link is followed."""
-    if is_social_post_preview_request(request):
+    if is_public_post_share_request(request):
         return None
     if request.method != "GET" or not current_user.is_authenticated:
         return None
@@ -5236,6 +5242,42 @@ def react_to_post(post_id):
         return jsonify({"success": False, "error": "Failed to react to post"}), 500
 
 
+@user.route("/share/post/<post_identifier>")
+def view_post_share(post_identifier):
+    """Return the intentionally public, metadata-only post share document."""
+    post = resolve_post_by_identifier(post_identifier)
+    post = (
+        Post.query.options(
+            joinedload(Post.author),
+            joinedload(Post.shared_post).joinedload(Post.author),
+        )
+        .filter_by(id=post.id)
+        .first_or_404()
+    )
+    canonical_origin = "https://kimbela.com"
+    share_meta = (
+        build_private_post_share_meta(post, base_url=canonical_origin)
+        if is_private_group_post(post)
+        else build_post_share_meta(post, base_url=canonical_origin)
+    )
+    destination_path = url_for(
+        "user.view_shared_post", post_identifier=post.public_id
+    )
+    template = current_app.jinja_env.get_template("post_preview.html")
+    response = current_app.make_response(
+        template.render(
+            share_meta=share_meta,
+            destination_path=destination_path,
+        )
+    )
+    response.headers["Content-Type"] = "text/html; charset=utf-8"
+    # This representation does not inspect or vary by session state.
+    session.modified = False
+    session.accessed = False
+    g.public_post_share = True
+    return response
+
+
 @user.route("/post/<post_identifier>")
 def view_shared_post(post_identifier):
     try:
@@ -5244,31 +5286,6 @@ def view_shared_post(post_identifier):
         if request.args.get("notification") == "1":
             return redirect(url_for("user.user_dashboard"))
         raise
-    if is_social_post_preview_request(request):
-        post = (
-            Post.query.options(
-                joinedload(Post.author),
-                joinedload(Post.shared_post).joinedload(Post.author),
-            )
-            .filter_by(id=post.id)
-            .first_or_404()
-        )
-        share_meta = (
-            build_private_post_share_meta(post)
-            if is_private_group_post(post)
-            else build_post_share_meta(post)
-        )
-        template = current_app.jinja_env.get_template("post_preview.html")
-        response = current_app.make_response(template.render(share_meta=share_meta))
-        response.headers["Content-Type"] = "text/html; charset=utf-8"
-        # The metadata representation never depends on browser session state.
-        # Suppress Flask's cookie/Vary handling even if an extension inspected
-        # the session earlier in request processing.
-        session.modified = False
-        session.accessed = False
-        g.social_post_preview = True
-        return response
-
     post = (
         Post.query.options(
             joinedload(Post.author),

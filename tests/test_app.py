@@ -143,12 +143,12 @@ def test_shared_post_page_rejects_insecure_preview_image_and_uses_public_fallbac
     db.session.commit()
 
     response = client.get(
-        f"/post/{post.public_id}?share_v=4",
-        base_url="https://www.kimbela.com",
+        f"/share/post/{post.public_id}?v=1",
+        base_url="https://kimbela.com",
     )
     assert response.status_code == 200
     head_html = response.data.split(b"</head>", 1)[0]
-    fallback_url = b"https://www.kimbela.com/static/assets/img/kim.png"
+    fallback_url = b"https://kimbela.com/static/assets/img/kim.png"
     assert b'<meta property="og:image" content="' + fallback_url + b'">' in head_html
     assert b'<meta property="og:image:width" content="687">' in head_html
     assert b'<meta property="og:image:height" content="363">' in head_html
@@ -160,27 +160,28 @@ def test_shared_post_page_rejects_insecure_preview_image_and_uses_public_fallbac
     assert not image_response.is_json
 
 
-def test_social_crawler_user_agents_receive_initial_server_rendered_post_metadata(
+def test_public_post_share_is_metadata_only_without_user_agent_detection(
     client, db, user
 ):
     from models import Post
 
-    post = Post(content="Crawler-specific preview marker", author_id=user.id)
+    post = Post(
+        content="Crawler-specific preview marker",
+        author_id=user.id,
+        image="https://res.cloudinary.com/demo/image/upload/v1/share.jpg",
+    )
     db.session.add(post)
     db.session.commit()
 
-    user_agents = (
-        "WhatsApp/2.26.1",
-        "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)",
-        "Facebot",
-    )
+    user_agents = (None, "Mozilla/5.0", "WhatsApp/2.26.1", "Facebot")
     for user_agent in user_agents:
         for method in ("GET", "HEAD"):
+            headers = {"User-Agent": user_agent} if user_agent else {}
             response = client.open(
-                f"/post/{post.public_id}?share_v=4",
+                f"/share/post/{post.public_id}?v=1",
                 method=method,
-                base_url="https://www.kimbela.com",
-                headers={"User-Agent": user_agent},
+                base_url="https://kimbela.com",
+                headers=headers,
             )
             assert response.status_code == 200
             assert not response.location
@@ -200,26 +201,24 @@ def test_social_crawler_user_agents_receive_initial_server_rendered_post_metadat
                 assert b'<meta property="og:description" content="Crawler-specific preview marker">' in head_html
                 assert b"Crawler-specific preview marker" in head_html
                 assert b'<meta name="twitter:card" content="summary_large_image">' in head_html
-                assert b"share_v=4" not in head_html
+                assert b'<meta property="og:image:type" content="image/jpeg">' in head_html
+                assert b'<meta property="og:image:width" content="1200">' in head_html
+                assert b'<meta property="og:image:height" content="630">' in head_html
+                assert b"/image/upload/f_jpg,q_auto,w_1200,h_630,c_fill,g_auto/" in head_html
+                assert f'https://kimbela.com/post/{post.public_id}'.encode() in head_html
+                assert b"share_v=" not in head_html
+                assert b"Open post on Kimbela" in response.data
+                assert f'window.location.replace("/post/{post.public_id}")'.encode() in response.data
 
     normal_response = client.get(
-        f"/post/{post.public_id}?share_v=4",
+        f"/post/{post.public_id}",
         base_url="https://www.kimbela.com",
-        headers={"User-Agent": "Mozilla/5.0"},
+        headers={"User-Agent": "WhatsApp/2.26.1"},
     )
     assert normal_response.status_code == 200
     assert normal_response.headers["Cache-Control"] == "private, no-store, max-age=0"
     assert "Cookie" in normal_response.headers.get("Vary", "")
     assert "Set-Cookie" in normal_response.headers
-
-    non_post_response = client.get(
-        "/login",
-        headers={"User-Agent": "WhatsApp"},
-    )
-    assert non_post_response.headers["Cache-Control"] == (
-        "private, no-store, max-age=0"
-    )
-
 
 def test_shared_post_page_returns_404_for_malformed_or_unknown_identifier(client):
     assert client.get("/post/not-a-valid-post").status_code == 404
@@ -364,9 +363,9 @@ def test_private_group_share_uses_post_metadata_without_group_or_comments(
     assert user.phone_number.encode() not in preview.data
 
     crawler_preview = anonymous.get(
-        f"/post/{post.public_id}?share_v=4",
-        base_url="https://www.kimbela.com",
-        headers={"User-Agent": "WhatsApp"},
+        f"/share/post/{post.public_id}?v=1",
+        base_url="https://kimbela.com",
+        headers={"User-Agent": "Mozilla/5.0"},
     )
     assert crawler_preview.status_code == 200
     assert crawler_preview.headers["Cache-Control"] == (
@@ -379,6 +378,37 @@ def test_private_group_share_uses_post_metadata_without_group_or_comments(
     assert b"private-comment-must-not-appear" not in crawler_preview.data
     assert user.email.encode() not in crawler_preview.data
     assert user.phone_number.encode() not in crawler_preview.data
+    assert f"/groups/{group.id}".encode() not in crawler_preview.data
+    assert b"data-post-id" not in crawler_preview.data
+
+    from datetime import date
+    from models import User
+
+    outsider = User(
+        first_name="Restricted",
+        last_name="Outsider",
+        email="restricted-outsider@example.com",
+        phone_number="+19876543210",
+        dob=date(1990, 1, 1),
+        gender="Female",
+        city="Elsewhere",
+        country="Testland",
+        state="TS",
+        marital_status="Single",
+        is_active=True,
+    )
+    outsider.set_password("StrongPassw0rd!")
+    db.session.add(outsider)
+    db.session.commit()
+    login_response = anonymous.post(
+        "/login",
+        data={
+            "email": outsider.email,
+            "password": "StrongPassw0rd!",
+        },
+    )
+    assert login_response.status_code in (200, 302)
+    assert anonymous.get(f"/post/{post.public_id}").status_code == 403
 
 
 def test_matchmaking_group_copy_link_renders_anonymous_social_preview(
@@ -417,18 +447,18 @@ def test_matchmaking_group_copy_link_renders_anonymous_social_preview(
     client.get("/logout")
     anonymous = app.test_client()
     preview = anonymous.get(
-        f"/post/{post.public_id}?share_v=4",
-        base_url="https://www.kimbela.com",
-        headers={"User-Agent": "WhatsApp/2.26.1"},
+        f"/share/post/{post.public_id}?v=1",
+        base_url="https://kimbela.com",
+        headers={"User-Agent": "Mozilla/5.0"},
     )
     assert preview.status_code == 200
     head_html = preview.data.split(b"</head>", 1)[0]
     assert b"MatchPreviewAuthor" in head_html
     assert b'<meta property="og:description" content="matchmaking-preview-marker">' in head_html
     assert b'<meta property="og:image" content="https://cdn.example.com/matchmaking-preview.jpg">' in head_html
-    assert f'<link rel="canonical" href="https://www.kimbela.com/post/{post.public_id}">'.encode() in head_html
-    assert f'<meta property="og:url" content="https://www.kimbela.com/post/{post.public_id}">'.encode() in head_html
-    assert b"share_v=4" not in head_html
+    assert f'<link rel="canonical" href="https://kimbela.com/post/{post.public_id}">'.encode() in head_html
+    assert f'<meta property="og:url" content="https://kimbela.com/post/{post.public_id}">'.encode() in head_html
+    assert b"?v=1" not in head_html
     assert b"Configured Matchmaking" not in preview.data
 
 

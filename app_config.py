@@ -12,7 +12,7 @@ from werkzeug.exceptions import BadRequest, RequestEntityTooLarge
 import time
 from flask import send_from_directory, abort
 from werkzeug.utils import safe_join
-from utils.social_preview import is_social_post_preview_request
+from utils.social_preview import is_public_post_share_request
 
 # Import extensions (make sure socketio is initialized with threading)
 from extensions import db, bcrypt, login_manager, mail, csrf, cache, socketio
@@ -295,7 +295,7 @@ def create_app():
     @app.before_request
     def before_request():
         g.start_time = time.time()
-        g.social_post_preview = False
+        g.public_post_share = False
 
     def resolve_client_ip():
         forwarded_for = request.headers.get("X-Forwarded-For", "")
@@ -377,7 +377,7 @@ def create_app():
 
     def is_passive_request():
         path = request.path or ""
-        if is_social_post_preview_request(request):
+        if is_public_post_share_request(request):
             return True
         if (
             path.startswith("/static/")
@@ -407,7 +407,7 @@ def create_app():
 
     @app.after_request
     def after_request(response):
-        if getattr(g, "social_post_preview", False):
+        if getattr(g, "public_post_share", False):
             response.headers["Cache-Control"] = (
                 "public, max-age=300, stale-while-revalidate=600"
             )
@@ -489,7 +489,7 @@ def create_app():
     def update_last_seen():
         from flask_login import current_user
 
-        if is_social_post_preview_request(request):
+        if is_public_post_share_request(request):
             return None
 
         try:
