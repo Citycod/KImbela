@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% set og_title = "Kimbela Features - Marketplace, Community & Trusted Connections" %}
+{% set og_description = "Discover the tools that power Kimbela's marketplace, seller growth, community engagement, and safe interactions." %}
 
 {% block head %}
 <meta charset="utf-8" />
@@ -10,19 +12,6 @@
     <!-- Favicons -->
     <link href="{{ url_for('static', filename='assets/img/favy.png') }}" rel="icon" />
     <link href="{{ url_for('static', filename='assets/img/favy.png') }}" rel="apple-touch-icon" />
-
-    <!-- Open Graph / Facebook -->
-    <meta property="og:title" content="Kimbela Features - Marketplace, Community & Trusted Connections">
-    <meta property="og:description" content="Discover the tools that power Kimbela's marketplace, seller growth, community engagement, and safe interactions.">
-    <meta property="og:image" content="https://kimbela.com/kimbela-logo.png">
-    <meta property="og:url" content="https://kimbela.com/features">
-    <meta property="og:type" content="website">
-
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Kimbela Features - Marketplace, Community & Trusted Connections">
-    <meta name="twitter:description" content="Discover the tools that power Kimbela's marketplace, seller growth, community engagement, and safe interactions.">
-    <meta name="twitter:image" content="https://kimbela.com/kimbela-logo.png">
 
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com" rel="preconnect" />

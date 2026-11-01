@@ -3,384 +3,369 @@
 
 {% block head %}
 <meta charset="utf-8" />
-    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>Kimbela - Meet. Connect. Belong</title>
-    <meta name="description"
-        content="Kimbela is a unique social platform for mature singles (31+) seeking authentic, meaningful friendships based on respect, integrity, and shared values." />
-    <meta name="keywords"
-        content="mature dating, friendship platform, meaningful connections, social network, mature singles" />
+<meta content="width=device-width, initial-scale=1.0" name="viewport" />
+<title>Kimbela - Meet. Connect. Belong</title>
+<meta name="description"
+    content="Kimbela is a unique social platform for mature singles (31+) seeking authentic, meaningful friendships based on respect, integrity, and shared values." />
+<meta name="keywords"
+    content="mature dating, friendship platform, meaningful connections, social network, mature singles" />
 
-    <!-- Favicons -->
-    <link href="{{ url_for('static', filename='assets/img/favy.png') }}" rel="icon" />
-    <link href="{{ url_for('static', filename='assets/img/favy.png') }}" rel="apple-touch-icon" />
+<!-- Favicons -->
+<link href="{{ url_for('static', filename='assets/img/favy.png') }}" rel="icon" />
+<link href="{{ url_for('static', filename='assets/img/favy.png') }}" rel="apple-touch-icon" />
 
-    <!-- Open Graph / Facebook -->
-    <meta property="og:title" content="Kimbela - Meet. Connect. Belong">
-    <meta property="og:description"
-        content="Connect with like-minded mature individuals in a positive and uplifting space.">
-    <meta property="og:image" content="https://kimbela.com/kimbela-logo.png">
-    <meta property="og:url" content="https://kimbela.com">
-    <meta property="og:type" content="website">
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect" />
+<link href="https://fonts.gstatic.com" rel="preconnect" crossorigin />
+<link
+    href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Raleway:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+    rel="stylesheet" />
 
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Kimbela - Meet. Connect. Belong">
-    <meta name="twitter:description"
-        content="Connect with like-minded mature individuals in a positive and uplifting space.">
-    <meta name="twitter:image" content="https://kimbela.com/kimbela-logo.png">
-
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com" rel="preconnect" />
-    <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin />
-    <link
-        href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Raleway:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
-        rel="stylesheet" />
-
-    <!-- Vendor CSS Files -->
-    <link href="{{ url_for('static', filename='assets/vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet" />
-    <link href="{{ url_for('static', filename='assets/vendor/bootstrap-icons/bootstrap-icons.css') }}"
-        rel="stylesheet" />
-    <link href="{{ url_for('static', filename='assets/vendor/aos/aos.css') }}" rel="stylesheet" />
-    <link href="{{ url_for('static', filename='assets/vendor/swiper/swiper-bundle.min.css') }}" rel="stylesheet" />
+<!-- Vendor CSS Files -->
+<link href="{{ url_for('static', filename='assets/vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet" />
+<link href="{{ url_for('static', filename='assets/vendor/bootstrap-icons/bootstrap-icons.css') }}" rel="stylesheet" />
+<link href="{{ url_for('static', filename='assets/vendor/aos/aos.css') }}" rel="stylesheet" />
+<link href="{{ url_for('static', filename='assets/vendor/swiper/swiper-bundle.min.css') }}" rel="stylesheet" />
 
 
-    <!-- Main CSS File -->
-    <link href="{{ url_for('static', filename='assets/css/main.css') }}" rel="stylesheet" />
+<!-- Main CSS File -->
+<link href="{{ url_for('static', filename='assets/css/main.css') }}" rel="stylesheet" />
 
 
 
 
-    <!-- Primary Tailwind CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+<!-- Primary Tailwind CSS -->
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 
-    <style>
-        /* Custom styles for Kimbela */
+<style>
+    /* Custom styles for Kimbela */
 
-        .service-icon {
-            font-size: 2.5rem;
-            color: #8e44ad;
-            margin-bottom: 1rem;
+    .service-icon {
+        font-size: 2.5rem;
+        color: #8e44ad;
+        margin-bottom: 1rem;
+    }
+
+    .search-container {
+        position: relative;
+        margin-left: 20px;
+    }
+
+    .search-results {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+        display: none;
+    }
+
+    .search-result-item {
+        padding: 10px 15px;
+        cursor: pointer;
+        border-bottom: 1px solid #eee;
+    }
+
+    .search-result-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    .service-tag {
+        display: inline-block;
+        background: #f8f9fa;
+        padding: 5px 10px;
+        border-radius: 20px;
+        margin: 5px;
+        font-size: 0.9rem;
+    }
+
+    .portfolio-filter {
+        margin-bottom: 30px;
+    }
+
+    .portfolio-item {
+        margin-bottom: 30px;
+        transition: transform 0.3s ease;
+    }
+
+    .portfolio-item:hover {
+        transform: translateY(-5px);
+    }
+
+    .btn-primary {
+        background-color: #8e44ad !important;
+        border-color: #8e44ad !important;
+    }
+
+    .btn-primary:hover {
+        background-color: #7d3c98 !important;
+        border-color: #7d3c98 !important;
+    }
+
+    body,
+    .hero,
+    .header,
+    .header-container {
+        background-color: #ffffff !important;
+    }
+
+    .mobile-nav-toggle {
+        color: #000000 !important;
+    }
+
+    .feature-card.active {
+        border-color: #8e44ad;
+    }
+
+    .feature-card.active .feature-icon {
+        color: #8e44ad;
+    }
+
+    .badge-accredited {
+        background-color: #8e44ad;
+    }
+
+    @media (max-width: 767px) {
+
+
+        .premium {
+            height: 5rem;
         }
 
-        .search-container {
-            position: relative;
-            margin-left: 20px;
+        .group {
+            height: 5rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .premium {
+            height: 3rem;
         }
 
-        .search-results {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            z-index: 1000;
-            display: none;
+        .group {
+            height: 3rem;
         }
-
-        .search-result-item {
-            padding: 10px 15px;
-            cursor: pointer;
-            border-bottom: 1px solid #eee;
-        }
-
-        .search-result-item:hover {
-            background-color: #f8f9fa;
-        }
-
-        .service-tag {
-            display: inline-block;
-            background: #f8f9fa;
-            padding: 5px 10px;
-            border-radius: 20px;
-            margin: 5px;
-            font-size: 0.9rem;
-        }
-
-        .portfolio-filter {
-            margin-bottom: 30px;
-        }
-
-        .portfolio-item {
-            margin-bottom: 30px;
-            transition: transform 0.3s ease;
-        }
-
-        .portfolio-item:hover {
-            transform: translateY(-5px);
-        }
-
-        .btn-primary {
-            background-color: #8e44ad !important;
-            border-color: #8e44ad !important;
-        }
-
-        .btn-primary:hover {
-            background-color: #7d3c98 !important;
-            border-color: #7d3c98 !important;
-        }
-
-        body, .hero, .header, .header-container {
-            background-color: #ffffff !important;
-        }
-        
-        .mobile-nav-toggle {
-            color: #000000 !important;
-        }
-
-        .feature-card.active {
-            border-color: #8e44ad;
-        }
-
-        .feature-card.active .feature-icon {
-            color: #8e44ad;
-        }
-
-        .badge-accredited {
-            background-color: #8e44ad;
-        }
-
-        @media (max-width: 767px) {
-
-
-            .premium {
-                height: 5rem;
-            }
-
-            .group {
-                height: 5rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .premium {
-                height: 3rem;
-            }
-
-            .group {
-                height: 3rem;
-            }
-        }
-    </style>
+    }
+</style>
 {% endblock %}
 
 {% block content %}
 <header id="header" class="header d-flex align-items-center sticky-top">
-        <div
-            class="header-container container-fluid container-xl position-relative d-flex align-items-center justify-content-end">
-            <a href="{{ url_for('user.index') }}" class="logo d-flex align-items-center me-auto"
-                style="background: none">
-                <!-- Uncomment the line below if you also wish to use an image logo -->
-                <img src="{{ url_for('static', filename='assets/img/kim.png') }}" alt=""
-                    width="687" height="363" style="width: 10rem; height: 5rem" />
-            </a>
+    <div
+        class="header-container container-fluid container-xl position-relative d-flex align-items-center justify-content-end">
+        <a href="{{ url_for('user.index') }}" class="logo d-flex align-items-center me-auto" style="background: none">
+            <!-- Uncomment the line below if you also wish to use an image logo -->
+            <img src="{{ url_for('static', filename='assets/img/kim.png') }}" alt="" width="687" height="363"
+                style="width: 10rem; height: 5rem" />
+        </a>
 
-            <nav id="navmenu" class="navmenu">
-                <ul>
-                    <li><a href="{{ url_for('user.index') }}" class="active">Home</a></li>
-                    <li><a href="{{ url_for('user.about') }}">About Us</a></li>
-                    <li><a href="{{ url_for('user.features') }}">Features</a></li>
-                    <li><a href="{{ url_for('payments.donate') }}">Partner</a></li>
-                    {% if current_user.is_authenticated %}
-                    <li><a href="{{ url_for('user.user_dashboard') }}" data-auth-nav="authenticated">Dashboard</a></li>
-                    {% else %}
-                    <li><a href="{{ url_for('auth.login') }}" data-auth-nav="anonymous">Login</a></li>
-                    {% endif %}
-                    <li><a href="{{ url_for('user.install_app') }}">Install Kimbela</a></li>
+        <nav id="navmenu" class="navmenu">
+            <ul>
+                <li><a href="{{ url_for('user.index') }}" class="active">Home</a></li>
+                <li><a href="{{ url_for('user.about') }}">About Us</a></li>
+                <li><a href="{{ url_for('user.features') }}">Features</a></li>
+                <li><a href="{{ url_for('payments.donate') }}">Partner</a></li>
+                {% if current_user.is_authenticated %}
+                <li><a href="{{ url_for('user.user_dashboard') }}" data-auth-nav="authenticated">Dashboard</a></li>
+                {% else %}
+                <li><a href="{{ url_for('auth.login') }}" data-auth-nav="anonymous">Login</a></li>
+                {% endif %}
+                <li><a href="{{ url_for('user.install_app') }}">Install Kimbela</a></li>
 
-                </ul>
-                <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
-            </nav>
-        </div>
-    </header>
-
+            </ul>
+            <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+        </nav>
+    </div>
+</header>
 
 
-    <main class="main">
-        <!-- Hero Section -->
-        <section id="hero" class="hero section">
-            <div class="hero-wrapper">
+
+<main class="main">
+    <!-- Hero Section -->
+    <section id="hero" class="hero section">
+        <div class="hero-wrapper">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-lg-6 hero-content" data-aos="fade-right" data-aos-delay="100">
+                        <h1>Meet. Connect. Belong</h1>
+                        <p>
+                            Kimbela is a unique social platform designed for mature singles (31+) seeking authentic,
+                            meaningful friendships.
+                        </p>
+                        <div class="stats-row">
+                            <div class="stat-item">
+                                <span class="stat-number">31+</span>
+                                <span class="stat-label">Age Requirement</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-number">100%</span>
+                                <span class="stat-label">Respectful Environment</span>
+                            </div>
+
+                        </div>
+                        <div class="action-buttons">
+                            <a href="{{ url_for('auth.register') }}" class="btn-primary">Join Our Community</a>
+                            <a href="{{ url_for('user.about') }}" class="btn-secondary">Learn More</a>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 hero-media" data-aos="zoom-in" data-aos-delay="200">
+                        <img src="{{ url_for('static', filename='assets/img/wwe.webp') }}" alt="Community Connection"
+                            class="img-fluid main-image" width="1200" height="675" fetchpriority="high" />
+                        <div class="image-overlay">
+                            <div class="badge-accredited">
+                                <i class="bi bi-patch-check-fill"></i>
+                                <span>Verified & Secure</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <br>
+            <br>
+            <br>
+            <br>
+
+            <div class="feature-cards-wrapper" data-aos="fade-up" data-aos-delay="300">
                 <div class="container">
-                    <div class="row align-items-center">
-                        <div class="col-lg-6 hero-content" data-aos="fade-right" data-aos-delay="100">
-                            <h1>Meet. Connect. Belong</h1>
-                            <p>
-                                Kimbela is a unique social platform designed for mature singles (31+) seeking authentic,
-                                meaningful friendships.
-                            </p>
-                            <div class="stats-row">
-                                <div class="stat-item">
-                                    <span class="stat-number">31+</span>
-                                    <span class="stat-label">Age Requirement</span>
+                    <div class="row gy-4">
+                        <div class="col-lg-4" data-aos="fade-up" data-aos-delay="100">
+                            <div class="feature-card">
+                                <div class="feature-icon">
+                                    <i class="bi bi-people-fill"></i>
                                 </div>
-                                <div class="stat-item">
-                                    <span class="stat-number">100%</span>
-                                    <span class="stat-label">Respectful Environment</span>
-                                </div>
-
-                            </div>
-                            <div class="action-buttons">
-                                <a href="{{ url_for('auth.register') }}" class="btn-primary">Join Our Community</a>
-                                <a href="{{ url_for('user.about') }}" class="btn-secondary">Learn More</a>
-                            </div>
-                        </div>
-                        <div class="col-lg-6 hero-media" data-aos="zoom-in" data-aos-delay="200">
-                            <img src="{{ url_for('static', filename='assets/img/wwe.webp') }}"
-                                alt="Community Connection" class="img-fluid main-image"
-                                width="1200" height="675" fetchpriority="high" />
-                            <div class="image-overlay">
-                                <div class="badge-accredited">
-                                    <i class="bi bi-patch-check-fill"></i>
-                                    <span>Verified & Secure</span>
+                                <div class="feature-content">
+                                    <h3>Meaningful Friendships</h3>
+                                    <p>
+                                        Connect with like-minded mature individuals in a positive and uplifting
+                                        space designed for authentic relationships.
+                                    </p>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-                <br>
-                <br>
-                <br>
-                <br>
 
-                <div class="feature-cards-wrapper" data-aos="fade-up" data-aos-delay="300">
-                    <div class="container">
-                        <div class="row gy-4">
-                            <div class="col-lg-4" data-aos="fade-up" data-aos-delay="100">
-                                <div class="feature-card">
-                                    <div class="feature-icon">
-                                        <i class="bi bi-people-fill"></i>
-                                    </div>
-                                    <div class="feature-content">
-                                        <h3>Meaningful Friendships</h3>
-                                        <p>
-                                            Connect with like-minded mature individuals in a positive and uplifting
-                                            space designed for authentic relationships.
-                                        </p>
-                                    </div>
+                        <div class="col-lg-4" data-aos="fade-up" data-aos-delay="200">
+                            <div class="feature-card active">
+                                <div class="feature-icon">
+                                    <i class="bi bi-shield-check"></i>
+                                </div>
+                                <div class="feature-content">
+                                    <h3>Safe & Respectful</h3>
+                                    <p>
+                                        Our platform maintains high moral standards with strict content policies and
+                                        robust safety features.
+                                    </p>
                                 </div>
                             </div>
+                        </div>
 
-                            <div class="col-lg-4" data-aos="fade-up" data-aos-delay="200">
-                                <div class="feature-card active">
-                                    <div class="feature-icon">
-                                        <i class="bi bi-shield-check"></i>
-                                    </div>
-                                    <div class="feature-content">
-                                        <h3>Safe & Respectful</h3>
-                                        <p>
-                                            Our platform maintains high moral standards with strict content policies and
-                                            robust safety features.
-                                        </p>
-                                    </div>
+                        <div class="col-lg-4" data-aos="fade-up" data-aos-delay="300">
+                            <div class="feature-card">
+                                <div class="feature-icon">
+                                    <i class="bi bi-heart-fill"></i>
                                 </div>
-                            </div>
-
-                            <div class="col-lg-4" data-aos="fade-up" data-aos-delay="300">
-                                <div class="feature-card">
-                                    <div class="feature-icon">
-                                        <i class="bi bi-heart-fill"></i>
-                                    </div>
-                                    <div class="feature-content">
-                                        <h3>Growth & Support</h3>
-                                        <p>
-                                            Access mentorship, community events, and resources for personal and
-                                            relationship development.
-                                        </p>
-                                    </div>
+                                <div class="feature-content">
+                                    <h3>Growth & Support</h3>
+                                    <p>
+                                        Access mentorship, community events, and resources for personal and
+                                        relationship development.
+                                    </p>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </section>
-        <!-- /Hero Section -->
+        </div>
+    </section>
+    <!-- /Hero Section -->
 
-        <!-- /Services Section -->
+    <!-- /Services Section -->
 
-        <!-- Portfolio Preview Section -->
-        <section id="portfolio-preview" class="portfolio-preview section">
-            <div class="container section-title" data-aos="fade-up">
-                <h2>Platform Features</h2>
-                <p>Explore how Kimbela facilitates meaningful connections</p>
-            </div>
+    <!-- Portfolio Preview Section -->
+    <section id="portfolio-preview" class="portfolio-preview section">
+        <div class="container section-title" data-aos="fade-up">
+            <h2>Platform Features</h2>
+            <p>Explore how Kimbela facilitates meaningful connections</p>
+        </div>
 
-            <div class="container" data-aos="fade-up" data-aos-delay="100">
-                <div class="row g-4">
-                    <div class="col-lg-4 col-md-6">
-                        <div class="portfolio-item">
-                            <div class="portfolio-img">
-                                <img src="{{ url_for('static', filename='assets/img/conn.jpeg') }}"
-                                    class="img-fluid balanced" alt="Connection Management" style="height: 15.6rem"
-                                    width="6000" height="4000" loading="lazy" decoding="async" />
-                                <div class="portfolio-overlay">
-                                    <div class="portfolio-info">
-                                        <h4>Balanced Connections</h4>
-                                        <p>Connect with same-sex and opposite-sex friends</p>
-                                        <a href="{{ url_for('user.features') }}#connections"
-                                            class="btn btn-sm btn-primary">Learn More</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-lg-4 col-md-6">
-                        <div class="portfolio-item">
-                            <div class="portfolio-img">
-                                <img src="{{ url_for('static', filename='assets/img/diss.webp') }}"
-                                    class="img-fluid group" alt="Group Discussions" style="height: 15.6rem"
-                                    width="2880" height="1620" loading="lazy" decoding="async" />
-                                <div class="portfolio-overlay">
-                                    <div class="portfolio-info">
-                                        <h4>Group Discussions</h4>
-                                        <p>Join interest-based groups that cater to your specific interests.</p>
-                                        <a href="{{ url_for('user.features') }}#groups"
-                                            class="btn btn-sm btn-primary">Explore Groups</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-lg-4 col-md-6">
-                        <div class="portfolio-item">
-                            <div class="portfolio-img">
-                                <img src="{{ url_for('static', filename='assets/img/stu.jpg') }}"
-                                    class="img-fluid premium" alt="Premium Services" style="height: 15.6rem"
-                                    width="1068" height="612" loading="lazy" decoding="async" />
-                                <div class="portfolio-overlay">
-                                    <div class="portfolio-info">
-                                        <h4>Premium Services</h4>
-                                        <p>Access mentorship, counseling, and professional services</p>
-                                        <a href="{{ url_for('user.features') }}#premium"
-                                            class="btn btn-sm btn-primary">View Services</a>
-                                    </div>
+        <div class="container" data-aos="fade-up" data-aos-delay="100">
+            <div class="row g-4">
+                <div class="col-lg-4 col-md-6">
+                    <div class="portfolio-item">
+                        <div class="portfolio-img">
+                            <img src="{{ url_for('static', filename='assets/img/conn.jpeg') }}"
+                                class="img-fluid balanced" alt="Connection Management" style="height: 15.6rem"
+                                width="6000" height="4000" loading="lazy" decoding="async" />
+                            <div class="portfolio-overlay">
+                                <div class="portfolio-info">
+                                    <h4>Balanced Connections</h4>
+                                    <p>Connect with same-sex and opposite-sex friends</p>
+                                    <a href="{{ url_for('user.features') }}#connections"
+                                        class="btn btn-sm btn-primary">Learn More</a>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="text-center mt-5" data-aos="fade-up" data-aos-delay="200">
-                    <a href="{{ url_for('user.features') }}" class="btn btn-primary">Explore All Features</a>
+                <div class="col-lg-4 col-md-6">
+                    <div class="portfolio-item">
+                        <div class="portfolio-img">
+                            <img src="{{ url_for('static', filename='assets/img/diss.webp') }}" class="img-fluid group"
+                                alt="Group Discussions" style="height: 15.6rem" width="2880" height="1620"
+                                loading="lazy" decoding="async" />
+                            <div class="portfolio-overlay">
+                                <div class="portfolio-info">
+                                    <h4>Group Discussions</h4>
+                                    <p>Join interest-based groups that cater to your specific interests.</p>
+                                    <a href="{{ url_for('user.features') }}#groups"
+                                        class="btn btn-sm btn-primary">Explore Groups</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6">
+                    <div class="portfolio-item">
+                        <div class="portfolio-img">
+                            <img src="{{ url_for('static', filename='assets/img/stu.jpg') }}" class="img-fluid premium"
+                                alt="Premium Services" style="height: 15.6rem" width="1068" height="612" loading="lazy"
+                                decoding="async" />
+                            <div class="portfolio-overlay">
+                                <div class="portfolio-info">
+                                    <h4>Premium Services</h4>
+                                    <p>Access mentorship, counseling, and professional services</p>
+                                    <a href="{{ url_for('user.features') }}#premium" class="btn btn-sm btn-primary">View
+                                        Services</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </section>
-        <!-- /Portfolio Preview Section -->
 
-        <!-- Testimonials Section -->
-        <section id="testimonials" class="testimonials section">
-            <div class="container section-title" data-aos="fade-up">
-                <h2>Success Stories</h2>
-                <p>Hear from our community members about their Kimbela experience</p>
+            <div class="text-center mt-5" data-aos="fade-up" data-aos-delay="200">
+                <a href="{{ url_for('user.features') }}" class="btn btn-primary">Explore All Features</a>
             </div>
+        </div>
+    </section>
+    <!-- /Portfolio Preview Section -->
 
-            <div class="container" data-aos="fade-up" data-aos-delay="100">
-                <div class="testimonial-slider swiper init-swiper">
-                    <script type="application/json" class="swiper-config">
+    <!-- Testimonials Section -->
+    <section id="testimonials" class="testimonials section">
+        <div class="container section-title" data-aos="fade-up">
+            <h2>Success Stories</h2>
+            <p>Hear from our community members about their Kimbela experience</p>
+        </div>
+
+        <div class="container" data-aos="fade-up" data-aos-delay="100">
+            <div class="testimonial-slider swiper init-swiper">
+                <script type="application/json" class="swiper-config">
                         {
                             "loop": true,
                             "speed": 600,
@@ -404,230 +389,230 @@
                         }
                     </script>
 
-                    <div class="swiper-wrapper">
-                        <div class="swiper-slide">
-                            <div class="testimonial-item" data-aos="zoom-in" data-aos-delay="200">
-                                <div class="testimonial-header">
-                                    <img src="{{ url_for('static', filename='assets/img/woman2.jpg') }}" alt="Client"
-                                        class="img-fluid" width="838" height="1280" loading="lazy" decoding="async" />
-                                    <div class="rating">
-                                        <i class="bi bi-star-fill"></i>
-                                        <i class="bi bi-star-fill"></i>
-                                        <i class="bi bi-star-fill"></i>
-                                        <i class="bi bi-star-fill"></i>
-                                        <i class="bi bi-star-fill"></i>
-                                    </div>
-                                </div>
-                                <div class="testimonial-body">
-                                    <p>
-                                        Kimbela helped me find genuine friendships after my divorce. The platform's
-                                        focus on values and meaningful connections made all the difference. I've met
-                                        incredible people who truly understand this stage of life.
-                                    </p>
-                                </div>
-                                <div class="testimonial-footer">
-                                    <h5>Sarah Johnson</h5>
-                                    <span>Found Lifelong Friends</span>
-                                    <div class="quote-icon">
-                                        <i class="bi bi-chat-quote-fill"></i>
-                                    </div>
+                <div class="swiper-wrapper">
+                    <div class="swiper-slide">
+                        <div class="testimonial-item" data-aos="zoom-in" data-aos-delay="200">
+                            <div class="testimonial-header">
+                                <img src="{{ url_for('static', filename='assets/img/woman2.jpg') }}" alt="Client"
+                                    class="img-fluid" width="838" height="1280" loading="lazy" decoding="async" />
+                                <div class="rating">
+                                    <i class="bi bi-star-fill"></i>
+                                    <i class="bi bi-star-fill"></i>
+                                    <i class="bi bi-star-fill"></i>
+                                    <i class="bi bi-star-fill"></i>
+                                    <i class="bi bi-star-fill"></i>
                                 </div>
                             </div>
-                        </div>
-
-                        <div class="swiper-slide">
-                            <div class="testimonial-item" data-aos="zoom-in" data-aos-delay="300">
-                                <div class="testimonial-header">
-                                    <img src="{{ url_for('static', filename='assets/img/man1.jpg') }}" alt="Client"
-                                        class="img-fluid" width="1442" height="1920" loading="lazy" decoding="async" />
-                                    <div class="rating">
-                                        <i class="bi bi-star-fill"></i>
-                                        <i class="bi bi-star-fill"></i>
-                                        <i class="bi bi-star-fill"></i>
-                                        <i class="bi bi-star-fill"></i>
-                                        <i class="bi bi-star-fill"></i>
-                                    </div>
-                                </div>
-                                <div class="testimonial-body">
-                                    <p>
-                                        As a busy professional, I struggled to meet like-minded people. Kimbela's
-                                        community events and interest groups helped me connect with amazing individuals
-                                        who share my values and interests.
-                                    </p>
-                                </div>
-                                <div class="testimonial-footer">
-                                    <h5>Michael Thompson</h5>
-                                    <span>Professional Network</span>
-                                    <div class="quote-icon">
-                                        <i class="bi bi-chat-quote-fill"></i>
-                                    </div>
-                                </div>
+                            <div class="testimonial-body">
+                                <p>
+                                    Kimbela helped me find genuine friendships after my divorce. The platform's
+                                    focus on values and meaningful connections made all the difference. I've met
+                                    incredible people who truly understand this stage of life.
+                                </p>
                             </div>
-                        </div>
-
-                        <div class="swiper-slide">
-                            <div class="testimonial-item" data-aos="zoom-in" data-aos-delay="400">
-                                <div class="testimonial-header">
-                                    <img src="{{ url_for('static', filename='assets/img/woman3.webp') }}" alt="Client"
-                                        class="img-fluid" width="605" height="328" loading="lazy" decoding="async" />
-                                    <div class="rating">
-                                        <i class="bi bi-star-fill"></i>
-                                        <i class="bi bi-star-fill"></i>
-                                        <i class="bi bi-star-fill"></i>
-                                        <i class="bi bi-star-fill"></i>
-                                        <i class="bi bi-star-fill"></i>
-                                    </div>
-                                </div>
-                                <div class="testimonial-body">
-                                    <p>
-                                        The mentorship program changed my life. I received guidance from experienced
-                                        professionals that helped me navigate career transitions and personal growth in
-                                        ways I never imagined.
-                                    </p>
-                                </div>
-                                <div class="testimonial-footer">
-                                    <h5>Jennifer Williams</h5>
-                                    <span>Mentorship Beneficiary</span>
-                                    <div class="quote-icon">
-                                        <i class="bi bi-chat-quote-fill"></i>
-                                    </div>
+                            <div class="testimonial-footer">
+                                <h5>Sarah Johnson</h5>
+                                <span>Found Lifelong Friends</span>
+                                <div class="quote-icon">
+                                    <i class="bi bi-chat-quote-fill"></i>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="swiper-navigation">
-                        <div class="swiper-button-prev"></div>
-                        <div class="swiper-button-next"></div>
+                    <div class="swiper-slide">
+                        <div class="testimonial-item" data-aos="zoom-in" data-aos-delay="300">
+                            <div class="testimonial-header">
+                                <img src="{{ url_for('static', filename='assets/img/man1.jpg') }}" alt="Client"
+                                    class="img-fluid" width="1442" height="1920" loading="lazy" decoding="async" />
+                                <div class="rating">
+                                    <i class="bi bi-star-fill"></i>
+                                    <i class="bi bi-star-fill"></i>
+                                    <i class="bi bi-star-fill"></i>
+                                    <i class="bi bi-star-fill"></i>
+                                    <i class="bi bi-star-fill"></i>
+                                </div>
+                            </div>
+                            <div class="testimonial-body">
+                                <p>
+                                    As a busy professional, I struggled to meet like-minded people. Kimbela's
+                                    community events and interest groups helped me connect with amazing individuals
+                                    who share my values and interests.
+                                </p>
+                            </div>
+                            <div class="testimonial-footer">
+                                <h5>Michael Thompson</h5>
+                                <span>Professional Network</span>
+                                <div class="quote-icon">
+                                    <i class="bi bi-chat-quote-fill"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="swiper-slide">
+                        <div class="testimonial-item" data-aos="zoom-in" data-aos-delay="400">
+                            <div class="testimonial-header">
+                                <img src="{{ url_for('static', filename='assets/img/woman3.webp') }}" alt="Client"
+                                    class="img-fluid" width="605" height="328" loading="lazy" decoding="async" />
+                                <div class="rating">
+                                    <i class="bi bi-star-fill"></i>
+                                    <i class="bi bi-star-fill"></i>
+                                    <i class="bi bi-star-fill"></i>
+                                    <i class="bi bi-star-fill"></i>
+                                    <i class="bi bi-star-fill"></i>
+                                </div>
+                            </div>
+                            <div class="testimonial-body">
+                                <p>
+                                    The mentorship program changed my life. I received guidance from experienced
+                                    professionals that helped me navigate career transitions and personal growth in
+                                    ways I never imagined.
+                                </p>
+                            </div>
+                            <div class="testimonial-footer">
+                                <h5>Jennifer Williams</h5>
+                                <span>Mentorship Beneficiary</span>
+                                <div class="quote-icon">
+                                    <i class="bi bi-chat-quote-fill"></i>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </section>
-        <!-- /Testimonials Section -->
 
-        <!-- CTA Section -->
-        <section id="cta" class="cta section">
-            <div class="container" data-aos="fade-up">
-                <div class="row justify-content-center">
-                    <div class="col-lg-8 text-center">
-                        <h2>Ready to Make Meaningful Connections?</h2>
-                        <p>
-                            Join Kimbela today and become part of a community that values authentic relationships,
-                            personal growth, and mutual respect.
-                        </p>
-                        <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">Create Your Profile</a>
-                    </div>
+                <div class="swiper-navigation">
+                    <div class="swiper-button-prev"></div>
+                    <div class="swiper-button-next"></div>
                 </div>
             </div>
-        </section>
-        <!-- /CTA Section -->
-    </main>
+        </div>
+    </section>
+    <!-- /Testimonials Section -->
 
-    <footer id="footer" class="footer position-relative light-background">
-        <div class="container footer-top">
-            <div class="row gy-4">
-                <div class="col-lg-4 col-md-6 footer-about">
-                    <a href="{{ url_for('user.index') }}" class="logo d-flex align-items-center">
-                        <span class="sitename">Kimbela</span>
+    <!-- CTA Section -->
+    <section id="cta" class="cta section">
+        <div class="container" data-aos="fade-up">
+            <div class="row justify-content-center">
+                <div class="col-lg-8 text-center">
+                    <h2>Ready to Make Meaningful Connections?</h2>
+                    <p>
+                        Join Kimbela today and become part of a community that values authentic relationships,
+                        personal growth, and mutual respect.
+                    </p>
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">Create Your Profile</a>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- /CTA Section -->
+</main>
+
+<footer id="footer" class="footer position-relative light-background">
+    <div class="container footer-top">
+        <div class="row gy-4">
+            <div class="col-lg-4 col-md-6 footer-about">
+                <a href="{{ url_for('user.index') }}" class="logo d-flex align-items-center">
+                    <span class="sitename">Kimbela</span>
+                </a>
+                <div class="footer-contact pt-3">
+                    <p>For connections that make sense</p>
+
+                    <p><strong>Support:</strong>
+                        <a href="https://wa.me/2347057264327" target="_blank" rel="noopener">
+                            <span> +234 705 726 4327 </span></a><br>
+                        <span>support@kimbela.com</span>
+                    </p>
+                    <p>
+                        <strong>Community:</strong>
+                        <span>Mature singles 31+ seeking meaningful connections</span>
+                    </p>
+                </div>
+                <div class="social-links d-flex mt-4">
+                    <a href="https://x.com/KimbelaConnect" target="_blank" rel="noopener" style="color: #000000;">
+                        <i class="bi bi-twitter-x"></i>
                     </a>
-                    <div class="footer-contact pt-3">
-                        <p>For connections that make sense</p>
-
-                        <p><strong>Support:</strong>
-                            <a href="https://wa.me/2347057264327" target="_blank" rel="noopener">
-                                <span> +234 705 726 4327 </span></a><br>
-                            <span>support@kimbela.com</span>
-                        </p>
-                        <p>
-                            <strong>Community:</strong>
-                            <span>Mature singles 31+ seeking meaningful connections</span>
-                        </p>
-                    </div>
-                    <div class="social-links d-flex mt-4">
-                        <a href="https://x.com/KimbelaConnect" target="_blank" rel="noopener" style="color: #000000;">
-                            <i class="bi bi-twitter-x"></i>
-                        </a>
-                        <a href="https://www.instagram.com/kimbelaconnect/" target="_blank" rel="noopener"
-                            style="color: #E4405F;">
-                            <i class="bi bi-instagram"></i>
-                        </a>
-                        <a href="https://whatsapp.com/channel/0029Vb7Hb1cEAKW6pV0Wge2h" target="_blank" rel="noopener"
-                            style="color: #25D366;">
-                            <i class="bi bi-whatsapp"></i>
-                        </a>
-                    </div>
+                    <a href="https://www.instagram.com/kimbelaconnect/" target="_blank" rel="noopener"
+                        style="color: #E4405F;">
+                        <i class="bi bi-instagram"></i>
+                    </a>
+                    <a href="https://whatsapp.com/channel/0029Vb7Hb1cEAKW6pV0Wge2h" target="_blank" rel="noopener"
+                        style="color: #25D366;">
+                        <i class="bi bi-whatsapp"></i>
+                    </a>
                 </div>
-
-                <div class="col-lg-2 col-md-3 footer-links">
-                    <h4>Quick Links</h4>
-                    <ul>
-                        <li><a href="{{ url_for('user.index') }}">Home</a></li>
-                        <li><a href="{{ url_for('user.about') }}">About Us</a></li>
-                        <li><a href="{{ url_for('user.features') }}">Features</a></li>
-                        <li><a href="{{ url_for('user.install_app') }}">Install Kimbela</a></li>
-                        {% if current_user.is_authenticated %}
-                        <li><a href="{{ url_for('user.user_dashboard') }}" data-auth-nav="authenticated">Dashboard</a></li>
-                        {% else %}
-                        <li><a href="{{ url_for('auth.login') }}" data-auth-nav="anonymous">Login</a></li>
-                        {% endif %}
-                    </ul>
-                </div>
-
-                <div class="col-lg-3 col-md-3 footer-links">
-                    <h4>Our Features</h4>
-                    <ul>
-                        <li><a href="{{ url_for('user.features') }}#connections">Friend Connections</a></li>
-                        <li><a href="{{ url_for('user.features') }}#groups">Group Discussions</a></li>
-                        <li><a href="{{ url_for('user.features') }}#mentorship">Mentorship</a></li>
-                        <li><a href="{{ url_for('user.features') }}#premium">Premium Services</a></li>
-                        <li><a href="{{ url_for('user.features') }}">View All Features</a></li>
-                    </ul>
-                </div>
-
-                <div class="col-lg-3 col-md-6 footer-links">
-                    <h4>Safety & Standards</h4>
-                    <ul>
-                        <li><a href="{{ url_for('user.terms') }}">Terms of Service</a></li>
-                        <li><a href="{{ url_for('user.privacy') }}">Privacy Policy</a></li>
-                        <li><a href="{{ url_for('user.cookie_policy') }}">Cookie Policy</a></li>
-                        <li><a href="{{ url_for('user.community_guidelines') }}">Community Guidelines</a></li>
-                        <li><a href="{{ url_for('user.safety_tips') }}">Safety Tips</a></li>
-                        <li><a href="{{ url_for('user.acceptable_use_policy') }}">Acceptable Use Policy</a></li>
-                        <li><a href="{{ url_for('user.marketplace_seller_terms') }}">Marketplace &amp; Seller Terms</a>
-                        </li>
-                        <li><a href="{{ url_for('user.refund_billing_policy') }}">Refund &amp; Billing Policy</a></li>
-                        <li><a href="{{ url_for('user.dispute_reporting') }}">Dispute &amp; Reporting Process</a></li>
-                        <li><a href="{{ url_for('user.disclaimer') }}">Disclaimer</a></li>
-                        <li><a href="{{ url_for('user.faq') }}">FAQ</a></li>
-                    </ul>
-                </div>
-
-
-            </div>
-        </div>
-
-        <div class="container copyright text-center mt-4">
-            <p>© 2026 Kimbela. All rights reserved.</p>
-            <div class="credits">
-                Kimbela is a platform owned and operated by Tutaf International Limited and may operate under the brand
-                name Kimbela Hub.
             </div>
 
+            <div class="col-lg-2 col-md-3 footer-links">
+                <h4>Quick Links</h4>
+                <ul>
+                    <li><a href="{{ url_for('user.index') }}">Home</a></li>
+                    <li><a href="{{ url_for('user.about') }}">About Us</a></li>
+                    <li><a href="{{ url_for('user.features') }}">Features</a></li>
+                    <li><a href="{{ url_for('user.install_app') }}">Install Kimbela</a></li>
+                    {% if current_user.is_authenticated %}
+                    <li><a href="{{ url_for('user.user_dashboard') }}" data-auth-nav="authenticated">Dashboard</a></li>
+                    {% else %}
+                    <li><a href="{{ url_for('auth.login') }}" data-auth-nav="anonymous">Login</a></li>
+                    {% endif %}
+                </ul>
+            </div>
+
+            <div class="col-lg-3 col-md-3 footer-links">
+                <h4>Our Features</h4>
+                <ul>
+                    <li><a href="{{ url_for('user.features') }}#connections">Friend Connections</a></li>
+                    <li><a href="{{ url_for('user.features') }}#groups">Group Discussions</a></li>
+                    <li><a href="{{ url_for('user.features') }}#mentorship">Mentorship</a></li>
+                    <li><a href="{{ url_for('user.features') }}#premium">Premium Services</a></li>
+                    <li><a href="{{ url_for('user.features') }}">View All Features</a></li>
+                </ul>
+            </div>
+
+            <div class="col-lg-3 col-md-6 footer-links">
+                <h4>Safety & Standards</h4>
+                <ul>
+                    <li><a href="{{ url_for('user.terms') }}">Terms of Service</a></li>
+                    <li><a href="{{ url_for('user.privacy') }}">Privacy Policy</a></li>
+                    <li><a href="{{ url_for('user.cookie_policy') }}">Cookie Policy</a></li>
+                    <li><a href="{{ url_for('user.community_guidelines') }}">Community Guidelines</a></li>
+                    <li><a href="{{ url_for('user.safety_tips') }}">Safety Tips</a></li>
+                    <li><a href="{{ url_for('user.acceptable_use_policy') }}">Acceptable Use Policy</a></li>
+                    <li><a href="{{ url_for('user.marketplace_seller_terms') }}">Marketplace &amp; Seller Terms</a>
+                    </li>
+                    <li><a href="{{ url_for('user.refund_billing_policy') }}">Refund &amp; Billing Policy</a></li>
+                    <li><a href="{{ url_for('user.dispute_reporting') }}">Dispute &amp; Reporting Process</a></li>
+                    <li><a href="{{ url_for('user.disclaimer') }}">Disclaimer</a></li>
+                    <li><a href="{{ url_for('user.faq') }}">FAQ</a></li>
+                </ul>
+            </div>
+
+
         </div>
-    </footer>
+    </div>
 
-    <!-- Scroll Top -->
-    <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i
-            class="bi bi-arrow-up-short"></i></a>
+    <div class="container copyright text-center mt-4">
+        <p>© 2026 Kimbela. All rights reserved.</p>
+        <div class="credits">
+            Kimbela is a platform owned and operated by Tutaf International Limited and may operate under the brand
+            name Kimbela Hub.
+        </div>
 
-    <!-- Preloader -->
-    <div id="preloader"></div>
+    </div>
+</footer>
 
-    <!-- Vendor JS Files -->
-    <script src="{{ url_for('static', filename='assets/vendor/bootstrap/js/bootstrap.bundle.min.js') }}" defer></script>
-    <script src="{{ url_for('static', filename='assets/vendor/aos/aos.js') }}" defer></script>
-    <script src="{{ url_for('static', filename='assets/vendor/swiper/swiper-bundle.min.js') }}" defer></script>
+<!-- Scroll Top -->
+<a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i
+        class="bi bi-arrow-up-short"></i></a>
 
-    <!-- Main JS File -->
-    <script src="{{ url_for('static', filename='assets/js/main.js', v='landing-performance-1') }}" defer></script>
+<!-- Preloader -->
+<div id="preloader"></div>
+
+<!-- Vendor JS Files -->
+<script src="{{ url_for('static', filename='assets/vendor/bootstrap/js/bootstrap.bundle.min.js') }}" defer></script>
+<script src="{{ url_for('static', filename='assets/vendor/aos/aos.js') }}" defer></script>
+<script src="{{ url_for('static', filename='assets/vendor/swiper/swiper-bundle.min.js') }}" defer></script>
+
+<!-- Main JS File -->
+<script src="{{ url_for('static', filename='assets/js/main.js', v='landing-performance-1') }}" defer></script>
 {% endblock %}
