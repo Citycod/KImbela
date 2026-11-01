@@ -205,7 +205,10 @@ def test_public_post_share_is_metadata_only_without_user_agent_detection(
                 assert b'<meta property="og:image:width" content="1200">' in head_html
                 assert b'<meta property="og:image:height" content="630">' in head_html
                 assert b"/image/upload/f_jpg,q_auto,w_1200,h_630,c_fill,g_auto/" in head_html
-                assert f'https://kimbela.com/post/{post.public_id}'.encode() in head_html
+                assert b'<meta name="robots" content="noindex,follow">' in head_html
+                assert f'<link rel="canonical" href="https://kimbela.com/share/post/{post.public_id}?v=1">'.encode() in head_html
+                assert f'<meta property="og:url" content="https://kimbela.com/share/post/{post.public_id}?v=1">'.encode() in head_html
+                assert f'<meta name="twitter:url" content="https://kimbela.com/share/post/{post.public_id}?v=1">'.encode() in head_html
                 assert b"share_v=" not in head_html
                 assert b"Open post on Kimbela" in response.data
                 assert f'window.location.replace("/post/{post.public_id}")'.encode() in response.data
@@ -454,11 +457,12 @@ def test_matchmaking_group_copy_link_renders_anonymous_social_preview(
     assert preview.status_code == 200
     head_html = preview.data.split(b"</head>", 1)[0]
     assert b"MatchPreviewAuthor" in head_html
+    assert b'<meta name="robots" content="noindex,follow">' in head_html
     assert b'<meta property="og:description" content="matchmaking-preview-marker">' in head_html
     assert b'<meta property="og:image" content="https://cdn.example.com/matchmaking-preview.jpg">' in head_html
-    assert f'<link rel="canonical" href="https://kimbela.com/post/{post.public_id}">'.encode() in head_html
-    assert f'<meta property="og:url" content="https://kimbela.com/post/{post.public_id}">'.encode() in head_html
-    assert b"?v=1" not in head_html
+    assert f'<link rel="canonical" href="https://kimbela.com/share/post/{post.public_id}?v=1">'.encode() in head_html
+    assert f'<meta property="og:url" content="https://kimbela.com/share/post/{post.public_id}?v=1">'.encode() in head_html
+    assert f'<meta name="twitter:url" content="https://kimbela.com/share/post/{post.public_id}?v=1">'.encode() in head_html
     assert b"Configured Matchmaking" not in preview.data
 
 
@@ -616,3 +620,103 @@ def test_public_profile_accepts_user_uuid(client, db, user, login):
     response = client.get(f"/profile/{user.public_id}")
     assert response.status_code == 200
     assert user.first_name.encode() in response.data
+
+
+def test_share_post_self_referencing_urls_and_same_host_with_base_url(
+    app, client, db, user, monkeypatch
+):
+    import re
+    from urllib.parse import urlparse
+    from models import Post
+
+    monkeypatch.setitem(app.config, "BASE_URL", "https://kimbela.com")
+
+    post = Post(
+        content="Self-referencing share preview test",
+        author_id=user.id,
+        image="https://www.kimbela.com/uploads/image/post-photo.png",
+    )
+    db.session.add(post)
+    db.session.commit()
+
+    share_resp = client.get(
+        f"/share/post/{post.public_id}?v=2",
+        base_url="https://www.kimbela.com",
+        headers={"User-Agent": "WhatsApp/2.23.20.0"},
+    )
+    assert share_resp.status_code == 200
+    share_head = share_resp.get_data(as_text=True).split("</head>", 1)[0]
+
+    expected_share_url = f"https://kimbela.com/share/post/{post.public_id}?v=2"
+    expected_image_url = "https://kimbela.com/public/uploads/image/post-photo.png"
+
+    assert '<meta name="robots" content="noindex,follow">' in share_head
+    assert f'<link rel="canonical" href="{expected_share_url}">' in share_head
+    assert f'<meta property="og:url" content="{expected_share_url}">' in share_head
+    assert f'<meta name="twitter:url" content="{expected_share_url}">' in share_head
+    assert f'<meta property="og:image" content="{expected_image_url}">' in share_head
+
+    canonical_href = re.search(r'<link rel="canonical" href="([^"]+)"', share_head).group(1)
+    og_url = re.search(r'<meta property="og:url" content="([^"]+)"', share_head).group(1)
+    og_image = re.search(r'<meta property="og:image" content="([^"]+)"', share_head).group(1)
+    assert urlparse(canonical_href).hostname == "kimbela.com"
+    assert urlparse(og_url).hostname == "kimbela.com"
+    assert urlparse(og_image).hostname == "kimbela.com"
+
+    post_resp = client.get(
+        f"/post/{post.public_id}",
+        base_url="https://www.kimbela.com",
+    )
+    assert post_resp.status_code == 200
+    post_head = post_resp.get_data(as_text=True).split("</head>", 1)[0]
+    expected_post_url = f"https://kimbela.com/post/{post.public_id}"
+    assert f'<link rel="canonical" href="{expected_post_url}">' in post_head
+    assert f'<meta property="og:url" content="{expected_post_url}">' in post_head
+    assert f'<meta name="twitter:url" content="{expected_post_url}">' in post_head
+    assert f'<meta property="og:image" content="{expected_image_url}">' in post_head
+
+
+def test_pages_emit_exactly_one_og_set_and_valid_fallback_image(
+    app, client, db, user, monkeypatch
+):
+    import re
+    from urllib.parse import urlparse
+    from models import Post
+
+    monkeypatch.setitem(app.config, "BASE_URL", "https://kimbela.com")
+
+    post = Post(content="Text post for single OG tag check", author_id=user.id)
+    db.session.add(post)
+    db.session.commit()
+
+    paths = [
+        "/",
+        "/about",
+        "/features",
+        "/login",
+        f"/post/{post.public_id}",
+        f"/share/post/{post.public_id}?v=1",
+    ]
+    for path in paths:
+        resp = client.get(path, base_url="https://www.kimbela.com")
+        assert resp.status_code == 200, f"Unexpected status for {path}"
+        head_html = resp.get_data(as_text=True).split("</head>", 1)[0]
+
+        og_images = re.findall(r'<meta\s+property="og:image"\s+content="([^"]+)"', head_html)
+        og_urls = re.findall(r'<meta\s+property="og:url"\s+content="([^"]+)"', head_html)
+        og_titles = re.findall(r'<meta\s+property="og:title"\s+content="([^"]+)"', head_html)
+        twitter_cards = re.findall(r'<meta\s+name="twitter:card"\s+content="([^"]+)"', head_html)
+
+        assert len(og_images) == 1, f"Expected 1 og:image on {path}, got {og_images}"
+        assert len(og_urls) == 1, f"Expected 1 og:url on {path}, got {og_urls}"
+        assert len(og_titles) == 1, f"Expected 1 og:title on {path}, got {og_titles}"
+        assert len(twitter_cards) == 1, f"Expected 1 twitter:card on {path}, got {twitter_cards}"
+
+        assert "kimbela-logo.png" not in head_html
+        assert og_images[0] == "https://kimbela.com/static/assets/img/kim.png"
+        assert urlparse(og_images[0]).hostname == "kimbela.com"
+        assert urlparse(og_urls[0]).hostname == "kimbela.com"
+        assert '<meta property="og:image:type" content="image/png">' in head_html
+        assert '<meta property="og:image:width" content="687">' in head_html
+        assert '<meta property="og:image:height" content="363">' in head_html
+

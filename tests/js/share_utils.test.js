@@ -20,8 +20,12 @@ const modularPostsSource = fs.readFileSync(
   path.resolve(__dirname, '../../static/assets/js/modules/posts/index.js'),
   'utf8',
 );
+const baseTemplateSource = fs.readFileSync(
+  path.resolve(__dirname, '../../templates/base.html'),
+  'utf8',
+);
 
-function runtime(clipboard) {
+function runtime(clipboard, publicBaseUrl = 'https://kimbela.com') {
   const calls = [];
   let clickHandler = null;
   const textarea = {
@@ -47,6 +51,7 @@ function runtime(clipboard) {
   };
   const window = {
     isSecureContext: true,
+    publicBaseUrl,
     location: { origin: 'https://www.kimbela.com' },
     setTimeout(callback) { callback(); },
   };
@@ -59,8 +64,8 @@ function runtime(clipboard) {
   return { calls, clickHandler, share: window.KimbelaShare };
 }
 
-test('builds one stable versioned URL for feed and group share actions', () => {
-  const { share } = runtime(null);
+test('builds one stable versioned URL for feed and group share actions from server BASE_URL', () => {
+  const { share } = runtime(null, 'https://kimbela.com');
 
   assert.equal(
     share.postUrl('post-uuid'),
@@ -71,7 +76,17 @@ test('builds one stable versioned URL for feed and group share actions', () => {
     'https://kimbela.com/share/post/post-uuid?v=1',
   );
   assert.equal(share.POST_SHARE_REVISION, '1');
-  assert.equal(share.POST_SHARE_ORIGIN, 'https://kimbela.com');
+  assert.equal(share.POST_SHARE_ORIGIN, undefined);
+  assert.doesNotMatch(source, /POST_SHARE_ORIGIN/);
+  assert.match(baseTemplateSource, /window\.publicBaseUrl\s*=\s*\{\{\s*_base_origin\|tojson\s*\}\}/);
+});
+
+test('falls back to location.origin when server publicBaseUrl is empty', () => {
+  const { share } = runtime(null, '');
+  assert.equal(
+    share.postUrl('post-uuid'),
+    'https://www.kimbela.com/share/post/post-uuid?v=1',
+  );
 });
 
 test('replaces an old revision without adding duplicate or random parameters', () => {

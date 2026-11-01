@@ -19,6 +19,7 @@ def app():
     test_app.config.update(
         TESTING=True,
         WTF_CSRF_ENABLED=False,
+        BASE_URL="",
     )
 
     from extensions import db
