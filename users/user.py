@@ -13,7 +13,7 @@ from flask import (
 )
 from datetime import date
 import ipaddress
-from urllib.parse import urlparse, urljoin
+from urllib.parse import urlparse, urljoin, urlunparse
 from sqlalchemy.orm import aliased, joinedload
 from sqlalchemy import and_, exists, false, func, or_
 
@@ -195,16 +195,48 @@ def resolve_post_by_identifier(post_identifier):
     abort(404)
 
 
+def _resolved_base_url(base_url=None):
+    resolved = (
+        base_url if base_url is not None else current_app.config.get("BASE_URL")
+    )
+    resolved = (resolved or "").rstrip("/")
+    if resolved:
+        return resolved
+    return (request.url_root or "").rstrip("/")
+
+
 def _absolute_share_url(raw_url, base_url=None):
     if not raw_url:
         return None
 
-    base_url = (
-        base_url if base_url is not None else current_app.config.get("BASE_URL")
-    )
-    base_url = (base_url or "").rstrip("/")
+    base_url = _resolved_base_url(base_url)
 
     if raw_url.startswith(("http://", "https://")):
+        if base_url:
+            parsed_raw = urlparse(raw_url)
+            parsed_base = urlparse(base_url)
+            raw_host = (parsed_raw.hostname or "").lower()
+            base_host = (parsed_base.hostname or "").lower()
+            if (
+                raw_host
+                and base_host
+                and raw_host.removeprefix("www.") == base_host.removeprefix("www.")
+                and parsed_raw.scheme == "https"
+                and parsed_base.scheme == "https"
+            ):
+                path = parsed_raw.path or ""
+                if path.startswith("/uploads/"):
+                    path = path.replace("/uploads/", "/public/uploads/", 1)
+                return urlunparse(
+                    (
+                        parsed_base.scheme,
+                        parsed_base.netloc,
+                        path,
+                        parsed_raw.params,
+                        parsed_raw.query,
+                        parsed_raw.fragment,
+                    )
+                )
         return raw_url
 
     if raw_url.startswith("/uploads/"):
@@ -246,7 +278,7 @@ def _social_preview_image_url(raw_url, base_url=None):
     return absolute_url
 
 
-def build_post_share_meta(post, base_url=None):
+def build_post_share_meta(post, base_url=None, share_url=None):
     preview_post = post.shared_post or post
     fallback_image = url_for("static", filename="assets/img/kim.png")
     candidate_image = preview_post.image or preview_post.gif or post.image or post.gif
@@ -289,11 +321,14 @@ def build_post_share_meta(post, base_url=None):
     elif using_cloudinary_image:
         image_width, image_height = "1200", "630"
 
+    target_url = share_url or url_for(
+        "user.view_shared_post", post_identifier=post.public_id
+    )
     return {
         "title": f"Post by {title_author.full_name} - Kimbela",
         "description": description,
         "url": _absolute_share_url(
-            url_for("user.view_shared_post", post_identifier=post.public_id),
+            target_url,
             base_url=base_url,
         ),
         "image": absolute_image_url,
@@ -303,9 +338,9 @@ def build_post_share_meta(post, base_url=None):
     }
 
 
-def build_private_post_share_meta(post, base_url=None):
+def build_private_post_share_meta(post, base_url=None, share_url=None):
     """Expose only the intentional post share excerpt for restricted groups."""
-    return build_post_share_meta(post, base_url=base_url)
+    return build_post_share_meta(post, base_url=base_url, share_url=share_url)
 
 
 def get_groups_data_for_user(user_id):
@@ -5254,11 +5289,16 @@ def view_post_share(post_identifier):
         .filter_by(id=post.id)
         .first_or_404()
     )
-    canonical_origin = "https://kimbela.com"
+    version = (request.args.get("v") or "").strip()
+    share_path = (
+        url_for("user.view_post_share", post_identifier=post.public_id, v=version)
+        if version
+        else url_for("user.view_post_share", post_identifier=post.public_id)
+    )
     share_meta = (
-        build_private_post_share_meta(post, base_url=canonical_origin)
+        build_private_post_share_meta(post, share_url=share_path)
         if is_private_group_post(post)
-        else build_post_share_meta(post, base_url=canonical_origin)
+        else build_post_share_meta(post, share_url=share_path)
     )
     destination_path = url_for(
         "user.view_shared_post", post_identifier=post.public_id

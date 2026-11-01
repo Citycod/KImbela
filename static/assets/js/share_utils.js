@@ -2,7 +2,6 @@
   'use strict';
 
   const POST_SHARE_REVISION = '1';
-  const POST_SHARE_ORIGIN = 'https://kimbela.com';
 
   function publicBaseUrl(baseUrl) {
     return String(
@@ -23,11 +22,11 @@
       const match = sourceUrl.pathname.match(/^\/(?:share\/)?post\/([^/]+)\/?$/);
       identifier = match ? decodeURIComponent(match[1]) : '';
     }
-    if (!identifier) return '';
+    if (!identifier || !base) return '';
 
     const url = new URL(
       `/share/post/${encodeURIComponent(identifier)}`,
-      `${POST_SHARE_ORIGIN}/`,
+      `${base}/`,
     );
     url.searchParams.set('v', POST_SHARE_REVISION);
     return url.toString();
@@ -148,9 +147,9 @@
 
   global.KimbelaShare = Object.freeze({
     POST_SHARE_REVISION,
-    POST_SHARE_ORIGIN,
     copyFromTrigger,
     copyText,
     postUrl,
+    publicBaseUrl,
   });
 })(window);
