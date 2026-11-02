@@ -13,6 +13,7 @@ from flask import (
 )
 from datetime import date
 import ipaddress
+import re
 from urllib.parse import urlparse, urljoin, urlunparse
 from sqlalchemy.orm import aliased, joinedload
 from sqlalchemy import and_, exists, false, func, or_
@@ -5289,7 +5290,12 @@ def view_post_share(post_identifier):
         .filter_by(id=post.id)
         .first_or_404()
     )
-    version = (request.args.get("v") or "").strip()
+    raw_version = (request.args.get("v") or "").strip()
+    version = (
+        raw_version
+        if re.fullmatch(r"[A-Za-z0-9_-]{1,16}", raw_version)
+        else ""
+    )
     share_path = (
         url_for("user.view_post_share", post_identifier=post.public_id, v=version)
         if version
