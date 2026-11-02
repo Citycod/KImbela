@@ -129,6 +129,30 @@ def test_shared_post_page_rewrites_cloudinary_images_for_social_preview(client, 
     assert b'<meta property="og:image:height" content="630">' in response.data
 
 
+def test_post_with_non_png_image_never_uses_png_or_fallback_dimensions(
+    client, db, user
+):
+    from models import Post
+
+    post = Post(
+        content="Non-PNG image preview",
+        author_id=user.id,
+        image="https://cdn.example.com/photo.jpg",
+    )
+    db.session.add(post)
+    db.session.commit()
+
+    for path in (f"/post/{post.public_id}", f"/share/post/{post.public_id}?v=1"):
+        response = client.get(path, base_url="https://kimbela.com")
+        assert response.status_code == 200
+        head_html = response.get_data(as_text=True).split("</head>", 1)[0]
+
+        assert '<meta property="og:image:type" content="image/jpeg">' in head_html
+        assert 'content="image/png"' not in head_html
+        assert 'content="687"' not in head_html
+        assert 'content="363"' not in head_html
+
+
 def test_shared_post_page_rejects_insecure_preview_image_and_uses_public_fallback(
     client, db, user
 ):
@@ -625,6 +649,7 @@ def test_public_profile_accepts_user_uuid(client, db, user, login):
 def test_share_post_self_referencing_urls_and_same_host_with_base_url(
     app, client, db, user, monkeypatch
 ):
+    import html
     import re
     from urllib.parse import urlparse
     from models import Post
@@ -651,6 +676,7 @@ def test_share_post_self_referencing_urls_and_same_host_with_base_url(
     expected_image_url = "https://kimbela.com/public/uploads/image/post-photo.png"
 
     assert '<meta name="robots" content="noindex,follow">' in share_head
+    assert '<link rel="icon" href="/static/assets/img/favy.png">' in share_head
     assert f'<link rel="canonical" href="{expected_share_url}">' in share_head
     assert f'<meta property="og:url" content="{expected_share_url}">' in share_head
     assert f'<meta name="twitter:url" content="{expected_share_url}">' in share_head
@@ -662,6 +688,29 @@ def test_share_post_self_referencing_urls_and_same_host_with_base_url(
     assert urlparse(canonical_href).hostname == "kimbela.com"
     assert urlparse(og_url).hostname == "kimbela.com"
     assert urlparse(og_image).hostname == "kimbela.com"
+
+    for invalid_v in ("too-long-1234567890", "bad<script>", "a/b", "space here"):
+        invalid_resp = client.get(
+            f"/share/post/{post.public_id}",
+            query_string={"v": invalid_v},
+            base_url="https://www.kimbela.com",
+        )
+        assert invalid_resp.status_code == 200
+        invalid_head = invalid_resp.get_data(as_text=True).split("</head>", 1)[0]
+        unversioned_url = f"https://kimbela.com/share/post/{post.public_id}"
+        assert f'<link rel="canonical" href="{unversioned_url}">' in invalid_head
+        assert f'<meta property="og:url" content="{unversioned_url}">' in invalid_head
+        assert f'<meta name="twitter:url" content="{unversioned_url}">' in invalid_head
+
+    valid_token_resp = client.get(
+        f"/share/post/{post.public_id}?v=rev_2-a",
+        base_url="https://www.kimbela.com",
+    )
+    valid_token_head = valid_token_resp.get_data(as_text=True).split("</head>", 1)[0]
+    assert (
+        f'<meta property="og:url" content="https://kimbela.com/share/post/{post.public_id}?v=rev_2-a">'
+        in valid_token_head
+    )
 
     post_resp = client.get(
         f"/post/{post.public_id}",
@@ -679,6 +728,7 @@ def test_share_post_self_referencing_urls_and_same_host_with_base_url(
 def test_pages_emit_exactly_one_og_set_and_valid_fallback_image(
     app, client, db, user, monkeypatch
 ):
+    import html
     import re
     from urllib.parse import urlparse
     from models import Post
@@ -689,6 +739,11 @@ def test_pages_emit_exactly_one_og_set_and_valid_fallback_image(
     db.session.add(post)
     db.session.commit()
 
+    expected_titles = {
+        "/": "Kimbela - Meet. Connect. Belong",
+        "/about": "About Kimbela - For Connections That Make Sense",
+        "/features": "Kimbela Features - Marketplace, Community & Trusted Connections",
+    }
     paths = [
         "/",
         "/about",
@@ -711,6 +766,9 @@ def test_pages_emit_exactly_one_og_set_and_valid_fallback_image(
         assert len(og_urls) == 1, f"Expected 1 og:url on {path}, got {og_urls}"
         assert len(og_titles) == 1, f"Expected 1 og:title on {path}, got {og_titles}"
         assert len(twitter_cards) == 1, f"Expected 1 twitter:card on {path}, got {twitter_cards}"
+
+        if path in expected_titles:
+            assert html.unescape(og_titles[0]) == expected_titles[path]
 
         assert "kimbela-logo.png" not in head_html
         assert og_images[0] == "https://kimbela.com/static/assets/img/kim.png"
