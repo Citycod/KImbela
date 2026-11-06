@@ -1695,7 +1695,9 @@ const ProfileSystem = {
                 day: 'numeric'
             }) : 'Not specified';
 
-            const age = userData.dob ? TimeUtils.calculateAge(userData.dob) : '';
+            const age = (data.age !== undefined && data.age !== null && data.age !== '')
+                ? data.age
+                : (userData.dob ? TimeUtils.calculateAge(userData.dob) : '');
 
             modalBody.innerHTML = `
                 <div class="profile-modal-content">

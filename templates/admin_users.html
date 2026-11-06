@@ -601,7 +601,9 @@ window.viewUserProfile = async function(userId) {
           year: 'numeric', month: 'long', day: 'numeric'
       }) : 'Not specified';
 
-      const age = data.dob ? calculateAge(new Date(data.dob)) : null;
+      const age = (data.age !== undefined && data.age !== null)
+          ? data.age
+          : (data.dob ? calculateAge(new Date(data.dob)) : null);
 
       document.getElementById('adminProfileModalBody').innerHTML = `
           <div class="profile-modal-content">

@@ -818,7 +818,7 @@
                                               name="min_age"
                                               placeholder="18"
                                               min="18"
-                                              max="99"
+                                              max="120"
                                               step="1"
                                               value="18"
                                               inputmode="numeric"
@@ -837,11 +837,11 @@
                                               class="text-input"
                                               id="maxAge"
                                               name="max_age"
-                                              placeholder="99"
+                                              placeholder="120"
                                               min="18"
-                                              max="99"
+                                              max="120"
                                               step="1"
-                                              value="99"
+                                              value="120"
                                               inputmode="numeric"
                                               aria-describedby="preferredAgeError"
                                               required
@@ -850,7 +850,7 @@
                                       </div>
 
                                       <p id="preferredAgeHelp" class="text-xs text-text-secondary mt-1">
-                                        Enter your preferred match age range from 18 to 99.
+                                        Enter your preferred match age range from 18 to 120.
                                       </p>
                                       <p id="preferredAgeError" class="mt-1 hidden text-xs font-medium text-red-600" role="alert" aria-live="polite">
                                       </p>
@@ -1515,8 +1515,8 @@
                 const maxAge = Number(maxAgeRaw);
                 if (minAge < 18) {
                     message = 'Minimum age must be at least 18.';
-                } else if (maxAge > 99 || minAge > 99) {
-                    message = 'Maximum age cannot be greater than 99.';
+                } else if (maxAge > 120 || minAge > 120) {
+                    message = 'Maximum age cannot be greater than 120.';
                 } else if (maxAge < minAge) {
                     message = 'Maximum age must be greater than or equal to minimum age.';
                 }

@@ -144,12 +144,20 @@ def is_strong_password(password):
     return True
 
 
+from utils.age_policy import (
+    adult_cutoff,
+    calculate_age as policy_calculate_age,
+    validate_account_dob,
+    MIN_ACCOUNT_AGE,
+    MIN_PLAUSIBLE_DOB,
+)
+
+
 def calculate_age(birth_date):
-    today = utcnow().date()
-    age = today.year - birth_date.year
-    if (today.month, today.day) < (birth_date.month, birth_date.day):
-        age -= 1
-    return age
+    if not birth_date:
+        return 0
+    age = policy_calculate_age(birth_date)
+    return age if age is not None else 0
 
 
 def resolve_client_ip():
@@ -608,9 +616,9 @@ def register():
         else:
             try:
                 dob = datetime.strptime(dob_str, "%Y-%m-%d").date()
-                age = calculate_age(dob)
-                if age < 31:
-                    errors["dob"] = "You must be at least 31 years old to join Kimbela."
+                is_valid, err_msg = validate_account_dob(dob)
+                if not is_valid:
+                    errors["dob"] = err_msg
             except ValueError:
                 errors["dob"] = "Invalid date of birth."
 
@@ -650,12 +658,14 @@ def register():
         if errors:
             for field, error in errors.items():
                 flash(error, "danger")
-            max_dob = (utcnow().date() - timedelta(days=31 * 365)).strftime(
+            max_dob = adult_cutoff(utcnow().date(), MIN_ACCOUNT_AGE).strftime(
                 "%Y-%m-%d"
             )
+            min_dob = MIN_PLAUSIBLE_DOB.strftime("%Y-%m-%d")
             return render_template(
                 "register.html",
                 max_dob=max_dob,
+                min_dob=min_dob,
                 errors=errors,
                 request=request,
                 educational_levels=EDUCATIONAL_LEVELS,
@@ -710,12 +720,14 @@ def register():
             db.session.rollback()
             flash("An error occurred during registration. Please try again.", "danger")
             print(f"Registration error: {e}")
-            max_dob = (utcnow().date() - timedelta(days=31 * 365)).strftime(
+            max_dob = adult_cutoff(utcnow().date(), MIN_ACCOUNT_AGE).strftime(
                 "%Y-%m-%d"
             )
+            min_dob = MIN_PLAUSIBLE_DOB.strftime("%Y-%m-%d")
             return render_template(
                 "register.html",
                 max_dob=max_dob,
+                min_dob=min_dob,
                 errors={},
                 request=request,
                 educational_levels=EDUCATIONAL_LEVELS,
@@ -725,10 +737,12 @@ def register():
             )
 
     # === GET request ===
-    max_dob = (utcnow().date() - timedelta(days=31 * 365)).strftime("%Y-%m-%d")
+    max_dob = adult_cutoff(utcnow().date(), MIN_ACCOUNT_AGE).strftime("%Y-%m-%d")
+    min_dob = MIN_PLAUSIBLE_DOB.strftime("%Y-%m-%d")
     return render_template(
         "register.html",
         max_dob=max_dob,
+        min_dob=min_dob,
         csrf_token=generate_csrf(),
         errors={},
         educational_levels=EDUCATIONAL_LEVELS,

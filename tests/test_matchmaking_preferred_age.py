@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 @pytest.mark.parametrize(
     "minimum,maximum",
-    [(18, 25), (21, 35), (25, 40), (30, 55), (31, 31), (45, 65)],
+    [(18, 25), (21, 35), (25, 40), (30, 55), (31, 31), (45, 65), (18, 120), (70, 110)],
 )
 def test_preferred_age_accepts_user_selected_adult_ranges(minimum, maximum):
     assert _preferred_age_range({
@@ -25,7 +25,7 @@ def test_preferred_age_accepts_user_selected_adult_ranges(minimum, maximum):
     [
         (17, 25, "Minimum age must be at least 18."),
         (40, 30, "Maximum age must be greater than or equal to minimum age."),
-        (25, 100, "Maximum age cannot be greater than 99."),
+        (25, 121, "Maximum age cannot be greater than 120."),
         ("18.5", 25, "Please enter a valid whole-number age."),
         ("age", 25, "Please enter a valid whole-number age."),
         (-1, 25, "Minimum age must be at least 18."),
@@ -49,14 +49,14 @@ def test_preferred_age_fields_are_editable_typed_number_inputs():
     for field in (min_field, max_field):
         assert 'type="number"' in field
         assert 'min="18"' in field
-        assert 'max="99"' in field
+        assert 'max="120"' in field
         assert 'step="1"' in field
         assert "readonly" not in field
         assert "disabled" not in field
     assert "Minimum age" in source
     assert "Maximum age" in source
     assert 'value="18"' in min_field
-    assert 'value="99"' in max_field
+    assert 'value="120"' in max_field
     assert "preferredAgeError" in source
     assert "Minimum age must be 31" not in source
     assert "minAgeInput.addEventListener('input'" not in source

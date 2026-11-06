@@ -807,7 +807,7 @@
                             <div class="form-group">
                                 <label for="dob" class="form-label">Date of Birth</label>
                                 <input type="date" class="form-control {% if errors.dob %}is-invalid{% endif %}"
-                                       id="dob" name="dob" max="{{ max_dob }}" value="{{ request.form.dob or '' }}" required>
+                                       id="dob" name="dob" {% if min_dob %}min="{{ min_dob }}"{% endif %} max="{{ max_dob }}" value="{{ request.form.dob or '' }}" required>
 
                                 <!-- Live Age Feedback -->
                                 <div id="ageFeedback" class="mt-2" style="font-size: var(--font-size-sm); display: none;">
@@ -989,7 +989,7 @@
                                 <input type="checkbox" id="terms" name="terms" {% if request.form.terms %}checked{% endif %}>
                                 <label for="terms" class="terms-text">
                                     I agree to the <a href="{{ url_for('user.terms') }}">Terms of Service</a> and
-                                    <a href="{{ url_for('user.privacy') }}">Privacy Policy</a> and confirm that I am at least 31 years old.
+                                    <a href="{{ url_for('user.privacy') }}">Privacy Policy</a> and confirm that I am at least 18 years old.
                                     I understand that my use of the platform is also subject to the
                                     <a href="{{ url_for('user.community_guidelines') }}">Community Guidelines</a>.
                                 </label>
@@ -1125,7 +1125,17 @@
                     return false;
                 }
 
-                const birthDate = new Date(dobValue);
+                const parts = dobValue.split('-');
+                if (parts.length !== 3) {
+                    ageText.innerHTML = `<span class="text-danger">Invalid date format</span>`;
+                    ageFeedback.style.display = 'block';
+                    dobInput.classList.add('is-invalid');
+                    dobInput.classList.remove('is-valid');
+                    nextBtn1.disabled = true;
+                    return false;
+                }
+
+                const birthDate = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
 
                 if (isNaN(birthDate.getTime())) {
                     ageText.innerHTML = `<span class="text-danger">Invalid date format</span>`;
@@ -1138,7 +1148,7 @@
 
                 const age = calculateAge(birthDate);
 
-                if (age >= 31) {
+                if (age >= 18) {
                     ageText.innerHTML = `<span class="text-success">Age: ${age} years ✓ Eligible</span>`;
                     ageFeedback.style.display = 'block';
                     dobInput.classList.remove('is-invalid');
@@ -1146,7 +1156,7 @@
                     nextBtn1.disabled = false;
                     return true;
                 } else {
-                    ageText.innerHTML = `<span class="text-danger">You must be 31+ years old (currently ${age})</span>`;
+                    ageText.innerHTML = `<span class="text-danger">You must be 18+ years old (currently ${age})</span>`;
                     ageFeedback.style.display = 'block';
                     dobInput.classList.add('is-invalid');
                     dobInput.classList.remove('is-valid');

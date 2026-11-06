@@ -400,7 +400,7 @@ def public_create_campaign():
             status="pending",
             payment_status="pending",
             target_gender=None,
-            target_age_min=31,
+            target_age_min=18,
             target_age_max=65,
         )
 
@@ -1482,7 +1482,7 @@ def create_campaign():
         # ✅ Extract targeting data
         targeting = data.get("targeting", {}) or {}
         target_gender = targeting.get("gender", "all")
-        target_age_min = targeting.get("age_min", 31)
+        target_age_min = targeting.get("age_min", 18)
         target_age_max = targeting.get("age_max", 65)
         target_locations = targeting.get("locations", [])
         target_interests = targeting.get("interests", [])
@@ -1565,8 +1565,8 @@ def create_campaign():
                 400,
             )
         if (
-            target_age_min < 31
-            or target_age_max > 80
+            target_age_min < 18
+            or target_age_max > 120
             or target_age_min > target_age_max
         ):
             return jsonify({"success": False, "error": "Invalid age range"}), 400

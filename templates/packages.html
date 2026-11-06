@@ -893,7 +893,7 @@
         const successBtn = document.getElementById('successBtn');
         
         let uploadedImageUrl = '';
-        let ageRangeMin = 31;
+        let ageRangeMin = 18;
         let ageRangeMax = 65;
         
         // Currency configuration
@@ -910,11 +910,11 @@
         function initAgeRangeSlider() {
           if (typeof noUiSlider !== 'undefined') {
             noUiSlider.create(ageRangeSlider, {
-              start: [31, 65],
+              start: [18, 65],
               connect: true,
               range: {
-                'min': 31,
-                'max': 80
+                'min': 18,
+                'max': 120
               },
               step: 1,
               behaviour: 'drag',
@@ -994,7 +994,7 @@
           }
           
           // Age targeting
-          if (targetingFactors.ageRange && (targetingFactors.ageRange[0] > 31 || targetingFactors.ageRange[1] < 65)) {
+          if (targetingFactors.ageRange && (targetingFactors.ageRange[0] > 18 || targetingFactors.ageRange[1] < 120)) {
             targetingMultiplier *= 0.8; // Narrower audience
           }
           

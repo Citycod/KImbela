@@ -55,6 +55,13 @@ import cloudinary.uploader
 import cloudinary.utils
 
 from time_utils import utcnow
+from utils.age_policy import (
+    adult_cutoff,
+    calculate_age as policy_calculate_age,
+    validate_account_dob,
+    MIN_ACCOUNT_AGE,
+    MIN_PLAUSIBLE_DOB,
+)
 from utils.group_description import sanitize_group_description
 from utils.matchmaking_group import (
     can_open_group_landing,
@@ -625,11 +632,10 @@ def is_strong_password(password):
 
 
 def calculate_age(birth_date):
-    today = utcnow().date()
-    age = today.year - birth_date.year
-    if (today.month, today.day) < (birth_date.month, birth_date.day):
-        age -= 1
-    return age
+    if not birth_date:
+        return 0
+    age = policy_calculate_age(birth_date)
+    return age if age is not None else 0
 
 def get_banner_ad_by_placement(placement):
     current_time = utcnow()
@@ -3088,17 +3094,17 @@ def track_ad_click(ad_id):
 def get_user_profile(user_id):
     user = User.query.get_or_404(user_id)
 
-    # DEBUG: Print everything about religion
-    print(f"=== DEBUG for user_id: {user_id} ===")
-    print(f"User religion value from DB: {user.religion}")
-    print(f"User religion type: {type(user.religion)}")
-    print(f"Religion is None: {user.religion is None}")
-    print(f"Religion == '': {user.religion == ''}")
+    if not user.is_visible_to(current_user):
+        abort(403)
 
-    # FIXED: Use the User model's existing method
     friend_status = current_user.get_friend_request_status(
         user_id
     )  # 'none', 'sent', 'received', or 'friends'
+
+    is_privileged_viewer = (
+        current_user.id == user.id
+        or bool(getattr(current_user, "is_admin", False) or getattr(current_user, "is_super_admin", False))
+    )
 
     # Create the response dictionary
     response_data = {
@@ -3114,7 +3120,8 @@ def get_user_profile(user_id):
         "state": user.state,
         "gender": user.gender,
         "religion": user.religion,  # This should be included even if None
-        "dob": user.dob.isoformat() if user.dob else None,
+        "dob": user.dob.isoformat() if (user.dob and is_privileged_viewer) else None,
+        "age": user.age,
         # "phone_number": user.phone_number,
         "marital_status": user.marital_status,
         "occupation": user.occupation,
@@ -3125,11 +3132,6 @@ def get_user_profile(user_id):
         "friends_count": user.friends.count(),
         "friend_status": friend_status,  # 'none', 'sent', 'received', or 'friends'
     }
-
-    # DEBUG: Print the response data
-    print(f"Response data keys: {response_data.keys()}")
-    print(f"Response data religion value: {response_data.get('religion')}")
-    print("=== END DEBUG ===\n")
 
     return jsonify(response_data)
 
@@ -4049,14 +4051,18 @@ def edit_profile(user_id):
                 "ethnicity", profile_user.ethnicity
             )
 
-            dob_str = request.form.get("dob")
+            dob_str = (request.form.get("dob") or "").strip()
             if dob_str:
                 try:
-                    profile_user.dob = datetime.strptime(
-                        dob_str, "%Y-%m-%d"
-                    ).date()
+                    new_dob = datetime.strptime(dob_str, "%Y-%m-%d").date()
+                    if new_dob != profile_user.dob:
+                        is_valid, err_msg = validate_account_dob(new_dob)
+                        if not is_valid:
+                            flash(err_msg or "Invalid date of birth.", "danger")
+                        else:
+                            profile_user.dob = new_dob
                 except ValueError:
-                    flash("Invalid date format for date of birth.", "warning")
+                    flash("Invalid date format for date of birth.", "danger")
 
             if "profile_pic" in request.files:
                 file = request.files["profile_pic"]
@@ -4108,12 +4114,16 @@ def edit_profile(user_id):
 
         return redirect(url_for("user.profile", user_id=profile_user.id))
 
+    max_dob = adult_cutoff(utcnow().date(), MIN_ACCOUNT_AGE).strftime("%Y-%m-%d")
+    min_dob = MIN_PLAUSIBLE_DOB.strftime("%Y-%m-%d")
     return render_template(
         "edit_profile.html",
         user=profile_user,
         educational_levels=educational_levels,
         religions=religions,
         ethnicities=ethnicities,
+        max_dob=max_dob,
+        min_dob=min_dob,
     )
 
 
