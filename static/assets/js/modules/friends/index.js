@@ -215,9 +215,9 @@ class FriendSystem {
                 if (container) {
                     container.innerHTML = `
                         <button
-                            class="btn-add-friend w-full py-2 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                            class="btn-add-friend w-full py-2 text-white rounded-lg font-medium transition-colors"
                             onclick="event.stopPropagation(); FriendSystem.add(${userId}, this)"
-                            style="background: linear-gradient(135deg, #5a4500, #b88900);"
+                            style="background: #f76f69;"
                         >
                             <i class="bi bi-person-plus mr-1"></i> Connect
                         </button>
@@ -292,7 +292,8 @@ class FriendSystem {
 
             default: // 'none'
                 buttonHTML = `
-                    <button class="btn btn-primary px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                    <button class="btn btn-primary px-4 py-2 text-white rounded-lg font-medium transition-colors"
+                            style="background: #f76f69;"
                             onclick="FriendSystem.add(${userId}, this)">
                         <i class="bi bi-person-plus mr-1"></i> Connect
                     </button>
