@@ -840,6 +840,7 @@
 
       function initializeEmojiPicker() {
           const picker = document.getElementById('emojiPicker');
+          const fallbackContainer = document.getElementById('emojiFallbackPalette');
 
           if (picker && !picker.hasAttribute('data-initialized')) {
               picker.addEventListener('emoji-click', event => {
@@ -852,6 +853,20 @@
 
               // Mark as initialized
               picker.setAttribute('data-initialized', 'true');
+          }
+
+          // Build/bind fallback emojis
+          const commonEmojis = ['😊', '😂', '😍', '❤️', '🔥', '🎉', '👍', '👏', '🙏', '🙌', '🥳', '🤩', '😎', '💖', '✨', '💯', '🌟', '🌹', '🥂', '✈️', '🏖️', '💡', '🎯', '🤝', '💬', '🎈'];
+          if (fallbackContainer && !fallbackContainer.hasAttribute('data-initialized')) {
+              fallbackContainer.innerHTML = commonEmojis.map(e => `<button type="button" class="w-8 h-8 text-xl hover:scale-125 transition flex items-center justify-center p-1 rounded hover:bg-gray-200" data-emoji="${e}">${e}</button>`).join('');
+              fallbackContainer.addEventListener('click', (ev) => {
+                  const btn = ev.target.closest('button[data-emoji]');
+                  if (btn && currentTextarea) {
+                      insertAtCursor(currentTextarea, btn.getAttribute('data-emoji'));
+                      closeEmojiModal();
+                  }
+              });
+              fallbackContainer.setAttribute('data-initialized', 'true');
           }
       }
 
@@ -2175,6 +2190,14 @@
         return response.json();
       }
 
+      function promptForManualLocation() {
+        const defaultLoc = '{{ current_user.city if current_user.city else "" }}{{ ", " ~ current_user.country if current_user.country else "" }}'.trim();
+        const entered = prompt("Enter your location (e.g. Lagos, Nigeria):", defaultLoc);
+        if (entered && entered.trim()) {
+          setPostLocation(entered.trim());
+        }
+      }
+
       async function handleAddLocationClick() {
         const button = document.getElementById("postLocationButton");
         if (!button) return;
@@ -2184,6 +2207,7 @@
         if (!navigator.geolocation) {
           button.disabled = false;
           button.classList.remove("opacity-60");
+          promptForManualLocation();
           return;
         }
 
@@ -2193,8 +2217,13 @@
               const { latitude, longitude } = position.coords;
               const data = await reverseGeocode(latitude, longitude);
               const pretty = formatLocation(data.address) || data.display_name || "";
-              if (pretty) setPostLocation(pretty);
+              if (pretty) {
+                setPostLocation(pretty);
+              } else {
+                promptForManualLocation();
+              }
             } catch (error) {
+              promptForManualLocation();
             } finally {
               button.disabled = false;
               button.classList.remove("opacity-60");
@@ -2203,8 +2232,9 @@
           () => {
             button.disabled = false;
             button.classList.remove("opacity-60");
+            promptForManualLocation();
           },
-          { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 }
+          { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 }
         );
       }
 

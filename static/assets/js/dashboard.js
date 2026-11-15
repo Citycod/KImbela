@@ -395,44 +395,30 @@ window.openModal = function(modalId) {
 
 
 
-// Add this to your dashboard.js, near the top of the "GLOBAL FUNCTIONS" section:
+window.closeModal = function(modalId) {
+    const el = document.getElementById(modalId);
+    if (el) {
+        el.classList.add('hidden');
+        el.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+    if (typeof Modal !== 'undefined' && Modal.close) {
+        Modal.close(modalId);
+    }
+};
 
 window.handleMessageButtonClick = function(userId) {
-    // Close the profile modal
-    Modal.close('profileModal');
+    // Immediately close the profile modal
+    window.closeModal('profileModal');
 
-    // Show loading toast
-    Toast.show('Opening chat...', 'info');
-
-    // Wait a bit for modal to close
-    setTimeout(() => {
-        // Open the messenger popup
-        const messengerPopup = document.getElementById('messengerPopup');
-        if (messengerPopup) {
-            // Remove hidden class and show it
-            messengerPopup.classList.remove('hidden');
-            messengerPopup.style.display = 'flex';
-
-            // Ensure Messenger is initialized
-            if (typeof Messenger !== 'undefined') {
-                // Initialize if not already
-                Messenger.init();
-
-                // Load the user's friends list (if not loaded)
-                Messenger.loadFriendsList();
-
-                // Small delay to ensure friends list is loaded
-                setTimeout(() => {
-                    // Try to open chat with the user
-                    openChatForUser(userId);
-                }, 300);
-            } else {
-                Toast.show('Messenger not available', 'danger');
-            }
-        } else {
-            Toast.show('Messenger not found', 'danger');
-        }
-    }, 300);
+    // Open chat directly for this specific user
+    if (typeof window.openMessenger === 'function') {
+        window.openMessenger(userId);
+    } else if (typeof openChatForUser === 'function') {
+        openChatForUser(userId);
+    } else {
+        window.location.href = `/user_dashboard?chat=${encodeURIComponent(userId)}`;
+    }
 };
 
 // Helper function to open chat for a specific user
@@ -530,6 +516,21 @@ function openPostComposerAction(action = 'post') {
 
     if (action === 'video') {
         setPostComposerActionNotice('Video uploads are not currently supported. You can add a photo or GIF instead.');
+        focusPostComposer(postModal);
+        return true;
+    }
+
+    if (action === 'live') {
+        setPostComposerActionNotice('Live video broadcasting will be available soon.');
+        focusPostComposer(postModal);
+        return true;
+    }
+
+    if (action === 'gif') {
+        if (typeof window.openGifPicker === 'function') {
+            window.openGifPicker();
+            return true;
+        }
         focusPostComposer(postModal);
         return true;
     }
@@ -1456,9 +1457,9 @@ const FriendSystem = {
                 if (container) {
                     container.innerHTML = `
                         <button
-                            class="btn-add-friend w-full py-2 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                            class="btn-add-friend w-full py-2 text-white rounded-lg font-medium transition-colors"
                             onclick="event.stopPropagation(); FriendSystem.add(${userId}, this)"
-                            style="background: linear-gradient(135deg, #5a4500, #b88900);"
+                            style="background: #f76f69;"
                         >
                             <i class="bi bi-person-plus mr-1"></i> Connect
                         </button>
@@ -1539,7 +1540,8 @@ const FriendSystem = {
 
             default: // 'none'
                 buttonHTML = `
-                    <button class="relative px-5 py-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-xl font-medium transition-all duration-300 overflow-hidden group shadow-md hover:shadow-lg"
+                    <button class="relative px-5 py-2 text-white rounded-xl font-medium transition-all duration-300 overflow-hidden group shadow-md hover:shadow-lg"
+        style="background: #f76f69;"
         onclick="FriendSystem.add(${userId}, this)">
     <!-- Shimmer overlay -->
     <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
@@ -2040,7 +2042,8 @@ const ProfileSystem = {
                         actionsHTML = `
                             <div class="flex flex-wrap gap-3 justify-center py-6">
                                 <!-- Connect Button -->
-                                <button class="relative px-5 py-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-xl font-medium transition-all duration-300 overflow-hidden group shadow-sm hover:shadow-md"
+                                <button class="relative px-5 py-2 text-white rounded-xl font-medium transition-all duration-300 overflow-hidden group shadow-sm hover:shadow-md"
+                                        style="background: #f76f69;"
                                         onclick="FriendSystem.add(${userId}, this)">
                                     <!-- Shimmer effect -->
                                     <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
@@ -2078,7 +2081,8 @@ const ProfileSystem = {
             profileActions.innerHTML = `
                 <div class="flex flex-wrap gap-3 justify-center py-6">
                     <!-- Connect Button -->
-                    <button class="relative px-5 py-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-xl font-medium transition-all duration-300 overflow-hidden group shadow-sm hover:shadow-md"
+                    <button class="relative px-5 py-2 text-white rounded-xl font-medium transition-all duration-300 overflow-hidden group shadow-sm hover:shadow-md"
+                            style="background: #f76f69;"
                             onclick="FriendSystem.add(${userId}, this)">
                         <!-- Shimmer effect -->
                         <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
@@ -2535,6 +2539,10 @@ const NotificationSystem = {
         if (dropdown) {
             dropdown.addEventListener('click', () => this.load());
         }
+
+        window.addEventListener('pageshow', () => {
+            this.updateBadge();
+        });
     }
 };
 

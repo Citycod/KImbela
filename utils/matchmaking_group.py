@@ -37,7 +37,7 @@ def configured_matchmaking_group_id(*, validate_exists=False):
             raise ValueError
     except (TypeError, ValueError):
         _log_config_error_once(
-            "MATCHMAKING_GROUP_ID is malformed; protected Matchmaking "
+            "MATCHMAKING_GROUP_ID is missing or malformed; protected Matchmaking "
             "features are unavailable"
         )
         return None

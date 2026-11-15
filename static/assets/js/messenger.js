@@ -380,11 +380,25 @@
         currentChatUserName = userName;
         currentChatAvatar = avatar;
 
-        document.getElementById('friendList').classList.add('hidden');
-        document.getElementById('chatArea').classList.remove('hidden');
+        const friendList = document.getElementById('friendList');
+        const chatArea = document.getElementById('chatArea');
+        if (friendList) friendList.classList.add('hidden');
+        if (chatArea) chatArea.classList.remove('hidden');
 
-        document.getElementById('chatName').textContent = userName;
+        document.getElementById('chatName').textContent = userName || 'Chat';
         document.getElementById('chatAvatar').src = avatar || window.defaultAvatar;
+        const profileLink = document.getElementById('chatUserProfileLink');
+        if (profileLink) {
+            profileLink.href = `/profile/${userId}`;
+        }
+
+        // Instantly clear unread badge on friend item in DOM
+        const friendItem = document.querySelector(`.friend-item[data-user-id="${userId}"]`);
+        if (friendItem) {
+            const unreadBadge = friendItem.querySelector('.bg-gradient-to-br, .bg-red-500');
+            if (unreadBadge) unreadBadge.remove();
+            friendItem.classList.remove('bg-blue-50', 'border-blue-100', 'shadow-md');
+        }
 
         loadChatHistory(userId);
 
@@ -1440,14 +1454,39 @@
 
         const friendList = document.getElementById('friendList');
         const chatArea = document.getElementById('chatArea');
-        if (friendList) friendList.classList.remove('hidden');
-        if (chatArea) chatArea.classList.add('hidden');
 
         if (userId) {
+            if (friendList) friendList.classList.add('hidden');
+            if (chatArea) chatArea.classList.remove('hidden');
+
             const item = document.querySelector(`.friend-item[data-user-id="${userId}"]`);
             const name = item?.querySelector('.font-semibold')?.textContent?.trim() || '';
             const avatar = item?.querySelector('img')?.getAttribute('src') || window.defaultAvatar;
-            openChat(parseInt(userId), name, avatar);
+
+            if (name) {
+                openChat(parseInt(userId), name, avatar);
+            } else {
+                openChat(parseInt(userId), 'Loading...', window.defaultAvatar);
+                fetch(`/get_user_profile/${userId}`)
+                    .then(r => r.json())
+                    .then(d => {
+                        if (!d.error) {
+                            const fullName = `${d.first_name || ''} ${d.last_name || ''}`.trim() || 'User';
+                            const userAvatar = d.profile_pic || window.defaultAvatar;
+                            const chatNameEl = document.getElementById('chatName');
+                            const chatAvatarEl = document.getElementById('chatAvatar');
+                            if (chatNameEl) chatNameEl.textContent = fullName;
+                            if (chatAvatarEl) chatAvatarEl.src = userAvatar;
+                            currentChatUserName = fullName;
+                            currentChatAvatar = userAvatar;
+                        }
+                    })
+                    .catch(() => {});
+            }
+        } else {
+            if (friendList) friendList.classList.remove('hidden');
+            if (chatArea) chatArea.classList.add('hidden');
+            updateUnreadBadge();
         }
     };
 
@@ -1469,4 +1508,8 @@
 
     window.closeGifPicker = function() { closeGifPicker(); };
     window.openGifPicker = function() { openGifPicker(); };
+
+    window.addEventListener('pageshow', function() {
+        updateUnreadBadge(true);
+    });
 })();

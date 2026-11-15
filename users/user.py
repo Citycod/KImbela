@@ -3899,10 +3899,9 @@ def get_post(post_id):
 def profile(user_id):
     user = User.query.get_or_404(user_id)
 
-    # This profile page is currently the signed-in user's private profile view.
+    # If viewing another user's profile, route to their public profile view with feed
     if user.id != current_user.id:
-        flash("You can only edit your own profile.", "warning")
-        return redirect(url_for("user.profile", user_id=current_user.id))
+        return redirect(url_for("user.view_profile", user_identifier=user.public_id))
 
     # Keep profile history bounded while preserving access to older posts.
     page = max(request.args.get("page", 1, type=int) or 1, 1)
@@ -4966,12 +4965,17 @@ def report_content():
             {"success": True, "message": "Content reported successfully"}
         )
 
+    is_anonymous = bool(data.get("is_anonymous"))
+    full_reason = f"{reason}: {additional_info}".strip() if additional_info else reason
+    if is_anonymous:
+        full_reason = f"[Anonymous Report] {full_reason}"
+
     report = ReportedContent(
         reporter_id=current_user.id,
         reported_user_id=reported_user_id,
         content_type=content_type,
         content_id=content_id,
-        reason=f"{reason}: {additional_info}".strip() if additional_info else reason,
+        reason=full_reason,
         status="pending",
     )
 

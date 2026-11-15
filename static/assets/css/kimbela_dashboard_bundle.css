@@ -14777,8 +14777,12 @@ nav .searching .search_input:focus {
 
 .kb-composer-btn.photo i { color: #10b981; }
 .kb-composer-btn.video i { color: #ef4444; }
+.kb-composer-btn.live i { color: #f43f5e; }
+.kb-composer-btn.gif i { color: #6366f1; }
 .kb-composer-btn.poll i { color: #f59e0b; }
 .kb-composer-btn.feeling i { color: #ec4899; }
+.kb-composer-btn.live { color: #e11d48; background: #fff1f2; }
+.kb-composer-btn.gif { color: #4f46e5; background: #eef2ff; }
 
 .kb-post-btn {
   padding: 0.55rem 1.5rem;
