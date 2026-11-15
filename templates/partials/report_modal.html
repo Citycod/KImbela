@@ -44,6 +44,14 @@
                         <textarea id="otherReason" placeholder="Please provide additional details..."
                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs md:text-sm"></textarea>
                     </div>
+
+                    <div class="pt-2 border-t border-gray-100">
+                        <label class="flex items-center text-xs md:text-sm text-gray-700 cursor-pointer">
+                            <input type="checkbox" id="reportAnonymous" class="rounded border-gray-300 text-amber-600 focus:ring-amber-500 mr-2">
+                            <span class="font-medium">Report anonymously</span>
+                        </label>
+                        <p class="text-[11px] text-gray-500 mt-0.5 ml-5">Your name and profile will not be revealed.</p>
+                    </div>
                 </div>
 
                 <div class="flex space-x-2 md:space-x-3">
@@ -136,7 +144,8 @@
                         content_type: document.getElementById('reportContentType').value,
                         content_id: document.getElementById('reportContentId').value,
                         reason: reason,
-                        additional_info: info
+                        additional_info: info,
+                        is_anonymous: document.getElementById('reportAnonymous')?.checked || false
                     })
                 });
                 const data = await res.json();

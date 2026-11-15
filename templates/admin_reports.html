@@ -487,6 +487,11 @@
                       <p class="text-xs text-slate-700">{{ report.reason }}</p>
                     </td>
                     <td class="py-4">
+                      {% if report.reason and report.reason.startswith('[Anonymous Report]') %}
+                      <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-gray-100 text-gray-800">
+                        <i class="bi bi-incognito mr-1"></i> Anonymous Member
+                      </span>
+                      {% else %}
                       <p class="text-sm text-slate-800">
                         {{ report.reporter.first_name }} {{
                         report.reporter.last_name }}
@@ -494,6 +499,7 @@
                       <p class="text-xs text-slate-500">
                         ID: {{ report.reporter.id }}
                       </p>
+                      {% endif %}
                     </td>
                     <td class="py-4">
                       {% if report.reported_user %}
