@@ -306,11 +306,11 @@ def get_requests():
 
         # Location filters apply to the displayed profile, not its partner wish-list.
         if filters["country"]:
-            query = query.filter(User.country == filters["country"])
+            query = query.filter(User.country.ilike(filters["country"]))
         if filters["state"]:
-            query = query.filter(User.state == filters["state"])
+            query = query.filter(User.state.ilike(filters["state"]))
         if filters["city"]:
-            query = query.filter(User.city == filters["city"])
+            query = query.filter(User.city.ilike(filters["city"]))
 
         # Keep the previous newest-first default and add deterministic tie-breakers.
         sort_by = filters["sort"]
