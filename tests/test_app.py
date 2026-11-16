@@ -641,7 +641,7 @@ def test_subscription_callback_recovers_success_via_reference_verification(
 def test_public_profile_accepts_user_uuid(client, db, user, login):
     login()
 
-    response = client.get(f"/profile/{user.public_id}")
+    response = client.get(f"/profile/{user.public_id}", follow_redirects=True)
     assert response.status_code == 200
     assert user.first_name.encode() in response.data
 

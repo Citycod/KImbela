@@ -218,7 +218,7 @@
                         </div>
                         {% endif %}
 
-                        {% if user.marital_status %}
+                        {% if user.marital_status and (user.marital_status != 'Prefer not to say' or (current_user.is_authenticated and (current_user.id == user.id or current_user.is_admin or current_user.is_super_admin))) %}
                         <div class="flex items-center gap-3 p-3 bg-green-50 rounded-xl">
                             <i class="fas fa-heart text-green-600 text-base"></i>
                             <div>
@@ -228,12 +228,12 @@
                         </div>
                         {% endif %}
 
-                        {% if user.dob %}
+                        {% if user.dob and (user.show_age_on_profile or (current_user.is_authenticated and (current_user.id == user.id or current_user.is_admin or current_user.is_super_admin))) %}
                         <div class="flex items-center gap-3 p-3 bg-yellow-50 rounded-xl">
                             <i class="fas fa-birthday-cake text-yellow-600 text-base"></i>
                             <div>
                                 <p class="text-gray-600">Age</p>
-                                <p class="font-semibold text-gray-900">{{ ((datetime.utcnow().date() - user.dob).days // 365) }} years old</p>
+                                <p class="font-semibold text-gray-900">{{ user.age if user.age is not none else ((datetime.utcnow().date() - user.dob).days // 365) }} years old</p>
                             </div>
                         </div>
                         {% endif %}
@@ -326,7 +326,7 @@
                         Quick Actions
                     </h3>
                     <div class="space-y-3">
-                        <a href="{{ url_for('user.edit_profile', user_id=user.id) }}"
+                        <a href="{{ url_for('user.edit_profile') }}"
                                 class="w-full py-3.5 gradient-primary text-white rounded-xl font-semibold hover-lift shadow-medium flex items-center justify-center gap-2 text-xs">
                             <i class="fas fa-edit"></i> Edit Profile
                         </a>
@@ -455,7 +455,7 @@
                         </div>
                         {% endif %}
 
-                        {% if user.marital_status %}
+                        {% if user.marital_status and (user.marital_status != 'Prefer not to say' or (current_user.is_authenticated and (current_user.id == user.id or current_user.is_admin or current_user.is_super_admin))) %}
                         <div class="flex items-center gap-3 p-3 bg-green-50 rounded-xl">
                             <i class="fas fa-heart text-green-600 text-base"></i>
                             <div>
@@ -465,12 +465,12 @@
                         </div>
                         {% endif %}
 
-                        {% if user.dob %}
+                        {% if user.dob and (user.show_age_on_profile or (current_user.is_authenticated and (current_user.id == user.id or current_user.is_admin or current_user.is_super_admin))) %}
                         <div class="flex items-center gap-3 p-3 bg-yellow-50 rounded-xl">
                             <i class="fas fa-birthday-cake text-yellow-600 text-base"></i>
                             <div>
                                 <p class="text-gray-600">Age</p>
-                                <p class="font-semibold text-gray-900">{{ ((datetime.utcnow().date() - user.dob).days // 365) }} years old</p>
+                                <p class="font-semibold text-gray-900">{{ user.age if user.age is not none else ((datetime.utcnow().date() - user.dob).days // 365) }} years old</p>
                             </div>
                         </div>
                         {% endif %}
@@ -563,7 +563,7 @@
                         Quick Actions
                     </h3>
                     <div class="space-y-3">
-                        <a href="{{ url_for('user.edit_profile', user_id=user.id) }}"
+                        <a href="{{ url_for('user.edit_profile') }}"
                                 class="w-full py-3.5 gradient-primary text-white rounded-xl font-semibold hover-lift shadow-medium flex items-center justify-center gap-2 text-xs">
                             <i class="fas fa-edit"></i> Edit Profile
                         </a>
@@ -664,7 +664,7 @@
                 class="flex-1 py-2.5 gradient-primary text-white rounded-lg font-semibold text-sm flex items-center justify-center gap-2 shadow-medium hover-lift transition">
             <i class="fas fa-plus text-xs"></i> Add to Story
         </button>
-        <a href="{{ url_for('user.edit_profile', user_id=user.id) }}"
+        <a href="{{ url_for('user.edit_profile') }}"
                 class="flex-1 py-2.5 bg-gray-200 text-gray-800 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 hover:bg-gray-300 transition">
             <i class="fas fa-pen text-xs"></i> Edit profile
         </a>
@@ -754,7 +754,7 @@
                 </div>
                 {% endif %}
 
-                {% if user.marital_status %}
+                {% if user.marital_status and (user.marital_status != 'Prefer not to say' or (current_user.is_authenticated and (current_user.id == user.id or current_user.is_admin or current_user.is_super_admin))) %}
                 <div class="detail-row">
                     <i class="fas fa-heart text-pink-500 w-5 text-center"></i>
                     <div>
@@ -764,12 +764,12 @@
                 </div>
                 {% endif %}
 
-                {% if user.dob %}
+                {% if user.dob and (user.show_age_on_profile or (current_user.is_authenticated and (current_user.id == user.id or current_user.is_admin or current_user.is_super_admin))) %}
                 <div class="detail-row">
                     <i class="fas fa-birthday-cake text-yellow-600 w-5 text-center"></i>
                     <div>
                         <p class="text-xs text-gray-500">Age</p>
-                        <p class="text-sm font-semibold text-gray-900">{{ ((datetime.utcnow().date() - user.dob).days // 365) }} years old</p>
+                        <p class="text-sm font-semibold text-gray-900">{{ user.age if user.age is not none else ((datetime.utcnow().date() - user.dob).days // 365) }} years old</p>
                     </div>
                 </div>
                 {% endif %}

@@ -375,7 +375,17 @@ def get_requests():
                 req.views = (req.views or 0) + 1
 
             # Calculate age of the request owner
-            age = calculate_age(req.user.dob) if req.user and req.user.dob else "N/A"
+            is_privileged_viewer = (
+                req.user_id == current_user.id
+                or bool(getattr(current_user, "is_admin", False) or getattr(current_user, "is_super_admin", False))
+            )
+            if req.user and req.user.dob:
+                if getattr(req.user, "show_age_on_profile", True) or is_privileged_viewer:
+                    age = calculate_age(req.user.dob)
+                else:
+                    age = None
+            else:
+                age = "N/A"
 
             # Days remaining
             days_remaining = max(0, (req.end_date - utcnow()).days)
@@ -617,12 +627,21 @@ def browse_users():
                 part for part in (candidate.city, candidate.state, candidate.country) if part
             )
             relationship = relationship_states[candidate.id]
+            is_privileged_candidate = (
+                current_user.id == candidate.id
+                or bool(getattr(current_user, "is_admin", False) or getattr(current_user, "is_super_admin", False))
+            )
+            candidate_age = (
+                calculate_age(candidate.dob)
+                if (candidate.dob and (getattr(candidate, "show_age_on_profile", True) or is_privileged_candidate))
+                else None
+            )
             users_data.append(
                 {
                     "id": candidate.id,
                     "public_id": candidate.public_id,
                     "full_name": candidate.full_name,
-                    "age": calculate_age(candidate.dob),
+                    "age": candidate_age,
                     "gender": candidate.gender,
                     "country": candidate.country,
                     "state": candidate.state,
@@ -916,12 +935,22 @@ def get_request_detail(request_id):
             is not None
         )
 
+        is_privileged_req = (
+            current_user.id == req.user_id
+            or bool(getattr(current_user, "is_admin", False) or getattr(current_user, "is_super_admin", False))
+        )
+        owner_age = (
+            calculate_age(req.user.dob)
+            if (req.user and req.user.dob and (getattr(req.user, "show_age_on_profile", True) or is_privileged_req))
+            else None
+        )
+
         request_data = {
             "id": req.id,
             "user": {
                 "id": req.user.id,
                 "full_name": req.user.full_name,
-                "age": calculate_age(req.user.dob),
+                "age": owner_age,
                 "location": f"{req.user.city}, {req.user.country}",
                 "profile_pic": req.user.profile_pic,
                 "about_me": req.user.about_me,

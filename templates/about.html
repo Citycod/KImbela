@@ -268,7 +268,7 @@
             <nav id="navmenu" class="navmenu">
                 <ul>
                     <li><a href="{{ url_for('user.index') }}">Home</a></li>
-                    <li><a href="{{ url_for('user.about') }}" class="active">About Us</a></li>
+                    <li style="display: none;"><a href="{{ url_for('user.about') }}" class="active">About Us</a></li>
                     <li><a href="{{ url_for('user.features') }}">Features</a></li>
                     <li><a href="{{ url_for('auth.login') }}">Login</a></li>
                 </ul>
@@ -277,7 +277,7 @@
         </div>
     </header>
 
-    <main class="main">
+    <main class="main" style="display: none !important;">
         <!-- Page Title -->
         <section class="page-title">
             <div class="container">
@@ -555,7 +555,7 @@
                         <p><strong>Support:</strong> <span>support@kimbela.com</span></p>
                         <p>
                             <strong>Community:</strong>
-                            <span>Adults (18+) seeking meaningful connections</span>
+                            <span>A space for people, passions, conversations, and connections.</span>
                         </p>
                     </div>
                     <div class="social-links d-flex mt-4">
@@ -576,7 +576,7 @@
                     <h4>Quick Links</h4>
                     <ul>
                         <li><a href="{{ url_for('user.index') }}">Home</a></li>
-                        <li><a href="{{ url_for('user.about') }}">About Us</a></li>
+                        <li style="display: none;"><a href="{{ url_for('user.about') }}">About Us</a></li>
                         <li><a href="{{ url_for('user.features') }}">Features</a></li>
                         <li><a href="{{ url_for('auth.login') }}">Login</a></li>
                     </ul>
@@ -587,7 +587,7 @@
                     <ul>
                         <li><a href="{{ url_for('user.features') }}#connections">Friend Connections</a></li>
                         <li><a href="{{ url_for('user.features') }}#groups">Group Discussions</a></li>
-                        <li><a href="{{ url_for('user.features') }}#mentorship">Mentorship</a></li>
+                        <li style="display: none;"><a href="{{ url_for('user.features') }}#mentorship">Mentorship</a></li>
                         <li><a href="{{ url_for('user.features') }}#premium">Premium Services</a></li>
                         <li><a href="{{ url_for('user.features') }}">View All Features</a></li>
                     </ul>

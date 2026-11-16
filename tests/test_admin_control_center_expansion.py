@@ -94,9 +94,14 @@ def test_matchmaking_group_privacy_and_posting_are_server_enforced(app, db, clie
         landing = client.get(f"/groups/{group.id}")
         assert landing.status_code == 200
         assert b"Join to view Matchmaking content" in landing.data
+        assert group.id not in {
+            item["id"] for item in client.get("/groups/all").get_json()
+        }
+        login(client, admin)
         assert group.id in {
             item["id"] for item in client.get("/groups/all").get_json()
         }
+        login(client, outsider)
         assert client.get(f"/groups/{group.id}/posts").status_code == 403
         assert client.post(f"/groups/{group.id}/join").status_code == 200
         assert client.get(f"/groups/{group.id}").status_code == 200
@@ -179,7 +184,8 @@ def test_admin_profile_link_and_public_ai_profile_uses_plain_name(db, client):
     login(client, admin)
     dashboard = client.get("/admin_dashboard").get_data(as_text=True)
     assert "My Profile" in dashboard
-    assert f'href="/{admin.id}"' in dashboard
+    assert 'href="/profile"' in dashboard
+    assert client.get(f"/{admin.id}").status_code == 301
 
     profile = client.get(f"/profile/{persona.user.public_id}").get_data(as_text=True)
     assert persona.user.full_name in profile

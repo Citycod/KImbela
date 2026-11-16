@@ -4,7 +4,7 @@
      data-post-time="{{ post.created_at.timestamp() }}">
     <div class="p-4 flex justify-between items-start">
         <div class="flex items-start space-x-3">
-            <a href="{{ url_for('user.view_profile', user_identifier=post.author.id) }}" class="flex-shrink-0">
+            <a href="{{ url_for('user.view_profile', user_identifier=post.author.public_id) }}" class="flex-shrink-0">
                 <img
                     src="{{ post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
                     class="post-author-avatar w-10 h-10 rounded-full object-cover hover:opacity-90 transition-opacity"
@@ -12,7 +12,7 @@
                 />
             </a>
             <div>
-                <a href="{{ url_for('user.view_profile', user_identifier=post.author.id) }}" class="hover:underline text-gray-900 block">
+                <a href="{{ url_for('user.view_profile', user_identifier=post.author.public_id) }}" class="hover:underline text-gray-900 block">
                     <div class="font-semibold">
                         {{ post.author.first_name }} {{ post.author.last_name }}
                     </div>
@@ -91,7 +91,7 @@
             <div class="shared-post-card mt-3">
                 {% if post.shared_post %}
                 <div class="shared-post-header flex items-start gap-3">
-                    <a href="{{ url_for('user.view_profile', user_identifier=post.shared_post.author.id) }}" class="flex-shrink-0">
+                    <a href="{{ url_for('user.view_profile', user_identifier=post.shared_post.author.public_id) }}" class="flex-shrink-0">
                         <img
                             src="{{ post.shared_post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
                             alt="{{ post.shared_post.author.full_name }}"
@@ -100,7 +100,7 @@
                         />
                     </a>
                     <div>
-                        <a href="{{ url_for('user.view_profile', user_identifier=post.shared_post.author.id) }}" class="hover:underline text-gray-900 block">
+                        <a href="{{ url_for('user.view_profile', user_identifier=post.shared_post.author.public_id) }}" class="hover:underline text-gray-900 block">
                             <div class="font-semibold text-sm">
                                 {{ post.shared_post.author.first_name }} {{ post.shared_post.author.last_name }}
                             </div>
@@ -271,7 +271,7 @@
             class="comment flex space-x-2 mb-3"
             id="comment-{{ comment.id }}"
         >
-            <a href="{{ url_for('user.view_profile', user_identifier=comment.author.id) }}" class="flex-shrink-0">
+            <a href="{{ url_for('user.view_profile', user_identifier=comment.author.public_id) }}" class="flex-shrink-0">
                 <img
                     src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
                     alt=""
@@ -281,7 +281,7 @@
             </a>
             <div class="flex-1">
                 <div class="bg-white rounded-2xl px-3 py-2">
-                    <a href="{{ url_for('user.view_profile', user_identifier=comment.author.id) }}" class="hover:underline text-gray-900">
+                    <a href="{{ url_for('user.view_profile', user_identifier=comment.author.public_id) }}" class="hover:underline text-gray-900">
                         <div class="font-semibold text-sm">
                             {{ comment.author.first_name }}
                         </div>
@@ -293,4 +293,69 @@
         {% endfor %}
     </div>
 </div>
+{% if sponsored_items and loop.index % 5 == 0 %}
+{% set sponsored_item = sponsored_items[(loop.index // 5 - 1) % sponsored_items|length] %}
+<div class="sponsored-feed-card my-6 bg-white rounded-2xl shadow-soft border border-gray-100 overflow-hidden" data-sponsored-card="true">
+  <div class="p-3.5 px-4 flex items-center justify-between border-b border-gray-50 bg-gray-50/50">
+    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold {% if sponsored_item and sponsored_item.is_boost %}bg-rose-50 text-[#f76f69] border border-rose-100{% else %}bg-blue-50 text-blue-600 border border-blue-100{% endif %}">
+      <i class="bi {% if sponsored_item and sponsored_item.is_boost %}bi-stars{% else %}bi-megaphone-fill{% endif %}"></i>
+      {{ sponsored_item.badge if sponsored_item else 'Sponsored' }}
+    </span>
+    <span class="text-xs text-gray-400 font-medium">{{ sponsored_item.sponsor_name if sponsored_item else 'Kimbela Partner' }}</span>
+  </div>
+  {% if sponsored_item and sponsored_item.is_boost %}
+  <div class="p-4 sm:p-5 flex flex-col sm:flex-row items-center sm:items-start gap-4">
+    <div class="relative flex-shrink-0">
+      <img src="{{ sponsored_item.image_url }}" alt="{{ sponsored_item.title }}" class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover shadow-sm border-2 border-rose-100" loading="lazy">
+      <div class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[#f76f69] text-white flex items-center justify-center text-xs shadow-sm">
+        <i class="bi bi-heart-fill"></i>
+      </div>
+    </div>
+    <div class="flex-1 text-center sm:text-left min-w-0">
+      <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-1">
+        <h4 class="text-base font-bold text-gray-900 truncate">{{ sponsored_item.title }}</h4>
+        {% if sponsored_item.age %}
+        <span class="text-xs px-2 py-0.5 rounded-md bg-gray-100 text-gray-700 font-medium">{{ sponsored_item.age }} yrs</span>
+        {% endif %}
+        {% if sponsored_item.gender %}
+        <span class="text-xs px-2 py-0.5 rounded-md bg-gray-100 text-gray-700 font-medium">{{ sponsored_item.gender }}</span>
+        {% endif %}
+      </div>
+      {% if sponsored_item.location %}
+      <p class="text-xs text-gray-500 mb-2 flex items-center justify-center sm:justify-start gap-1">
+        <i class="bi bi-geo-alt"></i> {{ sponsored_item.location }}
+      </p>
+      {% endif %}
+      {% if sponsored_item.description %}
+      <p class="text-sm text-gray-600 line-clamp-2 mb-3">{{ sponsored_item.description }}</p>
+      {% endif %}
+      <div class="mt-2 flex items-center justify-center sm:justify-start">
+        <a href="{{ sponsored_item.target_url }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-[#f76f69] hover:bg-[#e65d57] transition-all shadow-sm">
+          <i class="bi bi-person-fill"></i> {{ sponsored_item.call_to_action or 'View Profile' }}
+        </a>
+      </div>
+    </div>
+  </div>
+  {% elif sponsored_item %}
+  <div class="p-4 sm:p-5 flex flex-col md:flex-row items-center md:items-start gap-4">
+    {% if sponsored_item.image_url %}
+    <div class="w-full md:w-48 h-36 flex-shrink-0 rounded-xl overflow-hidden bg-gray-100">
+      <img src="{{ sponsored_item.image_url }}" alt="{{ sponsored_item.title }}" class="w-full h-full object-cover hover:scale-105 transition-transform duration-300" loading="lazy">
+    </div>
+    {% endif %}
+    <div class="flex-1 text-center md:text-left min-w-0">
+      <h4 class="text-base font-bold text-gray-900 mb-1.5">{{ sponsored_item.title }}</h4>
+      {% if sponsored_item.description %}
+      <p class="text-sm text-gray-600 line-clamp-3 mb-3">{{ sponsored_item.description }}</p>
+      {% endif %}
+      <div class="flex items-center justify-center md:justify-start">
+        <a href="{{ sponsored_item.target_url }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-[#f76f69] hover:bg-[#e65d57] transition-all shadow-sm" data-sponsored-ad-id="{{ sponsored_item.raw_id }}">
+          {{ sponsored_item.call_to_action or 'Learn More' }} <i class="bi bi-arrow-right"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
 {% endfor %}

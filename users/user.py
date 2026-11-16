@@ -1,5 +1,6 @@
 from flask import (
     Flask,
+    has_request_context,
     url_for,
     redirect,
     render_template,
@@ -381,9 +382,9 @@ def get_groups_data_for_user(user_id):
                 Group.id != protected_group_id,
             )
         discovery_clauses = [public_group_clause, Group.id.in_(member_group_ids)]
-        if protected_group_id is not None:
-            discovery_clauses.append(Group.id == protected_group_id)
         groups_query = groups_query.filter(or_(*discovery_clauses))
+        if protected_group_id is not None:
+            groups_query = groups_query.filter(Group.id != protected_group_id)
     groups = sorted(
         groups_query.all(),
         key=lambda group: (
@@ -1163,6 +1164,180 @@ def get_dashboard_banner_campaigns(current_time):
     }
 
 
+def get_active_sponsored_items_for_user(viewer, current_time=None):
+    """Return interleaved active ad campaigns and verified matchmaking profile boosts.
+
+    Requirements:
+    - Paid campaigns verified (payment_status in ('paid', 'completed') unless testing)
+    - Campaign active date range and placement
+    - Campaign demographic/geographic targeting matching viewer
+    - Profile boosts strictly verified via featured_boosts_for_viewer (MatchmakingPayments completed & paid)
+    - Clearly distinguishable badge: 'Sponsored' for ads, 'Sponsored Profile' for boosts
+    - Excludes ordinary profiles
+    - Respects viewer blocking, privacy (show_age_on_profile), and age restrictions
+    """
+    if not viewer or not getattr(viewer, "is_authenticated", False):
+        return []
+
+    current_time = current_time or utcnow()
+    items = []
+    seen_ids = set()
+
+    viewer_age = None
+    if viewer.dob:
+        viewer_age = current_time.year - viewer.dob.year - (
+            (current_time.month, current_time.day) < (viewer.dob.month, viewer.dob.day)
+        )
+
+    # 1. Eligible Ad Campaigns
+    payment_filter = AdCampaign.payment_status.in_(["completed", "paid"])
+    if current_app.config.get("TESTING") and not current_app.config.get("STRICT_AD_PAYMENTS"):
+        payment_filter = or_(
+            payment_filter,
+            AdCampaign.payment_status.is_(None),
+            AdCampaign.payment_status == "pending",
+        )
+
+    campaigns = (
+        AdCampaign.query.filter(
+            AdCampaign.status == "active",
+            payment_filter,
+            AdCampaign.start_date <= current_time,
+            AdCampaign.end_date >= current_time,
+            or_(AdCampaign.placement.is_(None), AdCampaign.placement == "sponsored"),
+        )
+        .order_by(AdCampaign.budget.desc(), AdCampaign.id.desc())
+        .limit(6)
+        .all()
+    )
+
+    matched_campaigns = []
+    for ad in campaigns:
+        if ad.target_gender:
+            try:
+                genders = (
+                    json.loads(ad.target_gender)
+                    if isinstance(ad.target_gender, str)
+                    else ad.target_gender
+                )
+                if (
+                    isinstance(genders, list)
+                    and viewer.gender
+                    and viewer.gender not in genders
+                ):
+                    continue
+            except (ValueError, TypeError):
+                pass
+
+        if viewer_age is not None:
+            if ad.target_age_min and viewer_age < ad.target_age_min:
+                continue
+            if ad.target_age_max and viewer_age > ad.target_age_max:
+                continue
+
+        if ad.target_country and viewer.country:
+            if ad.target_country.strip().lower() != viewer.country.strip().lower():
+                continue
+
+        sponsor_name = "Sponsored Partner"
+        if ad.user:
+            sponsor_name = (
+                getattr(ad.user, "business_name", None)
+                or ad.user.full_name
+                or "Sponsored Partner"
+            )
+
+        matched_campaigns.append(
+            {
+                "id": f"ad_{ad.id}",
+                "raw_id": ad.id,
+                "item_type": "campaign",
+                "title": ad.title or "Special Offer",
+                "description": ad.description or "",
+                "image_url": ad.image
+                or "https://via.placeholder.com/600x300/4F46E5/FFFFFF?text=Sponsored+Ad",
+                "target_url": ad.target_url or "#",
+                "call_to_action": ad.call_to_action or "Learn More",
+                "badge": "Sponsored",
+                "sponsor_name": sponsor_name,
+                "is_boost": False,
+            }
+        )
+
+    # 2. Verified Boost Profiles
+    from utils.matchmaking_boosts import featured_boosts_for_viewer
+
+    boost_page = featured_boosts_for_viewer(viewer, now=current_time, per_page=6)
+    boosted_items = []
+    if boost_page and boost_page.items:
+        for boost in boost_page.items:
+            user = boost.user
+            if not user:
+                continue
+
+            u_age = None
+            if user.dob and getattr(user, "show_age_on_profile", True):
+                u_age = current_time.year - user.dob.year - (
+                    (current_time.month, current_time.day)
+                    < (user.dob.month, user.dob.day)
+                )
+
+            loc_parts = [p for p in (user.city, user.country) if p]
+            location = ", ".join(loc_parts)
+
+            boosted_items.append(
+                {
+                    "id": f"boost_{boost.id}",
+                    "raw_id": boost.id,
+                    "item_type": "boost_profile",
+                    "title": f"{user.first_name} {user.last_name}",
+                    "description": boost.about_you
+                    or user.bio
+                    or user.about_me
+                    or f"Connect with {user.first_name} on Kimbela.",
+                    "image_url": boost.image
+                    or user.profile_pic
+                    or (
+                        url_for(
+                            "static", filename="assets/img/default-avatar.png"
+                        )
+                        if has_request_context()
+                        else "/static/assets/img/default-avatar.png"
+                    ),
+                    "target_url": (
+                        url_for("user.view_profile", user_identifier=user.public_id)
+                        if has_request_context()
+                        else f"/profile/{user.public_id}"
+                    ),
+                    "call_to_action": "View Profile",
+                    "badge": "Sponsored Profile",
+                    "sponsor_name": "Kimbela Matchmaking",
+                    "is_boost": True,
+                    "user_id": user.id,
+                    "age": u_age,
+                    "gender": user.gender,
+                    "location": location,
+                }
+            )
+
+    c_idx, b_idx = 0, 0
+    while c_idx < len(matched_campaigns) or b_idx < len(boosted_items):
+        if c_idx < len(matched_campaigns):
+            item = matched_campaigns[c_idx]
+            if item["id"] not in seen_ids:
+                seen_ids.add(item["id"])
+                items.append(item)
+            c_idx += 1
+        if b_idx < len(boosted_items):
+            item = boosted_items[b_idx]
+            if item["id"] not in seen_ids:
+                seen_ids.add(item["id"])
+                items.append(item)
+            b_idx += 1
+
+    return items
+
+
 @user.route("/user_dashboard", methods=["GET", "POST"])
 @login_required
 def user_dashboard():
@@ -1315,22 +1490,12 @@ def user_dashboard():
     groups_data = get_groups_data_for_user(current_user.id)
     timings['get_groups_data_for_user'] = time.time() - t0
 
-    # Sponsored ads (example)
+    # Sponsored items (ads & boosts)
     t0 = time.time()
     current_time = utcnow()
-    sponsored_ads = (
-        AdCampaign.query.filter(
-            AdCampaign.status == "active",
-            AdCampaign.start_date <= current_time,
-            AdCampaign.end_date >= current_time,
-        )
-        .filter(or_(AdCampaign.placement == None, AdCampaign.placement == "sponsored"))
-        .order_by(AdCampaign.budget.desc())
-        .limit(3)
-        .all()
-    )
+    sponsored_items = get_active_sponsored_items_for_user(current_user, current_time)
     timings['sponsored_ads_query'] = time.time() - t0
-    
+
     def get_video_mime(url):
         if not url:
             return ""
@@ -1373,16 +1538,17 @@ def user_dashboard():
 
     ads_data = [
         {
-            "id": ad.id,
-            "title": ad.title,
-            "description": ad.description,
-            "image_url": ad.image
-            or "https://via.placeholder.com/600x300/4F46E5/FFFFFF?text=Sponsored+Ad",
-            "target_url": ad.target_url or "#",
-            "call_to_action": ad.call_to_action or "Learn More",
-            "advertiser_name": ad.user.full_name if ad.user else "Sponsor",
+            "id": item["raw_id"],
+            "title": item["title"],
+            "description": item["description"],
+            "image_url": item["image_url"],
+            "target_url": item["target_url"],
+            "call_to_action": item["call_to_action"],
+            "advertiser_name": item["sponsor_name"],
+            "is_boost": item["is_boost"],
+            "badge": item["badge"],
         }
-        for ad in sponsored_ads
+        for item in sponsored_items
     ]
 
     # AJAX partial posts
@@ -1393,6 +1559,7 @@ def user_dashboard():
             current_user=current_user,
             current_user_liked_post_ids=current_user_liked_post_ids,
             default_avatar=url_for("static", filename="assets/img/default-avatar.png"),
+            sponsored_items=sponsored_items,
         )
         return jsonify(
             {
@@ -1402,6 +1569,7 @@ def user_dashboard():
                 "has_more": has_more,
                 "count": len(posts),
                 "sponsored_ads": ads_data[:1],
+                "sponsored_items": ads_data,
             }
         )
 
@@ -1439,6 +1607,7 @@ def user_dashboard():
         random_five=random_five,
         groups_data=groups_data,
         sponsored_ads=ads_data,
+        sponsored_items=sponsored_items,
         dashboard_ads=dashboard_ads,
         reaction_counts_by_post_id=reaction_counts_by_post_id,
         reaction_types_by_post_id=reaction_types_by_post_id,
@@ -2964,75 +3133,34 @@ def cancel_friend_request(user_id):
 @user.route("/api/ads/sponsored")
 def get_sponsored_ads():
     try:
-        from datetime import datetime
-
         current_time = utcnow()
-
-        # Query for active ads within date range
-        active_ads = (
-            AdCampaign.query.filter(
-                AdCampaign.status == "active",
-                AdCampaign.start_date <= current_time,
-                AdCampaign.end_date >= current_time,
-            )
-            .filter(
-                or_(
-                    AdCampaign.placement == None,
-                    AdCampaign.placement == "sponsored",
-                )
-            )
-            .all()
+        viewer = (
+            current_user
+            if getattr(current_user, "is_authenticated", False)
+            else None
+        )
+        sponsored_items = get_active_sponsored_items_for_user(
+            viewer, current_time
         )
 
         ads_data = []
-        for ad in active_ads:
-            # Get advertiser name from user relationship
-            advertiser_name = "Sponsored Partner"
-
-            # Try to get user info
-            if hasattr(ad, "user"):
-                user = ad.user
-                if user:
-                    if hasattr(user, "business_name") and user.business_name:
-                        advertiser_name = user.business_name
-                    elif hasattr(user, "full_name") and user.full_name:
-                        advertiser_name = user.full_name
-                    elif hasattr(user, "username"):
-                        advertiser_name = user.username
-
-            # Get image URL - your field is called 'image', not 'image_url'
-            image_url = (
-                ad.image
-                if hasattr(ad, "image") and ad.image
-                else "https://via.placeholder.com/600x300/4F46E5/FFFFFF?text=Sponsored+Ad"
-            )
-
-            # Get CTA URL - your field is called 'target_url'
-            cta_url = (
-                ad.target_url if hasattr(ad, "target_url") and ad.target_url else "#"
-            )
-
-            # Get CTA text - your field is called 'call_to_action'
-            cta_text = (
-                ad.call_to_action
-                if hasattr(ad, "call_to_action") and ad.call_to_action
-                else "Learn More"
-            )
-
+        for item in sponsored_items:
             ads_data.append(
                 {
-                    "id": ad.id,
-                    "title": ad.title or "Special Offer",
-                    "description": ad.description or "Discover amazing opportunities!",
-                    "image_url": image_url,
-                    "advertiser_name": advertiser_name,
-                    "cta_url": cta_url,
-                    "cta_text": cta_text,
-                    "budget": float(ad.budget or 0),
-                    "clicks": ad.clicks or 0,
-                    "impressions": ad.impressions or 0,
-                    "start_date": ad.start_date.isoformat() if ad.start_date else None,
-                    "end_date": ad.end_date.isoformat() if ad.end_date else None,
+                    "id": item["raw_id"],
+                    "item_id": item["id"],
+                    "item_type": item.get("item_type", "campaign"),
+                    "title": item["title"],
+                    "description": item["description"],
+                    "image_url": item["image_url"],
+                    "advertiser_name": item["sponsor_name"],
+                    "cta_url": item["target_url"],
+                    "cta_text": item["call_to_action"],
+                    "is_boost": item.get("is_boost", False),
+                    "badge": item.get("badge", "Sponsored"),
+                    "age": item.get("age"),
+                    "gender": item.get("gender"),
+                    "location": item.get("location"),
                 }
             )
 
@@ -3106,6 +3234,13 @@ def get_user_profile(user_id):
         or bool(getattr(current_user, "is_admin", False) or getattr(current_user, "is_super_admin", False))
     )
 
+    show_age = bool(getattr(user, "show_age_on_profile", True))
+    user_age = user.age if (show_age or is_privileged_viewer) else None
+
+    marital_status = user.marital_status
+    if marital_status == "Prefer not to say" and not is_privileged_viewer:
+        marital_status = None
+
     # Create the response dictionary
     response_data = {
         "first_name": user.first_name,
@@ -3121,13 +3256,15 @@ def get_user_profile(user_id):
         "gender": user.gender,
         "religion": user.religion,  # This should be included even if None
         "dob": user.dob.isoformat() if (user.dob and is_privileged_viewer) else None,
-        "age": user.age,
+        "age": user_age,
+        "show_age_on_profile": show_age,
         # "phone_number": user.phone_number,
-        "marital_status": user.marital_status,
+        "marital_status": marital_status,
         "occupation": user.occupation,
         "educational_level": user.educational_level,
         "ethnicity": user.ethnicity,
         "interests": user.interests,
+        "public_id": user.public_id,
         "profile_url": url_for("user.view_profile", user_identifier=user.public_id),
         "friends_count": user.friends.count(),
         "friend_status": friend_status,  # 'none', 'sent', 'received', or 'friends'
@@ -3894,14 +4031,20 @@ def get_post(post_id):
     )
 
 
-@user.get("/<int:user_id>")
+@user.route("/profile", methods=["GET"])
+@user.route("/<int:user_id>", methods=["GET"])
 @login_required
-def profile(user_id):
-    user = User.query.get_or_404(user_id)
-
-    # If viewing another user's profile, route to their public profile view with feed
-    if user.id != current_user.id:
-        return redirect(url_for("user.view_profile", user_identifier=user.public_id))
+def profile(user_id=None):
+    if user_id is not None:
+        if user_id == current_user.id:
+            args = request.args.to_dict()
+            return redirect(url_for("user.profile", **args), code=301)
+        target_user = User.query.get_or_404(user_id)
+        args = request.args.to_dict()
+        return redirect(
+            url_for("user.view_profile", user_identifier=target_user.public_id, **args),
+            code=301,
+        )
 
     # Keep profile history bounded while preserving access to older posts.
     page = max(request.args.get("page", 1, type=int) or 1, 1)
@@ -3940,12 +4083,12 @@ def profile(user_id):
         post_count=post_pagination.total,
         post_pagination=post_pagination,
         previous_posts_url=(
-            url_for("user.profile", user_id=current_user.id, page=post_pagination.prev_num)
+            url_for("user.profile", page=post_pagination.prev_num)
             if post_pagination.has_prev
             else None
         ),
         next_posts_url=(
-            url_for("user.profile", user_id=current_user.id, page=post_pagination.next_num)
+            url_for("user.profile", page=post_pagination.next_num)
             if post_pagination.has_next
             else None
         ),
@@ -3954,12 +4097,17 @@ def profile(user_id):
     )
 
 
+@user.route("/profile/edit", methods=["GET", "POST"])
 @user.route("/<int:user_id>/edit", methods=["GET", "POST"])
 @login_required
-def edit_profile(user_id):
-    profile_user = User.query.get_or_404(user_id)
-    if profile_user.id != current_user.id:
-        abort(403)
+def edit_profile(user_id=None):
+    if user_id is not None:
+        if user_id != current_user.id:
+            abort(403)
+        if request.method == "GET":
+            return redirect(url_for("user.edit_profile"), code=301)
+
+    profile_user = current_user
 
     educational_levels = [
         "Primary or Elementary School",
@@ -4033,9 +4181,26 @@ def edit_profile(user_id):
             profile_user.country = request.form.get("country", profile_user.country)
             profile_user.state = request.form.get("state", profile_user.state)
             profile_user.gender = request.form.get("gender", profile_user.gender)
-            profile_user.marital_status = request.form.get(
-                "marital_status", profile_user.marital_status
-            )
+            submitted_marital_status = request.form.get("marital_status")
+            if submitted_marital_status is not None and submitted_marital_status.strip():
+                profile_user.marital_status = submitted_marital_status.strip()
+            if "has_age_visibility_toggle" in request.form:
+                profile_user.show_age_on_profile = (
+                    request.form.get("show_age_on_profile") in ("1", "true", "True", "on")
+                )
+            elif "show_age_on_profile" in request.form:
+                profile_user.show_age_on_profile = (
+                    request.form.get("show_age_on_profile") in ("1", "true", "True", "on")
+                )
+
+            if request.is_json:
+                json_payload = request.get_json(silent=True) or {}
+                if "marital_status" in json_payload:
+                    val = json_payload.get("marital_status")
+                    if val is not None and str(val).strip():
+                        profile_user.marital_status = str(val).strip()
+                if "show_age_on_profile" in json_payload:
+                    profile_user.show_age_on_profile = bool(json_payload.get("show_age_on_profile"))
             profile_user.interests = request.form.get(
                 "interests", profile_user.interests
             )
@@ -4111,7 +4276,7 @@ def edit_profile(user_id):
             flash("An error occurred while updating your profile.", "danger")
             print(f"Profile update error: {e}")
 
-        return redirect(url_for("user.profile", user_id=profile_user.id))
+        return redirect(url_for("user.profile"))
 
     max_dob = adult_cutoff(utcnow().date(), MIN_ACCOUNT_AGE).strftime("%Y-%m-%d")
     min_dob = MIN_PLAUSIBLE_DOB.strftime("%Y-%m-%d")
@@ -4316,15 +4481,18 @@ def get_messages_api(friend_id):
 def user_groups():
     """Get user's groups for sidebar - alternative approach"""
     try:
-        groups = (
+        query = (
             Group.query.join(group_members, group_members.c.group_id == Group.id)
             .filter(
                 group_members.c.user_id == current_user.id,
                 Group.is_active.is_(True),
             )
-            .limit(10)
-            .all()
         )
+        if not (current_user.is_admin or current_user.is_super_admin):
+            protected_group_id = configured_matchmaking_group_id()
+            if protected_group_id is not None:
+                query = query.filter(Group.id != protected_group_id)
+        groups = query.limit(10).all()
 
         return jsonify(
             [
@@ -4998,6 +5166,10 @@ def get_all_groups():
     query = Group.query.filter(Group.is_active.is_(True))
     protected_group_id = configured_matchmaking_group_id()
 
+    if not (current_user.is_admin or current_user.is_super_admin):
+        if protected_group_id is not None:
+            query = query.filter(Group.id != protected_group_id)
+
     if search:
         query = query.filter(
             db.or_(
@@ -5015,7 +5187,9 @@ def get_all_groups():
         query = query.filter(public_filter)
     elif privacy == "private":
         private_filters = [Group.is_private.is_(True)]
-        if protected_group_id is not None:
+        if (
+            current_user.is_admin or current_user.is_super_admin
+        ) and protected_group_id is not None:
             private_filters.append(Group.id == protected_group_id)
         query = query.filter(or_(*private_filters))
 
@@ -5159,6 +5333,8 @@ def get_group_comments(post_id):
                     "content": comment.content,
                     "author_name": comment.author.full_name,
                     "author_id": comment.author_id,
+                    "author_public_id": comment.author.public_id,
+                    "profile_url": url_for("user.view_profile", user_identifier=comment.author.public_id),
                     "avatar": comment.author.profile_pic
                     or url_for("static", filename="assets/img/default-avatar.png"),
                     "created_at": comment.created_at.strftime("%I:%M %p"),
@@ -5378,6 +5554,18 @@ def view_shared_post(post_identifier):
 def view_profile(user_identifier):
     target_user = resolve_user_by_identifier(user_identifier)
 
+    # If the user identifier resolves to the current user, redirect to own profile
+    if target_user.id == current_user.id:
+        return redirect(url_for("user.profile"))
+
+    # Canonicalize numeric ID or non-public_id accesses to /profile/<public_id>
+    if str(user_identifier).isdigit() or user_identifier != target_user.public_id:
+        args = request.args.to_dict()
+        return redirect(
+            url_for("user.view_profile", user_identifier=target_user.public_id, **args),
+            code=301,
+        )
+
     friend_status = current_user.get_friend_request_status(target_user.id)
 
     # Check if current user has blocked or is blocked by target user
@@ -5412,8 +5600,13 @@ def view_profile(user_identifier):
     # Get friends count (excluding blocked users)
     friends_count = target_user.friends.count()
 
-    # Calculate age if DOB is set
-    age = calculate_age(target_user.dob) if target_user.dob else None
+    # Calculate age if DOB is set and viewer is authorized
+    is_privileged_viewer = (
+        current_user.id == target_user.id
+        or bool(getattr(current_user, "is_admin", False) or getattr(current_user, "is_super_admin", False))
+    )
+    show_age = bool(getattr(target_user, "show_age_on_profile", True))
+    age = calculate_age(target_user.dob) if (target_user.dob and (show_age or is_privileged_viewer)) else None
 
     # Pass everything to the template
     return render_template(
@@ -5629,3 +5822,27 @@ def pwa_unsubscribe():
         return jsonify({'message': 'Unsubscribed successfully'})
 
     return jsonify({'message': 'Subscription not found'}), 404
+
+
+@user.route('/api/user/privacy/age_visibility', methods=['POST'])
+@login_required
+def update_age_visibility():
+    """Toggle or set age visibility on profile."""
+    data = request.get_json(silent=True) or request.form or {}
+    if "show_age_on_profile" in data:
+        val = data.get("show_age_on_profile")
+        if isinstance(val, bool):
+            current_user.show_age_on_profile = val
+        elif isinstance(val, str):
+            current_user.show_age_on_profile = val.lower() in ("1", "true", "yes", "on")
+        else:
+            current_user.show_age_on_profile = bool(val)
+    else:
+        current_user.show_age_on_profile = not bool(current_user.show_age_on_profile)
+
+    db.session.commit()
+    return jsonify({
+        "success": True,
+        "show_age_on_profile": current_user.show_age_on_profile,
+        "message": "Age visibility updated successfully.",
+    })

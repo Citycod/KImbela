@@ -160,7 +160,7 @@
     </div>
 
     <!-- User Avatar -->
-    <a href="{{ url_for('user.profile', user_id=current_user.id) }}"
+    <a href="{{ url_for('user.profile') }}"
       data-header-profile
       class="flex items-center p-1 pr-2 sm:pr-3 rounded-full hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200 ml-1">
       <div class="relative">
@@ -274,7 +274,7 @@ placement='dashboard-top') %}
           </a>
         </li>
         <li>
-          <a href="{{ url_for('user.profile', user_id=current_user.id) }}">
+          <a href="{{ url_for('user.profile') }}">
             <i class="bi bi-person"></i> Profile
           </a>
         </li>
@@ -284,12 +284,12 @@ placement='dashboard-top') %}
           </a>
         </li>
         <li>
-          <a href="{{ url_for('user.profile', user_id=current_user.id) }}">
+          <a href="{{ url_for('user.profile') }}">
             <i class="bi bi-bookmark"></i> Saved
           </a>
         </li>
         <li>
-          <a href="{{ url_for('user.profile', user_id=current_user.id) }}">
+          <a href="{{ url_for('user.profile') }}">
             <i class="bi bi-gear"></i> Settings
           </a>
         </li>
@@ -416,7 +416,7 @@ placement='dashboard-top') %}
     <!-- POST COMPOSER -->
     <div class="kb-composer">
       <div class="kb-composer-top">
-        <a href="{{ url_for('user.profile', user_id=current_user.id) }}">
+        <a href="{{ url_for('user.profile') }}">
           <img src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
             alt="{{ current_user.first_name }}" />
         </a>
@@ -562,13 +562,13 @@ placement='dashboard-top') %}
         data-post-id="{{ post.id }}" id="post-{{ post.id }}">
         <div class="p-4 flex justify-between items-start">
           <div class="flex items-start space-x-3">
-            <a href="{{ url_for('user.view_profile', user_identifier=post.author.id) }}" class="flex-shrink-0">
+            <a href="{{ url_for('user.view_profile', user_identifier=post.author.public_id) }}" class="flex-shrink-0">
               <img src="{{ post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
                 class="post-author-avatar w-10 h-10 rounded-full object-cover hover:opacity-90 transition-opacity"
                 width="40" height="40" loading="lazy" />
             </a>
             <div>
-              <a href="{{ url_for('user.view_profile', user_identifier=post.author.id) }}"
+              <a href="{{ url_for('user.view_profile', user_identifier=post.author.public_id) }}"
                 class="hover:underline text-gray-900 block">
                 <div class="font-semibold">
                   {{ post.author.first_name }} {{ post.author.last_name }}
@@ -635,7 +635,7 @@ placement='dashboard-top') %}
           <div class="shared-post-card mt-3">
             {% if post.shared_post %}
             <div class="shared-post-header flex items-start gap-3">
-              <a href="{{ url_for('user.view_profile', user_identifier=post.shared_post.author.id) }}"
+              <a href="{{ url_for('user.view_profile', user_identifier=post.shared_post.author.public_id) }}"
                 class="flex-shrink-0">
                 <img
                   src="{{ post.shared_post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
@@ -644,7 +644,7 @@ placement='dashboard-top') %}
                   width="36" height="36" loading="lazy" />
               </a>
               <div>
-                <a href="{{ url_for('user.view_profile', user_identifier=post.shared_post.author.id) }}"
+                <a href="{{ url_for('user.view_profile', user_identifier=post.shared_post.author.public_id) }}"
                   class="hover:underline text-gray-900 block">
                   <div class="font-semibold text-sm">
                     {{ post.shared_post.author.first_name }} {{ post.shared_post.author.last_name }}
@@ -873,7 +873,7 @@ placement='dashboard-top') %}
             {% if post.comments_count > 0 %} {% for comment in
             post.comments[:20]|reverse %}
             <div class="flex space-x-3 comment-item" id="comment-{{ comment.id }}">
-              <a href="{{ url_for('user.view_profile', user_identifier=comment.author.id) }}" class="flex-shrink-0">
+              <a href="{{ url_for('user.view_profile', user_identifier=comment.author.public_id) }}" class="flex-shrink-0">
                 <img
                   src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
                   alt="{{ comment.author.full_name }}"
@@ -883,7 +883,7 @@ placement='dashboard-top') %}
               <div class="flex-1">
                 <div class="bg-white rounded-2xl px-4 py-3 shadow-sm">
                   <div class="flex justify-between items-start">
-                    <a href="{{ url_for('user.view_profile', user_identifier=comment.author.id) }}"
+                    <a href="{{ url_for('user.view_profile', user_identifier=comment.author.public_id) }}"
                       class="hover:underline text-gray-900">
                       <h6 class="font-semibold text-sm">
                         {{ comment.author.full_name }}
@@ -908,82 +908,177 @@ placement='dashboard-top') %}
         </div>
       </div>
 
-      {% if loop.index == 1 %}
-      <div class="mobile-feed-ad lg:hidden">
+      {% if loop.index == 2 %}
+      {% set sponsored_item = sponsored_items[0] if (sponsored_items and sponsored_items|length > 0) else None %}
+      <div class="sponsored-feed-card my-6 bg-white rounded-2xl shadow-soft border border-gray-100 overflow-hidden" data-sponsored-card="true">
+        <div class="p-3.5 px-4 flex items-center justify-between border-b border-gray-50 bg-gray-50/50">
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold {% if sponsored_item and sponsored_item.is_boost %}bg-rose-50 text-[#f76f69] border border-rose-100{% else %}bg-blue-50 text-blue-600 border border-blue-100{% endif %}">
+            <i class="bi {% if sponsored_item and sponsored_item.is_boost %}bi-stars{% else %}bi-megaphone-fill{% endif %}"></i>
+            {{ sponsored_item.badge if sponsored_item else 'Sponsored' }}
+          </span>
+          <span class="text-xs text-gray-400 font-medium">{{ sponsored_item.sponsor_name if sponsored_item else 'Kimbela Partner' }}</span>
+        </div>
+        {% if sponsored_item and sponsored_item.is_boost %}
+        <div class="p-4 sm:p-5 flex flex-col sm:flex-row items-center sm:items-start gap-4">
+          <div class="relative flex-shrink-0">
+            <img src="{{ sponsored_item.image_url }}" alt="{{ sponsored_item.title }}" class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover shadow-sm border-2 border-rose-100" loading="lazy">
+            <div class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[#f76f69] text-white flex items-center justify-center text-xs shadow-sm">
+              <i class="bi bi-heart-fill"></i>
+            </div>
+          </div>
+          <div class="flex-1 text-center sm:text-left min-w-0">
+            <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-1">
+              <h4 class="text-base font-bold text-gray-900 truncate">{{ sponsored_item.title }}</h4>
+              {% if sponsored_item.age %}
+              <span class="text-xs px-2 py-0.5 rounded-md bg-gray-100 text-gray-700 font-medium">{{ sponsored_item.age }} yrs</span>
+              {% endif %}
+              {% if sponsored_item.gender %}
+              <span class="text-xs px-2 py-0.5 rounded-md bg-gray-100 text-gray-700 font-medium">{{ sponsored_item.gender }}</span>
+              {% endif %}
+            </div>
+            {% if sponsored_item.location %}
+            <p class="text-xs text-gray-500 mb-2 flex items-center justify-center sm:justify-start gap-1">
+              <i class="bi bi-geo-alt"></i> {{ sponsored_item.location }}
+            </p>
+            {% endif %}
+            {% if sponsored_item.description %}
+            <p class="text-sm text-gray-600 line-clamp-2 mb-3">{{ sponsored_item.description }}</p>
+            {% endif %}
+            <div class="mt-2 flex items-center justify-center sm:justify-start">
+              <a href="{{ sponsored_item.target_url }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-[#f76f69] hover:bg-[#e65d57] transition-all shadow-sm">
+                <i class="bi bi-person-fill"></i> {{ sponsored_item.call_to_action or 'View Profile' }}
+              </a>
+            </div>
+          </div>
+        </div>
+        {% elif sponsored_item %}
+        <div class="p-4 sm:p-5 flex flex-col md:flex-row items-center md:items-start gap-4">
+          {% if sponsored_item.image_url %}
+          <div class="w-full md:w-48 h-36 flex-shrink-0 rounded-xl overflow-hidden bg-gray-100">
+            <img src="{{ sponsored_item.image_url }}" alt="{{ sponsored_item.title }}" class="w-full h-full object-cover hover:scale-105 transition-transform duration-300" loading="lazy">
+          </div>
+          {% endif %}
+          <div class="flex-1 text-center md:text-left min-w-0">
+            <h4 class="text-base font-bold text-gray-900 mb-1.5">{{ sponsored_item.title }}</h4>
+            {% if sponsored_item.description %}
+            <p class="text-sm text-gray-600 line-clamp-3 mb-3">{{ sponsored_item.description }}</p>
+            {% endif %}
+            <div class="flex items-center justify-center md:justify-start">
+              <a href="{{ sponsored_item.target_url }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-[#f76f69] hover:bg-[#e65d57] transition-all shadow-sm" data-sponsored-ad-id="{{ sponsored_item.raw_id }}">
+                {{ sponsored_item.call_to_action or 'Learn More' }} <i class="bi bi-arrow-right"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+        {% else %}
         {% set vertical_banner = dashboard_ads.get('vertical_banner') if dashboard_ads else None %}
         <div class="vertical-ad-banner {% if vertical_banner %}has-dashboard-ad{% endif %}">
           {% if vertical_banner %}
           <a class="dashboard-ad-link" href="{{ vertical_banner.target_url }}" target="_blank" rel="noopener">
             {% if vertical_banner.media_type == 'video' %}
             <video class="dashboard-ad-video" autoplay muted loop playsinline preload="metadata">
-              <source src="{{ vertical_banner.image_url }}" {% if vertical_banner.video_mime
-                %}type="{{ vertical_banner.video_mime }}" {% endif %} />
+              <source src="{{ vertical_banner.image_url }}" {% if vertical_banner.video_mime %}type="{{ vertical_banner.video_mime }}" {% endif %} />
             </video>
             {% else %}
-            <img src="{{ vertical_banner.image_url }}" alt="{{ vertical_banner.title }}" class="dashboard-ad-image"
-              loading="lazy" />
+            <img src="{{ vertical_banner.image_url }}" alt="{{ vertical_banner.title }}" class="dashboard-ad-image" loading="lazy" />
             {% endif %}
           </a>
           {% else %}
-          <div class="vertical-ad-badge">Promote</div>
-          <div class="sidebar-ad-icon" aria-hidden="true"><i class="bi bi-megaphone-fill"></i></div>
-          <div class="vertical-ad-content">
-            <h2>Boost your product today</h2>
-            <p>Get your brand seen by active Kimbela shoppers and creators.</p>
-            <a class="vertical-ad-cta"
-              href="{{ url_for('payments.dashboard_ad_package', placement='dashboard-vertical') }}">Start
-              advertising</a>
+          <div class="p-5 text-center">
+            <div class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-rose-50 text-[#f76f69] mb-2"><i class="bi bi-megaphone-fill"></i></div>
+            <h4 class="text-base font-bold text-gray-900">Promote on Kimbela</h4>
+            <p class="text-xs text-gray-500 mt-1 mb-3">Reach active shoppers, professionals, and creators with sponsored placements.</p>
+            <a class="inline-flex items-center px-4 py-1.5 rounded-xl text-xs font-semibold text-white bg-[#f76f69] hover:bg-[#e65d57] transition-colors" href="{{ url_for('payments.dashboard_ad_package', placement='dashboard-vertical') }}">Start advertising</a>
           </div>
           {% endif %}
         </div>
+        {% endif %}
       </div>
-      {% elif loop.index == 3 %}
-      <div class="mobile-feed-ad lg:hidden">
-        <div class="matchmaking-banner mt-4">
-          <div class="banner-image-layer matchmaking-image-layer" aria-hidden="true">
-            <span class="banner-image-core"
-              style="background-image: url('{{ url_for('static', filename='assets/img/love.jpg') }}');"></span>
-          </div>
-          <div class="matchmaking-glow"></div>
-          <div class="matchmaking-badge">Matchmaking</div>
-          <div class="matchmaking-title">
-            <span>Find your</span> <span class="matchmaking-highlight">perfect</span> <span>match on Kimbela</span>
-          </div>
-          <p class="matchmaking-copy">Find compatible people, or boost your profile to increase your matchmaking visibility.</p>
-          <div class="matchmaking-actions">
-            <a class="matchmaking-cta primary" href="{{ url_for('match.requests') }}">Boost Your Profile</a>
-            <a class="matchmaking-cta ghost" href="{{ url_for('match.view_requests') }}">Find Your Match</a>
-          </div>
-          <div class="matchmaking-orbits" aria-hidden="true"><span class="orbit orbit-1"></span><span
-              class="orbit orbit-2"></span><span class="orbit orbit-3"></span></div>
+      {% elif loop.index == 6 %}
+      {% set sponsored_item = sponsored_items[1] if (sponsored_items and sponsored_items|length > 1) else (sponsored_items[0] if (sponsored_items and sponsored_items|length > 0) else None) %}
+      <div class="sponsored-feed-card my-6 bg-white rounded-2xl shadow-soft border border-gray-100 overflow-hidden" data-sponsored-card="true">
+        <div class="p-3.5 px-4 flex items-center justify-between border-b border-gray-50 bg-gray-50/50">
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold {% if sponsored_item and sponsored_item.is_boost %}bg-rose-50 text-[#f76f69] border border-rose-100{% else %}bg-blue-50 text-blue-600 border border-blue-100{% endif %}">
+            <i class="bi {% if sponsored_item and sponsored_item.is_boost %}bi-stars{% else %}bi-megaphone-fill{% endif %}"></i>
+            {{ sponsored_item.badge if sponsored_item else 'Sponsored' }}
+          </span>
+          <span class="text-xs text-gray-400 font-medium">{{ sponsored_item.sponsor_name if sponsored_item else 'Kimbela Partner' }}</span>
         </div>
-      </div>
-      {% elif loop.index == 5 %}
-      <div class="mobile-feed-ad lg:hidden">
+        {% if sponsored_item and sponsored_item.is_boost %}
+        <div class="p-4 sm:p-5 flex flex-col sm:flex-row items-center sm:items-start gap-4">
+          <div class="relative flex-shrink-0">
+            <img src="{{ sponsored_item.image_url }}" alt="{{ sponsored_item.title }}" class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover shadow-sm border-2 border-rose-100" loading="lazy">
+            <div class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[#f76f69] text-white flex items-center justify-center text-xs shadow-sm">
+              <i class="bi bi-heart-fill"></i>
+            </div>
+          </div>
+          <div class="flex-1 text-center sm:text-left min-w-0">
+            <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-1">
+              <h4 class="text-base font-bold text-gray-900 truncate">{{ sponsored_item.title }}</h4>
+              {% if sponsored_item.age %}
+              <span class="text-xs px-2 py-0.5 rounded-md bg-gray-100 text-gray-700 font-medium">{{ sponsored_item.age }} yrs</span>
+              {% endif %}
+              {% if sponsored_item.gender %}
+              <span class="text-xs px-2 py-0.5 rounded-md bg-gray-100 text-gray-700 font-medium">{{ sponsored_item.gender }}</span>
+              {% endif %}
+            </div>
+            {% if sponsored_item.location %}
+            <p class="text-xs text-gray-500 mb-2 flex items-center justify-center sm:justify-start gap-1">
+              <i class="bi bi-geo-alt"></i> {{ sponsored_item.location }}
+            </p>
+            {% endif %}
+            {% if sponsored_item.description %}
+            <p class="text-sm text-gray-600 line-clamp-2 mb-3">{{ sponsored_item.description }}</p>
+            {% endif %}
+            <div class="mt-2 flex items-center justify-center sm:justify-start">
+              <a href="{{ sponsored_item.target_url }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-[#f76f69] hover:bg-[#e65d57] transition-all shadow-sm">
+                <i class="bi bi-person-fill"></i> {{ sponsored_item.call_to_action or 'View Profile' }}
+              </a>
+            </div>
+          </div>
+        </div>
+        {% elif sponsored_item %}
+        <div class="p-4 sm:p-5 flex flex-col md:flex-row items-center md:items-start gap-4">
+          {% if sponsored_item.image_url %}
+          <div class="w-full md:w-48 h-36 flex-shrink-0 rounded-xl overflow-hidden bg-gray-100">
+            <img src="{{ sponsored_item.image_url }}" alt="{{ sponsored_item.title }}" class="w-full h-full object-cover hover:scale-105 transition-transform duration-300" loading="lazy">
+          </div>
+          {% endif %}
+          <div class="flex-1 text-center md:text-left min-w-0">
+            <h4 class="text-base font-bold text-gray-900 mb-1.5">{{ sponsored_item.title }}</h4>
+            {% if sponsored_item.description %}
+            <p class="text-sm text-gray-600 line-clamp-3 mb-3">{{ sponsored_item.description }}</p>
+            {% endif %}
+            <div class="flex items-center justify-center md:justify-start">
+              <a href="{{ sponsored_item.target_url }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-[#f76f69] hover:bg-[#e65d57] transition-all shadow-sm" data-sponsored-ad-id="{{ sponsored_item.raw_id }}">
+                {{ sponsored_item.call_to_action or 'Learn More' }} <i class="bi bi-arrow-right"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+        {% else %}
         {% set spotlight_banner = dashboard_ads.get('spotlight_banner') if dashboard_ads else None %}
-        <div class="right-ad-banner-2 mt-4 {% if spotlight_banner %}has-dashboard-ad{% endif %}">
+        <div class="right-ad-banner-2 {% if spotlight_banner %}has-dashboard-ad{% endif %}">
           {% if spotlight_banner %}
           <a class="dashboard-ad-link" href="{{ spotlight_banner.target_url }}" target="_blank" rel="noopener">
             {% if spotlight_banner.media_type == 'video' %}
             <video class="dashboard-ad-video" autoplay muted loop playsinline preload="metadata">
-              <source src="{{ spotlight_banner.image_url }}" {% if spotlight_banner.video_mime
-                %}type="{{ spotlight_banner.video_mime }}" {% endif %} />
+              <source src="{{ spotlight_banner.image_url }}" {% if spotlight_banner.video_mime %}type="{{ spotlight_banner.video_mime }}" {% endif %} />
             </video>
             {% else %}
-            <img src="{{ spotlight_banner.image_url }}" alt="{{ spotlight_banner.title }}" class="dashboard-ad-image"
-              loading="lazy" />
+            <img src="{{ spotlight_banner.image_url }}" alt="{{ spotlight_banner.title }}" class="dashboard-ad-image" loading="lazy" />
             {% endif %}
           </a>
           {% else %}
-          <div class="right-ad-2-badge">Promote</div>
-          <div class="sidebar-ad-icon" aria-hidden="true"><i class="bi bi-megaphone-fill"></i></div>
-          <h2>Boost your product today</h2>
-          <p>Get your brand seen by active Kimbela shoppers and creators.</p>
-          <a class="right-ad-2-cta"
-            href="{{ url_for('payments.dashboard_ad_package', placement='dashboard-spotlight') }}">Start advertising</a>
-          <div class="right-ad-2-sparkles" aria-hidden="true"><span></span><span></span><span></span></div>
+          <div class="p-5 text-center">
+            <div class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-rose-50 text-[#f76f69] mb-2"><i class="bi bi-stars"></i></div>
+            <h4 class="text-base font-bold text-gray-900">Featured Showcase</h4>
+            <p class="text-xs text-gray-500 mt-1 mb-3">Highlight your brand, product, or profile to thousands of members.</p>
+            <a class="inline-flex items-center px-4 py-1.5 rounded-xl text-xs font-semibold text-white bg-[#f76f69] hover:bg-[#e65d57] transition-colors" href="{{ url_for('payments.dashboard_ad_package', placement='dashboard-spotlight') }}">Start advertising</a>
+          </div>
           {% endif %}
         </div>
+        {% endif %}
       </div>
       {% endif %}
       {% if loop.index % 13 == 0 %}
@@ -1562,7 +1657,7 @@ placement='dashboard-top') %}
         <span class="font-medium">Notifications</span>
       </a>
 
-      <a href="{{ url_for('user.profile', user_id=current_user.id) }}"
+      <a href="{{ url_for('user.profile') }}"
         class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-fb-gray transition-colors mb-2">
         <i class="bi bi-person mr-3 text-lg"></i> Profile
       </a>
@@ -4965,7 +5060,7 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
             `;
       bdayPop.onclick = function (e) {
         if (e.target.tagName !== 'BUTTON' && !e.target.closest('button')) {
-          window.location.href = "{{ url_for('user.view_profile', user_identifier=friend.id) }}";
+          window.location.href = "{{ url_for('user.view_profile', user_identifier=friend.public_id) }}";
         }
       };
       document.body.appendChild(bdayPop);

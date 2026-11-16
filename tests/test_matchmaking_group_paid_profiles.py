@@ -247,17 +247,29 @@ def test_expiration_is_evaluated_at_render_time_without_scheduler(
     _find_payment(db, find_user, now=now, days_ago=BROWSE_ACCESS_DAYS - 1)
     db.session.commit()
 
-    visible_now = {
-        item.user.id
-        for item in visible_paid_matchmaking_profiles(viewer, group, now=now).items
-    }
+    visible_now = set()
+    p = 1
+    while True:
+        page_items = visible_paid_matchmaking_profiles(
+            viewer, group, page=p, per_page=24, now=now
+        ).items
+        if not page_items:
+            break
+        visible_now.update(item.user.id for item in page_items)
+        p += 1
     assert boost_user.id in visible_now
     assert find_user.id in visible_now
     later = now + timedelta(days=2)
-    visible_later = {
-        item.user.id
-        for item in visible_paid_matchmaking_profiles(viewer, group, now=later).items
-    }
+    visible_later = set()
+    p = 1
+    while True:
+        page_items = visible_paid_matchmaking_profiles(
+            viewer, group, page=p, per_page=24, now=later
+        ).items
+        if not page_items:
+            break
+        visible_later.update(item.user.id for item in page_items)
+        p += 1
     assert boost_user.id not in visible_later
     assert find_user.id not in visible_later
 

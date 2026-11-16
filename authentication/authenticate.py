@@ -625,8 +625,18 @@ def register():
         if not gender:
             errors["gender"] = "Gender is required."
 
+        ALLOWED_REGISTRATION_MARITAL_STATUSES = {
+            "Single",
+            "Married",
+            "In a relationship",
+            "Divorced",
+            "Widowed",
+            "Prefer not to say",
+        }
         if not marital_status:
             errors["marital_status"] = "Marital status is required."
+        elif marital_status not in ALLOWED_REGISTRATION_MARITAL_STATUSES:
+            errors["marital_status"] = "Please select a valid marital status."
 
         if not country:
             errors["country"] = "Country is required."

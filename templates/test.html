@@ -993,7 +993,7 @@
           <i class="bi bi-house-door mr-3 text-lg"></i> Home
         </div>
         <a
-          href="{{ url_for('user.profile', user_id=current_user.id) }}"
+          href="{{ url_for('user.profile') }}"
           class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-fb-gray transition-colors mb-2"
         >
           <i class="bi bi-person mr-3 text-lg"></i> Profile
@@ -1161,7 +1161,7 @@
         <i class="bi bi-house-door mr-3 text-lg"></i> Home
       </div>
       <a
-        href="{{ url_for('user.profile', user_id=current_user.id) }}"
+        href="{{ url_for('user.profile') }}"
         class="sidebar-item flex items-center p-3 rounded-lg text-fb-text hover:bg-fb-gray transition-colors mb-2"
       >
         <i class="bi bi-person mr-3 text-lg"></i> Profile
@@ -1355,7 +1355,7 @@
         class="bg-white rounded-2xl shadow-soft p-3 sm:p-4 mb-6 card-hover"
       >
         <div class="flex items-center mb-3">
-          <a href="{{ url_for('user.profile', user_id=current_user.id) }}">
+          <a href="{{ url_for('user.profile') }}">
             <img
               src="{{ current_user.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
               alt=""

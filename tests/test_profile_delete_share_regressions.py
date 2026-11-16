@@ -48,7 +48,7 @@ def test_profile_delete_commits_requeries_and_disappears_after_reload(db, client
     assert response.get_json() == {'success': True, 'post_id': post_id}
     db.session.expire_all()
     assert db.session.get(Post, post_id) is None
-    profile = client.get(f'/{owner.id}')
+    profile = client.get(f'/{owner.id}', follow_redirects=True)
     assert profile.status_code == 200
     assert b'Permanent profile deletion marker' not in profile.data
 
@@ -103,8 +103,8 @@ def test_profile_and_post_detail_render_desktop_copy_link_with_public_uuid(
     db.session.commit()
     _login(client, owner)
 
-    for url in (f'/{owner.id}', f'/profile/{owner.public_id}', f'/post/{post.public_id}'):
-        response = client.get(url)
+    for url in ('/profile', f'/{owner.id}', f'/profile/{owner.public_id}', f'/post/{post.public_id}'):
+        response = client.get(url, follow_redirects=True)
         assert response.status_code == 200
         html = response.get_data(as_text=True)
         assert 'data-copy-post-link' in html

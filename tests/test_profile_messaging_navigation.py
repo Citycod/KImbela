@@ -65,7 +65,8 @@ def test_own_profile_message_control_targets_current_messenger(
 ):
     login()
 
-    response = client.get(f"/{user.id}")
+    assert client.get(f"/{user.id}").status_code == 301
+    response = client.get(f"/{user.id}", follow_redirects=True)
 
     assert response.status_code == 200
     assert "/user_dashboard?messenger=1" in response.get_data(as_text=True)

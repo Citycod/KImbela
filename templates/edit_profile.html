@@ -38,7 +38,7 @@
 <div class="min-h-screen bg-gray-50">
     <nav class="sticky top-0 z-40 border-b border-gray-200 bg-white/95 backdrop-blur-md shadow-soft">
         <div class="mx-auto flex h-16 max-w-4xl items-center justify-between px-4 sm:px-6">
-            <a href="{{ url_for('user.profile', user_id=user.id) }}"
+            <a href="{{ url_for('user.profile') }}"
                class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-100"
                aria-label="Back to profile">
                 <i class="fas fa-arrow-left"></i>
@@ -67,7 +67,7 @@
 
             <form method="POST"
                   enctype="multipart/form-data"
-                  action="{{ url_for('user.edit_profile', user_id=user.id) }}"
+                  action="{{ url_for('user.edit_profile') }}"
                   class="space-y-6 p-5 sm:p-8"
                   id="profileForm">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
@@ -168,6 +168,13 @@
                             <input id="dob" type="date" name="dob" value="{{ user.dob.strftime('%Y-%m-%d') if user.dob else '' }}"
                                    {% if min_dob %}min="{{ min_dob }}"{% endif %} {% if max_dob %}max="{{ max_dob }}"{% endif %}
                                    class="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-1 focus:ring-purple-500">
+                            <input type="hidden" name="has_age_visibility_toggle" value="1">
+                            <label class="mt-2 flex items-center gap-2 cursor-pointer text-xs text-gray-700">
+                                <input type="checkbox" id="show_age_on_profile" name="show_age_on_profile" value="1"
+                                       class="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                                       {% if user.show_age_on_profile %}checked{% endif %}>
+                                <span>Display my age on profile</span>
+                            </label>
                         </div>
                         <div>
                             <label for="gender" class="mb-1 block text-xs font-bold text-gray-700">Gender</label>
@@ -217,10 +224,11 @@
                                 class="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-1 focus:ring-purple-500">
                             <option value="">Select Status</option>
                             <option value="Single" {{ 'selected' if user.marital_status == 'Single' }}>Single</option>
+                            <option value="Married" {{ 'selected' if user.marital_status == 'Married' }}>Married</option>
+                            <option value="In a relationship" {{ 'selected' if user.marital_status == 'In a relationship' }}>In a relationship</option>
                             <option value="Divorced" {{ 'selected' if user.marital_status == 'Divorced' }}>Divorced</option>
                             <option value="Widowed" {{ 'selected' if user.marital_status == 'Widowed' }}>Widowed</option>
-                            <option value="Alumni" {{ 'selected' if user.marital_status == 'Alumni' }}>Alumni (Now Married)</option>
-                            <option value="In a relationship" {{ 'selected' if user.marital_status == 'In a relationship' }}>In a relationship</option>
+                            <option value="Prefer not to say" {{ 'selected' if user.marital_status == 'Prefer not to say' }}>Prefer not to say</option>
                         </select>
                     </div>
                     <div>
@@ -236,7 +244,7 @@
                 </section>
 
                 <div class="flex flex-col-reverse gap-3 border-t border-gray-200 pt-5 sm:flex-row sm:justify-end">
-                    <a href="{{ url_for('user.profile', user_id=user.id) }}"
+                    <a href="{{ url_for('user.profile') }}"
                        class="rounded-lg border border-gray-300 px-5 py-2.5 text-center text-sm font-bold text-gray-700 transition hover:bg-gray-50">
                         Cancel
                     </a>

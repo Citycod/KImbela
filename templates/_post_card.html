@@ -8,13 +8,13 @@
     <!-- Header -->
     <div class="flex items-center justify-between mb-4">
         <div class="flex items-center gap-3">
-            <a href="{{ url_for('user.view_profile', user_identifier=post.author.id) }}" class="flex-shrink-0">
+            <a href="{{ url_for('user.view_profile', user_identifier=post.author.public_id) }}" class="flex-shrink-0">
                 <img src="{{ post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
                     alt="{{ post.author.first_name }}" class="w-12 h-12 rounded-xl border-2 border-purple-200 object-cover hover:opacity-90 transition-opacity"
                     width="48" height="48" loading="lazy">
             </a>
             <div>
-                <a href="{{ url_for('user.view_profile', user_identifier=post.author.id) }}" class="hover:underline">
+                <a href="{{ url_for('user.view_profile', user_identifier=post.author.public_id) }}" class="hover:underline">
                     <h6 class="font-bold text-gray-900 text-sm">
                         {{ post.author.first_name }} {{ post.author.last_name }}
                     </h6>
@@ -68,13 +68,13 @@
         {% if post.shared_post %}
         <div class="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
             <div class="flex items-center gap-3 mb-3">
-                <a href="{{ url_for('user.view_profile', user_identifier=post.shared_post.author.id) }}" class="flex-shrink-0">
+                <a href="{{ url_for('user.view_profile', user_identifier=post.shared_post.author.public_id) }}" class="flex-shrink-0">
                     <img src="{{ post.shared_post.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
                         alt="{{ post.shared_post.author.first_name }}" class="w-10 h-10 rounded-xl object-cover hover:opacity-90 transition-opacity"
                         width="40" height="40" loading="lazy">
                 </a>
                 <div>
-                    <a href="{{ url_for('user.view_profile', user_identifier=post.shared_post.author.id) }}" class="hover:underline">
+                    <a href="{{ url_for('user.view_profile', user_identifier=post.shared_post.author.public_id) }}" class="hover:underline">
                         <h6 class="font-semibold text-sm text-gray-900">
                             {{ post.shared_post.author.first_name }} {{ post.shared_post.author.last_name }}
                         </h6>
@@ -177,7 +177,7 @@
             {% if post.comments_count > 0 %}
             {% for comment in post.comments|reverse %}
             <div id="comment-{{ comment.id }}" class="flex gap-2 comment-item">
-                <a href="{{ url_for('user.view_profile', user_identifier=comment.author.id) }}" class="flex-shrink-0">
+                <a href="{{ url_for('user.view_profile', user_identifier=comment.author.public_id) }}" class="flex-shrink-0">
                     <img src="{{ comment.author.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}"
                         alt="{{ comment.author.first_name }}" class="w-6 h-6 rounded-full object-cover mt-1 hover:opacity-90 transition-opacity"
                         width="24" height="24" loading="lazy">
@@ -185,7 +185,7 @@
                 <div class="flex-1 min-w-0">
                     <div class="bg-white rounded-xl px-3 py-2 shadow-sm border border-gray-100">
                         <div class="flex items-start justify-between mb-0.5">
-                            <a href="{{ url_for('user.view_profile', user_identifier=comment.author.id) }}" class="hover:underline block truncate">
+                            <a href="{{ url_for('user.view_profile', user_identifier=comment.author.public_id) }}" class="hover:underline block truncate">
                                 <span class="font-semibold text-xs text-gray-800">
                                     {{ comment.author.first_name }} {{ comment.author.last_name }}
                                 </span>

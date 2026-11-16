@@ -1697,9 +1697,10 @@ const ProfileSystem = {
                 day: 'numeric'
             }) : 'Not specified';
 
-            const age = (data.age !== undefined && data.age !== null && data.age !== '')
+            const showAge = data.show_age_on_profile !== false;
+            const age = (showAge && data.age !== undefined && data.age !== null && data.age !== '')
                 ? data.age
-                : (userData.dob ? TimeUtils.calculateAge(userData.dob) : '');
+                : ((showAge && userData.dob) ? TimeUtils.calculateAge(userData.dob) : '');
 
             modalBody.innerHTML = `
                 <div class="profile-modal-content">
@@ -1720,7 +1721,7 @@ const ProfileSystem = {
                             <div class="profile-text-content mt-4">
                                 <h3 class="profile-name text-2xl font-bold">${userData.first_name} ${userData.last_name}</h3>
                                 <div class="profile-details flex flex-wrap justify-center gap-2 mt-2">
-                                    ${userData.marital_status ? `
+                                    ${(userData.marital_status && userData.marital_status !== 'Prefer not to say') ? `
                                         <span class="inline-flex items-center gap-1 bg-gray-100 px-3 py-1.5 rounded-full text-sm">
                                             <i class="bi bi-heart-fill text-red-500 text-xs"></i>
                                             ${userData.marital_status}
@@ -2540,9 +2541,11 @@ const NotificationSystem = {
             dropdown.addEventListener('click', () => this.load());
         }
 
-        window.addEventListener('pageshow', () => {
-            this.updateBadge();
-        });
+        if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+            window.addEventListener('pageshow', () => {
+                this.updateBadge();
+            });
+        }
     }
 };
 
@@ -2942,10 +2945,9 @@ const AdSystem = {
         }
 
 
-        // Update all ad displays
+        // Update native and floating ad displays without disruptive modal popups
         this.updateNativeAd(ad);
         this.updateFloatingAd(ad);
-        this.showAdModal(ad);
 
         // Track impression
         this.trackAdImpression(ad.id);

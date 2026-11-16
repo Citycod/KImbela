@@ -839,9 +839,11 @@
                                         id="marital_status" name="marital_status" required>
                                     <option value="">Marital Status</option>
                                     <option value="Single" {% if request.form.marital_status == 'Single' %}selected{% endif %}>Single</option>
+                                    <option value="Married" {% if request.form.marital_status == 'Married' %}selected{% endif %}>Married</option>
+                                    <option value="In a relationship" {% if request.form.marital_status == 'In a relationship' %}selected{% endif %}>In a relationship</option>
                                     <option value="Divorced" {% if request.form.marital_status == 'Divorced' %}selected{% endif %}>Divorced</option>
                                     <option value="Widowed" {% if request.form.marital_status == 'Widowed' %}selected{% endif %}>Widowed</option>
-                                    <option value="Alumni" {% if request.form.marital_status in ['Alumni', 'Alumni (Now Married)'] %}selected{% endif %}>Alumni (Now Married)</option>
+                                    <option value="Prefer not to say" {% if request.form.marital_status == 'Prefer not to say' %}selected{% endif %}>Prefer not to say</option>
                                 </select>
                                 {% if errors.marital_status %}<div class="invalid-feedback">{{ errors.marital_status }}</div>{% endif %}
                             </div>

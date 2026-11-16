@@ -666,7 +666,7 @@ def test_feed_post_owner_actions_and_server_authorization(db, client):
     assert client.post(f"/delete_post/{deletable.id}").status_code == 200
     assert db.session.get(Post, deletable.id) is None
 
-    profile = client.get(f"/{owner.id}")
+    profile = client.get(f"/{owner.id}", follow_redirects=True)
     assert b'class="post-text ' in profile.data
     assert b'id="editPostModal"' in profile.data
 
@@ -735,13 +735,24 @@ def test_admin_profile_link_uses_dedicated_editor_and_cannot_change_privileges(d
     _login(client, admin)
 
     dashboard = client.get("/admin_dashboard")
-    assert f'href="/{admin.id}"'.encode() in dashboard.data
-    profile = client.get(f"/{admin.id}")
+    assert b'href="/profile"' in dashboard.data
+
+    # Old numeric URL redirects to canonical /profile
+    redirect_resp = client.get(f"/{admin.id}")
+    assert redirect_resp.status_code == 301
+    assert redirect_resp.headers["Location"].endswith("/profile")
+
+    profile = client.get("/profile")
     assert profile.status_code == 200
-    assert f'href="/{admin.id}/edit"'.encode() in profile.data
+    assert b'href="/profile/edit"' in profile.data
     assert b'id="editProfileModal"' not in profile.data
 
-    editor = client.get(f"/{admin.id}/edit")
+    # Old numeric edit URL redirects to canonical /profile/edit
+    edit_redirect_resp = client.get(f"/{admin.id}/edit")
+    assert edit_redirect_resp.status_code == 301
+    assert edit_redirect_resp.headers["Location"].endswith("/profile/edit")
+
+    editor = client.get("/profile/edit")
     assert editor.status_code == 200
     assert b'id="profileForm"' in editor.data
 
@@ -752,7 +763,7 @@ def test_admin_profile_link_uses_dedicated_editor_and_cannot_change_privileges(d
         lambda *_args, **_kwargs: {"secure_url": "https://cdn.example/admin.webp"},
     )
     response = client.post(
-        f"/{admin.id}/edit",
+        "/profile/edit",
         data={
             "first_name": "Updated",
             "last_name": "Admin",

@@ -393,3 +393,295 @@ def test_get_user_profile_privacy_and_security(client, db):
     assert blocked_resp.status_code == 403
 
 
+def test_registration_above_18_and_marital_status_options(client, db):
+    from models import User
+    from time_utils import utcnow
+
+    today = utcnow().date()
+    # Age 25
+    dob_25 = (today - timedelta(days=25 * 365 + 6)).strftime("%Y-%m-%d")
+    payload_married = _reg_payload("reg-married@example.com", dob_25)
+    payload_married["marital_status"] = "Married"
+
+    resp_m = client.post("/register", data=payload_married)
+    assert resp_m.status_code == 302
+    u_m = User.query.filter_by(email="reg-married@example.com").first()
+    assert u_m is not None
+    assert u_m.marital_status == "Married"
+    assert u_m.age >= 18
+
+    # Age 35 with "Prefer not to say"
+    dob_35 = (today - timedelta(days=35 * 365 + 8)).strftime("%Y-%m-%d")
+    payload_pnts = _reg_payload("reg-pnts@example.com", dob_35)
+    payload_pnts["marital_status"] = "Prefer not to say"
+
+    resp_p = client.post("/register", data=payload_pnts)
+    assert resp_p.status_code == 302
+    u_p = User.query.filter_by(email="reg-pnts@example.com").first()
+    assert u_p is not None
+    assert u_p.marital_status == "Prefer not to say"
+    assert u_p.age >= 18
+
+    # Alumni is rejected on registration
+    payload_alumni = _reg_payload("reg-alumni@example.com", dob_25)
+    payload_alumni["marital_status"] = "Alumni"
+    resp_alumni = client.post("/register", data=payload_alumni)
+    assert resp_alumni.status_code == 200
+    assert b"Please select a valid marital status." in resp_alumni.data
+    assert User.query.filter_by(email="reg-alumni@example.com").first() is None
+
+
+def test_user_age_visibility_controls(client, db):
+    from models import User
+
+    client.get("/logout")
+    carol = User(
+        first_name="Carol",
+        last_name="Private",
+        email="carol@example.com",
+        dob=date(1991, 7, 11),
+        gender="Female",
+        city="Lagos",
+        country="Nigeria",
+        marital_status="Single",
+        phone_number="+234800000006",
+        is_active=True,
+    )
+    carol.set_password("Pass12345!")
+
+    viewer = User(
+        first_name="Viewer",
+        last_name="Person",
+        email="viewer@example.com",
+        dob=date(1989, 3, 14),
+        gender="Male",
+        city="Lagos",
+        country="Nigeria",
+        marital_status="Single",
+        phone_number="+234800000007",
+        is_active=True,
+    )
+    viewer.set_password("Pass12345!")
+
+    admin = User(
+        first_name="Admin",
+        last_name="User",
+        email="admin-age@example.com",
+        dob=date(1985, 1, 1),
+        gender="Male",
+        city="Lagos",
+        country="Nigeria",
+        marital_status="Single",
+        phone_number="+234800000008",
+        is_active=True,
+        is_admin=True,
+    )
+    admin.set_password("Pass12345!")
+
+    db.session.add_all([carol, viewer, admin])
+    db.session.commit()
+
+    # 1. Default for user is True
+    assert carol.show_age_on_profile is True
+
+    # 2. Log in as Carol and turn off age visibility via edit_profile form
+    _login_user(client, carol)
+    client.post(
+        f"/{carol.id}/edit",
+        data={
+            "first_name": "Carol",
+            "last_name": "Private",
+            "has_age_visibility_toggle": "1",
+            # show_age_on_profile omitted = checkbox unchecked
+        },
+    )
+    db.session.refresh(carol)
+    assert carol.show_age_on_profile is False
+
+    # 3. Turn back on via API
+    resp_api = client.post(
+        "/api/user/privacy/age_visibility",
+        json={"show_age_on_profile": True},
+    )
+    assert resp_api.status_code == 200
+    assert resp_api.get_json()["show_age_on_profile"] is True
+    db.session.refresh(carol)
+    assert carol.show_age_on_profile is True
+
+    # 4. Toggle via API (omitting value toggles it to False)
+    resp_toggle = client.post("/api/user/privacy/age_visibility", json={})
+    assert resp_toggle.status_code == 200
+    assert resp_toggle.get_json()["show_age_on_profile"] is False
+    db.session.refresh(carol)
+    assert carol.show_age_on_profile is False
+
+    # 5. Log in as Viewer: check Carol's profile via API and public HTML
+    client.get("/logout")
+    _login_user(client, viewer)
+
+    api_resp = client.get(f"/get_user_profile/{carol.id}")
+    assert api_resp.status_code == 200
+    api_data = api_resp.get_json()
+    assert api_data["age"] is None
+    assert api_data["dob"] is None
+    assert api_data["show_age_on_profile"] is False
+
+    html_resp = client.get(f"/profile/{carol.public_id}")
+    assert html_resp.status_code == 200
+    # Age card/badge should NOT appear in rendered HTML
+    assert b">Age</p>" not in html_resp.data
+
+    # 6. Carol views her own profile via API
+    client.get("/logout")
+    _login_user(client, carol)
+    self_resp = client.get(f"/get_user_profile/{carol.id}")
+    assert self_resp.status_code == 200
+    self_data = self_resp.get_json()
+    assert self_data["age"] == carol.age
+    assert self_data["dob"] == "1991-07-11"
+
+    # 7. Admin views Carol's profile via API
+    client.get("/logout")
+    _login_user(client, admin)
+    admin_resp = client.get(f"/get_user_profile/{carol.id}")
+    assert admin_resp.status_code == 200
+    admin_data = admin_resp.get_json()
+    assert admin_data["age"] == carol.age
+    assert admin_data["dob"] == "1991-07-11"
+
+
+def test_marital_status_privacy_and_alumni_preservation(client, db):
+    from models import User
+
+    client.get("/logout")
+
+    # A. Verify Alumni is NOT offered in register form
+    reg_page = client.get("/register")
+    assert reg_page.status_code == 200
+    assert b'<option value="Alumni"' not in reg_page.data
+    assert b'<option value="Married"' in reg_page.data
+    assert b'<option value="Prefer not to say"' in reg_page.data
+
+    alumni_user = User(
+        first_name="Alum",
+        last_name="Grad",
+        email="alum-grad@example.com",
+        dob=date(1993, 2, 20),
+        gender="Male",
+        city="Lagos",
+        country="Nigeria",
+        marital_status="Alumni",
+        phone_number="+234800000009",
+        is_active=True,
+    )
+    alumni_user.set_password("Pass12345!")
+
+    viewer = User(
+        first_name="Viewer2",
+        last_name="Test",
+        email="viewer2@example.com",
+        dob=date(1994, 6, 12),
+        gender="Female",
+        city="Lagos",
+        country="Nigeria",
+        marital_status="Single",
+        phone_number="+234800000010",
+        is_active=True,
+    )
+    viewer.set_password("Pass12345!")
+
+    db.session.add_all([alumni_user, viewer])
+    db.session.commit()
+
+    # B. Verify edit_profile and packages do not offer Alumni dropdown option
+    _login_user(client, alumni_user)
+    edit_page = client.get("/profile/edit")
+    assert edit_page.status_code == 200
+    assert b'<option value="Alumni"' not in edit_page.data
+    assert b'<option value="Married"' in edit_page.data
+    assert b'<option value="Prefer not to say"' in edit_page.data
+
+    packages_page = client.get("/ad-packages")
+    assert packages_page.status_code == 200
+    assert b'<option value="Alumni">Alumni</option>' not in packages_page.data
+    assert b'<option value="Married">Married</option>' in packages_page.data
+    assert b'<option value="Prefer not to say">Prefer not to say</option>' in packages_page.data
+
+    # C. Existing user with Alumni retains legacy Alumni value when saving form with placeholder/empty status
+    client.post(
+        "/profile/edit",
+        data={
+            "first_name": "Alum",
+            "last_name": "Grad",
+            "bio": "Updated bio text",
+            "marital_status": "",  # Unselected in dropdown, placeholder submitted
+        },
+    )
+    db.session.refresh(alumni_user)
+    assert alumni_user.marital_status == "Alumni"
+    assert alumni_user.bio == "Updated bio text"
+
+    # D. Viewer sees legacy Alumni status rendered on public profile and API without regression
+    client.get("/logout")
+    _login_user(client, viewer)
+    resp_alumni = client.get(f"/get_user_profile/{alumni_user.id}")
+    assert resp_alumni.status_code == 200
+    assert resp_alumni.get_json()["marital_status"] == "Alumni"
+
+    html_alumni = client.get(f"/profile/{alumni_user.public_id}")
+    assert html_alumni.status_code == 200
+    assert b"Alumni" in html_alumni.data
+
+    # E. User can cleanly update from legacy Alumni to Married
+    client.get("/logout")
+    _login_user(client, alumni_user)
+    client.post(
+        "/profile/edit",
+        data={
+            "first_name": "Alum",
+            "last_name": "Grad",
+            "marital_status": "Married",
+        },
+    )
+    db.session.refresh(alumni_user)
+    assert alumni_user.marital_status == "Married"
+
+    # F. Viewer sees Married in API
+    client.get("/logout")
+    _login_user(client, viewer)
+    resp_v1 = client.get(f"/get_user_profile/{alumni_user.id}")
+    assert resp_v1.status_code == 200
+    assert resp_v1.get_json()["marital_status"] == "Married"
+
+    # G. User changes to Prefer not to say
+    client.get("/logout")
+    _login_user(client, alumni_user)
+    client.post(
+        "/profile/edit",
+        data={
+            "first_name": "Alum",
+            "last_name": "Grad",
+            "marital_status": "Prefer not to say",
+        },
+    )
+    db.session.refresh(alumni_user)
+    assert alumni_user.marital_status == "Prefer not to say"
+
+    # H. Viewer cannot see Prefer not to say via API (masked to None) and public page suppresses status badge
+    client.get("/logout")
+    _login_user(client, viewer)
+    resp_v2 = client.get(f"/get_user_profile/{alumni_user.id}")
+    assert resp_v2.status_code == 200
+    assert resp_v2.get_json()["marital_status"] is None
+
+    html_resp = client.get(f"/profile/{alumni_user.public_id}")
+    assert html_resp.status_code == 200
+    assert b">Status</p>" not in html_resp.data
+
+    # I. Alumni user sees their own status via API
+    client.get("/logout")
+    _login_user(client, alumni_user)
+    resp_self = client.get(f"/get_user_profile/{alumni_user.id}")
+    assert resp_self.status_code == 200
+    assert resp_self.get_json()["marital_status"] == "Prefer not to say"
+

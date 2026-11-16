@@ -389,7 +389,7 @@
             <nav id="navmenu" class="navmenu">
                 <ul>
                     <li><a href="{{ url_for('user.index') }}">Home</a></li>
-                    <li><a href="{{ url_for('user.about') }}">About Us</a></li>
+                    <li style="display: none;"><a href="{{ url_for('user.about') }}">About Us</a></li>
                     <li><a href="{{ url_for('user.features') }}" class="active">Features</a></li>
                     
                     <li><a href="{{ url_for('auth.login') }}">Login</a></li>
@@ -507,7 +507,7 @@
                             <h3>Safer Marketplace Activity</h3>
                             <p>Marketplace growth only works when trust is visible. Kimbela combines seller identity, community standards, and moderation to reduce low-quality behavior.</p>
                             <ul class="feature-list">
-                                <li>18+ adult community standards</li>
+                                <li>Gated Community Standards</li>
                                 <li>Reporting and review channels for suspicious activity</li>
                                 <li>Clear marketplace and seller terms</li>
                                 <li>Safer environment for repeat buyers and sellers</li>
@@ -713,7 +713,7 @@
         <!-- /Community Features -->
 
         <!-- Mentorship Features -->
-        <section id="mentorship" class="feature-category section light-background">
+        <section id="mentorship" class="feature-category section light-background" style="display: none !important;">
             <div class="container" data-aos="fade-up">
                 <div class="category-header">
                     <h2>Mentorship & Personal Growth</h2>
@@ -904,7 +904,7 @@
                         <p><strong>Support:</strong> <span>support@kimbela.com</span></p>
                         <p>
                             <strong>Community:</strong>
-                            <span>Adults (18+) seeking meaningful connections</span>
+                            <span>A space for people, passions, conversations, and connections.</span>
                         </p>
                     </div>
                     <div class="social-links d-flex mt-4">
@@ -925,7 +925,7 @@
                     <h4>Quick Links</h4>
                     <ul>
                         <li><a href="{{ url_for('user.index') }}">Home</a></li>
-                        <li><a href="{{ url_for('user.about') }}">About Us</a></li>
+                        <li style="display: none;"><a href="{{ url_for('user.about') }}">About Us</a></li>
                         <li><a href="{{ url_for('user.features') }}">Features</a></li>
                         <li><a href="{{ url_for('auth.login') }}">Login</a></li>
                     </ul>

@@ -47,7 +47,7 @@
                     <a href="{{ url_for('user.user_dashboard') }}" class="text-gray-600 hover:text-blue-600 transition-colors">
                         <i class="bi bi-house-door text-xl"></i>
                     </a>
-                    <a href="{{ url_for('user.profile', user_id=current_user.id) }}" class="text-gray-600 hover:text-blue-600 transition-colors">
+                    <a href="{{ url_for('user.profile') }}" class="text-gray-600 hover:text-blue-600 transition-colors">
                         <i class="bi bi-person text-xl"></i>
                     </a>
                     <!-- Messenger -->
@@ -80,13 +80,13 @@
             {% for u in users %}
             <div class="bg-white rounded-2xl shadow-lg overflow-hidden card-hover">
                 <div class="p-6 text-center">
-                    <a href="{{ url_for('user.view_profile', user_identifier=u.id) }}">
+                    <a href="{{ url_for('user.view_profile', user_identifier=u.public_id) }}">
                         <img src="{{ u.profile_pic or url_for('static', filename='assets/img/default-avatar.png') }}" 
                              alt="{{ u.first_name }}" 
                              class="w-24 h-24 rounded-full mx-auto mb-4 object-cover border-4 border-gray-100">
                     </a>
                     <h3 class="text-xl font-bold text-gray-900 mb-1">
-                        <a href="{{ url_for('user.view_profile', user_identifier=u.id) }}" class="hover:text-blue-600 transition-colors">
+                        <a href="{{ url_for('user.view_profile', user_identifier=u.public_id) }}" class="hover:text-blue-600 transition-colors">
                             {{ u.first_name }} {{ u.last_name }}
                         </a>
                     </h3>

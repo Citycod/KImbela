@@ -40,11 +40,15 @@ def _login_as(client, account):
 def test_profile_view_links_to_dedicated_editor_without_modal(client, login, user):
     login()
 
-    response = client.get(f"/{user.id}")
+    legacy_resp = client.get(f"/{user.id}")
+    assert legacy_resp.status_code == 301
+    assert legacy_resp.headers["Location"].endswith("/profile")
+
+    response = client.get("/profile")
 
     assert response.status_code == 200
     body = response.get_data(as_text=True)
-    assert f'href="/{user.id}/edit"' in body
+    assert 'href="/profile/edit"' in body
     assert 'id="editProfileModal"' not in body
     assert "openModal('editProfileModal')" not in body
     assert 'id="profileForm"' not in body
@@ -57,11 +61,11 @@ def test_profile_view_links_to_dedicated_editor_without_modal(client, login, use
 def test_old_edit_query_string_safely_renders_view_only_profile(client, login, user):
     login()
 
-    response = client.get(f"/{user.id}?edit=1")
+    response = client.get(f"/{user.id}?edit=1", follow_redirects=True)
 
     assert response.status_code == 200
     assert b'id="editProfileModal"' not in response.data
-    assert f'href="/{user.id}/edit"'.encode() in response.data
+    assert b'href="/profile/edit"' in response.data
     assert client.post(f"/{user.id}", data={"first_name": "No"}).status_code == 405
 
 
@@ -70,12 +74,16 @@ def test_edit_profile_page_loads_with_csrf_fields_and_location_controls(
 ):
     login()
 
-    response = client.get(f"/{user.id}/edit")
+    legacy_resp = client.get(f"/{user.id}/edit")
+    assert legacy_resp.status_code == 301
+    assert legacy_resp.headers["Location"].endswith("/profile/edit")
+
+    response = client.get("/profile/edit")
 
     assert response.status_code == 200
     body = response.get_data(as_text=True)
     assert 'id="profileForm"' in body
-    assert f'action="/{user.id}/edit"' in body
+    assert 'action="/profile/edit"' in body
     assert 'name="csrf_token"' in body
     assert 'name="profile_pic"' in body
     assert 'name="cover_pic"' in body
@@ -90,7 +98,7 @@ def test_edit_profile_updates_existing_fields_and_redirects_to_profile(
     login()
 
     response = client.post(
-        f"/{user.id}/edit",
+        "/profile/edit",
         data={
             "first_name": "Updated",
             "last_name": "Member",
@@ -111,7 +119,7 @@ def test_edit_profile_updates_existing_fields_and_redirects_to_profile(
     )
 
     assert response.status_code == 302
-    assert response.headers["Location"].endswith(f"/{user.id}")
+    assert response.headers["Location"].endswith("/profile")
     db.session.refresh(user)
     assert user.first_name == "Updated"
     assert user.last_name == "Member"
@@ -136,7 +144,7 @@ def test_edit_profile_preserves_profile_and_cover_uploads(
     login()
 
     response = client.post(
-        f"/{user.id}/edit",
+        "/profile/edit",
         data={
             "profile_pic": (BytesIO(b"profile-image"), "profile.png"),
             "cover_pic": (BytesIO(b"cover-image"), "cover.jpg"),

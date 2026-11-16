@@ -220,9 +220,9 @@
           <div class="col-lg-2 col-md-3 footer-links">
             <h4>Useful Links</h4>
             <ul>
-              <li><a href="#">Home</a></li>
-              <li><a href="#">About us</a></li>
-              <li><a href="#">Services</a></li>
+              <li><a href="{{ url_for('user.index') }}">Home</a></li>
+              <li style="display: none;"><a href="#">About us</a></li>
+              <li><a href="{{ url_for('user.features') }}">Features</a></li>
               <li><a href="{{ url_for('user.terms') }}">Terms of service</a></li>
               <li><a href="{{ url_for('user.privacy') }}">Privacy policy</a></li>
             </ul>

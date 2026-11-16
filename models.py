@@ -123,6 +123,9 @@ class User(db.Model, UserMixin):
     )
     bio = db.Column(db.Text, nullable=True)
     marital_status = db.Column(db.String(50), nullable=True)
+    show_age_on_profile = db.Column(
+        db.Boolean, default=True, server_default=db.true(), nullable=False
+    )
     email_token = db.Column(db.String(10))
     email_token_expires = db.Column(db.DateTime)
     otp = db.Column(db.String(255), nullable=True)

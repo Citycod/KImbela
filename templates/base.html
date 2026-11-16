@@ -13,7 +13,7 @@
     <script>window.publicBaseUrl = {{ _base_origin|tojson }};</script>
     {% block social_meta %}
     {% set _og_title = share_meta.title if (share_meta is defined and share_meta) else (og_title if og_title is defined else 'Kimbela - Meet. Connect. Belong') %}
-    {% set _og_description = share_meta.description if (share_meta is defined and share_meta) else (og_description if og_description is defined else 'Connect with like-minded mature individuals in a positive and uplifting space.') %}
+    {% set _og_description = share_meta.description if (share_meta is defined and share_meta) else (og_description if og_description is defined else 'Connect with like-minded individuals in a positive and uplifting space.') %}
     {% set _og_url = share_meta.url if (share_meta is defined and share_meta) else (og_url if og_url is defined else _default_og_url) %}
     {% set _og_image = share_meta.image if (share_meta is defined and share_meta) else (og_image if og_image is defined else _default_og_image) %}
     {% set _og_image_type = share_meta.image_type if (share_meta is defined and share_meta is mapping and 'image_type' in share_meta) else (og_image_type if og_image_type is defined else 'image/png') %}
