@@ -19,7 +19,7 @@
   rel="stylesheet" />
 
 <!-- Dashboard Redesign Override -->
-<link href="{{ url_for('static', filename='assets/css/dashboard_redesign.css', v='install-cta-1') }}"
+<link href="{{ url_for('static', filename='assets/css/dashboard_redesign.css', v='carousel-fix-2') }}"
   rel="stylesheet" />
 
 <!-- External CSS -->
@@ -477,7 +477,7 @@ placement='dashboard-top') %}
                 {% endif %}
               </p>
               <a href="{{ top_banner_url_new }}" class="kb-carousel-cta kb-hero-cta" {% if top_banner_new %}target="_blank" rel="noopener"{% endif %}>
-                {{ top_banner_new.call_to_action if top_banner_new and top_banner_new.call_to_action else 'Start Advertising &rarr;' }}
+                {{ top_banner_new.call_to_action if top_banner_new and top_banner_new.call_to_action else 'Start Advertising →' }}
               </a>
             </div>
             <div class="kb-carousel-visual kb-hero-image">
@@ -2930,10 +2930,22 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
       let currentIndex = 0;
       let timer = null;
       const autoInterval = 6000;
+      const numSlides = slides.length;
+
+      // Defensive inline styling to guarantee exact slide sizing across all browser engines
+      track.style.display = "flex";
+      track.style.width = (numSlides * 100) + "%";
+      slides.forEach((s) => {
+        s.style.flex = "0 0 " + (100 / numSlides) + "%";
+        s.style.width = (100 / numSlides) + "%";
+        s.style.maxWidth = (100 / numSlides) + "%";
+        s.style.minWidth = (100 / numSlides) + "%";
+      });
 
       function goToSlide(index) {
-        currentIndex = (index + slides.length) % slides.length;
-        track.style.transform = `translateX(-${currentIndex * 100}%)`;
+        currentIndex = (index + numSlides) % numSlides;
+        const shiftPercent = currentIndex * (100 / numSlides);
+        track.style.transform = `translate3d(-${shiftPercent}%, 0, 0)`;
         dots.forEach((dot, i) => {
           dot.classList.toggle("active", i === currentIndex);
           dot.setAttribute("aria-selected", i === currentIndex ? "true" : "false");

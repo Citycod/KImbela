@@ -152,3 +152,40 @@ def test_upcoming_birthday_control_is_removed_without_removing_birthday_ui():
     assert "View Upcoming Birthday" not in dashboard
     assert 'id="birthdayNotificationPopup"' in dashboard
     assert 'id="birthdayCalendarModal"' in dashboard
+
+
+def test_promotional_carousel_has_both_slides_and_resilient_controls():
+    dashboard = (PROJECT_ROOT / "templates" / "user_dashboard.html").read_text()
+    css = (
+        PROJECT_ROOT / "static" / "assets" / "css" / "dashboard_redesign.css"
+    ).read_text()
+
+    # Carousel container and navigation
+    assert dashboard.count('id="kbWelcomeCarousel"') == 1
+    assert 'class="kb-carousel-arrow prev"' in dashboard
+    assert 'class="kb-carousel-arrow next"' in dashboard
+    assert 'class="kb-carousel-dots"' in dashboard
+
+    # Slide 1: Welcome with group image
+    assert 'kb-carousel-slide-welcome' in dashboard
+    assert 'Welcome to Kimbela!' in dashboard
+    assert 'Connect, share and be part of something bigger.' in dashboard
+    assert 'Start Posting &rarr;' in dashboard
+    assert 'assets/img/peeps.jpeg' in dashboard
+
+    # Slide 2: Advertise with promo copy and vector artwork
+    assert 'kb-carousel-slide-ad' in dashboard
+    assert 'Advertise on Kimbela' in dashboard
+    assert 'Reach thousands of customers and grow your business today.' in dashboard
+    assert 'Start Advertising →' in dashboard
+    assert 'kb-carousel-ad-art' in dashboard
+
+    # CSS track & slide dimensioning for smooth hardware-accelerated transitions
+    assert ".kb-carousel-track {" in css
+    assert "width: 200%;" in css
+    assert "flex: 0 0 50%;" in css
+    assert ".kb-carousel-ad-art {" in css
+
+    # JS controller resiliency
+    assert "initKimbelaCarouselBootstrap" in dashboard
+    assert "translate3d" in dashboard
