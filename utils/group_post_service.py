@@ -17,6 +17,7 @@ from utils.matchmaking_group import can_create_group_post
 
 ALLOWED_GROUP_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp", "bmp"}
 GROUP_VIDEO_EXTENSIONS = (".mp4", ".mov", ".avi", ".mkv", ".webm")
+MAX_GROUP_MEDIA_SIZE = 100 * 1024 * 1024  # 100 MB
 
 
 class GroupPostCreationError(Exception):
@@ -45,13 +46,29 @@ def _upload_group_media(media_file) -> str:
         GROUP_VIDEO_EXTENSIONS
     ):
         raise GroupPostCreationError(
-            "video_not_allowed",
-            "Video uploads are not allowed.",
+            "unsupported_video_format",
+            "Unsupported video format. Please upload an MP4, MOV, or WebM video.",
         )
     if not _has_allowed_group_image_extension(filename):
         raise GroupPostCreationError(
             "unsupported_file_type",
-            "Unsupported file type. Please upload an image or GIF.",
+            "Unsupported file type. Please upload an image, GIF, or video.",
+        )
+
+    try:
+        media_file.seek(0, 2)
+        file_size = media_file.tell()
+        media_file.seek(0)
+    except Exception as exc:
+        raise GroupPostCreationError(
+            "media_upload_failed",
+            "Failed to upload media. Please try again.",
+        ) from exc
+
+    if file_size > MAX_GROUP_MEDIA_SIZE:
+        raise GroupPostCreationError(
+            "file_too_large",
+            "File too large! Maximum size is 100MB.",
         )
 
     try:
@@ -103,11 +120,31 @@ def create_group_post(*, author, group, content: str = "", media_file=None) -> P
         )
 
     try:
-        image_url = _upload_group_media(media_file) if has_media else None
+        image_url = None
+        video_url = None
+
+        if has_media:
+            from utils.video_service import (
+                VideoError,
+                is_video_upload,
+                process_and_store_feed_video,
+            )
+
+            if is_video_upload(media_file):
+                try:
+                    video_url = process_and_store_feed_video(media_file)
+                except VideoError as exc:
+                    raise GroupPostCreationError(
+                        exc.code,
+                        exc.user_message,
+                    ) from exc
+            else:
+                image_url = _upload_group_media(media_file)
+
         post = Post(
             content=content,
             image=image_url,
-            video=None,
+            video=video_url,
             author_id=author.id,
             group_id=group.id,
             created_at=utcnow(),

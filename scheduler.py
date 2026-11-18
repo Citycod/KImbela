@@ -486,6 +486,28 @@ def init_scheduler(app):
                 logger.error(f"Error in daily maintenance: {str(e)}")
                 db.session.rollback()
 
+    # Automated video expiration cleanup - daily at 3:30 AM (off-peak hours)
+    @scheduler.scheduled_job(
+        "cron", hour=3, minute=30, id="video_expiration_cleanup"
+    )
+    def scheduled_video_expiration_cleanup():
+        """Automatically expire and delete uploaded videos older than 10 days."""
+        with app.app_context():
+            start_time = time.time()
+            try:
+                from utils.video_service import cleanup_expired_videos
+
+                result = cleanup_expired_videos()
+                elapsed = time.time() - start_time
+                logger.info(
+                    "Video expiration cleanup finished in %.2fs: %s",
+                    elapsed,
+                    result,
+                )
+            except Exception as exc:
+                logger.error("Error in scheduled video expiration cleanup: %s", exc)
+                db.session.rollback()
+
     # Marketplace subscription check - 10 AM (once per day)
     @scheduler.scheduled_job("cron", hour=10, minute=0, id="marketplace_subscriptions")
     def check_marketplace_subscriptions():
@@ -953,6 +975,14 @@ def manual_trigger_matchmaking_expiry_check():
     except Exception as e:
         logger.error(f"Error in manual matchmaking expiry check: {str(e)}")
         return False
+
+
+def manual_trigger_video_cleanup(app=None):
+    """Manually trigger video expiration cleanup (for admin or testing)."""
+    target_app = app or current_app
+    with target_app.app_context():
+        from utils.video_service import cleanup_expired_videos
+        return cleanup_expired_videos()
 
 
 def resume_scheduler():

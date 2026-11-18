@@ -4966,6 +4966,8 @@ def create_group_post(group_id):
             {
                 "success": True,
                 "post_id": post.id,
+                "video_url": post.video,
+                "image_url": post.image,
                 "message": "Post created successfully!",
             }
         )

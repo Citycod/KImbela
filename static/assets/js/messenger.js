@@ -1509,7 +1509,9 @@
     window.closeGifPicker = function() { closeGifPicker(); };
     window.openGifPicker = function() { openGifPicker(); };
 
-    window.addEventListener('pageshow', function() {
-        updateUnreadBadge(true);
-    });
+    if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+        window.addEventListener('pageshow', function() {
+            updateUnreadBadge(true);
+        });
+    }
 })();

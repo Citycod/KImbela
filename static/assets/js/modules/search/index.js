@@ -197,7 +197,7 @@ class SearchSystem {
                 <div class="px-4 pb-3">
                     <p class="post-text">${post.content || ''}</p>
                     ${post.image ? `<div class="post-media mt-3"><img src="${post.image}" alt="Post" class="w-full rounded-2xl max-h-96 object-cover"></div>` : ''}
-                    ${post.video ? `<div class="post-media mt-3"><video controls class="w-full rounded-2xl max-h-96"><source src="${post.video}"></video></div>` : ''}
+                    ${post.video ? (post.video === 'expired' ? `<div class="post-media mt-3"><div class="video-expired-placeholder w-full py-6 px-4 rounded-2xl bg-gray-100 text-center text-gray-500 border border-gray-200"><i class="bi bi-clock-history text-2xl text-gray-400 mb-1 block"></i><span class="text-sm font-medium text-gray-700">Video expired</span><p class="text-xs text-gray-400 mt-1">Uploaded videos are automatically deleted after 10 days.</p></div></div>` : `<div class="post-media mt-3"><video controls class="w-full rounded-2xl max-h-96"><source src="${post.video}"></video></div>`) : ''}
                 </div>
             </div>
         `;

@@ -109,7 +109,16 @@ def create_app():
         if not file_path or not os.path.isfile(file_path):
             abort(404)
 
-        return send_from_directory(upload_folder, filename)
+        if filename.startswith("video/"):
+            from models import Post
+            from utils.matchmaking_group import can_view_post
+
+            video_url = f"/uploads/{filename}"
+            post = Post.query.filter_by(video=video_url).first()
+            if post and not can_view_post(post, current_user):
+                abort(403)
+
+        return send_from_directory(upload_folder, filename, conditional=True)
 
     @app.route("/public/uploads/<path:filename>")
     def serve_public_upload_preview(filename):
@@ -118,7 +127,16 @@ def create_app():
         if not file_path or not os.path.isfile(file_path):
             abort(404)
 
-        return send_from_directory(upload_folder, filename)
+        if filename.startswith("video/"):
+            from models import Post
+            from utils.matchmaking_group import is_private_group_post
+
+            video_url = f"/uploads/{filename}"
+            post = Post.query.filter_by(video=video_url).first()
+            if post and is_private_group_post(post):
+                abort(403)
+
+        return send_from_directory(upload_folder, filename, conditional=True)
 
     @app.route("/sw.js")
     def serve_sw():

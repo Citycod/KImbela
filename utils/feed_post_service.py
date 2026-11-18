@@ -160,20 +160,37 @@ def create_feed_post(
     if not (content or has_media or gif_url):
         raise FeedPostCreationError(
             "empty_post",
-            "Please add text, a photo, or a GIF to your post.",
+            "Please add text, a photo, video, or GIF to your post.",
             category="warning",
         )
 
     try:
-        image_url = (
-            _upload_feed_media(
-                media_file,
-                image_transformations=image_transformations,
-                gif_transformations=gif_transformations,
+        image_url = None
+        video_url = None
+
+        if has_media:
+            from utils.video_service import (
+                VideoError,
+                is_video_upload,
+                process_and_store_feed_video,
             )
-            if has_media
-            else None
-        )
+
+            if is_video_upload(media_file):
+                try:
+                    video_url = process_and_store_feed_video(media_file)
+                except VideoError as exc:
+                    raise FeedPostCreationError(
+                        exc.code,
+                        exc.user_message,
+                        category="danger",
+                    ) from exc
+            else:
+                image_url = _upload_feed_media(
+                    media_file,
+                    image_transformations=image_transformations,
+                    gif_transformations=gif_transformations,
+                )
+
         saved_gif_url = None
         if not has_media and gif_url:
             saved_gif_url = _validated_giphy_url(gif_url)
@@ -181,7 +198,7 @@ def create_feed_post(
         post = Post(
             content=content,
             image=image_url,
-            video=None,
+            video=video_url,
             gif=saved_gif_url,
             location=location or None,
             author_id=author.id,

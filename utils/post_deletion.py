@@ -34,6 +34,16 @@ def _cloudinary_public_id(url):
 
 def _destroy_media_after_commit(media):
     for url, resource_type in media:
+        if not url:
+            continue
+        if url.startswith("/uploads/video/"):
+            try:
+                from utils.video_service import delete_stored_video_file
+
+                delete_stored_video_file(url)
+            except Exception:
+                logger.exception("Post deleted but local video cleanup failed for %s", url)
+            continue
         public_id = _cloudinary_public_id(url)
         if not public_id:
             continue

@@ -827,6 +827,10 @@ class Post(db.Model):
         return self.public_id
 
     @property
+    def is_video_expired(self):
+        return self.video == "expired"
+
+    @property
     def comments_count(self):
         return len(self.comments) if self.comments else 0
 
