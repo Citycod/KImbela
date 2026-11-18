@@ -196,13 +196,15 @@ test('Feeling opens the existing emoji selector for the post textarea', () => {
   assert.equal(picker.modalClasses.has('hidden'), true);
 });
 
-test('unsupported Video and Poll actions explain the existing backend restriction', () => {
+test('Video action configures file input for supported video MIME types and opens picker', () => {
   const video = loadComposerActions();
   assert.equal(video.api.openPostComposerAction('video'), true);
-  assert.match(video.notice.textContent, /Video uploads are not currently supported/);
-  assert.equal(video.classNames.has('hidden'), false);
-  assert.equal(video.mediaInput.clickCount, 0);
+  assert.equal(video.mediaInput.accept, 'video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm');
+  assert.equal(video.mediaInput.clickCount, 1);
+  assert.equal(video.classNames.has('hidden'), true);
+});
 
+test('unsupported Poll action explains the existing restriction', () => {
   const poll = loadComposerActions();
   assert.equal(poll.api.openPostComposerAction('poll'), true);
   assert.match(poll.notice.textContent, /Poll posts are not currently supported/);

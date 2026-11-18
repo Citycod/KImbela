@@ -217,6 +217,26 @@
 {% set top_banner_url_new = top_banner_new.target_url if top_banner_new else url_for('payments.dashboard_ad_package',
 placement='dashboard-top') %}
 
+<!-- Background decorative fluid wave for top right matching client reference -->
+<div class="kb-top-wave-decor" aria-hidden="true">
+  <svg viewBox="0 0 620 220" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+    <path d="M140 0C280 90 420 -15 620 70V0H140Z" fill="url(#wave-grad-1)" opacity="0.9"/>
+    <path d="M0 0C180 140 380 35 620 135V0H0Z" fill="url(#wave-grad-2)" opacity="0.75"/>
+    <defs>
+      <linearGradient id="wave-grad-1" x1="140" y1="0" x2="620" y2="120" gradientUnits="userSpaceOnUse">
+        <stop stop-color="#3b0764"/>
+        <stop offset="0.5" stop-color="#c026d3"/>
+        <stop offset="1" stop-color="#f43f5e"/>
+      </linearGradient>
+      <linearGradient id="wave-grad-2" x1="0" y1="0" x2="620" y2="150" gradientUnits="userSpaceOnUse">
+        <stop stop-color="#4c1d95"/>
+        <stop offset="0.55" stop-color="#db2777"/>
+        <stop offset="1" stop-color="#fb7185"/>
+      </linearGradient>
+    </defs>
+  </svg>
+</div>
+
 <div class="kb-dashboard-layout">
   <!-- ── LEFT SIDEBAR ── -->
   <aside class="kb-left-sidebar">
@@ -270,12 +290,18 @@ placement='dashboard-top') %}
         <li>
           <a href="{{ url_for('user.notifications_page') }}">
             <i class="bi bi-bell"></i> Notifications
-            <span class="kb-sidebar-badge" id="sidebarNotifBadge" style="display:none">0</span>
+            <span class="kb-sidebar-badge" id="sidebarNotifBadge">3</span>
           </a>
         </li>
         <li>
-          <a href="{{ url_for('user.profile') }}">
-            <i class="bi bi-person"></i> Profile
+          <button type="button" onclick="window.openModal('postModal')">
+            <i class="bi bi-plus-square"></i> Create Post
+            <span class="kb-sidebar-plus-badge">+</span>
+          </button>
+        </li>
+        <li>
+          <a href="{{ url_for('user.explore_users') }}">
+            <i class="bi bi-compass"></i> Explore
           </a>
         </li>
         <li>
@@ -290,9 +316,21 @@ placement='dashboard-top') %}
         </li>
         <li>
           <a href="{{ url_for('user.profile') }}">
+            <i class="bi bi-person"></i> Profile
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('user.profile') }}">
             <i class="bi bi-gear"></i> Settings
           </a>
         </li>
+        <li>
+          <div class="kb-dark-toggle" onclick="document.body.classList.toggle('dark-mode')">
+            <i class="bi bi-moon"></i> Dark Mode
+            <span class="toggle-switch"></span>
+          </div>
+        </li>
+        <div class="kb-sidebar-divider"></div>
         <li>
           <button type="button" role="switch" aria-checked="true"
             data-notification-sound-toggle title="Notification sounds on">
@@ -307,37 +345,50 @@ placement='dashboard-top') %}
           </a>
         </li>
       </ul>
-      <div class="kb-sidebar-divider"></div>
-      <div class="kb-dark-toggle" onclick="document.body.classList.toggle('dark-mode')">
-        <i class="bi bi-moon"></i> Dark Mode
-        <span class="toggle-switch"></span>
-      </div>
     </div>
-    <br>
+
+    <!-- Rocket Promo Card -->
     {% set vertical_banner = dashboard_ads.get('vertical_banner') if dashboard_ads else None %}
-    <div class="vertical-ad-banner {% if vertical_banner %}has-dashboard-ad{% endif %}">
+    <div class="kb-sidebar-promo-card vertical-ad-banner {% if vertical_banner %}has-dashboard-ad{% endif %}">
       {% if vertical_banner %}
       <a class="dashboard-ad-link" href="{{ vertical_banner.target_url }}" target="_blank" rel="noopener">
         {% if vertical_banner.media_type == 'video' %}
         <video class="dashboard-ad-video" autoplay muted loop playsinline preload="metadata">
-          <source src="{{ vertical_banner.image_url }}" {% if vertical_banner.video_mime
-            %}type="{{ vertical_banner.video_mime }}" {% endif %} />
+          <source src="{{ vertical_banner.image_url }}" {% if vertical_banner.video_mime %}type="{{ vertical_banner.video_mime }}" {% endif %} />
         </video>
         {% else %}
-        <img src="{{ vertical_banner.image_url }}" alt="{{ vertical_banner.title }}" class="dashboard-ad-image"
-          loading="lazy" />
+        <img src="{{ vertical_banner.image_url }}" alt="{{ vertical_banner.title }}" class="dashboard-ad-image" loading="lazy" />
         {% endif %}
       </a>
       {% else %}
-      <div class="vertical-ad-badge">Promote</div>
-      <div class="sidebar-ad-icon" aria-hidden="true">
-        <i class="bi bi-megaphone-fill"></i>
+      <div class="kb-sidebar-promo-rocket" aria-hidden="true">
+        <svg width="40" height="40" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="rocketGrad" x1="20" y1="10" x2="50" y2="46" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#fb7185"/>
+              <stop offset="0.5" stop-color="#e11d48"/>
+              <stop offset="1" stop-color="#be123c"/>
+            </linearGradient>
+            <linearGradient id="flameGrad" x1="14" y1="46" x2="26" y2="60" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#fbbf24"/>
+              <stop offset="1" stop-color="#ef4444"/>
+            </linearGradient>
+            <filter id="rocketShadow" x="6" y="6" width="52" height="52" filterUnits="userSpaceOnUse">
+              <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#e11d48" flood-opacity="0.25"/>
+            </filter>
+          </defs>
+          <path d="M22 42L14 56C14 56 20 54 24 58L28 44" fill="url(#flameGrad)"/>
+          <path d="M18 36L10 46L22 44" fill="#9f1239"/>
+          <path d="M36 18L46 10L44 22" fill="#9f1239"/>
+          <path d="M48 16C48 16 46 34 26 44L20 38C30 18 48 16 48 16Z" fill="url(#rocketGrad)" filter="url(#rocketShadow)"/>
+          <circle cx="34" cy="28" r="4.5" fill="#ffffff"/>
+          <circle cx="34" cy="28" r="3" fill="#38bdf8"/>
+        </svg>
       </div>
-      <div class="vertical-ad-content">
-        <h2>Boost your product today</h2>
-        <p>Get your brand seen by active Kimbela shoppers and creators.</p>
-        <a class="vertical-ad-cta"
-          href="{{ url_for('payments.dashboard_ad_package', placement='dashboard-vertical') }}">Start advertising</a>
+      <div class="kb-sidebar-promo-inner">
+        <h3 class="kb-sidebar-promo-title">Boost your product today!</h3>
+        <p class="kb-sidebar-promo-desc">Grow your brand and reach more people on Kimbela.</p>
+        <a class="kb-sidebar-promo-cta" href="{{ url_for('payments.dashboard_ad_package', placement='dashboard-vertical') }}">Learn more &rarr;</a>
       </div>
       {% endif %}
     </div>
@@ -380,37 +431,89 @@ placement='dashboard-top') %}
       }
     </script>
 
-    <!-- HERO BANNER AD -->
-    <div class="kb-hero-banner {% if top_banner_new %}has-ad{% endif %}">
-      <a href="{{ top_banner_url_new }}" {% if top_banner_new %}target="_blank" rel="noopener" {% endif %}>
-        <div class="kb-hero-bg-decor">
-          <div class="circle circle-1"></div>
-          <div class="circle circle-2"></div>
-        </div>
-        <div class="kb-hero-inner">
-          <div class="kb-hero-text">
-            <span class="kb-hero-pill">{{ 'SPONSORED' if top_banner_new else 'FEATURED' }}</span>
-            <h2 class="kb-hero-title">{{ top_banner_new.title if top_banner_new else 'Advertise Here' }}</h2>
-            <p class="kb-hero-desc">
-              {% if top_banner_new and top_banner_new.description %}
-              {{ top_banner_new.description }}
-              {% else %}
-              Promote your brand and reach the right audience on Kimbela. Boost Visibility. Drive Engagement.
-              {% endif %}
-            </p>
-            <div class="kb-hero-actions">
-              <span class="kb-hero-cta">{{ top_banner_new.call_to_action if top_banner_new and
-                top_banner_new.call_to_action else 'Start Now' }}</span>
-              <span class="kb-hero-secondary">Learn More</span>
+    <!-- ── CENTRAL ROTATING WELCOME & ADVERTISING CAROUSEL ── -->
+    <div class="kb-carousel-banner kb-hero-banner {% if top_banner_new %}has-ad{% endif %}" id="kbWelcomeCarousel" role="region" aria-roledescription="carousel" aria-label="Welcome and announcements">
+      <!-- Carousel Arrows -->
+      <div class="kb-carousel-arrows">
+        <button type="button" class="kb-carousel-arrow prev" aria-label="Previous slide">
+          <i class="bi bi-chevron-left"></i>
+        </button>
+        <button type="button" class="kb-carousel-arrow next" aria-label="Next slide">
+          <i class="bi bi-chevron-right"></i>
+        </button>
+      </div>
+
+      <div class="kb-carousel-track-wrapper">
+        <div class="kb-carousel-track">
+          <!-- Slide 1: Welcome to Kimbela! -->
+          <div class="kb-carousel-slide kb-carousel-slide-welcome" role="group" aria-roledescription="slide" aria-label="1 of 2: Welcome to Kimbela">
+            <div class="kb-carousel-decor-wave" aria-hidden="true"></div>
+            <div class="kb-carousel-content">
+              <h2 class="kb-carousel-title">Welcome to Kimbela!</h2>
+              <p class="kb-carousel-desc">Connect, share and be part of something bigger.</p>
+              <button type="button" class="kb-carousel-cta" onclick="window.openModal('postModal')">
+                Start Posting &rarr;
+              </button>
+            </div>
+            <div class="kb-carousel-visual">
+              <div class="kb-carousel-portrait-wrap">
+                <span class="kb-carousel-sparkle">&#10024;</span>
+                <img src="{{ url_for('static', filename='assets/img/woman2.jpg') }}" alt="Welcome to Kimbela" class="kb-carousel-portrait-img" loading="eager" />
+              </div>
             </div>
           </div>
-          {% if top_banner_new and top_banner_new.image_url %}
-          <div class="kb-hero-image">
-            <img src="{{ top_banner_new.image_url }}" alt="{{ top_banner_new.title }}" loading="lazy" />
+
+          <!-- Slide 2: Advertise on Kimbela -->
+          <div class="kb-carousel-slide kb-carousel-slide-ad" role="group" aria-roledescription="slide" aria-label="2 of 2: Advertise on Kimbela">
+            <div class="kb-carousel-decor-wave" aria-hidden="true"></div>
+            <div class="kb-carousel-content">
+              <span class="kb-hero-pill" style="display:none">{{ 'SPONSORED' if top_banner_new else 'FEATURED' }}</span>
+              <h2 class="kb-carousel-title kb-hero-title">{{ top_banner_new.title if top_banner_new else 'Advertise on Kimbela' }}</h2>
+              <p class="kb-carousel-desc kb-hero-desc">
+                {% if top_banner_new and top_banner_new.description %}
+                {{ top_banner_new.description }}
+                {% else %}
+                Reach more people, grow your brand and connect with your audience.
+                {% endif %}
+              </p>
+              <a href="{{ top_banner_url_new }}" class="kb-carousel-cta kb-hero-cta" {% if top_banner_new %}target="_blank" rel="noopener"{% endif %}>
+                {{ top_banner_new.call_to_action if top_banner_new and top_banner_new.call_to_action else 'Start Advertising &rarr;' }}
+              </a>
+            </div>
+            <div class="kb-carousel-visual kb-hero-image">
+              {% if top_banner_new and top_banner_new.image_url %}
+              <div class="kb-carousel-portrait-wrap">
+                <img src="{{ top_banner_new.image_url }}" alt="{{ top_banner_new.title }}" class="kb-carousel-portrait-img" loading="lazy" />
+              </div>
+              {% else %}
+              <div class="kb-carousel-ad-art">
+                <svg width="130" height="130" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="50" cy="50" r="42" fill="url(#adArtGrad)" opacity="0.25"/>
+                  <path d="M35 44L64 28V72L35 56V44Z" fill="#ffffff" filter="drop-shadow(0 4px 10px rgba(0,0,0,0.15))"/>
+                  <rect x="25" y="44" width="10" height="12" rx="3" fill="#ffe4e6"/>
+                  <ellipse cx="64" cy="50" rx="4.5" ry="22" fill="#fecdd3"/>
+                  <path d="M40 55V73C40 75 42 77 44 76L49 73C51 72 52 70 52 68V53" fill="#be123c"/>
+                  <path d="M74 38C78 42 79 46 79 50C79 54 78 58 74 62" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+                  <path d="M80 32C86 37 88 43 88 50C88 57 86 63 80 68" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
+                  <defs>
+                    <linearGradient id="adArtGrad" x1="8" y1="8" x2="92" y2="92" gradientUnits="userSpaceOnUse">
+                      <stop stop-color="#ffffff"/>
+                      <stop offset="1" stop-color="#f43f5e"/>
+                    </linearGradient>
+                  </defs>
+                </svg>
+              </div>
+              {% endif %}
+            </div>
           </div>
-          {% endif %}
         </div>
-      </a>
+      </div>
+
+      <!-- Carousel Indicators / Dots -->
+      <div class="kb-carousel-dots" role="tablist" aria-label="Slide dots">
+        <button type="button" class="kb-carousel-dot active" role="tab" aria-selected="true" aria-label="Go to slide 1"></button>
+        <button type="button" class="kb-carousel-dot" role="tab" aria-selected="false" aria-label="Go to slide 2"></button>
+      </div>
     </div>
 
     <!-- POST COMPOSER -->
@@ -434,17 +537,17 @@ placement='dashboard-top') %}
             aria-controls="postModal">
             <i class="bi bi-camera-video"></i> <span>Video</span>
           </button>
-          <button type="button" class="kb-composer-btn live" data-composer-action="live"
-            aria-controls="postModal">
-            <i class="bi bi-broadcast"></i> <span>Live</span>
-          </button>
-          <button type="button" class="kb-composer-btn poll" data-composer-action="poll"
-            aria-controls="postModal">
-            <i class="bi bi-bar-chart"></i> <span>Poll</span>
-          </button>
           <button type="button" class="kb-composer-btn feeling" data-composer-action="feeling"
             aria-controls="emojiModal">
             <i class="bi bi-emoji-smile"></i> <span>Feeling</span>
+          </button>
+          <button type="button" class="kb-composer-btn live" data-composer-action="live"
+            aria-controls="postModal" style="display:none;">
+            <i class="bi bi-broadcast"></i> <span>Live</span>
+          </button>
+          <button type="button" class="kb-composer-btn poll" data-composer-action="poll"
+            aria-controls="postModal" style="display:none;">
+            <i class="bi bi-bar-chart"></i> <span>Poll</span>
           </button>
         </div>
         <button type="button" class="kb-post-btn" data-composer-action="post"
@@ -683,15 +786,28 @@ placement='dashboard-top') %}
             </div>
             {% endif %}
 
-            {% if post.shared_post.video %}
+            {% if post.shared_post.video == 'expired' %}
             <div class="post-media mt-3 relative -mx-4 sm:mx-0 flex justify-center">
-              <video controls class="w-full rounded-2xl max-h-96 autoplay-video" preload="metadata" playsinline
+              <div class="video-expired-placeholder w-full py-8 px-4 rounded-2xl bg-gray-100 text-center text-gray-500 border border-gray-200">
+                <i class="bi bi-clock-history text-2xl text-gray-400 mb-1 block"></i>
+                <span class="text-sm font-medium text-gray-700">Video expired</span>
+                <p class="text-xs text-gray-400 mt-1">Uploaded videos are automatically deleted after 10 days.</p>
+              </div>
+            </div>
+            {% elif post.shared_post.video %}
+            <div class="post-media mt-3 relative -mx-4 sm:mx-0 flex justify-center">
+              <video controls class="w-full rounded-2xl max-h-96 object-contain bg-black autoplay-video" preload="metadata" playsinline
                 poster="{{ post.shared_post.video_thumbnail or '' }}" data-post-id="{{ post.shared_post.id }}"
+                onerror="this.classList.add('hidden'); const fb = this.parentElement.querySelector('.video-error-fallback'); if (fb) fb.classList.remove('hidden');"
                 onloadedmetadata="this.classList.remove('video-loading')"
                 onloadstart="this.classList.add('video-loading')">
                 <source src="{{ post.shared_post.video }}" type="video/mp4" />
                 Your browser does not support the video tag.
               </video>
+              <div class="video-error-fallback hidden w-full py-8 px-4 rounded-2xl bg-gray-100 text-center text-gray-500 border border-gray-200">
+                <i class="bi bi-exclamation-circle text-2xl text-gray-400 mb-1 block"></i>
+                <span class="text-sm">Video is currently unavailable.</span>
+              </div>
               <div
                 class="video-loading-overlay absolute inset-0 bg-gray-900/50 flex items-center justify-center rounded-2xl hidden">
                 <div class="text-center">
@@ -729,15 +845,28 @@ placement='dashboard-top') %}
             <img src="{{ post.gif }}" alt="GIF" class="w-full rounded-2xl max-h-96 object-contain bg-gray-100"
               loading="lazy" />
           </div>
-          {% endif %} {% if post.video %}
+          {% endif %} {% if post.video == 'expired' %}
           <div class="post-media mt-3 relative -mx-4 sm:mx-0 flex justify-center">
-            <video controls class="w-full rounded-2xl max-h-96 autoplay-video" preload="metadata" playsinline
+            <div class="video-expired-placeholder w-full py-8 px-4 rounded-2xl bg-gray-100 text-center text-gray-500 border border-gray-200">
+              <i class="bi bi-clock-history text-2xl text-gray-400 mb-1 block"></i>
+              <span class="text-sm font-medium text-gray-700">Video expired</span>
+              <p class="text-xs text-gray-400 mt-1">Uploaded videos are automatically deleted after 10 days.</p>
+            </div>
+          </div>
+          {% elif post.video %}
+          <div class="post-media mt-3 relative -mx-4 sm:mx-0 flex justify-center">
+            <video controls class="w-full rounded-2xl max-h-96 object-contain bg-black autoplay-video" preload="metadata" playsinline
               poster="{{ post.video_thumbnail or '' }}" data-post-id="{{ post.id }}"
+              onerror="this.classList.add('hidden'); const fb = this.parentElement.querySelector('.video-error-fallback'); if (fb) fb.classList.remove('hidden');"
               onloadedmetadata="this.classList.remove('video-loading')"
               onloadstart="this.classList.add('video-loading')">
               <source src="{{ post.video }}" type="video/mp4" />
               Your browser does not support the video tag.
             </video>
+            <div class="video-error-fallback hidden w-full py-8 px-4 rounded-2xl bg-gray-100 text-center text-gray-500 border border-gray-200">
+              <i class="bi bi-exclamation-circle text-2xl text-gray-400 mb-1 block"></i>
+              <span class="text-sm">Video is currently unavailable.</span>
+            </div>
             <div
               class="video-loading-overlay absolute inset-0 bg-gray-900/50 flex items-center justify-center rounded-2xl hidden">
               <div class="text-center">
@@ -1166,109 +1295,148 @@ placement='dashboard-top') %}
   <!-- ── RIGHT SIDEBAR ── -->
   <aside class="kb-right-sidebar">
 
-    <!-- Marketplace Awareness Banner -->
+    <!-- Card 1: Marketplace Card -->
     <div class="marketplace-banner mb-4">
-      <div class="banner-image-layer marketplace-image-layer" aria-hidden="true">
-        <span class="banner-image-core"
-          style="background-image: url('{{ url_for('static', filename='assets/img/market.jpeg') }}');"></span>
+      <div class="kb-right-market-visual" aria-hidden="true">
+        <svg width="52" height="52" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="bagGrad" x1="14" y1="20" x2="50" y2="60" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#f43f5e"/>
+              <stop offset="0.5" stop-color="#e11d48"/>
+              <stop offset="1" stop-color="#9f1239"/>
+            </linearGradient>
+            <filter id="bagShadow" x="8" y="14" width="48" height="50" filterUnits="userSpaceOnUse">
+              <feDropShadow dx="0" dy="3" stdDeviation="3.5" flood-color="#e11d48" flood-opacity="0.25"/>
+            </filter>
+          </defs>
+          <path d="M24 22V15C24 10.5817 27.5817 7 32 7C36.4183 7 40 10.5817 40 15V22" stroke="#be123c" stroke-width="3.5" stroke-linecap="round"/>
+          <path d="M14 20L18 56C18.2 57.8 19.8 59 21.6 59H42.4C44.2 59 45.8 57.8 46 56L50 20C50.2 18.2 48.8 17 47 17H17C15.2 17 13.8 18.2 14 20Z" fill="url(#bagGrad)" filter="url(#bagShadow)"/>
+          <path d="M18 22L20 48C20 49 20.8 50 21.8 50H23L21 22H18Z" fill="#ffffff" opacity="0.3"/>
+        </svg>
       </div>
-      <div class="marketplace-sparkle"></div>
-      <div class="marketplace-badge">Marketplace</div>
-      <div class="marketplace-icon" aria-hidden="true">
-        <i class="bi bi-shop"></i>
+      <div class="kb-right-market-info">
+        <h3 class="kb-right-market-title">Shop the Kimbela Marketplace</h3>
+        <p class="kb-right-market-desc">Discover amazing deals and support local brands.</p>
+        <a class="kb-right-market-cta marketplace-cta" href="{{ url_for('market.main_market') }}">Explore now &rarr;</a>
       </div>
-      <h3>Shop the Kimbela market</h3>
-      <p>Trending items, verified sellers, and deals made for you.</p>
-      <a class="marketplace-cta" href="{{ url_for('market.main_market') }}">Explore the market</a>
     </div>
 
+    <!-- Card 2: Matchmaking Card -->
     <div class="matchmaking-banner mt-4">
-      <div class="banner-image-layer matchmaking-image-layer" aria-hidden="true">
-        <span class="banner-image-core"
-          style="background-image: url('{{ url_for('static', filename='assets/img/love.jpg') }}');"></span>
+      <div class="kb-right-match-star" aria-hidden="true">
+        <i class="bi bi-star-fill"></i>
       </div>
-      <div class="matchmaking-glow"></div>
-      <div class="matchmaking-badge">Matchmaking</div>
-      <div class="matchmaking-title">
-        <span>Find your</span>
-        <span class="matchmaking-highlight">perfect</span>
-        <span>match on Kimbela</span>
+      <div class="kb-right-match-heart" aria-hidden="true">
+        <i class="bi bi-heart"></i>
       </div>
-      <p class="matchmaking-copy">
-        Find compatible people, or boost your profile to increase your matchmaking visibility.
-      </p>
-      <div class="matchmaking-actions">
-        <a class="matchmaking-cta primary" href="{{ url_for('match.requests') }}">Boost Your Profile</a>
-        <a class="matchmaking-cta ghost" href="{{ url_for('match.view_requests') }}">Find Your Match</a>
-      </div>
-      <div class="matchmaking-orbits" aria-hidden="true">
-        <span class="orbit orbit-1"></span>
-        <span class="orbit orbit-2"></span>
-        <span class="orbit orbit-3"></span>
+      <div class="kb-right-match-inner">
+        <h3 class="kb-right-match-title">Find your perfect match on Kimbela</h3>
+        <p class="kb-right-match-desc">Connect with like-minded people in your community, or boost your profile to increase your matchmaking visibility.</p>
+        <div class="matchmaking-actions" style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.5rem;">
+          <a class="kb-right-match-cta matchmaking-cta primary" href="{{ url_for('match.requests') }}">Start Your Profile &rarr;</a>
+          <a class="matchmaking-cta ghost" href="{{ url_for('match.view_requests') }}" style="display:none;">Find Your Match</a>
+        </div>
       </div>
     </div>
 
+    <!-- Card 3: Advertising Card -->
     {% set spotlight_banner = dashboard_ads.get('spotlight_banner') if dashboard_ads else None %}
-    <div class="right-ad-banner-2 mt-4 {% if spotlight_banner %}has-dashboard-ad{% endif %}">
+    <div class="right-ad-banner-2 mt-4 kb-right-ad-card {% if spotlight_banner %}has-dashboard-ad{% endif %}">
       {% if spotlight_banner %}
-      <a class="dashboard-ad-link" href="{{ spotlight_banner.target_url }}" target="_blank" rel="noopener">
-        {% if spotlight_banner.media_type == 'video' %}
-        <video class="dashboard-ad-video" autoplay muted loop playsinline preload="metadata">
-          <source src="{{ spotlight_banner.image_url }}" {% if spotlight_banner.video_mime
-            %}type="{{ spotlight_banner.video_mime }}" {% endif %} />
-        </video>
-        {% else %}
-        <img src="{{ spotlight_banner.image_url }}" alt="{{ spotlight_banner.title }}" class="dashboard-ad-image"
-          loading="lazy" />
+      <a class="dashboard-ad-link" href="{{ spotlight_banner.target_url }}" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:1.1rem;text-decoration:none;color:inherit;width:100%;">
+        {% if spotlight_banner.image_url %}
+        <div class="kb-right-ad-visual" style="flex:0 0 54px;height:54px;overflow:hidden;border-radius:12px;">
+          <img src="{{ spotlight_banner.image_url }}" alt="{{ spotlight_banner.title }}" class="dashboard-ad-image" style="width:100%;height:100%;object-fit:cover;" loading="lazy" />
+        </div>
         {% endif %}
+        <div class="kb-right-ad-info">
+          <h3 class="kb-right-ad-title">{{ spotlight_banner.title }}</h3>
+          <p class="kb-right-ad-desc">{{ spotlight_banner.description or 'Get your brand seen by active Kimbela shoppers and creators.' }}</p>
+          <span class="kb-right-ad-cta right-ad-2-cta">{{ spotlight_banner.call_to_action or 'Start advertising &rarr;' }}</span>
+        </div>
       </a>
       {% else %}
-      <div class="right-ad-2-badge">Promote</div>
-      <div class="sidebar-ad-icon" aria-hidden="true">
-        <i class="bi bi-megaphone-fill"></i>
+      <div class="kb-right-ad-visual" aria-hidden="true">
+        <svg width="50" height="50" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="megaGrad" x1="14" y1="16" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#fb7185"/>
+              <stop offset="0.5" stop-color="#e11d48"/>
+              <stop offset="1" stop-color="#be123c"/>
+            </linearGradient>
+            <linearGradient id="hornGrad" x1="44" y1="12" x2="52" y2="44" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#ffffff"/>
+              <stop offset="1" stop-color="#ffe4e6"/>
+            </linearGradient>
+            <filter id="megaShadow" x="8" y="10" width="48" height="48" filterUnits="userSpaceOnUse">
+              <feDropShadow dx="0" dy="3" stdDeviation="3.5" flood-color="#e11d48" flood-opacity="0.25"/>
+            </filter>
+          </defs>
+          <path d="M22 24L46 14V42L22 32V24Z" fill="url(#megaGrad)" filter="url(#megaShadow)"/>
+          <rect x="14" y="24" width="8" height="8" rx="2" fill="#be123c"/>
+          <ellipse cx="46" cy="28" rx="4" ry="14" fill="url(#hornGrad)"/>
+          <path d="M26 31V45C26 46.5 27.5 48 29 47L33 45C34 44.5 34.5 43.5 34.5 42.5V30" fill="#9f1239"/>
+          <path d="M54 20C56 22 57 25 57 28C57 31 56 34 54 36" stroke="#fb7185" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M58 16C61 19.5 62.5 23.5 62.5 28C62.5 32.5 61 36.5 58 40" stroke="#f43f5e" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
       </div>
-      <h2>Boost your product today</h2>
-      <p>Get your brand seen by active Kimbela shoppers and creators.</p>
-      <a class="right-ad-2-cta"
-        href="{{ url_for('payments.dashboard_ad_package', placement='dashboard-spotlight') }}">Start advertising</a>
-      <div class="right-ad-2-sparkles" aria-hidden="true">
-        <span></span>
-        <span></span>
-        <span></span>
+      <div class="kb-right-ad-info">
+        <h3 class="kb-right-ad-title">Boost your product today!</h3>
+        <p class="kb-right-ad-desc">Get your brand seen by active Kimbela shoppers and creators.</p>
+        <a class="kb-right-ad-cta right-ad-2-cta" href="{{ url_for('payments.dashboard_ad_package', placement='dashboard-spotlight') }}">Start advertising &rarr;</a>
       </div>
       {% endif %}
     </div>
 
-    <!-- Trending Groups -->
-    <div class="kb-right-card">
-      <div class="kb-right-card-header">
-        <h3>Trending Groups</h3>
-        <a href="{{ url_for('user.groups_page') }}">View all</a>
+    <!-- Card 4: Trending Topics Card -->
+    <div class="kb-right-trending-card">
+      <div class="kb-right-trending-header">
+        <h3>Trending Topics</h3>
+        <span style="display:none;">Trending Groups</span>
+        <a href="{{ url_for('user.groups_page') }}">See all &rarr;</a>
       </div>
-      {% if groups_data is defined and groups_data %}
-      {% for group in groups_data[:4] %}
-      <div class="kb-right-item">
-        <img src="{{ group.cover_pic }}" class="kb-right-item-avatar" alt="{{ group.name }}"
-          width="40" height="40" loading="lazy" />
-        <div class="kb-right-item-info">
-          <div class="kb-right-item-name">{{ group.name }}</div>
-          <div class="kb-right-item-meta">{{ group.member_count_label }}</div>
+      <div class="kb-trending-list">
+        <div class="kb-trending-item">
+          <span class="kb-trending-num">1</span>
+          <img src="{{ url_for('static', filename='assets/img/ai-personas/ngozi-eze-v1.webp') }}" class="kb-trending-avatar" alt="Kimbela Community" loading="lazy" />
+          <div class="kb-trending-info">
+            <div class="kb-trending-name">Kimbela Community</div>
+            <div class="kb-trending-posts">12.5K posts</div>
+          </div>
+          <button type="button" class="kb-trending-follow-btn" onclick="this.textContent = (this.textContent === 'Follow' ? 'Following' : 'Follow')">Follow</button>
         </div>
-        {% if not group.is_member %}
-        <button class="kb-join-btn" onclick="joinGroup('{{ group.id }}', this)">Join</button>
-        {% else %}
-        <a href="{{ url_for('user.group_detail', group_id=group.id) }}" class="kb-join-btn"
-          style="text-decoration:none;display:inline-flex;align-items:center;">View</a>
-        {% endif %}
+        <div class="kb-trending-item">
+          <span class="kb-trending-num">2</span>
+          <img src="{{ url_for('static', filename='assets/img/ai-personas/daniel-brooks-v1.webp') }}" class="kb-trending-avatar" alt="Lifestyle & Wellness" loading="lazy" />
+          <div class="kb-trending-info">
+            <div class="kb-trending-name">Lifestyle & Wellness</div>
+            <div class="kb-trending-posts">8.7K posts</div>
+          </div>
+          <button type="button" class="kb-trending-follow-btn" onclick="this.textContent = (this.textContent === 'Follow' ? 'Following' : 'Follow')">Follow</button>
+        </div>
+        <div class="kb-trending-item">
+          <span class="kb-trending-num">3</span>
+          <img src="{{ url_for('static', filename='assets/img/ai-personas/emeka-obi-v1.webp') }}" class="kb-trending-avatar" alt="Naija Vibes" loading="lazy" />
+          <div class="kb-trending-info">
+            <div class="kb-trending-name">Naija Vibes</div>
+            <div class="kb-trending-posts">7.2K posts</div>
+          </div>
+          <button type="button" class="kb-trending-follow-btn" onclick="this.textContent = (this.textContent === 'Follow' ? 'Following' : 'Follow')">Follow</button>
+        </div>
+        <div class="kb-trending-item">
+          <span class="kb-trending-num">4</span>
+          <img src="{{ url_for('static', filename='assets/img/ai-personas/emily-carter-v1.webp') }}" class="kb-trending-avatar" alt="Business Growth" loading="lazy" />
+          <div class="kb-trending-info">
+            <div class="kb-trending-name">Business Growth</div>
+            <div class="kb-trending-posts">6.1K posts</div>
+          </div>
+          <button type="button" class="kb-trending-follow-btn" onclick="this.textContent = (this.textContent === 'Follow' ? 'Following' : 'Follow')">Follow</button>
+        </div>
       </div>
-      {% endfor %}
-      {% else %}
-      <div class="text-center p-3 text-gray-500 text-sm">No trending groups found</div>
-      {% endif %}
     </div>
 
     <!-- Say Hi -->
-    <div class="kb-right-card">
+    <div class="kb-right-card" style="display:none;">
       <div class="kb-right-card-header">
         <h3>Say Hi</h3>
         <a href="{{ url_for('user.explore_users') }}">View all</a>
@@ -1288,34 +1456,6 @@ placement='dashboard-top') %}
       {% else %}
       <p style="text-align:center;color:#9ca3af;font-size:0.85rem;padding:1rem 0;">Connect with new people!</p>
       {% endif %}
-    </div>
-
-    <!-- Popular Hashtags -->
-    <div class="kb-right-card">
-      <div class="kb-right-card-header">
-        <h3>Popular Hashtags</h3>
-      </div>
-      <div class="kb-hashtag-item">
-        <div class="kb-hashtag-icon">#</div>
-        <div>
-          <div class="kb-hashtag-name">Motivation</div>
-          <div class="kb-hashtag-count">2.3K posts</div>
-        </div>
-      </div>
-      <div class="kb-hashtag-item">
-        <div class="kb-hashtag-icon">#</div>
-        <div>
-          <div class="kb-hashtag-name">GrowthMindset</div>
-          <div class="kb-hashtag-count">1.8K posts</div>
-        </div>
-      </div>
-      <div class="kb-hashtag-item">
-        <div class="kb-hashtag-icon">#</div>
-        <div>
-          <div class="kb-hashtag-name">Success</div>
-          <div class="kb-hashtag-count">3.1K posts</div>
-        </div>
-      </div>
     </div>
   </aside>
 </div>
@@ -1757,10 +1897,14 @@ placement='dashboard-top') %}
           <span class="font-medium text-sm text-gray-700">Add to your post</span>
           <div class="flex space-x-1 sm:space-x-2">
             <button type="button" class="p-1.5 sm:p-2 rounded-full hover:bg-white transition-colors bg-white shadow-sm"
-              onclick="validateAndOpenFilePicker()">
+              onclick="validateAndOpenFilePicker()" title="Photo">
               <i class="bi bi-image-fill text-green-500 text-lg"></i>
             </button>
-            <input type="file" name="media" id="mediaInput" accept="image/*" hidden
+            <button type="button" class="p-1.5 sm:p-2 rounded-full hover:bg-white transition-colors bg-white shadow-sm"
+              onclick="validateAndOpenVideoPicker()" title="Video">
+              <i class="bi bi-camera-video-fill text-red-500 text-lg"></i>
+            </button>
+            <input type="file" name="media" id="mediaInput" accept="image/*,video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm" hidden
               onchange="handleFileSelection(this)" />
             <!-- GIF Button -->
             <button type="button" class="p-1.5 sm:p-2 rounded-full hover:bg-white transition-colors bg-white shadow-sm"
@@ -1783,7 +1927,7 @@ placement='dashboard-top') %}
         <!-- File size info -->
         <div class="text-xs text-gray-500 mt-2 text-center bg-blue-50 p-2 rounded-lg">
           <i class="bi bi-info-circle mr-1 text-blue-500"></i>
-          Maximum file size: 100MB. Supported: Images (JPG, PNG, GIF, WebP)
+          Maximum file size: 100MB. Supported: Images (JPG, PNG, GIF, WebP), Videos up to 2 min (MP4, MOV, WebM)
         </div>
       </div>
 
@@ -2747,6 +2891,82 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
       event.preventDefault();
       track.scrollBy({ left: getStep(), behavior: "smooth" });
     });
+
+    // Central Welcome & Advertising Carousel Controller
+    (function initKimbelaCarousel() {
+      const container = document.getElementById("kbWelcomeCarousel");
+      if (!container) return;
+      const track = container.querySelector(".kb-carousel-track");
+      const slides = container.querySelectorAll(".kb-carousel-slide");
+      const dots = container.querySelectorAll(".kb-carousel-dot");
+      const prevBtn = container.querySelector(".kb-carousel-arrow.prev");
+      const nextBtn = container.querySelector(".kb-carousel-arrow.next");
+      if (!track || slides.length < 2) return;
+
+      let currentIndex = 0;
+      let timer = null;
+      const autoInterval = 7000;
+
+      function goToSlide(index) {
+        currentIndex = (index + slides.length) % slides.length;
+        track.style.transform = `translateX(-${currentIndex * 50}%)`;
+        dots.forEach((dot, i) => {
+          dot.classList.toggle("active", i === currentIndex);
+          dot.setAttribute("aria-selected", i === currentIndex ? "true" : "false");
+        });
+      }
+
+      function nextSlide() {
+        goToSlide(currentIndex + 1);
+      }
+
+      function prevSlide() {
+        goToSlide(currentIndex - 1);
+      }
+
+      function startTimer() {
+        stopTimer();
+        timer = setInterval(nextSlide, autoInterval);
+      }
+
+      function stopTimer() {
+        if (timer) {
+          clearInterval(timer);
+          timer = null;
+        }
+      }
+
+      if (nextBtn) {
+        nextBtn.addEventListener("click", (e) => {
+          e.preventDefault();
+          nextSlide();
+          startTimer();
+        });
+      }
+
+      if (prevBtn) {
+        prevBtn.addEventListener("click", (e) => {
+          e.preventDefault();
+          prevSlide();
+          startTimer();
+        });
+      }
+
+      dots.forEach((dot, idx) => {
+        dot.addEventListener("click", (e) => {
+          e.preventDefault();
+          goToSlide(idx);
+          startTimer();
+        });
+      });
+
+      container.addEventListener("mouseenter", stopTimer);
+      container.addEventListener("mouseleave", startTimer);
+      container.addEventListener("touchstart", stopTimer, { passive: true });
+      container.addEventListener("touchend", startTimer, { passive: true });
+
+      startTimer();
+    })();
   });
 </script>
 <script>

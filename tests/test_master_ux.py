@@ -89,7 +89,10 @@ def test_dashboard_composer_actions_use_one_safe_initialization_path():
     assert "mediaInput.accept = 'image/*';" in dashboard_js
     assert "mediaInput.click();" in dashboard_js
     assert "window.openEmojiPicker();" in dashboard_js
-    assert "Video uploads are not currently supported." in dashboard_js
+    assert (
+        "mediaInput.accept = 'video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm';"
+        in dashboard_js
+    )
     assert "Poll posts are not currently supported." in dashboard_js
     assert 'type="button" class="kb-composer-btn video"' in dashboard
     assert 'type="button" class="kb-composer-btn poll"' in dashboard

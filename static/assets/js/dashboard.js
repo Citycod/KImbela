@@ -515,8 +515,10 @@ function openPostComposerAction(action = 'post') {
     }
 
     if (action === 'video') {
-        setPostComposerActionNotice('Video uploads are not currently supported. You can add a photo or GIF instead.');
-        focusPostComposer(postModal);
+        const mediaInput = document.getElementById('mediaInput');
+        if (!mediaInput) return false;
+        mediaInput.accept = 'video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm';
+        mediaInput.click();
         return true;
     }
 
@@ -566,10 +568,21 @@ function validateAndOpenFilePicker() {
     mediaInput.click();
 }
 
+function validateAndOpenVideoPicker() {
+    const postModal = openPostComposer();
+    const mediaInput = document.getElementById('mediaInput');
+    if (!postModal || !mediaInput) return;
+    setPostComposerActionNotice();
+    mediaInput.accept = 'video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm';
+    mediaInput.click();
+}
+
 window.openPostComposer = openPostComposer;
 window.focusPostComposer = focusPostComposer;
 window.openPostComposerAction = openPostComposerAction;
 window.openPostComposerMediaPicker = openPostComposerMediaPicker;
+window.validateAndOpenFilePicker = validateAndOpenFilePicker;
+window.validateAndOpenVideoPicker = validateAndOpenVideoPicker;
 
 function syncComposerMediaInput(sourceInput) {
     const modalInput = document.getElementById('mediaInput');
@@ -2743,7 +2756,7 @@ const SearchSystem = {
                 <div class="px-4 pb-3">
                     <p class="post-text">${post.content || ''}</p>
                     ${post.image ? `<div class="post-media mt-3"><img src="${post.image}" alt="Post" class="w-full rounded-2xl max-h-96 object-cover"></div>` : ''}
-                    ${post.video ? `<div class="post-media mt-3"><video controls class="w-full rounded-2xl max-h-96"><source src="${post.video}"></video></div>` : ''}
+                    ${post.video ? (post.video === 'expired' ? `<div class="post-media mt-3"><div class="video-expired-placeholder w-full py-6 px-4 rounded-2xl bg-gray-100 text-center text-gray-500 border border-gray-200"><i class="bi bi-clock-history text-2xl text-gray-400 mb-1 block"></i><span class="text-sm font-medium text-gray-700">Video expired</span><p class="text-xs text-gray-400 mt-1">Uploaded videos are automatically deleted after 10 days.</p></div></div>` : `<div class="post-media mt-3"><video controls class="w-full rounded-2xl max-h-96"><source src="${post.video}"></video></div>`) : ''}
                 </div>
             </div>
         `;
@@ -4020,7 +4033,48 @@ window.handleFileSelection = function(input) {
         return;
     }
 
-    // Show preview immediately
+    if (file.type && file.type.startsWith('video/')) {
+        const tempVideo = document.createElement('video');
+        tempVideo.preload = 'metadata';
+        const objectUrl = URL.createObjectURL(file);
+
+        tempVideo.onloadedmetadata = function() {
+            URL.revokeObjectURL(objectUrl);
+            if (tempVideo.duration > 120) {
+                Toast.show('Video duration exceeds 2 minutes (120 seconds). Please select a shorter video.', 'danger');
+                input.value = '';
+                if (preview) preview.innerHTML = '';
+                if (uploadProgressContainer) uploadProgressContainer.classList.add('hidden');
+                return;
+            }
+            showFilePreview(file, preview);
+            if (uploadProgressContainer) {
+                uploadProgressContainer.classList.remove('hidden');
+                uploadProgressBar.style.width = '0%';
+                uploadPercentage.textContent = '0%';
+                uploadStatus.textContent = 'Ready to upload';
+                uploadSpeed.textContent = '-';
+            }
+        };
+
+        tempVideo.onerror = function() {
+            URL.revokeObjectURL(objectUrl);
+            // Fallback for browsers unable to decode locally: server will validate
+            showFilePreview(file, preview);
+            if (uploadProgressContainer) {
+                uploadProgressContainer.classList.remove('hidden');
+                uploadProgressBar.style.width = '0%';
+                uploadPercentage.textContent = '0%';
+                uploadStatus.textContent = 'Ready to upload';
+                uploadSpeed.textContent = '-';
+            }
+        };
+
+        tempVideo.src = objectUrl;
+        return;
+    }
+
+    // Show preview immediately for non-video files
     showFilePreview(file, preview);
 
     // Show upload progress container
@@ -4048,13 +4102,13 @@ function showFilePreview(file, previewContainer) {
             previewContainer.innerHTML = `
                 <div class="file-preview relative rounded-xl overflow-hidden border border-gray-200">
                     <img src="${e.target.result}" alt="Preview" class="w-full h-48 object-cover">
-                    <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
+                    <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 pointer-events-none">
                         <div class="text-white text-sm">
                             <div class="font-medium">${file.name}</div>
                             <div class="text-xs opacity-80">${fileSize} • ${file.type}</div>
                         </div>
                     </div>
-                    <button type="button" onclick="removeFilePreview(this)" class="absolute top-2 right-2 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors">
+                    <button type="button" onclick="removeFilePreview(this)" class="absolute top-2 right-2 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors z-10">
                         <i class="bi bi-x text-sm"></i>
                     </button>
                 </div>
@@ -4064,33 +4118,22 @@ function showFilePreview(file, previewContainer) {
     } else if (isVideo) {
         const url = URL.createObjectURL(file);
         previewContainer.innerHTML = `
-            <div class="file-preview relative rounded-xl overflow-hidden border border-gray-200">
-                <video controls class="w-full h-48 object-cover bg-black">
+            <div class="file-preview relative rounded-xl overflow-hidden border border-gray-200 bg-black">
+                <video controls preload="metadata" playsinline class="w-full h-56 object-contain bg-black">
                     <source src="${url}" type="${file.type}">
+                    Your browser does not support the video tag.
                 </video>
-                <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
-                    <div class="text-white text-sm">
-                        <div class="font-medium">${file.name}</div>
-                        <div class="text-xs opacity-80">${fileSize} • ${file.type}</div>
-                        <div id="videoUploadProgress" class="mt-1">
-                            <div class="w-full bg-gray-700 rounded-full h-1">
-                                <div id="videoProgressBar" class="h-1 bg-blue-500 rounded-full" style="width: 0%"></div>
-                            </div>
-                            <div class="flex justify-between text-xs mt-1">
-                                <span id="videoProgressText">0%</span>
-                                <span id="videoTimeRemaining">-</span>
-                            </div>
-                        </div>
+                <div class="p-2 bg-gray-900 text-white flex items-center justify-between">
+                    <div class="truncate text-xs opacity-90 pr-2">
+                        <span class="font-medium">${file.name}</span>
+                        <span class="opacity-75">(${fileSize})</span>
                     </div>
+                    <button type="button" onclick="removeFilePreview(this)" class="px-2 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700 transition-colors flex items-center">
+                        <i class="bi bi-trash mr-1"></i> Remove
+                    </button>
                 </div>
-                <button type="button" onclick="removeFilePreview(this)" class="absolute top-2 right-2 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors">
-                    <i class="bi bi-x text-sm"></i>
-                </button>
             </div>
         `;
-
-        // Simulate video upload progress
-        simulateVideoUploadProgress();
     } else {
         previewContainer.innerHTML = `
             <div class="file-preview bg-gray-100 rounded-xl p-4 border border-gray-200">
@@ -4223,7 +4266,7 @@ const MediaPreview = {
 
             el.src = url;
             if (isVideo) el.controls = true;
-            el.className = 'w-full max-h-32 rounded-lg object-contain border border-gray-200 bg-gray-50';
+            el.className = isVideo ? 'w-full max-h-48 rounded-lg object-contain border border-gray-200 bg-black' : 'w-full max-h-32 rounded-lg object-contain border border-gray-200 bg-gray-50';
 
             preview.innerHTML = '';
             preview.appendChild(el);
@@ -4300,8 +4343,15 @@ const PostUploader = {
                         resolve(true);
                     }
                 } else {
-                    Toast.show('Upload failed. Please try again.', 'danger');
-                    reject(new Error('Upload failed'));
+                    let errorMsg = 'Upload failed. Please try again.';
+                    try {
+                        const errResp = JSON.parse(xhr.responseText);
+                        if (errResp && errResp.error) {
+                            errorMsg = errResp.error;
+                        }
+                    } catch (_) {}
+                    Toast.show(errorMsg, 'danger');
+                    reject(new Error(errorMsg));
                 }
                 this.hideUploadProgress();
             });
@@ -4314,6 +4364,10 @@ const PostUploader = {
 
             xhr.open('POST', form.action);
             xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            xhr.setRequestHeader('X-File-Upload', 'true');
+            if (typeof csrfToken !== 'undefined' && csrfToken) {
+                xhr.setRequestHeader('X-CSRFToken', csrfToken);
+            }
             xhr.send(formData);
         });
     },
@@ -5194,3 +5248,15 @@ window.toggleFloatingAd = function() {
 window.refreshAds = function() {
     AdSystem.refresh();
 };
+
+// Avoid simultaneous playback of multiple videos in feed
+document.addEventListener('play', function(e) {
+    if (e.target && e.target.tagName === 'VIDEO') {
+        const activeVideo = e.target;
+        document.querySelectorAll('video').forEach((v) => {
+            if (v !== activeVideo && !v.paused) {
+                v.pause();
+            }
+        });
+    }
+}, true);
