@@ -456,9 +456,9 @@ placement='dashboard-top') %}
               </button>
             </div>
             <div class="kb-carousel-visual">
-              <div class="kb-carousel-portrait-wrap">
+              <div class="kb-carousel-friends-wrap">
                 <span class="kb-carousel-sparkle">&#10024;</span>
-                <img src="{{ url_for('static', filename='assets/img/woman2.jpg') }}" alt="Welcome to Kimbela" class="kb-carousel-portrait-img" loading="eager" />
+                <img src="{{ url_for('static', filename='assets/img/peeps.jpeg') }}" alt="Welcome to Kimbela - Connect with friends" class="kb-carousel-friends-img" loading="eager" />
               </div>
             </div>
           </div>
@@ -473,7 +473,7 @@ placement='dashboard-top') %}
                 {% if top_banner_new and top_banner_new.description %}
                 {{ top_banner_new.description }}
                 {% else %}
-                Reach more people, grow your brand and connect with your audience.
+                Reach thousands of customers and grow your business today.
                 {% endif %}
               </p>
               <a href="{{ top_banner_url_new }}" class="kb-carousel-cta kb-hero-cta" {% if top_banner_new %}target="_blank" rel="noopener"{% endif %}>
@@ -482,25 +482,47 @@ placement='dashboard-top') %}
             </div>
             <div class="kb-carousel-visual kb-hero-image">
               {% if top_banner_new and top_banner_new.image_url %}
-              <div class="kb-carousel-portrait-wrap">
-                <img src="{{ top_banner_new.image_url }}" alt="{{ top_banner_new.title }}" class="kb-carousel-portrait-img" loading="lazy" />
+              <div class="kb-carousel-friends-wrap">
+                <img src="{{ top_banner_new.image_url }}" alt="{{ top_banner_new.title }}" class="kb-carousel-friends-img" loading="lazy" />
               </div>
               {% else %}
-              <div class="kb-carousel-ad-art">
-                <svg width="130" height="130" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="50" cy="50" r="42" fill="url(#adArtGrad)" opacity="0.25"/>
-                  <path d="M35 44L64 28V72L35 56V44Z" fill="#ffffff" filter="drop-shadow(0 4px 10px rgba(0,0,0,0.15))"/>
-                  <rect x="25" y="44" width="10" height="12" rx="3" fill="#ffe4e6"/>
-                  <ellipse cx="64" cy="50" rx="4.5" ry="22" fill="#fecdd3"/>
-                  <path d="M40 55V73C40 75 42 77 44 76L49 73C51 72 52 70 52 68V53" fill="#be123c"/>
-                  <path d="M74 38C78 42 79 46 79 50C79 54 78 58 74 62" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
-                  <path d="M80 32C86 37 88 43 88 50C88 57 86 63 80 68" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
+              <div class="kb-carousel-ad-art" aria-hidden="true">
+                <svg width="170" height="150" viewBox="0 0 170 150" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <defs>
-                    <linearGradient id="adArtGrad" x1="8" y1="8" x2="92" y2="92" gradientUnits="userSpaceOnUse">
+                    <linearGradient id="adArtBg" x1="0" y1="0" x2="170" y2="150" gradientUnits="userSpaceOnUse">
                       <stop stop-color="#ffffff"/>
-                      <stop offset="1" stop-color="#f43f5e"/>
+                      <stop offset="1" stop-color="#ffe4e6"/>
                     </linearGradient>
+                    <linearGradient id="adMegaGrad" x1="20" y1="20" x2="120" y2="120" gradientUnits="userSpaceOnUse">
+                      <stop stop-color="#fb7185"/>
+                      <stop offset="0.5" stop-color="#e11d48"/>
+                      <stop offset="1" stop-color="#9f1239"/>
+                    </linearGradient>
+                    <linearGradient id="adChartGrad" x1="80" y1="30" x2="150" y2="90" gradientUnits="userSpaceOnUse">
+                      <stop stop-color="#a855f7"/>
+                      <stop offset="1" stop-color="#6366f1"/>
+                    </linearGradient>
+                    <filter id="adMegaShadow" x="15" y="25" width="140" height="110" filterUnits="userSpaceOnUse">
+                      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#e11d48" flood-opacity="0.25"/>
+                    </filter>
                   </defs>
+                  <rect x="75" y="25" width="80" height="60" rx="14" fill="#ffffff" stroke="#f1f5f9" stroke-width="2" filter="drop-shadow(0 4px 12px rgba(0,0,0,0.06))"/>
+                  <rect x="85" y="60" width="10" height="15" rx="3" fill="#cbd5e1"/>
+                  <rect x="100" y="50" width="10" height="25" rx="3" fill="#cbd5e1"/>
+                  <rect x="115" y="42" width="10" height="33" rx="3" fill="#cbd5e1"/>
+                  <rect x="130" y="35" width="10" height="40" rx="3" fill="url(#adChartGrad)"/>
+                  <path d="M88 56L104 46L118 40L135 32" stroke="#e11d48" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  <g filter="url(#adMegaShadow)">
+                    <path d="M42 55L95 32V98L42 75V55Z" fill="url(#adMegaGrad)"/>
+                    <rect x="24" y="55" width="18" height="20" rx="4" fill="#9f1239"/>
+                    <ellipse cx="95" cy="65" rx="9" ry="33" fill="#fda4af"/>
+                    <ellipse cx="95" cy="65" rx="5" ry="24" fill="#ffe4e6"/>
+                    <path d="M50 72V98C50 102 54 105 58 103L66 99C69 97.5 71 94.5 71 91V70" fill="#881337"/>
+                  </g>
+                  <path d="M112 48C118 53 122 60 122 65C122 70 118 77 112 82" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
+                  <path d="M124 38C134 46 138 56 138 65C138 74 134 84 124 92" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+                  <polygon points="40,25 43,33 51,33 45,38 47,46 40,41 33,46 35,38 29,33 37,33" fill="#fbbf24"/>
+                  <polygon points="148,18 150,23 155,23 151,26 152,31 148,28 144,31 145,26 141,23 146,23" fill="#fbbf24"/>
                 </svg>
               </div>
               {% endif %}
@@ -2891,9 +2913,11 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
       event.preventDefault();
       track.scrollBy({ left: getStep(), behavior: "smooth" });
     });
+  });
 
-    // Central Welcome & Advertising Carousel Controller
-    (function initKimbelaCarousel() {
+  // Central Welcome & Advertising Carousel Controller
+  (function initKimbelaCarouselBootstrap() {
+    function setupCarousel() {
       const container = document.getElementById("kbWelcomeCarousel");
       if (!container) return;
       const track = container.querySelector(".kb-carousel-track");
@@ -2905,11 +2929,11 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
 
       let currentIndex = 0;
       let timer = null;
-      const autoInterval = 7000;
+      const autoInterval = 6000;
 
       function goToSlide(index) {
         currentIndex = (index + slides.length) % slides.length;
-        track.style.transform = `translateX(-${currentIndex * 50}%)`;
+        track.style.transform = `translateX(-${currentIndex * 100}%)`;
         dots.forEach((dot, i) => {
           dot.classList.toggle("active", i === currentIndex);
           dot.setAttribute("aria-selected", i === currentIndex ? "true" : "false");
@@ -2937,37 +2961,89 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
       }
 
       if (nextBtn) {
-        nextBtn.addEventListener("click", (e) => {
+        nextBtn.addEventListener("click", function(e) {
           e.preventDefault();
+          e.stopPropagation();
           nextSlide();
           startTimer();
         });
       }
 
       if (prevBtn) {
-        prevBtn.addEventListener("click", (e) => {
+        prevBtn.addEventListener("click", function(e) {
           e.preventDefault();
+          e.stopPropagation();
           prevSlide();
           startTimer();
         });
       }
 
       dots.forEach((dot, idx) => {
-        dot.addEventListener("click", (e) => {
+        dot.addEventListener("click", function(e) {
           e.preventDefault();
+          e.stopPropagation();
           goToSlide(idx);
           startTimer();
         });
       });
 
+      // Pause on hover & focus
       container.addEventListener("mouseenter", stopTimer);
       container.addEventListener("mouseleave", startTimer);
-      container.addEventListener("touchstart", stopTimer, { passive: true });
-      container.addEventListener("touchend", startTimer, { passive: true });
+      container.addEventListener("focusin", stopTimer);
+      container.addEventListener("focusout", startTimer);
+
+      // Touch swipe support for mobile
+      let touchStartX = 0;
+      let touchStartY = 0;
+
+      container.addEventListener("touchstart", function(e) {
+        if (e.touches && e.touches.length > 0) {
+          touchStartX = e.touches[0].clientX;
+          touchStartY = e.touches[0].clientY;
+          stopTimer();
+        }
+      }, { passive: true });
+
+      container.addEventListener("touchend", function(e) {
+        if (e.changedTouches && e.changedTouches.length > 0) {
+          const touchEndX = e.changedTouches[0].clientX;
+          const touchEndY = e.changedTouches[0].clientY;
+          const diffX = touchStartX - touchEndX;
+          const diffY = touchStartY - touchEndY;
+          if (Math.abs(diffX) > 40 && Math.abs(diffX) > Math.abs(diffY)) {
+            if (diffX > 0) {
+              nextSlide();
+            } else {
+              prevSlide();
+            }
+          }
+          startTimer();
+        }
+      }, { passive: true });
+
+      // Keyboard navigation
+      container.addEventListener("keydown", function(e) {
+        if (e.key === "ArrowLeft") {
+          e.preventDefault();
+          prevSlide();
+          startTimer();
+        } else if (e.key === "ArrowRight") {
+          e.preventDefault();
+          nextSlide();
+          startTimer();
+        }
+      });
 
       startTimer();
-    })();
-  });
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", setupCarousel);
+    } else {
+      setupCarousel();
+    }
+  })();
 </script>
 <script>
   const blockedUsersState = { list: [] };
@@ -3372,11 +3448,12 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
   .right-ad-banner-2 {
     position: relative;
     margin: 16px 0 20px;
-    padding: 22px 18px 24px;
-    border-radius: 24px;
-    color: #1E293B;
-    background: linear-gradient(145deg, #ffd7c7 0%, #f7a16b 48%, #caa7ff 100%);
-    box-shadow: 0 18px 34px rgba(170, 92, 76, 0.22);
+    padding: 20px 18px 22px;
+    border-radius: 20px;
+    color: #111827;
+    background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%);
+    border: 1px solid #fecdd3;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
     overflow: hidden;
     animation: none;
   }
@@ -3393,14 +3470,7 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
   }
 
   .right-ad-banner-2::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background:
-      radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.55), transparent 38%),
-      radial-gradient(circle at 82% 85%, rgba(255, 255, 255, 0.18), transparent 30%);
-    opacity: 1;
-    animation: none;
+    display: none;
   }
 
   .right-ad-2-badge {
@@ -3421,9 +3491,9 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
     position: relative;
     z-index: 1;
     margin: 14px 0 8px;
-    font-size: 1.2rem;
-    font-weight: 900;
-    color: #4F46E5;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #111827;
     text-shadow: none;
   }
 
@@ -3431,9 +3501,9 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
     position: relative;
     z-index: 1;
     margin: 0 0 16px;
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: rgba(79, 41, 67, 0.92);
+    font-size: 0.88rem;
+    font-weight: 400;
+    color: #6b7280;
     opacity: 1;
   }
 
@@ -3443,14 +3513,14 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 10px 16px;
+    padding: 8px 18px;
     border-radius: 999px;
-    background: linear-gradient(135deg, #ec8d71 0%, #8B5CF6 100%);
-    color: #fffaf8;
-    font-weight: 800;
-    font-size: 0.85rem;
+    background: var(--kb-primary);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.82rem;
     text-decoration: none;
-    box-shadow: 0 12px 22px rgba(162, 93, 149, 0.24);
+    box-shadow: 0 4px 12px rgba(225, 29, 72, 0.28);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
 
@@ -3722,12 +3792,12 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
     position: relative;
     margin: 18px 0 20px;
     padding: 20px 18px 22px;
-    border-radius: 24px;
+    border-radius: 20px;
     color: #ffffff;
-    background: linear-gradient(135deg, #1d4ed8 0%, #9333ea 45%, #f43f5e 100%);
-    box-shadow: 0 18px 40px rgba(76, 29, 149, 0.35);
+    background: linear-gradient(135deg, #3b0764 0%, #1e1b4b 100%);
+    box-shadow: 0 4px 16px rgba(59, 7, 100, 0.25);
     overflow: hidden;
-    animation: matchmakingFloat 6s ease-in-out infinite;
+    animation: none;
   }
 
   .banner-image-layer {
@@ -4003,28 +4073,30 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
     position: relative;
     margin: 18px 0 26px;
     padding: 20px 18px 22px;
-    border-radius: 24px;
-    color: #0f172a;
-    background: linear-gradient(135deg, #facc15 0%, #fb7185 45%, #38bdf8 100%);
-    box-shadow: 0 18px 40px rgba(251, 113, 133, 0.35);
+    border-radius: 20px;
+    color: #111827;
+    background: #ffffff;
+    border: 1px solid #f0eef5;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
     overflow: hidden;
-    animation: marketplaceFloat 5.5s ease-in-out infinite;
+    animation: none;
   }
 
   .marketplace-banner::before {
     content: "";
     position: absolute;
-    inset: -30%;
-    background: radial-gradient(circle at 80% 10%, rgba(255, 255, 255, 0.6), transparent 45%);
-    opacity: 0.9;
+    right: -25px;
+    bottom: -25px;
+    width: 140px;
+    height: 140px;
+    background: radial-gradient(circle at center, #fb7185 0%, #db2777 45%, #a855f7 90%);
+    opacity: 0.12;
+    border-radius: 50%;
+    pointer-events: none;
   }
 
   .marketplace-sparkle {
-    position: absolute;
-    inset: 0;
-    background: conic-gradient(from 180deg, rgba(255, 255, 255, 0.5), transparent 40%, rgba(255, 255, 255, 0.3), transparent 70%);
-    animation: marketplaceSpin 12s linear infinite;
-    opacity: 0.6;
+    display: none;
   }
 
   .marketplace-badge {
@@ -4069,18 +4141,20 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
     position: relative;
     z-index: 1;
     margin: 0 0 8px;
-    font-size: 1.25rem;
-    font-weight: 900;
-    text-shadow: 0 3px 12px rgba(255, 255, 255, 0.5);
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #111827;
+    text-shadow: none;
   }
 
   .marketplace-banner p {
     position: relative;
     z-index: 1;
     margin: 0 0 14px;
-    font-size: 0.92rem;
-    font-weight: 600;
-    opacity: 0.9;
+    font-size: 0.88rem;
+    font-weight: 400;
+    color: #6b7280;
+    opacity: 1;
   }
 
   .marketplace-cta {
@@ -4089,20 +4163,20 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 10px 16px;
+    padding: 8px 18px;
     border-radius: 999px;
-    background: #0f172a;
+    background: var(--kb-primary);
     color: #ffffff;
     text-decoration: none;
-    font-weight: 800;
-    font-size: 0.85rem;
-    box-shadow: 0 14px 24px rgba(15, 23, 42, 0.35);
+    font-weight: 700;
+    font-size: 0.82rem;
+    box-shadow: 0 4px 12px rgba(225, 29, 72, 0.28);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
 
   .marketplace-cta:hover {
-    transform: translateY(-2px) scale(1.02);
-    box-shadow: 0 18px 30px rgba(15, 23, 42, 0.4);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(225, 29, 72, 0.35);
   }
 
   @keyframes marketplaceFloat {
