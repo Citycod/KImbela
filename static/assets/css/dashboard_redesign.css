@@ -94,7 +94,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-h1, h2, h3, .brand-word, .sec-head h2, .sponsor h3, .promo h3 {
+h1, h2, h3, .sec-head h2, .sponsor h3, .promo h3 {
   font-family: 'Bricolage Grotesque', 'DM Sans', sans-serif !important;
   font-weight: 600;
   line-height: 1.2;
@@ -1944,30 +1944,13 @@ body.font-poppins > .pt-16.flex {
   width: 232px;
   flex-shrink: 0;
 }
-.brand-mark {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: var(--accent);
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
+.brand a {
+  display: inline-flex;
+  align-items: center;
 }
-.brand-mark svg {
-  width: 20px;
-  height: 20px;
-  fill: none;
-  stroke: #fff;
-  stroke-width: 2.4;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-.brand-word {
-  font-family: 'Bricolage Grotesque', 'DM Sans', sans-serif;
-  font-weight: 600;
-  font-size: 20px;
-  letter-spacing: 0.02em;
-  color: var(--ink);
+.brand a img {
+  display: block;
+  object-fit: contain;
 }
 .search {
   min-width: 0;
@@ -2378,7 +2361,6 @@ html.drawer-open body {
 }
 
 @media (max-width: 560px) {
-  .brand-word,
   .gift-btn {
     display: none !important;
   }

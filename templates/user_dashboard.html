@@ -110,11 +110,9 @@
       <i class="bi bi-list text-xl hidden" aria-hidden="true"></i>
     </button>
 
-    <a href="{{ url_for('user.user_dashboard') }}" class="flex items-center gap-2.5 text-decoration-none">
-      <div class="brand-mark">
-        <svg viewBox="0 0 24 24"><path d="M5 17c3-1 5-4 6-9M9 13c3-.5 6-3 8-7"/></svg>
-      </div>
-      <span class="brand-word">KIMBELA</span>
+    <a href="{{ url_for('user.user_dashboard') }}" class="flex items-center ml-1">
+      <img src="{{ url_for('static', filename='assets/img/kim.png') }}" alt="Kimbela"
+        class="h-8 md:h-10 lg:h-12 w-auto object-contain" style="max-width: 160px; height: auto;" />
     </a>
   </div>
 
