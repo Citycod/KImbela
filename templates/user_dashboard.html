@@ -50,8 +50,9 @@
 <link rel="preload" href="{{ url_for('static', filename='assets/fonts/dm-sans-400.woff2') }}" as="font" type="font/woff2" crossorigin />
 <link rel="preload" href="{{ url_for('static', filename='assets/fonts/bricolage-grotesque-600.woff2') }}" as="font" type="font/woff2" crossorigin />
 
-<!-- Pre-paint collapsed sidebar check -->
+<!-- Pre-paint collapsed sidebar and dismissed cards check -->
 <script>try{if(localStorage.getItem("kb_side")==="collapsed")document.documentElement.classList.add("side-collapsed")}catch(e){}</script>
+<script>try{if(localStorage.getItem("kb_dismiss_profile_strength")==="true")document.write("<style>#kbProfileStrengthCard{display:none!important}</style>")}catch(e){}</script>
 
 {% include 'partials/user_dashboard_head_scripts.html' %}
 {% endblock %}
@@ -237,26 +238,6 @@
 {% set top_banner_new = dashboard_ads.get('top_banner') if dashboard_ads else None %}
 {% set top_banner_url_new = top_banner_new.target_url if top_banner_new else url_for('payments.dashboard_ad_package',
 placement='dashboard-top') %}
-
-<!-- Background decorative fluid wave for top right matching client reference -->
-<div class="kb-top-wave-decor" aria-hidden="true">
-  <svg viewBox="0 0 620 220" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
-    <path d="M140 0C280 90 420 -15 620 70V0H140Z" fill="url(#wave-grad-1)" opacity="0.9"/>
-    <path d="M0 0C180 140 380 35 620 135V0H0Z" fill="url(#wave-grad-2)" opacity="0.75"/>
-    <defs>
-      <linearGradient id="wave-grad-1" x1="140" y1="0" x2="620" y2="120" gradientUnits="userSpaceOnUse">
-        <stop stop-color="#3b0764"/>
-        <stop offset="0.5" stop-color="#c026d3"/>
-        <stop offset="1" stop-color="#f43f5e"/>
-      </linearGradient>
-      <linearGradient id="wave-grad-2" x1="0" y1="0" x2="620" y2="150" gradientUnits="userSpaceOnUse">
-        <stop stop-color="#4c1d95"/>
-        <stop offset="0.55" stop-color="#db2777"/>
-        <stop offset="1" stop-color="#fb7185"/>
-      </linearGradient>
-    </defs>
-  </svg>
-</div>
 
 <div class="shell kb-dashboard-layout">
   <!-- ── LEFT SIDEBAR ── -->
@@ -538,9 +519,6 @@ placement='dashboard-top') %}
 
       <!-- Carousel Indicators / Dots -->
       <div class="kb-carousel-dots" role="tablist" aria-label="Slide dots">
-        <button type="button" class="pause" aria-label="Pause banner rotation" id="carouselPauseBtn">
-          <svg class="ic" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></svg>
-        </button>
         <button type="button" class="kb-carousel-dot dot active" role="tab" aria-selected="true" aria-label="Go to slide 1"></button>
         <button type="button" class="kb-carousel-dot dot" role="tab" aria-selected="false" aria-label="Go to slide 2"></button>
       </div>
@@ -1325,7 +1303,10 @@ placement='dashboard-top') %}
     {% set completed_fields = profile_fields | select | list | length %}
     {% set profile_pct = ((completed_fields / profile_fields|length) * 100) | round | int %}
     {% if profile_pct < 100 %}
-    <section class="card strength mb-4" aria-label="Profile strength">
+    <section class="card strength mb-4" id="kbProfileStrengthCard" aria-label="Profile strength">
+      <button type="button" class="strength-close-btn" id="dismissProfileStrengthBtn" aria-label="Dismiss profile completion card" onclick="dismissProfileStrengthCard()" title="Dismiss">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
       <div class="row">
         <div class="avatar lg" style="overflow:hidden;">
           {% if current_user.profile_pic %}
@@ -5535,6 +5516,14 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
     window.addEventListener('resize', sync);
     sync();
   })();
+
+  window.dismissProfileStrengthCard = function () {
+    var card = document.getElementById('kbProfileStrengthCard');
+    if (card) {
+      card.style.display = 'none';
+      try { localStorage.setItem('kb_dismiss_profile_strength', 'true'); } catch (e) {}
+    }
+  };
 </script>
 {% include 'partials/report_modal.html' %}
 {% endblock %}
