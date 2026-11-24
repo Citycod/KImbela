@@ -260,115 +260,57 @@ placement='dashboard-top') %}
   </svg>
 </div>
 
-<div class="kb-dashboard-layout">
+<div class="shell kb-dashboard-layout">
   <!-- ── LEFT SIDEBAR ── -->
   <aside class="kb-left-sidebar">
-    <div class="kb-sidebar-card">
-      <ul class="kb-sidebar-nav">
-        <li>
-          <a href="{{ url_for('user.user_dashboard') }}" class="kb-active">
-            <i class="bi bi-house-door-fill"></i> Home
-          </a>
-        </li>
-        <li>
-          <a href="{{ url_for('payments.ad_packages') }}">
-            <i class="bi bi-megaphone"></i> Sponsored Ads
-          </a>
-        </li>
-        <li>
-          <a href="{{ url_for('match.view_requests') }}">
-            <i class="bi bi-binoculars-fill"></i> Find Your Match
-          </a>
-        </li>
-        <li>
-          <a href="{{ url_for('match.requests') }}">
-            <i class="bi bi-heart-fill"></i> Boost Your Profile
-          </a>
-        </li>
-        <li>
-          <a href="{{ url_for('user.install_app') }}" class="kb-install-nav">
-            <i class="bi bi-phone-fill"></i>
-            <span>Install Kimbela</span>
-            <span class="kb-install-nav-badge" aria-hidden="true">APP</span>
-          </a>
-        </li>
-        <li>
-          <a href="{{ url_for('market.main_market') }}">
-            <i class="bi bi-shop"></i> Marketplace
-          </a>
-        </li>
-        <li>
-          <a href="{{ url_for('payments.donate') }}">
-            <i class="bi bi-heart-fill" style="color: #8e44ad;"></i> Partner
-          </a>
-        </li>
-        <div class="kb-sidebar-divider"></div>
-        <li>
-          <button id="openMessagingSidebar" onclick="window.openMessenger()" type="button"
-            aria-label="Messages, no unread messages" title="Messages, no unread messages">
-            <i class="bi bi-chat-dots"></i> Messages
-            <span class="kb-sidebar-badge" id="sidebarMsgBadge" style="display:none" aria-hidden="true">0</span>
-          </button>
-        </li>
-        <li>
-          <a href="{{ url_for('user.notifications_page') }}">
-            <i class="bi bi-bell"></i> Notifications
-            <span class="kb-sidebar-badge" id="sidebarNotifBadge">3</span>
-          </a>
-        </li>
-        <li>
-          <button type="button" onclick="window.openModal('postModal')">
-            <i class="bi bi-plus-square"></i> Create Post
-            <span class="kb-sidebar-plus-badge">+</span>
-          </button>
-        </li>
-        <li>
-          <a href="{{ url_for('user.explore_users') }}">
-            <i class="bi bi-compass"></i> Explore
-          </a>
-        </li>
-        <li>
-          <a href="{{ url_for('user.groups_page') }}">
-            <i class="bi bi-people"></i> Groups
-          </a>
-        </li>
-        <li>
-          <a href="{{ url_for('user.profile') }}">
-            <i class="bi bi-bookmark"></i> Saved
-          </a>
-        </li>
-        <li>
-          <a href="{{ url_for('user.profile') }}">
-            <i class="bi bi-person"></i> Profile
-          </a>
-        </li>
-        <li>
-          <a href="{{ url_for('user.profile') }}">
-            <i class="bi bi-gear"></i> Settings
-          </a>
-        </li>
-        <li>
-          <div class="kb-dark-toggle" onclick="document.body.classList.toggle('dark-mode')">
-            <i class="bi bi-moon"></i> Dark Mode
-            <span class="toggle-switch"></span>
-          </div>
-        </li>
-        <div class="kb-sidebar-divider"></div>
-        <li>
-          <button type="button" role="switch" aria-checked="true"
-            data-notification-sound-toggle title="Notification sounds on">
-            <i class="bi bi-volume-up-fill" data-notification-sound-icon></i>
-            Notification sounds
-            <span class="kb-sidebar-badge" data-notification-sound-status>On</span>
-          </button>
-        </li>
-        <li>
-          <a href="{{ url_for('user.logout') }}" style="color: #ef4444;">
-            <i class="bi bi-box-arrow-right"></i> Logout
-          </a>
-        </li>
-      </ul>
-    </div>
+    <nav class="card nav kb-sidebar-card" id="sidebar" aria-label="Main">
+      <a class="item kb-active" href="{{ url_for('user.user_dashboard') }}" data-label="Home" aria-current="page">
+        <svg class="ic"><use href="#i-home"/></svg>
+        <span class="lbl">Home</span>
+      </a>
+      <a class="item" href="{{ url_for('match.view_requests') }}" data-label="Find your match">
+        <svg class="ic"><use href="#i-compass"/></svg>
+        <span class="lbl">Find Your Match</span>
+      </a>
+      <button class="item" id="openMessagingSidebar" onclick="window.openMessenger()" type="button" data-label="Messages" aria-label="Messages, no unread messages" title="Messages, no unread messages">
+        <svg class="ic"><use href="#i-msg"/></svg>
+        <span class="lbl">Messages</span>
+        <span class="cnt" id="sidebarMsgBadge" style="display:none" aria-hidden="true">0</span>
+      </button>
+      <a class="item" href="{{ url_for('user.notifications_page') }}" data-label="Notifications">
+        <svg class="ic"><use href="#i-bell"/></svg>
+        <span class="lbl">Notifications</span>
+        <span class="cnt" id="sidebarNotifBadge">{% if unread_notifications_count %}{{ unread_notifications_count }}{% else %}3{% endif %}</span>
+      </a>
+      <a class="item" href="{{ url_for('market.main_market') }}" data-label="Marketplace">
+        <svg class="ic"><use href="#i-bag"/></svg>
+        <span class="lbl">Marketplace</span>
+      </a>
+      <a class="item" href="{{ url_for('user.profile') }}" data-label="Profile">
+        <svg class="ic"><use href="#i-user"/></svg>
+        <span class="lbl">Profile</span>
+      </a>
+      <hr>
+      <a class="item" href="{{ url_for('match.requests') }}" data-label="Boost your profile">
+        <svg class="ic"><use href="#i-heart"/></svg>
+        <span class="lbl">Boost Your Profile</span>
+      </a>
+      <a class="item" href="{{ url_for('payments.ad_packages') }}" data-label="Sponsored ads">
+        <svg class="ic"><use href="#i-mega"/></svg>
+        <span class="lbl">Sponsored Ads</span>
+      </a>
+      <a class="item" href="{{ url_for('payments.donate') }}" data-label="Partner">
+        <svg class="ic"><use href="#i-users"/></svg>
+        <span class="lbl">Partner</span>
+      </a>
+      <hr>
+      <a class="item kb-install-nav" href="{{ url_for('user.install_app') }}" data-label="Install Kimbela">
+        <svg class="ic"><use href="#i-phone"/></svg>
+        <i class="bi bi-phone-fill" aria-hidden="true" style="display:none;"></i>
+        <span class="lbl">Install Kimbela</span>
+        <span class="tag kb-install-nav-badge">App</span>
+      </a>
+    </nav>
 
     <!-- Rocket Promo Card -->
     {% set vertical_banner = dashboard_ads.get('vertical_banner') if dashboard_ads else None %}
@@ -418,7 +360,7 @@ placement='dashboard-top') %}
   </aside>
 
   <!-- ── MAIN CONTENT ── -->
-  <main class="kb-main-content">
+  <main class="main kb-main-content">
 
     <!-- Push Notification Prompt Banner -->
     <div id="push-prompt-banner" class="alert alert-primary alert-dismissible fade show align-items-center mb-4"
@@ -5543,10 +5485,11 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
           try { localStorage.setItem('kb_side', c ? 'collapsed' : 'expanded'); } catch (e) { }
           sync();
         } else {
-          if (typeof window.toggleMobileMenu === 'function') {
-            window.toggleMobileMenu();
+          var o = root.classList.toggle('drawer-open');
+          if (o && nav) {
+            var f = nav.querySelector('a, button');
+            if (f) f.focus();
           }
-          root.classList.toggle('drawer-open');
           sync();
         }
       });
@@ -5555,13 +5498,8 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
     if (scrim) {
       scrim.addEventListener('click', function () {
         root.classList.remove('drawer-open');
-        if (typeof window.toggleMobileMenu === 'function') {
-          var overlay = document.getElementById('mobileSidebarOverlay');
-          if (overlay && (overlay.style.display === 'block' || overlay.classList.contains('block'))) {
-            window.toggleMobileMenu();
-          }
-        }
         sync();
+        if (btn) btn.focus();
       });
     }
 
@@ -5569,12 +5507,6 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
       if (!root.classList.contains('drawer-open')) return;
       if (e.key === 'Escape') {
         root.classList.remove('drawer-open');
-        if (typeof window.toggleMobileMenu === 'function') {
-          var overlay = document.getElementById('mobileSidebarOverlay');
-          if (overlay && (overlay.style.display === 'block' || overlay.classList.contains('block'))) {
-            window.toggleMobileMenu();
-          }
-        }
         sync();
         if (btn) btn.focus();
         return;
@@ -5595,6 +5527,11 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
           }
         }
       }
+    });
+
+    wide.addEventListener('change', function () {
+      root.classList.remove('drawer-open');
+      sync();
     });
 
     window.addEventListener('resize', sync);
