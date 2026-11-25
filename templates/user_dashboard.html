@@ -19,7 +19,7 @@
   rel="stylesheet" />
 
 <!-- Dashboard Redesign Override -->
-<link href="{{ url_for('static', filename='assets/css/dashboard_redesign.css', v='layout-grid-v3') }}"
+<link href="{{ url_for('static', filename='assets/css/dashboard_redesign.css', v='layout-grid-v4') }}"
   rel="stylesheet" />
 
 <!-- External CSS -->
@@ -375,48 +375,6 @@ placement='dashboard-top') %}
       }
     </script>
 
-    <!-- POST COMPOSER -->
-    <div class="card composer kb-composer mb-4" aria-label="Create a post">
-      <div class="composer-row kb-composer-top">
-        <a href="{{ url_for('user.profile') }}" class="avatar lg">
-          {% if current_user.profile_pic %}
-          <img src="{{ current_user.profile_pic }}" alt="{{ current_user.first_name }}" class="w-full h-full object-cover rounded-full" />
-          {% else %}
-          {{ current_user.first_name[0] if current_user.first_name else 'U' }}
-          {% endif %}
-        </a>
-        <div class="prompt kb-composer-input" onclick="window.openModal('postModal')">
-          What's on your mind, {{ current_user.first_name }}?
-        </div>
-      </div>
-      <div class="composer-foot kb-composer-actions">
-        <div class="tools kb-composer-btns">
-          <button type="button" class="kb-composer-btn photo" data-composer-action="photo"
-            aria-controls="postModal">
-            <svg class="ic"><use href="#i-image"/></svg> <span class="tl">Photo</span>
-          </button>
-          <button type="button" class="kb-composer-btn video" data-composer-action="video"
-            aria-controls="postModal">
-            <svg class="ic"><use href="#i-video"/></svg> <span class="tl">Video</span>
-          </button>
-          <button type="button" class="kb-composer-btn feeling" data-composer-action="feeling"
-            aria-controls="emojiModal">
-            <svg class="ic"><use href="#i-smile"/></svg> <span class="tl">Feeling</span>
-          </button>
-          <button type="button" class="kb-composer-btn live" data-composer-action="live"
-            aria-controls="postModal" style="display:none;">
-            <svg class="ic"><use href="#i-mega"/></svg> <span class="tl">Live</span>
-          </button>
-          <button type="button" class="kb-composer-btn poll" data-composer-action="poll"
-            aria-controls="postModal" style="display:none;">
-            <svg class="ic"><use href="#i-poll"/></svg> <span class="tl">Poll</span>
-          </button>
-        </div>
-        <button type="button" class="kb-post-btn" data-composer-action="post"
-          aria-controls="postModal">Post</button>
-      </div>
-    </div>
-
     <!-- ── CENTRAL ROTATING WELCOME & ADVERTISING CAROUSEL ── -->
     <div class="card carousel kb-carousel-banner kb-hero-banner mb-4 {% if top_banner_new %}has-ad{% endif %}" id="kbWelcomeCarousel" role="region" aria-roledescription="carousel" aria-label="Welcome and announcements">
       <!-- Carousel Arrows -->
@@ -521,6 +479,48 @@ placement='dashboard-top') %}
       <div class="kb-carousel-dots" role="tablist" aria-label="Slide dots">
         <button type="button" class="kb-carousel-dot dot active" role="tab" aria-selected="true" aria-label="Go to slide 1"></button>
         <button type="button" class="kb-carousel-dot dot" role="tab" aria-selected="false" aria-label="Go to slide 2"></button>
+      </div>
+    </div>
+
+    <!-- POST COMPOSER -->
+    <div class="card composer kb-composer mb-4" aria-label="Create a post">
+      <div class="composer-row kb-composer-top">
+        <a href="{{ url_for('user.profile') }}" class="avatar lg">
+          {% if current_user.profile_pic %}
+          <img src="{{ current_user.profile_pic }}" alt="{{ current_user.first_name }}" class="w-full h-full object-cover rounded-full" />
+          {% else %}
+          {{ current_user.first_name[0] if current_user.first_name else 'U' }}
+          {% endif %}
+        </a>
+        <div class="prompt kb-composer-input" onclick="window.openModal('postModal')">
+          What's on your mind, {{ current_user.first_name }}?
+        </div>
+      </div>
+      <div class="composer-foot kb-composer-actions">
+        <div class="tools kb-composer-btns">
+          <button type="button" class="kb-composer-btn photo" data-composer-action="photo"
+            aria-controls="postModal">
+            <svg class="ic"><use href="#i-image"/></svg> <span class="tl">Photo</span>
+          </button>
+          <button type="button" class="kb-composer-btn video" data-composer-action="video"
+            aria-controls="postModal">
+            <svg class="ic"><use href="#i-video"/></svg> <span class="tl">Video</span>
+          </button>
+          <button type="button" class="kb-composer-btn feeling" data-composer-action="feeling"
+            aria-controls="emojiModal">
+            <svg class="ic"><use href="#i-smile"/></svg> <span class="tl">Feeling</span>
+          </button>
+          <button type="button" class="kb-composer-btn live" data-composer-action="live"
+            aria-controls="postModal" style="display:none;">
+            <svg class="ic"><use href="#i-mega"/></svg> <span class="tl">Live</span>
+          </button>
+          <button type="button" class="kb-composer-btn poll" data-composer-action="poll"
+            aria-controls="postModal" style="display:none;">
+            <svg class="ic"><use href="#i-poll"/></svg> <span class="tl">Poll</span>
+          </button>
+        </div>
+        <button type="button" class="kb-post-btn" data-composer-action="post"
+          aria-controls="postModal">Post</button>
       </div>
     </div>
 
