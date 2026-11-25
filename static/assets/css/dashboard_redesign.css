@@ -75,8 +75,8 @@
   --kb-radius: 16px;
   --kb-radius-sm: 12px;
   --kb-radius-pill: 9999px;
-  --kb-sidebar-width: 232px;
-  --kb-right-sidebar-width: 304px;
+  --kb-sidebar-width: 220px;
+  --kb-right-sidebar-width: 300px;
   --kb-nav-height: 64px;
 }
 
@@ -248,27 +248,33 @@ nav .searching .search_input:focus {
 .shell,
 .kb-dashboard-layout {
   display: grid !important;
-  grid-template-columns: 232px minmax(0, 1fr) 304px !important;
-  gap: 24px !important;
-  max-width: 1280px !important;
+  grid-template-columns: 220px minmax(0, 1fr) 300px !important;
+  gap: 20px !important;
+  width: 100% !important;
+  max-width: 1400px !important;
   margin: 0 auto !important;
-  padding: calc(var(--kb-nav-height, 64px) + 24px) 24px 48px !important;
+  padding: calc(var(--kb-nav-height, 64px) + 20px) 20px 48px !important;
   align-items: start !important;
   box-sizing: border-box !important;
   min-height: 100vh !important;
+  overflow-x: clip !important;
 }
 
 /* ── LEFT SIDEBAR ── */
 .side,
 .kb-left-sidebar {
   grid-column: 1 !important;
-  width: 232px !important;
-  max-width: 232px !important;
+  width: 220px !important;
+  max-width: 220px !important;
   min-width: 0 !important;
   flex-shrink: 0 !important;
   position: sticky !important;
-  top: calc(var(--kb-nav-height, 64px) + 24px) !important;
+  top: calc(var(--kb-nav-height, 64px) + 20px) !important;
   box-sizing: border-box !important;
+  height: auto !important;
+  max-height: calc(100vh - var(--kb-nav-height, 64px) - 30px) !important;
+  overflow-y: auto !important;
+  scrollbar-width: none !important;
 }
 
 .kb-left-sidebar::-webkit-scrollbar {
@@ -435,6 +441,9 @@ nav .searching .search_input:focus {
 
 /* Rocket Promo Card in left sidebar */
 .kb-sidebar-promo-card {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  max-width: 100% !important;
   background: linear-gradient(135deg, #fdf2f8 0%, #fae8ff 50%, #ede9fe 100%);
   border: 1px solid #f3e8ff;
   border-radius: 20px;
@@ -501,6 +510,7 @@ nav .searching .search_input:focus {
   max-width: 100% !important;
   box-sizing: border-box !important;
   margin: 0 !important;
+  overflow-x: clip !important;
 }
 
 .main > *,
@@ -909,15 +919,25 @@ nav .searching .search_input:focus {
   gap: 16px !important;
   width: 100% !important;
   min-width: 0 !important;
-  max-width: 304px !important;
+  max-width: 300px !important;
   box-sizing: border-box !important;
   position: sticky !important;
-  top: calc(var(--kb-nav-height, 64px) + 24px) !important;
+  top: calc(var(--kb-nav-height, 64px) + 20px) !important;
   height: auto !important;
-  max-height: calc(100vh - var(--kb-nav-height, 64px) - 36px) !important;
+  max-height: calc(100vh - var(--kb-nav-height, 64px) - 30px) !important;
   overflow-y: auto !important;
   scrollbar-width: none !important;
   padding: 0 !important;
+}
+
+.rail > *,
+.kb-right-sidebar > * {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
 }
 
 .rail::-webkit-scrollbar,
@@ -2039,18 +2059,7 @@ body.font-poppins > .pt-16.flex {
   object-fit: cover;
 }
 
-/* Shell & Columns */
-.shell,
-.kb-dashboard-layout {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: calc(var(--kb-nav-height, 64px) + 24px) 24px 48px !important;
-  display: grid !important;
-  grid-template-columns: 232px minmax(0, 1fr) 304px !important;
-  gap: 24px !important;
-  align-items: start;
-  box-sizing: border-box !important;
-}
+/* Shell & Columns handled by unified layout above */
 .card {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -2062,8 +2071,6 @@ body.font-poppins > .pt-16.flex {
 .nav,
 .kb-sidebar-card {
   padding: 12px;
-  position: sticky;
-  top: calc(var(--kb-nav-height, 64px) + 24px);
   box-sizing: border-box;
 }
 .nav a.item,
@@ -2132,21 +2139,22 @@ body.font-poppins > .pt-16.flex {
   color: var(--accent-deep);
 }
 
-/* Collapsible sidebar (desktop >= 1200px) */
+/* Collapsible sidebar (desktop >= 1100px) */
 .navscrim {
   display: none;
 }
-@media (min-width: 1200px) {
+@media (min-width: 1100px) {
   .side-collapsed .shell,
   .side-collapsed .kb-dashboard-layout {
-    grid-template-columns: 76px minmax(0, 1fr) 304px !important;
+    grid-template-columns: 76px minmax(0, 1fr) 300px !important;
   }
   .side-collapsed .side,
   .side-collapsed .kb-left-sidebar {
     width: 76px !important;
     max-width: 76px !important;
   }
-  .side-collapsed .vertical-ad-banner {
+  .side-collapsed .vertical-ad-banner,
+  .side-collapsed .kb-sidebar-promo-card {
     display: none !important;
   }
   .side-collapsed .nav,
@@ -2241,26 +2249,32 @@ body.font-poppins > .pt-16.flex {
   }
 }
 
-/* Tablet & Mobile: Drawer below 1200px */
+/* Tablet & Mobile: Drawer below 1100px */
 html.drawer-open,
 html.drawer-open body {
   overflow: hidden !important;
 }
 
-@media (max-width: 1199px) {
+@media (max-width: 1099px) {
   .side,
   .kb-left-sidebar {
     display: contents !important;
+  }
+  .kb-sidebar-promo-card {
+    display: none !important;
   }
   .shell,
   .kb-dashboard-layout {
     grid-template-columns: minmax(0, 1fr) !important;
     gap: 16px !important;
     padding: calc(var(--kb-nav-height, 64px) + 16px) 16px 48px !important;
+    max-width: 100% !important;
   }
   .main,
   .kb-main-content {
     grid-column: 1 !important;
+    width: 100% !important;
+    max-width: 100% !important;
   }
   .rail,
   .kb-right-sidebar {
@@ -2326,8 +2340,9 @@ html.drawer-open body {
 }
 
 @media (max-width: 767px) {
-  .rail {
-    grid-template-columns: minmax(0, 1fr);
+  .rail,
+  .kb-right-sidebar {
+    grid-template-columns: minmax(0, 1fr) !important;
   }
   .sponsor {
     flex-direction: column;
@@ -2484,6 +2499,10 @@ html.drawer-open body {
 }
 .intro {
   padding: 20px;
+  overflow: hidden;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
 }
 .intro p.sub {
   font-size: 14px;
@@ -2684,14 +2703,7 @@ html.drawer-open body {
   max-width: 54ch;
 }
 
-/* Right Rail Spec */
-.rail {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  position: sticky;
-  top: 24px;
-}
+/* Right Rail Spec handled by unified .rail, .kb-right-sidebar above */
 .strength {
   position: relative;
   padding: 20px;
