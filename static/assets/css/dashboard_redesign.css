@@ -162,6 +162,17 @@ nav .searching .search_input:focus {
   color: var(--kb-primary) !important;
 }
 
+/* Search container layout */
+nav #searchContainer.search,
+#searchContainer.search {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
 /* Mobile search overlay */
 #searchContainer.search-active-mobile {
   position: absolute !important;
@@ -189,6 +200,10 @@ nav .searching .search_input:focus {
 }
 
 #closeMobileSearchBtn {
+  display: none !important;
+}
+
+#searchContainer.search-active-mobile #closeMobileSearchBtn {
   width: 36px !important;
   height: 36px !important;
   min-width: 36px !important;
