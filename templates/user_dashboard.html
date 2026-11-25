@@ -19,7 +19,7 @@
   rel="stylesheet" />
 
 <!-- Dashboard Redesign Override -->
-<link href="{{ url_for('static', filename='assets/css/dashboard_redesign.css', v='layout-grid-v4') }}"
+<link href="{{ url_for('static', filename='assets/css/dashboard_redesign.css', v='mobile-polish-v1') }}"
   rel="stylesheet" />
 
 <!-- External CSS -->
@@ -113,7 +113,7 @@
 
     <a href="{{ url_for('user.user_dashboard') }}" class="flex items-center ml-1">
       <img src="{{ url_for('static', filename='assets/img/kim.png') }}" alt="Kimbela"
-        class="h-8 md:h-10 lg:h-12 w-auto object-contain" style="max-width: 160px; height: auto;" />
+        class="h-8 md:h-10 lg:h-12 w-auto object-contain my_logo" />
     </a>
   </div>
 
@@ -144,6 +144,13 @@
   </div>
 
   <div class="top-actions header-actions flex items-center flex-shrink-0 space-x-1 sm:space-x-3 ml-auto">
+    <!-- Mobile Search Toggle Button -->
+    <button id="mobileSearchBtn" type="button" onclick="toggleMobileSearch()"
+      aria-label="Search" title="Search"
+      class="icon-btn search-toggle-btn dashboard-nav-icon md:hidden flex items-center justify-center transition-colors relative text-gray-600">
+      <svg class="ic"><use href="#i-search"/></svg>
+    </button>
+
     <!-- Birthdays -->
     <button id="birthdayShortcut" onclick="showBirthdayNotifications()" type="button"
       aria-label="Birthdays, none today" title="Birthdays, none today"
@@ -5298,27 +5305,29 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
     display: none !important;
   }
 
-  /* Compact fallback sidebar banners when no image/video ad is present */
-  .sidebar-ad-banner:not(.has-dashboard-ad) {
-    min-height: 260px !important;
-    max-height: none !important;
-    padding: 18px !important;
-  }
+  /* Compact fallback sidebar banners on desktop when no image/video ad is present */
+  @media (min-width: 1100px) {
+    .sidebar-ad-banner:not(.has-dashboard-ad) {
+      min-height: 260px !important;
+      max-height: none !important;
+      padding: 18px !important;
+    }
 
-  .vertical-ad-banner:not(.has-dashboard-ad) {
-    min-height: 380px !important;
-    max-height: none !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    justify-content: flex-start !important;
-    padding: 56px 22px 22px !important;
-  }
+    .vertical-ad-banner:not(.has-dashboard-ad) {
+      min-height: 380px !important;
+      max-height: none !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      justify-content: flex-start !important;
+      padding: 56px 22px 22px !important;
+    }
 
-  .right-ad-banner-2:not(.has-dashboard-ad) {
-    min-height: unset !important;
-    max-height: none !important;
-    padding: 22px 18px 24px !important;
+    .right-ad-banner-2:not(.has-dashboard-ad) {
+      min-height: unset !important;
+      max-height: none !important;
+      padding: 22px 18px 24px !important;
+    }
   }
 
   .sidebar-ad-banner:not(.has-dashboard-ad) h3,
@@ -5448,7 +5457,7 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
     var btn = document.getElementById('menuBtn');
     var nav = document.querySelector('.nav') || document.querySelector('.kb-left-sidebar');
     var scrim = document.getElementById('navScrim');
-    var wide = window.matchMedia('(min-width: 1200px)');
+    var wide = window.matchMedia('(min-width: 1100px)');
 
     function sync() {
       if (!btn) return;
