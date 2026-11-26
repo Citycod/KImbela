@@ -1338,6 +1338,152 @@ def get_active_sponsored_items_for_user(viewer, current_time=None):
     return items
 
 
+def _parse_interest_tokens(interests_field):
+    if not interests_field:
+        return set()
+    raw = str(interests_field).strip()
+    if not raw:
+        return set()
+    try:
+        parsed = json.loads(raw)
+        if isinstance(parsed, list):
+            return {str(item).strip().lower() for item in parsed if str(item).strip()}
+    except (TypeError, ValueError):
+        pass
+    return {item.strip().lower() for item in raw.split(",") if item.strip()}
+
+
+def calculate_match_score(viewer, target):
+    """
+    Calculates a data-driven match score (0-100) between viewer and target.
+    Returns None if insufficient profile data is available (<2 profile fields beyond basic signup).
+    """
+    if not viewer or not target:
+        return None
+
+    # Check profile data richness: at least one of interests, marital_status, occupation, bio must be present
+    v_has_optional = bool(getattr(viewer, "interests", None) or getattr(viewer, "marital_status", None) or getattr(viewer, "occupation", None) or getattr(viewer, "bio", None))
+    t_has_optional = bool(getattr(target, "interests", None) or getattr(target, "marital_status", None) or getattr(target, "occupation", None) or getattr(target, "bio", None))
+    if not v_has_optional or not t_has_optional:
+        return None
+
+    comparable_signals = 0
+    score = 0.0
+
+    # 1. Interests (up to 35 points)
+    viewer_interests = _parse_interest_tokens(getattr(viewer, "interests", None))
+    target_interests = _parse_interest_tokens(getattr(target, "interests", None))
+    if viewer_interests and target_interests:
+        comparable_signals += 1
+        intersection = viewer_interests & target_interests
+        if intersection:
+            overlap_ratio = len(intersection) / max(len(viewer_interests), len(target_interests), 1)
+            score += 15.0 + (overlap_ratio * 20.0)
+        else:
+            score += 5.0
+    elif viewer_interests or target_interests:
+        score += 3.0
+
+    # 2. Location (up to 25 points)
+    v_city = (getattr(viewer, "city", None) or "").strip().lower()
+    t_city = (getattr(target, "city", None) or "").strip().lower()
+    v_state = (getattr(viewer, "state", None) or "").strip().lower()
+    t_state = (getattr(target, "state", None) or "").strip().lower()
+    v_country = (getattr(viewer, "country", None) or "").strip().lower()
+    t_country = (getattr(target, "country", None) or "").strip().lower()
+
+    if v_city and t_city:
+        comparable_signals += 1
+        if v_city == t_city:
+            score += 25.0
+        elif v_state and t_state and v_state == t_state:
+            score += 18.0
+        elif v_country and t_country and v_country == t_country:
+            score += 10.0
+    elif (v_state and t_state and v_state == t_state) or (v_country and t_country and v_country == t_country):
+        comparable_signals += 1
+        score += 12.0
+
+    # 3. Marital status (up to 15 points)
+    v_marital = (getattr(viewer, "marital_status", None) or "").strip().lower()
+    t_marital = (getattr(target, "marital_status", None) or "").strip().lower()
+    if v_marital and t_marital:
+        comparable_signals += 1
+        if v_marital == t_marital:
+            score += 15.0
+        elif {v_marital, t_marital}.issubset({"single", "divorced", "widowed"}):
+            score += 10.0
+        else:
+            score += 2.0
+
+    # 4. Age proximity (up to 15 points)
+    v_age = getattr(viewer, "age", None)
+    t_age = getattr(target, "age", None)
+    if callable(v_age):
+        v_age = v_age()
+    if callable(t_age):
+        t_age = t_age()
+
+    if v_age and t_age:
+        comparable_signals += 1
+        age_diff = abs(v_age - t_age)
+        if age_diff <= 2:
+            score += 15.0
+        elif age_diff <= 5:
+            score += 12.0
+        elif age_diff <= 8:
+            score += 8.0
+        elif age_diff <= 12:
+            score += 4.0
+
+    # 5. Religion / Education (bonus up to 10 points)
+    v_rel = (getattr(viewer, "religion", None) or "").strip().lower()
+    t_rel = (getattr(target, "religion", None) or "").strip().lower()
+    if v_rel and t_rel and v_rel == t_rel:
+        score += 5.0
+        comparable_signals += 1
+
+    v_edu = (getattr(viewer, "educational_level", None) or "").strip().lower()
+    t_edu = (getattr(target, "educational_level", None) or "").strip().lower()
+    if v_edu and t_edu and v_edu == t_edu:
+        score += 5.0
+
+    if comparable_signals < 2:
+        return None
+
+    score += 10.0
+    final_score = int(round(min(98.0, max(20.0, score))))
+    return final_score
+
+
+def get_user_presence_status(user, now=None):
+    """
+    Returns presence status ('online', 'away', or 'offline') based on user's last_seen and is_online.
+    """
+    if not user:
+        return "offline"
+    if now is None:
+        now = utcnow()
+    last_seen = getattr(user, "last_seen", None)
+    is_online = getattr(user, "is_online", False)
+
+    if not last_seen:
+        return "online" if is_online else "offline"
+
+    if last_seen.tzinfo is not None and now.tzinfo is None:
+        last_seen = last_seen.replace(tzinfo=None)
+    elif last_seen.tzinfo is None and now.tzinfo is not None:
+        now = now.replace(tzinfo=None)
+
+    diff_seconds = (now - last_seen).total_seconds()
+    if diff_seconds <= 300:
+        return "online"
+    elif diff_seconds <= 1800:
+        return "away"
+    else:
+        return "offline"
+
+
 @user.route("/user_dashboard", methods=["GET", "POST"])
 @login_required
 def user_dashboard():
@@ -1449,6 +1595,7 @@ def user_dashboard():
     blocked_ids = {row[0] for row in blocked_ids_result}
 
     friends = []
+    current_time_presence = utcnow()
     if friend_ids:
         friends = (
             User.query.filter(User.id.in_(friend_ids), ~User.id.in_(blocked_ids))
@@ -1456,6 +1603,10 @@ def user_dashboard():
             .limit(20)
             .all()
         )
+        for friend in friends:
+            friend.presence_status = get_user_presence_status(
+                friend, current_time_presence
+            )
     timings['friends_queries'] = time.time() - t0
 
     # People you may know (suggestions)
@@ -1482,6 +1633,12 @@ def user_dashboard():
         for suggested_user in random_five:
             suggested_user.friend_request_status = (
                 friend_request_state_by_user_id[suggested_user.id]
+            )
+            suggested_user.match_score = calculate_match_score(
+                current_user, suggested_user
+            )
+            suggested_user.presence_status = get_user_presence_status(
+                suggested_user, current_time_presence
             )
     timings['suggestions_full_block'] = time.time() - t0
 

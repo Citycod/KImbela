@@ -327,11 +327,13 @@ nav #searchContainer.search,
   height: auto !important;
   max-height: calc(100vh - var(--kb-nav-height, 64px) - 30px) !important;
   overflow-y: auto !important;
+  overflow-x: hidden !important;
   scrollbar-width: none !important;
 }
 
 .kb-left-sidebar::-webkit-scrollbar {
   width: 0;
+  display: none !important;
 }
 
 .kb-sidebar-card {
@@ -2200,11 +2202,11 @@ body.font-poppins > .pt-16.flex {
   color: var(--accent-deep);
 }
 
-/* Collapsible sidebar (desktop >= 1100px) */
+/* Collapsible sidebar (desktop >= 1024px) */
 .navscrim {
   display: none;
 }
-@media (min-width: 1100px) {
+@media (min-width: 1024px) {
   .side-collapsed .shell,
   .side-collapsed .kb-dashboard-layout {
     grid-template-columns: 76px minmax(0, 1fr) 300px !important;
@@ -2213,9 +2215,20 @@ body.font-poppins > .pt-16.flex {
   .side-collapsed .kb-left-sidebar {
     width: 76px !important;
     max-width: 76px !important;
+    min-width: 0 !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    scrollbar-width: none !important;
+  }
+  .side-collapsed .side::-webkit-scrollbar,
+  .side-collapsed .kb-left-sidebar::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
   }
   .side-collapsed .vertical-ad-banner,
-  .side-collapsed .kb-sidebar-promo-card {
+  .side-collapsed .kb-sidebar-promo-card,
+  .side-collapsed .kb-left-sidebar .vertical-ad-banner,
+  .side-collapsed .kb-left-sidebar .kb-sidebar-promo-card {
     display: none !important;
   }
   .side-collapsed .nav,
@@ -2226,33 +2239,36 @@ body.font-poppins > .pt-16.flex {
     align-items: center !important;
     gap: 4px !important;
     width: 76px !important;
+    max-width: 76px !important;
+    min-width: 0 !important;
+    overflow-x: hidden !important;
     box-sizing: border-box !important;
   }
   .side-collapsed .nav a.item,
   .side-collapsed .nav button.item {
     position: relative !important;
     width: 48px !important;
+    max-width: 48px !important;
     height: 48px !important;
+    min-width: 0 !important;
     padding: 0 !important;
     justify-content: center !important;
     border-radius: 12px !important;
+    overflow: hidden !important;
+    margin: 0 auto !important;
   }
   .side-collapsed .nav .ic {
     width: 22px !important;
     height: 22px !important;
+    flex-shrink: 0 !important;
   }
   .side-collapsed .nav .lbl {
-    position: absolute !important;
-    width: 1px !important;
-    height: 1px !important;
-    overflow: hidden !important;
-    clip: rect(0 0 0 0) !important;
-    white-space: nowrap !important;
+    display: none !important;
   }
   .side-collapsed .nav hr,
   .side-collapsed .kb-sidebar-divider {
     width: 28px !important;
-    margin: 6px 0 !important;
+    margin: 6px auto !important;
   }
   .side-collapsed .nav a.item .cnt,
   .side-collapsed .nav button.item .cnt {
@@ -2284,29 +2300,7 @@ body.font-poppins > .pt-16.flex {
   }
   .side-collapsed .nav a.item::after,
   .side-collapsed .nav button.item::after {
-    content: attr(data-label) !important;
-    position: absolute !important;
-    left: calc(100% + 12px) !important;
-    top: 50% !important;
-    transform: translateY(-50%) !important;
-    background: var(--ink) !important;
-    color: #fff !important;
-    font-size: 12px !important;
-    font-weight: 500 !important;
-    line-height: 1.4 !important;
-    padding: 6px 10px !important;
-    border-radius: 8px !important;
-    white-space: nowrap !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
-    z-index: 60 !important;
-    transition: opacity 0.12s ease !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-  }
-  .side-collapsed .nav a.item:hover::after,
-  .side-collapsed .nav a.item:focus-visible::after,
-  .side-collapsed .nav button.item:hover::after {
-    opacity: 1 !important;
+    display: none !important;
   }
 }
 
@@ -2555,6 +2549,12 @@ html.drawer-open body {
   border-radius: 50%;
   background: #10b981;
   display: block;
+}
+.pcard .dot.away i {
+  background: #f59e0b !important;
+}
+.pcard .dot.offline i {
+  background: #94a3b8 !important;
 }
 
 /* Posts Spec */
@@ -2818,8 +2818,8 @@ html.drawer-open body {
    RESPONSIVE LAYOUT & VIEWPORT CONSTRAINTS
    ========================================================================== */
 
-/* ── TABLET & MOBILE DRAWER (Below 1100px) ── */
-@media (max-width: 1099px) {
+/* ── TABLET & MOBILE DRAWER (Below 1024px) ── */
+@media (max-width: 1023px) {
   .side,
   .kb-left-sidebar {
     display: contents !important;

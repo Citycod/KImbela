@@ -547,14 +547,18 @@ placement='dashboard-top') %}
           {% else %}
           <svg class="person"><use href="#person"/></svg>
           {% endif %}
-          {% if user.is_active %}
-          <span class="dot"><i></i>Online</span>
+          {% if user.presence_status == 'online' %}
+          <span class="dot online"><i></i>Online</span>
+          {% elif user.presence_status == 'away' %}
+          <span class="dot away"><i></i>Away</span>
+          {% else %}
+          <span class="dot offline"><i></i>Offline</span>
           {% endif %}
           <div class="scrim"></div>
           <div class="info">
             <div class="nm">{{ user.first_name }}{% if user.age %}, {{ user.age }}{% endif %}</div>
             <div class="ct">{{ user.city or user.country or 'Nigeria' }}</div>
-            <div class="mt">{{ user.match_score|default(88) }}% match</div>
+            <div class="mt">{% if user.match_score is not none %}{{ user.match_score }}% match{% else %}Not enough data{% endif %}</div>
           </div>
           <button type="button" class="like" aria-label="Like {{ user.first_name }}" onclick="event.stopPropagation(); addFriend({{ user.id }}, this)">
             <svg class="ic"><use href="#i-heart"/></svg>
@@ -1336,7 +1340,7 @@ placement='dashboard-top') %}
     {% set online_friends = [] %}
     {% if friends %}
       {% for friend in friends %}
-        {% if friend.is_active or friend.is_online %}
+        {% if friend.presence_status == 'online' or friend.is_online %}
           {% set _ = online_friends.append(friend) %}
         {% endif %}
       {% endfor %}
@@ -5457,7 +5461,7 @@ Happy Birthday! Wishing you all the happiness in the world! 🎉🎁</textarea>
     var btn = document.getElementById('menuBtn');
     var nav = document.querySelector('.nav') || document.querySelector('.kb-left-sidebar');
     var scrim = document.getElementById('navScrim');
-    var wide = window.matchMedia('(min-width: 1100px)');
+    var wide = window.matchMedia('(min-width: 1024px)');
 
     function sync() {
       if (!btn) return;
