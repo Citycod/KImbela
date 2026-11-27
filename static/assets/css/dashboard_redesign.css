@@ -2160,6 +2160,17 @@ body.font-poppins > .pt-16.flex {
 .nav button.item:hover {
   background: #f8f9fb;
 }
+.nav a.item.kb-logout-nav {
+  color: #dc2626;
+}
+.nav a.item.kb-logout-nav .ic {
+  color: #dc2626;
+  stroke: #dc2626;
+}
+.nav a.item.kb-logout-nav:hover {
+  background: #fef2f2;
+  color: #b91c1c;
+}
 .nav a.item[aria-current=page],
 .nav a.item.kb-active,
 .nav button.item.kb-active {
